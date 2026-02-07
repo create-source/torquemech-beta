@@ -1,0 +1,2252 @@
+{
+  "categories": [
+    {
+      "key": "maintenance",
+      "name": "Maintenance",
+      "services": [
+        {
+          "code": "oil_and_filter_change",
+          "name": "Oil & Filter Change",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 0.9,
+          "flat_rate_min": 60,
+          "flat_rate_max": 120
+        },
+        {
+          "code": "synthetic_oil_change",
+          "name": "Synthetic Oil Change",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 80,
+          "flat_rate_max": 160
+        },
+        {
+          "code": "tire_rotation",
+          "name": "Tire Rotation",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 35,
+          "flat_rate_max": 90
+        },
+        {
+          "code": "balance_tires_4",
+          "name": "Balance Tires (4)",
+          "labor_hours_min": 0.7,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 160
+        },
+        {
+          "code": "engine_air_filter_replacement",
+          "name": "Engine Air Filter Replacement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "flat_rate_min": 30,
+          "flat_rate_max": 90
+        },
+        {
+          "code": "cabin_air_filter_replacement",
+          "name": "Cabin Air Filter Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 50,
+          "flat_rate_max": 140
+        },
+        {
+          "code": "wiper_blade_replacement_pair",
+          "name": "Wiper Blade Replacement (pair)",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.4,
+          "flat_rate_min": 25,
+          "flat_rate_max": 75
+        },
+        {
+          "code": "battery_terminal_cleaning",
+          "name": "Battery Terminal Cleaning",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.7,
+          "flat_rate_min": 35,
+          "flat_rate_max": 110
+        },
+        {
+          "code": "fuel_system_cleaner_service",
+          "name": "Fuel System Cleaner Service",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 80,
+          "flat_rate_max": 170
+        },
+        {
+          "code": "multi_point_inspection",
+          "name": "Multi-point Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 50,
+          "flat_rate_max": 140
+        },
+        {
+          "code": "serpentine_belt_replacement",
+          "name": "Serpentine Belt Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 120,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "timing_belt_replacement_where_applicable",
+          "name": "Timing Belt Replacement (where applicable)",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 6.5,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1500
+        },
+        {
+          "code": "spark_plug_replacement_4_cyl",
+          "name": "Spark Plug Replacement (4-cyl)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.2,
+          "flat_rate_min": 180,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "spark_plug_replacement_v6_v8",
+          "name": "Spark Plug Replacement (V6/V8)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.5,
+          "flat_rate_min": 260,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "brake_inspection",
+          "name": "Brake Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 0.9,
+          "flat_rate_min": 40,
+          "flat_rate_max": 120
+        },
+        {
+          "code": "fluid_top_off",
+          "name": "Fluid Top-off",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "flat_rate_min": 20,
+          "flat_rate_max": 70
+        }
+        ,
+{
+  "key": "cooling",
+  "name": "Cooling System",
+  "services": [
+    { "code": "water_pump", "name": "Water Pump Replacement", "labor_hours_min": 2.0, "labor_hours_max": 6.0, "flat_rate_min": 600, "flat_rate_max": 1700 },
+    { "code": "radiator_replace", "name": "Radiator Replacement", "labor_hours_min": 1.5, "labor_hours_max": 4.0, "flat_rate_min": 450, "flat_rate_max": 1200 },
+    { "code": "thermostat", "name": "Thermostat Replacement", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 220, "flat_rate_max": 650 },
+    { "code": "coolant_flush", "name": "Coolant Flush", "labor_hours_min": 1.0, "labor_hours_max": 1.8, "flat_rate_min": 140, "flat_rate_max": 260 },
+    { "code": "coolant_leak_diag", "name": "Coolant Leak Diagnosis (pressure test)", "labor_hours_min": 1.0, "labor_hours_max": 2.5, "flat_rate_min": 150, "flat_rate_max": 420 },
+    { "code": "cooling_fan", "name": "Cooling Fan / Fan Clutch Replacement", "labor_hours_min": 1.0, "labor_hours_max": 3.5, "flat_rate_min": 300, "flat_rate_max": 950 },
+    { "code": "hose_replace", "name": "Coolant Hose Replacement (each)", "labor_hours_min": 0.7, "labor_hours_max": 2.5, "flat_rate_min": 150, "flat_rate_max": 520 },
+    { "code": "overflow_tank", "name": "Coolant Reservoir / Overflow Tank", "labor_hours_min": 0.5, "labor_hours_max": 1.5, "flat_rate_min": 120, "flat_rate_max": 320 },
+    { "code": "temp_sensor", "name": "Coolant Temp Sensor Replacement", "labor_hours_min": 0.4, "labor_hours_max": 1.2, "flat_rate_min": 120, "flat_rate_max": 320 },
+    { "code": "radiator_cap", "name": "Radiator Cap Replacement", "labor_hours_min": 0.1, "labor_hours_max": 0.2, "flat_rate_min": 20, "flat_rate_max": 45 }
+  ]
+},
+{
+  "key": "transmission",
+  "name": "Transmission",
+  "services": [
+    { "code": "trans_diag", "name": "Transmission Diagnosis", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 150, "flat_rate_max": 450 },
+    { "code": "trans_service", "name": "Transmission Fluid Service", "labor_hours_min": 1.0, "labor_hours_max": 2.5, "flat_rate_min": 180, "flat_rate_max": 420 },
+    { "code": "trans_flush", "name": "Transmission Fluid Flush", "labor_hours_min": 1.0, "labor_hours_max": 2.5, "flat_rate_min": 220, "flat_rate_max": 520 },
+    { "code": "trans_pan_gasket", "name": "Transmission Pan Gasket + Filter", "labor_hours_min": 1.5, "labor_hours_max": 3.0, "flat_rate_min": 280, "flat_rate_max": 650 },
+    { "code": "shift_solenoid", "name": "Shift Solenoid Replacement", "labor_hours_min": 2.0, "labor_hours_max": 6.0, "flat_rate_min": 550, "flat_rate_max": 1600 },
+    { "code": "tcc_solenoid", "name": "Torque Converter Clutch (TCC) Solenoid", "labor_hours_min": 2.0, "labor_hours_max": 6.5, "flat_rate_min": 600, "flat_rate_max": 1750 },
+    { "code": "trans_mount", "name": "Transmission Mount Replacement", "labor_hours_min": 1.0, "labor_hours_max": 3.5, "flat_rate_min": 260, "flat_rate_max": 900 },
+    { "code": "clutch_replace", "name": "Clutch Replacement (manual)", "labor_hours_min": 5.0, "labor_hours_max": 10.0, "flat_rate_min": 1100, "flat_rate_max": 2600 },
+    { "code": "slave_cyl", "name": "Clutch Slave Cylinder Replacement", "labor_hours_min": 2.0, "labor_hours_max": 6.0, "flat_rate_min": 500, "flat_rate_max": 1500 },
+    { "code": "trans_cooler", "name": "Transmission Cooler Replacement/Install", "labor_hours_min": 1.5, "labor_hours_max": 4.0, "flat_rate_min": 350, "flat_rate_max": 1100 }
+  ]
+},
+{
+  "key": "driveline",
+  "name": "Driveline / Axle / 4WD",
+  "services": [
+    { "code": "cv_axle", "name": "CV Axle Replacement (each)", "labor_hours_min": 1.5, "labor_hours_max": 3.5, "flat_rate_min": 420, "flat_rate_max": 950 },
+    { "code": "u_joint", "name": "U-Joint Replacement (each)", "labor_hours_min": 1.0, "labor_hours_max": 2.5, "flat_rate_min": 280, "flat_rate_max": 650 },
+    { "code": "driveshaft_replace", "name": "Driveshaft Replacement", "labor_hours_min": 1.5, "labor_hours_max": 3.0, "flat_rate_min": 450, "flat_rate_max": 1100 },
+    { "code": "wheel_bearing", "name": "Wheel Bearing / Hub Assembly (each)", "labor_hours_min": 1.5, "labor_hours_max": 4.0, "flat_rate_min": 420, "flat_rate_max": 1100 },
+    { "code": "diff_service", "name": "Differential Fluid Service", "labor_hours_min": 0.8, "labor_hours_max": 1.8, "flat_rate_min": 140, "flat_rate_max": 320 },
+    { "code": "diff_diag", "name": "Differential Noise Diagnosis", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 150, "flat_rate_max": 450 },
+    { "code": "transfer_case_service", "name": "Transfer Case Fluid Service", "labor_hours_min": 0.8, "labor_hours_max": 1.8, "flat_rate_min": 160, "flat_rate_max": 360 },
+    { "code": "transfer_case_diag", "name": "Transfer Case Diagnosis", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 160, "flat_rate_max": 520 },
+    { "code": "axle_seal", "name": "Axle Seal Replacement (each)", "labor_hours_min": 2.0, "labor_hours_max": 5.5, "flat_rate_min": 450, "flat_rate_max": 1400 }
+  ]
+},
+{
+  "key": "intake_air",
+  "name": "Intake / Air / Vacuum",
+  "services": [
+    { "code": "intake_manifold_gasket", "name": "Intake Manifold Gasket Replacement", "labor_hours_min": 3.0, "labor_hours_max": 8.0, "flat_rate_min": 700, "flat_rate_max": 1900 },
+    { "code": "intake_manifold_replace", "name": "Intake Manifold Replacement", "labor_hours_min": 3.5, "labor_hours_max": 9.0, "flat_rate_min": 900, "flat_rate_max": 2400 },
+    { "code": "throttle_body_clean", "name": "Throttle Body Cleaning", "labor_hours_min": 0.7, "labor_hours_max": 1.5, "flat_rate_min": 120, "flat_rate_max": 260 },
+    { "code": "maf_sensor", "name": "MAF Sensor Replacement", "labor_hours_min": 0.3, "labor_hours_max": 0.8, "flat_rate_min": 90, "flat_rate_max": 200 },
+    { "code": "map_sensor", "name": "MAP Sensor Replacement", "labor_hours_min": 0.3, "labor_hours_max": 0.9, "flat_rate_min": 90, "flat_rate_max": 220 },
+    { "code": "vacuum_leak_diag", "name": "Vacuum Leak Diagnosis (smoke test)", "labor_hours_min": 1.0, "labor_hours_max": 2.5, "flat_rate_min": 150, "flat_rate_max": 420 },
+    { "code": "pcv_valve", "name": "PCV Valve Replacement", "labor_hours_min": 0.3, "labor_hours_max": 1.2, "flat_rate_min": 70, "flat_rate_max": 220 }
+  ]
+},
+{
+  "key": "fuel_ignition",
+  "name": "Fuel / Ignition",
+  "services": [
+    { "code": "misfire_diag", "name": "Misfire Diagnosis", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 150, "flat_rate_max": 450 },
+    { "code": "coil_pack", "name": "Ignition Coil Replacement (each)", "labor_hours_min": 0.3, "labor_hours_max": 1.2, "flat_rate_min": 120, "flat_rate_max": 320 },
+    { "code": "spark_plugs", "name": "Spark Plug Replacement", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 200, "flat_rate_max": 600 },
+    { "code": "fuel_pump", "name": "Fuel Pump Replacement", "labor_hours_min": 2.5, "labor_hours_max": 6.5, "flat_rate_min": 650, "flat_rate_max": 1700 },
+    { "code": "fuel_filter", "name": "Fuel Filter Replacement", "labor_hours_min": 0.5, "labor_hours_max": 1.5, "flat_rate_min": 120, "flat_rate_max": 280 },
+    { "code": "injector_single", "name": "Fuel Injector Replacement (each)", "labor_hours_min": 0.8, "labor_hours_max": 2.5, "flat_rate_min": 180, "flat_rate_max": 520 },
+    { "code": "injector_set", "name": "Fuel Injectors Replacement (set)", "labor_hours_min": 3.0, "labor_hours_max": 8.0, "flat_rate_min": 900, "flat_rate_max": 2400 }
+  ]
+},
+{
+  "key": "exhaust_emissions",
+  "name": "Exhaust / Emissions",
+  "services": [
+    { "code": "o2_sensor", "name": "O2 Sensor Replacement", "labor_hours_min": 0.5, "labor_hours_max": 2.0, "flat_rate_min": 160, "flat_rate_max": 520 },
+    { "code": "catalytic_converter", "name": "Catalytic Converter Replacement", "labor_hours_min": 1.5, "labor_hours_max": 4.5, "flat_rate_min": 700, "flat_rate_max": 2200 },
+    { "code": "muffler_replace", "name": "Muffler Replacement", "labor_hours_min": 1.0, "labor_hours_max": 2.5, "flat_rate_min": 250, "flat_rate_max": 650 },
+    { "code": "exhaust_leak_repair", "name": "Exhaust Leak Repair (minor)", "labor_hours_min": 1.0, "labor_hours_max": 2.5, "flat_rate_min": 180, "flat_rate_max": 520 },
+    { "code": "evap_diag", "name": "EVAP Leak Diagnosis", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 160, "flat_rate_max": 520 },
+    { "code": "charcoal_canister", "name": "EVAP Charcoal Canister Replacement", "labor_hours_min": 1.0, "labor_hours_max": 3.0, "flat_rate_min": 280, "flat_rate_max": 900 }
+  ]
+}
+
+      ]
+    },
+    {
+      "key": "brakes",
+      "name": "Brakes",
+      "services": [
+        {
+          "code": "brake_diagnostic",
+          "name": "Brake Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 90,
+          "flat_rate_max": 220
+        },
+        {
+          "code": "front_brake_pads",
+          "name": "Front Brake Pads",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "rear_brake_pads",
+          "name": "Rear Brake Pads",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "brake_rotors_per_axle",
+          "name": "Brake Rotors (per axle)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 2.8,
+          "flat_rate_min": 300,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "brake_pads_and_rotors_per_axle",
+          "name": "Brake Pads & Rotors (per axle)",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 420,
+          "flat_rate_max": 900
+        },
+        {
+          "code": "brake_caliper_replacement_each",
+          "name": "Brake Caliper Replacement (each)",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 220,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "brake_hose_replacement_each",
+          "name": "Brake Hose Replacement (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 160,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "brake_master_cylinder_replacement",
+          "name": "Brake Master Cylinder Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 350,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "brake_booster_replacement",
+          "name": "Brake Booster Replacement",
+          "labor_hours_min": 1.8,
+          "labor_hours_max": 3.8,
+          "flat_rate_min": 450,
+          "flat_rate_max": 1100
+        },
+        {
+          "code": "parking_brake_adjustment",
+          "name": "Parking Brake Adjustment",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 90,
+          "flat_rate_max": 220
+        },
+        {
+          "code": "parking_brake_shoes_rear",
+          "name": "Parking Brake Shoes (rear)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 260,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "brake_fluid_flush",
+          "name": "Brake Fluid Flush",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 120,
+          "flat_rate_max": 250
+        },
+        {
+          "code": "abs_diagnosis",
+          "name": "ABS Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 140,
+          "flat_rate_max": 330
+        },
+        {
+          "code": "abs_wheel_speed_sensor_each",
+          "name": "ABS Wheel Speed Sensor (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.6,
+          "flat_rate_min": 170,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "brake_bleed",
+          "name": "Brake Bleed",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 90,
+          "flat_rate_max": 210
+        }
+      ]
+    },
+    {
+      "key": "electrical",
+      "name": "Electrical",
+      "services": [
+        {
+          "code": "electrical_diagnostic",
+          "name": "Electrical Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 90,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "battery_replacement",
+          "name": "Battery Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "alternator_replacement",
+          "name": "Alternator Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 400,
+          "flat_rate_max": 950
+        },
+        {
+          "code": "starter_replacement",
+          "name": "Starter Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 350,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "serpentine_belt_and_tensioner_combo",
+          "name": "Serpentine Belt & Tensioner (combo)",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 260,
+          "flat_rate_max": 620
+        },
+        {
+          "code": "battery_cable_replacement",
+          "name": "Battery Cable Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "ground_strap_repair",
+          "name": "Ground Strap Repair",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 220
+        },
+        {
+          "code": "fuse_relay_diagnosis",
+          "name": "Fuse/Relay Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 80,
+          "flat_rate_max": 200
+        },
+        {
+          "code": "headlight_bulb_replacement_each",
+          "name": "Headlight Bulb Replacement (each)",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 40,
+          "flat_rate_max": 140
+        },
+        {
+          "code": "tail_light_bulb_replacement_each",
+          "name": "Tail Light Bulb Replacement (each)",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 40,
+          "flat_rate_max": 140
+        },
+        {
+          "code": "power_window_motor_regulator_each",
+          "name": "Power Window Motor/Regulator (each)",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 260,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "door_lock_actuator_each",
+          "name": "Door Lock Actuator (each)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 220,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "battery_charging_system_test",
+          "name": "Battery/Charging System Test",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 30,
+          "flat_rate_max": 90
+        },
+        {
+          "code": "parasitic_draw_test",
+          "name": "Parasitic Draw Test",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "wiring_repair_minor",
+          "name": "Wiring Repair (minor)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 150,
+          "flat_rate_max": 450
+        },
+        {
+          "code": "wiring_repair_major",
+          "name": "Wiring Repair (major)",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "flat_rate_min": 450,
+          "flat_rate_max": 1500
+        }
+      ]
+    },
+    {
+      "key": "engine",
+      "name": "Engine",
+      "services": [
+        {
+          "code": "engine_diagnostic",
+          "name": "Engine Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "check_engine_light_diagnosis",
+          "name": "Check Engine Light Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "ignition_coil_replacement_each",
+          "name": "Ignition Coil Replacement (each)",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 280
+        },
+        {
+          "code": "intake_manifold_replace",
+          "name": "Intake Manifold Replacement",
+          "labor_hours_min": 3.5,
+          "labor_hours_max": 9.0,
+          "flat_rate_min": 900,
+          "flat_rate_max": 2400
+        },
+        {
+          "code": "intake_manifold_gasket",
+          "name": "Intake Manifold Gasket Replacement",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 8.0,
+          "flat_rate_min": 700,
+          "flat_rate_max": 1900
+        },
+        
+        {
+          "code": "head_gasket_4_cyl",
+          "name": "Head Gasket (4-cyl)",
+          "labor_hours_min": 10.0,
+          "labor_hours_max": 18.0,
+          "flat_rate_min": 2200,
+          "flat_rate_max": 5200
+        },
+        {
+          "code": "head_gasket_v6_v8",
+          "name": "Head Gasket (V6/V8)",
+          "labor_hours_min": 12.0,
+          "labor_hours_max": 22.0,
+          "flat_rate_min": 2800,
+          "flat_rate_max": 6500
+        },
+        {
+          "code": "engine_mount_replacement_each",
+          "name": "Engine Mount Replacement (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 350,
+          "flat_rate_max": 950
+        },
+        {
+          "code": "throttle_body_cleaning",
+          "name": "Throttle Body Cleaning",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 90,
+          "flat_rate_max": 220
+        },
+        {
+          "code": "throttle_body_replacement",
+          "name": "Throttle Body Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "pcv_valve_replacement",
+          "name": "PCV Valve Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 60,
+          "flat_rate_max": 200
+        },
+        {
+          "code": "egr_valve_service_replacement",
+          "name": "EGR Valve Service/Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "oxygen_sensor_each",
+          "name": "Oxygen Sensor (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "mass_air_flow_sensor_replacement",
+          "name": "Mass Air Flow Sensor Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "engine_tune_up_basic",
+          "name": "Engine Tune-Up (basic)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "timing_chain_service_where_applicable",
+          "name": "Timing Chain Service (where applicable)",
+          "labor_hours_min": 6.0,
+          "labor_hours_max": 16.0,
+          "flat_rate_min": 1500,
+          "flat_rate_max": 4500
+        },
+        {
+          "code": "compression_test",
+          "name": "Compression Test",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 150,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "leak_down_test",
+          "name": "Leak-down Test",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 220,
+          "flat_rate_max": 520
+        }
+      ]
+    },
+    {
+      "key": "ac_heat",
+      "name": "A/C & Heating",
+      "services": [
+        {
+          "code": "a_c_diagnostic",
+          "name": "A/C Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "a_c_recharge_r134a",
+          "name": "A/C Recharge (R134a)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 150,
+          "flat_rate_max": 300
+        },
+        {
+          "code": "a_c_recharge_r1234yf",
+          "name": "A/C Recharge (R1234yf)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 220,
+          "flat_rate_max": 450
+        },
+        {
+          "code": "a_c_compressor_replacement",
+          "name": "A/C Compressor Replacement",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 6.5,
+          "flat_rate_min": 900,
+          "flat_rate_max": 2200
+        },
+        {
+          "code": "a_c_condenser_replacement",
+          "name": "A/C Condenser Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 4.5,
+          "flat_rate_min": 550,
+          "flat_rate_max": 1400
+        },
+        {
+          "code": "a_c_evaporator_replacement",
+          "name": "A/C Evaporator Replacement",
+          "labor_hours_min": 6.0,
+          "labor_hours_max": 12.0,
+          "flat_rate_min": 1400,
+          "flat_rate_max": 3500
+        },
+        {
+          "code": "blower_motor_replacement",
+          "name": "Blower Motor Replacement",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 300,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "blower_motor_resistor",
+          "name": "Blower Motor Resistor",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 200,
+          "flat_rate_max": 550
+        },
+        {
+          "code": "cabin_temperature_blend_door_actuator",
+          "name": "Cabin Temperature Blend Door Actuator",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "heater_core_replacement",
+          "name": "Heater Core Replacement",
+          "labor_hours_min": 6.0,
+          "labor_hours_max": 12.0,
+          "flat_rate_min": 1200,
+          "flat_rate_max": 3200
+        },
+        {
+          "code": "thermostat_replacement",
+          "name": "Thermostat Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.2,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "cooling_fan_diagnosis",
+          "name": "Cooling Fan Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "cooling_fan_motor_replacement",
+          "name": "Cooling Fan Motor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 280,
+          "flat_rate_max": 820
+        },
+        {
+          "code": "a_c_pressure_switch_each",
+          "name": "A/C Pressure Switch (each)",
+          "labor_hours_min": 0.7,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "a_c_leak_test_uv_dye",
+          "name": "A/C Leak Test (UV dye)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 150,
+          "flat_rate_max": 420
+        }
+      ]
+    },
+    {
+      "key": "suspension",
+      "name": "Suspension & Steering",
+      "services": [
+        {
+          "code": "suspension_diagnostic",
+          "name": "Suspension Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "front_struts_pair",
+          "name": "Front Struts (pair)",
+          "labor_hours_min": 2.5,
+          "labor_hours_max": 5.0,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1400
+        },
+        {
+          "code": "rear_shocks_pair",
+          "name": "Rear Shocks (pair)",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 350,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "control_arm_replacement_each",
+          "name": "Control Arm Replacement (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 350,
+          "flat_rate_max": 900
+        },
+        {
+          "code": "ball_joint_replacement_each",
+          "name": "Ball Joint Replacement (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 350,
+          "flat_rate_max": 900
+        },
+        {
+          "code": "tie_rod_end_replacement_each",
+          "name": "Tie Rod End Replacement (each)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 250,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "inner_tie_rod_replacement_each",
+          "name": "Inner Tie Rod Replacement (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 320,
+          "flat_rate_max": 780
+        },
+        {
+          "code": "power_steering_pump_replacement",
+          "name": "Power Steering Pump Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 450,
+          "flat_rate_max": 1050
+        },
+        {
+          "code": "power_steering_fluid_flush",
+          "name": "Power Steering Fluid Flush",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 140,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "rack_and_pinion_replacement",
+          "name": "Rack & Pinion Replacement",
+          "labor_hours_min": 4.0,
+          "labor_hours_max": 9.0,
+          "flat_rate_min": 1100,
+          "flat_rate_max": 2800
+        },
+        {
+          "code": "wheel_alignment",
+          "name": "Wheel Alignment",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 90,
+          "flat_rate_max": 180
+        },
+        {
+          "code": "sway_bar_links_pair",
+          "name": "Sway Bar Links (pair)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 220,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "sway_bar_bushings",
+          "name": "Sway Bar Bushings",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.2,
+          "flat_rate_min": 200,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "wheel_bearing_each",
+          "name": "Wheel Bearing (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 350,
+          "flat_rate_max": 1050
+        },
+        {
+          "code": "cv_axle_replacement_each",
+          "name": "CV Axle Replacement (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 420,
+          "flat_rate_max": 980
+        },
+        {
+          "code": "steering_column_diagnosis",
+          "name": "Steering Column Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 340
+        }
+      ]
+    },
+    {
+      "key": "tires",
+      "name": "Tires",
+      "services": [
+        {
+          "code": "tire_plug_repair",
+          "name": "Tire Plug Repair",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 30,
+          "flat_rate_max": 80
+        },
+        {
+          "code": "tire_patch_repair",
+          "name": "Tire Patch Repair",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 45,
+          "flat_rate_max": 120
+        },
+        {
+          "code": "mount_and_balance_per_tire",
+          "name": "Mount & Balance (per tire)",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 0.9,
+          "flat_rate_min": 25,
+          "flat_rate_max": 80
+        },
+        {
+          "code": "mount_and_balance_4_tires",
+          "name": "Mount & Balance (4 tires)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "tpms_sensor_replacement_each",
+          "name": "TPMS Sensor Replacement (each)",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 90,
+          "flat_rate_max": 240
+        },
+        {
+          "code": "tpms_relearn_program",
+          "name": "TPMS Relearn/Program",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 50,
+          "flat_rate_max": 160
+        },
+        {
+          "code": "road_force_balance_4",
+          "name": "Road Force Balance (4)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 160,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "tire_rotation_and_balance",
+          "name": "Tire Rotation & Balance",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.6,
+          "flat_rate_min": 80,
+          "flat_rate_max": 170
+        },
+        {
+          "code": "nitrogen_fill_4",
+          "name": "Nitrogen Fill (4)",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 20,
+          "flat_rate_max": 60
+        },
+        {
+          "code": "spare_tire_install",
+          "name": "Spare Tire Install",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 25,
+          "flat_rate_max": 70
+        },
+        {
+          "code": "tire_pressure_check",
+          "name": "Tire Pressure Check",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "flat_rate_min": 10,
+          "flat_rate_max": 40
+        },
+        {
+          "code": "wheel_swap_seasonal_set",
+          "name": "Wheel Swap (seasonal set)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 60,
+          "flat_rate_max": 140
+        }
+      ]
+    },
+    {
+      "key": "cooling",
+      "name": "Cooling System",
+      "services": [
+        {
+          "code": "cooling_system_diagnostic",
+          "name": "Cooling System Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "coolant_flush",
+          "name": "Coolant Flush",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 280
+        },
+        {
+          "code": "radiator_replacement",
+          "name": "Radiator Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 5.0,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1500
+        },
+        {
+          "code": "water_pump_replacement",
+          "name": "Water Pump Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "flat_rate_min": 600,
+          "flat_rate_max": 1700
+        },
+        {
+          "code": "thermostat_replacement",
+          "name": "Thermostat Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.2,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "upper_lower_radiator_hose",
+          "name": "Upper/Lower Radiator Hose",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "heater_hose_replacement",
+          "name": "Heater Hose Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "coolant_leak_repair_minor",
+          "name": "Coolant Leak Repair (minor)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "cooling_fan_assembly",
+          "name": "Cooling Fan Assembly",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 350,
+          "flat_rate_max": 950
+        },
+        {
+          "code": "fan_clutch_replacement",
+          "name": "Fan Clutch Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 280,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "expansion_tank_replacement",
+          "name": "Expansion Tank Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "pressure_test",
+          "name": "Pressure Test",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 180
+        },
+        {
+          "code": "head_gasket_test_block_test",
+          "name": "Head Gasket Test (block test)",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 90,
+          "flat_rate_max": 200
+        }
+      ]
+    },
+    {
+      "key": "transmission",
+      "name": "Transmission",
+      "services": [
+        {
+          "code": "transmission_diagnostic",
+          "name": "Transmission Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "transmission_fluid_and_filter_service",
+          "name": "Transmission Fluid & Filter Service",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 220,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "transmission_fluid_exchange",
+          "name": "Transmission Fluid Exchange",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 180,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "transmission_mount_replacement",
+          "name": "Transmission Mount Replacement",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 320,
+          "flat_rate_max": 780
+        },
+        {
+          "code": "clutch_replacement_manual",
+          "name": "Clutch Replacement (manual)",
+          "labor_hours_min": 6.0,
+          "labor_hours_max": 12.0,
+          "flat_rate_min": 1400,
+          "flat_rate_max": 3200
+        },
+        {
+          "code": "clutch_hydraulics_master_slave",
+          "name": "Clutch Hydraulics (master/slave)",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 5.0,
+          "flat_rate_min": 450,
+          "flat_rate_max": 1200
+        },
+        {
+          "code": "shifter_cable_bushings",
+          "name": "Shifter Cable/Bushings",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "cvt_service",
+          "name": "CVT Service",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 220,
+          "flat_rate_max": 480
+        },
+        {
+          "code": "transmission_pan_gasket",
+          "name": "Transmission Pan Gasket",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 280,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "valve_body_service",
+          "name": "Valve Body Service",
+          "labor_hours_min": 4.0,
+          "labor_hours_max": 9.0,
+          "flat_rate_min": 1200,
+          "flat_rate_max": 3000
+        },
+        {
+          "code": "torque_converter_replacement",
+          "name": "Torque Converter Replacement",
+          "labor_hours_min": 8.0,
+          "labor_hours_max": 16.0,
+          "flat_rate_min": 2200,
+          "flat_rate_max": 5200
+        },
+        {
+          "code": "transmission_replacement_used_reman",
+          "name": "Transmission Replacement (used/reman)",
+          "labor_hours_min": 10.0,
+          "labor_hours_max": 18.0,
+          "flat_rate_min": 2800,
+          "flat_rate_max": 6500
+        }
+      ]
+    },
+    {
+      "key": "drivetrain",
+      "name": "Drivetrain & Axles",
+      "services": [
+        {
+          "code": "drivetrain_diagnostic",
+          "name": "Drivetrain Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "cv_axle_replacement_each",
+          "name": "CV Axle Replacement (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 420,
+          "flat_rate_max": 980
+        },
+        {
+          "code": "driveshaft_u_joint_each",
+          "name": "Driveshaft U-Joint (each)",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 2.8,
+          "flat_rate_min": 300,
+          "flat_rate_max": 820
+        },
+        {
+          "code": "center_support_bearing",
+          "name": "Center Support Bearing",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 4.5,
+          "flat_rate_min": 520,
+          "flat_rate_max": 1200
+        },
+        {
+          "code": "differential_fluid_service",
+          "name": "Differential Fluid Service",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 160,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "transfer_case_fluid_service",
+          "name": "Transfer Case Fluid Service",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 160,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "wheel_bearing_replacement_each",
+          "name": "Wheel Bearing Replacement (each)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 350,
+          "flat_rate_max": 1050
+        },
+        {
+          "code": "hub_assembly_replacement_each",
+          "name": "Hub Assembly Replacement (each)",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 320,
+          "flat_rate_max": 820
+        },
+        {
+          "code": "axle_seal_replacement",
+          "name": "Axle Seal Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 350,
+          "flat_rate_max": 1050
+        },
+        {
+          "code": "differential_replacement_build",
+          "name": "Differential Replacement/Build",
+          "labor_hours_min": 8.0,
+          "labor_hours_max": 16.0,
+          "flat_rate_min": 2200,
+          "flat_rate_max": 5500
+        },
+        {
+          "code": "transfer_case_replacement",
+          "name": "Transfer Case Replacement",
+          "labor_hours_min": 6.0,
+          "labor_hours_max": 12.0,
+          "flat_rate_min": 1800,
+          "flat_rate_max": 4500
+        },
+        {
+          "code": "4wd_awd_system_diagnosis",
+          "name": "4WD/AWD System Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        }
+      ]
+    },
+    {
+      "key": "fuel",
+      "name": "Fuel System",
+      "services": [
+        {
+          "code": "fuel_system_diagnostic",
+          "name": "Fuel System Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 340
+        },
+        {
+          "code": "fuel_pump_replacement",
+          "name": "Fuel Pump Replacement",
+          "labor_hours_min": 2.5,
+          "labor_hours_max": 6.0,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1600
+        },
+        {
+          "code": "fuel_filter_replacement",
+          "name": "Fuel Filter Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 140,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "fuel_injector_replacement_each",
+          "name": "Fuel Injector Replacement (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 220,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "fuel_injector_cleaning_service",
+          "name": "Fuel Injector Cleaning Service",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 180,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "throttle_body_cleaning",
+          "name": "Throttle Body Cleaning",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 90,
+          "flat_rate_max": 220
+        },
+        {
+          "code": "throttle_body_replacement",
+          "name": "Throttle Body Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "evap_diagnosis",
+          "name": "EVAP Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "purge_valve_replacement",
+          "name": "Purge Valve Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "charcoal_canister_replacement",
+          "name": "Charcoal Canister Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.8,
+          "flat_rate_min": 280,
+          "flat_rate_max": 780
+        },
+        {
+          "code": "fuel_tank_strap_replacement",
+          "name": "Fuel Tank Strap Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 420,
+          "flat_rate_max": 1100
+        },
+        {
+          "code": "fuel_leak_repair",
+          "name": "Fuel Leak Repair",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 250,
+          "flat_rate_max": 950
+        }
+      ]
+    },
+    {
+      "key": "exhaust",
+      "name": "Exhaust",
+      "services": [
+        {
+          "code": "exhaust_diagnostic",
+          "name": "Exhaust Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "muffler_replacement",
+          "name": "Muffler Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 280,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "exhaust_pipe_repair_section",
+          "name": "Exhaust Pipe Repair (section)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 300,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "catalytic_converter_replacement_single",
+          "name": "Catalytic Converter Replacement (single)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1800
+        },
+        {
+          "code": "catalytic_converter_replacement_pair",
+          "name": "Catalytic Converter Replacement (pair)",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 7.0,
+          "flat_rate_min": 1300,
+          "flat_rate_max": 3200
+        },
+        {
+          "code": "oxygen_sensor_replacement_each",
+          "name": "Oxygen Sensor Replacement (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "exhaust_manifold_gasket",
+          "name": "Exhaust Manifold Gasket",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 8.0,
+          "flat_rate_min": 750,
+          "flat_rate_max": 2200
+        },
+        {
+          "code": "exhaust_manifold_replacement",
+          "name": "Exhaust Manifold Replacement",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 10.0,
+          "flat_rate_min": 950,
+          "flat_rate_max": 2800
+        },
+        {
+          "code": "resonator_replacement",
+          "name": "Resonator Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 280,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "flex_pipe_replacement",
+          "name": "Flex Pipe Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 420,
+          "flat_rate_max": 980
+        },
+        {
+          "code": "exhaust_hanger_repair",
+          "name": "Exhaust Hanger Repair",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 240
+        }
+      ]
+    },
+    {
+      "key": "inspection",
+      "name": "Inspections & Tests",
+      "services": [
+        {
+          "code": "pre_purchase_inspection",
+          "name": "Pre-purchase Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "safety_inspection",
+          "name": "Safety Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 80,
+          "flat_rate_max": 200
+        },
+        {
+          "code": "smog_pre_check_where_applicable",
+          "name": "Smog Pre-check (where applicable)",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 60,
+          "flat_rate_max": 160
+        },
+        {
+          "code": "battery_charging_system_test",
+          "name": "Battery/Charging System Test",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 30,
+          "flat_rate_max": 90
+        },
+        {
+          "code": "check_engine_light_scan",
+          "name": "Check Engine Light Scan",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 50,
+          "flat_rate_max": 140
+        },
+        {
+          "code": "compression_test",
+          "name": "Compression Test",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 150,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "leak_down_test",
+          "name": "Leak-down Test",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 220,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "cooling_system_pressure_test",
+          "name": "Cooling System Pressure Test",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 180
+        },
+        {
+          "code": "ac_performance_test",
+          "name": "AC Performance Test",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 200
+        },
+        {
+          "code": "brake_performance_test",
+          "name": "Brake Performance Test",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 200
+        },
+        {
+          "code": "road_test_and_noise_diagnosis",
+          "name": "Road Test & Noise Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "parasitic_draw_test",
+          "name": "Parasitic Draw Test",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "oil_leak_inspection",
+          "name": "Oil Leak Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        }
+      ]
+    },
+    {
+      "key": "fluids",
+      "name": "Fluids & Leaks",
+      "services": [
+        {
+          "code": "oil_leak_repair_minor",
+          "name": "Oil Leak Repair (minor)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 350,
+          "flat_rate_max": 1050
+        },
+        {
+          "code": "oil_leak_repair_major",
+          "name": "Oil Leak Repair (major)",
+          "labor_hours_min": 4.0,
+          "labor_hours_max": 10.0,
+          "flat_rate_min": 950,
+          "flat_rate_max": 2800
+        },
+        {
+          "code": "coolant_leak_repair_minor",
+          "name": "Coolant Leak Repair (minor)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "coolant_leak_repair_major",
+          "name": "Coolant Leak Repair (major)",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 8.0,
+          "flat_rate_min": 750,
+          "flat_rate_max": 2200
+        },
+        {
+          "code": "power_steering_leak_repair",
+          "name": "Power Steering Leak Repair",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 5.0,
+          "flat_rate_min": 420,
+          "flat_rate_max": 1400
+        },
+        {
+          "code": "transmission_leak_repair",
+          "name": "Transmission Leak Repair",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 6.0,
+          "flat_rate_min": 450,
+          "flat_rate_max": 1600
+        },
+        {
+          "code": "differential_leak_repair",
+          "name": "Differential Leak Repair",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 5.0,
+          "flat_rate_min": 420,
+          "flat_rate_max": 1400
+        },
+        {
+          "code": "valve_cover_gasket_replacement",
+          "name": "Valve Cover Gasket Replacement",
+          "labor_hours_min": 2.5,
+          "labor_hours_max": 6.0,
+          "flat_rate_min": 500,
+          "flat_rate_max": 1400
+        },
+        {
+          "code": "oil_pan_gasket_replacement",
+          "name": "Oil Pan Gasket Replacement",
+          "labor_hours_min": 4.0,
+          "labor_hours_max": 10.0,
+          "flat_rate_min": 950,
+          "flat_rate_max": 2800
+        },
+        {
+          "code": "rear_main_seal_where_applicable",
+          "name": "Rear Main Seal (where applicable)",
+          "labor_hours_min": 8.0,
+          "labor_hours_max": 16.0,
+          "flat_rate_min": 1800,
+          "flat_rate_max": 4500
+        },
+        {
+          "code": "front_crank_seal",
+          "name": "Front Crank Seal",
+          "labor_hours_min": 2.5,
+          "labor_hours_max": 6.0,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1700
+        },
+        {
+          "code": "cam_seal_each",
+          "name": "Cam Seal (each)",
+          "labor_hours_min": 2.5,
+          "labor_hours_max": 6.0,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1700
+        }
+      ]
+    },
+    {
+      "key": "starting_charging",
+      "name": "Starting & Charging",
+      "services": [
+        {
+          "code": "no_start_diagnosis",
+          "name": "No-start Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "battery_replacement",
+          "name": "Battery Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "alternator_replacement",
+          "name": "Alternator Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 400,
+          "flat_rate_max": 950
+        },
+        {
+          "code": "starter_replacement",
+          "name": "Starter Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 350,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "starter_relay_fuse_diagnosis",
+          "name": "Starter Relay/Fuse Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 80,
+          "flat_rate_max": 200
+        },
+        {
+          "code": "ignition_switch_replacement",
+          "name": "Ignition Switch Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "battery_cable_replacement",
+          "name": "Battery Cable Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "ground_strap_repair",
+          "name": "Ground Strap Repair",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "flat_rate_min": 80,
+          "flat_rate_max": 220
+        },
+        {
+          "code": "serpentine_belt_replacement",
+          "name": "Serpentine Belt Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 120,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "belt_tensioner_replacement",
+          "name": "Belt Tensioner Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "charging_system_test",
+          "name": "Charging System Test",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 30,
+          "flat_rate_max": 90
+        }
+      ]
+    },
+    {
+      "key": "lighting",
+      "name": "Lighting",
+      "services": [
+        {
+          "code": "headlight_bulb_replacement_each",
+          "name": "Headlight Bulb Replacement (each)",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 40,
+          "flat_rate_max": 140
+        },
+        {
+          "code": "tail_light_bulb_replacement_each",
+          "name": "Tail Light Bulb Replacement (each)",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "flat_rate_min": 40,
+          "flat_rate_max": 140
+        },
+        {
+          "code": "brake_light_diagnosis",
+          "name": "Brake Light Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 80,
+          "flat_rate_max": 200
+        },
+        {
+          "code": "headlight_assembly_replacement_each",
+          "name": "Headlight Assembly Replacement (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 220,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "tail_light_assembly_replacement_each",
+          "name": "Tail Light Assembly Replacement (each)",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "fog_light_replacement_each",
+          "name": "Fog Light Replacement (each)",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "turn_signal_switch_replacement",
+          "name": "Turn Signal Switch Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "light_wiring_repair",
+          "name": "Light Wiring Repair",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 180,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "headlight_aim_adjustment",
+          "name": "Headlight Aim/Adjustment",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "flat_rate_min": 50,
+          "flat_rate_max": 160
+        },
+        {
+          "code": "drl_module_diagnosis",
+          "name": "DRL Module Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        }
+      ]
+    },
+    {
+      "key": "hvac_controls",
+      "name": "HVAC Controls & Sensors",
+      "services": [
+        {
+          "code": "cabin_temperature_blend_door_actuator",
+          "name": "Cabin Temperature Blend Door Actuator",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "mode_door_actuator",
+          "name": "Mode Door Actuator",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "recirculation_door_actuator",
+          "name": "Recirculation Door Actuator",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 220,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "cabin_temperature_sensor",
+          "name": "Cabin Temperature Sensor",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "ambient_temperature_sensor",
+          "name": "Ambient Temperature Sensor",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "ac_pressure_switch_each",
+          "name": "AC Pressure Switch (each)",
+          "labor_hours_min": 0.7,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "heater_control_valve",
+          "name": "Heater Control Valve",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 220,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "hvac_control_head_replacement",
+          "name": "HVAC Control Head Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 350,
+          "flat_rate_max": 950
+        },
+        {
+          "code": "blower_motor_resistor",
+          "name": "Blower Motor Resistor",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 200,
+          "flat_rate_max": 550
+        },
+        {
+          "code": "blower_motor_replacement",
+          "name": "Blower Motor Replacement",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.5,
+          "flat_rate_min": 300,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "ac_leak_test_uv_dye",
+          "name": "AC Leak Test (UV dye)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 150,
+          "flat_rate_max": 420
+        }
+      ]
+    },
+    {
+      "key": "emissions",
+      "name": "Emissions",
+      "services": [
+        {
+          "code": "evap_diagnosis",
+          "name": "EVAP Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "purge_valve_replacement",
+          "name": "Purge Valve Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "charcoal_canister_replacement",
+          "name": "Charcoal Canister Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.8,
+          "flat_rate_min": 280,
+          "flat_rate_max": 780
+        },
+        {
+          "code": "egr_valve_service_replacement",
+          "name": "EGR Valve Service/Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 850
+        },
+        {
+          "code": "oxygen_sensor_replacement_each",
+          "name": "Oxygen Sensor Replacement (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 180,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "catalytic_converter_replacement_single",
+          "name": "Catalytic Converter Replacement (single)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 650,
+          "flat_rate_max": 1800
+        },
+        {
+          "code": "secondary_air_injection_diagnosis",
+          "name": "Secondary Air Injection Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "smoke_test_vacuum_evap",
+          "name": "Smoke Test (vacuum/EVAP)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 120,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "pcv_system_service",
+          "name": "PCV System Service",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "check_engine_light_repair_general",
+          "name": "Check Engine Light Repair (general)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 150,
+          "flat_rate_max": 900
+        }
+      ]
+    },
+    {
+      "key": "safety",
+      "name": "Safety Systems",
+      "services": [
+        {
+          "code": "airbag_srs_diagnosis",
+          "name": "Airbag/SRS Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "abs_diagnosis",
+          "name": "ABS Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 140,
+          "flat_rate_max": 380
+        },
+        {
+          "code": "abs_wheel_speed_sensor_each",
+          "name": "ABS Wheel Speed Sensor (each)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.6,
+          "flat_rate_min": 170,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "steering_angle_sensor_calibration",
+          "name": "Steering Angle Sensor Calibration",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "tpms_diagnosis",
+          "name": "TPMS Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 90,
+          "flat_rate_max": 260
+        },
+        {
+          "code": "parking_brake_adjustment",
+          "name": "Parking Brake Adjustment",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 90,
+          "flat_rate_max": 220
+        },
+        {
+          "code": "brake_light_switch_replacement",
+          "name": "Brake Light Switch Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "flat_rate_min": 120,
+          "flat_rate_max": 320
+        },
+        {
+          "code": "seat_belt_retractor_replacement",
+          "name": "Seat Belt Retractor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "adas_calibration_basic",
+          "name": "ADAS Calibration (basic)",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 900
+        },
+        {
+          "code": "lane_camera_sensor_diagnosis",
+          "name": "Lane/Camera Sensor Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 150,
+          "flat_rate_max": 650
+        }
+      ]
+    },
+    {
+      "key": "body",
+      "name": "Body & Exterior",
+      "services": [
+        {
+          "code": "door_handle_replacement_outer",
+          "name": "Door Handle Replacement (outer)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 160,
+          "flat_rate_max": 450
+        },
+        {
+          "code": "door_latch_replacement",
+          "name": "Door Latch Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.8,
+          "flat_rate_min": 220,
+          "flat_rate_max": 650
+        },
+        {
+          "code": "window_regulator_each",
+          "name": "Window Regulator (each)",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 260,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "side_mirror_replacement",
+          "name": "Side Mirror Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 160,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "hood_latch_replacement",
+          "name": "Hood Latch Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "trunk_latch_replacement",
+          "name": "Trunk Latch Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "windshield_wiper_motor",
+          "name": "Windshield Wiper Motor",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 250,
+          "flat_rate_max": 750
+        },
+        {
+          "code": "washer_pump_replacement",
+          "name": "Washer Pump Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "flat_rate_min": 160,
+          "flat_rate_max": 420
+        },
+        {
+          "code": "door_weatherstrip_replacement",
+          "name": "Door Weatherstrip Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "flat_rate_min": 180,
+          "flat_rate_max": 520
+        },
+        {
+          "code": "body_panel_adjustment",
+          "name": "Body Panel Adjustment",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "flat_rate_min": 180,
+          "flat_rate_max": 650
+        }
+      ]
+    }
+  ]
+}
