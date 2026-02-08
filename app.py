@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException
 import json
 import httpx
 from datetime import datetime
@@ -21,14 +21,16 @@ if STATIC_DIR.exists():
 
 @app.get("/")
 def home():
-    # Prefer /static/index.html if you keep it there, otherwise root index.html
     static_index = STATIC_DIR / "index.html"
     root_index = BASE_DIR / "index.html"
+
     if static_index.exists():
-        return FileResponse(static_index)
+        return FileResponse(str(static_index))
     if root_index.exists():
-        return FileResponse(root_index)
+        return FileResponse(str(root_index))
+
     raise HTTPException(status_code=404, detail="index.html not found")
+
 
 
 @app.get("/favicon.ico")
