@@ -106,7 +106,9 @@ BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 SERVICES_CATALOG_PATH = BASE_DIR / "services_catalog.json"
-DB_PATH = "/data/app.db"
+
+DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
+DB_PATH = str((DATA_DIR / "app.db").resolve())
 
 # --- Templates ---
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
