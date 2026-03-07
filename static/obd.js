@@ -313,7 +313,7 @@ async function runSuggest() {
 // debounce as user types
 input.addEventListener("input", () => {
   clearTimeout(tmr);
-  tmr = setTimeout(runSuggest, 180);
+  tmr = setTimeout(runSuggest, 280);
 });
 
 // hide suggestions when clicking outside
