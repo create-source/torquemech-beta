@@ -55,6 +55,12 @@ import os
 
 from fastapi.templating import Jinja2Templates
 
+
+import sqlite3
+import json
+from pathlib import Path
+from fastapi.responses import HTMLResponse
+
 load_dotenv()
 
 SMTP_SERVER = os.getenv("SMTP_SERVER")
@@ -100,7 +106,7 @@ BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 SERVICES_CATALOG_PATH = BASE_DIR / "services_catalog.json"
-DB_PATH = str((BASE_DIR / "app.db").resolve())
+DB_PATH = "/data/app.db"
 
 # --- Templates ---
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -136,6 +142,89 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 ADMIN_KEY = os.getenv("TORQUEMECH_ADMIN_KEY", "change-me")
+
+from fastapi import Query
+
+@app.get("/admin/feedback", response_class=HTMLResponse)
+def admin_feedback(key: str = Query(None)):
+    if key != ADMIN_KEY:
+        return HTMLResponse("Unauthorized", status_code=401)
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+
+    rows = conn.execute("""
+        SELECT id, created_at, is_read, payload_json
+        FROM feedback
+        ORDER BY id DESC
+    """).fetchall()
+
+    conn.close()
+
+    html = """
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>TorqueMech Feedback Admin</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: #0b1220;
+          color: #e5e7eb;
+          margin: 0;
+          padding: 24px;
+        }
+        h1 {
+          margin-bottom: 20px;
+        }
+        .card {
+          background: #111827;
+          border: 1px solid #243041;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 16px;
+        }
+        .meta {
+          font-size: 14px;
+          color: #9ca3af;
+          margin-bottom: 10px;
+        }
+        pre {
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          background: #0f172a;
+          padding: 12px;
+          border-radius: 8px;
+          overflow-x: auto;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>TorqueMech Feedback Admin</h1>
+    """
+
+    if not rows:
+        html += "<p>No feedback found.</p>"
+    else:
+        for row in rows:
+            html += f"""
+            <div class="card">
+              <div class="meta">
+                <strong>ID:</strong> {row['id']} |
+                <strong>Created:</strong> {row['created_at']} |
+                <strong>Read:</strong> {row['is_read']}
+              </div>
+              <pre>{row['payload_json']}</pre>
+            </div>
+            """
+
+    html += """
+    </body>
+    </html>
+    """
+    return html
 
 # ===============================
 # OBD (SQLite-backed DTC DB)
