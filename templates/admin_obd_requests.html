@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+{% if new_count and new_count > 0 %}
+<div style="
+    background:#1a1f2e;
+    border:1px solid #2f3a55;
+    padding:12px 16px;
+    border-radius:8px;
+    margin-bottom:16px;
+    color:#ffcc00;
+    font-weight:600;
+">
+  ⚠️ {{ new_count }} new requests since last check
+</div>
+{% endif %}
+
+<section class="tm-hero" style="padding-bottom: 10px;">
+  <div class="tm-hero__copy">
+    <div class="tm-badge">Admin</div>
+    <h1 class="tm-h1">OBD Requests</h1>
+    <p class="tm-sub">Most requested missing codes (top 200).</p>
+  </div>
+</section>
+
+<section class="tm-card" style="padding: 18px;">
+  {% if items|length == 0 %}
+    <p style="opacity:.85;">No requests yet.</p>
+  {% else %}
+    <div style="overflow:auto;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="text-align:left; border-bottom:1px solid rgba(255,255,255,.12);">
+            <th style="padding:10px 8px;">Code</th>
+            <th style="padding:10px 8px;">Requests</th>
+            <th style="padding:10px 8px;">Last requested</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in items %}
+          <tr style="border-bottom:1px solid rgba(255,255,255,.08);">
+            <td style="padding:10px 8px; font-weight:800;">{{ r.code }}</td>
+            <td style="padding:10px 8px;">{{ r.requests }}</td>
+            <td style="padding:10px 8px; opacity:.9;">{{ r.last_requested }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>
+
+{% endblock %}

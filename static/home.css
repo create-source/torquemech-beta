@@ -1,0 +1,408 @@
+/* =========================================================
+   TorqueMech — Home (CLEAN)
+   Goal: Startup polish, corporate electric
+   Rule: Home.css = home-only styles (no global duplication)
+   ========================================================= */
+
+/* Legacy feedback system (confirmed unused) — keep hidden */
+.fb-float{
+  display: none !important;
+}
+
+/* Layout: give home breathing room */
+.tm-container{
+  padding-bottom: 28px;
+}
+
+/* Optional: subtle home background glow (safe, token-driven) */
+.tm-homeBg{
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 380px at 20% 10%, rgba(59,130,246,.16), transparent 55%),
+    radial-gradient(720px 320px at 85% 25%, rgba(34,211,238,.12), transparent 55%),
+    radial-gradient(900px 520px at 55% 85%, rgba(59,130,246,.10), transparent 60%);
+  filter: saturate(1.05);
+}
+
+/* Hero */
+.tm-hero{
+  padding: 22px 0 10px;
+}
+
+.tm-hero__title{
+  margin: 0 0 10px;
+  font-size: clamp(30px, 5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.6px;
+  font-weight: 850;
+}
+
+.tm-hero__sub{
+  margin: 0 0 16px;
+  max-width: 66ch;
+  color: var(--subtext);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* CTA row */
+.tm-ctaRow{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+/* If you have primary/secondary buttons on Home */
+.tm-btn{
+  margin-top: 0; /* avoid the global button margin-top spacing */
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-weight: 800;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.tm-btn--primary{
+  border: none;
+  color: #fff;
+  background: linear-gradient(180deg, #60A5FA 0%, var(--primary) 100%);
+  box-shadow: 0 18px 40px rgba(59,130,246,.22);
+}
+
+.tm-btn--ghost{
+  background: rgba(255,255,255,.05);
+}
+
+.tm-btn:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Refined hover system (calm → glow) */
+.tm-btn,
+.tm-card,
+.tm-link{
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+  will-change: transform;
+}
+
+.tm-btn:hover,
+.tm-card:hover,
+.tm-link:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0,0,0,.28);
+}
+
+.tm-btn:active,
+.tm-card:active,
+.tm-link:active{
+  transform: translateY(0px) scale(.99);
+  box-shadow: 0 10px 24px rgba(0,0,0,.22);
+}
+
+/* Cards / sections */
+.tm-section{
+  margin-top: 18px;
+}
+
+.tm-grid{
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+}
+
+/* Default card sizes (adjust if your home markup differs) */
+.tm-card{
+  grid-column: span 6;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.tm-card__title{
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: -0.2px;
+}
+
+.tm-card__text{
+  margin: 0;
+  color: var(--subtext);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Small “pill” labels */
+.tm-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.16);
+  font-size: 12px;
+  opacity: .9;
+}
+
+/* Links */
+.tm-link{
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Footer (single source of truth) */
+.tm-footer{
+  margin-top: 22px;
+  padding: 18px 0 26px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.72);
+}
+
+.tm-footer__inner{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tm-footer__links{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.tm-footer__links a{
+  color: rgba(255,255,255,.75);
+  text-decoration: none;
+}
+
+.tm-footer__links a:hover{
+  color: rgba(255,255,255,.92);
+}
+
+/* Optional: OBD suggestion dropdown (keep only if Home uses it) */
+.obd-suggestions{
+  position: absolute;
+  width: 100%;
+  max-height: 280px;
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(15,23,42,.96);
+  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  z-index: 50;
+}
+
+.obd-suggestions button{
+  margin-top: 0;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,.88);
+  cursor: pointer;
+}
+
+.obd-suggestions button:hover{
+  background: rgba(255,255,255,.06);
+}
+
+.obd-input-wrapper{
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  z-index: 2000;
+}
+
+.obd-suggestBox{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+
+  background: rgba(15,23,42,0.98);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+
+  z-index: 9999;
+  max-height: 260px;
+  overflow-y: auto;
+
+  backdrop-filter: blur(12px);
+}
+
+.obd-input-wrapper{
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  z-index: 2000;
+}
+
+.obd-suggestBox{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+
+  background: rgba(15,23,42,0.98);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+
+  z-index: 9999;
+  max-height: 260px;
+  overflow-y: auto;
+
+  backdrop-filter: blur(12px);
+}
+
+/* Responsive */
+@media (max-width: 860px){
+  .tm-card{ grid-column: span 12; }
+}
+
+/* =========================================================
+   Home HTML compatibility patch
+   (matches current home.html classes)
+   ========================================================= */
+
+/* Remove default purple/underline on home link cards */
+.tm-linkCard{
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Badge / sub / disclaimer used by home.html */
+.tm-badge{
+  display:inline-flex;
+  align-items:center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.88);
+  margin-bottom: 10px;
+}
+
+.tm-sub{
+  margin: 0 0 14px;
+  color: var(--subtext);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.tm-disclaimer{
+  margin: 12px 0 0;
+  color: rgba(255,255,255,.70);
+  font-size: 13px;
+}
+
+/* Home layout uses tm-grid2 (2 cards). Give it a clean 2-col grid */
+.tm-grid2{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* Icon + card text styling for those two cards */
+.tm-card__icon{
+  font-size: 22px;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display:grid;
+  place-items:center;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+
+.tm-linkCard.tm-card{
+  display:flex;
+  gap: 12px;
+  align-items:flex-start;
+}
+
+.tm-linkCard h3{
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: -0.2px;
+}
+
+.tm-linkCard p{
+  margin: 0;
+  color: var(--subtext);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* Mobile */
+@media (max-width: 860px){
+  .tm-grid2{ grid-template-columns: 1fr; }
+}
+
+/* ===== Footer alignment lock (mobile-safe) ===== */
+.tm-footer{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tm-footer__right{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+/* Buttons sometimes carry default baseline quirks — normalize */
+.tm-footerBtn{
+  margin: 0;
+  line-height: 1;
+  display:inline-flex;
+  align-items:center;
+}
+
+/* Mobile: stack cleanly but keep everything left-aligned */
+@media (max-width: 520px){
+  .tm-footer{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tm-footer__right{
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

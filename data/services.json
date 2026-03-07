@@ -1,0 +1,378 @@
+{
+  "Maintenance": {
+    "Oil Service": [
+      "Oil Change (Conventional)",
+      "Oil Change (Synthetic Blend)",
+      "Oil Change (Full Synthetic)",
+      "Oil Filter Replacement",
+      "Engine Flush Service"
+    ],
+    "Filters": [
+      "Engine Air Filter Replacement",
+      "Cabin Air Filter Replacement",
+      "Fuel Filter Replacement",
+      "Transmission Filter Replacement"
+    ],
+    "Fluids": [
+      "Coolant Drain & Refill",
+      "Coolant Flush",
+      "Brake Fluid Flush",
+      "Power Steering Fluid Service",
+      "Transmission Fluid Service",
+      "Differential Fluid Service",
+      "Transfer Case Fluid Service",
+      "Clutch Fluid Service"
+    ],
+    "Belts": [
+      "Serpentine Belt Replacement",
+      "Accessory Belt Replacement",
+      "Belt Tensioner Replacement",
+      "Idler Pulley Replacement"
+    ],
+    "Tires": [
+      "Tire Rotation",
+      "Tire Balance",
+      "Mount & Balance Tire",
+      "Tire Repair (Patch)",
+      "TPMS Sensor Replacement",
+      "TPMS Relearn"
+    ],
+    "Inspection": [
+      "Multi-Point Inspection",
+      "Pre-Purchase Inspection",
+      "Seasonal Inspection",
+      "Road Trip Inspection"
+    ]
+  },
+
+  "Engine": {
+    "Ignition": [
+      "Spark Plug Replacement",
+      "Ignition Coil Replacement",
+      "Spark Plug Wire Replacement",
+      "Distributor Cap Replacement",
+      "Distributor Rotor Replacement"
+    ],
+    "Gaskets": [
+      "Valve Cover Gasket Replacement",
+      "Oil Pan Gasket Replacement",
+      "Timing Cover Gasket Replacement",
+      "Intake Manifold Gasket Replacement",
+      "Exhaust Manifold Gasket Replacement",
+      "Head Gasket Replacement",
+      "Rear Main Seal Replacement"
+    ],
+    "Air Intake": [
+      "Throttle Body Cleaning",
+      "Throttle Body Replacement",
+      "Intake Manifold Replacement",
+      "PCV Valve Replacement",
+      "PCV System Service"
+    ],
+    "Sensors": [
+      "Mass Air Flow Sensor Replacement",
+      "MAP Sensor Replacement",
+      "Crankshaft Position Sensor Replacement",
+      "Camshaft Position Sensor Replacement",
+      "Knock Sensor Replacement",
+      "Coolant Temperature Sensor Replacement",
+      "Oil Pressure Sensor Replacement"
+    ],
+    "Timing": [
+      "Timing Belt Replacement",
+      "Timing Chain Replacement",
+      "Timing Chain Guide Replacement",
+      "Timing Tensioner Replacement"
+    ],
+    "Major Service": [
+      "Engine Mount Replacement",
+      "Engine Replacement",
+      "Engine Rebuild",
+      "Compression Test",
+      "Leak Down Test"
+    ]
+  },
+
+  "Cooling System": {
+    "Components": [
+      "Radiator Replacement",
+      "Radiator Hose Replacement",
+      "Heater Hose Replacement",
+      "Coolant Reservoir Replacement",
+      "Cooling Fan Replacement",
+      "Fan Clutch Replacement"
+    ],
+    "Water Pump": [
+      "Water Pump Replacement",
+      "Thermostat Replacement",
+      "Thermostat Housing Replacement"
+    ],
+    "Diagnostics": [
+      "Cooling System Pressure Test",
+      "Overheating Diagnosis",
+      "Cooling Fan Diagnosis"
+    ]
+  },
+
+  "Fuel System": {
+    "Fuel Delivery": [
+      "Fuel Pump Replacement",
+      "Fuel Sending Unit Replacement",
+      "Fuel Line Repair",
+      "Fuel Tank Replacement"
+    ],
+    "Injection": [
+      "Fuel Injector Replacement",
+      "Fuel Injector Cleaning",
+      "Fuel Rail Replacement"
+    ],
+    "Service": [
+      "Fuel System Cleaning",
+      "Throttle Body Service"
+    ],
+    "Diagnostics": [
+      "Fuel Pressure Test",
+      "Fuel System Diagnosis"
+    ]
+  },
+
+  "Electrical": {
+    "Starting System": [
+      "Starter Replacement",
+      "Starter Solenoid Replacement",
+      "Starter Relay Replacement"
+    ],
+    "Charging System": [
+      "Alternator Replacement",
+      "Voltage Regulator Replacement",
+      "Battery Replacement",
+      "Battery Cable Replacement"
+    ],
+    "Lighting": [
+      "Headlight Bulb Replacement",
+      "Tail Light Bulb Replacement",
+      "Brake Light Replacement",
+      "Turn Signal Replacement",
+      "Fog Light Replacement",
+      "Headlight Assembly Replacement",
+      "Tail Light Assembly Replacement"
+    ],
+    "Modules": [
+      "ECM Diagnosis",
+      "BCM Diagnosis",
+      "ABS Module Diagnosis",
+      "Airbag System Diagnosis"
+    ],
+    "Wiring": [
+      "Wiring Diagnosis",
+      "Wiring Repair",
+      "Connector Repair",
+      "Fuse Replacement",
+      "Relay Replacement",
+      "Parasitic Draw Test"
+    ]
+  },
+
+  "Brakes": {
+    "Pads": [
+      "Front Brake Pads Replacement",
+      "Rear Brake Pads Replacement"
+    ],
+    "Rotors": [
+      "Front Brake Rotors Replacement",
+      "Rear Brake Rotors Replacement"
+    ],
+    "Complete Service": [
+      "Front Brake Pads & Rotors Replacement",
+      "Rear Brake Pads & Rotors Replacement"
+    ],
+    "Hydraulics": [
+      "Brake Caliper Replacement",
+      "Brake Hose Replacement",
+      "Brake Line Repair",
+      "Brake Master Cylinder Replacement",
+      "Brake Booster Replacement"
+    ],
+    "ABS": [
+      "ABS Sensor Replacement",
+      "ABS Diagnosis"
+    ],
+    "Parking Brake": [
+      "Parking Brake Adjustment",
+      "Parking Brake Cable Replacement"
+    ],
+    "Diagnostics": [
+      "Brake Noise Diagnosis",
+      "Brake Vibration Diagnosis"
+    ]
+  },
+
+  "Suspension & Steering": {
+    "Suspension": [
+      "Strut Replacement",
+      "Shock Replacement",
+      "Strut Mount Replacement",
+      "Control Arm Replacement",
+      "Ball Joint Replacement",
+      "Sway Bar Link Replacement",
+      "Sway Bar Bushing Replacement",
+      "Coil Spring Replacement"
+    ],
+    "Steering": [
+      "Inner Tie Rod Replacement",
+      "Outer Tie Rod Replacement",
+      "Steering Rack Replacement",
+      "Power Steering Pump Replacement",
+      "Power Steering Hose Replacement"
+    ],
+    "Bearings": [
+      "Front Wheel Bearing Replacement",
+      "Rear Wheel Bearing Replacement"
+    ],
+    "Alignment": [
+      "Wheel Alignment (2-Wheel)",
+      "Wheel Alignment (4-Wheel)"
+    ],
+    "Diagnostics": [
+      "Suspension Noise Diagnosis",
+      "Steering Pull Diagnosis"
+    ]
+  },
+
+  "Drivetrain": {
+    "Axles": [
+      "CV Axle Replacement",
+      "CV Boot Replacement",
+      "Axle Seal Replacement"
+    ],
+    "Driveshaft": [
+      "Driveshaft Replacement",
+      "U-Joint Replacement",
+      "Carrier Bearing Replacement"
+    ],
+    "Differential": [
+      "Differential Fluid Service",
+      "Differential Seal Replacement",
+      "Differential Replacement"
+    ],
+    "Transfer Case": [
+      "Transfer Case Fluid Service",
+      "Transfer Case Replacement",
+      "4WD Actuator Replacement"
+    ]
+  },
+
+  "Transmission": {
+    "Service": [
+      "Transmission Fluid Service",
+      "Transmission Flush",
+      "Transmission Filter Replacement",
+      "Transmission Pan Gasket Replacement"
+    ],
+    "Manual": [
+      "Clutch Replacement",
+      "Clutch Master Cylinder Replacement",
+      "Clutch Slave Cylinder Replacement",
+      "Flywheel Replacement"
+    ],
+    "Major Repair": [
+      "Transmission Replacement",
+      "Transmission Rebuild",
+      "Torque Converter Replacement"
+    ],
+    "Diagnostics": [
+      "Transmission Leak Diagnosis",
+      "Shift Concern Diagnosis"
+    ]
+  },
+
+  "AC & Heating": {
+    "AC Service": [
+      "AC Performance Check",
+      "AC Recharge",
+      "AC Leak Test",
+      "Evacuate & Recharge"
+    ],
+    "AC Components": [
+      "AC Compressor Replacement",
+      "AC Condenser Replacement",
+      "AC Evaporator Replacement",
+      "Receiver Dryer Replacement",
+      "Expansion Valve Replacement"
+    ],
+    "Cabin": [
+      "Blower Motor Replacement",
+      "Blower Motor Resistor Replacement",
+      "Heater Core Replacement",
+      "Blend Door Actuator Replacement"
+    ]
+  },
+
+  "Exhaust & Emissions": {
+    "Exhaust": [
+      "Muffler Replacement",
+      "Resonator Replacement",
+      "Exhaust Pipe Replacement",
+      "Exhaust Leak Repair",
+      "Exhaust Manifold Replacement"
+    ],
+    "Emissions": [
+      "Oxygen Sensor Replacement",
+      "Catalytic Converter Replacement",
+      "EGR Valve Replacement",
+      "EVAP Purge Valve Replacement",
+      "EVAP Vent Valve Replacement",
+      "Charcoal Canister Replacement"
+    ],
+    "Diagnostics": [
+      "Check Engine Light Diagnosis",
+      "EVAP Smoke Test",
+      "Emissions System Diagnosis"
+    ]
+  },
+
+  "Body & Exterior": {
+    "Glass": [
+      "Windshield Replacement",
+      "Door Glass Replacement",
+      "Window Regulator Replacement",
+      "Mirror Replacement"
+    ],
+    "Exterior Hardware": [
+      "Exterior Door Handle Replacement",
+      "Interior Door Handle Replacement",
+      "Hood Latch Replacement",
+      "Trunk Latch Replacement"
+    ],
+    "Body Panels": [
+      "Front Bumper Replacement",
+      "Rear Bumper Replacement",
+      "Fender Replacement",
+      "Door Replacement",
+      "Hood Replacement",
+      "Tailgate Replacement"
+    ],
+    "Finish": [
+      "Paint Correction",
+      "Touch-Up Paint",
+      "Headlight Restoration"
+    ]
+  },
+
+  "Diagnostics": {
+    "Scanning": [
+      "OBD-II Scan",
+      "Full System Scan",
+      "Electrical Diagnosis"
+    ],
+    "Driveability": [
+      "No Start Diagnosis",
+      "Rough Running Diagnosis",
+      "Misfire Diagnosis"
+    ],
+    "Testing": [
+      "Road Test",
+      "Post Repair Verification"
+    ]
+  }
+}

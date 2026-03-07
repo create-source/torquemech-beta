@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TorqueMech - Disclaimer</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="legal-page">
+    <div class="legal-card">
+      <a href="/" class="tm-back-btn">‹ Back to Home</a>
+      <h1>Informational Use Disclaimer</h1>
+      <p><strong>Last Updated:</strong> 2026-03-02</p>
+
+      <p>TorqueMech provides automotive repair estimates and diagnostic information for general informational purposes only.</p>
+
+      <p>The Service:</p>
+      <ul>
+        <li>Does not inspect vehicles</li>
+        <li>Does not verify mechanical condition</li>
+        <li>Does not replace certified diagnostic tools</li>
+        <li>Does not provide mechanical warranties</li>
+      </ul>
+
+      <p>Improper vehicle repairs can result in serious injury, property damage, or death. Always consult a qualified mechanic before performing repairs.</p>
+
+      <p>TorqueMech assumes no responsibility for actions taken based on information provided through the Service.</p>
+
+      <p>Use of this Service constitutes acceptance of this disclaimer.</p>
+    </div>
+
+  </main>
+
+  <!-- Feedback Modal -->
+  <div id="feedbackModal" class="tm-modal" hidden>
+    <div class="tm-modal__overlay" data-close="1"></div>
+
+    <div class="tm-modal__panel" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+      <div class="tm-modal__head">
+        <h2 id="fbTitle">Send Feedback</h2>
+        <button type="button" class="tm-iconBtn" id="feedbackCloseBtn" aria-label="Close">✕</button>
+      </div>
+
+      <p class="tm-muted" style="margin:0 0 10px;">
+        Tell us what didn’t work, what was unclear, or what you expected to see.
+      </p>
+
+      <form id="feedbackForm">
+        <div class="tm-grid2">
+          <div>
+            <label class="tm-label">Name (optional)</label>
+            <input class="input" type="text" id="fbName" maxlength="80" autocomplete="name">
+          </div>
+          <div>
+            <label class="tm-label">Email (optional)</label>
+            <input class="input" type="email" id="fbEmail" maxlength="120" autocomplete="email">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-label">Message *</label>
+          <textarea class="input" id="fbMessage" rows="5" required maxlength="2000"
+            placeholder="Example: I searched P0300 and expected…"></textarea>
+        </div>
+
+        <div class="tm-row" style="margin-top:14px; justify-content:flex-end; gap:10px;">
+          <span id="fbStatus" class="tm-muted" style="margin-right:auto;"></span>
+          <button type="button" class="btn ghost" data-close="1">Cancel</button>
+          <button type="submit" class="btn" id="fbSubmitBtn">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/feedback.js?v=1"></script>
+</body>
+</html>

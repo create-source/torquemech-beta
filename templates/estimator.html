@@ -1,0 +1,252 @@
+{% extends "layout.html" %}
+{% set title = "TorqueMech — Estimator" %}
+
+{% block page_css %}{% endblock %}
+
+{% block content %}
+
+    <header style="display:flex;align-items:center;justify-content:space-between;">
+      <h1 style="margin:0;">Repair Estimator</h1>
+
+      <button id="installBtn" type="button" class="ghost" style="display:none;">Install App</button>
+    </header>
+
+    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
+      <div style="font-weight:800; margin-bottom:8px;">How it works</div>
+      <div class="tm-muted" style="line-height:1.6;">
+        1. Select your vehicle<br>
+        2. Choose a service<br>
+        3. Click Get Estimate<br>
+        4. Add more services or generate a PDF
+      </div>
+    </div>
+
+    <!-- Vehicle -->
+    <section class="card" aria-label="Vehicle">
+      <div class="vehicle-header">
+        <h2>Vehicle</h2>
+        <button id="clearBtn" type="button" class="ghost">Clear fields</button>
+      </div>
+
+      <div class="vin-section">
+        <button type="button" id="vinToggle" class="vin-toggle">
+          🔎 Have a VIN? Auto-fill vehicle (Optional)
+          <span id="vinArrow" class="vin-arrow">▸</span>
+        </button>
+
+        <div id="vinPanel" class="vin-panel hidden">
+          <label for="vin">VIN</label>
+          <input id="vin" type="text" maxlength="17" placeholder="Enter 17-digit VIN" />
+          <button id="vinLookupBtn" type="button" class="ghost" style="margin-top:6px;">
+            Decode VIN
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+      <div class="grid3">
+        <div>
+          <label for="year">Year</label>
+          <select id="year"></select>
+        </div>
+
+        <div>
+          <label for="make">Make (popular)</label>
+          <select id="make"></select>
+        </div>
+
+        <div>
+          <label for="model">Model</label>
+          <select id="model"></select>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Service -->
+    <section class="card" aria-label="Service">
+
+    <div class="vehicle-header">
+      <h2>Service</h2>
+      <div class="tm-addServiceRow">
+  <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
+    To add another service, click “+ Add Service”.
+  </span>
+  <button id="addLineBtn" class="add-more-btn" type="button">
+    + Add Service
+  </button>
+</div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <label for="category">Category</label>
+        <select id="category"></select>
+      </div>
+
+      <div>
+        <label for="service">Service</label>
+        <select id="service"></select>
+      </div>
+    </div>
+   
+    <div id="lineItemsWrap" class="line-items hidden">
+      <div class="line-items-head">
+        <div class="line-items-title">Services to estimate</div>
+        <div class="line-items-hint">Add services, then click Get Estimate on a card (or Generate All below).</div>
+      </div>
+
+      <div id="lineItemsList" class="line-items-list"></div>
+    </div>
+
+      <div class="grid3">
+        <div>
+          <label for="laborHours">
+            <span id="laborLabelText">Labor Hours</span>
+          </label>
+
+          <div class="labor-row">
+            <input id="laborHours" type="number" step="0.1" value="0" />
+            <span id="laborHoursRange" class="labor-range"></span>
+          </div>
+        </div>
+
+        <div>
+          <label for="partsPrice">Parts Price (optional)</label>
+          <input id="partsPrice" type="number" step="0.01" value="0" />
+        </div>
+
+        <div>
+          <label for="laborRate">Labor Rate ($/hr)</label>
+          <input id="laborRate" type="number" step="1" value="90" />
+        </div>
+      </div>
+
+      <p class="recalc-note">
+        If you adjust labor hours, parts price, or labor rate,
+        click the corresponding <strong>“Recalculate”</strong> button on that service card.
+      </p>
+
+      <div class="inline-actions" style="margin-top:10px;">
+  <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select a category/service, then click “Get Estimate”.</div>
+        <button id="quickEstimateBtn" type="button" class="btn primary">
+          Get Estimate
+        </button>
+      </div>
+
+      <div id="statusBox" data-kind="info" style="margin-top:10px;"></div>
+
+      <!-- Estimate Preview -->
+      <div id="estimatePreview" class="preview hidden" aria-live="polite">
+        <div class="preview-label">Estimate preview</div>
+        <div class="preview-value" id="previewTotalText">—</div>
+        <div class="preview-sub" id="previewSubText"></div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" rows="3" placeholder="Optional notes..."></textarea>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- Saved Estimates (Local) --> 
+      <div class="card" id="draftsCard">
+      <h2>Saved Estimates</h2>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <button id="saveDraftBtn" type="button" class="btn">Save Draft</button>
+
+        <select id="draftsSelect" class="input" style="min-width:260px;">
+          <option value="">— Select a saved draft —</option>
+        </select>
+
+        <button id="loadDraftBtn" type="button" class="btn ghost">Load</button>
+        <button id="deleteDraftBtn" type="button" class="btn danger">Delete</button>
+      </div>
+
+      <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;"></div>
+    </div>
+
+      <div class="actions">
+        <button id="generateAllBtn" type="button">Generate All Service Estimates</button>
+      </div>
+
+    </section>
+
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop" id="confirmBackdrop"></div>
+
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Confirm Estimate</h2>
+      </div>
+
+      <div class="confirm-grid">
+        <div>
+          <label>
+            <input type="checkbox" id="customerAgreesChk" checked />
+            Customer agrees
+          </label>
+        </div>
+
+        <div>
+          <div>Services</div>
+          <div id="confirmServicesList">—</div>
+        </div>
+  </div>
+
+      <!-- Signature choice -->
+      <div class="sig-choice" style="margin-top:10px; display:flex; gap:16px; align-items:center;">
+        <label style="display:flex; gap:8px; align-items:center;">
+          <input type="radio" name="wantSig" value="yes" checked />
+          Signature required
+        </label>
+
+        <label style="display:flex; gap:8px; align-items:center;">
+          <input type="radio" name="wantSig" value="no" />
+          No signature
+        </label>
+      </div>
+
+      <!-- Customer info (optional) -->
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label for="customerName">Customer Name (optional)</label>
+          <input id="customerName" type="text" placeholder="Customer name" />
+        </div>
+        <div>
+          <label for="customerPhone">Customer Phone (optional)</label>
+          <input id="customerPhone" type="tel" placeholder="(###) ###-####" />
+        </div>
+      </div>
+
+      <!-- Signature section -->
+      <div id="sigSection" class="hidden" style="margin-top:12px;">
+        <label style="display:block; margin-bottom:8px;">Customer Signature</label>
+
+        <div class="sig-wrap" style="border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow:hidden;">
+          <canvas id="sigCanvas" style="width:100%; height:140px; display:block; touch-action:none;"></canvas>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+          <button id="sigClearBtn" type="button" class="ghost">Clear Signature</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="confirmAddBtn" type="button" class="btn primary">Generate PDF</button>
+        <button id="confirmCloseBtn" type="button" class="btn secondary">Close</button>
+      </div>
+
+      <div id="confirmMsg"></div>
+    </div>
+  </div>
+
+  <!-- Scripts (ORDER MATTERS) -->
+  
+  <script src="/static/app.js?v=LOCK1"></script>
+
+  {% endblock %}

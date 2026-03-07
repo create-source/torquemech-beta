@@ -3,8 +3,31 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parent / "services_catalog.json"
 
-def svc(code, name, h1, h2, f1, f2):
-    return {
+catalog = {
+  "meta": {
+    "version": "1.0.0",
+    "currency": "USD",
+    "region": "US"
+  },
+  "profiles": {
+    "diy":   {"labor_rate_default": 0,   "labor_rate_min": 0,   "labor_rate_max": 0},
+    "mobile":{"labor_rate_default": 120, "labor_rate_min": 90,  "labor_rate_max": 160},
+    "shop":  {"labor_rate_default": 160, "labor_rate_min": 120, "labor_rate_max": 220}
+  },
+  "categories": []
+}
+
+def svc(
+    code, name, h1, h2, f1, f2, *,
+    tags=None,
+    notes=None,
+    parts_min=None, parts_max=None,
+    difficulty=None,           # "easy" | "medium" | "hard"
+    audience=None,             # ["diy","mobile","shop"]
+    default_hours=None,        # recommended default hours (UI autofill)
+    default_parts=None         # recommended default parts price (UI autofill)
+):
+    out = {
         "code": code,
         "name": name,
         "labor_hours_min": round(float(h1), 2),
@@ -12,6 +35,24 @@ def svc(code, name, h1, h2, f1, f2):
         "flat_rate_min": int(f1),
         "flat_rate_max": int(f2),
     }
+
+    if tags: out["tags"] = list(tags)
+    if notes: out["notes"] = str(notes)
+
+    if parts_min is not None and parts_max is not None:
+        out["parts_min"] = int(parts_min)
+        out["parts_max"] = int(parts_max)
+
+    if difficulty: out["difficulty"] = str(difficulty)
+    if audience: out["audience"] = list(audience)
+
+    # Pro defaults (so UI can auto-fill without guessing)
+    if default_hours is not None:
+        out["default_hours"] = round(float(default_hours), 2)
+    if default_parts is not None:
+        out["default_parts"] = float(default_parts)
+
+    return out
 
 def cat(key, name, services):
     return {"key": key, "name": name, "services": services}

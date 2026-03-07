@@ -1,0 +1,71 @@
+{
+  "slug": "p0300",
+  "category": "obd",
+  "category_label": "OBD Code",
+  "title": "P0300 — Random/Multiple Cylinder Misfire Detected",
+  "subtitle": "Common causes, symptoms, and what to check first.",
+  "badge": "Beta",
+  "updated": "2026-03-04",
+
+  "blocks": [
+
+    { "type": "p", "text": "Code P0300 means the engine computer detected misfires happening across more than one cylinder, or the pattern isn't isolated to a single cylinder." },
+
+    { "type": "h2", "text": "Common Symptoms" },
+    { "type": "ul", "items": [
+      "Rough idle",
+      "Shaking under load",
+      "Flashing check engine light",
+      "Loss of engine power",
+      "Fuel smell or poor fuel economy"
+    ]},
+
+    { "type": "h2", "text": "Most Common Causes" },
+    { "type": "ul", "items": [
+      "Worn spark plugs",
+      "Bad ignition coils",
+      "Vacuum leak",
+      "Fuel injector issues",
+      "MAF sensor contamination",
+      "Low compression or internal engine damage"
+    ]},
+
+    { "type": "h2", "text": "How Mechanics Diagnose P0300" },
+    { "type": "ul", "items": [
+      "Scan for additional codes like P0301–P0308",
+      "Check live misfire counters using a scan tool",
+      "Inspect spark plugs and ignition coils",
+      "Test fuel pressure and injector operation",
+      "Smoke test the intake system for vacuum leaks"
+    ]},
+
+    { "type": "h2", "text": "Quick Things You Can Check First" },
+    { "type": "ul", "items": [
+      "Check the condition of spark plugs",
+      "Inspect ignition coil connectors",
+      "Look for cracked vacuum hoses",
+      "Clean the MAF sensor if dirty",
+      "Check for loose intake tubing"
+    ]},
+
+    { "type": "h2", "text": "Is It Safe to Drive?" },
+    { "type": "p", "text": "If the check engine light is flashing, reduce load and avoid hard driving. Misfires can overheat and damage the catalytic converter." },
+
+    { "type": "h2", "text": "Typical Repair Cost" },
+    { "type": "ul", "items": [
+      "Spark plugs: $150–$400",
+      "Ignition coils: $200–$600",
+      "Fuel injector replacement: $300–$800",
+      "Vacuum leak repair: $100–$400"
+    ]},
+
+    {
+      "type": "cta",
+      "primary": { "label": "Start an Estimate", "href": "/estimator" },
+      "secondary": { "label": "Search OBD Codes", "href": "/obd" }
+    }
+
+  ],
+
+  "disclaimer": "Educational only. Diagnostics vary by vehicle; confirm with a qualified technician."
+}

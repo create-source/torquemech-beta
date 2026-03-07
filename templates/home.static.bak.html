@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TorqueMech — Home</title>
+  <link rel="icon" href="/static/favicon.ico">
+
+  <!-- Global styles (your existing) -->
+  <link rel="stylesheet" href="/static/style.css?v=3">
+  <!-- Home-only styles -->
+  <link rel="stylesheet" href="/static/home.css?v=3">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- NAV (keeps your shared header/hamburger consistent) -->
+  <div id="navMount"></div>
+
+  <main class="tm-container">
+    <!-- HERO -->
+    <section class="tm-hero">
+      <div class="tm-hero__copy">
+
+        <div class="tm-badge">Beta</div>
+
+        <h1 class="tm-h1">
+          Repair estimates.<br>
+          OBD diagnostics.
+        </h1>
+
+        <p class="tm-sub">
+          Clear. Accurate. Direct.
+        </p>
+
+        <div class="tm-ctaRow">
+          <a href="/estimator" class="tm-btn tm-btn--primary">
+            Start Estimate
+          </a>
+          <a href="/obd" class="tm-btn">
+            Search OBD Codes
+          </a>
+        </div>
+
+        <p class="tm-disclaimer">
+          Pricing may vary by vehicle condition and region.
+        </p>
+
+      </div>
+
+      <div class="tm-hero__visual">
+        <!-- keep your illustration block -->
+      </div>
+    </section>
+
+    <section class="tm-grid2">
+
+      <a href="/estimator" class="tm-linkCard tm-card">
+        <div class="tm-card__icon">📄</div>
+        <div>
+          <h3>Estimator</h3>
+          <p>
+            Select your vehicle and service.<br>
+            Receive a structured cost estimate.
+          </p>
+        </div>
+      </a>
+
+      <a href="/obd" class="tm-linkCard tm-card">
+        <div class="tm-card__icon">🔍</div>
+        <div>
+          <h3>OBD Lookup</h3>
+          <p>
+            Enter a diagnostic code.<br>
+            View plain-language guidance.
+          </p>
+        </div>
+      </a>
+
+    </section>
+
+    <!-- SIMPLE FOOTER -->
+    <footer class="tm-footer">
+      <div>© 2026 TorqueMech</div>
+
+      <div class="tm-footer__right">
+        <a class="tm-footerLink" href="/terms">Terms</a>
+        <a class="tm-footerLink" href="/privacy">Privacy</a>
+        <button class="tm-footerBtn" id="feedbackFab" type="button">Feedback</button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Feedback Modal -->
+  <div class="tm-modalBackdrop" id="feedbackBackdrop" hidden>
+    <div class="tm-modal" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+      <div class="tm-modal__top">
+        <h2 class="tm-h2" id="feedbackTitle">Send feedback</h2>
+        <button class="tm-iconBtn" id="feedbackClose" aria-label="Close">✕</button>
+      </div>
+
+      <form id="feedbackForm" class="tm-form">
+        <label class="tm-label">
+          What should we improve?
+          <textarea class="tm-textarea" id="feedbackText" rows="5" placeholder="Bug, idea, or confusing step…"></textarea>
+        </label>
+
+        <div class="tm-formRow">
+          <button type="submit" class="tm-btn tm-btn--primary">Submit</button>
+          <button type="button" class="tm-btn tm-btn--ghost" id="feedbackCancel">Cancel</button>
+        </div>
+
+        <p class="tm-micro tm-muted">This is a lightweight beta feedback form.</p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/nav.js?v=2"></script>
+  <script src="/static/home.js?v=2"></script>
+</body>
+</html>

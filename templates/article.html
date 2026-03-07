@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="tm-card" style="max-width: 900px; margin: 24px auto;">
+
+  <h1 style="margin-top:14px;">{{ article.title }}</h1>
+
+  {% if article.subtitle %}
+    <p class="muted" style="margin-top:6px;">{{ article.subtitle }}</p>
+  {% endif %}
+
+  <div class="kb-meta">
+    <span class="kb-pill">🧠 {{ article.category_label }}</span>
+    {% if article.badge %}<span class="kb-pill">🏷 {{ article.badge }}</span>{% endif %}
+    {% if article.updated %}<span class="kb-pill">🕒 Updated: {{ article.updated }}</span>{% endif %}
+  </div>
+
+  <hr class="tm-hr" style="margin: 16px 0;" />
+
+  {% for block in article.blocks %}
+    {% if block.type == "p" %}
+      <p style="line-height:1.7;">{{ block.text }}</p>
+
+    {% elif block.type == "h2" %}
+      {% if not loop.first %}</div>{% endif %}
+      <div class="kb-section">
+        <h2>{{ block.text }}</h2>
+
+    {% elif block.type == "ul" %}
+      <ul style="line-height:1.7;">
+        {% for item in block["items"] %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+
+    {% elif block.type == "callout" %}
+      <div class="tm-callout" style="margin: 14px 0;">
+        <strong>{{ block.title }}</strong>
+        <div style="margin-top:6px;">{{ block.text }}</div>
+      </div>
+
+    {% elif block.type == "cta" %}
+      <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+        {% if block.primary %}
+          <a class="btn primary" href="{{ block.primary.href }}">{{ block.primary.label }}</a>
+        {% endif %}
+        {% if block.secondary %}
+          <a class="btn secondary" href="{{ block.secondary.href }}">{{ block.secondary.label }}</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+  </div>  {# closes the final kb-section #}
+
+  {% if article.disclaimer %}
+    <div class="muted" style="margin-top:18px; font-size:0.95rem;">
+      {{ article.disclaimer }}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

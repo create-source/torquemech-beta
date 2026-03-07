@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block page_css %}<link rel="stylesheet" href="/static/home.css?v=2">{% endblock %}
+
+{% block content %}
+<section class="tm-hero">
+  <div class="tm-hero__copy">
+    <div class="tm-badge">Beta</div>
+
+    <h1 class="tm-h1">
+      Repair estimates.<br>
+      OBD diagnostics.
+    </h1>
+
+    <p class="tm-sub">Clear. Accurate. Direct.</p>
+
+    <div class="tm-ctaRow">
+      <a href="/estimator" class="tm-btn tm-btn--primary">Start Estimate</a>
+      <a href="/obd" class="tm-btn">Search OBD Codes</a>
+    </div>
+
+    <p class="tm-disclaimer">Pricing may vary by vehicle condition and region.</p>
+  </div>
+
+  <div class="tm-hero__visual">
+    <!-- keep your illustration HTML if you want -->
+  </div>
+</section>
+
+<section class="tm-grid2">
+  <a href="/estimator" class="tm-linkCard tm-card">
+    <div class="tm-card__icon">📄</div>
+    <div>
+      <h3>Estimator</h3>
+      <p>Select your vehicle and service.<br>Receive a structured cost estimate.</p>
+    </div>
+  </a>
+
+  <a href="/obd" class="tm-linkCard tm-card">
+    <div class="tm-card__icon">🔍</div>
+    <div>
+      <h3>OBD Lookup</h3>
+      <p>Enter a diagnostic code.<br>View plain-language guidance.</p>
+    </div>
+  </a>
+</section>
+{% endblock %}
+
+{% block page_js %}<script src="/static/home.js?v=2"></script>{% endblock %}

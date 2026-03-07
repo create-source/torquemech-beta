@@ -1,0 +1,35 @@
+{
+  "Brakes": {
+    "Pads": [
+      {
+        "id": "brk_pads_front",
+        "name": "Front Brake Pads Replacement",
+        "default_hours": 1.2,
+        "min_hours": 0.8,
+        "max_hours": 2.0,
+        "notes": "Includes pad replacement; rotors extra if needed.",
+        "parts_templates": ["Front brake pads set", "Brake cleaner (optional)"]
+      },
+      {
+        "id": "brk_pads_rear",
+        "name": "Rear Brake Pads Replacement",
+        "default_hours": 1.2,
+        "min_hours": 0.8,
+        "max_hours": 2.0,
+        "notes": "",
+        "parts_templates": ["Rear brake pads set"]
+      }
+    ],
+    "Rotors": [
+      {
+        "id": "brk_rotors_front",
+        "name": "Front Brake Rotors Replacement",
+        "default_hours": 1.3,
+        "min_hours": 1.0,
+        "max_hours": 2.2,
+        "notes": "",
+        "parts_templates": ["Front brake rotors (pair)"]
+      }
+    ]
+  }
+}

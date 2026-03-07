@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>{% block title %}TorqueMech{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/style.css?v=2">
+  {% block page_css %}{% endblock %}
+</head>
+
+<body>
+  {% include "partials/nav.html" %}
+
+  <main class="tm-container">
+    {% block content %}{% endblock %}
+
+    <footer class="tm-footer">
+      <div class="tm-footer__left">© 2026 TorqueMech</div>
+
+      <div class="tm-footer__right">
+        <a class="tm-footerLink" href="/terms">Terms</a>
+        <a class="tm-footerLink" href="/privacy">Privacy</a>
+        <a class="tm-footerLink" href="/disclaimer">Disclaimer</a>
+        <button class="tm-footerBtn" id="feedbackFab" type="button">Feedback</button>
+      </div>
+    </footer>
+  </main>
+
+  <script src="/static/nav.js?v=3"></script>
+  <script src="/static/feedback.js?v=2"></script>
+  {% block page_js %}{% endblock %}
+
+  <div id="feedbackModal" class="tm-modal" hidden>
+    <div class="tm-modal__overlay" data-close="1"></div>
+
+    <div class="tm-modal__panel" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+      <div class="tm-modal__head">
+        <h2 id="fbTitle">Send Feedback</h2>
+        <button type="button" class="tm-iconBtn" id="feedbackCloseBtn" aria-label="Close">✕</button>
+      </div>
+
+      <p class="tm-muted" style="margin:0 0 10px;">
+        Tell us what didn’t work, what was unclear, or what you expected to see.
+      </p>
+
+      <form id="feedbackForm">
+        <div class="tm-grid2">
+          <div>
+            <label class="tm-label">Name (optional)</label>
+            <input class="input" type="text" id="fbName" maxlength="80" autocomplete="name">
+          </div>
+          <div>
+            <label class="tm-label">Email (optional)</label>
+            <input class="input" type="email" id="fbEmail" maxlength="120" autocomplete="email">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-label">Message *</label>
+          <textarea class="input" id="fbMessage" rows="5" required maxlength="2000"
+            placeholder="Example: I searched P0300 and expected…"></textarea>
+        </div>
+
+        <div class="tm-row tm-modal-actions">
+          <span id="fbStatus" class="tm-muted"></span>
+          <div class="tm-modal-btns">
+            <button type="button" class="btn btn-secondary" data-close="1">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="fbSubmitBtn">Send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

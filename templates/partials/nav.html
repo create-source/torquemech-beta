@@ -1,0 +1,36 @@
+<header class="tm-nav">
+  <div class="tm-nav__inner">
+    <!-- Left: Wordmark (NO underline in nav) -->
+    <a class="tm-brand" href="/" aria-label="TorqueMech Home">
+      <span class="tm-brand_text">
+        <span class="tm-brand__torque">Torque</span><span class="tm-brand__mech">Mech</span>
+        <span class="tm-beta-badge">Beta</span>
+      </span>
+    </a>
+
+    <!-- Right: Hamburger -->
+    <button class="tm-menuBtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+      <span class="tm-menuBtn__icon" aria-hidden="true">☰</span>
+    </button>
+  </div>
+
+  <!-- Dropdown panel -->
+  <div class="tm-menu" id="navMenu" hidden>
+    <nav class="tm-menu__panel" aria-label="Main menu">
+      <a class="tm-menu__item" href="/">Home</a>
+      <a class="tm-menu__item" href="/estimator">Estimator</a>
+      <a class="tm-menu__item" href="/obd">OBD Lookup</a>
+      <a class="tm-menu__item" href="/about">About</a>
+
+      <div class="tm-menu__divider"></div>
+
+      <a class="tm-menu__item tm-menu__muted" href="/terms">Terms</a>
+      <a class="tm-menu__item tm-menu__muted" href="/privacy">Privacy</a>
+      <a class="tm-menu__item tm-menu__muted" href="/disclaimer">Disclaimer</a>
+    </nav>
+  </div>
+
+  <!-- Click-outside backdrop -->
+  <div class="tm-menuBackdrop" id="menuBackdrop" hidden></div>
+</header>
+
