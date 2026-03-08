@@ -2067,3 +2067,199 @@ a.btn:visited {
     border-color: rgba(15, 23, 42, 0.10);
   }
 }
+
+/* =========================
+   Button visibility fix
+   ========================= */
+
+.add-more-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-more-btn:hover {
+  opacity: .9;
+}
+
+/* Saved estimate buttons */
+
+.btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn.danger {
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.35);
+  color: #ef4444;
+}
+
+/* ==============================
+   GLOBAL LIGHT MODE TEXT FIX
+   ============================== */
+@media (prefers-color-scheme: light) {
+
+  /* NAV */
+  .tm-nav {
+    background: rgba(255,255,255,.85);
+    border-bottom: 1px solid rgba(15,23,42,.08);
+  }
+
+  .tm-brand__torque {
+    color: #0F172A;
+  }
+
+  .tm-menuBtn {
+    color: #0F172A;
+    background: rgba(15,23,42,.04);
+    border-color: rgba(15,23,42,.12);
+  }
+
+  .tm-menu__panel {
+    background: #ffffff;
+    border: 1px solid rgba(15,23,42,.10);
+    box-shadow: 0 18px 50px rgba(15,23,42,.12);
+  }
+
+  .tm-menu__item,
+  .tm-menu__item:visited,
+  .tm-menu__muted {
+    color: #0F172A;
+  }
+
+  .tm-menu__divider {
+    background: rgba(15,23,42,.08);
+  }
+
+  /* HERO + GENERAL TEXT */
+  .tm-muted,
+  .tm-hint,
+  .recalc-note,
+  .labor-range {
+    color: #475569;
+    opacity: 1;
+  }
+
+  /* FOOTER */
+  .tm-footer {
+    border-top: 1px solid rgba(15,23,42,.08);
+  }
+
+  .tm-footer__left,
+  .tm-footerLink,
+  .tm-footerLink:visited,
+  .tm-disclaimer,
+  .tm-meta {
+    color: #475569;
+  }
+
+  .tm-footerLink:hover {
+    color: #0F172A;
+  }
+
+  /* LEGAL PAGES */
+  .legal-page {
+    color: #334155;
+  }
+
+  .legal-page h2 {
+    color: #0F172A;
+  }
+
+  .legal-card {
+    background: #ffffff;
+    border: 1px solid rgba(15,23,42,.08);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .tm-nav {
+    background: rgba(255,255,255,.85);
+    border-bottom: 1px solid rgba(15,23,42,.08);
+  }
+
+  .tm-brand__torque {
+    color: #0F172A;
+  }
+
+  .tm-menuBtn {
+    color: #0F172A;
+    background: rgba(15,23,42,.04);
+    border-color: rgba(15,23,42,.12);
+  }
+
+  .tm-menu__panel {
+    background: #ffffff;
+    border: 1px solid rgba(15,23,42,.10);
+    box-shadow: 0 18px 50px rgba(15,23,42,.12);
+  }
+
+  .tm-menu__item,
+  .tm-menu__item:visited,
+  .tm-menu__muted {
+    color: #0F172A;
+  }
+
+  .tm-menu__divider {
+    background: rgba(15,23,42,.08);
+  }
+
+  .tm-muted,
+  .tm-hint,
+  .recalc-note,
+  .labor-range {
+    color: #475569;
+    opacity: 1;
+  }
+
+  .tm-footer {
+    border-top: 1px solid rgba(15,23,42,.08);
+  }
+
+  .tm-footer__left,
+  .tm-footerLink,
+  .tm-footerLink:visited,
+  .tm-disclaimer,
+  .tm-meta {
+    color: #475569;
+  }
+
+  .tm-footerLink:hover {
+    color: #0F172A;
+  }
+
+  .legal-page {
+    color: #334155;
+  }
+
+  .legal-page h2 {
+    color: #0F172A;
+  }
+
+  .legal-card {
+    background: #ffffff;
+    border: 1px solid rgba(15,23,42,.08);
+  }
+}
+
+.btn.danger {
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.35);
+  color: #ef4444;
+}
