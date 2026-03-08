@@ -1945,3 +1945,59 @@ a.btn:visited {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0,0,0,.25);
 }
+
+@media (prefers-color-scheme: light) {
+  /* Secondary / ghost-style buttons need light-mode surfaces */
+  button.ghost,
+  .btn.secondary,
+  .icon-btn,
+  .add-more-btn,
+  .toggle-btn {
+    background: #eef4ff;
+    color: var(--text);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    box-shadow: none;
+  }
+
+  button.ghost:hover,
+  .btn.secondary:hover,
+  .icon-btn:hover,
+  .add-more-btn:hover,
+  .toggle-btn:hover {
+    background: #e3eeff;
+    border-color: rgba(37, 99, 235, 0.32);
+  }
+
+  /* Buttons inside service cards / estimate cards */
+  .line-item,
+  .line-items,
+  .preview,
+  .totals,
+  .vin-panel,
+  .kb-section,
+  .kb-panel,
+  .cost-row {
+    background: #f8fbff;
+    border-color: rgba(15, 23, 42, 0.10);
+  }
+
+  /* Remove button should stay visible but softer in light mode */
+  .line-item .remove {
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.30);
+    color: #b91c1c;
+  }
+
+  /* Inputs should look like real light-mode fields */
+  select,
+  textarea,
+  input:not([type="checkbox"]):not([type="radio"]) {
+    background: #ffffff;
+  }
+
+  /* Native select dropdown options */
+  select option {
+    background: #ffffff;
+    color: var(--text);
+  }
+}
