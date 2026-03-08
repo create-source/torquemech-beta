@@ -71,6 +71,34 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       submitBtn.disabled = false;
     }
-  });
+    });
+
+    // Show feedback hint on first visit
+    const hint = document.getElementById("feedbackHint");
+
+    if (hint && !localStorage.getItem("tm_feedback_hint_seen")) {
+
+      setTimeout(() => {
+
+        hint.hidden = false;
+
+        requestAnimationFrame(() => {
+          hint.classList.add("show");
+        });
+
+        setTimeout(() => {
+
+          hint.classList.remove("show");
+
+          setTimeout(() => {
+            hint.hidden = true;
+            localStorage.setItem("tm_feedback_hint_seen", "1");
+          }, 250);
+
+        }, 5000);
+
+      }, 1800);
+
+    }
 
 });
