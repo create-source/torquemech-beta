@@ -2001,3 +2001,69 @@ a.btn:visited {
     color: var(--text);
   }
 }
+
+/* ===== LIGHT MODE FIXES (put at very bottom) ===== */
+@media (prefers-color-scheme: light) {
+
+  /* Native dropdown list items */
+  select,
+  textarea,
+  input:not([type="checkbox"]):not([type="radio"]) {
+    background: #ffffff;
+    color: var(--text);
+  }
+
+  select option {
+    background: #ffffff;
+    color: #0F172A;
+  }
+
+  /* Hint text */
+  .tm-hint {
+    color: var(--muted);
+    opacity: 1;
+  }
+
+  /* Ghost / utility buttons that were inheriting white text */
+  button.ghost,
+  .icon-btn,
+  .add-more-btn,
+  .btn.secondary,
+  .toggle-btn {
+    color: var(--text);
+    background: #eef4ff;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    box-shadow: none;
+  }
+
+  button.ghost:hover,
+  .icon-btn:hover,
+  .add-more-btn:hover,
+  .btn.secondary:hover,
+  .toggle-btn:hover {
+    background: #e3eeff;
+    border-color: rgba(37, 99, 235, 0.30);
+  }
+
+  /* Saved estimate utility buttons */
+  .line-item .remove {
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.28);
+  }
+
+  /* Light surfaces for dark-first panels */
+  .line-items,
+  .line-item,
+  .preview,
+  .totals,
+  .vin-panel,
+  .kb-section,
+  .kb-panel,
+  .cost-row,
+  .status,
+  #statusBox {
+    background: #f8fbff;
+    border-color: rgba(15, 23, 42, 0.10);
+  }
+}
