@@ -209,6 +209,7 @@
   let serviceMeta = null;
   let signatureDataUrl = null;
   let editingLineItem = null; // { serviceCode, serviceText }
+  let activeLineItemIndex = null;
 
   // ---- Saved Drafts (localStorage) ----
   const DRAFTS_KEY = "torquemech_drafts_v1";
@@ -979,6 +980,7 @@ if (getEstimateHint) {
 
     // add the card immediately
     lineItems.push(it);
+    activeLineItemIndex = lineItems.length - 1;
     renderLineItems();
 
     setStatus("info", `Pricing: ${serviceText}…`);
@@ -1063,12 +1065,15 @@ if (getEstimateHint) {
         return;
       }
 
-      // First click: load this card's values into the shared inputs
-      // so the user edits the correct service.
+      // Load this card's values into the shared inputs when switching cards
       if (activeLineItemIndex !== idx) {
         activeLineItemIndex = idx;
-      }
 
+        if (laborHoursEl) laborHoursEl.value = String(it.laborHours ?? 0);
+        if (partsPriceEl) partsPriceEl.value = String(it.partsPrice ?? 0);
+        if (laborRateEl) laborRateEl.value = String(it.laborRate ?? 0);
+        if (notesEl) notesEl.value = it.notes || "";
+      }
       // Second click on same card: apply edited shared inputs back to THIS card only
       const currentHours = Number(laborHoursEl?.value || 0);
       if (Number.isFinite(currentHours) && currentHours >= 0) it.laborHours = currentHours;
