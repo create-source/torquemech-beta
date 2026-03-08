@@ -6,6 +6,8 @@
   --green: #14b8a6;
   */
 
+  color-scheme: light;
+
   /* ===== Brand: Electric Corporate (ACTIVE) ===== */
   --bg: #F8FAFC;
   --text: #0F172A;
@@ -36,6 +38,9 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* ===== Brand: Electric Corporate (ACTIVE) ===== */
+
+    color-scheme: dark;
+
     --bg: #0B1220;                  /* slightly cooler */
     --text: #F8FAFC;
     --subtext: #94A3B8;
@@ -184,6 +189,7 @@ body{
   font-family: var(--font);
   color: var(--text);
   background: var(--bg);
+  color: var(--text);
   overflow-x: hidden;
 }
 
@@ -219,7 +225,7 @@ input:not([type="checkbox"]):not([type="radio"]) {
   padding: 12px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(255,255,255,.06);
+  background: var(--card);
   color: var(--text);
   outline: none;
   -webkit-appearance: none;
