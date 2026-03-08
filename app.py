@@ -845,6 +845,16 @@ Sitemap: https://torquemech.com/sitemap.xml
 # Utility Routes
 # ============================================================
 
+@app.get("/{estimate_id}", response_class=HTMLResponse)
+def open_shared_estimate(request: Request, estimate_id: str):
+    return templates.TemplateResponse(
+        "estimator.html",
+        {
+            "request": request,
+            "shared_id": estimate_id,
+        },
+    )
+
 @app.get("/health")
 def health():
     return {"ok": True, "service": "torquemech"}
