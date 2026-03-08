@@ -877,7 +877,7 @@
         const est = it.estimate != null ? money(it.estimate) : "—";
 
         return `
-        <div class="line-item" data-idx="${idx}">
+        <div class="line-item selectable" data-idx="${idx}">
           <div>
             <div class="name">${it.serviceText || "Service"}</div>
             <div class="meta">
@@ -1067,17 +1067,6 @@ if (getEstimateHint) {
       // so the user edits the correct service.
       if (activeLineItemIndex !== idx) {
         activeLineItemIndex = idx;
-
-        if (laborHoursEl) laborHoursEl.value = String(it.laborHours ?? 0);
-        if (partsPriceEl) partsPriceEl.value = String(it.partsPrice ?? 0);
-        if (laborRateEl) laborRateEl.value = String(it.laborRate ?? 0);
-        if (notesEl) notesEl.value = it.notes || "";
-
-        setStatus(
-          "info",
-          `Loaded ${it.serviceText}. Adjust Labor Hours / Parts / Labor Rate below, then click Recalculate again on this same service.`
-        );
-        return;
       }
 
       // Second click on same card: apply edited shared inputs back to THIS card only
