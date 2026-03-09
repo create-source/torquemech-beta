@@ -1200,7 +1200,7 @@ if (getEstimateHint) {
       const pdfBlob = await pdfResponse.blob();
       const pdfUrl = URL.createObjectURL(pdfBlob);
 
-      // Create download link instead of popup
+      // Try download
       const a = document.createElement("a");
       a.href = pdfUrl;
       a.download = "torquemech_estimate.pdf";
@@ -1208,6 +1208,18 @@ if (getEstimateHint) {
       a.click();
       a.remove();
 
+      setStatus("ok", "PDF ready.");
+
+      if (confirmMsg) {
+        confirmMsg.innerHTML = `
+          PDF ready.<br>
+          <a href="${pdfUrl}" download="torquemech_estimate.pdf">Download PDF</a>
+          &nbsp;|&nbsp;
+          <a href="${pdfUrl}" target="_blank" rel="noopener">Open PDF</a>
+        `;
+      }
+
+      // Do NOT auto-close immediately
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
       setStatus("ok", "PDF downloaded.");

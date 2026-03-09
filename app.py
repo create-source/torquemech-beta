@@ -1743,7 +1743,7 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         return Response(
             content=buf.read(),
             media_type="application/pdf",
-            headers={"Content-Disposition": "inline; filename=estimate.pdf"},
+            headers={"Content-Disposition": "attachment; filename=torquemech_estimate.pdf"}
         )
 
         c.save()
@@ -1754,7 +1754,7 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         return Response(
             content=buf.read(),
             media_type="application/pdf",
-            headers={"Content-Disposition": "inline; filename=estimate.pdf"},
+            headers={"Content-Disposition": "attachment; filename=torquemech_estimate.pdf"}
         )
 
     except Exception:
