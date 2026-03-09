@@ -1199,10 +1199,18 @@ if (getEstimateHint) {
 
       const pdfBlob = await pdfResponse.blob();
       const pdfUrl = URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl, "_blank", "noopener,noreferrer");
+
+      // Create download link instead of popup
+      const a = document.createElement("a");
+      a.href = pdfUrl;
+      a.download = "torquemech_estimate.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
-      setStatus("ok", "PDF opened.");
+      setStatus("ok", "PDF downloaded.");
       closeConfirm();
 
     } catch (e) {
