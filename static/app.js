@@ -91,14 +91,23 @@
     const svc = SERVICE_INDEX[serviceId];
     if (!svc) return;
 
+    const pricingMode = pricingModeEl?.value || "hourly";
+
     const line = {
       type: "labor",
       service_id: svc.id,
       name: svc.name,
       category: svc.category,
       subcategory: svc.subcategory,
-      hours: (svc.default_hours ?? 0),
-      rate: getLaborRate(),          // from your UI
+      pricing_mode: pricingMode,
+
+      hours: pricingMode === "hourly" ? (svc.default_hours ?? 0) : 0,
+      rate: pricingMode === "hourly" ? getLaborRate() : 0,
+
+      flat_rate: pricingMode === "flat"
+        ? Number(flatRatePriceEl?.value || 0)
+        : 0,
+
       notes: svc.notes || ""
     };
 
@@ -118,7 +127,15 @@
   function calculateTotals(estimate) {
     const labor = estimate.lines
       .filter(l => l.type === "labor")
-      .reduce((sum, l) => sum + (Number(l.hours) || 0) * (Number(l.rate) || 0), 0);
+      .reduce((sum, l) => {
+
+        if (l.pricing_mode === "flat") {
+          return sum + (Number(l.flat_rate) || 0);
+        }
+
+        return sum + (Number(l.hours) || 0) * (Number(l.rate) || 0);
+
+      }, 0);
 
     const parts = estimate.lines
       .filter(l => l.type === "part")
@@ -131,9 +148,11 @@
     const taxableParts = parts + supplies;  // common approach; can change later
     const tax = taxableParts * taxRate;
 
-    const total = labor + parts + supplies + tax;
+    const travel = Number(estimate.travel_fee || 0);
 
-    return { labor, parts, supplies, tax, total };
+    const total = labor + parts + supplies + tax + travel;
+
+    return { labor, parts, supplies, tax, travel, total };
   }
 
   // ---- DOM helpers ----
@@ -153,6 +172,11 @@
   const laborHoursRangeEl = $("laborHoursRange");
   const partsPriceEl = $("partsPrice");
   const laborRateEl = $("laborRate");
+  const pricingModeEl = $("pricingMode");
+  const flatRatePriceEl = $("flatRatePrice");
+  const travelFeeEl = $("travelFee");
+  const flatRateWrap = $("flatRateWrap");
+  const hourlyPricingWrap = $("hourlyPricingWrap");
   const notesEl = $("notes");
 
   // Buttons / UI
@@ -178,6 +202,8 @@
   const confirmBackdrop = $("confirmBackdrop");
   const confirmCloseBtn = $("confirmCloseBtn");
   const confirmAddBtn = $("confirmAddBtn");
+  const copyQuoteBtn = $("copyQuoteBtn");
+  const quotePreviewEl = $("quotePreview");
   const confirmMsg = $("confirmMsg");
   const confirmServiceText = $("confirmServiceText");
   const confirmTotalText = $("confirmTotalText");
@@ -204,7 +230,8 @@
   let sigCtx = sigCanvas ? sigCanvas.getContext("2d") : null;
 
   // ---- State ----
-  let lineItems = []; // { serviceCode, serviceText, laborHours, partsPrice, laborRate, notes, estimate }
+  let lineItems = [];
+  // { serviceCode, serviceText, pricingMode, flatRatePrice, travelFee, laborHours, partsPrice, laborRate, notes, estimate }
   let lastEstimate = null; // { req, res }
   let serviceMeta = null;
   let signatureDataUrl = null;
@@ -308,6 +335,7 @@
 
     // ✅ IMPORTANT: after loading, let buttons work immediately
     readyForNextService = true;
+    togglePricingModeUI();
     updateEstimateButtonState();
 
     if (draftsMsg) draftsMsg.textContent = `Loaded: ${d.title}`;
@@ -375,6 +403,94 @@
   function money(n) {
     const x = Number(n || 0);
     return `$${Math.round(x).toLocaleString()}`;
+  }
+
+  function getPricingMode() {
+  return (pricingModeEl?.value || "hourly").trim();
+}
+
+function togglePricingModeUI() {
+  const isFlat = getPricingMode() === "flat";
+
+  flatRateWrap?.classList.toggle("hidden", !isFlat);
+  hourlyPricingWrap?.classList.toggle("hidden", isFlat);
+
+  if (laborHoursRangeEl) {
+    laborHoursRangeEl.textContent = isFlat ? "" : laborHoursRangeEl.textContent;
+  }
+}
+
+  function quoteTotal() {
+    return lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0);
+  }
+
+  function buildQuoteMessage() {
+    const customerName = (customerNameEl?.value || "").trim();
+    const vehicle = [yearEl?.value, makeEl?.value, modelEl?.value].filter(Boolean).join(" ");
+    const total = quoteTotal();
+
+    const lines = [];
+
+    if (customerName) {
+      lines.push(`Hi ${customerName},`);
+      lines.push("");
+    } else {
+      lines.push("Hi,");
+      lines.push("");
+    }
+
+    lines.push("Here is your estimate from TorqueMech:");
+    lines.push("");
+
+    if (vehicle) {
+      lines.push(`Vehicle: ${vehicle}`);
+      lines.push("");
+    }
+
+    lineItems.forEach((it) => {
+      if (it.pricingMode === "flat") {
+        lines.push(`• ${it.serviceText}: ${money(it.estimate)} (flat-rate${Number(it.travelFee || 0) > 0 ? `, includes ${money(it.travelFee)} travel` : ""})`);
+      } else {
+        lines.push(`• ${it.serviceText}: ${money(it.estimate)}${Number(it.travelFee || 0) > 0 ? ` (includes ${money(it.travelFee)} travel)` : ""}`);
+      }
+    });
+
+    lines.push("");
+    lines.push(`Estimated Total: ${money(total)}`);
+
+    const notes = (notesEl?.value || "").trim();
+    if (notes) {
+      lines.push("");
+      lines.push(`Notes: ${notes}`);
+    }
+
+    lines.push("");
+    lines.push("This is an estimate. Final pricing may vary after inspection.");
+
+    return lines.join("\n");
+  }
+
+  function calcLineItemEstimate(it) {
+    const pricingMode = (it.pricingMode || "hourly").trim();
+    const parts = Number(it.partsPrice || 0);
+    const travel = Number(it.travelFee || 0);
+
+    let base = 0;
+
+    if (pricingMode === "flat") {
+      base = Number(it.flatRatePrice || 0) + parts;
+    } else {
+      const laborHours = Number(it.laborHours || 0);
+      const laborRate = Number(it.laborRate || 0);
+      base = (laborHours * laborRate) + parts;
+    }
+
+    return Math.round(base + travel);
+  }
+
+  function refreshQuotePreview() {
+    if (!quotePreviewEl) return;
+    quotePreviewEl.value = buildQuoteMessage();
   }
 
   function fmt1(n) {
@@ -537,6 +653,11 @@
       } catch (e) {
         setStatus("error", `OBD bridge failed: ${e.message}`);
       }
+    });
+
+    pricingModeEl?.addEventListener("change", () => {
+      togglePricingModeUI();
+      refreshQuotePreview?.();
     });
 
     dismissBtn?.addEventListener("click", () => {
@@ -710,6 +831,8 @@
       `;
     }
 
+    refreshQuotePreview();
+
     // make sure canvas is sized correctly when modal opens
     resizeSigCanvas();
   }
@@ -722,6 +845,28 @@
 
   confirmBackdrop?.addEventListener("click", closeConfirm);
   confirmCloseBtn?.addEventListener("click", closeConfirm);
+
+  customerNameEl?.addEventListener("input", refreshQuotePreview);
+  notesEl?.addEventListener("input", refreshQuotePreview);
+
+  copyQuoteBtn?.addEventListener("click", async () => {
+    try {
+      const text = buildQuoteMessage();
+
+      if (!text.trim()) {
+        if (confirmMsg) confirmMsg.textContent = "Nothing to copy yet.";
+        return;
+      }
+
+      await navigator.clipboard.writeText(text);
+      if (confirmMsg) confirmMsg.textContent = "Quote message copied.";
+      setStatus("ok", "Quote message copied.");
+    } catch (e) {
+      if (confirmMsg) confirmMsg.textContent = "Copy failed. Try selecting the text manually.";
+      setStatus("error", `Copy failed: ${e.message}`);
+    }
+  });
+
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && confirmModal && !confirmModal.classList.contains("hidden")) closeConfirm();
   });
@@ -851,10 +996,12 @@
       category: (categoryEl?.value || "").trim() || null,
       serviceCode: (serviceEl?.value || "").trim() || null,
 
+      pricingMode: getPricingMode(),
+      flatRatePrice: Number(flatRatePriceEl?.value || 0),
+      travelFee: Number(travelFeeEl?.value || 0),
       laborHours: Number(laborHoursEl?.value || 0),
       partsPrice: Number(partsPriceEl?.value || 0),
       laborRate: Number(laborRateEl?.value || 0),
-
       notes: (notesEl?.value || "").trim() || null,
       customerName: (customerNameEl?.value || "").trim() || null,
       customerPhone: (customerPhoneEl?.value || "").trim() || null,
@@ -877,24 +1024,30 @@
       .map((it, idx) => {
         const est = it.estimate != null ? money(it.estimate) : "—";
 
-        return `
-        <div class="line-item selectable" data-idx="${idx}">
-          <div>
-            <div class="name">${it.serviceText || "Service"}</div>
-            <div class="meta">
-              Labor: ${Number(it.laborHours || 0).toFixed(1)}h •
-              Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr •
-              Parts: ${money(it.partsPrice || 0)}
-            </div>
-            <div class="money">Estimate: ${est}</div>
-          </div>
+        const pricingLabel = it.pricingMode === "flat"
+          ? `Flat: ${money(it.flatRatePrice || 0)}`
+          : `Labor: ${Number(it.laborHours || 0).toFixed(1)}h • Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`;
 
-          <div class="line-actions">
-            <button type="button" class="ghost" data-action="estimate">Recalculate</button>
-            <button type="button" class="remove" data-action="remove">Remove</button>
+        const travelLabel = Number(it.travelFee || 0) > 0
+          ? ` • Travel: ${money(it.travelFee)}`
+          : "";
+
+        return `
+          <div class="line-item selectable" data-idx="${idx}">
+            <div>
+              <div class="name">${it.serviceText || "Service"}</div>
+              <div class="meta">
+                ${pricingLabel}${travelLabel} • Parts: ${money(it.partsPrice || 0)}
+              </div>
+              <div class="money">Estimate: ${est}</div>
+            </div>
+
+            <div class="line-actions">
+              <button type="button" class="ghost" data-action="estimate">Recalculate</button>
+              <button type="button" class="remove" data-action="remove">Remove</button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
       })
       .join("");
 
@@ -969,14 +1122,17 @@ if (getEstimateHint) {
       : (serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl.value);
 
     const it = {
-      serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
-      serviceText,
-      laborHours: Number(laborHoursEl.value || 0),
-      partsPrice: Number(partsPriceEl.value || 0),
-      laborRate: Number(laborRateEl.value || 0),
-      notes: (notesEl?.value || "").trim() || null,
-      estimate: null,
-    };
+    serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
+    serviceText,
+    pricingMode: getPricingMode(),
+    flatRatePrice: Number(flatRatePriceEl?.value || 0),
+    travelFee: Number(travelFeeEl?.value || 0),
+    laborHours: Number(laborHoursEl?.value || 0),
+    partsPrice: Number(partsPriceEl?.value || 0),
+    laborRate: Number(laborRateEl?.value || 0),
+    notes: (notesEl?.value || "").trim() || null,
+    estimate: null,
+  };
 
     // add the card immediately
     lineItems.push(it);
@@ -986,6 +1142,19 @@ if (getEstimateHint) {
     setStatus("info", `Pricing: ${serviceText}…`);
 
     try {
+      if (it.pricingMode === "flat") {
+        it.estimate = calcLineItemEstimate(it);
+        editingLineItem = null;
+        lastEstimate = null;
+
+        renderLineItems();
+        setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
+
+        readyForNextService = false;
+        updateEstimateButtonState();
+        return;
+      }
+
       const req = buildRequest({
         serviceCode: it.serviceCode,
         laborHours: it.laborHours,
@@ -1000,18 +1169,16 @@ if (getEstimateHint) {
         body: JSON.stringify(req),
       });
 
-      it.estimate = res.estimate ?? null;
+      it.estimate = Math.round(Number(res.estimate || 0) + Number(it.travelFee || 0));
       editingLineItem = null;
       lastEstimate = { req, res };
 
       renderLineItems();
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
 
-      // stay locked until + Add Service
       readyForNextService = false;
       updateEstimateButtonState();
     } catch (e) {
-      // if estimate fails, remove the just-added item and unlock
       lineItems.pop();
       renderLineItems();
 
@@ -1036,6 +1203,11 @@ if (getEstimateHint) {
     laborHoursEl.value = "0";
     partsPriceEl.value = "0";
     if (notesEl) notesEl.value = "";
+
+    if (pricingModeEl) pricingModeEl.value = "hourly";
+    if (flatRatePriceEl) flatRatePriceEl.value = "0";
+    if (travelFeeEl) travelFeeEl.value = "0";
+    togglePricingModeUI();
 
     // 🔓 Unlock Get Estimate
     activeLineItemIndex = null;
@@ -1073,6 +1245,10 @@ if (getEstimateHint) {
         if (partsPriceEl) partsPriceEl.value = String(it.partsPrice ?? 0);
         if (laborRateEl) laborRateEl.value = String(it.laborRate ?? 0);
         if (notesEl) notesEl.value = it.notes || "";
+        if (pricingModeEl) pricingModeEl.value = it.pricingMode || "hourly";
+        if (flatRatePriceEl) flatRatePriceEl.value = String(it.flatRatePrice ?? 0);
+        if (travelFeeEl) travelFeeEl.value = String(it.travelFee ?? 0);
+        togglePricingModeUI();
       }
       // Second click on same card: apply edited shared inputs back to THIS card only
       const currentHours = Number(laborHoursEl?.value || 0);
@@ -1084,12 +1260,27 @@ if (getEstimateHint) {
       const currentRate = Number(laborRateEl?.value || 0);
       if (Number.isFinite(currentRate) && currentRate > 0) it.laborRate = currentRate;
 
+      it.pricingMode = getPricingMode();
+      it.flatRatePrice = Number(flatRatePriceEl?.value || 0);
+      it.travelFee = Number(travelFeeEl?.value || 0);
+
       if (notesEl) it.notes = (notesEl.value || "").trim() || null;
+    
 
       renderLineItems();
       setStatus("info", `Pricing: ${it.serviceText}…`);
 
       try {
+        if (it.pricingMode === "flat") {
+          it.estimate = calcLineItemEstimate(it);
+          renderLineItems();
+          setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
+
+          readyForNextService = false;
+          updateEstimateButtonState();
+          return;
+        }
+
         const req = buildRequest({
           serviceCode: it.serviceCode,
           laborHours: it.laborHours,
@@ -1104,7 +1295,7 @@ if (getEstimateHint) {
           body: JSON.stringify(req),
         });
 
-        it.estimate = res.estimate ?? null;
+        it.estimate = Math.round(Number(res.estimate || 0) + Number(it.travelFee || 0));
         renderLineItems();
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
 
@@ -1308,6 +1499,10 @@ if (getEstimateHint) {
     if (laborHoursEl) laborHoursEl.value = "0";
     if (partsPriceEl) partsPriceEl.value = "0";
     if (laborRateEl) laborRateEl.value = "90";
+    if (pricingModeEl) pricingModeEl.value = "hourly";
+    if (flatRatePriceEl) flatRatePriceEl.value = "0";
+    if (travelFeeEl) travelFeeEl.value = "0";
+    togglePricingModeUI();
     if (notesEl) notesEl.value = "";
     if (customerNameEl) customerNameEl.value = "";
     if (customerPhoneEl) customerPhoneEl.value = "";

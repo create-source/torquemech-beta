@@ -102,6 +102,26 @@
 
       <div class="grid3">
         <div>
+          <label for="pricingMode">Pricing Mode</label>
+          <select id="pricingMode">
+            <option value="hourly" selected>Hourly</option>
+            <option value="flat">Flat Rate</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="travelFee">Travel Fee (optional)</label>
+          <input id="travelFee" type="number" step="0.01" value="0" />
+        </div>
+
+        <div id="flatRateWrap" class="hidden">
+          <label for="flatRatePrice">Flat Rate Price</label>
+          <input id="flatRatePrice" type="number" step="0.01" value="0" />
+        </div>
+      </div>
+
+      <div class="grid3" id="hourlyPricingWrap">
+        <div>
           <label for="laborHours">
             <span id="laborLabelText">Labor Hours</span>
           </label>
@@ -236,7 +256,21 @@
         </div>
       </div>
 
+      <div style="margin-top:14px;">
+        <label for="quotePreview" style="display:block; margin-bottom:8px; font-weight:600;">
+          Quote Message Preview
+        </label>
+        <textarea
+          id="quotePreview"
+          rows="9"
+          readonly
+          style="width:100%; resize:vertical;"
+          placeholder="Your quote message will appear here..."
+        ></textarea>
+      </div>
+
       <div class="modal-actions">
+        <button id="copyQuoteBtn" type="button" class="btn">Copy Quote Message</button>
         <button id="confirmAddBtn" type="button" class="btn primary">Generate PDF</button>
         <button id="confirmCloseBtn" type="button" class="btn secondary">Close</button>
       </div>
