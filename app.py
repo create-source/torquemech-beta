@@ -911,9 +911,33 @@ def make_qr_image_reader(url: str) -> ImageReader:
 # CONFIG
 # ===============================
 POPULAR_MAKES: List[str] = [
-    "TOYOTA", "HONDA", "FORD", "CHEVROLET", "NISSAN", "HYUNDAI", "KIA", "DODGE", "JEEP",
-    "GMC", "SUBARU", "BMW", "MERCEDES-BENZ", "VOLKSWAGEN", "AUDI", "LEXUS", "MAZDA",
-    "TESLA", "VOLVO",
+    "ACURA",
+    "AUDI",
+    "BMW",
+    "BUICK",
+    "CADILLAC",
+    "CHEVROLET",
+    "CHRYSLER",
+    "DODGE",
+    "FORD",
+    "GMC",
+    "HONDA",
+    "HYUNDAI",
+    "INFINITI",
+    "JEEP",
+    "KIA",
+    "LEXUS",
+    "MAZDA",
+    "MERCEDES-BENZ",
+    "MINI",
+    "NISSAN",
+    "PORSCHE",
+    "RAM",
+    "SUBARU",
+    "TESLA",
+    "TOYOTA",
+    "VOLKSWAGEN",
+    "VOLVO",
 ]
 
 # ===============================

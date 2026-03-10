@@ -415,8 +415,17 @@ function togglePricingModeUI() {
   flatRateWrap?.classList.toggle("hidden", !isFlat);
   hourlyPricingWrap?.classList.toggle("hidden", isFlat);
 
-  if (laborHoursRangeEl) {
-    laborHoursRangeEl.textContent = isFlat ? "" : laborHoursRangeEl.textContent;
+  if (statusBox) {
+    statusBox.textContent = isFlat
+      ? "Flat Rate mode: enter one fixed price for the job, then click Recalculate."
+      : "Hourly mode: labor = hours × labor rate, then click Recalculate.";
+    statusBox.dataset.kind = "info";
+  }
+
+  if (laborHoursRangeEl && isFlat) {
+    laborHoursRangeEl.textContent = "";
+  } else {
+    updateLaborRangeUI();
   }
 }
 
