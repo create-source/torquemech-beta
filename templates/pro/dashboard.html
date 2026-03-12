@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}TorqueMech Pro Dashboard{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-header">
+    <div>
+      <div class="tm-pro-eyebrow">TorqueMech Pro Preview</div>
+      <h1 class="tm-pro-title">Pro Dashboard</h1>
+      <p class="tm-pro-subtitle">
+        Hidden local preview for future shop tools.
+      </p>
+    </div>
+  </div>
+
+  <div class="tm-pro-grid">
+    <a class="tm-pro-card" href="/pro/customers">
+      <h3>Customers</h3>
+      <p>Customer profiles, contact details, and estimate history.</p>
+    </a>
+
+    <a class="tm-pro-card" href="/pro/vehicles">
+      <h3>Vehicles</h3>
+      <p>Track customer vehicles, service records, and repeat repairs.</p>
+    </a>
+
+    <a class="tm-pro-card" href="/pro/estimates">
+      <h3>Estimates</h3>
+      <p>Future estimate management, saved jobs, and workflow tracking.</p>
+    </a>
+
+    <a class="tm-pro-card" href="/pro/reports">
+      <h3>Reports</h3>
+      <p>View future shop reporting for labor, pricing, and repair trends.</p>
+    </a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}Automotive Knowledge Hub | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-container">
+  <div class="card">
+    <div class="eyebrow">TorqueMech Knowledge</div>
+    <h1>Automotive Knowledge Hub</h1>
+    <p class="tm-muted">
+      Explore automotive repair knowledge by diagnostic code, symptom, or repair type.
+      TorqueMech connects common problems to likely causes, repair guides, and estimate tools.
+    </p>
+  </div>
+
+  <div class="tm-repair-guide-list" style="margin-top:16px;">
+    {% for item in sections %}
+    <a class="tm-repair-guide-item" href="{{ item.href }}">
+      <div>
+        <strong>{{ item.title }}</strong>
+        <div class="tm-muted">{{ item.summary }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

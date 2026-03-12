@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block title %}
+{{ service.name }} Cost | TorqueMech Repair Guide
+{% endblock %}
+
+{% block content %}
+
+<section class="tm-container">
+
+  <h1>{{ service.name }} Cost</h1>
+
+  <p class="tm-muted">
+  Typical repair cost and labor information for {{ service.name|lower }}.
+  </p>
+
+  <div class="card">
+
+    <h2>Average Labor Time</h2>
+
+    <p>
+      {{ labor_min }} – {{ labor_max }} hours
+    </p>
+
+    <h2>Estimated Labor Cost</h2>
+
+    <p>
+      ${{ labor_low }} – ${{ labor_high }}
+    </p>
+
+  </div>
+
+  <div class="card">
+
+    <h2>What This Repair Involves</h2>
+
+    <p>
+      {{ service.name }} typically involves removing worn components and installing
+      new parts to restore proper vehicle performance and safety.
+    </p>
+
+  </div>
+
+  <div class="card">
+
+    <h2>Estimate This Repair</h2>
+
+    <p>
+      Use the TorqueMech estimator to calculate a repair estimate based on your vehicle.
+    </p>
+
+    <a class="btn btn-primary" href="/estimator">
+      Estimate This Repair
+    </a>
+
+  </div>
+
+</section>
+
+{% endblock %}

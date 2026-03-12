@@ -2373,3 +2373,163 @@ a.btn:visited {
     max-width: 220px;
   }
 }
+
+/* =========================
+   TorqueMech Pro Shell
+   ========================= */
+
+.tm-pro-shell {
+  padding: 24px 0 40px;
+}
+
+.tm-pro-header,
+.tm-pro-pagehead {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.tm-pro-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+  margin-bottom: 8px;
+}
+
+.tm-pro-title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.05;
+}
+
+.tm-pro-subtitle {
+  margin: 10px 0 0;
+  opacity: 0.82;
+  max-width: 760px;
+}
+
+.tm-pro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.tm-pro-card,
+.tm-pro-panel {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 20px;
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+}
+
+.tm-pro-card {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tm-pro-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(61, 184, 198, 0.5);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.22);
+}
+
+.tm-pro-card h3,
+.tm-pro-panel h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.tm-pro-card p,
+.tm-pro-panel p {
+  margin: 0;
+  opacity: 0.82;
+}
+
+.tm-pro-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+}
+
+.tm-pro-list li {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 820px) {
+  .tm-pro-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   Repair Cost Index
+   ========================= */
+
+.tm-repair-guide-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.tm-repair-guide-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(255,255,255,0.03);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tm-repair-guide-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(61, 184, 198, 0.45);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+}
+
+@media (max-width: 700px) {
+  .tm-repair-guide-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.tm-footer-support {
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.tm-testimonial {
+  margin-top: 50px;
+  text-align: center;
+}
+
+.tm-testimonial-title {
+  font-weight: 600;
+  opacity: .7;
+  margin-bottom: 10px;
+}
+
+.tm-testimonial blockquote {
+  font-size: 18px;
+  font-style: italic;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.tm-testimonial-author {
+  margin-top: 10px;
+  font-size: 14px;
+  opacity: .7;
+}

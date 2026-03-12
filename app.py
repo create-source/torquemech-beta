@@ -20,6 +20,7 @@ from fastapi import (
 )
 
 from routers.knowledge import router as knowledge_router
+from routers.pro import router as pro_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
@@ -60,6 +61,13 @@ import sqlite3
 import json
 from pathlib import Path
 from fastapi.responses import HTMLResponse
+
+def slugify_service_name(name: str) -> str:
+    name = (name or "").strip().lower()
+    name = re.sub(r"[^a-z0-9\s-]", "", name)
+    name = re.sub(r"\s+", "-", name)
+    name = re.sub(r"-+", "-", name)
+    return name.strip("-")
 
 load_dotenv()
 
@@ -116,6 +124,7 @@ app.state.templates = templates
 
 # routers
 app.include_router(knowledge_router)
+app.include_router(pro_router)
 
 # --- Static Mount ---
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -587,7 +596,6 @@ def estimator(request: Request):
         {"request": request},
     )
 
-
 @app.get("/obd", response_class=HTMLResponse)
 def obd(request: Request):
     metric_incr("page_obd_lookup")
@@ -792,6 +800,264 @@ def build_diagnostic_summary(code: str):
 
     return summaries.get(code)
 
+def get_symptom_page_data(symptom_slug: str):
+    symptom_slug = (symptom_slug or "").strip().lower()
+
+    symptom_pages = {
+        "engine-misfire": {
+            "title": "Engine Misfire",
+            "intro": "An engine misfire can cause rough idle, hesitation, loss of power, poor fuel economy, and a flashing or steady check engine light.",
+            "common_causes": [
+                "Worn spark plugs",
+                "Failing ignition coil",
+                "Fuel injector problems",
+                "Vacuum leaks",
+                "Low compression",
+            ],
+            "related_codes": [
+                {"code": "P0300", "label": "Random/Multiple Cylinder Misfire"},
+                {"code": "P0301", "label": "Cylinder 1 Misfire"},
+                {"code": "P0302", "label": "Cylinder 2 Misfire"},
+                {"code": "P0303", "label": "Cylinder 3 Misfire"},
+                {"code": "P0304", "label": "Cylinder 4 Misfire"},
+            ],
+            "common_repairs": [
+                {"name": "Spark Plug Replacement", "slug": "spark-plug-replacement"},
+                {"name": "Ignition Coil Replacement", "slug": "ignition-coil-replacement"},
+                {"name": "Fuel Injector Diagnosis", "slug": "fuel-injector-diagnosis"},
+                {"name": "Vacuum Leak Diagnosis", "slug": "vacuum-leak-diagnosis"},
+            ],
+        },
+
+        "check-engine-light": {
+            "title": "Check Engine Light",
+            "intro": "A check engine light can indicate anything from a loose gas cap to a misfire, emissions fault, fuel trim issue, or sensor problem.",
+            "common_causes": [
+                "Loose or faulty gas cap",
+                "Engine misfire",
+                "Oxygen sensor problems",
+                "Catalytic converter efficiency issues",
+                "EVAP system leak",
+            ],
+            "related_codes": [
+                {"code": "P0300", "label": "Random/Multiple Cylinder Misfire"},
+                {"code": "P0171", "label": "System Too Lean (Bank 1)"},
+                {"code": "P0420", "label": "Catalyst Efficiency Below Threshold (Bank 1)"},
+                {"code": "P0442", "label": "EVAP Small Leak Detected"},
+            ],
+            "common_repairs": [
+                {"name": "Gas Cap Replacement", "slug": "gas-cap-replacement"},
+                {"name": "O2 Sensor Diagnosis", "slug": "o2-sensor-diagnosis"},
+                {"name": "Catalytic Converter Diagnosis", "slug": "catalytic-converter-diagnosis"},
+                {"name": "EVAP Leak Diagnosis", "slug": "evap-leak-diagnosis"},
+            ],
+        },
+
+        "car-wont-start": {
+            "title": "Car Won’t Start",
+            "intro": "A car that won’t start may have a battery, starter, fuel delivery, ignition, or sensor-related problem.",
+            "common_causes": [
+                "Weak or dead battery",
+                "Bad starter motor",
+                "Fuel pump failure",
+                "Crankshaft position sensor fault",
+                "Ignition system problem",
+            ],
+            "related_codes": [
+                {"code": "P0335", "label": "Crankshaft Position Sensor A Circuit"},
+                {"code": "P0340", "label": "Camshaft Position Sensor Circuit"},
+                {"code": "P0562", "label": "System Voltage Low"},
+            ],
+            "common_repairs": [
+                {"name": "Starter Replacement", "slug": "starter-replacement"},
+                {"name": "Fuel Pump Replacement", "slug": "fuel-pump-replacement"},
+                {"name": "Battery Diagnosis", "slug": "battery-diagnosis"},
+                {"name": "Crankshaft Position Sensor Replacement", "slug": "crankshaft-position-sensor-replacement"},
+            ],
+        },
+
+        "rough-idle": {
+            "title": "Rough Idle",
+            "intro": "A rough idle can feel like shaking, stumbling, uneven RPM, or engine vibration while the vehicle is stopped.",
+            "common_causes": [
+                "Vacuum leaks",
+                "Dirty throttle body",
+                "Mass airflow sensor problems",
+                "Lean fuel mixture",
+                "Worn spark plugs or ignition components",
+            ],
+            "related_codes": [
+                {"code": "P0171", "label": "System Too Lean (Bank 1)"},
+                {"code": "P0172", "label": "System Too Rich (Bank 1)"},
+                {"code": "P0300", "label": "Random/Multiple Cylinder Misfire"},
+            ],
+            "common_repairs": [
+                {"name": "Vacuum Leak Diagnosis", "slug": "vacuum-leak-diagnosis"},
+                {"name": "MAF Sensor Diagnosis", "slug": "maf-sensor-diagnosis"},
+                {"name": "Throttle Body Cleaning", "slug": "throttle-body-cleaning"},
+                {"name": "Spark Plug Replacement", "slug": "spark-plug-replacement"},
+            ],
+        },
+    }
+
+    return symptom_pages.get(symptom_slug)
+
+@app.get("/repair-cost/{service_slug}", response_class=HTMLResponse)
+def repair_cost_page(request: Request, service_slug: str):
+
+    metric_incr("page_repair_cost")
+
+    catalog = load_services_catalog()
+
+    service_match = None
+
+    for category in catalog["categories"]:
+        for service in category.get("services", []):
+            slug = slugify_service_name(service.get("name", ""))
+            if slug == service_slug:
+                service_match = service
+                break
+
+    if not service_match:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    labor_min = float(service_match.get("labor_hours_min", 0))
+    labor_max = float(service_match.get("labor_hours_max", 0))
+
+    rate = default_labor_rate()
+
+    labor_low = int(labor_min * rate)
+    labor_high = int(labor_max * rate)
+
+    return templates.TemplateResponse(
+        "repair_cost.html",
+        {
+            "request": request,
+            "service": service_match,
+            "labor_min": labor_min,
+            "labor_max": labor_max,
+            "labor_low": labor_low,
+            "labor_high": labor_high,
+        },
+    )
+
+@app.get("/symptoms/{symptom_slug}", response_class=HTMLResponse)
+def symptom_page(request: Request, symptom_slug: str):
+    metric_incr("page_symptom")
+
+    symptom = get_symptom_page_data(symptom_slug)
+    if not symptom:
+        raise HTTPException(status_code=404, detail="Symptom page not found")
+
+    return templates.TemplateResponse(
+        "symptom_page.html",
+        {
+            "request": request,
+            "symptom": symptom,
+            "symptom_slug": symptom_slug,
+        },
+    )
+
+@app.get("/repair-cost", response_class=HTMLResponse)
+def repair_cost_index(request: Request):
+    metric_incr("page_repair_cost_index")
+
+    catalog = load_services_catalog()
+    repair_pages = []
+
+    for category in catalog["categories"]:
+        for service in category.get("services", []):
+            name = service.get("name", "").strip()
+            if not name:
+                continue
+
+            slug = slugify_service_name(name)
+
+            labor_min = float(service.get("labor_hours_min", 0) or 0)
+            labor_max = float(service.get("labor_hours_max", 0) or 0)
+
+            repair_pages.append({
+                "name": name,
+                "slug": slug,
+                "category": category.get("name", "General Repair"),
+                "labor_min": labor_min,
+                "labor_max": labor_max,
+            })
+
+    repair_pages.sort(key=lambda x: x["name"].lower())
+
+    return templates.TemplateResponse(
+        "repair_cost_index.html",
+        {
+            "request": request,
+            "repair_pages": repair_pages,
+        },
+    )
+
+@app.get("/symptoms", response_class=HTMLResponse)
+def symptoms_index(request: Request):
+    metric_incr("page_symptoms_index")
+
+    symptom_pages = [
+        {
+            "title": "Engine Misfire",
+            "slug": "engine-misfire",
+            "summary": "Rough idle, hesitation, loss of power, and flashing check engine light.",
+        },
+        {
+            "title": "Check Engine Light",
+            "slug": "check-engine-light",
+            "summary": "Common causes, related OBD codes, and likely repair paths.",
+        },
+        {
+            "title": "Car Won’t Start",
+            "slug": "car-wont-start",
+            "summary": "Battery, starter, fuel, ignition, and sensor-related no-start issues.",
+        },
+        {
+            "title": "Rough Idle",
+            "slug": "rough-idle",
+            "summary": "Uneven RPM, shaking at idle, lean/rich conditions, and ignition faults.",
+        },
+    ]
+
+    return templates.TemplateResponse(
+        "symptoms_index.html",
+        {
+            "request": request,
+            "symptom_pages": symptom_pages,
+        },
+    )
+
+@app.get("/knowledge", response_class=HTMLResponse)
+def knowledge_hub(request: Request):
+    metric_incr("page_knowledge_hub")
+
+    sections = [
+        {
+            "title": "OBD Code Guides",
+            "href": "/obd",
+            "summary": "Look up diagnostic trouble codes, causes, quick checks, and related repairs.",
+        },
+        {
+            "title": "Repair Cost Guides",
+            "href": "/repair-cost",
+            "summary": "Browse repair labor times and estimated labor cost ranges powered by TorqueMech’s service database.",
+        },
+        {
+            "title": "Symptoms Guide",
+            "href": "/symptoms",
+            "summary": "Start with a symptom like rough idle, check engine light, or engine misfire and trace likely causes.",
+        },
+    ]
+
+    return templates.TemplateResponse(
+        "knowledge_hub.html",
+        {
+            "request": request,
+            "sections": sections,
+        },
+    )
 # ---------------------------------
 # SITEMAP 
 # ---------------------------------
@@ -800,7 +1066,6 @@ from fastapi.responses import Response
 
 @app.get("/sitemap.xml", response_class=Response)
 def sitemap(request: Request):
-
     conn = obd_conn()
     cur = conn.cursor()
 
@@ -810,16 +1075,31 @@ def sitemap(request: Request):
     conn.close()
 
     base_url = str(request.base_url).rstrip("/")
-
     urls = []
 
     urls.append(f"<url><loc>{base_url}/</loc></url>")
     urls.append(f"<url><loc>{base_url}/estimator</loc></url>")
     urls.append(f"<url><loc>{base_url}/obd</loc></url>")
+    urls.append(f"<url><loc>{base_url}/repair-cost</loc></url>")
+    urls.append(f"<url><loc>{base_url}/symptoms</loc></url>")
+    urls.append(f"<url><loc>{base_url}/knowledge</loc></url>")
+    urls.append(f"<url><loc>{base_url}/symptoms/engine-misfire</loc></url>")
+    urls.append(f"<url><loc>{base_url}/symptoms/check-engine-light</loc></url>")
+    urls.append(f"<url><loc>{base_url}/symptoms/car-wont-start</loc></url>")
+    urls.append(f"<url><loc>{base_url}/symptoms/rough-idle</loc></url>")
 
+    # OBD pages
     for r in rows:
         code = r["code"].lower()
         urls.append(f"<url><loc>{base_url}/obd/{code}</loc></url>")
+
+    # Repair-cost pages
+    catalog = load_services_catalog()
+    for category in catalog["categories"]:
+        for service in category.get("services", []):
+            slug = slugify_service_name(service.get("name", ""))
+            if slug:
+                urls.append(f"<url><loc>{base_url}/repair-cost/{slug}</loc></url>")
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

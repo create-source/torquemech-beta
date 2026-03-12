@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block title %}Repair Cost Guides | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-container">
+  <div class="card">
+    <div class="eyebrow">TorqueMech Knowledge</div>
+    <h1>Repair Cost Guides</h1>
+    <p class="tm-muted">
+      Browse repair cost guides powered by TorqueMech’s service database.
+      These pages help drivers and mechanics understand common labor times
+      and estimated repair costs.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>All Repair Guides</h2>
+
+    <div class="tm-repair-guide-list">
+      {% for item in repair_pages %}
+      <a class="tm-repair-guide-item" href="/repair-cost/{{ item.slug }}">
+        <div>
+          <strong>{{ item.name }}</strong>
+          <div class="tm-muted">{{ item.category }}</div>
+        </div>
+        <div class="tm-muted">
+          {{ item.labor_min }} – {{ item.labor_max }} hrs
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

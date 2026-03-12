@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}Symptoms Guide | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-container">
+  <div class="card">
+    <div class="eyebrow">TorqueMech Knowledge</div>
+    <h1>Symptoms Guide</h1>
+    <p class="tm-muted">
+      Browse common vehicle symptoms and connect them to likely OBD codes,
+      repair guides, and estimate paths.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>Common Symptom Pages</h2>
+
+    <div class="tm-repair-guide-list">
+      {% for item in symptom_pages %}
+      <a class="tm-repair-guide-item" href="/symptoms/{{ item.slug }}">
+        <div>
+          <strong>{{ item.title }}</strong>
+          <div class="tm-muted">{{ item.summary }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

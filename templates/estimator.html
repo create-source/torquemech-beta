@@ -52,8 +52,16 @@
         </div>
 
         <div>
-          <label for="make">Make (popular)</label>
-          <select id="make"></select>
+          <label for="make">Make</label>
+
+            <input
+            id="make"
+            list="makesList"
+            placeholder="Start typing a make..."
+            autocomplete="off"
+          />
+
+          <datalist id="makesList"></datalist>
         </div>
 
         <div>
