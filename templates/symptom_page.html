@@ -20,21 +20,6 @@
   </div>
 
   <div class="card" style="margin-top:16px;">
-  <h2>Related OBD Codes</h2>
-
-  <div class="tm-repair-guide-list">
-    {% for item in symptom.related_codes %}
-    <a class="tm-repair-guide-item" href="/obd/{{ item.code|lower }}">
-      <div>
-        <strong>{{ item.code }}</strong>
-        <div class="tm-muted">{{ item.label }}</div>
-      </div>
-    </a>
-    {% endfor %}
-  </div>
-</div>
-
-  <div class="card" style="margin-top:16px;">
     <h2>Common Repairs</h2>
     <div class="tm-repair-guide-list">
       {% for item in symptom.common_repairs %}

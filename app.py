@@ -77,6 +77,17 @@ SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 FEEDBACK_EMAIL = os.getenv("FEEDBACK_EMAIL")
 
+def service_slug_exists(service_slug: str) -> bool:
+    catalog = load_services_catalog()
+
+    for category in catalog["categories"]:
+        for service in category.get("services", []):
+            slug = slugify_service_name(service.get("name", ""))
+            if slug == service_slug:
+                return True
+
+    return False
+
 # ===============================
 # Basic Error Logging (Beta-safe)
 # ===============================
@@ -948,6 +959,15 @@ def symptom_page(request: Request, symptom_slug: str):
     symptom = get_symptom_page_data(symptom_slug)
     if not symptom:
         raise HTTPException(status_code=404, detail="Symptom page not found")
+
+    filtered_repairs = []
+    for repair in symptom.get("common_repairs", []):
+        slug = repair.get("slug", "").strip()
+        if slug and service_slug_exists(slug):
+            filtered_repairs.append(repair)
+
+    symptom = dict(symptom)
+    symptom["common_repairs"] = filtered_repairs
 
     return templates.TemplateResponse(
         "symptom_page.html",

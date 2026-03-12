@@ -26,6 +26,13 @@
   </div>
 </section>
 
+<div class="tm-section">
+  <h2 class="tm-section-title">Tools</h2>
+  <p class="tm-section-sub">
+    Professional diagnostic and repair estimate tools for mechanics and DIYers.
+  </p>
+</div>
+
 <section class="tm-grid2">
   <a href="/estimator" class="tm-linkCard tm-card">
     <div class="tm-card__icon">📄</div>
@@ -48,10 +55,10 @@
   <div class="card">
     <div class="eyebrow">TorqueMech Knowledge</div>
 
-    <h2>Understand Vehicle Problems</h2>
+    <h2>Diagnose Vehicle Problems</h2>
 
     <p class="tm-muted">
-      Explore common vehicle symptoms, diagnostic trouble codes, and repair cost guides to better understand what your vehicle may need.
+      Start with a symptom, diagnostic code, or repair guide to diagnose vehicle problems and understand possible fixes.
     </p>
 
     <div class="tm-repair-guide-list" style="margin-top:16px;">
@@ -74,30 +81,62 @@
         </div>
       </a>
 
-      <a class="tm-repair-guide-item" href="/obd">
+      <a class="tm-repair-guide-item" href="/knowledge">
         <div>
-          <strong>OBD Code Lookup</strong>
+          <strong>Knowledge Hub</strong>
           <div class="tm-muted">
-            Search diagnostic trouble codes and understand possible causes.
+            Browse TorqueMech’s growing library of symptoms, repair guides, and diagnostics.
           </div>
         </div>
       </a>
-
     </div>
   </div>
 
-  <section class="tm-testimonial">
-  <div class="tm-testimonial-inner">
-    <p class="tm-testimonial-title">Trusted by mechanics</p>
-
-    <blockquote>
-      “Great app — I’ll definitely be using it as a mobile mechanic for estimates.”
-    </blockquote>
-
-    <p class="tm-testimonial-author">— Anthony H., Mobile Mechanic</p>
   </div>
+</div>
+<section class="tm-section">
+  <h2 class="tm-section-title">Diagnose Common Vehicle Symptoms</h2>
+  <p class="tm-section-sub">
+    Start diagnosing common vehicle problems.
+  </p>
 
+  <div class="tm-grid2">
+
+    <a href="/symptoms/engine-misfire" class="tm-linkCard tm-card">
+      <div class="tm-card__icon">⚠️</div>
+      <div>
+        <h3>Engine Misfire</h3>
+        <p>Rough running engine, shaking, or power loss.</p>
+      </div>
+    </a>
+
+    <a href="/symptoms/car-wont-start" class="tm-linkCard tm-card">
+      <div class="tm-card__icon">🔋</div>
+      <div>
+        <h3>Car Won't Start</h3>
+        <p>Diagnose battery, starter, or ignition problems.</p>
+      </div>
+    </a>
+
+    <a href="/symptoms/rough-idle" class="tm-linkCard tm-card">
+      <div class="tm-card__icon">⚙️</div>
+      <div>
+        <h3>Rough Idle</h3>
+        <p>Engine shaking or unstable idle speed.</p>
+      </div>
+    </a>
+
+    <a href="/symptoms/check-engine-light" class="tm-linkCard tm-card">
+      <div class="tm-card__icon">🔧</div>
+      <div>
+        <h3>Check Engine Light</h3>
+        <p>Understand why the warning light appears.</p>
+      </div>
+    </a>
+  </div>
 </section>
+
+<section class="tm-testimonial">
 {% endblock %}
 
 {% block page_js %}<script src="/static/home.js?v=2"></script>{% endblock %}
