@@ -2514,6 +2514,13 @@ a.btn:visited {
 .tm-footer-support{
   font-size:13px;
   opacity:0.85;
+  display:inline-flex;
+  align-items:center;
+  gap: 4px;
+}
+
+.tm-footer-support a:hover{
+  color:rgba(255,255,255,.92);
 }
 
 .tm-testimonial {
