@@ -1344,31 +1344,34 @@ def db_conn() -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def init_db() -> None:
     conn = db_conn()
     cur = conn.cursor()
+
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS feedback (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          created_at TEXT NOT NULL,
-          is_read INTEGER NOT NULL DEFAULT 0,
-          payload_json TEXT NOT NULL
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            payload_json TEXT NOT NULL
         )
         """
     )
+
+    # ADD THIS HERE
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS symptom_search_terms (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symptom_slug TEXT NOT NULL,
+            term TEXT NOT NULL
+        )
+        """
+    )
+
     conn.commit()
     conn.close()
-
-def get_admin_meta() -> dict:
-    if not OBD_ADMIN_META_PATH.exists():
-        return {"last_viewed": None}
-    return json.loads(OBD_ADMIN_META_PATH.read_text())
-
-def set_admin_last_viewed() -> None:
-    data = {"last_viewed": datetime.utcnow().isoformat()}
-    OBD_ADMIN_META_PATH.write_text(json.dumps(data))
 
 # ===============================
 # Email Feedback Sender
