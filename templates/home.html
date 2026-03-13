@@ -55,19 +55,23 @@
   <div class="card">
     <div class="eyebrow">TorqueMech Knowledge</div>
 
-    <h2>Diagnose Vehicle Problems</h2>
+    <h1>Vehicle Diagnostics</h1>
+
+    <p class="tm-subtle">
+    Free tools for DIYers, mobile mechanics, and small repair shops.
+    </p>
 
     <p class="tm-muted">
-      Start with a symptom, diagnostic code, or repair guide to diagnose vehicle problems and understand possible fixes.
+      Start diagnosing common vehicle problems.
     </p>
 
     <div class="tm-repair-guide-list" style="margin-top:16px;">
 
       <a class="tm-repair-guide-item" href="/symptoms">
         <div>
-          <strong>Symptoms Guide</strong>
+          <strong>Diagnostic Guides</strong>
           <div class="tm-muted">
-            Diagnose issues like engine misfire, rough idle, or a car that won't start.
+          Quick diagnostic references for common vehicle problems.
           </div>
         </div>
       </a>
@@ -95,48 +99,115 @@
   </div>
 </div>
 <section class="tm-section">
-  <h2 class="tm-section-title">Diagnose Common Vehicle Symptoms</h2>
+  <h2 class="tm-section-title">Common Diagnostic Guides</h2>
   <p class="tm-section-sub">
-    Start diagnosing common vehicle problems.
+    Quick diagnostic references for common vehicle issues.
   </p>
 
-  <div class="tm-grid2">
+  <input
+    id="diagSearch"
+    class="tm-search-input"
+    type="text"
+    placeholder="Search symptoms (misfire, shaking, won't start...)"
+    autocomplete="off"
+  />
 
-    <a href="/symptoms/engine-misfire" class="tm-linkCard tm-card">
-      <div class="tm-card__icon">⚠️</div>
-      <div>
-        <h3>Engine Misfire</h3>
-        <p>Rough running engine, shaking, or power loss.</p>
-      </div>
-    </a>
-
-    <a href="/symptoms/car-wont-start" class="tm-linkCard tm-card">
-      <div class="tm-card__icon">🔋</div>
-      <div>
-        <h3>Car Won't Start</h3>
-        <p>Diagnose battery, starter, or ignition problems.</p>
-      </div>
-    </a>
-
-    <a href="/symptoms/rough-idle" class="tm-linkCard tm-card">
-      <div class="tm-card__icon">⚙️</div>
-      <div>
-        <h3>Rough Idle</h3>
-        <p>Engine shaking or unstable idle speed.</p>
-      </div>
-    </a>
-
-    <a href="/symptoms/check-engine-light" class="tm-linkCard tm-card">
-      <div class="tm-card__icon">🔧</div>
-      <div>
-        <h3>Check Engine Light</h3>
-        <p>Understand why the warning light appears.</p>
-      </div>
-    </a>
-  </div>
+  <div id="diagSuggestions" class="tm-search-suggestions"></div>
 </section>
 
 <section class="tm-testimonial">
+
+  <div class="tm-container" style="text-align:center; margin-top:40px;">
+    <p style="font-size:18px; font-weight:500;">
+      ⭐ “Really helpful tool for quick repair estimates.”
+    </p>
+
+    <p class="tm-muted" style="margin-top:6px;">
+      — Anthony, Mobile Mechanic
+    </p>
+  </div>
+
+</section>
+<script>
+const search = document.getElementById("diagSearch");
+const suggestions = document.getElementById("diagSuggestions");
+
+const diagnosticGuides = [
+  {
+    title: "Engine Misfire",
+    href: "/symptoms/engine-misfire",
+    summary: "Rough running engine, shaking, or power loss.",
+    search: ["misfire","engine shaking","engine vibration","rough running"]
+  },
+  {
+    title: "Car Won't Start",
+    href: "/symptoms/car-wont-start",
+    summary: "Diagnose battery, starter, or ignition problems.",
+    search: ["won't start","no start","battery dead","starter issue"]
+  },
+  {
+    title: "Rough Idle",
+    href: "/symptoms/rough-idle",
+    summary: "Engine shaking or unstable idle speed.",
+    search: ["rough idle","engine shaking idle","unstable rpm"]
+  },
+  {
+    title: "Check Engine Light",
+    href: "/symptoms/check-engine-light",
+    summary: "Understand why the warning light appears.",
+    search: ["check engine","engine light","warning light","obd code"]
+  }
+];
+
+function showSuggestions(term) {
+  suggestions.innerHTML = "";
+
+  if (!term) {
+    suggestions.style.display = "none";
+    return;
+  }
+
+  const matches = diagnosticGuides.filter(g =>
+    g.search.some(s => s.includes(term)) ||
+    g.title.toLowerCase().includes(term)
+  );
+
+  if (!matches.length) {
+    suggestions.style.display = "none";
+    return;
+  }
+
+  suggestions.innerHTML = matches.map(g => `
+    <a class="tm-suggestion" href="${g.href}">
+      ${g.title}
+    </a>
+  `).join("");
+
+  suggestions.style.display = "block";
+}
+
+if (search && suggestions) {
+  search.addEventListener("input", function () {
+    showSuggestions(this.value.trim().toLowerCase());
+  });
+
+  search.addEventListener("focus", function () {
+    showSuggestions(this.value.trim().toLowerCase());
+  });
+
+  search.addEventListener("blur", function () {
+    setTimeout(() => {
+      suggestions.style.display = "none";
+    }, 150);
+  });
+}
+
+document.addEventListener("click", function(e){
+  if(!search.contains(e.target) && !suggestions.contains(e.target)){
+    suggestions.style.display = "none";
+  }
+});
+</script>
 {% endblock %}
 
 {% block page_js %}<script src="/static/home.js?v=2"></script>{% endblock %}

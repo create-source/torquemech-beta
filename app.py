@@ -837,6 +837,7 @@ def get_symptom_page_data(symptom_slug: str):
                 {"name": "Ignition Coil Replacement", "slug": "ignition-coil-replacement"},
                 {"name": "Fuel Injector Diagnosis", "slug": "fuel-injector-diagnosis"},
                 {"name": "Vacuum Leak Diagnosis", "slug": "vacuum-leak-diagnosis"},
+                {"name": "Engine Compression Test", "slug": "engine-compression-test"},
             ],
         },
 
@@ -960,14 +961,7 @@ def symptom_page(request: Request, symptom_slug: str):
     if not symptom:
         raise HTTPException(status_code=404, detail="Symptom page not found")
 
-    filtered_repairs = []
-    for repair in symptom.get("common_repairs", []):
-        slug = repair.get("slug", "").strip()
-        if slug and service_slug_exists(slug):
-            filtered_repairs.append(repair)
-
     symptom = dict(symptom)
-    symptom["common_repairs"] = filtered_repairs
 
     return templates.TemplateResponse(
         "symptom_page.html",
@@ -1065,9 +1059,9 @@ def knowledge_hub(request: Request):
             "summary": "Browse repair labor times and estimated labor cost ranges powered by TorqueMech’s service database.",
         },
         {
-            "title": "Symptoms Guide",
+            "title": "Diagnostic Guides",
             "href": "/symptoms",
-            "summary": "Start with a symptom like rough idle, check engine light, or engine misfire and trace likely causes.",
+            "summary": "Quick diagnostic references for common vehicle problems.",
         },
     ]
 

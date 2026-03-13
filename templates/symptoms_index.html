@@ -1,24 +1,35 @@
 {% extends "layout.html" %}
 
-{% block title %}Symptoms Guide | TorqueMech{% endblock %}
+{% block title %}Diagnostic Guides | TorqueMech{% endblock %}
 
 {% block content %}
 <section class="tm-container">
   <div class="card">
     <div class="eyebrow">TorqueMech Knowledge</div>
-    <h1>Symptoms Guide</h1>
+    <h1>Diagnostic Guides</h1>
     <p class="tm-muted">
-      Browse common vehicle symptoms and connect them to likely OBD codes,
-      repair guides, and estimate paths.
+      Quick diagnostic references used by mechanics to identify common vehicle issues.
     </p>
   </div>
 
   <div class="card" style="margin-top:16px;">
-    <h2>Common Symptom Pages</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <h2 style="margin:0;">Common Diagnostic Guides</h2>
+      <input
+        id="diagnosticSearch"
+        type="text"
+        placeholder="Search diagnostic guides..."
+        style="min-width:240px; max-width:360px; width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:inherit;"
+      />
+    </div>
 
-    <div class="tm-repair-guide-list">
+    <div id="diagnosticGuideList" class="tm-repair-guide-list" style="margin-top:16px;">
       {% for item in symptom_pages %}
-      <a class="tm-repair-guide-item" href="/symptoms/{{ item.slug }}">
+      <a class="tm-repair-guide-item"
+        href="/symptoms/{{ item.slug }}"
+        data-title="{{ item.title|lower }}"
+        data-summary="{{ item.summary|lower }}"
+        data-search="{{ item.search_terms|lower }} {{ item.title|lower }} {{ item.summary|lower }}">
         <div>
           <strong>{{ item.title }}</strong>
           <div class="tm-muted">{{ item.summary }}</div>
@@ -26,6 +37,33 @@
       </a>
       {% endfor %}
     </div>
+    </div>
   </div>
 </section>
+
+<script>
+  (function () {
+    const input = document.getElementById("diagnosticSearch");
+    const items = document.querySelectorAll("#diagnosticGuideList .tm-repair-guide-item");
+
+    if (!input || !items.length) return;
+
+    input.addEventListener("input", function () {
+      const term = input.value.toLowerCase().trim();
+
+      items.forEach((item) => {
+        const title = item.dataset.title || "";
+        const summary = item.dataset.summary || "";
+        const search = item.dataset.search || "";
+
+        const match =
+          title.includes(term) ||
+          summary.includes(term) ||
+          search.includes(term);
+
+        item.style.display = match ? "" : "none";
+      });
+    });
+  })();
+</script>
 {% endblock %}

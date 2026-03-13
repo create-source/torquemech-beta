@@ -1,0 +1,437 @@
+[
+    {
+      "slug": "engine-misfire",
+      "title": "Engine Misfire",
+      "search_terms": [
+        "car shaking",
+        "engine shaking",
+        "car jerking",
+        "rough running",
+        "shaking while driving",
+        "misfire"
+      ],
+    "summary": "Rough idle, hesitation, loss of power, and flashing check engine light.",
+    "intro": "An engine misfire happens when one or more cylinders fail to burn the air-fuel mixture correctly. This can cause shaking, hesitation, poor fuel economy, and reduced power.",
+    "system": "Engine",
+    "severity": "Medium",
+    "driveability": "Usually drivable for a short distance, but not recommended if the check engine light is flashing.",
+    "repair_cost_min": 150,
+    "repair_cost_max": 900,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 3 hours",
+    "common_causes": [
+      "Worn or fouled spark plugs",
+      "Failing ignition coils",
+      "Vacuum leaks",
+      "Fuel injector problems",
+      "Low engine compression",
+      "Dirty or faulty mass airflow sensor"
+    ],
+    "related_codes": [
+      { "code": "P0300", "label": "Random/Multiple Cylinder Misfire Detected" },
+      { "code": "P0301", "label": "Cylinder 1 Misfire Detected" },
+      { "code": "P0302", "label": "Cylinder 2 Misfire Detected" },
+      { "code": "P0303", "label": "Cylinder 3 Misfire Detected" },
+      { "code": "P0304", "label": "Cylinder 4 Misfire Detected" }
+    ],
+    "common_repairs": [
+      { "name": "Replace spark plugs" },
+      { "name": "Replace ignition coil" },
+      { "name": "Repair vacuum leak" },
+      { "name": "Clean or replace fuel injector" },
+      { "name": "Perform compression test and mechanical diagnosis" }
+    ]    
+  },
+  {
+    "slug": "check-engine-light",
+    "title": "Check Engine Light",
+    "summary": "Common causes, related OBD codes, and likely repair paths.",
+    "intro": "A check engine light can be triggered by emissions faults, ignition problems, fuel system issues, sensor failures, or engine performance problems. A scan tool is the first step.",
+    "system": "Emissions",
+    "severity": "Varies",
+    "driveability": "Often drivable if steady, but urgent if flashing.",
+    "repair_cost_min": 50,
+    "repair_cost_max": 1500,
+    "difficulty": "Varies",
+    "repair_time": "0.5 to 4 hours",
+    "common_causes": [
+      "Loose or faulty gas cap",
+      "Oxygen sensor failure",
+      "Catalytic converter efficiency issues",
+      "Ignition misfires",
+      "EVAP system leaks",
+      "Mass airflow sensor problems"
+    ],
+    "related_codes": [
+      { "code": "P0420", "label": "Catalyst System Efficiency Below Threshold" },
+      { "code": "P0171", "label": "System Too Lean" },
+      { "code": "P0300", "label": "Random/Multiple Cylinder Misfire" },
+      { "code": "P0442", "label": "EVAP System Small Leak Detected" },
+      { "code": "P0101", "label": "Mass Air Flow Sensor Range/Performance" }
+    ],
+    "common_repairs": [
+      { "name": "Scan and diagnose stored trouble codes" },
+      { "name": "Replace faulty oxygen sensor" },
+      { "name": "Repair EVAP leak" },
+      { "name": "Replace spark plugs or ignition components" },
+      { "name": "Clean or replace mass airflow sensor" }
+    ]
+  },
+  {
+    "slug": "car-wont-start",
+    "title": "Car Won’t Start",
+    "search_terms": [
+      "car wont start",
+      "no start",
+      "engine wont crank",
+      "car not starting"
+    ],
+    "summary": "Battery, starter, fuel, ignition, and sensor-related no-start issues.",
+    "intro": "A vehicle that won’t start may have a battery issue, starter failure, ignition fault, fuel delivery problem, or sensor-related no-start condition.",
+    "system": "Starting / Charging",
+    "severity": "High",
+    "driveability": "No",
+    "repair_cost_min": 100,
+    "repair_cost_max": 1200,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 3 hours",
+    "common_causes": [
+      "Weak or dead battery",
+      "Bad starter motor or starter solenoid",
+      "Poor battery terminal connection",
+      "No fuel pressure",
+      "Ignition switch issues",
+      "Crankshaft position sensor failure"
+    ],
+    "related_codes": [
+      { "code": "P0335", "label": "Crankshaft Position Sensor A Circuit" },
+      { "code": "P0562", "label": "System Voltage Low" },
+      { "code": "P0230", "label": "Fuel Pump Primary Circuit" },
+      { "code": "P0685", "label": "ECM/PCM Power Relay Control Circuit" }
+    ],
+    "common_repairs": [
+      { "name": "Charge or replace battery" },
+      { "name": "Replace starter motor" },
+      { "name": "Clean and tighten battery terminals" },
+      { "name": "Test fuel pressure and replace fuel pump if needed" },
+      { "name": "Replace crankshaft position sensor" }
+    ]
+  },
+  {
+    "slug": "rough-idle",
+    "title": "Rough Idle",
+    "search_terms": [
+      "car shaking at idle",
+      "engine vibration",
+      "rough idle",
+      "shaking when stopped"
+    ],
+    "summary": "Uneven RPM, shaking at idle, lean/rich conditions, and ignition faults.",
+    "intro": "A rough idle usually means the engine is struggling to maintain a smooth idle speed. This can be caused by air leaks, ignition issues, fuel delivery problems, or sensor faults.",
+    "system": "Engine",
+    "severity": "Medium",
+    "driveability": "Usually yes for short distances, depending on severity.",
+    "repair_cost_min": 100,
+    "repair_cost_max": 700,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 2 hours",
+    "common_causes": [
+      "Vacuum leaks",
+      "Dirty throttle body",
+      "Worn spark plugs",
+      "Bad ignition coil",
+      "Dirty fuel injectors",
+      "Mass airflow or idle control issues"
+    ],
+    "related_codes": [
+      { "code": "P0505", "label": "Idle Control System Malfunction" },
+      { "code": "P0171", "label": "System Too Lean Bank 1" },
+      { "code": "P0300", "label": "Random/Multiple Cylinder Misfire" },
+      { "code": "P0101", "label": "Mass Air Flow Sensor Range/Performance" }
+    ],
+    "common_repairs": [
+      { "name": "Repair vacuum leak" },
+      { "name": "Clean throttle body" },
+      { "name": "Replace spark plugs" },
+      { "name": "Replace ignition coil" },
+      { "name": "Clean fuel injectors" }
+    ]
+  },
+  {
+    "slug": "engine-knocking",
+    "title": "Engine Knocking",
+    "summary": "Knocking or pinging noise from the engine under acceleration.",
+    "intro": "Engine knocking occurs when fuel detonates unevenly inside the cylinder. It is commonly caused by ignition timing issues, poor fuel quality, or excessive carbon buildup.",
+    "system": "Engine",
+    "severity": "High",
+    "driveability": "Driveable short term but can cause engine damage.",
+    "repair_cost_min": 100,
+    "repair_cost_max": 2000,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 4 hours",
+    "common_causes": [
+    "Low octane fuel",
+    "Carbon buildup in combustion chamber",
+    "Faulty knock sensor",
+    "Incorrect ignition timing",
+    "Overheating engine"
+    ],
+    "related_codes": [
+    {"code":"P0325","label":"Knock Sensor Circuit Malfunction"},
+    {"code":"P0330","label":"Knock Sensor 2 Circuit Malfunction"}
+    ],
+    "common_repairs":[
+    {"name":"Use higher octane fuel"},
+    {"name":"Replace knock sensor"},
+    {"name":"Clean carbon buildup"},
+    {"name":"Correct ignition timing"}
+    ]
+    },
+{
+    "slug": "engine-overheating",
+    "title": "Engine Overheating",
+    "search_terms": [
+      "car overheating",
+      "running hot",
+      "engine too hot",
+      "temperature gauge high"
+    ],
+    "summary": "High engine temperature, coolant loss, or steam from engine bay.",
+    "intro": "Engine overheating occurs when the cooling system fails to remove enough heat from the engine. This can lead to severe engine damage if not corrected.",
+    "system": "Cooling System",
+    "severity": "Critical",
+    "driveability": "Stop driving immediately.",
+    "repair_cost_min": 150,
+    "repair_cost_max": 2500,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 4 hours",
+    "common_causes": [
+    "Low coolant level",
+    "Failed thermostat",
+    "Radiator blockage",
+    "Water pump failure",
+    "Cooling fan malfunction"
+    ],
+    "related_codes":[
+    {"code":"P0217","label":"Engine Over Temperature Condition"},
+    {"code":"P0128","label":"Coolant Thermostat Below Regulating Temperature"}
+    ],
+    "common_repairs":[
+    {"name":"Replace thermostat"},
+    {"name":"Repair coolant leak"},
+    {"name":"Replace radiator"},
+    {"name":"Replace water pump"}
+    ],
+    "search_terms": [
+        "car overheating",
+        "engine overheating",
+        "overheating",
+        "running hot",
+        "hot engine",
+        "coolant overheating"
+    ]
+    },
+{
+    "slug": "dead-battery",
+    "title": "Dead Battery",
+    "summary": "Vehicle will not start and electrical systems are weak or inactive.",
+    "intro": "A dead battery prevents the starter motor from turning the engine. Batteries commonly fail due to age, extreme temperatures, or charging system issues.",
+    "system": "Electrical",
+    "severity": "Medium",
+    "driveability": "Vehicle will not start.",
+    "repair_cost_min": 100,
+    "repair_cost_max": 300,
+    "difficulty": "Easy",
+    "repair_time": "15 to 30 minutes",
+    "common_causes":[
+    "Old battery",
+    "Parasitic drain",
+    "Alternator not charging",
+    "Loose battery terminals"
+    ],
+    "related_codes":[
+    {"code":"P0562","label":"System Voltage Low"}
+    ],
+    "common_repairs":[
+    {"name":"Replace battery"},
+    {"name":"Clean battery terminals"},
+    {"name":"Test charging system"}
+    ]
+    },
+{
+    "slug": "alternator-failure",
+    "title": "Alternator Failure",
+    "summary": "Battery warning light on and electrical system losing power.",
+    "intro": "The alternator charges the battery and powers the electrical system while the engine runs. Failure can cause the vehicle to stall or lose electrical power.",
+    "system": "Electrical",
+    "severity": "High",
+    "driveability": "Limited driving before battery drains.",
+    "repair_cost_min": 300,
+    "repair_cost_max": 900,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 2 hours",
+    "common_causes":[
+    "Worn alternator bearings",
+    "Voltage regulator failure",
+    "Broken serpentine belt",
+    "Faulty alternator diodes"
+    ],
+    "related_codes":[
+    {"code":"P0620","label":"Generator Control Circuit"},
+    {"code":"P0562","label":"System Voltage Low"}
+    ],
+    "common_repairs":[
+    {"name":"Replace alternator"},
+    {"name":"Replace serpentine belt"},
+    {"name":"Repair charging circuit"}
+    ]
+    },
+
+{
+    "slug": "poor-fuel-economy",
+    "title": "Poor Fuel Economy",
+    "summary": "Vehicle consuming more fuel than normal.",
+    "intro": "Poor fuel economy often results from inefficient combustion, faulty sensors, or restricted airflow.",
+    "system": "Fuel System",
+    "severity": "Low",
+    "driveability": "Yes",
+    "repair_cost_min": 50,
+    "repair_cost_max": 800,
+    "difficulty": "Easy to Moderate",
+    "repair_time": "30 minutes to 2 hours",
+    "common_causes":[
+    "Dirty air filter",
+    "Oxygen sensor failure",
+    "Mass airflow sensor issues",
+    "Fuel injector problems",
+    "Underinflated tires"
+    ],
+    "related_codes":[
+    {"code":"P0171","label":"System Too Lean"},
+    {"code":"P0172","label":"System Too Rich"}
+    ],
+    "common_repairs":[
+    {"name":"Replace air filter"},
+    {"name":"Replace oxygen sensor"},
+    {"name":"Clean mass airflow sensor"}
+    ]
+    },
+
+{
+    "slug": "brake-squealing",
+    "title": "Brake Squealing",
+    "summary": "High-pitched noise when braking.",
+    "intro": "Brake squealing often occurs when brake pads wear down or debris becomes trapped between the pad and rotor.",
+    "system": "Brakes",
+    "severity": "Medium",
+    "driveability": "Yes but should be inspected.",
+    "repair_cost_min": 150,
+    "repair_cost_max": 600,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 2 hours",
+    "common_causes":[
+    "Worn brake pads",
+    "Glazed brake pads",
+    "Debris between rotor and pad",
+    "Lack of lubrication"
+    ],
+    "related_codes":[],
+    "common_repairs":[
+    {"name":"Replace brake pads"},
+    {"name":"Resurface or replace rotors"},
+    {"name":"Clean brake components"}
+    ]
+    },
+
+{
+    "slug": "brake-vibration",
+    "title": "Brake Vibration",
+    "summary": "Steering wheel or pedal shakes when braking.",
+    "intro": "Brake vibration is usually caused by warped brake rotors or uneven brake pad deposits.",
+    "system": "Brakes",
+    "severity": "Medium",
+    "driveability": "Yes but braking performance may be reduced.",
+    "repair_cost_min": 200,
+    "repair_cost_max": 700,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 2 hours",
+    "common_causes":[
+    "Warped brake rotors",
+    "Uneven pad deposits",
+    "Loose suspension components"
+    ],
+    "related_codes":[],
+    "common_repairs":[
+    {"name":"Replace brake rotors"},
+    {"name":"Replace brake pads"}
+    ],
+    "search_terms": [
+    "car shakes when braking",
+    "brake shake",
+    "vibration when braking",
+    "steering wheel shakes when braking",
+    "pedal vibration"
+    ]
+    },
+
+{
+    "slug": "steering-wheel-vibration",
+    "title": "Steering Wheel Vibration",
+    "summary": "Steering wheel shakes while driving.",
+    "intro": "Steering wheel vibration usually occurs from wheel imbalance, suspension wear, or brake rotor issues.",
+    "system": "Suspension",
+    "severity": "Medium",
+    "driveability": "Yes but should be inspected.",
+    "repair_cost_min": 50,
+    "repair_cost_max": 600,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 2 hours",
+    "common_causes":[
+    "Wheel imbalance",
+    "Bent wheel",
+    "Worn suspension components",
+    "Warped brake rotors"
+    ],
+    "related_codes":[],
+    "common_repairs":[
+    {"name":"Balance wheels"},
+    {"name":"Replace suspension components"}
+    ],
+    "search_terms": [
+    "car shaking",
+    "steering shake",
+    "vibration while driving",
+    "front end vibration",
+    "wheel vibration",
+    "steering wheel shaking"
+    ]
+    },
+
+{
+    "slug": "coolant-leak",
+    "title": "Coolant Leak",
+    "summary": "Coolant dripping under vehicle or low coolant level.",
+    "intro": "Coolant leaks reduce the cooling system's ability to control engine temperature and can lead to overheating.",
+    "system": "Cooling System",
+    "severity": "High",
+    "driveability": "Limited",
+    "repair_cost_min": 100,
+    "repair_cost_max": 800,
+    "difficulty": "Moderate",
+    "repair_time": "1 to 3 hours",
+    "common_causes":[
+    "Leaking radiator",
+    "Failed hose",
+    "Water pump leak",
+    "Head gasket leak"
+    ],
+    "related_codes":[
+    {"code":"P0217","label":"Engine Over Temperature"}
+    ],
+    "common_repairs":[
+    {"name":"Replace radiator hose"},
+    {"name":"Replace radiator"},
+    {"name":"Replace water pump"}
+    ]
+    }
+]

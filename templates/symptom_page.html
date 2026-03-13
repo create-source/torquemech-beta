@@ -20,17 +20,25 @@
   </div>
 
   <div class="card" style="margin-top:16px;">
-    <h2>Common Repairs</h2>
-    <div class="tm-repair-guide-list">
-      {% for item in symptom.common_repairs %}
-      <a class="tm-repair-guide-item" href="/repair-cost/{{ item.slug }}">
-        <div>
-          <strong>{{ item.name }}</strong>
-          <div class="tm-muted">View repair cost guide</div>
-        </div>
-      </a>
+    <h2>Related OBD Codes</h2>
+    <ul class="tm-pro-list">
+      {% for item in symptom.related_codes %}
+      <li>
+        <strong>{{ item.code }}</strong> — {{ item.label }}
+      </li>
       {% endfor %}
-    </div>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>Common Repairs</h2>
+    <ul class="tm-pro-list">
+      {% for item in symptom.common_repairs %}
+      <li>
+        <strong>{{ item.name }}</strong>
+      </li>
+      {% endfor %}
+    </ul>
   </div>
 
   <div class="card" style="margin-top:16px;">
