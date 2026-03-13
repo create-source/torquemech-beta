@@ -811,109 +811,6 @@ def build_diagnostic_summary(code: str):
 
     return summaries.get(code)
 
-def get_symptom_page_data(symptom_slug: str):
-    symptom_slug = (symptom_slug or "").strip().lower()
-
-    symptom_pages = {
-        "engine-misfire": {
-            "title": "Engine Misfire",
-            "intro": "An engine misfire can cause rough idle, hesitation, loss of power, poor fuel economy, and a flashing or steady check engine light.",
-            "common_causes": [
-                "Worn spark plugs",
-                "Failing ignition coil",
-                "Fuel injector problems",
-                "Vacuum leaks",
-                "Low compression",
-            ],
-            "related_codes": [
-                {"code": "P0300", "label": "Random/Multiple Cylinder Misfire"},
-                {"code": "P0301", "label": "Cylinder 1 Misfire"},
-                {"code": "P0302", "label": "Cylinder 2 Misfire"},
-                {"code": "P0303", "label": "Cylinder 3 Misfire"},
-                {"code": "P0304", "label": "Cylinder 4 Misfire"},
-            ],
-            "common_repairs": [
-                {"name": "Spark Plug Replacement", "slug": "spark-plug-replacement"},
-                {"name": "Ignition Coil Replacement", "slug": "ignition-coil-replacement"},
-                {"name": "Fuel Injector Diagnosis", "slug": "fuel-injector-diagnosis"},
-                {"name": "Vacuum Leak Diagnosis", "slug": "vacuum-leak-diagnosis"},
-                {"name": "Engine Compression Test", "slug": "engine-compression-test"},
-            ],
-        },
-
-        "check-engine-light": {
-            "title": "Check Engine Light",
-            "intro": "A check engine light can indicate anything from a loose gas cap to a misfire, emissions fault, fuel trim issue, or sensor problem.",
-            "common_causes": [
-                "Loose or faulty gas cap",
-                "Engine misfire",
-                "Oxygen sensor problems",
-                "Catalytic converter efficiency issues",
-                "EVAP system leak",
-            ],
-            "related_codes": [
-                {"code": "P0300", "label": "Random/Multiple Cylinder Misfire"},
-                {"code": "P0171", "label": "System Too Lean (Bank 1)"},
-                {"code": "P0420", "label": "Catalyst Efficiency Below Threshold (Bank 1)"},
-                {"code": "P0442", "label": "EVAP Small Leak Detected"},
-            ],
-            "common_repairs": [
-                {"name": "Gas Cap Replacement", "slug": "gas-cap-replacement"},
-                {"name": "O2 Sensor Diagnosis", "slug": "o2-sensor-diagnosis"},
-                {"name": "Catalytic Converter Diagnosis", "slug": "catalytic-converter-diagnosis"},
-                {"name": "EVAP Leak Diagnosis", "slug": "evap-leak-diagnosis"},
-            ],
-        },
-
-        "car-wont-start": {
-            "title": "Car Won’t Start",
-            "intro": "A car that won’t start may have a battery, starter, fuel delivery, ignition, or sensor-related problem.",
-            "common_causes": [
-                "Weak or dead battery",
-                "Bad starter motor",
-                "Fuel pump failure",
-                "Crankshaft position sensor fault",
-                "Ignition system problem",
-            ],
-            "related_codes": [
-                {"code": "P0335", "label": "Crankshaft Position Sensor A Circuit"},
-                {"code": "P0340", "label": "Camshaft Position Sensor Circuit"},
-                {"code": "P0562", "label": "System Voltage Low"},
-            ],
-            "common_repairs": [
-                {"name": "Starter Replacement", "slug": "starter-replacement"},
-                {"name": "Fuel Pump Replacement", "slug": "fuel-pump-replacement"},
-                {"name": "Battery Diagnosis", "slug": "battery-diagnosis"},
-                {"name": "Crankshaft Position Sensor Replacement", "slug": "crankshaft-position-sensor-replacement"},
-            ],
-        },
-
-        "rough-idle": {
-            "title": "Rough Idle",
-            "intro": "A rough idle can feel like shaking, stumbling, uneven RPM, or engine vibration while the vehicle is stopped.",
-            "common_causes": [
-                "Vacuum leaks",
-                "Dirty throttle body",
-                "Mass airflow sensor problems",
-                "Lean fuel mixture",
-                "Worn spark plugs or ignition components",
-            ],
-            "related_codes": [
-                {"code": "P0171", "label": "System Too Lean (Bank 1)"},
-                {"code": "P0172", "label": "System Too Rich (Bank 1)"},
-                {"code": "P0300", "label": "Random/Multiple Cylinder Misfire"},
-            ],
-            "common_repairs": [
-                {"name": "Vacuum Leak Diagnosis", "slug": "vacuum-leak-diagnosis"},
-                {"name": "MAF Sensor Diagnosis", "slug": "maf-sensor-diagnosis"},
-                {"name": "Throttle Body Cleaning", "slug": "throttle-body-cleaning"},
-                {"name": "Spark Plug Replacement", "slug": "spark-plug-replacement"},
-            ],
-        },
-    }
-
-    return symptom_pages.get(symptom_slug)
-
 @app.get("/repair-cost/{service_slug}", response_class=HTMLResponse)
 def repair_cost_page(request: Request, service_slug: str):
 
@@ -953,25 +850,6 @@ def repair_cost_page(request: Request, service_slug: str):
         },
     )
 
-@app.get("/symptoms/{symptom_slug}", response_class=HTMLResponse)
-def symptom_page(request: Request, symptom_slug: str):
-    metric_incr("page_symptom")
-
-    symptom = get_symptom_page_data(symptom_slug)
-    if not symptom:
-        raise HTTPException(status_code=404, detail="Symptom page not found")
-
-    symptom = dict(symptom)
-
-    return templates.TemplateResponse(
-        "symptom_page.html",
-        {
-            "request": request,
-            "symptom": symptom,
-            "symptom_slug": symptom_slug,
-        },
-    )
-
 @app.get("/repair-cost", response_class=HTMLResponse)
 def repair_cost_index(request: Request):
     metric_incr("page_repair_cost_index")
@@ -1005,41 +883,6 @@ def repair_cost_index(request: Request):
         {
             "request": request,
             "repair_pages": repair_pages,
-        },
-    )
-
-@app.get("/symptoms", response_class=HTMLResponse)
-def symptoms_index(request: Request):
-    metric_incr("page_symptoms_index")
-
-    symptom_pages = [
-        {
-            "title": "Engine Misfire",
-            "slug": "engine-misfire",
-            "summary": "Rough idle, hesitation, loss of power, and flashing check engine light.",
-        },
-        {
-            "title": "Check Engine Light",
-            "slug": "check-engine-light",
-            "summary": "Common causes, related OBD codes, and likely repair paths.",
-        },
-        {
-            "title": "Car Won’t Start",
-            "slug": "car-wont-start",
-            "summary": "Battery, starter, fuel, ignition, and sensor-related no-start issues.",
-        },
-        {
-            "title": "Rough Idle",
-            "slug": "rough-idle",
-            "summary": "Uneven RPM, shaking at idle, lean/rich conditions, and ignition faults.",
-        },
-    ]
-
-    return templates.TemplateResponse(
-        "symptoms_index.html",
-        {
-            "request": request,
-            "symptom_pages": symptom_pages,
         },
     )
 
