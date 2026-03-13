@@ -12,9 +12,21 @@
 
   <div class="tm-obd-intro">
   <p>
-  The {{ code }} trouble code indicates {{ title | lower }}.
-  This page explains the causes, symptoms, and possible repairs.
+  <strong>{{ code }}</strong> is an OBD-II diagnostic trouble code that indicates
+  <strong>{{ title | lower }}</strong>.
   </p>
+
+  <p>
+  When this code appears, the vehicle's onboard diagnostics system has detected
+  a condition outside normal operating parameters. Below you’ll find common
+  symptoms, possible causes, quick diagnostic checks, and repair guidance.
+  </p>
+  </div>
+
+  <div class="tm-warning-box">
+    <strong>Important:</strong>
+    OBD codes indicate a symptom, not always the exact failed part.
+    Proper diagnosis should be performed before replacing components.
   </div>
 
   {% if diagnostic_summary %}
@@ -40,6 +52,20 @@
 
   <h2>Description</h2>
   <p>{{ description }}</p>
+
+  <h2>How Serious Is Code {{ code }}?</h2>
+
+  <p>
+  The severity of {{ code }} depends on the underlying cause. In many cases the
+  vehicle may still drive normally, but performance, fuel economy, or emissions
+  may be affected. Ignoring a diagnostic trouble code for long periods can lead
+  to additional issues or more expensive repairs.
+  </p>
+
+  <p>
+  If the check engine light is flashing or the vehicle is running poorly,
+  diagnosis should be performed as soon as possible.
+  </p>
 
   {% if symptoms and symptoms|length %}
   <h2>Common Symptoms</h2>
@@ -118,8 +144,9 @@
 <div class="tm-obd-about" style="margin-top:40px;">
   <h3>About TorqueMech</h3>
   <p class="muted">
-    TorqueMech provides diagnostic guidance and repair cost estimates
-    to help drivers understand vehicle problems before visiting a repair shop.
+    TorqueMech provides <a href="/obd">OBD diagnostic lookup tools</a> and
+    <a href="/estimator">repair cost estimates</a> to help drivers understand
+    vehicle problems before visiting a repair shop.
   </p>
 
   <p class="muted" style="margin-top:8px;">
