@@ -358,7 +358,7 @@ from fastapi import Query
 
 OBD_IMPORT_KEY = os.getenv("TORQUEMECH_OBD_IMPORT_KEY", ADMIN_KEY)
 
-@app.post("/admin/obd/import")
+@app.get("/admin/obd/import")
 def admin_import_obd_codes(key: str = Query(...)):
     # simple Beta protection: a secret key in the URL
     if key != OBD_IMPORT_KEY:
