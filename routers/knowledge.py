@@ -108,6 +108,16 @@ def init_symptom_tables():
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS symptom_search_terms (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symptom_id INTEGER NOT NULL,
+            term TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (symptom_id) REFERENCES symptoms(id) ON DELETE CASCADE
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -163,6 +173,12 @@ def seed_symptoms_from_python():
                 repair.get("name", ""),
                 i,
             ))
+        
+        for i, term in enumerate(symptom.get("search_terms", []), start=1):
+            cur.execute("""
+                INSERT INTO symptom_search_terms (symptom_id, term, sort_order)
+                VALUES (?, ?, ?)
+            """, (symptom_id, term, i))
 
     conn.commit()
     conn.close()
