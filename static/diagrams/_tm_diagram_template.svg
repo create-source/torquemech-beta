@@ -1,0 +1,81 @@
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg">
+
+<style>
+
+.bg { fill:#0f172a; }
+.card { fill:#111827; stroke:#243041; stroke-width:2; }
+
+.component { fill:#1c2430; stroke:#3ba4ff; stroke-width:3; }
+
+.title {
+font-family:Inter,Arial,sans-serif;
+font-size:20px;
+font-weight:700;
+fill:#e6edf3;
+}
+
+.label {
+font-family:Inter,Arial,sans-serif;
+font-size:16px;
+font-weight:600;
+fill:#e6edf3;
+}
+
+.pin {
+font-family:Inter,Arial,sans-serif;
+font-size:18px;
+font-weight:700;
+fill:#ffffff;
+}
+
+/* wire colors */
+
+.power { stroke:#ff4d4d; stroke-width:5; fill:none; }
+.control { stroke:#3ba4ff; stroke-width:5; fill:none; }
+.ground { stroke:#9ca3af; stroke-width:5; fill:none; }
+
+</style>
+
+<!-- background -->
+
+<rect x="0" y="0" width="760" height="420" class="bg"/>
+<rect x="24" y="24" width="712" height="372" rx="18" class="card"/>
+
+<!-- title -->
+
+<text x="40" y="60" class="title">Diagram Title</text>
+
+<!-- main component area -->
+
+<rect x="330" y="130" width="140" height="140" rx="14" class="component"/>
+
+<text x="400" y="165" text-anchor="middle" class="label">Component</text>
+
+<!-- example pins -->
+
+<text x="400" y="200" text-anchor="middle" class="pin">30</text>
+<text x="365" y="230" text-anchor="middle" class="pin">85</text>
+<text x="435" y="230" text-anchor="middle" class="pin">86</text>
+<text x="400" y="260" text-anchor="middle" class="pin">87</text>
+
+<!-- power input -->
+
+<line x1="180" y1="200" x2="330" y2="200" class="power"/>
+<text x="40" y="205" class="label">Power In</text>
+
+<!-- ground -->
+
+<line x1="180" y1="230" x2="330" y2="230" class="ground"/>
+<text x="80" y="235" class="label">Ground</text>
+
+<!-- control signal -->
+
+<line x1="470" y1="230" x2="600" y2="170" class="control"/>
+<text x="610" y="170" class="label">Signal</text>
+
+<!-- output -->
+
+<line x1="470" y1="260" x2="620" y2="260" class="power"/>
+<text x="630" y="265" class="label">Output</text>
+
+</svg>

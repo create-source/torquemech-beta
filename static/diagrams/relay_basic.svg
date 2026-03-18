@@ -1,0 +1,39 @@
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Basic 4-pin relay wiring">
+  <style>
+    .bg { fill:#0f172a; }
+    .card { fill:#111827; stroke:#243041; stroke-width:2; }
+    .component { fill:#1c2430; stroke:#3ba4ff; stroke-width:3; }
+    .title { font-family:Inter,Arial,sans-serif; font-size:20px; font-weight:700; fill:#e6edf3; }
+    .label { font-family:Inter,Arial,sans-serif; font-size:16px; font-weight:600; fill:#e6edf3; }
+    .pin { font-family:Inter,Arial,sans-serif; font-size:18px; font-weight:700; fill:#ffffff; }
+    .power { stroke:#ff4d4d; stroke-width:5; fill:none; }
+    .ground { stroke:#9ca3af; stroke-width:5; fill:none; }
+    .control { stroke:#3ba4ff; stroke-width:5; fill:none; }
+    text { user-select:none; }
+  </style>
+
+  <rect x="0" y="0" width="760" height="420" class="bg"/>
+  <rect x="24" y="24" width="712" height="372" rx="18" class="card"/>
+
+  <text x="40" y="60" class="title">Basic 4-Pin Relay Wiring</text>
+
+  <rect x="330" y="120" width="140" height="170" rx="14" class="component"/>
+  <text x="400" y="155" text-anchor="middle" class="label">Relay</text>
+
+  <text x="400" y="190" text-anchor="middle" class="pin">30</text>
+  <text x="360" y="220" text-anchor="middle" class="pin">85</text>
+  <text x="440" y="220" text-anchor="middle" class="pin">86</text>
+  <text x="400" y="255" text-anchor="middle" class="pin">87</text>
+
+  <line x1="190" y1="190" x2="330" y2="190" class="power"/>
+  <text x="40" y="186" class="label">+ Battery / Power In</text>
+
+  <line x1="190" y1="220" x2="330" y2="220" class="ground"/>
+  <text x="95" y="226" class="label">− Ground</text>
+
+  <line x1="470" y1="220" x2="600" y2="170" class="control"/>
+  <text x="610" y="170" class="label">Switch + / Signal</text>
+
+  <line x1="470" y1="255" x2="620" y2="255" class="power"/>
+  <text x="630" y="261" class="label">Output to Load</text>
+</svg>

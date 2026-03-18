@@ -2681,3 +2681,659 @@ a.btn:visited {
 .tm-suggestion:last-child{
   border-bottom:none;
 }
+
+/* =========================================
+   TorqueMech Knowledge / Electrical Pages
+   ========================================= */
+
+.tm-pageHero{
+  padding: 28px 0 10px;
+}
+
+.tm-eyebrow{
+  display:inline-block;
+  margin-bottom:10px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: var(--muted);
+}
+
+.tm-pageHero h1{
+  margin: 0 0 12px;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.04;
+  letter-spacing: -0.8px;
+}
+
+.tm-pageLead{
+  max-width: 860px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--subtext);
+  margin: 0;
+}
+
+.tm-section{
+  padding: 22px 0 8px;
+}
+
+.tm-grid{
+  display:grid;
+  gap:18px;
+}
+
+.tm-grid-3{
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tm-grid-2{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tm-card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.16);
+}
+
+.tm-cardLink{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.tm-cardLink:hover{
+  transform: translateY(-2px);
+  border-color: rgba(59,130,246,.35);
+  box-shadow: 0 16px 36px rgba(0,0,0,.22);
+}
+
+.tm-cardLink h3{
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.tm-cardLink p{
+  margin: 0;
+  color: var(--subtext);
+  line-height: 1.6;
+}
+
+.tm-article{
+  max-width: 860px;
+}
+
+.tm-article h2{
+  margin-top: 24px;
+  margin-bottom: 10px;
+  font-size: 22px;
+}
+
+.tm-article p,
+.tm-article li{
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.tm-article ul{
+  margin: 0 0 14px 20px;
+  padding: 0;
+}
+
+@media (max-width: 900px){
+  .tm-grid-3{
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px){
+  .tm-pageHero{
+    padding-top: 20px;
+  }
+
+  .tm-pageHero h1{
+    font-size: 38px;
+  }
+
+  .tm-pageLead{
+    font-size: 16px;
+  }
+
+  .tm-grid-3,
+  .tm-grid-2{
+    grid-template-columns: 1fr;
+  }
+
+  .tm-card{
+    padding: 18px;
+  }
+}
+
+@media (prefers-color-scheme: light){
+  .tm-card{
+    box-shadow: 0 12px 28px rgba(15,23,42,.08);
+  }
+
+  .tm-cardLink:hover{
+    box-shadow: 0 14px 30px rgba(15,23,42,.12);
+  }
+}
+
+.relay-reference {
+  margin: 32px 0 0;
+}
+
+.relay-reference h2,
+.relay-reference h3 {
+  margin: 0 0 14px;
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.relay-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.relay-table thead th {
+  text-align: left;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 16px;
+  color: #e6edf3;
+  background: rgba(59, 130, 246, 0.14);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.relay-table tbody td {
+  padding: 14px 16px;
+  vertical-align: top;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #e6edf3;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.relay-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.relay-table th:nth-child(1),
+.relay-table td:nth-child(1) {
+  width: 80px;
+}
+
+.relay-table th:nth-child(2),
+.relay-table td:nth-child(2) {
+  width: 180px;
+}
+
+.relay-table th:nth-child(3),
+.relay-table td:nth-child(3) {
+  width: auto;
+}
+
+@media (max-width: 640px) {
+  .relay-reference h2,
+  .relay-reference h3 {
+    font-size: 26px;
+  }
+
+  .relay-table thead th,
+  .relay-table tbody td {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .relay-table th:nth-child(2),
+  .relay-table td:nth-child(2) {
+    width: 140px;
+  }
+}
+
+.relay-table td:first-child,
+.relay-table th:first-child {
+  text-align: center;
+}
+
+.relay-table td:first-child {
+  font-weight: 700;
+  color: #7cc4ff;
+}
+
+.diagram {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.diagram-img {
+  max-width: 650px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.tm-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.tm-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tm-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tm-card-link:hover {
+  transform: translateY(-2px);
+  border-color: rgba(90, 170, 255, 0.35);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.tm-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.tm-list li + li {
+  margin-top: 8px;
+}
+
+@media (max-width: 860px) {
+  .tm-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tm-card-link,
+.tm-card-link:visited,
+.tm-card-link:hover,
+.tm-card-link:active {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tm-card-link h2,
+.tm-card-link h3,
+.tm-card-link p {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tm-card-link:hover h2,
+.tm-card-link:hover h3 {
+  color: #ffffff;
+}
+
+.tm-card a,
+.tm-card a:visited {
+  color: inherit;
+}
+
+.tm-diagram {
+  margin: 24px auto 32px;
+  text-align: center;
+}
+
+.tm-diagram img {
+  width: 90%;
+  max-width: 700px;
+}
+
+.tm-diagram-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.tm-card + .tm-card {
+  margin-top: 16px;
+}
+
+.tm-elec-page {
+  padding: 32px 16px 56px;
+}
+
+.tm-elec-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.tm-elec-hero {
+  margin-bottom: 28px;
+}
+
+.tm-elec-kicker {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tm-accent, #2f7fda);
+}
+
+.tm-elec-hero h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  line-height: 1.05;
+}
+
+.tm-elec-lead {
+  max-width: 760px;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--tm-text-muted, #aab4c3);
+}
+
+.tm-elec-section {
+  margin-top: 28px;
+}
+
+.tm-elec-sectionHead {
+  margin-bottom: 14px;
+}
+
+.tm-elec-sectionHead h2 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+}
+
+.tm-elec-sectionHead p {
+  margin: 0;
+  color: var(--tm-text-muted, #aab4c3);
+}
+
+.tm-diagram-card,
+.tm-flow-card,
+.tm-example-card,
+.tm-spec-card {
+  background: var(--tm-panel, rgba(255,255,255,0.04));
+  border: 1px solid var(--tm-border, rgba(255,255,255,0.08));
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+}
+
+.tm-diagram-card {
+  padding: 18px;
+}
+
+.tm-diagram-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tm-flow-grid,
+.tm-example-grid,
+.tm-spec-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.tm-flow-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tm-example-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tm-spec-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tm-flow-card,
+.tm-example-card,
+.tm-spec-card {
+  padding: 18px;
+}
+
+.tm-flow-step {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  font-weight: 700;
+  background: var(--tm-accent, #2f7fda);
+  color: #fff;
+}
+
+.tm-flow-card h3,
+.tm-example-card h3,
+.tm-spec-card h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.tm-flow-card p,
+.tm-example-card p,
+.tm-spec-card p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--tm-text-muted, #aab4c3);
+}
+
+.tm-example-card p + p,
+.tm-spec-card p + p {
+  margin-top: 8px;
+}
+
+.tm-failure-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tm-failure-item {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--tm-panel, rgba(255,255,255,0.04));
+  border: 1px solid var(--tm-border, rgba(255,255,255,0.08));
+  color: var(--tm-text, #e8edf5);
+}
+
+@media (max-width: 980px) {
+  .tm-flow-grid,
+  .tm-spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tm-example-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .tm-elec-page {
+    padding: 24px 14px 44px;
+  }
+
+  .tm-flow-grid,
+  .tm-spec-grid,
+  .tm-failure-list {
+    grid-template-columns: 1fr;
+  }
+
+  .tm-diagram-card,
+  .tm-flow-card,
+  .tm-example-card,
+  .tm-spec-card {
+    border-radius: 16px;
+  }
+}
+
+.tm-electrical-box {
+  margin: 20px 0;
+  padding: 16px;
+  border-left: 4px solid #58c4dd;
+  background: rgba(88,196,221,0.08);
+  border-radius: 10px;
+}
+
+.tm-electrical-box h2 {
+  margin-bottom: 10px;
+}
+
+.obd-electrical-card {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid var(--tm-border, #243041);
+  border-radius: 18px;
+  background: var(--tm-panel, #111827);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+
+.obd-electrical-head h2 {
+  margin: 6px 0 6px;
+  font-size: 1.35rem;
+}
+
+.obd-eyebrow {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tm-accent, #58c4dd);
+}
+
+.obd-electrical-sub {
+  margin: 0 0 18px;
+  color: var(--tm-muted, #9ca3af);
+}
+
+.obd-electrical-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 18px;
+}
+
+.obd-electrical-main,
+.obd-fault-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.obd-info-row + .obd-info-row {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.obd-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tm-muted, #9ca3af);
+}
+
+.obd-value {
+  display: block;
+  line-height: 1.55;
+  color: var(--tm-text, #f3f4f6);
+}
+
+.obd-fault-box h3,
+.obd-electrical-links h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.obd-fault-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.obd-fault-list li + li {
+  margin-top: 8px;
+}
+
+.obd-electrical-links {
+  margin-top: 18px;
+}
+
+.obd-guide-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.obd-guide-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  background: rgba(88,196,221,0.12);
+  border: 1px solid rgba(88,196,221,0.25);
+  color: var(--tm-accent, #58c4dd);
+  transition: 0.2s ease;
+}
+
+.obd-guide-pill:hover {
+  transform: translateY(-1px);
+  background: rgba(88,196,221,0.18);
+}
+
+.obd-electrical-note {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-left: 4px solid var(--tm-accent, #58c4dd);
+  border-radius: 12px;
+  background: rgba(88,196,221,0.08);
+  color: var(--tm-text, #f3f4f6);
+  line-height: 1.55;
+}
+
+@media (max-width: 860px) {
+  .obd-electrical-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.obd-electrical-card {
+  margin: 20px 0;
+  padding: 16px;
+  border-left: 4px solid #58c4dd;
+  background: rgba(88, 196, 221, 0.08);
+  border-radius: 12px;
+}
+
+.obd-electrical-card h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.obd-electrical-card ul {
+  margin-bottom: 0;
+}
+
+.tm-diagram-card {
+  padding: 20px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
+}

@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block title %}Relay Wiring Guide | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-pageHero">
+  <div class="tm-container">
+    <span class="tm-eyebrow">Electrical • Wiring</span>
+    <h1>Automotive Relay Wiring Guide</h1>
+    <p class="tm-pageLead">
+      Learn how common automotive relays work, what each terminal does,
+      and how relay wiring is used to safely control higher-current circuits.
+    </p>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="tm-container tm-article">
+    <h2>Overview</h2>
+    <p>
+      A relay allows a low-current control circuit to switch a higher-current load.
+      This is commonly used for fog lights, cooling fans, horns, pumps, and other accessories.
+    </p>
+
+    <h2>Common relay terminals</h2>
+    <ul>
+      <li><strong>30</strong> — battery power input</li>
+      <li><strong>85</strong> — relay coil terminal</li>
+      <li><strong>86</strong> — relay coil terminal</li>
+      <li><strong>87</strong> — switched output to the component</li>
+      <li><strong>87a</strong> — normally closed output on some 5-pin relays</li>
+    </ul>
+
+    <h2>How it works</h2>
+    <p>
+      When the relay coil is energized through terminals 85 and 86, the internal switch closes.
+      This connects terminal 30 to terminal 87 and sends power to the load.
+    </p>
+
+    <h2>Common uses</h2>
+    <ul>
+      <li>Auxiliary lighting</li>
+      <li>Radiator cooling fans</li>
+      <li>Horn circuits</li>
+      <li>Fuel pump switching</li>
+      <li>Accessory power control</li>
+    </ul>
+
+    <h2>Testing tips</h2>
+    <ul>
+      <li>Verify battery voltage at terminal 30</li>
+      <li>Check that the relay coil is receiving power or ground at 85/86</li>
+      <li>Listen or feel for a relay click when activated</li>
+      <li>Check for output voltage at terminal 87 when commanded on</li>
+    </ul>
+
+    <h2>Common failures</h2>
+    <ul>
+      <li>Burned internal contacts</li>
+      <li>Failed relay coil</li>
+      <li>Corroded terminals or loose connector fit</li>
+      <li>No trigger signal from switch, module, or fuse</li>
+    </ul>
+
+    <h2>Related guides</h2>
+    <ul>
+      <li><a href="/electrical/fuse-relay/relay-guide">Relay Guide</a></li>
+      <li><a href="/electrical/fuse-relay/fuse-guide">Fuse Guide</a></li>
+      <li><a href="/electrical/diagnostics/voltage-drop-test">Voltage Drop Test</a></li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

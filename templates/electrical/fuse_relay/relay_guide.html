@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block title %}Relay Guide | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-pageHero">
+  <div class="tm-container">
+    <span class="tm-eyebrow">Electrical • Fuse & Relay</span>
+    <h1>Automotive Relay Guide</h1>
+    <p class="tm-pageLead">
+      Understand what an automotive relay does, why it is used, and how relay-controlled circuits improve reliability.
+    </p>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="tm-container tm-article">
+    <h2>Overview</h2>
+    <p>
+      A relay is an electrically controlled switch. It allows a low-current control signal
+      to operate a higher-current component without routing full load current through the switch itself.
+    </p>
+
+    <h2>Why relays are used</h2>
+    <ul>
+      <li>Reduce current load on dashboard switches</li>
+      <li>Protect control modules from high-current demand</li>
+      <li>Allow shorter heavy-gauge power paths to the load</li>
+      <li>Improve control of accessories and motors</li>
+    </ul>
+
+    <h2>Common relay-controlled systems</h2>
+    <ul>
+      <li>Cooling fans</li>
+      <li>Fuel pumps</li>
+      <li>Headlights and fog lights</li>
+      <li>Horn circuits</li>
+      <li>A/C clutch circuits</li>
+    </ul>
+
+    <h2>Testing tips</h2>
+    <ul>
+      <li>Check the fuse feeding the relay first</li>
+      <li>Verify battery power at the power feed terminal</li>
+      <li>Verify coil command from the control side</li>
+      <li>Swap with a matching known-good relay when appropriate</li>
+    </ul>
+
+    <h2>Common failures</h2>
+    <ul>
+      <li>Stuck or burned contacts</li>
+      <li>Open relay coil</li>
+      <li>Heat damage at relay socket terminals</li>
+      <li>Missing trigger input from module or switch</li>
+    </ul>
+
+    <h2>Related guides</h2>
+    <ul>
+      <li><a href="/electrical/wiring/relay-wiring">Relay Wiring</a></li>
+      <li><a href="/electrical/fuse-relay/fuse-guide">Fuse Guide</a></li>
+      <li><a href="/electrical/diagnostics/voltage-drop-test">Voltage Drop Test</a></li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

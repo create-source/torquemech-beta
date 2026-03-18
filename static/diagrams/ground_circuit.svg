@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="800"
+   height="400"
+   viewBox="0 0 800 400"
+   version="1.1"
+   id="svg11"
+   sodipodi:docname="ground_circuit.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs11" />
+  <sodipodi:namedview
+     id="namedview11"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.3541095"
+     inkscape:cx="427.95653"
+     inkscape:cy="198.65454"
+     inkscape:window-width="1920"
+     inkscape:window-height="1010"
+     inkscape:window-x="2553"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg11" />
+  <!-- Background -->
+  <rect
+     width="103.04627%"
+     height="104.61559%"
+     fill="#0f1c2e"
+     rx="20.609257"
+     id="rect1"
+     x="-8.8619127"
+     y="-11.815884"
+     style="stroke-width:1.03828" />
+  <!-- Title -->
+  <text
+     x="40"
+     y="50"
+     fill="#ffffff"
+     font-size="22"
+     id="text1">
+    Ground Circuit (Return Path)
+  </text>
+  <!-- Battery -->
+  <rect
+     x="80"
+     y="150"
+     width="90"
+     height="60"
+     rx="8"
+     fill="none"
+     stroke="#4ea1ff"
+     stroke-width="2"
+     id="rect2" />
+  <text
+     x="95"
+     y="185"
+     fill="#ffffff"
+     font-size="14"
+     id="text2">Battery</text>
+  <!-- Load -->
+  <rect
+     x="600"
+     y="150"
+     width="90"
+     height="60"
+     rx="8"
+     fill="none"
+     stroke="#4ea1ff"
+     stroke-width="2"
+     id="rect3" />
+  <text
+     x="627.01569"
+     y="185.55386"
+     fill="#ffffff"
+     font-size="14px"
+     id="text3">Load</text>
+  <!-- Power wire -->
+  <line
+     x1="170"
+     y1="180"
+     x2="585.96863"
+     y2="180"
+     stroke="#ff4d4d"
+     stroke-width="3.9342"
+     id="line3" />
+  <text
+     x="260"
+     y="165"
+     fill="#9ccaff"
+     font-size="12"
+     id="text4">Power Flow (+)</text>
+  <!-- Ground wire -->
+  <line
+     x1="600"
+     y1="210"
+     x2="213.84674"
+     y2="210"
+     stroke="#cccccc"
+     stroke-width="3.93016"
+     id="line4" />
+  <!-- Ground point -->
+  <circle
+     cx="200"
+     cy="210"
+     r="6"
+     fill="#cccccc"
+     id="circle4" />
+  <line
+     x1="200"
+     y1="210"
+     x2="200"
+     y2="250"
+     stroke="#cccccc"
+     stroke-width="3"
+     id="line5" />
+  <line
+     x1="180"
+     y1="250"
+     x2="220"
+     y2="250"
+     stroke="#cccccc"
+     stroke-width="3"
+     id="line6" />
+  <line
+     x1="185"
+     y1="260"
+     x2="215"
+     y2="260"
+     stroke="#cccccc"
+     stroke-width="3"
+     id="line7" />
+  <line
+     x1="190"
+     y1="270"
+     x2="210"
+     y2="270"
+     stroke="#cccccc"
+     stroke-width="3"
+     id="line8" />
+  <!-- Ground label -->
+  <text
+     x="150"
+     y="300"
+     fill="#ffffff"
+     font-size="14"
+     id="text8">Chassis Ground</text>
+  <!-- Return label -->
+  <text
+     x="350"
+     y="235"
+     fill="#9ccaff"
+     font-size="12"
+     id="text9">Return Path</text>
+  <!-- Resistance problem area -->
+  <circle
+     cx="350"
+     cy="210"
+     r="10"
+     fill="#ff4d4d"
+     id="circle9" />
+  <text
+     x="330"
+     y="270"
+     fill="#9ccaff"
+     font-size="12"
+     id="text10">
+    High Resistance Point
+  </text>
+  <!-- Arrows -->
+  <polygon
+     points="580,175 600,180 580,185"
+     fill="#ff4d4d"
+     id="polygon10" />
+  <polygon
+     points="200,210 220,215 220,205 "
+     fill="#cccccc"
+     id="polygon11"
+     transform="translate(5.5386954,-0.18462318)" />
+</svg>

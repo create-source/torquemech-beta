@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="800"
+   height="300"
+   viewBox="0 0 800 300"
+   version="1.1"
+   id="svg19"
+   sodipodi:docname="starter_circuit.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs19" />
+  <sodipodi:namedview
+     id="namedview19"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="2.2775"
+     inkscape:cx="400"
+     inkscape:cy="150.16465"
+     inkscape:window-width="1920"
+     inkscape:window-height="1010"
+     inkscape:window-x="2553"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg19" />
+  <!-- Background -->
+  <rect
+     width="100%"
+     height="100%"
+     fill="#0b1220"
+     id="rect1" />
+  <!-- Battery -->
+  <rect
+     x="40"
+     y="120"
+     width="80"
+     height="60"
+     rx="8"
+     fill="#1f2a44"
+     stroke="#58c4dd"
+     id="rect2" />
+  <text
+     x="80"
+     y="155"
+     text-anchor="middle"
+     fill="#fff"
+     font-size="12"
+     id="text2">Battery</text>
+  <text
+     x="73.117455"
+     y="113.07355"
+     fill="#58c4dd"
+     opacity="0.85"
+     font-size="12px"
+     id="text3">+</text>
+  <!-- Fuse -->
+  <rect
+     x="150"
+     y="135"
+     width="60"
+     height="30"
+     rx="6"
+     fill="#1f2a44"
+     stroke="#58c4dd"
+     id="rect3" />
+  <text
+     x="180"
+     y="155"
+     text-anchor="middle"
+     fill="#fff"
+     font-size="12"
+     id="text4">Fuse</text>
+  <!-- Ignition Switch -->
+  <rect
+     x="240"
+     y="120"
+     width="90"
+     height="60"
+     rx="8"
+     fill="#1f2a44"
+     stroke="#58c4dd"
+     id="rect4" />
+  <text
+     x="285"
+     y="155"
+     text-anchor="middle"
+     fill="#fff"
+     font-size="12"
+     id="text5">Ignition</text>
+  <!-- Relay -->
+  <rect
+     x="360"
+     y="120"
+     width="80"
+     height="60"
+     rx="8"
+     fill="#1f2a44"
+     stroke="#58c4dd"
+     id="rect5" />
+  <text
+     x="400"
+     y="155"
+     text-anchor="middle"
+     fill="#fff"
+     font-size="12"
+     id="text6">Relay</text>
+  <!-- Starter -->
+  <rect
+     x="480"
+     y="120"
+     width="100"
+     height="60"
+     rx="8"
+     fill="#1f2a44"
+     stroke="#58c4dd"
+     id="rect6" />
+  <text
+     x="530"
+     y="155"
+     text-anchor="middle"
+     fill="#fff"
+     font-size="12"
+     id="text7">Starter</text>
+  <!-- Ground -->
+  <rect
+     x="620"
+     y="120"
+     width="80"
+     height="60"
+     rx="8"
+     fill="#1f2a44"
+     stroke="#58c4dd"
+     id="rect7" />
+  <text
+     x="660"
+     y="155"
+     text-anchor="middle"
+     fill="#fff"
+     font-size="12"
+     id="text8">Ground</text>
+  <!-- Labels -->
+  <text
+     x="180"
+     y="128.85291"
+     fill="#58c4dd"
+     font-size="10px"
+     text-anchor="middle"
+     id="text9">12V</text>
+  <text
+     x="286.16354"
+     y="110.41164"
+     fill="#58c4dd"
+     font-size="10px"
+     text-anchor="middle"
+     id="text10">Start Signal</text>
+  <text
+     x="398.96817"
+     y="109.53348"
+     fill="#58c4dd"
+     font-size="10px"
+     text-anchor="middle"
+     id="text11">High Current</text>
+  <!-- Wires -->
+  <line
+     x1="120"
+     y1="150"
+     x2="150"
+     y2="150"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line11" />
+  <line
+     x1="210"
+     y1="150"
+     x2="240"
+     y2="150"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line12" />
+  <line
+     x1="330"
+     y1="150"
+     x2="360"
+     y2="150"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line13" />
+  <line
+     x1="440"
+     y1="150"
+     x2="480"
+     y2="150"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line14" />
+  <line
+     x1="580"
+     y1="150"
+     x2="620"
+     y2="150"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line15" />
+  <!-- Ground symbol -->
+  <line
+     x1="660"
+     y1="180"
+     x2="660"
+     y2="210"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line16" />
+  <line
+     x1="640"
+     y1="210"
+     x2="680"
+     y2="210"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line17" />
+  <line
+     x1="645"
+     y1="220"
+     x2="675"
+     y2="220"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line18" />
+  <line
+     x1="650"
+     y1="230"
+     x2="670"
+     y2="230"
+     stroke="#58c4dd"
+     stroke-width="2"
+     id="line19" />
+</svg>

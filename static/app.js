@@ -1105,6 +1105,14 @@ if (getEstimateHint) {
 
   // ---- Get Estimate FIRST ----
   estimateBtn?.addEventListener("click", async () => {
+
+    // Google Analytics event
+    if (typeof gtag === "function") {
+      gtag("event", "get_estimate_clicked", {
+        event_category: "engagement",
+        event_label: "Estimator Tool"
+      });
+    }
     if (!readyForNextService) return;
 
     if (!(yearEl.value && makeEl.value && modelEl.value)) {

@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block title %}Wiring Diagrams | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-pageHero">
+  <div class="tm-container">
+    <span class="tm-eyebrow">Electrical</span>
+    <h1>Automotive Wiring Diagrams</h1>
+    <p class="tm-pageLead">
+      Explore common automotive wiring diagrams including relay circuits,
+      lighting systems, accessory wiring, and trailer wiring.
+    </p>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="tm-container">
+    <div class="tm-grid tm-grid-2">
+
+      <a class="tm-card tm-cardLink" href="/electrical/wiring/relay-wiring">
+        <h3>Relay Wiring</h3>
+        <p>Understanding terminals 30, 85, 86, 87 and how relay circuits work.</p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/wiring/trailer-wiring">
+        <h3>Trailer Wiring</h3>
+        <p>Learn trailer light wiring for brake lights, turn signals, and grounds.</p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/wiring/starter">
+        <h3>Starter System</h3>
+        <p>Battery → relay → starter motor. Diagnose no-crank, slow crank, and voltage drop issues.</p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/wiring/sensor-circuit">
+        <h3>Sensor Circuit</h3>
+        <p>Understand 5V reference, ground, and signal wires used by many common automotive sensors.</p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/wiring/5-pin-relay">
+        <h3>5-Pin Relay</h3>
+        <p>Understand pins 30, 85, 86, 87, and 87a and how relay switching works.</p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/wiring/sensor-circuit">
+        <h3>Sensor Circuit</h3>
+        <p>Learn the common 5V reference, ground, and signal pattern used by many sensors.</p>
+      </a>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

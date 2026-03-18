@@ -1,0 +1,62 @@
+{% set code_upper = code | upper %}
+
+<section class="obd-electrical-card">
+  <h2>Electrical Insight</h2>
+
+  {% if code_upper in ["P0100", "P0101", "P0102", "P0103", "P0104", "P0110", "P0115", "P0116", "P0117", "P0118", "P0120", "P0121", "P0122", "P0123", "P0130", "P0135", "P0140", "P0150", "P0155"] %}
+    <p>
+      This code usually points to a <strong>sensor circuit issue</strong>. The fault may be in the sensor,
+      its wiring, connector, reference voltage, signal wire, or ground.
+    </p>
+    <ul>
+      <li>Open circuit (broken wire or unplugged connector)</li>
+      <li>Short to ground</li>
+      <li>Short to power</li>
+      <li>Weak or missing sensor signal</li>
+      <li>Corroded connector or poor ground</li>
+    </ul>
+
+  {% elif code_upper in ["P0560", "P0562", "P0563", "P0620", "P2500", "P2501"] %}
+    <p>
+      This code usually points to a <strong>system voltage or charging circuit issue</strong>. The problem may
+      involve the battery, alternator, power cable, fuse link, or ground path.
+    </p>
+    <ul>
+      <li>Low system voltage</li>
+      <li>Voltage drop on the positive side</li>
+      <li>Poor engine or chassis ground</li>
+      <li>Weak battery or charging problem</li>
+      <li>Loose or corroded battery terminals</li>
+    </ul>
+
+  {% elif code_upper in ["P0300", "P0301", "P0302", "P0303", "P0304", "P0351", "P0352", "P0353", "P0354"] %}
+    <p>
+      This code usually points to an <strong>ignition or injector control circuit issue</strong>. The problem
+      may involve coil control, injector pulse, power supply, or ground.
+    </p>
+    <ul>
+      <li>Weak or missing coil signal</li>
+      <li>Injector circuit fault</li>
+      <li>Poor ground connection</li>
+      <li>Damaged connector or wiring</li>
+      <li>Fault in the ignition control side of the circuit</li>
+    </ul>
+
+  {% else %}
+    <p>
+      This code may involve an <strong>electrical circuit issue</strong>. The problem is not always the
+      component itself — it may also be related to wiring, connectors, power supply, or ground.
+    </p>
+    <ul>
+      <li>Open circuit</li>
+      <li>Short to ground</li>
+      <li>Short to power</li>
+      <li>High resistance from corrosion or loose connections</li>
+      <li>Faulty sensor, actuator, or control component</li>
+    </ul>
+  {% endif %}
+
+  <p class="muted" style="margin-top:10px;">
+    Electrical faults should be confirmed with proper testing before replacing parts.
+  </p>
+</section>

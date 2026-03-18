@@ -358,6 +358,11 @@ from fastapi import Query
 
 OBD_IMPORT_KEY = os.getenv("TORQUEMECH_OBD_IMPORT_KEY", ADMIN_KEY)
 
+# IMPORTANT:
+# After updating data/obd_codes.json, redeploy the app and run
+# /admin/obd/import?key=YOUR_KEY to sync the live SQLite dtc table.
+# The live OBD lookup reads from data/obd.sqlite, not directly from the JSON file.
+
 @app.get("/admin/obd/import")
 def admin_import_obd_codes(key: str = Query(...)):
     # simple Beta protection: a secret key in the URL
@@ -1021,16 +1026,6 @@ def terms():
 @app.get("/disclaimer", include_in_schema=False)
 def disclaimer():
     return FileResponse(BASE_DIR / "static" / "disclaimer.html")
-
-@app.get("/{estimate_id}", response_class=HTMLResponse)
-def open_shared_estimate(request: Request, estimate_id: str):
-    return templates.TemplateResponse(
-        "estimator.html",
-        {
-            "request": request,
-            "shared_id": estimate_id,
-        },
-    )
 
 FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScqx74MW1pDdyA-I7GHL1vo5TyS6iaQ3QhJogQtkXvfjiaBrA/viewform?usp=sf_link"
 
@@ -2106,3 +2101,91 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         metric_incr("errors_pdf_multi")
         metric_incr("errors_total")
         raise
+
+@app.get("/electrical", response_class=HTMLResponse)
+def electrical_hub(request: Request):
+    return templates.TemplateResponse("electrical/index.html", {"request": request})
+
+@app.get("/electrical/wiring", response_class=HTMLResponse)
+def electrical_wiring_index(request: Request):
+    return templates.TemplateResponse("electrical/wiring/index.html", {"request": request})
+
+@app.get("/electrical/wiring/relay-wiring", response_class=HTMLResponse)
+def electrical_relay_wiring(request: Request):
+    return templates.TemplateResponse("electrical/wiring/relay_wiring.html", {"request": request})
+
+@app.get("/electrical/wiring/trailer-wiring", response_class=HTMLResponse)
+def electrical_trailer_wiring(request: Request):
+    return templates.TemplateResponse("electrical/wiring/trailer_wiring.html", {"request": request})
+
+@app.get("/electrical/components", response_class=HTMLResponse)
+def electrical_components_index(request: Request):
+    return templates.TemplateResponse("electrical/components/index.html", {"request": request})
+
+@app.get("/electrical/fuse-relay", response_class=HTMLResponse)
+def electrical_fuse_relay_index(request: Request):
+    return templates.TemplateResponse("electrical/fuse_relay/index.html", {"request": request})
+
+@app.get("/electrical/fuse-relay/fuse-guide", response_class=HTMLResponse)
+def electrical_fuse_guide(request: Request):
+    return templates.TemplateResponse(
+        "electrical/fuse_relay/fuse-guide.html",
+        {"request": request},
+    )
+
+@app.get("/electrical/diagnostics", response_class=HTMLResponse)
+def electrical_diagnostics_index(request: Request):
+    return templates.TemplateResponse("electrical/diagnostics/index.html", {"request": request})
+
+@app.get("/electrical/diagnostics/voltage-drop-test", response_class=HTMLResponse)
+def electrical_voltage_drop_test(request: Request):
+    return templates.TemplateResponse(
+        "electrical/diagnostics/voltage-drop-test.html",
+        {"request": request},
+    )
+
+@app.get("/electrical/pinouts", response_class=HTMLResponse)
+def electrical_pinouts_index(request: Request):
+    return templates.TemplateResponse("electrical/pinouts/index.html", {"request": request})
+
+@app.get("/electrical/fundamentals", response_class=HTMLResponse)
+def electrical_fundamentals_index(request: Request):
+    return templates.TemplateResponse("electrical/fundamentals/index.html", {"request": request})
+
+@app.get("/electrical/fundamentals/ground-circuits")
+def electrical_ground_circuits(request: Request):
+    return templates.TemplateResponse(
+        "electrical/fundamentals/ground-circuits.html",
+        {"request": request}
+    )
+
+@app.get("/electrical/wiring/5-pin-relay", response_class=HTMLResponse)
+def electrical_5_pin_relay(request: Request):
+    return templates.TemplateResponse(
+        "electrical/wiring/5_pin_relay.html",
+        {"request": request},
+    )
+
+@app.get("/electrical/wiring/starter", response_class=HTMLResponse)
+def electrical_starter(request: Request):
+    return templates.TemplateResponse(
+        "electrical/wiring/starter_system.html",
+        {"request": request},
+    )
+
+@app.get("/electrical/wiring/sensor-circuit", response_class=HTMLResponse)
+def electrical_sensor_circuit(request: Request):
+    return templates.TemplateResponse(
+        "electrical/wiring/sensor_circuit.html",
+        {"request": request},
+    )
+
+@app.get("/estimate/share/{estimate_id}", response_class=HTMLResponse)
+def open_shared_estimate(request: Request, estimate_id: str):
+    return templates.TemplateResponse(
+        "estimator.html",
+        {
+            "request": request,
+            "shared_id": estimate_id,
+        },
+    )

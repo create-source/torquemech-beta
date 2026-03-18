@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1200"
+   height="520"
+   viewBox="0 0 1200 520"
+   fill="none"
+   version="1.1"
+   id="svg37"
+   sodipodi:docname="sensor_circuit.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview37"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.4730769"
+     inkscape:cx="483.00261"
+     inkscape:cy="151.38381"
+     inkscape:window-width="1920"
+     inkscape:window-height="1010"
+     inkscape:window-x="2553"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg37" />
+  <defs
+     id="defs4">
+    <style
+       id="style1">
+      .bg { fill: #0F172A; }
+      .panel { fill: #111827; stroke: #334155; stroke-width: 2; rx: 18; }
+      .box { fill: #1E293B; stroke: #475569; stroke-width: 2; rx: 14; }
+      .text { fill: #E5E7EB; font-family: Arial, Helvetica, sans-serif; }
+      .muted { fill: #94A3B8; font-family: Arial, Helvetica, sans-serif; }
+      .title { font-size: 28px; font-weight: 700; }
+      .label { font-size: 20px; font-weight: 700; }
+      .small { font-size: 16px; font-weight: 600; }
+      .tiny { font-size: 14px; font-weight: 600; }
+      .wireRef { stroke: #22C55E; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .wireSig { stroke: #38BDF8; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .wireGnd { stroke: #F59E0B; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .wireBatt { stroke: #EF4444; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .outline { stroke: #CBD5E1; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .dash { stroke: #64748B; stroke-width: 2.5; fill: none; stroke-dasharray: 8 8; }
+      .badgeRef { fill: #14532D; stroke: #22C55E; stroke-width: 2; rx: 10; }
+      .badgeSig { fill: #082F49; stroke: #38BDF8; stroke-width: 2; rx: 10; }
+      .badgeGnd { fill: #451A03; stroke: #F59E0B; stroke-width: 2; rx: 10; }
+      .badgeBatt { fill: #450A0A; stroke: #EF4444; stroke-width: 2; rx: 10; }
+      .arrowHeadRef { fill: #22C55E; }
+      .arrowHeadSig { fill: #38BDF8; }
+      .arrowHeadGnd { fill: #F59E0B; }
+      .arrowHeadBatt { fill: #EF4444; }
+    </style>
+    <marker
+       id="arrow-ref"
+       markerWidth="6"
+       markerHeight="6"
+       refX="5"
+       refY="3"
+       orient="auto">
+      <path
+         d="M0,0 L6,3 L0,6 Z"
+         fill="#22C55E"
+         id="path1" />
+    </marker>
+    <marker
+       id="arrow-sig"
+       markerWidth="6"
+       markerHeight="6"
+       refX="5"
+       refY="3"
+       orient="auto">
+      <path
+         d="M0,0 L6,3 L0,6 Z"
+         fill="#38BDF8"
+         id="path2" />
+    </marker>
+    <marker
+       id="arrow-gnd"
+       markerWidth="6"
+       markerHeight="6"
+       refX="5"
+       refY="3"
+       orient="auto">
+      <path
+         d="M0,0 L6,3 L0,6 Z"
+         fill="#F59E0B"
+         id="path3" />
+    </marker>
+    <marker
+       id="arrow-batt"
+       markerWidth="6"
+       markerHeight="6"
+       refX="5"
+       refY="3"
+       orient="auto">
+      <path
+         d="M0,0 L6,3 L0,6 Z"
+         fill="#EF4444"
+         id="path4" />
+    </marker>
+  </defs>
+  <!-- Background -->
+  <rect
+     width="1200"
+     height="520"
+     class="bg"
+     id="rect4" />
+  <rect
+     x="24"
+     y="24"
+     width="1152"
+     height="472"
+     rx="22"
+     class="panel"
+     id="rect5" />
+  <!-- Title -->
+  <text
+     x="58.642296"
+     y="61.817234"
+     class="text title"
+     id="text5">Sensor Circuit</text>
+  <text
+     x="58.642296"
+     y="91.81723"
+     class="muted small"
+     id="text6">Reference voltage + signal return + sensor ground</text>
+  <!-- ECM / PCM -->
+  <rect
+     x="60"
+     y="150"
+     width="280"
+     height="220"
+     rx="18"
+     class="box"
+     id="rect6" />
+  <text
+     x="105"
+     y="190"
+     class="text label"
+     id="text7">ECM / PCM</text>
+  <text
+     x="100.24805"
+     y="218.6423"
+     class="muted small"
+     id="text8">Control module</text>
+  <!-- ECM internal labels -->
+  <circle
+     cx="299.32114"
+     cy="246.47519"
+     r="7"
+     fill="#22c55e"
+     id="circle8" />
+  <circle
+     cx="298.6423"
+     cy="286.47519"
+     r="7"
+     fill="#38bdf8"
+     id="circle9" />
+  <circle
+     cx="300.67886"
+     cy="325.79636"
+     r="7"
+     fill="#f59e0b"
+     id="circle10" />
+  <text
+     x="95.678848"
+     y="251.11749"
+     class="text small"
+     id="text10">5V Reference Output</text>
+  <text
+     x="95.678848"
+     y="291.11749"
+     class="text small"
+     id="text11">Signal Input</text>
+  <text
+     x="95.678848"
+     y="331.11749"
+     class="text small"
+     id="text12">Sensor Ground</text>
+  <!-- Sensor -->
+  <rect
+     x="470"
+     y="165"
+     width="240"
+     height="190"
+     rx="18"
+     class="box"
+     id="rect12" />
+  <text
+     x="549.75195"
+     y="187.78069"
+     class="text label"
+     id="text13">Sensor</text>
+  <text
+     x="506.81723"
+     y="219.89035"
+     class="muted small"
+     id="text14">TPS / MAP / Pressure</text>
+  <!-- Sensor pins -->
+  <circle
+     cx="470"
+     cy="245.79634"
+     r="7"
+     fill="#22c55e"
+     id="circle14" />
+  <circle
+     cx="471.3577"
+     cy="285.79636"
+     r="7"
+     fill="#38bdf8"
+     id="circle15" />
+  <circle
+     cx="471.35773"
+     cy="326.47519"
+     r="7"
+     fill="#f59e0b"
+     id="circle16" />
+  <text
+     x="500"
+     y="251.11749"
+     class="text small"
+     id="text16">Ref</text>
+  <text
+     x="500"
+     y="291.11749"
+     class="text small"
+     id="text17">Signal</text>
+  <text
+     x="500"
+     y="331.11749"
+     class="text small"
+     id="text18">Ground</text>
+  <!-- Battery -->
+  <rect
+     x="860"
+     y="120"
+     width="180"
+     height="110"
+     rx="18"
+     class="box"
+     id="rect18" />
+  <text
+     x="920"
+     y="155"
+     class="text label"
+     id="text19">Battery</text>
+  <!-- battery symbol -->
+  <line
+     x1="915"
+     y1="178"
+     x2="915"
+     y2="212"
+     class="outline"
+     id="line19" />
+  <line
+     x1="935"
+     y1="170"
+     x2="935"
+     y2="220"
+     class="outline"
+     id="line20" />
+  <text
+     x="898"
+     y="170"
+     class="text tiny"
+     id="text20">-</text>
+  <text
+     x="942"
+     y="170"
+     class="text tiny"
+     id="text21">+</text>
+  <!-- chassis ground -->
+  <g
+     transform="translate(960 355)"
+     id="g24">
+    <line
+       x1="0"
+       y1="0"
+       x2="0"
+       y2="28"
+       class="outline"
+       id="line21" />
+    <line
+       x1="-26"
+       y1="28"
+       x2="26"
+       y2="28"
+       class="outline"
+       id="line22" />
+    <line
+       x1="-18"
+       y1="38"
+       x2="18"
+       y2="38"
+       class="outline"
+       id="line23" />
+    <line
+       x1="-10"
+       y1="48"
+       x2="10"
+       y2="48"
+       class="outline"
+       id="line24" />
+  </g>
+  <text
+     x="900"
+     y="350"
+     class="text label"
+     id="text24">Chassis / Ground</text>
+  <!-- Wires -->
+  <line
+     x1="306.88074"
+     y1="247.15404"
+     x2="460.05573"
+     y2="247.15404"
+     class="wireRef"
+     marker-end="url(#arrow-ref)"
+     id="line25" />
+  <line
+     x1="465.2962"
+     y1="286.13577"
+     x2="306.22473"
+     y2="286.13577"
+     class="wireSig"
+     marker-end="url(#arrow-sig)"
+     id="line26" />
+  <path
+     d="m 300.32871,327.8329 h 97.07716 v 0 h 66.94976"
+     class="wireGnd"
+     marker-end="url(#arrow-gnd)"
+     id="path26" />
+  <!-- ECM main power -->
+  <path
+     d="m 858.62231,171.34298 -40.67653,10e-6 -1.35763,-66.33749 -671.81556,-2.74536 0.67882,43.0547"
+     class="wireBatt"
+     marker-end="url(#arrow-batt)"
+     id="path27"
+     sodipodi:nodetypes="ccccc" />
+  <text
+     x="670.3786"
+     y="127.32115"
+     class="muted tiny"
+     id="text27">Module power feed</text>
+  <!-- dashed interpretation arrow -->
+  <path
+     d="m 710.67885,246.42298 159.60458,-1.18648 0.63041,41.23869"
+     class="dash"
+     marker-end="url(#arrow-sig)"
+     id="path28"
+     sodipodi:nodetypes="ccc" />
+  <text
+     x="737.35773"
+     y="231.06528"
+     class="muted tiny"
+     id="text28">Signal read</text>
+  <!-- Callout boxes -->
+  <rect
+     x="760"
+     y="290"
+     width="320"
+     height="84"
+     rx="14"
+     class="badgeSig"
+     id="rect28" />
+  <text
+     x="785"
+     y="320"
+     class="text small"
+     id="text29">Signal usually changes with input</text>
+  <text
+     x="785"
+     y="346"
+     class="muted tiny"
+     id="text30">Example: about 0.5V to 4.5V on many 3-wire sensors</text>
+  <rect
+     x="762.03656"
+     y="39.634464"
+     width="280"
+     height="46"
+     rx="12"
+     class="badgeRef"
+     id="rect30" />
+  <text
+     x="810.11749"
+     y="68.634468"
+     class="text small"
+     id="text31">Reference Voltage ≈ 5V</text>
+  <rect
+     x="836.71021"
+     y="415.79636"
+     width="250"
+     height="46"
+     rx="12"
+     class="badgeGnd"
+     id="rect31" />
+  <text
+     x="861.71021"
+     y="444.79636"
+     class="text small"
+     id="text32">Ground should stay near 0V</text>
+  <!-- Pin legend -->
+  <rect
+     x="59.906643"
+     y="411.44711"
+     width="532.74548"
+     height="64.186714"
+     rx="13.113734"
+     class="box"
+     id="rect32" />
+  <rect
+     x="86"
+     y="429.54047"
+     width="90"
+     height="28"
+     rx="10"
+     class="badgeRef"
+     id="rect33" />
+  <text
+     x="110"
+     y="448.54047"
+     class="text tiny"
+     id="text33">5V Ref</text>
+  <rect
+     x="206"
+     y="429.54047"
+     width="88"
+     height="28"
+     rx="10"
+     class="badgeSig"
+     id="rect34" />
+  <text
+     x="230"
+     y="448.54047"
+     class="text tiny"
+     id="text34">Signal</text>
+  <rect
+     x="324"
+     y="429.54047"
+     width="95"
+     height="28"
+     rx="10"
+     class="badgeGnd"
+     id="rect35" />
+  <text
+     x="346.96344"
+     y="448.54047"
+     class="text tiny"
+     id="text35">Ground</text>
+  <rect
+     x="449"
+     y="429.54047"
+     width="120"
+     height="28"
+     rx="10"
+     class="badgeBatt"
+     id="rect36" />
+  <text
+     x="466.85379"
+     y="447.8616"
+     class="text tiny"
+     id="text36">Battery Feed</text>
+  <text
+     x="601.35773"
+     y="444.46735"
+     class="muted tiny"
+     id="text37">Standardized simplified diagram</text>
+</svg>

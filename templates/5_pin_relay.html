@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+
+{% block title %}5-Pin Relay Wiring | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <h1>5-Pin Relay Wiring (87a)</h1>
+
+  <p>
+    A 5-pin relay includes terminal 87a, which is the normally closed output.
+    This means power can pass through 30 to 87a until the relay is energized.
+  </p>
+
+  <div class="diagram">
+    <img
+      src="/static/diagrams/relay_5_pin.svg"
+      alt="Basic 5 pin relay wiring diagram"
+      class="diagram-img"
+    >
+  </div>
+
+  <div class="relay-reference">
+    <h2>Relay Pin Quick Reference</h2>
+
+    <table class="relay-table">
+      <thead>
+        <tr>
+          <th>Pin</th>
+          <th>Name</th>
+          <th>Function</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>30</td>
+          <td>Battery Power</td>
+          <td>Main power input.</td>
+        </tr>
+        <tr>
+          <td>85</td>
+          <td>Coil Ground</td>
+          <td>Ground side of the relay coil.</td>
+        </tr>
+        <tr>
+          <td>86</td>
+          <td>Switch Signal</td>
+          <td>Trigger signal from switch or control module.</td>
+        </tr>
+        <tr>
+          <td>87</td>
+          <td>Normally Open</td>
+          <td>Receives power when the relay is energized.</td>
+        </tr>
+        <tr>
+          <td>87a</td>
+          <td>Normally Closed</td>
+          <td>Receives power when the relay is not energized.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

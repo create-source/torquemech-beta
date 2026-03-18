@@ -52,6 +52,26 @@
 
   <h2>Description</h2>
   <p>{{ description }}</p>
+  {% include "partials/obd_electrical.html" %}
+
+  <!-- 🔌 Electrical Insight -->
+<div class="tm-electrical-box">
+  <h2>Electrical Insight</h2>
+
+  <p>
+    This code is related to an electrical circuit within the vehicle.
+    The issue may not always be the component itself, but the wiring,
+    connector, power supply, or ground path.
+  </p>
+
+  <ul>
+    <li>Open circuit (broken wire or disconnected connector)</li>
+    <li>Short to ground</li>
+    <li>Short to power</li>
+    <li>High resistance (corrosion or loose connection)</li>
+    <li>Faulty sensor or control component</li>
+  </ul>
+</div>
 
   <h2>How Serious Is Code {{ code }}?</h2>
 

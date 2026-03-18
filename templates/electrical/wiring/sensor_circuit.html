@@ -1,0 +1,197 @@
+{% extends "layout.html" %}
+
+{% block title %}Sensor Circuit Guide | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-elec-page">
+  <div class="tm-container tm-elec-shell">
+
+    <header class="tm-elec-hero">
+      <div>
+        <p class="tm-elec-kicker">Electrical Hub • Wiring</p>
+        <h1>Sensor Circuit Guide</h1>
+        <p class="tm-elec-lead">
+          Many automotive sensors use the same basic pattern: a reference voltage, a ground, and a signal wire.
+          Understanding that pattern helps you diagnose bad readings, wiring faults, shorts, opens, and sensor failures faster.
+        </p>
+      </div>
+    </header>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Sensor Circuit Diagram</h2>
+        <p>Standardized technician view</p>
+      </div>
+
+      <div class="tm-diagram-card">
+        <img
+          src="/static/diagrams/sensor_circuit.svg"
+          alt="Sensor circuit diagram showing reference voltage, sensor ground, and signal wire to the control module"
+          class="tm-diagram-img"
+        >
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>How It Works</h2>
+        <p>Simple sensor signal view</p>
+      </div>
+
+      <div class="tm-flow-grid">
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">1</div>
+          <h3>Module Sends Reference Voltage</h3>
+          <p>The control module often provides a stable reference, commonly around 5 volts, to the sensor.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">2</div>
+          <h3>Sensor Has a Ground Path</h3>
+          <p>The sensor also needs a clean ground so the signal can be measured accurately.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">3</div>
+          <h3>Sensor Changes the Signal</h3>
+          <p>As pressure, position, or temperature changes, the sensor changes the return signal voltage.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">4</div>
+          <h3>Module Interprets the Reading</h3>
+          <p>The control module reads that signal and uses it to make operating decisions.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Common Sensor Circuit Pattern</h2>
+        <p>Fast reference</p>
+      </div>
+
+      <div class="tm-spec-grid">
+        <article class="tm-spec-card">
+          <h3>Reference Voltage</h3>
+          <p>Often about <strong>5V</strong> supplied by the module.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Ground</h3>
+          <p>Should stay very close to <strong>0V</strong> and remain stable.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Signal Wire</h3>
+          <p>Usually varies depending on sensor input, often within a range like <strong>0.5V to 4.5V</strong>.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Module Input</h3>
+          <p>The control module watches the signal for expected changes and faults.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Real-World Examples</h2>
+        <p>Where sensor circuit problems show up</p>
+      </div>
+
+      <div class="tm-example-grid">
+        <article class="tm-example-card">
+          <h3>Throttle Position Sensor Problem</h3>
+          <p><strong>Symptom:</strong> Poor throttle response, erratic shifting, or throttle-related trouble codes.</p>
+          <p><strong>Likely cause:</strong> Missing 5V reference, bad ground, or unstable signal voltage.</p>
+          <p><strong>Check first:</strong> Confirm reference voltage, ground quality, and signal sweep as the throttle moves.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>MAP Sensor Reading Wrong</h3>
+          <p><strong>Symptom:</strong> Hard starting, rough idle, poor performance, or incorrect load calculation.</p>
+          <p><strong>Likely cause:</strong> Signal short, open wire, bad ground, or failed sensor.</p>
+          <p><strong>Check first:</strong> Verify 5V reference, ground, and whether signal changes with engine load.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Shared 5V Reference Short</h3>
+          <p><strong>Symptom:</strong> Multiple sensors fail or several unrelated sensor codes appear at once.</p>
+          <p><strong>Likely cause:</strong> One sensor or wire pulling the shared 5V reference down.</p>
+          <p><strong>Check first:</strong> Measure the 5V reference line and isolate sensors one by one if needed.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Quick Sensor Checks</h2>
+        <p>Fast diagnostic direction</p>
+      </div>
+
+      <div class="tm-spec-grid">
+        <article class="tm-spec-card">
+          <h3>Check the 5V Line</h3>
+          <p>If reference voltage is missing, the sensor cannot report correctly.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Check Ground Integrity</h3>
+          <p>A weak sensor ground can create false readings even when power is present.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Watch Signal Change</h3>
+          <p>The signal should respond logically as the input changes, not stay fixed or jump erratically.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Compare to Known Good Data</h3>
+          <p>Use expected ranges or scan data to decide whether the signal makes sense.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Common Sensor Circuit Mistakes</h2>
+        <p>What causes misdiagnosis</p>
+      </div>
+
+      <div class="tm-failure-list">
+        <div class="tm-failure-item">Replacing the sensor before checking for 5V reference</div>
+        <div class="tm-failure-item">Ignoring ground quality and focusing only on the signal wire</div>
+        <div class="tm-failure-item">Assuming one bad reading means the sensor itself has failed</div>
+        <div class="tm-failure-item">Forgetting that multiple sensors may share the same 5V reference</div>
+        <div class="tm-failure-item">Checking voltage only at rest instead of while the sensor is operating</div>
+        <div class="tm-failure-item">Not comparing the signal to expected behavior for that sensor type</div>
+      </div>
+    </section>
+
+  </div>
+</section>
+<section class="tm-elec-section">
+  <div class="tm-elec-sectionHead">
+    <h2>Related Guides</h2>
+    <p>Keep diagnosing</p>
+  </div>
+
+  <div class="tm-grid tm-grid-2">
+    <a class="tm-card tm-cardLink" href="/electrical/fundamentals/ground-circuits">
+      <h3>Ground Circuits</h3>
+      <p>Bad sensor grounds can cause unstable or false signal readings.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/diagnostics/voltage-drop-test">
+      <h3>Voltage Drop Test</h3>
+      <p>Use voltage drop testing to confirm poor power or ground paths feeding a sensor.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/5-pin-relay">
+      <h3>5-Pin Relay</h3>
+      <p>Understanding signal paths and switching logic helps across many controlled circuits.</p>
+    </a>
+  </div>
+</section>
+{% endblock %}

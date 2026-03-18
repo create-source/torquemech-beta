@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="tm-page">
+  <div class="tm-container">
+
+    <div class="tm-eyebrow">ELECTRICAL • FUSE &amp; RELAY</div>
+    <h1 class="tm-title">Fuse Guide</h1>
+    <p class="tm-subtitle">
+      Learn what automotive fuses do, how to test them, and how to identify common fuse-related problems.
+    </p>
+
+    <div class="tm-card">
+      <h2>Overview</h2>
+      <p>
+        A fuse protects a circuit by opening when current exceeds a safe limit.
+        If a fuse blows, it usually means the circuit had an overload or a short.
+      </p>
+    </div>
+
+    <div class="tm-card">
+      <h2>Why fuses matter</h2>
+      <ul>
+        <li>Protect wiring from overheating</li>
+        <li>Protect modules and components from excessive current</li>
+        <li>Help isolate circuit faults</li>
+        <li>Prevent bigger electrical damage</li>
+      </ul>
+    </div>
+
+    <div class="tm-card">
+      <h2>Common signs of a blown fuse</h2>
+      <ul>
+        <li>A single accessory suddenly stops working</li>
+        <li>No power at a light, horn, radio, or outlet</li>
+        <li>Circuit works again after replacing fuse, then blows again</li>
+        <li>Visible broken fuse element</li>
+      </ul>
+    </div>
+
+    <div class="tm-card">
+      <h2>Basic testing method</h2>
+      <ul>
+        <li>Turn the key or circuit on if needed</li>
+        <li>Use a test light or multimeter</li>
+        <li>Check for power on both test points of the fuse</li>
+        <li>If only one side has power, the fuse is blown</li>
+        <li>If neither side has power, trace the feed side of the circuit</li>
+      </ul>
+    </div>
+
+    <div class="tm-card">
+      <h2>Important tip</h2>
+      <p>
+        Do not keep replacing a blown fuse without finding the cause. Repeated fuse failure usually points to a shorted wire, failed component, or overloaded circuit.
+      </p>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

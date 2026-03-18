@@ -1,0 +1,32 @@
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Basic fuse protection circuit">
+  <style>
+    .bg { fill:#0f172a; }
+    .card { fill:#111827; stroke:#243041; stroke-width:2; }
+    .fuse { fill:#2a1f1f; stroke:#ff4d4d; stroke-width:3; }
+    .load { fill:#1c2430; stroke:#3ba4ff; stroke-width:3; }
+    .title { font-family:Inter,Arial,sans-serif; font-size:20px; font-weight:700; fill:#e6edf3; }
+    .label { font-family:Inter,Arial,sans-serif; font-size:16px; font-weight:600; fill:#e6edf3; }
+    .power { stroke:#ff4d4d; stroke-width:5; fill:none; }
+    .ground { stroke:#9ca3af; stroke-width:5; fill:none; }
+    text { user-select:none; }
+  </style>
+
+  <rect x="0" y="0" width="760" height="420" class="bg"/>
+  <rect x="24" y="24" width="712" height="372" rx="18" class="card"/>
+
+  <text x="40" y="60" class="title">Basic Fuse Protection Circuit</text>
+
+  <text x="40" y="206" class="label">+ Battery</text>
+  <line x1="155" y1="200" x2="270" y2="200" class="power"/>
+
+  <rect x="270" y="172" width="90" height="56" rx="10" class="fuse"/>
+  <text x="315" y="206" text-anchor="middle" class="label">Fuse</text>
+
+  <line x1="360" y1="200" x2="500" y2="200" class="power"/>
+
+  <rect x="500" y="165" width="110" height="70" rx="12" class="load"/>
+  <text x="555" y="206" text-anchor="middle" class="label">Load</text>
+
+  <line x1="555" y1="235" x2="555" y2="310" class="ground"/>
+  <text x="515" y="335" class="label">− Ground</text>
+</svg>

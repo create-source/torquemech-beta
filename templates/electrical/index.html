@@ -1,0 +1,98 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="tm-page">
+  <div class="tm-container">
+
+    <div class="tm-eyebrow">TORQUEMECH • ELECTRICAL HUB</div>
+    <h1 class="tm-title">Automotive Electrical Guides</h1>
+    <p class="tm-subtitle">
+      Learn the basics of automotive electrical diagnosis with simple, structured guides for wiring, grounds, voltage drop testing, fuses, relays, and more.
+    </p>
+
+    <div class="tm-grid tm-grid-2">
+      <a class="tm-card tm-cardLink" href="/electrical/fundamentals">
+        <h2>Fundamentals</h2>
+        <p>
+          Start with the basics of how electrical circuits work, why grounds matter, and how to understand current flow.
+        </p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/diagnostics">
+        <h2>Diagnostics</h2>
+        <p>
+          Learn practical testing methods like voltage drop testing and how to find resistance, poor connections, and weak grounds.
+        </p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/fuse-relay">
+        <h2>Fuse &amp; Relay</h2>
+        <p>
+          Understand fuse protection, relay basics, pin layouts, and common electrical switching problems.
+        </p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/wiring">
+        <h2>Wiring</h2>
+        <p>
+          Explore simple wiring references, relay wiring examples, and future diagram-based guides.
+        </p>
+      </a>
+
+      <a class="tm-card tm-cardLink" href="/electrical/pinouts">
+        <h2>Pinouts</h2>
+        <p>
+          Connector and terminal references will live here as the electrical library grows.
+        </p>
+      </a>
+
+      <div class="tm-card">
+        <h2>What’s inside</h2>
+        <ul class="tm-list">
+          <li>Ground Circuits Guide</li>
+          <li>Voltage Drop Test Guide</li>
+          <li>Fuse Guide</li>
+          <li>5-Pin Relay Guide</li>
+          <li>More electrical pages coming soon</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tm-card" style="margin-top: 24px;">
+      <h2>Featured Guides</h2>
+      <div class="tm-grid tm-grid-2">
+        <a class="tm-card tm-cardLink" href="/electrical/fundamentals/ground-circuits">
+          <h3>Ground Circuits Guide</h3>
+          <p>Learn why bad grounds cause dim lights, slow motors, and strange intermittent electrical faults.</p>
+        </a>
+
+        <a class="tm-card tm-cardLink" href="/electrical/diagnostics/voltage-drop-test">
+          <h3>Voltage Drop Test Guide</h3>
+          <p>One of the most useful ways to find hidden resistance in power and ground circuits.</p>
+        </a>
+
+        <a class="tm-card tm-cardLink" href="/electrical/fuse-relay/fuse-guide">
+          <h3>Fuse Guide</h3>
+          <p>Learn what fuses do, how to test them, and what repeated blown fuses usually mean.</p>
+        </a>
+
+        <a class="tm-card tm-cardLink" href="/electrical/wiring/5-pin-relay">
+          <h3>5-Pin Relay Explained</h3>
+          <p>Understand pin 30, 85, 86, 87, and 87a and how a 5-pin relay switches under load.</p>
+        </a>
+
+        <a class="tm-card tm-cardLink" href="/electrical/wiring/starter">
+          <h3>Starter System</h3>
+          <p>Learn how battery power reaches the starter and how to diagnose no-crank and slow-crank problems.</p>
+        </a>
+
+        <a class="tm-card tm-cardLink" href="/electrical/wiring/sensor-circuit">
+          <h3>Sensor Circuit</h3>
+          <p>Understand 5V reference, ground, and signal circuits used by many common automotive sensors.</p>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

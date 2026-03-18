@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block title %}Ground Circuits Guide | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-elec-page">
+  <div class="tm-container tm-elec-shell">
+
+    <header class="tm-elec-hero">
+      <div>
+        <p class="tm-elec-kicker">Electrical Hub • Fundamentals</p>
+        <h1>Ground Circuits Guide</h1>
+        <p class="tm-elec-lead">
+          Ground circuits complete the electrical path back to the battery. Poor grounds can cause dim lights,
+          slow motors, false sensor readings, intermittent faults, and no-crank problems.
+        </p>
+      </div>
+    </header>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Ground Circuit Diagram</h2>
+        <p>Standardized technician view</p>
+      </div>
+
+      <div class="tm-diagram-card">
+        <img
+          src="/static/diagrams/ground_circuit.svg"
+          alt="Ground circuit diagram showing load, chassis ground, battery negative, and return path"
+          class="tm-diagram-img"
+        >
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>How It Works</h2>
+        <p>Simple return-path view</p>
+      </div>
+
+      <div class="tm-flow-grid">
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">1</div>
+          <h3>Power Reaches the Load</h3>
+          <p>The component receives battery voltage from the power side of the circuit.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">2</div>
+          <h3>Current Passes Through the Load</h3>
+          <p>The bulb, motor, relay, or sensor uses electrical energy to do work.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">3</div>
+          <h3>Ground Completes the Path</h3>
+          <p>Current returns through the ground path to battery negative.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">4</div>
+          <h3>Resistance Creates Problems</h3>
+          <p>Corrosion, loose fasteners, or damaged straps increase resistance and reduce performance.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Real-World Examples</h2>
+        <p>Common failures seen in actual vehicles</p>
+      </div>
+
+      <div class="tm-example-grid">
+        <article class="tm-example-card">
+          <h3>Dim Headlights</h3>
+          <p><strong>Symptom:</strong> Lights are weak or yellow, especially at idle.</p>
+          <p><strong>Likely cause:</strong> Corroded or loose ground near the headlight assembly.</p>
+          <p><strong>Check first:</strong> Ground point condition and voltage drop on the ground side.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Starter Click, No Crank</h3>
+          <p><strong>Symptom:</strong> Starter clicks but engine does not turn normally.</p>
+          <p><strong>Likely cause:</strong> Bad engine block ground or failing ground strap.</p>
+          <p><strong>Check first:</strong> Voltage drop from battery negative to engine block while cranking.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Intermittent Electrical Problems</h3>
+          <p><strong>Symptom:</strong> Random warning lights, strange sensor behavior, or accessories acting erratically.</p>
+          <p><strong>Likely cause:</strong> Shared ground point with corrosion or looseness.</p>
+          <p><strong>Check first:</strong> Main body grounds and shared ground eyelets.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Quick Ground Checks</h2>
+        <p>Fast reference for diagnosis</p>
+      </div>
+
+      <div class="tm-spec-grid">
+        <article class="tm-spec-card">
+          <h3>Voltage on Ground Side</h3>
+          <p>A good ground should be very close to <strong>0V</strong> compared to battery negative.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Voltage Drop Target</h3>
+          <p>Ground-side drop is usually best kept under about <strong>0.2V</strong> on many circuits.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Cranking Ground Test</h3>
+          <p>If voltage drop rises during cranking, suspect a poor engine ground or cable connection.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Wiggle Test</h3>
+          <p>If the symptom changes when the ground wire or eyelet is moved, the connection may be faulty.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Common Failure Points</h2>
+        <p>Where bad grounds usually show up</p>
+      </div>
+
+      <div class="tm-failure-list">
+        <div class="tm-failure-item">Battery negative terminal corrosion</div>
+        <div class="tm-failure-item">Loose chassis ground bolts</div>
+        <div class="tm-failure-item">Damaged engine-to-body ground strap</div>
+        <div class="tm-failure-item">Paint or rust under eyelet connections</div>
+        <div class="tm-failure-item">Shared ground points overloaded by corrosion</div>
+        <div class="tm-failure-item">Broken ground wire near connector or harness bend</div>
+      </div>
+    </section>
+
+  </div>
+</section>
+<section class="tm-elec-section">
+  <div class="tm-elec-sectionHead">
+    <h2>Related Guides</h2>
+    <p>Keep diagnosing</p>
+  </div>
+
+  <div class="tm-grid tm-grid-2">
+    <a class="tm-card tm-cardLink" href="/electrical/diagnostics/voltage-drop-test">
+      <h3>Voltage Drop Test</h3>
+      <p>One of the best ways to confirm a bad ground under load.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/starter">
+      <h3>Starter System</h3>
+      <p>Poor engine grounds often show up as click-no-crank or slow cranking.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/sensor-circuit">
+      <h3>Sensor Circuit</h3>
+      <p>Weak sensor grounds can create false readings and multiple codes.</p>
+    </a>
+  </div>
+</section>
+{% endblock %}

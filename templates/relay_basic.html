@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h1>Basic 4-Pin Relay Wiring</h1>
+
+<p>
+Automotive relays allow a low-current switch to control a higher current load.
+This diagram shows how a standard 4-pin relay is wired.
+</p>
+
+<div class="diagram">
+  <img src="/static/diagrams/relay_basic.svg" class="diagram-img">
+</div>
+
+<h2>Relay Pin Quick Reference</h2>
+
+<table class="relay-table">
+<tr>
+<th>Pin</th>
+<th>Name</th>
+<th>Function</th>
+</tr>
+
+<tr>
+<td>30</td>
+<td>Battery Power</td>
+<td>Receives constant 12V from the battery.</td>
+</tr>
+
+<tr>
+<td>85</td>
+<td>Coil Ground</td>
+<td>Ground side of the relay coil.</td>
+</tr>
+
+<tr>
+<td>86</td>
+<td>Switch Signal</td>
+<td>Trigger signal from switch or ECU.</td>
+</tr>
+
+<tr>
+<td>87</td>
+<td>Output</td>
+<td>Power sent to the load when relay activates.</td>
+</tr>
+
+</table>
+
+{% endblock %}

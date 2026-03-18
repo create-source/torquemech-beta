@@ -1,0 +1,202 @@
+{% extends "layout.html" %}
+
+{% block title %}5-Pin Relay Guide | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-elec-page">
+  <div class="tm-container tm-elec-shell">
+
+    <header class="tm-elec-hero">
+      <div>
+        <p class="tm-elec-kicker">Electrical Hub • Wiring</p>
+        <h1>5-Pin Relay Guide</h1>
+        <p class="tm-elec-lead">
+          A 5-pin relay uses a control side and a load side to switch power safely. Understanding pins 30, 85, 86, 87,
+          and 87a helps you diagnose fans, fuel pumps, lighting, starter controls, and many other switched circuits.
+        </p>
+      </div>
+    </header>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>5-Pin Relay Diagram</h2>
+        <p>Standardized technician view</p>
+      </div>
+
+      <div class="tm-diagram-card">
+        <img
+          src="/static/diagrams/relay_5_pin.svg"
+          alt="5-pin relay diagram showing terminals 30, 85, 86, 87, and 87a"
+          class="tm-diagram-img"
+        >
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>How It Works</h2>
+        <p>Simple switching view</p>
+      </div>
+
+      <div class="tm-flow-grid">
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">1</div>
+          <h3>Control Side Receives Signal</h3>
+          <p>Pins 85 and 86 energize the relay coil when voltage and ground are applied.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">2</div>
+          <h3>Internal Switch Moves</h3>
+          <p>The energized coil pulls the internal contact away from 87a and toward 87.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">3</div>
+          <h3>Load Side Changes Path</h3>
+          <p>Pin 30 connects to either 87a at rest or 87 when the relay is energized.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">4</div>
+          <h3>High Current Device Operates</h3>
+          <p>This lets a small control signal switch a higher-current load like a fan, pump, or lamp circuit.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Pin Functions</h2>
+        <p>Fast reference</p>
+      </div>
+
+      <div class="tm-spec-grid">
+        <article class="tm-spec-card">
+          <h3>Pin 30</h3>
+          <p>Common feed. Usually battery power coming into the switched side of the relay.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Pin 85</h3>
+          <p>One side of the coil. Often ground, depending on circuit design.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Pin 86</h3>
+          <p>Other side of the coil. Often receives switched power or control voltage.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Pin 87</h3>
+          <p>Normally open output. Connects to pin 30 when the relay is energized.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Pin 87a</h3>
+          <p>Normally closed output. Connects to pin 30 when the relay is at rest.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Real-World Examples</h2>
+        <p>Common relay-related problems</p>
+      </div>
+
+      <div class="tm-example-grid">
+        <article class="tm-example-card">
+          <h3>Cooling Fan Not Running</h3>
+          <p><strong>Symptom:</strong> Fan does not turn on when engine temperature rises.</p>
+          <p><strong>Likely cause:</strong> Relay coil not being energized, no output at 87, or failed relay contacts.</p>
+          <p><strong>Check first:</strong> Confirm control signal at 85/86 and battery power at 30.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Fuel Pump Will Not Prime</h3>
+          <p><strong>Symptom:</strong> No pump sound with key on and possible no-start condition.</p>
+          <p><strong>Likely cause:</strong> Bad relay, no ECM control, blown fuse, or open load circuit.</p>
+          <p><strong>Check first:</strong> Power at 30, coil activation at 85/86, and output at 87 during prime.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Accessory Stays On When It Should Be Off</h3>
+          <p><strong>Symptom:</strong> Circuit remains active unexpectedly.</p>
+          <p><strong>Likely cause:</strong> Stuck internal contacts, incorrect wiring, or misunderstanding of 87a function.</p>
+          <p><strong>Check first:</strong> Whether the circuit is using 87 or 87a and relay state at rest.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Quick Relay Checks</h2>
+        <p>Fast diagnostic direction</p>
+      </div>
+
+      <div class="tm-spec-grid">
+        <article class="tm-spec-card">
+          <h3>Power at 30</h3>
+          <p>Pin 30 often should have battery voltage if the feed side is healthy.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Coil Activation</h3>
+          <p>Pins 85 and 86 need the correct power and ground relationship to energize the relay.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Output at 87</h3>
+          <p>When energized, pin 87 should receive power from pin 30 in a standard normally open setup.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Listen for Click</h3>
+          <p>A click can help, but it does not prove the high-current contacts are carrying power correctly.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Common Relay Mistakes</h2>
+        <p>What causes confusion</p>
+      </div>
+
+      <div class="tm-failure-list">
+        <div class="tm-failure-item">Assuming a clicking relay is automatically good</div>
+        <div class="tm-failure-item">Mixing up the control side and the load side</div>
+        <div class="tm-failure-item">Confusing pin 87 with pin 87a</div>
+        <div class="tm-failure-item">Forgetting to check fuse power feeding pin 30</div>
+        <div class="tm-failure-item">Testing the relay without knowing whether the circuit is normally open or normally closed</div>
+        <div class="tm-failure-item">Replacing the relay before checking the command signal</div>
+      </div>
+    </section>
+
+  </div>
+</section>
+<section class="tm-elec-section">
+  <div class="tm-elec-sectionHead">
+    <h2>Related Guides</h2>
+    <p>Keep diagnosing</p>
+  </div>
+
+  <div class="tm-grid tm-grid-2">
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/starter">
+      <h3>Starter System</h3>
+      <p>Relays are often part of the control path in no-crank and start-command circuits.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/diagnostics/voltage-drop-test">
+      <h3>Voltage Drop Test</h3>
+      <p>A clicking relay can still have bad contacts, and voltage drop helps prove it.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/sensor-circuit">
+      <h3>Sensor Circuit</h3>
+      <p>Both systems rely on understanding control signals versus load-side behavior.</p>
+    </a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,13 @@
+TorqueMech OBD update workflow
+
+After updating data/obd_codes.json:
+
+1. Commit and push the updated JSON
+2. Wait for Railway deploy to finish
+3. Run /admin/obd/import?key=YOUR_KEY
+4. Test:
+   /api/obd/search?q=P0421
+   /api/obd/lookup?code=P0421
+
+Important:
+The live OBD lookup reads from data/obd.sqlite (dtc table), not directly from obd_codes.json.

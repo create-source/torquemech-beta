@@ -1,0 +1,43 @@
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="5-pin relay wiring with 87a">
+  <style>
+    .bg { fill:#0f172a; }
+    .card { fill:#111827; stroke:#243041; stroke-width:2; }
+    .component { fill:#1c2430; stroke:#3ba4ff; stroke-width:3; }
+    .title { font-family:Inter,Arial,sans-serif; font-size:20px; font-weight:700; fill:#e6edf3; }
+    .label { font-family:Inter,Arial,sans-serif; font-size:16px; font-weight:600; fill:#e6edf3; }
+    .pin { font-family:Inter,Arial,sans-serif; font-size:18px; font-weight:700; fill:#ffffff; }
+    .power { stroke:#ff4d4d; stroke-width:5; fill:none; }
+    .ground { stroke:#9ca3af; stroke-width:5; fill:none; }
+    .control { stroke:#3ba4ff; stroke-width:5; fill:none; }
+    text { user-select:none; }
+  </style>
+
+  <rect x="0" y="0" width="760" height="420" class="bg"/>
+  <rect x="24" y="24" width="712" height="372" rx="18" class="card"/>
+
+  <text x="40" y="60" class="title">5-Pin Relay Wiring (87a)</text>
+
+  <rect x="330" y="110" width="150" height="190" rx="14" class="component"/>
+  <text x="405" y="145" text-anchor="middle" class="label">Relay</text>
+
+  <text x="405" y="180" text-anchor="middle" class="pin">30</text>
+  <text x="365" y="215" text-anchor="middle" class="pin">85</text>
+  <text x="445" y="215" text-anchor="middle" class="pin">86</text>
+  <text x="365" y="250" text-anchor="middle" class="pin">87</text>
+  <text x="445" y="250" text-anchor="middle" class="pin">87a</text>
+
+  <line x1="190" y1="180" x2="330" y2="180" class="power"/>
+  <text x="40" y="176" class="label">+ Battery / Power In</text>
+
+  <line x1="190" y1="215" x2="330" y2="215" class="ground"/>
+  <text x="95" y="221" class="label">− Ground</text>
+
+  <line x1="480" y1="215" x2="600" y2="165" class="control"/>
+  <text x="610" y="165" class="label">Switch + / Signal</text>
+
+  <line x1="480" y1="250" x2="620" y2="250" class="power"/>
+  <text x="630" y="256" class="label">87 = Output When ON</text>
+
+  <line x1="480" y1="250" x2="610" y2="315" class="power"/>
+  <text x="620" y="320" class="label">87a = Output When OFF</text>
+</svg>

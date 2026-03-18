@@ -684,7 +684,12 @@ input.addEventListener("keydown", (e) => {
     }
   }
 
-  lookupBtn.addEventListener("click", lookup);
+  lookupBtn.addEventListener("click", () => {
+  const code = input.value.trim().toUpperCase();
+  if (!code) return;
+
+  window.location.href = `/obd/${code}`;
+});
   clearBtn.addEventListener("click", () => {
   input.value = "";
   resultCard.classList.remove("show");
@@ -699,7 +704,11 @@ input.addEventListener("keydown", (e) => {
 });
 
   input.addEventListener("keydown", e => {
-    if (e.key === "Enter") lookup();
+    if (e.key === "Enter") {
+      const code = input.value.trim().toUpperCase();
+      if (!code) return;
+      window.location.href = `/obd/${code}`;
+    }
   });
 
   addToSelectionBtn?.addEventListener("click", () => {
@@ -744,4 +753,5 @@ input.addEventListener("keydown", (e) => {
       lookup();
     }, 150);
   }
+
 });

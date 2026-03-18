@@ -1,0 +1,172 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<section class="tm-elec-page">
+  <div class="tm-elec-shell">
+
+    <!-- Header -->
+    <header class="tm-elec-hero">
+      <div>
+        <p class="tm-elec-kicker">Electrical Hub • Wiring</p>
+        <h1>Starter System</h1>
+        <p class="tm-elec-lead">
+          Learn how battery power reaches the starter motor, what can go wrong,
+          and where to test first when the engine will not crank normally.
+        </p>
+      </div>
+    </header>
+
+    <!-- Clean Diagram -->
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Starter Circuit Diagram</h2>
+        <p>Standardized technician view</p>
+      </div>
+
+      <div class="tm-diagram-card">
+        <img
+          src="/static/diagrams/starter_circuit.svg"
+          alt="Starter circuit diagram showing battery, fuse, ignition switch, relay, starter motor, and ground"
+          class="tm-diagram-img"
+        >
+      </div>
+    </section>
+
+    <!-- Visual Explainer -->
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>How It Works</h2>
+        <p>Simple power flow</p>
+      </div>
+
+      <div class="tm-flow-grid">
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">1</div>
+          <h3>Battery Supplies Power</h3>
+          <p>The battery provides 12V power to the starting circuit.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">2</div>
+          <h3>Ignition Switch Sends Signal</h3>
+          <p>Turning the key or pressing Start sends a signal to the relay or solenoid.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">3</div>
+          <h3>Relay Closes Circuit</h3>
+          <p>The relay allows high current to reach the starter motor safely.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">4</div>
+          <h3>Starter Cranks Engine</h3>
+          <p>The starter motor turns the engine so combustion can begin.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Real World Examples -->
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Real-World Examples</h2>
+        <p>Common issues you may actually see</p>
+      </div>
+
+      <div class="tm-example-grid">
+        <article class="tm-example-card">
+          <h3>Slow Crank</h3>
+          <p class="tm-example-symptom"><strong>Symptom:</strong> Engine cranks slowly.</p>
+          <p><strong>Likely cause:</strong> Weak battery, corroded cable, or high voltage drop.</p>
+          <p><strong>Check first:</strong> Battery voltage and cable connections.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Click, No Crank</h3>
+          <p class="tm-example-symptom"><strong>Symptom:</strong> You hear a click, but engine does not turn.</p>
+          <p><strong>Likely cause:</strong> Weak battery, bad starter, or poor engine ground.</p>
+          <p><strong>Check first:</strong> Voltage at starter and ground path.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>No Response at All</h3>
+          <p class="tm-example-symptom"><strong>Symptom:</strong> No click and no crank.</p>
+          <p><strong>Likely cause:</strong> Faulty ignition switch, relay control issue, blown fuse, or neutral safety problem.</p>
+          <p><strong>Check first:</strong> Start signal at relay and fuse power.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Quick Tests -->
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Quick Test Values</h2>
+        <p>Use these as a fast reference</p>
+      </div>
+
+      <div class="tm-spec-grid">
+        <article class="tm-spec-card">
+          <h3>Battery at Rest</h3>
+          <p>About <strong>12.6V</strong> on a fully charged battery.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Battery While Cranking</h3>
+          <p>Usually should stay above <strong>~10V</strong>.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Voltage Drop</h3>
+          <p>Try to keep major cable drop under about <strong>0.5V</strong> per side.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Ground Side</h3>
+          <p>High drop on ground side often points to a bad engine or chassis ground.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Common Failure Points -->
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Common Failure Points</h2>
+        <p>Fast diagnostic direction</p>
+      </div>
+
+      <div class="tm-failure-list">
+        <div class="tm-failure-item">Loose or corroded battery terminals</div>
+        <div class="tm-failure-item">Weak battery</div>
+        <div class="tm-failure-item">Bad starter relay</div>
+        <div class="tm-failure-item">Worn starter motor or solenoid</div>
+        <div class="tm-failure-item">Poor engine ground strap</div>
+        <div class="tm-failure-item">Ignition switch or start-signal issue</div>
+      </div>
+    </section>
+
+  </div>
+</section>
+<section class="tm-elec-section">
+  <div class="tm-elec-sectionHead">
+    <h2>Related Guides</h2>
+    <p>Keep diagnosing</p>
+  </div>
+
+  <div class="tm-grid tm-grid-2">
+    <a class="tm-card tm-cardLink" href="/electrical/fundamentals/ground-circuits">
+      <h3>Ground Circuits</h3>
+      <p>Bad grounds are a common cause of no-crank and slow-crank issues.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/diagnostics/voltage-drop-test">
+      <h3>Voltage Drop Test</h3>
+      <p>Use voltage drop testing to find resistance in starter power and ground cables.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/5-pin-relay">
+      <h3>5-Pin Relay</h3>
+      <p>Understand how the control side and load side affect starter-related circuits.</p>
+    </a>
+  </div>
+</section>
+{% endblock %}

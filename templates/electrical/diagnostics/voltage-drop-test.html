@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block title %}Voltage Drop Test Guide | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-elec-page">
+  <div class="tm-container tm-elec-shell">
+
+    <header class="tm-elec-hero">
+      <div>
+        <p class="tm-elec-kicker">Electrical Hub • Diagnostics</p>
+        <h1>Voltage Drop Test Guide</h1>
+        <p class="tm-elec-lead">
+          Voltage drop testing helps you find hidden resistance in power and ground circuits. It is one of the best
+          ways to catch bad connections, corrosion, weak grounds, and cable problems under load.
+        </p>
+      </div>
+    </header>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Voltage Drop Diagram</h2>
+        <p>Standardized technician view</p>
+      </div>
+
+      <div class="tm-diagram-card">
+        <img
+          src="/static/diagrams/voltage_drop_test.svg"
+          alt="Voltage drop test diagram showing battery, load, meter leads, and power and ground side testing"
+          class="tm-diagram-img"
+        >
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>How It Works</h2>
+        <p>Simple diagnostic view</p>
+      </div>
+
+      <div class="tm-flow-grid">
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">1</div>
+          <h3>Turn the Circuit On</h3>
+          <p>Voltage drop testing only works properly when the circuit is under load.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">2</div>
+          <h3>Place Meter Across the Suspected Section</h3>
+          <p>Measure across the cable, connection, switch, or ground path you want to test.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">3</div>
+          <h3>Read the Voltage Loss</h3>
+          <p>A low reading usually means the path is healthy. A higher reading points to resistance.</p>
+        </article>
+
+        <article class="tm-flow-card">
+          <div class="tm-flow-step">4</div>
+          <h3>Find the Restriction</h3>
+          <p>Move section by section until the excessive voltage drop appears and isolate the bad spot.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Real-World Examples</h2>
+        <p>Where voltage drop testing saves time</p>
+      </div>
+
+      <div class="tm-example-grid">
+        <article class="tm-example-card">
+          <h3>Slow Crank</h3>
+          <p><strong>Symptom:</strong> Engine cranks sluggishly even with a battery that seems charged.</p>
+          <p><strong>Likely cause:</strong> High resistance in the positive cable, ground cable, or starter connections.</p>
+          <p><strong>Check first:</strong> Voltage drop across battery positive to starter and battery negative to engine block while cranking.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Dim Headlights</h3>
+          <p><strong>Symptom:</strong> Lights are weak or get worse when other loads are turned on.</p>
+          <p><strong>Likely cause:</strong> Bad ground or resistance in the power feed.</p>
+          <p><strong>Check first:</strong> Voltage drop on both the power side and ground side of the headlight circuit.</p>
+        </article>
+
+        <article class="tm-example-card">
+          <h3>Fuel Pump Low Voltage</h3>
+          <p><strong>Symptom:</strong> Hard starting, low fuel pressure, or weak pump operation.</p>
+          <p><strong>Likely cause:</strong> Resistance in wiring, relay contacts, fuse connections, or ground.</p>
+          <p><strong>Check first:</strong> Compare battery voltage to actual voltage at the pump under load.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Quick Reference Values</h2>
+        <p>General target ranges</p>
+      </div>
+
+      <div class="tm-spec-grid">
+        <article class="tm-spec-card">
+          <h3>Single Connection</h3>
+          <p>Try to keep drop very low, often around <strong>0.1V or less</strong> on a good connection.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Ground Side</h3>
+          <p>Many ground circuits should stay around <strong>0.2V or less</strong> under load.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Heavy Current Cables</h3>
+          <p>Starter and other high-load cables may allow more, but excessive drop still points to resistance.</p>
+        </article>
+
+        <article class="tm-spec-card">
+          <h3>Zero Is Ideal</h3>
+          <p>The closer the reading is to <strong>0V</strong>, the less unwanted resistance is present.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="tm-elec-section">
+      <div class="tm-elec-sectionHead">
+        <h2>Common Voltage Drop Mistakes</h2>
+        <p>What throws people off</p>
+      </div>
+
+      <div class="tm-failure-list">
+        <div class="tm-failure-item">Testing with the circuit off and expecting meaningful results</div>
+        <div class="tm-failure-item">Measuring from power to ground instead of across the suspect section</div>
+        <div class="tm-failure-item">Assuming a shiny terminal is automatically a good connection</div>
+        <div class="tm-failure-item">Ignoring the ground side and only checking power feed</div>
+        <div class="tm-failure-item">Testing only at rest instead of during actual load</div>
+        <div class="tm-failure-item">Replacing parts before confirming the voltage loss location</div>
+      </div>
+    </section>
+
+  </div>
+</section>
+<section class="tm-elec-section">
+  <div class="tm-elec-sectionHead">
+    <h2>Related Guides</h2>
+    <p>Keep diagnosing</p>
+  </div>
+
+  <div class="tm-grid tm-grid-2">
+    <a class="tm-card tm-cardLink" href="/electrical/fundamentals/ground-circuits">
+      <h3>Ground Circuits</h3>
+      <p>Ground-side voltage drop testing is one of the fastest ways to confirm a poor return path.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/starter">
+      <h3>Starter System</h3>
+      <p>Starter circuits are one of the most important places to use voltage drop testing.</p>
+    </a>
+
+    <a class="tm-card tm-cardLink" href="/electrical/wiring/5-pin-relay">
+      <h3>5-Pin Relay</h3>
+      <p>Voltage drop can also reveal poor relay contacts and feed-side resistance.</p>
+    </a>
+  </div>
+</section>
+{% endblock %}
