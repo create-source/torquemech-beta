@@ -60,6 +60,24 @@ def init_symptom_tables():
     cur = conn.cursor()
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS symptoms (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT UNIQUE,
+            title TEXT,
+            summary TEXT,
+            intro TEXT,
+            system TEXT,
+            severity TEXT,
+            driveability TEXT,
+            repair_cost_min REAL,
+            repair_cost_max REAL,
+            difficulty TEXT,
+            repair_time TEXT,
+            is_published INTEGER DEFAULT 1
+        )
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS services (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             slug TEXT NOT NULL UNIQUE,
