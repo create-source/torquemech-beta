@@ -3452,17 +3452,20 @@ a.btn:visited {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: nowrap;
 }
 
 .labor-inline input {
   width: 140px !important;
   min-width: 140px;
+  max-width: 140px;
   flex: 0 0 140px;
 }
 
 .labor-range {
+  display: inline-block;
+  white-space: nowrap;
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255,255,255,0.82);
-  white-space: nowrap;
+  color: #9ecbff;
 }
