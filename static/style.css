@@ -3337,3 +3337,129 @@ a.btn:visited {
   padding: 20px;
   background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
 }
+
+.labor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+.labor-range {
+  font-size: 13px;
+  opacity: .85;
+  white-space: normal;
+}
+
+.tm-hint {
+  line-height: 1.4;
+}
+
+.labor-help {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  max-width: 560px;
+}
+
+.labor-info {
+  margin-top: 6px;
+}
+
+.labor-range {
+  font-size: 13px;
+  opacity: .85;
+}
+
+.labor-confidence {
+  font-size: 12px;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.conf-low { color: #4ade80; }     /* green */
+.conf-typical { color: #facc15; } /* yellow */
+.conf-high { color: #f87171; }    /* red */
+
+.labor-info {
+  margin-top: 6px;
+}
+
+.labor-range {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9ecbff; /* your teal/blue accent */
+  margin-bottom: 4px;
+}
+
+.labor-note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.75);
+}
+
+.labor-note.subtle {
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.labor-info {
+  margin-top: 6px;
+}
+
+.labor-range {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.88);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+}
+
+.recalc-note {
+  margin-top: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.82);
+  line-height: 1.45;
+}
+
+.labor-info {
+  margin-top: 6px;
+}
+
+.labor-range {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+}
+
+.recalc-note {
+  margin-top: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.45;
+}
+
+.labor-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.labor-inline input {
+  flex: 0 0 120px; /* keeps input compact */
+}
+
+.labor-range {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9ecbff; /* your accent */
+}

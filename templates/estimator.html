@@ -126,44 +126,53 @@
             value="0"
             placeholder="Example: 220"
           />
-
-          <div class="tm-hint" style="margin-top:6px;">
-            Enter one fixed labor price for the whole job.
-            Example: Brake job = $220.
-          </div>
         </div>
       </div>
 
-      <div class="grid3" id="hourlyPricingWrap">
-        <div>
-          <label for="laborHours">
-            <span id="laborLabelText">Labor Hours</span>
-          </label>
+        <div class="grid3" id="hourlyPricingWrap">
 
-          <div class="labor-row">
-            <input id="laborHours" type="number" step="0.1" value="0" />
-            <span id="laborHoursRange" class="labor-range"></span>
+          <!-- Labor -->
+          <div>
+            <label for="laborHours">
+              <span id="laborLabelText">Labor Hours</span>
+            </label>
+
+            <div class="labor-inline">
+              <input id="laborHours" type="number" step="0.1" value="0" />
+              <span id="laborHoursRange" class="labor-range"></span>
+            </div>
           </div>
+
+          <!-- Parts -->
+          <div>
+            <label for="partsPrice">Parts Price (optional)</label>
+            <input id="partsPrice" type="number" step="0.01" value="0" />
+          </div>
+
+          <!-- Labor Rate -->
+          <div>
+            <label for="laborRate">Labor Rate ($/hr)</label>
+            <input id="laborRate" type="number" step="1" value="90" />
+          </div>
+
         </div>
 
-        <div>
-          <label for="partsPrice">Parts Price (optional)</label>
-          <input id="partsPrice" type="number" step="0.01" value="0" />
-        </div>
-
-        <div>
-          <label for="laborRate">Labor Rate ($/hr)</label>
-          <input id="laborRate" type="number" step="1" value="90" />
-        </div>
+        <p class="recalc-note">
+          If you adjust labor hours, parts price, or labor rate,
+          click the corresponding <strong>“Recalculate”</strong> button on that service card.
+        </p>
+            
       </div>
 
-      <p class="recalc-note">
-        If you adjust labor hours, parts price, or labor rate,
-        click the corresponding <strong>“Recalculate”</strong> button on that service card.
-      </p>
+      <div class="labor-help">
+        <span class="tm-hint">
+          Based on typical service time ranges. Actual labor may vary depending on vehicle condition, access, and technician experience.
+        </span>
+        
+      </div>
 
       <div class="inline-actions" style="margin-top:10px;">
-  <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select a category/service, then click “Get Estimate”.</div>
+      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select a category/service, then click “Get Estimate”.</div>
         <button id="quickEstimateBtn" type="button" class="btn primary">
           Get Estimate
         </button>

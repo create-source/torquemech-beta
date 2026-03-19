@@ -5,7 +5,7 @@
   "categories": [
     {
       "key": "maintenance",
-      "name": "Maintenance",
+      "name": "Maintenance",      
       "services": [
         {
           "code": "oil_and_filter_change",

@@ -429,6 +429,8 @@ function togglePricingModeUI() {
   }
 }
 
+const confidenceEl = document.getElementById("laborConfidence");
+
   function quoteTotal() {
     return lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0);
   }
@@ -777,6 +779,11 @@ function togglePricingModeUI() {
 
     if (!serviceCode) {
       if (laborHoursRangeEl) laborHoursRangeEl.textContent = "";
+      const confidenceEl = document.getElementById("laborConfidence");
+      if (confidenceEl) {
+        confidenceEl.textContent = "";
+        confidenceEl.className = "labor-confidence";
+      }
       return;
     }
 
@@ -788,8 +795,30 @@ function togglePricingModeUI() {
     const mx = Number(serviceMeta?.labor_hours_max ?? 0);
     const midpoint = mx > 0 && mx >= mn ? (mn + mx) / 2 : 0;
 
-    if (!laborHoursTouched && midpoint > 0 && laborHoursEl) {
+    if ((!laborHoursTouched || !laborHoursEl.value) && midpoint > 0) {
       laborHoursEl.value = fmt1(midpoint);
+    }
+
+    const confidenceEl = document.getElementById("laborConfidence");
+    if (confidenceEl) {
+      let label = "";
+      let className = "labor-confidence";
+
+      if (midpoint > 0) {
+        label = "Standard labor";
+        className += " conf-typical";
+
+        if (midpoint <= 1.5) {
+          label = "Quick service";
+          className = "labor-confidence conf-low";
+        } else if (midpoint >= 3.5) {
+          label = "Extended labor";
+          className = "labor-confidence conf-high";
+        }
+      }
+
+      confidenceEl.textContent = label;
+      confidenceEl.className = className;
     }
   }
 

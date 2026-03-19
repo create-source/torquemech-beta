@@ -59,8 +59,24 @@ from fastapi.templating import Jinja2Templates
 
 import sqlite3
 import json
+
+
 from pathlib import Path
 from fastapi.responses import HTMLResponse
+
+DEFAULT_LABOR_RANGES = {
+    "maintenance": (0.5, 1.5),
+    "brakes": (1.0, 2.0),
+    "engine": (1.5, 3.5),
+    "cooling": (1.0, 2.5),
+    "electrical": (1.0, 2.5),
+    "suspension": (1.5, 3.0),
+    "exhaust": (1.0, 2.0),
+    "fuel": (1.0, 2.5),
+    "transmission": (2.5, 5.0),
+    "ac_heating": (1.5, 3.0),
+    "default": (1.0, 2.0)
+}
 
 def slugify_service_name(name: str) -> str:
     name = (name or "").strip().lower()
@@ -1269,8 +1285,7 @@ def _read_json(path: Path) -> Any:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Invalid JSON in {path.name}: {e}")
-
-
+    
 def load_services_catalog() -> Dict[str, Any]:
     global _services_cache, _services_mtime
 
@@ -1288,26 +1303,33 @@ def load_services_catalog() -> Dict[str, Any]:
     if "categories" not in data or not isinstance(data["categories"], list):
         raise HTTPException(status_code=500, detail="services_catalog.json must include: { categories: [...] }")
 
-    _services_cache = data
-    _services_mtime = mtime
-    return data
+    services_lookup = {}
 
+    for category in data.get("categories", []):
+        category_key = category.get("key", "default")
+
+        for service in category.get("services", []):
+            service["category"] = category_key
+            services_lookup[service["code"]] = service
+
+    _services_cache = {
+        "raw": data,
+        "lookup": services_lookup,
+    }
+    _services_mtime = mtime
+    return _services_cache
 
 def find_service_by_code(service_code: str) -> Optional[Dict[str, Any]]:
-    cat = load_services_catalog()
+    catalog = load_services_catalog()
     code = (service_code or "").strip()
     if not code:
         return None
-    for c in cat["categories"]:
-        for s in c.get("services", []):
-            if s.get("code") == code:
-                return s
-    return None
-
-
+    return catalog["lookup"].get(code)
+   
 def default_labor_rate() -> float:
-    cat = load_services_catalog()
-    return float(cat.get("default_labor_rate") or cat.get("labor_rate") or 90)
+    catalog = load_services_catalog()
+    raw = catalog["raw"]
+    return float(raw.get("default_labor_rate") or raw.get("labor_rate") or 90)
 
 
 def zip_multiplier(zip_code: str) -> float:
@@ -1426,38 +1448,42 @@ async def get_models(make: str) -> List[str]:
 # ===============================
 @app.get("/api/categories")
 def get_categories() -> List[Dict[str, str]]:
-    cat = load_services_catalog()
-    return [{"key": c.get("key", ""), "name": c.get("name", "")} for c in cat["categories"]]
+    catalog = load_services_catalog()
+    raw = catalog["raw"]
+    return [{"key": c.get("key", ""), "name": c.get("name", "")} for c in raw["categories"]]
 
 
 @app.get("/api/services/{category_key}")
 def get_services(category_key: str) -> List[Dict[str, Any]]:
-    cat = load_services_catalog()
+    catalog = load_services_catalog()
+    raw = catalog["raw"]
     ck = (category_key or "").strip()
-    for c in cat["categories"]:
+    for c in raw["categories"]:
         if c.get("key") == ck:
             return c.get("services", [])
     raise HTTPException(status_code=404, detail=f"Category '{category_key}' not found")
 
 
 @app.get("/api/service/{service_code}")
-def get_service(service_code: str) -> Dict[str, Any]:
-    s = find_service_by_code(service_code)
-    if not s:
+def get_service(service_code: str):
+    catalog = load_services_catalog()
+    service = catalog["lookup"].get(service_code)
+
+    if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    mn = float(s.get("labor_hours_min", 0) or 0)
-    mx = float(s.get("labor_hours_max", 0) or 0)
+    # If missing labor data → use category defaults
+    if not service.get("labor_hours_min") or not service.get("labor_hours_max"):
+        category = service.get("category", "default")
+        default_min, default_max = DEFAULT_LABOR_RANGES.get(
+            category,
+            DEFAULT_LABOR_RANGES["default"]
+        )
 
-    # midpoint if range exists, else 0
-    labor_hours = (mn + mx) / 2.0 if (mx > 0 and mx >= mn) else 0
+        service["labor_hours_min"] = default_min
+        service["labor_hours_max"] = default_max
 
-    # add normalized field so frontend can auto-fill
-    out = dict(s)
-    out["labor_hours"] = labor_hours
-
-    print("SERVICE_META_KEYS:", list(out.keys()))
-    return out
+    return service
 
 
 # ===============================
