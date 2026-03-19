@@ -3451,15 +3451,18 @@ a.btn:visited {
 .labor-inline {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .labor-inline input {
-  flex: 0 0 120px; /* keeps input compact */
+  width: 140px !important;
+  min-width: 140px;
+  flex: 0 0 140px;
 }
 
 .labor-range {
   font-size: 13px;
   font-weight: 600;
-  color: #9ecbff; /* your accent */
+  color: rgba(255,255,255,0.82);
+  white-space: nowrap;
 }
