@@ -3469,3 +3469,124 @@ a.btn:visited {
   font-weight: 600;
   color: #9ecbff;
 }
+
+.breakdown-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.breakdown-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #7dd3fc; /* subtle blue accent */
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+}
+
+#laborBreakdownBox {
+  border: 1px solid rgba(125, 211, 252, 0.2);
+}
+
+.breakdown-row {
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.breakdown-row span:last-child {
+  font-weight: 600;
+  color: #fff;
+}
+
+.breakdown-card {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 14px;
+  margin-top: 12px;
+}
+
+.breakdown-panel {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.04) inset;
+}
+
+.breakdown-toggle {
+  width: 100%;
+  border: 0;
+  background: linear-gradient(180deg, rgba(125, 211, 252, 0.08), rgba(125, 211, 252, 0.03));
+  color: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+
+.breakdown-toggle:hover {
+  background: linear-gradient(180deg, rgba(125, 211, 252, 0.11), rgba(125, 211, 252, 0.05));
+}
+
+.breakdown-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.breakdown-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.breakdown-title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: #eaf6ff;
+}
+
+.breakdown-chevron {
+  font-size: 18px;
+  opacity: 0.9;
+  transition: transform 0.18s ease;
+}
+
+.breakdown-toggle[aria-expanded="true"] .breakdown-chevron {
+  transform: rotate(180deg);
+}
+
+.breakdown-content {
+  padding: 14px 16px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.breakdown-steps > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 0;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.breakdown-steps strong {
+  font-size: 18px;
+  font-weight: 800;
+  color: #7dd3fc;
+  white-space: nowrap;
+}
+
+.breakdown-disclaimer {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.72);
+}
+
+.hidden {
+  display: none;
+}

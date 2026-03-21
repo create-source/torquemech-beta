@@ -15,10 +15,6 @@
   async function loadServicesCatalog() {
     const res = await fetch("/api/services");
     const data = await res.json();
-    if (data.error) throw new Error(data.error);
-
-    SERVICES = data;
-    SERVICE_INDEX = {};
 
     // Build index
     Object.entries(SERVICES).forEach(([cat, subs]) => {
@@ -157,11 +153,26 @@
 
   // ---- DOM helpers ----
   const $ = (id) => document.getElementById(id);
+  const laborBreakdownToggle = $("laborBreakdownToggle");
+  const laborBreakdownContent = $("laborBreakdownContent");
+  const laborBreakdownChevron = $("laborBreakdownChevron");
+
+  function setLaborBreakdownExpanded(expanded) {
+    if (!laborBreakdownToggle || !laborBreakdownContent) return;
+
+    laborBreakdownToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+    laborBreakdownContent.classList.toggle("hidden", !expanded);
+  }
+
+  laborBreakdownToggle?.addEventListener("click", () => {
+    const expanded = laborBreakdownToggle.getAttribute("aria-expanded") === "true";
+    setLaborBreakdownExpanded(!expanded);
+  });
 
   // Vehicle
-  const yearEl = $("year");
-  const makeEl = $("make");
-  const modelEl = $("model");
+  let yearEl = $("year");
+  let makeEl = $("make");
+  let modelEl = $("model");
 
   // Service selection
   const categoryEl = $("category");
@@ -229,8 +240,59 @@
 
   let sigCtx = sigCanvas ? sigCanvas.getContext("2d") : null;
 
+  // ===== NEW MULTI-VEHICLE STATE (Phase 1 Safe) =====
+  let estimateState = {
+    customer: {
+      name: "",
+      phone: "",
+      email: ""
+    },
+    vehicles: [
+      {
+        id: "veh_1",
+        year: "",
+        make: "",
+        model: "",
+        services: [] // we will map lineItems into here later
+      }
+    ]
+  };
+
+  window.estimateState = estimateState;
+
   // ---- State ----
   let lineItems = [];
+
+  // Sync lineItems to Vehicle 1 (temporary bridge)
+  function syncLineItemsToVehicle() {
+    if (!estimateState.vehicles.length) return;
+
+    estimateState.vehicles[0].services = lineItems.map((it, index) => ({
+      id: `svc_${index}`,
+      serviceCode: it.serviceCode,
+      title: it.serviceText,
+      laborHours: it.laborHours,
+      laborRate: it.laborRate,
+      partsTotal: it.partsPrice,
+      lineTotal: it.estimate,
+      notes: it.notes || ""
+    }));
+
+    window.estimateState = estimateState;
+  }
+
+  function syncEstimateMeta() {
+    if (!estimateState.vehicles.length) return;
+
+    estimateState.customer.name = customerNameEl?.value || "";
+    estimateState.customer.phone = customerPhoneEl?.value || "";
+
+    estimateState.vehicles[0].year = yearEl?.value || "";
+    estimateState.vehicles[0].make = makeEl?.value || "";
+    estimateState.vehicles[0].model = modelEl?.value || "";
+
+    window.estimateState = estimateState;
+  }
   // { serviceCode, serviceText, pricingMode, flatRatePrice, travelFee, laborHours, partsPrice, laborRate, notes, estimate }
   let lastEstimate = null; // { req, res }
   let serviceMeta = null;
@@ -875,12 +937,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     resizeSigCanvas();
   }
   function closeConfirm() {
+    if (document.activeElement && confirmModal?.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+
     confirmModal?.classList.add("hidden");
     confirmModal?.setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
     if (confirmMsg) confirmMsg.textContent = "";
-  }
 
+    quickEstimateBtn?.focus();
+  }
   confirmBackdrop?.addEventListener("click", closeConfirm);
   confirmCloseBtn?.addEventListener("click", closeConfirm);
 
@@ -1088,9 +1155,12 @@ const confidenceEl = document.getElementById("laborConfidence");
         `;
       })
       .join("");
-
+    
+    syncEstimateMeta();
+    syncLineItemsToVehicle();
     updateEstimateButtonState();
   }
+  
 
   function updateEstimateButtonState() {
     if (!estimateBtn) return;
@@ -1216,6 +1286,60 @@ if (getEstimateHint) {
       });
 
       it.estimate = Math.round(Number(res.estimate || 0) + Number(it.travelFee || 0));
+
+      if (res.labor_breakdown?.labor_hours) {
+        const selected = Number(res.labor_breakdown.labor_hours.selected || 0);
+
+        // Keep backend value ONLY for estimate
+        it.laborHours = selected;
+
+        // Sync the range badge
+        if (laborHoursRangeEl) {
+          const lh = res.labor_breakdown.labor_hours;
+          laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
+        }
+      }
+
+      // ===== LABOR HOURS UI =====
+      if (res.labor_breakdown) {
+        const lh = res.labor_breakdown.labor_hours;
+
+        if (laborHoursRangeEl) {
+          laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
+        }
+
+        if (laborHoursEl && !laborHoursTouched) {
+          laborHoursEl.value = lh.selected.toFixed(1);
+        }
+      }
+
+      // ===== LABOR BREAKDOWN =====
+      const box = document.getElementById("laborBreakdownBox");
+      const stepsEl = document.getElementById("laborSteps");
+      const disclaimerEl = document.getElementById("laborDisclaimer");
+
+      if (res.labor_breakdown && res.labor_breakdown.steps.length > 0) {
+        if (box) box.style.display = "block";
+
+        if (stepsEl) {
+          stepsEl.innerHTML = res.labor_breakdown.steps.map(step => `
+            <div>
+              <span>${step.label}</span>
+              <strong>${step.hours.toFixed(1)} hr</strong>
+            </div>
+          `).join("");
+        }
+
+        if (disclaimerEl) {
+          disclaimerEl.textContent =
+            "This shows how labor time is typically distributed for this service. Actual time may vary depending on vehicle condition and access.";
+        }
+
+        setLaborBreakdownExpanded(true);
+      } else {
+        if (box) box.style.display = "none";
+        setLaborBreakdownExpanded(false);
+      }
       editingLineItem = null;
       lastEstimate = { req, res };
 
@@ -1322,6 +1446,42 @@ if (getEstimateHint) {
           renderLineItems();
           setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
 
+      // ===== UPDATE LABOR BREAKDOWN (Recalculate) =====
+      if (res.labor_breakdown) {
+        const lh = res.labor_breakdown.labor_hours;
+
+        if (laborHoursRangeEl) {
+          laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
+        }
+
+        if (laborHoursEl && !laborHoursTouched) {
+          laborHoursEl.value = lh.selected.toFixed(1);
+        }
+      }
+
+      const box = document.getElementById("laborBreakdownBox");
+      const stepsEl = document.getElementById("laborSteps");
+      const disclaimerEl = document.getElementById("laborDisclaimer");
+
+      if (res.labor_breakdown && res.labor_breakdown.steps.length > 0) {
+        if (box) box.style.display = "block";
+
+        if (stepsEl) {
+          stepsEl.innerHTML = res.labor_breakdown.steps.map(step => `
+            <div style="display:flex; justify-content:space-between; padding:4px 0;">
+              <span>${step.label}</span>
+              <strong>${step.hours.toFixed(1)} hr</strong>
+            </div>
+          `).join("");
+        }
+
+        if (disclaimerEl) {
+          disclaimerEl.textContent = res.labor_breakdown.disclaimer || "";
+        }
+      } else {
+        if (box) box.style.display = "none";
+      }
+
           readyForNextService = false;
           updateEstimateButtonState();
           return;
@@ -1342,8 +1502,62 @@ if (getEstimateHint) {
         });
 
         it.estimate = Math.round(Number(res.estimate || 0) + Number(it.travelFee || 0));
+
+        let clampMessage = "";
+
+        if (res.labor_breakdown?.labor_hours) {
+          const lh = res.labor_breakdown.labor_hours;
+          const selected = Number(lh.selected || 0);
+
+          it.laborHours = selected;
+
+          if (laborHoursEl) {
+            laborHoursEl.value = selected.toFixed(1);
+          }
+
+          if (laborHoursRangeEl) {
+            laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
+          }
+
+          const requested = Number(currentHours || 0);
+
+          if (requested > lh.max) {
+            clampMessage = `Labor hours adjusted to max allowed range: ${lh.max.toFixed(1)} hrs.`;
+          } else if (requested < lh.min) {
+            clampMessage = `Labor hours adjusted to minimum allowed range: ${lh.min.toFixed(1)} hrs.`;
+          }
+        }
+
+        const box = document.getElementById("laborBreakdownBox");
+        const stepsEl = document.getElementById("laborSteps");
+        const disclaimerEl = document.getElementById("laborDisclaimer");
+
+        if (res.labor_breakdown && res.labor_breakdown.steps.length > 0) {
+          if (box) box.style.display = "block";
+
+          if (stepsEl) {
+            stepsEl.innerHTML = res.labor_breakdown.steps.map(step => `
+              <div style="display:flex; justify-content:space-between; padding:4px 0;">
+                <span>${step.label}</span>
+                <strong>${step.hours.toFixed(1)} hr</strong>
+              </div>
+            `).join("");
+          }
+
+          if (disclaimerEl) {
+            disclaimerEl.textContent = res.labor_breakdown.disclaimer || "";
+          }
+        } else {
+          if (box) box.style.display = "none";
+        }
+
         renderLineItems();
-        setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
+
+        if (clampMessage) {
+          setStatus("info", clampMessage);
+        } else {
+          setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
+        }
 
         readyForNextService = false;
         updateEstimateButtonState();
@@ -1518,6 +1732,8 @@ if (getEstimateHint) {
 
     activeLineItemIndex = null;
 
+    window.estimateState = estimateState;
+
     // ---- State reset (DO NOT redeclare) ----
     lineItems = [];
     lastEstimate = null;
@@ -1530,12 +1746,6 @@ if (getEstimateHint) {
     // VIN
     if (vinEl) vinEl.value = "";
     vinPanel?.classList.add("hidden");
-
-    // vehicle
-    const now = new Date().getFullYear();
-    if (yearEl) yearEl.value = String(now);
-    if (makeEl) makeEl.value = "";
-    if (modelEl) modelEl.innerHTML = `<option value="">Select model…</option>`;
 
     // service
     if (categoryEl) categoryEl.value = "";
@@ -1703,6 +1913,178 @@ if (getEstimateHint) {
   });
   deleteDraftBtn?.addEventListener("click", deleteSelectedDraft);
 
+  addVehicleBtn?.addEventListener("click", () => {
+    addVehicleCard();
+  });
+
+  customerNameEl?.addEventListener("input", () => {
+    syncEstimateMeta();
+  });
+
+  customerPhoneEl?.addEventListener("input", () => {
+    syncEstimateMeta();
+  });
+
+  yearEl?.addEventListener("change", () => {
+    syncEstimateMeta();
+  });
+
+  makeEl?.addEventListener("change", () => {
+    syncEstimateMeta();
+  });
+
+  modelEl?.addEventListener("change", () => {
+    syncEstimateMeta();
+  });
+
+  function setActiveVehicle(vehicleId) {
+    const index = estimateState.vehicles.findIndex(v => v.id === vehicleId);
+    if (index === -1) return;
+
+    const vehicle = estimateState.vehicles[index];
+
+    if (yearEl) yearEl.value = vehicle.year || "";
+    if (makeEl) makeEl.value = vehicle.make || "";
+    if (modelEl) modelEl.value = vehicle.model || "";
+
+    renderVehicles();
+  }
+
+  function addVehicleCard() {
+    const nextIndex = estimateState.vehicles.length + 1;
+
+    estimateState.vehicles.push({
+      id: `veh_${nextIndex}`,
+      year: "",
+      make: "",
+      model: "",
+      services: []
+    });
+
+    window.estimateState = estimateState;
+    renderVehicles();
+  }
+
+  function removeVehicleCard(vehicleId) {
+    if (estimateState.vehicles.length === 1) return;
+
+    estimateState.vehicles = estimateState.vehicles.filter(v => v.id !== vehicleId);
+
+    window.estimateState = estimateState;
+    renderVehicles();
+  }
+
+  function renderVehicles() {
+    if (!vehiclesContainer) return;
+
+    vehiclesContainer.innerHTML = estimateState.vehicles.map((vehicle, idx) => `
+      <div class="vehicle-card" data-vehicle-id="${vehicle.id}" style="border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+          <h3 style="margin:0;">Vehicle ${idx + 1}</h3>
+          ${estimateState.vehicles.length > 1 ? `
+            <button type="button" class="ghost remove-vehicle-btn" data-vehicle-id="${vehicle.id}">
+              Remove Vehicle
+            </button>
+          ` : ""}
+        </div>
+
+        <div class="grid3">
+          <div>
+            <label>Year</label>
+            <select class="vehicle-year" data-vehicle-id="${vehicle.id}"></select>
+          </div>
+
+          <div>
+            <label>Make</label>
+            <select class="vehicle-make" data-vehicle-id="${vehicle.id}">
+              <option value="">Select make...</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Model</label>
+            <select class="vehicle-model" data-vehicle-id="${vehicle.id}">
+              <option value="">Select model...</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    bindVehicleCardFields();
+  }
+
+  async function bindVehicleCardFields() {
+    const firstVehicle = estimateState.vehicles[0];
+    if (!firstVehicle) return;
+
+    yearEl = document.querySelector(`.vehicle-year[data-vehicle-id="${firstVehicle.id}"]`);
+    makeEl = document.querySelector(`.vehicle-make[data-vehicle-id="${firstVehicle.id}"]`);
+    modelEl = document.querySelector(`.vehicle-model[data-vehicle-id="${firstVehicle.id}"]`);
+
+    if (yearEl) {
+      const currentYear = new Date().getFullYear();
+      yearEl.innerHTML = `<option value="">Select Year</option>`;
+      for (let y = currentYear; y >= currentYear - 30; y--) {
+        const opt = document.createElement("option");
+        opt.value = String(y);
+        opt.textContent = String(y);
+        yearEl.appendChild(opt);
+      }
+      yearEl.value = firstVehicle.year || String(currentYear);
+    }
+
+    if (makeEl) {
+      makeEl.innerHTML = `<option value="">Select make…</option>`;
+      const makes = await apiJSON("/api/makes");
+      for (const m of makes) {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        makeEl.appendChild(opt);
+      }
+      makeEl.value = firstVehicle.make || "";
+    }
+
+    if (modelEl && firstVehicle.make) {
+      modelEl.innerHTML = `<option value="">Select model…</option>`;
+      const models = await apiJSON(`/api/models/${encodeURIComponent(firstVehicle.make)}`);
+      for (const m of models) {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        modelEl.appendChild(opt);
+      }
+      modelEl.value = firstVehicle.model || "";
+    }
+
+    yearEl?.addEventListener("change", () => {
+      firstVehicle.year = yearEl.value;
+      syncEstimateMeta();
+      window.estimateState = estimateState;
+    });
+
+    makeEl?.addEventListener("change", async () => {
+      firstVehicle.make = makeEl.value;
+      firstVehicle.model = "";
+      syncEstimateMeta();
+      await loadModels(makeEl.value);
+      window.estimateState = estimateState;
+    });
+
+    modelEl?.addEventListener("change", () => {
+      firstVehicle.model = modelEl.value;
+      syncEstimateMeta();
+      window.estimateState = estimateState;
+    });
+
+    document.querySelectorAll(".remove-vehicle-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        removeVehicleCard(btn.dataset.vehicleId);
+      });
+    });
+  }
+
   // Populate dropdown on page load
   refreshDraftsUI();
 
@@ -1713,8 +2095,8 @@ if (getEstimateHint) {
       await loadMakes();
       await loadCategories();
       await applyObdFromQuery();
+      await renderVehicles();
 
-      if (modelEl) modelEl.innerHTML = `<option value="">Select model…</option>`;
       if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
 
       updateEstimateButtonState();

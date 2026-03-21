@@ -21,16 +21,22 @@
       </div>
     </div>
 
-    <!-- Vehicle -->
-    <section class="card" aria-label="Vehicle">
+    <!-- Vehicles -->
+    <section class="card" aria-label="Vehicles">
       <div class="vehicle-header">
-        <h2>Vehicle</h2>
-        <button id="clearBtn" type="button" class="ghost">Clear fields</button>
+        <h2>Vehicles</h2>
+        <div class="tm-addServiceRow">
+          <button id="addVehicleBtn" class="add-more-btn" type="button">
+            + Add Vehicle
+          </button>
+        </div>
       </div>
+
+      <div id="vehiclesContainer"></div>
 
       <div class="vin-section">
         <button type="button" id="vinToggle" class="vin-toggle">
-          🔎 Have a VIN? Auto-fill vehicle (Optional)
+          🔎 Have a VIN? Auto-fill active vehicle (Optional)
           <span id="vinArrow" class="vin-arrow">▸</span>
         </button>
 
@@ -42,27 +48,7 @@
           </button>
         </div>
       </div>
-
     </section>
-
-      <div class="grid3">
-        <div>
-          <label for="year">Year</label>
-          <select id="year"></select>
-        </div>
-
-        <div>
-          <label for="make">Make</label>
-          <select id="make">
-            <option value="">Select make...</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="model">Model</label>
-          <select id="model"></select>
-        </div>
-      </div>
 
     </section>
 
@@ -185,6 +171,27 @@
         <div class="preview-label">Estimate preview</div>
         <div class="preview-value" id="previewTotalText">—</div>
         <div class="preview-sub" id="previewSubText"></div>
+      </div>
+
+      <div id="laborBreakdownBox" class="tm-card breakdown-panel" style="margin-top:12px; display:none;">
+        <button
+          id="laborBreakdownToggle"
+          type="button"
+          class="breakdown-toggle"
+          aria-expanded="false"
+          aria-controls="laborBreakdownContent"
+        >
+          <span class="breakdown-toggle-left">
+            <span class="breakdown-icon">🔧</span>
+            <span class="breakdown-title">Labor time breakdown</span>
+          </span>
+          <span id="laborBreakdownChevron" class="breakdown-chevron">▾</span>
+        </button>
+
+        <div id="laborBreakdownContent" class="breakdown-content hidden">
+          <div id="laborSteps" class="breakdown-steps"></div>
+          <div id="laborDisclaimer" class="tm-muted breakdown-disclaimer"></div>
+        </div>
       </div>
 
       <div style="margin-top:12px;">

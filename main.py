@@ -64,6 +64,8 @@ import json
 from pathlib import Path
 from fastapi.responses import HTMLResponse
 
+from app.data.labor_profiles import build_labor_breakdown, get_service_labor_profile
+
 DEFAULT_LABOR_RANGES = {
     "maintenance": (0.5, 1.5),
     "brakes": (1.0, 2.0),
@@ -1397,8 +1399,9 @@ class EstimateRequest(BaseModel):
 class EstimateResponse(BaseModel):
     estimate: int
     currency: str = "USD"
-    breakdown: Dict[str, float]
     service_name: str
+    breakdown: Dict[str, Any]
+    labor_breakdown: Optional[Dict[str, Any]] = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -1555,6 +1558,17 @@ async def decode_vin(vin: str):
         "model": model.title(),
     }
 
+def normalize_service_key(value: str) -> str:
+    return (
+        (value or "")
+        .strip()
+        .lower()
+        .replace("&", "and")
+        .replace("/", "_")
+        .replace("-", "_")
+        .replace(" ", "_")
+    )
+
 # ===============================
 # ESTIMATE
 # ===============================
@@ -1576,13 +1590,16 @@ async def estimate(req: EstimateRequest) -> EstimateResponse:
             raise HTTPException(status_code=400, detail="Invalid model for selected make")
 
     service_name = ""
+    service_key = ""
     hours_default = 0.0
 
     if req.serviceCode:
         s = find_service_by_code(req.serviceCode)
         if not s:
             raise HTTPException(status_code=400, detail="Invalid serviceCode")
+
         service_name = str(s.get("name", "")).strip()
+        service_key = str(s.get("code", "")).strip()
 
         mn = float(s.get("labor_hours_min", 0))
         mx = float(s.get("labor_hours_max", 0))
@@ -1590,12 +1607,29 @@ async def estimate(req: EstimateRequest) -> EstimateResponse:
             hours_default = (mn + mx) / 2.0
     else:
         service_name = (req.service or "").strip()
+        service_key = (req.serviceCode or "").strip()
+
         if not service_name:
             raise HTTPException(status_code=400, detail="Select a service")
 
     labor_rate = float(req.laborRate) if req.laborRate is not None else default_labor_rate()
     labor_hours = float(req.laborHours) if req.laborHours and req.laborHours > 0 else hours_default
 
+    labor_breakdown = build_labor_breakdown(
+        service_key,
+        labor_hours,
+        display_name=service_name,
+        category_key=req.category,
+        labor_min=mn if req.serviceCode else 0,
+        labor_max=mx if req.serviceCode else 0,
+    )
+
+    if labor_breakdown:
+        labor_hours = labor_breakdown["labor_hours"]["selected"]
+    
+    if not labor_breakdown:
+        raise HTTPException(status_code=500, detail="Labor breakdown failed to generate")
+    
     labor = labor_hours * labor_rate
     parts = float(req.partsPrice)
 
@@ -1616,7 +1650,10 @@ async def estimate(req: EstimateRequest) -> EstimateResponse:
             "zip_multiplier": z,
             "year_multiplier": y,
             "subtotal": subtotal,
+            "hours_default": hours_default,
+            "service_key": service_key,
         },
+        labor_breakdown=labor_breakdown,
     )
 
 # ==============================
