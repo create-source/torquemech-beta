@@ -15,6 +15,7 @@
   async function loadServicesCatalog() {
     const res = await fetch("/api/services");
     const data = await res.json();
+    SERVICES = data;
 
     // Build index
     Object.entries(SERVICES).forEach(([cat, subs]) => {
@@ -156,6 +157,8 @@
   const laborBreakdownToggle = $("laborBreakdownToggle");
   const laborBreakdownContent = $("laborBreakdownContent");
   const laborBreakdownChevron = $("laborBreakdownChevron");
+  const vehiclesContainer = $("vehiclesContainer");
+  const addVehicleBtn = $("addVehicleBtn");
 
   function setLaborBreakdownExpanded(expanded) {
     if (!laborBreakdownToggle || !laborBreakdownContent) return;
@@ -168,6 +171,28 @@
     const expanded = laborBreakdownToggle.getAttribute("aria-expanded") === "true";
     setLaborBreakdownExpanded(!expanded);
   });
+
+  function isVehicleReadyForNextService(vehicleId) {
+    if (!vehicleId) return false;
+    return readyForNextServiceByVehicle[vehicleId] !== false;
+  }
+
+  function setVehicleReadyForNextService(vehicleId, isReady) {
+    if (!vehicleId) return;
+    readyForNextServiceByVehicle[vehicleId] = !!isReady;
+  }
+
+  function initializeVehicleReadyState(vehicleId) {
+    if (!vehicleId) return;
+    if (!(vehicleId in readyForNextServiceByVehicle)) {
+      readyForNextServiceByVehicle[vehicleId] = true;
+    }
+  }
+
+  function removeVehicleReadyState(vehicleId) {
+    if (!vehicleId) return;
+    delete readyForNextServiceByVehicle[vehicleId];
+  }
 
   // Vehicle
   let yearEl = $("year");
@@ -208,6 +233,9 @@
   const previewTotalText = $("previewTotalText");
   const previewSubText = $("previewSubText");
 
+  const activeVehicleBanner = $("activeVehicleBanner");
+  const activeVehicleText = $("activeVehicleText");
+
   // Confirm modal
   const confirmModal = $("confirmModal");
   const confirmBackdrop = $("confirmBackdrop");
@@ -247,13 +275,14 @@
       phone: "",
       email: ""
     },
+    activeVehicleId: "veh_1",
     vehicles: [
       {
         id: "veh_1",
         year: "",
         make: "",
         model: "",
-        services: [] // we will map lineItems into here later
+        services: []
       }
     ]
   };
@@ -265,18 +294,22 @@
 
   // Sync lineItems to Vehicle 1 (temporary bridge)
   function syncLineItemsToVehicle() {
-    if (!estimateState.vehicles.length) return;
-
-    estimateState.vehicles[0].services = lineItems.map((it, index) => ({
-      id: `svc_${index}`,
-      serviceCode: it.serviceCode,
-      title: it.serviceText,
-      laborHours: it.laborHours,
-      laborRate: it.laborRate,
-      partsTotal: it.partsPrice,
-      lineTotal: it.estimate,
-      notes: it.notes || ""
-    }));
+    for (const vehicle of estimateState.vehicles) {
+      vehicle.services = lineItems
+        .filter(it => it.vehicleId === vehicle.id)
+        .map((it, index) => ({
+          id: `svc_${vehicle.id}_${index}`,
+          vehicleId: vehicle.id,
+          vehicleLabel: it.vehicleLabel || getVehicleLabel(vehicle),
+          serviceCode: it.serviceCode,
+          title: it.serviceText,
+          laborHours: it.laborHours,
+          laborRate: it.laborRate,
+          partsTotal: it.partsPrice,
+          lineTotal: it.estimate,
+          notes: it.notes || ""
+        }));
+    }
 
     window.estimateState = estimateState;
   }
@@ -287,12 +320,36 @@
     estimateState.customer.name = customerNameEl?.value || "";
     estimateState.customer.phone = customerPhoneEl?.value || "";
 
-    estimateState.vehicles[0].year = yearEl?.value || "";
-    estimateState.vehicles[0].make = makeEl?.value || "";
-    estimateState.vehicles[0].model = modelEl?.value || "";
-
     window.estimateState = estimateState;
   }
+
+  function getActiveVehicle() {
+    return estimateState.vehicles.find(v => v.id === estimateState.activeVehicleId) || estimateState.vehicles[0] || null;
+  }
+
+  function getVehicleLabel(vehicle, idxOverride = null) {
+    if (!vehicle) return "No vehicle selected";
+
+    const idx = idxOverride ?? estimateState.vehicles.findIndex(v => v.id === vehicle.id);
+    const title = `Vehicle ${idx + 1}`;
+    const details = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
+
+    return details || `${title} (select vehicle)`;
+  }
+
+  function renderActiveVehicleBanner() {
+      const activeVehicle = getActiveVehicle();
+
+      if (!activeVehicleBanner || !activeVehicleText) return;
+
+      if (!activeVehicle) {
+        activeVehicleBanner.style.display = "none";
+        return;
+      }
+
+      activeVehicleBanner.style.display = "block";
+      activeVehicleText.textContent = getVehicleLabel(activeVehicle);
+    }
   // { serviceCode, serviceText, pricingMode, flatRatePrice, travelFee, laborHours, partsPrice, laborRate, notes, estimate }
   let lastEstimate = null; // { req, res }
   let serviceMeta = null;
@@ -396,7 +453,7 @@
     clearSignatureCanvas();
 
     // ✅ IMPORTANT: after loading, let buttons work immediately
-    readyForNextService = true;
+    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
     togglePricingModeUI();
     updateEstimateButtonState();
 
@@ -448,7 +505,7 @@
   }
 
   let laborHoursTouched = false;
-  let readyForNextService = true; // ✅ the lock/unlock flag
+  let readyForNextServiceByVehicle = {};
 
   // Track if user manually edited labor hours (so we don't overwrite it)
   laborHoursEl?.addEventListener("input", () => {
@@ -715,14 +772,14 @@ const confidenceEl = document.getElementById("laborConfidence");
             serviceEl.value = diagSvcValue;
             await loadServiceMeta(serviceEl.value);
             updateEstimateButtonState();
-            setStatus("ok", `OBD ${code} attached. Diagnostic service selected.`);
+            setStatus("ok", "OBD codes attached. Diagnostic service selected.");
             return;
           }
         }
 
         // Fallback if we can’t auto-map
         updateEstimateButtonState();
-        setStatus("info", `OBD ${code} attached to Notes. Select a diagnostic service to estimate.`);
+        setStatus("info", "OBD codes attached to Notes. Select a diagnostic service to estimate.");
       } catch (e) {
         setStatus("error", `OBD bridge failed: ${e.message}`);
       }
@@ -1094,10 +1151,12 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
   // ---- Build request ----
   function buildRequest(extra = {}) {
+    const activeVehicle = getActiveVehicle() || {};
+
     return {
-      year: Number(yearEl?.value),
-      make: (makeEl?.value || "").trim(),
-      model: (modelEl?.value || "").trim(),
+      year: Number(activeVehicle.year || 0),
+      make: (activeVehicle.make || "").trim(),
+      model: (activeVehicle.model || "").trim(),
       category: (categoryEl?.value || "").trim() || null,
       serviceCode: (serviceEl?.value || "").trim() || null,
 
@@ -1141,6 +1200,9 @@ const confidenceEl = document.getElementById("laborConfidence");
           <div class="line-item selectable" data-idx="${idx}">
             <div>
               <div class="name">${it.serviceText || "Service"}</div>
+              <div class="meta" style="margin-bottom:6px;">
+                Assigned to: ${it.vehicleLabel || "Vehicle 1"}
+              </div>
               <div class="meta">
                 ${pricingLabel}${travelLabel} • Parts: ${money(it.partsPrice || 0)}
               </div>
@@ -1163,43 +1225,42 @@ const confidenceEl = document.getElementById("laborConfidence");
   
 
   function updateEstimateButtonState() {
-    if (!estimateBtn) return;
+    const activeVehicle = getActiveVehicle();
+    const vehicleId = activeVehicle?.id || estimateState.activeVehicleId;
 
-    const hasBasics = !!(yearEl?.value && makeEl?.value && modelEl?.value);
-    const hasSelection = !!(categoryEl?.value && serviceEl?.value);
+    const hasBasics = !!(
+      activeVehicle?.year?.trim() &&
+      activeVehicle?.make?.trim() &&
+      activeVehicle?.model?.trim()
+    );
 
-    // --- Add Service button label (dynamic) ---
-    if (addLineBtn) {
-      // If user already added a service (locked state), guide them to add another
-      addLineBtn.textContent = readyForNextService ? "+ Add Service" : "+ Add Another Service";
-    }
+    const hasSelection = !!(
+      categoryEl?.value?.trim() &&
+      serviceEl?.value?.trim()
+    );
+
+    const readyForNextService = isVehicleReadyForNextService(vehicleId);
+
+    estimateBtn.textContent = "Get Estimate";
 
     estimateBtn.disabled = !(hasBasics && hasSelection && readyForNextService);
 
+    // UX hints
+    if (addServiceHint) addServiceHint.hidden = readyForNextService;
 
-// Hint text: when locked, explain the flow
-if (addServiceHint) addServiceHint.hidden = !!readyForNextService; // show only after a service is added
-if (getEstimateHint) {
-  // Show hint only when button is disabled
-  getEstimateHint.hidden = !estimateBtn.disabled;
+    if (getEstimateHint) {
+      getEstimateHint.hidden = !estimateBtn.disabled;
 
-  if (!getEstimateHint.hidden) {
-    getEstimateHint.textContent = !hasBasics
-      ? "Select year, make, and model first."
-      : !hasSelection
-        ? "Select a category and service first."
-        : "To add another service, click “+ Add Another Service”, then choose the next service.";
-  }
-}
+      if (!getEstimateHint.hidden) {
+        getEstimateHint.textContent = !hasBasics
+          ? "Select year, make, and model first."
+          : !hasSelection
+            ? "Select a category and service first."
+            : "Finish current service or click + Add Service.";
+      }
+    }
 
-    // + Add Service enabled ONLY after a service has been added
     if (addLineBtn) addLineBtn.disabled = readyForNextService;
-
-    // keep status helpful, but don't spam over error messages
-    if (!hasBasics) setStatus("info", "Select year, make, and model.");
-    else if (!hasSelection) setStatus("info", "Select a category and service.");
-    else if (!readyForNextService) setStatus("info", "Click + Add Service to add another service.");
-    else setStatus("info", "Click Get Estimate to add this service.");
   }
 
   // ---- Get Estimate FIRST ----
@@ -1212,9 +1273,11 @@ if (getEstimateHint) {
         event_label: "Estimator Tool"
       });
     }
-    if (!readyForNextService) return;
+    const activeVehicleId = estimateState.activeVehicleId;
+    if (!isVehicleReadyForNextService(activeVehicleId)) return;
 
-    if (!(yearEl.value && makeEl.value && modelEl.value)) {
+    const activeVehicle = getActiveVehicle();
+    if (!(activeVehicle?.year && activeVehicle?.make && activeVehicle?.model)) {
       setStatus("error", "Select year, make, and model first.");
       return;
     }
@@ -1230,25 +1293,32 @@ if (getEstimateHint) {
     }
 
     // lock immediately so user can’t spam add
-    readyForNextService = false;
+    setVehicleReadyForNextService(estimateState.activeVehicleId, false);
     updateEstimateButtonState();
 
     const serviceText = editingLineItem
       ? (editingLineItem.serviceText || editingLineItem.serviceCode)
       : (serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl.value);
 
+    if (!activeVehicle) {
+      setStatus("error", "Select a vehicle first.");
+      return;
+    }
+
     const it = {
-    serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
-    serviceText,
-    pricingMode: getPricingMode(),
-    flatRatePrice: Number(flatRatePriceEl?.value || 0),
-    travelFee: Number(travelFeeEl?.value || 0),
-    laborHours: Number(laborHoursEl?.value || 0),
-    partsPrice: Number(partsPriceEl?.value || 0),
-    laborRate: Number(laborRateEl?.value || 0),
-    notes: (notesEl?.value || "").trim() || null,
-    estimate: null,
-  };
+      vehicleId: activeVehicle.id,
+      vehicleLabel: getVehicleLabel(activeVehicle),
+      serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
+      serviceText,
+      pricingMode: getPricingMode(),
+      flatRatePrice: Number(flatRatePriceEl?.value || 0),
+      travelFee: Number(travelFeeEl?.value || 0),
+      laborHours: Number(laborHoursEl?.value || 0),
+      partsPrice: Number(partsPriceEl?.value || 0),
+      laborRate: Number(laborRateEl?.value || 0),
+      notes: (notesEl?.value || "").trim() || null,
+      estimate: null,
+    };
 
     // add the card immediately
     lineItems.push(it);
@@ -1266,7 +1336,7 @@ if (getEstimateHint) {
         renderLineItems();
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
 
-        readyForNextService = false;
+        setVehicleReadyForNextService(estimateState.activeVehicleId, false);
         updateEstimateButtonState();
         return;
       }
@@ -1346,13 +1416,13 @@ if (getEstimateHint) {
       renderLineItems();
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
 
-      readyForNextService = false;
+      setVehicleReadyForNextService(estimateState.activeVehicleId, false);
       updateEstimateButtonState();
     } catch (e) {
       lineItems.pop();
       renderLineItems();
 
-      readyForNextService = true;
+      setVehicleReadyForNextService(estimateState.activeVehicleId, true);
       updateEstimateButtonState();
 
       setStatus("error", `Estimate failed: ${e.message}`);
@@ -1381,7 +1451,7 @@ if (getEstimateHint) {
 
     // 🔓 Unlock Get Estimate
     activeLineItemIndex = null;
-    readyForNextService = true;
+    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
     updateEstimateButtonState();
 
     setStatus("info", "Ready for next service.");
@@ -1400,14 +1470,27 @@ if (getEstimateHint) {
     const it = lineItems[idx];
     if (!it) return;
 
-    // --- PER-SERVICE ESTIMATE ---
+    // =========================
+    // REMOVE (FIRST)
+    // =========================
+    if (action === "remove") {
+      activeLineItemIndex = null;
+      lineItems.splice(idx, 1);
+      renderLineItems();
+      return;
+    }
+
+    // =========================
+    // ESTIMATE
+    // =========================
     if (action === "estimate") {
+
       if (!(yearEl.value && makeEl.value && modelEl.value)) {
         setStatus("error", "Select year, make, and model first.");
         return;
       }
 
-      // Load this card's values into the shared inputs when switching cards
+      // Load values if switching card
       if (activeLineItemIndex !== idx) {
         activeLineItemIndex = idx;
 
@@ -1418,24 +1501,18 @@ if (getEstimateHint) {
         if (pricingModeEl) pricingModeEl.value = it.pricingMode || "hourly";
         if (flatRatePriceEl) flatRatePriceEl.value = String(it.flatRatePrice ?? 0);
         if (travelFeeEl) travelFeeEl.value = String(it.travelFee ?? 0);
+
         togglePricingModeUI();
       }
-      // Second click on same card: apply edited shared inputs back to THIS card only
-      const currentHours = Number(laborHoursEl?.value || 0);
-      if (Number.isFinite(currentHours) && currentHours >= 0) it.laborHours = currentHours;
 
-      const currentParts = Number(partsPriceEl?.value || 0);
-      if (Number.isFinite(currentParts) && currentParts >= 0) it.partsPrice = currentParts;
-
-      const currentRate = Number(laborRateEl?.value || 0);
-      if (Number.isFinite(currentRate) && currentRate > 0) it.laborRate = currentRate;
-
+      // Apply edits
+      it.laborHours = Number(laborHoursEl?.value || 0);
+      it.partsPrice = Number(partsPriceEl?.value || 0);
+      it.laborRate = Number(laborRateEl?.value || 0);
       it.pricingMode = getPricingMode();
       it.flatRatePrice = Number(flatRatePriceEl?.value || 0);
       it.travelFee = Number(travelFeeEl?.value || 0);
-
-      if (notesEl) it.notes = (notesEl.value || "").trim() || null;
-    
+      it.notes = (notesEl?.value || "").trim() || null;
 
       renderLineItems();
       setStatus("info", `Pricing: ${it.serviceText}…`);
@@ -1445,55 +1522,22 @@ if (getEstimateHint) {
           it.estimate = calcLineItemEstimate(it);
           renderLineItems();
           setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
-
-      // ===== UPDATE LABOR BREAKDOWN (Recalculate) =====
-      if (res.labor_breakdown) {
-        const lh = res.labor_breakdown.labor_hours;
-
-        if (laborHoursRangeEl) {
-          laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
-        }
-
-        if (laborHoursEl && !laborHoursTouched) {
-          laborHoursEl.value = lh.selected.toFixed(1);
-        }
-      }
-
-      const box = document.getElementById("laborBreakdownBox");
-      const stepsEl = document.getElementById("laborSteps");
-      const disclaimerEl = document.getElementById("laborDisclaimer");
-
-      if (res.labor_breakdown && res.labor_breakdown.steps.length > 0) {
-        if (box) box.style.display = "block";
-
-        if (stepsEl) {
-          stepsEl.innerHTML = res.labor_breakdown.steps.map(step => `
-            <div style="display:flex; justify-content:space-between; padding:4px 0;">
-              <span>${step.label}</span>
-              <strong>${step.hours.toFixed(1)} hr</strong>
-            </div>
-          `).join("");
-        }
-
-        if (disclaimerEl) {
-          disclaimerEl.textContent = res.labor_breakdown.disclaimer || "";
-        }
-      } else {
-        if (box) box.style.display = "none";
-      }
-
-          readyForNextService = false;
-          updateEstimateButtonState();
           return;
         }
 
-        const req = buildRequest({
+        const vehicle = estimateState.vehicles.find(v => v.id === it.vehicleId) || {};
+
+        const req = {
+          ...buildRequest(),
+          year: Number(vehicle.year || 0),
+          make: (vehicle.make || "").trim(),
+          model: (vehicle.model || "").trim(),
           serviceCode: it.serviceCode,
           laborHours: it.laborHours,
           partsPrice: it.partsPrice,
           laborRate: it.laborRate,
           notes: it.notes,
-        });
+        };
 
         const res = await apiJSON("/estimate", {
           method: "POST",
@@ -1501,80 +1545,15 @@ if (getEstimateHint) {
           body: JSON.stringify(req),
         });
 
-        it.estimate = Math.round(Number(res.estimate || 0) + Number(it.travelFee || 0));
-
-        let clampMessage = "";
-
-        if (res.labor_breakdown?.labor_hours) {
-          const lh = res.labor_breakdown.labor_hours;
-          const selected = Number(lh.selected || 0);
-
-          it.laborHours = selected;
-
-          if (laborHoursEl) {
-            laborHoursEl.value = selected.toFixed(1);
-          }
-
-          if (laborHoursRangeEl) {
-            laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
-          }
-
-          const requested = Number(currentHours || 0);
-
-          if (requested > lh.max) {
-            clampMessage = `Labor hours adjusted to max allowed range: ${lh.max.toFixed(1)} hrs.`;
-          } else if (requested < lh.min) {
-            clampMessage = `Labor hours adjusted to minimum allowed range: ${lh.min.toFixed(1)} hrs.`;
-          }
-        }
-
-        const box = document.getElementById("laborBreakdownBox");
-        const stepsEl = document.getElementById("laborSteps");
-        const disclaimerEl = document.getElementById("laborDisclaimer");
-
-        if (res.labor_breakdown && res.labor_breakdown.steps.length > 0) {
-          if (box) box.style.display = "block";
-
-          if (stepsEl) {
-            stepsEl.innerHTML = res.labor_breakdown.steps.map(step => `
-              <div style="display:flex; justify-content:space-between; padding:4px 0;">
-                <span>${step.label}</span>
-                <strong>${step.hours.toFixed(1)} hr</strong>
-              </div>
-            `).join("");
-          }
-
-          if (disclaimerEl) {
-            disclaimerEl.textContent = res.labor_breakdown.disclaimer || "";
-          }
-        } else {
-          if (box) box.style.display = "none";
-        }
+        it.estimate = res.estimate ?? null;
 
         renderLineItems();
+        setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
 
-        if (clampMessage) {
-          setStatus("info", clampMessage);
-        } else {
-          setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
-        }
-
-        readyForNextService = false;
-        updateEstimateButtonState();
-      } catch (err) {
-        setStatus("error", `Estimate failed: ${err.message}`);
+      } catch (e) {
+        setStatus("error", `Estimate failed: ${e.message}`);
       }
-      return;
     }
-
-    // --- REMOVE ---
-    if (action === "remove") {
-      activeLineItemIndex = null;
-      lineItems.splice(idx, 1);
-      renderLineItems();
-      return;
-    }
-
   });
 
   // Confirm Add = finalize signature and generate PDF
@@ -1682,48 +1661,6 @@ if (getEstimateHint) {
     }
   });
 
-  // ---- Generate All Service Estimates ----
-  generateAllBtn?.addEventListener("click", async () => {
-    if (!lineItems.length) {
-      setStatus("error", "Add at least one service using Get Estimate first.");
-      return;
-    }
-    if (!(yearEl.value && makeEl.value && modelEl.value)) {
-      setStatus("error", "Select year, make, and model first.");
-      return;
-    }
-
-    setStatus("info", "Generating all service estimates…");
-
-    try {
-      // Recalculate each line item one-by-one
-      for (const it of lineItems) {
-        const req = buildRequest({
-          serviceCode: it.serviceCode,
-          laborHours: it.laborHours,
-          partsPrice: it.partsPrice,
-          laborRate: it.laborRate,
-          notes: it.notes,
-        });
-
-        const res = await apiJSON("/estimate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(req),
-        });
-
-        it.estimate = res.estimate ?? null;
-        lastEstimate = { req, res }; // keeps PDF working with “latest”
-        renderLineItems();
-      }
-
-      setStatus("ok", "All service estimates generated.");
-      openConfirm();
-    } catch (e) {
-      setStatus("error", `Generate all failed: ${e.message}`);
-    }
-  });
-
   // ---- Clear fields (Hard reset) ----
   clearBtn?.addEventListener("click", async () => {
     try {
@@ -1740,7 +1677,7 @@ if (getEstimateHint) {
     serviceMeta = null;
     signatureDataUrl = null;
     laborHoursTouched = false;
-    readyForNextService = true;
+    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
     if (laborHoursRangeEl) laborHoursRangeEl.textContent = "";
 
     // VIN
@@ -1925,44 +1862,30 @@ if (getEstimateHint) {
     syncEstimateMeta();
   });
 
-  yearEl?.addEventListener("change", () => {
-    syncEstimateMeta();
-  });
-
-  makeEl?.addEventListener("change", () => {
-    syncEstimateMeta();
-  });
-
-  modelEl?.addEventListener("change", () => {
-    syncEstimateMeta();
-  });
-
-  function setActiveVehicle(vehicleId) {
-    const index = estimateState.vehicles.findIndex(v => v.id === vehicleId);
-    if (index === -1) return;
-
-    const vehicle = estimateState.vehicles[index];
-
-    if (yearEl) yearEl.value = vehicle.year || "";
-    if (makeEl) makeEl.value = vehicle.make || "";
-    if (modelEl) modelEl.value = vehicle.model || "";
-
-    renderVehicles();
-  }
-
   function addVehicleCard() {
     const nextIndex = estimateState.vehicles.length + 1;
+    const newId = `veh_${nextIndex}`;
 
     estimateState.vehicles.push({
-      id: `veh_${nextIndex}`,
+      id: newId,
       year: "",
       make: "",
       model: "",
       services: []
     });
 
+    initializeVehicleReadyState(newId);
+
+    estimateState.activeVehicleId = newId;
+
+    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
+    editingLineItem = null;
+    activeLineItemIndex = null;
+
     window.estimateState = estimateState;
     renderVehicles();
+    renderActiveVehicleBanner();
+    updateEstimateButtonState();
   }
 
   function removeVehicleCard(vehicleId) {
@@ -1970,18 +1893,59 @@ if (getEstimateHint) {
 
     estimateState.vehicles = estimateState.vehicles.filter(v => v.id !== vehicleId);
 
+    lineItems = lineItems.filter(it => it.vehicleId !== vehicleId);
+
+    removeVehicleReadyState(vehicleId);
+
+    if (estimateState.activeVehicleId === vehicleId) {
+      estimateState.activeVehicleId = estimateState.vehicles[0]?.id || null;
+    }
+
+    editingLineItem = null;
+    activeLineItemIndex = null;
+
     window.estimateState = estimateState;
     renderVehicles();
+    renderLineItems();
+    renderActiveVehicleBanner();
+    updateEstimateButtonState();
+  }
+
+  function setActiveVehicle(vehicleId) {
+    const exists = estimateState.vehicles.some(v => v.id === vehicleId);
+    if (!exists) return;
+
+    initializeVehicleReadyState(vehicleId);
+
+    estimateState.activeVehicleId = vehicleId;
+    editingLineItem = null;
+    activeLineItemIndex = null;
+
+    window.estimateState = estimateState;
+    renderVehicles();
+    renderActiveVehicleBanner();
+    updateEstimateButtonState();
   }
 
   function renderVehicles() {
     if (!vehiclesContainer) return;
 
     vehiclesContainer.innerHTML = estimateState.vehicles.map((vehicle, idx) => `
-      <div class="vehicle-card" data-vehicle-id="${vehicle.id}" style="border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px; margin-top:12px;">
+      <div
+        class="vehicle-card ${estimateState.activeVehicleId === vehicle.id ? "is-active-vehicle" : ""}"
+        data-vehicle-id="${vehicle.id}"
+        style="
+          border:1px solid ${estimateState.activeVehicleId === vehicle.id ? "rgba(76, 132, 255, .9)" : "rgba(255,255,255,.12)"};
+          box-shadow:${estimateState.activeVehicleId === vehicle.id ? "0 0 0 1px rgba(76,132,255,.25) inset" : "none"};
+          border-radius:14px;
+          padding:14px;
+          margin-top:12px;
+          cursor:pointer;
+        "
+      >
         <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
           <h3 style="margin:0;">Vehicle ${idx + 1}</h3>
-          ${estimateState.vehicles.length > 1 ? `
+          ${estimateState.vehicles.length > 1 && idx > 0 ? `
             <button type="button" class="ghost remove-vehicle-btn" data-vehicle-id="${vehicle.id}">
               Remove Vehicle
             </button>
@@ -2015,75 +1979,151 @@ if (getEstimateHint) {
   }
 
   async function bindVehicleCardFields() {
-    const firstVehicle = estimateState.vehicles[0];
-    if (!firstVehicle) return;
+    const makes = await apiJSON("/api/makes");
 
-    yearEl = document.querySelector(`.vehicle-year[data-vehicle-id="${firstVehicle.id}"]`);
-    makeEl = document.querySelector(`.vehicle-make[data-vehicle-id="${firstVehicle.id}"]`);
-    modelEl = document.querySelector(`.vehicle-model[data-vehicle-id="${firstVehicle.id}"]`);
+    for (const vehicle of estimateState.vehicles) {
+      const yearSelect = document.querySelector(`.vehicle-year[data-vehicle-id="${vehicle.id}"]`);
+      const makeSelect = document.querySelector(`.vehicle-make[data-vehicle-id="${vehicle.id}"]`);
+      const modelSelect = document.querySelector(`.vehicle-model[data-vehicle-id="${vehicle.id}"]`);
 
-    if (yearEl) {
+      if (!yearSelect || !makeSelect || !modelSelect) continue;
+
+      // Year options
       const currentYear = new Date().getFullYear();
-      yearEl.innerHTML = `<option value="">Select Year</option>`;
+      yearSelect.innerHTML = `<option value="">Select Year</option>`;
       for (let y = currentYear; y >= currentYear - 30; y--) {
         const opt = document.createElement("option");
         opt.value = String(y);
         opt.textContent = String(y);
-        yearEl.appendChild(opt);
+        yearSelect.appendChild(opt);
       }
-      yearEl.value = firstVehicle.year || String(currentYear);
-    }
+      yearSelect.value = vehicle.year || "";
 
-    if (makeEl) {
-      makeEl.innerHTML = `<option value="">Select make…</option>`;
-      const makes = await apiJSON("/api/makes");
+      // Make options
+      makeSelect.innerHTML = `<option value="">Select make...</option>`;
       for (const m of makes) {
         const opt = document.createElement("option");
         opt.value = m;
         opt.textContent = m;
-        makeEl.appendChild(opt);
+        makeSelect.appendChild(opt);
       }
-      makeEl.value = firstVehicle.make || "";
+      makeSelect.value = vehicle.make || "";
+
+      // Model options
+      modelSelect.innerHTML = `<option value="">Select model...</option>`;
+      if (vehicle.make) {
+        try {
+          const models = await apiJSON(`/api/models/${encodeURIComponent(vehicle.make)}`);
+          for (const m of models) {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.textContent = m;
+            modelSelect.appendChild(opt);
+          }
+        } catch (_) {}
+      }
+      modelSelect.value = vehicle.model || "";
+
+      yearSelect.addEventListener("change", () => {
+        vehicle.year = yearSelect.value;
+        syncEstimateMeta();
+        window.estimateState = estimateState;
+      });
+
+      makeSelect.addEventListener("change", async () => {
+        vehicle.make = makeSelect.value;
+        vehicle.model = "";
+
+        modelSelect.innerHTML = `<option value="">Select model...</option>`;
+
+        if (vehicle.make) {
+          try {
+            const models = await apiJSON(`/api/models/${encodeURIComponent(vehicle.make)}`);
+            for (const m of models) {
+              const opt = document.createElement("option");
+              opt.value = m;
+              opt.textContent = m;
+              modelSelect.appendChild(opt);
+            }
+          } catch (_) {}
+        }
+
+        syncEstimateMeta();
+        window.estimateState = estimateState;
+      });
+
+      modelSelect.addEventListener("change", () => {
+        vehicle.model = modelSelect.value;
+        syncEstimateMeta();
+        window.estimateState = estimateState;
+      });
     }
 
-    if (modelEl && firstVehicle.make) {
-      modelEl.innerHTML = `<option value="">Select model…</option>`;
-      const models = await apiJSON(`/api/models/${encodeURIComponent(firstVehicle.make)}`);
-      for (const m of models) {
-        const opt = document.createElement("option");
-        opt.value = m;
-        opt.textContent = m;
-        modelEl.appendChild(opt);
-      }
-      modelEl.value = firstVehicle.model || "";
-    }
-
-    yearEl?.addEventListener("change", () => {
-      firstVehicle.year = yearEl.value;
-      syncEstimateMeta();
-      window.estimateState = estimateState;
-    });
-
-    makeEl?.addEventListener("change", async () => {
-      firstVehicle.make = makeEl.value;
-      firstVehicle.model = "";
-      syncEstimateMeta();
-      await loadModels(makeEl.value);
-      window.estimateState = estimateState;
-    });
-
-    modelEl?.addEventListener("change", () => {
-      firstVehicle.model = modelEl.value;
-      syncEstimateMeta();
-      window.estimateState = estimateState;
-    });
-
-    document.querySelectorAll(".remove-vehicle-btn").forEach(btn => {
+    document.querySelectorAll(".remove-vehicle-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         removeVehicleCard(btn.dataset.vehicleId);
       });
     });
+
+    document.querySelectorAll(".vehicle-card").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("button") || e.target.closest("select") || e.target.closest("input") || e.target.closest("label")) {
+          return;
+        }
+
+        setActiveVehicle(card.dataset.vehicleId);
+      });
+    });
   }
+
+  // ---- Generate All Service Estimates ----
+  generateAllBtn?.addEventListener("click", async () => {
+    if (!lineItems.length) {
+      setStatus("error", "Add at least one service using Get Estimate first.");
+      return;
+    }
+
+    setStatus("info", "Generating all service estimates…");
+
+    try {
+      for (const it of lineItems) {
+
+        if (it.pricingMode === "flat") {
+          it.estimate = calcLineItemEstimate(it);
+          continue;
+        }
+
+        const vehicle = estimateState.vehicles.find(v => v.id === it.vehicleId) || {};
+
+        const req = {
+          ...buildRequest(),
+          year: Number(vehicle.year || 0),
+          make: (vehicle.make || "").trim(),
+          model: (vehicle.model || "").trim(),
+          serviceCode: it.serviceCode,
+          laborHours: it.laborHours,
+          partsPrice: it.partsPrice,
+          laborRate: it.laborRate,
+          notes: it.notes,
+        };
+
+        const res = await apiJSON("/estimate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(req),
+        });
+
+        it.estimate = res.estimate ?? null;
+      }
+
+      renderLineItems();
+      setStatus("ok", "All service estimates generated.");
+      openConfirm();
+
+    } catch (e) {
+      setStatus("error", `Generate all failed: ${e.message}`);
+    }
+  });
 
   // Populate dropdown on page load
   refreshDraftsUI();
@@ -2096,6 +2136,7 @@ if (getEstimateHint) {
       await loadCategories();
       await applyObdFromQuery();
       await renderVehicles();
+      renderActiveVehicleBanner();
 
       if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
 

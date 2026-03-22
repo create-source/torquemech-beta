@@ -22,15 +22,16 @@
     </div>
 
     <!-- Vehicles -->
-    <section class="card" aria-label="Vehicles">
-      <div class="vehicle-header">
-        <h2>Vehicles</h2>
-        <div class="tm-addServiceRow">
-          <button id="addVehicleBtn" class="add-more-btn" type="button">
-            + Add Vehicle
-          </button>
-        </div>
+    <div class="vehicle-header">
+      <h2>Vehicles</h2>
+
+      <div class="vehicle-header-actions">
+        <button id="clearBtn" type="button" class="ghost">Clear Fields</button>
+        <button id="addVehicleBtn" class="add-more-btn" type="button">
+          + Add Vehicle
+        </button>
       </div>
+    </div>
 
       <div id="vehiclesContainer"></div>
 
@@ -54,6 +55,11 @@
 
     <!-- Service -->
     <section class="card" aria-label="Service">
+
+    <div id="activeVehicleBanner" class="tm-card" style="margin:10px 0 14px; padding:10px 12px;">
+      <div style="font-size:12px; opacity:.75; margin-bottom:4px;">Active Vehicle</div>
+      <div id="activeVehicleText" style="font-weight:800;">Vehicle 1</div>
+    </div>
 
     <div class="vehicle-header">
       <h2>Service</h2>

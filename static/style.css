@@ -298,6 +298,16 @@ button.ghost:hover{ background:rgba(255,255,255,0.10); }
   gap:12px;
 }
 
+.vehicle-header .tm-addServiceRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.vehicle-header h2 {
+  margin: 0;
+}
+
 /* Estimator: Clear fields button sizing */
 #clearBtn{
   margin-top: 0;
@@ -1929,7 +1939,7 @@ a.btn:visited {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
   }
 
   .vehicle-header h2{
