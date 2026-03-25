@@ -1900,11 +1900,35 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         y -= 16
 
         c.setFont("Helvetica", 10)
+
         for k, v in est.breakdown.items():
-            c.drawString(72, y, f"{k}: {v:.2f}")
+            try:
+                c.drawString(72, y, f"{k}: {v:.2f}")
+            except:
+                c.drawString(72, y, f"{k}: {v}")
             y -= 14
 
-        y -= 10
+        y -= 6
+
+        # ---------------- Labor Breakdown ----------------
+        lb = est.labor_breakdown
+
+        if lb and lb.get("steps"):
+            c.setFont("Helvetica-Bold", 12)
+            c.drawString(72, y, "Labor Breakdown")
+            y -= 14
+
+            c.setFont("Helvetica", 10)
+
+            for step in lb["steps"]:
+                label = step.get("label", "")
+                hours = step.get("hours", 0)
+
+                c.drawString(82, y, f"- {label}")
+                c.drawRightString(540, y, f"{hours:.1f} hr")
+                y -= 12
+
+            y -= 10
 
         # ---------------- Customer ----------------
         c.setFont("Helvetica-Bold", 12)
@@ -2052,11 +2076,12 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         y = draw_service_columns(y)
 
         grand_total = 0.0
+        X_BREAKDOWN_HOURS = 500
 
         for it in (req.lineItems or []):
             y = pdf_ensure_space(
                 c, w, h, y,
-                needed=46,
+                needed=140,
                 title="Repair Estimate",
                 vehicle_line=vehicle_line,
                 left=LEFT, right=RIGHT,
@@ -2064,10 +2089,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 draw_columns_fn=draw_service_columns,
             )
 
-            try:
-                est = float(it.estimate) if it.estimate is not None else 0.0
-            except Exception:
-                est = 0.0
+            est = float(it.estimate) if it.estimate is not None else 0.0
             grand_total += est
 
             service_name = (it.serviceText or it.serviceCode or "").strip()
@@ -2085,7 +2107,57 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setFont("Helvetica", 9)
             c.drawString(X_SERVICE, y, f"Rate: ${it.laborRate:.0f}/hr")
             c.setFillGray(0)
-            y -= 14
+            y -= 12
+
+            lb = build_labor_breakdown(
+                it.serviceCode,
+                it.laborHours,
+                display_name=it.serviceText,
+            )
+
+            if lb and lb.get("steps"):
+                if lb.get("labor_hours") and lb["labor_hours"].get("range"):
+                    rng = lb["labor_hours"]["range"]
+                    rmin = rng.get("min")
+                    rmax = rng.get("max")
+
+                    if rmin is not None and rmax is not None:
+                        c.setFont("Helvetica", 8)
+                        c.setFillGray(0.45)
+                        c.drawString(X_SERVICE + 20, y, f"Typical range: {rmin:.1f} - {rmax:.1f} hrs")
+                        c.setFillGray(0)
+                        y -= 10
+
+                c.setFont("Helvetica-Bold", 8)
+                if lb.get("labor_hours") and lb["labor_hours"].get("range"):
+                    rng = lb["labor_hours"]["range"]
+                    rmin = rng.get("min")
+                    rmax = rng.get("max")
+
+                    if rmin is not None and rmax is not None:
+                        c.setFont("Helvetica", 8)
+                        c.setFillGray(0.45)
+                        c.drawString(X_SERVICE + 20, y, f"Typical range: {rmin:.1f} - {rmax:.1f} hrs")
+                        c.setFillGray(0)
+                        y -= 10
+                c.drawString(X_SERVICE + 20, y, "Labor Breakdown")
+                y -= 11
+
+                c.setFont("Helvetica", 9)
+                for step in lb["steps"]:
+                    label = step.get("label", "")
+                    hours = float(step.get("hours", 0))
+
+                    c.drawString(X_SERVICE + 26, y, f"- {label}")
+                    c.drawRightString(X_BREAKDOWN_HOURS, y, f"{hours:.1f} hr")
+                    y -= 11
+
+                y -= 4
+
+            c.setStrokeGray(0.88)
+            c.line(X_SERVICE, y, X_TOTAL, y)
+            c.setStrokeGray(0)
+            y -= 10
 
         # Ensure space for totals + customer + signature
         y = pdf_ensure_space(

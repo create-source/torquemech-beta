@@ -159,6 +159,7 @@
   const laborBreakdownChevron = $("laborBreakdownChevron");
   const vehiclesContainer = $("vehiclesContainer");
   const addVehicleBtn = $("addVehicleBtn");
+  if (addVehicleBtn) addVehicleBtn.style.display = "none";
 
   function setLaborBreakdownExpanded(expanded) {
     if (!laborBreakdownToggle || !laborBreakdownContent) return;
@@ -171,28 +172,6 @@
     const expanded = laborBreakdownToggle.getAttribute("aria-expanded") === "true";
     setLaborBreakdownExpanded(!expanded);
   });
-
-  function isVehicleReadyForNextService(vehicleId) {
-    if (!vehicleId) return false;
-    return readyForNextServiceByVehicle[vehicleId] !== false;
-  }
-
-  function setVehicleReadyForNextService(vehicleId, isReady) {
-    if (!vehicleId) return;
-    readyForNextServiceByVehicle[vehicleId] = !!isReady;
-  }
-
-  function initializeVehicleReadyState(vehicleId) {
-    if (!vehicleId) return;
-    if (!(vehicleId in readyForNextServiceByVehicle)) {
-      readyForNextServiceByVehicle[vehicleId] = true;
-    }
-  }
-
-  function removeVehicleReadyState(vehicleId) {
-    if (!vehicleId) return;
-    delete readyForNextServiceByVehicle[vehicleId];
-  }
 
   // Vehicle
   let yearEl = $("year");
@@ -334,22 +313,23 @@
     const title = `Vehicle ${idx + 1}`;
     const details = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
 
-    return details || `${title} (select vehicle)`;
+    return details ? `${title} — ${details}` : title;
+  }
+
+  function setActiveVehicle(vehicleId) {
+    const exists = estimateState.vehicles.some(v => v.id === vehicleId);
+    if (!exists) return;
+
+    estimateState.activeVehicleId = vehicleId;
+    window.estimateState = estimateState;
+    renderVehicles();
+    renderActiveVehicleBanner();
   }
 
   function renderActiveVehicleBanner() {
-      const activeVehicle = getActiveVehicle();
-
-      if (!activeVehicleBanner || !activeVehicleText) return;
-
-      if (!activeVehicle) {
-        activeVehicleBanner.style.display = "none";
-        return;
-      }
-
-      activeVehicleBanner.style.display = "block";
-      activeVehicleText.textContent = getVehicleLabel(activeVehicle);
-    }
+    if (!activeVehicleBanner) return;
+    activeVehicleBanner.style.display = "none";
+  }
   // { serviceCode, serviceText, pricingMode, flatRatePrice, travelFee, laborHours, partsPrice, laborRate, notes, estimate }
   let lastEstimate = null; // { req, res }
   let serviceMeta = null;
@@ -425,40 +405,68 @@
   }
 
     async function applyDraft(d) {
-    if (!d) return;
+      if (!d) return;
 
-    // Vehicle (safe restore with model reload)
-    if (yearEl) yearEl.value = d.vehicle?.year || "";
+      // Reset to a safe default state first
+      estimateState = {
+        customer: {
+          name: d.customer?.name || "",
+          phone: d.customer?.phone || "",
+          email: ""
+        },
+        activeVehicleId: "veh_1",
+        vehicles: [
+          {
+            id: "veh_1",
+            year: d.vehicle?.year || "",
+            make: d.vehicle?.make || "",
+            model: d.vehicle?.model || "",
+            services: []
+          }
+        ]
+      };
 
-    if (makeEl) {
-      makeEl.value = d.vehicle?.make || "";
-      // Load models immediately (don’t rely on “change” timing)
-      await loadModels(makeEl.value);
+      window.estimateState = estimateState;
+
+      // Legacy draft support:
+      // if old line items do not have vehicleId / vehicleLabel, assign them to Vehicle 1
+      lineItems = (Array.isArray(d.lineItems) ? d.lineItems : []).map((it) => ({
+        ...it,
+        vehicleId: it.vehicleId || "veh_1",
+        vehicleLabel: it.vehicleLabel || getVehicleLabel(estimateState.vehicles[0], 0),
+        vehicleYear: it.vehicleYear || d.vehicle?.year || "",
+        vehicleMake: it.vehicleMake || d.vehicle?.make || "",
+        vehicleModel: it.vehicleModel || d.vehicle?.model || "",
+      }));
+      estimateState.activeVehicleId = "veh_1";
+
+      // Sync top-level customer fields
+      if (customerAgreesChk) customerAgreesChk.checked = !!d.customer?.agrees;
+      if (customerNameEl) customerNameEl.value = d.customer?.name || "";
+      if (customerPhoneEl) customerPhoneEl.value = d.customer?.phone || "";
+      if (notesEl) notesEl.value = d.customer?.notes || "";
+
+      // Re-render vehicle cards from restored estimateState
+      renderVehicles();
+      renderActiveVehicleBanner();
+
+      // Re-render service cards
+      renderLineItems();
+
+      // Reset signature (Beta-safe)
+      signatureDataUrl = null;
+      clearSignatureCanvas();
+
+      // Reset editor state
+      activeLineItemIndex = null;
+      editingLineItem = null;
+      laborHoursTouched = false;
+      readyForNextService = true;
+      togglePricingModeUI();
+      updateEstimateButtonState();
+
+      if (draftsMsg) draftsMsg.textContent = `Loaded: ${d.title}`;
     }
-
-    if (modelEl) modelEl.value = d.vehicle?.model || "";
-
-    // Customer
-    if (customerAgreesChk) customerAgreesChk.checked = !!d.customer?.agrees;
-    if (customerNameEl) customerNameEl.value = d.customer?.name || "";
-    if (customerPhoneEl) customerPhoneEl.value = d.customer?.phone || "";
-    if (notesEl) notesEl.value = d.customer?.notes || "";
-
-    // Restore services
-    lineItems = Array.isArray(d.lineItems) ? d.lineItems : [];
-    renderLineItems();
-
-    // Reset signature (Beta-safe)
-    signatureDataUrl = null;
-    clearSignatureCanvas();
-
-    // ✅ IMPORTANT: after loading, let buttons work immediately
-    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
-    togglePricingModeUI();
-    updateEstimateButtonState();
-
-    if (draftsMsg) draftsMsg.textContent = `Loaded: ${d.title}`;
-  }
 
   function saveCurrentDraft() {
     const d = serializeDraft();
@@ -505,7 +513,7 @@
   }
 
   let laborHoursTouched = false;
-  let readyForNextServiceByVehicle = {};
+  let readyForNextService = true; // ✅ the lock/unlock flag
 
   // Track if user manually edited labor hours (so we don't overwrite it)
   laborHoursEl?.addEventListener("input", () => {
@@ -772,14 +780,14 @@ const confidenceEl = document.getElementById("laborConfidence");
             serviceEl.value = diagSvcValue;
             await loadServiceMeta(serviceEl.value);
             updateEstimateButtonState();
-            setStatus("ok", "OBD codes attached. Diagnostic service selected.");
+            setStatus("ok", `OBD ${code} attached. Diagnostic service selected.`);
             return;
           }
         }
 
         // Fallback if we can’t auto-map
         updateEstimateButtonState();
-        setStatus("info", "OBD codes attached to Notes. Select a diagnostic service to estimate.");
+        setStatus("info", `OBD ${code} attached to Notes. Select a diagnostic service to estimate.`);
       } catch (e) {
         setStatus("error", `OBD bridge failed: ${e.message}`);
       }
@@ -964,20 +972,23 @@ const confidenceEl = document.getElementById("laborConfidence");
     confirmModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
 
-    // show/hide signature section depending on radio choice
     setSigVisible(getWantSig() === "yes");
 
-    // ✅ STEP 2 — render services + grand total
     const listEl = document.getElementById("confirmServicesList");
     if (listEl) {
       const total = lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0);
 
       listEl.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
           ${lineItems.map(it => `
-            <div style="display:flex;justify-content:space-between;">
-              <div>${it.serviceText}</div>
-              <div style="font-weight:700">${money(it.estimate)}</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+              <div>
+                <div>${it.serviceText}</div>
+                <div style="font-size:12px; opacity:.72; margin-top:2px;">
+                  ${it.vehicleLabel || "No vehicle assigned"}
+                </div>
+              </div>
+              <div style="font-weight:700; white-space:nowrap;">${money(it.estimate)}</div>
             </div>
           `).join("")}
           <div style="border-top:1px solid rgba(255,255,255,.15);padding-top:8px;display:flex;justify-content:space-between;">
@@ -989,10 +1000,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     refreshQuotePreview();
-
-    // make sure canvas is sized correctly when modal opens
     resizeSigCanvas();
   }
+
   function closeConfirm() {
     if (document.activeElement && confirmModal?.contains(document.activeElement)) {
       document.activeElement.blur();
@@ -1213,6 +1223,46 @@ const confidenceEl = document.getElementById("laborConfidence");
               <button type="button" class="ghost" data-action="estimate">Recalculate</button>
               <button type="button" class="remove" data-action="remove">Remove</button>
             </div>
+
+            ${
+              it.laborBreakdown && Array.isArray(it.laborBreakdown.steps) && it.laborBreakdown.steps.length > 0
+                ? `
+                <div class="line-breakdown" style="margin-top:14px; border-top:1px solid rgba(255,255,255,.08); padding-top:12px;">
+                  <button
+                    type="button"
+                    class="ghost"
+                    data-action="toggle-breakdown"
+                    style="margin-bottom:10px;"
+                  >
+                    ${it.breakdownOpen ? "Hide labor breakdown" : "Show labor breakdown"}
+                  </button>
+
+                  ${
+                    it.breakdownOpen
+                      ? `
+                      <div class="meta" style="margin-bottom:8px;">
+                        Typical range: ${Number(it.laborBreakdown.labor_hours?.min || 0).toFixed(1)} - ${Number(it.laborBreakdown.labor_hours?.max || 0).toFixed(1)} hrs
+                      </div>
+
+                      <div style="display:flex; flex-direction:column; gap:8px;">
+                        ${it.laborBreakdown.steps.map(step => `
+                          <div style="display:flex; justify-content:space-between; gap:12px;">
+                            <span>${step.label}</span>
+                            <strong>${Number(step.hours || 0).toFixed(1)} hr</strong>
+                          </div>
+                        `).join("")}
+                      </div>
+
+                      <div class="meta" style="margin-top:10px;">
+                        This shows how labor time is typically distributed for this service. Actual time may vary depending on vehicle condition and access.
+                      </div>
+                      `
+                      : ""
+                  }
+                </div>
+                `
+                : ""
+            }
           </div>
         `;
       })
@@ -1225,42 +1275,44 @@ const confidenceEl = document.getElementById("laborConfidence");
   
 
   function updateEstimateButtonState() {
-    const activeVehicle = getActiveVehicle();
-    const vehicleId = activeVehicle?.id || estimateState.activeVehicleId;
+    if (!estimateBtn) return;
 
-    const hasBasics = !!(
-      activeVehicle?.year?.trim() &&
-      activeVehicle?.make?.trim() &&
-      activeVehicle?.model?.trim()
-    );
+    const activeVehicle = getActiveVehicle() || {};
+    const hasBasics = !!(activeVehicle.year && activeVehicle.make && activeVehicle.model);
+    const hasSelection = !!(categoryEl?.value && serviceEl?.value);
 
-    const hasSelection = !!(
-      categoryEl?.value?.trim() &&
-      serviceEl?.value?.trim()
-    );
-
-    const readyForNextService = isVehicleReadyForNextService(vehicleId);
-
-    estimateBtn.textContent = "Get Estimate";
+    // --- Add Service button label (dynamic) ---
+    if (addLineBtn) {
+      // If user already added a service (locked state), guide them to add another
+      addLineBtn.textContent = readyForNextService ? "+ Add Service" : "+ Add Another Service";
+    }
 
     estimateBtn.disabled = !(hasBasics && hasSelection && readyForNextService);
 
-    // UX hints
-    if (addServiceHint) addServiceHint.hidden = readyForNextService;
 
-    if (getEstimateHint) {
-      getEstimateHint.hidden = !estimateBtn.disabled;
+// Hint text: when locked, explain the flow
+if (addServiceHint) addServiceHint.hidden = !!readyForNextService; // show only after a service is added
+if (getEstimateHint) {
+  // Show hint only when button is disabled
+  getEstimateHint.hidden = !estimateBtn.disabled;
 
-      if (!getEstimateHint.hidden) {
-        getEstimateHint.textContent = !hasBasics
-          ? "Select year, make, and model first."
-          : !hasSelection
-            ? "Select a category and service first."
-            : "Finish current service or click + Add Service.";
-      }
-    }
+  if (!getEstimateHint.hidden) {
+    getEstimateHint.textContent = !hasBasics
+      ? "Select year, make, and model first."
+      : !hasSelection
+        ? "Select a category and service first."
+        : "To add another service, click “+ Add Another Service”, then choose the next service.";
+  }
+}
 
+    // + Add Service enabled ONLY after a service has been added
     if (addLineBtn) addLineBtn.disabled = readyForNextService;
+
+    // keep status helpful, but don't spam over error messages
+    if (!hasBasics) setStatus("info", "Select year, make, and model.");
+    else if (!hasSelection) setStatus("info", "Select a category and service.");
+    else if (!readyForNextService) setStatus("info", "Click + Add Service to add another service.");
+    else setStatus("info", "Click Get Estimate to add this service.");
   }
 
   // ---- Get Estimate FIRST ----
@@ -1273,8 +1325,7 @@ const confidenceEl = document.getElementById("laborConfidence");
         event_label: "Estimator Tool"
       });
     }
-    const activeVehicleId = estimateState.activeVehicleId;
-    if (!isVehicleReadyForNextService(activeVehicleId)) return;
+    if (!readyForNextService) return;
 
     const activeVehicle = getActiveVehicle();
     if (!(activeVehicle?.year && activeVehicle?.make && activeVehicle?.model)) {
@@ -1293,7 +1344,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     // lock immediately so user can’t spam add
-    setVehicleReadyForNextService(estimateState.activeVehicleId, false);
+    readyForNextService = false;
     updateEstimateButtonState();
 
     const serviceText = editingLineItem
@@ -1308,6 +1359,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     const it = {
       vehicleId: activeVehicle.id,
       vehicleLabel: getVehicleLabel(activeVehicle),
+      vehicleYear: activeVehicle.year || "",
+      vehicleMake: activeVehicle.make || "",
+      vehicleModel: activeVehicle.model || "",
       serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
       serviceText,
       pricingMode: getPricingMode(),
@@ -1336,7 +1390,7 @@ const confidenceEl = document.getElementById("laborConfidence");
         renderLineItems();
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
 
-        setVehicleReadyForNextService(estimateState.activeVehicleId, false);
+        readyForNextService = false;
         updateEstimateButtonState();
         return;
       }
@@ -1355,17 +1409,14 @@ const confidenceEl = document.getElementById("laborConfidence");
         body: JSON.stringify(req),
       });
 
-      it.estimate = Math.round(Number(res.estimate || 0) + Number(it.travelFee || 0));
+      it.estimate = calcLineItemEstimate(it);
+      it.laborBreakdown = res.labor_breakdown || null;
+      it.breakdownOpen = true;
 
       if (res.labor_breakdown?.labor_hours) {
-        const selected = Number(res.labor_breakdown.labor_hours.selected || 0);
+        const lh = res.labor_breakdown.labor_hours;
 
-        // Keep backend value ONLY for estimate
-        it.laborHours = selected;
-
-        // Sync the range badge
         if (laborHoursRangeEl) {
-          const lh = res.labor_breakdown.labor_hours;
           laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
         }
       }
@@ -1377,52 +1428,23 @@ const confidenceEl = document.getElementById("laborConfidence");
         if (laborHoursRangeEl) {
           laborHoursRangeEl.textContent = `${lh.min.toFixed(1)} - ${lh.max.toFixed(1)} hrs`;
         }
-
-        if (laborHoursEl && !laborHoursTouched) {
-          laborHoursEl.value = lh.selected.toFixed(1);
-        }
       }
 
       // ===== LABOR BREAKDOWN =====
-      const box = document.getElementById("laborBreakdownBox");
-      const stepsEl = document.getElementById("laborSteps");
-      const disclaimerEl = document.getElementById("laborDisclaimer");
-
-      if (res.labor_breakdown && res.labor_breakdown.steps.length > 0) {
-        if (box) box.style.display = "block";
-
-        if (stepsEl) {
-          stepsEl.innerHTML = res.labor_breakdown.steps.map(step => `
-            <div>
-              <span>${step.label}</span>
-              <strong>${step.hours.toFixed(1)} hr</strong>
-            </div>
-          `).join("");
-        }
-
-        if (disclaimerEl) {
-          disclaimerEl.textContent =
-            "This shows how labor time is typically distributed for this service. Actual time may vary depending on vehicle condition and access.";
-        }
-
-        setLaborBreakdownExpanded(true);
-      } else {
-        if (box) box.style.display = "none";
-        setLaborBreakdownExpanded(false);
-      }
+      
       editingLineItem = null;
       lastEstimate = { req, res };
 
       renderLineItems();
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
 
-      setVehicleReadyForNextService(estimateState.activeVehicleId, false);
+      readyForNextService = false;
       updateEstimateButtonState();
     } catch (e) {
       lineItems.pop();
       renderLineItems();
 
-      setVehicleReadyForNextService(estimateState.activeVehicleId, true);
+      readyForNextService = true;
       updateEstimateButtonState();
 
       setStatus("error", `Estimate failed: ${e.message}`);
@@ -1451,7 +1473,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     // 🔓 Unlock Get Estimate
     activeLineItemIndex = null;
-    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
+    readyForNextService = true;
     updateEstimateButtonState();
 
     setStatus("info", "Ready for next service.");
@@ -1480,32 +1502,22 @@ const confidenceEl = document.getElementById("laborConfidence");
       return;
     }
 
+    if (action === "toggle-breakdown") {
+      it.breakdownOpen = !it.breakdownOpen;
+      renderLineItems();
+      return;
+    }
+
     // =========================
     // ESTIMATE
     // =========================
     if (action === "estimate") {
-
-      if (!(yearEl.value && makeEl.value && modelEl.value)) {
-        setStatus("error", "Select year, make, and model first.");
+      if (!(it.vehicleYear && it.vehicleMake && it.vehicleModel)) {
+        setStatus("error", "Assigned vehicle is missing year, make, or model.");
         return;
       }
 
-      // Load values if switching card
-      if (activeLineItemIndex !== idx) {
-        activeLineItemIndex = idx;
-
-        if (laborHoursEl) laborHoursEl.value = String(it.laborHours ?? 0);
-        if (partsPriceEl) partsPriceEl.value = String(it.partsPrice ?? 0);
-        if (laborRateEl) laborRateEl.value = String(it.laborRate ?? 0);
-        if (notesEl) notesEl.value = it.notes || "";
-        if (pricingModeEl) pricingModeEl.value = it.pricingMode || "hourly";
-        if (flatRatePriceEl) flatRatePriceEl.value = String(it.flatRatePrice ?? 0);
-        if (travelFeeEl) travelFeeEl.value = String(it.travelFee ?? 0);
-
-        togglePricingModeUI();
-      }
-
-      // Apply edits
+      // Apply editor values first
       it.laborHours = Number(laborHoursEl?.value || 0);
       it.partsPrice = Number(partsPriceEl?.value || 0);
       it.laborRate = Number(laborRateEl?.value || 0);
@@ -1515,7 +1527,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       it.notes = (notesEl?.value || "").trim() || null;
 
       renderLineItems();
-      setStatus("info", `Pricing: ${it.serviceText}…`);
+      setStatus("info", `Recalculating ${it.serviceText}…`);
 
       try {
         if (it.pricingMode === "flat") {
@@ -1525,27 +1537,30 @@ const confidenceEl = document.getElementById("laborConfidence");
           return;
         }
 
-        const vehicle = estimateState.vehicles.find(v => v.id === it.vehicleId) || {};
-
         const req = {
           ...buildRequest(),
-          year: Number(vehicle.year || 0),
-          make: (vehicle.make || "").trim(),
-          model: (vehicle.model || "").trim(),
+          year: Number(it.vehicleYear || 0),
+          make: String(it.vehicleMake || "").trim(),
+          model: String(it.vehicleModel || "").trim(),
           serviceCode: it.serviceCode,
           laborHours: it.laborHours,
           partsPrice: it.partsPrice,
           laborRate: it.laborRate,
           notes: it.notes,
         };
-
         const res = await apiJSON("/estimate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(req),
         });
 
-        it.estimate = res.estimate ?? null;
+        // ✅ CORRECT PLACE
+        it.laborBreakdown = res.labor_breakdown || null;
+        if (typeof it.breakdownOpen !== "boolean") {
+          it.breakdownOpen = true;
+        }
+
+        it.estimate = calcLineItemEstimate(it);
 
         renderLineItems();
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
@@ -1589,16 +1604,19 @@ const confidenceEl = document.getElementById("laborConfidence");
         if (confirmMsg) confirmMsg.textContent = "Some services are missing prices. Click Generate All first.";
         return;
       }
+      
       // Generate PDF
       setStatus("info", "Generating PDF…");
+
+      const activeVehicle = getActiveVehicle() || {};
 
       const pdfResponse = await fetch("/estimate/pdf_multi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          year: Number(yearEl.value),
-          make: makeEl.value,
-          model: modelEl.value,
+          year: Number(activeVehicle.year || 0),
+          make: String(activeVehicle.make || "").trim(),
+          model: String(activeVehicle.model || "").trim(),
           notes: (notesEl?.value || "").trim() || null,
           customerName: (customerNameEl?.value || "").trim() || null,
           customerPhone: (customerPhoneEl?.value || "").trim() || null,
@@ -1611,6 +1629,7 @@ const confidenceEl = document.getElementById("laborConfidence");
             partsPrice: Number(it.partsPrice || 0),
             laborRate: Number(it.laborRate || 0),
             estimate: it.estimate != null ? Number(it.estimate) : null,
+            laborBreakdown: it.laborBreakdown || null,
           })),
         }),
       });
@@ -1677,7 +1696,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     serviceMeta = null;
     signatureDataUrl = null;
     laborHoursTouched = false;
-    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
+    readyForNextService = true;
     if (laborHoursRangeEl) laborHoursRangeEl.textContent = "";
 
     // VIN
@@ -1825,6 +1844,21 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
   });
 
+  function syncTopVehicleToState() {
+    const v = estimateState.vehicles[0];
+    if (!v) return;
+
+    v.year = yearEl?.value || "";
+    v.make = makeEl?.value || "";
+    v.model = modelEl?.value || "";
+
+    window.estimateState = estimateState;
+  }
+
+  yearEl?.addEventListener("change", syncTopVehicleToState);
+  makeEl?.addEventListener("change", syncTopVehicleToState);
+  modelEl?.addEventListener("change", syncTopVehicleToState);
+
   // ---- PWA install (optional) ----
   if (installBtn) installBtn.style.display = "none";
   let deferredPrompt = null;
@@ -1863,68 +1897,23 @@ const confidenceEl = document.getElementById("laborConfidence");
   });
 
   function addVehicleCard() {
-    const nextIndex = estimateState.vehicles.length + 1;
-    const newId = `veh_${nextIndex}`;
-
-    estimateState.vehicles.push({
-      id: newId,
-      year: "",
-      make: "",
-      model: "",
-      services: []
-    });
-
-    initializeVehicleReadyState(newId);
-
-    estimateState.activeVehicleId = newId;
-
-    setVehicleReadyForNextService(estimateState.activeVehicleId, true);
-    editingLineItem = null;
-    activeLineItemIndex = null;
-
-    window.estimateState = estimateState;
-    renderVehicles();
-    renderActiveVehicleBanner();
-    updateEstimateButtonState();
+    return; // single-vehicle mode only
   }
 
   function removeVehicleCard(vehicleId) {
     if (estimateState.vehicles.length === 1) return;
 
     estimateState.vehicles = estimateState.vehicles.filter(v => v.id !== vehicleId);
-
     lineItems = lineItems.filter(it => it.vehicleId !== vehicleId);
-
-    removeVehicleReadyState(vehicleId);
 
     if (estimateState.activeVehicleId === vehicleId) {
       estimateState.activeVehicleId = estimateState.vehicles[0]?.id || null;
     }
 
-    editingLineItem = null;
-    activeLineItemIndex = null;
-
     window.estimateState = estimateState;
     renderVehicles();
     renderLineItems();
     renderActiveVehicleBanner();
-    updateEstimateButtonState();
-  }
-
-  function setActiveVehicle(vehicleId) {
-    const exists = estimateState.vehicles.some(v => v.id === vehicleId);
-    if (!exists) return;
-
-    initializeVehicleReadyState(vehicleId);
-
-    estimateState.activeVehicleId = vehicleId;
-    editingLineItem = null;
-    activeLineItemIndex = null;
-
-    window.estimateState = estimateState;
-    renderVehicles();
-    renderActiveVehicleBanner();
-    updateEstimateButtonState();
   }
 
   function renderVehicles() {
@@ -2078,13 +2067,6 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   // ---- Generate All Service Estimates ----
   generateAllBtn?.addEventListener("click", async () => {
-    if (!lineItems.length) {
-      setStatus("error", "Add at least one service using Get Estimate first.");
-      return;
-    }
-
-    setStatus("info", "Generating all service estimates…");
-
     try {
       for (const it of lineItems) {
 
@@ -2093,13 +2075,11 @@ const confidenceEl = document.getElementById("laborConfidence");
           continue;
         }
 
-        const vehicle = estimateState.vehicles.find(v => v.id === it.vehicleId) || {};
-
         const req = {
           ...buildRequest(),
-          year: Number(vehicle.year || 0),
-          make: (vehicle.make || "").trim(),
-          model: (vehicle.model || "").trim(),
+          year: Number(it.vehicleYear || 0),
+          make: String(it.vehicleMake || "").trim(),
+          model: String(it.vehicleModel || "").trim(),
           serviceCode: it.serviceCode,
           laborHours: it.laborHours,
           partsPrice: it.partsPrice,
@@ -2113,7 +2093,12 @@ const confidenceEl = document.getElementById("laborConfidence");
           body: JSON.stringify(req),
         });
 
-        it.estimate = res.estimate ?? null;
+        it.laborBreakdown = res.labor_breakdown || null;
+        if (typeof it.breakdownOpen !== "boolean") {
+          it.breakdownOpen = true;
+        }
+
+        it.estimate = calcLineItemEstimate(it);
       }
 
       renderLineItems();
@@ -2137,6 +2122,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       await applyObdFromQuery();
       await renderVehicles();
       renderActiveVehicleBanner();
+      syncTopVehicleToState();
 
       if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
 
