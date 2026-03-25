@@ -1206,33 +1206,39 @@ const confidenceEl = document.getElementById("laborConfidence");
           ? ` • Travel: ${money(it.travelFee)}`
           : "";
 
-        return `
-          <div class="line-item selectable" data-idx="${idx}">
-            <div>
-              <div class="name">${it.serviceText || "Service"}</div>
-              <div class="meta" style="margin-bottom:6px;">
-                Assigned to: ${it.vehicleLabel || "Vehicle 1"}
-              </div>
-              <div class="meta">
-                ${pricingLabel}${travelLabel} • Parts: ${money(it.partsPrice || 0)}
-              </div>
-              <div class="money">Estimate: ${est}</div>
-            </div>
+        const hasBreakdown =
+          it.laborBreakdown &&
+          Array.isArray(it.laborBreakdown.steps) &&
+          it.laborBreakdown.steps.length > 0;
 
-            <div class="line-actions">
-              <button type="button" class="ghost" data-action="estimate">Recalculate</button>
-              <button type="button" class="remove" data-action="remove">Remove</button>
+        return `
+          <div class="line-item selectable service-line-item" data-idx="${idx}">
+            <div class="service-line-item-top">
+              <div class="service-line-item-main">
+                <div class="name">${it.serviceText || "Service"}</div>
+                <div class="meta" style="margin-bottom:6px;">
+                  Assigned to: ${it.vehicleLabel || "Vehicle 1"}
+                </div>
+                <div class="meta">
+                  ${pricingLabel}${travelLabel} • Parts: ${money(it.partsPrice || 0)}
+                </div>
+                <div class="money">Estimate: ${est}</div>
+              </div>
+
+              <div class="line-actions service-line-item-actions">
+                <button type="button" class="ghost tm-btn" data-action="estimate">Recalculate</button>
+                <button type="button" class="remove tm-btn" data-action="remove">Remove</button>
+              </div>
             </div>
 
             ${
-              it.laborBreakdown && Array.isArray(it.laborBreakdown.steps) && it.laborBreakdown.steps.length > 0
+              hasBreakdown
                 ? `
-                <div class="line-breakdown" style="margin-top:14px; border-top:1px solid rgba(255,255,255,.08); padding-top:12px;">
+                <div class="line-breakdown breakdown-card">
                   <button
                     type="button"
-                    class="ghost"
+                    class="ghost tm-btn"
                     data-action="toggle-breakdown"
-                    style="margin-bottom:10px;"
                   >
                     ${it.breakdownOpen ? "Hide labor breakdown" : "Show labor breakdown"}
                   </button>
@@ -1240,15 +1246,15 @@ const confidenceEl = document.getElementById("laborConfidence");
                   ${
                     it.breakdownOpen
                       ? `
-                      <div class="meta" style="margin-bottom:8px;">
+                      <div class="labor-range">
                         Typical range: ${Number(it.laborBreakdown.labor_hours?.min || 0).toFixed(1)} - ${Number(it.laborBreakdown.labor_hours?.max || 0).toFixed(1)} hrs
                       </div>
 
-                      <div style="display:flex; flex-direction:column; gap:8px;">
+                      <div class="labor-breakdown-list">
                         ${it.laborBreakdown.steps.map(step => `
-                          <div style="display:flex; justify-content:space-between; gap:12px;">
-                            <span>${step.label}</span>
-                            <strong>${Number(step.hours || 0).toFixed(1)} hr</strong>
+                          <div class="labor-breakdown-row">
+                            <span class="labor-breakdown-label">${step.label}</span>
+                            <span class="labor-breakdown-hours">${Number(step.hours || 0).toFixed(1)} hr</span>
                           </div>
                         `).join("")}
                       </div>

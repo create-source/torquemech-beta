@@ -22,11 +22,11 @@
     </div>
 
     <!-- Vehicles -->
-    <div class="vehicle-header">
+    <div class="section-header--vehicles">
       <h2>Vehicles</h2>
 
-      <div class="vehicle-header-actions">
-        <button id="clearBtn" type="button" class="ghost">Clear Fields</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="clearBtn" type="button" class="ghost clear-fields-btn">Clear Fields</button>
         <button id="addVehicleBtn" class="add-more-btn" type="button">
           + Add Vehicle
         </button>
@@ -58,7 +58,7 @@
 
     <div id="activeVehicleBanner" class="tm-card" style="cursor:pointer;">
       <div style="font-size:12px; opacity:.75; margin-bottom:4px;">Active Vehicle</div>
-      <div id="activeVehicleText" style="font-weight:800;">Vehicle 1</div>
+      <div id="activeVehicleText" style="font-weight:800;">Vehicle</div>
     </div>
 
     <div class="vehicle-header">
@@ -221,6 +221,7 @@
         <button id="loadDraftBtn" type="button" class="btn ghost">Load</button>
         <button id="deleteDraftBtn" type="button" class="btn danger">Delete</button>
       </div>
+      
 
       <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;"></div>
     </div>
