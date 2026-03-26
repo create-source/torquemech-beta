@@ -8,7 +8,7 @@
     <header style="display:flex;align-items:center;justify-content:space-between;">
       <h1 style="margin:0;">Repair Estimator</h1>
 
-      <button id="installBtn" type="button" class="ghost" style="display:none;">Install App</button>
+      <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
     </header>
 
     <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
@@ -26,8 +26,8 @@
       <h2>Vehicles</h2>
 
       <div style="display:flex; gap:10px; align-items:center;">
-        <button id="clearBtn" type="button" class="ghost clear-fields-btn">Clear Fields</button>
-        <button id="addVehicleBtn" class="add-more-btn" type="button">
+        <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Fields</button>
+        <button id="addVehicleBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
           + Add Vehicle
         </button>
       </div>
@@ -44,7 +44,7 @@
         <div id="vinPanel" class="vin-panel hidden">
           <label for="vin">VIN</label>
           <input id="vin" type="text" maxlength="17" placeholder="Enter 17-digit VIN" />
-          <button id="vinLookupBtn" type="button" class="ghost" style="margin-top:6px;">
+          <button id="vinLookupBtn" type="button" class="tm-btn tm-btn-secondary" style="margin-top:6px;">
             Decode VIN
           </button>
         </div>
@@ -54,7 +54,7 @@
     </section>
 
     <!-- Service -->
-    <section class="card" aria-label="Service">
+    <section class="tm-card" aria-label="Service">
 
     <div id="activeVehicleBanner" class="tm-card" style="cursor:pointer;">
       <div style="font-size:12px; opacity:.75; margin-bottom:4px;">Active Vehicle</div>
@@ -67,7 +67,7 @@
   <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
     To add another service, click “+ Add Service”.
   </span>
-  <button id="addLineBtn" class="add-more-btn" type="button">
+  <button id="addLineBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
     + Add Service
   </button>
 </div>
@@ -165,7 +165,7 @@
 
       <div class="inline-actions" style="margin-top:10px;">
       <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select a category/service, then click “Get Estimate”.</div>
-        <button id="quickEstimateBtn" type="button" class="btn primary">
+        <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary">
           Get Estimate
         </button>
       </div>
@@ -208,18 +208,18 @@
       <hr class="section-divider">
 
       <!-- Saved Estimates (Local) --> 
-      <div class="card" id="draftsCard">
+      <div class="tm-card" id="draftsCard">
       <h2>Saved Estimates</h2>
 
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-        <button id="saveDraftBtn" type="button" class="btn">Save Draft</button>
+        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary">Save Draft</button>
 
         <select id="draftsSelect" class="input" style="min-width:260px;">
           <option value="">— Select a saved draft —</option>
         </select>
 
-        <button id="loadDraftBtn" type="button" class="btn ghost">Load</button>
-        <button id="deleteDraftBtn" type="button" class="btn danger">Delete</button>
+        <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary">Load</button>
+        <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger">Delete</button>
       </div>
       
 
@@ -227,7 +227,9 @@
     </div>
 
       <div class="actions">
-        <button id="generateAllBtn" type="button">Generate All Service Estimates</button>
+        <button id="generateAllBtn" type="button" class="tm-btn tm-btn-secondary">
+          Generate All Service Estimates
+        </button>
       </div>
 
     </section>
@@ -289,7 +291,7 @@
         </div>
 
         <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-          <button id="sigClearBtn" type="button" class="ghost">Clear Signature</button>
+          <button id="sigClearBtn" type="button" class="tm-btn tm-btn-secondary">Clear Signature</button>
         </div>
       </div>
 
@@ -307,9 +309,9 @@
       </div>
 
       <div class="modal-actions">
-        <button id="copyQuoteBtn" type="button" class="btn">Copy Quote Message</button>
-        <button id="confirmAddBtn" type="button" class="btn primary">Generate PDF</button>
-        <button id="confirmCloseBtn" type="button" class="btn secondary">Close</button>
+        <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
+        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary">Generate PDF</button>
+        <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
       </div>
 
       <div id="confirmMsg"></div>
