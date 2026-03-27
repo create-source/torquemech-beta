@@ -3164,8 +3164,24 @@ html {
 }
 
 select,
-input,
 textarea,
-button {
-  color-scheme: light;
+input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

@@ -1043,10 +1043,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (e.key === "Escape" && confirmModal && !confirmModal.classList.contains("hidden")) closeConfirm();
   });
 
-  document.querySelectorAll('input[name="wantSig"]').forEach((r) => {
-    r.addEventListener("change", () => setSigVisible(getWantSig() === "yes"));
+  document.querySelectorAll('input, select, textarea').forEach((el) => {
+  el.addEventListener('change', () => {
+    if (window.innerWidth < 768) el.blur();
   });
 
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && window.innerWidth < 768) {
+      el.blur();
+    }
+  });
+});
  // ---- Signature pad ----
   let isDrawing = false;
   let lastX = 0, lastY = 0;
