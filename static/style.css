@@ -440,6 +440,21 @@ body.modal-open {
   cursor: pointer;
 }
 
+.tm-input,
+.input {
+  background: #0f172a;
+  color: #e5e7eb;
+  border: 1px solid #243041;
+}
+
+.tm-input::placeholder {
+  color: #6b7280;
+}
+
+canvas {
+  background: #0f172a;
+  border-radius: 8px;
+}
 
 /* Confirm layout */
 .confirm-grid{
