@@ -3175,7 +3175,7 @@ a.tm-btn:visited {
 }
 
 html {
-  color-scheme: light;
+  color-scheme: light dark;
 }
 
 select,
@@ -3481,4 +3481,26 @@ body.dark .tm-footer-email:visited,
 
 .tm-repair-info strong {
   font-size: 0.95rem;
+}
+
+/* Confirm Estimate modal: keep fields dark in both modes */
+.modal-card input:not([type="checkbox"]):not([type="radio"]),
+.modal-card textarea,
+.modal-card select {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+  border: 1px solid #243041 !important;
+}
+
+.modal-card input::placeholder,
+.modal-card textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+.modal-card .sig-canvas,
+.modal-card canvas,
+#signatureCanvas {
+  background: #1e293b !important;
+  border: 1px solid #243041 !important;
+  border-radius: 12px;
 }
