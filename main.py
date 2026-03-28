@@ -1690,9 +1690,14 @@ from reportlab.lib.utils import ImageReader
 
 def signature_to_dark_imagereader(data_url: str) -> ImageReader:
     """
-    Convert the e-signature canvas PNG (dataURL) into solid black-ink on white for PDF.
+    Convert the signature PNG data URL into solid black ink on white background.
 
-    UI pad draws WHITE ink on dark background → composite on black, invert, threshold.
+    Works for both:
+    - dark mode: white strokes on transparent canvas
+    - light mode: dark strokes on transparent canvas
+
+    We ignore the original RGB stroke color and use the alpha channel only.
+    Any visible stroke becomes black ink in the PDF.
     """
     if not data_url:
         return None
@@ -1703,17 +1708,23 @@ def signature_to_dark_imagereader(data_url: str) -> ImageReader:
 
     im = Image.open(io.BytesIO(raw)).convert("RGBA")
 
-    # Composite onto white so both light-mode dark ink and dark-mode light ink normalize cleanly
-    white_bg = Image.new("RGBA", im.size, (255, 255, 255, 255))
-    im = Image.alpha_composite(white_bg, im).convert("L")
+    # Use alpha channel only so both white ink and dark ink survive
+    alpha = im.getchannel("A")
 
-    # Normalize to strong black ink on white background
-    im = im.point(lambda p: 0 if p < 220 else 255).convert("RGB")
+    # Create white background
+    out = Image.new("RGB", im.size, (255, 255, 255))
 
-    out = io.BytesIO()
-    im.save(out, format="PNG")
-    out.seek(0)
-    return ImageReader(out)
+    # Build solid black ink from any non-transparent stroke
+    ink = alpha.point(lambda a: 0 if a > 10 else 255).convert("L")
+    black = Image.new("RGB", im.size, (0, 0, 0))
+
+    # Paste black wherever alpha says there was a signature stroke
+    out.paste(black, mask=ImageOps.invert(ink))
+
+    bio = io.BytesIO()
+    out.save(bio, format="PNG")
+    bio.seek(0)
+    return ImageReader(bio)
 
 def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=50):
     """
