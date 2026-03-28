@@ -3534,26 +3534,6 @@ body.dark .tm-footer-email:visited,
     color: #0f172a;
   }
 
-  .modal-card input:not([type="checkbox"]):not([type="radio"]),
-  .modal-card textarea,
-  .modal-card select {
-    background: #ffffff;
-    color: #0f172a;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-  }
-
-  .modal-card input::placeholder,
-  .modal-card textarea::placeholder {
-    color: #64748b;
-  }
-
-  .modal-card .sig-canvas,
-  .modal-card canvas,
-  #signatureCanvas {
-    background: #f8fafc !important;
-    border: 1px solid rgba(15, 23, 42, 0.12) !important;
-  }
-
   .confirm-summary {
     background: #f8fafc;
     border: 1px solid rgba(15, 23, 42, 0.08);
@@ -3574,5 +3554,102 @@ body.dark .tm-footer-email:visited,
     background: #f8fafc;
     border-color: rgba(15, 23, 42, 0.08);
     color: #0f172a;
+  }
+}
+
+/* =========================
+   LIGHT MODE: make surfaces truly light
+   ========================= */
+@media (prefers-color-scheme: light) {
+  /* Confirm modal shell */
+  .modal-card {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+    color: #0f172a;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .modal-actions {
+    background: #ffffff;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  /* All modal text */
+  .modal-card,
+  .modal-card h1,
+  .modal-card h2,
+  .modal-card h3,
+  .modal-card p,
+  .modal-card label,
+  .modal-card .tm-label,
+  .modal-card .tm-muted,
+  .modal-card .tm-disclaimer {
+    color: #0f172a;
+  }
+
+  /* Inputs inside confirm modal */
+  .modal-card input:not([type="checkbox"]):not([type="radio"]),
+  .modal-card textarea,
+  .modal-card select {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    box-shadow: none !important;
+  }
+
+  .modal-card input::placeholder,
+  .modal-card textarea::placeholder {
+    color: #64748b !important;
+  }
+
+  /* Signature area */
+  .modal-card .sig-canvas,
+  .modal-card canvas,
+  #signatureCanvas {
+    background: #f8fafc !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  }
+
+  /* Quote preview box */
+  .modal-card .preview,
+  .modal-card .confirm-summary,
+  .modal-card .line-items,
+  .modal-card .line-item,
+  .modal-card .totals,
+  .modal-card .breakdown-card {
+    background: #f8fafc !important;
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+  }
+
+  /* Saved draft select + other estimator selects in light mode */
+  select,
+  textarea,
+  input:not([type="checkbox"]):not([type="radio"]) {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+  }
+
+  select option {
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  /* Saved Estimates card surfaces */
+  .tm-list-card,
+  .tm-repair-card,
+  .line-items,
+  .preview,
+  .totals,
+  .breakdown-card,
+  .card,
+  .tm-card {
+    box-shadow: none;
   }
 }
