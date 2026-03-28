@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusEl = document.getElementById("fbStatus");
   const submitBtn = document.getElementById("fbSubmitBtn");
 
-  if (!fab || !modal) return;
+  if (!footerBtn || !modal) return;
 
   function openModal() {
     modal.hidden = false;
@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.hidden = true;
   }
 
-  fab.addEventListener("click", openModal);
   footerBtn?.addEventListener("click", openModal);
   closeBtn?.addEventListener("click", closeModal);
 
