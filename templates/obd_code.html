@@ -10,54 +10,29 @@
     <p class="muted">{{ title }}</p>
   {% endif %}
 
-  <div class="tm-obd-intro">
-  <p>
-  <strong>{{ code }}</strong> is an OBD-II diagnostic trouble code that indicates
-  <strong>{{ title | lower }}</strong>.
-  </p>
 
-  <p>
-  When this code appears, the vehicle's onboard diagnostics system has detected
-  a condition outside normal operating parameters. Below you’ll find common
-  symptoms, possible causes, quick diagnostic checks, and repair guidance.
-  </p>
-  </div>
-
-  <div class="tm-warning-box">
-    <strong>Important:</strong>
-    OBD codes indicate a symptom, not always the exact failed part.
-    Proper diagnosis should be performed before replacing components.
-  </div>
 
   {% if diagnostic_summary %}
-  <div class="tm-diagnostic-card">
-
-    <div class="tm-diag-item">
-      <strong>Severity</strong>
-      <span>{{ diagnostic_summary.severity }}</span>
+  <div class="tm-summary-card">
+    <div>
+      <span class="tm-label">Severity</span>
+      <strong>{{ diagnostic_summary.severity }}</strong>
     </div>
 
-    <div class="tm-diag-item">
-      <strong>Drivability</strong>
-      <span>{{ diagnostic_summary.drivability }}</span>
+    <div>
+      <span class="tm-label">Drivability</span>
+      <strong>{{ diagnostic_summary.drivability }}</strong>
     </div>
 
-    <div class="tm-diag-item">
-      <strong>Typical Repair Cost</strong>
-      <span>{{ diagnostic_summary.cost }}</span>
+    <div>
+      <span class="tm-label">Typical Cost</span>
+      <strong>{{ diagnostic_summary.cost }}</strong>
     </div>
-
   </div>
   {% endif %}
 
-  <h2>Description</h2>
-  <p>{{ description }}</p>
-  {% include "partials/obd_electrical.html" %}
-
-  <!-- 🔌 Electrical Insight -->
-<div class="tm-electrical-box">
-  <h2>Electrical Insight</h2>
-
+  
+  
   <p>
     This code is related to an electrical circuit within the vehicle.
     The issue may not always be the component itself, but the wiring,
@@ -73,19 +48,6 @@
   </ul>
 </div>
 
-  <h2>How Serious Is Code {{ code }}?</h2>
-
-  <p>
-  The severity of {{ code }} depends on the underlying cause. In many cases the
-  vehicle may still drive normally, but performance, fuel economy, or emissions
-  may be affected. Ignoring a diagnostic trouble code for long periods can lead
-  to additional issues or more expensive repairs.
-  </p>
-
-  <p>
-  If the check engine light is flashing or the vehicle is running poorly,
-  diagnosis should be performed as soon as possible.
-  </p>
 
   {% if symptoms and symptoms|length %}
   <h2>Common Symptoms</h2>
@@ -98,11 +60,13 @@
 
   {% if possible_causes and possible_causes|length %}
     <h2>Possible Causes</h2>
-    <ul>
+    <div class="tm-list-grid">
       {% for c in possible_causes %}
-        <li>{{ c }}</li>
+        <div class="tm-list-card">
+          {{ c }}
+        </div>
       {% endfor %}
-    </ul>
+    </div>
   {% endif %}
 
   {% if quick_checks and quick_checks|length %}
@@ -114,15 +78,16 @@
     </ul>
   {% endif %}
 
-  {% if drivability_advice %}
-  <h2>Can You Still Drive With This Code?</h2>
-  <p>{{ drivability_advice }}</p>
-  {% endif %}
+  <!-- 🔌 Electrical Insight -->
+<div class="tm-electrical-box">
+  <h2>Electrical Insight</h2>
+
+
 
  <h2>Common Repairs for This Code</h2>
 
  <div class="tm-estimate-cta" style="margin:20px 0;">
-    <a class="btn primary" href="/estimator?obd={{ code }}">
+    <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">
       Estimate Repair Cost for {{ code }}
     </a>
   </div>
@@ -130,10 +95,20 @@
 {% if common_repairs and common_repairs|length %}
   <div class="rel-list" style="margin-bottom: 18px;">
     {% for item in common_repairs %}
-      <a class="rel-chip" href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
-        <span class="rel-code">🔧</span>
-        <span class="rel-text">{{ item.label }}</span>
-      </a>
+      <div class="tm-repair-grid">
+        {% for item in common_repairs %}
+          <div class="tm-repair-card">
+            <div class="tm-repair-info">
+              <strong>{{ item.label }}</strong>
+            </div>
+
+            <a class="tm-btn tm-btn-primary"
+              href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
+              Estimate
+            </a>
+          </div>
+        {% endfor %}
+      </div>
     {% endfor %}
   </div>
 {% else %}
@@ -156,12 +131,13 @@
 {% endif %}
 
 <div class="tm-search-again" style="margin-top:24px;">
-  <a class="btn ghost" href="/obd">
-    🔎 Search Another OBD Code
+  <a class="rel-chip tm-search-chip" href="/obd">
+    <span class="rel-code">🔎</span>
+    <span class="rel-text">Search Another OBD Code</span>
   </a>
 </div>
 
-<div class="tm-obd-about" style="margin-top:40px;">
+<div class="tm-obd-about" style="margin-top:28px;">
   <h3>About TorqueMech</h3>
   <p class="muted">
     TorqueMech provides <a href="/obd">OBD diagnostic lookup tools</a> and
@@ -169,7 +145,7 @@
     vehicle problems before visiting a repair shop.
   </p>
 
-  <p class="muted" style="margin-top:8px;">
+  <p class="muted" style="margin-top:6px;">
     Last updated: March 2026
   </p>
 </div>

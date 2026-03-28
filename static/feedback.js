@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  const fab = document.getElementById("feedbackFab");
+  const footerBtn = document.getElementById("feedbackBtn");
   const modal = document.getElementById("feedbackModal");
   const closeBtn = document.getElementById("feedbackCloseBtn");
 
@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   fab.addEventListener("click", openModal);
+  footerBtn?.addEventListener("click", openModal);
   closeBtn?.addEventListener("click", closeModal);
 
   modal.addEventListener("click", (e) => {

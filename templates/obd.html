@@ -1,137 +1,77 @@
 {% extends "layout.html" %}
 
-{% block title %}OBD Lookup — TorqueMech{% endblock %}
+{% block title %}Diagnostic Repair — TorqueMech{% endblock %}
 
 {% block content %}
 
-    <section class="tm-card obd-hero" style="max-width: 980px;">
-      <div class="obd-hero__eyebrow">TorqueMech Diagnostic Lookup</div>
+<section class="tm-card" style="max-width: 1000px;">
 
-      <h1 class="tm-h1 obd-hero__title">OBD Code Lookup</h1>
+  <!-- HERO -->
+  <div style="margin-bottom: 24px;">
+    <div class="obd-hero__eyebrow">TorqueMech Diagnostic System</div>
 
-      <p class="tm-sub obd-hero__subtitle">
-        Enter a code like <strong>P0300</strong> or <strong>P0420</strong>.
-        Get plain-language guidance, likely causes, quick checks, and repair direction.
+    <h1 class="tm-h1">Diagnostic Repair</h1>
+
+    <p class="tm-sub">
+      Diagnose faster with wiring insight, guided checks, and repair workflow —
+      then move directly into an estimate.
+    </p>
+  </div>
+
+  <!-- VEHICLE SELECT (placeholder for now) -->
+  <div class="tm-card" style="margin-bottom:20px;">
+    <div style="font-weight:600; margin-bottom:10px;">Select Vehicle</div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <input class="tm-input" placeholder="Year">
+      <input class="tm-input" placeholder="Make">
+      <input class="tm-input" placeholder="Model">
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="tm-grid2">
+
+    <!-- Wiring -->
+    <div class="tm-card">
+      <h3>🔌 Wiring & Electrical</h3>
+      <p class="tm-muted">
+        Trace power, grounds, fuses, relays, and component paths.
       </p>
+      <button class="tm-btn">Open Electrical →</button>
+    </div>
 
-      <div class="obd-input-wrapper">
-        <div style="position:relative; z-index:50;">
-          <input id="obdCode" class="tm-input" placeholder="P0300" maxlength="7" style="width:100%;">
-          <div id="suggestBox" class="obd-suggestBox tm-card" style="display:none;">
-            <div style="font-size:12px; opacity:.8; margin-bottom:8px;">Suggestions</div>
-            <div id="suggestList"></div>
-          </div>
-        </div>
-        <button id="lookupBtn" class="tm-btn tm-btn--primary" type="button">Lookup</button>
-        <button id="clearBtn" class="tm-btn" type="button">Clear</button>
-      </div>
-
-      <div id="status" class="tm-disclaimer" style="margin-top:12px;"></div>
-
-      <div id="obdResultCard" class="tm-card" style="margin-top:24px; display:none;">
-        <div id="obdHeader" class="obd-head">
-          <div class="obd-head__left">
-            <div class="obd-head__row">
-              <h2 id="obdCodeTitle" class="obd-head__code"></h2>
-              <span id="obdSeverityBadge" class="badge obd-head__badge"></span>
-            </div>
-
-            <div id="obdCodeSubtitle" class="obd-head__subtitle"></div>
-
-            <div id="obdDiagGuide" class="obd-head__guide" style="display:none;">
-              <a id="diagGuideLink" class="btn secondary btn--linklike" target="_blank" rel="noopener">
-                🔎 View Full Diagnosis Guide →
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div id="guidePreview" class="tm-card" style="margin-top:16px; display:none;">
-          <div style="font-weight:600; margin-bottom:6px;">
-            Full Diagnosis Guide
-          </div>
-
-          <div id="guidePreviewTitle" style="opacity:.9; margin-bottom:10px;"></div>
-
-          <ul style="font-size:13px; opacity:.85; line-height:1.6;">
-            <li>Symptoms and warning signs</li>
-            <li>Common failure causes</li>
-            <li>Step-by-step diagnosis</li>
-            <li>Typical repair costs</li>
-          </ul>
-
-          <a id="guidePreviewLink" class="btn primary" style="margin-top:10px;">
-            Open Full Guide →
-          </a>
-        </div>
-
-        <div id="obdDivider" class="obd-divider"></div>
-
-        <div>
-          <h4>Description</h4>
-          <p id="obdDescription"></p>
-        </div>
-
-        <div>
-          <h4>Possible Causes</h4>
-          <ul id="obdCauses"></ul>
-
-          <div id="obdLikelyFixes" style="margin-top:10px; display:none;">
-            <div style="font-size:13px; opacity:.85; margin-bottom:8px;">
-              Most Likely Fixes (based on common failure patterns)
-            </div>
-            <div id="obdLikelyFixesList"></div>
-          </div>
-
-          <div id="obdRepairCosts" style="margin-top:14px; display:none;">
-            <div style="font-size:13px; opacity:.85; margin-bottom:8px;">
-              Common Repair Cost Range
-            </div>
-            <div id="obdRepairCostsList"></div>
-          </div>
-        </div>
-
-        <div>
-          <h4>Quick Checks</h4>
-          <ul id="obdChecks"></ul>
-        </div>
-
-        <!-- Related OBD Codes -->
-        <div id="obdRelated" class="tm-card" style="margin-top:16px; display:none;">
-          <div style="font-weight:600; margin-bottom:8px;">Related Codes</div>
-          <div id="obdRelatedList" class="rel-list"></div>
-        </div>
-
-        <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button id="addToSelectionBtn" class="tm-btn" type="button">
-            + Add to Selection
-          </button>
-
-          <button id="sendSelectedBtn" class="tm-btn tm-btn--primary" type="button" disabled>
-            Send Selected to Estimator →
-          </button>
-        </div>
-
-        <div id="selectedCodesTray" style="margin-top:14px; display:none;">
-          <div style="font-size:13px; opacity:.8; margin-bottom:6px;">
-            Selected Codes:
-          </div>
-          <div id="selectedCodesList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-          <div style="margin-top:8px;">
-            <button id="clearSelectedBtn" class="tm-btn ghost" type="button">
-              Clear Selection
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-      <p class="tm-disclaimer" style="margin-top:12px;">
-        Disclaimer: OBD codes are clues — confirm with proper diagnosis before replacing parts.
+    <!-- Diagnostics -->
+    <div class="tm-card">
+      <h3>🧠 Guided Diagnostics</h3>
+      <p class="tm-muted">
+        Start with likely causes and follow real diagnostic steps.
       </p>
+      <button class="tm-btn">Start Diagnosis →</button>
+    </div>
 
-{% endblock %}
+    <!-- Repair -->
+    <div class="tm-card">
+      <h3>🔧 Repair Procedures</h3>
+      <p class="tm-muted">
+        Removal, install steps, and key service notes.
+      </p>
+      <button class="tm-btn">View Repairs →</button>
+    </div>
 
-{% block page_js %}
-<script src="/static/obd.js?v=1" defer></script>
+    <!-- Estimate -->
+    <div class="tm-card">
+      <h3>💰 Estimate Integration</h3>
+      <p class="tm-muted">
+        Turn your findings into a clean customer estimate.
+      </p>
+      <a href="/estimator" class="tm-btn tm-btn--primary">
+        Open Estimator →
+      </a>
+    </div>
+
+  </div>
+
+</section>
+
 {% endblock %}

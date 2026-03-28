@@ -18,7 +18,7 @@
 
   <title>{% block title %}TorqueMech — Automotive Repair Estimator & OBD Diagnostic Tools{% endblock %}</title>
 
-  <meta name="description" content="TorqueMech provides automotive repair cost estimates, OBD diagnostic tools, and professional repair insights for DIYers and mechanics." />
+  <meta name="description" content="TorqueMech provides automotive diagnostic workflows, repair guidance, wiring insight, and professional repair cost estimates." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,27 +34,32 @@
   <main class="tm-container">
     {% block content %}{% endblock %}
 
-    <footer class="tm-footer">
-      <div class="tm-footer__left">© 2026 TorqueMech</div>
+    <div class="tm-footer__right">
 
-      <div class="tm-footer__right">
-        <a class="tm-footerLink" href="/terms">Terms</a>
-        <a class="tm-footerLink" href="/privacy">Privacy</a>
-        <a class="tm-footerLink" href="/disclaimer">Disclaimer</a>
+      <div class="tm-footer-top">
+        <span>© 2026 TorqueMech</span>
 
+        <div class="tm-footer-links">
+          <a class="tm-footerLink" href="/terms">Terms</a>
+          <a class="tm-footerLink" href="/privacy">Privacy</a>
+          <a class="tm-footerLink" href="/disclaimer">Disclaimer</a>
+        </div>
+      </div>
+
+      <div class="tm-footer-bottom">
         <span class="tm-footer-support">
-          Support: <a href="mailto:support@torquemech.com">support@torquemech.com</a>
+          Support:
+          <a href="mailto:support@torquemech.com" class="tm-footer-email">
+            support@torquemech.com
+          </a>
         </span>
 
-        <div class="tm-feedback-hint" id="feedbackHint" hidden>
-          💬 Help improve TorqueMech — send feedback!
-        </div>
-
-        <button id="feedbackBtn" type="button" class="tm-btn tm-btn-secondary">
-          💬 Improve TorqueMech
+        <button id="feedbackBtn" type="button" class="tm-feedback-link">
+          Feedback
         </button>
       </div>
-    </footer>
+
+    </div>
   </main>
 
   <script src="/static/nav.js?v=4"></script>

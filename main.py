@@ -66,6 +66,8 @@ from fastapi.responses import HTMLResponse
 
 from app.data.labor_profiles import build_labor_breakdown, get_service_labor_profile
 
+from repair_paths import REPAIR_PATHS
+
 DEFAULT_LABOR_RANGES = {
     "maintenance": (0.5, 1.5),
     "brakes": (1.0, 2.0),
@@ -737,12 +739,10 @@ def build_common_repairs(code: str):
 
 @app.get("/obd/{code}", response_class=HTMLResponse)
 async def obd_code_page(request: Request, code: str):
-    # normalize like the API routes do
+
     norm = "".join(ch for ch in (code or "").upper() if ch.isalnum())[:7]
     if len(norm) < 4:
         raise HTTPException(status_code=400, detail="Invalid OBD code.")
-    
-    metric_incr("page_obd_code")
 
     conn = obd_conn()
     cur = conn.cursor()
@@ -753,21 +753,15 @@ async def obd_code_page(request: Request, code: str):
     if not row:
         raise HTTPException(status_code=404, detail="OBD code not found")
 
-    # dtc.possible_causes + dtc.quick_checks are stored as JSON strings
-    try:
-        possible_causes = json.loads(row["possible_causes"] or "[]")
-    except Exception:
-        possible_causes = []
-    try:
-        quick_checks = json.loads(row["quick_checks"] or "[]")
-    except Exception:
-        quick_checks = []
+    possible_causes = json.loads(row["possible_causes"] or "[]")
+    quick_checks = json.loads(row["quick_checks"] or "[]")
 
     related_codes = build_related_codes(row["code"])
-
     common_repairs = build_common_repairs(row["code"])
-
     diagnostic_summary = build_diagnostic_summary(row["code"])
+
+    # ✅ THIS IS STEP 2
+    repair_path = REPAIR_PATHS.get(row["code"])
 
     return templates.TemplateResponse(
         "obd_code.html",
@@ -778,11 +772,10 @@ async def obd_code_page(request: Request, code: str):
             "description": row["description"] or "",
             "possible_causes": possible_causes,
             "quick_checks": quick_checks,
-            "system": row["system"],
-            "generic": bool(row["generic"]),
             "related_codes": related_codes,
             "common_repairs": common_repairs,
             "diagnostic_summary": diagnostic_summary,
+            "repair_path": repair_path,
         },
     )
 
@@ -2324,3 +2317,4 @@ def open_shared_estimate(request: Request, estimate_id: str):
             "shared_id": estimate_id,
         },
     )
+
