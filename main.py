@@ -1690,14 +1690,15 @@ from reportlab.lib.utils import ImageReader
 
 def signature_to_dark_imagereader(data_url: str) -> ImageReader:
     """
-    Convert the signature PNG data URL into solid black ink on white background.
+    Convert the signature PNG data URL into BLACK ink on TRANSPARENT background.
 
-    Works for both:
+    This works for both:
     - dark mode: white strokes on transparent canvas
     - light mode: dark strokes on transparent canvas
 
-    We ignore the original RGB stroke color and use the alpha channel only.
-    Any visible stroke becomes black ink in the PDF.
+    We use only the alpha channel to find where strokes exist,
+    then redraw those strokes as black while keeping everything
+    else transparent so ReportLab won't show a box.
     """
     if not data_url:
         return None
@@ -1708,18 +1709,16 @@ def signature_to_dark_imagereader(data_url: str) -> ImageReader:
 
     im = Image.open(io.BytesIO(raw)).convert("RGBA")
 
-    # Use alpha channel only so both white ink and dark ink survive
+    # Use only transparency to detect drawn pixels
     alpha = im.getchannel("A")
 
-    # Create white background
-    out = Image.new("RGB", im.size, (255, 255, 255))
+    # Transparent output
+    out = Image.new("RGBA", im.size, (255, 255, 255, 0))
 
-    # Build solid black ink from any non-transparent stroke
-    ink = alpha.point(lambda a: 0 if a > 10 else 255).convert("L")
-    black = Image.new("RGB", im.size, (0, 0, 0))
-
-    # Paste black wherever alpha says there was a signature stroke
-    out.paste(black, mask=ImageOps.invert(ink))
+    # Any visible stroke becomes solid black
+    stroke_mask = alpha.point(lambda a: 255 if a > 10 else 0)
+    black = Image.new("RGBA", im.size, (0, 0, 0, 255))
+    out.paste(black, (0, 0), mask=stroke_mask)
 
     bio = io.BytesIO()
     out.save(bio, format="PNG")
