@@ -1058,56 +1058,69 @@ const confidenceEl = document.getElementById("laborConfidence");
   let isDrawing = false;
   let lastX = 0, lastY = 0;
 
+  function signatureInkColor() {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "#ffffff"
+      : "#0f172a";
+  }
+
+  function signaturePadBg() {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "rgba(255,255,255,0.06)"
+      : "#f8fafc";
+  }
+
   function resizeSigCanvas() {
     if (!sigCanvas) return;
 
     const rect = sigCanvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
 
-    // Preserve current drawing while resizing
     const prev = sigCanvas.toDataURL("image/png");
 
-    // Resize backing store
     sigCanvas.width = Math.max(1, Math.floor(rect.width * dpr));
     sigCanvas.height = Math.max(1, Math.floor(rect.height * dpr));
 
-    // Re-grab context after resize
     sigCtx = sigCanvas.getContext("2d");
     sigCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Subtle pad background so white ink pops
     sigCtx.clearRect(0, 0, rect.width, rect.height);
-    sigCtx.fillStyle = isDark
-      ? "rgba(255,255,255,0.06)"
-      : "#f8fafc";
+    sigCtx.fillStyle = signaturePadBg();
     sigCtx.fillRect(0, 0, rect.width, rect.height);
-
-    // Dynamic ink color (light vs dark mode)
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
     sigCtx.lineWidth = 3.5;
     sigCtx.lineCap = "round";
     sigCtx.lineJoin = "round";
-    sigCtx.strokeStyle = isDark ? "#ffffff" : "#0f172a";
+    sigCtx.strokeStyle = signatureInkColor();
 
-    // Restore previous drawing
     const img = new Image();
     img.onload = () => {
       sigCtx.drawImage(img, 0, 0, rect.width, rect.height);
+      sigCtx.lineWidth = 3.5;
+      sigCtx.lineCap = "round";
+      sigCtx.lineJoin = "round";
+      sigCtx.strokeStyle = signatureInkColor();
     };
     img.src = prev;
   }
 
   function clearSignatureCanvas() {
     if (!sigCanvas) return;
-    const rect = sigCanvas.getBoundingClientRect();
-    const ctx = sigCanvas.getContext("2d");
-    ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
 
-    // re-paint subtle background after clear
-    ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
-    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    const rect = sigCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const ctx = sigCanvas.getContext("2d");
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    ctx.fillStyle = signaturePadBg();
     ctx.fillRect(0, 0, rect.width, rect.height);
+
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = signatureInkColor();
   }
 
   function canvasIsBlank() {
@@ -1129,9 +1142,14 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function startDraw(e) {
     if (!sigCanvas || !sigCtx) return;
+    sigCtx.strokeStyle = signatureInkColor();
+    sigCtx.lineWidth = 3.5;
+    sigCtx.lineCap = "round";
+    sigCtx.lineJoin = "round";
     isDrawing = true;
     const p = getCanvasPos(e);
-    lastX = p.x; lastY = p.y;
+    lastX = p.x;
+    lastY = p.y;
   }
 
   function draw(e) {
