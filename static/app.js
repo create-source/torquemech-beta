@@ -1078,9 +1078,6 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
 
-    ctx.fillStyle = signaturePadBg();
-    ctx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
-
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -1098,9 +1095,6 @@ const confidenceEl = document.getElementById("laborConfidence");
     sigCtx = sigCanvas.getContext("2d");
 
     sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-    sigCtx.fillStyle = signaturePadBg();
-    sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
-
     sigCtx.lineWidth = 2;
     sigCtx.lineCap = "round";
     sigCtx.lineJoin = "round";
@@ -1621,7 +1615,22 @@ if (getEstimateHint) {
           if (confirmMsg) confirmMsg.textContent = "Signature is required. Please sign or choose 'No signature'.";
           return;
         }
-        signatureDataUrl = sigCanvas.toDataURL("image/png");
+
+        // CLEAN EXPORT (no dark background)
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = sigCanvas.width;
+        exportCanvas.height = sigCanvas.height;
+
+        const ctx = exportCanvas.getContext("2d");
+
+        // white background for PDF
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+        // draw signature on top
+        ctx.drawImage(sigCanvas, 0, 0);
+
+        signatureDataUrl = exportCanvas.toDataURL("image/png");
       } else {
         signatureDataUrl = null;
       }
