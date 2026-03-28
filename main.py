@@ -1703,15 +1703,12 @@ def signature_to_dark_imagereader(data_url: str) -> ImageReader:
 
     im = Image.open(io.BytesIO(raw)).convert("RGBA")
 
-    # Assume dark pad behind the ink
-    black_bg = Image.new("RGBA", im.size, (0, 0, 0, 255))
-    im = Image.alpha_composite(black_bg, im).convert("L")
+    # Composite onto white so both light-mode dark ink and dark-mode light ink normalize cleanly
+    white_bg = Image.new("RGBA", im.size, (255, 255, 255, 255))
+    im = Image.alpha_composite(white_bg, im).convert("L")
 
-    # White strokes -> dark strokes
-    im = ImageOps.invert(im)
-
-    # Force pure black ink
-    im = im.point(lambda p: 0 if p < 200 else 255).convert("RGB")
+    # Normalize to strong black ink on white background
+    im = im.point(lambda p: 0 if p < 220 else 255).convert("RGB")
 
     out = io.BytesIO()
     im.save(out, format="PNG")
