@@ -1616,18 +1616,25 @@ if (getEstimateHint) {
           return;
         }
 
-        // CLEAN EXPORT (remove any background)
-        const exportCanvas = document.createElement("canvas");
-        exportCanvas.width = sigCanvas.width;
-        exportCanvas.height = sigCanvas.height;
+        // CLEAN EXPORT (no dark background)
+          const exportCanvas = document.createElement("canvas");
+          exportCanvas.width = sigCanvas.width;
+          exportCanvas.height = sigCanvas.height;
 
-        const ctx = exportCanvas.getContext("2d");
+          const ctx = exportCanvas.getContext("2d");
 
-        // DO NOT paint background — keep transparent
-        ctx.drawImage(sigCanvas, 0, 0);
+          // white background for PDF
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-        signatureDataUrl = exportCanvas.toDataURL("image/png");
-      } else {
+          // draw signature on top
+          ctx.drawImage(sigCanvas, 0, 0);
+
+          // Export signature with transparent background
+          signatureDataUrl = sigCanvas.toDataURL("image/png");
+      } 
+      
+      else {
         signatureDataUrl = null;
       }
 

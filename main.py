@@ -1690,15 +1690,14 @@ from reportlab.lib.utils import ImageReader
 
 def signature_to_dark_imagereader(data_url: str) -> ImageReader:
     """
-    Convert the signature PNG data URL into BLACK ink on TRANSPARENT background.
+    Convert signature PNG into black ink on transparent background for PDF.
 
-    This works for both:
+    Works for both:
     - dark mode: white strokes on transparent canvas
     - light mode: dark strokes on transparent canvas
 
-    We use only the alpha channel to find where strokes exist,
-    then redraw those strokes as black while keeping everything
-    else transparent so ReportLab won't show a box.
+    We detect stroke pixels from RGB + alpha, then redraw them as black
+    while keeping the background transparent.
     """
     if not data_url:
         return None
@@ -1709,16 +1708,31 @@ def signature_to_dark_imagereader(data_url: str) -> ImageReader:
 
     im = Image.open(io.BytesIO(raw)).convert("RGBA")
 
-    # Use only transparency to detect drawn pixels
-    alpha = im.getchannel("A")
+    # Split channels
+    r, g, b, a = im.split()
 
-    # Transparent output
+    # Transparent output canvas
     out = Image.new("RGBA", im.size, (255, 255, 255, 0))
+    out_px = out.load()
+    src_px = im.load()
 
-    # Any visible stroke becomes solid black
-    stroke_mask = alpha.point(lambda a: 255 if a > 10 else 0)
-    black = Image.new("RGBA", im.size, (0, 0, 0, 255))
-    out.paste(black, (0, 0), mask=stroke_mask)
+    width, height = im.size
+
+    for y in range(height):
+        for x in range(width):
+            rr, gg, bb, aa = src_px[x, y]
+
+            # Ignore fully transparent pixels
+            if aa <= 10:
+                continue
+
+            # Treat any non-background visible pixel as signature ink
+            # This catches both dark ink (light mode) and light ink (dark mode)
+            is_dark_stroke = (rr < 240 or gg < 240 or bb < 240)
+            is_light_stroke = (rr > 200 and gg > 200 and bb > 200)
+
+            if is_dark_stroke or is_light_stroke:
+                out_px[x, y] = (0, 0, 0, 255)
 
     bio = io.BytesIO()
     out.save(bio, format="PNG")
