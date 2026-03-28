@@ -1077,14 +1077,18 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     // Subtle pad background so white ink pops
     sigCtx.clearRect(0, 0, rect.width, rect.height);
-    sigCtx.fillStyle = "rgba(255,255,255,0.06)";
+    sigCtx.fillStyle = isDark
+      ? "rgba(255,255,255,0.06)"
+      : "#f8fafc";
     sigCtx.fillRect(0, 0, rect.width, rect.height);
 
-    // ✅ White ink
+    // Dynamic ink color (light vs dark mode)
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
     sigCtx.lineWidth = 3.5;
     sigCtx.lineCap = "round";
     sigCtx.lineJoin = "round";
-    sigCtx.strokeStyle = "#ffffff";
+    sigCtx.strokeStyle = isDark ? "#ffffff" : "#0f172a";
 
     // Restore previous drawing
     const img = new Image();

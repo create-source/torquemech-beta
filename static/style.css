@@ -3653,3 +3653,32 @@ body.dark .tm-footer-email:visited,
     box-shadow: none;
   }
 }
+
+/* Light mode: fix dropdown/select colors */
+@media (prefers-color-scheme: light) {
+  select {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  }
+
+  select option {
+    background: #ffffff;
+    color: #0f172a;
+  }
+}
+
+/* Fix saved draft dropdown in light mode */
+@media (prefers-color-scheme: light) {
+  #draftsSelect,
+  select {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  }
+
+  #draftsSelect option {
+    background: #ffffff;
+    color: #0f172a;
+  }
+}
