@@ -3504,3 +3504,75 @@ body.dark .tm-footer-email:visited,
   border: 1px solid #243041 !important;
   border-radius: 12px;
 }
+
+/* Light mode: make Confirm Estimate modal match the light estimator page */
+@media (prefers-color-scheme: light) {
+  .modal-card {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.16);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .modal-actions {
+    background: #ffffff;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .modal-card,
+  .modal-card h1,
+  .modal-card h2,
+  .modal-card h3,
+  .modal-card p,
+  .modal-card label,
+  .modal-card .tm-muted,
+  .modal-card .tm-label,
+  .modal-card .tm-disclaimer {
+    color: #0f172a;
+  }
+
+  .modal-card input:not([type="checkbox"]):not([type="radio"]),
+  .modal-card textarea,
+  .modal-card select {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+  }
+
+  .modal-card input::placeholder,
+  .modal-card textarea::placeholder {
+    color: #64748b;
+  }
+
+  .modal-card .sig-canvas,
+  .modal-card canvas,
+  #signatureCanvas {
+    background: #f8fafc !important;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  }
+
+  .confirm-summary {
+    background: #f8fafc;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: none;
+  }
+
+  .toggle-btn {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+  }
+
+  .breakdown-card,
+  .preview,
+  .totals,
+  .line-items,
+  .line-item {
+    background: #f8fafc;
+    border-color: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+  }
+}
