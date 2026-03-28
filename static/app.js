@@ -1070,58 +1070,48 @@ const confidenceEl = document.getElementById("laborConfidence");
       : "#f8fafc";
   }
 
-  function resizeSigCanvas() {
-    if (!sigCanvas) return;
-
-    const rect = sigCanvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-
-    const prev = sigCanvas.toDataURL("image/png");
-
-    sigCanvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    sigCanvas.height = Math.max(1, Math.floor(rect.height * dpr));
-
-    sigCtx = sigCanvas.getContext("2d");
-    sigCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    sigCtx.clearRect(0, 0, rect.width, rect.height);
-    sigCtx.fillStyle = signaturePadBg();
-    sigCtx.fillRect(0, 0, rect.width, rect.height);
-
-    sigCtx.lineWidth = 3.5;
-    sigCtx.lineCap = "round";
-    sigCtx.lineJoin = "round";
-    sigCtx.strokeStyle = signatureInkColor();
-
-    const img = new Image();
-    img.onload = () => {
-      sigCtx.drawImage(img, 0, 0, rect.width, rect.height);
-      sigCtx.lineWidth = 3.5;
-      sigCtx.lineCap = "round";
-      sigCtx.lineJoin = "round";
-      sigCtx.strokeStyle = signatureInkColor();
-    };
-    img.src = prev;
-  }
 
   function clearSignatureCanvas() {
     if (!sigCanvas) return;
 
-    const rect = sigCanvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
     const ctx = sigCanvas.getContext("2d");
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
 
     ctx.fillStyle = signaturePadBg();
-    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
 
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = signatureInkColor();
   }
+
+  function resizeSigCanvas() {
+    if (!sigCanvas) return;
+
+    const rect = sigCanvas.getBoundingClientRect();
+
+    sigCanvas.width = Math.round(rect.width);
+    sigCanvas.height = Math.round(rect.height);
+
+    sigCtx = sigCanvas.getContext("2d");
+
+    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    sigCtx.fillStyle = signaturePadBg();
+    sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+
+    sigCtx.lineWidth = 2;
+    sigCtx.lineCap = "round";
+    sigCtx.lineJoin = "round";
+    sigCtx.strokeStyle = signatureInkColor();
+  }
+
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    signatureDataUrl = null;
+    clearSignatureCanvas();
+    lastSignatureTheme = currentSignatureTheme();
+  });
 
   function canvasIsBlank() {
     if (!sigCanvas) return true;
@@ -1135,17 +1125,23 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function getCanvasPos(e) {
     const rect = sigCanvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
+    const point = e.touches ? e.touches[0] : e;
+
+    return {
+      x: point.clientX - rect.left,
+      y: point.clientY - rect.top,
+    };
   }
 
   function startDraw(e) {
     if (!sigCanvas || !sigCtx) return;
+    e.preventDefault();
+
     sigCtx.strokeStyle = signatureInkColor();
-    sigCtx.lineWidth = 3.5;
+    sigCtx.lineWidth = 2;
     sigCtx.lineCap = "round";
     sigCtx.lineJoin = "round";
+
     isDrawing = true;
     const p = getCanvasPos(e);
     lastX = p.x;
@@ -1161,7 +1157,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     sigCtx.moveTo(lastX, lastY);
     sigCtx.lineTo(p.x, p.y);
     sigCtx.stroke();
-    lastX = p.x; lastY = p.y;
+    lastX = p.x;
+    lastY = p.y;
   }
 
   function endDraw() { isDrawing = false; }
