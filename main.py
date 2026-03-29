@@ -1690,14 +1690,14 @@ from reportlab.lib.utils import ImageReader
 
 def signature_to_dark_imagereader(data_url: str) -> ImageReader:
     """
-    Convert signature PNG into black ink on transparent background for PDF.
+    Convert signature PNG into cropped black ink on white background for PDF.
 
-    Works for both:
+    This works for both:
     - dark mode: white strokes on transparent canvas
     - light mode: dark strokes on transparent canvas
 
-    We detect stroke pixels from RGB + alpha, then redraw them as black
-    while keeping the background transparent.
+    We detect strokes using alpha, crop tightly to the actual signature,
+    and redraw them as black on white so ReportLab does not render a box.
     """
     if not data_url:
         return None
@@ -1707,32 +1707,30 @@ def signature_to_dark_imagereader(data_url: str) -> ImageReader:
     raw = base64.b64decode(b64)
 
     im = Image.open(io.BytesIO(raw)).convert("RGBA")
+    alpha = im.getchannel("A")
 
-    # Split channels
-    r, g, b, a = im.split()
+    bbox = alpha.getbbox()
+    if not bbox:
+        return None
 
-    # Transparent output canvas
-    out = Image.new("RGBA", im.size, (255, 255, 255, 0))
-    out_px = out.load()
-    src_px = im.load()
+    # Small padding around signature
+    pad = 4
+    left, top, right, bottom = bbox
+    left = max(0, left - pad)
+    top = max(0, top - pad)
+    right = min(im.width, right + pad)
+    bottom = min(im.height, bottom + pad)
 
-    width, height = im.size
+    cropped_alpha = alpha.crop((left, top, right, bottom))
 
-    for y in range(height):
-        for x in range(width):
-            rr, gg, bb, aa = src_px[x, y]
+    # White background, tightly cropped
+    out = Image.new("RGB", (right - left, bottom - top), (255, 255, 255))
 
-            # Ignore fully transparent pixels
-            if aa <= 10:
-                continue
+    # Any visible stroke becomes black
+    black = Image.new("RGB", out.size, (0, 0, 0))
+    stroke_mask = cropped_alpha.point(lambda a: 255 if a > 10 else 0)
 
-            # Treat any non-background visible pixel as signature ink
-            # This catches both dark ink (light mode) and light ink (dark mode)
-            is_dark_stroke = (rr < 240 or gg < 240 or bb < 240)
-            is_light_stroke = (rr > 200 and gg > 200 and bb > 200)
-
-            if is_dark_stroke or is_light_stroke:
-                out_px[x, y] = (0, 0, 0, 255)
+    out.paste(black, mask=stroke_mask)
 
     bio = io.BytesIO()
     out.save(bio, format="PNG")

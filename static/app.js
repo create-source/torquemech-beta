@@ -1616,22 +1616,8 @@ if (getEstimateHint) {
           return;
         }
 
-        // CLEAN EXPORT (no dark background)
-          const exportCanvas = document.createElement("canvas");
-          exportCanvas.width = sigCanvas.width;
-          exportCanvas.height = sigCanvas.height;
-
-          const ctx = exportCanvas.getContext("2d");
-
-          // white background for PDF
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-
-          // draw signature on top
-          ctx.drawImage(sigCanvas, 0, 0);
-
-          // Export signature with transparent background
-          signatureDataUrl = sigCanvas.toDataURL("image/png");
+        // Export signature directly from the live canvas with transparent background
+        signatureDataUrl = sigCanvas.toDataURL("image/png");
       } 
       
       else {
