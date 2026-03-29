@@ -34,6 +34,7 @@
     <h2>Start With a Code, Symptom, or System</h2>
 
     <input
+      id="diagSearchInput"
       class="tm-input"
       type="text"
       placeholder="P0303, no start, rough idle, overheating..."
@@ -41,7 +42,7 @@
     >
 
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="tm-btn tm-btn-primary">Search Diagnostics</button>
+      <button id="diagSearchBtn" class="tm-btn tm-btn-primary">Search Diagnostics</button>
       <a href="/obd/p0303" class="tm-btn tm-btn-ghost">Try Example</a>
     </div>
   </div>
@@ -138,5 +139,15 @@
   </div>
 
 </section>
+
+<script>
+  document.getElementById("diagSearchBtn").onclick = function () {
+    const value = document.getElementById("diagSearchInput").value;
+
+    if (!value) return;
+
+    window.location.href = "/obd/" + value.toLowerCase();
+  };
+</script>
 
 {% endblock %}
