@@ -3,121 +3,130 @@
 {% block title %}{{ code }} Code — {{ title }} | TorqueMech{% endblock %}
 
 {% block content %}
+
 <div class="container">
-  <h1>OBD Code {{ code }}</h1>
 
-  {% if title %}
-    <p class="muted">{{ title }}</p>
-  {% endif %}
+<h1>Diagnostic Repair — {{ code }}</h1>
 
+<p class="muted">
+  {{ title }} — Follow guided checks, wiring paths, and repair context to diagnose faster.
+</p>
 
+{% if diagnostic_summary and diagnostic_summary.severity %}
 
-  {% if diagnostic_summary %}
-  <div class="tm-summary-card">
-    <div>
-      <span class="tm-label">Severity</span>
-      <strong>{{ diagnostic_summary.severity }}</strong>
-    </div>
-
-    <div>
-      <span class="tm-label">Drivability</span>
-      <strong>{{ diagnostic_summary.drivability }}</strong>
-    </div>
-
-    <div>
-      <span class="tm-label">Typical Cost</span>
-      <strong>{{ diagnostic_summary.cost }}</strong>
-    </div>
+<div class="tm-summary-card">
+  <div>
+    <span class="tm-label">Severity</span>
+    <strong>{{ diagnostic_summary.severity }}</strong>
   </div>
-  {% endif %}
 
-  
-  
-  <p>
-    This code is related to an electrical circuit within the vehicle.
-    The issue may not always be the component itself, but the wiring,
-    connector, power supply, or ground path.
-  </p>
+  <div>
+    <span class="tm-label">Drivability</span>
+    <strong>{{ diagnostic_summary.drivability }}</strong>
+  </div>
 
+  <div>
+    <span class="tm-label">Typical Cost</span>
+    <strong>{{ diagnostic_summary.cost }}</strong>
+  </div>
+</div>
+{% endif %}
+
+<div class="tm-card">
+  <h2>Start Here (Quick Direction)</h2>
   <ul>
-    <li>Open circuit (broken wire or disconnected connector)</li>
-    <li>Short to ground</li>
-    <li>Short to power</li>
-    <li>High resistance (corrosion or loose connection)</li>
-    <li>Faulty sensor or control component</li>
+    <li>Check the most common failure first (coil, plug, injector, or wiring)</li>
+    <li>Inspect connectors and harness for damage or corrosion</li>
+    <li>Verify power and ground before replacing parts</li>
+    <li>Swap components (if applicable) to confirm fault location</li>
   </ul>
 </div>
 
+<div class="tm-card">
+  <h2>Diagnostic Workflow</h2>
+  <ol>
+    <li>Confirm the code and freeze frame data</li>
+    <li>Inspect wiring, connectors, and obvious damage</li>
+    <li>Test the most likely failed component first</li>
+    <li>Verify power, ground, and signal integrity</li>
+    <li>Confirm repair and clear the code</li>
+  </ol>
+</div>
 
-  {% if symptoms and symptoms|length %}
-  <h2>Common Symptoms</h2>
+<div class="tm-card">
+  <h2>Wiring & Electrical Focus</h2>
   <ul>
-    {% for s in symptoms %}
-      <li>{{ s }}</li>
-    {% endfor %}
+    <li>Trace power and ground paths to the affected component</li>
+    <li>Check fuse and relay supplying the circuit</li>
+    <li>Look for high resistance (corrosion, loose pins)</li>
+    <li>Inspect harness routing near heat or moving parts</li>
   </ul>
-  {% endif %}
+</div>
 
-  {% if possible_causes and possible_causes|length %}
-    <h2>Possible Causes</h2>
-    <div class="tm-list-grid">
-      {% for c in possible_causes %}
-        <div class="tm-list-card">
-          {{ c }}
-        </div>
-      {% endfor %}
+{% if symptoms %}
+
+<h2>What You’ll Notice</h2>
+<ul>
+  {% for s in symptoms %}
+    <li>{{ s }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if possible_causes %}
+
+<h2>Most Likely Causes</h2>
+<div class="tm-list-grid">
+  {% for c in possible_causes %}
+    <div class="tm-list-card">
+      {{ c }}
     </div>
-  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
 
-  {% if quick_checks and quick_checks|length %}
-    <h2>Quick Checks</h2>
-    <ul>
-      {% for q in quick_checks %}
-        <li>{{ q }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+{% if quick_checks %}
 
-  <!-- 🔌 Electrical Insight -->
-<div class="tm-electrical-box">
-  <h2>Electrical Insight</h2>
+<h2>Recommended Test Order</h2>
+<ul>
+  {% for q in quick_checks %}
+    <li>{{ q }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
 
+<h2>Common Repairs</h2>
 
+<div class="tm-estimate-cta" style="margin:20px 0;">
+  <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">
+    Start Estimate for This Repair
+  </a>
+</div>
 
- <h2>Common Repairs for This Code</h2>
+{% if common_repairs %}
+  <div class="tm-repair-grid">
+    {% for item in common_repairs or [] %}
+      <div class="tm-repair-card">
+        <div class="tm-repair-info">
+          <strong>{{ item.label }}</strong>
+        </div>
 
- <div class="tm-estimate-cta" style="margin:20px 0;">
-    <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">
-      Estimate Repair Cost for {{ code }}
-    </a>
-  </div>
-
-{% if common_repairs and common_repairs|length %}
-  <div class="rel-list" style="margin-bottom: 18px;">
-    {% for item in common_repairs %}
-      <div class="tm-repair-grid">
-        {% for item in common_repairs %}
-          <div class="tm-repair-card">
-            <div class="tm-repair-info">
-              <strong>{{ item.label }}</strong>
-            </div>
-
-            <a class="tm-btn tm-btn-primary"
-              href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
-              Estimate
-            </a>
-          </div>
-        {% endfor %}
+        <a class="tm-btn tm-btn-primary"
+          href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
+          Estimate
+        </a>
       </div>
     {% endfor %}
   </div>
+
 {% else %}
   <p class="muted">No common repairs mapped yet.</p>
 {% endif %}
 
-<h2>Related OBD Codes</h2>
+<h2>Related Codes</h2>
 
 {% if related_codes and related_codes|length %}
+
   <div class="rel-list">
     {% for item in related_codes %}
       <a class="rel-chip" href="/obd/{{ item.code | lower }}">
@@ -133,22 +142,18 @@
 <div class="tm-search-again" style="margin-top:24px;">
   <a class="rel-chip tm-search-chip" href="/obd">
     <span class="rel-code">🔎</span>
-    <span class="rel-text">Search Another OBD Code</span>
+    <span class="rel-text">Search Another Code</span>
   </a>
 </div>
 
 <div class="tm-obd-about" style="margin-top:28px;">
-  <h3>About TorqueMech</h3>
+  <h3>Diagnostic Repair Workflow</h3>
   <p class="muted">
-    TorqueMech provides <a href="/obd">OBD diagnostic lookup tools</a> and
-    <a href="/estimator">repair cost estimates</a> to help drivers understand
-    vehicle problems before visiting a repair shop.
-  </p>
-
-  <p class="muted" style="margin-top:6px;">
-    Last updated: March 2026
+    TorqueMech helps you move from fault code to verified repair using
+    guided checks, wiring insight, and estimate-ready workflows.
   </p>
 </div>
 
 </div>
+
 {% endblock %}

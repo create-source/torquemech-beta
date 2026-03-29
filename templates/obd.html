@@ -26,6 +26,53 @@
       <input class="tm-input" placeholder="Year">
       <input class="tm-input" placeholder="Make">
       <input class="tm-input" placeholder="Model">
+      <button class="tm-btn tm-btn-primary">Load Vehicle</button>
+    </div>
+  </div>
+
+  <div class="tm-card" style="margin-bottom:20px;">
+    <h2>Start With a Code, Symptom, or System</h2>
+
+    <input
+      class="tm-input"
+      type="text"
+      placeholder="P0303, no start, rough idle, overheating..."
+      style="margin-bottom:12px;"
+    >
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="tm-btn tm-btn-primary">Search Diagnostics</button>
+      <a href="/obd/p0303" class="tm-btn tm-btn-ghost">Try Example</a>
+    </div>
+  </div>
+
+  <div class="tm-card" style="margin-bottom:20px;">
+    <h2>Common Fault Paths</h2>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <span class="rel-chip">No Start</span>
+      <span class="rel-chip">Hard Start</span>
+      <span class="rel-chip">Cold Start Misfire</span>
+      <span class="rel-chip">Rough Idle</span>
+      <span class="rel-chip">Overheating</span>
+      <span class="rel-chip">Battery Drain</span>
+      <span class="rel-chip">No AC</span>
+      <span class="rel-chip">Brake Noise</span>
+    </div>
+  </div>
+
+  <div class="tm-card" style="margin-top:20px;">
+    <h2>Choose a System</h2>
+
+    <div class="tm-list-grid">
+      <div class="tm-list-card">Ignition</div>
+      <div class="tm-list-card">Fuel</div>
+      <div class="tm-list-card">Charging / Starting</div>
+      <div class="tm-list-card">Cooling</div>
+      <div class="tm-list-card">Brakes</div>
+      <div class="tm-list-card">HVAC</div>
+      <div class="tm-list-card">Engine Mechanical</div>
+      <div class="tm-list-card">Electrical</div>
     </div>
   </div>
 
@@ -34,38 +81,56 @@
 
     <!-- Wiring -->
     <div class="tm-card">
-      <h3>🔌 Wiring & Electrical</h3>
+      <h3>🔌 Wiring Diagrams</h3>
       <p class="tm-muted">
-        Trace power, grounds, fuses, relays, and component paths.
+        Trace power, ground, fuse, and relay paths for accurate testing.
       </p>
-      <button class="tm-btn">Open Electrical →</button>
+      <button class="tm-btn tm-btn-primary">Open Wiring →</button>
     </div>
 
     <!-- Diagnostics -->
     <div class="tm-card">
       <h3>🧠 Guided Diagnostics</h3>
       <p class="tm-muted">
-        Start with likely causes and follow real diagnostic steps.
+        Follow step-by-step fault paths based on real-world failure patterns.
       </p>
-      <button class="tm-btn">Start Diagnosis →</button>
+      <button class="tm-btn tm-btn-primary">Start Diagnosis →</button>
     </div>
 
     <!-- Repair -->
     <div class="tm-card">
       <h3>🔧 Repair Procedures</h3>
       <p class="tm-muted">
-        Removal, install steps, and key service notes.
+        Removal, installation, and service procedures with key notes.
       </p>
-      <button class="tm-btn">View Repairs →</button>
+      <button class="tm-btn tm-btn-primary">View Procedures →</button>
+    </div>
+
+    <!-- Labor -->
+    <div class="tm-card">
+      <h3>⏱ Labor Times</h3>
+      <p class="tm-muted">
+        Estimated repair time ranges to plan the job correctly.
+      </p>
+      <button class="tm-btn tm-btn-primary">View Labor →</button>
+    </div>
+
+    <!-- Fuses -->
+    <div class="tm-card">
+      <h3>⚡ Fuses & Relays</h3>
+      <p class="tm-muted">
+        Locate fuse boxes, relays, and circuit protection components.
+      </p>
+      <button class="tm-btn tm-btn-primary">Open Electrical →</button>
     </div>
 
     <!-- Estimate -->
     <div class="tm-card">
       <h3>💰 Estimate Integration</h3>
       <p class="tm-muted">
-        Turn your findings into a clean customer estimate.
+        Turn diagnostics into a clean, customer-ready estimate.
       </p>
-      <a href="/estimator" class="tm-btn tm-btn--primary">
+      <a href="/estimator" class="tm-btn tm-btn-primary">
         Open Estimator →
       </a>
     </div>
