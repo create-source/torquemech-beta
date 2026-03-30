@@ -322,4 +322,43 @@
   
   <script src="/static/app.js?v=LOCK3"></script>
 
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    const params = new URLSearchParams(window.location.search);
+
+    const obd = params.get("obd");
+    const repair = params.get("repair");
+
+    if (obd) {
+    const notes = document.getElementById("notes");
+
+    if (notes && !notes.value) {
+      notes.value = "Diagnostic source: " + obd.toUpperCase();
+
+    if (repair) {
+
+      const serviceSelect = document.getElementById("service");
+
+      if (serviceSelect) {
+
+        const decodedRepair = decodeURIComponent(repair);
+
+        // try to match the repair text with a service option
+        for (let option of serviceSelect.options) {
+          if (option.text.toLowerCase().includes(decodedRepair.toLowerCase())) {
+            serviceSelect.value = option.value;
+            serviceSelect.dispatchEvent(new Event("change"));
+            break;
+          }
+        }
+
+      }
+    }
+    }
+  }
+
+  });
+  </script>
+
   {% endblock %}

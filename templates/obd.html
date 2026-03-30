@@ -51,14 +51,14 @@
     <h2>Common Fault Paths</h2>
 
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <span class="rel-chip">No Start</span>
-      <span class="rel-chip">Hard Start</span>
-      <span class="rel-chip">Cold Start Misfire</span>
-      <span class="rel-chip">Rough Idle</span>
-      <span class="rel-chip">Overheating</span>
-      <span class="rel-chip">Battery Drain</span>
-      <span class="rel-chip">No AC</span>
-      <span class="rel-chip">Brake Noise</span>
+      <span class="rel-chip" data-value="no start">No Start</span>
+      <span class="rel-chip" data-value="hard start">Hard Start</span>
+      <span class="rel-chip" data-value="cold start misfire">Cold Start Misfire</span>
+      <span class="rel-chip" data-value="rough idle">Rough Idle</span>
+      <span class="rel-chip" data-value="overheating">Overheating</span>
+      <span class="rel-chip" data-value="battery drain">Battery Drain</span>
+      <span class="rel-chip" data-value="no ac">No AC</span>
+      <span class="rel-chip" data-value="brake noise">Brake Noise</span>
     </div>
   </div>
 
@@ -141,6 +141,7 @@
 </section>
 
 <script>
+  // Search input
   document.getElementById("diagSearchBtn").onclick = function () {
     const value = document.getElementById("diagSearchInput").value;
 
@@ -148,6 +149,17 @@
 
     window.location.href = "/obd/" + value.toLowerCase();
   };
+
+  // Clickable symptoms
+  document.querySelectorAll(".rel-chip").forEach(chip => {
+    chip.addEventListener("click", function () {
+      const value = this.getAttribute("data-value");
+
+      if (!value) return;
+
+      window.location.href = "/obd/p0303";
+    });
+  });
 </script>
 
 {% endblock %}

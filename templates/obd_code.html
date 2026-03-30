@@ -32,6 +32,12 @@
 </div>
 {% endif %}
 
+<div style="margin:14px 0 20px 0;">
+  <a href="/estimator?obd={{ code }}" class="tm-btn tm-btn-primary">
+    Create Estimate From This Diagnostic →
+  </a>
+</div>
+
 <div class="tm-card">
   <h2>Start Here (Quick Direction)</h2>
   <ul>
@@ -113,7 +119,7 @@
 
         <a class="tm-btn tm-btn-primary"
           href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
-          Estimate
+          Estimate This Repair →
         </a>
       </div>
     {% endfor %}

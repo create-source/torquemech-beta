@@ -9,7 +9,7 @@
   color-scheme: light;
 
   /* ===== Brand: Electric Corporate (ACTIVE) ===== */
-  --bg: #F8FAFC;
+  --bg: #dfe6f5;
   --text: #0F172A;
   --subtext: #475569;
   --card: #FFFFFF;
@@ -42,7 +42,7 @@
     color-scheme: dark;
 
     --bg: #0B1220;                  /* slightly cooler */
-    --text: #F8FAFC;
+    --text: #eef2f7;
     --subtext: #94A3B8;
     --card: #0F1B2D;                /* cleaner “SaaS dark card” */
 
@@ -211,7 +211,7 @@ h2{ margin:0 0 12px; font-size:22px; line-height:1.2; }
   border-radius: 18px;
   padding: 18px;
   margin: 14px 0;
-  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+  box-shadow: 0 6px 18px rgba(15,23,42,.08);
 }
 
 /* Grid */
@@ -2023,9 +2023,13 @@ a.tm-btn:visited {
 
 .tm-subtle{
   font-size:14px;
-  opacity:0.75;
-  margin-top:6px;
-  margin-bottom:18px;
+  color: var(--text);
+  opacity: 1;
+}
+
+.tm-normal {
+  color: var(--text);
+  opacity: 1;
 }
 
 .tm-search-suggestions{
