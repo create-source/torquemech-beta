@@ -6,39 +6,110 @@
 
 <div class="container">
 
-<h1>Diagnostic Repair — {{ code }}</h1>
+<div class="tm-card" style="margin-bottom:12px; padding:16px;">
+  <div class="eyebrow" style="margin-bottom:6px;">TorqueMech Diagnostic Repair</div>
 
-<p class="muted">
-  {{ title }} — Follow guided checks, wiring paths, and repair context to diagnose faster.
-</p>
+  <h1 style="margin:0 0 8px 0; font-size:clamp(1.7rem, 5vw, 2.4rem); line-height:1.05;">
+    {{ code }} — {{ title }}
+  </h1>
+
+  <p class="tm-muted" style="margin:0; max-width:58ch;">
+    Diagnose faster with likely causes, guided checks, and repair-ready next steps.
+  </p>
+</div>
 
 {% if diagnostic_summary and diagnostic_summary.severity %}
+<div class="tm-card" style="margin-bottom:16px;">
+  <div class="tm-summary-card">
+    <div>
+      <span class="tm-label">Severity</span>
+      <strong>{{ diagnostic_summary.severity }}</strong>
+    </div>
 
-<div class="tm-summary-card">
-  <div>
-    <span class="tm-label">Severity</span>
-    <strong>{{ diagnostic_summary.severity }}</strong>
-  </div>
+    <div>
+      <span class="tm-label">Drivability</span>
+      <strong>{{ diagnostic_summary.drivability }}</strong>
+    </div>
 
-  <div>
-    <span class="tm-label">Drivability</span>
-    <strong>{{ diagnostic_summary.drivability }}</strong>
-  </div>
-
-  <div>
-    <span class="tm-label">Typical Cost</span>
-    <strong>{{ diagnostic_summary.cost }}</strong>
+    <div>
+      <span class="tm-label">Typical Cost</span>
+      <strong>{{ diagnostic_summary.cost }}</strong>
+    </div>
   </div>
 </div>
 {% endif %}
 
-<div style="margin:14px 0 20px 0;">
-  <a href="/estimator?obd={{ code }}" class="tm-btn tm-btn-primary">
-    Create Estimate From This Diagnostic →
-  </a>
+<div class="tm-card" style="margin-bottom:16px;">
+  <h2 style="margin-bottom:12px;">Quick Direction</h2>
+
+  <div style="display:grid; gap:10px;">
+    <div class="tm-list-card" style="display:flex; gap:12px; align-items:flex-start;">
+      <div style="font-weight:800; font-size:1rem; line-height:1; min-width:24px;">1</div>
+      <div>
+        <strong>Check first</strong>
+        <div class="tm-muted">Inspect coil, plug, injector, and connector condition.</div>
+      </div>
+    </div>
+
+    <div class="tm-list-card" style="display:flex; gap:12px; align-items:flex-start;">
+      <div style="font-weight:800; font-size:1rem; line-height:1; min-width:24px;">2</div>
+      <div>
+        <strong>Most common path</strong>
+        <div class="tm-muted">Misfire faults usually start with ignition or fuel delivery.</div>
+      </div>
+    </div>
+
+    <div class="tm-list-card" style="display:flex; gap:12px; align-items:flex-start;">
+      <div style="font-weight:800; font-size:1rem; line-height:1; min-width:24px;">3</div>
+      <div>
+        <strong>Verify before replacing</strong>
+        <div class="tm-muted">Confirm power, ground, and signal before installing parts.</div>
+      </div>
+    </div>
+
+    <div class="tm-list-card" style="display:flex; gap:12px; align-items:flex-start;">
+      <div style="font-weight:800; font-size:1rem; line-height:1; min-width:24px;">4</div>
+      <div>
+        <strong>Next move</strong>
+        <div class="tm-muted">Confirm the fault, then move into the repair estimate.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;">
+    <a href="/estimator?obd={{ code }}" class="tm-btn tm-btn-primary">
+      Start Repair Estimate
+    </a>
+  </div>
 </div>
 
-<div class="tm-card">
+<div class="tm-card" style="margin-bottom:16px;">
+  <h2 style="margin-bottom:12px;">Most Likely Fault Path</h2>
+
+  <div class="tm-list-grid">
+    <div class="tm-list-card">
+      <strong>Ignition coil failure</strong>
+      <div class="tm-muted">Most common cause of cylinder misfire codes.</div>
+    </div>
+
+    <div class="tm-list-card">
+      <strong>Spark plug issue</strong>
+      <div class="tm-muted">Worn or fouled spark plug causing incomplete combustion.</div>
+    </div>
+
+    <div class="tm-list-card">
+      <strong>Fuel injector fault</strong>
+      <div class="tm-muted">Injector not delivering proper fuel.</div>
+    </div>
+
+    <div class="tm-list-card">
+      <strong>Wiring or connector problem</strong>
+      <div class="tm-muted">Loose pins, corrosion, or damaged harness.</div>
+    </div>
+  </div>
+</div>
+
+<div class="tm-card" style="margin-bottom:16px;">
   <h2>Start Here (Quick Direction)</h2>
   <ul>
     <li>Check the most common failure first (coil, plug, injector, or wiring)</li>
@@ -48,7 +119,7 @@
   </ul>
 </div>
 
-<div class="tm-card">
+<div class="tm-card" style="margin-bottom:16px;">
   <h2>Diagnostic Workflow</h2>
   <ol>
     <li>Confirm the code and freeze frame data</li>
@@ -59,7 +130,7 @@
   </ol>
 </div>
 
-<div class="tm-card">
+<div class="tm-card" style="margin-bottom:16px;">
   <h2>Wiring & Electrical Focus</h2>
   <ul>
     <li>Trace power and ground paths to the affected component</li>
@@ -80,70 +151,105 @@
 {% endif %}
 
 {% if possible_causes %}
+<div class="tm-card" style="margin-bottom:16px;">
+  <h2 style="margin-bottom:12px;">Most Likely Causes</h2>
 
-<h2>Most Likely Causes</h2>
-<div class="tm-list-grid">
-  {% for c in possible_causes %}
-    <div class="tm-list-card">
-      {{ c }}
-    </div>
-  {% endfor %}
+  <div class="tm-list-grid">
+    {% for c in possible_causes %}
+      <div class="tm-list-card">
+        {{ c }}
+      </div>
+    {% endfor %}
+  </div>
 </div>
 {% endif %}
 
 {% if quick_checks %}
+<div class="tm-card" style="margin-bottom:16px;">
+  <h2 style="margin-bottom:12px;">Recommended Test Order</h2>
 
-<h2>Recommended Test Order</h2>
-<ul>
-  {% for q in quick_checks %}
-    <li>{{ q }}</li>
-  {% endfor %}
-</ul>
+  <ul>
+    {% for q in quick_checks %}
+      <li>{{ q }}</li>
+    {% endfor %}
+  </ul>
+</div>
 {% endif %}
 
-<h2>Common Repairs</h2>
+<div class="tm-card" style="margin-bottom:16px;">
+  <h2 style="margin-bottom:10px;">Common Repairs</h2>
 
-<div class="tm-estimate-cta" style="margin:20px 0;">
+  <p class="tm-muted" style="margin:0 0 14px 0;">
+    Choose the repair path that best matches your confirmed fault, then move straight into the estimate.
+  </p>
+
   <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">
-    Start Estimate for This Repair
+    Start Repair Estimate
   </a>
 </div>
 
 {% if common_repairs %}
-  <div class="tm-repair-grid">
+  <div style="display:grid; gap:12px; margin-top:16px;">
     {% for item in common_repairs or [] %}
-      <div class="tm-repair-card">
-        <div class="tm-repair-info">
-          <strong>{{ item.label }}</strong>
+      <div class="tm-card" style="padding:14px 16px;">
+
+        <div style="font-weight:700; font-size:1.05rem; line-height:1.35; margin-bottom:6px;">
+          {{ item.label }}
         </div>
 
-        <a class="tm-btn tm-btn-primary"
+        <div class="tm-muted" style="margin-bottom:10px;">
+          Use this when testing confirms this repair path.
+        </div>
+
+        <a
+          class="tm-btn tm-btn-secondary"
           href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
           Estimate This Repair →
         </a>
+
       </div>
     {% endfor %}
   </div>
-
 {% else %}
+
+
   <p class="muted">No common repairs mapped yet.</p>
 {% endif %}
 
-<h2>Related Codes</h2>
+<div class="tm-card" style="margin-bottom:16px;">
+  <h2 style="margin-bottom:12px;">Related Codes</h2>
 
-{% if related_codes and related_codes|length %}
+  {% if related_codes and related_codes|length %}
+    <div style="display:grid; gap:10px;">
+      {% for item in related_codes %}
+        <a
+          href="/obd/{{ item.code | lower }}"
+          style="
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:12px;
+            padding:12px 14px;
+            border:1px solid rgba(15, 23, 42, 0.10);
+            border-radius:14px;
+            text-decoration:none;
+            color:inherit;
+            background:rgba(255,255,255,0.55);
+          "
+        >
+          <div>
+            <div style="font-weight:800; margin-bottom:4px;">{{ item.code }}</div>
+            <div class="tm-muted">{{ item.label }}</div>
+          </div>
 
-  <div class="rel-list">
-    {% for item in related_codes %}
-      <a class="rel-chip" href="/obd/{{ item.code | lower }}">
-        <span class="rel-code">{{ item.code }}</span>
-        <span class="rel-text">{{ item.label }}</span>
-      </a>
-    {% endfor %}
-  </div>
-{% else %}
-  <p class="muted">No related codes available.</p>
-{% endif %}
+          <div class="tm-muted" style="white-space:nowrap;">Open →</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="tm-muted" style="margin:0;">No related codes available.</p>
+  {% endif %}
+</div>
 
 <div class="tm-search-again" style="margin-top:24px;">
   <a class="rel-chip tm-search-chip" href="/obd">

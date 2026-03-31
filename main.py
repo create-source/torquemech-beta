@@ -827,6 +827,13 @@ def build_diagnostic_summary(code: str):
 
     return summaries.get(code)
 
+@app.get("/obd-codes", response_class=HTMLResponse)
+async def obd_codes_index(request: Request):
+    return templates.TemplateResponse(
+        "obd_codes_index.html",
+        {"request": request},
+    )
+
 @app.get("/repair-cost/{service_slug}", response_class=HTMLResponse)
 def repair_cost_page(request: Request, service_slug: str):
 

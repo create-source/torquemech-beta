@@ -1,0 +1,120 @@
+{% extends "layout.html" %}
+
+{% block title %}OBD Codes | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-container">
+
+  <div class="tm-card" style="margin-bottom:16px;">
+    <div class="eyebrow">TorqueMech Diagnostics</div>
+    <h1>OBD Codes</h1>
+    <p class="tm-muted" style="margin-bottom:0;">
+      Search common diagnostic trouble codes and move directly into likely causes, checks, and repair estimates.
+    </p>
+  </div>
+
+  <div class="tm-card" style="margin-bottom:16px;">
+    <label for="obdCodeSearch" class="eyebrow">Find a Code</label>
+    <input
+      id="obdCodeSearch"
+      type="text"
+      class="tm-search-input"
+      placeholder="Search P0303, P0420, P0171..."
+      autocomplete="off"
+    >
+    <p class="tm-muted" id="obdCodeSearchCount" style="margin-top:10px; margin-bottom:0;">
+      Showing common OBD codes
+    </p>
+  </div>
+
+  <div class="tm-card" style="margin-bottom:16px;">
+    <h2 style="margin-bottom:12px;">Popular OBD Codes</h2>
+
+    <div id="obdCodeList" style="display:grid; gap:10px;">
+      <a class="obd-code-row" href="/obd/p0300" data-search="p0300 random multiple cylinder misfire">
+        <div>
+          <strong>P0300</strong>
+          <div class="tm-muted">Random / multiple cylinder misfire detected</div>
+        </div>
+      </a>
+
+      <a class="obd-code-row" href="/obd/p0301" data-search="p0301 cylinder 1 misfire">
+        <div>
+          <strong>P0301</strong>
+          <div class="tm-muted">Cylinder 1 misfire detected</div>
+        </div>
+      </a>
+
+      <a class="obd-code-row" href="/obd/p0302" data-search="p0302 cylinder 2 misfire">
+        <div>
+          <strong>P0302</strong>
+          <div class="tm-muted">Cylinder 2 misfire detected</div>
+        </div>
+      </a>
+
+      <a class="obd-code-row" href="/obd/p0303" data-search="p0303 cylinder 3 misfire">
+        <div>
+          <strong>P0303</strong>
+          <div class="tm-muted">Cylinder 3 misfire detected</div>
+        </div>
+      </a>
+
+      <a class="obd-code-row" href="/obd/p0171" data-search="p0171 system too lean bank 1">
+        <div>
+          <strong>P0171</strong>
+          <div class="tm-muted">System too lean (Bank 1)</div>
+        </div>
+      </a>
+
+      <a class="obd-code-row" href="/obd/p0420" data-search="p0420 catalyst system efficiency below threshold">
+        <div>
+          <strong>P0420</strong>
+          <div class="tm-muted">Catalyst system efficiency below threshold</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+</section>
+
+<style>
+  .obd-code-row{
+    display:block;
+    padding:12px 14px;
+    border:1px solid rgba(15,23,42,.10);
+    border-radius:14px;
+    text-decoration:none;
+    color:inherit;
+    background:rgba(255,255,255,.55);
+  }
+</style>
+
+<script>
+(function () {
+  const input = document.getElementById("obdCodeSearch");
+  const rows = document.querySelectorAll("#obdCodeList .obd-code-row");
+  const count = document.getElementById("obdCodeSearchCount");
+
+  if (!input || !rows.length) return;
+
+  function runFilter() {
+    const q = input.value.toLowerCase().trim();
+    let visible = 0;
+
+    rows.forEach((row) => {
+      const text = row.dataset.search || "";
+      const match = !q || text.includes(q);
+
+      row.style.display = match ? "" : "none";
+      if (match) visible++;
+    });
+
+    count.textContent = !q
+      ? "Showing common OBD codes"
+      : `Showing ${visible} matching codes`;
+  }
+
+  input.addEventListener("input", runFilter);
+})();
+</script>
+{% endblock %}

@@ -48,7 +48,7 @@
 
     if (!input || !items.length) return;
 
-    input.addEventListener("input", function () {
+    function runFilter() {
       const term = input.value.toLowerCase().trim();
 
       items.forEach((item) => {
@@ -57,13 +57,25 @@
         const search = item.dataset.search || "";
 
         const match =
+          !term ||
           title.includes(term) ||
           summary.includes(term) ||
           search.includes(term);
 
         item.style.display = match ? "" : "none";
       });
-    });
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+
+    if (q) {
+      input.value = q;
+    }
+
+    runFilter();
+
+    input.addEventListener("input", runFilter);
   })();
 </script>
 {% endblock %}
