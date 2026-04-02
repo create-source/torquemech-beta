@@ -323,11 +323,11 @@ body.dark .tm-hero,
 .tm-card,
 .card,
 .tm-linked-card{
-  background: var(--tm-surface);
-  border: 1px solid var(--tm-border);
+  background: linear-gradient(180deg, #fdfefe 0%, #f4f7fa 100%);
+  border: 1px solid rgba(11,22,40,.10);
   border-radius: var(--tm-radius);
   padding: 20px;
-  box-shadow: var(--tm-shadow-sm);
+  box-shadow: 0 10px 24px rgba(15,23,42,.06);
 }
 
 .tm-card--feature{
@@ -470,14 +470,41 @@ input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea{
   width: 100%;
-  min-height: 46px;
+  min-height: 48px;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid var(--tm-border);
-  background: var(--tm-surface);
+  border: 1px solid rgba(11,22,40,.14);
+  background: #ffffff;
   color: var(--tm-text);
   outline: none;
   appearance: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 2px 8px rgba(15,23,42,.04);
+}
+
+select{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.92),
+    0 2px 8px rgba(15,23,42,.05);
+}
+
+input:hover,
+select:hover,
+textarea:hover{
+  border-color: rgba(37,99,235,.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 4px 12px rgba(15,23,42,.06);
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color: rgba(37,99,235,.42);
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,.10),
+    0 8px 18px rgba(37,99,235,.08);
 }
 
 html.dark input:not([type="checkbox"]):not([type="radio"]),
@@ -1046,4 +1073,353 @@ h2{
 
 h3{
   font-weight:700;
+}
+
+.tm-service-card{
+  background:var(--tm-surface);
+  border:1px solid var(--tm-border);
+  border-radius:18px;
+  padding:16px;
+  margin-top:14px;
+}
+
+.tm-service-top{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+}
+
+.tm-service-title{
+  margin:0;
+  font-size:1.15rem;
+  font-weight:800;
+}
+
+.tm-service-meta{
+  margin-top:6px;
+  font-size:.95rem;
+  color:var(--tm-text-muted);
+}
+
+.tm-service-price{
+  text-align:right;
+}
+
+.tm-service-price strong{
+  font-size:1.7rem;
+}
+
+.tm-service-actions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+}
+
+.tm-labor-panel{
+  margin-top:14px;
+  border-top:1px solid var(--tm-border);
+  padding-top:14px;
+}
+
+.tm-labor-row{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+}
+
+.tm-service-main{
+  flex: 1;
+  min-width: 0;
+}
+
+.tm-service-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.tm-service-toggle{
+  flex-shrink:0;
+}
+
+.tm-service-meta{
+  margin-top:8px;
+  display:grid;
+  gap:6px;
+}
+
+.tm-service-assigned{
+  font-size:.95rem;
+  font-weight:700;
+  color:var(--tm-text);
+}
+
+.tm-service-stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  font-size:.93rem;
+  color:var(--tm-text-muted);
+}
+
+.tm-service-stats span{
+  white-space:nowrap;
+}
+
+.tm-service-actions{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+@media (max-width: 700px){
+  .tm-service-top{
+    flex-direction:row;
+    align-items:flex-start;
+    gap:12px;
+  }
+
+  .tm-service-price{
+    min-width:86px;
+    text-align:right;
+  }
+
+  .tm-service-price strong{
+    font-size:1.35rem;
+  }
+
+  .tm-service-title{
+    font-size:1.05rem;
+    line-height:1.15;
+  }
+
+  .tm-service-toggle{
+    padding:8px 10px;
+    font-size:.82rem;
+  }
+
+  .tm-service-actions .tm-btn{
+    min-width:0;
+    padding:0 12px;
+  }
+}
+
+.tm-service-card{
+  background:#fff;
+  border:1px solid rgba(11,22,40,.10);
+  border-radius:18px;
+  padding:16px;
+  margin-top:14px;
+  box-shadow:0 8px 20px rgba(15,23,42,.05);
+}
+
+.tm-service-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+}
+
+.tm-service-head-main{
+  flex:1;
+  min-width:0;
+}
+
+.tm-service-title{
+  font-size:1.2rem;
+  font-weight:800;
+  line-height:1.15;
+  color:var(--tm-text);
+}
+
+.tm-service-vehicle{
+  margin-top:6px;
+  font-size:.95rem;
+  font-weight:700;
+  color:var(--tm-text);
+}
+
+.tm-service-meta{
+  margin-top:8px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  font-size:.93rem;
+  color:var(--tm-text-muted);
+}
+
+.tm-service-meta span{
+  white-space:nowrap;
+}
+
+.tm-service-estimate{
+  min-width:92px;
+  text-align:right;
+  flex-shrink:0;
+}
+
+.tm-service-estimate-label{
+  display:block;
+  font-size:.8rem;
+  font-weight:700;
+  color:var(--tm-text-muted);
+  margin-bottom:4px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.tm-service-estimate strong{
+  font-size:2rem;
+  line-height:1;
+  color:var(--tm-text);
+}
+
+.tm-service-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:14px;
+}
+
+.tm-service-actions .tm-btn{
+  min-height:40px;
+}
+
+.tm-labor-panel{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid rgba(11,22,40,.08);
+}
+
+.tm-labor-range{
+  margin-bottom:10px;
+  font-size:.96rem;
+  color:var(--tm-text);
+}
+
+.tm-labor-rows{
+  display:grid;
+  gap:8px;
+}
+
+.tm-labor-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  padding:6px 0;
+}
+
+.tm-labor-row span{
+  color:var(--tm-text);
+  line-height:1.4;
+}
+
+.tm-labor-row strong{
+  white-space:nowrap;
+  color:var(--tm-text);
+  font-weight:800;
+}
+
+.tm-labor-note{
+  margin:12px 0 0;
+  font-size:.95rem;
+  line-height:1.5;
+  color:var(--tm-text-muted);
+}
+
+@media (max-width: 700px){
+  .tm-service-head{
+    gap:12px;
+  }
+
+  .tm-service-title{
+    font-size:1.05rem;
+  }
+
+  .tm-service-estimate{
+    min-width:78px;
+  }
+
+  .tm-service-estimate strong{
+    font-size:1.65rem;
+  }
+
+  .tm-service-actions{
+    gap:8px;
+  }
+
+  .tm-service-actions .tm-btn{
+    flex:0 0 auto;
+  }
+}
+
+/* =========================
+   TorqueMech Vehicle Section
+   ========================= */
+
+.vehicle-card{
+  background: linear-gradient(180deg, #eef4f8 0%, #e5edf4 100%) !important;
+  border: 1px solid rgba(37,99,235,.18) !important;
+  border-radius: 18px !important;
+  padding: 18px !important;
+  box-shadow:
+    0 10px 24px rgba(15,23,42,.06),
+    inset 0 1px 0 rgba(255,255,255,.7) !important;
+}
+
+.vehicle-card h3{
+  font-size: 1.25rem;
+  font-weight: 850;
+  color: var(--tm-text);
+  margin: 0 0 12px;
+}
+
+.vehicle-card label{
+  font-size: .92rem;
+  font-weight: 700;
+  color: #4f6782;
+  margin-bottom: 7px;
+}
+
+.vehicle-card select{
+  background: #ffffff !important;
+  border: 1px solid rgba(37,99,235,.16) !important;
+  border-radius: 16px !important;
+  min-height: 50px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 4px 12px rgba(15,23,42,.05) !important;
+}
+
+.vehicle-card select:hover{
+  border-color: rgba(37,99,235,.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.98),
+    0 6px 16px rgba(15,23,42,.08) !important;
+}
+
+.vehicle-card select:focus{
+  border-color: rgba(37,99,235,.45) !important;
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,.10),
+    0 8px 18px rgba(37,99,235,.10) !important;
+}
+
+.section-header--vehicles{
+  margin-top: 6px;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.section-header--vehicles h2{
+  font-size: 1.9rem;
+  font-weight: 900;
+  letter-spacing: -.04em;
+}
+
+#vehiclesContainer{
+  margin-top: 8px;
 }

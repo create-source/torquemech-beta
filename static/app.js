@@ -823,7 +823,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     const currentYear = new Date().getFullYear();
     const startYear = currentYear;
-    const endYear = currentYear - 30;
+    const endYear = currentYear = 1980;
 
     yearEl.innerHTML = `<option value="">Select Year</option>`;
     for (let y = startYear; y >= endYear; y--) {
@@ -851,22 +851,34 @@ const confidenceEl = document.getElementById("laborConfidence");
   async function loadModels(make) {
     if (!modelEl) return;
 
-    modelEl.innerHTML = `<option value="">Select model…</option>`;
-    if (!make) return;
+    const selectedYear = Number(yearEl?.value || 0);
 
-    let models;
-    try {
-      models = await apiJSON(`/api/models/${encodeURIComponent(make)}`);
-    } catch (_) {
-      models = await apiJSON(`/api/models?make=${encodeURIComponent(make)}`);
+    modelEl.innerHTML = `<option value="">Loading models…</option>`;
+    modelEl.disabled = true;
+
+    if (!make) {
+      modelEl.innerHTML = `<option value="">Select model…</option>`;
+      modelEl.disabled = false;
+      return;
     }
 
-    modelEl.innerHTML = `<option value="">Select model…</option>`;
-    for (const m of models) {
-      const opt = document.createElement("option");
-      opt.value = m;
-      opt.textContent = m;
-      modelEl.appendChild(opt);
+    try {
+      let models;
+      if (selectedYear) {
+        models = await apiJSON(`/api/models/${encodeURIComponent(make)}?year=${selectedYear}`);
+      } else {
+        models = await apiJSON(`/api/models/${encodeURIComponent(make)}`);
+      }
+
+      modelEl.innerHTML = `<option value="">Select model…</option>`;
+      for (const m of models) {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        modelEl.appendChild(opt);
+      }
+    } finally {
+      modelEl.disabled = false;
     }
   }
 
@@ -1237,7 +1249,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           : `Labor: ${Number(it.laborHours || 0).toFixed(1)}h • Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`;
 
         const travelLabel = Number(it.travelFee || 0) > 0
-          ? ` • Travel: ${money(it.travelFee)}`
+          ? `Travel: ${money(it.travelFee)}`
           : "";
 
         const hasBreakdown =
@@ -1246,73 +1258,73 @@ const confidenceEl = document.getElementById("laborConfidence");
           it.laborBreakdown.steps.length > 0;
 
         return `
-          <div class="line-item selectable service-line-item" data-idx="${idx}">
-            <div class="service-line-item-top">
-              <div class="service-line-item-main">
-                <div class="name">${it.serviceText || "Service"}</div>
-                <div class="meta" style="margin-bottom:6px;">
-                  Assigned to: ${it.vehicleLabel || "Vehicle 1"}
+          <div class="tm-service-card" data-idx="${idx}">
+            <div class="tm-service-head">
+              <div class="tm-service-head-main">
+                <div class="tm-service-title">${it.serviceText || "Service"}</div>
+                <div class="tm-service-vehicle">${it.vehicleLabel || "Vehicle 1"}</div>
+                <div class="tm-service-meta">
+                  <span>${pricingLabel}</span>
+                  <span>Parts: ${money(it.partsPrice || 0)}</span>
+                  ${travelLabel ? `<span>${travelLabel}</span>` : ""}
                 </div>
-                <div class="meta">
-                  ${pricingLabel}${travelLabel} • Parts: ${money(it.partsPrice || 0)}
-                </div>
-                <div class="money">Estimate: ${est}</div>
               </div>
 
-              <div class="line-actions service-line-item-actions">
-                <button type="button" class="ghost tm-btn" data-action="estimate">Recalculate</button>
-                <button type="button" class="remove tm-btn" data-action="remove">Remove</button>
+              <div class="tm-service-estimate">
+                <span class="tm-service-estimate-label">Estimate</span>
+                <strong>${est}</strong>
               </div>
             </div>
 
-            ${
-              hasBreakdown
-                ? `
-                <div class="line-breakdown breakdown-card">
-                  <button
-                    type="button"
-                    class="ghost tm-btn"
-                    data-action="toggle-breakdown"
-                  >
-                    ${it.breakdownOpen ? "Hide labor breakdown" : "Show labor breakdown"}
-                  </button>
+            <div class="tm-service-actions">
+              ${hasBreakdown ? `
+                <button
+                  type="button"
+                  class="tm-btn tm-btn-secondary tm-service-toggle"
+                  data-action="toggle-breakdown"
+                >
+                  ${it.breakdownOpen ? "Hide labor breakdown" : "Show labor breakdown"}
+                </button>
+              ` : ""}
 
-                  ${
-                    it.breakdownOpen
-                      ? `
-                      <div class="labor-range">
-                        Typical range: ${Number(it.laborBreakdown.labor_hours?.min || 0).toFixed(1)} - ${Number(it.laborBreakdown.labor_hours?.max || 0).toFixed(1)} hrs
-                      </div>
+              <button type="button" class="tm-btn tm-btn-secondary" data-action="estimate">
+                Recalculate
+              </button>
 
-                      <div class="labor-breakdown-list">
-                        ${it.laborBreakdown.steps.map(step => `
-                          <div class="labor-breakdown-row">
-                            <span class="labor-breakdown-label">${step.label}</span>
-                            <span class="labor-breakdown-hours">${Number(step.hours || 0).toFixed(1)} hr</span>
-                          </div>
-                        `).join("")}
-                      </div>
+              <button type="button" class="tm-btn tm-btn-danger" data-action="remove">
+                Remove
+              </button>
+            </div>
 
-                      <div class="meta" style="margin-top:10px;">
-                        This shows how labor time is typically distributed for this service. Actual time may vary depending on vehicle condition and access.
-                      </div>
-                      `
-                      : ""
-                  }
+            ${hasBreakdown && it.breakdownOpen ? `
+              <div class="tm-labor-panel">
+                <div class="tm-labor-range">
+                  Typical range: ${Number(it.laborBreakdown.labor_hours?.min || 0).toFixed(1)} - ${Number(it.laborBreakdown.labor_hours?.max || 0).toFixed(1)} hrs
                 </div>
-                `
-                : ""
-            }
+
+                <div class="tm-labor-rows">
+                  ${it.laborBreakdown.steps.map(step => `
+                    <div class="tm-labor-row">
+                      <span>${step.label}</span>
+                      <strong>${Number(step.hours || 0).toFixed(1)} hr</strong>
+                    </div>
+                  `).join("")}
+                </div>
+
+                <p class="tm-labor-note">
+                  Labor distribution is a guide. Actual time may vary depending on vehicle condition and access.
+                </p>
+              </div>
+            ` : ""}
           </div>
         `;
       })
       .join("");
-    
+
     syncEstimateMeta();
     syncLineItemsToVehicle();
     updateEstimateButtonState();
   }
-  
 
   function updateEstimateButtonState() {
     if (!estimateBtn) return;
@@ -1524,7 +1536,7 @@ if (getEstimateHint) {
     const btn = e.target?.closest?.("button[data-action]");
     if (!btn) return;
 
-    const row = btn.closest(".line-item");
+    const row = btn.closest(".tm-service-card");
     const idx = Number(row?.dataset?.idx);
     if (!Number.isFinite(idx)) return;
 
@@ -1903,6 +1915,21 @@ if (getEstimateHint) {
   makeEl?.addEventListener("change", syncTopVehicleToState);
   modelEl?.addEventListener("change", syncTopVehicleToState);
 
+  yearEl?.addEventListener("change", async () => {
+  syncTopVehicleToState();
+
+  if (!makeEl?.value) return;
+
+  try {
+    modelEl.innerHTML = `<option value="">Loading models…</option>`;
+    modelEl.value = "";
+    await loadModels(makeEl.value);
+    updateEstimateButtonState();
+  } catch (e) {
+    setStatus("error", `Models failed: ${e.message}`);
+  }
+});
+
   // ---- PWA install (optional) ----
   if (installBtn) installBtn.style.display = "none";
   let deferredPrompt = null;
@@ -2024,7 +2051,7 @@ if (getEstimateHint) {
       // Year options
       const currentYear = new Date().getFullYear();
       yearSelect.innerHTML = `<option value="">Select Year</option>`;
-      for (let y = currentYear; y >= currentYear - 30; y--) {
+      for (let y = currentYear; y >= 1980; y--) {
         const opt = document.createElement("option");
         opt.value = String(y);
         opt.textContent = String(y);
