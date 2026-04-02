@@ -8,80 +8,345 @@
 
 <section class="tm-container">
 
-  <h1>{{ service.name }} Cost</h1>
-
-  <p class="tm-muted">
-  Typical repair cost and labor information for {{ service.name|lower }}.
-  </p>
-
-  <div class="card">
-
-    <h2>Average Labor Time</h2>
-
-    <p>
-      {{ labor_min }} – {{ labor_max }} hours
+  <div class="tm-card" style="margin-bottom:16px;">
+    <div class="eyebrow">TorqueMech Repair Guide</div>
+    <h1>{{ service.name }}</h1>
+    <p class="tm-muted" style="margin-bottom:0;">
+      Repair guide, labor context, and estimate workflow for {{ service.name|lower }}.
     </p>
-
-    <h2>Estimated Labor Cost</h2>
-
-    <p>
-      ${{ labor_low }} – ${{ labor_high }}
-    </p>
-
   </div>
 
-  <div class="card">
+  <div class="tm-card" style="margin-bottom:16px;">
+    <h2>Select Vehicle (Optional)</h2>
 
-    <h2>What This Repair Involves</h2>
+    <div class="tm-grid3">
 
-    <p>
-      {{ service.name }} typically involves removing worn components and installing
-      new parts to restore proper vehicle performance and safety.
-    </p>
+      <select id="yearSelect" class="tm-input">
+        <option value="">Year</option>
+      </select>
 
-  </div>
+      <select id="makeSelect" class="tm-input">
+        <option value="">Make</option>
+      </select>
 
-  <div class="card" style="margin-top:16px;">
-    <h2>Why Does This Repair Happen?</h2>
-
-    <p class="tm-muted">
-      This repair is usually triggered by underlying vehicle issues.
-      Explore common causes and diagnostics below.
-    </p>
-
-    <div class="tm-repair-guide-list">
-
-      <a class="tm-repair-guide-item" href="/symptoms">
-        <div>
-          <strong>View Common Symptoms</strong>
-          <div class="tm-muted">See what problems lead to this repair</div>
-        </div>
-      </a>
-
-      <a class="tm-repair-guide-item" href="/obd">
-        <div>
-          <strong>Check OBD Codes</strong>
-          <div class="tm-muted">Find diagnostic codes related to this issue</div>
-        </div>
-      </a>
+      <select id="modelSelect" class="tm-input">
+        <option value="">Model</option>
+      </select>
 
     </div>
-</div>
 
-  <div class="card">
+    <button class="tm-btn tm-btn-secondary" style="margin-top:10px;" onclick="loadVehicle()">
+      Load Vehicle
+    </button>
 
+  </div>
+
+  <div class="tm-grid2">
+    <div class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.4rem; font-weight:700;">
+        {{ labor_min }} – {{ labor_max }} hours
+      </p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical labor range based on TorqueMech service data.
+      </p>
+    </div>
+
+    <div class="tm-card">
+      <h2>Estimated Labor Cost</h2>
+      <p style="font-size:1.4rem; font-weight:700;">
+        ${{ labor_low }} – ${{ labor_high }}
+      </p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Estimated labor only. Final total depends on parts, condition, and access.
+      </p>
+    </div>
+  </div>
+
+  {% if guide.tools %}
+  <div class="tm-card" style="margin-top:16px;">
+  <h2>Tools Required</h2>
+  <ul class="tm-list">
+  {% for tool in guide.tools %}
+  <li>{{ tool }}</li>
+  {% endfor %}
+  </ul>
+  </div>
+  {% endif %}
+
+  <div class="tm-card" style="margin-top:16px;">
+    <h2>What This Repair Usually Involves</h2>
+    <ul class="tm-list">
+      <li>Confirm the failed component and related condition</li>
+      <li>Remove surrounding parts as needed for access</li>
+      <li>Replace worn or failed components</li>
+      <li>Reassemble and verify proper operation</li>
+      <li>Road test or confirm repair when applicable</li>
+    </ul>
+  </div>
+
+  {% if guide.torque_specs %}
+  <div class="tm-card" style="margin-top:16px;">
+  <h2>Torque Specs</h2>
+  <ul class="tm-list">
+  {% for t in guide.torque_specs %}
+  <li>{{ t.part }} — {{ t.spec }}</li>
+  {% endfor %}
+  </ul>
+  </div>
+  {% endif %}
+
+  {% if guide.steps %}
+  <div class="tm-card" style="margin-top:16px;">
+  <h2>Repair Steps</h2>
+  <ol class="tm-list">
+  {% for step in guide.steps %}
+  <li>{{ step }}</li>
+  {% endfor %}
+  </ol>
+  </div>
+  {% endif %}
+
+  <div class="tm-grid2" style="margin-top:16px;">
+    <div class="tm-card">
+      <h2>What We’ll Add Next</h2>
+      <ul class="tm-list">
+        <li>Torque specs</li>
+        <li>Bolt sizes</li>
+        <li>Tools required</li>
+        <li>Part locations</li>
+        <li>Diagrams and reference images</li>
+      </ul>
+    </div>
+
+    <div class="tm-card">
+      <h2>Diagnostic Context</h2>
+      <p class="tm-muted">
+        Some repairs start from a symptom or diagnostic finding before replacement.
+      </p>
+
+      <div class="tm-repair-guide-list">
+        <a class="tm-repair-guide-item" href="/symptoms">
+          <div>
+            <strong>View Common Symptoms</strong>
+            <div class="tm-muted">See what problems often lead to this repair</div>
+          </div>
+        </a>
+
+        <a class="tm-repair-guide-item" href="/obd">
+          <div>
+            <strong>Diagnostic Tools</strong>
+            <div class="tm-muted">Use code and diagnostic lookup when needed</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="tm-card" style="margin-top:16px;">
     <h2>Estimate This Repair</h2>
-
-    <p>
-      Use the TorqueMech estimator to calculate a repair estimate based on your vehicle.
+    <p class="tm-muted">
+      Move directly from this repair guide into the estimator.
     </p>
 
-    <a class="btn btn-primary" href="/estimator">
-      Estimate This Repair
+    <a class="tm-btn tm-btn-primary" href="/estimator?repair={{ service.name|urlencode }}">
+      Estimate {{ service.name }} →
     </a>
-
   </div>
 
 </section>
+
+<script>
+
+async function loadMakes() {
+  const res = await fetch("/api/makes")
+  const makes = await res.json()
+
+  const makeSelect = document.getElementById("makeSelect")
+
+  makes.forEach(m=>{
+    const opt = document.createElement("option")
+    opt.value = m
+    opt.textContent = m
+    makeSelect.appendChild(opt)
+  })
+}
+
+async function loadModels(make) {
+
+  const res = await fetch("/api/models/" + make)
+  const models = await res.json()
+
+  const modelSelect = document.getElementById("modelSelect")
+  modelSelect.innerHTML = `<option value="">Model</option>`
+
+  models.forEach(m=>{
+    const opt = document.createElement("option")
+    opt.value = m
+    opt.textContent = m
+    modelSelect.appendChild(opt)
+  })
+}
+
+document.getElementById("makeSelect").addEventListener("change", e=>{
+  loadModels(e.target.value)
+})
+
+function loadVehicle(){
+
+  const year = document.getElementById("yearSelect").value
+  const make = document.getElementById("makeSelect").value
+  const model = document.getElementById("modelSelect").value
+
+  if(!year || !make || !model){
+    alert("Select year, make and model")
+    return
+  }
+
+  const url = new URL(window.location.href)
+
+  url.searchParams.set("year", year)
+  url.searchParams.set("make", make)
+  url.searchParams.set("model", model)
+
+  window.location = url
+
+}
+
+function loadYears(){
+
+  const select = document.getElementById("yearSelect")
+
+  for(let y = new Date().getFullYear(); y >= 1990; y--){
+
+    const opt = document.createElement("option")
+    opt.value = y
+    opt.textContent = y
+
+    select.appendChild(opt)
+
+  }
+
+}
+
+loadYears()
+loadMakes()
+
+</script>
+
+<script>
+async function loadMakes() {
+  try {
+    const res = await fetch("/api/makes");
+    const makes = await res.json();
+
+    const makeSelect = document.getElementById("makeSelect");
+    if (!makeSelect) return;
+
+    makeSelect.innerHTML = `<option value="">Make</option>`;
+
+    makes.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      makeSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Failed to load makes:", err);
+  }
+}
+
+async function loadModels(make) {
+  try {
+    const modelSelect = document.getElementById("modelSelect");
+    if (!modelSelect) return;
+
+    modelSelect.innerHTML = `<option value="">Model</option>`;
+
+    if (!make) return;
+
+    const res = await fetch("/api/models/" + encodeURIComponent(make));
+    const models = await res.json();
+
+    models.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      modelSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Failed to load models:", err);
+  }
+}
+
+function loadYears() {
+  const yearSelect = document.getElementById("yearSelect");
+  if (!yearSelect) return;
+
+  yearSelect.innerHTML = `<option value="">Year</option>`;
+
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear; y >= 1990; y--) {
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    yearSelect.appendChild(opt);
+  }
+}
+
+function loadVehicle() {
+  const year = document.getElementById("yearSelect")?.value || "";
+  const make = document.getElementById("makeSelect")?.value || "";
+  const model = document.getElementById("modelSelect")?.value || "";
+
+  if (!year || !make || !model) {
+    alert("Select year, make, and model.");
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("year", year);
+  url.searchParams.set("make", make);
+  url.searchParams.set("model", model);
+
+  window.location.href = url.toString();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  loadYears();
+  loadMakes();
+
+  const makeSelect = document.getElementById("makeSelect");
+  if (makeSelect) {
+    makeSelect.addEventListener("change", function (e) {
+      loadModels(e.target.value);
+    });
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const selectedYear = params.get("year");
+  const selectedMake = params.get("make");
+  const selectedModel = params.get("model");
+
+  if (selectedYear) {
+    const yearSelect = document.getElementById("yearSelect");
+    if (yearSelect) yearSelect.value = selectedYear;
+  }
+
+  if (selectedMake) {
+    loadMakes().then(() => {
+      const makeSelect = document.getElementById("makeSelect");
+      if (makeSelect) makeSelect.value = selectedMake;
+
+      return loadModels(selectedMake);
+    }).then(() => {
+      if (selectedModel) {
+        const modelSelect = document.getElementById("modelSelect");
+        if (modelSelect) modelSelect.value = selectedModel;
+      }
+    });
+  }
+});
+</script>
 
 {% endblock %}

@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Diagnostic Guide</div>
+    <h1 class="tm-page-title">{{ diagnostic.code }} — {{ diagnostic.title }}</h1>
+    <p class="tm-muted">{{ diagnostic.summary }}</p>
+  </div>
+</section>
+
+{% if diagnostic.meaning %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>What It Means</h2>
+    <p>{{ diagnostic.meaning }}</p>
+  </div>
+</section>
+{% endif %}
+
+{% if diagnostic.common_causes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Causes</h2>
+    <ul class="tm-list">
+      {% for item in diagnostic.common_causes %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if diagnostic.quick_checks %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Quick Checks</h2>
+    <ul class="tm-list">
+      {% for item in diagnostic.quick_checks %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if diagnostic.likely_repairs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Likely Repairs</h2>
+    <div class="tm-stack">
+      {% for repair in diagnostic.likely_repairs %}
+      <div class="tm-linked-card">
+        <h3>{{ repair.name }}</h3>
+        <a href="{{ repair.repair_guide_link }}">Open Repair Guide →</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="tm-section tm-two-col">
+  {% if diagnostic.diagnostic_tools_link %}
+  <div class="tm-card">
+    <h2>Diagnostic Tools</h2>
+    <p class="tm-muted">Continue with diagnostic workflow and guided checks.</p>
+    <a href="{{ diagnostic.diagnostic_tools_link }}">Open Diagnostic Tools →</a>
+  </div>
+  {% endif %}
+
+  {% if diagnostic.estimator_link %}
+  <div class="tm-card">
+    <h2>Estimate a Likely Repair</h2>
+    <p class="tm-muted">Move into the estimator once the repair is confirmed.</p>
+    <a href="{{ diagnostic.estimator_link }}">Open Estimator →</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

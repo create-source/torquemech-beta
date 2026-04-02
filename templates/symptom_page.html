@@ -1,85 +1,72 @@
 {% extends "layout.html" %}
 
-{% block title %}{{ symptom.title }} Causes, Codes, and Repairs | TorqueMech{% endblock %}
-
 {% block content %}
-<section class="tm-container">
-  <div class="card">
-    <div class="eyebrow">TorqueMech Symptoms</div>
-    <h1>{{ symptom.title }}</h1>
-    <p class="tm-muted">{{ symptom.intro }}</p>
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Symptom Guide</div>
+    <h1 class="tm-page-title">{{ symptom.title }}</h1>
+    <p class="tm-muted">{{ symptom.summary }}</p>
+    <p>{{ symptom.intro }}</p>
   </div>
+</section>
 
-  <div class="card" style="margin-top:16px;">
-    <h2>Common Causes</h2>
-    <ul class="tm-pro-list">
-      {% for item in symptom.common_causes %}
+{% if symptom.common_sounds %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Sounds or Signs</h2>
+    <ul class="tm-list">
+      {% for item in symptom.common_sounds %}
       <li>{{ item }}</li>
       {% endfor %}
     </ul>
   </div>
+</section>
+{% endif %}
 
-  <div class="card" style="margin-top:16px;">
-    <h2>Related OBD Codes</h2>
-    <ul class="tm-pro-list">
-      {% for item in symptom.related_codes %}
-      <li>
-        <strong>{{ item.code }}</strong> — {{ item.label }}
-      </li>
+{% if symptom.quick_checks %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Quick Checks</h2>
+    <ul class="tm-list">
+      {% for item in symptom.quick_checks %}
+      <li>{{ item }}</li>
       {% endfor %}
     </ul>
   </div>
+</section>
+{% endif %}
 
-  <div class="card" style="margin-top:16px;">
-    <h2>Common Repairs</h2>
-    <ul class="tm-pro-list">
-      {% for item in symptom.common_repairs %}
-      <li>
-        <strong>{{ item.name }}</strong>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-
-  {% if symptom.related_repair_guides %}
-  <div class="card" style="margin-top:16px;">
-    <h2>Related Repair Cost Guides</h2>
-    <div class="tm-repair-guide-list">
-      {% for item in symptom.related_repair_guides %}
-      <a class="tm-repair-guide-item" href="/repair-cost/{{ item.slug }}">
-        <div>
-          <strong>{{ item.name }}</strong>
-          <div class="tm-muted">{{ item.category }}</div>
-        </div>
-        <div class="tm-muted">
-          {{ item.labor_min }} – {{ item.labor_max }} hrs
-        </div>
-      </a>
+{% if symptom.likely_causes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Likely Causes</h2>
+    <div class="tm-stack">
+      {% for cause in symptom.likely_causes %}
+      <div class="tm-linked-card">
+        <h3>{{ cause.name }}</h3>
+        <a href="{{ cause.repair_guide_link }}">Open Repair Guide →</a>
+      </div>
       {% endfor %}
     </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="tm-section tm-two-col">
+  {% if symptom.diagnostic_tools_link %}
+  <div class="tm-card">
+    <h2>Diagnostic Tools</h2>
+    <p class="tm-muted">Use TorqueMech diagnostic flow for symptom-based troubleshooting.</p>
+    <a href="{{ symptom.diagnostic_tools_link }}">Open Diagnostic Tools →</a>
   </div>
   {% endif %}
 
-  <div class="card" style="margin-top:16px;">
-    <h2>What Should You Do Next?</h2>
-
-    <p class="tm-muted">
-      Not sure where to go next? Use these tools to continue diagnosing or estimate your repair.
-    </p>
-
-    <div class="tm-repair-guide-list">
-      <!-- links -->
-    </div>
+  {% if symptom.estimator_link %}
+  <div class="tm-card">
+    <h2>Need a Quick Estimate?</h2>
+    <p class="tm-muted">Go directly into the estimator if the repair is already known.</p>
+    <a href="{{ symptom.estimator_link }}">Open Estimator →</a>
   </div>
-
-  <div class="card" style="margin-top:16px;">
-    <h2>Estimate This Repair</h2>
-
-    <p class="tm-muted">
-      Use the TorqueMech estimator to calculate a repair estimate based on your vehicle and service.
-    </p>
-
-    <a class="btn btn-primary" href="/estimator">Open Estimator</a>
-  </div>
+  {% endif %}
 </section>
 {% endblock %}

@@ -1,408 +1,930 @@
-/* =========================================================
-   TorqueMech — Home (CLEAN)
-   Goal: Startup polish, corporate electric
-   Rule: Home.css = home-only styles (no global duplication)
-   ========================================================= */
+/* TorqueMech Home
+   Home-only styling.
+   Do not redefine global .tm-btn, .tm-card, or footer systems here.
+*/
 
-/* Legacy feedback system (confirmed unused) — keep hidden */
-.fb-float{
-  display: none !important;
+.tm-homeHero{
+  padding: 18px 0 10px;
 }
 
-/* Layout: give home breathing room */
-.tm-container{
-  padding-bottom: 28px;
-}
-
-/* Optional: subtle home background glow (safe, token-driven) */
-.tm-homeBg{
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
+.tm-homeHero__inner{
   background:
-    radial-gradient(900px 380px at 20% 10%, rgba(59,130,246,.16), transparent 55%),
-    radial-gradient(720px 320px at 85% 25%, rgba(34,211,238,.12), transparent 55%),
-    radial-gradient(900px 520px at 55% 85%, rgba(59,130,246,.10), transparent 60%);
-  filter: saturate(1.05);
+    linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(246,249,252,1) 100%);
+  border: 1px solid rgba(11,22,40,.08);
+  border-radius: 28px;
+  padding: 34px 32px 28px;
+  box-shadow: 0 18px 40px rgba(15,23,42,.08);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Hero */
-.tm-hero{
-  padding: 22px 0 10px;
+.tm-homeHero__inner::after{
+  content: "";
+  position: absolute;
+  right: -80px;
+  bottom: -80px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(17,179,173,.12) 0%, rgba(17,179,173,0) 70%);
+  pointer-events: none;
 }
 
-.tm-hero__title{
-  margin: 0 0 10px;
-  font-size: clamp(30px, 5vw, 44px);
-  line-height: 1.05;
-  letter-spacing: -0.6px;
-  font-weight: 850;
+html.dark .tm-homeHero__inner,
+body.dark .tm-homeHero__inner,
+[data-theme="dark"] .tm-homeHero__inner{
+  background: linear-gradient(180deg, #122338 0%, #0d1b2d 100%);
+  border-color: rgba(255,255,255,.08);
 }
 
-.tm-hero__sub{
-  margin: 0 0 16px;
-  max-width: 66ch;
-  color: var(--subtext);
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-/* CTA row */
-.tm-ctaRow{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 10px;
-  align-items: center;
-}
-
-/* If you have primary/secondary buttons on Home */
-.tm-btn{
-  margin-top: 0; /* avoid the global button margin-top spacing */
-  text-decoration: none;
+.tm-homeHero__eyebrow{
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  font-weight: 800;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  box-shadow: none;
-  cursor: pointer;
-}
-
-.tm-btn--primary{
-  border: none;
-  color: #fff;
-  background: linear-gradient(180deg, #60A5FA 0%, var(--primary) 100%);
-  box-shadow: 0 18px 40px rgba(59,130,246,.22);
-}
-
-.tm-btn--ghost{
-  background: rgba(255,255,255,.05);
-}
-
-.tm-btn:disabled{
-  opacity: .55;
-  cursor: not-allowed;
-}
-
-/* Refined hover system (calm → glow) */
-.tm-btn,
-.tm-card,
-.tm-link{
-  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
-  will-change: transform;
-}
-
-.tm-btn:hover,
-.tm-card:hover,
-.tm-link:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(0,0,0,.28);
-}
-
-.tm-btn:active,
-.tm-card:active,
-.tm-link:active{
-  transform: translateY(0px) scale(.99);
-  box-shadow: 0 10px 24px rgba(0,0,0,.22);
-}
-
-/* Cards / sections */
-.tm-section{
-  margin-top: 18px;
-}
-
-.tm-grid{
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 14px;
-}
-
-/* Default card sizes (adjust if your home markup differs) */
-.tm-card{
-  grid-column: span 6;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 16px;
-}
-
-.tm-card__title{
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 850;
-  letter-spacing: -0.2px;
-}
-
-.tm-card__text{
-  margin: 0;
-  color: var(--subtext);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* Small “pill” labels */
-.tm-pill{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  min-height: 28px;
+  padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.16);
-  font-size: 12px;
-  opacity: .9;
-}
-
-/* Links */
-.tm-link{
-  color: inherit;
-  text-decoration: none;
-}
-
-/* Footer (single source of truth) */
-.tm-footer{
-  margin-top: 22px;
-  padding: 18px 0 26px;
-  border-top: 1px solid rgba(255,255,255,.08);
-  color: rgba(255,255,255,.72);
-}
-
-.tm-footer__inner{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.tm-footer__links{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
-.tm-footer__links a{
-  color: rgba(255,255,255,.75);
-  text-decoration: none;
-}
-
-.tm-footer__links a:hover{
-  color: rgba(255,255,255,.92);
-}
-
-/* Optional: OBD suggestion dropdown (keep only if Home uses it) */
-.obd-suggestions{
-  position: absolute;
-  width: 100%;
-  max-height: 280px;
-  overflow: auto;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: rgba(15,23,42,.96);
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
-  z-index: 50;
-}
-
-.obd-suggestions button{
-  margin-top: 0;
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 10px 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  color: rgba(255,255,255,.88);
-  cursor: pointer;
-}
-
-.obd-suggestions button:hover{
-  background: rgba(255,255,255,.06);
-}
-
-.obd-input-wrapper{
-  position: relative;
-  flex: 1;
-  min-width: 240px;
-  z-index: 2000;
-}
-
-.obd-suggestBox{
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 8px);
-
-  background: rgba(15,23,42,0.98);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 16px;
-
-  box-shadow: 0 20px 60px rgba(0,0,0,.55);
-
-  z-index: 9999;
-  max-height: 260px;
-  overflow-y: auto;
-
-  backdrop-filter: blur(12px);
-}
-
-.obd-input-wrapper{
-  position: relative;
-  flex: 1;
-  min-width: 240px;
-  z-index: 2000;
-}
-
-.obd-suggestBox{
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 8px);
-
-  background: rgba(15,23,42,0.98);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 16px;
-
-  box-shadow: 0 20px 60px rgba(0,0,0,.55);
-
-  z-index: 9999;
-  max-height: 260px;
-  overflow-y: auto;
-
-  backdrop-filter: blur(12px);
-}
-
-/* Responsive */
-@media (max-width: 860px){
-  .tm-card{ grid-column: span 12; }
-}
-
-/* =========================================================
-   Home HTML compatibility patch
-   (matches current home.html classes)
-   ========================================================= */
-
-/* Remove default purple/underline on home link cards */
-.tm-linkCard{
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Badge / sub / disclaimer used by home.html */
-.tm-badge{
-  display:inline-flex;
-  align-items:center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
+  background: rgba(37,99,235,.08);
+  color: var(--tm-blue);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.88);
+  margin-bottom: 14px;
+}
+
+.tm-homeHero__title{
+  max-width: 760px;
+  margin: 0 0 14px;
+  font-size: clamp(2.6rem, 6vw, 5rem);
+  line-height: .98;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+  color: var(--tm-text);
+}
+
+.tm-homeHero__lead{
+  max-width: 620px;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--tm-text-muted);
+}
+
+.tm-homeHero__actions{
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.tm-homeHero__note{
+  margin: 18px 0 0;
+  font-size: 14px;
+  color: var(--tm-text-muted);
+}
+
+.tm-homeSection{
+  padding: 30px 0 6px;
+}
+
+.tm-homeSection__head{
+  margin-bottom: 16px;
+}
+
+.tm-homeSection__head h2{
+  margin-bottom: 8px;
+}
+
+.tm-homeSection__head p{
+  margin: 0;
+  max-width: 700px;
+  color: var(--tm-text-muted);
+}
+
+.tm-homeTools{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.tm-homeToolCard{
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--tm-surface);
+  border: 1px solid var(--tm-border);
+  box-shadow: var(--tm-shadow-sm);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.tm-homeToolCard:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--tm-shadow);
+  border-color: rgba(37,99,235,.18);
+}
+
+.tm-homeToolCard__icon{
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, rgba(37,99,235,.08) 0%, rgba(17,179,173,.08) 100%);
+  border: 1px solid rgba(11,22,40,.06);
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.tm-homeToolCard h3{
+  margin: 0 0 6px;
+}
+
+.tm-homeToolCard p{
+  margin: 0;
+  color: var(--tm-text-muted);
+  line-height: 1.55;
+}
+
+.tm-homeFeatureCard{
+  background: linear-gradient(180deg,#ffffff 0%,#e9eff5 100%);
+  border: 1px solid rgba(17,179,173,.14);
+  border-radius: 28px;
+  padding: 26px;
+  box-shadow: var(--tm-shadow);
+}
+
+html.dark .tm-homeFeatureCard,
+body.dark .tm-homeFeatureCard,
+[data-theme="dark"] .tm-homeFeatureCard{
+  background: linear-gradient(180deg, #122338 0%, #0d1b2d 100%);
+  border-color: rgba(24,189,182,.18);
+}
+
+.tm-homeFeatureCard__eyebrow{
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tm-blue);
+}
+
+.tm-homeFeatureCard__header{
+  margin-bottom: 18px;
+}
+
+.tm-homeFeatureCard__header h2{
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
   margin-bottom: 10px;
 }
 
-.tm-sub{
-  margin: 0 0 14px;
-  color: var(--subtext);
-  font-size: 15px;
+.tm-homeFeatureCard__header p{
+  max-width: 760px;
+  margin: 0;
+  color: var(--tm-text-muted);
+  line-height: 1.65;
+}
+
+.tm-homeKnowledgeList{
+  display: grid;
+  gap: 12px;
+}
+
+.tm-homeKnowledgeItem{
+  display: block;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.7);
+  border: 1px solid rgba(11,22,40,.07);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+html.dark .tm-homeKnowledgeItem,
+body.dark .tm-homeKnowledgeItem,
+[data-theme="dark"] .tm-homeKnowledgeItem{
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.08);
+}
+
+.tm-homeKnowledgeItem:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--tm-shadow-sm);
+  border-color: rgba(37,99,235,.16);
+}
+
+.tm-homeKnowledgeItem strong{
+  display: block;
+  color: var(--tm-text);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.tm-homeKnowledgeItem span{
+  display: block;
+  color: var(--tm-text-muted);
   line-height: 1.5;
 }
 
-.tm-disclaimer{
-  margin: 12px 0 0;
-  color: rgba(255,255,255,.70);
-  font-size: 13px;
+.tm-homeSearch{
+  position: relative;
+  max-width: 760px;
 }
 
-/* Home layout uses tm-grid2 (2 cards). Give it a clean 2-col grid */
-.tm-grid2{
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+.tm-search-suggestions{
+  margin-top: 10px;
+  display: none;
+  border: 1px solid var(--tm-border);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow);
+}
+
+.tm-suggestion{
+  display: block;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.tm-suggestion:last-child{
+  border-bottom: none;
+}
+
+.tm-suggestion strong{
+  display: block;
+  color: var(--tm-text);
+  margin-bottom: 4px;
+}
+
+.tm-suggestion span{
+  display: block;
+  color: var(--tm-text-muted);
+  font-size: 14px;
+}
+
+.tm-homeQuote{
+  padding: 34px 0 8px;
+  text-align: center;
+}
+
+.tm-homeQuote__text{
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--tm-text);
+}
+
+.tm-homeQuote__author{
+  margin: 8px 0 0;
+  color: var(--tm-text-muted);
+}
+
+@media (max-width: 860px){
+  .tm-homeTools{
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px){
+  .tm-homeHero__inner{
+    padding: 26px 20px 22px;
+    border-radius: 24px;
+  }
+
+  .tm-homeFeatureCard{
+    padding: 22px 18px;
+    border-radius: 24px;
+  }
+
+  .tm-homeHero__title{
+    font-size: clamp(2.2rem, 10vw, 3.4rem);
+  }
+}
+
+/* ===== Tighten homepage scale ===== */
+
+.tm-homeHero{
+  padding: 10px 0 4px;
+}
+
+.tm-homeHero__inner{
+  border-radius: 22px;
+  padding: 24px 24px 20px;
+  box-shadow: 0 12px 28px rgba(15,23,42,.07);
+}
+
+.tm-homeHero__eyebrow{
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+
+.tm-homeHero__title{
+  max-width: 680px;
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 4.4vw, 3.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.tm-homeHero__lead{
+  max-width: 560px;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.tm-homeHero__actions{
+  gap: 10px;
   margin-top: 18px;
 }
 
-/* Icon + card text styling for those two cards */
-.tm-card__icon{
-  font-size: 22px;
-  line-height: 1;
+.tm-homeHero__note{
+  margin: 14px 0 0;
+  font-size: 13px;
+}
+
+/* Section spacing */
+.tm-homeSection{
+  padding: 22px 0 2px;
+}
+
+.tm-homeSection__head{
+  margin-bottom: 12px;
+}
+
+.tm-homeSection__head h2{
+  margin-bottom: 6px;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+}
+
+.tm-homeSection__head p{
+  font-size: 0.98rem;
+  max-width: 620px;
+}
+
+/* Core tools cards */
+.tm-homeTools{
+  gap: 14px;
+}
+
+.tm-homeToolCard{
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+}
+
+.tm-homeToolCard__icon{
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  font-size: 18px;
+}
+
+.tm-homeToolCard h3{
+  margin: 0 0 4px;
+  font-size: 1.02rem;
+}
+
+.tm-homeToolCard p{
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
+/* Knowledge feature card */
+.tm-homeFeatureCard{
+  border-radius: 22px;
+  padding: 22px 22px 20px;
+}
+
+.tm-homeFeatureCard__eyebrow{
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.tm-homeFeatureCard__header{
+  margin-bottom: 14px;
+}
+
+.tm-homeFeatureCard__header h2{
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  margin-bottom: 8px;
+}
+
+.tm-homeFeatureCard__header p{
+  max-width: 700px;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.tm-homeKnowledgeList{
+  gap: 10px;
+}
+
+.tm-homeKnowledgeItem{
+  padding: 14px 16px;
+  border-radius: 16px;
+}
+
+.tm-homeKnowledgeItem strong{
+  font-size: 0.98rem;
+  margin-bottom: 3px;
+}
+
+.tm-homeKnowledgeItem span{
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+/* Search */
+.tm-homeSearch{
+  max-width: 680px;
+}
+
+/* Quote */
+.tm-homeQuote{
+  padding: 26px 0 4px;
+}
+
+.tm-homeQuote__text{
+  font-size: 1rem;
+}
+
+.tm-homeQuote__author{
+  font-size: 0.95rem;
+}
+
+/* Mobile */
+@media (max-width: 640px){
+  .tm-homeHero__inner{
+    padding: 20px 18px 18px;
+    border-radius: 20px;
+  }
+
+  .tm-homeHero__title{
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  .tm-homeFeatureCard{
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+}
+
+/* =========================================================
+   TORQUEMECH — SHOP MODE
+   Paste at bottom of home.css
+   ========================================================= */
+
+.tm-homeHero{
+  padding: 8px 0 2px;
+}
+
+.tm-homeHero__inner{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(240,244,248,1) 100%);
+  border: 1px solid rgba(11,22,40,.12);
+  border-radius: 18px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 10px 24px rgba(15,23,42,.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.tm-homeHero__inner::before{
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: linear-gradient(180deg, #11b3ad 0%, #2563eb 100%);
+}
+
+.tm-homeHero__inner::after{
+  content: "";
+  position: absolute;
+  right: -70px;
+  top: 40px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(17,179,173,.10) 0%, rgba(17,179,173,0) 72%);
+  pointer-events: none;
+}
+
+html.dark .tm-homeHero__inner,
+body.dark .tm-homeHero__inner,
+[data-theme="dark"] .tm-homeHero__inner{
+  background: linear-gradient(180deg, #101d2d 0%, #0b1624 100%);
+  border-color: rgba(255,255,255,.10);
+}
+
+.tm-homeHero__eyebrow{
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(37,99,235,.10);
+  color: var(--tm-blue);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.tm-homeHero__title{
+  max-width: 760px;
+  margin: 0 0 10px;
+  font-size: clamp(2.15rem, 5vw, 4.4rem);
+  line-height: .94;
+  letter-spacing: -0.065em;
+  font-weight: 900;
+  color: var(--tm-text);
+  text-transform: none;
+}
+
+.tm-homeHero__lead{
+  max-width: 580px;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--tm-text-muted);
+}
+
+.tm-homeHero__actions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.tm-homeHero__note{
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--tm-text-muted);
+}
+
+/* Section heads tighter, more direct */
+.tm-homeSection{
+  padding: 20px 0 0;
+}
+
+.tm-homeSection__head{
+  margin-bottom: 12px;
+}
+
+.tm-homeSection__head h2{
+  margin: 0 0 6px;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.tm-homeSection__head p{
+  margin: 0;
+  max-width: 640px;
+  font-size: .97rem;
+  color: var(--tm-text-muted);
+}
+
+/* Tool cards — more like modules/panels */
+.tm-homeTools{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tm-homeToolCard{
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg,#ffffff 0%,#e9eff5 100%);
+  border: 1px solid rgba(11,22,40,.10);
+  box-shadow: 0 6px 18px rgba(15,23,42,.05);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tm-homeToolCard::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, rgba(17,179,173,.95), rgba(37,99,235,.95));
+  opacity: .9;
+}
+
+.tm-homeToolCard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15,23,42,.09);
+  border-color: rgba(37,99,235,.18);
+}
+
+html.dark .tm-homeToolCard,
+body.dark .tm-homeToolCard,
+[data-theme="dark"] .tm-homeToolCard{
+  background: linear-gradient(180deg, #122338 0%, #0e1b2d 100%);
+  border-color: rgba(255,255,255,.08);
+}
+
+.tm-homeToolCard__icon{
   width: 44px;
   height: 44px;
-  border-radius: 14px;
-  display:grid;
-  place-items:center;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
+  border-radius: 10px;
+
+  display: grid;
+  place-items: center;
+
+  background: #0f172a;
+  color: #14b8a6;
+
+  border: 1px solid rgba(0,0,0,.35);
+
+  font-size: 19px;
+  font-weight: 900;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 2px 6px rgba(0,0,0,.15);
 }
 
-.tm-linkCard.tm-card{
-  display:flex;
-  gap: 12px;
-  align-items:flex-start;
+html.dark .tm-homeToolCard__icon,
+body.dark .tm-homeToolCard__icon,
+[data-theme="dark"] .tm-homeToolCard__icon{
+  border-color: rgba(255,255,255,.08);
 }
 
-.tm-linkCard h3{
-  margin: 0 0 6px;
-  font-size: 18px;
+.tm-homeToolCard h3{
+  margin: 0 0 4px;
+  font-size: 1rem;
   font-weight: 850;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.02em;
 }
 
-.tm-linkCard p{
+.tm-homeToolCard p{
   margin: 0;
-  color: var(--subtext);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: .95rem;
+  line-height: 1.42;
+  color: var(--tm-text-muted);
+}
+
+/* Feature card = authority panel */
+.tm-homeFeatureCard{
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8fb 100%);
+  border: 1px solid rgba(11,22,40,.11);
+  border-radius: 18px;
+  padding: 20px 20px 18px;
+  box-shadow: 0 10px 24px rgba(15,23,42,.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.tm-homeFeatureCard::before{
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, #11b3ad 0%, #2563eb 100%);
+}
+
+html.dark .tm-homeFeatureCard,
+body.dark .tm-homeFeatureCard,
+[data-theme="dark"] .tm-homeFeatureCard{
+  background: linear-gradient(180deg, #112135 0%, #0d1b2d 100%);
+  border-color: rgba(255,255,255,.09);
+}
+
+.tm-homeFeatureCard__eyebrow{
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tm-blue);
+  margin-left: 2px;
+}
+
+.tm-homeFeatureCard__header{
+  margin-bottom: 14px;
+}
+
+.tm-homeFeatureCard__header h2{
+  margin: 0 0 8px;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  line-height: .96;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+}
+
+.tm-homeFeatureCard__header p{
+  max-width: 700px;
+  margin: 0;
+  font-size: .97rem;
+  line-height: 1.5;
+  color: var(--tm-text-muted);
+}
+
+.tm-homeKnowledgeList{
+  display: grid;
+  gap: 10px;
+}
+
+.tm-homeKnowledgeItem{
+  display: block;
+  padding: 14px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.74);
+  border: 1px solid rgba(11,22,40,.08);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+}
+
+html.dark .tm-homeKnowledgeItem,
+body.dark .tm-homeKnowledgeItem,
+[data-theme="dark"] .tm-homeKnowledgeItem{
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.08);
+}
+
+.tm-homeKnowledgeItem:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(15,23,42,.06);
+  border-color: rgba(37,99,235,.16);
+}
+
+.tm-homeKnowledgeItem strong{
+  display: block;
+  margin-bottom: 4px;
+  color: var(--tm-text);
+  font-size: .98rem;
+  font-weight: 850;
+}
+
+.tm-homeKnowledgeItem span{
+  display: block;
+  color: var(--tm-text-muted);
+  font-size: .94rem;
+  line-height: 1.42;
+}
+
+/* Search tighter and more tool-like */
+.tm-homeSearch{
+  max-width: 680px;
+  position: relative;
+}
+
+.tm-search-input{
+  min-height: 44px;
+  border-radius: 12px;
+}
+
+.tm-search-suggestions{
+  margin-top: 8px;
+  display: none;
+  border: 1px solid var(--tm-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--tm-surface);
+  box-shadow: 0 12px 24px rgba(15,23,42,.08);
+}
+
+.tm-suggestion{
+  display: block;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.tm-suggestion:last-child{
+  border-bottom: none;
+}
+
+.tm-suggestion strong{
+  display: block;
+  color: var(--tm-text);
+  margin-bottom: 3px;
+  font-size: .95rem;
+}
+
+.tm-suggestion span{
+  display: block;
+  color: var(--tm-text-muted);
+  font-size: .9rem;
+  line-height: 1.4;
+}
+
+/* Quote smaller */
+.tm-homeQuote{
+  padding: 24px 0 4px;
+  text-align: center;
+}
+
+.tm-homeQuote__text{
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--tm-text);
+}
+
+.tm-homeQuote__author{
+  margin: 6px 0 0;
+  font-size: .93rem;
+  color: var(--tm-text-muted);
 }
 
 /* Mobile */
 @media (max-width: 860px){
-  .tm-grid2{ grid-template-columns: 1fr; }
+  .tm-homeTools{
+    grid-template-columns: 1fr;
+  }
 }
 
-/* ===== Footer alignment lock (mobile-safe) ===== */
-.tm-footer{
+@media (max-width: 640px){
+  .tm-homeHero__inner{
+    padding: 20px 18px 16px;
+    border-radius: 16px;
+  }
+
+  .tm-homeHero__title{
+    font-size: clamp(2rem, 10vw, 3.15rem);
+  }
+
+  .tm-homeFeatureCard{
+    padding: 18px 16px 16px;
+    border-radius: 16px;
+  }
+}
+
+.tm-homeHero__inner,
+.tm-homeToolCard,
+.tm-homeFeatureCard{
+  background: linear-gradient(180deg,#ffffff 0%,#e9eff5 100%);
+  border: 1px solid rgba(15,23,42,.14);
+  box-shadow: 0 12px 24px rgba(15,23,42,.08);
+}
+
+.tm-homeToolCard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(15,23,42,.12);
+}
+h1,h2,h3{
+  letter-spacing:-.04em;
+}
+
+.tm-homeHero__title{
+  font-weight:900;
+  letter-spacing:-0.07em;
+}
+
+/* ===============================
+   Diagnostic Panel Bar
+================================ */
+
+.tm-panelBar{
   display:flex;
   align-items:center;
-  justify-content: space-between;
-  gap: 12px;
+  gap:8px;
+
+  margin-bottom:16px;
+  padding-bottom:10px;
+
+  border-bottom:1px solid rgba(15,23,42,.08);
 }
 
-.tm-footer__right{
-  display:flex;
-  align-items:center;
-  gap: 12px;
+.tm-panelDot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  display:inline-block;
 }
 
-/* Buttons sometimes carry default baseline quirks — normalize */
-.tm-footerBtn{
-  margin: 0;
-  line-height: 1;
-  display:inline-flex;
-  align-items:center;
+.tm-panelDot.red{
+  background:#ef4444;
 }
 
-/* Mobile: stack cleanly but keep everything left-aligned */
-@media (max-width: 520px){
-  .tm-footer{
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .tm-footer__right{
-    width: 100%;
-    justify-content: flex-start;
-  }
+.tm-panelDot.amber{
+  background:#f59e0b;
+}
+
+.tm-panelDot.green{
+  background:#22c55e;
+}
+
+.tm-panelLabel{
+  margin-left:8px;
+
+  font-size:12px;
+  font-weight:800;
+
+  letter-spacing:.08em;
+  text-transform:uppercase;
+
+  color:var(--tm-text-muted);
 }

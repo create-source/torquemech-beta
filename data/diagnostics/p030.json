@@ -1,0 +1,34 @@
+{
+  "slug": "p0303",
+  "code": "P0303",
+  "title": "Cylinder 3 Misfire Detected",
+  "summary": "Diagnostic checks and likely repair paths for a cylinder 3 misfire.",
+  "meaning": "The powertrain control module detected a misfire on cylinder 3.",
+  "common_causes": [
+    "Faulty spark plug",
+    "Faulty ignition coil",
+    "Fuel injector issue",
+    "Compression problem",
+    "Vacuum leak near affected cylinder",
+    "Coolant intrusion or head gasket issue"
+  ],
+  "quick_checks": [
+    "Inspect spark plug condition",
+    "Swap ignition coil with another cylinder if applicable",
+    "Inspect injector connector and function",
+    "Check compression",
+    "Look for coolant loss or signs of internal leak"
+  ],
+  "likely_repairs": [
+    {
+      "name": "Spark Plug Replacement",
+      "repair_guide_link": "/repair-guides/spark-plug-replacement"
+    },
+    {
+      "name": "Ignition Coil Replacement",
+      "repair_guide_link": "/repair-guides/ignition-coil-replacement"
+    }
+  ],
+  "diagnostic_tools_link": "/diagnostic-repair",
+  "estimator_link": "/"
+}

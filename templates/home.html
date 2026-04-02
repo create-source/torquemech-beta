@@ -1,135 +1,124 @@
 {% extends "layout.html" %}
-{% block page_css %}<link rel="stylesheet" href="/static/home.css?v=2">{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="/static/home.css?v=3">{% endblock %}
 
 {% block content %}
-<section class="tm-hero">
-  <div class="tm-hero__copy">
-    <div class="tm-badge">Beta</div>
+<section class="tm-homeHero">
+  <div class="tm-homeHero__inner">
 
-    <h1 class="tm-h1">
+    <div class="tm-panelBar">
+      <span class="tm-panelDot red"></span>
+      <span class="tm-panelDot amber"></span>
+      <span class="tm-panelDot green"></span>
+      <span class="tm-panelLabel">TorqueMech Diagnostic System</span>
+    </div>
+    <div class="tm-homeHero__eyebrow">TorqueMech Beta</div>
+
+    <h1 class="tm-homeHero__title">
       Repair estimates.<br>
       Diagnostic workflow.
     </h1>
 
-    <p class="tm-sub">Clear. Accurate. Direct.</p>
+    <p class="tm-homeHero__lead">
+      Built for real repair work. Estimate faster. Diagnose smarter.
+    </p>
 
-    <div class="tm-ctaRow">
-      <a href="/estimator" class="tm-btn tm-btn--primary">Start Estimate</a>
-      <a href="/obd" class="tm-btn">Diagnostic Repair</a>
+    <div class="tm-homeHero__actions">
+      <a href="/estimator" class="tm-btn tm-btn-primary">Start Estimate</a>
+      <a href="/repair-guides" class="tm-btn tm-btn-secondary">Repair Guides</a>
     </div>
 
-    <p class="tm-normal">
-    Pricing may vary by vehicle condition and region.
+    <p class="tm-homeHero__note">
+      Pricing may vary by vehicle condition and region.
     </p>
-  </div>
-
-  <div class="tm-hero__visual">
-    <!-- keep your illustration HTML if you want -->
   </div>
 </section>
 
-<div class="tm-section">
-  <h2 class="tm-section-title">Tools</h2>
-  <p class="tm-section-sub">
-    Professional diagnostic and repair estimate tools for mechanics and DIYers.
-  </p>
-</div>
+<section class="tm-homeSection">
+  <div class="tm-homeSection__head">
+    <h2>Core Tools</h2>
+    <p>Professional diagnostic and repair estimate tools built for real workflow.</p>
+  </div>
 
-<section class="tm-grid2">
-  <a href="/estimator" class="tm-linkCard tm-card">
-    <div class="tm-card__icon">📄</div>
-    <div>
-      <h3>Estimator</h3>
-      <p>Select your vehicle and service.<br>Receive a structured cost estimate.</p>
-    </div>
-  </a>
+  <div class="tm-homeTools">
+    <a href="/estimator" class="tm-homeToolCard">
+      <div class="tm-homeToolCard__icon">📄</div>
+      <div>
+        <h3>Estimator</h3>
+        <p>Select the vehicle, choose the service, and generate a structured estimate.</p>
+      </div>
+    </a>
 
-  <a href="/obd" class="tm-linkCard tm-card">
-    <div class="tm-card__icon">🧠</div>
-    <div>
-      <h3>Diagnostic Repair</h3>
-      <p>Follow guided diagnostics, wiring insight, and repair workflow.</p>
-    </div>
-  </a>
+    <a href="/repair-guides" class="tm-homeToolCard">
+      <div class="tm-homeToolCard__icon">🔧</div>
+      <div>
+        <h3>Repair Guides</h3>
+        <p>Step-by-step service guidance, labor ranges, and estimate-ready procedures.</p>
+      </div>
+    </a>
+  </div>
 </section>
 
-<section class="tm-container" style="margin-top:40px;">
-  <div class="card">
-    <div class="eyebrow">TorqueMech Knowledge</div>
+<section class="tm-homeSection">
+  <div class="tm-homeFeatureCard">
+    <div class="tm-homeFeatureCard__eyebrow">TorqueMech Knowledge</div>
 
-    <h1>Diagnostic Workflow</h1>
+    <div class="tm-homeFeatureCard__header">
+      <div>
+        <h2>Diagnostic Workflow</h2>
+        <p>
+          Start with common symptoms, move into repair guidance, and build toward a stronger repair knowledge system.
+        </p>
+      </div>
+    </div>
 
-    <p class="tm-subtle">
-    Free tools for DIYers, mobile mechanics, and small repair shops.
-    </p>
-
-    <p class="tm-muted">
-      Start diagnosing common vehicle problems.
-    </p>
-
-    <div class="tm-repair-guide-list" style="margin-top:16px;">
-
-      <a class="tm-repair-guide-item" href="/symptoms">
+    <div class="tm-homeKnowledgeList">
+      <a class="tm-homeKnowledgeItem" href="/symptoms">
         <div>
           <strong>Diagnostic Guides</strong>
-          <div class="tm-muted">
-          Quick diagnostic references for common vehicle problems.
-          </div>
+          <span>Quick references for common vehicle problems and symptom paths.</span>
         </div>
       </a>
 
-      <a class="tm-repair-guide-item" href="/repair-cost">
+      <a class="tm-homeKnowledgeItem" href="/repair-guides">
         <div>
-          <strong>Repair Cost Guides</strong>
-          <div class="tm-muted">
-            View common repair labor times and estimated repair costs.
-          </div>
+          <strong>Repair Guides</strong>
+          <span>Browse procedures, labor ranges, and estimate-ready service pages.</span>
         </div>
       </a>
 
-      <a class="tm-repair-guide-item" href="/knowledge">
+      <a class="tm-homeKnowledgeItem" href="/knowledge">
         <div>
           <strong>Knowledge Hub</strong>
-          <div class="tm-muted">
-            Browse TorqueMech’s growing library of symptoms, repair guides, and diagnostics.
-          </div>
+          <span>Browse TorqueMech’s growing library of symptoms, repair guides, and diagnostics.</span>
         </div>
       </a>
     </div>
   </div>
-
-  </div>
-</div>
-<section class="tm-section">
-  <h2 class="tm-section-title">Common Diagnostic Guides</h2>
-  <p class="tm-section-sub">
-    Quick diagnostic references for common vehicle issues.
-  </p>
-
-  <input
-    id="diagSearch"
-    class="tm-search-input"
-    type="text"
-    placeholder="Search symptoms (misfire, shaking, won't start...)"
-    autocomplete="off"
-  />
-
-  <div id="diagSuggestions" class="tm-search-suggestions"></div>
 </section>
 
-<section class="tm-testimonial">
-
-  <div class="tm-container" style="text-align:center; margin-top:40px;">
-    <p style="font-size:18px; font-weight:500;">
-      ⭐ “Really helpful tool for quick repair estimates.”
-    </p>
-
-    <p class="tm-muted" style="margin-top:6px;">
-      — Anthony, Mobile Mechanic
-    </p>
+<section class="tm-homeSection">
+  <div class="tm-homeSection__head">
+    <h2>Common Diagnostic Guides</h2>
+    <p>Quick references for issues you want to identify fast.</p>
   </div>
 
+  <div class="tm-homeSearch">
+    <input
+      id="diagSearch"
+      class="tm-search-input"
+      type="text"
+      placeholder="Search symptoms: misfire, rough idle, won't start..."
+      autocomplete="off"
+    />
+    <div id="diagSuggestions" class="tm-search-suggestions"></div>
+  </div>
 </section>
+
+<section class="tm-homeQuote">
+  <p class="tm-homeQuote__text">“Really helpful tool for quick repair estimates.”</p>
+  <p class="tm-homeQuote__author">— Anthony, Mobile Mechanic</p>
+</section>
+
 <script>
 const search = document.getElementById("diagSearch");
 const suggestions = document.getElementById("diagSuggestions");
@@ -181,7 +170,8 @@ function showSuggestions(term) {
 
   suggestions.innerHTML = matches.map(g => `
     <a class="tm-suggestion" href="${g.href}">
-      ${g.title}
+      <strong>${g.title}</strong>
+      <span>${g.summary}</span>
     </a>
   `).join("");
 

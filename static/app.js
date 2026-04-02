@@ -2162,5 +2162,44 @@ if (getEstimateHint) {
       setStatus("error", `Init failed: ${e.message}`);
     }
   })();
+
+  // ---- Repair Guide → Estimator preload ----
+  (function preloadFromRepairGuide() {
+    const params = new URLSearchParams(window.location.search);
+
+    const year = params.get("year");
+    const make = params.get("make");
+    const model = params.get("model");
+    const service = params.get("service");
+
+    if (!year && !make && !model && !service) return;
+
+    // Wait for estimator init to finish
+    setTimeout(async () => {
+
+      if (year && yearEl) {
+        yearEl.value = year;
+        yearEl.dispatchEvent(new Event("change"));
+      }
+
+      if (make && makeEl) {
+        makeEl.value = make;
+        makeEl.dispatchEvent(new Event("change"));
+      }
+
+      if (model && modelEl) {
+        setTimeout(() => {
+          modelEl.value = model;
+          modelEl.dispatchEvent(new Event("change"));
+        }, 400);
+      }
+
+      if (service && serviceEl) {
+        serviceEl.value = service;
+        serviceEl.dispatchEvent(new Event("change"));
+      }
+
+    }, 500);
+  })();
 })();
 

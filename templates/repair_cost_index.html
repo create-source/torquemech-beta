@@ -1,16 +1,15 @@
 {% extends "layout.html" %}
 
-{% block title %}Repair Cost Guides | TorqueMech{% endblock %}
+{% block title %}Repair Guides | TorqueMech{% endblock %}
 
 {% block content %}
 <section class="tm-container">
   <div class="card">
-    <div class="eyebrow">TorqueMech Knowledge</div>
-    <h1>Repair Cost Guides</h1>
+    <div class="eyebrow">TorqueMech Repair Library</div>
+    <h1>Repair Guides</h1>
     <p class="tm-muted">
-      Browse repair cost guides powered by TorqueMech’s service database.
-      These pages help drivers and mechanics understand common labor times
-      and estimated repair costs.
+      Browse repair guides, labor ranges, and estimate-ready service pages for common vehicle repairs.
+      Start with the repair you need, then move directly into TorqueMech’s estimate workflow.
     </p>
   </div>
 
@@ -38,7 +37,7 @@
       {% for item in repair_pages %}
       <a
         class="tm-repair-guide-item repair-guide-row"
-        href="/repair-cost/{{ item.slug }}"
+        href="/repair-guides/{{ item.slug }}"
         data-search="{{ (item.name ~ ' ' ~ item.category)|lower }}"
       >
         <div>

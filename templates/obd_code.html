@@ -110,6 +110,68 @@
 </div>
 
 <div class="tm-card" style="margin-bottom:16px;">
+  <h2 style="margin-bottom:12px;">Most Likely Fixes</h2>
+
+  <div class="fix-row">
+    <div class="fix-top">
+      <div class="fix-label">Ignition Coil Replacement</div>
+
+      <div class="fix-right">
+        <div class="fix-pct">45%</div>
+
+        <a class="tm-btn tm-btn-secondary fix-estimate-btn"
+           href="/estimator?obd={{ code }}&repair=ignition coil">
+           Estimate →
+        </a>
+      </div>
+    </div>
+
+    <div class="fix-bar">
+      <span style="width:45%"></span>
+    </div>
+  </div>
+
+  <div class="fix-row">
+    <div class="fix-top">
+      <div class="fix-label">Spark Plug Replacement</div>
+
+      <div class="fix-right">
+        <div class="fix-pct">30%</div>
+
+        <a class="tm-btn tm-btn-secondary fix-estimate-btn"
+           href="/estimator?obd={{ code }}&repair=spark plug">
+           Estimate →
+        </a>
+      </div>
+    </div>
+
+    <div class="fix-bar">
+      <span style="width:30%"></span>
+    </div>
+  </div>
+
+  <div class="fix-row">
+    <div class="fix-top">
+      <div class="fix-label">Fuel Injector</div>
+
+      <div class="fix-right">
+        <div class="fix-pct">18%</div>
+
+        <a class="tm-btn tm-btn-secondary fix-estimate-btn"
+           href="/estimator?obd={{ code }}&repair=fuel injector">
+           Estimate →
+        </a>
+      </div>
+    </div>
+
+    <div class="fix-bar">
+      <span style="width:18%"></span>
+    </div>
+  </div>
+
+</div>
+
+<div class="tm-card" style="margin-bottom:16px;">
   <h2>Start Here (Quick Direction)</h2>
   <ul>
     <li>Check the most common failure first (coil, plug, injector, or wiring)</li>
@@ -210,7 +272,7 @@
       </div>
     {% endfor %}
   </div>
-{% else %}
+{% else %}a
 
 
   <p class="muted">No common repairs mapped yet.</p>

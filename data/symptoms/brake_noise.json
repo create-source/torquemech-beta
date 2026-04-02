@@ -1,0 +1,36 @@
+{
+  "slug": "brake-noise",
+  "title": "Brake Noise",
+  "category": "Brakes",
+  "summary": "Common causes, quick checks, and likely repair paths for brake noise.",
+  "intro": "Brake noise can come from worn pads, rotor issues, hardware problems, or sticking brake components.",
+  "common_sounds": [
+    "Squealing",
+    "Grinding",
+    "Scraping",
+    "Clicking while braking"
+  ],
+  "quick_checks": [
+    "Inspect brake pad thickness",
+    "Check rotor surface condition",
+    "Inspect hardware clips and anti-rattle parts",
+    "Check caliper movement and slide pins",
+    "Look for uneven pad wear"
+  ],
+  "likely_causes": [
+    {
+      "name": "Worn front brake pads",
+      "repair_guide_link": "/repair-guides/front-brake-pads"
+    },
+    {
+      "name": "Brake rotor wear or scoring",
+      "repair_guide_link": "/repair-guides/brake-rotor-replacement"
+    },
+    {
+      "name": "Sticking caliper or slide pins",
+      "repair_guide_link": "/repair-guides/brake-caliper-service"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostic-repair"
+}

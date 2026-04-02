@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2ZCQZQDDZ2"></script>
   <script>
@@ -34,34 +36,34 @@
 
   <main class="tm-container">
     {% block content %}{% endblock %}
+  </main>
 
-    <div class="tm-footer__right">
+  <footer class="tm-footer">
+    <div class="tm-container tm-footer-inner">
 
-      <div class="tm-footer-top">
-        <span>© 2026 TorqueMech</span>
-
-        <div class="tm-footer-links">
-          <a class="tm-footerLink" href="/terms">Terms</a>
-          <a class="tm-footerLink" href="/privacy">Privacy</a>
-          <a class="tm-footerLink" href="/disclaimer">Disclaimer</a>
-        </div>
+      <div class="tm-footer-left">
+        <span class="tm-footer-brand">© 2026 TorqueMech</span>
       </div>
 
-      <div class="tm-footer-bottom">
+      <div class="tm-footer-links">
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/disclaimer">Disclaimer</a>
+      </div>
+
+      <div class="tm-footer-right">
         <span class="tm-footer-support">
           Support:
-          <a href="mailto:support@torquemech.com" class="tm-footer-email">
-            support@torquemech.com
-          </a>
+          <a href="mailto:support@torquemech.com">support@torquemech.com</a>
         </span>
 
-        <button id="feedbackBtn" type="button" class="tm-feedback-link">
+        <button id="feedbackBtn" type="button" class="tm-btn tm-btn-ghost">
           Feedback
         </button>
       </div>
 
     </div>
-  </main>
+  </footer>
 
   <script src="/static/nav.js?v=4"></script>
   <script src="/static/feedback.js?v=4"></script>

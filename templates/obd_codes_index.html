@@ -91,6 +91,7 @@
 
 <script>
 (function () {
+
   const input = document.getElementById("obdCodeSearch");
   const rows = document.querySelectorAll("#obdCodeList .obd-code-row");
   const count = document.getElementById("obdCodeSearchCount");
@@ -114,7 +115,19 @@
       : `Showing ${visible} matching codes`;
   }
 
+  /* 🔧 NEW: read query string */
+  const params = new URLSearchParams(window.location.search);
+  const query = params.get("q");
+
+  if (query) {
+    input.value = query;
+  }
+
   input.addEventListener("input", runFilter);
+
+  runFilter();
+
 })();
+
 </script>
 {% endblock %}

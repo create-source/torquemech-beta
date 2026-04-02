@@ -1,0 +1,338 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Repair Guide</div>
+    <h1 class="tm-page-title">{{ guide.title }}</h1>
+    <p class="tm-muted">{{ guide.summary }}</p>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Select Vehicle (Optional)</h2>
+
+    <div class="tm-form-grid tm-form-grid-3">
+      <select id="guideYear">
+        <option value="">Year</option>
+      </select>
+
+      <select id="guideMake">
+        <option value="">Make</option>
+      </select>
+
+      <select id="guideModel" disabled>
+        <option value="">Model</option>
+      </select>
+    </div>
+
+    <div class="tm-actions" style="margin-top: 14px;">
+      <button class="tm-btn tm-btn-secondary" id="loadVehicleBtn" type="button">
+        Load Vehicle
+      </button>
+    </div>
+
+    <p id="loadedVehicleNote" class="tm-muted" style="margin-top: 12px; display: none;"></p>
+  </div>
+</section>
+
+{% if guide.symptoms %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Symptoms</h2>
+    <ul class="tm-list">
+      {% for item in guide.symptoms %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+<section class="tm-section tm-two-col">
+  <div class="tm-card">
+    <h2>Labor Time</h2>
+    <div class="tm-stat">{{ guide.labor_range.min_hours }} – {{ guide.labor_range.max_hours }} hours</div>
+    <p class="tm-muted">Typical labor range based on TorqueMech service data.</p>
+  </div>
+
+  <div class="tm-card">
+    <h2>Estimated Labor Cost</h2>
+    <div class="tm-stat">${{ guide.labor_cost.min }} – ${{ guide.labor_cost.max }}</div>
+    <p class="tm-muted">Estimated labor only. Final total depends on parts, condition, and access.</p>
+  </div>
+</section>
+
+{% if guide.parts_cost %}
+<section class="tm-section tm-two-col">
+  <div class="tm-card">
+    <h2>Typical Parts Cost</h2>
+    <div class="tm-stat">${{ guide.parts_cost.min }} – ${{ guide.parts_cost.max }}</div>
+    <p class="tm-muted">Parts estimate range for common replacement scenarios.</p>
+  </div>
+
+  <div class="tm-card">
+    <h2>Typical Total Repair Range</h2>
+    <div class="tm-stat">${{ guide.total_cost.min }} – ${{ guide.total_cost.max }}</div>
+    <p class="tm-muted">Combined labor and parts estimate range.</p>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.repair_overview %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>What This Repair Usually Involves</h2>
+    <ul class="tm-list">
+      {% for item in guide.repair_overview %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.tools_required %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Tools Required</h2>
+    <ul class="tm-list">
+      {% for tool in guide.tools_required %}
+      <li>{{ tool }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.torque_specs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Torque Specs</h2>
+    <ul class="tm-list">
+      {% for spec in guide.torque_specs %}
+    <li>
+      <strong>{{ spec.label }}</strong> —
+      <span class="tm-torque-value" data-spec-label="{{ spec.label | lower }}">
+        {{ spec.value }}
+      </span>
+    </li>
+      {% endfor %}
+    </ul>
+    <p class="tm-muted" id="torqueSpecsNote" style="margin-top: 12px;">
+        Load a vehicle to carry repair context into the estimator. Vehicle-specific torque specs are coming next.
+    </p>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.repair_steps %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Repair Steps</h2>
+    <ol class="tm-list tm-list-numbered">
+      {% for step in guide.repair_steps %}
+      <li>{{ step }}</li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.pro_tips %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Pro Tips</h2>
+    <ul class="tm-list">
+      {% for tip in guide.pro_tips %}
+      <li>{{ tip }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.warnings %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Warnings</h2>
+    <ul class="tm-list">
+      {% for warning in guide.warnings %}
+      <li>{{ warning }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+<section class="tm-section tm-two-col">
+  {% if guide.coming_next %}
+  <div class="tm-card">
+    <h2>What We’ll Add Next</h2>
+    <ul class="tm-list">
+      {% for item in guide.coming_next %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if guide.diagnostic_context %}
+  <div class="tm-card">
+    <h2>Diagnostic Context</h2>
+    <p class="tm-muted">{{ guide.diagnostic_context.intro }}</p>
+
+    {% if guide.diagnostic_context.common_symptoms_link %}
+    <div class="tm-link-block">
+      <a href="{{ guide.diagnostic_context.common_symptoms_link }}">View Common Symptoms</a>
+      <p class="tm-muted">See what problems often lead to this repair</p>
+    </div>
+    {% endif %}
+
+    {% if guide.diagnostic_context.diagnostic_tools_link %}
+    <div class="tm-link-block">
+      <a href="{{ guide.diagnostic_context.diagnostic_tools_link }}">Diagnostic Tools</a>
+      <p class="tm-muted">Use code and diagnostic lookup when needed</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+
+{% if guide.estimate %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Estimate This Repair</h2>
+    <p class="tm-muted">Move directly from this repair guide into the estimator.</p>
+    <a
+      class="tm-btn tm-btn-primary"
+      id="estimateRepairBtn"
+      data-estimator-link="{{ guide.estimate.estimator_link }}"
+      data-service-code="{{ guide.estimate.service_code }}"
+      href="{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}"
+    >
+      {{ guide.estimate.cta_label }} →
+    </a>
+  </div>
+</section>
+<script>
+(function () {
+  const yearSelect = document.getElementById("guideYear");
+  const makeSelect = document.getElementById("guideMake");
+  const modelSelect = document.getElementById("guideModel");
+  const loadVehicleBtn = document.getElementById("loadVehicleBtn");
+  const loadedVehicleNote = document.getElementById("loadedVehicleNote");
+  const estimateRepairBtn = document.getElementById("estimateRepairBtn");
+
+  if (!yearSelect || !makeSelect || !modelSelect || !loadVehicleBtn || !estimateRepairBtn) {
+    return;
+  }
+
+  const currentYear = new Date().getFullYear();
+
+  for (let year = currentYear + 1; year >= 1985; year--) {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = String(year);
+    yearSelect.appendChild(option);
+  }
+
+  async function loadMakes() {
+    try {
+      const res = await fetch("/api/makes");
+      if (!res.ok) throw new Error("Failed to load makes");
+
+      const makes = await res.json();
+
+      makeSelect.innerHTML = '<option value="">Make</option>';
+      makes.forEach((make) => {
+        const option = document.createElement("option");
+        option.value = make;
+        option.textContent = make;
+        makeSelect.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Could not load makes", err);
+    }
+  }
+
+  async function loadModels(make) {
+    modelSelect.innerHTML = '<option value="">Loading models...</option>';
+    modelSelect.disabled = true;
+
+    try {
+      const res = await fetch(`/api/models/${encodeURIComponent(make)}`);
+      if (!res.ok) throw new Error("Failed to load models");
+
+      const models = await res.json();
+
+      modelSelect.innerHTML = '<option value="">Model</option>';
+      models.forEach((model) => {
+        const option = document.createElement("option");
+        option.value = model;
+        option.textContent = model;
+        modelSelect.appendChild(option);
+      });
+
+      modelSelect.disabled = false;
+    } catch (err) {
+      console.error("Could not load models", err);
+      modelSelect.innerHTML = '<option value="">Model unavailable</option>';
+      modelSelect.disabled = true;
+    }
+  }
+
+  function updateEstimateLink() {
+    const estimatorLink = estimateRepairBtn.dataset.estimatorLink || "/estimator";
+    const serviceCode = estimateRepairBtn.dataset.serviceCode || "";
+
+    const params = new URLSearchParams();
+    if (serviceCode) params.set("service", serviceCode);
+
+    if (yearSelect.value) params.set("year", yearSelect.value);
+    if (makeSelect.value) params.set("make", makeSelect.value);
+    if (modelSelect.value) params.set("model", modelSelect.value);
+
+    estimateRepairBtn.href = `${estimatorLink}?${params.toString()}`;
+  }
+
+  makeSelect.addEventListener("change", async function () {
+    loadedVehicleNote.style.display = "none";
+    loadedVehicleNote.textContent = "";
+
+    modelSelect.innerHTML = '<option value="">Model</option>';
+    modelSelect.disabled = true;
+
+    updateEstimateLink();
+
+    if (!this.value) return;
+    await loadModels(this.value);
+    updateEstimateLink();
+  });
+
+  yearSelect.addEventListener("change", updateEstimateLink);
+  modelSelect.addEventListener("change", updateEstimateLink);
+
+  loadVehicleBtn.addEventListener("click", function () {
+    const year = yearSelect.value;
+    const make = makeSelect.value;
+    const model = modelSelect.value;
+
+    if (!year || !make || !model) {
+      loadedVehicleNote.style.display = "block";
+      loadedVehicleNote.textContent = "Select year, make, and model first.";
+      return;
+    }
+
+    loadedVehicleNote.style.display = "block";
+    loadedVehicleNote.textContent = `Loaded Vehicle: ${year} ${make} ${model}`;
+    updateEstimateLink();
+  });
+
+  loadMakes();
+  updateEstimateLink();
+})();
+</script>
+{% endif %}
+{% endblock %}

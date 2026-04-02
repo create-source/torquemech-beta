@@ -68,6 +68,10 @@ from app.data.labor_profiles import build_labor_breakdown, get_service_labor_pro
 
 from repair_paths import REPAIR_PATHS
 
+from pathlib import Path
+import json
+from fastapi import HTTPException
+
 DEFAULT_LABOR_RANGES = {
     "maintenance": (0.5, 1.5),
     "brakes": (1.0, 2.0),
@@ -99,8 +103,9 @@ FEEDBACK_EMAIL = os.getenv("FEEDBACK_EMAIL")
 
 def service_slug_exists(service_slug: str) -> bool:
     catalog = load_services_catalog()
+    raw = catalog["raw"]
 
-    for category in catalog["categories"]:
+    for category in raw["categories"]:
         for service in category.get("services", []):
             slug = slugify_service_name(service.get("name", ""))
             if slug == service_slug:
@@ -148,6 +153,19 @@ SERVICES_CATALOG_PATH = BASE_DIR / "services_catalog.json"
 
 DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
 DB_PATH = str((DATA_DIR / "app.db").resolve())
+
+DATA_DIR = Path(__file__).resolve().parent / "data"
+
+def load_json_file(*parts: str) -> dict:
+    file_path = DATA_DIR.joinpath(*parts)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Content not found")
+
+    try:
+        with file_path.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Invalid JSON content")
 
 # --- Templates ---
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -610,6 +628,17 @@ def startup_checks() -> None:
     init_obd_db()
     obd_seed_from_json_if_empty() 
     _ = load_services_catalog()
+
+REPAIR_GUIDES_PATH = BASE_DIR / "repair_guides_data.json"
+
+def load_repair_guides():
+    if not REPAIR_GUIDES_PATH.exists():
+        return {}
+
+    try:
+        return json.loads(REPAIR_GUIDES_PATH.read_text())
+    except Exception:
+        return {}
    
 # ============================================================
 # Template Routes
@@ -835,31 +864,45 @@ async def obd_codes_index(request: Request):
     )
 
 @app.get("/repair-cost/{service_slug}", response_class=HTMLResponse)
-def repair_cost_page(request: Request, service_slug: str):
-
-    metric_incr("page_repair_cost")
+def repair_cost_page(
+    request: Request,
+    service_slug: str,
+    year: str = "",
+    make: str = "",
+    model: str = ""
+):
 
     catalog = load_services_catalog()
+    raw = catalog["raw"]
 
     service_match = None
 
-    for category in catalog["categories"]:
+    for category in raw["categories"]:
         for service in category.get("services", []):
             slug = slugify_service_name(service.get("name", ""))
+
             if slug == service_slug:
                 service_match = service
                 break
 
-    if not service_match:
-        raise HTTPException(status_code=404, detail="Service not found")
+        if service_match:
+            break
 
-    labor_min = float(service_match.get("labor_hours_min", 0))
-    labor_max = float(service_match.get("labor_hours_max", 0))
+    if not service_match:
+        raise HTTPException(status_code=404, detail="repair guide not found")
+
+    # Labor calculations
+    labor_min = float(service_match.get("labor_hours_min", 0) or 0)
+    labor_max = float(service_match.get("labor_hours_max", 0) or 0)
 
     rate = default_labor_rate()
 
     labor_low = int(labor_min * rate)
     labor_high = int(labor_max * rate)
+
+    # Load guide data
+    guides = load_repair_guides()
+    guide = guides.get(service_slug, {})
 
     return templates.TemplateResponse(
         "repair_cost.html",
@@ -870,6 +913,12 @@ def repair_cost_page(request: Request, service_slug: str):
             "labor_max": labor_max,
             "labor_low": labor_low,
             "labor_high": labor_high,
+            "guide": guide,
+            "vehicle": {
+                "year": year,
+                "make": make,
+                "model": model
+            }
         },
     )
 
@@ -878,9 +927,10 @@ def repair_cost_index(request: Request):
     metric_incr("page_repair_cost_index")
 
     catalog = load_services_catalog()
+    raw = catalog["raw"]
     repair_pages = []
 
-    for category in catalog["categories"]:
+    for category in raw["categories"]:
         for service in category.get("services", []):
             name = service.get("name", "").strip()
             if not name:
@@ -907,6 +957,12 @@ def repair_cost_index(request: Request):
             "request": request,
             "repair_pages": repair_pages,
         },
+    )
+@app.get("/repair-guides", response_class=HTMLResponse)
+async def repair_guides_index(request: Request):
+    return templates.TemplateResponse(
+        "repair_guides_index.html",
+        {"request": request},
     )
 
 @app.get("/knowledge", response_class=HTMLResponse)
@@ -2344,3 +2400,43 @@ def open_shared_estimate(request: Request, estimate_id: str):
         },
     )
 
+@app.get("/repair-guides/{slug}")
+async def repair_guide_page(request: Request, slug: str):
+    guide = load_json_file("repair_guides", f"{slug.replace('-', '_')}.json")
+    return templates.TemplateResponse(
+        "repair_guide.html",
+        {
+            "request": request,
+            "guide": guide,
+            "page_title": f"{guide.get('title', 'Repair Guide')} | TorqueMech",
+            "meta_description": guide.get("summary", "TorqueMech repair guide"),
+        },
+    )
+
+
+@app.get("/symptoms/{slug}")
+async def symptom_page(request: Request, slug: str):
+    symptom = load_json_file("symptoms", f"{slug.replace('-', '_')}.json")
+    return templates.TemplateResponse(
+        "symptom_page.html",
+        {
+            "request": request,
+            "symptom": symptom,
+            "page_title": f"{symptom.get('title', 'Symptom Guide')} | TorqueMech",
+            "meta_description": symptom.get("summary", "TorqueMech symptom guide"),
+        },
+    )
+
+
+@app.get("/diagnostics/{slug}")
+async def diagnostic_page(request: Request, slug: str):
+    diagnostic = load_json_file("diagnostics", f"{slug.replace('-', '_')}.json")
+    return templates.TemplateResponse(
+        "diagnostic_page.html",
+        {
+            "request": request,
+            "diagnostic": diagnostic,
+            "page_title": f"{diagnostic.get('title', 'Diagnostic Guide')} | TorqueMech",
+            "meta_description": diagnostic.get("summary", "TorqueMech diagnostic guide"),
+        },
+    )

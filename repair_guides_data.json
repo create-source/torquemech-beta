@@ -1,0 +1,40 @@
+{
+  "front-brake-pads-replacement": {
+    "tools": [
+      "Floor jack",
+      "Jack stands",
+      "Lug wrench",
+      "Socket set",
+      "Torque wrench",
+      "Brake piston compressor"
+    ],
+    "torque_specs": [
+      { "part": "Wheel lug nuts", "spec": "Vehicle specific" },
+      { "part": "Caliper bracket bolts", "spec": "Vehicle specific" },
+      { "part": "Slide pin bolts", "spec": "Vehicle specific" }
+    ],
+    "bolt_sizes": [
+      "Lug nuts: vehicle specific",
+      "Slide pin bolts: vehicle specific",
+      "Bracket bolts: vehicle specific"
+    ],
+    "steps": [
+      "Raise and support the vehicle safely.",
+      "Remove the wheel.",
+      "Remove caliper hardware.",
+      "Support caliper without stressing hose.",
+      "Remove old pads and hardware.",
+      "Compress piston fully.",
+      "Install new pads and hardware.",
+      "Reassemble and torque fasteners.",
+      "Reinstall wheel and torque lug nuts.",
+      "Pump brake pedal before moving vehicle."
+    ],
+    "watchouts": [
+      "Do not let caliper hang by hose.",
+      "Verify pad orientation before reassembly.",
+      "Always confirm exact torque specs for the vehicle."
+    ],
+    "diagram": "/static/diagrams/brakes/front_brake_pad_layout.svg"
+  }
+}
