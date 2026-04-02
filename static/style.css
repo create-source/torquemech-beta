@@ -839,8 +839,8 @@ canvas,
 #signatureCanvas{
   width: 100%;
   border-radius: 14px;
-  background: var(--tm-surface-2);
-  border: 1px solid var(--tm-border);
+  background: #e9eef3;
+  border: 1px solid #cbd5e1;
 }
 
 .toggle-group{

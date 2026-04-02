@@ -1057,11 +1057,12 @@ const confidenceEl = document.getElementById("laborConfidence");
  // ---- Signature pad ----
   let isDrawing = false;
   let lastX = 0, lastY = 0;
+  let lastMidX = 0;
+  let lastMidY = 0;
 
   function signatureInkColor() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "#ffffff"
-      : "#0f172a";
+      "#0f172a";
   }
 
   function signaturePadBg() {
@@ -1078,7 +1079,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
 
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = signatureInkColor();
@@ -1089,16 +1090,22 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     const rect = sigCanvas.getBoundingClientRect();
 
+    const prevData = sigCanvas.toDataURL(); // preserve drawing
+
     sigCanvas.width = Math.round(rect.width);
     sigCanvas.height = Math.round(rect.height);
 
     sigCtx = sigCanvas.getContext("2d");
 
-    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
     sigCtx.lineWidth = 2;
     sigCtx.lineCap = "round";
     sigCtx.lineJoin = "round";
     sigCtx.strokeStyle = signatureInkColor();
+
+    // restore previous drawing
+    const img = new Image();
+    img.onload = () => sigCtx.drawImage(img, 0, 0);
+    img.src = prevData;
   }
 
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
@@ -1132,27 +1139,36 @@ const confidenceEl = document.getElementById("laborConfidence");
     e.preventDefault();
 
     sigCtx.strokeStyle = signatureInkColor();
-    sigCtx.lineWidth = 2;
+    sigCtx.lineWidth = 2.5;
     sigCtx.lineCap = "round";
     sigCtx.lineJoin = "round";
 
     isDrawing = true;
+
     const p = getCanvasPos(e);
     lastX = p.x;
     lastY = p.y;
+    lastMidX = p.x;
+    lastMidY = p.y;
   }
-
   function draw(e) {
     if (!isDrawing || !sigCtx) return;
     e.preventDefault();
 
     const p = getCanvasPos(e);
+
+    const midX = (lastX + p.x) / 2;
+    const midY = (lastY + p.y) / 2;
+
     sigCtx.beginPath();
-    sigCtx.moveTo(lastX, lastY);
-    sigCtx.lineTo(p.x, p.y);
+    sigCtx.moveTo(lastMidX, lastMidY);
+    sigCtx.quadraticCurveTo(lastX, lastY, midX, midY);
     sigCtx.stroke();
+
     lastX = p.x;
     lastY = p.y;
+    lastMidX = midX;
+    lastMidY = midY;
   }
 
   function endDraw() { isDrawing = false; }
