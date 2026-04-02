@@ -1061,8 +1061,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   let lastMidY = 0;
 
   function signatureInkColor() {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      "#0f172a";
+    return "#0f172a";
   }
 
   function signaturePadBg() {
@@ -1111,7 +1110,6 @@ const confidenceEl = document.getElementById("laborConfidence");
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     signatureDataUrl = null;
     clearSignatureCanvas();
-    lastSignatureTheme = currentSignatureTheme();
   });
 
   function canvasIsBlank() {
