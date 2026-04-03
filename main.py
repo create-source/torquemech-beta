@@ -1711,7 +1711,8 @@ def normalize_service_key(value: str) -> str:
 async def estimate(req: EstimateRequest) -> EstimateResponse:
     metric_incr("estimate_requests")
     make_key = (req.make or "").strip().upper()
-    if make_key not in POPULAR_MAKES:
+    catalog = load_vehicle_catalog()
+    if make_key not in catalog:
         raise HTTPException(status_code=400, detail="Invalid make")
 
     model = (req.model or "").strip()
