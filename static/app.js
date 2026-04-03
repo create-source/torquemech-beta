@@ -823,7 +823,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     const currentYear = new Date().getFullYear();
     const startYear = currentYear;
-    const endYear = currentYear = 1980;
+    const endYear = 1982;
 
     yearEl.innerHTML = `<option value="">Select Year</option>`;
     for (let y = startYear; y >= endYear; y--) {
@@ -2215,32 +2215,70 @@ if (getEstimateHint) {
 
     if (!year && !make && !model && !service) return;
 
-    // Wait for estimator init to finish
-    setTimeout(async () => {
+    async function preloadVehicle() {
+      const activeVehicle = getActiveVehicle();
+      if (!activeVehicle) return;
 
-      if (year && yearEl) {
-        yearEl.value = year;
-        yearEl.dispatchEvent(new Event("change"));
-      }
+      if (year) activeVehicle.year = year;
+      if (make) activeVehicle.make = make;
+      if (model) activeVehicle.model = model;
 
-      if (make && makeEl) {
-        makeEl.value = make;
-        makeEl.dispatchEvent(new Event("change"));
-      }
+      window.estimateState = estimateState;
+      renderVehicles();
+      renderActiveVehicleBanner();
+      updateEstimateButtonState();
+    }
 
-      if (model && modelEl) {
-        setTimeout(() => {
-          modelEl.value = model;
-          modelEl.dispatchEvent(new Event("change"));
-        }, 400);
-      }
+    async function preloadServiceByCode(serviceCode) {
+      if (!serviceCode || !categoryEl || !serviceEl) return false;
 
-      if (service && serviceEl) {
-        serviceEl.value = service;
+      try {
+        const serviceMeta = await apiJSON(`/api/service/${encodeURIComponent(serviceCode)}`);
+        const categoryKey = serviceMeta?.category;
+
+        if (!categoryKey) {
+          console.warn("No category returned for service:", serviceCode);
+          return false;
+        }
+
+        categoryEl.value = categoryKey;
+        await loadServices(categoryKey);
+
+        const serviceExists = Array.from(serviceEl.options).some(
+          opt => opt.value === serviceCode
+        );
+
+        if (!serviceExists) {
+          console.warn("Service not found in loaded category:", serviceCode, categoryKey);
+          return false;
+        }
+
+        serviceEl.value = serviceCode;
+        await loadServiceMeta(serviceCode);
         serviceEl.dispatchEvent(new Event("change"));
-      }
+        updateEstimateButtonState();
+        return true;
 
-    }, 500);
+      } catch (e) {
+        console.warn("Service preload failed:", serviceCode, e);
+        return false;
+      }
+    }
+
+    setTimeout(async () => {
+      try {
+        await preloadVehicle();
+
+        if (service) {
+          const found = await preloadServiceByCode(service);
+          if (!found) {
+            console.warn("Could not auto-find service:", service);
+          }
+        }
+      } catch (e) {
+        console.warn("Repair guide preload failed:", e);
+      }
+    }, 700);
   })();
 })();
 

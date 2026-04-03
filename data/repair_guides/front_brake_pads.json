@@ -88,10 +88,10 @@
   },
   "estimate": {
     "cta_label": "Estimate Front Brake Pads Replacement",
-    "service_code": "front_brake_pads",
+    "service_code": "front_brake_pads_replacement",
     "service_name": "Front Brake Pads Replacement",
     "estimator_link": "/estimator"
-    },
+  },
   "coming_next": [
     "Exact torque specs",
     "Bolt sizes",

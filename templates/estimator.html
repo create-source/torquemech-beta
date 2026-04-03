@@ -323,6 +323,12 @@
   <script src="/static/app.js?v=LOCK3"></script>
 
   <script>
+
+  function getQueryParam(name){
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
 
     const params = new URLSearchParams(window.location.search);
@@ -330,35 +336,84 @@
     const obd = params.get("obd");
     const repair = params.get("repair");
 
-    if (obd) {
+    const service = params.get("service");
+    const year = params.get("year");
+    const make = params.get("make");
+    const model = params.get("model");
+
+    const serviceSelect = document.getElementById("service");
+
+    const yearSelect = document.getElementById("year");
+    const makeSelect = document.getElementById("make");
+    const modelSelect = document.getElementById("model");
+
     const notes = document.getElementById("notes");
 
-    if (notes && !notes.value) {
+    /* ------------------------------
+      OBD → estimator context
+    ------------------------------ */
+
+    if (obd && notes && !notes.value) {
       notes.value = "Diagnostic source: " + obd.toUpperCase();
+    }
 
-    if (repair) {
+    if (repair && serviceSelect) {
 
-      const serviceSelect = document.getElementById("service");
+      const decodedRepair = decodeURIComponent(repair);
 
-      if (serviceSelect) {
+      for (let option of serviceSelect.options) {
+        if (option.text.toLowerCase().includes(decodedRepair.toLowerCase())) {
+          serviceSelect.value = option.value;
+          serviceSelect.dispatchEvent(new Event("change"));
+          break;
+        }
+      }
 
-        const decodedRepair = decodeURIComponent(repair);
+    }
 
-        // try to match the repair text with a service option
-        for (let option of serviceSelect.options) {
-          if (option.text.toLowerCase().includes(decodedRepair.toLowerCase())) {
-            serviceSelect.value = option.value;
-            serviceSelect.dispatchEvent(new Event("change"));
-            break;
-          }
+    /* ------------------------------
+      Repair Guide → Estimator
+    ------------------------------ */
+
+    if(service && serviceSelect){
+
+      for (let option of serviceSelect.options) {
+
+        if(option.value === service || option.text.toLowerCase().includes(service.replace(/_/g," ").toLowerCase())){
+
+          serviceSelect.value = option.value;
+          serviceSelect.dispatchEvent(new Event("change"));
+          break;
+
         }
 
       }
+
     }
+
+    /* ------------------------------
+      Vehicle preload from guide
+    ------------------------------ */
+
+    if(year && yearSelect){
+      yearSelect.value = year;
     }
-  }
+
+    if(make && makeSelect){
+      makeSelect.value = make;
+      makeSelect.dispatchEvent(new Event("change"));
+    }
+
+    if(model && modelSelect){
+
+      setTimeout(()=>{
+        modelSelect.value = model;
+      },500);
+
+    }
 
   });
+
   </script>
 
   {% endblock %}

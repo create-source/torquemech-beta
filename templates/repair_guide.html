@@ -27,9 +27,13 @@
       </select>
     </div>
 
-    <div class="tm-actions" style="margin-top: 14px;">
+    <div class="tm-actions" style="margin-top: 14px; display:flex; gap:10px;">
       <button class="tm-btn tm-btn-secondary" id="loadVehicleBtn" type="button">
         Load Vehicle
+      </button>
+
+      <button class="tm-btn tm-btn-ghost" id="clearVehicleBtn" type="button">
+        Clear Fields
       </button>
     </div>
 
@@ -210,7 +214,7 @@
       id="estimateRepairBtn"
       data-estimator-link="{{ guide.estimate.estimator_link }}"
       data-service-code="{{ guide.estimate.service_code }}"
-      href="{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}"
+      href="{{ guide.estimate.estimator_link }}?category={{ guide.estimate.category_code | urlencode }}&service={{ guide.estimate.service_code | urlencode }}"
     >
       {{ guide.estimate.cta_label }} →
     </a>
@@ -222,6 +226,7 @@
   const makeSelect = document.getElementById("guideMake");
   const modelSelect = document.getElementById("guideModel");
   const loadVehicleBtn = document.getElementById("loadVehicleBtn");
+  const clearVehicleBtn = document.getElementById("clearVehicleBtn");
   const loadedVehicleNote = document.getElementById("loadedVehicleNote");
   const estimateRepairBtn = document.getElementById("estimateRepairBtn");
 
@@ -311,8 +316,27 @@
     updateEstimateLink();
   });
 
-  yearSelect.addEventListener("change", updateEstimateLink);
-  modelSelect.addEventListener("change", updateEstimateLink);
+  yearSelect.addEventListener("change", () => {
+    updateEstimateLink();
+    updateClearButtonState();
+  });
+
+  makeSelect.addEventListener("change", () => {
+    updateEstimateLink();
+    updateClearButtonState();
+  });
+
+  modelSelect.addEventListener("change", () => {
+    updateEstimateLink();
+    updateClearButtonState();
+  });
+
+  function updateClearButtonState() {
+    if (!clearVehicleBtn) return;
+
+    clearVehicleBtn.disabled =
+      !(yearSelect.value || makeSelect.value || modelSelect.value);
+  }
 
   loadVehicleBtn.addEventListener("click", function () {
     const year = yearSelect.value;
@@ -332,6 +356,19 @@
 
   loadMakes();
   updateEstimateLink();
+  updateClearButtonState();
+
+  clearVehicleBtn?.addEventListener("click", function () {
+    yearSelect.value = "";
+    makeSelect.value = "";
+    modelSelect.innerHTML = '<option value="">Model</option>';
+    modelSelect.disabled = true;
+
+    loadedVehicleNote.style.display = "none";
+    loadedVehicleNote.textContent = "";
+
+    updateEstimateLink();
+  });
 })();
 </script>
 {% endif %}

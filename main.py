@@ -960,9 +960,29 @@ def repair_cost_index(request: Request):
     )
 @app.get("/repair-guides", response_class=HTMLResponse)
 async def repair_guides_index(request: Request):
+
+    guides_dir = BASE_DIR / "data" / "repair_guides"
+
+    guides = []
+
+    for file in guides_dir.glob("*.json"):
+        slug = file.stem.replace("_", "-")
+
+        data = json.loads(file.read_text())
+
+        guides.append({
+            "slug": slug,
+            "title": data.get("title", slug.replace("-", " ").title())
+        })
+
+    guides.sort(key=lambda g: g["title"])
+
     return templates.TemplateResponse(
         "repair_guides_index.html",
-        {"request": request},
+        {
+            "request": request,
+            "guides": guides
+        },
     )
 
 @app.get("/knowledge", response_class=HTMLResponse)
@@ -1153,35 +1173,42 @@ VPIC_BASE = "https://vpic.nhtsa.dot.gov/api/vehicles"
 VPIC_TIMEOUT_S = 12.0
 
 _models_cache: Dict[str, Tuple[float, List[str]]] = {}
-MODELS_TTL_SECONDS = 60 * 60 * 24  # 24h
 
+def _cache_key(make_upper: str, year: Optional[int] = None) -> str:
+    return f"{make_upper}::{year or 'all'}"
 
-def _cache_get(make_upper: str) -> Optional[List[str]]:
-    item = _models_cache.get(make_upper)
+def _cache_get(make_upper: str, year: Optional[int] = None) -> Optional[List[str]]:
+    key = _cache_key(make_upper, year)
+    item = _models_cache.get(key)
     if not item:
         return None
     expires, models = item
     if time.time() > expires:
-        _models_cache.pop(make_upper, None)
+        _models_cache.pop(key, None)
         return None
     return models
 
+def _cache_set(make_upper: str, models: List[str], year: Optional[int] = None) -> None:
+    key = _cache_key(make_upper, year)
+    _models_cache[key] = (time.time() + MODELS_TTL_SECONDS, models)
 
-def _cache_set(make_upper: str, models: List[str]) -> None:
-    _models_cache[make_upper] = (time.time() + MODELS_TTL_SECONDS, models)
 
-
-async def fetch_models_from_vpic(make: str) -> List[str]:
+async def fetch_models_from_vpic(make: str, year: Optional[int] = None) -> List[str]:
     make_clean = (make or "").strip()
     if not make_clean:
         return []
 
     make_upper = make_clean.upper()
-    cached = _cache_get(make_upper)
+
+    cached = _cache_get(make_upper, year)
     if cached is not None:
         return cached
 
-    url = f"{VPIC_BASE}/GetModelsForMake/{make_clean}"
+    if year:
+        url = f"{VPIC_BASE}/GetModelsForMakeYear/make/{make_clean}/modelyear/{year}"
+    else:
+        url = f"{VPIC_BASE}/GetModelsForMake/{make_clean}"
+
     params = {"format": "json"}
 
     last_err: Optional[Exception] = None
@@ -1207,15 +1234,15 @@ async def fetch_models_from_vpic(make: str) -> List[str]:
                 models.append(name)
 
             models.sort(key=lambda s: s.upper())
-            _cache_set(make_upper, models)
+            _cache_set(make_upper, models, year)
             return models
 
         except Exception as e:
             last_err = e
 
-    stale = _models_cache.get(make_upper)
+    stale = _cache_get(make_upper, year)
     if stale:
-        return stale[1]
+        return stale
 
     raise HTTPException(status_code=502, detail=f"NHTSA vPIC unavailable: {last_err}")
 
@@ -1486,21 +1513,73 @@ def service_worker() -> FileResponse:
         raise HTTPException(status_code=500, detail="Missing static/sw.js")
     return FileResponse(str(p), media_type="application/javascript", headers={"Cache-Control": "no-cache"})
 
+VEHICLE_CATALOG_PATH = BASE_DIR / "data" / "vehicle_catalog.json"
+
+_vehicle_catalog_cache: Optional[Dict[str, List[str]]] = None
+_vehicle_catalog_mtime: Optional[float] = None
+
+def load_vehicle_catalog() -> Dict[str, List[str]]:
+    global _vehicle_catalog_cache, _vehicle_catalog_mtime
+
+    if not VEHICLE_CATALOG_PATH.exists():
+        raise HTTPException(status_code=500, detail="Missing data/vehicle_catalog.json")
+
+    mtime = VEHICLE_CATALOG_PATH.stat().st_mtime
+    if _vehicle_catalog_cache is not None and _vehicle_catalog_mtime == mtime:
+        return _vehicle_catalog_cache
+
+    data = json.loads(VEHICLE_CATALOG_PATH.read_text(encoding="utf-8"))
+
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=500, detail="vehicle_catalog.json must be an object")
+
+    cleaned: Dict[str, List[str]] = {}
+
+    for make, models in data.items():
+        make_key = str(make).strip().upper()
+        if not make_key:
+            continue
+
+        if not isinstance(models, list):
+            continue
+
+        seen = set()
+        cleaned_models: List[str] = []
+
+        for model in models:
+            model_name = str(model).strip().upper()
+            if not model_name or model_name in seen:
+                continue
+            seen.add(model_name)
+            cleaned_models.append(model_name)
+
+        cleaned_models.sort()
+        cleaned[make_key] = cleaned_models
+
+    _vehicle_catalog_cache = cleaned
+    _vehicle_catalog_mtime = mtime
+    return cleaned
+
 # ===============================
 # MAKES / MODELS API
 # ===============================
+import httpx
+
 @app.get("/api/makes")
 def get_makes() -> List[str]:
-    return POPULAR_MAKES
+    catalog = load_vehicle_catalog()
+    return sorted(catalog.keys())
 
 
 @app.get("/api/models/{make}")
-async def get_models(make: str) -> List[str]:
+def get_models(make: str) -> List[str]:
+    catalog = load_vehicle_catalog()
     make_upper = (make or "").strip().upper()
-    if make_upper not in POPULAR_MAKES:
-        raise HTTPException(status_code=404, detail=f"Make '{make}' not supported")
-    return await fetch_models_from_vpic(make_upper)
 
+    if make_upper not in catalog:
+        raise HTTPException(status_code=404, detail=f"Make '{make}' not supported")
+
+    return catalog[make_upper]
 
 # ===============================
 # SERVICES API
@@ -1639,7 +1718,8 @@ async def estimate(req: EstimateRequest) -> EstimateResponse:
     if not model:
         raise HTTPException(status_code=400, detail="Model is required")
 
-    models = await fetch_models_from_vpic(make_key)
+    catalog = load_vehicle_catalog()
+    models = catalog.get(make_key, [])
     if models:
         allowed = {m.upper() for m in models}
         if model.upper() not in allowed:
