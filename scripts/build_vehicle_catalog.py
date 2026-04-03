@@ -36,12 +36,28 @@ def fetch_all_makes() -> list[str]:
 
 def fetch_models_for_make(make: str) -> list[str]:
     data = get_json(f"{BASE}/GetModelsForMake/{make}?format=json")
-    models = sorted({
-        normalize_model(row.get("Model_Name", ""))
-        for row in data.get("Results", [])
-        if normalize_model(row.get("Model_Name", ""))
-    })
-    return models
+
+    allowed_vehicle_types = {
+        "PASSENGER CAR",
+        "MULTIPURPOSE PASSENGER VEHICLE",
+        "TRUCK",
+        "BUS",
+        "INCOMPLETE VEHICLE",
+    }
+
+    models = set()
+
+    for row in data.get("Results", []):
+        vehicle_type = (row.get("VehicleTypeName") or "").upper()
+        model = normalize_model(row.get("Model_Name", ""))
+
+        if vehicle_type in allowed_vehicle_types and model:
+            models.add(model)
+
+    if len(models) < 2:
+        return []
+
+    return sorted(models)
 
 
 def main():
@@ -53,11 +69,13 @@ def main():
     for idx, make in enumerate(makes, start=1):
         try:
             models = fetch_models_for_make(make)
-            if models:
-                catalog[make] = models
-                print(f"[{idx}/{len(makes)}] {make}: {len(models)} models")
-            else:
-                print(f"[{idx}/{len(makes)}] {make}: no models")
+            if not models:
+                print(f"[{idx}/{len(makes)}] {make}: skipped")
+                continue
+
+            catalog[make] = models
+            print(f"[{idx}/{len(makes)}] {make}: {len(models)} models")
+
         except Exception as e:
             print(f"[{idx}/{len(makes)}] FAILED {make}: {e}")
 
