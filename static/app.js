@@ -236,6 +236,8 @@
   const vinToggle = $("vinToggle");
   const vinPanel = $("vinPanel");
 
+  const vinDecodedMeta = $("vinDecodedMeta");
+
   // PWA install (optional)
   const installBtn = $("installBtn");
 
@@ -1855,6 +1857,12 @@ if (getEstimateHint) {
         }
       }
       if (modelIndex >= 0) modelEl.selectedIndex = modelIndex;
+      if (vinDecodedMeta) {
+        const metaBits = [res.engine, res.trim].filter(Boolean);
+        vinDecodedMeta.textContent = metaBits.length
+          ? `Detected: ${metaBits.join(" • ")}`
+          : "";
+      }
 
       updateEstimateButtonState();
       setStatus("ok", "VIN decoded and vehicle filled.");
@@ -2020,6 +2028,15 @@ if (getEstimateHint) {
 
           <div>
             <label>Make</label>
+
+            <input
+              type="text"
+              class="vehicle-make-search"
+              data-vehicle-id="${vehicle.id}"
+              placeholder="Search make..."
+              style="margin-bottom:6px;"
+            />
+
             <select class="vehicle-make" data-vehicle-id="${vehicle.id}">
               <option value="">Select make...</option>
             </select>
@@ -2044,6 +2061,7 @@ if (getEstimateHint) {
     for (const vehicle of estimateState.vehicles) {
       const yearSelect = document.querySelector(`.vehicle-year[data-vehicle-id="${vehicle.id}"]`);
       const makeSelect = document.querySelector(`.vehicle-make[data-vehicle-id="${vehicle.id}"]`);
+      const makeSearch = document.querySelector(`.vehicle-make-search[data-vehicle-id="${vehicle.id}"]`);
       const modelSelect = document.querySelector(`.vehicle-model[data-vehicle-id="${vehicle.id}"]`);
 
       if (!yearSelect || !makeSelect || !modelSelect) continue;
@@ -2068,6 +2086,17 @@ if (getEstimateHint) {
         makeSelect.appendChild(opt);
       }
       makeSelect.value = vehicle.make || "";
+
+      if (makeSearch) {
+        makeSearch.addEventListener("input", () => {
+          const q = makeSearch.value.trim().toLowerCase();
+
+          for (const opt of makeSelect.options) {
+            if (!opt.value) continue;
+            opt.hidden = q ? !opt.textContent.toLowerCase().includes(q) : false;
+          }
+        });
+      }
 
       // Model options
       modelSelect.innerHTML = `<option value="">Select model...</option>`;

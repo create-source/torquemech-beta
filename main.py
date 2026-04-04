@@ -1193,59 +1193,31 @@ def _cache_set(make_upper: str, models: List[str], year: Optional[int] = None) -
     _models_cache[key] = (time.time() + MODELS_TTL_SECONDS, models)
 
 
-async def fetch_models_from_vpic(make: str, year: Optional[int] = None) -> List[str]:
-    make_clean = (make or "").strip()
-    if not make_clean:
+def fetch_models_for_make(make: str) -> list[str]:
+    data = get_json(f"{BASE}/GetModelsForMake/{make}?format=json")
+
+    allowed_vehicle_types = {
+        "PASSENGER CAR",
+        "MULTIPURPOSE PASSENGER VEHICLE",
+        "TRUCK",
+        "BUS",
+        "INCOMPLETE VEHICLE"
+    }
+
+    models = set()
+
+    for row in data.get("Results", []):
+        vehicle_type = (row.get("VehicleTypeName") or "").upper()
+        model = normalize_model(row.get("Model_Name", ""))
+
+        if vehicle_type in allowed_vehicle_types and model:
+            models.add(model)
+
+        # remove junk manufacturers with only 1 model
+    if len(models) < 2:
         return []
 
-    make_upper = make_clean.upper()
-
-    cached = _cache_get(make_upper, year)
-    if cached is not None:
-        return cached
-
-    if year:
-        url = f"{VPIC_BASE}/GetModelsForMakeYear/make/{make_clean}/modelyear/{year}"
-    else:
-        url = f"{VPIC_BASE}/GetModelsForMake/{make_clean}"
-
-    params = {"format": "json"}
-
-    last_err: Optional[Exception] = None
-    for _ in range(2):
-        try:
-            async with httpx.AsyncClient(timeout=VPIC_TIMEOUT_S, follow_redirects=True) as client:
-                r = await client.get(url, params=params)
-                r.raise_for_status()
-                data = r.json()
-
-            results = data.get("Results", []) if isinstance(data, dict) else []
-            models: List[str] = []
-            seen = set()
-
-            for item in results:
-                name = (item.get("Model_Name") or "").strip()
-                if not name:
-                    continue
-                key = name.upper()
-                if key in seen:
-                    continue
-                seen.add(key)
-                models.append(name)
-
-            models.sort(key=lambda s: s.upper())
-            _cache_set(make_upper, models, year)
-            return models
-
-        except Exception as e:
-            last_err = e
-
-    stale = _cache_get(make_upper, year)
-    if stale:
-        return stale
-
-    raise HTTPException(status_code=502, detail=f"NHTSA vPIC unavailable: {last_err}")
-
+    return sorted(models)
 
 # ===============================
 # DB
@@ -1687,12 +1659,16 @@ async def decode_vin(vin: str):
         # Some VINs return partial data; treat as failure for beta
         raise HTTPException(status_code=404, detail="VIN decoded but missing year/make/model")
 
+    engine = row.get("DisplacementL") or row.get("EngineModel") or row.get("EngineCylinders")
+    trim = row.get("Trim") or row.get("Series") or row.get("Series2")
+
     return {
         "year": int(year),
         "make": make.title(),
         "model": model.title(),
+        "engine": str(engine).strip() if engine else "",
+        "trim": str(trim).strip() if trim else "",
     }
-
 def normalize_service_key(value: str) -> str:
     return (
         (value or "")
