@@ -1423,3 +1423,32 @@ h3{
 #vehiclesContainer{
   margin-top: 8px;
 }
+
+.vehicle-make {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.vehicle-make-results {
+  background: rgba(255,255,255,0.98);
+}
+
+.make-result-item:last-child {
+  border-bottom: none;
+}
+
+.make-result-item:hover,
+.make-result-item:focus {
+  background: rgba(125, 211, 252, 0.12);
+}
+
+.vehicle-make-results {
+  max-height: 220px;
+  overflow-y: auto;
+  background: white;
+}
+
+.vehicle-make-results {
+  position: relative;
+  z-index: 20;
+}

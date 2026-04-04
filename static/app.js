@@ -1746,6 +1746,26 @@ if (getEstimateHint) {
 
     activeLineItemIndex = null;
 
+    estimateState = {
+      customer: {
+        name: "",
+        phone: "",
+        email: ""
+      },
+      activeVehicleId: "veh_1",
+      vehicles: [
+        {
+          id: "veh_1",
+          year: "",
+          make: "",
+          model: "",
+          services: []
+        }
+      ]
+    };
+
+    window.estimateState = estimateState;
+
     window.estimateState = estimateState;
 
     // ---- State reset (DO NOT redeclare) ----
@@ -1794,9 +1814,9 @@ if (getEstimateHint) {
 
     // reload core dropdown data
     try {
-      await loadMakes();
       await loadCategories();
-      
+      renderVehicles();
+      renderActiveVehicleBanner();
       await applyObdFromQuery();
     } catch (_) {}
 
@@ -2034,10 +2054,16 @@ if (getEstimateHint) {
               class="vehicle-make-search"
               data-vehicle-id="${vehicle.id}"
               placeholder="Search make..."
-              style="margin-bottom:6px;"
+              autocomplete="off"
             />
 
-            <select class="vehicle-make" data-vehicle-id="${vehicle.id}">
+            <div
+              class="vehicle-make-results"
+              data-vehicle-id="${vehicle.id}"
+              style="display:none; margin-top:6px; border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow-y:auto;"
+            ></div>
+
+            <select class="vehicle-make" data-vehicle-id="${vehicle.id}" style="display:none;">
               <option value="">Select make...</option>
             </select>
           </div>
@@ -2062,6 +2088,7 @@ if (getEstimateHint) {
       const yearSelect = document.querySelector(`.vehicle-year[data-vehicle-id="${vehicle.id}"]`);
       const makeSelect = document.querySelector(`.vehicle-make[data-vehicle-id="${vehicle.id}"]`);
       const makeSearch = document.querySelector(`.vehicle-make-search[data-vehicle-id="${vehicle.id}"]`);
+      const makeResults = document.querySelector(`.vehicle-make-results[data-vehicle-id="${vehicle.id}"]`);
       const modelSelect = document.querySelector(`.vehicle-model[data-vehicle-id="${vehicle.id}"]`);
 
       if (!yearSelect || !makeSelect || !modelSelect) continue;
@@ -2087,13 +2114,106 @@ if (getEstimateHint) {
       }
       makeSelect.value = vehicle.make || "";
 
-      if (makeSearch) {
-        makeSearch.addEventListener("input", () => {
-          const q = makeSearch.value.trim().toLowerCase();
+      if (makeSearch && makeResults) {
+        const renderMakeResults = (query) => {
+          const q = query.trim().toLowerCase();
 
-          for (const opt of makeSelect.options) {
-            if (!opt.value) continue;
-            opt.hidden = q ? !opt.textContent.toLowerCase().includes(q) : false;
+          if (!q) {
+            makeResults.style.display = "none";
+            makeResults.innerHTML = "";
+            return;
+          }
+
+          const filtered = makes
+            .filter(m => m.toLowerCase().includes(q))
+            .slice(0, 8);
+
+          if (!filtered.length) {
+            makeResults.style.display = "none";
+            makeResults.innerHTML = "";
+            return;
+          }
+
+          const html = filtered.map(m => `
+            <button
+              type="button"
+              class="make-result-item"
+              data-vehicle-id="${vehicle.id}"
+              data-make="${m}"
+              style="
+                display:block;
+                width:100%;
+                text-align:left;
+                padding:12px 14px;
+                background:#ffffff;
+                color:#0f172a;
+                border:none;
+                border-bottom:1px solid #e5e7eb;
+                cursor:pointer;
+                font-size:16px;
+              "
+            >${m}</button>
+          `).join("");
+
+          makeResults.innerHTML = html;
+
+          if (html) {
+            makeResults.style.display = "block";
+          } else {
+            makeResults.style.display = "none";
+          }
+        };
+
+        makeSearch.addEventListener("input", () => {
+          renderMakeResults(makeSearch.value);
+        });
+
+        makeResults.addEventListener("click", async (e) => {
+          const btn = e.target.closest(".make-result-item");
+          if (!btn) return;
+
+          const selectedMake = btn.dataset.make || "";
+          makeSearch.value = selectedMake;
+          makeResults.style.display = "none";
+          makeResults.innerHTML = "";
+
+          makeSelect.value = selectedMake;
+          vehicle.make = selectedMake;
+          vehicle.model = "";
+
+          modelSelect.innerHTML = `<option value="">Loading models...</option>`;
+
+          if (vehicle.make) {
+            try {
+              const models = await apiJSON(`/api/models/${encodeURIComponent(vehicle.make)}`);
+              modelSelect.innerHTML = `<option value="">Select model...</option>`;
+
+              for (const m of models) {
+                const opt = document.createElement("option");
+                opt.value = m;
+                opt.textContent = m;
+                modelSelect.appendChild(opt);
+              }
+
+              modelSelect.focus();
+            } catch (_) {
+              modelSelect.innerHTML = `<option value="">Select model...</option>`;
+            }
+          }
+
+          syncEstimateMeta();
+          window.estimateState = estimateState;
+        });
+
+        makeSearch.addEventListener("blur", () => {
+          setTimeout(() => {
+            makeResults.style.display = "none";
+          }, 150);
+        });
+
+        makeSearch.addEventListener("focus", () => {
+          if (makeSearch.value.trim()) {
+            renderMakeResults(makeSearch.value);
           }
         });
       }
@@ -2120,25 +2240,35 @@ if (getEstimateHint) {
       });
 
       makeSelect.addEventListener("change", async () => {
+
         vehicle.make = makeSelect.value;
+        makeSearch.value = makeSelect.value;
         vehicle.model = "";
 
-        modelSelect.innerHTML = `<option value="">Select model...</option>`;
+        modelSelect.innerHTML = `<option value="">Loading models...</option>`;
 
         if (vehicle.make) {
           try {
             const models = await apiJSON(`/api/models/${encodeURIComponent(vehicle.make)}`);
+
+            modelSelect.innerHTML = `<option value="">Select model...</option>`;
+
             for (const m of models) {
               const opt = document.createElement("option");
               opt.value = m;
               opt.textContent = m;
               modelSelect.appendChild(opt);
             }
+
+            // ⭐ Auto focus model dropdown
+            modelSelect.focus();
+
           } catch (_) {}
         }
 
         syncEstimateMeta();
         window.estimateState = estimateState;
+
       });
 
       modelSelect.addEventListener("change", () => {
