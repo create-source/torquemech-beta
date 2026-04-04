@@ -1466,3 +1466,28 @@ h3{
   }
 
 }
+
+/* Vehicles header mobile layout */
+.section-header--vehicles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+
+  .section-header--vehicles {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-header--vehicles h2 {
+    margin-bottom: 6px;
+  }
+
+  .section-header--vehicles button {
+    width: 100%;
+  }
+
+}
