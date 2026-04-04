@@ -1,12 +1,12 @@
 import json
 import time
+import re
 from pathlib import Path
 
 import requests
 
 BASE = "https://vpic.nhtsa.dot.gov/api/vehicles"
 OUT = Path("data/vehicle_catalog.json")
-
 TIMEOUT = 30
 
 
@@ -24,35 +24,91 @@ def normalize_model(name: str) -> str:
     return " ".join((name or "").strip().upper().split())
 
 
+def looks_like_real_vehicle_make(make: str) -> bool:
+    if not make:
+        return False
+
+    make = " ".join(make.strip().upper().split())
+
+    if len(make) < 3:
+        return False
+
+    if make.isdigit():
+        return False
+
+    if make[0].isdigit():
+        return False
+
+    digit_count = sum(ch.isdigit() for ch in make)
+    if digit_count >= 3:
+        return False
+
+    skip_terms = {
+        "TRAILER", "TRAILERS", "FABRICATION", "INDUSTRIES", "INDUSTRIAL",
+        "EQUIPMENT", "MANUFACTURING", "MFG", "COACH", "MOTORCYCLE",
+        "SCOOTER", "BICYCLE", "POWERSPORTS", "MARINE", "BOAT",
+        "RV", "CAMPER", "FIRE", "EMERGENCY", "AMBULANCE",
+        "AGRICULTURAL", "TRACTOR", "FORKLIFT", "LOW SPEED", "OFF ROAD",
+        "CUSTOM", "WELDING", "FAB", "CHASSIS", "BODY", "TOOL",
+        "MACHINE", "MACHINING", "CART", "CARTS", "GO KART", "GO-CART",
+        "MESSAGE SYSTEMS", "ENTERPRISE", "DYNAMIC", "CONSTRUCTION"
+    }
+
+    if any(term in make for term in skip_terms):
+        return False
+
+    words = make.split()
+    if len(words) > 4:
+        return False
+
+    return True
+
 def fetch_all_makes() -> list[str]:
-    data = get_json(f"{BASE}/GetAllMakes?format=json")
-    makes = sorted({
-        normalize_make(row.get("Make_Name", ""))
-        for row in data.get("Results", [])
-        if normalize_make(row.get("Make_Name", ""))
-    })
-    return makes
+    vehicle_types = [
+        "car",
+        "multipurpose passenger vehicle",
+        "truck",
+        "bus",
+        "incomplete vehicle",
+    ]
+
+    makes = set()
+
+    for vehicle_type in vehicle_types:
+        data = get_json(f"{BASE}/GetMakesForVehicleType/{vehicle_type}?format=json")
+
+        for row in data.get("Results", []):
+            make = normalize_make(row.get("MakeName", ""))
+            if make and looks_like_real_vehicle_make(make):
+                makes.add(make)
+
+        time.sleep(0.02)
+
+    return sorted(makes)
 
 
 def fetch_models_for_make(make: str) -> list[str]:
-    data = get_json(f"{BASE}/GetModelsForMake/{make}?format=json")
-
-    allowed_vehicle_types = {
-        "PASSENGER CAR",
-        "MULTIPURPOSE PASSENGER VEHICLE",
-        "TRUCK",
-        "BUS",
-        "INCOMPLETE VEHICLE",
-    }
+    vehicle_types = [
+        "car",
+        "multipurpose passenger vehicle",
+        "truck",
+        "bus",
+        "incomplete vehicle",
+    ]
 
     models = set()
 
-    for row in data.get("Results", []):
-        vehicle_type = (row.get("VehicleTypeName") or "").upper()
-        model = normalize_model(row.get("Model_Name", ""))
+    for vehicle_type in vehicle_types:
+        data = get_json(
+            f"{BASE}/GetModelsForMakeYear/make/{make}/vehicletype/{vehicle_type}?format=json"
+        )
 
-        if vehicle_type in allowed_vehicle_types and model:
-            models.add(model)
+        for row in data.get("Results", []):
+            model = normalize_model(row.get("Model_Name", ""))
+            if model:
+                models.add(model)
+
+        time.sleep(0.02)
 
     if len(models) < 2:
         return []
@@ -62,13 +118,15 @@ def fetch_models_for_make(make: str) -> list[str]:
 
 def main():
     makes = fetch_all_makes()
-    catalog: dict[str, list[str]] = {}
+    catalog = {}
 
-    print(f"Found {len(makes)} makes")
+    print(f"Filtered to {len(makes)} candidate makes")
 
     for idx, make in enumerate(makes, start=1):
+
         try:
             models = fetch_models_for_make(make)
+
             if not models:
                 print(f"[{idx}/{len(makes)}] {make}: skipped")
                 continue
@@ -79,10 +137,11 @@ def main():
         except Exception as e:
             print(f"[{idx}/{len(makes)}] FAILED {make}: {e}")
 
-        time.sleep(0.05)
+        time.sleep(0.03)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(catalog, indent=2), encoding="utf-8")
+
     print(f"\nSaved {len(catalog)} makes to {OUT}")
 
 
