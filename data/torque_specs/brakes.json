@@ -1,210 +1,87 @@
 {
-  "front-brake-pads": {
-    "2017": {
-      "HONDA": {
-        "CIVIC": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      }
-    },
-    "2018": {
-      "FORD": {
-        "ESCAPE": {
-          "Wheel lug nuts": "100 lb-ft (135 N·m)"
-        }
-      },
-      "TOYOTA": {
-        "CAMRY": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
-      }
-    },
-    "2019": {
-      "FORD": {
-        "F-150": {
-          "Wheel lug nuts": "150 lb-ft (204 N·m)"
-        }
-      },
-      "TOYOTA": {
-        "C-HR": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
-      }
-    },
-    "2024": {
-      "HONDA": {
-        "CR-V": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      },
-      "NISSAN": {
-        "ALTIMA": {
-          "Wheel lug nuts": "83 ft-lb (113 N·m)"
-        }
-      }
-    },
-    "2025": {
-      "HONDA": {
-        "ACCORD": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      }
-    }
+  "guide_sets": {
+    "all-brake-guides": [
+      "front-brake-pads",
+      "rear-brake-pads",
+      "brake-rotor-replacement",
+      "brake-caliper-replacement"
+    ]
   },
-  "rear-brake-pads": {
-    "2017": {
-      "HONDA": {
-        "CIVIC": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
+  "entries": [
+    {
+      "guides": "all-brake-guides",
+      "make": "TOYOTA",
+      "model": "CAMRY",
+      "years": [2018],
+      "specs": {
+        "Wheel lug nuts": "76 ft-lb (103 N·m)"
       }
     },
-    "2018": {
-      "FORD": {
-        "ESCAPE": {
-          "Wheel lug nuts": "100 lb-ft (135 N·m)"
-        }
+    {
+      "guides": "all-brake-guides",
+      "make": "TOYOTA",
+      "model": "C-HR",
+      "years": [2019],
+      "specs": {
+        "Wheel lug nuts": "76 ft-lb (103 N·m)"
+      }
+    },
+    {
+      "guides": "all-brake-guides",
+      "make": "HONDA",
+      "model": "CIVIC",
+      "years": [2017],
+      "specs": {
+        "Wheel lug nuts": "80 ft-lb (108 N·m)"
+      }
+    },
+    {
+      "guides": "all-brake-guides",
+      "make": "HONDA",
+      "model": "ACCORD",
+      "years": [2025],
+      "specs": {
+        "Wheel lug nuts": "80 ft-lb (108 N·m)"
+      }
+    },
+    {
+      "guides": "all-brake-guides",
+      "make": "HONDA",
+      "model": "CR-V",
+      "years": [2024],
+      "specs": {
+        "Wheel lug nuts": "80 ft-lb (108 N·m)"
+      }
+    },
+    {
+      "guides": "all-brake-guides",
+      "make": "FORD",
+      "model": "ESCAPE",
+      "year_range": {
+        "start": 2018,
+        "end": 2019
       },
-      "TOYOTA": {
-        "CAMRY": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
+      "specs": {
+        "Wheel lug nuts": "100 lb-ft (135 N·m)"
       }
     },
-    "2019": {
-      "FORD": {
-        "F-150": {
-          "Wheel lug nuts": "150 lb-ft (204 N·m)"
-        }
-      },
-      "TOYOTA": {
-        "C-HR": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
+    {
+      "guides": "all-brake-guides",
+      "make": "FORD",
+      "model": "F-150",
+      "years": [2019, 2021],
+      "specs": {
+        "Wheel lug nuts": "150 lb-ft (204 N·m)"
       }
     },
-    "2024": {
-      "HONDA": {
-        "CR-V": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      },
-      "NISSAN": {
-        "ALTIMA": {
-          "Wheel lug nuts": "83 ft-lb (113 N·m)"
-        }
-      }
-    },
-    "2025": {
-      "HONDA": {
-        "ACCORD": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
+    {
+      "guides": "all-brake-guides",
+      "make": "NISSAN",
+      "model": "ALTIMA",
+      "years": [2024],
+      "specs": {
+        "Wheel lug nuts": "83 ft-lb (113 N·m)"
       }
     }
-  },
-  "brake-rotor-replacement": {
-    "2017": {
-      "HONDA": {
-        "CIVIC": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      }
-    },
-    "2018": {
-      "FORD": {
-        "ESCAPE": {
-          "Wheel lug nuts": "100 lb-ft (135 N·m)"
-        }
-      },
-      "TOYOTA": {
-        "CAMRY": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
-      }
-    },
-    "2019": {
-      "FORD": {
-        "F-150": {
-          "Wheel lug nuts": "150 lb-ft (204 N·m)"
-        }
-      },
-      "TOYOTA": {
-        "C-HR": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
-      }
-    },
-    "2024": {
-      "HONDA": {
-        "CR-V": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      },
-      "NISSAN": {
-        "ALTIMA": {
-          "Wheel lug nuts": "83 ft-lb (113 N·m)"
-        }
-      }
-    },
-    "2025": {
-      "HONDA": {
-        "ACCORD": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      }
-    }
-  },
-  "brake-caliper-replacement": {
-    "2017": {
-      "HONDA": {
-        "CIVIC": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      }
-    },
-    "2018": {
-      "FORD": {
-        "ESCAPE": {
-          "Wheel lug nuts": "100 lb-ft (135 N·m)"
-        }
-      },
-      "TOYOTA": {
-        "CAMRY": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
-      }
-    },
-    "2019": {
-      "FORD": {
-        "F-150": {
-          "Wheel lug nuts": "150 lb-ft (204 N·m)"
-        }
-      },
-      "TOYOTA": {
-        "C-HR": {
-          "Wheel lug nuts": "76 ft-lb (103 N·m)"
-        }
-      }
-    },
-    "2024": {
-      "HONDA": {
-        "CR-V": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      },
-      "NISSAN": {
-        "ALTIMA": {
-          "Wheel lug nuts": "83 ft-lb (113 N·m)"
-        }
-      }
-    },
-    "2025": {
-      "HONDA": {
-        "ACCORD": {
-          "Wheel lug nuts": "80 ft-lb (108 N·m)"
-        }
-      }
-    }
-  }
+  ]
 }

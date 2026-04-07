@@ -294,14 +294,7 @@
   const torqueSpecsNote = document.getElementById("torqueSpecsNote");
   const torqueValueEls = Array.from(document.querySelectorAll(".tm-torque-value"));
 
-  if (
-    !yearSelect ||
-    !makeSelect ||
-    !makeSearch ||
-    !makeResults ||
-    !modelSelect ||
-    !window.TorqueMechVehicleUI?.initSharedVehicleSelector
-  ) {
+  if (!yearSelect || !makeSelect || !makeSearch || !makeResults || !modelSelect) {
     return;
   }
 
@@ -386,36 +379,55 @@
     }
   }
 
-  window.TorqueMechVehicleUI.initSharedVehicleSelector({
-    yearSelect,
-    makeSelect,
-    makeSearch,
-    makeResults,
-    modelSelect,
-    clearButton: clearVehicleBtn,
-    onChange: ({ year, make, model, hasSelection, isComplete }) => {
-      updateEstimateLink(year, make, model);
-      if (isComplete) {
-        refreshTorqueSpecs(year, make, model);
-      } else {
-        resetTorqueSpecs();
-      }
-
-      if (!loadedVehicleNote) return;
-      if (!hasSelection) {
-        loadedVehicleNote.style.display = "none";
-        loadedVehicleNote.textContent = "";
-        return;
-      }
-
-      loadedVehicleNote.style.display = "block";
-      loadedVehicleNote.textContent = isComplete
-        ? `Selected vehicle: ${year} ${make} ${model}`
-        : "Continue selecting year, make, and model to carry vehicle context into the estimator.";
-    },
-  });
-
   updateEstimateLink();
+  let vehicleSelectorInitStarted = false;
+
+  function initGuideVehicleSelector() {
+    const sharedInit = window.TorqueMechVehicleUI?.initSharedVehicleSelector;
+    if (vehicleSelectorInitStarted || typeof sharedInit !== "function") {
+      return false;
+    }
+
+    vehicleSelectorInitStarted = true;
+    sharedInit({
+      yearSelect,
+      makeSelect,
+      makeSearch,
+      makeResults,
+      modelSelect,
+      clearButton: clearVehicleBtn,
+      onChange: ({ year, make, model, hasSelection, isComplete }) => {
+        updateEstimateLink(year, make, model);
+        if (isComplete) {
+          refreshTorqueSpecs(year, make, model);
+        } else {
+          resetTorqueSpecs();
+        }
+
+        if (!loadedVehicleNote) return;
+        if (!hasSelection) {
+          loadedVehicleNote.style.display = "none";
+          loadedVehicleNote.textContent = "";
+          return;
+        }
+
+        loadedVehicleNote.style.display = "block";
+        loadedVehicleNote.textContent = isComplete
+          ? `Selected vehicle: ${year} ${make} ${model}`
+          : "Continue selecting year, make, and model to carry vehicle context into the estimator.";
+      },
+    }).catch(() => {
+      vehicleSelectorInitStarted = false;
+    });
+
+    return true;
+  }
+
+  if (!initGuideVehicleSelector()) {
+    [50, 250, 1000].forEach((delay) => {
+      window.setTimeout(initGuideVehicleSelector, delay);
+    });
+  }
 })();
 </script>
 {% endif %}

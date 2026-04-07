@@ -206,6 +206,113 @@ def normalize_torque_lookup_key(value: str) -> str:
     return " ".join(str(value or "").strip().upper().split())
 
 
+def normalize_repair_guide_torque_specs_map(raw_specs: Any) -> Dict[str, str]:
+    if not isinstance(raw_specs, dict):
+        return {}
+
+    normalized_specs: Dict[str, str] = {}
+    for label, value in raw_specs.items():
+        label_text = str(label or "").strip()
+        value_text = str(value or "").strip()
+        if label_text and value_text:
+            normalized_specs[label_text] = value_text
+    return normalized_specs
+
+
+def parse_torque_lookup_year(value: str | int) -> Optional[int]:
+    try:
+        return int(str(value or "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def expand_torque_guide_targets(targets: Any, guide_sets: Dict[str, Any]) -> List[str]:
+    expanded: List[str] = []
+
+    if isinstance(targets, str):
+        if targets in guide_sets and isinstance(guide_sets[targets], list):
+            for item in guide_sets[targets]:
+                slug = normalize_repair_guide_slug(item)
+                if slug:
+                    expanded.append(slug)
+        else:
+            slug = normalize_repair_guide_slug(targets)
+            if slug:
+                expanded.append(slug)
+    elif isinstance(targets, list):
+        for item in targets:
+            expanded.extend(expand_torque_guide_targets(item, guide_sets))
+
+    return expanded
+
+
+def torque_entry_matches_year(entry: Dict[str, Any], year_value: int) -> bool:
+    years = entry.get("years")
+    if isinstance(years, list):
+        normalized_years = {
+            parsed_year
+            for item in years
+            if (parsed_year := parse_torque_lookup_year(item)) is not None
+        }
+        if year_value in normalized_years:
+            return True
+
+    year_range = entry.get("year_range")
+    if isinstance(year_range, dict):
+        start_year = parse_torque_lookup_year(year_range.get("start"))
+        end_year = parse_torque_lookup_year(year_range.get("end"))
+        if start_year is not None and end_year is not None:
+            return start_year <= year_value <= end_year
+
+    return False
+
+
+def lookup_structured_repair_guide_torque_specs(
+    data: Dict[str, Any],
+    guide_slug: str,
+    year: str | int,
+    make: str,
+    model: str,
+) -> Dict[str, str]:
+    entries = data.get("entries")
+    if not isinstance(entries, list):
+        return {}
+
+    year_value = parse_torque_lookup_year(year)
+    make_key = normalize_torque_lookup_key(make)
+    model_key = normalize_torque_lookup_key(model)
+    if year_value is None or not make_key or not model_key:
+        return {}
+
+    guide_sets = data.get("guide_sets")
+    if not isinstance(guide_sets, dict):
+        guide_sets = {}
+
+    matched_specs: Dict[str, str] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+
+        entry_make = normalize_torque_lookup_key(entry.get("make", ""))
+        entry_model = normalize_torque_lookup_key(entry.get("model", ""))
+        if entry_make != make_key or entry_model != model_key:
+            continue
+
+        entry_guides = expand_torque_guide_targets(
+            entry.get("guides") or entry.get("guide") or [],
+            guide_sets,
+        )
+        if guide_slug not in entry_guides:
+            continue
+
+        if not torque_entry_matches_year(entry, year_value):
+            continue
+
+        matched_specs.update(normalize_repair_guide_torque_specs_map(entry.get("specs")))
+
+    return matched_specs
+
+
 def get_repair_guide_vehicle_torque_specs(
     guide_slug: str,
     year: str | int,
@@ -221,24 +328,21 @@ def get_repair_guide_vehicle_torque_specs(
     if not (slug_key and year_key and make_key and model_key):
         return {}
 
-    specs = (
+    if isinstance(data.get("entries"), list):
+        return lookup_structured_repair_guide_torque_specs(
+            data,
+            slug_key,
+            year_key,
+            make_key,
+            model_key,
+        )
+
+    return normalize_repair_guide_torque_specs_map(
         data.get(slug_key, {})
         .get(year_key, {})
         .get(make_key, {})
         .get(model_key, {})
     )
-
-    if not isinstance(specs, dict):
-        return {}
-
-    normalized_specs: Dict[str, str] = {}
-    for label, value in specs.items():
-        label_text = str(label or "").strip()
-        value_text = str(value or "").strip()
-        if label_text and value_text:
-            normalized_specs[label_text] = value_text
-
-    return normalized_specs
 
 # --- Templates ---
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
