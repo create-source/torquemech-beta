@@ -2364,220 +2364,6 @@ if (getEstimateHint) {
         setActiveVehicle(card.dataset.vehicleId);
       });
     });
-
-    return;
-
-    const makes = await apiJSON("/api/makes");
-
-    for (const vehicle of estimateState.vehicles) {
-      const yearSelect = document.querySelector(`.vehicle-year[data-vehicle-id="${vehicle.id}"]`);
-      const makeSelect = document.querySelector(`.vehicle-make[data-vehicle-id="${vehicle.id}"]`);
-      const makeSearch = document.querySelector(`.vehicle-make-search[data-vehicle-id="${vehicle.id}"]`);
-      const makeResults = document.querySelector(`.vehicle-make-results[data-vehicle-id="${vehicle.id}"]`);
-      const modelSelect = document.querySelector(`.vehicle-model[data-vehicle-id="${vehicle.id}"]`);
-
-      if (!yearSelect || !makeSelect || !modelSelect) continue;
-
-      // Year options
-      const currentYear = new Date().getFullYear();
-      yearSelect.innerHTML = `<option value="">Select Year</option>`;
-      for (let y = currentYear; y >= 1980; y--) {
-        const opt = document.createElement("option");
-        opt.value = String(y);
-        opt.textContent = String(y);
-        yearSelect.appendChild(opt);
-      }
-      yearSelect.value = vehicle.year || "";
-
-      // Make options
-      makeSelect.innerHTML = `<option value="">Select make...</option>`;
-      for (const m of makes) {
-        const opt = document.createElement("option");
-        opt.value = m;
-        opt.textContent = m;
-        makeSelect.appendChild(opt);
-      }
-      makeSelect.value = vehicle.make || "";
-
-      if (makeSearch && makeResults) {
-        const renderMakeResults = (query) => {
-          const q = query.trim().toLowerCase();
-
-          if (!q) {
-            makeResults.style.display = "none";
-            makeResults.innerHTML = "";
-            return;
-          }
-
-          const filtered = makes
-            .filter(m => m.toLowerCase().includes(q))
-            .slice(0, 8);
-
-          if (!filtered.length) {
-            makeResults.style.display = "none";
-            makeResults.innerHTML = "";
-            return;
-          }
-
-          const html = filtered.map(m => `
-            <button
-              type="button"
-              class="make-result-item"
-              data-vehicle-id="${vehicle.id}"
-              data-make="${m}"
-              style="
-                display:block;
-                width:100%;
-                text-align:left;
-                padding:12px 14px;
-                background:#ffffff;
-                color:#0f172a;
-                border:none;
-                border-bottom:1px solid #e5e7eb;
-                cursor:pointer;
-                font-size:16px;
-              "
-            >${m}</button>
-          `).join("");
-
-          makeResults.innerHTML = html;
-
-          if (html) {
-            makeResults.style.display = "block";
-          } else {
-            makeResults.style.display = "none";
-          }
-        };
-
-        makeSearch.addEventListener("input", () => {
-          renderMakeResults(makeSearch.value);
-        });
-
-        makeResults.addEventListener("click", async (e) => {
-          const btn = e.target.closest(".make-result-item");
-          if (!btn) return;
-
-          const selectedMake = btn.dataset.make || "";
-          makeSearch.value = selectedMake;
-          makeResults.style.display = "none";
-          makeResults.innerHTML = "";
-
-          makeSelect.value = selectedMake;
-          vehicle.make = selectedMake;
-          vehicle.model = "";
-
-          modelSelect.innerHTML = `<option value="">Loading models...</option>`;
-
-          if (vehicle.make) {
-            try {
-              const models = await apiJSON(`/api/models/${encodeURIComponent(vehicle.make)}`);
-              modelSelect.innerHTML = `<option value="">Select model...</option>`;
-
-              for (const m of models) {
-                const opt = document.createElement("option");
-                opt.value = m;
-                opt.textContent = m;
-                modelSelect.appendChild(opt);
-              }
-
-              modelSelect.focus();
-            } catch (_) {
-              modelSelect.innerHTML = `<option value="">Select model...</option>`;
-            }
-          }
-
-          syncEstimateMeta();
-          window.estimateState = estimateState;
-        });
-
-        makeSearch.addEventListener("blur", () => {
-          setTimeout(() => {
-            makeResults.style.display = "none";
-          }, 150);
-        });
-
-        makeSearch.addEventListener("focus", () => {
-          if (makeSearch.value.trim()) {
-            renderMakeResults(makeSearch.value);
-          }
-        });
-      }
-
-      // Model options
-      modelSelect.innerHTML = `<option value="">Select model...</option>`;
-      if (vehicle.make) {
-        try {
-          const models = await apiJSON(`/api/models/${encodeURIComponent(vehicle.make)}`);
-          for (const m of models) {
-            const opt = document.createElement("option");
-            opt.value = m;
-            opt.textContent = m;
-            modelSelect.appendChild(opt);
-          }
-        } catch (_) {}
-      }
-      modelSelect.value = vehicle.model || "";
-
-      yearSelect.addEventListener("change", () => {
-        vehicle.year = yearSelect.value;
-        syncEstimateMeta();
-        window.estimateState = estimateState;
-      });
-
-      makeSelect.addEventListener("change", async () => {
-
-        vehicle.make = makeSelect.value;
-        makeSearch.value = makeSelect.value;
-        vehicle.model = "";
-
-        modelSelect.innerHTML = `<option value="">Loading models...</option>`;
-
-        if (vehicle.make) {
-          try {
-            const models = await apiJSON(`/api/models/${encodeURIComponent(vehicle.make)}`);
-
-            modelSelect.innerHTML = `<option value="">Select model...</option>`;
-
-            for (const m of models) {
-              const opt = document.createElement("option");
-              opt.value = m;
-              opt.textContent = m;
-              modelSelect.appendChild(opt);
-            }
-
-            // ⭐ Auto focus model dropdown
-            modelSelect.focus();
-
-          } catch (_) {}
-        }
-
-        syncEstimateMeta();
-        window.estimateState = estimateState;
-
-      });
-
-      modelSelect.addEventListener("change", () => {
-        vehicle.model = modelSelect.value;
-        syncEstimateMeta();
-        window.estimateState = estimateState;
-      });
-    }
-
-    document.querySelectorAll(".remove-vehicle-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        removeVehicleCard(btn.dataset.vehicleId);
-      });
-    });
-
-    document.querySelectorAll(".vehicle-card").forEach((card) => {
-      card.addEventListener("click", (e) => {
-        if (e.target.closest("button") || e.target.closest("select") || e.target.closest("input") || e.target.closest("label")) {
-          return;
-        }
-
-        setActiveVehicle(card.dataset.vehicleId);
-      });
-    });
   }
 
   // ---- Generate All Service Estimates ----
@@ -2629,7 +2415,7 @@ if (getEstimateHint) {
   refreshDraftsUI();
 
   // ---- Init ----
-  (async () => {
+  const initReady = (async () => {
     try {
       populateYears();
       await loadMakes();
@@ -2709,7 +2495,7 @@ if (getEstimateHint) {
       }
     }
 
-    setTimeout(async () => {
+    initReady.then(async () => {
       try {
         await preloadVehicle();
 
@@ -2722,6 +2508,6 @@ if (getEstimateHint) {
       } catch (e) {
         console.warn("Repair guide preload failed:", e);
       }
-    }, 700);
+    });
   })();
 })();

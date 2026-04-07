@@ -423,10 +423,18 @@
     return true;
   }
 
-  if (!initGuideVehicleSelector()) {
-    [50, 250, 1000].forEach((delay) => {
-      window.setTimeout(initGuideVehicleSelector, delay);
-    });
+  function startGuideVehicleSelector() {
+    if (!initGuideVehicleSelector()) {
+      [50, 250, 1000].forEach((delay) => {
+        window.setTimeout(initGuideVehicleSelector, delay);
+      });
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startGuideVehicleSelector, { once: true });
+  } else {
+    startGuideVehicleSelector();
   }
 })();
 </script>
