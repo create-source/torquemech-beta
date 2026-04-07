@@ -3,6 +3,7 @@
   "title": "Front Brake Pads Replacement",
   "category": "Brakes",
   "subcategory": "Pads and Friction",
+  "sort_order": 10,
   "summary": "Repair guide, labor context, and estimate workflow for front brake pads replacement.",
   "vehicle_optional": true,
   "symptoms": [

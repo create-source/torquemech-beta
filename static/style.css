@@ -1491,3 +1491,85 @@ h3{
   }
 
 }
+
+.repair-diagram {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.tm-repair-visual {
+  margin: 12px 0 0;
+}
+
+.tm-repair-caption {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  color: var(--tm-text-muted);
+}
+
+.tm-repair-step {
+  margin-bottom: 18px;
+}
+
+.tm-repair-step:last-child {
+  margin-bottom: 0;
+}
+
+.tm-repair-stepText {
+  color: var(--tm-text);
+}
+
+.tm-repair-stepVisual {
+  max-width: 760px;
+}
+
+.repair-step-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+  padding: 12px;
+}
+
+.tm-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.tm-guide-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.tm-guide-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border-color: rgba(22, 163, 184, 0.28);
+}
+
+.tm-guide-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.tm-guide-card p {
+  margin: 0;
+}

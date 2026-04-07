@@ -1,28 +1,34 @@
 {% extends "layout.html" %}
 
 {% block content %}
-
 <section class="tm-section">
   <div class="tm-card">
-    <h1>TorqueMech Repair Guides</h1>
-    <p>Browse common repair procedures and estimate workflows.</p>
+    <div class="tm-eyebrow">TorqueMech Repair Guides</div>
+    <h1 class="tm-page-title">Repair Guides</h1>
+    <p class="tm-muted">
+      Browse mechanic-focused repair procedures, labor context, and estimate workflows by system.
+    </p>
   </div>
 </section>
 
+{% for group in guide_groups %}
 <section class="tm-section">
   <div class="tm-card">
+    <h2>{{ group.name }}</h2>
 
-    <ul class="tm-list">
-      {% for guide in guides %}
-      <li>
-        <a href="/repair-guides/{{ guide.slug }}">
-          {{ guide.title }}
-        </a>
-      </li>
+    <div class="tm-guide-grid">
+      {% for guide in group.guides %}
+      <a class="tm-guide-card" href="/repair-guides/{{ guide.slug }}">
+        <h3>{{ guide.title }}</h3>
+        {% if guide.summary %}
+        <p class="tm-muted">{{ guide.summary }}</p>
+        {% else %}
+        <p class="tm-muted">Open repair guide</p>
+        {% endif %}
+      </a>
       {% endfor %}
-    </ul>
-
+    </div>
   </div>
 </section>
-
+{% endfor %}
 {% endblock %}

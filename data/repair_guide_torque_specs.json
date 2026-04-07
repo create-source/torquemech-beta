@@ -1,0 +1,46 @@
+{
+  "front-brake-pads": {
+    "2018": {
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb",
+          "Caliper bracket bolts": "79 ft-lb",
+          "Slide pin bolts": "25 ft-lb"
+        }
+      }
+    }
+  },
+  "rear-brake-pads": {
+    "2018": {
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb",
+          "Caliper bracket bolts": "79 ft-lb",
+          "Slide pin bolts": "20 ft-lb"
+        }
+      }
+    }
+  },
+  "brake-rotor-replacement": {
+    "2018": {
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb",
+          "Caliper bracket bolts": "79 ft-lb",
+          "Rotor retaining screws": "80 in-lb"
+        }
+      }
+    }
+  },
+  "brake-caliper-replacement": {
+    "2018": {
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb",
+          "Caliper bracket bolts": "79 ft-lb",
+          "Brake hose banjo bolt": "22 ft-lb"
+        }
+      }
+    }
+  }
+}

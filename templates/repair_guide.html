@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+﻿{% extends "layout.html" %}
 
 {% block content %}
 <section class="tm-section">
@@ -11,33 +11,51 @@
 
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Select Vehicle (Optional)</h2>
+    <h2>Load Vehicle (Optional)</h2>
+    <div class="vehicle-card">
+      <div class="grid3">
+        <div>
+          <label for="guideYear">Year</label>
+          <select id="guideYear" class="vehicle-year">
+            <option value="">Select Year</option>
+          </select>
+        </div>
 
-    <div class="tm-form-grid tm-form-grid-3">
-      <select id="guideYear">
-        <option value="">Year</option>
-      </select>
+        <div>
+          <label for="guideMakeSearch">Make</label>
+          <input
+            id="guideMakeSearch"
+            type="text"
+            class="vehicle-make-search"
+            placeholder="Search make..."
+            autocomplete="off"
+          />
+          <div
+            id="guideMakeResults"
+            class="vehicle-make-results"
+            style="display:none; margin-top:6px; border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow-y:auto;"
+          ></div>
+          <select id="guideMake" class="vehicle-make" style="display:none;">
+            <option value="">Select make...</option>
+          </select>
+        </div>
 
-      <select id="guideMake">
-        <option value="">Make</option>
-      </select>
+        <div>
+          <label for="guideModel">Model</label>
+          <select id="guideModel" class="vehicle-model" disabled>
+            <option value="">Select model...</option>
+          </select>
+        </div>
+      </div>
 
-      <select id="guideModel" disabled>
-        <option value="">Model</option>
-      </select>
+      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <button class="tm-btn tm-btn-secondary clear-fields-btn" id="clearVehicleBtn" type="button">
+          Clear Fields
+        </button>
+      </div>
+
+      <p id="loadedVehicleNote" class="tm-muted" style="margin-top: 12px; display: none;"></p>
     </div>
-
-    <div class="tm-actions" style="margin-top: 14px; display:flex; gap:10px;">
-      <button class="tm-btn tm-btn-secondary" id="loadVehicleBtn" type="button">
-        Load Vehicle
-      </button>
-
-      <button class="tm-btn tm-btn-ghost" id="clearVehicleBtn" type="button">
-        Clear Fields
-      </button>
-    </div>
-
-    <p id="loadedVehicleNote" class="tm-muted" style="margin-top: 12px; display: none;"></p>
   </div>
 </section>
 
@@ -57,13 +75,13 @@
 <section class="tm-section tm-two-col">
   <div class="tm-card">
     <h2>Labor Time</h2>
-    <div class="tm-stat">{{ guide.labor_range.min_hours }} – {{ guide.labor_range.max_hours }} hours</div>
+    <div class="tm-stat">{{ guide.labor_range.min_hours }} - {{ guide.labor_range.max_hours }} hours</div>
     <p class="tm-muted">Typical labor range based on TorqueMech service data.</p>
   </div>
 
   <div class="tm-card">
     <h2>Estimated Labor Cost</h2>
-    <div class="tm-stat">${{ guide.labor_cost.min }} – ${{ guide.labor_cost.max }}</div>
+    <div class="tm-stat">${{ guide.labor_cost.min }} - ${{ guide.labor_cost.max }}</div>
     <p class="tm-muted">Estimated labor only. Final total depends on parts, condition, and access.</p>
   </div>
 </section>
@@ -72,13 +90,13 @@
 <section class="tm-section tm-two-col">
   <div class="tm-card">
     <h2>Typical Parts Cost</h2>
-    <div class="tm-stat">${{ guide.parts_cost.min }} – ${{ guide.parts_cost.max }}</div>
+    <div class="tm-stat">${{ guide.parts_cost.min }} - ${{ guide.parts_cost.max }}</div>
     <p class="tm-muted">Parts estimate range for common replacement scenarios.</p>
   </div>
 
   <div class="tm-card">
     <h2>Typical Total Repair Range</h2>
-    <div class="tm-stat">${{ guide.total_cost.min }} – ${{ guide.total_cost.max }}</div>
+    <div class="tm-stat">${{ guide.total_cost.min }} - ${{ guide.total_cost.max }}</div>
     <p class="tm-muted">Combined labor and parts estimate range.</p>
   </div>
 </section>
@@ -110,23 +128,50 @@
 </section>
 {% endif %}
 
+{% if guide.diagram %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Reference Diagram</h2>
+    <figure class="tm-repair-visual">
+      <img src="{{ guide.diagram.src }}" alt="{{ guide.diagram.alt }}" class="repair-diagram">
+      {% if guide.diagram.caption %}
+      <figcaption class="tm-repair-caption">{{ guide.diagram.caption }}</figcaption>
+      {% endif %}
+    </figure>
+  </div>
+</section>
+{% endif %}
+
 {% if guide.torque_specs %}
 <section class="tm-section">
   <div class="tm-card">
     <h2>Torque Specs</h2>
     <ul class="tm-list">
       {% for spec in guide.torque_specs %}
-    <li>
-      <strong>{{ spec.label }}</strong> —
-      <span class="tm-torque-value" data-spec-label="{{ spec.label | lower }}">
-        {{ spec.value }}
-      </span>
-    </li>
+      <li>
+        <strong>{{ spec.label }}</strong> -
+        <span class="tm-torque-value" data-spec-label="{{ spec.label | lower }}">
+          {{ spec.value }}
+        </span>
+      </li>
       {% endfor %}
     </ul>
     <p class="tm-muted" id="torqueSpecsNote" style="margin-top: 12px;">
-        Load a vehicle to carry repair context into the estimator. Vehicle-specific torque specs are coming next.
+      Load a vehicle to apply stored torque specs where available. Unsupported labels stay on the current guide placeholders.
     </p>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.bolt_sizes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Bolt Sizes</h2>
+    <ul class="tm-list">
+      {% for bolt in guide.bolt_sizes %}
+      <li>{{ bolt }}</li>
+      {% endfor %}
+    </ul>
   </div>
 </section>
 {% endif %}
@@ -137,7 +182,22 @@
     <h2>Repair Steps</h2>
     <ol class="tm-list tm-list-numbered">
       {% for step in guide.repair_steps %}
-      <li>{{ step }}</li>
+      {% set step_number = loop.index %}
+      <li class="tm-repair-step">
+        <div class="tm-repair-stepText">{{ step }}</div>
+        {% if guide.step_images %}
+        {% for image in guide.step_images %}
+        {% if image.step == step_number %}
+        <figure class="tm-repair-visual tm-repair-stepVisual">
+          <img src="{{ image.src }}" alt="{{ image.alt }}" class="repair-step-image">
+          {% if image.caption %}
+          <figcaption class="tm-repair-caption">{{ image.caption }}</figcaption>
+          {% endif %}
+        </figure>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+      </li>
       {% endfor %}
     </ol>
   </div>
@@ -173,7 +233,7 @@
 <section class="tm-section tm-two-col">
   {% if guide.coming_next %}
   <div class="tm-card">
-    <h2>What We’ll Add Next</h2>
+    <h2>What We'll Add Next</h2>
     <ul class="tm-list">
       {% for item in guide.coming_next %}
       <li>{{ item }}</li>
@@ -216,159 +276,146 @@
       data-service-code="{{ guide.estimate.service_code }}"
       href="{{ guide.estimate.estimator_link }}?category={{ guide.estimate.category_code | urlencode }}&service={{ guide.estimate.service_code | urlencode }}"
     >
-      {{ guide.estimate.cta_label }} →
+      {{ guide.estimate.cta_label }} ->
     </a>
   </div>
 </section>
 <script>
 (function () {
+  const guideSlug = {{ guide.get("slug", "") | tojson }};
   const yearSelect = document.getElementById("guideYear");
   const makeSelect = document.getElementById("guideMake");
+  const makeSearch = document.getElementById("guideMakeSearch");
+  const makeResults = document.getElementById("guideMakeResults");
   const modelSelect = document.getElementById("guideModel");
-  const loadVehicleBtn = document.getElementById("loadVehicleBtn");
   const clearVehicleBtn = document.getElementById("clearVehicleBtn");
   const loadedVehicleNote = document.getElementById("loadedVehicleNote");
   const estimateRepairBtn = document.getElementById("estimateRepairBtn");
+  const torqueSpecsNote = document.getElementById("torqueSpecsNote");
+  const torqueValueEls = Array.from(document.querySelectorAll(".tm-torque-value"));
 
-  if (!yearSelect || !makeSelect || !modelSelect || !loadVehicleBtn || !estimateRepairBtn) {
+  if (
+    !yearSelect ||
+    !makeSelect ||
+    !makeSearch ||
+    !makeResults ||
+    !modelSelect ||
+    !window.TorqueMechVehicleUI?.initSharedVehicleSelector
+  ) {
     return;
   }
 
-  const currentYear = new Date().getFullYear();
+  const defaultTorqueValues = new Map(
+    torqueValueEls.map((el) => [
+      String(el.dataset.specLabel || "").trim().toLowerCase(),
+      (el.textContent || "").trim(),
+    ])
+  );
+  const defaultTorqueNote = torqueSpecsNote ? torqueSpecsNote.textContent.trim() : "";
 
-  for (let year = currentYear + 1; year >= 1985; year--) {
-    const option = document.createElement("option");
-    option.value = String(year);
-    option.textContent = String(year);
-    yearSelect.appendChild(option);
-  }
+  function updateEstimateLink(year = "", make = "", model = "") {
+    if (!estimateRepairBtn) return;
 
-  async function loadMakes() {
-    try {
-      const res = await fetch("/api/makes");
-      if (!res.ok) throw new Error("Failed to load makes");
-
-      const makes = await res.json();
-
-      makeSelect.innerHTML = '<option value="">Make</option>';
-      makes.forEach((make) => {
-        const option = document.createElement("option");
-        option.value = make;
-        option.textContent = make;
-        makeSelect.appendChild(option);
-      });
-    } catch (err) {
-      console.error("Could not load makes", err);
-    }
-  }
-
-  async function loadModels(make) {
-    modelSelect.innerHTML = '<option value="">Loading models...</option>';
-    modelSelect.disabled = true;
-
-    try {
-      const res = await fetch(`/api/models/${encodeURIComponent(make)}`);
-      if (!res.ok) throw new Error("Failed to load models");
-
-      const models = await res.json();
-
-      modelSelect.innerHTML = '<option value="">Model</option>';
-      models.forEach((model) => {
-        const option = document.createElement("option");
-        option.value = model;
-        option.textContent = model;
-        modelSelect.appendChild(option);
-      });
-
-      modelSelect.disabled = false;
-    } catch (err) {
-      console.error("Could not load models", err);
-      modelSelect.innerHTML = '<option value="">Model unavailable</option>';
-      modelSelect.disabled = true;
-    }
-  }
-
-  function updateEstimateLink() {
     const estimatorLink = estimateRepairBtn.dataset.estimatorLink || "/estimator";
     const serviceCode = estimateRepairBtn.dataset.serviceCode || "";
-
     const params = new URLSearchParams();
     if (serviceCode) params.set("service", serviceCode);
+    if (year) params.set("year", year);
+    if (make) params.set("make", make);
+    if (model) params.set("model", model);
 
-    if (yearSelect.value) params.set("year", yearSelect.value);
-    if (makeSelect.value) params.set("make", makeSelect.value);
-    if (modelSelect.value) params.set("model", modelSelect.value);
-
-    estimateRepairBtn.href = `${estimatorLink}?${params.toString()}`;
+    const query = params.toString();
+    estimateRepairBtn.href = query ? `${estimatorLink}?${query}` : estimatorLink;
   }
 
-  makeSelect.addEventListener("change", async function () {
-    loadedVehicleNote.style.display = "none";
-    loadedVehicleNote.textContent = "";
+  function applyTorqueSpecs(specs) {
+    const normalizedSpecs = new Map(
+      Object.entries(specs || {}).map(([label, value]) => [
+        String(label || "").trim().toLowerCase(),
+        String(value || "").trim(),
+      ])
+    );
 
-    modelSelect.innerHTML = '<option value="">Model</option>';
-    modelSelect.disabled = true;
+    let appliedCount = 0;
+    torqueValueEls.forEach((el) => {
+      const labelKey = String(el.dataset.specLabel || "").trim().toLowerCase();
+      const fallbackValue = defaultTorqueValues.get(labelKey) || "";
+      const matchedValue = normalizedSpecs.get(labelKey);
 
-    updateEstimateLink();
+      if (matchedValue) {
+        el.textContent = matchedValue;
+        appliedCount += 1;
+      } else {
+        el.textContent = fallbackValue;
+      }
+    });
 
-    if (!this.value) return;
-    await loadModels(this.value);
-    updateEstimateLink();
-  });
-
-  yearSelect.addEventListener("change", () => {
-    updateEstimateLink();
-    updateClearButtonState();
-  });
-
-  makeSelect.addEventListener("change", () => {
-    updateEstimateLink();
-    updateClearButtonState();
-  });
-
-  modelSelect.addEventListener("change", () => {
-    updateEstimateLink();
-    updateClearButtonState();
-  });
-
-  function updateClearButtonState() {
-    if (!clearVehicleBtn) return;
-
-    clearVehicleBtn.disabled =
-      !(yearSelect.value || makeSelect.value || modelSelect.value);
+    return appliedCount;
   }
 
-  loadVehicleBtn.addEventListener("click", function () {
-    const year = yearSelect.value;
-    const make = makeSelect.value;
-    const model = modelSelect.value;
+  function resetTorqueSpecs() {
+    applyTorqueSpecs({});
+    if (torqueSpecsNote) {
+      torqueSpecsNote.textContent = defaultTorqueNote;
+    }
+  }
 
-    if (!year || !make || !model) {
-      loadedVehicleNote.style.display = "block";
-      loadedVehicleNote.textContent = "Select year, make, and model first.";
+  async function refreshTorqueSpecs(year, make, model) {
+    if (!guideSlug || !year || !make || !model || !torqueValueEls.length) {
+      resetTorqueSpecs();
       return;
     }
 
-    loadedVehicleNote.style.display = "block";
-    loadedVehicleNote.textContent = `Loaded Vehicle: ${year} ${make} ${model}`;
-    updateEstimateLink();
+    try {
+      const params = new URLSearchParams({ year, make, model });
+      const response = await fetch(`/api/repair-guides/${encodeURIComponent(guideSlug)}/torque-specs?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to load torque specs");
+      }
+
+      const payload = await response.json();
+      const appliedCount = applyTorqueSpecs(payload.specs || {});
+
+      if (torqueSpecsNote) {
+        torqueSpecsNote.textContent = appliedCount
+          ? `Showing stored torque specs for ${year} ${make} ${model} where available.`
+          : `No stored torque specs found for ${year} ${make} ${model} yet. Placeholder values remain.`;
+      }
+    } catch (_) {
+      resetTorqueSpecs();
+    }
+  }
+
+  window.TorqueMechVehicleUI.initSharedVehicleSelector({
+    yearSelect,
+    makeSelect,
+    makeSearch,
+    makeResults,
+    modelSelect,
+    clearButton: clearVehicleBtn,
+    onChange: ({ year, make, model, hasSelection, isComplete }) => {
+      updateEstimateLink(year, make, model);
+      if (isComplete) {
+        refreshTorqueSpecs(year, make, model);
+      } else {
+        resetTorqueSpecs();
+      }
+
+      if (!loadedVehicleNote) return;
+      if (!hasSelection) {
+        loadedVehicleNote.style.display = "none";
+        loadedVehicleNote.textContent = "";
+        return;
+      }
+
+      loadedVehicleNote.style.display = "block";
+      loadedVehicleNote.textContent = isComplete
+        ? `Selected vehicle: ${year} ${make} ${model}`
+        : "Continue selecting year, make, and model to carry vehicle context into the estimator.";
+    },
   });
 
-  loadMakes();
   updateEstimateLink();
-  updateClearButtonState();
-
-  clearVehicleBtn?.addEventListener("click", function () {
-    yearSelect.value = "";
-    makeSelect.value = "";
-    modelSelect.innerHTML = '<option value="">Model</option>';
-    modelSelect.disabled = true;
-
-    loadedVehicleNote.style.display = "none";
-    loadedVehicleNote.textContent = "";
-
-    updateEstimateLink();
-  });
 })();
 </script>
 {% endif %}

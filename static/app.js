@@ -5,6 +5,243 @@
 */
 // static/app.js — CLEAN (Beta-stable)
 (() => {
+  async function vehicleUiApiJSON(url, opts) {
+    const response = await fetch(url, opts);
+    if (!response.ok) {
+      let detail = "";
+      try {
+        detail = await response.text();
+      } catch (_) {}
+      throw new Error(detail || `${response.status} ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async function initSharedVehicleSelector({
+    yearSelect,
+    makeSelect,
+    makeSearch,
+    makeResults,
+    modelSelect,
+    clearButton,
+    initialVehicle = {},
+    startYear = 1980,
+    onChange,
+    onModelLoadingChange,
+  } = {}) {
+    if (!yearSelect || !makeSelect || !makeSearch || !makeResults || !modelSelect) {
+      return null;
+    }
+
+    const vehicle = {
+      year: String(initialVehicle.year || ""),
+      make: String(initialVehicle.make || ""),
+      model: String(initialVehicle.model || ""),
+    };
+
+    const notifyChange = () => {
+      if (typeof onChange === "function") {
+        onChange({
+          year: vehicle.year,
+          make: vehicle.make,
+          model: vehicle.model,
+          hasSelection: Boolean(vehicle.year || vehicle.make || vehicle.model),
+          isComplete: Boolean(vehicle.year && vehicle.make && vehicle.model),
+        });
+      }
+    };
+
+    const setModelLoading = (isLoading) => {
+      if (typeof onModelLoadingChange === "function") {
+        onModelLoadingChange(Boolean(isLoading), { ...vehicle });
+      }
+    };
+
+    let makes = [];
+    const currentYear = new Date().getFullYear();
+
+    yearSelect.innerHTML = `<option value="">Select Year</option>`;
+    for (let year = currentYear; year >= startYear; year--) {
+      const option = document.createElement("option");
+      option.value = String(year);
+      option.textContent = String(year);
+      yearSelect.appendChild(option);
+    }
+    yearSelect.value = vehicle.year;
+
+    const hideMakeResults = () => {
+      makeResults.style.display = "none";
+      makeResults.innerHTML = "";
+    };
+
+    const renderMakeResults = (query) => {
+      const normalizedQuery = query.trim().toLowerCase();
+
+      if (!normalizedQuery) {
+        hideMakeResults();
+        return;
+      }
+
+      const filtered = makes
+        .filter((make) => make.toLowerCase().includes(normalizedQuery))
+        .slice(0, 8);
+
+      if (!filtered.length) {
+        hideMakeResults();
+        return;
+      }
+
+      makeResults.innerHTML = filtered
+        .map(
+          (make) => `
+            <button
+              type="button"
+              class="make-result-item"
+              data-make="${make}"
+              style="
+                display:block;
+                width:100%;
+                text-align:left;
+                padding:12px 14px;
+                background:#ffffff;
+                color:#0f172a;
+                border:none;
+                border-bottom:1px solid #e5e7eb;
+                cursor:pointer;
+                font-size:16px;
+              "
+            >${make}</button>
+          `
+        )
+        .join("");
+
+      makeResults.style.display = "block";
+    };
+
+    const populateMakeOptions = () => {
+      makeSelect.innerHTML = `<option value="">Select make...</option>`;
+      makes.forEach((make) => {
+        const option = document.createElement("option");
+        option.value = make;
+        option.textContent = make;
+        makeSelect.appendChild(option);
+      });
+      makeSelect.value = vehicle.make;
+      makeSearch.value = vehicle.make;
+    };
+
+    const populateModels = async (selectedMake, selectedModel = "") => {
+      modelSelect.innerHTML = `<option value="">Loading models...</option>`;
+      modelSelect.disabled = true;
+      setModelLoading(true);
+
+      if (!selectedMake) {
+        modelSelect.innerHTML = `<option value="">Select model...</option>`;
+        setModelLoading(false);
+        return;
+      }
+
+      try {
+        const models = await vehicleUiApiJSON(`/api/models/${encodeURIComponent(selectedMake)}`);
+        modelSelect.innerHTML = `<option value="">Select model...</option>`;
+
+        models.forEach((model) => {
+          const option = document.createElement("option");
+          option.value = model;
+          option.textContent = model;
+          modelSelect.appendChild(option);
+        });
+
+        modelSelect.disabled = false;
+        modelSelect.value = selectedModel;
+      } catch (_) {
+        modelSelect.innerHTML = `<option value="">Select model...</option>`;
+      } finally {
+        setModelLoading(false);
+      }
+    };
+
+    const applyMakeSelection = async (selectedMake, { focusModel = false } = {}) => {
+      vehicle.make = selectedMake;
+      vehicle.model = "";
+
+      makeSelect.value = selectedMake;
+      makeSearch.value = selectedMake;
+      hideMakeResults();
+
+      notifyChange();
+      await populateModels(selectedMake);
+
+      if (focusModel && selectedMake && !modelSelect.disabled) {
+        modelSelect.focus();
+      }
+
+      notifyChange();
+    };
+
+    makes = await vehicleUiApiJSON("/api/makes");
+    populateMakeOptions();
+    await populateModels(vehicle.make, vehicle.model);
+    notifyChange();
+
+    yearSelect.addEventListener("change", () => {
+      vehicle.year = yearSelect.value;
+      notifyChange();
+    });
+
+    makeSearch.addEventListener("input", () => {
+      renderMakeResults(makeSearch.value);
+    });
+
+    makeSearch.addEventListener("focus", () => {
+      if (makeSearch.value.trim()) {
+        renderMakeResults(makeSearch.value);
+      }
+    });
+
+    makeSearch.addEventListener("blur", () => {
+      setTimeout(hideMakeResults, 150);
+    });
+
+    makeResults.addEventListener("click", async (event) => {
+      const resultButton = event.target.closest(".make-result-item");
+      if (!resultButton) return;
+      await applyMakeSelection(resultButton.dataset.make || "", { focusModel: true });
+    });
+
+    makeSelect.addEventListener("change", async () => {
+      await applyMakeSelection(makeSelect.value, { focusModel: true });
+    });
+
+    modelSelect.addEventListener("change", () => {
+      vehicle.model = modelSelect.value;
+      notifyChange();
+    });
+
+    clearButton?.addEventListener("click", async () => {
+      vehicle.year = "";
+      vehicle.make = "";
+      vehicle.model = "";
+
+      yearSelect.value = "";
+      makeSelect.value = "";
+      makeSearch.value = "";
+      hideMakeResults();
+      await populateModels("");
+      notifyChange();
+    });
+
+    return {
+      getValue() {
+        return { ...vehicle };
+      },
+    };
+  }
+
+  window.TorqueMechVehicleUI = Object.assign({}, window.TorqueMechVehicleUI, {
+    initSharedVehicleSelector,
+  });
+
   // Only run on Estimator page
   const estimateBtn = document.getElementById("quickEstimateBtn");
   if (!estimateBtn) return;
@@ -2082,6 +2319,54 @@ if (getEstimateHint) {
   }
 
   async function bindVehicleCardFields() {
+    for (const vehicle of estimateState.vehicles) {
+      const yearSelect = document.querySelector(`.vehicle-year[data-vehicle-id="${vehicle.id}"]`);
+      const makeSelect = document.querySelector(`.vehicle-make[data-vehicle-id="${vehicle.id}"]`);
+      const makeSearch = document.querySelector(`.vehicle-make-search[data-vehicle-id="${vehicle.id}"]`);
+      const makeResults = document.querySelector(`.vehicle-make-results[data-vehicle-id="${vehicle.id}"]`);
+      const modelSelect = document.querySelector(`.vehicle-model[data-vehicle-id="${vehicle.id}"]`);
+
+      if (!yearSelect || !makeSelect || !makeSearch || !makeResults || !modelSelect) continue;
+
+      await window.TorqueMechVehicleUI.initSharedVehicleSelector({
+        yearSelect,
+        makeSelect,
+        makeSearch,
+        makeResults,
+        modelSelect,
+        initialVehicle: {
+          year: vehicle.year || "",
+          make: vehicle.make || "",
+          model: vehicle.model || "",
+        },
+        onChange: ({ year, make, model }) => {
+          vehicle.year = year;
+          vehicle.make = make;
+          vehicle.model = model;
+          syncEstimateMeta();
+          window.estimateState = estimateState;
+        },
+      });
+    }
+
+    document.querySelectorAll(".remove-vehicle-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        removeVehicleCard(btn.dataset.vehicleId);
+      });
+    });
+
+    document.querySelectorAll(".vehicle-card").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("button") || e.target.closest("select") || e.target.closest("input") || e.target.closest("label")) {
+          return;
+        }
+
+        setActiveVehicle(card.dataset.vehicleId);
+      });
+    });
+
+    return;
+
     const makes = await apiJSON("/api/makes");
 
     for (const vehicle of estimateState.vehicles) {
@@ -2440,4 +2725,3 @@ if (getEstimateHint) {
     }, 700);
   })();
 })();
-

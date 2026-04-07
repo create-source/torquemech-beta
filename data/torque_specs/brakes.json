@@ -1,0 +1,210 @@
+{
+  "front-brake-pads": {
+    "2017": {
+      "HONDA": {
+        "CIVIC": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    },
+    "2018": {
+      "FORD": {
+        "ESCAPE": {
+          "Wheel lug nuts": "100 lb-ft (135 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2019": {
+      "FORD": {
+        "F-150": {
+          "Wheel lug nuts": "150 lb-ft (204 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "C-HR": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2024": {
+      "HONDA": {
+        "CR-V": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      },
+      "NISSAN": {
+        "ALTIMA": {
+          "Wheel lug nuts": "83 ft-lb (113 N·m)"
+        }
+      }
+    },
+    "2025": {
+      "HONDA": {
+        "ACCORD": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    }
+  },
+  "rear-brake-pads": {
+    "2017": {
+      "HONDA": {
+        "CIVIC": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    },
+    "2018": {
+      "FORD": {
+        "ESCAPE": {
+          "Wheel lug nuts": "100 lb-ft (135 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2019": {
+      "FORD": {
+        "F-150": {
+          "Wheel lug nuts": "150 lb-ft (204 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "C-HR": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2024": {
+      "HONDA": {
+        "CR-V": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      },
+      "NISSAN": {
+        "ALTIMA": {
+          "Wheel lug nuts": "83 ft-lb (113 N·m)"
+        }
+      }
+    },
+    "2025": {
+      "HONDA": {
+        "ACCORD": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    }
+  },
+  "brake-rotor-replacement": {
+    "2017": {
+      "HONDA": {
+        "CIVIC": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    },
+    "2018": {
+      "FORD": {
+        "ESCAPE": {
+          "Wheel lug nuts": "100 lb-ft (135 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2019": {
+      "FORD": {
+        "F-150": {
+          "Wheel lug nuts": "150 lb-ft (204 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "C-HR": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2024": {
+      "HONDA": {
+        "CR-V": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      },
+      "NISSAN": {
+        "ALTIMA": {
+          "Wheel lug nuts": "83 ft-lb (113 N·m)"
+        }
+      }
+    },
+    "2025": {
+      "HONDA": {
+        "ACCORD": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    }
+  },
+  "brake-caliper-replacement": {
+    "2017": {
+      "HONDA": {
+        "CIVIC": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    },
+    "2018": {
+      "FORD": {
+        "ESCAPE": {
+          "Wheel lug nuts": "100 lb-ft (135 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "CAMRY": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2019": {
+      "FORD": {
+        "F-150": {
+          "Wheel lug nuts": "150 lb-ft (204 N·m)"
+        }
+      },
+      "TOYOTA": {
+        "C-HR": {
+          "Wheel lug nuts": "76 ft-lb (103 N·m)"
+        }
+      }
+    },
+    "2024": {
+      "HONDA": {
+        "CR-V": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      },
+      "NISSAN": {
+        "ALTIMA": {
+          "Wheel lug nuts": "83 ft-lb (113 N·m)"
+        }
+      }
+    },
+    "2025": {
+      "HONDA": {
+        "ACCORD": {
+          "Wheel lug nuts": "80 ft-lb (108 N·m)"
+        }
+      }
+    }
+  }
+}

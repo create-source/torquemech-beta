@@ -1,0 +1,94 @@
+﻿{
+  "slug": "rear-brake-pads",
+  "title": "Rear Brake Pads Replacement",
+  "category": "Brakes",
+  "subcategory": "Pads and Friction",
+  "sort_order": 20,
+  "summary": "Repair guide, labor context, and estimate workflow for rear brake pads replacement.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Squealing while braking",
+    "Grinding noise from rear wheels",
+    "Brake warning indicator",
+    "Longer stopping distance",
+    "Uneven rear pad wear"
+  ],
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 3.5
+  },
+  "labor_cost": {
+    "min": 90,
+    "max": 315
+  },
+  "parts_cost": {
+    "min": 35,
+    "max": 140
+  },
+  "total_cost": {
+    "min": 125,
+    "max": 455
+  },
+  "repair_overview": [
+    "Confirm brake pad wear and related rotor condition",
+    "Remove wheel and brake assembly hardware",
+    "Replace worn rear brake pads and service hardware",
+    "Reassemble and verify brake operation",
+    "Road test or confirm proper pedal feel when applicable"
+  ],
+  "tools_required": [
+    "Floor jack",
+    "Jack stands",
+    "Lug wrench or impact",
+    "Socket set",
+    "Torque wrench",
+    "Brake piston compressor or rewind tool",
+    "Brake cleaner"
+  ],
+  "torque_specs": [
+    { "label": "Wheel lug nuts", "value": "Vehicle specific - load vehicle for exact spec" },
+    { "label": "Caliper bracket bolts", "value": "Vehicle specific - load vehicle for exact spec" },
+    { "label": "Slide pin bolts", "value": "Vehicle specific - load vehicle for exact spec" }
+  ],
+  "repair_steps": [
+    "Raise and support the vehicle safely.",
+    "Remove the wheel.",
+    "Remove caliper hardware.",
+    "Support caliper without stressing hose.",
+    "Remove old pads and hardware.",
+    "Retract or rewind piston as required.",
+    "Install new pads and hardware.",
+    "Reassemble and torque fasteners.",
+    "Reinstall wheel and torque lug nuts.",
+    "Pump brake pedal before moving vehicle."
+  ],
+  "pro_tips": [
+    "Check parking brake design before retracting rear pistons.",
+    "Inspect rotor wear pattern before reinstalling components.",
+    "Replace pad hardware clips when included.",
+    "Torque fasteners properly and avoid overtightening."
+  ],
+  "warnings": [
+    "Do not let the caliper hang by the brake hose.",
+    "Some rear calipers require a piston rewind tool.",
+    "Do not drive until brake pedal feel is restored."
+  ],
+  "diagnostic_context": {
+    "intro": "Rear brake wear may begin with noise, drag, or uneven braking before replacement is needed.",
+    "common_symptoms_link": "/symptoms/brake-noise",
+    "diagnostic_tools_link": "/diagnostic-repair"
+  },
+  "estimate": {
+    "cta_label": "Estimate Rear Brake Pads Replacement",
+    "service_code": "rear_brake_pads_replacement",
+    "service_name": "Rear Brake Pads Replacement",
+    "estimator_link": "/estimator"
+  },
+  "coming_next": [
+    "Exact torque specs",
+    "Bolt sizes",
+    "Tools by vehicle",
+    "Part locations",
+    "Diagrams and reference images"
+  ]
+}

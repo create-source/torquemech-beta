@@ -1,0 +1,95 @@
+﻿{
+  "slug": "brake-caliper-replacement",
+  "title": "Brake Caliper Replacement",
+  "category": "Brakes",
+  "subcategory": "Hydraulic Components",
+  "sort_order": 40,
+  "summary": "Repair guide, labor context, and estimate workflow for brake caliper replacement.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Brake drag",
+    "Uneven pad wear",
+    "Brake fluid leak near wheel",
+    "Pulling while braking",
+    "Sticking caliper piston"
+  ],
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 3.0
+  },
+  "labor_cost": {
+    "min": 90,
+    "max": 270
+  },
+  "parts_cost": {
+    "min": 80,
+    "max": 260
+  },
+  "total_cost": {
+    "min": 170,
+    "max": 530
+  },
+  "repair_overview": [
+    "Confirm caliper sticking, leaking, or seized condition",
+    "Remove brake hose and caliper assembly",
+    "Install replacement caliper",
+    "Bleed brake system as required",
+    "Verify there are no leaks and confirm proper brake operation"
+  ],
+  "tools_required": [
+    "Floor jack",
+    "Jack stands",
+    "Lug wrench or impact",
+    "Socket set",
+    "Torque wrench",
+    "Line wrench",
+    "Brake bleeder bottle or pressure bleeder",
+    "Brake cleaner"
+  ],
+  "torque_specs": [
+    { "label": "Wheel lug nuts", "value": "Vehicle specific - load vehicle for exact spec" },
+    { "label": "Caliper bracket bolts", "value": "Vehicle specific - load vehicle for exact spec" },
+    { "label": "Brake hose banjo bolt", "value": "Vehicle specific - load vehicle for exact spec" }
+  ],
+  "repair_steps": [
+    "Raise and support the vehicle safely.",
+    "Remove the wheel.",
+    "Confirm caliper and hose connection layout.",
+    "Remove caliper hardware and disconnect hose as required.",
+    "Install replacement caliper and sealing washers if applicable.",
+    "Reconnect brake hose and torque fittings.",
+    "Bleed brake system.",
+    "Verify there are no fluid leaks.",
+    "Reinstall wheel and torque lug nuts.",
+    "Confirm brake pedal feel before moving vehicle."
+  ],
+  "pro_tips": [
+    "Compare replacement caliper to the original before installation.",
+    "Use new sealing washers where required.",
+    "Inspect hose condition while the system is apart.",
+    "Bleed both sides when needed for balanced brake feel."
+  ],
+  "warnings": [
+    "Brake fluid damages painted surfaces.",
+    "Do not reuse damaged sealing washers.",
+    "Do not drive until pedal feel is firm and leaks are ruled out."
+  ],
+  "diagnostic_context": {
+    "intro": "Caliper replacement often follows brake drag, fluid leaks, or uneven wear discovered during brake inspection.",
+    "common_symptoms_link": "/symptoms/brake-drag",
+    "diagnostic_tools_link": "/diagnostic-repair"
+  },
+  "estimate": {
+    "cta_label": "Estimate Brake Caliper Replacement",
+    "service_code": "brake_caliper_replacement",
+    "service_name": "Brake Caliper Replacement",
+    "estimator_link": "/estimator"
+  },
+  "coming_next": [
+    "Exact torque specs",
+    "Bolt sizes",
+    "Bleeding references",
+    "Part locations",
+    "Diagrams and reference images"
+  ]
+}

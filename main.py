@@ -155,6 +155,10 @@ DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
 DB_PATH = str((DATA_DIR / "app.db").resolve())
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
+REPAIR_GUIDE_TORQUE_SPECS_PATH = DATA_DIR / "torque_specs" / "brakes.json"
+
+_repair_guide_torque_specs_cache: Optional[Dict[str, Any]] = None
+_repair_guide_torque_specs_mtime: Optional[float] = None
 
 def load_json_file(*parts: str) -> dict:
     file_path = DATA_DIR.joinpath(*parts)
@@ -162,10 +166,79 @@ def load_json_file(*parts: str) -> dict:
         raise HTTPException(status_code=404, detail="Content not found")
 
     try:
-        with file_path.open("r", encoding="utf-8") as f:
+        with file_path.open("r", encoding="utf-8-sig") as f:
             return json.load(f)
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Invalid JSON content")
+
+
+def load_repair_guide_torque_specs() -> Dict[str, Any]:
+    global _repair_guide_torque_specs_cache, _repair_guide_torque_specs_mtime
+
+    if not REPAIR_GUIDE_TORQUE_SPECS_PATH.exists():
+        return {}
+
+    mtime = REPAIR_GUIDE_TORQUE_SPECS_PATH.stat().st_mtime
+    if (
+        _repair_guide_torque_specs_cache is not None
+        and _repair_guide_torque_specs_mtime == mtime
+    ):
+        return _repair_guide_torque_specs_cache
+
+    try:
+        data = json.loads(REPAIR_GUIDE_TORQUE_SPECS_PATH.read_text(encoding="utf-8-sig"))
+    except Exception:
+        data = {}
+
+    if not isinstance(data, dict):
+        data = {}
+
+    _repair_guide_torque_specs_cache = data
+    _repair_guide_torque_specs_mtime = mtime
+    return data
+
+
+def normalize_repair_guide_slug(value: str) -> str:
+    return (value or "").strip().lower().replace("_", "-")
+
+
+def normalize_torque_lookup_key(value: str) -> str:
+    return " ".join(str(value or "").strip().upper().split())
+
+
+def get_repair_guide_vehicle_torque_specs(
+    guide_slug: str,
+    year: str | int,
+    make: str,
+    model: str,
+) -> Dict[str, str]:
+    data = load_repair_guide_torque_specs()
+    slug_key = normalize_repair_guide_slug(guide_slug)
+    year_key = str(year or "").strip()
+    make_key = normalize_torque_lookup_key(make)
+    model_key = normalize_torque_lookup_key(model)
+
+    if not (slug_key and year_key and make_key and model_key):
+        return {}
+
+    specs = (
+        data.get(slug_key, {})
+        .get(year_key, {})
+        .get(make_key, {})
+        .get(model_key, {})
+    )
+
+    if not isinstance(specs, dict):
+        return {}
+
+    normalized_specs: Dict[str, str] = {}
+    for label, value in specs.items():
+        label_text = str(label or "").strip()
+        value_text = str(value or "").strip()
+        if label_text and value_text:
+            normalized_specs[label_text] = value_text
+
+    return normalized_specs
 
 # --- Templates ---
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -354,7 +427,7 @@ def obd_seed_from_json_if_empty() -> None:
         return
 
     try:
-        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8"))
+        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
         if not isinstance(data, dict):
             return
     except Exception:
@@ -411,7 +484,7 @@ def admin_import_obd_codes(key: str = Query(...)):
         raise HTTPException(status_code=404, detail="obd_codes.json not found")
 
     try:
-        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8"))
+        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
         if not isinstance(data, dict):
             raise ValueError("obd_codes.json must be an object {code: {...}}")
     except Exception as e:
@@ -958,30 +1031,68 @@ def repair_cost_index(request: Request):
             "repair_pages": repair_pages,
         },
     )
+
 @app.get("/repair-guides", response_class=HTMLResponse)
 async def repair_guides_index(request: Request):
+    guides_dir = Path(__file__).parent / "data" / "repair_guides"
 
-    guides_dir = BASE_DIR / "data" / "repair_guides"
+    category_order = [
+        "Brakes",
+        "Engine",
+        "Cooling",
+        "Suspension",
+        "Electrical",
+        "Maintenance",
+    ]
 
-    guides = []
+    grouped_guides = {category: [] for category in category_order}
+    grouped_guides["Other"] = []
 
     for file in guides_dir.glob("*.json"):
         slug = file.stem.replace("_", "-")
 
-        data = json.loads(file.read_text())
+        try:
+            data = json.loads(file.read_text(encoding="utf-8-sig"))
+            print("LOADED:", file.name, "|", data.get("title"), "|", data.get("category"))
+        except Exception as e:
+            print("FAILED:", file.name, "|", str(e))
+            continue
 
-        guides.append({
+        category = (data.get("category") or "Other").title()
+        title = data.get("title", slug.replace("-", " ").title())
+        summary = data.get("summary", "")
+
+        item = {
             "slug": slug,
-            "title": data.get("title", slug.replace("-", " ").title())
-        })
+            "title": title,
+            "summary": summary,
+            "sort_order": data.get("sort_order", 999),
+        }
 
-    guides.sort(key=lambda g: g["title"])
+        if category in grouped_guides:
+            grouped_guides[category].append(item)
+        else:
+            grouped_guides["Other"].append(item)
+
+    for category in grouped_guides:
+        grouped_guides[category].sort(
+            key=lambda g: (g.get("sort_order", 999), g["title"].lower())
+        )
+
+    visible_groups = [
+        {"name": category, "guides": grouped_guides[category]}
+        for category in category_order
+        if grouped_guides[category]
+    ]
+
+    if grouped_guides["Other"]:
+        visible_groups.append({"name": "Other", "guides": grouped_guides["Other"]})
 
     return templates.TemplateResponse(
         "repair_guides_index.html",
         {
             "request": request,
-            "guides": guides
+            "guide_groups": visible_groups,
         },
     )
 
@@ -1500,7 +1611,7 @@ def load_vehicle_catalog() -> Dict[str, List[str]]:
     if _vehicle_catalog_cache is not None and _vehicle_catalog_mtime == mtime:
         return _vehicle_catalog_cache
 
-    data = json.loads(VEHICLE_CATALOG_PATH.read_text(encoding="utf-8"))
+    data = json.loads(VEHICLE_CATALOG_PATH.read_text(encoding="utf-8-sig"))
 
     if not isinstance(data, dict):
         raise HTTPException(status_code=500, detail="vehicle_catalog.json must be an object")
@@ -1552,6 +1663,17 @@ def get_models(make: str) -> List[str]:
         raise HTTPException(status_code=404, detail=f"Make '{make}' not supported")
 
     return catalog[make_upper]
+
+
+@app.get("/api/repair-guides/{slug}/torque-specs")
+def get_repair_guide_torque_specs_api(
+    slug: str,
+    year: str = Query(""),
+    make: str = Query(""),
+    model: str = Query(""),
+) -> Dict[str, Dict[str, str]]:
+    specs = get_repair_guide_vehicle_torque_specs(slug, year, make, model)
+    return {"specs": specs}
 
 # ===============================
 # SERVICES API
@@ -2460,6 +2582,96 @@ def open_shared_estimate(request: Request, estimate_id: str):
 @app.get("/repair-guides/{slug}")
 async def repair_guide_page(request: Request, slug: str):
     guide = load_json_file("repair_guides", f"{slug.replace('-', '_')}.json")
+
+    def normalize_media_item(media, fallback_alt: str) -> dict | None:
+        if isinstance(media, str) and media.strip():
+            return {
+                "src": media.strip(),
+                "caption": "",
+                "alt": fallback_alt,
+            }
+
+        if isinstance(media, dict):
+            src = (
+                media.get("src")
+                or media.get("url")
+                or media.get("path")
+                or media.get("image")
+            )
+            if isinstance(src, str) and src.strip():
+                caption = (
+                    media.get("caption")
+                    or media.get("caption_text")
+                    or media.get("text")
+                    or ""
+                )
+                alt = media.get("alt") or caption or fallback_alt
+                return {
+                    "src": src.strip(),
+                    "caption": str(caption).strip(),
+                    "alt": str(alt).strip(),
+                }
+
+        return None
+
+    # Normalize field names so old/new guide JSON structures both work
+    guide["tools_required"] = guide.get("tools_required") or guide.get("tools") or []
+    guide["repair_steps"] = guide.get("repair_steps") or guide.get("steps") or []
+    guide["warnings"] = guide.get("warnings") or guide.get("watchouts") or []
+    guide["bolt_sizes"] = guide.get("bolt_sizes") or []
+    guide["diagram"] = normalize_media_item(
+        guide.get("diagram"),
+        f"{guide.get('title', 'Repair guide')} diagram",
+    )
+    if guide["diagram"] and not guide["diagram"]["caption"]:
+        legacy_caption = guide.get("diagram_caption")
+        if isinstance(legacy_caption, str) and legacy_caption.strip():
+            guide["diagram"]["caption"] = legacy_caption.strip()
+
+    normalized_step_images = []
+    for media in guide.get("step_images", []):
+        if not isinstance(media, dict):
+            continue
+
+        step_number = (
+            media.get("step")
+            or media.get("step_number")
+            or media.get("repair_step")
+            or media.get("index")
+        )
+        try:
+            step_number = int(step_number)
+        except (TypeError, ValueError):
+            continue
+
+        normalized_image = normalize_media_item(
+            media,
+            f"{guide.get('title', 'Repair guide')} step {step_number}",
+        )
+        if not normalized_image:
+            continue
+
+        normalized_step_images.append(
+            {
+                "step": step_number,
+                "src": normalized_image["src"],
+                "caption": normalized_image["caption"],
+                "alt": normalized_image["alt"],
+            }
+        )
+
+    guide["step_images"] = sorted(normalized_step_images, key=lambda item: item["step"])
+
+    # Normalize torque specs shape
+    normalized_specs = []
+    for spec in guide.get("torque_specs", []):
+        if isinstance(spec, dict):
+            normalized_specs.append({
+                "label": spec.get("label") or spec.get("part") or "Spec",
+                "value": spec.get("value") or spec.get("spec") or "Vehicle specific"
+            })
+    guide["torque_specs"] = normalized_specs
+
     return templates.TemplateResponse(
         "repair_guide.html",
         {
