@@ -246,117 +246,6 @@
   const estimateBtn = document.getElementById("quickEstimateBtn");
   if (!estimateBtn) return;
 
-  let SERVICES = {};         // full tree
-  let SERVICE_INDEX = {};    // id -> service object for quick lookup
-
-  async function loadServicesCatalog() {
-    const res = await fetch("/api/services");
-    const data = await res.json();
-    SERVICES = data;
-
-    // Build index
-    Object.entries(SERVICES).forEach(([cat, subs]) => {
-      Object.entries(subs).forEach(([sub, services]) => {
-        services.forEach(svc => {
-          SERVICE_INDEX[svc.id] = { ...svc, category: cat, subcategory: sub };
-        });
-      });
-    });
-  }
-
-  function populateCategories(categoryEl) {
-    categoryEl.innerHTML = `<option value="">Select category...</option>`;
-    Object.keys(SERVICES).forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat;
-      opt.textContent = cat;
-      categoryEl.appendChild(opt);
-    });
-  }
-
-  function populateSubcategories(categoryEl, subcategoryEl) {
-    const cat = categoryEl.value;
-    subcategoryEl.innerHTML = `<option value="">Select subcategory...</option>`;
-    if (!cat || !SERVICES[cat]) return;
-
-    Object.keys(SERVICES[cat]).forEach(sub => {
-      const opt = document.createElement("option");
-      opt.value = sub;
-      opt.textContent = sub;
-      subcategoryEl.appendChild(opt);
-    });
-  }
-
-  function populateServices(categoryEl, subcategoryEl, serviceEl) {
-    const cat = categoryEl.value;
-    const sub = subcategoryEl.value;
-    serviceEl.innerHTML = `<option value="">Select service...</option>`;
-    if (!cat || !sub || !SERVICES[cat]?.[sub]) return;
-
-    SERVICES[cat][sub].forEach(svc => {
-      const opt = document.createElement("option");
-      opt.value = svc.id;        // IMPORTANT: use id
-      opt.textContent = svc.name;
-      serviceEl.appendChild(opt);
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    const categoryEl = document.querySelector("#svcCategory");
-    const subcategoryEl = document.querySelector("#svcSubcategory");
-    const serviceEl = document.querySelector("#svcService");
-
-    if (!categoryEl || !subcategoryEl || !serviceEl) return;
-
-    await loadServicesCatalog();
-    populateCategories(categoryEl);
-
-    categoryEl.addEventListener("change", () => {
-      populateSubcategories(categoryEl, subcategoryEl);
-      populateServices(categoryEl, subcategoryEl, serviceEl);
-    });
-
-    subcategoryEl.addEventListener("change", () => {
-      populateServices(categoryEl, subcategoryEl, serviceEl);
-    });
-  });
-
-  function addSelectedServiceToEstimate(serviceId) {
-    const svc = SERVICE_INDEX[serviceId];
-    if (!svc) return;
-
-    const pricingMode = pricingModeEl?.value || "hourly";
-
-    const line = {
-      type: "labor",
-      service_id: svc.id,
-      name: svc.name,
-      category: svc.category,
-      subcategory: svc.subcategory,
-      pricing_mode: pricingMode,
-
-      hours: pricingMode === "hourly" ? (svc.default_hours ?? 0) : 0,
-      rate: pricingMode === "hourly" ? getLaborRate() : 0,
-
-      flat_rate: pricingMode === "flat"
-        ? Number(flatRatePriceEl?.value || 0)
-        : 0,
-
-      notes: svc.notes || ""
-    };
-
-    // optional: auto-add part templates as suggestion lines (not priced)
-    const parts = (svc.parts_templates || []).map(p => ({
-      type: "part",
-      name: p,
-      qty: 1,
-      unit_price: 0
-    }));
-
-    estimate.lines.push(line, ...parts);
-    renderEstimate();
-    persistDraft();
-  }
 
   function calculateTotals(estimate) {
     const labor = estimate.lines
@@ -545,6 +434,15 @@
     return estimateState.vehicles.find(v => v.id === estimateState.activeVehicleId) || estimateState.vehicles[0] || null;
   }
 
+  function getCurrentVehicleSnapshot() {
+    const vehicle = getActiveVehicle() || estimateState.vehicles[0] || null;
+    return {
+      year: vehicle?.year || "",
+      make: vehicle?.make || "",
+      model: vehicle?.model || "",
+    };
+  }
+
   function getVehicleLabel(vehicle, idxOverride = null) {
     if (!vehicle) return "No vehicle selected";
 
@@ -561,8 +459,9 @@
 
     estimateState.activeVehicleId = vehicleId;
     window.estimateState = estimateState;
-    renderVehicles();
+    void renderVehicles();
     renderActiveVehicleBanner();
+    refreshQuotePreview();
   }
 
   function renderActiveVehicleBanner() {
@@ -611,21 +510,23 @@
   }
 
   function buildDraftTitle() {
-    const vehicle = [yearEl?.value, makeEl?.value, modelEl?.value].filter(Boolean).join(" ");
+    const currentVehicle = getCurrentVehicleSnapshot();
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
     const servicesCount = lineItems.length;
     return (vehicle || "Estimate") + (servicesCount ? ` (${servicesCount} service${servicesCount > 1 ? "s" : ""})` : "");
   }
 
   function serializeDraft() {
+    const currentVehicle = getCurrentVehicleSnapshot();
     return {
       id: String(Date.now()),
       savedAt: Date.now(),
       title: buildDraftTitle(),
 
       vehicle: {
-        year: yearEl?.value || "",
-        make: makeEl?.value || "",
-        model: modelEl?.value || "",
+        year: currentVehicle.year,
+        make: currentVehicle.make,
+        model: currentVehicle.model,
       },
 
       // IMPORTANT: storing signature in localStorage can blow quota.
@@ -686,7 +587,7 @@
       if (notesEl) notesEl.value = d.customer?.notes || "";
 
       // Re-render vehicle cards from restored estimateState
-      renderVehicles();
+      await renderVehicles();
       renderActiveVehicleBanner();
 
       // Re-render service cards
@@ -803,7 +704,8 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function buildQuoteMessage() {
     const customerName = (customerNameEl?.value || "").trim();
-    const vehicle = [yearEl?.value, makeEl?.value, modelEl?.value].filter(Boolean).join(" ");
+    const currentVehicle = getCurrentVehicleSnapshot();
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
     const total = quoteTotal();
 
     const lines = [];
@@ -2052,7 +1954,7 @@ if (getEstimateHint) {
     // reload core dropdown data
     try {
       await loadCategories();
-      renderVehicles();
+      await renderVehicles();
       renderActiveVehicleBanner();
       await applyObdFromQuery();
     } catch (_) {}
@@ -2247,12 +2149,12 @@ if (getEstimateHint) {
     }
 
     window.estimateState = estimateState;
-    renderVehicles();
+    void renderVehicles();
     renderLineItems();
     renderActiveVehicleBanner();
   }
 
-  function renderVehicles() {
+  async function renderVehicles() {
     if (!vehiclesContainer) return;
 
     vehiclesContainer.innerHTML = estimateState.vehicles.map((vehicle, idx) => `
@@ -2315,7 +2217,7 @@ if (getEstimateHint) {
       </div>
     `).join("");
 
-    bindVehicleCardFields();
+    await bindVehicleCardFields();
   }
 
   async function bindVehicleCardFields() {
@@ -2345,6 +2247,8 @@ if (getEstimateHint) {
           vehicle.model = model;
           syncEstimateMeta();
           window.estimateState = estimateState;
+          updateEstimateButtonState();
+          refreshQuotePreview();
         },
       });
     }
@@ -2369,6 +2273,11 @@ if (getEstimateHint) {
   // ---- Generate All Service Estimates ----
   generateAllBtn?.addEventListener("click", async () => {
     try {
+      if (!lineItems.length) {
+        setStatus("error", "Add at least one service first.");
+        return;
+      }
+
       for (const it of lineItems) {
 
         if (it.pricingMode === "flat") {
@@ -2454,7 +2363,7 @@ if (getEstimateHint) {
       if (model) activeVehicle.model = model;
 
       window.estimateState = estimateState;
-      renderVehicles();
+      await renderVehicles();
       renderActiveVehicleBanner();
       updateEstimateButtonState();
     }

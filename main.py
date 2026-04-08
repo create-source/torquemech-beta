@@ -2347,17 +2347,6 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
             headers={"Content-Disposition": "attachment; filename=torquemech_estimate.pdf"}
         )
 
-        c.save()
-        buf.seek(0)
-
-        metric_incr("pdf_single_generated")
-
-        return Response(
-            content=buf.read(),
-            media_type="application/pdf",
-            headers={"Content-Disposition": "attachment; filename=torquemech_estimate.pdf"}
-        )
-
     except Exception:
         logging.exception("PDF_SINGLE_FAILED")
         metric_incr("errors_pdf_single")
