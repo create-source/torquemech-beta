@@ -48,15 +48,15 @@
   "torque_specs": [
     {
       "label": "Wheel lug nuts",
-      "value": "Coming next"
+      "value": "Vehicle specific - load vehicle for exact spec"
     },
     {
       "label": "Caliper bracket bolts",
-      "value": "Coming next"
+      "value": "Vehicle specific - load vehicle for exact spec"
     },
     {
       "label": "Slide pin bolts",
-      "value": "Coming next"
+      "value": "Vehicle specific - load vehicle for exact spec"
     }
   ],
   "repair_steps": [
