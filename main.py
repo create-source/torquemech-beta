@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote
 
 import httpx
 import qrcode
@@ -1019,6 +1020,319 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
         normalized["estimate"] = None
 
     return normalized
+
+
+def load_normalized_repair_guides_map() -> Dict[str, Dict[str, Any]]:
+    guides_dir = DATA_DIR / "repair_guides"
+    guides: Dict[str, Dict[str, Any]] = {}
+
+    for file in guides_dir.glob("*.json"):
+        slug = file.stem.replace("_", "-")
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8-sig"))
+        except Exception:
+            continue
+        guides[slug] = normalize_repair_guide(raw, slug=slug)
+
+    return guides
+
+
+def build_estimator_service_href(service_code: str, estimator_link: str = "/estimator") -> str:
+    base = str(estimator_link or "/estimator").strip() or "/estimator"
+    code = str(service_code or "").strip()
+    if not code:
+        return base
+
+    separator = "&" if "?" in base else "?"
+    return f"{base}{separator}service={quote(code)}"
+
+
+def extract_repair_guide_slug(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+
+    if "/repair-guides/" in text:
+        text = text.split("/repair-guides/", 1)[1]
+
+    return text.strip("/").replace("_", "-")
+
+
+def dedupe_link_items(items: List[Dict[str, Any]], key: str = "href") -> List[Dict[str, Any]]:
+    seen: set[str] = set()
+    deduped: List[Dict[str, Any]] = []
+
+    for item in items:
+        value = str(item.get(key) or "").strip()
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        deduped.append(item)
+
+    return deduped
+
+
+def build_related_repair_guides(raw_items: Any, repair_guides: Dict[str, Dict[str, Any]]) -> List[Dict[str, str]]:
+    if not isinstance(raw_items, list):
+        return []
+
+    related_guides: List[Dict[str, str]] = []
+    for item in raw_items:
+        if isinstance(item, dict):
+            slug = (
+                extract_repair_guide_slug(item.get("repair_guide_link"))
+                or extract_repair_guide_slug(item.get("repair_guide_slug"))
+                or extract_repair_guide_slug(item.get("href"))
+            )
+        else:
+            slug = extract_repair_guide_slug(item)
+
+        guide = repair_guides.get(slug)
+        if not guide:
+            continue
+
+        estimate = guide.get("estimate") or {}
+        service_code = str(estimate.get("service_code") or "").strip()
+        estimator_href = build_estimator_service_href(
+            service_code,
+            estimate.get("estimator_link") or "/estimator",
+        ) if service_code else ""
+
+        related_guides.append(
+            {
+                "title": str(guide.get("title") or slug.replace("-", " ").title()).strip(),
+                "href": f"/repair-guides/{slug}",
+                "estimator_href": estimator_href,
+            }
+        )
+
+    return dedupe_link_items(related_guides)
+
+
+def build_estimator_links(raw_estimator_link: Any, related_guides: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    estimator_links: List[Dict[str, str]] = []
+
+    for guide in related_guides:
+        href = str(guide.get("estimator_href") or "").strip()
+        if href:
+            estimator_links.append(
+                {
+                    "label": f"Estimate {guide.get('title', 'Repair')}",
+                    "href": href,
+                }
+            )
+
+    explicit = str(raw_estimator_link or "").strip()
+    if explicit and explicit != "/":
+        estimator_links.append({"label": "Open Estimator", "href": explicit})
+
+    if not estimator_links:
+        estimator_links.append({"label": "Open Estimator", "href": "/estimator"})
+
+    return dedupe_link_items(estimator_links)
+
+
+def normalize_diagnostic_entry(raw_entry: Any, *, file_slug: str, repair_guides: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    raw = dict(raw_entry) if isinstance(raw_entry, dict) else {}
+
+    possible_causes = normalize_repair_guide_list(raw.get("common_causes"))
+    if not possible_causes:
+        possible_causes = normalize_repair_guide_list(
+            [item.get("name") for item in raw.get("likely_repairs", []) if isinstance(item, dict)]
+        )
+
+    related_repair_guides = build_related_repair_guides(raw.get("likely_repairs"), repair_guides)
+    estimator_links = build_estimator_links(raw.get("estimator_link"), related_repair_guides)
+
+    code = str(raw.get("code") or "").strip()
+    title = str(raw.get("title") or code or file_slug.replace("-", " ").replace("_", " ").title()).strip()
+
+    canonical_slug = str(raw.get("slug") or code or file_slug).strip().lower().replace("_", "-")
+
+    return {
+        "slug": canonical_slug,
+        "code": code,
+        "title": title,
+        "summary": str(raw.get("summary") or "").strip(),
+        "meaning": str(raw.get("meaning") or "").strip(),
+        "quick_checks": normalize_repair_guide_list(raw.get("quick_checks")),
+        "possible_causes": possible_causes,
+        "related_repair_guides": related_repair_guides,
+        "estimator_links": estimator_links,
+        "diagnostic_tools_link": str(raw.get("diagnostic_tools_link") or "/obd").strip() or "/obd",
+        "detail_href": f"/diagnostics/{canonical_slug}",
+        "entry_type": "obd_code",
+        "entry_label": "OBD Code",
+    }
+
+
+def normalize_symptom_entry(raw_entry: Any, *, file_slug: str, repair_guides: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    raw = dict(raw_entry) if isinstance(raw_entry, dict) else {}
+
+    possible_causes = normalize_repair_guide_list(raw.get("common_causes"))
+    if not possible_causes:
+        possible_causes = normalize_repair_guide_list(
+            [item.get("name") for item in raw.get("likely_causes", []) if isinstance(item, dict)]
+        )
+
+    related_repair_guides = build_related_repair_guides(raw.get("likely_causes"), repair_guides)
+    estimator_links = build_estimator_links(raw.get("estimator_link"), related_repair_guides)
+
+    return {
+        "slug": file_slug.replace("_", "-"),
+        "title": str(raw.get("title") or file_slug.replace("-", " ").replace("_", " ").title()).strip(),
+        "summary": str(raw.get("summary") or "").strip(),
+        "intro": str(raw.get("intro") or "").strip(),
+        "system": str(raw.get("system") or raw.get("category") or "").strip(),
+        "common_sounds": normalize_repair_guide_list(raw.get("common_sounds")),
+        "quick_checks": normalize_repair_guide_list(raw.get("quick_checks")),
+        "possible_causes": possible_causes,
+        "related_repair_guides": related_repair_guides,
+        "estimator_links": estimator_links,
+        "diagnostic_tools_link": str(raw.get("diagnostic_tools_link") or "/diagnostics").strip() or "/diagnostics",
+        "detail_href": f"/symptoms/{file_slug.replace('_', '-')}",
+        "entry_type": "symptom",
+        "entry_label": "Symptom",
+    }
+
+
+def build_vehicle_system_entries(
+    symptom_entries: List[Dict[str, Any]],
+    repair_guides: Dict[str, Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    grouped: Dict[str, Dict[str, Any]] = {}
+
+    for symptom in symptom_entries:
+        system_label = str(symptom.get("system") or "").strip()
+        if not system_label:
+            continue
+        grouped.setdefault(
+            system_label,
+            {
+                "title": system_label,
+                "possible_causes": [],
+                "related_repair_guides": [],
+                "estimator_links": [],
+            },
+        )
+        grouped[system_label]["possible_causes"].extend(symptom.get("possible_causes") or [])
+        grouped[system_label]["related_repair_guides"].extend(symptom.get("related_repair_guides") or [])
+        grouped[system_label]["estimator_links"].extend(symptom.get("estimator_links") or [])
+
+    for guide in repair_guides.values():
+        system_label = str(guide.get("category") or "").strip()
+        if not system_label:
+            continue
+        grouped.setdefault(
+            system_label,
+            {
+                "title": system_label,
+                "possible_causes": [],
+                "related_repair_guides": [],
+                "estimator_links": [],
+            },
+        )
+
+        guide_href = f"/repair-guides/{guide.get('slug')}"
+        estimate = guide.get("estimate") or {}
+        service_code = str(estimate.get("service_code") or "").strip()
+        estimator_href = build_estimator_service_href(
+            service_code,
+            estimate.get("estimator_link") or "/estimator",
+        ) if service_code else "/estimator"
+
+        grouped[system_label]["related_repair_guides"].append(
+            {
+                "title": str(guide.get("title") or "").strip(),
+                "href": guide_href,
+                "estimator_href": estimator_href,
+            }
+        )
+        grouped[system_label]["estimator_links"].append(
+            {
+                "label": f"Estimate {guide.get('title', 'Repair')}",
+                "href": estimator_href,
+            }
+        )
+
+    entries: List[Dict[str, Any]] = []
+    for system_label in sorted(grouped):
+        possible_causes = []
+        for cause in grouped[system_label]["possible_causes"]:
+            text = str(cause or "").strip()
+            if text and text not in possible_causes:
+                possible_causes.append(text)
+
+        related_repair_guides = dedupe_link_items(grouped[system_label]["related_repair_guides"])
+        estimator_links = dedupe_link_items(grouped[system_label]["estimator_links"])
+
+        entries.append(
+            {
+                "title": system_label,
+                "summary": f"Common problems, repair guides, and estimate entry points for {system_label.lower()} issues.",
+                "possible_causes": possible_causes[:5],
+                "related_repair_guides": related_repair_guides[:4],
+                "estimator_links": estimator_links[:4],
+                "entry_type": "vehicle_system",
+                "entry_label": "Vehicle System",
+            }
+        )
+
+    return entries
+
+
+def load_diagnostic_entries(repair_guides: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    diagnostics_dir = DATA_DIR / "diagnostics"
+    entries: List[Dict[str, Any]] = []
+
+    for file in diagnostics_dir.glob("*.json"):
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8-sig"))
+        except Exception:
+            continue
+        entries.append(
+            normalize_diagnostic_entry(raw, file_slug=file.stem, repair_guides=repair_guides)
+        )
+
+    return sorted(entries, key=lambda item: ((item.get("code") or item.get("title") or "").lower()))
+
+
+def load_symptom_entries(repair_guides: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    symptoms_dir = DATA_DIR / "symptoms"
+    entries: List[Dict[str, Any]] = []
+
+    for file in symptoms_dir.glob("*.json"):
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8-sig"))
+        except Exception:
+            continue
+        entries.append(
+            normalize_symptom_entry(raw, file_slug=file.stem, repair_guides=repair_guides)
+        )
+
+    return sorted(entries, key=lambda item: (item.get("title") or "").lower())
+
+
+def load_diagnostic_source(slug: str) -> Tuple[Dict[str, Any], str]:
+    diagnostics_dir = DATA_DIR / "diagnostics"
+    file_slug = slug.replace("-", "_")
+    direct_path = diagnostics_dir / f"{file_slug}.json"
+    if direct_path.exists():
+        return load_json_file("diagnostics", f"{file_slug}.json"), direct_path.stem
+
+    requested = str(slug or "").strip().lower().replace("_", "-")
+    for file in diagnostics_dir.glob("*.json"):
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8-sig"))
+        except Exception:
+            continue
+
+        raw_slug = str(raw.get("slug") or "").strip().lower().replace("_", "-")
+        raw_code = str(raw.get("code") or "").strip().lower()
+        if requested in {file.stem.replace("_", "-").lower(), raw_slug, raw_code}:
+            return raw, file.stem
+
+    raise HTTPException(status_code=404, detail="Content not found")
    
 # ============================================================
 # Template Routes
@@ -1241,6 +1555,65 @@ async def obd_codes_index(request: Request):
     return templates.TemplateResponse(
         "obd_codes_index.html",
         {"request": request},
+    )
+
+
+@app.get("/diagnostics", response_class=HTMLResponse)
+async def diagnostics_hub(request: Request):
+    repair_guides = load_normalized_repair_guides_map()
+    obd_entries = load_diagnostic_entries(repair_guides)
+    symptom_entries = load_symptom_entries(repair_guides)
+    system_entries = build_vehicle_system_entries(symptom_entries, repair_guides)
+
+    return templates.TemplateResponse(
+        "diagnostics.html",
+        {
+            "request": request,
+            "obd_entries": obd_entries,
+            "symptom_entries": symptom_entries,
+            "system_entries": system_entries,
+            "page_title": "Diagnostics | TorqueMech",
+            "meta_description": "Structured diagnostic entry points for OBD codes, symptoms, and vehicle systems.",
+        },
+    )
+
+
+@app.get("/symptoms", response_class=HTMLResponse)
+async def symptoms_index(request: Request):
+    repair_guides = load_normalized_repair_guides_map()
+    symptom_entries = load_symptom_entries(repair_guides)
+    symptom_pages = []
+
+    for entry in symptom_entries:
+        search_terms = " ".join(
+            filter(
+                None,
+                [
+                    entry.get("title"),
+                    entry.get("summary"),
+                    entry.get("system"),
+                    " ".join(entry.get("possible_causes") or []),
+                    " ".join(entry.get("common_sounds") or []),
+                ],
+            )
+        )
+        symptom_pages.append(
+            {
+                "slug": entry.get("slug", ""),
+                "title": entry.get("title", ""),
+                "summary": entry.get("summary", ""),
+                "search_terms": search_terms.strip(),
+            }
+        )
+
+    return templates.TemplateResponse(
+        "symptoms_index.html",
+        {
+            "request": request,
+            "symptom_pages": symptom_pages,
+            "page_title": "Symptoms | TorqueMech",
+            "meta_description": "Search common vehicle symptoms and open the matching TorqueMech symptom guide.",
+        },
     )
 
 @app.get("/repair-cost/{service_slug}", response_class=HTMLResponse)
@@ -2892,7 +3265,20 @@ async def repair_guide_page(request: Request, slug: str):
 
 @app.get("/symptoms/{slug}")
 async def symptom_page(request: Request, slug: str):
-    symptom = load_json_file("symptoms", f"{slug.replace('-', '_')}.json")
+    raw_symptom = load_json_file("symptoms", f"{slug.replace('-', '_')}.json")
+    repair_guides = load_normalized_repair_guides_map()
+    symptom = normalize_symptom_entry(raw_symptom, file_slug=slug.replace("-", "_"), repair_guides=repair_guides)
+    symptom["likely_causes"] = [
+        {
+            "name": item.get("title"),
+            "repair_guide_link": item.get("href"),
+            "estimator_link": item.get("estimator_href"),
+        }
+        for item in symptom.get("related_repair_guides", [])
+    ]
+    symptom["estimator_link"] = (
+        (symptom.get("estimator_links") or [{}])[0].get("href") or "/estimator"
+    )
     return templates.TemplateResponse(
         "symptom_page.html",
         {
@@ -2906,7 +3292,21 @@ async def symptom_page(request: Request, slug: str):
 
 @app.get("/diagnostics/{slug}")
 async def diagnostic_page(request: Request, slug: str):
-    diagnostic = load_json_file("diagnostics", f"{slug.replace('-', '_')}.json")
+    raw_diagnostic, source_slug = load_diagnostic_source(slug)
+    repair_guides = load_normalized_repair_guides_map()
+    diagnostic = normalize_diagnostic_entry(raw_diagnostic, file_slug=source_slug, repair_guides=repair_guides)
+    diagnostic["common_causes"] = diagnostic.get("possible_causes") or []
+    diagnostic["likely_repairs"] = [
+        {
+            "name": item.get("title"),
+            "repair_guide_link": item.get("href"),
+            "estimator_link": item.get("estimator_href"),
+        }
+        for item in diagnostic.get("related_repair_guides", [])
+    ]
+    diagnostic["estimator_link"] = (
+        (diagnostic.get("estimator_links") or [{}])[0].get("href") or "/estimator"
+    )
     return templates.TemplateResponse(
         "diagnostic_page.html",
         {

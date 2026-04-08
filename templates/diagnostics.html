@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Diagnostics</div>
+    <h1 class="tm-page-title">Diagnostic Entry Points</h1>
+    <p class="tm-muted">
+      Start from an OBD code, a symptom, or a vehicle system. Each entry connects into likely repair guides and the estimator without trying to replace full diagnosis.
+    </p>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Start From an OBD Code</h2>
+    <p class="tm-muted">Use stored trouble codes as a fast diagnostic entry point, then move into related repair paths.</p>
+    <div class="tm-stack">
+      <div class="tm-linked-card">
+        <h3>Search OBD Codes</h3>
+        <p class="tm-muted">Open the existing OBD lookup for direct code search.</p>
+        <a href="/obd">Open OBD Lookup →</a>
+      </div>
+
+      {% for entry in obd_entries %}
+      <div class="tm-linked-card">
+        <h3>{{ entry.code or entry.title }}</h3>
+        <p class="tm-muted">{{ entry.summary }}</p>
+
+        {% if entry.possible_causes %}
+        <div style="margin-top:10px;">
+          <strong>Possible causes</strong>
+          <ul class="tm-list">
+            {% for cause in entry.possible_causes[:4] %}
+            <li>{{ cause }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        {% if entry.related_repair_guides %}
+        <div class="tm-link-block">
+          <strong>Related repair guides</strong>
+          {% for guide in entry.related_repair_guides %}
+          <div><a href="{{ guide.href }}">{{ guide.title }}</a></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if entry.estimator_links %}
+        <div class="tm-link-block">
+          <strong>Estimator links</strong>
+          {% for link in entry.estimator_links %}
+          <div><a href="{{ link.href }}">{{ link.label }}</a></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="tm-link-block">
+          <a href="{{ entry.detail_href }}">Open Diagnostic Result →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Start From a Symptom</h2>
+    <p class="tm-muted">Use symptom-led entry points to move from what the driver notices into likely repair guides.</p>
+    <div class="tm-stack">
+      {% for entry in symptom_entries %}
+      <div class="tm-linked-card">
+        <h3>{{ entry.title }}</h3>
+        <p class="tm-muted">{{ entry.summary }}</p>
+
+        {% if entry.possible_causes %}
+        <div style="margin-top:10px;">
+          <strong>Possible causes</strong>
+          <ul class="tm-list">
+            {% for cause in entry.possible_causes[:4] %}
+            <li>{{ cause }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        {% if entry.related_repair_guides %}
+        <div class="tm-link-block">
+          <strong>Related repair guides</strong>
+          {% for guide in entry.related_repair_guides %}
+          <div><a href="{{ guide.href }}">{{ guide.title }}</a></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if entry.estimator_links %}
+        <div class="tm-link-block">
+          <strong>Estimator links</strong>
+          {% for link in entry.estimator_links %}
+          <div><a href="{{ link.href }}">{{ link.label }}</a></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="tm-link-block">
+          <a href="{{ entry.detail_href }}">Open Symptom Result →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Start From a Vehicle System</h2>
+    <p class="tm-muted">Browse structured system-level entry points when the issue is already narrowed to a general area.</p>
+    <div class="tm-stack">
+      {% for entry in system_entries %}
+      <div class="tm-linked-card">
+        <h3>{{ entry.title }}</h3>
+        <p class="tm-muted">{{ entry.summary }}</p>
+
+        {% if entry.possible_causes %}
+        <div style="margin-top:10px;">
+          <strong>Possible causes</strong>
+          <ul class="tm-list">
+            {% for cause in entry.possible_causes %}
+            <li>{{ cause }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        {% if entry.related_repair_guides %}
+        <div class="tm-link-block">
+          <strong>Related repair guides</strong>
+          {% for guide in entry.related_repair_guides %}
+          <div><a href="{{ guide.href }}">{{ guide.title }}</a></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if entry.estimator_links %}
+        <div class="tm-link-block">
+          <strong>Estimator links</strong>
+          {% for link in entry.estimator_links %}
+          <div><a href="{{ link.href }}">{{ link.label }}</a></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

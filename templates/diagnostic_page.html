@@ -47,11 +47,16 @@
 {% if diagnostic.likely_repairs %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Likely Repairs</h2>
+    <h2>Related Repair Guides</h2>
     <div class="tm-stack">
       {% for repair in diagnostic.likely_repairs %}
       <div class="tm-linked-card">
         <h3>{{ repair.name }}</h3>
+        {% if repair.estimator_link %}
+        <div style="margin-top:8px;">
+          <a href="{{ repair.estimator_link }}">Open Estimator &rarr;</a>
+        </div>
+        {% endif %}
         <a href="{{ repair.repair_guide_link }}">Open Repair Guide →</a>
       </div>
       {% endfor %}

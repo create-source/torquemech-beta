@@ -22,11 +22,13 @@
         style="min-width:240px; max-width:360px; width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:inherit;"
       />
     </div>
+    <p id="diagnosticSearchMsg" class="tm-muted" style="margin-top:10px; display:none;"></p>
 
     <div id="diagnosticGuideList" class="tm-repair-guide-list" style="margin-top:16px;">
       {% for item in symptom_pages %}
       <a class="tm-repair-guide-item"
         href="/symptoms/{{ item.slug }}"
+        data-slug="{{ item.slug|lower }}"
         data-title="{{ item.title|lower }}"
         data-summary="{{ item.summary|lower }}"
         data-search="{{ item.search_terms|lower }} {{ item.title|lower }} {{ item.summary|lower }}">
@@ -44,17 +46,27 @@
 <script>
   (function () {
     const input = document.getElementById("diagnosticSearch");
-    const items = document.querySelectorAll("#diagnosticGuideList .tm-repair-guide-item");
+    const items = Array.from(document.querySelectorAll("#diagnosticGuideList .tm-repair-guide-item"));
+    const message = document.getElementById("diagnosticSearchMsg");
 
     if (!input || !items.length) return;
 
+    function normalizeTerm(value) {
+      return (value || "")
+        .toLowerCase()
+        .trim()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ");
+    }
+
     function runFilter() {
-      const term = input.value.toLowerCase().trim();
+      const term = normalizeTerm(input.value);
+      let visibleCount = 0;
 
       items.forEach((item) => {
-        const title = item.dataset.title || "";
-        const summary = item.dataset.summary || "";
-        const search = item.dataset.search || "";
+        const title = normalizeTerm(item.dataset.title || "");
+        const summary = normalizeTerm(item.dataset.summary || "");
+        const search = normalizeTerm(item.dataset.search || "");
 
         const match =
           !term ||
@@ -63,7 +75,47 @@
           search.includes(term);
 
         item.style.display = match ? "" : "none";
+        if (match) visibleCount += 1;
       });
+
+      if (!message) return visibleCount;
+
+      if (!term) {
+        message.style.display = "none";
+        message.textContent = "";
+      } else if (!visibleCount) {
+        message.style.display = "";
+        message.textContent = 'No exact symptom match found. Try a different term or choose one of the listed guides.';
+      } else {
+        message.style.display = "none";
+        message.textContent = "";
+      }
+
+      return visibleCount;
+    }
+
+    function findExactMatch() {
+      const term = normalizeTerm(input.value);
+      if (!term) return null;
+
+      return items.find((item) => {
+        const title = normalizeTerm(item.dataset.title || "");
+        const slug = normalizeTerm(item.dataset.slug || "");
+        return title === term || slug === term;
+      }) || null;
+    }
+
+    function openSelectedSymptom() {
+      const exact = findExactMatch();
+      if (exact) {
+        window.location.href = exact.href;
+        return;
+      }
+
+      if (message) {
+        message.style.display = "";
+        message.textContent = 'No exact symptom match found. Try a different term or choose one of the listed guides.';
+      }
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -76,6 +128,12 @@
     runFilter();
 
     input.addEventListener("input", runFilter);
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      runFilter();
+      openSelectedSymptom();
+    });
   })();
 </script>
 {% endblock %}
