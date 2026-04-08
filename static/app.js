@@ -1537,7 +1537,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     // --- Add Service button label (dynamic) ---
     if (addLineBtn) {
       // If user already added a service (locked state), guide them to add another
-      addLineBtn.textContent = readyForNextService ? "+ Add Service" : "+ Add Another Service";
+      addLineBtn.textContent = "+ Add Service";
     }
 
     estimateBtn.disabled = !(hasBasics && hasSelection && readyForNextService);
@@ -1554,7 +1554,7 @@ if (getEstimateHint) {
       ? "Select year, make, and model first."
       : !hasSelection
         ? "Select a category and service first."
-        : "To add another service, click “+ Add Another Service”, then choose the next service.";
+        : "To add another service, click “+ Add Service”, then choose the next service.";
   }
 }
 

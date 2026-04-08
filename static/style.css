@@ -642,7 +642,7 @@ input[type="radio"]{
 
 .tm-estimate-total-bar{
   margin-top: 14px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-radius: 18px;
   border: 1px solid rgba(11,22,40,.10);
   background: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
@@ -662,10 +662,11 @@ input[type="radio"]{
 }
 
 .tm-estimate-total-bar__value{
-  font-size: 1.55rem;
-  font-weight: 900;
-  letter-spacing: -.03em;
-  color: var(--tm-text);
+  font-size: 2.1rem;
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: -.05em;
+  color: #0f172a;
 }
 
 .line-items-list,
@@ -1336,8 +1337,8 @@ h3{
   background:#fff;
   border:1px solid rgba(11,22,40,.10);
   border-radius:18px;
-  padding:16px;
-  margin-top:14px;
+  padding:14px 15px;
+  margin-top:12px;
   box-shadow:0 8px 20px rgba(15,23,42,.05);
 }
 
@@ -1345,7 +1346,7 @@ h3{
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
-  gap:16px;
+  gap:14px;
 }
 
 .tm-service-head-main{
@@ -1361,17 +1362,17 @@ h3{
 }
 
 .tm-service-vehicle{
-  margin-top:6px;
+  margin-top:4px;
   font-size:.95rem;
   font-weight:700;
   color:var(--tm-text);
 }
 
 .tm-service-meta{
-  margin-top:8px;
+  margin-top:6px;
   display:flex;
   flex-wrap:wrap;
-  gap:6px 12px;
+  gap:4px 10px;
   font-size:.93rem;
   color:var(--tm-text-muted);
 }
@@ -1381,7 +1382,7 @@ h3{
 }
 
 .tm-service-estimate{
-  min-width:92px;
+  min-width:108px;
   text-align:right;
   flex-shrink:0;
 }
@@ -1397,16 +1398,16 @@ h3{
 }
 
 .tm-service-estimate strong{
-  font-size:2rem;
+  font-size:2.2rem;
   line-height:1;
-  color:var(--tm-text);
+  color:#0f172a;
 }
 
 .tm-service-actions{
   display:flex;
   flex-wrap:wrap;
-  gap:10px;
-  margin-top:14px;
+  gap:8px;
+  margin-top:12px;
 }
 
 .tm-service-actions .tm-btn{
@@ -1470,7 +1471,7 @@ h3{
   }
 
   .tm-service-estimate strong{
-    font-size:1.65rem;
+    font-size:1.85rem;
   }
 
   .tm-service-actions{
@@ -1614,7 +1615,7 @@ h3{
   }
 
   .tm-estimate-total-bar__value{
-    font-size: 1.35rem;
+    font-size: 1.75rem;
   }
 
   .section-header--vehicles h2 {
