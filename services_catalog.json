@@ -1700,6 +1700,12 @@
           "labor_hours_max": 4.0
         },
         {
+          "code": "air_fuel_ratio_sensor_replacement",
+          "name": "Air Fuel Ratio Sensor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0
+        },
+        {
           "code": "catalytic_converter_replacement",
           "name": "Catalytic Converter Replacement",
           "labor_hours_min": 6.0,
@@ -1960,6 +1966,18 @@
         {
           "code": "electrical_diagnosis",
           "name": "Electrical Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5
+        },
+        {
+          "code": "sensor_diagnostic",
+          "name": "Sensor Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5
+        },
+        {
+          "code": "sensor_circuit_diagnosis",
+          "name": "Sensor Circuit Diagnosis",
           "labor_hours_min": 0.8,
           "labor_hours_max": 2.5
         },
