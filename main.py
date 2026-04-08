@@ -28,6 +28,7 @@ from fastapi.responses import (
     FileResponse,
     HTMLResponse,
     JSONResponse,
+    RedirectResponse,
 )
 from fastapi.staticfiles import StaticFiles
 
@@ -160,6 +161,13 @@ REPAIR_GUIDE_TORQUE_SPECS_PATH = DATA_DIR / "torque_specs" / "brakes.json"
 
 _repair_guide_torque_specs_cache: Optional[Dict[str, Any]] = None
 _repair_guide_torque_specs_mtime: Optional[float] = None
+SHARED_ESTIMATE_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-"
+    r"[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{12}$"
+)
 
 def load_json_file(*parts: str) -> dict:
     file_path = DATA_DIR.joinpath(*parts)
@@ -3373,4 +3381,15 @@ async def diagnostic_page(request: Request, slug: str):
             "page_title": f"{diagnostic.get('title', 'Diagnostic Guide')} | TorqueMech",
             "meta_description": diagnostic.get("summary", "TorqueMech diagnostic guide"),
         },
+    )
+
+
+@app.get("/{maybe_estimate_id}", include_in_schema=False)
+def shared_estimate_short_link(maybe_estimate_id: str):
+    if not SHARED_ESTIMATE_UUID_RE.fullmatch(maybe_estimate_id or ""):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return RedirectResponse(
+        url=f"/estimate/share/{maybe_estimate_id}",
+        status_code=307,
     )
