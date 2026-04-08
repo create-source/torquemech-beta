@@ -2359,7 +2359,7 @@ from fastapi import Request
 
 class LineItemPDF(BaseModel):
     serviceCode: str
-    serviceText: str
+    serviceText: Optional[str] = None
     laborHours: float
     partsPrice: float
     laborRate: float

@@ -544,8 +544,42 @@
     };
   }
 
+  function normalizeDraftLineItem(it, fallbackVehicle) {
+    const pricingMode = (it?.pricingMode || "hourly").trim() === "flat" ? "flat" : "hourly";
+    const vehicleId = it?.vehicleId || fallbackVehicle.id;
+    const vehicleYear = it?.vehicleYear || fallbackVehicle.year || "";
+    const vehicleMake = it?.vehicleMake || fallbackVehicle.make || "";
+    const vehicleModel = it?.vehicleModel || fallbackVehicle.model || "";
+    const vehicleLabel = it?.vehicleLabel || getVehicleLabel({ id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel }, 0);
+
+    return {
+      ...it,
+      vehicleId,
+      vehicleLabel,
+      vehicleYear,
+      vehicleMake,
+      vehicleModel,
+      serviceCode: String(it?.serviceCode || "").trim(),
+      serviceText: String(it?.serviceText || it?.serviceCode || "Service").trim(),
+      pricingMode,
+      flatRatePrice: Number(it?.flatRatePrice || 0),
+      travelFee: Number(it?.travelFee || 0),
+      laborHours: Number(it?.laborHours || 0),
+      partsPrice: Number(it?.partsPrice || 0),
+      laborRate: Number(it?.laborRate || 0),
+      notes: (it?.notes || "").trim() || null,
+      estimate: it?.estimate != null ? Number(it.estimate) : null,
+      laborBreakdown: it?.laborBreakdown || null,
+      breakdownOpen: typeof it?.breakdownOpen === "boolean" ? it.breakdownOpen : !!it?.laborBreakdown,
+    };
+  }
+
     async function applyDraft(d) {
       if (!d) return;
+
+      try {
+        closeConfirm();
+      } catch (_) {}
 
       // Reset to a safe default state first
       estimateState = {
@@ -570,14 +604,9 @@
 
       // Legacy draft support:
       // if old line items do not have vehicleId / vehicleLabel, assign them to Vehicle 1
-      lineItems = (Array.isArray(d.lineItems) ? d.lineItems : []).map((it) => ({
-        ...it,
-        vehicleId: it.vehicleId || "veh_1",
-        vehicleLabel: it.vehicleLabel || getVehicleLabel(estimateState.vehicles[0], 0),
-        vehicleYear: it.vehicleYear || d.vehicle?.year || "",
-        vehicleMake: it.vehicleMake || d.vehicle?.make || "",
-        vehicleModel: it.vehicleModel || d.vehicle?.model || "",
-      }));
+      lineItems = (Array.isArray(d.lineItems) ? d.lineItems : []).map((it) =>
+        normalizeDraftLineItem(it, estimateState.vehicles[0])
+      );
       estimateState.activeVehicleId = "veh_1";
 
       // Sync top-level customer fields
@@ -585,6 +614,8 @@
       if (customerNameEl) customerNameEl.value = d.customer?.name || "";
       if (customerPhoneEl) customerPhoneEl.value = d.customer?.phone || "";
       if (notesEl) notesEl.value = d.customer?.notes || "";
+      const wantYes = document.querySelector('input[name="wantSig"][value="yes"]');
+      if (wantYes) wantYes.checked = true;
 
       // Re-render vehicle cards from restored estimateState
       await renderVehicles();
@@ -595,6 +626,7 @@
 
       // Reset signature (Beta-safe)
       signatureDataUrl = null;
+      setSigVisible(false);
       clearSignatureCanvas();
 
       // Reset editor state
@@ -603,6 +635,7 @@
       laborHoursTouched = false;
       readyForNextService = true;
       togglePricingModeUI();
+      refreshQuotePreview();
       updateEstimateButtonState();
 
       if (draftsMsg) draftsMsg.textContent = `Loaded: ${d.title}`;
@@ -648,6 +681,7 @@
     const drafts = getDrafts().filter(x => x.id !== id);
     setDrafts(drafts);
     refreshDraftsUI();
+    if (draftsSelect) draftsSelect.value = "";
 
     if (draftsMsg) draftsMsg.textContent = "Draft deleted.";
   }
@@ -1116,6 +1150,12 @@ const confidenceEl = document.getElementById("laborConfidence");
       clearSignatureCanvas();
     }
   }
+
+  document.querySelectorAll('input[name="wantSig"]').forEach((el) => {
+    el.addEventListener("change", () => {
+      setSigVisible(getWantSig() === "yes");
+    });
+  });
 
   function openConfirm() {
     if (!confirmModal) return;
@@ -1905,8 +1945,6 @@ if (getEstimateHint) {
 
     window.estimateState = estimateState;
 
-    window.estimateState = estimateState;
-
     // ---- State reset (DO NOT redeclare) ----
     lineItems = [];
     lastEstimate = null;
@@ -1919,6 +1957,7 @@ if (getEstimateHint) {
     // VIN
     if (vinEl) vinEl.value = "";
     vinPanel?.classList.add("hidden");
+    if (vinDecodedMeta) vinDecodedMeta.textContent = "";
 
     // service
     if (categoryEl) categoryEl.value = "";
@@ -1942,6 +1981,11 @@ if (getEstimateHint) {
     if (customerAgreesChk) customerAgreesChk.checked = true;
     setSigVisible(false);
     clearSignatureCanvas();
+    if (confirmMsg) confirmMsg.textContent = "";
+    if (quotePreviewEl) quotePreviewEl.value = "";
+    if (draftsSelect) draftsSelect.value = "";
+    const confirmServicesList = document.getElementById("confirmServicesList");
+    if (confirmServicesList) confirmServicesList.textContent = "—";
 
     // UI blocks
     if (lineItemsList) lineItemsList.innerHTML = "";
@@ -1959,6 +2003,7 @@ if (getEstimateHint) {
       await applyObdFromQuery();
     } catch (_) {}
 
+    refreshQuotePreview();
     updateEstimateButtonState();
     setStatus("info", "Cleared. Start a new estimate.");
   });
