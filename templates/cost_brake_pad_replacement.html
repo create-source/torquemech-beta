@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}Brake Pad Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Brake pad replacement cost usually depends on labor time, pad quality, and whether related brake hardware or rotors need attention. Use TorqueMech to estimate the job clearly." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Brake Pad Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Brake pad replacement cost usually depends on labor time, pad quality, vehicle design, and whether the shop finds related brake wear during inspection.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$150 to $400+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total for one axle. Final price changes based on pad quality, labor rate, and whether extra brake work is needed.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 2.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Most brake pad jobs are straightforward, but seized hardware, corrosion, or electronic parking brake procedures can add time.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$40 to $180+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Pads alone vary widely. Premium ceramic pads, European applications, and dealer parts usually raise the price.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Squealing or grinding during braking</li>
+        <li>Longer stopping distance</li>
+        <li>Brake warning light or pad wear sensor alert</li>
+        <li>Vibration or rough brake feel</li>
+        <li>Visible thin pad material during inspection</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Front vs. rear brake pad service</li>
+        <li>Vehicle size, design, and brake access</li>
+        <li>Shop labor rate in your area</li>
+        <li>Pad material and brand quality</li>
+        <li>Whether rotors, hardware, or calipers need attention at the same time</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a brake repair estimate with your vehicle, labor rate, and service selection.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=front_brake_pads_replacement">Estimate Brake Pad Replacement</a>
+        <a class="tm-btn tm-btn-secondary" href="/repair-guides/front-brake-pads">View Front Brake Pad Guide</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}
