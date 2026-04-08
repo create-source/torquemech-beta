@@ -285,7 +285,6 @@
   const laborBreakdownChevron = $("laborBreakdownChevron");
   const vehiclesContainer = $("vehiclesContainer");
   const addVehicleBtn = $("addVehicleBtn");
-  if (addVehicleBtn) addVehicleBtn.style.display = "none";
 
   function setLaborBreakdownExpanded(expanded) {
     if (!laborBreakdownToggle || !laborBreakdownContent) return;
@@ -332,6 +331,8 @@
   // Line items
   const lineItemsWrap = $("lineItemsWrap");
   const lineItemsList = $("lineItemsList");
+  const estimateTotalBar = $("estimateTotalBar");
+  const estimateTotalValue = $("estimateTotalValue");
 
   // Preview (optional)
   const estimatePreview = $("estimatePreview");
@@ -734,6 +735,24 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function quoteTotal() {
     return lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0);
+  }
+
+  function formatRunningTotal(n) {
+    return Number(n || 0).toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  function renderEstimateTotalBar() {
+    if (estimateTotalValue) {
+      estimateTotalValue.textContent = formatRunningTotal(quoteTotal());
+    }
+    if (estimateTotalBar) {
+      estimateTotalBar.dataset.empty = lineItems.length ? "false" : "true";
+    }
   }
 
   function buildQuoteMessage() {
@@ -1417,6 +1436,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   // ----- Line Items UI (Service cards) -----
   function renderLineItems() {
+    renderEstimateTotalBar();
     if (!lineItemsWrap || !lineItemsList) return;
 
     lineItemsWrap.classList.toggle("hidden", lineItems.length === 0);
@@ -1994,6 +2014,7 @@ if (getEstimateHint) {
     estimatePreview?.classList.add("hidden");
     if (previewTotalText) previewTotalText.textContent = "—";
     if (previewSubText) previewSubText.textContent = "";
+    renderEstimateTotalBar();
 
     // reload core dropdown data
     try {
@@ -2001,6 +2022,7 @@ if (getEstimateHint) {
       await renderVehicles();
       renderActiveVehicleBanner();
       await applyObdFromQuery();
+      renderEstimateTotalBar();
     } catch (_) {}
 
     refreshQuotePreview();
@@ -2180,7 +2202,17 @@ if (getEstimateHint) {
   });
 
   function addVehicleCard() {
-    return; // single-vehicle mode only
+    const activeVehicleId = estimateState.activeVehicleId || estimateState.vehicles[0]?.id || "";
+    const activeYearSelect = activeVehicleId
+      ? document.querySelector(`.vehicle-year[data-vehicle-id="${activeVehicleId}"]`)
+      : document.querySelector(".vehicle-year");
+
+    if (activeYearSelect instanceof HTMLElement) {
+      activeYearSelect.scrollIntoView({ behavior: "smooth", block: "center" });
+      activeYearSelect.focus();
+    }
+
+    setStatus("info", "Phase 1 supports one vehicle per estimate. Use the current vehicle selector below.");
   }
 
   function removeVehicleCard(vehicleId) {

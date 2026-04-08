@@ -640,6 +640,34 @@ input[type="radio"]{
   gap: 12px;
 }
 
+.tm-estimate-total-bar{
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(11,22,40,.10);
+  background: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
+  box-shadow: var(--tm-shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tm-estimate-total-bar__label{
+  font-size: .92rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--tm-text-muted);
+}
+
+.tm-estimate-total-bar__value{
+  font-size: 1.55rem;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  color: var(--tm-text);
+}
+
 .line-items-list,
 .labor-breakdown-list{
   display: grid;
@@ -1578,6 +1606,15 @@ h3{
   .section-header--vehicles {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .tm-estimate-total-bar{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tm-estimate-total-bar__value{
+    font-size: 1.35rem;
   }
 
   .section-header--vehicles h2 {
