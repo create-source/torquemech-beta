@@ -72,33 +72,43 @@
 </section>
 {% endif %}
 
+{% if guide.labor_range or guide.labor_cost %}
 <section class="tm-section tm-two-col">
+  {% if guide.labor_range %}
   <div class="tm-card">
     <h2>Labor Time</h2>
     <div class="tm-stat">{{ guide.labor_range.min_hours }} - {{ guide.labor_range.max_hours }} hours</div>
     <p class="tm-muted">Typical labor range based on TorqueMech service data.</p>
   </div>
+  {% endif %}
 
+  {% if guide.labor_cost %}
   <div class="tm-card">
     <h2>Estimated Labor Cost</h2>
     <div class="tm-stat">${{ guide.labor_cost.min }} - ${{ guide.labor_cost.max }}</div>
     <p class="tm-muted">Estimated labor only. Final total depends on parts, condition, and access.</p>
   </div>
+  {% endif %}
 </section>
+{% endif %}
 
-{% if guide.parts_cost %}
+{% if guide.parts_cost or guide.total_cost %}
 <section class="tm-section tm-two-col">
+  {% if guide.parts_cost %}
   <div class="tm-card">
     <h2>Typical Parts Cost</h2>
     <div class="tm-stat">${{ guide.parts_cost.min }} - ${{ guide.parts_cost.max }}</div>
     <p class="tm-muted">Parts estimate range for common replacement scenarios.</p>
   </div>
+  {% endif %}
 
+  {% if guide.total_cost %}
   <div class="tm-card">
     <h2>Typical Total Repair Range</h2>
     <div class="tm-stat">${{ guide.total_cost.min }} - ${{ guide.total_cost.max }}</div>
     <p class="tm-muted">Combined labor and parts estimate range.</p>
   </div>
+  {% endif %}
 </section>
 {% endif %}
 
@@ -230,6 +240,7 @@
 </section>
 {% endif %}
 
+{% if guide.coming_next or guide.diagnostic_context %}
 <section class="tm-section tm-two-col">
   {% if guide.coming_next %}
   <div class="tm-card">
@@ -263,6 +274,7 @@
   </div>
   {% endif %}
 </section>
+{% endif %}
 
 {% if guide.estimate %}
 <section class="tm-section">
@@ -274,7 +286,7 @@
       id="estimateRepairBtn"
       data-estimator-link="{{ guide.estimate.estimator_link }}"
       data-service-code="{{ guide.estimate.service_code }}"
-      href="{{ guide.estimate.estimator_link }}?category={{ guide.estimate.category_code | urlencode }}&service={{ guide.estimate.service_code | urlencode }}"
+      href="{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}"
     >
       {{ guide.estimate.cta_label }} ->
     </a>

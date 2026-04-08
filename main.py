@@ -816,6 +816,209 @@ def load_repair_guides():
         return json.loads(REPAIR_GUIDES_PATH.read_text())
     except Exception:
         return {}
+
+
+def normalize_repair_guide_list(raw: Any) -> List[str]:
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, list):
+        return []
+
+    normalized: List[str] = []
+    for item in raw:
+        text = str(item or "").strip()
+        if text:
+            normalized.append(text)
+    return normalized
+
+
+def normalize_repair_guide_range(raw: Any, min_key: str, max_key: str) -> Optional[Dict[str, Any]]:
+    if not isinstance(raw, dict):
+        return None
+
+    min_value = raw.get(min_key)
+    max_value = raw.get(max_key)
+    if min_value in (None, "") and max_value in (None, ""):
+        return None
+
+    return {
+        min_key: min_value,
+        max_key: max_value,
+    }
+
+
+def normalize_repair_guide_media_item(media: Any, fallback_alt: str) -> Optional[Dict[str, str]]:
+    if isinstance(media, str) and media.strip():
+        return {
+            "src": media.strip(),
+            "caption": "",
+            "alt": fallback_alt,
+        }
+
+    if isinstance(media, dict):
+        src = (
+            media.get("src")
+            or media.get("url")
+            or media.get("path")
+            or media.get("image")
+        )
+        if isinstance(src, str) and src.strip():
+            caption = (
+                media.get("caption")
+                or media.get("caption_text")
+                or media.get("text")
+                or ""
+            )
+            alt = media.get("alt") or caption or fallback_alt
+            return {
+                "src": src.strip(),
+                "caption": str(caption).strip(),
+                "alt": str(alt).strip(),
+            }
+
+    return None
+
+
+def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
+    guide = dict(raw_guide) if isinstance(raw_guide, dict) else {}
+    normalized: Dict[str, Any] = dict(guide)
+
+    guide_slug = str(guide.get("slug") or slug or "").strip()
+    guide_title = str(guide.get("title") or guide_slug.replace("-", " ").replace("_", " ").title() or "Repair Guide").strip()
+
+    normalized["slug"] = guide_slug
+    normalized["title"] = guide_title
+    normalized["summary"] = str(guide.get("summary") or "").strip()
+    normalized["category"] = str(guide.get("category") or "Other").strip() or "Other"
+    normalized["subcategory"] = str(guide.get("subcategory") or "").strip()
+    normalized["vehicle_optional"] = bool(guide.get("vehicle_optional", True))
+
+    try:
+        normalized["sort_order"] = int(guide.get("sort_order", 999))
+    except (TypeError, ValueError):
+        normalized["sort_order"] = 999
+
+    normalized["symptoms"] = normalize_repair_guide_list(guide.get("symptoms"))
+    normalized["repair_overview"] = normalize_repair_guide_list(guide.get("repair_overview"))
+    normalized["tools_required"] = normalize_repair_guide_list(
+        guide.get("tools_required") or guide.get("tools")
+    )
+    normalized["repair_steps"] = normalize_repair_guide_list(
+        guide.get("repair_steps") or guide.get("steps")
+    )
+    normalized["pro_tips"] = normalize_repair_guide_list(guide.get("pro_tips"))
+    normalized["warnings"] = normalize_repair_guide_list(
+        guide.get("warnings") or guide.get("watchouts")
+    )
+    normalized["bolt_sizes"] = normalize_repair_guide_list(guide.get("bolt_sizes"))
+    normalized["coming_next"] = normalize_repair_guide_list(guide.get("coming_next"))
+
+    normalized["labor_range"] = normalize_repair_guide_range(
+        guide.get("labor_range"), "min_hours", "max_hours"
+    )
+    normalized["labor_cost"] = normalize_repair_guide_range(
+        guide.get("labor_cost"), "min", "max"
+    )
+    normalized["parts_cost"] = normalize_repair_guide_range(
+        guide.get("parts_cost"), "min", "max"
+    )
+    normalized["total_cost"] = normalize_repair_guide_range(
+        guide.get("total_cost"), "min", "max"
+    )
+
+    normalized["diagram"] = normalize_repair_guide_media_item(
+        guide.get("diagram"),
+        f"{guide_title} diagram",
+    )
+    if normalized["diagram"] and not normalized["diagram"]["caption"]:
+        legacy_caption = str(guide.get("diagram_caption") or "").strip()
+        if legacy_caption:
+            normalized["diagram"]["caption"] = legacy_caption
+
+    normalized_step_images: List[Dict[str, Any]] = []
+    for media in guide.get("step_images", []):
+        if not isinstance(media, dict):
+            continue
+
+        step_number = (
+            media.get("step")
+            or media.get("step_number")
+            or media.get("repair_step")
+            or media.get("index")
+        )
+        try:
+            step_number = int(step_number)
+        except (TypeError, ValueError):
+            continue
+
+        normalized_image = normalize_repair_guide_media_item(
+            media,
+            f"{guide_title} step {step_number}",
+        )
+        if not normalized_image:
+            continue
+
+        normalized_step_images.append(
+            {
+                "step": step_number,
+                "src": normalized_image["src"],
+                "caption": normalized_image["caption"],
+                "alt": normalized_image["alt"],
+            }
+        )
+
+    normalized["step_images"] = sorted(normalized_step_images, key=lambda item: item["step"])
+
+    normalized_specs: List[Dict[str, str]] = []
+    for spec in guide.get("torque_specs", []):
+        if not isinstance(spec, dict):
+            continue
+
+        label = str(spec.get("label") or spec.get("part") or "").strip()
+        value = str(spec.get("value") or spec.get("spec") or "").strip()
+        if label and value:
+            normalized_specs.append({"label": label, "value": value})
+    normalized["torque_specs"] = normalized_specs
+
+    diagnostic_context = guide.get("diagnostic_context")
+    if isinstance(diagnostic_context, dict):
+        intro = str(diagnostic_context.get("intro") or "").strip()
+        common_symptoms_link = str(diagnostic_context.get("common_symptoms_link") or "").strip()
+        diagnostic_tools_link = str(diagnostic_context.get("diagnostic_tools_link") or "").strip()
+        normalized["diagnostic_context"] = (
+            {
+                "intro": intro,
+                "common_symptoms_link": common_symptoms_link,
+                "diagnostic_tools_link": diagnostic_tools_link,
+            }
+            if intro or common_symptoms_link or diagnostic_tools_link
+            else None
+        )
+    else:
+        normalized["diagnostic_context"] = None
+
+    estimate = guide.get("estimate")
+    if isinstance(estimate, dict):
+        cta_label = str(estimate.get("cta_label") or "").strip()
+        service_code = str(estimate.get("service_code") or "").strip()
+        service_name = str(estimate.get("service_name") or "").strip()
+        estimator_link = str(estimate.get("estimator_link") or "/estimator").strip() or "/estimator"
+        category_code = str(estimate.get("category_code") or "").strip()
+        normalized["estimate"] = (
+            {
+                "cta_label": cta_label or "Estimate This Repair",
+                "service_code": service_code,
+                "service_name": service_name,
+                "estimator_link": estimator_link,
+                "category_code": category_code,
+            }
+            if service_code or cta_label or service_name
+            else None
+        )
+    else:
+        normalized["estimate"] = None
+
+    return normalized
    
 # ============================================================
 # Template Routes
@@ -1157,20 +1360,19 @@ async def repair_guides_index(request: Request):
 
         try:
             data = json.loads(file.read_text(encoding="utf-8-sig"))
-            print("LOADED:", file.name, "|", data.get("title"), "|", data.get("category"))
-        except Exception as e:
-            print("FAILED:", file.name, "|", str(e))
+            guide = normalize_repair_guide(data, slug=slug)
+        except Exception:
             continue
 
-        category = (data.get("category") or "Other").title()
-        title = data.get("title", slug.replace("-", " ").title())
-        summary = data.get("summary", "")
+        category = str(guide.get("category") or "Other").title()
+        title = guide.get("title", slug.replace("-", " ").title())
+        summary = guide.get("summary", "")
 
         item = {
             "slug": slug,
             "title": title,
             "summary": summary,
-            "sort_order": data.get("sort_order", 999),
+            "sort_order": guide.get("sort_order", 999),
         }
 
         if category in grouped_guides:
@@ -2674,96 +2876,8 @@ def open_shared_estimate(request: Request, estimate_id: str):
 
 @app.get("/repair-guides/{slug}")
 async def repair_guide_page(request: Request, slug: str):
-    guide = load_json_file("repair_guides", f"{slug.replace('-', '_')}.json")
-
-    def normalize_media_item(media, fallback_alt: str) -> dict | None:
-        if isinstance(media, str) and media.strip():
-            return {
-                "src": media.strip(),
-                "caption": "",
-                "alt": fallback_alt,
-            }
-
-        if isinstance(media, dict):
-            src = (
-                media.get("src")
-                or media.get("url")
-                or media.get("path")
-                or media.get("image")
-            )
-            if isinstance(src, str) and src.strip():
-                caption = (
-                    media.get("caption")
-                    or media.get("caption_text")
-                    or media.get("text")
-                    or ""
-                )
-                alt = media.get("alt") or caption or fallback_alt
-                return {
-                    "src": src.strip(),
-                    "caption": str(caption).strip(),
-                    "alt": str(alt).strip(),
-                }
-
-        return None
-
-    # Normalize field names so old/new guide JSON structures both work
-    guide["tools_required"] = guide.get("tools_required") or guide.get("tools") or []
-    guide["repair_steps"] = guide.get("repair_steps") or guide.get("steps") or []
-    guide["warnings"] = guide.get("warnings") or guide.get("watchouts") or []
-    guide["bolt_sizes"] = guide.get("bolt_sizes") or []
-    guide["diagram"] = normalize_media_item(
-        guide.get("diagram"),
-        f"{guide.get('title', 'Repair guide')} diagram",
-    )
-    if guide["diagram"] and not guide["diagram"]["caption"]:
-        legacy_caption = guide.get("diagram_caption")
-        if isinstance(legacy_caption, str) and legacy_caption.strip():
-            guide["diagram"]["caption"] = legacy_caption.strip()
-
-    normalized_step_images = []
-    for media in guide.get("step_images", []):
-        if not isinstance(media, dict):
-            continue
-
-        step_number = (
-            media.get("step")
-            or media.get("step_number")
-            or media.get("repair_step")
-            or media.get("index")
-        )
-        try:
-            step_number = int(step_number)
-        except (TypeError, ValueError):
-            continue
-
-        normalized_image = normalize_media_item(
-            media,
-            f"{guide.get('title', 'Repair guide')} step {step_number}",
-        )
-        if not normalized_image:
-            continue
-
-        normalized_step_images.append(
-            {
-                "step": step_number,
-                "src": normalized_image["src"],
-                "caption": normalized_image["caption"],
-                "alt": normalized_image["alt"],
-            }
-        )
-
-    guide["step_images"] = sorted(normalized_step_images, key=lambda item: item["step"])
-
-    # Normalize torque specs shape
-    normalized_specs = []
-    for spec in guide.get("torque_specs", []):
-        if isinstance(spec, dict):
-            normalized_specs.append({
-                "label": spec.get("label") or spec.get("part") or "Spec",
-                "value": spec.get("value") or spec.get("spec") or "Vehicle specific"
-            })
-    guide["torque_specs"] = normalized_specs
+    raw_guide = load_json_file("repair_guides", f"{slug.replace('-', '_')}.json")
+    guide = normalize_repair_guide(raw_guide, slug=slug)
 
     return templates.TemplateResponse(
         "repair_guide.html",
