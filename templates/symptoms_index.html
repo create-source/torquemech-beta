@@ -1,24 +1,40 @@
 {% extends "layout.html" %}
 
-{% block title %}Diagnostic Guides | TorqueMech{% endblock %}
+{% block title %}Symptoms | TorqueMech{% endblock %}
 
 {% block content %}
 <section class="tm-container">
   <div class="card">
     <div class="eyebrow">TorqueMech Knowledge</div>
-    <h1>Diagnostic Guides</h1>
+    <h1>Symptoms</h1>
     <p class="tm-muted">
-      Quick diagnostic references used by mechanics to identify common vehicle issues.
+      Search common vehicle symptoms, then move into the matching symptom guide, repair path, or estimate flow.
     </p>
   </div>
 
+  {% if platform_sections %}
+  <div class="card" style="margin-top:16px;">
+    <h2>Continue Through TorqueMech</h2>
+    <div class="tm-repair-guide-list">
+      {% for item in platform_sections %}
+      <a class="tm-repair-guide-item" href="{{ item.href }}">
+        <div>
+          <strong>{{ item.title }}</strong>
+          <div class="tm-muted">{{ item.summary }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <div class="card" style="margin-top:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-      <h2 style="margin:0;">Common Diagnostic Guides</h2>
+      <h2 style="margin:0;">Common Symptom Guides</h2>
       <input
         id="diagnosticSearch"
         type="text"
-        placeholder="Search diagnostic guides..."
+        placeholder="Search symptom guides..."
         style="min-width:240px; max-width:360px; width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:inherit;"
       />
     </div>

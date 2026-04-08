@@ -11,6 +11,24 @@
   </div>
 </section>
 
+{% if platform_sections %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Continue Through TorqueMech</h2>
+    <div class="tm-repair-guide-list">
+      {% for item in platform_sections %}
+      <a class="tm-repair-guide-item" href="{{ item.href }}">
+        <div>
+          <strong>{{ item.title }}</strong>
+          <div class="tm-muted">{{ item.summary }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <section class="tm-section">
   <div class="tm-card">
     <h2>Start From an OBD Code</h2>

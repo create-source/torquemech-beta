@@ -14,35 +14,51 @@
   </div>
 
   <div class="card" style="margin-top:16px;">
-    <h2>Start Here</h2>
+    <h2>Core TorqueMech Paths</h2>
 
     <div class="tm-repair-guide-list">
 
-      <a class="tm-repair-guide-item" href="/obd">
+      <a class="tm-repair-guide-item" href="/diagnostics">
         <div>
-          <strong>I Have a Code</strong>
-          <div class="tm-muted">Look up and understand OBD-II codes</div>
+          <strong>Diagnostics Hub</strong>
+          <div class="tm-muted">Start from an OBD code, symptom, or vehicle system</div>
         </div>
       </a>
 
       <a class="tm-repair-guide-item" href="/symptoms">
         <div>
-          <strong>My Car Has a Problem</strong>
-          <div class="tm-muted">Find causes based on symptoms</div>
+          <strong>Symptoms</strong>
+          <div class="tm-muted">Open symptom guides for the problem you are seeing or hearing</div>
+        </div>
+      </a>
+
+      <a class="tm-repair-guide-item" href="/repair-guides">
+        <div>
+          <strong>Repair Guides</strong>
+          <div class="tm-muted">Browse repair procedures and labor context by system</div>
         </div>
       </a>
 
       <a class="tm-repair-guide-item" href="/repair-cost">
         <div>
-          <strong>I Need Repair Cost</strong>
-          <div class="tm-muted">Browse common repair pricing</div>
+          <strong>Repair Costs</strong>
+          <div class="tm-muted">Browse repair pricing context and labor ranges</div>
+        </div>
+      </a>
+
+      <a class="tm-repair-guide-item" href="/estimator">
+        <div>
+          <strong>Estimator</strong>
+          <div class="tm-muted">Build the estimate once the repair path is known</div>
         </div>
       </a>
 
     </div>
   </div>
 
-  <div class="tm-repair-guide-list" style="margin-top:16px;">
+  <div class="card" style="margin-top:16px;">
+    <h2>Supporting Entry Points</h2>
+    <div class="tm-repair-guide-list" style="margin-top:16px;">
     {% for item in sections %}
     <a class="tm-repair-guide-item" href="{{ item.href }}">
       <div>
@@ -51,6 +67,7 @@
       </div>
     </a>
     {% endfor %}
+    </div>
   </div>
 </section>
 {% endblock %}

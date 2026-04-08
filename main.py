@@ -779,6 +779,21 @@ def admin_obd_requests(request: Request, key: str | None = None):
 def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
 
+
+@app.get("/privacy", response_class=HTMLResponse, include_in_schema=False)
+def privacy(request: Request):
+    return templates.TemplateResponse("privacy.html", {"request": request})
+
+
+@app.get("/terms", response_class=HTMLResponse, include_in_schema=False)
+def terms(request: Request):
+    return templates.TemplateResponse("terms.html", {"request": request})
+
+
+@app.get("/disclaimer", response_class=HTMLResponse, include_in_schema=False)
+def disclaimer(request: Request):
+    return templates.TemplateResponse("disclaimer.html", {"request": request})
+
 # ============================================================
 # Startup Checks
 # ============================================================
@@ -1333,6 +1348,41 @@ def load_diagnostic_source(slug: str) -> Tuple[Dict[str, Any], str]:
             return raw, file.stem
 
     raise HTTPException(status_code=404, detail="Content not found")
+
+
+def build_platform_sections(current_href: str = "") -> List[Dict[str, str]]:
+    sections = [
+        {
+            "title": "Diagnostics Hub",
+            "href": "/diagnostics",
+            "summary": "Enter from OBD codes, symptoms, and vehicle systems.",
+        },
+        {
+            "title": "Symptoms",
+            "href": "/symptoms",
+            "summary": "Search symptom guides and open the closest matching problem path.",
+        },
+        {
+            "title": "Repair Guides",
+            "href": "/repair-guides",
+            "summary": "Browse mechanic-focused repair procedures by system.",
+        },
+        {
+            "title": "Repair Costs",
+            "href": "/repair-cost",
+            "summary": "Browse labor ranges and pricing context by service.",
+        },
+        {
+            "title": "Estimator",
+            "href": "/estimator",
+            "summary": "Build the estimate once the repair path is known.",
+        },
+    ]
+
+    if not current_href:
+        return sections
+
+    return [section for section in sections if section.get("href") != current_href]
    
 # ============================================================
 # Template Routes
@@ -1572,6 +1622,7 @@ async def diagnostics_hub(request: Request):
             "obd_entries": obd_entries,
             "symptom_entries": symptom_entries,
             "system_entries": system_entries,
+            "platform_sections": build_platform_sections("/diagnostics"),
             "page_title": "Diagnostics | TorqueMech",
             "meta_description": "Structured diagnostic entry points for OBD codes, symptoms, and vehicle systems.",
         },
@@ -1611,6 +1662,7 @@ async def symptoms_index(request: Request):
         {
             "request": request,
             "symptom_pages": symptom_pages,
+            "platform_sections": build_platform_sections("/symptoms"),
             "page_title": "Symptoms | TorqueMech",
             "meta_description": "Search common vehicle symptoms and open the matching TorqueMech symptom guide.",
         },
@@ -1681,9 +1733,19 @@ def repair_cost_index(request: Request):
 
     catalog = load_services_catalog()
     raw = catalog["raw"]
-    repair_pages = []
+    category_order = [
+        "Brakes",
+        "Engine",
+        "Cooling",
+        "Electrical",
+        "Suspension",
+        "Maintenance",
+    ]
+    grouped_repairs: Dict[str, List[Dict[str, Any]]] = {category: [] for category in category_order}
+    grouped_repairs["Other"] = []
 
     for category in raw["categories"]:
+        category_name = str(category.get("name", "General Repair")).title()
         for service in category.get("services", []):
             name = service.get("name", "").strip()
             if not name:
@@ -1694,28 +1756,43 @@ def repair_cost_index(request: Request):
             labor_min = float(service.get("labor_hours_min", 0) or 0)
             labor_max = float(service.get("labor_hours_max", 0) or 0)
 
-            repair_pages.append({
+            item = {
                 "name": name,
                 "slug": slug,
-                "category": category.get("name", "General Repair"),
+                "category": category_name,
                 "labor_min": labor_min,
                 "labor_max": labor_max,
-            })
+            }
 
-    repair_pages.sort(key=lambda x: x["name"].lower())
+            if category_name in grouped_repairs:
+                grouped_repairs[category_name].append(item)
+            else:
+                grouped_repairs["Other"].append(item)
+
+    for category_name in grouped_repairs:
+        grouped_repairs[category_name].sort(key=lambda item: item["name"].lower())
+
+    cost_groups = [
+        {"name": category_name, "repairs": grouped_repairs[category_name]}
+        for category_name in category_order
+        if grouped_repairs[category_name]
+    ]
+
+    if grouped_repairs["Other"]:
+        cost_groups.append({"name": "Other", "repairs": grouped_repairs["Other"]})
 
     return templates.TemplateResponse(
         "repair_cost_index.html",
         {
             "request": request,
-            "repair_pages": repair_pages,
+            "cost_groups": cost_groups,
+            "platform_sections": build_platform_sections("/repair-cost"),
         },
     )
 
 @app.get("/repair-guides", response_class=HTMLResponse)
 async def repair_guides_index(request: Request):
-    guides_dir = Path(__file__).parent / "data" / "repair_guides"
-
+    guides = load_normalized_repair_guides_map()
     category_order = [
         "Brakes",
         "Engine",
@@ -1728,15 +1805,7 @@ async def repair_guides_index(request: Request):
     grouped_guides = {category: [] for category in category_order}
     grouped_guides["Other"] = []
 
-    for file in guides_dir.glob("*.json"):
-        slug = file.stem.replace("_", "-")
-
-        try:
-            data = json.loads(file.read_text(encoding="utf-8-sig"))
-            guide = normalize_repair_guide(data, slug=slug)
-        except Exception:
-            continue
-
+    for slug, guide in guides.items():
         category = str(guide.get("category") or "Other").title()
         title = guide.get("title", slug.replace("-", " ").title())
         summary = guide.get("summary", "")
@@ -1772,6 +1841,7 @@ async def repair_guides_index(request: Request):
         {
             "request": request,
             "guide_groups": visible_groups,
+            "platform_sections": build_platform_sections("/repair-guides"),
         },
     )
 
@@ -1899,18 +1969,6 @@ def favicon():
     return FileResponse(str(STATIC_DIR / "favicon.ico"))
 
 # ✅ Clean legal routes
-@app.get("/privacy", include_in_schema=False)
-def privacy():
-    return FileResponse(BASE_DIR / "static" / "privacy.html")
-
-@app.get("/terms", include_in_schema=False)
-def terms():
-    return FileResponse(BASE_DIR / "static" / "terms.html")
-
-@app.get("/disclaimer", include_in_schema=False)
-def disclaimer():
-    return FileResponse(BASE_DIR / "static" / "disclaimer.html")
-
 FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScqx74MW1pDdyA-I7GHL1vo5TyS6iaQ3QhJogQtkXvfjiaBrA/viewform?usp=sf_link"
 
 def make_qr_image_reader(url: str) -> ImageReader:

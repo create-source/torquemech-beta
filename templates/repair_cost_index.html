@@ -1,21 +1,37 @@
 {% extends "layout.html" %}
 
-{% block title %}Repair Guides | TorqueMech{% endblock %}
+{% block title %}Repair Costs | TorqueMech{% endblock %}
 
 {% block content %}
 <section class="tm-container">
   <div class="card">
     <div class="eyebrow">TorqueMech Repair Library</div>
-    <h1>Repair Guides</h1>
+    <h1>Repair Cost Index</h1>
     <p class="tm-muted">
-      Browse repair guides, labor ranges, and estimate-ready service pages for common vehicle repairs.
+      Browse repair cost pages, labor ranges, and estimate-ready service paths for common vehicle repairs.
       Start with the repair you need, then move directly into TorqueMech’s estimate workflow.
     </p>
   </div>
 
+  {% if platform_sections %}
+  <div class="card" style="margin-top:16px;">
+    <h2>Continue Through TorqueMech</h2>
+    <div class="tm-repair-guide-list">
+      {% for item in platform_sections %}
+      <a class="tm-repair-guide-item" href="{{ item.href }}">
+        <div>
+          <strong>{{ item.title }}</strong>
+          <div class="tm-muted">{{ item.summary }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <!-- SEARCH BAR -->
   <div class="card" style="margin-top:16px;">
-    <label for="repairSearch" class="eyebrow">Find a Repair Guide</label>
+    <label for="repairSearch" class="eyebrow">Find a Repair Cost Page</label>
 
     <input
       id="repairSearch"
@@ -26,18 +42,20 @@
     >
 
     <p class="tm-muted" id="repairSearchCount" style="margin-top:10px;">
-      Showing all repair guides
+      Showing all repair cost pages
     </p>
   </div>
 
   <div class="card" style="margin-top:16px;">
-    <h2>All Repair Guides</h2>
+    <h2>Browse by Category</h2>
 
+    {% for group in cost_groups %}
+    <h3 class="repair-cost-group-heading" style="margin-top:18px;">{{ group.name }}</h3>
     <div class="tm-repair-guide-list">
-      {% for item in repair_pages %}
+      {% for item in group.repairs %}
       <a
         class="tm-repair-guide-item repair-guide-row"
-        href="/repair-guides/{{ item.slug }}"
+        href="/repair-cost/{{ item.slug }}"
         data-search="{{ (item.name ~ ' ' ~ item.category)|lower }}"
       >
         <div>
@@ -50,6 +68,7 @@
       </a>
       {% endfor %}
     </div>
+    {% endfor %}
   </div>
 </section>
 
@@ -57,8 +76,11 @@
 document.addEventListener("DOMContentLoaded", function () {
 
   const input = document.getElementById("repairSearch");
-  const rows = document.querySelectorAll(".repair-guide-row");
+  const rows = Array.from(document.querySelectorAll(".repair-guide-row"));
+  const groups = Array.from(document.querySelectorAll(".repair-cost-group-heading"));
   const count = document.getElementById("repairSearchCount");
+
+  if (!input || !rows.length || !count) return;
 
   function runFilter() {
     const q = input.value.toLowerCase().trim();
@@ -72,10 +94,19 @@ document.addEventListener("DOMContentLoaded", function () {
       if (match) visible++;
     });
 
+    groups.forEach((heading) => {
+      const list = heading.nextElementSibling;
+      if (!list) return;
+      const visibleRows = Array.from(list.querySelectorAll(".repair-guide-row"))
+        .filter((row) => row.style.display !== "none");
+      heading.style.display = visibleRows.length ? "" : "none";
+      list.style.display = visibleRows.length ? "" : "none";
+    });
+
     if (!q) {
-      count.textContent = "Showing all repair guides";
+      count.textContent = "Showing all repair cost pages";
     } else {
-      count.textContent = `Showing ${visible} repair guides`;
+      count.textContent = `Showing ${visible} repair cost pages`;
     }
   }
 
