@@ -313,10 +313,7 @@
     });
 
     modelSearch.addEventListener("input", () => {
-      vehicle.model = "";
-      modelSelect.value = "";
       renderModelResults(modelSearch.value);
-      notifyChange();
     });
 
     modelSearch.addEventListener("focus", () => {
