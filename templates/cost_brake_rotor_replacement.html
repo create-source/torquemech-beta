@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Brake Rotor Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Brake rotor replacement cost depends on axle, rotor size, corrosion, labor access, and whether pads or hardware are replaced at the same time. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Brake Rotor Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Brake rotor replacement cost usually depends on rotor size, labor access, corrosion, and whether pads or related brake hardware are serviced during the same visit.
+      This page gives a clean baseline before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$250 to $700+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on whether one axle or both axles are being serviced, rotor size, labor rate, and related brake work found during inspection.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 2.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Straightforward jobs go quickly, but rusted rotors, seized hardware, or electronic parking brake procedures can add labor time.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$100 to $400+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Rotor pricing varies based on axle, vehicle size, coated versus standard rotors, and whether premium or OE-level parts are used.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Brake pulsation or shaking during stops</li>
+        <li>Grooved, scored, or heat-spotted rotor surfaces</li>
+        <li>Grinding noise during braking</li>
+        <li>Rotor thickness below service limit</li>
+        <li>Brake vibration after prolonged heat or heavy use</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Front versus rear rotor service</li>
+        <li>Rotor size, type, and vehicle weight class</li>
+        <li>Corrosion level and hardware condition</li>
+        <li>Whether brake pads are replaced at the same time</li>
+        <li>Shop labor rate and local parts pricing</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a brake rotor replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator">Estimate Brake Rotor Replacement</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}

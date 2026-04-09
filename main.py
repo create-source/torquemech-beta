@@ -1819,6 +1819,20 @@ def radiator_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/spark-plug-replacement", response_class=HTMLResponse)
+def spark_plug_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_spark_plug_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/brake-rotor-replacement", response_class=HTMLResponse)
+def brake_rotor_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_brake_rotor_replacement.html",
+        {"request": request},
+    )
+
 @app.get("/repair-guides", response_class=HTMLResponse)
 async def repair_guides_index(request: Request):
     guides = load_normalized_repair_guides_map()
