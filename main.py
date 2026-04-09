@@ -156,6 +156,18 @@ for _h in logging.getLogger().handlers:
 
 app = FastAPI()
 
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class CanonicalHostMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        host = request.headers.get("host", "")
+        if host.startswith("www."):
+            url = request.url.replace(netloc=host.replace("www.", ""))
+            return RedirectResponse(str(url), status_code=301)
+        return await call_next(request)
+
+app.add_middleware(CanonicalHostMiddleware)
+
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
