@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block title %}A/C Compressor Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="A/C compressor replacement cost depends on refrigerant recovery, system contamination, compressor access, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>A/C Compressor Replacement Cost</h1>
+    <p class="tm-pageLead">
+      A/C compressor replacement cost usually depends on compressor access, refrigerant recovery and recharge, and whether the system needs extra cleanup or component replacement after a compressor failure.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$900 to $2,200+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on compressor type, labor access, refrigerant service, and whether the repair includes a dryer, expansion valve, or flushing.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">3.0 to 6.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Recovery, replacement, evacuation, and recharge add time, especially when the compressor is buried low in the engine bay.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$350 to $1,400+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Pricing varies based on compressor design, OE versus aftermarket quality, and whether the job also requires seals, oil, or related A/C components.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Warm air from the vents with A/C selected</li>
+        <li>Compressor clutch not engaging or cycling abnormally</li>
+        <li>Grinding, whining, or rattling from the compressor area</li>
+        <li>Metal debris found during A/C system diagnosis</li>
+        <li>Repeated refrigerant pressure problems after recharge</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Compressor location and engine bay access</li>
+        <li>Refrigerant recovery, evacuation, and recharge requirements</li>
+        <li>Need for receiver-drier, condenser, or expansion valve service</li>
+        <li>System contamination after internal compressor failure</li>
+        <li>Part type: aftermarket, premium aftermarket, or OE</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build an A/C compressor replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=a_c_compressor_replacement">Estimate A/C Compressor Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/alternator-replacement">Alternator Replacement Cost</a></li>
+        <li><a href="/cost/serpentine-belt-replacement">Serpentine Belt Replacement Cost</a></li>
+        <li><a href="/cost/radiator-replacement">Radiator Replacement Cost</a></li>
+        <li><a href="/cost/water-pump-replacement">Water Pump Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

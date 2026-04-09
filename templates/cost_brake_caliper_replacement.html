@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block title %}Brake Caliper Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Brake caliper replacement cost depends on axle location, corrosion, brake system condition, and whether pads or rotors also need service. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Brake Caliper Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Brake caliper replacement cost usually depends on whether the repair is front or rear, how much corrosion is present, and whether pads, rotors, or brake fluid service happen at the same time.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$300 to $800+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total for one caliper depends on part quality, labor rate, and whether the repair includes brake bleeding or related hardware replacement.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.2 to 3.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Straightforward swaps move quickly, but seized fittings, rusted hardware, or electronic parking brake procedures can extend the job.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$120 to $400+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price varies based on front versus rear caliper design, remanufactured versus new units, and whether brackets or hardware are included.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Vehicle pulling during braking</li>
+        <li>Uneven pad wear on one side</li>
+        <li>Brake fluid leak near the wheel</li>
+        <li>Wheel running hot after a short drive</li>
+        <li>Dragging brake or sticking caliper symptoms</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Front versus rear caliper replacement</li>
+        <li>Rust, corrosion, and bleeder or hose fitting condition</li>
+        <li>Need for pads, rotors, or brake hose service</li>
+        <li>Brake fluid bleed or flush requirements</li>
+        <li>Part type: remanufactured, new aftermarket, or OE</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a brake caliper replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=brake_caliper_replacement_each">Estimate Brake Caliper Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/brake-pad-replacement">Brake Pad Replacement Cost</a></li>
+        <li><a href="/cost/brake-rotor-replacement">Brake Rotor Replacement Cost</a></li>
+        <li><a href="/cost/control-arm-replacement">Control Arm Replacement Cost</a></li>
+        <li><a href="/cost/starter-replacement">Starter Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

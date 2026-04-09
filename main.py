@@ -1840,6 +1840,27 @@ def radiator_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/serpentine-belt-replacement", response_class=HTMLResponse)
+def serpentine_belt_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_serpentine_belt_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/brake-caliper-replacement", response_class=HTMLResponse)
+def brake_caliper_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_brake_caliper_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/ac-compressor-replacement", response_class=HTMLResponse)
+def ac_compressor_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_ac_compressor_replacement.html",
+        {"request": request},
+    )
+
 @app.get("/cost/spark-plug-replacement", response_class=HTMLResponse)
 def spark_plug_cost(request: Request):
     return templates.TemplateResponse(
@@ -1859,6 +1880,13 @@ def starter_cost(request: Request):
     return templates.TemplateResponse(
         "cost_starter_replacement.html",
         {"request": request},
+    )
+
+@app.get("/repair-costs", response_class=HTMLResponse)
+async def repair_costs(request: Request):
+    return templates.TemplateResponse(
+        "repair_costs.html",
+        {"request": request}
     )
 
 @app.get("/cost/water-pump-replacement", response_class=HTMLResponse)
@@ -2001,6 +2029,9 @@ def sitemap():
         "/cost/brake-pad-replacement",
         "/cost/alternator-replacement",
         "/cost/radiator-replacement",
+        "/cost/serpentine-belt-replacement",
+        "/cost/brake-caliper-replacement",
+        "/cost/ac-compressor-replacement",
         "/cost/spark-plug-replacement",
         "/cost/brake-rotor-replacement",
         "/cost/starter-replacement",
