@@ -58,7 +58,33 @@
     };
 
     let makes = [];
+    let models = [];
     const currentYear = new Date().getFullYear();
+
+    let modelSearch = modelSelect.parentElement?.querySelector(".vehicle-model-search");
+    if (!modelSearch) {
+      modelSearch = document.createElement("input");
+      modelSearch.type = "text";
+      modelSearch.className = "vehicle-model-search";
+      modelSearch.autocomplete = "off";
+      modelSelect.insertAdjacentElement("beforebegin", modelSearch);
+    }
+    modelSearch.placeholder = "Search model...";
+    modelSearch.disabled = true;
+
+    let modelResults = modelSelect.parentElement?.querySelector(".vehicle-model-results");
+    if (!modelResults) {
+      modelResults = document.createElement("div");
+      modelResults.className = "vehicle-model-results";
+      modelSearch.insertAdjacentElement("afterend", modelResults);
+    }
+    modelResults.style.display = "none";
+    modelResults.style.marginTop = "6px";
+    modelResults.style.border = "1px solid rgba(255,255,255,.12)";
+    modelResults.style.borderRadius = "12px";
+    modelResults.style.overflowY = "auto";
+
+    modelSelect.style.display = "none";
 
     yearSelect.innerHTML = `<option value="">Select Year</option>`;
     for (let year = currentYear; year >= startYear; year--) {
@@ -72,6 +98,11 @@
     const hideMakeResults = () => {
       makeResults.style.display = "none";
       makeResults.innerHTML = "";
+    };
+
+    const hideModelResults = () => {
+      modelResults.style.display = "none";
+      modelResults.innerHTML = "";
     };
 
     const renderMakeResults = (query) => {
@@ -130,19 +161,73 @@
       makeSearch.value = vehicle.make;
     };
 
+    const renderModelResults = (query) => {
+      if (modelSearch.disabled) {
+        hideModelResults();
+        return;
+      }
+
+      const normalizedQuery = query.trim().toLowerCase();
+
+      if (!normalizedQuery) {
+        hideModelResults();
+        return;
+      }
+
+      const filtered = models
+        .filter((model) => model.toLowerCase().includes(normalizedQuery))
+        .slice(0, 8);
+
+      if (!filtered.length) {
+        hideModelResults();
+        return;
+      }
+
+      modelResults.innerHTML = filtered
+        .map(
+          (model) => `
+            <button
+              type="button"
+              class="model-result-item"
+              data-model="${model}"
+              style="
+                display:block;
+                width:100%;
+                text-align:left;
+                padding:12px 14px;
+                background:#ffffff;
+                color:#0f172a;
+                border:none;
+                border-bottom:1px solid #e5e7eb;
+                cursor:pointer;
+                font-size:16px;
+              "
+            >${model}</button>
+          `
+        )
+        .join("");
+
+      modelResults.style.display = "block";
+    };
+
     const populateModels = async (selectedMake, selectedModel = "") => {
+      models = [];
+      modelSearch.value = "";
+      modelSearch.disabled = true;
+      hideModelResults();
       modelSelect.innerHTML = `<option value="">Loading models...</option>`;
       modelSelect.disabled = true;
       setModelLoading(true);
 
       if (!selectedMake) {
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
+        modelSearch.placeholder = "Select make first...";
         setModelLoading(false);
         return;
       }
 
       try {
-        const models = await vehicleUiApiJSON(`/api/models/${encodeURIComponent(selectedMake)}`);
+        models = await vehicleUiApiJSON(`/api/models/${encodeURIComponent(selectedMake)}`);
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
 
         models.forEach((model) => {
@@ -154,11 +239,23 @@
 
         modelSelect.disabled = false;
         modelSelect.value = selectedModel;
+        modelSearch.disabled = false;
+        modelSearch.placeholder = "Search model...";
+        modelSearch.value = selectedModel;
       } catch (_) {
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
+        modelSearch.placeholder = "Search model...";
       } finally {
         setModelLoading(false);
       }
+    };
+
+    const applyModelSelection = (selectedModel) => {
+      vehicle.model = selectedModel;
+      modelSelect.value = selectedModel;
+      modelSearch.value = selectedModel;
+      hideModelResults();
+      notifyChange();
     };
 
     const applyMakeSelection = async (selectedMake, { focusModel = false } = {}) => {
@@ -167,7 +264,9 @@
 
       makeSelect.value = selectedMake;
       makeSearch.value = selectedMake;
+      modelSearch.value = "";
       hideMakeResults();
+      hideModelResults();
 
       notifyChange();
       await populateModels(selectedMake);
@@ -213,9 +312,31 @@
       await applyMakeSelection(makeSelect.value, { focusModel: true });
     });
 
-    modelSelect.addEventListener("change", () => {
-      vehicle.model = modelSelect.value;
+    modelSearch.addEventListener("input", () => {
+      vehicle.model = "";
+      modelSelect.value = "";
+      renderModelResults(modelSearch.value);
       notifyChange();
+    });
+
+    modelSearch.addEventListener("focus", () => {
+      if (modelSearch.value.trim()) {
+        renderModelResults(modelSearch.value);
+      }
+    });
+
+    modelSearch.addEventListener("blur", () => {
+      setTimeout(hideModelResults, 150);
+    });
+
+    modelResults.addEventListener("click", (event) => {
+      const resultButton = event.target.closest(".model-result-item");
+      if (!resultButton) return;
+      applyModelSelection(resultButton.dataset.model || "");
+    });
+
+    modelSelect.addEventListener("change", () => {
+      applyModelSelection(modelSelect.value);
     });
 
     clearButton?.addEventListener("click", async () => {
@@ -226,7 +347,9 @@
       yearSelect.value = "";
       makeSelect.value = "";
       makeSearch.value = "";
+      modelSearch.value = "";
       hideMakeResults();
+      hideModelResults();
       await populateModels("");
       notifyChange();
     });
