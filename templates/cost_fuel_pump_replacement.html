@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Fuel Pump Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Fuel pump replacement cost depends on pump location, tank access, diagnosis, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Fuel Pump Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Fuel pump replacement cost usually depends on whether the pump is mounted inside the tank, how much fuel system diagnosis is needed, and how much labor it takes to reach the module safely.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$450 to $1,600+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on pump location, module style, labor rate, and whether the job includes a tank drop or related fuel system parts.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">2.0 to 5.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Some vehicles offer easier service access, while others require lowering the fuel tank and handling straps, shields, and lines carefully.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$150 to $900+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price changes based on pump module design, sending unit integration, brand quality, and whether the application uses an in-tank or external pump.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Long crank or hard starting</li>
+        <li>Engine stalls under load or while driving</li>
+        <li>No-start condition with low fuel pressure</li>
+        <li>Whining noise from the fuel tank area</li>
+        <li>Loss of power during acceleration</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>In-tank versus external pump design</li>
+        <li>Fuel tank access and amount of fuel in the tank</li>
+        <li>Need for diagnosis before replacement</li>
+        <li>Integrated sending unit or module replacement</li>
+        <li>Part quality and related filter or line service</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a fuel pump replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=fuel_pump_replacement_in_tank">Estimate Fuel Pump Replacement</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}
