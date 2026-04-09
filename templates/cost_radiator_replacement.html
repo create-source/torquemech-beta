@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Radiator Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Radiator replacement cost depends on cooling-system access, vehicle design, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Radiator Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Radiator replacement cost usually depends on cooling-system access, the amount of teardown required, and whether related hoses, fans, or coolant service need attention during the same job.
+      This page gives a clean starting point before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$350 to $1,000+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on vehicle design, labor access, and whether related cooling-system parts are replaced at the same time.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.5 to 3.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Some radiator jobs are straightforward, while others require front-end trim removal, fan assembly service, or tighter access around the support.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$150 to $600+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price varies based on radiator size, material, transmission cooler integration, and whether you use OE or aftermarket parts.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Coolant leaking under the front of the vehicle</li>
+        <li>Engine overheating or running hotter than normal</li>
+        <li>Visible radiator damage, cracks, or corrosion</li>
+        <li>Low coolant level with no obvious hose failure</li>
+        <li>Cooling fan running excessively after warm-up</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Radiator location and front-end access</li>
+        <li>Vehicle make, model, and engine size</li>
+        <li>Whether hoses, clamps, or fan components also need service</li>
+        <li>Coolant type and refill or bleed procedure</li>
+        <li>Part type: aftermarket, premium aftermarket, or OE</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a radiator replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=radiator_replacement">Estimate Radiator Replacement</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}
