@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Alternator Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Alternator replacement cost depends on vehicle access, charging-system diagnosis, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Alternator Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Alternator replacement cost usually depends on engine bay access, charging-system diagnosis, belt drive layout, and whether the job needs related electrical inspection at the same time.
+      This page gives a clean starting point before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$350 to $900+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on labor access and whether the replacement uses a remanufactured, aftermarket, or OE-quality alternator.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 3.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Some alternators are easy to access, while others require splash shields, intake components, or tighter front-end disassembly.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$180 to $650+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Cost changes quickly based on amperage rating, application, whether the unit is new or remanufactured, and brand quality.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Battery warning light on the dash</li>
+        <li>Repeated dead battery or slow cranking</li>
+        <li>Dim headlights or flickering interior lights</li>
+        <li>Electrical accessories acting weak or intermittent</li>
+        <li>Charging-system voltage out of range during testing</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Alternator location and engine bay access</li>
+        <li>Vehicle make, model, and engine package</li>
+        <li>Charging-system testing before replacement</li>
+        <li>Drive belt condition and related hardware</li>
+        <li>Part type: remanufactured, aftermarket, or OE</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build an alternator replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=alternator_replacement">Estimate Alternator Replacement</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}

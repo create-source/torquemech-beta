@@ -1805,6 +1805,13 @@ def brake_pad_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/alternator-replacement", response_class=HTMLResponse)
+def alternator_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_alternator_replacement.html",
+        {"request": request},
+    )
+
 @app.get("/repair-guides", response_class=HTMLResponse)
 async def repair_guides_index(request: Request):
     guides = load_normalized_repair_guides_map()
