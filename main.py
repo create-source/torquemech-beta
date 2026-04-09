@@ -30,6 +30,15 @@ from fastapi.responses import (
     JSONResponse,
     RedirectResponse,
 )
+
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    PlainTextResponse,
+)
+
 from fastapi.staticfiles import StaticFiles
 
 from pydantic import BaseModel, Field
@@ -1888,6 +1897,14 @@ async def repair_guides_index(request: Request):
         },
     )
 
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots_txt():
+    return """User-agent: *
+Allow: /
+
+Sitemap: https://torquemech.com/sitemap.xml
+"""
+
 @app.get("/knowledge", response_class=HTMLResponse)
 def knowledge_hub(request: Request):
     metric_incr("page_knowledge_hub")
@@ -1950,6 +1967,16 @@ def sitemap():
 """
 
     return Response(content=xml, media_type="application/xml")
+
+from fastapi.responses import PlainTextResponse
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+async def robots_txt():
+    return """User-agent: *
+Allow: /
+
+Sitemap: https://torquemech.com/sitemap.xml
+"""
 
 @app.get("/robots.txt")
 def robots():

@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Spark Plug Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Spark plug replacement cost depends on engine layout, plug access, parts quality, and whether intake or ignition components need extra labor. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Spark Plug Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Spark plug replacement cost usually depends on engine layout, plug access, and whether ignition coils, intake components, or related tune-up items add labor to the job.
+      This page gives a clear baseline before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$150 to $600+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on cylinder count, plug accessibility, labor rate, and whether related ignition parts are serviced at the same time.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 4.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Straightforward four-cylinder jobs are usually quicker, while transverse V6 engines or buried rear-bank plugs can add significant labor.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$20 to $250+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price varies based on plug type, cylinder count, brand, and whether coils or boots are also replaced during the repair.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Engine misfire or rough idle</li>
+        <li>Hesitation or reduced power under load</li>
+        <li>Poor fuel economy</li>
+        <li>Hard starting or longer crank time</li>
+        <li>Check engine light with misfire-related fault codes</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Engine layout and plug access</li>
+        <li>Four-cylinder versus V6 or V8 labor time</li>
+        <li>Standard, platinum, or iridium plug choice</li>
+        <li>Whether intake components or coil packs need removal</li>
+        <li>Condition of the threads, boots, and related ignition hardware</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a spark plug replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator">Estimate Spark Plug Replacement</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}

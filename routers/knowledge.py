@@ -588,8 +588,13 @@ SYMPTOM_PAGES = [
 
 ]
 
-init_symptom_tables()
-seed_symptoms_from_python()
+def initialize_symptom_seed_data():
+    try:
+        init_symptom_tables()
+        seed_symptoms_from_python()
+        return True
+    except sqlite3.Error:
+        return False
 
 def get_all_symptoms():
     conn = get_db()

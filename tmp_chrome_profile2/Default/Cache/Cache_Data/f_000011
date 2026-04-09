@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2ZCQZQDDZ2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-2ZCQZQDDZ2');
+  </script>
+  
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+
+  <title>TorqueMech — Automotive Repair Estimator & OBD Diagnostic Tools</title>
+
+  <meta name="description" content="TorqueMech provides automotive diagnostic workflows, repair guidance, wiring insight, and professional repair cost estimates." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/style.css?v=24">
+  <script src="/static/app.js?v=29" defer></script>
+  
+</head>
+
+<body>
+  <header class="tm-nav">
+  <div class="tm-nav__inner">
+    <!-- Left: Wordmark (NO underline in nav) -->
+    <a class="tm-brand" href="/" aria-label="TorqueMech Home">
+      <span class="tm-brand_text">
+        <span class="tm-brand__torque">Torque</span><span class="tm-brand__mech">Mech</span>
+        <span class="tm-beta-badge">Beta</span>
+      </span>
+    </a>
+
+    <!-- Right: Hamburger -->
+    <button class="tm-menuBtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+      <span class="tm-menuBtn__icon" aria-hidden="true">☰</span>
+    </button>
+  </div>
+
+  <!-- Dropdown panel -->
+  <div class="tm-menu" id="navMenu" hidden>
+    <nav class="tm-menu__panel" aria-label="Main menu">
+      <a class="tm-menu__item" href="/">Home</a>
+      <a class="tm-menu__item" href="/estimator">Estimator</a>
+      <a class="tm-menu__item" href="/obd">Diagnostic Repair</a>
+
+      <a class="tm-menu__item" href="/symptoms">Symptoms</a>
+      <a class="tm-menu__item" href="/repair-guides">Repair Guides</a>
+      <a class="tm-menu__item" href="/knowledge">Knowledge Hub</a>
+
+      <a class="tm-menu__item" href="/about">About</a>
+
+      <div class="tm-menu__divider"></div>
+
+      <a class="tm-menu__item tm-menu__muted" href="/terms">Terms</a>
+      <a class="tm-menu__item tm-menu__muted" href="/privacy">Privacy</a>
+      <a class="tm-menu__item tm-menu__muted" href="/disclaimer">Disclaimer</a>
+    </nav>
+  </div>
+
+  <!-- Click-outside backdrop -->
+  <div class="tm-menuBackdrop" id="menuBackdrop" hidden></div>
+</header>
+
+
+  <main class="tm-container">
+    
+
+    <header style="display:flex;align-items:center;justify-content:space-between;">
+      <h1 style="margin:0;">Repair Estimator</h1>
+
+      <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
+    </header>
+
+    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
+      <div style="font-weight:800; margin-bottom:8px;">How it works</div>
+      <div class="tm-muted" style="line-height:1.6;">
+        1. Select your vehicle<br>
+        2. Choose a service<br>
+        3. Click Get Estimate<br>
+        4. Add more services or generate a PDF
+      </div>
+    </div>
+
+    <!-- Vehicles -->
+    <section class="tm-card" aria-label="Vehicles" style="margin-top:14px;">
+      <div class="section-header--vehicles">
+        <h2>Vehicles</h2>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Fields</button>
+          <button id="addVehicleBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
+            Select Vehicle
+          </button>
+        </div>
+      </div>
+
+      <div id="vehiclesContainer"></div>
+
+      <div class="vin-section">
+        <button type="button" id="vinToggle" class="vin-toggle">
+          🔎 Have a VIN? Auto-fill active vehicle (Optional)
+          <span id="vinArrow" class="vin-arrow">▸</span>
+        </button>
+
+        <div id="vinPanel" class="vin-panel hidden">
+          <label for="vin">VIN</label>
+          <input id="vin" type="text" maxlength="17" placeholder="Enter 17-digit VIN" />
+          <button id="vinLookupBtn" type="button" class="tm-btn tm-btn-secondary" style="margin-top:6px;">
+            Decode VIN
+          </button>
+        </div>
+        <div id="vinDecodedMeta" class="tm-hint" style="margin-top:8px;"></div>
+      </div>
+    </section>
+
+    <div id="estimateTotalBar" class="tm-estimate-total-bar" aria-live="polite">
+      <div class="tm-estimate-total-bar__label">Estimated Total</div>
+      <div id="estimateTotalValue" class="tm-estimate-total-bar__value">$0.00</div>
+    </div>
+
+    <!-- Service -->
+    <section class="tm-card" aria-label="Service">
+
+    <div id="activeVehicleBanner" class="tm-card" style="cursor:pointer;">
+      <div style="font-size:12px; opacity:.75; margin-bottom:4px;">Active Vehicle</div>
+      <div id="activeVehicleText" style="font-weight:800;">Vehicle</div>
+    </div>
+
+    <div class="vehicle-header">
+      <h2>Service</h2>
+      <div class="tm-addServiceRow">
+  <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
+    To add another service, click “+ Add Service”.
+  </span>
+  <button id="addLineBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
+    + Add Service
+  </button>
+</div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <label for="category">Category</label>
+        <select id="category"></select>
+      </div>
+
+      <div>
+        <label for="service">Service</label>
+        <select id="service"></select>
+      </div>
+    </div>
+   
+    <div id="lineItemsWrap" class="line-items hidden">
+      <div class="line-items-head">
+        <div class="line-items-title">Services to estimate</div>
+        <div class="line-items-hint">Add services, then click Get Estimate on a card (or Generate All below).</div>
+      </div>
+
+      <div id="lineItemsList" class="line-items-list"></div>
+    </div>
+
+      <div class="grid3">
+        <div>
+          <label for="pricingMode">Pricing Mode</label>
+          <select id="pricingMode">
+            <option value="hourly" selected>Hourly</option>
+            <option value="flat">Flat Rate</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="travelFee">Travel Fee (optional)</label>
+          <input id="travelFee" type="number" step="0.01" value="0" />
+        </div>
+
+        <div id="flatRateWrap" class="hidden">
+          <label for="flatRatePrice">Flat Rate Price</label>
+
+          <input
+            id="flatRatePrice"
+            type="number"
+            step="0.01"
+            value="0"
+            placeholder="Example: 220"
+          />
+        </div>
+      </div>
+
+        <div class="grid3" id="hourlyPricingWrap">
+
+          <!-- Labor -->
+          <div>
+            <label for="laborHours">
+              <span id="laborLabelText">Labor Hours</span>
+            </label>
+
+            <div class="labor-inline">
+              <input id="laborHours" type="number" step="0.1" value="0" />
+              <span id="laborHoursRange" class="labor-range"></span>
+            </div>
+          </div>
+
+          <!-- Parts -->
+          <div>
+            <label for="partsPrice">Parts Price (optional)</label>
+            <input id="partsPrice" type="number" step="0.01" value="0" />
+          </div>
+
+          <!-- Labor Rate -->
+          <div>
+            <label for="laborRate">Labor Rate ($/hr)</label>
+            <input id="laborRate" type="number" step="1" value="90" />
+          </div>
+
+        </div>
+
+        <p class="recalc-note">
+          If you adjust labor hours, parts price, or labor rate,
+          click the corresponding <strong>“Recalculate”</strong> button on that service card.
+        </p>
+            
+      </div>
+
+      <div class="labor-help">
+        <span class="tm-hint">
+          Based on typical service time ranges. Actual labor may vary depending on vehicle condition, access, and technician experience.
+        </span>
+        
+      </div>
+
+      <div class="inline-actions" style="margin-top:10px;">
+      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select a category/service, then click “Get Estimate”.</div>
+        <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary">
+          Get Estimate
+        </button>
+      </div>
+
+      <div id="statusBox" data-kind="info" style="margin-top:10px;"></div>
+
+      <!-- Estimate Preview -->
+      <div id="estimatePreview" class="preview hidden" aria-live="polite">
+        <div class="preview-label">Estimate preview</div>
+        <div class="preview-value" id="previewTotalText">—</div>
+        <div class="preview-sub" id="previewSubText"></div>
+      </div>
+
+      <div id="laborBreakdownBox" class="tm-card breakdown-panel" style="margin-top:12px; display:none;">
+        <button
+          id="laborBreakdownToggle"
+          type="button"
+          class="breakdown-toggle"
+          aria-expanded="false"
+          aria-controls="laborBreakdownContent"
+        >
+          <span class="breakdown-toggle-left">
+            <span class="breakdown-icon">🔧</span>
+            <span class="breakdown-title">Labor time breakdown</span>
+          </span>
+          <span id="laborBreakdownChevron" class="breakdown-chevron">▾</span>
+        </button>
+
+        <div id="laborBreakdownContent" class="breakdown-content hidden">
+          <div id="laborSteps" class="breakdown-steps"></div>
+          <div id="laborDisclaimer" class="tm-muted breakdown-disclaimer"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" rows="3" placeholder="Optional notes..."></textarea>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- Saved Estimates (Local) --> 
+      <div class="tm-card" id="draftsCard">
+      <h2>Saved Estimates</h2>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary">Save Draft</button>
+
+        <select id="draftsSelect" class="input" style="min-width:260px;">
+          <option value="">— Select a saved draft —</option>
+        </select>
+
+        <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary">Load</button>
+        <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger">Delete</button>
+      </div>
+      
+
+      <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;"></div>
+    </div>
+
+      <div class="actions">
+        <button id="generateAllBtn" type="button" class="tm-btn tm-btn-secondary">
+          Generate All Service Estimates
+        </button>
+      </div>
+
+    </section>
+
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop" id="confirmBackdrop"></div>
+
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Confirm Estimate</h2>
+      </div>
+
+      <div class="confirm-grid">
+        <div>
+          <label>
+            <input type="checkbox" id="customerAgreesChk" checked />
+            Customer agrees
+          </label>
+        </div>
+
+        <div>
+          <div>Services</div>
+          <div id="confirmServicesList">—</div>
+        </div>
+  </div>
+
+      <!-- Signature choice -->
+      <div class="sig-choice" style="margin-top:10px; display:flex; gap:16px; align-items:center;">
+        <label style="display:flex; gap:8px; align-items:center;">
+          <input type="radio" name="wantSig" value="yes" checked />
+          Signature required
+        </label>
+
+        <label style="display:flex; gap:8px; align-items:center;">
+          <input type="radio" name="wantSig" value="no" />
+          No signature
+        </label>
+      </div>
+
+      <!-- Customer info (optional) -->
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label for="customerName">Customer Name (optional)</label>
+          <input id="customerName" type="text" placeholder="Customer name" />
+        </div>
+        <div>
+          <label for="customerPhone">Customer Phone (optional)</label>
+          <input id="customerPhone" type="tel" placeholder="(###) ###-####" />
+        </div>
+      </div>
+
+      <!-- Signature section -->
+      <div id="sigSection" class="hidden" style="margin-top:12px;">
+        <label style="display:block; margin-bottom:8px;">Customer Signature</label>
+
+        <div class="sig-wrap" style="border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow:hidden;">
+          <canvas id="sigCanvas" style="width:100%; height:140px; display:block; touch-action:none;"></canvas>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+          <button id="sigClearBtn" type="button" class="tm-btn tm-btn-secondary">Clear Signature</button>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label for="quotePreview" style="display:block; margin-bottom:8px; font-weight:600;">
+          Quote Message Preview
+        </label>
+        <textarea
+          id="quotePreview"
+          rows="9"
+          readonly
+          style="width:100%; resize:vertical;"
+          placeholder="Your quote message will appear here..."
+        ></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
+        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary">Generate PDF</button>
+        <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
+      </div>
+
+      <div id="confirmMsg"></div>
+    </div>
+  </div>
+
+  
+  </main>
+
+  <footer class="tm-footer">
+    <div class="tm-container tm-footer-inner">
+
+      <div class="tm-footer-left">
+        <span class="tm-footer-brand">© 2026 TorqueMech</span>
+      </div>
+
+      <div class="tm-footer-links">
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/disclaimer">Disclaimer</a>
+      </div>
+
+      <div class="tm-footer-right">
+        <span class="tm-footer-support">
+          Support:
+          <a href="mailto:support@torquemech.com">support@torquemech.com</a>
+        </span>
+
+        <button id="feedbackBtn" type="button" class="tm-btn tm-btn-ghost">
+          Feedback
+        </button>
+      </div>
+
+    </div>
+  </footer>
+
+  <script src="/static/nav.js?v=4"></script>
+  <script src="/static/feedback.js?v=4"></script>
+  
+
+  <div id="feedbackModal" class="tm-modal" hidden>
+    <div class="tm-modal__overlay" data-close="1"></div>
+
+    <div class="tm-modal__panel" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+      <div class="tm-modal__head">
+        <h2 id="fbTitle">Send Feedback</h2>
+        <button type="button" class="tm-iconBtn" id="feedbackCloseBtn" aria-label="Close">✕</button>
+      </div>
+
+      <p class="tm-muted" style="margin:0 0 10px;">
+        Tell us what didn’t work, what was unclear, or what you expected to see.
+      </p>
+
+      <form id="feedbackForm">
+        <div class="tm-grid2">
+          <div>
+            <label class="tm-label">Name (optional)</label>
+            <input class="input" type="text" id="fbName" maxlength="80" autocomplete="name">
+          </div>
+          <div>
+            <label class="tm-label">Email (optional)</label>
+            <input class="input" type="email" id="fbEmail" maxlength="120" autocomplete="email">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-label">Message *</label>
+          <textarea class="input" id="fbMessage" rows="5" required maxlength="2000"
+            placeholder="Example: I searched P0300 and expected…"></textarea>
+        </div>
+
+        <div class="tm-row tm-modal-actions">
+          <span id="fbStatus" class="tm-muted"></span>
+          <div class="tm-modal-btns">
+            <button type="button" class="btn btn-secondary" data-close="1">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="fbSubmitBtn">Send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
