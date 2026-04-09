@@ -429,6 +429,36 @@
   // Service selection
   const categoryEl = $("category");
   const serviceEl = $("service");
+  let serviceOptions = [];
+  let serviceSearch = null;
+  let serviceResults = null;
+
+  if (serviceEl) {
+    serviceSearch = serviceEl.parentElement?.querySelector(".service-search");
+    if (!serviceSearch) {
+      serviceSearch = document.createElement("input");
+      serviceSearch.type = "text";
+      serviceSearch.className = "service-search";
+      serviceSearch.autocomplete = "off";
+      serviceEl.insertAdjacentElement("beforebegin", serviceSearch);
+    }
+    serviceSearch.placeholder = "Select category first...";
+    serviceSearch.disabled = true;
+
+    serviceResults = serviceEl.parentElement?.querySelector(".service-results");
+    if (!serviceResults) {
+      serviceResults = document.createElement("div");
+      serviceResults.className = "service-results";
+      serviceSearch.insertAdjacentElement("afterend", serviceResults);
+    }
+    serviceResults.style.display = "none";
+    serviceResults.style.marginTop = "6px";
+    serviceResults.style.border = "1px solid rgba(255,255,255,.12)";
+    serviceResults.style.borderRadius = "12px";
+    serviceResults.style.overflowY = "auto";
+
+    serviceEl.style.display = "none";
+  }
 
   // Inputs
   const laborHoursEl = $("laborHours");
@@ -1200,6 +1230,88 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   // ---- Categories / services ----
+  function hideServiceResults() {
+    if (!serviceResults) return;
+    serviceResults.style.display = "none";
+    serviceResults.innerHTML = "";
+  }
+
+  function syncServiceSearchFromSelect() {
+    if (!serviceSearch || !serviceEl) return;
+    const selectedText = serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || "";
+    serviceSearch.value = serviceEl.value ? selectedText : "";
+  }
+
+  function renderServiceResults(query) {
+    if (!serviceSearch || !serviceResults || serviceSearch.disabled) {
+      hideServiceResults();
+      return;
+    }
+
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      hideServiceResults();
+      return;
+    }
+
+    const filtered = serviceOptions
+      .filter((service) => service.name.toLowerCase().includes(normalizedQuery))
+      .slice(0, 8);
+
+    if (!filtered.length) {
+      hideServiceResults();
+      return;
+    }
+
+    serviceResults.innerHTML = filtered
+      .map(
+        (service) => `
+          <button
+            type="button"
+            class="service-result-item"
+            data-service-code="${service.code}"
+            style="
+              display:block;
+              width:100%;
+              text-align:left;
+              padding:12px 14px;
+              background:#ffffff;
+              color:#0f172a;
+              border:none;
+              border-bottom:1px solid #e5e7eb;
+              cursor:pointer;
+              font-size:16px;
+            "
+          >${service.name}</button>
+        `
+      )
+      .join("");
+
+    serviceResults.style.display = "block";
+  }
+
+  function resetServiceSearch({ placeholder = "Select category first...", disabled = true } = {}) {
+    serviceOptions = [];
+    if (!serviceSearch) return;
+    serviceSearch.value = "";
+    serviceSearch.placeholder = placeholder;
+    serviceSearch.disabled = disabled;
+    hideServiceResults();
+  }
+
+  function enableServiceSearch() {
+    if (!serviceSearch) return;
+    serviceSearch.disabled = false;
+    serviceSearch.placeholder = "Search service...";
+  }
+
+  function applyServiceSelection(serviceCode) {
+    if (!serviceEl) return;
+    serviceEl.value = serviceCode;
+    syncServiceSearchFromSelect();
+    hideServiceResults();
+  }
+
   async function loadCategories() {
     if (!categoryEl) return;
     categoryEl.innerHTML = `<option value="">Select category…</option>`;
@@ -1215,6 +1327,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   async function loadServices(categoryKey) {
     if (!serviceEl) return;
 
+    resetServiceSearch();
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
     serviceMeta = null;
     laborHoursTouched = false;
@@ -1222,12 +1335,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!categoryKey) return;
 
     const svcs = await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`);
+    serviceOptions = svcs.map((s) => ({
+      code: s.code || "",
+      name: s.name || s.code || "Service",
+    }));
     for (const s of svcs) {
       const opt = document.createElement("option");
       opt.value = s.code || "";
       opt.textContent = s.name || s.code || "Service";
       serviceEl.appendChild(opt);
     }
+    enableServiceSearch();
   }
 
   async function loadServiceMeta(serviceCode) {
@@ -1833,6 +1951,7 @@ if (getEstimateHint) {
     categoryEl.value = "";
     serviceEl.value = "";
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
+    resetServiceSearch();
 
     serviceMeta = null;
     if (laborHoursRangeEl) laborHoursRangeEl.textContent = "";
@@ -2105,6 +2224,7 @@ if (getEstimateHint) {
     // service
     if (categoryEl) categoryEl.value = "";
     if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
+    resetServiceSearch();
 
     // inputs
     if (laborHoursEl) laborHoursEl.value = "0";
@@ -2250,11 +2370,38 @@ if (getEstimateHint) {
 
   serviceEl?.addEventListener("change", async () => {
     try {
+      syncServiceSearchFromSelect();
       await loadServiceMeta(serviceEl.value);
       updateEstimateButtonState();
     } catch (e) {
       setStatus("error", `Service detail failed: ${e.message}`);
     }
+  });
+
+  serviceSearch?.addEventListener("input", async () => {
+    if (!serviceEl) return;
+    serviceEl.value = "";
+    renderServiceResults(serviceSearch.value);
+    await loadServiceMeta("");
+    updateEstimateButtonState();
+  });
+
+  serviceSearch?.addEventListener("focus", () => {
+    if (serviceSearch.value.trim()) {
+      renderServiceResults(serviceSearch.value);
+    }
+  });
+
+  serviceSearch?.addEventListener("blur", () => {
+    setTimeout(hideServiceResults, 150);
+  });
+
+  serviceResults?.addEventListener("click", async (event) => {
+    const resultButton = event.target.closest(".service-result-item");
+    if (!resultButton) return;
+    applyServiceSelection(resultButton.dataset.serviceCode || "");
+    await loadServiceMeta(serviceEl.value);
+    updateEstimateButtonState();
   });
 
   function syncTopVehicleToState() {
@@ -2535,6 +2682,7 @@ if (getEstimateHint) {
       syncTopVehicleToState();
 
       if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
+      resetServiceSearch();
 
       updateEstimateButtonState();
       setStatus("info", "Select a service and click Get Estimate. To add another one, click + Add Service.");
