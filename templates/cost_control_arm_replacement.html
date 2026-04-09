@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Control Arm Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Control arm replacement cost depends on suspension design, bushing or ball joint wear, alignment needs, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Control Arm Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Control arm replacement cost usually depends on whether the repair is front or rear, how rusted the suspension hardware is, and whether alignment service is needed afterward.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$300 to $1,000+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total is often priced per control arm and changes based on suspension layout, labor access, and whether an alignment is included.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.5 to 4.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Straightforward jobs move quickly, but seized cam bolts, corrosion, and tight suspension packaging can add significant time.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$100 to $500+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price varies based on complete arm assemblies, pressed-in bushings or joints, and premium versus budget suspension parts.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Clunking over bumps or during turns</li>
+        <li>Loose steering feel or wandering</li>
+        <li>Uneven tire wear</li>
+        <li>Vehicle pulling or poor alignment</li>
+        <li>Visible bushing tears or ball joint play</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Front versus rear suspension design</li>
+        <li>Whether one arm or both sides need replacement</li>
+        <li>Rust, seized fasteners, and subframe access</li>
+        <li>Alignment service after suspension work</li>
+        <li>Part quality and included ball joint or bushing assemblies</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a control arm replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=control_arm_replacement_each">Estimate Control Arm Replacement</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}
