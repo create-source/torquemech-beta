@@ -2020,28 +2020,6 @@ def sitemap():
 
     return Response(content=xml, media_type="application/xml")
 
-from fastapi.responses import PlainTextResponse
-
-@app.get("/robots.txt", response_class=PlainTextResponse)
-async def robots_txt():
-    return """User-agent: *
-Allow: /
-
-Sitemap: https://torquemech.com/sitemap.xml
-"""
-
-@app.get("/robots.txt")
-def robots():
-
-    content = """
-User-agent: *
-Allow: /
-
-Sitemap: https://torquemech.com/sitemap.xml
-"""
-
-    return Response(content=content.strip(), media_type="text/plain")
-
 # ============================================================
 # Utility Routes
 # ============================================================
