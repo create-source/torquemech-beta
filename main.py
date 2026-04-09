@@ -1924,45 +1924,28 @@ def knowledge_hub(request: Request):
 from fastapi.responses import Response
 
 @app.get("/sitemap.xml", response_class=Response)
-def sitemap(request: Request):
-    conn = obd_conn()
-    cur = conn.cursor()
+def sitemap():
+    base_url = "https://torquemech.com"
+    paths = [
+        "/",
+        "/estimator",
+        "/repair-guides",
+        "/about",
+        "/privacy",
+        "/terms",
+        "/disclaimer",
+        "/cost/brake-pad-replacement",
+        "/cost/alternator-replacement",
+        "/cost/radiator-replacement",
+        "/cost/spark-plug-replacement",
+        "/cost/brake-rotor-replacement",
+    ]
 
-    cur.execute("SELECT code FROM dtc")
-    rows = cur.fetchall()
-
-    conn.close()
-
-    base_url = str(request.base_url).rstrip("/")
-    urls = []
-
-    urls.append(f"<url><loc>{base_url}/</loc></url>")
-    urls.append(f"<url><loc>{base_url}/estimator</loc></url>")
-    urls.append(f"<url><loc>{base_url}/obd</loc></url>")
-    urls.append(f"<url><loc>{base_url}/repair-cost</loc></url>")
-    urls.append(f"<url><loc>{base_url}/symptoms</loc></url>")
-    urls.append(f"<url><loc>{base_url}/knowledge</loc></url>")
-    urls.append(f"<url><loc>{base_url}/symptoms/engine-misfire</loc></url>")
-    urls.append(f"<url><loc>{base_url}/symptoms/check-engine-light</loc></url>")
-    urls.append(f"<url><loc>{base_url}/symptoms/car-wont-start</loc></url>")
-    urls.append(f"<url><loc>{base_url}/symptoms/rough-idle</loc></url>")
-
-    # OBD pages
-    for r in rows:
-        code = r["code"].lower()
-        urls.append(f"<url><loc>{base_url}/obd/{code}</loc></url>")
-
-    # Repair-cost pages
-    catalog = load_services_catalog()
-    for category in catalog["categories"]:
-        for service in category.get("services", []):
-            slug = slugify_service_name(service.get("name", ""))
-            if slug:
-                urls.append(f"<url><loc>{base_url}/repair-cost/{slug}</loc></url>")
+    urls = "".join(f"<url><loc>{base_url}{path}</loc></url>" for path in paths)
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{''.join(urls)}
+{urls}
 </urlset>
 """
 
