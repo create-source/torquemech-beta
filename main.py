@@ -1854,6 +1854,41 @@ def brake_rotor_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/starter-replacement", response_class=HTMLResponse)
+def starter_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_starter_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/water-pump-replacement", response_class=HTMLResponse)
+def water_pump_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_water_pump_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/control-arm-replacement", response_class=HTMLResponse)
+def control_arm_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_control_arm_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/oxygen-sensor-replacement", response_class=HTMLResponse)
+def oxygen_sensor_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_oxygen_sensor_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/fuel-pump-replacement", response_class=HTMLResponse)
+def fuel_pump_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_fuel_pump_replacement.html",
+        {"request": request},
+    )
+
 @app.get("/repair-guides", response_class=HTMLResponse)
 async def repair_guides_index(request: Request):
     guides = load_normalized_repair_guides_map()
@@ -1968,6 +2003,11 @@ def sitemap():
         "/cost/radiator-replacement",
         "/cost/spark-plug-replacement",
         "/cost/brake-rotor-replacement",
+        "/cost/starter-replacement",
+        "/cost/water-pump-replacement",
+        "/cost/control-arm-replacement",
+        "/cost/oxygen-sensor-replacement",
+        "/cost/fuel-pump-replacement",
     ]
 
     urls = "".join(f"<url><loc>{base_url}{path}</loc></url>" for path in paths)
