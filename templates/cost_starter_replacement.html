@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block title %}Starter Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Starter replacement cost depends on component access, engine layout, labor time, and starter quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Starter Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Starter replacement cost usually depends on engine bay access, wiring access, and whether the shop needs extra diagnosis to confirm the no-start issue before replacing parts.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$250 to $700+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on starter location, labor rate, and whether the repair includes related battery or cable checks.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 3.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Some starters are easy to reach from below, while others are buried near the exhaust, intake, or front drivetrain components.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$120 to $450+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price varies based on OE versus aftermarket quality, built-in solenoid design, and vehicle-specific packaging.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Clicking during start attempts</li>
+        <li>Engine will not crank</li>
+        <li>Intermittent no-start condition</li>
+        <li>Starter spins slowly or drags</li>
+        <li>Burning smell or electrical heat near the starter area</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Starter location and access from above or below</li>
+        <li>Vehicle make, model, engine, and drivetrain layout</li>
+        <li>Need for no-start diagnosis before replacement</li>
+        <li>Battery cable condition and solenoid wiring access</li>
+        <li>Part quality: aftermarket, remanufactured, or OE</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a starter replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=starter_replacement">Estimate Starter Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/alternator-replacement">Alternator Replacement Cost</a></li>
+        <li><a href="/cost/brake-rotor-replacement">Brake Rotor Replacement Cost</a></li>
+        <li><a href="/cost/oxygen-sensor-replacement">Oxygen Sensor Replacement Cost</a></li>
+        <li><a href="/cost/fuel-pump-replacement">Fuel Pump Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

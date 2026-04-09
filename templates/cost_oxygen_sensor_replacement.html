@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block title %}Oxygen Sensor Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Oxygen sensor replacement cost depends on sensor location, exhaust access, diagnostics, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Oxygen Sensor Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Oxygen sensor replacement cost usually depends on whether the sensor is upstream or downstream, how accessible the exhaust is, and whether corrosion makes removal harder than expected.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$200 to $550+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on sensor location, labor rate, and whether diagnosis confirms a failed sensor instead of a wiring or catalyst issue.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 2.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Many sensors are fairly quick to replace, but rusted threads, heat shielding, and hard-to-reach exhaust routing can add time.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$80 to $300+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price changes based on universal versus direct-fit sensors, sensor brand, and whether the vehicle uses multiple sensors.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Check engine light with oxygen-sensor-related codes</li>
+        <li>Poor fuel economy</li>
+        <li>Rough running or hesitation in some cases</li>
+        <li>Failed emissions or readiness monitor issues</li>
+        <li>Slow sensor response during scan tool testing</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Upstream versus downstream sensor location</li>
+        <li>Sensor access and exhaust corrosion level</li>
+        <li>Need for diagnosis before replacement</li>
+        <li>Direct-fit versus universal sensor choice</li>
+        <li>Vehicle sensor count and emissions system layout</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build an oxygen sensor replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=oxygen_sensor_replacement_upstream">Estimate Oxygen Sensor Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/spark-plug-replacement">Spark Plug Replacement Cost</a></li>
+        <li><a href="/cost/fuel-pump-replacement">Fuel Pump Replacement Cost</a></li>
+        <li><a href="/cost/alternator-replacement">Alternator Replacement Cost</a></li>
+        <li><a href="/cost/starter-replacement">Starter Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}
