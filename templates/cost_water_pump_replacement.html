@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Water Pump Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Water pump replacement cost depends on cooling-system design, engine access, labor time, and whether belts, coolant, or gaskets are replaced at the same time. Use TorqueMech to estimate the job clearly." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Water Pump Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Water pump replacement cost usually depends on engine access, whether the pump is belt-driven or timing-driven, and how much coolant service is required during the repair.
+      This page gives a clean baseline so you can understand the job before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$450 to $1,400+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on vehicle design, labor access, and whether the job includes related cooling-system or belt-drive parts.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">2.0 to 5.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Straightforward external pumps can be much easier than applications that require more teardown near covers, pulleys, or tight front-end packaging.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$100 to $600+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price changes based on pump design, gasket style, coolant type, and whether the repair includes new belts, seals, or hardware.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Coolant leaking near the pump or front of the engine</li>
+        <li>Engine overheating or running hotter than normal</li>
+        <li>Grinding or whining noise from the pump area</li>
+        <li>Coolant smell after driving</li>
+        <li>Visible wobble or play in the pump pulley</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>External pump versus more involved engine packaging</li>
+        <li>Vehicle make, model, and engine size</li>
+        <li>Coolant drain, refill, and bleed procedure</li>
+        <li>Need for belts, pulleys, hoses, or thermostat service at the same time</li>
+        <li>Part quality and gasket or seal requirements</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a water pump replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=water_pump_replacement">Estimate Water Pump Replacement</a>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}
