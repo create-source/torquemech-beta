@@ -1398,7 +1398,7 @@ def build_platform_sections(current_href: str = "") -> List[Dict[str, str]]:
         },
         {
             "title": "Repair Costs",
-            "href": "/repair-cost",
+            "href": "/repair-costs",
             "summary": "Browse labor ranges and pricing context by service.",
         },
         {
@@ -2022,6 +2022,7 @@ def sitemap():
         "/",
         "/estimator",
         "/repair-guides",
+        "/repair-costs",
         "/about",
         "/privacy",
         "/terms",

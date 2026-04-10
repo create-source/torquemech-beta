@@ -1709,3 +1709,34 @@ h3{
 .tm-guide-card p {
   margin: 0;
 }
+
+/* Repair Cost Hub Grid */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.card-grid .tm-card {
+  display: block;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-grid .tm-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.12);
+}
+
+.card-grid .tm-card h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1b2733;
+}
