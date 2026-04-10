@@ -2,6 +2,94 @@
 
 {% block title %}Diagnostic Repair — TorqueMech{% endblock %}
 
+{% block page_css %}
+<style>
+  .obd-polish-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    gap:12px;
+  }
+
+  .obd-code-tile,
+  .obd-benefit-card,
+  .obd-lane-card {
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;
+    background:rgba(255,255,255,.04);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+  }
+
+  .obd-code-tile {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-height:122px;
+    padding:16px;
+    text-decoration:none;
+    color:inherit;
+  }
+
+  .obd-code-tile__code {
+    font-size:1rem;
+    font-weight:800;
+    letter-spacing:.04em;
+  }
+
+  .obd-code-tile__meta,
+  .obd-lane-card__footer {
+    margin-top:auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    color:rgba(255,255,255,.72);
+    font-size:.92rem;
+    font-weight:700;
+  }
+
+  .obd-benefit-card,
+  .obd-lane-card {
+    padding:16px;
+  }
+
+  .obd-benefit-card {
+    min-height:128px;
+  }
+
+  .obd-benefit-card__eyebrow,
+  .obd-lane-card__eyebrow {
+    font-size:.76rem;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,.55);
+    margin-bottom:8px;
+  }
+
+  .obd-benefit-card strong,
+  .obd-lane-card strong {
+    display:block;
+    font-size:1.02rem;
+    margin-bottom:8px;
+  }
+
+  .obd-lane-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:14px;
+  }
+
+  .obd-lane-card {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    min-height:176px;
+    text-decoration:none;
+    color:inherit;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
 <section class="tm-card" style="max-width: 1000px;">
@@ -22,11 +110,50 @@
   <div class="tm-card" style="margin-bottom:20px;">
     <div style="font-weight:600; margin-bottom:10px;">Select Vehicle</div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <input class="tm-input" placeholder="Year">
-      <input class="tm-input" placeholder="Make">
-      <input class="tm-input" placeholder="Model">
-      <button class="tm-btn tm-btn-primary">Load Vehicle</button>
+    <div class="grid3" style="gap:10px;">
+      <div>
+        <label for="obdVehicleYear">Year</label>
+        <select id="obdVehicleYear" class="tm-input vehicle-year">
+          <option value="">Select Year</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="obdVehicleMakeSearch">Make</label>
+        <input
+          id="obdVehicleMakeSearch"
+          class="tm-input vehicle-make-search"
+          type="text"
+          placeholder="Search make..."
+          autocomplete="off"
+        >
+        <div
+          id="obdVehicleMakeResults"
+          class="vehicle-make-results"
+          style="display:none; margin-top:6px; border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow-y:auto;"
+        ></div>
+        <select id="obdVehicleMake" class="vehicle-make" style="display:none;">
+          <option value="">Select make...</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="obdVehicleModel">Model</label>
+        <select id="obdVehicleModel" class="tm-input vehicle-model">
+          <option value="">Select model...</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <button id="obdLoadVehicleBtn" class="tm-btn tm-btn-primary" type="button" disabled>Load Vehicle</button>
+      <button id="obdClearVehicleBtn" class="tm-btn tm-btn-secondary" type="button">Clear</button>
+    </div>
+
+    <p id="obdVehicleHint" class="tm-muted" style="margin:10px 0 0 0;">
+      Pick a year, make, and model to carry that vehicle into the estimator.
+    </p>
+    <p id="obdVehicleStatus" class="tm-muted" style="margin:6px 0 0 0;"></p>
     </div>
   </div>
 
@@ -103,11 +230,15 @@
       Open some of TorqueMech's strongest code pages directly.
     </p>
 
-    <div class="tm-list-grid">
+    <div class="obd-polish-grid">
       {% for item in featured_obd_codes %}
-      <a href="/obd/{{ item.code | lower }}" class="tm-list-card" style="text-decoration:none; color:inherit;">
-        <strong>{{ item.code }}</strong>
+      <a href="/obd/{{ item.code | lower }}" class="obd-code-tile">
+        <div class="obd-code-tile__code">{{ item.code }}</div>
         <div class="tm-muted">{{ item.title }}</div>
+        <div class="obd-code-tile__meta">
+          <span>Open code guide</span>
+          <span>→</span>
+        </div>
       </a>
       {% endfor %}
     </div>
@@ -117,23 +248,27 @@
   <div class="tm-card" style="margin-bottom:20px;">
     <h2>How TorqueMech Helps</h2>
 
-    <div class="tm-list-grid">
-      <div class="tm-list-card">
+    <div class="obd-polish-grid">
+      <div class="obd-benefit-card">
+        <div class="obd-benefit-card__eyebrow">Find</div>
         <strong>Find likely causes</strong>
         <div class="tm-muted">Start with the most common real-world failure paths.</div>
       </div>
 
-      <div class="tm-list-card">
+      <div class="obd-benefit-card">
+        <div class="obd-benefit-card__eyebrow">Verify</div>
         <strong>Follow guided checks</strong>
         <div class="tm-muted">Verify the fault before replacing parts.</div>
       </div>
 
-      <div class="tm-list-card">
+      <div class="obd-benefit-card">
+        <div class="obd-benefit-card__eyebrow">Trace</div>
         <strong>Open wiring context</strong>
         <div class="tm-muted">Trace power, ground, fuse, and relay paths faster.</div>
       </div>
 
-      <div class="tm-list-card">
+      <div class="obd-benefit-card">
+        <div class="obd-benefit-card__eyebrow">Quote</div>
         <strong>Build the estimate</strong>
         <div class="tm-muted">Move straight from diagnosis into a customer-ready repair estimate.</div>
       </div>
@@ -146,25 +281,45 @@
       Pick the area you want to work in first.
     </p>
 
-    <div class="tm-list-grid">
-      <a href="/symptoms" class="tm-list-card" style="text-decoration:none; color:inherit;">
+    <div class="obd-lane-grid">
+      <a href="/symptoms" class="obd-lane-card">
+        <div class="obd-lane-card__eyebrow">Lane 1</div>
         <strong>Symptoms</strong>
         <div class="tm-muted">No start, rough idle, overheating, brake noise, and more.</div>
+        <div class="obd-lane-card__footer">
+          <span>Start from the complaint</span>
+          <span>→</span>
+        </div>
       </a>
 
-      <a href="/obd-codes" class="tm-list-card" style="text-decoration:none; color:inherit;">
+      <a href="/obd-codes" class="obd-lane-card">
+        <div class="obd-lane-card__eyebrow">Lane 2</div>
         <strong>OBD Codes</strong>
         <div class="tm-muted">Start from a trouble code and work toward likely repairs.</div>
+        <div class="obd-lane-card__footer">
+          <span>Search code families</span>
+          <span>→</span>
+        </div>
       </a>
 
-      <a href="/relay-basic" class="tm-list-card" style="text-decoration:none; color:inherit;">
+      <a href="/relay-basic" class="obd-lane-card">
+        <div class="obd-lane-card__eyebrow">Lane 3</div>
         <strong>Electrical</strong>
         <div class="tm-muted">Relays, power paths, grounds, and circuit basics.</div>
+        <div class="obd-lane-card__footer">
+          <span>Open circuit references</span>
+          <span>→</span>
+        </div>
       </a>
 
-      <a href="/repair-cost" class="tm-list-card" style="text-decoration:none; color:inherit;">
+      <a href="/repair-cost" class="obd-lane-card">
+        <div class="obd-lane-card__eyebrow">Lane 4</div>
         <strong>Repair Cost Guides</strong>
         <div class="tm-muted">See labor ranges and repair cost context before quoting.</div>
+        <div class="obd-lane-card__footer">
+          <span>Review cost context</span>
+          <span>→</span>
+        </div>
       </a>
     </div>
   </div>
@@ -224,6 +379,79 @@
 </section>
 
 <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const yearSelect = document.getElementById("obdVehicleYear");
+    const makeSelect = document.getElementById("obdVehicleMake");
+    const makeSearch = document.getElementById("obdVehicleMakeSearch");
+    const makeResults = document.getElementById("obdVehicleMakeResults");
+    const modelSelect = document.getElementById("obdVehicleModel");
+    const clearButton = document.getElementById("obdClearVehicleBtn");
+    const loadButton = document.getElementById("obdLoadVehicleBtn");
+    const status = document.getElementById("obdVehicleStatus");
+
+    const vehicle = {
+      year: "",
+      make: "",
+      model: "",
+    };
+
+    function renderVehicleStatus() {
+      const isComplete = !!(vehicle.year && vehicle.make && vehicle.model);
+      loadButton.disabled = !isComplete;
+
+      if (!status) return;
+
+      if (!vehicle.year && !vehicle.make && !vehicle.model) {
+        status.textContent = "";
+        return;
+      }
+
+      if (isComplete) {
+        status.textContent = `Ready: ${vehicle.year} ${vehicle.make} ${vehicle.model}`;
+        return;
+      }
+
+      status.textContent = "Finish selecting year, make, and model.";
+    }
+
+    if (window.TorqueMechVehicleUI?.initSharedVehicleSelector) {
+      window.TorqueMechVehicleUI.initSharedVehicleSelector({
+        yearSelect,
+        makeSelect,
+        makeSearch,
+        makeResults,
+        modelSelect,
+        clearButton,
+        onChange: ({ year, make, model }) => {
+          vehicle.year = year;
+          vehicle.make = make;
+          vehicle.model = model;
+          renderVehicleStatus();
+        },
+      }).catch(() => {
+        if (status) {
+          status.textContent = "Vehicle selector failed to load. Refresh and try again.";
+        }
+      });
+    } else if (status) {
+      status.textContent = "Vehicle selector is unavailable on this page.";
+    }
+
+    loadButton?.addEventListener("click", function () {
+      if (!(vehicle.year && vehicle.make && vehicle.model)) return;
+
+      const params = new URLSearchParams({
+        year: vehicle.year,
+        make: vehicle.make,
+        model: vehicle.model,
+      });
+
+      window.location.href = "/estimator?" + params.toString();
+    });
+
+    renderVehicleStatus();
+  });
+
   // Search input
   document.getElementById("diagSearchBtn").onclick = function () {
     const value = document.getElementById("diagSearchInput").value.trim().toLowerCase();
