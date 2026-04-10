@@ -33,6 +33,18 @@
   <div class="tm-card">
     <h2>Start From an OBD Code</h2>
     <p class="tm-muted">Use stored trouble codes as a fast diagnostic entry point, then move into related repair paths.</p>
+
+    {% if featured_obd_codes %}
+    <div class="tm-list-grid" style="margin:14px 0 18px;">
+      {% for item in featured_obd_codes %}
+      <a href="/obd/{{ item.code | lower }}" class="tm-list-card" style="text-decoration:none; color:inherit;">
+        <strong>{{ item.code }}</strong>
+        <div class="tm-muted">{{ item.title }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="tm-stack">
       <div class="tm-linked-card">
         <h3>Search OBD Codes</h3>

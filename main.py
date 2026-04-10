@@ -4,6 +4,7 @@ import base64
 import io
 import json
 import sqlite3
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
@@ -174,8 +175,10 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 SERVICES_CATALOG_PATH = BASE_DIR / "services_catalog.json"
 
-DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
-DB_PATH = str((DATA_DIR / "app.db").resolve())
+STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
+STATE_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = str((STATE_DIR / "app.db").resolve())
+USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 REPAIR_GUIDE_TORQUE_SPECS_PATH = DATA_DIR / "torque_specs" / "brakes.json"
@@ -226,6 +229,17 @@ def load_repair_guide_torque_specs() -> Dict[str, Any]:
     _repair_guide_torque_specs_cache = data
     _repair_guide_torque_specs_mtime = mtime
     return data
+
+
+def app_db_conn(*, row_factory: bool = False) -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH)
+    if USE_LOCAL_SQLITE_COMPAT:
+        # OneDrive-backed local workspaces can fail on default rollback-journal commits.
+        conn.execute("PRAGMA journal_mode=MEMORY")
+        conn.execute("PRAGMA synchronous=NORMAL")
+    if row_factory:
+        conn.row_factory = sqlite3.Row
+    return conn
 
 
 def normalize_repair_guide_slug(value: str) -> str:
@@ -417,8 +431,7 @@ def admin_feedback(key: str = Query(None)):
     if key != ADMIN_KEY:
         return HTMLResponse("Unauthorized", status_code=401)
 
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = app_db_conn(row_factory=True)
 
     rows = conn.execute("""
         SELECT id, created_at, is_read, payload_json
@@ -1439,13 +1452,47 @@ def obd(request: Request):
     metric_incr("page_obd_lookup")
     return templates.TemplateResponse(
         "obd.html",
-        {"request": request},
+        {
+            "request": request,
+            "featured_obd_codes": build_featured_obd_codes(),
+        },
     )
+
+def build_featured_obd_codes():
+    return [
+        {"code": "P0300", "title": "Random/Multiple Cylinder Misfire"},
+        {"code": "P0301", "title": "Cylinder 1 Misfire"},
+        {"code": "P0302", "title": "Cylinder 2 Misfire"},
+        {"code": "P0303", "title": "Cylinder 3 Misfire"},
+        {"code": "P0304", "title": "Cylinder 4 Misfire"},
+        {"code": "P0171", "title": "System Too Lean (Bank 1)"},
+        {"code": "P0174", "title": "System Too Lean (Bank 2)"},
+        {"code": "P0420", "title": "Catalyst Efficiency Below Threshold (Bank 1)"},
+        {"code": "P0442", "title": "EVAP Small Leak Detected"},
+        {"code": "P0455", "title": "EVAP Large Leak Detected"},
+    ]
 
 def build_related_codes(code: str):
     code = code.upper()
 
     clusters = {
+        "maf": [
+            ("P0100", "Mass or Volume Air Flow Circuit Malfunction"),
+            ("P0101", "Mass or Volume Air Flow Circuit Range/Performance"),
+            ("P0102", "Mass or Volume Air Flow Circuit Low Input"),
+            ("P0103", "Mass or Volume Air Flow Circuit High Input"),
+        ],
+        "iat": [
+            ("P0110", "Intake Air Temperature Circuit Malfunction"),
+            ("P0112", "Intake Air Temperature Circuit Low Input"),
+            ("P0113", "Intake Air Temperature Circuit High Input"),
+        ],
+        "cooling": [
+            ("P0115", "Engine Coolant Temperature Circuit Malfunction"),
+            ("P0117", "Engine Coolant Temperature Circuit Low Input"),
+            ("P0118", "Engine Coolant Temperature Circuit High Input"),
+            ("P0128", "Coolant Thermostat Below Regulating Temp"),
+        ],
         "misfire": [
             ("P0300", "Random/Multiple Cylinder Misfire"),
             ("P0301", "Cylinder 1 Misfire"),
@@ -1457,19 +1504,47 @@ def build_related_codes(code: str):
             ("P0307", "Cylinder 7 Misfire"),
             ("P0308", "Cylinder 8 Misfire"),
         ],
+        "egr": [
+            ("P0401", "Exhaust Gas Recirculation Flow Insufficient Detected"),
+            ("P0402", "Exhaust Gas Recirculation Flow Excessive Detected"),
+            ("P0403", "Exhaust Gas Recirculation Circuit Malfunction"),
+        ],
         "fuel_trim": [
             ("P0171", "System Too Lean (Bank 1)"),
             ("P0174", "System Too Lean (Bank 2)"),
             ("P0172", "System Too Rich (Bank 1)"),
             ("P0175", "System Too Rich (Bank 2)"),
         ],
+        "air_fuel": [
+            ("P0171", "System Too Lean (Bank 1)"),
+            ("P0172", "System Too Rich (Bank 1)"),
+            ("P2195", "O2/A-F Sensor Signal Stuck Lean (B1S1)"),
+            ("P2196", "O2/A-F Sensor Signal Stuck Rich (B1S1)"),
+            ("P2197", "O2/A-F Sensor Signal Stuck Lean (B2S1)"),
+            ("P2198", "O2/A-F Sensor Signal Stuck Rich (B2S1)"),
+        ],
         "catalyst": [
             ("P0420", "Catalyst Efficiency Below Threshold (Bank 1)"),
             ("P0430", "Catalyst Efficiency Below Threshold (Bank 2)"),
+            ("P0137", "O2 Sensor Circuit Low Voltage (Bank 1 Sensor 2)"),
+            ("P0138", "O2 Sensor Circuit High Voltage (Bank 1 Sensor 2)"),
+            ("P0140", "O2 Sensor Circuit No Activity (Bank 1 Sensor 2)"),
+        ],
+        "idle": [
+            ("P0505", "Idle Air Control System Malfunction"),
+            ("P0507", "Idle Control System RPM Higher Than Expected"),
+        ],
+        "transmission": [
+            ("P0700", "Transmission Control System Malfunction"),
+            ("P0715", "Input/Turbine Speed Sensor Circuit Malfunction"),
+            ("P0720", "Output Speed Sensor Circuit Malfunction"),
+            ("P0740", "Torque Converter Clutch Circuit Malfunction"),
+            ("P0741", "TCC Performance/Stuck Off"),
         ],
         "evap": [
             ("P0440", "EVAP System Malfunction"),
             ("P0442", "EVAP Small Leak Detected"),
+            ("P0446", "EVAP Vent Control Circuit"),
             ("P0455", "EVAP Large Leak Detected"),
             ("P0456", "EVAP Very Small Leak Detected"),
         ],
@@ -1491,49 +1566,122 @@ def build_common_repairs(code: str):
 
     repair_map = {
         "P0300": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil"},
-            {"label": "Spark plug replacement", "service_query": "spark plugs"},
-            {"label": "Fuel injector diagnosis", "service_query": "fuel injector"},
-            {"label": "Vacuum leak diagnosis", "service_query": "vacuum leak"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
+            {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Fuel injector cleaning or replacement", "service_query": "fuel injector replacement"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
+            {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
         ],
         "P0301": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil"},
-            {"label": "Spark plug replacement", "service_query": "spark plugs"},
-            {"label": "Fuel injector diagnosis", "service_query": "fuel injector"},
-            {"label": "Vacuum leak diagnosis", "service_query": "vacuum leak"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
+            {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0302": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil"},
-            {"label": "Spark plug replacement", "service_query": "spark plugs"},
-            {"label": "Fuel injector diagnosis", "service_query": "fuel injector"},
-            {"label": "Vacuum leak diagnosis", "service_query": "vacuum leak"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
+            {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0303": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil"},
-            {"label": "Spark plug replacement", "service_query": "spark plugs"},
-            {"label": "Fuel injector diagnosis", "service_query": "fuel injector"},
-            {"label": "Vacuum leak diagnosis", "service_query": "vacuum leak"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
+            {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0304": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil"},
-            {"label": "Spark plug replacement", "service_query": "spark plugs"},
-            {"label": "Fuel injector diagnosis", "service_query": "fuel injector"},
-            {"label": "Vacuum leak diagnosis", "service_query": "vacuum leak"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
+            {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0171": [
-            {"label": "Vacuum leak diagnosis", "service_query": "vacuum leak"},
-            {"label": "MAF sensor diagnosis", "service_query": "maf sensor"},
-            {"label": "Fuel system diagnosis", "service_query": "fuel system"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
+            {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
+            {"label": "Fuel system diagnostic", "service_query": "fuel system diagnostic"},
+            {"label": "PCV system service", "service_query": "pcv system"},
+        ],
+        "P0174": [
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
+            {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
+            {"label": "Fuel system diagnostic", "service_query": "fuel system diagnostic"},
+            {"label": "PCV system service", "service_query": "pcv system"},
+        ],
+        "P0101": [
+            {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
+            {"label": "Intake leak diagnosis", "service_query": "intake leak diagnosis"},
+            {"label": "Throttle body cleaning", "service_query": "throttle body cleaning"},
+        ],
+        "P0113": [
+            {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
+            {"label": "Intake leak diagnosis", "service_query": "intake leak diagnosis"},
+            {"label": "Throttle body service", "service_query": "throttle body service"},
+        ],
+        "P0128": [
+            {"label": "Thermostat replacement", "service_query": "thermostat replacement"},
+            {"label": "Thermostat housing replacement", "service_query": "thermostat housing replacement"},
+            {"label": "Coolant temperature sensor replacement", "service_query": "coolant temperature sensor replacement"},
+        ],
+        "P0401": [
+            {"label": "EGR diagnosis", "service_query": "egr diagnosis"},
+            {"label": "EGR valve replacement", "service_query": "egr valve replacement"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0420": [
-            {"label": "Catalytic converter diagnosis", "service_query": "catalytic converter"},
-            {"label": "O2 sensor diagnosis", "service_query": "o2 sensor"},
-            {"label": "Exhaust leak diagnosis", "service_query": "exhaust leak"},
+            {"label": "Catalyst efficiency diagnosis", "service_query": "catalyst efficiency diagnosis"},
+            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
+            {"label": "Exhaust leak repair", "service_query": "exhaust leak repair"},
+            {"label": "Catalytic converter replacement", "service_query": "catalytic converter replacement"},
+        ],
+        "P0430": [
+            {"label": "Catalyst efficiency diagnosis", "service_query": "catalyst efficiency diagnosis"},
+            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
+            {"label": "Exhaust leak repair", "service_query": "exhaust leak repair"},
+            {"label": "Catalytic converter replacement", "service_query": "catalytic converter replacement"},
+        ],
+        "P0507": [
+            {"label": "Throttle body cleaning", "service_query": "throttle body cleaning"},
+            {"label": "Throttle body service", "service_query": "throttle body service"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
+            {"label": "Throttle body replacement", "service_query": "throttle body replacement"},
+        ],
+        "P0700": [
+            {"label": "Transmission diagnostic", "service_query": "transmission diagnostic"},
+            {"label": "Transmission fluid service", "service_query": "transmission fluid service"},
+            {"label": "Solenoid pack replacement", "service_query": "solenoid pack replacement"},
+            {"label": "Transmission replacement", "service_query": "transmission replacement"},
+        ],
+        "P0741": [
+            {"label": "Transmission diagnostic", "service_query": "transmission diagnostic"},
+            {"label": "Transmission fluid service", "service_query": "transmission fluid service"},
+            {"label": "Torque converter replacement", "service_query": "torque converter replacement"},
+            {"label": "Solenoid pack replacement", "service_query": "solenoid pack replacement"},
         ],
         "P0442": [
-            {"label": "EVAP leak diagnosis", "service_query": "evap leak"},
-            {"label": "Gas cap replacement", "service_query": "gas cap"},
-            {"label": "Purge valve diagnosis", "service_query": "purge valve"},
+            {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
+            {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
+            {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
+            {"label": "EVAP purge valve replacement", "service_query": "evap purge valve replacement"},
+        ],
+        "P0455": [
+            {"label": "EVAP system diagnosis", "service_query": "evap system diagnosis"},
+            {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
+            {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
+            {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
+        ],
+        "P0456": [
+            {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
+            {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
+            {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
+            {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
+        ],
+        "P2195": [
+            {"label": "Air fuel ratio sensor replacement", "service_query": "air fuel ratio sensor replacement"},
+            {"label": "Upstream oxygen sensor replacement", "service_query": "oxygen sensor replacement upstream"},
+            {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
+            {"label": "Fuel system diagnostic", "service_query": "fuel system diagnostic"},
         ],
     }
 
@@ -1566,7 +1714,7 @@ async def obd_code_page(request: Request, code: str):
     repair_path = REPAIR_PATHS.get(row["code"])
 
     return templates.TemplateResponse(
-        "obd_code.html",
+        "obd_code_detail.html",
         {
             "request": request,
             "code": row["code"],
@@ -1629,6 +1777,114 @@ def build_diagnostic_summary(code: str):
 
     return summaries.get(code)
 
+def build_diagnostic_summary(code: str):
+    code = code.upper().strip()
+
+    summaries = {
+        "P0101": {
+            "severity": "Medium",
+            "drivability": "Hesitation, surge, poor throttle response",
+            "cost": "$120 - $550+"
+        },
+        "P0113": {
+            "severity": "Low-Medium",
+            "drivability": "Hard cold start, rich running, poor fuel economy",
+            "cost": "$80 - $350+"
+        },
+        "P0128": {
+            "severity": "Low-Medium",
+            "drivability": "Usually mild symptoms, weak heat, poor warm-up",
+            "cost": "$120 - $500+"
+        },
+        "P0300": {
+            "severity": "Medium-High",
+            "drivability": "Rough idle, hesitation, flashing MIL possible",
+            "cost": "$150 - $900+"
+        },
+        "P0301": {
+            "severity": "Medium",
+            "drivability": "Single-cylinder misfire, rough idle, reduced power",
+            "cost": "$120 - $650+"
+        },
+        "P0302": {
+            "severity": "Medium",
+            "drivability": "Single-cylinder misfire, rough idle, reduced power",
+            "cost": "$120 - $650+"
+        },
+        "P0303": {
+            "severity": "Medium",
+            "drivability": "Single-cylinder misfire, rough idle, reduced power",
+            "cost": "$120 - $650+"
+        },
+        "P0304": {
+            "severity": "Medium",
+            "drivability": "Single-cylinder misfire, rough idle, reduced power",
+            "cost": "$120 - $650+"
+        },
+        "P0171": {
+            "severity": "Medium",
+            "drivability": "Lean surge, hesitation, rough idle",
+            "cost": "$120 - $900+"
+        },
+        "P0174": {
+            "severity": "Medium",
+            "drivability": "Lean surge, hesitation, rough idle",
+            "cost": "$120 - $900+"
+        },
+        "P0401": {
+            "severity": "Medium",
+            "drivability": "Ping under load, rough idle, emissions failure risk",
+            "cost": "$150 - $700+"
+        },
+        "P0420": {
+            "severity": "Low-Medium",
+            "drivability": "Usually mild symptoms, emissions failure risk",
+            "cost": "$180 - $2200+"
+        },
+        "P0430": {
+            "severity": "Low-Medium",
+            "drivability": "Usually mild symptoms, emissions failure risk",
+            "cost": "$180 - $2200+"
+        },
+        "P0507": {
+            "severity": "Medium",
+            "drivability": "High idle, hanging RPM, rough idle after warm-up",
+            "cost": "$100 - $600+"
+        },
+        "P0700": {
+            "severity": "Medium",
+            "drivability": "Shift concerns or limp mode depend on companion TCM codes",
+            "cost": "$120 - $2500+"
+        },
+        "P0741": {
+            "severity": "Medium-High",
+            "drivability": "High cruise RPM, shudder, poor lockup performance",
+            "cost": "$180 - $3500+"
+        },
+        "P0442": {
+            "severity": "Low",
+            "drivability": "Usually no noticeable symptoms",
+            "cost": "$20 - $350+"
+        },
+        "P0455": {
+            "severity": "Low",
+            "drivability": "Usually no drivability issue, fuel vapor leak likely",
+            "cost": "$20 - $450+"
+        },
+        "P0456": {
+            "severity": "Low",
+            "drivability": "Usually no noticeable symptoms",
+            "cost": "$20 - $300+"
+        },
+        "P2195": {
+            "severity": "Medium",
+            "drivability": "Lean surge, hesitation, poor cold-start fueling",
+            "cost": "$120 - $850+"
+        }
+    }
+
+    return summaries.get(code)
+
 @app.get("/obd-codes", response_class=HTMLResponse)
 async def obd_codes_index(request: Request):
     return templates.TemplateResponse(
@@ -1651,6 +1907,7 @@ async def diagnostics_hub(request: Request):
             "obd_entries": obd_entries,
             "symptom_entries": symptom_entries,
             "system_entries": system_entries,
+            "featured_obd_codes": build_featured_obd_codes(),
             "platform_sections": build_platform_sections("/diagnostics"),
             "page_title": "Diagnostics | TorqueMech",
             "meta_description": "Structured diagnostic entry points for OBD codes, symptoms, and vehicle systems.",
@@ -2065,8 +2322,7 @@ def admin_metrics(key: str):
     if key != ADMIN_KEY:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = app_db_conn(row_factory=True)
     cur = conn.cursor()
     cur.execute("SELECT name, value, updated_at FROM metrics ORDER BY name")
     rows = [dict(r) for r in cur.fetchall()]
@@ -2187,7 +2443,7 @@ def fetch_models_for_make(make: str) -> list[str]:
 # ===============================
 
 def init_metrics_db() -> None:
-    conn = sqlite3.connect(DB_PATH)
+    conn = app_db_conn()
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS metrics (
@@ -2201,7 +2457,7 @@ def init_metrics_db() -> None:
 
 def metric_incr(name: str, delta: int = 1) -> None:
     now = datetime.utcnow().isoformat()
-    conn = sqlite3.connect(DB_PATH)
+    conn = app_db_conn()
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO metrics(name, value, updated_at)
@@ -2214,9 +2470,7 @@ def metric_incr(name: str, delta: int = 1) -> None:
     conn.close()
 
 def db_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return app_db_conn(row_factory=True)
 
 
 def init_db() -> None:

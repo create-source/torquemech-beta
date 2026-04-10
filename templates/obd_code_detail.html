@@ -1,0 +1,188 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ code }} Code - {{ title }} | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="{{ code }} means {{ description or title }}. Review common causes, quick checks, related codes, likely repairs, and estimator-ready next steps on TorqueMech." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="eyebrow">TorqueMech OBD Code Guide</div>
+    <h1 style="margin:0 0 10px 0; font-size:clamp(1.8rem, 5vw, 2.5rem); line-height:1.05;">
+      {{ code }} - {{ title }}
+    </h1>
+    <p class="tm-muted" style="margin:0; max-width:64ch;">
+      {{ description or "Review the code meaning, common causes, quick checks, and likely repair paths before estimating the next step." }}
+    </p>
+    <div class="tm-actions" style="margin-top:16px;">
+      <a href="/estimator?obd={{ code }}" class="tm-btn tm-btn-primary">Open Estimator</a>
+      <a href="/diagnostics" class="tm-btn tm-btn-secondary">Browse Diagnostics</a>
+      <a href="/repair-guides" class="tm-btn tm-btn-secondary">Browse Repair Guides</a>
+    </div>
+  </div>
+</section>
+
+{% if diagnostic_summary and diagnostic_summary.severity %}
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-summary-card">
+      <div>
+        <span class="tm-label">Severity</span>
+        <strong>{{ diagnostic_summary.severity }}</strong>
+      </div>
+      <div>
+        <span class="tm-label">Drivability</span>
+        <strong>{{ diagnostic_summary.drivability }}</strong>
+      </div>
+      <div>
+        <span class="tm-label">Typical Cost</span>
+        <strong>{{ diagnostic_summary.cost }}</strong>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Code Meaning</h2>
+    <p style="margin:0;">{{ description or title }}</p>
+  </div>
+</section>
+
+{% if repair_path and repair_path.symptoms %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>What You May Notice</h2>
+    <ul style="margin:0; padding-left:18px; line-height:1.7;">
+      {% for symptom in repair_path.symptoms %}
+      <li>{{ symptom }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if possible_causes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Causes</h2>
+    <div class="tm-list-grid">
+      {% for cause in possible_causes %}
+      <div class="tm-list-card">{{ cause }}</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if quick_checks %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Quick Checks</h2>
+    <ul style="margin:0; padding-left:18px; line-height:1.7;">
+      {% for item in quick_checks %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if repair_path and repair_path.electrical and repair_path.electrical["items"] %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>{{ repair_path.electrical.title or "Electrical Focus" }}</h2>
+    <ul style="margin:0; padding-left:18px; line-height:1.7;">
+      {% for item in repair_path.electrical["items"] %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Likely Repairs</h2>
+    <p class="tm-muted" style="margin:0 0 14px 0;">
+      Use test results to confirm the fault before pricing the repair.
+    </p>
+
+    {% if common_repairs %}
+    <div style="display:grid; gap:12px;">
+      {% for item in common_repairs %}
+      <div class="tm-list-card" style="display:flex; justify-content:space-between; gap:14px; align-items:flex-start;">
+        <div>
+          <div style="font-weight:700; margin-bottom:6px;">{{ item.label }}</div>
+          <div class="tm-muted">Estimator-ready next step for a confirmed repair path.</div>
+        </div>
+        <a
+          class="tm-btn tm-btn-secondary"
+          href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
+          Estimate Repair
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% elif repair_path and repair_path.repairs %}
+    <div style="display:grid; gap:12px;">
+      {% for item in repair_path.repairs %}
+      <div class="tm-list-card" style="display:flex; justify-content:space-between; gap:14px; align-items:flex-start;">
+        <div>
+          <div style="font-weight:700; margin-bottom:6px;">{{ item.label }}</div>
+          {% if item.labor_range %}
+          <div class="tm-muted">Typical labor: {{ item.labor_range }}</div>
+          {% endif %}
+        </div>
+        <a class="tm-btn tm-btn-secondary" href="/estimator?obd={{ code }}">
+          Open Estimator
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">Open Estimator</a>
+    {% endif %}
+  </div>
+</section>
+
+{% if related_codes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related Codes</h2>
+    <div style="display:grid; gap:10px;">
+      {% for item in related_codes %}
+      <a
+        href="/obd/{{ item.code | lower }}"
+        style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px 14px; border:1px solid rgba(15, 23, 42, 0.10); border-radius:14px; text-decoration:none; color:inherit; background:rgba(255,255,255,0.55);"
+      >
+        <div>
+          <div style="font-weight:800; margin-bottom:4px;">{{ item.code }}</div>
+          <div class="tm-muted">{{ item.label }}</div>
+        </div>
+        <div class="tm-muted" style="white-space:nowrap;">Open -></div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Next Steps</h2>
+    <p class="tm-muted" style="margin:0 0 14px 0;">
+      Move from the code to a diagnosis path, then into repair pricing once the fault is confirmed.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">Estimate This Repair</a>
+      <a class="tm-btn tm-btn-secondary" href="/diagnostics">Diagnostic Guides</a>
+      <a class="tm-btn tm-btn-secondary" href="/obd">Search Another Code</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

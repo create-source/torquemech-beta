@@ -96,6 +96,24 @@
     </div>
   </div>
 
+  {% if featured_obd_codes %}
+  <div class="tm-card" style="margin-bottom:20px;">
+    <h2>Featured OBD Codes</h2>
+    <p class="tm-muted" style="margin-bottom:12px;">
+      Open some of TorqueMech's strongest code pages directly.
+    </p>
+
+    <div class="tm-list-grid">
+      {% for item in featured_obd_codes %}
+      <a href="/obd/{{ item.code | lower }}" class="tm-list-card" style="text-decoration:none; color:inherit;">
+        <strong>{{ item.code }}</strong>
+        <div class="tm-muted">{{ item.title }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <div class="tm-card" style="margin-bottom:20px;">
     <h2>How TorqueMech Helps</h2>
 

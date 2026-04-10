@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import tempfile
 from pathlib import Path
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse
 
 router = APIRouter()
 
-BASE = Path("data/knowledge")
-DB_PATH = Path("app.db")
+BASE_DIR = Path(__file__).resolve().parent.parent
+BASE = BASE_DIR / "data" / "knowledge"
+STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
+STATE_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = STATE_DIR / "app.db"
+USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
 
 ALLOWED_CATEGORIES = {
     "obd": "OBD Code",
@@ -51,6 +57,9 @@ def load_article(category: str, slug: str) -> dict:
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
+    if USE_LOCAL_SQLITE_COMPAT:
+        conn.execute("PRAGMA journal_mode=MEMORY")
+        conn.execute("PRAGMA synchronous=NORMAL")
     conn.row_factory = sqlite3.Row
     return conn
 
