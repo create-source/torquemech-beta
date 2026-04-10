@@ -513,13 +513,23 @@ def admin_feedback(key: str = Query(None)):
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-OBD_SQLITE_PATH = DATA_DIR / "obd.sqlite"
-OBD_ADMIN_META_PATH = DATA_DIR / "obd_admin_meta.json"
+OBD_STATE_DIR = Path("/data") if Path("/data").exists() else STATE_DIR
+OBD_STATE_DIR.mkdir(parents=True, exist_ok=True)
+OBD_SQLITE_PATH = OBD_STATE_DIR / "obd.sqlite"
+OBD_ADMIN_META_PATH = OBD_STATE_DIR / "obd_admin_meta.json"
 OBD_SEED_JSON_PATH = BASE_DIR / "data" / "obd_codes.json"
 
+def obd_sqlite_conn(*, row_factory: bool = True) -> sqlite3.Connection:
+    conn = sqlite3.connect(str(OBD_SQLITE_PATH))
+    if USE_LOCAL_SQLITE_COMPAT:
+        conn.execute("PRAGMA journal_mode=MEMORY")
+        conn.execute("PRAGMA synchronous=NORMAL")
+    if row_factory:
+        conn.row_factory = sqlite3.Row
+    return conn
+
 def init_obd_db() -> None:
-    conn = sqlite3.connect(OBD_SQLITE_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = obd_sqlite_conn()
     cur = conn.cursor()
 
     # Main codes table
@@ -557,19 +567,9 @@ def init_obd_db() -> None:
     conn.close()
 
 def obd_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(str(OBD_SQLITE_PATH))
-    conn.row_factory = sqlite3.Row
-    return conn
+    return obd_sqlite_conn()
 
 def obd_seed_from_json_if_empty() -> None:
-    conn = obd_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) AS n FROM dtc")
-    n = int(cur.fetchone()["n"])
-    conn.close()
-    if n > 0:
-        return
-
     if not OBD_SEED_JSON_PATH.exists():
         return
 
@@ -2344,6 +2344,9 @@ def sitemap():
     paths = [
         "/",
         "/estimator",
+        "/diagnostics",
+        "/symptoms",
+        "/obd",
         "/repair-guides",
         "/repair-costs",
         "/about",
@@ -2363,6 +2366,22 @@ def sitemap():
         "/cost/control-arm-replacement",
         "/cost/oxygen-sensor-replacement",
         "/cost/fuel-pump-replacement",
+        "/obd/P0300",
+        "/obd/P0301",
+        "/obd/P0302",
+        "/obd/P0303",
+        "/obd/P0304",
+        "/obd/P0171",
+        "/obd/P0174",
+        "/obd/P0420",
+        "/obd/P0442",
+        "/obd/P0455",
+        "/obd/P0101",
+        "/obd/P0113",
+        "/obd/P0401",
+        "/obd/P0430",
+        "/obd/P0700",
+        "/obd/P0456",
     ]
 
     urls = "".join(f"<url><loc>{base_url}{path}</loc></url>" for path in paths)

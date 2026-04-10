@@ -932,6 +932,22 @@
     ],
     "title": "Idle Air Control System Malfunction"
   },
+  "P0507": {
+    "description": "Idle speed is higher than the PCM expects at closed throttle.",
+    "possible_causes": [
+      "Dirty throttle body",
+      "Vacuum leak",
+      "Idle relearn needed after battery or throttle service",
+      "Throttle actuator or IAC issue"
+    ],
+    "quick_checks": [
+      "Inspect for vacuum leaks",
+      "Check throttle body for carbon buildup",
+      "Perform idle relearn if applicable",
+      "Scan for related throttle or idle control codes"
+    ],
+    "title": "Idle Control System RPM Higher Than Expected"
+  },
   "P0562": {
     "description": "System voltage is lower than expected.",
     "possible_causes": [
