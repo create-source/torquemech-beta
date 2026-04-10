@@ -693,7 +693,7 @@ def get_symptom_by_slug(slug: str):
     conn.close()
     return symptom
 
-@router.get("/symptoms", response_class=HTMLResponse)
+@router.get("/knowledge/symptoms", response_class=HTMLResponse)
 def symptoms_index(request: Request):
     return request.app.state.templates.TemplateResponse(
         "symptoms_index.html",
@@ -704,7 +704,7 @@ def symptoms_index(request: Request):
     )
 
 
-@router.get("/symptoms/{slug}", response_class=HTMLResponse)
+@router.get("/knowledge/symptoms/{slug}", response_class=HTMLResponse)
 def symptom_page(request: Request, slug: str):
     symptom = get_symptom_by_slug(slug)
     if not symptom:
