@@ -1687,6 +1687,70 @@ def build_common_repairs(code: str):
 
     return repair_map.get(code, [])
 
+def build_cost_guide_links(code: str):
+    code = code.upper().strip()
+
+    cost_guide_map = {
+        "P0300": [
+            {
+                "label": "Spark Plug Replacement Cost",
+                "href": "/cost/spark-plug-replacement",
+                "description": "Useful when testing confirms worn or fouled plugs are driving the misfire.",
+            },
+        ],
+        "P0301": [
+            {
+                "label": "Spark Plug Replacement Cost",
+                "href": "/cost/spark-plug-replacement",
+                "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
+            },
+        ],
+        "P0302": [
+            {
+                "label": "Spark Plug Replacement Cost",
+                "href": "/cost/spark-plug-replacement",
+                "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
+            },
+        ],
+        "P0303": [
+            {
+                "label": "Spark Plug Replacement Cost",
+                "href": "/cost/spark-plug-replacement",
+                "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
+            },
+        ],
+        "P0304": [
+            {
+                "label": "Spark Plug Replacement Cost",
+                "href": "/cost/spark-plug-replacement",
+                "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
+            },
+        ],
+        "P0420": [
+            {
+                "label": "Oxygen Sensor Replacement Cost",
+                "href": "/cost/oxygen-sensor-replacement",
+                "description": "Relevant when testing points to a weak downstream O2 sensor instead of a failed converter.",
+            },
+        ],
+        "P0430": [
+            {
+                "label": "Oxygen Sensor Replacement Cost",
+                "href": "/cost/oxygen-sensor-replacement",
+                "description": "Relevant when testing points to a weak downstream O2 sensor instead of a failed converter.",
+            },
+        ],
+        "P2195": [
+            {
+                "label": "Oxygen Sensor Replacement Cost",
+                "href": "/cost/oxygen-sensor-replacement",
+                "description": "Useful when diagnosis confirms the upstream air-fuel or oxygen sensor is biased lean.",
+            },
+        ],
+    }
+
+    return cost_guide_map.get(code, [])
+
 @app.get("/obd/{code}", response_class=HTMLResponse)
 async def obd_code_page(request: Request, code: str):
 
@@ -1708,6 +1772,7 @@ async def obd_code_page(request: Request, code: str):
 
     related_codes = build_related_codes(row["code"])
     common_repairs = build_common_repairs(row["code"])
+    cost_guide_links = build_cost_guide_links(row["code"])
     diagnostic_summary = build_diagnostic_summary(row["code"])
 
     # ✅ THIS IS STEP 2
@@ -1724,6 +1789,7 @@ async def obd_code_page(request: Request, code: str):
             "quick_checks": quick_checks,
             "related_codes": related_codes,
             "common_repairs": common_repairs,
+            "cost_guide_links": cost_guide_links,
             "diagnostic_summary": diagnostic_summary,
             "repair_path": repair_path,
         },

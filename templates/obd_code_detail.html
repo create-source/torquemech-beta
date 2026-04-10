@@ -150,6 +150,30 @@
   </div>
 </section>
 
+{% if cost_guide_links %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related Cost Guides</h2>
+    <p class="tm-muted" style="margin:0 0 14px 0;">
+      Use these only when testing has already pointed you to a matching repair path.
+    </p>
+    <div style="display:grid; gap:12px;">
+      {% for item in cost_guide_links %}
+      <div class="tm-list-card" style="display:flex; justify-content:space-between; gap:14px; align-items:flex-start;">
+        <div>
+          <div style="font-weight:700; margin-bottom:6px;">{{ item.label }}</div>
+          <div class="tm-muted">{{ item.description }}</div>
+        </div>
+        <a class="tm-btn tm-btn-secondary" href="{{ item.href }}">
+          View Cost Guide
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if related_codes %}
 <section class="tm-section">
   <div class="tm-card">
