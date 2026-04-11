@@ -3,7 +3,7 @@
 {% block title %}Radiator Replacement Cost | TorqueMech{% endblock %}
 
 {% block page_css %}
-  <meta name="description" content="Radiator replacement cost depends on cooling-system access, vehicle design, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <meta name="description" content="Radiator replacement cost depends on cooling-system access, teardown required, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
   <link rel="canonical" href="{{ request.url }}" />
 {% endblock %}
 
@@ -13,17 +13,17 @@
     <div class="eyebrow">TorqueMech Cost Guide</div>
     <h1>Radiator Replacement Cost</h1>
     <p class="tm-pageLead">
-      Radiator replacement cost usually depends on cooling-system access, the amount of teardown required, and whether related hoses, fans, or coolant service need attention during the same job.
-      This page gives a clean starting point before you move into the estimator.
+      Radiator replacement cost usually depends on cooling-system access, the amount of front-end teardown required, and whether the job needs hoses, fans, or coolant service at the same time.
+      This page gives a clean baseline before you move into the estimator.
     </p>
     <div class="tm-actions">
-      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+      <a class="tm-btn tm-btn-primary" href="/estimator?service=radiator_replacement">Estimate Radiator Replacement</a>
     </div>
   </section>
 
   <section class="tm-grid-3 tm-section">
     <article class="tm-card">
-      <h2>Average Cost</h2>
+      <h2>Estimated Cost</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$350 to $1,000+</p>
       <p class="tm-muted" style="margin-bottom:0;">
         Typical total depends on vehicle design, labor access, and whether related cooling-system parts are replaced at the same time.
@@ -34,7 +34,7 @@
       <h2>Labor Time</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.5 to 3.5 hours</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Some radiator jobs are straightforward, while others require front-end trim removal, fan assembly service, or tighter access around the support.
+        Straightforward jobs move quickly, while tighter radiator supports, fan assemblies, and trim removal can add time.
       </p>
     </article>
 
@@ -42,18 +42,18 @@
       <h2>Parts Cost</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$150 to $600+</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Price varies based on radiator size, material, transmission cooler integration, and whether you use OE or aftermarket parts.
+        Price varies based on radiator size, material, integrated cooler design, and aftermarket versus OE quality.
       </p>
     </article>
   </section>
 
   <section class="tm-grid-2 tm-section">
     <article class="tm-card">
-      <h2>Common Symptoms</h2>
+      <h2>Replacement Signs</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
         <li>Coolant leaking under the front of the vehicle</li>
         <li>Engine overheating or running hotter than normal</li>
-        <li>Visible radiator damage, cracks, or corrosion</li>
+        <li>Visible radiator cracks, corrosion, or fin damage</li>
         <li>Low coolant level with no obvious hose failure</li>
         <li>Cooling fan running excessively after warm-up</li>
       </ul>
@@ -64,9 +64,25 @@
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
         <li>Radiator location and front-end access</li>
         <li>Vehicle make, model, and engine size</li>
-        <li>Whether hoses, clamps, or fan components also need service</li>
+        <li>Whether hoses, clamps, or fan parts also need service</li>
         <li>Coolant type and refill or bleed procedure</li>
         <li>Part type: aftermarket, premium aftermarket, or OE</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Service Overview</h2>
+      <p class="tm-muted">
+        Radiator work is more than just swapping the core. A careful repair includes leak confirmation, safe coolant handling, and a proper refill and bleed so the engine does not trap air and overheat again.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Pressure-test the cooling system and confirm the radiator is the leak source</li>
+        <li>Drain coolant and remove covers, fans, or hoses as needed</li>
+        <li>Replace the radiator and inspect mounting points and hose connections</li>
+        <li>Refill with the correct coolant and bleed trapped air</li>
+        <li>Verify operating temperature and check for leaks after warm-up</li>
       </ul>
     </article>
   </section>
@@ -89,9 +105,9 @@
       <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
       <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
         <li><a href="/cost/water-pump-replacement">Water Pump Replacement Cost</a></li>
-        <li><a href="/cost/fuel-pump-replacement">Fuel Pump Replacement Cost</a></li>
+        <li><a href="/cost/serpentine-belt-replacement">Serpentine Belt Replacement Cost</a></li>
         <li><a href="/cost/alternator-replacement">Alternator Replacement Cost</a></li>
-        <li><a href="/cost/spark-plug-replacement">Spark Plug Replacement Cost</a></li>
+        <li><a href="/cost/ac-compressor-replacement">A/C Compressor Replacement Cost</a></li>
       </ul>
     </article>
   </section>

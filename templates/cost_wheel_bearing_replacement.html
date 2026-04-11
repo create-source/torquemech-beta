@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block title %}Wheel Bearing Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Wheel bearing replacement cost depends on front or rear hub design, rust, labor access, and part quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Wheel Bearing Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Wheel bearing replacement cost usually depends on whether the repair is front or rear, how badly corrosion has locked the hub in place, and whether the job includes a complete hub assembly.
+      This page gives you a practical baseline before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator?service=wheel_bearing_replacement_front">Estimate Wheel Bearing Replacement</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Estimated Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$300 to $900+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total is often priced per bearing or per hub assembly and changes based on axle location, rust, and parts quality.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.5 to 4.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Bolt-in hub units are usually quicker, while pressed bearings or severe corrosion can add substantial labor.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$90 to $350+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Cost varies based on hub style, sensor integration, and whether you use budget, premium, or OE-quality parts.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Replacement Signs</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Growling, humming, or rumbling that changes with speed</li>
+        <li>Noise that gets louder during turns or lane changes</li>
+        <li>Wheel play found during inspection</li>
+        <li>ABS or wheel speed sensor issues on integrated hub assemblies</li>
+        <li>Heat or roughness from the hub area after driving</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Front versus rear bearing design</li>
+        <li>Bolt-in hub assembly versus pressed bearing setup</li>
+        <li>Rust, seized hardware, or stuck axle splines</li>
+        <li>Whether alignment or related suspension work is needed</li>
+        <li>Integrated ABS sensor or hub electronics</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Service Overview</h2>
+      <p class="tm-muted">
+        Wheel bearing jobs often look simple on paper but can change quickly once the vehicle is apart. Rusted hubs, axle splines, and sensor-equipped assemblies are usually what turn a routine estimate into a longer suspension repair.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Confirm the noisy or loose corner during road test and inspection</li>
+        <li>Remove the brake and hub hardware for access</li>
+        <li>Extract the old hub or bearing assembly</li>
+        <li>Install the replacement part and torque the fasteners correctly</li>
+        <li>Recheck for noise, play, and warning lights after repair</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a wheel bearing estimate. This CTA opens the closest current estimator service and can be adjusted inside the estimator if the repair is rear instead of front.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=wheel_bearing_replacement_front">Estimate Wheel Bearing Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/sway-bar-link-replacement">Sway Bar Link Replacement Cost</a></li>
+        <li><a href="/cost/control-arm-replacement">Control Arm Replacement Cost</a></li>
+        <li><a href="/cost/brake-rotor-replacement">Brake Rotor Replacement Cost</a></li>
+        <li><a href="/cost/brake-pad-replacement">Brake Pad Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

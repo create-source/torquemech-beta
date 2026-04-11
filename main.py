@@ -2226,6 +2226,20 @@ def control_arm_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/wheel-bearing-replacement", response_class=HTMLResponse)
+def wheel_bearing_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_wheel_bearing_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/sway-bar-link-replacement", response_class=HTMLResponse)
+def sway_bar_link_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_sway_bar_link_replacement.html",
+        {"request": request},
+    )
+
 @app.get("/cost/oxygen-sensor-replacement", response_class=HTMLResponse)
 def oxygen_sensor_cost(request: Request):
     return templates.TemplateResponse(
@@ -2364,6 +2378,8 @@ def sitemap():
         "/cost/starter-replacement",
         "/cost/water-pump-replacement",
         "/cost/control-arm-replacement",
+        "/cost/wheel-bearing-replacement",
+        "/cost/sway-bar-link-replacement",
         "/cost/oxygen-sensor-replacement",
         "/cost/fuel-pump-replacement",
         "/obd/P0300",
