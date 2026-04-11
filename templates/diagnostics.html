@@ -1,5 +1,57 @@
 {% extends "layout.html" %}
 
+{% block page_css %}
+<style>
+  .diag-obd-tile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 14px 0 18px;
+  }
+
+  .diag-obd-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 104px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 18px;
+    background: rgba(255,255,255,.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.12);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .diag-obd-tile__code {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+  }
+
+  .diag-obd-tile__desc {
+    color: var(--tm-text);
+    opacity: .84;
+    font-size: .95rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .diag-obd-tile__footer {
+    margin-top: auto;
+    color: var(--tm-text-muted);
+    font-size: .88rem;
+    font-weight: 600;
+  }
+
+  @media (min-width: 720px) {
+    .diag-obd-tile-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="tm-section">
   <div class="tm-card">
@@ -35,11 +87,12 @@
     <p class="tm-muted">Use stored trouble codes as a fast diagnostic entry point, then move into related repair paths.</p>
 
     {% if featured_obd_codes %}
-    <div class="tm-list-grid" style="margin:14px 0 18px;">
+    <div class="diag-obd-tile-grid">
       {% for item in featured_obd_codes %}
-      <a href="/obd/{{ item.code | lower }}" class="tm-list-card" style="text-decoration:none; color:inherit;">
-        <strong>{{ item.code }}</strong>
-        <div class="tm-muted">{{ item.title }}</div>
+      <a href="/obd/{{ item.code | lower }}" class="diag-obd-tile">
+        <div class="diag-obd-tile__code">{{ item.code }}</div>
+        <div class="diag-obd-tile__desc">{{ item.title }}</div>
+        <div class="diag-obd-tile__footer">Open code guide →</div>
       </a>
       {% endfor %}
     </div>
