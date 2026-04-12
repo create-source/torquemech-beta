@@ -1,78 +1,89 @@
 {% extends "layout.html" %}
 
-{% block title %}Car Repair Cost Guides | TorqueMech{% endblock %}
+{% block title %}Repair Cost Guides | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Browse TorqueMech repair cost guides for common services, then move into the estimator once you know the repair path." />
+  <link rel="canonical" href="{{ request.url }}" />
+  <style>
+    .repair-costs-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .repair-costs-card {
+      display: block;
+      padding: 18px;
+      border: 1px solid var(--tm-border);
+      border-radius: 18px;
+      background: var(--tm-surface);
+      box-shadow: var(--tm-shadow-sm);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .repair-costs-card__title {
+      margin: 0 0 8px 0;
+      color: var(--tm-text);
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .repair-costs-card__desc {
+      margin: 0 0 12px 0;
+      color: var(--tm-text-muted);
+      line-height: 1.55;
+    }
+
+    .repair-costs-card__footer {
+      color: var(--tm-text);
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    @media (min-width: 860px) {
+      .repair-costs-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+{% endblock %}
 
 {% block content %}
-
-<section class="hero-card">
-  <h1>Car Repair Cost Guides</h1>
-
-  <p>
-  Explore common automotive repair costs including parts, labor time,
-  and common symptoms. These guides provide a baseline before generating
-  a detailed estimate with TorqueMech.
-  </p>
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Cost Guides</div>
+    <h1 class="tm-page-title">Browse Repair Cost Guides</h1>
+    <p class="tm-muted">
+      Browse common repair cost guides to get a practical feel for labor time, parts pricing, and the symptoms that usually lead to each job. Once the repair path is confirmed, move into the estimator for a cleaner quote.
+    </p>
+    <div class="tm-actions" style="margin-top:14px;">
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+      <a class="tm-btn tm-btn-secondary" href="/diagnostics">Browse Diagnostics</a>
+    </div>
+  </div>
 </section>
 
-<section class="card-grid">
-<div class="tm-card-grid">
-
-<a class="tm-card" href="/cost/brake-pad-replacement">
-  <h3>Brake Pad Replacement Cost</h3>
-  <p>Average brake pad replacement cost, labor time, and common brake wear symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/starter-replacement">
-  <h3>Starter Replacement Cost</h3>
-  <p>Typical starter replacement pricing and common no-start symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/alternator-replacement">
-  <h3>Alternator Replacement Cost</h3>
-  <p>Charging system repair pricing, labor time, and battery warning signs.</p>
-</a>
-
-<a class="tm-card" href="/cost/radiator-replacement">
-  <h3>Radiator Replacement Cost</h3>
-  <p>Cooling system repair cost, labor time, and overheating symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/serpentine-belt-replacement">
-  <h3>Serpentine Belt Replacement Cost</h3>
-  <p>Accessory drive belt replacement pricing and squealing belt symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/brake-caliper-replacement">
-  <h3>Brake Caliper Replacement Cost</h3>
-  <p>Brake caliper repair cost, labor time, and brake dragging symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/ac-compressor-replacement">
-  <h3>A/C Compressor Replacement Cost</h3>
-  <p>Air conditioning compressor repair pricing and cooling system symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/fuel-pump-replacement">
-  <h3>Fuel Pump Replacement Cost</h3>
-  <p>Fuel system repair cost, labor time, and engine stalling symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/water-pump-replacement">
-  <h3>Water Pump Replacement Cost</h3>
-  <p>Cooling system water pump replacement cost and overheating symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/control-arm-replacement">
-  <h3>Control Arm Replacement Cost</h3>
-  <p>Suspension control arm repair pricing and steering stability symptoms.</p>
-</a>
-
-<a class="tm-card" href="/cost/oxygen-sensor-replacement">
-  <h3>Oxygen Sensor Replacement Cost</h3>
-  <p>Oxygen sensor replacement pricing and check engine light symptoms.</p>
-</a>
-
-</div>
+<section class="tm-section">
+  <div class="repair-costs-grid">
+    {% for guide in cost_guides %}
+    <a class="repair-costs-card" href="{{ guide.href }}">
+      <div class="repair-costs-card__title">{{ guide.title }}</div>
+      <p class="repair-costs-card__desc">{{ guide.description }}</p>
+      <div class="repair-costs-card__footer">Open cost guide →</div>
+    </a>
+    {% endfor %}
+  </div>
 </section>
 
+<section class="tm-section">
+  <div class="tm-card">
+    <h2 style="margin-top:0;">Need a Real Estimate?</h2>
+    <p class="tm-muted" style="margin:0 0 14px 0;">
+      Use the guide pages for cost context, then open the estimator when you are ready to narrow the job by vehicle and service.
+    </p>
+    <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+  </div>
+</section>
 {% endblock %}

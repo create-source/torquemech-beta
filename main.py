@@ -2373,11 +2373,93 @@ def starter_cost(request: Request):
         {"request": request},
     )
 
+def build_repair_cost_guide_cards():
+    return [
+        {
+            "title": "Brake Pad Replacement Cost",
+            "description": "Baseline pricing, labor time, and brake wear symptoms for a common service visit.",
+            "href": "/cost/brake-pad-replacement",
+        },
+        {
+            "title": "Alternator Replacement Cost",
+            "description": "Charging system cost context for battery warning lights, dim lights, or no-charge complaints.",
+            "href": "/cost/alternator-replacement",
+        },
+        {
+            "title": "Radiator Replacement Cost",
+            "description": "Cooling system pricing guidance when leaks, overheating, or cracked tanks show up.",
+            "href": "/cost/radiator-replacement",
+        },
+        {
+            "title": "Serpentine Belt Replacement Cost",
+            "description": "Useful when belt noise, cracking, or accessory drive wear points to a simple front-drive repair.",
+            "href": "/cost/serpentine-belt-replacement",
+        },
+        {
+            "title": "Brake Caliper Replacement Cost",
+            "description": "Pricing context for dragging brakes, uneven pad wear, or sticking caliper issues.",
+            "href": "/cost/brake-caliper-replacement",
+        },
+        {
+            "title": "A/C Compressor Replacement Cost",
+            "description": "Air conditioning repair range for compressor failure, no-cool complaints, or noisy A/C drive loads.",
+            "href": "/cost/ac-compressor-replacement",
+        },
+        {
+            "title": "Spark Plug Replacement Cost",
+            "description": "A strong starting point for tune-up pricing, maintenance intervals, and misfire-related repairs.",
+            "href": "/cost/spark-plug-replacement",
+        },
+        {
+            "title": "Brake Rotor Replacement Cost",
+            "description": "Labor and parts context when brake pulsation, scoring, or rotor wear is part of the job.",
+            "href": "/cost/brake-rotor-replacement",
+        },
+        {
+            "title": "Starter Replacement Cost",
+            "description": "Typical no-crank repair pricing for starter motor faults and related starting complaints.",
+            "href": "/cost/starter-replacement",
+        },
+        {
+            "title": "Water Pump Replacement Cost",
+            "description": "Cooling system cost guidance when pump leaks, bearing noise, or circulation issues are confirmed.",
+            "href": "/cost/water-pump-replacement",
+        },
+        {
+            "title": "Control Arm Replacement Cost",
+            "description": "Suspension repair pricing for worn bushings, loose ball joints, and front-end instability.",
+            "href": "/cost/control-arm-replacement",
+        },
+        {
+            "title": "Wheel Bearing Replacement Cost",
+            "description": "Helpful for humming, growling, or wheel-play complaints tied to hub or bearing wear.",
+            "href": "/cost/wheel-bearing-replacement",
+        },
+        {
+            "title": "Sway Bar Link Replacement Cost",
+            "description": "Quick cost context for clunking over bumps and basic stabilizer link service.",
+            "href": "/cost/sway-bar-link-replacement",
+        },
+        {
+            "title": "Oxygen Sensor Replacement Cost",
+            "description": "Useful when diagnosis points to a biased O2 signal, slow response, or emissions-related fault.",
+            "href": "/cost/oxygen-sensor-replacement",
+        },
+        {
+            "title": "Fuel Pump Replacement Cost",
+            "description": "Fuel delivery pricing guidance for hard starts, stalling, low-pressure, or no-start complaints.",
+            "href": "/cost/fuel-pump-replacement",
+        },
+    ]
+
 @app.get("/repair-costs", response_class=HTMLResponse)
 async def repair_costs(request: Request):
     return templates.TemplateResponse(
         "repair_costs.html",
-        {"request": request}
+        {
+            "request": request,
+            "cost_guides": build_repair_cost_guide_cards(),
+        }
     )
 
 @app.get("/cost/water-pump-replacement", response_class=HTMLResponse)
