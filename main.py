@@ -1762,6 +1762,26 @@ def build_common_repairs(code: str):
 
 def build_cost_guide_links(code: str):
     code = code.upper().strip()
+    live_cost_guides = {
+        item["href"]: item
+        for item in build_repair_cost_guide_cards()
+        if item.get("href")
+    }
+
+    results: List[Dict[str, str]] = []
+    seen_hrefs: set[str] = set()
+
+    def add_guide(label: str, href: str, description: str) -> None:
+        if not href or href in seen_hrefs or href not in live_cost_guides:
+            return
+        seen_hrefs.add(href)
+        results.append(
+            {
+                "label": label,
+                "href": href,
+                "description": description,
+            }
+        )
 
     cost_guide_map = {
         "P0300": [
@@ -1822,7 +1842,89 @@ def build_cost_guide_links(code: str):
         ],
     }
 
-    return cost_guide_map.get(code, [])
+    for item in cost_guide_map.get(code, []):
+        add_guide(
+            str(item.get("label") or "").strip(),
+            str(item.get("href") or "").strip(),
+            str(item.get("description") or "").strip(),
+        )
+
+    if not results:
+        fallback_rules = [
+            {
+                "matches": lambda current: current.startswith(("P013", "P014", "P015", "P016")) or current in {
+                    "P0171",
+                    "P0174",
+                    "P0420",
+                    "P0430",
+                    "P2195",
+                    "P2196",
+                    "P2197",
+                    "P2198",
+                },
+                "guides": [
+                    {
+                        "label": "Oxygen Sensor Replacement Cost",
+                        "href": "/cost/oxygen-sensor-replacement",
+                        "description": "Useful when testing confirms the oxygen or air-fuel sensor is the repair path.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current.startswith("P030") or current == "P0316",
+                "guides": [
+                    {
+                        "label": "Spark Plug Replacement Cost",
+                        "href": "/cost/spark-plug-replacement",
+                        "description": "A relevant next cost check when the confirmed misfire path leads back to worn plugs.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current in {"P0128", "P0217"},
+                "guides": [
+                    {
+                        "label": "Radiator Replacement Cost",
+                        "href": "/cost/radiator-replacement",
+                        "description": "Relevant when diagnosis finds a cooling-system leak or radiator flow problem behind the temperature issue.",
+                    },
+                    {
+                        "label": "Water Pump Replacement Cost",
+                        "href": "/cost/water-pump-replacement",
+                        "description": "Useful when overheating or circulation tests point to pump flow or bearing failure.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current in {"P0562", "P0563", "P0620"},
+                "guides": [
+                    {
+                        "label": "Alternator Replacement Cost",
+                        "href": "/cost/alternator-replacement",
+                        "description": "A strong cost guide when charging-system testing confirms low output or alternator control failure.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current in {"P0230", "P0231", "P0232", "P0460", "P0461", "P0462", "P0463"},
+                "guides": [
+                    {
+                        "label": "Fuel Pump Replacement Cost",
+                        "href": "/cost/fuel-pump-replacement",
+                        "description": "Relevant when testing shows the fault is in the fuel pump module or an integrated sender assembly.",
+                    },
+                ],
+            },
+        ]
+
+        for rule in fallback_rules:
+            if not rule["matches"](code):
+                continue
+            for item in rule["guides"]:
+                add_guide(item["label"], item["href"], item["description"])
+            break
+
+    return results[:3]
 
 @app.get("/obd/{code}", response_class=HTMLResponse)
 async def obd_code_page(request: Request, code: str):
