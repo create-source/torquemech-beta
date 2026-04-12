@@ -1472,8 +1472,72 @@ def build_featured_obd_codes():
         {"code": "P0455", "title": "EVAP Large Leak Detected"},
     ]
 
+def load_available_obd_titles() -> Dict[str, str]:
+    conn = obd_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT code, title FROM dtc ORDER BY code")
+    rows = cur.fetchall()
+    conn.close()
+
+    return {
+        str(row["code"]).upper(): (str(row["title"] or row["code"]).strip() or str(row["code"]).upper())
+        for row in rows
+        if row["code"]
+    }
+
+
+def build_fallback_related_code_candidates(code: str, available_titles: Dict[str, str]) -> List[str]:
+    prefixes: List[str] = []
+    if len(code) >= 4:
+        prefixes.append(code[:4])
+    if len(code) >= 3:
+        prefixes.append(code[:3])
+
+    def code_distance(other_code: str) -> int:
+        try:
+            return abs(int(other_code[1:]) - int(code[1:]))
+        except Exception:
+            return 9999
+
+    candidates: List[str] = []
+    seen: set[str] = {code}
+
+    for prefix in prefixes:
+        matches = [
+            other_code
+            for other_code in available_titles
+            if other_code.startswith(prefix) and other_code not in seen
+        ]
+        for other_code in sorted(matches, key=lambda value: (code_distance(value), value)):
+            if other_code in seen:
+                continue
+            seen.add(other_code)
+            candidates.append(other_code)
+
+    return candidates
+
+
 def build_related_codes(code: str):
-    code = code.upper()
+    code = code.upper().strip()
+    available_titles = load_available_obd_titles()
+    if code not in available_titles:
+        return []
+
+    max_items = 5
+    related: List[Dict[str, str]] = []
+    seen_codes = {code}
+
+    def add_candidate(candidate_code: str, fallback_label: str = "") -> None:
+        candidate_code = str(candidate_code or "").upper().strip()
+        if not candidate_code or candidate_code in seen_codes or candidate_code not in available_titles:
+            return
+        seen_codes.add(candidate_code)
+        related.append(
+            {
+                "code": candidate_code,
+                "label": available_titles.get(candidate_code) or fallback_label or candidate_code,
+            }
+        )
 
     clusters = {
         "maf": [
@@ -1551,15 +1615,24 @@ def build_related_codes(code: str):
     }
 
     for group in clusters.values():
-        codes = [c[0] for c in group]
-        if code in codes:
-            return [
-                {"code": c, "label": label}
-                for c, label in group
-                if c != code
-            ]
+        codes = [item_code for item_code, _ in group]
+        if code not in codes:
+            continue
+        for item_code, item_label in group:
+            if len(related) >= max_items:
+                break
+            if item_code == code:
+                continue
+            add_candidate(item_code, item_label)
+        break
 
-    return []
+    if len(related) < 3:
+        for fallback_code in build_fallback_related_code_candidates(code, available_titles):
+            if len(related) >= max_items:
+                break
+            add_candidate(fallback_code)
+
+    return related[:max_items]
 
 def build_common_repairs(code: str):
     code = code.upper().strip()
