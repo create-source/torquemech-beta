@@ -2933,5 +2933,753 @@
       "Note delayed or slipping reverse engagement"
     ],
     "title": "Reverse Incorrect Ratio"
+  },
+  "P0114": {
+    "description": "Intake air temperature signal cuts in and out or drops out.",
+    "possible_causes": [
+      "Loose IAT connector",
+      "Broken/chafed wiring",
+      "Failing IAT sensor"
+    ],
+    "quick_checks": [
+      "Wiggle-test the connector while watching scan data",
+      "Inspect harness near the intake tube",
+      "Compare IAT reading to ambient when cold"
+    ],
+    "title": "Intake Air Temperature Circuit Intermittent"
+  },
+  "P0124": {
+    "description": "Throttle or pedal position signal is intermittent.",
+    "possible_causes": [
+      "Worn TPS/APP sensor",
+      "Loose connector",
+      "Wiring issue",
+      "Throttle body fault"
+    ],
+    "quick_checks": [
+      "Monitor TPS/APP sweep for dropouts",
+      "Inspect connector pins for spread terminals",
+      "Check throttle body and harness movement"
+    ],
+    "title": "Throttle/Pedal Position Sensor/Switch A Circuit Intermittent"
+  },
+  "P0126": {
+    "description": "Coolant temperature stayed too low for normal closed-loop operation.",
+    "possible_causes": [
+      "Thermostat stuck open",
+      "Low coolant",
+      "ECT sensor reading skewed",
+      "Cooling fan running too much"
+    ],
+    "quick_checks": [
+      "Verify engine warms up fully on a road test",
+      "Check coolant level and air pockets",
+      "Compare ECT to thermostat housing temperature"
+    ],
+    "title": "Insufficient Coolant Temperature for Stable Operation"
+  },
+  "P0127": {
+    "description": "Intake air temperature is reading hotter than expected.",
+    "possible_causes": [
+      "Heat-soaked or failed IAT sensor",
+      "Short to ground",
+      "Sensor mounted near a heat source"
+    ],
+    "quick_checks": [
+      "Compare IAT to ambient after a cold soak",
+      "Inspect the sensor mount and intake tract",
+      "Check wiring for chafing or pinched insulation"
+    ],
+    "title": "Intake Air Temperature Too High"
+  },
+  "P0129": {
+    "description": "Barometric pressure reading is lower than expected for current conditions.",
+    "possible_causes": [
+      "BARO/MAP sensor issue",
+      "Wiring fault",
+      "Restricted intake",
+      "Sensor reference voltage problem"
+    ],
+    "quick_checks": [
+      "Compare BARO/MAP to local atmospheric pressure",
+      "Inspect vacuum routing and intake ducting",
+      "Verify reference voltage and ground"
+    ],
+    "title": "Barometric Pressure Too Low"
+  },
+  "P0139": {
+    "description": "Bank 1 downstream oxygen sensor is switching too slowly.",
+    "possible_causes": [
+      "Aging O2 sensor",
+      "Exhaust leak",
+      "Catalyst efficiency issue",
+      "Rich/lean running condition"
+    ],
+    "quick_checks": [
+      "Watch B1S2 response on a scan tool",
+      "Check for exhaust leaks ahead of the sensor",
+      "Look for fuel trim or catalyst-related companion codes"
+    ],
+    "title": "O2 Sensor Circuit Slow Response (Bank 1, Sensor 2)"
+  },
+  "P0146": {
+    "description": "Bank 1 sensor 3 oxygen sensor shows no activity.",
+    "possible_causes": [
+      "Failed O2 sensor",
+      "Open circuit",
+      "Connector damage",
+      "Exhaust system issue"
+    ],
+    "quick_checks": [
+      "Verify the sensor is connected and powered",
+      "Inspect wiring near the exhaust",
+      "Check live data for any sensor switching"
+    ],
+    "title": "O2 Sensor Circuit No Activity Detected (Bank 1, Sensor 3)"
+  },
+  "P0147": {
+    "description": "Bank 1 sensor 3 oxygen sensor heater circuit fault detected.",
+    "possible_causes": [
+      "Failed heater element",
+      "Blown fuse",
+      "Open wiring",
+      "Poor connector contact"
+    ],
+    "quick_checks": [
+      "Check heater circuit fuse and power supply",
+      "Measure heater resistance if accessible",
+      "Inspect the sensor connector for heat damage"
+    ],
+    "title": "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 3)"
+  },
+  "P0159": {
+    "description": "Bank 2 downstream oxygen sensor is switching too slowly.",
+    "possible_causes": [
+      "Aging O2 sensor",
+      "Exhaust leak",
+      "Catalyst efficiency issue",
+      "Rich/lean running condition"
+    ],
+    "quick_checks": [
+      "Watch B2S2 response on a scan tool",
+      "Check for exhaust leaks ahead of the sensor",
+      "Look for fuel trim or catalyst-related companion codes"
+    ],
+    "title": "O2 Sensor Circuit Slow Response (Bank 2, Sensor 2)"
+  },
+  "P0194": {
+    "description": "Fuel rail pressure sensor signal drops out or changes erratically.",
+    "possible_causes": [
+      "Fuel pressure sensor failure",
+      "Loose connector",
+      "Harness issue",
+      "Unstable fuel pressure"
+    ],
+    "quick_checks": [
+      "Monitor fuel rail pressure PID for glitches",
+      "Inspect the sensor connector and harness",
+      "Verify actual fuel pressure if equipment is available"
+    ],
+    "title": "Fuel Rail Pressure Sensor Circuit Intermittent"
+  },
+  "P0217": {
+    "description": "Engine coolant temperature reached an overheating threshold.",
+    "possible_causes": [
+      "Low coolant",
+      "Cooling fan problem",
+      "Thermostat stuck closed",
+      "Water pump or flow issue"
+    ],
+    "quick_checks": [
+      "Do not keep driving the vehicle hot",
+      "Check coolant level and signs of leaks",
+      "Confirm fan operation and coolant circulation"
+    ],
+    "title": "Engine Over Temperature Condition"
+  },
+  "P0218": {
+    "description": "Transmission fluid temperature is too high.",
+    "possible_causes": [
+      "Low or degraded fluid",
+      "Cooling system issue",
+      "Heavy slipping",
+      "Restricted transmission cooler flow"
+    ],
+    "quick_checks": [
+      "Check fluid level and condition",
+      "Inspect the transmission cooler lines",
+      "Look for slipping or towing-related heat load"
+    ],
+    "title": "Transmission Over Temperature Condition"
+  },
+  "P0219": {
+    "description": "Engine speed exceeded the calibrated overspeed limit.",
+    "possible_causes": [
+      "Aggressive downshift or over-rev",
+      "Throttle control issue",
+      "Transmission problem",
+      "Intermittent RPM signal fault"
+    ],
+    "quick_checks": [
+      "Review freeze-frame data if available",
+      "Check for throttle and transmission companion codes",
+      "Inspect for a sticking throttle or shift issue"
+    ],
+    "title": "Engine Overspeed Condition"
+  },
+  "P0221": {
+    "description": "Throttle or pedal position sensor B is out of expected range.",
+    "possible_causes": [
+      "TPS/APP sensor B failure",
+      "Wiring problem",
+      "Throttle body issue",
+      "Connector corrosion"
+    ],
+    "quick_checks": [
+      "Compare sensor A and B sweep on a scan tool",
+      "Inspect connector pins and harness routing",
+      "Check throttle plate movement for binding"
+    ],
+    "title": "Throttle/Pedal Position Sensor/Switch B Circuit Range/Performance"
+  },
+  "P0222": {
+    "description": "Throttle or pedal position sensor B signal is too low.",
+    "possible_causes": [
+      "Short to ground",
+      "Sensor fault",
+      "Wiring open",
+      "Connector issue"
+    ],
+    "quick_checks": [
+      "Verify 5V reference and ground",
+      "Check the signal wire for a short to ground",
+      "Monitor live data while moving the throttle"
+    ],
+    "title": "Throttle/Pedal Position Sensor/Switch B Circuit Low Input"
+  },
+  "P0223": {
+    "description": "Throttle or pedal position sensor B signal is too high.",
+    "possible_causes": [
+      "Open circuit",
+      "Short to voltage",
+      "Sensor fault",
+      "Connector issue"
+    ],
+    "quick_checks": [
+      "Inspect the harness for an open or rubbed-through wire",
+      "Verify signal voltage at the sensor",
+      "Compare APP/TPS B reading to sensor A"
+    ],
+    "title": "Throttle/Pedal Position Sensor/Switch B Circuit High Input"
+  },
+  "P0230": {
+    "description": "Fuel pump primary control circuit fault detected.",
+    "possible_causes": [
+      "Fuel pump relay issue",
+      "Open fuse or power feed",
+      "Wiring fault",
+      "PCM command issue"
+    ],
+    "quick_checks": [
+      "Listen for pump prime at key-on",
+      "Check relay, fuse, and power at the pump circuit",
+      "Inspect the harness near the fuel tank"
+    ],
+    "title": "Fuel Pump Primary Circuit Malfunction"
+  },
+  "P0231": {
+    "description": "Fuel pump secondary feedback circuit is reading low.",
+    "possible_causes": [
+      "Low supply voltage",
+      "High resistance in the circuit",
+      "Weak pump",
+      "Wiring issue"
+    ],
+    "quick_checks": [
+      "Load-test the battery and charging system",
+      "Check voltage drop across the pump feed and ground",
+      "Inspect relay and connector condition"
+    ],
+    "title": "Fuel Pump Secondary Circuit Low"
+  },
+  "P0232": {
+    "description": "Fuel pump secondary feedback circuit is reading high.",
+    "possible_causes": [
+      "Short to voltage",
+      "Relay stuck on",
+      "Wiring issue",
+      "Control circuit fault"
+    ],
+    "quick_checks": [
+      "Check for a stuck fuel pump relay",
+      "Inspect the circuit for a short to power",
+      "Confirm commanded pump state with scan data if available"
+    ],
+    "title": "Fuel Pump Secondary Circuit High"
+  },
+  "P0234": {
+    "description": "Boost pressure climbed higher than the system expected.",
+    "possible_causes": [
+      "Sticking wastegate",
+      "Boost control solenoid issue",
+      "Vacuum/pressure hose routing problem",
+      "Modified tune or hardware"
+    ],
+    "quick_checks": [
+      "Inspect boost control hoses and actuator movement",
+      "Check for overboost under load only",
+      "Verify boost readings against commanded values"
+    ],
+    "title": "Engine Overboost Condition"
+  },
+  "P0235": {
+    "description": "Turbo or supercharger boost sensor A circuit fault detected.",
+    "possible_causes": [
+      "Boost/MAP sensor failure",
+      "Wiring issue",
+      "Connector problem",
+      "Reference voltage fault"
+    ],
+    "quick_checks": [
+      "Compare boost sensor data to KOEO barometric pressure",
+      "Verify 5V reference and ground",
+      "Inspect the sensor port and connector"
+    ],
+    "title": "Turbocharger/Supercharger Boost Sensor A Circuit"
+  },
+  "P0236": {
+    "description": "Boost sensor A reading is outside the expected range.",
+    "possible_causes": [
+      "Skewed boost/MAP sensor",
+      "Intake or charge leak",
+      "Wiring issue",
+      "Boost control fault"
+    ],
+    "quick_checks": [
+      "Compare KOEO reading to atmospheric pressure",
+      "Inspect charge pipes and clamps",
+      "Watch boost response during a controlled road test"
+    ],
+    "title": "Turbocharger/Supercharger Boost Sensor A Circuit Range/Performance"
+  },
+  "P0237": {
+    "description": "Boost sensor A signal is too low.",
+    "possible_causes": [
+      "Short to ground",
+      "Sensor fault",
+      "Low reference voltage",
+      "Connector issue"
+    ],
+    "quick_checks": [
+      "Check the signal circuit for a short to ground",
+      "Verify reference voltage at the sensor",
+      "Inspect the connector for oil or moisture intrusion"
+    ],
+    "title": "Turbocharger/Supercharger Boost Sensor A Circuit Low"
+  },
+  "P0238": {
+    "description": "Boost sensor A signal is too high.",
+    "possible_causes": [
+      "Open circuit",
+      "Short to voltage",
+      "Sensor fault",
+      "Connector issue"
+    ],
+    "quick_checks": [
+      "Inspect for an open signal wire or damaged connector",
+      "Check for a short to voltage",
+      "Compare scan data to a mechanical boost reading if available"
+    ],
+    "title": "Turbocharger/Supercharger Boost Sensor A Circuit High"
+  },
+  "P0316": {
+    "description": "A misfire was detected during startup.",
+    "possible_causes": [
+      "Worn plugs or coils",
+      "Fuel delivery issue",
+      "Leaking injector",
+      "Low compression on startup"
+    ],
+    "quick_checks": [
+      "Note if the misfire clears once warm",
+      "Check for coolant or fuel fouling on plugs",
+      "Scan for cylinder-specific misfire companions"
+    ],
+    "title": "Misfire Detected on Startup (First 1000 Revolutions)"
+  },
+  "P0321": {
+    "description": "Engine speed input signal is erratic or out of range.",
+    "possible_causes": [
+      "Crank/cam signal issue",
+      "Ignition module fault",
+      "Wiring problem",
+      "Reluctor damage"
+    ],
+    "quick_checks": [
+      "Watch RPM signal during crank and stall events",
+      "Inspect crank and cam sensor connectors",
+      "Check for rubbed-through wiring near the engine"
+    ],
+    "title": "Ignition/Distributor Engine Speed Input Circuit Range/Performance"
+  },
+  "P0322": {
+    "description": "Engine speed input signal is missing.",
+    "possible_causes": [
+      "Failed crank or ignition input component",
+      "Open circuit",
+      "Poor power or ground",
+      "Reluctor issue"
+    ],
+    "quick_checks": [
+      "Check for RPM while cranking",
+      "Verify sensor power, ground, and signal",
+      "Inspect reluctor and sensor mounting if accessible"
+    ],
+    "title": "Ignition/Distributor Engine Speed Input Circuit No Signal"
+  },
+  "P0326": {
+    "description": "Knock sensor 1 signal is outside expected range on bank 1.",
+    "possible_causes": [
+      "Knock sensor fault",
+      "Loose sensor mounting",
+      "Wiring issue",
+      "Actual engine knock or mechanical noise"
+    ],
+    "quick_checks": [
+      "Inspect sensor connector and harness routing",
+      "Verify the sensor is properly torqued if accessible",
+      "Rule out obvious spark knock or mechanical noise"
+    ],
+    "title": "Knock Sensor 1 Circuit Range/Performance (Bank 1)"
+  },
+  "P0327": {
+    "description": "Knock sensor 1 signal is too low on bank 1.",
+    "possible_causes": [
+      "Short to ground",
+      "Failed knock sensor",
+      "Harness issue",
+      "Poor sensor mounting"
+    ],
+    "quick_checks": [
+      "Inspect the signal wire for a short to ground",
+      "Check connector condition",
+      "Look for damage near the intake valley or engine block"
+    ],
+    "title": "Knock Sensor 1 Circuit Low Input (Bank 1)"
+  },
+  "P0328": {
+    "description": "Knock sensor 1 signal is too high on bank 1.",
+    "possible_causes": [
+      "Open circuit",
+      "Sensor fault",
+      "Wiring issue",
+      "Excessive noise or detonation"
+    ],
+    "quick_checks": [
+      "Inspect for an open or broken sensor lead",
+      "Check for true spark knock under load",
+      "Verify connector fit and harness condition"
+    ],
+    "title": "Knock Sensor 1 Circuit High Input (Bank 1)"
+  },
+  "P0336": {
+    "description": "Crankshaft position sensor A signal is erratic or out of range.",
+    "possible_causes": [
+      "Crank sensor fault",
+      "Reluctor wheel issue",
+      "Wiring problem",
+      "Sensor gap problem"
+    ],
+    "quick_checks": [
+      "Watch RPM signal while cranking",
+      "Inspect sensor mounting and air gap if accessible",
+      "Check for metal debris on the sensor tip"
+    ],
+    "title": "Crankshaft Position Sensor A Circuit Range/Performance"
+  },
+  "P0337": {
+    "description": "Crankshaft position sensor A signal is too low.",
+    "possible_causes": [
+      "Short to ground",
+      "Weak sensor signal",
+      "Wiring issue",
+      "Poor connector contact"
+    ],
+    "quick_checks": [
+      "Inspect the harness for rubbing or pinching",
+      "Check signal voltage while cranking",
+      "Verify connector fit and sensor mounting"
+    ],
+    "title": "Crankshaft Position Sensor A Circuit Low Input"
+  },
+  "P0338": {
+    "description": "Crankshaft position sensor A signal is too high.",
+    "possible_causes": [
+      "Open circuit",
+      "Short to voltage",
+      "Sensor fault",
+      "Connector issue"
+    ],
+    "quick_checks": [
+      "Check for an open signal wire",
+      "Verify reference voltage and connector condition",
+      "Compare sensor output during cranking if possible"
+    ],
+    "title": "Crankshaft Position Sensor A Circuit High Input"
+  },
+  "P0341": {
+    "description": "Camshaft position sensor A signal is erratic or out of expected range.",
+    "possible_causes": [
+      "Cam sensor fault",
+      "Timing issue",
+      "Reluctor problem",
+      "Wiring issue"
+    ],
+    "quick_checks": [
+      "Compare cam and crank correlation on the scan tool if available",
+      "Inspect the sensor and connector",
+      "Check for stretched timing chain or belt issues"
+    ],
+    "title": "Camshaft Position Sensor A Circuit Range/Performance (Bank 1 or Single Sensor)"
+  },
+  "P0342": {
+    "description": "Camshaft position sensor A signal is too low.",
+    "possible_causes": [
+      "Short to ground",
+      "Sensor fault",
+      "Wiring issue",
+      "Poor connector contact"
+    ],
+    "quick_checks": [
+      "Inspect the signal wire and connector",
+      "Verify reference voltage and ground",
+      "Check sensor mounting and tone wheel condition"
+    ],
+    "title": "Camshaft Position Sensor A Circuit Low Input (Bank 1 or Single Sensor)"
+  },
+  "P0343": {
+    "description": "Camshaft position sensor A signal is too high.",
+    "possible_causes": [
+      "Open circuit",
+      "Short to voltage",
+      "Sensor fault",
+      "Connector issue"
+    ],
+    "quick_checks": [
+      "Inspect the circuit for an open or rubbed-through wire",
+      "Check connector tension and corrosion",
+      "Compare cam signal to expected KOEO values"
+    ],
+    "title": "Camshaft Position Sensor A Circuit High Input (Bank 1 or Single Sensor)"
+  },
+  "P0351": {
+    "description": "Ignition coil A primary or secondary circuit fault detected.",
+    "possible_causes": [
+      "Failed ignition coil",
+      "Coil wiring issue",
+      "Poor connector fit",
+      "PCM driver issue (rare)"
+    ],
+    "quick_checks": [
+      "Swap the coil if the design allows",
+      "Inspect the coil connector and boot",
+      "Check for cylinder-specific misfire companions"
+    ],
+    "title": "Ignition Coil A Primary/Secondary Circuit"
+  },
+  "P0352": {
+    "description": "Ignition coil B primary or secondary circuit fault detected.",
+    "possible_causes": [
+      "Failed ignition coil",
+      "Coil wiring issue",
+      "Poor connector fit",
+      "PCM driver issue (rare)"
+    ],
+    "quick_checks": [
+      "Swap the coil if the design allows",
+      "Inspect the coil connector and boot",
+      "Check for cylinder-specific misfire companions"
+    ],
+    "title": "Ignition Coil B Primary/Secondary Circuit"
+  },
+  "P0400": {
+    "description": "EGR flow is not behaving as the system expects.",
+    "possible_causes": [
+      "Carbon-clogged EGR passages",
+      "Faulty EGR valve",
+      "Vacuum or control issue",
+      "DPFE/feedback problem"
+    ],
+    "quick_checks": [
+      "Inspect EGR passages for carbon buildup",
+      "Command the EGR valve and watch response if possible",
+      "Check vacuum supply or control wiring"
+    ],
+    "title": "Exhaust Gas Recirculation Flow Malfunction"
+  },
+  "P0404": {
+    "description": "EGR control signal or valve position is outside expected range.",
+    "possible_causes": [
+      "Sticking EGR valve",
+      "Position sensor fault",
+      "Wiring issue",
+      "Carbon buildup"
+    ],
+    "quick_checks": [
+      "Inspect the valve for sticking or heavy deposits",
+      "Check connector condition and valve feedback",
+      "Look for related EGR flow codes"
+    ],
+    "title": "Exhaust Gas Recirculation Circuit Range/Performance"
+  },
+  "P0460": {
+    "description": "Fuel level sensor signal is implausible or not tracking normally.",
+    "possible_causes": [
+      "Worn fuel level sender",
+      "Poor connector contact",
+      "Harness issue",
+      "Cluster or module interpretation fault"
+    ],
+    "quick_checks": [
+      "See if the fuel gauge reading jumps around",
+      "Inspect the tank-side connector for corrosion",
+      "Compare gauge behavior after refueling"
+    ],
+    "title": "Fuel Level Sensor Circuit Malfunction"
+  },
+  "P0461": {
+    "description": "Fuel level sensor is not moving through the expected range.",
+    "possible_causes": [
+      "Sticking float",
+      "Worn sender track",
+      "Wiring issue",
+      "Connector corrosion"
+    ],
+    "quick_checks": [
+      "Note whether the gauge is slow or stuck",
+      "Inspect the sender circuit if tank access is available",
+      "Check for companion fuel level or EVAP codes"
+    ],
+    "title": "Fuel Level Sensor Circuit Range/Performance"
+  },
+  "P0480": {
+    "description": "Cooling fan 1 control circuit fault detected.",
+    "possible_causes": [
+      "Fan relay failure",
+      "Cooling fan motor issue",
+      "Wiring problem",
+      "PCM control issue"
+    ],
+    "quick_checks": [
+      "Command fan operation if a scan tool supports it",
+      "Check relay, fuse, and power at the fan",
+      "Inspect the fan harness for heat damage"
+    ],
+    "title": "Cooling Fan 1 Control Circuit"
+  },
+  "P0481": {
+    "description": "Cooling fan 2 control circuit fault detected.",
+    "possible_causes": [
+      "Fan relay failure",
+      "Cooling fan motor issue",
+      "Wiring problem",
+      "PCM control issue"
+    ],
+    "quick_checks": [
+      "Command fan operation if a scan tool supports it",
+      "Check relay, fuse, and power at the secondary fan",
+      "Inspect the fan harness and connector condition"
+    ],
+    "title": "Cooling Fan 2 Control Circuit"
+  },
+  "P0501": {
+    "description": "Vehicle speed sensor reading is out of expected range.",
+    "possible_causes": [
+      "Speed sensor failure",
+      "Tone ring issue",
+      "Wiring problem",
+      "ABS-related signal issue"
+    ],
+    "quick_checks": [
+      "Compare vehicle speed data to actual road speed",
+      "Inspect wheel or transmission speed sensor wiring",
+      "Check for ABS companion codes"
+    ],
+    "title": "Vehicle Speed Sensor Range/Performance"
+  },
+  "P0502": {
+    "description": "Vehicle speed sensor signal is too low or missing.",
+    "possible_causes": [
+      "Failed speed sensor",
+      "Short to ground",
+      "Tone ring damage",
+      "Wiring issue"
+    ],
+    "quick_checks": [
+      "Watch speed PID during a road test",
+      "Inspect the sensor and tone ring area",
+      "Check the signal circuit for damage"
+    ],
+    "title": "Vehicle Speed Sensor Low Input"
+  },
+  "P0503": {
+    "description": "Vehicle speed sensor signal is intermittent, erratic, or too high.",
+    "possible_causes": [
+      "Intermittent sensor",
+      "Loose connector",
+      "Tone ring damage",
+      "Harness issue"
+    ],
+    "quick_checks": [
+      "Road test while monitoring speed PID",
+      "Inspect connector fit and harness routing",
+      "Look for debris or damage at the tone ring"
+    ],
+    "title": "Vehicle Speed Sensor Intermittent/Erratic/High"
+  },
+  "P0701": {
+    "description": "Transmission control system reported a performance or range problem.",
+    "possible_causes": [
+      "Low or dirty fluid",
+      "Internal transmission issue",
+      "Control solenoid fault",
+      "Sensor input problem"
+    ],
+    "quick_checks": [
+      "Check fluid level and condition first",
+      "Scan for transmission-specific companion codes",
+      "Note shift quality and fail-safe behavior"
+    ],
+    "title": "Transmission Control System Range/Performance"
+  },
+  "P0710": {
+    "description": "Transmission fluid temperature sensor A circuit fault detected.",
+    "possible_causes": [
+      "Temp sensor failure",
+      "Wiring issue",
+      "Connector contamination",
+      "Internal harness problem"
+    ],
+    "quick_checks": [
+      "Compare TFT to ambient when cold",
+      "Inspect transmission connector for fluid intrusion",
+      "Check sensor wiring and reference values"
+    ],
+    "title": "Transmission Fluid Temperature Sensor A Circuit"
+  },
+  "P0711": {
+    "description": "Transmission fluid temperature sensor A reading is out of expected range.",
+    "possible_causes": [
+      "Skewed temp sensor",
+      "Wiring issue",
+      "Actual overheating event",
+      "Internal harness problem"
+    ],
+    "quick_checks": [
+      "Compare TFT to actual transmission temperature if possible",
+      "Inspect fluid condition and level",
+      "Check for overheat or cooling-system companion issues"
+    ],
+    "title": "Transmission Fluid Temperature Sensor A Circuit Range/Performance"
   }
 }
