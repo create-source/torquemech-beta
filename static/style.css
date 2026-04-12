@@ -813,15 +813,30 @@ input[type="radio"]{
 .rel-chip,
 .tm-repair-guide-item,
 .tm-search-result{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: var(--tm-surface);
-  border: 1px solid var(--tm-border);
-  box-shadow: var(--tm-shadow-sm);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+
+  padding:16px 18px;
+
+  border-radius:14px;
+  background:var(--tm-surface);
+  border:1px solid var(--tm-border);
+
+  box-shadow:var(--tm-shadow-sm);
+}
+
+.tm-repair-guide-item strong,
+.tm-search-result__title{
+  font-weight:700;
+  color:var(--tm-text);
+}
+
+.tm-repair-guide-item p,
+.tm-search-result__summary{
+  margin-top:4px;
+  font-size:.95rem;
 }
 
 .rel-code{
