@@ -1951,11 +1951,106 @@ def build_diagnostic_summary(code: str):
 
     return summaries.get(code)
 
+def build_obd_index_groups(query: str = "") -> Tuple[List[Dict[str, Any]], int]:
+    if not OBD_SEED_JSON_PATH.exists():
+        return [], 0
+
+    try:
+        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
+        if not isinstance(data, dict):
+            return [], 0
+    except Exception:
+        return [], 0
+
+    group_defs = [
+        ("p00_p01", "P00xx / P01xx Air, Fuel, Sensors"),
+        ("p02", "P02xx Fuel / Injector"),
+        ("p03", "P03xx Ignition / Misfire"),
+        ("p04", "P04xx Emissions / EVAP / Catalyst"),
+        ("p05", "P05xx Idle / Speed / Electrical"),
+        ("p06", "P06xx Computer / Output / Communication"),
+        ("p07", "P07xx Transmission"),
+        ("p1", "P1xxx Manufacturer / Advanced Powertrain"),
+        ("c", "Cxxxx Chassis / ABS"),
+        ("u", "Uxxxx Network / Communication"),
+        ("other", "Other Codes"),
+    ]
+
+    def pick_group(code: str) -> str:
+        if code.startswith(("P00", "P01")):
+            return "p00_p01"
+        if code.startswith("P02"):
+            return "p02"
+        if code.startswith("P03"):
+            return "p03"
+        if code.startswith("P04"):
+            return "p04"
+        if code.startswith("P05"):
+            return "p05"
+        if code.startswith("P06"):
+            return "p06"
+        if code.startswith("P07"):
+            return "p07"
+        if code.startswith("P1"):
+            return "p1"
+        if code.startswith("C"):
+            return "c"
+        if code.startswith("U"):
+            return "u"
+        return "other"
+
+    groups_map = {
+        group_id: {"id": group_id, "title": title, "items": []}
+        for group_id, title in group_defs
+    }
+
+    query_norm = str(query or "").strip().lower()
+    total_codes = 0
+
+    for raw_code, item in data.items():
+        code = "".join(ch for ch in str(raw_code or "").upper() if ch.isalnum())[:7]
+        if len(code) < 4:
+            continue
+
+        title = str((item or {}).get("title") or (item or {}).get("description") or "").strip()
+        if not title:
+            continue
+
+        description = str((item or {}).get("description") or "").strip()
+        searchable = f"{code} {title} {description}".lower()
+        if query_norm and query_norm not in searchable:
+            continue
+
+        groups_map[pick_group(code)]["items"].append(
+            {
+                "code": code,
+                "title": title,
+                "href": f"/obd/{code.lower()}",
+            }
+        )
+        total_codes += 1
+
+    visible_groups = []
+    for group_id, title in group_defs:
+        group = groups_map[group_id]
+        if not group["items"]:
+            continue
+        group["items"].sort(key=lambda item: item["code"])
+        visible_groups.append(group)
+
+    return visible_groups, total_codes
+
 @app.get("/obd-codes", response_class=HTMLResponse)
-async def obd_codes_index(request: Request):
+async def obd_codes_index(request: Request, q: str = ""):
+    obd_code_groups, total_codes = build_obd_index_groups(q)
     return templates.TemplateResponse(
         "obd_codes_index.html",
-        {"request": request},
+        {
+            "request": request,
+            "obd_code_groups": obd_code_groups,
+            "total_codes": total_codes,
+            "query": str(q or "").strip(),
+        },
     )
 
 
@@ -2361,6 +2456,7 @@ def sitemap():
         "/diagnostics",
         "/symptoms",
         "/obd",
+        "/obd-codes",
         "/repair-guides",
         "/repair-costs",
         "/about",

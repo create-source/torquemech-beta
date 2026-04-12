@@ -1,133 +1,137 @@
 {% extends "layout.html" %}
 
-{% block title %}OBD Codes | TorqueMech{% endblock %}
+{% block title %}OBD Code Index | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Browse TorqueMech OBD trouble codes and open full diagnostic code guides with code meaning, likely causes, quick checks, and repair paths." />
+  <link rel="canonical" href="{{ request.url }}" />
+  <style>
+    .obd-index-groups {
+      display: grid;
+      gap: 18px;
+    }
+
+    .obd-index-card {
+      background: linear-gradient(180deg, #fdfefe 0%, #f4f7fa 100%);
+      border: 1px solid var(--tm-border);
+      border-radius: var(--tm-radius);
+      padding: 20px;
+      box-shadow: var(--tm-shadow-sm);
+    }
+
+    html.dark .obd-index-card,
+    body.dark .obd-index-card,
+    [data-theme="dark"] .obd-index-card {
+      background: linear-gradient(180deg, #122338 0%, #0d1b2d 100%);
+    }
+
+    .obd-index-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .obd-index-count {
+      color: var(--tm-text-muted);
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .obd-index-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .obd-index-item {
+      display: block;
+      padding: 14px 16px;
+      border: 1px solid var(--tm-border);
+      border-radius: 16px;
+      background: var(--tm-surface);
+      box-shadow: var(--tm-shadow-sm);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .obd-index-item__code {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--tm-text);
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .obd-index-item__title {
+      color: var(--tm-text-muted);
+      line-height: 1.5;
+    }
+
+    @media (min-width: 860px) {
+      .obd-index-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+{% endblock %}
 
 {% block content %}
-<section class="tm-container">
-
-  <div class="tm-card" style="margin-bottom:16px;">
-    <div class="eyebrow">TorqueMech Diagnostics</div>
-    <h1>OBD Codes</h1>
-    <p class="tm-muted" style="margin-bottom:0;">
-      Search common diagnostic trouble codes and move directly into likely causes, checks, and repair estimates.
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Diagnostics</div>
+    <h1 class="tm-page-title">Browse OBD Trouble Codes</h1>
+    <p class="tm-muted">
+      Use this page to browse diagnostic trouble codes and open full TorqueMech code guides. Each code page connects into meaning, likely causes, quick checks, and repair direction.
     </p>
-  </div>
-
-  <div class="tm-card" style="margin-bottom:16px;">
-    <label for="obdCodeSearch" class="eyebrow">Find a Code</label>
-    <input
-      id="obdCodeSearch"
-      type="text"
-      class="tm-search-input"
-      placeholder="Search P0303, P0420, P0171..."
-      autocomplete="off"
-    >
-    <p class="tm-muted" id="obdCodeSearchCount" style="margin-top:10px; margin-bottom:0;">
-      Showing common OBD codes
-    </p>
-  </div>
-
-  <div class="tm-card" style="margin-bottom:16px;">
-    <h2 style="margin-bottom:12px;">Popular OBD Codes</h2>
-
-    <div id="obdCodeList" style="display:grid; gap:10px;">
-      <a class="obd-code-row" href="/obd/p0300" data-search="p0300 random multiple cylinder misfire">
-        <div>
-          <strong>P0300</strong>
-          <div class="tm-muted">Random / multiple cylinder misfire detected</div>
-        </div>
-      </a>
-
-      <a class="obd-code-row" href="/obd/p0301" data-search="p0301 cylinder 1 misfire">
-        <div>
-          <strong>P0301</strong>
-          <div class="tm-muted">Cylinder 1 misfire detected</div>
-        </div>
-      </a>
-
-      <a class="obd-code-row" href="/obd/p0302" data-search="p0302 cylinder 2 misfire">
-        <div>
-          <strong>P0302</strong>
-          <div class="tm-muted">Cylinder 2 misfire detected</div>
-        </div>
-      </a>
-
-      <a class="obd-code-row" href="/obd/p0303" data-search="p0303 cylinder 3 misfire">
-        <div>
-          <strong>P0303</strong>
-          <div class="tm-muted">Cylinder 3 misfire detected</div>
-        </div>
-      </a>
-
-      <a class="obd-code-row" href="/obd/p0171" data-search="p0171 system too lean bank 1">
-        <div>
-          <strong>P0171</strong>
-          <div class="tm-muted">System too lean (Bank 1)</div>
-        </div>
-      </a>
-
-      <a class="obd-code-row" href="/obd/p0420" data-search="p0420 catalyst system efficiency below threshold">
-        <div>
-          <strong>P0420</strong>
-          <div class="tm-muted">Catalyst system efficiency below threshold</div>
-        </div>
-      </a>
+    <div class="tm-actions" style="margin-top:14px;">
+      <a class="tm-btn tm-btn-primary" href="/obd">Open OBD Lookup</a>
+      <a class="tm-btn tm-btn-secondary" href="/diagnostics">Browse Diagnostics</a>
+      {% if query %}
+      <a class="tm-btn tm-btn-secondary" href="/obd-codes">Browse All Codes</a>
+      {% endif %}
     </div>
+    <p class="tm-muted" style="margin:14px 0 0;">
+      {% if query %}
+      Showing {{ total_codes }} matching code{% if total_codes != 1 %}s{% endif %} for "{{ query }}".
+      {% else %}
+      Showing {{ total_codes }} code{% if total_codes != 1 %}s{% endif %} from the current TorqueMech OBD dataset.
+      {% endif %}
+    </p>
   </div>
-
 </section>
 
-<style>
-  .obd-code-row{
-    display:block;
-    padding:12px 14px;
-    border:1px solid rgba(15,23,42,.10);
-    border-radius:14px;
-    text-decoration:none;
-    color:inherit;
-    background:rgba(255,255,255,.55);
-  }
-</style>
+<section class="tm-section">
+  <div class="obd-index-groups">
+    {% for group in obd_code_groups %}
+    <article class="obd-index-card">
+      <div class="obd-index-head">
+        <h2 style="margin:0;">{{ group["title"] }}</h2>
+        <div class="obd-index-count">{{ group["items"]|length }} code{% if group["items"]|length != 1 %}s{% endif %}</div>
+      </div>
 
-<script>
-(function () {
+      <div class="obd-index-list">
+        {% for item in group["items"] %}
+        <a class="obd-index-item" href="{{ item.href }}">
+          <span class="obd-index-item__code">{{ item.code }}</span>
+          <span class="obd-index-item__title">{{ item.title }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </article>
+    {% endfor %}
 
-  const input = document.getElementById("obdCodeSearch");
-  const rows = document.querySelectorAll("#obdCodeList .obd-code-row");
-  const count = document.getElementById("obdCodeSearchCount");
-
-  if (!input || !rows.length) return;
-
-  function runFilter() {
-    const q = input.value.toLowerCase().trim();
-    let visible = 0;
-
-    rows.forEach((row) => {
-      const text = row.dataset.search || "";
-      const match = !q || text.includes(q);
-
-      row.style.display = match ? "" : "none";
-      if (match) visible++;
-    });
-
-    count.textContent = !q
-      ? "Showing common OBD codes"
-      : `Showing ${visible} matching codes`;
-  }
-
-  /* 🔧 NEW: read query string */
-  const params = new URLSearchParams(window.location.search);
-  const query = params.get("q");
-
-  if (query) {
-    input.value = query;
-  }
-
-  input.addEventListener("input", runFilter);
-
-  runFilter();
-
-})();
-
-</script>
+    {% if not obd_code_groups %}
+    <article class="obd-index-card">
+      <h2 style="margin-top:0;">No Matching Codes</h2>
+      <p class="tm-muted" style="margin-bottom:0;">
+        No OBD codes matched that browse query in the current TorqueMech dataset.
+      </p>
+    </article>
+    {% endif %}
+  </div>
+</section>
 {% endblock %}
