@@ -5,6 +5,76 @@
 {% block page_css %}
   <meta name="description" content="Battery replacement cost depends on battery group size, reserve capacity, testing time, and registration requirements on newer vehicles. Use TorqueMech for a realistic baseline." />
   <link rel="canonical" href="{{ request.url }}" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://torquemech.com/cost/battery-replacement#webpage",
+          "url": "https://torquemech.com/cost/battery-replacement",
+          "name": "Battery Replacement Cost | TorqueMech",
+          "description": "Battery replacement cost depends on battery group size, reserve capacity, testing time, and registration requirements on newer vehicles.",
+          "isPartOf": {
+            "@id": "https://torquemech.com/#organization"
+          },
+          "breadcrumb": {
+            "@id": "https://torquemech.com/cost/battery-replacement#breadcrumb"
+          }
+        },
+        {
+          "@type": "Service",
+          "@id": "https://torquemech.com/cost/battery-replacement#service",
+          "name": "Battery Replacement",
+          "serviceType": "Battery Replacement",
+          "description": "Typical battery replacement pricing guidance for weak batteries, slow-crank complaints, and confirmed no-start battery failures.",
+          "url": "https://torquemech.com/cost/battery-replacement",
+          "provider": {
+            "@type": "Organization",
+            "@id": "https://torquemech.com/#organization",
+            "name": "TorqueMech"
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "United States"
+          },
+          "offers": {
+            "@type": "Offer",
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "priceCurrency": "USD",
+              "minPrice": 180,
+              "maxPrice": 450
+            }
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://torquemech.com/cost/battery-replacement#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://torquemech.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Repair Costs",
+              "item": "https://torquemech.com/repair-costs"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Battery Replacement Cost",
+              "item": "https://torquemech.com/cost/battery-replacement"
+            }
+          ]
+        }
+      ]
+    }
+  </script>
 {% endblock %}
 
 {% block content %}
