@@ -2953,68 +2953,120 @@ def knowledge_hub(request: Request):
 
 from fastapi.responses import Response
 
+SITEMAP_STATIC_PATHS = [
+    "/",
+    "/estimator",
+    "/diagnostics",
+    "/symptoms",
+    "/obd",
+    "/obd-codes",
+    "/repair-guides",
+    "/repair-costs",
+    "/about",
+    "/privacy",
+    "/terms",
+    "/disclaimer",
+]
+
+SITEMAP_CURATED_OBD_PATHS = [
+    "/obd/P0300",
+    "/obd/P0301",
+    "/obd/P0302",
+    "/obd/P0303",
+    "/obd/P0304",
+    "/obd/P0171",
+    "/obd/P0174",
+    "/obd/P0420",
+    "/obd/P0442",
+    "/obd/P0455",
+    "/obd/P0101",
+    "/obd/P0113",
+    "/obd/P0128",
+    "/obd/P0401",
+    "/obd/P0430",
+    "/obd/P0507",
+    "/obd/P0700",
+    "/obd/P0741",
+    "/obd/P0456",
+]
+
+def latest_lastmod_for_files(files: List[Path]) -> Optional[str]:
+    timestamps: List[float] = []
+
+    for file_path in files:
+        try:
+            if file_path.exists():
+                timestamps.append(file_path.stat().st_mtime)
+        except OSError:
+            continue
+
+    if not timestamps:
+        return None
+
+    return datetime.fromtimestamp(max(timestamps)).date().isoformat()
+
+def build_sitemap_lastmods() -> Dict[str, str]:
+    lastmods: Dict[str, str] = {}
+    shared_cost_sources = [BASE_DIR / "main.py"]
+    shared_obd_sources = [
+        BASE_DIR / "main.py",
+        BASE_DIR / "data" / "obd_codes.json",
+        BASE_DIR / "repair_paths.py",
+        TEMPLATES_DIR / "obd_code_detail.html",
+    ]
+
+    lastmod_sources: Dict[str, List[Path]] = {
+        "/": [BASE_DIR / "main.py", TEMPLATES_DIR / "home.html"],
+        "/repair-costs": [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_costs.html"],
+        "/obd": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd.html", BASE_DIR / "data" / "obd_codes.json"],
+        "/obd-codes": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_codes_index.html", BASE_DIR / "data" / "obd_codes.json"],
+    }
+
+    for guide in build_repair_cost_guide_cards():
+        href = str(guide.get("href") or "").strip()
+        if not href.startswith("/cost/"):
+            continue
+        slug = href.removeprefix("/cost/")
+        template_name = f"cost_{slug.replace('-', '_')}.html"
+        lastmod_sources[href] = [*shared_cost_sources, TEMPLATES_DIR / template_name]
+
+    for path in SITEMAP_CURATED_OBD_PATHS:
+        lastmod_sources[path] = list(shared_obd_sources)
+
+    for path, source_files in lastmod_sources.items():
+        lastmod = latest_lastmod_for_files(source_files)
+        if lastmod:
+            lastmods[path] = lastmod
+
+    return lastmods
+
 @app.get("/sitemap.xml", response_class=Response)
 def sitemap():
     base_url = "https://torquemech.com"
     paths = [
-        "/",
-        "/estimator",
-        "/diagnostics",
-        "/symptoms",
-        "/obd",
-        "/obd-codes",
-        "/repair-guides",
-        "/repair-costs",
-        "/about",
-        "/privacy",
-        "/terms",
-        "/disclaimer",
-        "/cost/brake-pad-replacement",
-        "/cost/alternator-replacement",
-        "/cost/radiator-replacement",
-        "/cost/serpentine-belt-replacement",
-        "/cost/brake-caliper-replacement",
-        "/cost/ac-compressor-replacement",
-        "/cost/spark-plug-replacement",
-        "/cost/ignition-coil-replacement",
-        "/cost/brake-rotor-replacement",
-        "/cost/starter-replacement",
-        "/cost/water-pump-replacement",
-        "/cost/thermostat-replacement",
-        "/cost/control-arm-replacement",
-        "/cost/wheel-bearing-replacement",
-        "/cost/sway-bar-link-replacement",
-        "/cost/oxygen-sensor-replacement",
-        "/cost/mass-air-flow-sensor-replacement",
-        "/cost/fuel-pump-replacement",
-        "/cost/battery-replacement",
-        "/cost/catalytic-converter-replacement",
-        "/obd/P0300",
-        "/obd/P0301",
-        "/obd/P0302",
-        "/obd/P0303",
-        "/obd/P0304",
-        "/obd/P0171",
-        "/obd/P0174",
-        "/obd/P0420",
-        "/obd/P0442",
-        "/obd/P0455",
-        "/obd/P0101",
-        "/obd/P0113",
-        "/obd/P0128",
-        "/obd/P0401",
-        "/obd/P0430",
-        "/obd/P0507",
-        "/obd/P0700",
-        "/obd/P0741",
-        "/obd/P0456",
+        *SITEMAP_STATIC_PATHS,
+        *[item["href"] for item in build_repair_cost_guide_cards() if item.get("href")],
+        *SITEMAP_CURATED_OBD_PATHS,
     ]
+    seen_paths: set[str] = set()
+    unique_paths: List[str] = []
+    for path in paths:
+        if path in seen_paths:
+            continue
+        seen_paths.add(path)
+        unique_paths.append(path)
 
-    urls = "".join(f"<url><loc>{base_url}{path}</loc></url>" for path in paths)
+    lastmods = build_sitemap_lastmods()
+    urls = []
+    for path in unique_paths:
+        parts = [f"<loc>{base_url}{path}</loc>"]
+        if path in lastmods:
+            parts.append(f"<lastmod>{lastmods[path]}</lastmod>")
+        urls.append(f"<url>{''.join(parts)}</url>")
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{urls}
+{''.join(urls)}
 </urlset>
 """
 
