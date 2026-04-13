@@ -1664,8 +1664,8 @@ def build_common_repairs(code: str):
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0304": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
@@ -1686,6 +1686,11 @@ def build_common_repairs(code: str):
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
             {"label": "Intake leak diagnosis", "service_query": "intake leak diagnosis"},
             {"label": "Throttle body cleaning", "service_query": "throttle body cleaning"},
+        ],
+        "P0138": [
+            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
+            {"label": "Fuel system diagnostic", "service_query": "fuel system diagnostic"},
+            {"label": "Exhaust wiring inspection", "service_query": "electrical diagnostic"},
         ],
         "P0113": [
             {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
@@ -1710,8 +1715,8 @@ def build_common_repairs(code: str):
         ],
         "P0430": [
             {"label": "Catalyst efficiency diagnosis", "service_query": "catalyst efficiency diagnosis"},
-            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
             {"label": "Exhaust leak repair", "service_query": "exhaust leak repair"},
+            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
             {"label": "Catalytic converter replacement", "service_query": "catalytic converter replacement"},
         ],
         "P0507": [
@@ -1719,6 +1724,21 @@ def build_common_repairs(code: str):
             {"label": "Throttle body service", "service_query": "throttle body service"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
             {"label": "Throttle body replacement", "service_query": "throttle body replacement"},
+        ],
+        "P0562": [
+            {"label": "Battery replacement", "service_query": "battery replacement"},
+            {"label": "Alternator replacement", "service_query": "alternator replacement"},
+            {"label": "Charging system diagnostic", "service_query": "electrical diagnostic"},
+        ],
+        "P0563": [
+            {"label": "Alternator replacement", "service_query": "alternator replacement"},
+            {"label": "Battery replacement", "service_query": "battery replacement"},
+            {"label": "Charging system diagnostic", "service_query": "electrical diagnostic"},
+        ],
+        "P0351": [
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
+            {"label": "Ignition wiring diagnosis", "service_query": "electrical diagnostic"},
+            {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
         ],
         "P0700": [
             {"label": "Transmission diagnostic", "service_query": "transmission diagnostic"},
@@ -1842,6 +1862,51 @@ def build_cost_guide_links(code: str):
                 "label": "Ignition Coil Replacement Cost",
                 "href": "/cost/ignition-coil-replacement",
                 "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
+            },
+        ],
+        "P0101": [
+            {
+                "label": "Mass Air Flow Sensor Replacement Cost",
+                "href": "/cost/mass-air-flow-sensor-replacement",
+                "description": "A strong next cost check when the airflow signal or contamination points back to the MAF sensor.",
+            },
+        ],
+        "P0138": [
+            {
+                "label": "Oxygen Sensor Replacement Cost",
+                "href": "/cost/oxygen-sensor-replacement",
+                "description": "A strong fit when testing confirms the downstream oxygen sensor is biased high or no longer reporting accurately.",
+            },
+        ],
+        "P0351": [
+            {
+                "label": "Ignition Coil Replacement Cost",
+                "href": "/cost/ignition-coil-replacement",
+                "description": "The strongest cost guide when the coil A circuit fault points to a failed coil after wiring checks.",
+            },
+        ],
+        "P0562": [
+            {
+                "label": "Battery Replacement Cost",
+                "href": "/cost/battery-replacement",
+                "description": "Useful when low system voltage starts with a weak battery that fails load or conductance testing.",
+            },
+            {
+                "label": "Alternator Replacement Cost",
+                "href": "/cost/alternator-replacement",
+                "description": "A strong next cost check when charging voltage stays low because the alternator is not keeping up.",
+            },
+        ],
+        "P0563": [
+            {
+                "label": "Alternator Replacement Cost",
+                "href": "/cost/alternator-replacement",
+                "description": "The strongest cost guide when overcharging points back to an alternator or regulator fault.",
+            },
+            {
+                "label": "Battery Replacement Cost",
+                "href": "/cost/battery-replacement",
+                "description": "Useful when the battery has been damaged by sustained overcharging or fails testing after the charging fault is found.",
             },
         ],
         "P0171": [

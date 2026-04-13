@@ -16,18 +16,18 @@
     "title": "Mass or Volume Air Flow Circuit Malfunction"
   },
   "P0101": {
-    "description": "MAF signal is outside expected range.",
+    "description": "The mass air flow signal is outside the expected range for the current engine load and RPM.",
     "possible_causes": [
-      "Dirty/failed MAF",
-      "Air leak",
-      "Restricted air filter",
-      "Incorrect MAF housing/aftermarket intake"
+      "Dirty or failing mass air flow sensor",
+      "Air leak between the MAF and throttle body",
+      "Incorrect aftermarket intake or wrong MAF housing",
+      "Restricted air filter or intake ducting"
     ],
     "quick_checks": [
-      "Inspect intake tract and clamps",
-      "Clean MAF sensor",
-      "Check air filter and ducting",
-      "Compare MAF readings to MAP/RPM load"
+      "Inspect the intake boot, clamps, and ducting for unmetered air leaks",
+      "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
+      "Check the air filter and intake tract for restriction or poor sealing",
+      "Compare MAF readings to expected load and RPM on the scan tool"
     ],
     "title": "Mass or Volume Air Flow Circuit Range/Performance"
   },
@@ -613,20 +613,20 @@
     "title": "Cylinder 3 Misfire Detected"
   },
   "P0304": {
-    "description": "The ECM detected a misfire on cylinder 4.",
+    "description": "Cylinder 4 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
     "possible_causes": [
-      "Worn spark plug",
-      "Faulty ignition coil or plug wire",
-      "Injector issue",
-      "Compression/valve issue",
-      "Vacuum leak affecting that cylinder"
+      "Worn or fouled spark plug on cylinder 4",
+      "Weak ignition coil, boot, or plug wire for cylinder 4",
+      "Fuel injector issue on cylinder 4",
+      "Vacuum leak affecting the cylinder 4 intake runner",
+      "Low compression or valve sealing problem on cylinder 4"
     ],
     "quick_checks": [
-      "Swap coil to another cylinder and see if misfire follows",
-      "Inspect spark plug condition/gap",
-      "Check injector connector and fuel trim",
-      "Perform compression/leak-down if persistent",
-      "Check for intake/vacuum leak near that runner"
+      "Swap the coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 4 spark plug for wear, gap, oil, or fuel fouling",
+      "Check the injector connector and listen for injector operation",
+      "Look for an intake or vacuum leak near the cylinder 4 runner",
+      "Run compression or leak-down testing if the misfire stays on cylinder 4"
     ],
     "title": "Cylinder 4 Misfire Detected"
   },
@@ -803,18 +803,18 @@
     "title": "Catalyst System Efficiency Below Threshold (Bank 1)"
   },
   "P0430": {
-    "description": "Catalyst monitor indicates converter efficiency is below threshold (bank 2).",
+    "description": "Bank 2 catalyst efficiency is below threshold after the monitor compared upstream and downstream O2 sensor behavior.",
     "possible_causes": [
-      "Exhaust leak upstream of catalyst",
       "Aging catalytic converter",
-      "Faulty upstream or downstream O2 sensor",
-      "Misfire/rich condition damaging catalyst"
+      "Exhaust leak ahead of the converter or O2 sensor",
+      "Lazy or inaccurate downstream oxygen sensor",
+      "Upstream fueling or misfire problem that damaged the catalyst"
     ],
     "quick_checks": [
-      "Fix misfires first (if present)",
-      "Check for exhaust leaks before the converter",
-      "Review O2 sensor switching (scanner)",
-      "Check fuel trims and engine temperature"
+      "Fix active misfire or rich-running codes before condemning the converter",
+      "Check for exhaust leaks ahead of the converter and sensors",
+      "Compare upstream and downstream O2 sensor behavior on the scan tool",
+      "Review fuel trims and confirm the engine reaches normal operating temperature"
     ],
     "title": "Catalyst System Efficiency Below Threshold (Bank 2)"
   },
@@ -949,30 +949,30 @@
     "title": "Idle Control System RPM Higher Than Expected"
   },
   "P0562": {
-    "description": "System voltage is lower than expected.",
+    "description": "System voltage dropped below the expected range, usually because the battery is weak or the charging system is not keeping up.",
     "possible_causes": [
       "Weak battery",
-      "Charging system issue",
-      "Loose/dirty battery terminals"
+      "Low alternator output or charging system fault",
+      "Loose, dirty, or corroded battery terminals or grounds"
     ],
     "quick_checks": [
-      "Check battery voltage and load test",
-      "Check alternator output",
-      "Inspect terminals and grounds"
+      "Check resting battery voltage and perform a battery load or conductance test",
+      "Check charging voltage with the engine running",
+      "Inspect battery terminals, main grounds, and charging-cable connections"
     ],
     "title": "System Voltage Low"
   },
   "P0563": {
-    "description": "System voltage is higher than expected.",
+    "description": "System voltage is higher than expected, which usually points to an overcharging condition in the charging system.",
     "possible_causes": [
-      "Alternator overcharging",
-      "Voltage regulator fault",
-      "Battery connection issues"
+      "Alternator or regulator overcharging",
+      "Fault in the alternator control circuit",
+      "Battery connection or sensing issue causing incorrect regulation"
     ],
     "quick_checks": [
-      "Check charging voltage with meter",
-      "Inspect battery/ground connections",
-      "Test alternator/regulator"
+      "Measure charging voltage at idle and with electrical load applied",
+      "Inspect regulator and alternator control wiring for faults",
+      "Inspect battery terminals and sensing connections for poor contact"
     ],
     "title": "System Voltage High"
   },
@@ -1468,16 +1468,16 @@
     "title": "O2 Sensor Circuit Low Voltage (Bank 1 Sensor 2)"
   },
   "P0138": {
-    "description": "Downstream O2 sensor signal voltage high (B1S2).",
+    "description": "The downstream oxygen sensor on bank 1 is stuck high or reading richer than expected for too long.",
     "possible_causes": [
-      "O2 sensor failure",
-      "Wiring short",
-      "Rich condition"
+      "Failing downstream oxygen sensor",
+      "Engine running rich",
+      "Short to voltage or wiring problem in the sensor circuit"
     ],
     "quick_checks": [
-      "Check for rich running",
-      "Inspect wiring",
-      "Verify sensor output"
+      "Check for signs of rich running or fuel-control faults first",
+      "Inspect the sensor wiring near the exhaust for damage or shorting",
+      "Verify downstream sensor voltage behavior on the scan tool"
     ],
     "title": "O2 Sensor Circuit High Voltage (Bank 1 Sensor 2)"
   },
@@ -3473,17 +3473,17 @@
     "title": "Camshaft Position Sensor A Circuit High Input (Bank 1 or Single Sensor)"
   },
   "P0351": {
-    "description": "Ignition coil A primary or secondary circuit fault detected.",
+    "description": "The ECM detected a primary or secondary circuit fault for ignition coil A.",
     "possible_causes": [
       "Failed ignition coil",
       "Coil wiring issue",
-      "Poor connector fit",
+      "Poor connector fit or terminal tension problem",
       "PCM driver issue (rare)"
     ],
     "quick_checks": [
-      "Swap the coil if the design allows",
-      "Inspect the coil connector and boot",
-      "Check for cylinder-specific misfire companions"
+      "Swap the coil if the design allows and see whether the fault follows",
+      "Inspect the coil connector, pins, and boot for heat or carbon tracking",
+      "Check for companion misfire codes and verify power and ground at the coil"
     ],
     "title": "Ignition Coil A Primary/Secondary Circuit"
   },
