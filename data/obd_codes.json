@@ -90,15 +90,16 @@
     "title": "Intake Air Temperature Circuit Low Input"
   },
   "P0113": {
-    "description": "IAT signal indicates very hot temperature (high voltage/open).",
+    "description": "The intake air temperature signal is reading colder than expected because the circuit is open or the sensor signal is stuck high.",
     "possible_causes": [
-      "Open circuit/unplugged IAT",
-      "IAT sensor failed"
+      "Unplugged intake air temperature sensor",
+      "Open circuit or broken wiring in the IAT signal path",
+      "Failed intake air temperature sensor"
     ],
     "quick_checks": [
-      "Check connector seated",
-      "Inspect for broken wires",
-      "Check sensor resistance"
+      "Make sure the IAT connector is fully seated",
+      "Inspect the harness for broken, stretched, or corroded wires",
+      "Compare IAT reading to ambient temperature and check sensor resistance"
     ],
     "title": "Intake Air Temperature Circuit High Input"
   },
@@ -130,15 +131,16 @@
     "title": "Engine Coolant Temperature Circuit Low Input"
   },
   "P0118": {
-    "description": "ECT signal indicates very cold (open/high voltage).",
+    "description": "The coolant temperature signal is reading colder than expected because the sensor circuit is open or the signal is stuck high.",
     "possible_causes": [
-      "Open circuit/unplugged sensor",
-      "ECT sensor failed"
+      "Unplugged coolant temperature sensor",
+      "Open circuit or broken wiring in the ECT sensor circuit",
+      "Failed engine coolant temperature sensor"
     ],
     "quick_checks": [
-      "Check connector seated",
-      "Inspect wiring for breaks",
-      "Check sensor resistance"
+      "Make sure the coolant temperature sensor connector is fully seated",
+      "Inspect the wiring for breaks, corrosion, or coolant intrusion",
+      "Compare ECT reading to ambient temperature and check sensor resistance"
     ],
     "title": "Engine Coolant Temperature Circuit High Input"
   },
@@ -311,18 +313,18 @@
     "title": "O2 Sensor Circuit No Activity Detected (Bank 1 Sensor 2)"
   },
   "P0141": {
-    "description": "An oxygen sensor circuit issue was detected.",
+    "description": "The heater circuit for the downstream oxygen sensor on bank 1 is not working as expected.",
     "possible_causes": [
-      "O2 sensor aging/failure",
-      "Wiring/connectors damage",
-      "Exhaust leak upstream",
-      "Engine running rich/lean affecting readings"
+      "Failed downstream oxygen sensor heater",
+      "Damaged wiring or connector at bank 1 sensor 2",
+      "Blown fuse or heater power supply fault",
+      "High resistance in the heater circuit"
     ],
     "quick_checks": [
-      "Check for exhaust leaks near manifold",
-      "Inspect O2 sensor wiring away from hot exhaust",
-      "Verify heater fuse/relay (if heater code)",
-      "Check fuel trims/misfires first"
+      "Inspect the downstream sensor wiring away from the hot exhaust",
+      "Verify heater circuit power, ground, and related fuse protection",
+      "Check connector condition and terminal tension at bank 1 sensor 2",
+      "Confirm the heater circuit fault with scan data or meter checks"
     ],
     "title": "O2 Sensor Heater Circuit Malfunction (Bank 1 Sensor 2)"
   },
@@ -849,44 +851,44 @@
     "title": "Evaporative Emission Control System Incorrect Purge Flow"
   },
   "P0442": {
-    "description": "Small EVAP leak detected.",
+    "description": "The EVAP system detected a small leak, often from the gas cap seal or a minor seep at a hose or valve.",
     "possible_causes": [
-      "Loose gas cap",
-      "Small hose crack",
-      "Canister vent valve leakage"
+      "Loose or weak-sealing gas cap",
+      "Small crack or loose connection in an EVAP hose",
+      "Canister vent or purge valve not sealing completely"
     ],
     "quick_checks": [
-      "Inspect/replace gas cap seal",
-      "Smoke test for small leaks",
-      "Inspect EVAP lines near tank/canister"
+      "Inspect the gas cap seal and make sure the cap tightens correctly",
+      "Inspect EVAP lines near the canister and fuel tank for small damage",
+      "Run a smoke test if the leak is not obvious during visual inspection"
     ],
     "title": "Evaporative Emission Control System Leak Detected (Small Leak)"
   },
   "P0455": {
-    "description": "Large EVAP leak detected.",
+    "description": "The EVAP system detected a large leak, usually because a hose is disconnected, the gas cap is missing, or a valve is stuck open.",
     "possible_causes": [
-      "Gas cap off",
-      "Disconnected/ruptured EVAP hose",
-      "Failed vent valve"
+      "Gas cap loose, missing, or not sealing",
+      "Disconnected or split EVAP hose",
+      "Vent valve or purge valve stuck open"
     ],
     "quick_checks": [
-      "Check gas cap is present/tight",
-      "Inspect EVAP hoses for disconnection",
-      "Smoke test / check vent valve"
+      "Check that the gas cap is installed correctly and seals tightly",
+      "Inspect EVAP hoses and canister connections for obvious disconnection",
+      "Smoke test the EVAP system and verify vent-valve sealing if needed"
     ],
     "title": "Evaporative Emission Control System Leak Detected (Gross Leak)"
   },
   "P0456": {
-    "description": "Very small EVAP leak detected.",
+    "description": "The EVAP system detected a very small leak, which usually means a seal, cap, or hose is seeping rather than fully open.",
     "possible_causes": [
-      "Gas cap seal issue",
-      "Small leak in EVAP hoses",
-      "Vent valve seepage"
+      "Gas cap seal starting to leak",
+      "Very small seep in an EVAP hose or fitting",
+      "Vent valve or purge valve seepage"
     ],
     "quick_checks": [
-      "Inspect gas cap seal",
-      "Smoke test (low pressure)",
-      "Inspect canister and lines"
+      "Inspect the gas cap seal for hardening, cracking, or poor fit",
+      "Smoke test the EVAP system for a tiny leak source",
+      "Inspect the canister, vent valve, and lines for subtle seepage"
     ],
     "title": "Evaporative Emission Control System Leak Detected (Very Small Leak)"
   },
@@ -1511,16 +1513,16 @@
     "title": "O2 Sensor Circuit Low Voltage (Bank 2 Sensor 2)"
   },
   "P0158": {
-    "description": "Downstream O2 sensor signal voltage high (B2S2).",
+    "description": "The downstream oxygen sensor on bank 2 is stuck high or reading richer than expected for too long.",
     "possible_causes": [
-      "O2 sensor failure",
-      "Wiring short",
-      "Rich condition"
+      "Failing downstream oxygen sensor",
+      "Engine running rich",
+      "Short to voltage or wiring problem in the sensor circuit"
     ],
     "quick_checks": [
-      "Check for rich running",
-      "Inspect wiring",
-      "Verify sensor output"
+      "Check for signs of rich running or fuel-control faults first",
+      "Inspect the sensor wiring near the exhaust for damage or shorting",
+      "Verify downstream sensor voltage behavior on the scan tool"
     ],
     "title": "O2 Sensor Circuit High Voltage (Bank 2 Sensor 2)"
   },

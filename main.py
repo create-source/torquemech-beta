@@ -1693,9 +1693,24 @@ def build_common_repairs(code: str):
             {"label": "Exhaust wiring inspection", "service_query": "electrical diagnostic"},
         ],
         "P0113": [
-            {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
-            {"label": "Intake leak diagnosis", "service_query": "intake leak diagnosis"},
-            {"label": "Throttle body service", "service_query": "throttle body service"},
+            {"label": "Intake air temperature sensor replacement", "service_query": "intake air temperature sensor replacement"},
+            {"label": "Intake air temperature circuit diagnosis", "service_query": "electrical diagnostic"},
+            {"label": "Mass air flow and intake sensor assembly inspection", "service_query": "mass air flow sensor"},
+        ],
+        "P0118": [
+            {"label": "Coolant temperature sensor replacement", "service_query": "coolant temperature sensor replacement"},
+            {"label": "Coolant temperature circuit diagnosis", "service_query": "electrical diagnostic"},
+            {"label": "Cooling system inspection", "service_query": "cooling system diagnostic"},
+        ],
+        "P0141": [
+            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
+            {"label": "Oxygen sensor heater circuit diagnosis", "service_query": "electrical diagnostic"},
+            {"label": "Fuse and heater power inspection", "service_query": "electrical diagnostic"},
+        ],
+        "P0158": [
+            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
+            {"label": "Fuel system diagnostic", "service_query": "fuel system diagnostic"},
+            {"label": "Oxygen sensor circuit inspection", "service_query": "electrical diagnostic"},
         ],
         "P0128": [
             {"label": "Thermostat replacement", "service_query": "thermostat replacement"},
@@ -1753,21 +1768,21 @@ def build_common_repairs(code: str):
             {"label": "Solenoid pack replacement", "service_query": "solenoid pack replacement"},
         ],
         "P0442": [
-            {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
-            {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
             {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
+            {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
+            {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
             {"label": "EVAP purge valve replacement", "service_query": "evap purge valve replacement"},
         ],
         "P0455": [
+            {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
             {"label": "EVAP system diagnosis", "service_query": "evap system diagnosis"},
             {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
-            {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
             {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
         ],
         "P0456": [
-            {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
-            {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
             {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
+            {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
+            {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
             {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
         ],
         "P2195": [
