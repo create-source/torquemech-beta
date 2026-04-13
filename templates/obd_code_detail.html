@@ -6,6 +6,27 @@
   <meta name="description" content="{{ code }} means {{ description or title }}. Review common causes, quick checks, related codes, likely repairs, and estimator-ready next steps on TorqueMech." />
   <link rel="canonical" href="{{ request.url }}" />
   <style>
+    .obd-cause-list {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.7;
+    }
+
+    .obd-cause-list li + li {
+      margin-top: 4px;
+    }
+
+    .obd-cause-link {
+      color: var(--tm-text);
+      text-decoration: underline;
+      text-decoration-color: rgba(15, 23, 42, 0.22);
+      text-underline-offset: 2px;
+    }
+
+    .obd-cause-link:hover {
+      text-decoration-color: currentColor;
+    }
+
     .obd-repair-rows {
       display: grid;
       gap: 0;
@@ -170,6 +191,50 @@
   </div>
 </section>
 
+{% if possible_causes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Causes</h2>
+    <ul class="obd-cause-list">
+      {% for cause in possible_causes %}
+      {% set cause_lower = cause | lower %}
+      {% set cause_href = "" %}
+      {% if "oxygen sensor" in cause_lower or "air-fuel sensor" in cause_lower %}
+        {% set cause_href = "/cost/oxygen-sensor-replacement" %}
+      {% elif "spark plug" in cause_lower %}
+        {% set cause_href = "/cost/spark-plug-replacement" %}
+      {% elif "ignition coil" in cause_lower or "coil pack" in cause_lower or "coil-on-plug" in cause_lower %}
+        {% set cause_href = "/cost/ignition-coil-replacement" %}
+      {% elif "mass air flow" in cause_lower or "maf sensor" in cause_lower or "maf " in cause_lower %}
+        {% set cause_href = "/cost/mass-air-flow-sensor-replacement" %}
+      {% elif "thermostat" in cause_lower %}
+        {% set cause_href = "/cost/thermostat-replacement" %}
+      {% elif "battery" in cause_lower %}
+        {% set cause_href = "/cost/battery-replacement" %}
+      {% elif "alternator" in cause_lower %}
+        {% set cause_href = "/cost/alternator-replacement" %}
+      {% elif "catalytic converter" in cause_lower or "clogged converter" in cause_lower or "restricted converter" in cause_lower %}
+        {% set cause_href = "/cost/catalytic-converter-replacement" %}
+      {% elif "radiator" in cause_lower %}
+        {% set cause_href = "/cost/radiator-replacement" %}
+      {% elif "water pump" in cause_lower %}
+        {% set cause_href = "/cost/water-pump-replacement" %}
+      {% elif "fuel pump" in cause_lower %}
+        {% set cause_href = "/cost/fuel-pump-replacement" %}
+      {% endif %}
+      <li>
+        {% if cause_href %}
+        <a class="obd-cause-link" href="{{ cause_href }}">{{ cause }}</a>
+        {% else %}
+        {{ cause }}
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
 {% if repair_path and repair_path.symptoms %}
 <section class="tm-section">
   <div class="tm-card">
@@ -179,19 +244,6 @@
       <li>{{ symptom }}</li>
       {% endfor %}
     </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if possible_causes %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Common Causes</h2>
-    <div class="tm-list-grid">
-      {% for cause in possible_causes %}
-      <div class="tm-list-card">{{ cause }}</div>
-      {% endfor %}
-    </div>
   </div>
 </section>
 {% endif %}
