@@ -455,20 +455,20 @@
     "title": "O2 Sensor Heater Circuit Malfunction (Bank 2 Sensor 2)"
   },
   "P0171": {
-    "description": "The engine is running lean on bank 1.",
+    "description": "Bank 1 is running lean because the engine is seeing too much air, too little fuel, or an airflow reading that is off.",
     "possible_causes": [
-      "Vacuum leak",
-      "Dirty/failed MAF sensor",
-      "Low fuel pressure",
-      "Exhaust leak before O2 sensor",
-      "Injector restriction"
+      "Vacuum leak after the MAF sensor",
+      "Dirty or failing mass air flow sensor",
+      "Low fuel pressure or weak fuel delivery",
+      "Restricted or weak injector on bank 1",
+      "Exhaust leak ahead of the upstream O2 sensor"
     ],
     "quick_checks": [
-      "Check fuel trims (STFT/LTFT)",
-      "Inspect intake/vacuum hoses",
-      "Clean/inspect MAF and air filter",
-      "Check fuel pressure",
-      "Check for exhaust leaks upstream"
+      "Check short- and long-term fuel trims at idle and cruise",
+      "Inspect intake boots, PCV hoses, and vacuum lines for leaks",
+      "Inspect and clean the MAF sensor and verify the air filter is sealed",
+      "Check fuel pressure or fuel delivery volume if available",
+      "Look for exhaust leaks ahead of the front O2 sensor"
     ],
     "title": "System Too Lean (Bank 1)"
   },
@@ -541,74 +541,74 @@
     "title": "Injector Circuit Malfunction"
   },
   "P0300": {
-    "description": "The ECM detected misfires occurring on multiple cylinders.",
+    "description": "The ECM is seeing misfires on multiple cylinders instead of one specific cylinder.",
     "possible_causes": [
-      "Worn spark plugs or ignition coils",
-      "Vacuum leak or intake leak",
-      "Low fuel pressure",
-      "Dirty MAF sensor",
-      "Injector issue"
+      "Worn spark plugs",
+      "Weak ignition coils or coil boots",
+      "Vacuum leak or intake air leak",
+      "Low fuel pressure or weak fuel delivery",
+      "Dirty or skewed mass air flow sensor"
     ],
     "quick_checks": [
-      "Check for other codes (P0301\u2013P0308)",
-      "Inspect plugs and coils (swap coil test)",
-      "Look for vacuum leaks (cracked hoses, intake boot)",
-      "Check fuel trims / fuel pressure if available",
-      "Inspect MAF and air filter"
+      "Check whether cylinder-specific misfire codes are stored with P0300",
+      "Inspect spark plugs and coil boots for wear, oil, or carbon tracking",
+      "Check for vacuum leaks at hoses, PCV plumbing, and the intake boot",
+      "Review fuel trims and fuel pressure if that data is available",
+      "Inspect the MAF sensor and air filter housing for contamination or leaks"
     ],
     "title": "Random/Multiple Cylinder Misfire Detected"
   },
   "P0301": {
-    "description": "The ECM detected a misfire on cylinder 1.",
+    "description": "Cylinder 1 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
     "possible_causes": [
-      "Worn spark plug",
-      "Faulty ignition coil or plug wire",
-      "Injector issue",
-      "Compression/valve issue",
-      "Vacuum leak affecting that cylinder"
+      "Worn or fouled spark plug on cylinder 1",
+      "Weak ignition coil, boot, or plug wire for cylinder 1",
+      "Fuel injector issue on cylinder 1",
+      "Vacuum leak affecting the cylinder 1 intake runner",
+      "Low compression or valve sealing problem on cylinder 1"
     ],
     "quick_checks": [
-      "Swap coil to another cylinder and see if misfire follows",
-      "Inspect spark plug condition/gap",
-      "Check injector connector and fuel trim",
-      "Perform compression/leak-down if persistent",
-      "Check for intake/vacuum leak near that runner"
+      "Swap the coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 1 spark plug for wear, gap, oil, or fuel fouling",
+      "Check the injector connector and listen for injector operation",
+      "Look for an intake or vacuum leak near the cylinder 1 runner",
+      "Run compression or leak-down testing if the misfire stays on cylinder 1"
     ],
     "title": "Cylinder 1 Misfire Detected"
   },
   "P0302": {
-    "description": "The ECM detected a misfire on cylinder 2.",
+    "description": "Cylinder 2 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
     "possible_causes": [
-      "Worn spark plug",
-      "Faulty ignition coil or plug wire",
-      "Injector issue",
-      "Compression/valve issue",
-      "Vacuum leak affecting that cylinder"
+      "Worn or fouled spark plug on cylinder 2",
+      "Weak ignition coil, boot, or plug wire for cylinder 2",
+      "Fuel injector issue on cylinder 2",
+      "Vacuum leak affecting the cylinder 2 intake runner",
+      "Low compression or valve sealing problem on cylinder 2"
     ],
     "quick_checks": [
-      "Swap coil to another cylinder and see if misfire follows",
-      "Inspect spark plug condition/gap",
-      "Check injector connector and fuel trim",
-      "Perform compression/leak-down if persistent",
-      "Check for intake/vacuum leak near that runner"
+      "Swap the coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 2 spark plug for wear, gap, oil, or fuel fouling",
+      "Check the injector connector and listen for injector operation",
+      "Look for an intake or vacuum leak near the cylinder 2 runner",
+      "Run compression or leak-down testing if the misfire stays on cylinder 2"
     ],
     "title": "Cylinder 2 Misfire Detected"
   },
   "P0303": {
-    "description": "The ECM detected a misfire on cylinder 3.",
+    "description": "Cylinder 3 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
     "possible_causes": [
-      "Worn spark plug",
-      "Faulty ignition coil or plug wire",
-      "Injector issue",
-      "Compression/valve issue",
-      "Vacuum leak affecting that cylinder"
+      "Worn or fouled spark plug on cylinder 3",
+      "Weak ignition coil, boot, or plug wire for cylinder 3",
+      "Fuel injector issue on cylinder 3",
+      "Vacuum leak affecting the cylinder 3 intake runner",
+      "Low compression or valve sealing problem on cylinder 3"
     ],
     "quick_checks": [
-      "Swap coil to another cylinder and see if misfire follows",
-      "Inspect spark plug condition/gap",
-      "Check injector connector and fuel trim",
-      "Perform compression/leak-down if persistent",
-      "Check for intake/vacuum leak near that runner"
+      "Swap the coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 3 spark plug for wear, gap, oil, or fuel fouling",
+      "Check the injector connector and listen for injector operation",
+      "Look for an intake or vacuum leak near the cylinder 3 runner",
+      "Run compression or leak-down testing if the misfire stays on cylinder 3"
     ],
     "title": "Cylinder 3 Misfire Detected"
   },
@@ -787,18 +787,18 @@
     "title": "Exhaust Gas Recirculation Circuit Malfunction"
   },
   "P0420": {
-    "description": "Catalyst monitor indicates converter efficiency is below threshold.",
+    "description": "Bank 1 catalyst efficiency is below threshold after the monitor compared upstream and downstream O2 sensor behavior.",
     "possible_causes": [
-      "Exhaust leak upstream of catalyst",
       "Aging catalytic converter",
-      "Faulty upstream or downstream O2 sensor",
-      "Misfire/rich condition damaging catalyst"
+      "Exhaust leak ahead of the converter or O2 sensor",
+      "Lazy or inaccurate downstream oxygen sensor",
+      "Upstream fueling or misfire problem that damaged the catalyst"
     ],
     "quick_checks": [
-      "Fix misfires first (if present)",
-      "Check for exhaust leaks before the converter",
-      "Review O2 sensor switching (scanner)",
-      "Check fuel trims and engine temperature"
+      "Fix active misfire or rich-running codes before condemning the converter",
+      "Check for exhaust leaks ahead of the converter and sensors",
+      "Compare upstream and downstream O2 sensor behavior on the scan tool",
+      "Review fuel trims and confirm the engine reaches normal operating temperature"
     ],
     "title": "Catalyst System Efficiency Below Threshold (Bank 1)"
   },
@@ -1425,16 +1425,16 @@
     "title": "Insufficient Coolant Temp for Closed Loop"
   },
   "P0128": {
-    "description": "Engine temperature is below expected operating range.",
+    "description": "The engine is taking too long to reach normal operating temperature, usually because the thermostat is stuck open.",
     "possible_causes": [
       "Thermostat stuck open",
-      "Low coolant/air pocket",
-      "ECT sensor issue"
+      "Low coolant level or trapped air in the cooling system",
+      "Coolant temperature sensor or wiring issue"
     ],
     "quick_checks": [
-      "Compare ECT to actual temp",
-      "Inspect thermostat housing",
-      "Check coolant level"
+      "Compare scan-tool coolant temperature to actual engine warm-up behavior",
+      "Inspect the thermostat housing area for seepage or poor sealing",
+      "Check coolant level and make sure the system is properly full"
     ],
     "title": "Coolant Thermostat Below Regulating Temp"
   },

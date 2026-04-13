@@ -1639,27 +1639,27 @@ def build_common_repairs(code: str):
 
     repair_map = {
         "P0300": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
-            {"label": "Fuel injector cleaning or replacement", "service_query": "fuel injector replacement"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
+            {"label": "Fuel system diagnostic", "service_query": "fuel system diagnostic"},
             {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
         ],
         "P0301": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0302": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
         "P0303": [
-            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
+            {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
             {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
@@ -1694,8 +1694,8 @@ def build_common_repairs(code: str):
         ],
         "P0128": [
             {"label": "Thermostat replacement", "service_query": "thermostat replacement"},
-            {"label": "Thermostat housing replacement", "service_query": "thermostat housing replacement"},
             {"label": "Coolant temperature sensor replacement", "service_query": "coolant temperature sensor replacement"},
+            {"label": "Thermostat housing replacement", "service_query": "thermostat housing replacement"},
         ],
         "P0401": [
             {"label": "EGR diagnosis", "service_query": "egr diagnosis"},
@@ -1704,8 +1704,8 @@ def build_common_repairs(code: str):
         ],
         "P0420": [
             {"label": "Catalyst efficiency diagnosis", "service_query": "catalyst efficiency diagnosis"},
-            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
             {"label": "Exhaust leak repair", "service_query": "exhaust leak repair"},
+            {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
             {"label": "Catalytic converter replacement", "service_query": "catalytic converter replacement"},
         ],
         "P0430": [
@@ -1842,6 +1842,20 @@ def build_cost_guide_links(code: str):
                 "label": "Ignition Coil Replacement Cost",
                 "href": "/cost/ignition-coil-replacement",
                 "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
+            },
+        ],
+        "P0171": [
+            {
+                "label": "Mass Air Flow Sensor Replacement Cost",
+                "href": "/cost/mass-air-flow-sensor-replacement",
+                "description": "A strong next cost check when airflow readings or contamination point to the MAF sensor as the lean-condition trigger.",
+            },
+        ],
+        "P0128": [
+            {
+                "label": "Thermostat Replacement Cost",
+                "href": "/cost/thermostat-replacement",
+                "description": "The strongest cost guide when slow warm-up and temperature data point to a thermostat stuck open.",
             },
         ],
         "P0420": [
