@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% block title %}OBD Code Index | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Browse TorqueMech OBD trouble codes by code range and open full code pages with causes, quick checks, repair direction, and estimate-ready next steps." />
+  <link rel="canonical" href="{{ request.url }}" />
+  <style>
+    .obd-index-groups {
+      display: grid;
+      gap: 18px;
+    }
+
+    .obd-index-card {
+      background: linear-gradient(180deg, #fdfefe 0%, #f4f7fa 100%);
+      border: 1px solid var(--tm-border);
+      border-radius: var(--tm-radius);
+      padding: 20px;
+      box-shadow: var(--tm-shadow-sm);
+    }
+
+    html.dark .obd-index-card,
+    body.dark .obd-index-card,
+    [data-theme="dark"] .obd-index-card {
+      background: linear-gradient(180deg, #122338 0%, #0d1b2d 100%);
+    }
+
+    .obd-index-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .obd-index-count {
+      color: var(--tm-text-muted);
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .obd-index-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .obd-index-item {
+      display: block;
+      padding: 14px 16px;
+      border: 1px solid var(--tm-border);
+      border-radius: 16px;
+      background: var(--tm-surface);
+      box-shadow: var(--tm-shadow-sm);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .obd-index-item__code {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--tm-text);
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .obd-index-item__title {
+      color: var(--tm-text-muted);
+      line-height: 1.5;
+    }
+
+    @media (min-width: 860px) {
+      .obd-index-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Diagnostics</div>
+    <h1 class="tm-page-title">Browse OBD Trouble Codes</h1>
+    <p class="tm-muted">
+      OBD trouble codes are diagnostic fault codes your vehicle stores when the system detects a problem. Use this index to browse code families, then open the full TorqueMech code page for plain-English meaning, common causes, quick checks, likely repairs, and related cost context.
+    </p>
+    <div class="tm-actions" style="margin-top:14px;">
+      <a class="tm-btn tm-btn-primary" href="/diagnostics">Browse Diagnostics</a>
+      <a class="tm-btn tm-btn-secondary" href="/obd-codes">Open Full OBD Index</a>
+    </div>
+    <p class="tm-muted" style="margin:14px 0 0;">
+      Showing {{ total_codes }} code{% if total_codes != 1 %}s{% endif %} from the current TorqueMech OBD dataset.
+    </p>
+  </div>
+</section>
+
+<section class="tm-section">
+  <div class="obd-index-groups">
+    {% for group in obd_code_groups %}
+    <article class="obd-index-card">
+      <div class="obd-index-head">
+        <h2 style="margin:0;">{{ group["title"] }}</h2>
+        <div class="obd-index-count">{{ group["items"]|length }} code{% if group["items"]|length != 1 %}s{% endif %}</div>
+      </div>
+
+      <div class="obd-index-list">
+        {% for item in group["items"] %}
+        <a class="obd-index-item" href="{{ item.href }}">
+          <span class="obd-index-item__code">{{ item.code }}</span>
+          <span class="obd-index-item__title">{{ item.title }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </article>
+    {% endfor %}
+
+    {% if not obd_code_groups %}
+    <article class="obd-index-card">
+      <h2 style="margin-top:0;">No Codes Available</h2>
+      <p class="tm-muted" style="margin-bottom:0;">
+        No OBD codes are available in the current TorqueMech dataset.
+      </p>
+    </article>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

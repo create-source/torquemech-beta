@@ -1450,11 +1450,13 @@ def estimator(request: Request):
 @app.get("/obd", response_class=HTMLResponse)
 def obd(request: Request):
     metric_incr("page_obd_lookup")
+    obd_code_groups, total_codes = build_obd_index_groups()
     return templates.TemplateResponse(
-        "obd.html",
+        "obd_index.html",
         {
             "request": request,
-            "featured_obd_codes": build_featured_obd_codes(),
+            "obd_code_groups": obd_code_groups,
+            "total_codes": total_codes,
         },
     )
 
