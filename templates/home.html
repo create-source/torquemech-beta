@@ -38,6 +38,16 @@
     font-weight: 700;
   }
 
+  .tm-homeObdCode {
+    display: inline-block;
+    margin: 0 0 6px 0;
+    color: var(--tm-text);
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
   @media (min-width: 860px) {
     .tm-homeRepairCosts {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -138,6 +148,57 @@
       <div class="tm-homeRepairCosts__title">Catalytic Converter Replacement</div>
       <p class="tm-homeRepairCosts__desc">Useful when catalyst-efficiency codes or failed emissions testing point to converter work.</p>
       <div class="tm-homeRepairCosts__footer">Open cost guide →</div>
+    </a>
+  </div>
+</section>
+
+<section class="tm-homeSection">
+  <div class="tm-homeSection__head">
+    <h2>Popular OBD Codes</h2>
+    <p>Direct links into high-intent code pages for common drivability, emissions, and charging faults.</p>
+  </div>
+
+  <div class="tm-homeRepairCosts">
+    <a class="tm-homeRepairCosts__card" href="/obd/p0300">
+      <div class="tm-homeObdCode">P0300</div>
+      <div class="tm-homeRepairCosts__title">Random/Multiple Cylinder Misfire</div>
+      <p class="tm-homeRepairCosts__desc">Start here for multi-cylinder misfire causes, repair flow, and next-step cost context.</p>
+      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/obd/p0303">
+      <div class="tm-homeObdCode">P0303</div>
+      <div class="tm-homeRepairCosts__title">Cylinder 3 Misfire</div>
+      <p class="tm-homeRepairCosts__desc">Useful when the misfire is isolated to cylinder 3 and you need a tighter diagnostic path.</p>
+      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/obd/p0171">
+      <div class="tm-homeObdCode">P0171</div>
+      <div class="tm-homeRepairCosts__title">System Too Lean (Bank 1)</div>
+      <p class="tm-homeRepairCosts__desc">A strong entry point for vacuum leaks, airflow faults, and lean-running diagnosis.</p>
+      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/obd/p0128">
+      <div class="tm-homeObdCode">P0128</div>
+      <div class="tm-homeRepairCosts__title">Coolant Thermostat Below Regulating Temp</div>
+      <p class="tm-homeRepairCosts__desc">Helpful for slow warm-up complaints, weak cabin heat, and thermostat-related cooling faults.</p>
+      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/obd/p0420">
+      <div class="tm-homeObdCode">P0420</div>
+      <div class="tm-homeRepairCosts__title">Catalyst Efficiency Below Threshold (Bank 1)</div>
+      <p class="tm-homeRepairCosts__desc">Use this page to separate converter failure from sensor, exhaust leak, or fueling issues.</p>
+      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/obd/p0562">
+      <div class="tm-homeObdCode">P0562</div>
+      <div class="tm-homeRepairCosts__title">System Voltage Low</div>
+      <p class="tm-homeRepairCosts__desc">A practical starting point for weak battery, low charging voltage, and power-supply faults.</p>
+      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
     </a>
   </div>
 </section>
