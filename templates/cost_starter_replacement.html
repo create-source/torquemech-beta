@@ -5,6 +5,76 @@
 {% block page_css %}
   <meta name="description" content="Starter replacement cost depends on component access, engine layout, labor time, and starter quality. Use TorqueMech to understand the baseline before building an estimate." />
   <link rel="canonical" href="{{ request.url }}" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://torquemech.com/cost/starter-replacement#webpage",
+          "url": "https://torquemech.com/cost/starter-replacement",
+          "name": "Starter Replacement Cost | TorqueMech",
+          "description": "Starter replacement cost depends on component access, engine layout, labor time, and starter quality.",
+          "isPartOf": {
+            "@id": "https://torquemech.com/#organization"
+          },
+          "breadcrumb": {
+            "@id": "https://torquemech.com/cost/starter-replacement#breadcrumb"
+          }
+        },
+        {
+          "@type": "Service",
+          "@id": "https://torquemech.com/cost/starter-replacement#service",
+          "name": "Starter Replacement",
+          "serviceType": "Starter Replacement",
+          "description": "Typical starter replacement pricing guidance for no-crank complaints, slow cranking, and confirmed starter failures.",
+          "url": "https://torquemech.com/cost/starter-replacement",
+          "provider": {
+            "@type": "Organization",
+            "@id": "https://torquemech.com/#organization",
+            "name": "TorqueMech"
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "United States"
+          },
+          "offers": {
+            "@type": "Offer",
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "priceCurrency": "USD",
+              "minPrice": 250,
+              "maxPrice": 700
+            }
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://torquemech.com/cost/starter-replacement#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://torquemech.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Repair Costs",
+              "item": "https://torquemech.com/repair-costs"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Starter Replacement Cost",
+              "item": "https://torquemech.com/cost/starter-replacement"
+            }
+          ]
+        }
+      ]
+    }
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -96,32 +166,4 @@
     </article>
   </section>
 </section>
-
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "HowTo",
- "name": "Starter Replacement Cost",
- "description": "Average starter replacement cost including labor time, parts pricing, and common symptoms.",
- "step": [
-   {
-     "@type": "HowToStep",
-     "name": "Diagnose starting system issue"
-   },
-   {
-     "@type": "HowToStep",
-     "name": "Remove the old starter motor"
-   },
-   {
-     "@type": "HowToStep",
-     "name": "Install the replacement starter"
-   },
-   {
-     "@type": "HowToStep",
-     "name": "Test the starting system"
-   }
- ]
-}
-</script>
-
 {% endblock %}
