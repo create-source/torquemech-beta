@@ -1,5 +1,50 @@
 {% extends "layout.html" %}
-{% block page_css %}<link rel="stylesheet" href="/static/home.css?v=3">{% endblock %}
+{% block page_css %}
+<link rel="stylesheet" href="/static/home.css?v=3">
+<style>
+  .tm-homeRepairCosts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .tm-homeRepairCosts__card {
+    display: block;
+    padding: 18px;
+    border: 1px solid var(--tm-border);
+    border-radius: 18px;
+    background: var(--tm-surface);
+    box-shadow: var(--tm-shadow-sm);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .tm-homeRepairCosts__title {
+    margin: 0 0 8px 0;
+    color: var(--tm-text);
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .tm-homeRepairCosts__desc {
+    margin: 0 0 12px 0;
+    color: var(--tm-text-muted);
+    line-height: 1.55;
+  }
+
+  .tm-homeRepairCosts__footer {
+    color: var(--tm-text);
+    font-size: .95rem;
+    font-weight: 700;
+  }
+
+  @media (min-width: 860px) {
+    .tm-homeRepairCosts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <section class="tm-homeHero">
@@ -54,6 +99,45 @@
         <h3>Repair Guides</h3>
         <p>Step-by-step service guidance, labor ranges, and estimate-ready procedures.</p>
       </div>
+    </a>
+  </div>
+</section>
+
+<section class="tm-homeSection">
+  <div class="tm-homeSection__head">
+    <h2>Popular Repair Costs</h2>
+    <p>Quick cost-guide entry points for some of the most common repair questions.</p>
+  </div>
+
+  <div class="tm-homeRepairCosts">
+    <a class="tm-homeRepairCosts__card" href="/cost/ignition-coil-replacement">
+      <div class="tm-homeRepairCosts__title">Ignition Coil Replacement</div>
+      <p class="tm-homeRepairCosts__desc">Useful for misfire complaints, rough idle, and confirmed coil failures.</p>
+      <div class="tm-homeRepairCosts__footer">Open cost guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/cost/oxygen-sensor-replacement">
+      <div class="tm-homeRepairCosts__title">Oxygen Sensor Replacement</div>
+      <p class="tm-homeRepairCosts__desc">Helpful when emissions faults, fuel-trim issues, or sensor response problems show up.</p>
+      <div class="tm-homeRepairCosts__footer">Open cost guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/cost/alternator-replacement">
+      <div class="tm-homeRepairCosts__title">Alternator Replacement</div>
+      <p class="tm-homeRepairCosts__desc">A strong starting point for battery light, low-voltage, and no-charge complaints.</p>
+      <div class="tm-homeRepairCosts__footer">Open cost guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/cost/battery-replacement">
+      <div class="tm-homeRepairCosts__title">Battery Replacement</div>
+      <p class="tm-homeRepairCosts__desc">Quick pricing context for weak batteries, slow cranking, and no-start situations.</p>
+      <div class="tm-homeRepairCosts__footer">Open cost guide →</div>
+    </a>
+
+    <a class="tm-homeRepairCosts__card" href="/cost/catalytic-converter-replacement">
+      <div class="tm-homeRepairCosts__title">Catalytic Converter Replacement</div>
+      <p class="tm-homeRepairCosts__desc">Useful when catalyst-efficiency codes or failed emissions testing point to converter work.</p>
+      <div class="tm-homeRepairCosts__footer">Open cost guide →</div>
     </a>
   </div>
 </section>
