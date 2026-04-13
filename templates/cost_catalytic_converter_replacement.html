@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block title %}Catalytic Converter Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Catalytic converter replacement cost depends on converter location, emissions coverage, labor access, and parts quality. Use TorqueMech to understand the baseline before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Catalytic Converter Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Catalytic converter replacement cost usually depends on exhaust layout, converter location, emissions requirements, and whether upstream drivability faults have already been diagnosed.
+      This page gives you a grounded baseline before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator?service=catalytic_converter_replacement">Estimate Catalytic Converter Replacement</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$1,100 to $3,500+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on whether the vehicle uses a bolt-on unit, manifold-style converter, or higher-cost direct-fit emissions hardware.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.5 to 4.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Labor varies with rust, sensor removal, exhaust access, and whether the converter is integrated into a manifold assembly.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$700 to $2,800+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Converter pricing changes quickly based on emissions certification, precious-metal content, and direct-fit versus universal design.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Check engine light with catalyst-efficiency codes</li>
+        <li>Failed emissions inspection</li>
+        <li>Rattling from a damaged converter substrate</li>
+        <li>Reduced power if the converter is restricted</li>
+        <li>Sulfur or overheated exhaust smell after prolonged running issues</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Federal versus California or CARB-compliant parts</li>
+        <li>Converter location and exhaust disassembly time</li>
+        <li>Need for oxygen sensors, gaskets, or hardware</li>
+        <li>Rust, seized fasteners, or fabrication work</li>
+        <li>Whether upstream fuel or misfire issues need correction first</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Service Overview</h2>
+      <p class="tm-muted">
+        Converter quotes are only solid after the failure is confirmed. Good shops verify catalyst efficiency, check fuel-trim and misfire history, and make sure a bad sensor or engine-running issue is not the real reason the converter code set in the first place.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Confirm catalyst-efficiency failure with scan data and exhaust testing</li>
+        <li>Inspect for upstream misfire, fuel-control, or oil-burning problems</li>
+        <li>Remove the failed converter and any affected sensors or hardware</li>
+        <li>Install the replacement converter with new seals as needed</li>
+        <li>Verify code behavior and exhaust operation after the repair</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a catalytic converter replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=catalytic_converter_replacement">Estimate Catalytic Converter Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/oxygen-sensor-replacement">Oxygen Sensor Replacement Cost</a></li>
+        <li><a href="/cost/mass-air-flow-sensor-replacement">Mass Air Flow Sensor Replacement Cost</a></li>
+        <li><a href="/cost/spark-plug-replacement">Spark Plug Replacement Cost</a></li>
+        <li><a href="/cost/ignition-coil-replacement">Ignition Coil Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

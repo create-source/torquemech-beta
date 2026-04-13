@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+
+{% block title %}Thermostat Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Thermostat replacement cost depends on cooling-system access, housing design, coolant service, and engine layout. Use TorqueMech to understand the job before building an estimate." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Thermostat Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Thermostat replacement cost usually depends on housing location, coolant refill and bleed time, and whether hoses, sensors, or gaskets are serviced during the job.
+      This page gives you a clean baseline before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator?service=thermostat_replacement">Estimate Thermostat Replacement</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$220 to $600+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on thermostat housing design, coolant type, and how much teardown is needed to reach the part.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 3.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Some thermostats sit right up front, while others are buried under intake plumbing or tight cooling-system packaging.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$25 to $180+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price changes based on whether the repair uses a simple thermostat, a full housing assembly, or added seals and coolant.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Engine taking too long to warm up</li>
+        <li>Temperature gauge running colder or hotter than normal</li>
+        <li>Heater performance dropping off</li>
+        <li>Check engine light with coolant-temperature related codes</li>
+        <li>Intermittent overheating depending on load or ambient temperature</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Thermostat-only repair versus full housing assembly</li>
+        <li>Coolant drain, refill, and bleed requirements</li>
+        <li>Engine bay access and hose routing</li>
+        <li>Need for gasket surfaces, sensors, or hose replacement</li>
+        <li>Part quality and coolant specification</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Service Overview</h2>
+      <p class="tm-muted">
+        A thermostat quote usually starts with confirming the cooling system is behaving the way the code or gauge suggests. Good shops verify sensor readings, coolant level, and circulation before replacing the thermostat so the real failure is not missed.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Confirm coolant-temperature behavior with scan data or gauge readings</li>
+        <li>Drain coolant and access the thermostat housing</li>
+        <li>Replace the thermostat or thermostat housing and install new seals</li>
+        <li>Refill and bleed the cooling system properly</li>
+        <li>Recheck operating temperature and heater performance</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a thermostat replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=thermostat_replacement">Estimate Thermostat Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/radiator-replacement">Radiator Replacement Cost</a></li>
+        <li><a href="/cost/water-pump-replacement">Water Pump Replacement Cost</a></li>
+        <li><a href="/cost/serpentine-belt-replacement">Serpentine Belt Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

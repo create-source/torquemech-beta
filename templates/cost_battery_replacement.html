@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+
+{% block title %}Battery Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Battery replacement cost depends on battery group size, reserve capacity, testing time, and registration requirements on newer vehicles. Use TorqueMech for a realistic baseline." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Battery Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Battery replacement cost usually depends on battery size, cold-cranking capacity, mounting location, and whether the vehicle needs battery registration or memory-preserve steps after installation.
+      This page gives you a mechanic-first baseline before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator?service=battery_replacement">Estimate Battery Replacement</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$180 to $450+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on battery group size, AGM versus flooded design, and whether testing or registration is part of the job.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">0.3 to 0.8 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Under-hood battery swaps are quick, but trunk-mounted or buried batteries can take longer.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$120 to $320+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Pricing changes with battery capacity, warranty level, brand, and whether AGM construction is required.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Slow cranking or no-start condition</li>
+        <li>Repeated jump starts</li>
+        <li>Low-voltage warnings or electrical resets</li>
+        <li>Battery failing a load or conductance test</li>
+        <li>Visible corrosion, leakage, or battery case swelling</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Battery type, group size, and cold-cranking rating</li>
+        <li>Mounting location and access time</li>
+        <li>Terminal cleaning or cable-end service</li>
+        <li>Battery registration or system reset on newer vehicles</li>
+        <li>Warranty length and part quality</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Service Overview</h2>
+      <p class="tm-muted">
+        Battery quotes are best when the charging and starting system have already been checked. A good shop confirms the battery is actually weak, inspects the terminals, and makes sure an alternator or draw problem is not the real issue.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Test battery state of health and verify charging voltage</li>
+        <li>Remove covers, braces, or trunk trim as needed for access</li>
+        <li>Clean terminals and install the replacement battery securely</li>
+        <li>Register the battery or reset adaptations when required</li>
+        <li>Verify starting and charging performance after installation</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a battery replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=battery_replacement">Estimate Battery Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/alternator-replacement">Alternator Replacement Cost</a></li>
+        <li><a href="/cost/starter-replacement">Starter Replacement Cost</a></li>
+        <li><a href="/cost/serpentine-belt-replacement">Serpentine Belt Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

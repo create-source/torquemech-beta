@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block title %}Mass Air Flow Sensor Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Mass air flow sensor replacement cost depends on sensor type, air-intake design, diagnosis time, and parts quality. Use TorqueMech for a clean drivability-repair baseline." />
+  <link rel="canonical" href="{{ request.url }}" />
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Mass Air Flow Sensor Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Mass air flow sensor replacement cost usually depends on airflow diagnosis, intake design, and whether the repair needs a simple sensor swap or deeper drivability testing first.
+      This page gives you a practical baseline before you move into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator?service=mass_air_flow_sensor_replacement">Estimate Mass Air Flow Sensor Replacement</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-3 tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$220 to $520+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Total cost changes with sensor design, diagnosis time, and whether intake boots or air leaks are part of the repair path.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">0.3 to 1.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Many MAF sensors are easy to access, but confirmation testing and intake inspection still matter before replacing parts.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$110 to $350+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price varies by application, electronics quality, and whether the sensor comes separately or with an intake housing.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Hesitation, surging, or poor throttle response</li>
+        <li>Lean-running fault codes or airflow-related faults</li>
+        <li>Rough idle or intermittent stalling</li>
+        <li>Poor fuel economy</li>
+        <li>Reduced power with no obvious mechanical noise</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Sensor-only replacement versus sensor-and-housing assembly</li>
+        <li>Time spent ruling out intake leaks or wiring faults</li>
+        <li>Vehicle application and sensor quality</li>
+        <li>Air filter condition and intake contamination</li>
+        <li>Need to clean or repair intake tubing during the visit</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Service Overview</h2>
+      <p class="tm-muted">
+        MAF quotes are safest after confirming the sensor is actually the problem. A solid diagnostic process checks live airflow data, intake leaks, and connector condition before the sensor gets replaced.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Confirm airflow readings or circuit faults with scan data</li>
+        <li>Inspect the air intake tract for leaks, contamination, or poor connections</li>
+        <li>Remove the faulty MAF sensor or intake housing assembly</li>
+        <li>Install the replacement part and verify intake sealing</li>
+        <li>Recheck idle quality, fuel trims, and throttle response</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a mass air flow sensor replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=mass_air_flow_sensor_replacement">Estimate Mass Air Flow Sensor Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/oxygen-sensor-replacement">Oxygen Sensor Replacement Cost</a></li>
+        <li><a href="/cost/ignition-coil-replacement">Ignition Coil Replacement Cost</a></li>
+        <li><a href="/cost/spark-plug-replacement">Spark Plug Replacement Cost</a></li>
+        <li><a href="/cost/catalytic-converter-replacement">Catalytic Converter Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

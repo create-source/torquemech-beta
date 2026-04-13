@@ -1790,12 +1790,22 @@ def build_cost_guide_links(code: str):
                 "href": "/cost/spark-plug-replacement",
                 "description": "Useful when testing confirms worn or fouled plugs are driving the misfire.",
             },
+            {
+                "label": "Ignition Coil Replacement Cost",
+                "href": "/cost/ignition-coil-replacement",
+                "description": "A strong next cost check when the misfire path points to a weak or failing coil.",
+            },
         ],
         "P0301": [
             {
                 "label": "Spark Plug Replacement Cost",
                 "href": "/cost/spark-plug-replacement",
                 "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
+            },
+            {
+                "label": "Ignition Coil Replacement Cost",
+                "href": "/cost/ignition-coil-replacement",
+                "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
             },
         ],
         "P0302": [
@@ -1804,12 +1814,22 @@ def build_cost_guide_links(code: str):
                 "href": "/cost/spark-plug-replacement",
                 "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
             },
+            {
+                "label": "Ignition Coil Replacement Cost",
+                "href": "/cost/ignition-coil-replacement",
+                "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
+            },
         ],
         "P0303": [
             {
                 "label": "Spark Plug Replacement Cost",
                 "href": "/cost/spark-plug-replacement",
                 "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
+            },
+            {
+                "label": "Ignition Coil Replacement Cost",
+                "href": "/cost/ignition-coil-replacement",
+                "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
             },
         ],
         "P0304": [
@@ -1818,8 +1838,18 @@ def build_cost_guide_links(code: str):
                 "href": "/cost/spark-plug-replacement",
                 "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
             },
+            {
+                "label": "Ignition Coil Replacement Cost",
+                "href": "/cost/ignition-coil-replacement",
+                "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
+            },
         ],
         "P0420": [
+            {
+                "label": "Catalytic Converter Replacement Cost",
+                "href": "/cost/catalytic-converter-replacement",
+                "description": "A direct cost guide when catalyst-efficiency testing confirms the converter is no longer doing the job.",
+            },
             {
                 "label": "Oxygen Sensor Replacement Cost",
                 "href": "/cost/oxygen-sensor-replacement",
@@ -1827,6 +1857,11 @@ def build_cost_guide_links(code: str):
             },
         ],
         "P0430": [
+            {
+                "label": "Catalytic Converter Replacement Cost",
+                "href": "/cost/catalytic-converter-replacement",
+                "description": "A direct cost guide when catalyst-efficiency testing confirms the converter is no longer doing the job.",
+            },
             {
                 "label": "Oxygen Sensor Replacement Cost",
                 "href": "/cost/oxygen-sensor-replacement",
@@ -1871,6 +1906,16 @@ def build_cost_guide_links(code: str):
                 ],
             },
             {
+                "matches": lambda current: current.startswith("P035"),
+                "guides": [
+                    {
+                        "label": "Ignition Coil Replacement Cost",
+                        "href": "/cost/ignition-coil-replacement",
+                        "description": "A strong match when the trouble code points directly to an ignition-coil circuit problem.",
+                    },
+                ],
+            },
+            {
                 "matches": lambda current: current.startswith("P030") or current == "P0316",
                 "guides": [
                     {
@@ -1878,10 +1923,45 @@ def build_cost_guide_links(code: str):
                         "href": "/cost/spark-plug-replacement",
                         "description": "A relevant next cost check when the confirmed misfire path leads back to worn plugs.",
                     },
+                    {
+                        "label": "Ignition Coil Replacement Cost",
+                        "href": "/cost/ignition-coil-replacement",
+                        "description": "Useful when misfire diagnosis shows one or more ignition coils breaking down under load.",
+                    },
                 ],
             },
             {
-                "matches": lambda current: current in {"P0128", "P0217"},
+                "matches": lambda current: current in {"P0100", "P0101", "P0102", "P0103", "P0104"},
+                "guides": [
+                    {
+                        "label": "Mass Air Flow Sensor Replacement Cost",
+                        "href": "/cost/mass-air-flow-sensor-replacement",
+                        "description": "A direct cost guide when airflow readings or circuit checks point to a failed MAF sensor.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current == "P0128",
+                "guides": [
+                    {
+                        "label": "Thermostat Replacement Cost",
+                        "href": "/cost/thermostat-replacement",
+                        "description": "A strong next cost check when the engine is running colder than expected because the thermostat is stuck open.",
+                    },
+                    {
+                        "label": "Radiator Replacement Cost",
+                        "href": "/cost/radiator-replacement",
+                        "description": "Relevant when diagnosis finds a cooling-system leak or radiator flow problem behind the temperature issue.",
+                    },
+                    {
+                        "label": "Water Pump Replacement Cost",
+                        "href": "/cost/water-pump-replacement",
+                        "description": "Useful when overheating or circulation tests point to pump flow or bearing failure.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current == "P0217",
                 "guides": [
                     {
                         "label": "Radiator Replacement Cost",
@@ -1896,7 +1976,22 @@ def build_cost_guide_links(code: str):
                 ],
             },
             {
-                "matches": lambda current: current in {"P0562", "P0563", "P0620"},
+                "matches": lambda current: current in {"P0562", "P0563"},
+                "guides": [
+                    {
+                        "label": "Battery Replacement Cost",
+                        "href": "/cost/battery-replacement",
+                        "description": "Useful when low-voltage testing shows the battery itself is weak or unable to hold charge.",
+                    },
+                    {
+                        "label": "Alternator Replacement Cost",
+                        "href": "/cost/alternator-replacement",
+                        "description": "A strong cost guide when charging-system testing confirms low output or alternator control failure.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current == "P0620",
                 "guides": [
                     {
                         "label": "Alternator Replacement Cost",
@@ -2475,6 +2570,41 @@ def starter_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/ignition-coil-replacement", response_class=HTMLResponse)
+def ignition_coil_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_ignition_coil_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/thermostat-replacement", response_class=HTMLResponse)
+def thermostat_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_thermostat_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/battery-replacement", response_class=HTMLResponse)
+def battery_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_battery_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/mass-air-flow-sensor-replacement", response_class=HTMLResponse)
+def mass_air_flow_sensor_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_mass_air_flow_sensor_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/catalytic-converter-replacement", response_class=HTMLResponse)
+def catalytic_converter_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_catalytic_converter_replacement.html",
+        {"request": request},
+    )
+
 def build_repair_cost_guide_cards():
     return [
         {
@@ -2513,6 +2643,11 @@ def build_repair_cost_guide_cards():
             "href": "/cost/spark-plug-replacement",
         },
         {
+            "title": "Ignition Coil Replacement Cost",
+            "description": "Helpful for misfire diagnosis, rough-running complaints, and coil-related ignition failures.",
+            "href": "/cost/ignition-coil-replacement",
+        },
+        {
             "title": "Brake Rotor Replacement Cost",
             "description": "Labor and parts context when brake pulsation, scoring, or rotor wear is part of the job.",
             "href": "/cost/brake-rotor-replacement",
@@ -2526,6 +2661,11 @@ def build_repair_cost_guide_cards():
             "title": "Water Pump Replacement Cost",
             "description": "Cooling system cost guidance when pump leaks, bearing noise, or circulation issues are confirmed.",
             "href": "/cost/water-pump-replacement",
+        },
+        {
+            "title": "Thermostat Replacement Cost",
+            "description": "Cooling-system pricing context when the engine runs cold, overheats, or warm-up timing is off.",
+            "href": "/cost/thermostat-replacement",
         },
         {
             "title": "Control Arm Replacement Cost",
@@ -2548,9 +2688,24 @@ def build_repair_cost_guide_cards():
             "href": "/cost/oxygen-sensor-replacement",
         },
         {
+            "title": "Mass Air Flow Sensor Replacement Cost",
+            "description": "Useful for drivability faults, airflow signal problems, and lean-running issues tied to the MAF sensor.",
+            "href": "/cost/mass-air-flow-sensor-replacement",
+        },
+        {
             "title": "Fuel Pump Replacement Cost",
             "description": "Fuel delivery pricing guidance for hard starts, stalling, low-pressure, or no-start complaints.",
             "href": "/cost/fuel-pump-replacement",
+        },
+        {
+            "title": "Battery Replacement Cost",
+            "description": "Quick pricing context for weak batteries, slow cranking, and no-start complaints.",
+            "href": "/cost/battery-replacement",
+        },
+        {
+            "title": "Catalytic Converter Replacement Cost",
+            "description": "Emissions repair pricing when catalyst-efficiency testing confirms the converter is the failure point.",
+            "href": "/cost/catalytic-converter-replacement",
         },
     ]
 
@@ -2727,14 +2882,19 @@ def sitemap():
         "/cost/brake-caliper-replacement",
         "/cost/ac-compressor-replacement",
         "/cost/spark-plug-replacement",
+        "/cost/ignition-coil-replacement",
         "/cost/brake-rotor-replacement",
         "/cost/starter-replacement",
         "/cost/water-pump-replacement",
+        "/cost/thermostat-replacement",
         "/cost/control-arm-replacement",
         "/cost/wheel-bearing-replacement",
         "/cost/sway-bar-link-replacement",
         "/cost/oxygen-sensor-replacement",
+        "/cost/mass-air-flow-sensor-replacement",
         "/cost/fuel-pump-replacement",
+        "/cost/battery-replacement",
+        "/cost/catalytic-converter-replacement",
         "/obd/P0300",
         "/obd/P0301",
         "/obd/P0302",
