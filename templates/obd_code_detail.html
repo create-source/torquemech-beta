@@ -29,14 +29,15 @@
       display: flex;
       justify-content: space-between;
       gap: 14px;
-      align-items: flex-start;
+      align-items: center;
+      margin-bottom: 4px;
     }
 
     .obd-repair-row__title {
-      margin: 0 0 4px 0;
+      margin: 0;
       color: var(--tm-text);
       font-size: 1.02rem;
-      font-weight: 800;
+      font-weight: 600;
       line-height: 1.35;
     }
 
@@ -108,12 +109,8 @@
     }
 
     @media (max-width: 640px) {
-      .obd-repair-row__head {
-        flex-direction: column;
-      }
-
       .obd-repair-row__cta {
-        align-self: flex-start;
+        flex-shrink: 0;
       }
 
       .obd-cost-guide-mini {
