@@ -1067,6 +1067,34 @@
     ],
     "title": "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 3)"
   },
+  "P0148": {
+    "title": "Fuel Delivery Error",
+    "description": "The ECM detected a fuel-delivery problem that is outside the expected control range.",
+    "possible_causes": [
+      "Low fuel pressure or restricted fuel supply",
+      "Fuel control component fault",
+      "Wiring or command issue in the fuel-delivery system"
+    ],
+    "quick_checks": [
+      "Check fuel pressure and supply volume",
+      "Inspect related connectors and harnesses",
+      "Look for additional fuel-system or injector codes"
+    ]
+  },
+  "P0149": {
+    "title": "Fuel Timing Error",
+    "description": "The ECM detected a fault in fuel timing control.",
+    "possible_causes": [
+      "Fuel timing control fault",
+      "Sensor or actuator issue",
+      "Wiring or PCM control problem"
+    ],
+    "quick_checks": [
+      "Check for related timing or fuel-control codes",
+      "Inspect sensor and actuator wiring",
+      "Compare command and actual timing data if supported"
+    ]
+  },
   "P0150": {
     "description": "An oxygen sensor circuit issue was detected.",
     "possible_causes": [
@@ -1341,6 +1369,34 @@
       "Inspect the sensor wiring and connector near the exhaust",
       "Check live sensor data and heater operation",
       "Look for exhaust leaks or related fuel-control faults before replacing parts"
+    ]
+  },
+  "P0168": {
+    "title": "Fuel Temperature Too High",
+    "description": "The fuel temperature reading is higher than expected.",
+    "possible_causes": [
+      "Failed fuel temperature sensor",
+      "Heat-soaked fuel system",
+      "Wiring or connector issue"
+    ],
+    "quick_checks": [
+      "Compare fuel temperature to ambient and operating conditions",
+      "Inspect the sensor and connector",
+      "Look for wiring damage near hot components"
+    ]
+  },
+  "P0169": {
+    "title": "Incorrect Fuel Composition",
+    "description": "The ECM detected a fuel composition reading that does not match expected values.",
+    "possible_causes": [
+      "Contaminated fuel",
+      "Fuel composition sensor fault",
+      "Wiring or connector issue"
+    ],
+    "quick_checks": [
+      "Check fuel quality if contamination is suspected",
+      "Inspect the sensor connector and wiring",
+      "Compare fuel composition data to known fuel type"
     ]
   },
   "P0170": {
@@ -2540,6 +2596,20 @@
       "Inspect for heat-related wiring damage"
     ]
   },
+  "P0324": {
+    "title": "Knock Control System Error",
+    "description": "The ECM detected a fault in the knock control system.",
+    "possible_causes": [
+      "Knock sensor signal issue",
+      "Damaged wiring or connector",
+      "Engine noise or timing problem affecting knock control"
+    ],
+    "quick_checks": [
+      "Inspect knock sensor wiring and connector condition",
+      "Check for related knock sensor or timing codes",
+      "Look for abnormal engine noise before replacing parts"
+    ]
+  },
   "P0325": {
     "description": "Knock sensor circuit fault detected.",
     "possible_causes": [
@@ -3084,6 +3154,34 @@
       "Confirm the fault follows the coil before replacing parts"
     ]
   },
+  "P0363": {
+    "title": "Misfire Detected - Fueling Disabled",
+    "description": "The ECM disabled fuel to a cylinder after detecting a damaging misfire.",
+    "possible_causes": [
+      "Severe ignition misfire",
+      "Injector or compression problem",
+      "Persistent cylinder fault severe enough to threaten the catalyst"
+    ],
+    "quick_checks": [
+      "Do not continue driving if the misfire is active",
+      "Check for cylinder-specific misfire codes",
+      "Inspect ignition, fuel, and compression on the affected cylinder"
+    ]
+  },
+  "P0364": {
+    "title": "Camshaft Position Sensor B Circuit (Bank 1)",
+    "description": "The ECM detected a camshaft position sensor B circuit fault on bank 1.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
   "P0365": {
     "title": "Camshaft Position Sensor B Circuit Malfunction (Bank 1)",
     "description": "The ECM detected a fault in the camshaft position sensor B on bank 1 circuit.",
@@ -3152,6 +3250,426 @@
       "Inspect the camshaft position sensor B on bank 1 connector and wiring",
       "Compare cam and crank signals if the tool supports it",
       "Check for timing-related or oil-contamination problems before replacing parts"
+    ]
+  },
+  "P0370": {
+    "title": "Timing Reference High Resolution Signal B Circuit Malfunction",
+    "description": "The ECM detected a timing-reference signal B problem: circuit malfunction.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0371": {
+    "title": "Timing Reference High Resolution Signal B Range/Performance",
+    "description": "The ECM detected a timing-reference signal B problem: range/performance.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0372": {
+    "title": "Timing Reference High Resolution Signal B Low Resolution Timing Reference High Signal",
+    "description": "The ECM detected a timing-reference signal B problem: low resolution timing reference high signal.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0373": {
+    "title": "Timing Reference High Resolution Signal B Few Pulses",
+    "description": "The ECM detected a timing-reference signal B problem: few pulses.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0374": {
+    "title": "Timing Reference High Resolution Signal B No Pulses",
+    "description": "The ECM detected a timing-reference signal B problem: no pulses.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0375": {
+    "title": "Timing Reference High Resolution Signal B High Resolution Timing Reference B Too Many Pulses",
+    "description": "The ECM detected a timing-reference signal B problem: high resolution timing reference b too many pulses.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0376": {
+    "title": "Timing Reference High Resolution Signal B High Resolution Timing Reference B No Pulses",
+    "description": "The ECM detected a timing-reference signal B problem: high resolution timing reference b no pulses.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0377": {
+    "title": "Timing Reference High Resolution Signal B High Resolution Timing Reference B Intermittent",
+    "description": "The ECM detected a timing-reference signal B problem: high resolution timing reference b intermittent.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0378": {
+    "title": "Timing Reference High Resolution Signal B High Resolution Timing Reference B High Input",
+    "description": "The ECM detected a timing-reference signal B problem: high resolution timing reference b high input.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0379": {
+    "title": "Timing Reference High Resolution Signal B High Resolution Timing Reference B Low Input",
+    "description": "The ECM detected a timing-reference signal B problem: high resolution timing reference b low input.",
+    "possible_causes": [
+      "Reference sensor problem",
+      "Damaged wiring or connector",
+      "Reluctor or timing signal issue"
+    ],
+    "quick_checks": [
+      "Inspect timing-reference wiring and connectors",
+      "Check signal integrity with scan data or scope if available",
+      "Look for related crank or cam sensor faults"
+    ]
+  },
+  "P0380": {
+    "title": "Glow Plug/Heater Circuit A",
+    "description": "The ECM detected a fault in glow plug or heater circuit A.",
+    "possible_causes": [
+      "Failed glow plug or heater element",
+      "Relay, fuse, or wiring issue",
+      "Control module fault"
+    ],
+    "quick_checks": [
+      "Check fuse, relay, and power feed to the heater circuit",
+      "Inspect harness and connector condition",
+      "Test glow plug or heater resistance if applicable"
+    ]
+  },
+  "P0381": {
+    "title": "Glow Plug/Heater Indicator Circuit Malfunction",
+    "description": "The ECM detected a fault in the glow plug or heater indicator circuit.",
+    "possible_causes": [
+      "Indicator circuit fault",
+      "Wiring problem",
+      "Cluster or module issue"
+    ],
+    "quick_checks": [
+      "Inspect indicator circuit wiring and connector condition",
+      "Check for related heater-system codes",
+      "Verify command and indicator operation"
+    ]
+  },
+  "P0382": {
+    "title": "Glow Plug/Heater Circuit B",
+    "description": "The ECM detected a fault in glow plug or heater circuit B.",
+    "possible_causes": [
+      "Failed glow plug or heater element",
+      "Relay, fuse, or wiring issue",
+      "Control module fault"
+    ],
+    "quick_checks": [
+      "Check fuse, relay, and power feed to the heater circuit",
+      "Inspect harness and connector condition",
+      "Test glow plug or heater resistance if applicable"
+    ]
+  },
+  "P0383": {
+    "title": "Glow Plug Control Module to PCM Communication Circuit",
+    "description": "The ECM detected a fault in communication between the glow plug control module and PCM.",
+    "possible_causes": [
+      "Control module fault",
+      "Damaged communication wiring",
+      "Connector or power issue"
+    ],
+    "quick_checks": [
+      "Inspect module connectors and power feeds",
+      "Check communication wiring continuity",
+      "Look for additional module communication codes"
+    ]
+  },
+  "P0384": {
+    "title": "Glow Plug/Heater Indicator Circuit Range/Performance",
+    "description": "The glow plug or heater indicator circuit is not operating within the expected range.",
+    "possible_causes": [
+      "Indicator circuit fault",
+      "Cluster problem",
+      "Wiring or control issue"
+    ],
+    "quick_checks": [
+      "Verify indicator operation during key-on checks",
+      "Inspect circuit continuity and connector condition",
+      "Check for related heater-system faults"
+    ]
+  },
+  "P0385": {
+    "title": "Crankshaft Position Sensor B Circuit Malfunction",
+    "description": "The ECM detected a crankshaft position sensor B circuit malfunction fault.",
+    "possible_causes": [
+      "Failed crankshaft position sensor",
+      "Damaged wiring or connector",
+      "Reluctor or timing problem affecting the signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check RPM signal during crank and run",
+      "Look for timing or reluctor issues if the signal is unstable"
+    ]
+  },
+  "P0386": {
+    "title": "Crankshaft Position Sensor B Range/Performance",
+    "description": "The ECM detected a crankshaft position sensor B range/performance fault.",
+    "possible_causes": [
+      "Failed crankshaft position sensor",
+      "Damaged wiring or connector",
+      "Reluctor or timing problem affecting the signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check RPM signal during crank and run",
+      "Look for timing or reluctor issues if the signal is unstable"
+    ]
+  },
+  "P0387": {
+    "title": "Crankshaft Position Sensor B Low Input",
+    "description": "The ECM detected a crankshaft position sensor B low input fault.",
+    "possible_causes": [
+      "Failed crankshaft position sensor",
+      "Damaged wiring or connector",
+      "Reluctor or timing problem affecting the signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check RPM signal during crank and run",
+      "Look for timing or reluctor issues if the signal is unstable"
+    ]
+  },
+  "P0388": {
+    "title": "Crankshaft Position Sensor B High Input",
+    "description": "The ECM detected a crankshaft position sensor B high input fault.",
+    "possible_causes": [
+      "Failed crankshaft position sensor",
+      "Damaged wiring or connector",
+      "Reluctor or timing problem affecting the signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check RPM signal during crank and run",
+      "Look for timing or reluctor issues if the signal is unstable"
+    ]
+  },
+  "P0389": {
+    "title": "Crankshaft Position Sensor B Intermittent",
+    "description": "The ECM detected a crankshaft position sensor B intermittent fault.",
+    "possible_causes": [
+      "Failed crankshaft position sensor",
+      "Damaged wiring or connector",
+      "Reluctor or timing problem affecting the signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check RPM signal during crank and run",
+      "Look for timing or reluctor issues if the signal is unstable"
+    ]
+  },
+  "P0390": {
+    "title": "Camshaft Position Sensor B Circuit Malfunction (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor B circuit malfunction fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0391": {
+    "title": "Camshaft Position Sensor B Range/Performance (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor B range/performance fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0392": {
+    "title": "Camshaft Position Sensor B Low Input (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor B low input fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0393": {
+    "title": "Camshaft Position Sensor B High Input (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor B high input fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0394": {
+    "title": "Camshaft Position Sensor B Intermittent (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor B intermittent fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0395": {
+    "title": "Camshaft Position Sensor A Circuit (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor A circuit fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0396": {
+    "title": "Camshaft Position Sensor A Range/Performance (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor A range/performance fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0397": {
+    "title": "Camshaft Position Sensor A Low Input (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor A low input fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0398": {
+    "title": "Camshaft Position Sensor A High Input (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor A high input fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
+    ]
+  },
+  "P0399": {
+    "title": "Camshaft Position Sensor A Intermittent (Bank 2)",
+    "description": "The ECM detected a camshaft position sensor A intermittent fault on bank 2.",
+    "possible_causes": [
+      "Failed camshaft position sensor",
+      "Damaged wiring or connector",
+      "Timing issue affecting signal quality"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness routing",
+      "Compare cam and crank signal behavior if supported",
+      "Check for timing-related faults before replacing parts"
     ]
   },
   "P0400": {
@@ -3253,6 +3771,48 @@
       "Verify sensor voltage"
     ],
     "title": "EGR Sensor A Circuit High"
+  },
+  "P0407": {
+    "title": "Exhaust Gas Recirculation Sensor B Circuit Low",
+    "description": "The EGR sensor B signal is lower than expected.",
+    "possible_causes": [
+      "Failed EGR sensor",
+      "Short to ground",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect the EGR sensor connector and wiring",
+      "Check signal voltage against expected range",
+      "Inspect for carbon buildup or sticking components"
+    ]
+  },
+  "P0408": {
+    "title": "Exhaust Gas Recirculation Sensor B Circuit High",
+    "description": "The EGR sensor B signal is higher than expected.",
+    "possible_causes": [
+      "Failed EGR sensor",
+      "Short to voltage",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect the EGR sensor connector and wiring",
+      "Check signal voltage against expected range",
+      "Inspect for carbon buildup or sticking components"
+    ]
+  },
+  "P0409": {
+    "title": "Exhaust Gas Recirculation Sensor B Circuit",
+    "description": "The ECM detected a fault in the EGR sensor B circuit.",
+    "possible_causes": [
+      "Failed EGR sensor",
+      "Damaged wiring or connector",
+      "Control circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect the EGR sensor connector and harness",
+      "Check command and feedback data if supported",
+      "Inspect the EGR valve and passages for buildup"
+    ]
   },
   "P0410": {
     "description": "Secondary air injection did not operate as expected.",
@@ -3538,6 +4098,20 @@
       "Compare sensor data before replacing catalyst parts"
     ]
   },
+  "P0429": {
+    "title": "Catalyst Heater Control Circuit (Bank 1)",
+    "description": "The ECM detected a fault in catalyst heater control circuit on bank 1.",
+    "possible_causes": [
+      "Catalyst heater control fault",
+      "Damaged wiring or connector",
+      "Relay or power supply issue"
+    ],
+    "quick_checks": [
+      "Inspect the heater circuit wiring and connectors",
+      "Check fuse, relay, and power feed",
+      "Look for related catalyst or temperature-sensor codes"
+    ]
+  },
   "P0430": {
     "description": "Bank 2 catalyst efficiency is below threshold after the monitor compared upstream and downstream O2 sensor behavior.",
     "possible_causes": [
@@ -3676,6 +4250,20 @@
       "Fix any active misfire or fueling codes first",
       "Check for exhaust leaks ahead of the converter",
       "Compare sensor data before replacing catalyst parts"
+    ]
+  },
+  "P0439": {
+    "title": "Catalyst Heater Control Circuit (Bank 2)",
+    "description": "The ECM detected a fault in catalyst heater control circuit on bank 2.",
+    "possible_causes": [
+      "Catalyst heater control fault",
+      "Damaged wiring or connector",
+      "Relay or power supply issue"
+    ],
+    "quick_checks": [
+      "Inspect the heater circuit wiring and connectors",
+      "Check fuse, relay, and power feed",
+      "Look for related catalyst or temperature-sensor codes"
     ]
   },
   "P0440": {
@@ -4045,6 +4633,76 @@
       "Check for signal dropouts or poor connector fit"
     ]
   },
+  "P0465": {
+    "title": "Purge Flow Sensor Sensor Circuit",
+    "description": "The ECM detected a purge-flow sensor sensor circuit fault.",
+    "possible_causes": [
+      "Failed purge flow sensor",
+      "Damaged wiring or connector",
+      "Restriction or leak in the EVAP system"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and nearby EVAP lines",
+      "Check live data for a stable purge-flow reading",
+      "Use smoke or flow testing if the EVAP system is suspect"
+    ]
+  },
+  "P0466": {
+    "title": "Purge Flow Sensor Sensor Range/Performance",
+    "description": "The ECM detected a purge-flow sensor sensor range/performance fault.",
+    "possible_causes": [
+      "Failed purge flow sensor",
+      "Damaged wiring or connector",
+      "Restriction or leak in the EVAP system"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and nearby EVAP lines",
+      "Check live data for a stable purge-flow reading",
+      "Use smoke or flow testing if the EVAP system is suspect"
+    ]
+  },
+  "P0467": {
+    "title": "Purge Flow Sensor Sensor Low Input",
+    "description": "The ECM detected a purge-flow sensor sensor low input fault.",
+    "possible_causes": [
+      "Failed purge flow sensor",
+      "Damaged wiring or connector",
+      "Restriction or leak in the EVAP system"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and nearby EVAP lines",
+      "Check live data for a stable purge-flow reading",
+      "Use smoke or flow testing if the EVAP system is suspect"
+    ]
+  },
+  "P0468": {
+    "title": "Purge Flow Sensor Sensor High Input",
+    "description": "The ECM detected a purge-flow sensor sensor high input fault.",
+    "possible_causes": [
+      "Failed purge flow sensor",
+      "Damaged wiring or connector",
+      "Restriction or leak in the EVAP system"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and nearby EVAP lines",
+      "Check live data for a stable purge-flow reading",
+      "Use smoke or flow testing if the EVAP system is suspect"
+    ]
+  },
+  "P0469": {
+    "title": "Purge Flow Sensor Sensor Intermittent",
+    "description": "The ECM detected a purge-flow sensor sensor intermittent fault.",
+    "possible_causes": [
+      "Failed purge flow sensor",
+      "Damaged wiring or connector",
+      "Restriction or leak in the EVAP system"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and nearby EVAP lines",
+      "Check live data for a stable purge-flow reading",
+      "Use smoke or flow testing if the EVAP system is suspect"
+    ]
+  },
   "P0470": {
     "title": "Exhaust Pressure Sensor Circuit",
     "description": "The ECM detected a fault in the exhaust pressure sensor circuit.",
@@ -4113,6 +4771,76 @@
       "Inspect the pressure tube and sensor connector",
       "Check live exhaust pressure data against engine load",
       "Inspect the harness for heat damage or restriction"
+    ]
+  },
+  "P0475": {
+    "title": "Exhaust Pressure Control Valve A Control Valve A Malfunction",
+    "description": "The ECM detected an exhaust pressure control valve A fault: control valve a malfunction.",
+    "possible_causes": [
+      "Failed control valve",
+      "Damaged wiring or connector",
+      "Restriction or mechanical sticking"
+    ],
+    "quick_checks": [
+      "Inspect the valve connector and wiring",
+      "Command the valve if supported and verify response",
+      "Inspect for restriction or soot buildup"
+    ]
+  },
+  "P0476": {
+    "title": "Exhaust Pressure Control Valve A Control Valve A Range/Performance",
+    "description": "The ECM detected an exhaust pressure control valve A fault: control valve a range/performance.",
+    "possible_causes": [
+      "Failed control valve",
+      "Damaged wiring or connector",
+      "Restriction or mechanical sticking"
+    ],
+    "quick_checks": [
+      "Inspect the valve connector and wiring",
+      "Command the valve if supported and verify response",
+      "Inspect for restriction or soot buildup"
+    ]
+  },
+  "P0477": {
+    "title": "Exhaust Pressure Control Valve A Control Valve A Low",
+    "description": "The ECM detected an exhaust pressure control valve A fault: control valve a low.",
+    "possible_causes": [
+      "Failed control valve",
+      "Damaged wiring or connector",
+      "Restriction or mechanical sticking"
+    ],
+    "quick_checks": [
+      "Inspect the valve connector and wiring",
+      "Command the valve if supported and verify response",
+      "Inspect for restriction or soot buildup"
+    ]
+  },
+  "P0478": {
+    "title": "Exhaust Pressure Control Valve A Control Valve A High",
+    "description": "The ECM detected an exhaust pressure control valve A fault: control valve a high.",
+    "possible_causes": [
+      "Failed control valve",
+      "Damaged wiring or connector",
+      "Restriction or mechanical sticking"
+    ],
+    "quick_checks": [
+      "Inspect the valve connector and wiring",
+      "Command the valve if supported and verify response",
+      "Inspect for restriction or soot buildup"
+    ]
+  },
+  "P0479": {
+    "title": "Exhaust Pressure Control Valve A Control Valve A Intermittent",
+    "description": "The ECM detected an exhaust pressure control valve A fault: control valve a intermittent.",
+    "possible_causes": [
+      "Failed control valve",
+      "Damaged wiring or connector",
+      "Restriction or mechanical sticking"
+    ],
+    "quick_checks": [
+      "Inspect the valve connector and wiring",
+      "Command the valve if supported and verify response",
+      "Inspect for restriction or soot buildup"
     ]
   },
   "P0480": {
@@ -4199,6 +4927,146 @@
       "Command the fan on if the scan tool supports it",
       "Check relay, fuse, and fan motor power and ground",
       "Inspect harness routing and connector condition"
+    ]
+  },
+  "P0486": {
+    "title": "Exhaust Gas Recirculation Sensor B Circuit",
+    "description": "The ECM detected a fault in the EGR sensor B circuit.",
+    "possible_causes": [
+      "EGR throttle or sensor fault",
+      "Damaged wiring or connector",
+      "Carbon buildup or sticking components"
+    ],
+    "quick_checks": [
+      "Inspect the throttle or sensor connector and wiring",
+      "Check command and feedback data if supported",
+      "Inspect for sticking or carbon buildup"
+    ]
+  },
+  "P0487": {
+    "title": "Exhaust Gas Recirculation Throttle Control Circuit A Open",
+    "description": "The ECM detected an open circuit in EGR throttle control circuit A.",
+    "possible_causes": [
+      "EGR throttle or sensor fault",
+      "Damaged wiring or connector",
+      "Carbon buildup or sticking components"
+    ],
+    "quick_checks": [
+      "Inspect the throttle or sensor connector and wiring",
+      "Check command and feedback data if supported",
+      "Inspect for sticking or carbon buildup"
+    ]
+  },
+  "P0488": {
+    "title": "Exhaust Gas Recirculation Throttle Control Range/Performance",
+    "description": "EGR throttle control is outside the expected operating range.",
+    "possible_causes": [
+      "EGR throttle or sensor fault",
+      "Damaged wiring or connector",
+      "Carbon buildup or sticking components"
+    ],
+    "quick_checks": [
+      "Inspect the throttle or sensor connector and wiring",
+      "Check command and feedback data if supported",
+      "Inspect for sticking or carbon buildup"
+    ]
+  },
+  "P0489": {
+    "title": "Exhaust Gas Recirculation Throttle Control Circuit A Low",
+    "description": "The EGR throttle control circuit A signal is lower than expected.",
+    "possible_causes": [
+      "EGR throttle or sensor fault",
+      "Damaged wiring or connector",
+      "Carbon buildup or sticking components"
+    ],
+    "quick_checks": [
+      "Inspect the throttle or sensor connector and wiring",
+      "Check command and feedback data if supported",
+      "Inspect for sticking or carbon buildup"
+    ]
+  },
+  "P0490": {
+    "title": "Exhaust Gas Recirculation Throttle Control Circuit A High",
+    "description": "The EGR throttle control circuit A signal is higher than expected.",
+    "possible_causes": [
+      "EGR throttle or sensor fault",
+      "Damaged wiring or connector",
+      "Carbon buildup or sticking components"
+    ],
+    "quick_checks": [
+      "Inspect the throttle or sensor connector and wiring",
+      "Check command and feedback data if supported",
+      "Inspect for sticking or carbon buildup"
+    ]
+  },
+  "P0491": {
+    "title": "Secondary Air Injection System Insufficient Flow (Bank 1)",
+    "description": "Secondary air injection flow on bank 1 is lower than expected.",
+    "possible_causes": [
+      "Failed secondary air pump or valve",
+      "Restricted air passages or hoses",
+      "Relay, fuse, or wiring issue"
+    ],
+    "quick_checks": [
+      "Inspect pump, valves, and hoses",
+      "Check fuse and relay operation",
+      "Command the system on if supported and confirm airflow"
+    ]
+  },
+  "P0492": {
+    "title": "Secondary Air Injection System Insufficient Flow (Bank 2)",
+    "description": "Secondary air injection flow on bank 2 is lower than expected.",
+    "possible_causes": [
+      "Failed secondary air pump or valve",
+      "Restricted air passages or hoses",
+      "Relay, fuse, or wiring issue"
+    ],
+    "quick_checks": [
+      "Inspect pump, valves, and hoses",
+      "Check fuse and relay operation",
+      "Command the system on if supported and confirm airflow"
+    ]
+  },
+  "P0493": {
+    "title": "Fan Overspeed",
+    "description": "The cooling fan is running faster than the ECM expects.",
+    "possible_causes": [
+      "Cooling fan relay or control fault",
+      "Fan motor issue",
+      "Wiring, power, or ground problem"
+    ],
+    "quick_checks": [
+      "Command the fan on if supported",
+      "Check fan speed feedback and operation",
+      "Inspect relay, fuse, power, and ground circuits"
+    ]
+  },
+  "P0494": {
+    "title": "Fan Speed Low",
+    "description": "The cooling fan is running slower than the ECM expects.",
+    "possible_causes": [
+      "Cooling fan relay or control fault",
+      "Fan motor issue",
+      "Wiring, power, or ground problem"
+    ],
+    "quick_checks": [
+      "Command the fan on if supported",
+      "Check fan speed feedback and operation",
+      "Inspect relay, fuse, power, and ground circuits"
+    ]
+  },
+  "P0495": {
+    "title": "Fan Speed High",
+    "description": "The cooling fan is running faster than expected or control is unstable.",
+    "possible_causes": [
+      "Cooling fan relay or control fault",
+      "Fan motor issue",
+      "Wiring, power, or ground problem"
+    ],
+    "quick_checks": [
+      "Command the fan on if supported",
+      "Check fan speed feedback and operation",
+      "Inspect relay, fuse, power, and ground circuits"
     ]
   },
   "P0496": {
@@ -4405,6 +5273,146 @@
       "Check for mechanical sticking or adjustment problems"
     ]
   },
+  "P0510": {
+    "title": "Closed Throttle Position Switch Malfunction",
+    "description": "The ECM detected a fault in the closed-throttle position switch signal.",
+    "possible_causes": [
+      "Throttle switch fault",
+      "Throttle body adjustment issue",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect throttle switch data on the scan tool",
+      "Check throttle body for sticking or misadjustment",
+      "Inspect wiring and connector condition"
+    ]
+  },
+  "P0511": {
+    "title": "Idle Air Control Circuit",
+    "description": "The ECM detected a fault in the idle air control circuit.",
+    "possible_causes": [
+      "Idle air control valve fault",
+      "Damaged wiring or connector",
+      "Throttle body contamination"
+    ],
+    "quick_checks": [
+      "Inspect the idle air control connector and wiring",
+      "Check throttle body and idle passages for buildup",
+      "Command the idle control system if supported"
+    ]
+  },
+  "P0512": {
+    "title": "Starter Request Circuit",
+    "description": "The ECM detected a fault in the starter-request circuit.",
+    "possible_causes": [
+      "Ignition switch or start-request fault",
+      "Starter relay circuit issue",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Check start-request data and ignition switch operation",
+      "Inspect relay and circuit continuity",
+      "Check for related anti-theft or transmission-range faults"
+    ]
+  },
+  "P0513": {
+    "title": "Incorrect Immobilizer Key",
+    "description": "The immobilizer did not recognize the key signal as valid.",
+    "possible_causes": [
+      "Incorrect or damaged key",
+      "Immobilizer antenna or module fault",
+      "Communication issue between modules"
+    ],
+    "quick_checks": [
+      "Try another programmed key if available",
+      "Check for anti-theft or module communication codes",
+      "Inspect immobilizer antenna and module connections"
+    ]
+  },
+  "P0514": {
+    "title": "Battery Temperature Sensor Circuit",
+    "description": "The ECM detected a fault in the battery temperature sensor circuit.",
+    "possible_causes": [
+      "Failed battery temperature sensor",
+      "Damaged wiring or connector",
+      "Battery monitoring system fault"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare battery temperature data to ambient conditions",
+      "Check for corrosion or battery-terminal issues"
+    ]
+  },
+  "P0515": {
+    "title": "Battery Temperature Sensor Circuit Range/Performance",
+    "description": "The battery temperature sensor signal is range/performance.",
+    "possible_causes": [
+      "Failed battery temperature sensor",
+      "Damaged wiring or connector",
+      "Battery monitoring system fault"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare battery temperature data to ambient conditions",
+      "Check for corrosion or poor terminal contact"
+    ]
+  },
+  "P0516": {
+    "title": "Battery Temperature Sensor Circuit Low Input",
+    "description": "The battery temperature sensor signal is low input.",
+    "possible_causes": [
+      "Failed battery temperature sensor",
+      "Damaged wiring or connector",
+      "Battery monitoring system fault"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare battery temperature data to ambient conditions",
+      "Check for corrosion or poor terminal contact"
+    ]
+  },
+  "P0517": {
+    "title": "Battery Temperature Sensor Circuit High Input",
+    "description": "The battery temperature sensor signal is high input.",
+    "possible_causes": [
+      "Failed battery temperature sensor",
+      "Damaged wiring or connector",
+      "Battery monitoring system fault"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare battery temperature data to ambient conditions",
+      "Check for corrosion or poor terminal contact"
+    ]
+  },
+  "P0518": {
+    "title": "Battery Temperature Sensor Circuit Intermittent",
+    "description": "The battery temperature sensor signal is intermittent.",
+    "possible_causes": [
+      "Failed battery temperature sensor",
+      "Damaged wiring or connector",
+      "Battery monitoring system fault"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare battery temperature data to ambient conditions",
+      "Check for corrosion or poor terminal contact"
+    ]
+  },
+  "P0519": {
+    "title": "Idle Air Control System Performance",
+    "description": "The ECM detected idle air control performance outside the expected range.",
+    "possible_causes": [
+      "Idle control valve or throttle body problem",
+      "Vacuum leak or unmetered air leak",
+      "Wiring, connector, or control issue"
+    ],
+    "quick_checks": [
+      "Inspect the throttle body and idle passages for buildup",
+      "Check for vacuum leaks that affect idle speed",
+      "Compare commanded idle to actual idle behavior on the scan tool"
+    ]
+  },
   "P0520": {
     "description": "Engine oil pressure sensor or switch circuit fault detected.",
     "possible_causes": [
@@ -4483,6 +5491,501 @@
       "Do not continue driving until low-pressure causes are confirmed"
     ]
   },
+  "P0525": {
+    "title": "Cruise Control Servo Control Circuit",
+    "description": "The ECM detected a fault in the cruise-control servo control circuit.",
+    "possible_causes": [
+      "Cruise servo fault",
+      "Damaged wiring or connector",
+      "Control module issue"
+    ],
+    "quick_checks": [
+      "Check cruise-control command data if supported",
+      "Inspect servo wiring and connectors",
+      "Look for related brake or switch faults"
+    ]
+  },
+  "P0526": {
+    "title": "Fan Speed Sensor Circuit",
+    "description": "The ECM detected a fault in the fan-speed sensor circuit.",
+    "possible_causes": [
+      "Failed fan-speed sensor",
+      "Cooling fan or control issue",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect sensor and fan wiring",
+      "Compare fan-speed data to actual fan operation",
+      "Check for relay, fuse, or control faults"
+    ]
+  },
+  "P0527": {
+    "title": "Fan Speed Sensor Circuit Low",
+    "description": "The fan-speed sensor signal is lower than expected.",
+    "possible_causes": [
+      "Failed fan-speed sensor",
+      "Cooling fan or control issue",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect sensor and fan wiring",
+      "Compare fan-speed data to actual fan operation",
+      "Check for relay, fuse, or control faults"
+    ]
+  },
+  "P0528": {
+    "title": "Fan Speed Sensor Circuit High",
+    "description": "The fan-speed sensor signal is higher than expected.",
+    "possible_causes": [
+      "Failed fan-speed sensor",
+      "Cooling fan or control issue",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect sensor and fan wiring",
+      "Compare fan-speed data to actual fan operation",
+      "Check for relay, fuse, or control faults"
+    ]
+  },
+  "P0529": {
+    "title": "Fan Speed Sensor Circuit Intermittent",
+    "description": "The fan-speed sensor signal is dropping out intermittently.",
+    "possible_causes": [
+      "Failed fan-speed sensor",
+      "Cooling fan or control issue",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect sensor and fan wiring",
+      "Compare fan-speed data to actual fan operation",
+      "Check for relay, fuse, or control faults"
+    ]
+  },
+  "P0530": {
+    "title": "A/C Refrigerant Pressure Sensor A Circuit",
+    "description": "The ECM detected an A/C refrigerant pressure fault: circuit.",
+    "possible_causes": [
+      "Low refrigerant charge",
+      "Failed pressure sensor",
+      "Damaged wiring or connector",
+      "A/C system leak or restriction"
+    ],
+    "quick_checks": [
+      "Inspect A/C pressure sensor connector and wiring",
+      "Check static and commanded A/C pressure data if available",
+      "Look for refrigerant leaks before replacing parts"
+    ]
+  },
+  "P0531": {
+    "title": "A/C Refrigerant Pressure Sensor A Range/Performance",
+    "description": "The ECM detected an A/C refrigerant pressure fault: range/performance.",
+    "possible_causes": [
+      "Low refrigerant charge",
+      "Failed pressure sensor",
+      "Damaged wiring or connector",
+      "A/C system leak or restriction"
+    ],
+    "quick_checks": [
+      "Inspect A/C pressure sensor connector and wiring",
+      "Check static and commanded A/C pressure data if available",
+      "Look for refrigerant leaks before replacing parts"
+    ]
+  },
+  "P0532": {
+    "title": "A/C Refrigerant Pressure Sensor A Circuit Low Input",
+    "description": "The ECM detected an A/C refrigerant pressure fault: low input.",
+    "possible_causes": [
+      "Low refrigerant charge",
+      "Failed pressure sensor",
+      "Damaged wiring or connector",
+      "A/C system leak or restriction"
+    ],
+    "quick_checks": [
+      "Inspect A/C pressure sensor connector and wiring",
+      "Check static and commanded A/C pressure data if available",
+      "Look for refrigerant leaks before replacing parts"
+    ]
+  },
+  "P0533": {
+    "title": "A/C Refrigerant Pressure Sensor A Circuit High Input",
+    "description": "The ECM detected an A/C refrigerant pressure fault: high input.",
+    "possible_causes": [
+      "Low refrigerant charge",
+      "Failed pressure sensor",
+      "Damaged wiring or connector",
+      "A/C system leak or restriction"
+    ],
+    "quick_checks": [
+      "Inspect A/C pressure sensor connector and wiring",
+      "Check static and commanded A/C pressure data if available",
+      "Look for refrigerant leaks before replacing parts"
+    ]
+  },
+  "P0534": {
+    "title": "A/C Refrigerant Charge Loss",
+    "description": "The ECM detected an A/C refrigerant pressure fault: refrigerant charge loss.",
+    "possible_causes": [
+      "Low refrigerant charge",
+      "Failed pressure sensor",
+      "Damaged wiring or connector",
+      "A/C system leak or restriction"
+    ],
+    "quick_checks": [
+      "Inspect A/C pressure sensor connector and wiring",
+      "Check static and commanded A/C pressure data if available",
+      "Look for refrigerant leaks before replacing parts"
+    ]
+  },
+  "P0535": {
+    "title": "A/C Evaporator Temperature Sensor Circuit",
+    "description": "The ECM detected a fault in the A/C evaporator temperature sensor circuit.",
+    "possible_causes": [
+      "Failed evaporator temperature sensor",
+      "Damaged wiring or connector",
+      "HVAC control issue"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring",
+      "Compare evap temperature data to A/C operation",
+      "Check for intermittent dropouts or connector fit issues"
+    ]
+  },
+  "P0536": {
+    "title": "A/C Evaporator Temperature Sensor Range/Performance",
+    "description": "The evaporator temperature sensor signal is outside the expected range.",
+    "possible_causes": [
+      "Failed evaporator temperature sensor",
+      "Damaged wiring or connector",
+      "HVAC control issue"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring",
+      "Compare evap temperature data to A/C operation",
+      "Check for intermittent dropouts or connector fit issues"
+    ]
+  },
+  "P0537": {
+    "title": "A/C Evaporator Temperature Sensor Circuit Low",
+    "description": "The evaporator temperature sensor signal is lower than expected.",
+    "possible_causes": [
+      "Failed evaporator temperature sensor",
+      "Damaged wiring or connector",
+      "HVAC control issue"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring",
+      "Compare evap temperature data to A/C operation",
+      "Check for intermittent dropouts or connector fit issues"
+    ]
+  },
+  "P0538": {
+    "title": "A/C Evaporator Temperature Sensor Circuit High",
+    "description": "The evaporator temperature sensor signal is higher than expected.",
+    "possible_causes": [
+      "Failed evaporator temperature sensor",
+      "Damaged wiring or connector",
+      "HVAC control issue"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring",
+      "Compare evap temperature data to A/C operation",
+      "Check for intermittent dropouts or connector fit issues"
+    ]
+  },
+  "P0539": {
+    "title": "A/C Evaporator Temperature Sensor Circuit Intermittent",
+    "description": "The evaporator temperature sensor signal is dropping out intermittently.",
+    "possible_causes": [
+      "Failed evaporator temperature sensor",
+      "Damaged wiring or connector",
+      "HVAC control issue"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring",
+      "Compare evap temperature data to A/C operation",
+      "Check for intermittent dropouts or connector fit issues"
+    ]
+  },
+  "P0540": {
+    "title": "Intake Air Heater A Circuit",
+    "description": "The ECM detected a fault in intake air heater A circuit.",
+    "possible_causes": [
+      "Failed intake air heater element",
+      "Relay, fuse, or wiring issue",
+      "Connector or control fault"
+    ],
+    "quick_checks": [
+      "Inspect heater circuit wiring and connectors",
+      "Check fuse, relay, and power feed",
+      "Test heater element resistance if applicable"
+    ]
+  },
+  "P0541": {
+    "title": "Intake Air Heater A Circuit Low",
+    "description": "The intake air heater A circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed intake air heater element",
+      "Relay, fuse, or wiring issue",
+      "Connector or control fault"
+    ],
+    "quick_checks": [
+      "Inspect heater circuit wiring and connectors",
+      "Check fuse, relay, and power feed",
+      "Test heater element resistance if applicable"
+    ]
+  },
+  "P0542": {
+    "title": "Intake Air Heater A Circuit High",
+    "description": "The intake air heater A circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed intake air heater element",
+      "Relay, fuse, or wiring issue",
+      "Connector or control fault"
+    ],
+    "quick_checks": [
+      "Inspect heater circuit wiring and connectors",
+      "Check fuse, relay, and power feed",
+      "Test heater element resistance if applicable"
+    ]
+  },
+  "P0543": {
+    "title": "Intake Air Heater A Circuit Open",
+    "description": "The intake air heater A circuit is open.",
+    "possible_causes": [
+      "Failed intake air heater element",
+      "Relay, fuse, or wiring issue",
+      "Connector or control fault"
+    ],
+    "quick_checks": [
+      "Inspect heater circuit wiring and connectors",
+      "Check fuse, relay, and power feed",
+      "Test heater element resistance if applicable"
+    ]
+  },
+  "P0544": {
+    "title": "Exhaust Gas Temperature Sensor Circuit Circuit Malfunction (Bank 1 Sensor 1)",
+    "description": "The ECM detected an exhaust gas temperature sensor circuit malfunction fault on bank 1 sensor 1.",
+    "possible_causes": [
+      "Failed exhaust gas temperature sensor",
+      "Damaged wiring or connector",
+      "Heat-related harness damage"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring near the exhaust",
+      "Compare temperature data to operating conditions",
+      "Check for heat damage or intermittent signal loss"
+    ]
+  },
+  "P0545": {
+    "title": "Exhaust Gas Temperature Sensor Circuit Range/Performance (Bank 1 Sensor 1)",
+    "description": "The ECM detected an exhaust gas temperature sensor range/performance fault on bank 1 sensor 1.",
+    "possible_causes": [
+      "Failed exhaust gas temperature sensor",
+      "Damaged wiring or connector",
+      "Heat-related harness damage"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring near the exhaust",
+      "Compare temperature data to operating conditions",
+      "Check for heat damage or intermittent signal loss"
+    ]
+  },
+  "P0546": {
+    "title": "Exhaust Gas Temperature Sensor Circuit Low (Bank 1 Sensor 1)",
+    "description": "The ECM detected an exhaust gas temperature sensor low fault on bank 1 sensor 1.",
+    "possible_causes": [
+      "Failed exhaust gas temperature sensor",
+      "Damaged wiring or connector",
+      "Heat-related harness damage"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring near the exhaust",
+      "Compare temperature data to operating conditions",
+      "Check for heat damage or intermittent signal loss"
+    ]
+  },
+  "P0547": {
+    "title": "Exhaust Gas Temperature Sensor Circuit High (Bank 1 Sensor 1)",
+    "description": "The ECM detected an exhaust gas temperature sensor high fault on bank 1 sensor 1.",
+    "possible_causes": [
+      "Failed exhaust gas temperature sensor",
+      "Damaged wiring or connector",
+      "Heat-related harness damage"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring near the exhaust",
+      "Compare temperature data to operating conditions",
+      "Check for heat damage or intermittent signal loss"
+    ]
+  },
+  "P0548": {
+    "title": "Exhaust Gas Temperature Sensor Circuit Intermittent (Bank 1 Sensor 1)",
+    "description": "The ECM detected an exhaust gas temperature sensor intermittent fault on bank 1 sensor 1.",
+    "possible_causes": [
+      "Failed exhaust gas temperature sensor",
+      "Damaged wiring or connector",
+      "Heat-related harness damage"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring near the exhaust",
+      "Compare temperature data to operating conditions",
+      "Check for heat damage or intermittent signal loss"
+    ]
+  },
+  "P0549": {
+    "title": "Exhaust Gas Temperature Sensor Circuit High (Bank 2 Sensor 1)",
+    "description": "The ECM detected a high-input fault in the exhaust gas temperature sensor circuit on bank 2 sensor 1.",
+    "possible_causes": [
+      "Failed exhaust gas temperature sensor",
+      "Short to voltage in the circuit",
+      "Heat-damaged wiring or connector near the exhaust"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and wiring near the exhaust",
+      "Compare temperature data to actual operating conditions",
+      "Check for harness damage or poor connector fit"
+    ]
+  },
+  "P0550": {
+    "title": "Power Steering Pressure Sensor/Switch Circuit",
+    "description": "The ECM detected a power steering pressure sensor or switch circuit fault.",
+    "possible_causes": [
+      "Failed pressure sensor or switch",
+      "Damaged wiring or connector",
+      "Power steering system issue affecting pressure signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare steering load to sensor data if available",
+      "Check for fluid leaks or steering system noise"
+    ]
+  },
+  "P0551": {
+    "title": "Power Steering Pressure Sensor/Switch Range/Performance",
+    "description": "The ECM detected a power steering pressure sensor or switch range/performance fault.",
+    "possible_causes": [
+      "Failed pressure sensor or switch",
+      "Damaged wiring or connector",
+      "Power steering system issue affecting pressure signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare steering load to sensor data if available",
+      "Check for fluid leaks or steering system noise"
+    ]
+  },
+  "P0552": {
+    "title": "Power Steering Pressure Sensor/Switch Low Input",
+    "description": "The ECM detected a power steering pressure sensor or switch low input fault.",
+    "possible_causes": [
+      "Failed pressure sensor or switch",
+      "Damaged wiring or connector",
+      "Power steering system issue affecting pressure signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare steering load to sensor data if available",
+      "Check for fluid leaks or steering system noise"
+    ]
+  },
+  "P0553": {
+    "title": "Power Steering Pressure Sensor/Switch High Input",
+    "description": "The ECM detected a power steering pressure sensor or switch high input fault.",
+    "possible_causes": [
+      "Failed pressure sensor or switch",
+      "Damaged wiring or connector",
+      "Power steering system issue affecting pressure signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare steering load to sensor data if available",
+      "Check for fluid leaks or steering system noise"
+    ]
+  },
+  "P0554": {
+    "title": "Power Steering Pressure Sensor/Switch Intermittent",
+    "description": "The ECM detected a power steering pressure sensor or switch intermittent fault.",
+    "possible_causes": [
+      "Failed pressure sensor or switch",
+      "Damaged wiring or connector",
+      "Power steering system issue affecting pressure signal"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Compare steering load to sensor data if available",
+      "Check for fluid leaks or steering system noise"
+    ]
+  },
+  "P0555": {
+    "title": "Brake Booster Pressure Sensor Sensor Circuit",
+    "description": "The ECM detected a brake booster pressure sensor sensor circuit fault.",
+    "possible_causes": [
+      "Failed pressure sensor",
+      "Vacuum or hydraulic issue at the booster",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check booster vacuum or pressure supply",
+      "Compare sensor data to actual brake-assist behavior"
+    ]
+  },
+  "P0556": {
+    "title": "Brake Booster Pressure Sensor Sensor Range/Performance",
+    "description": "The ECM detected a brake booster pressure sensor sensor range/performance fault.",
+    "possible_causes": [
+      "Failed pressure sensor",
+      "Vacuum or hydraulic issue at the booster",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check booster vacuum or pressure supply",
+      "Compare sensor data to actual brake-assist behavior"
+    ]
+  },
+  "P0557": {
+    "title": "Brake Booster Pressure Sensor Sensor Low Input",
+    "description": "The ECM detected a brake booster pressure sensor sensor low input fault.",
+    "possible_causes": [
+      "Failed pressure sensor",
+      "Vacuum or hydraulic issue at the booster",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check booster vacuum or pressure supply",
+      "Compare sensor data to actual brake-assist behavior"
+    ]
+  },
+  "P0558": {
+    "title": "Brake Booster Pressure Sensor Sensor High Input",
+    "description": "The ECM detected a brake booster pressure sensor sensor high input fault.",
+    "possible_causes": [
+      "Failed pressure sensor",
+      "Vacuum or hydraulic issue at the booster",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check booster vacuum or pressure supply",
+      "Compare sensor data to actual brake-assist behavior"
+    ]
+  },
+  "P0559": {
+    "title": "Brake Booster Pressure Sensor Sensor Intermittent",
+    "description": "The ECM detected a brake booster pressure sensor sensor intermittent fault.",
+    "possible_causes": [
+      "Failed pressure sensor",
+      "Vacuum or hydraulic issue at the booster",
+      "Damaged wiring or connector"
+    ],
+    "quick_checks": [
+      "Inspect the sensor connector and harness",
+      "Check booster vacuum or pressure supply",
+      "Compare sensor data to actual brake-assist behavior"
+    ]
+  },
   "P0560": {
     "title": "System Voltage Malfunction",
     "description": "The ECM detected a system voltage problem.",
@@ -4551,6 +6054,496 @@
       "Measure battery and charging voltage",
       "Inspect terminals and grounds for voltage drop",
       "Check alternator output under load"
+    ]
+  },
+  "P0565": {
+    "title": "Cruise Control On Signal",
+    "description": "The ECM detected a fault in the cruise-control ON signal.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0566": {
+    "title": "Cruise Control Off Signal",
+    "description": "The ECM detected a fault in the cruise-control OFF signal.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0567": {
+    "title": "Cruise Control Resume Signal",
+    "description": "The ECM detected a fault in the cruise-control RESUME signal.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0568": {
+    "title": "Cruise Control Set Signal",
+    "description": "The ECM detected a fault in the cruise-control SET signal.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0569": {
+    "title": "Cruise Control Coast Signal",
+    "description": "The ECM detected a fault in the cruise-control COAST signal.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0570": {
+    "title": "Cruise Control Accel Signal",
+    "description": "The ECM detected a fault in the cruise-control ACCEL signal.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0571": {
+    "title": "Brake Switch A Circuit",
+    "description": "The ECM detected a fault in brake switch A circuit.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0572": {
+    "title": "Brake Switch A Circuit Low",
+    "description": "The brake switch A circuit signal is lower than expected.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0573": {
+    "title": "Brake Switch A Circuit High",
+    "description": "The brake switch A circuit signal is higher than expected.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0574": {
+    "title": "Cruise Control System - Vehicle Speed Too High",
+    "description": "Cruise control was canceled because vehicle speed is above the allowed range.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0575": {
+    "title": "Cruise Control Input Circuit",
+    "description": "The ECM detected a fault in the cruise-control input circuit.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0576": {
+    "title": "Cruise Control Input Circuit Low",
+    "description": "The cruise-control input circuit signal is lower than expected.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0577": {
+    "title": "Cruise Control Input Circuit High",
+    "description": "The cruise-control input circuit signal is higher than expected.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0578": {
+    "title": "Cruise Control Multi-Function Input A Circuit Stuck",
+    "description": "The ECM detected a stuck signal in cruise-control multi-function input A.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0579": {
+    "title": "Cruise Control Multi-Function Input A Circuit Range/Performance",
+    "description": "Cruise-control multi-function input A is outside the expected operating range.",
+    "possible_causes": [
+      "Cruise-control switch fault",
+      "Brake switch or steering wheel switch issue",
+      "Damaged wiring, clock spring, or connector"
+    ],
+    "quick_checks": [
+      "Watch switch input data on the scan tool if supported",
+      "Inspect steering wheel switch and clock spring circuits",
+      "Check brake switch operation and connector fit"
+    ]
+  },
+  "P0580": {
+    "title": "Cruise Control Multi-Function Input A Circuit Low",
+    "description": "The cruise-control multi-function input A signal is lower than expected.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0581": {
+    "title": "Cruise Control Multi-Function Input A Circuit High",
+    "description": "The cruise-control multi-function input A signal is higher than expected.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0582": {
+    "title": "Cruise Control Vacuum Control Circuit/Open",
+    "description": "The ECM detected an open or fault in the cruise-control vacuum control circuit.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0583": {
+    "title": "Cruise Control Vacuum Control Circuit Low",
+    "description": "The cruise-control vacuum control circuit signal is lower than expected.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0584": {
+    "title": "Cruise Control Vacuum Control Circuit High",
+    "description": "The cruise-control vacuum control circuit signal is higher than expected.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0585": {
+    "title": "Cruise Control Multi-Function Input A/B Correlation",
+    "description": "The ECM detected a mismatch between cruise-control multi-function input A and B.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0586": {
+    "title": "Cruise Control Vent Control Circuit/Open",
+    "description": "The ECM detected an open or fault in the cruise-control vent control circuit.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0587": {
+    "title": "Cruise Control Vent Control Circuit Low",
+    "description": "The cruise-control vent control circuit signal is lower than expected.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0588": {
+    "title": "Cruise Control Vent Control Circuit High",
+    "description": "The cruise-control vent control circuit signal is higher than expected.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0589": {
+    "title": "Cruise Control Multi-Function Input B Circuit",
+    "description": "The ECM detected a fault in cruise-control multi-function input B circuit.",
+    "possible_causes": [
+      "Cruise-control switch or vacuum control fault",
+      "Damaged wiring or connector",
+      "Clock spring or module issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and vacuum control circuits",
+      "Watch input data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0590": {
+    "title": "Cruise Control Multi-Function Input B Circuit Stuck",
+    "description": "The ECM detected a stuck signal in cruise-control multi-function input B.",
+    "possible_causes": [
+      "Cruise-control switch or servo fault",
+      "Damaged wiring or connector",
+      "Intermittent control-circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and servo circuits",
+      "Watch input or control data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0591": {
+    "title": "Cruise Control Multi-Function Input B Circuit Low",
+    "description": "The cruise-control multi-function input B signal is lower than expected.",
+    "possible_causes": [
+      "Cruise-control switch or servo fault",
+      "Damaged wiring or connector",
+      "Intermittent control-circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and servo circuits",
+      "Watch input or control data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0592": {
+    "title": "Cruise Control Multi-Function Input B Circuit High",
+    "description": "The cruise-control multi-function input B signal is higher than expected.",
+    "possible_causes": [
+      "Cruise-control switch or servo fault",
+      "Damaged wiring or connector",
+      "Intermittent control-circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and servo circuits",
+      "Watch input or control data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0593": {
+    "title": "Cruise Control Servo Control Circuit High",
+    "description": "The cruise-control servo control signal is higher than expected.",
+    "possible_causes": [
+      "Cruise-control switch or servo fault",
+      "Damaged wiring or connector",
+      "Intermittent control-circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and servo circuits",
+      "Watch input or control data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0594": {
+    "title": "Cruise Control Servo Control Circuit Intermittent",
+    "description": "The cruise-control servo control signal is dropping out intermittently.",
+    "possible_causes": [
+      "Cruise-control switch or servo fault",
+      "Damaged wiring or connector",
+      "Intermittent control-circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect cruise-control switch and servo circuits",
+      "Watch input or control data if supported",
+      "Check connector condition and continuity"
+    ]
+  },
+  "P0595": {
+    "title": "Thermostat Heater Control Circuit",
+    "description": "The ECM detected a fault in the thermostat heater control circuit.",
+    "possible_causes": [
+      "Thermostat heater or assembly fault",
+      "Damaged wiring or connector",
+      "Control circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect thermostat heater connector and harness",
+      "Check command and voltage at the heater circuit",
+      "Confirm cooling-system operation before replacing parts"
+    ]
+  },
+  "P0596": {
+    "title": "Thermostat Heater Control Circuit Range/Performance",
+    "description": "The thermostat heater control is outside the expected operating range.",
+    "possible_causes": [
+      "Thermostat heater or assembly fault",
+      "Damaged wiring or connector",
+      "Control circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect thermostat heater connector and harness",
+      "Check command and voltage at the heater circuit",
+      "Confirm cooling-system operation before replacing parts"
+    ]
+  },
+  "P0597": {
+    "title": "Thermostat Heater Control Circuit/Open",
+    "description": "The thermostat heater control circuit is open.",
+    "possible_causes": [
+      "Thermostat heater or assembly fault",
+      "Damaged wiring or connector",
+      "Control circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect thermostat heater connector and harness",
+      "Check command and voltage at the heater circuit",
+      "Confirm cooling-system operation before replacing parts"
+    ]
+  },
+  "P0598": {
+    "title": "Thermostat Heater Control Circuit Low",
+    "description": "The thermostat heater control circuit signal is lower than expected.",
+    "possible_causes": [
+      "Thermostat heater or assembly fault",
+      "Damaged wiring or connector",
+      "Control circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect thermostat heater connector and harness",
+      "Check command and voltage at the heater circuit",
+      "Confirm cooling-system operation before replacing parts"
+    ]
+  },
+  "P0599": {
+    "title": "Thermostat Heater Control Circuit High",
+    "description": "The thermostat heater control circuit signal is higher than expected.",
+    "possible_causes": [
+      "Thermostat heater or assembly fault",
+      "Damaged wiring or connector",
+      "Control circuit issue"
+    ],
+    "quick_checks": [
+      "Inspect thermostat heater connector and harness",
+      "Check command and voltage at the heater circuit",
+      "Confirm cooling-system operation before replacing parts"
     ]
   },
   "P0600": {
