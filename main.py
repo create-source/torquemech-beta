@@ -2133,7 +2133,12 @@ def build_cost_guide_links(code: str):
     if not results:
         fallback_rules = [
             {
-                "matches": lambda current: current.startswith(("P013", "P014", "P015", "P016")) or current in {
+                "matches": lambda current: (
+                    current.startswith("P013")
+                    or (current.startswith("P014") and current not in {"P0148", "P0149"})
+                    or current.startswith("P015")
+                    or (current.startswith("P016") and current not in {"P0168", "P0169"})
+                    or current in {
                     "P0171",
                     "P0174",
                     "P0420",
@@ -2142,7 +2147,8 @@ def build_cost_guide_links(code: str):
                     "P2196",
                     "P2197",
                     "P2198",
-                },
+                }
+                ),
                 "guides": [
                     {
                         "label": "Oxygen Sensor Replacement Cost",
@@ -3490,6 +3496,15 @@ SITEMAP_STATIC_PATHS = [
     "/disclaimer",
 ]
 
+SITEMAP_OBD_RANGE_PATHS = [
+    "/obd/p00xx",
+    "/obd/p01xx",
+    "/obd/p02xx",
+    "/obd/p03xx",
+    "/obd/p04xx",
+    "/obd/p05xx",
+]
+
 def build_sitemap_obd_detail_paths() -> List[str]:
     if not OBD_SEED_JSON_PATH.exists():
         return []
@@ -3542,6 +3557,12 @@ def build_sitemap_lastmods() -> Dict[str, str]:
         "/obd-codes": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_codes_index.html", BASE_DIR / "data" / "obd_codes.json"],
     }
 
+    shared_obd_index_sources = [
+        BASE_DIR / "main.py",
+        TEMPLATES_DIR / "obd_index.html",
+        BASE_DIR / "data" / "obd_codes.json",
+    ]
+
     for guide in build_repair_cost_guide_cards():
         href = str(guide.get("href") or "").strip()
         if not href.startswith("/cost/"):
@@ -3552,6 +3573,9 @@ def build_sitemap_lastmods() -> Dict[str, str]:
 
     for path in build_sitemap_obd_detail_paths():
         lastmod_sources[path] = list(shared_obd_sources)
+
+    for path in SITEMAP_OBD_RANGE_PATHS:
+        lastmod_sources[path] = list(shared_obd_index_sources)
 
     for path, source_files in lastmod_sources.items():
         lastmod = latest_lastmod_for_files(source_files)
@@ -3565,6 +3589,7 @@ def sitemap():
     base_url = "https://torquemech.com"
     paths = [
         *SITEMAP_STATIC_PATHS,
+        *SITEMAP_OBD_RANGE_PATHS,
         *[item["href"] for item in build_repair_cost_guide_cards() if item.get("href")],
         *build_sitemap_obd_detail_paths(),
     ]
