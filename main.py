@@ -1626,6 +1626,20 @@ OBD_RANGE_PAGE_CONFIG = {
         "intro": "Browse P05xx OBD trouble codes covering idle control, speed signals, and charging or electrical faults, then open the full TorqueMech guides for next steps.",
         "meta_description": "Browse P05xx OBD trouble codes on TorqueMech for idle, speed, and electrical faults with code meanings, causes, and repair guidance.",
     },
+    "p08xx": {
+        "prefixes": ("P08",),
+        "title": "P08xx OBD Codes",
+        "group_title": "P08xx Transmission / Clutch / Range Codes",
+        "intro": "Browse P08xx OBD trouble codes covering clutch inputs, shift-position faults, transfer-case controls, and transmission pressure switch issues, then open each TorqueMech guide for practical next steps.",
+        "meta_description": "Browse P08xx OBD trouble codes on TorqueMech for clutch, shift-range, 4WD, and transmission pressure faults with plain-English meaning and diagnostic direction.",
+    },
+    "p09xx": {
+        "prefixes": ("P09",),
+        "title": "P09xx OBD Codes",
+        "group_title": "P09xx Transmission / Hydraulic / Actuator Codes",
+        "intro": "Browse P09xx OBD trouble codes focused on clutch actuators, gear-select circuits, hydraulic pressure signals, and transmission control faults, then open each TorqueMech guide for causes and checks.",
+        "meta_description": "Browse P09xx OBD trouble codes on TorqueMech for transmission actuator, hydraulic pressure, and gear-select faults with code meanings, causes, and repair direction.",
+    },
 }
 
 def build_obd_range_group(range_slug: str) -> Tuple[List[Dict[str, Any]], int, Dict[str, str] | None]:
@@ -1713,6 +1727,14 @@ def obd_p04xx(request: Request):
 @app.get("/obd/p05xx", response_class=HTMLResponse)
 def obd_p05xx(request: Request):
     return render_obd_range_page(request, "p05xx")
+
+@app.get("/obd/p08xx", response_class=HTMLResponse)
+def obd_p08xx(request: Request):
+    return render_obd_range_page(request, "p08xx")
+
+@app.get("/obd/p09xx", response_class=HTMLResponse)
+def obd_p09xx(request: Request):
+    return render_obd_range_page(request, "p09xx")
 
 def build_featured_obd_codes():
     return [
@@ -3628,6 +3650,8 @@ SITEMAP_OBD_RANGE_PATHS = [
     "/obd/p03xx",
     "/obd/p04xx",
     "/obd/p05xx",
+    "/obd/p08xx",
+    "/obd/p09xx",
 ]
 
 def build_sitemap_obd_detail_paths() -> List[str]:

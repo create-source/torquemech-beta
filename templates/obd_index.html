@@ -36,6 +36,39 @@
       margin-top: 14px;
     }
 
+    .obd-index-range-links {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .obd-index-range-links__item {
+      display: block;
+      padding: 12px 14px;
+      border: 1px solid var(--tm-border);
+      border-radius: 14px;
+      background: var(--tm-surface);
+      box-shadow: var(--tm-shadow-sm);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .obd-index-range-links__code {
+      display: inline-block;
+      margin: 0 0 4px 0;
+      color: var(--tm-text);
+      font-size: 0.84rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .obd-index-range-links__label {
+      color: var(--tm-text-muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
     .obd-index-range-nav__item {
       display: block;
       padding: 12px 14px;
@@ -138,6 +171,10 @@
       .obd-index-range-nav {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .obd-index-range-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
   </style>
 {% endblock %}
@@ -163,6 +200,43 @@
       Showing {{ total_codes }} code{% if total_codes != 1 %}s{% endif %} from the current TorqueMech OBD dataset.
     </p>
 
+    {% if not is_range_page %}
+    <div class="obd-index-range-links">
+      <a class="obd-index-range-links__item" href="/obd/p00xx">
+        <div class="obd-index-range-links__code">P00xx</div>
+        <div class="obd-index-range-links__label">Air / Fuel / Sensor codes</div>
+      </a>
+      <a class="obd-index-range-links__item" href="/obd/p01xx">
+        <div class="obd-index-range-links__code">P01xx</div>
+        <div class="obd-index-range-links__label">Air / Fuel / Sensor performance</div>
+      </a>
+      <a class="obd-index-range-links__item" href="/obd/p02xx">
+        <div class="obd-index-range-links__code">P02xx</div>
+        <div class="obd-index-range-links__label">Fuel / Injector / Air metering</div>
+      </a>
+      <a class="obd-index-range-links__item" href="/obd/p03xx">
+        <div class="obd-index-range-links__code">P03xx</div>
+        <div class="obd-index-range-links__label">Ignition / Misfire / Timing</div>
+      </a>
+      <a class="obd-index-range-links__item" href="/obd/p04xx">
+        <div class="obd-index-range-links__code">P04xx</div>
+        <div class="obd-index-range-links__label">Emissions / EVAP / Catalyst</div>
+      </a>
+      <a class="obd-index-range-links__item" href="/obd/p05xx">
+        <div class="obd-index-range-links__code">P05xx</div>
+        <div class="obd-index-range-links__label">Idle / Speed / Electrical</div>
+      </a>
+      <a class="obd-index-range-links__item" href="/obd/p08xx">
+        <div class="obd-index-range-links__code">P08xx</div>
+        <div class="obd-index-range-links__label">Transmission / Clutch / Range</div>
+      </a>
+      <a class="obd-index-range-links__item" href="/obd/p09xx">
+        <div class="obd-index-range-links__code">P09xx</div>
+        <div class="obd-index-range-links__label">Transmission / Hydraulic / Actuator</div>
+      </a>
+    </div>
+    {% endif %}
+
     {% set existing_group_ids = obd_code_groups | map(attribute='id') | list %}
     <div class="obd-index-jumps">
       {% if is_range_page %}
@@ -172,6 +246,8 @@
       <a class="obd-index-jump" href="/obd/p03xx">P03xx</a>
       <a class="obd-index-jump" href="/obd/p04xx">P04xx</a>
       <a class="obd-index-jump" href="/obd/p05xx">P05xx</a>
+      <a class="obd-index-jump" href="/obd/p08xx">P08xx</a>
+      <a class="obd-index-jump" href="/obd/p09xx">P09xx</a>
       {% else %}
       {% if "p00_p01" in existing_group_ids %}
       <a class="obd-index-jump" href="#group-p00_p01">Air / Fuel / Sensors</a>
@@ -222,6 +298,16 @@
       {% elif range_slug == "p05xx" %}
         {% set prev_href = "/obd/p04xx" %}
         {% set prev_label = "P04xx Emissions / EVAP / Catalyst" %}
+        {% set next_href = "/obd/p08xx" %}
+        {% set next_label = "P08xx Transmission / Clutch / Range" %}
+      {% elif range_slug == "p08xx" %}
+        {% set prev_href = "/obd/p05xx" %}
+        {% set prev_label = "P05xx Charging / Idle / Voltage" %}
+        {% set next_href = "/obd/p09xx" %}
+        {% set next_label = "P09xx Transmission / Hydraulic / Actuator" %}
+      {% elif range_slug == "p09xx" %}
+        {% set prev_href = "/obd/p08xx" %}
+        {% set prev_label = "P08xx Transmission / Clutch / Range" %}
       {% elif range_slug == "p00xx" %}
         {% set next_href = "/obd/p01xx" %}
         {% set next_label = "P01xx Air / Fuel / Sensor Performance" %}
