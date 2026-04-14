@@ -11,6 +11,25 @@
       line-height: 1.7;
     }
 
+    .obd-detail-subsection + .obd-detail-subsection {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .obd-detail-subsection__title {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--tm-text);
+    }
+
+    .obd-detail-subsection__list {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.7;
+    }
+
     .obd-cause-list li + li {
       margin-top: 4px;
     }
@@ -199,7 +218,7 @@
       {{ code }} - {{ title }}
     </h1>
     <p class="tm-muted" style="margin:0; max-width:64ch;">
-      {{ description or "Review the code meaning, common causes, quick checks, and likely repair paths before estimating the next step." }}
+      {{ display_description or description or "Review the code meaning, common causes, quick checks, and likely repair paths before estimating the next step." }}
     </p>
     <div class="tm-actions" style="margin-top:16px;">
       <a href="/estimator?obd={{ code }}" class="tm-btn tm-btn-primary">Open Estimator</a>
@@ -233,7 +252,29 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Code Meaning</h2>
-    <p style="margin:0;">{{ description or title }}</p>
+    <p style="margin:0;">{{ display_description or description or title }}</p>
+
+    {% if use_inline_quality_sections and display_symptoms %}
+    <div class="obd-detail-subsection">
+      <h3 class="obd-detail-subsection__title">Symptoms</h3>
+      <ul class="obd-detail-subsection__list">
+        {% for symptom in display_symptoms %}
+        <li>{{ symptom }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if use_inline_quality_sections and display_quick_checks %}
+    <div class="obd-detail-subsection">
+      <h3 class="obd-detail-subsection__title">Quick Diagnostic Checks</h3>
+      <ul class="obd-detail-subsection__list">
+        {% for item in display_quick_checks %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </div>
 </section>
 
@@ -281,7 +322,7 @@
 </section>
 {% endif %}
 
-{% if repair_path and repair_path.symptoms %}
+{% if not use_inline_quality_sections and repair_path and repair_path.symptoms %}
 <section class="tm-section">
   <div class="tm-card">
     <h2>What You May Notice</h2>
@@ -294,12 +335,12 @@
 </section>
 {% endif %}
 
-{% if quick_checks %}
+{% if not use_inline_quality_sections and display_quick_checks %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Quick Checks</h2>
+    <h2>Quick Diagnostic Checks</h2>
     <ul style="margin:0; padding-left:18px; line-height:1.7;">
-      {% for item in quick_checks %}
+      {% for item in display_quick_checks %}
       <li>{{ item }}</li>
       {% endfor %}
     </ul>
@@ -307,7 +348,7 @@
 </section>
 {% endif %}
 
-{% if repair_path and repair_path.electrical and repair_path.electrical["items"] %}
+{% if not use_inline_quality_sections and repair_path and repair_path.electrical and repair_path.electrical["items"] %}
 <section class="tm-section">
   <div class="tm-card">
     <h2>{{ repair_path.electrical.title or "Electrical Focus" }}</h2>
