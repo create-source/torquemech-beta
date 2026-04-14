@@ -29,6 +29,150 @@
     ],
     "title": "Right Front Wheel Speed Sensor Circuit"
   },
+  "P0001": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Volume Regulator Control Circuit/Open"
+  },
+  "P0002": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Volume Regulator Control Circuit Range/Performance"
+  },
+  "P0003": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Volume Regulator Control Circuit Low"
+  },
+  "P0004": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Volume Regulator Control Circuit High"
+  },
+  "P0005": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Shutoff Valve \"A\" Control Circuit/Open"
+  },
+  "P0006": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Shutoff Valve \"A\" Control Circuit Low"
+  },
+  "P0007": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Shutoff Valve \"A\" Control Circuit High"
+  },
+  "P0008": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Engine Position System Performance Bank 1"
+  },
+  "P0009": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Engine Position System Performance Bank 2"
+  },
   "P0010": {
     "description": "VVT solenoid/actuator circuit fault (bank 1).",
     "possible_causes": [
@@ -289,6 +433,70 @@
     ],
     "title": "B Camshaft Position Timing Over-Retarded (Bank 2)"
   },
+  "P0026": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit Range/Performance Bank 1"
+  },
+  "P0027": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit Range/Performance Bank 1"
+  },
+  "P0028": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit Range/Performance Bank 2"
+  },
+  "P0029": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit Range/Performance Bank 2"
+  },
   "P0030": {
     "description": "The heater circuit for the upstream oxygen sensor on bank 1 is not operating correctly.",
     "possible_causes": [
@@ -304,6 +512,86 @@
       "Check for exhaust heat damage to wiring"
     ],
     "title": "HO2S Heater Control Circuit (Bank 1 Sensor 1)"
+  },
+  "P0031": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit Low (Bank 1 Sensor 1)"
+  },
+  "P0032": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit High (Bank 1 Sensor 1)"
+  },
+  "P0033": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger Bypass Valve Control Circuit"
+  },
+  "P0034": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger Bypass Valve Control Circuit Low"
+  },
+  "P0035": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger Bypass Valve Control Circuit High"
   },
   "P0036": {
     "description": "The heater circuit for the downstream oxygen sensor on bank 1 is not operating correctly.",
@@ -321,6 +609,210 @@
     ],
     "title": "HO2S Heater Control Circuit (Bank 1 Sensor 2)"
   },
+  "P0037": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit Low (Bank 1 Sensor 2)"
+  },
+  "P0038": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit High (Bank 1 Sensor 2)"
+  },
+  "P0039": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger/Supercharger Bypass Valve Control Circuit Range/Performance"
+  },
+  "P0040": {
+    "description": "The PCM sees the oxygen-sensor signals assigned to the wrong bank, usually after sensor replacement or harness cross-connection.",
+    "possible_causes": [
+      "Sensor connectors swapped during service",
+      "Harness routing error",
+      "Incorrect sensor installation"
+    ],
+    "quick_checks": [
+      "Trace the upstream and downstream sensor connectors bank to bank",
+      "Verify sensor connectors were not crossed during exhaust service",
+      "Confirm the scan-tool bank labeling matches the installed sensors"
+    ],
+    "title": "Upstream Oxygen Sensors Swapped From Bank To Bank"
+  },
+  "P0041": {
+    "description": "The PCM sees the oxygen-sensor signals assigned to the wrong bank, usually after sensor replacement or harness cross-connection.",
+    "possible_causes": [
+      "Sensor connectors swapped during service",
+      "Harness routing error",
+      "Incorrect sensor installation"
+    ],
+    "quick_checks": [
+      "Trace the upstream and downstream sensor connectors bank to bank",
+      "Verify sensor connectors were not crossed during exhaust service",
+      "Confirm the scan-tool bank labeling matches the installed sensors"
+    ],
+    "title": "Downstream Oxygen Sensors Swapped From Bank To Bank"
+  },
+  "P0042": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit (Bank 1 Sensor 3)"
+  },
+  "P0043": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit Low (Bank 1 Sensor 3)"
+  },
+  "P0044": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit High (Bank 1 Sensor 3)"
+  },
+  "P0045": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger/Supercharger Boost Control \"A\" Circuit/Open"
+  },
+  "P0046": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger/Supercharger Boost Control \"A\" Circuit Range/Performance"
+  },
+  "P0047": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger/Supercharger Boost Control \"A\" Circuit Low"
+  },
+  "P0048": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger/Supercharger Boost Control \"A\" Circuit High"
+  },
+  "P0049": {
+    "description": "The PCM detected a turbo or supercharger control fault, often tied to the bypass or boost-control circuit, a sticking actuator, or a pressure-control problem.",
+    "possible_causes": [
+      "Sticking boost-control or bypass actuator",
+      "Vacuum or pressure leak",
+      "Wiring or solenoid fault",
+      "Turbocharger mechanical issue"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and actuator linkage",
+      "Check for stuck bypass or wastegate movement",
+      "Compare commanded and actual boost-control data",
+      "Inspect for charge-pipe leaks before blaming the turbocharger"
+    ],
+    "title": "Turbocharger/Supercharger Turbine Overspeed"
+  },
   "P0050": {
     "description": "The heater circuit for the upstream oxygen sensor on bank 2 is not operating correctly.",
     "possible_causes": [
@@ -337,6 +829,86 @@
     ],
     "title": "HO2S Heater Control Circuit (Bank 2 Sensor 1)"
   },
+  "P0051": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit Low (Bank 2 Sensor 1)"
+  },
+  "P0052": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit High (Bank 2 Sensor 1)"
+  },
+  "P0053": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Resistance (Bank 1 Sensor 1)"
+  },
+  "P0054": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Resistance (Bank 1 Sensor 2)"
+  },
+  "P0055": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Resistance (Bank 1 Sensor 3)"
+  },
   "P0056": {
     "description": "The heater circuit for the downstream oxygen sensor on bank 2 is not operating correctly.",
     "possible_causes": [
@@ -352,6 +924,694 @@
       "Inspect for heat damage near the exhaust"
     ],
     "title": "HO2S Heater Control Circuit (Bank 2 Sensor 2)"
+  },
+  "P0057": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit Low (Bank 2 Sensor 2)"
+  },
+  "P0058": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit High (Bank 2 Sensor 2)"
+  },
+  "P0059": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Resistance (Bank 2 Sensor 1)"
+  },
+  "P0060": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Resistance (Bank 2 Sensor 2)"
+  },
+  "P0061": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Resistance (Bank 2 Sensor 3)"
+  },
+  "P0062": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit (Bank 2 Sensor 3)"
+  },
+  "P0063": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit Low (Bank 2 Sensor 3)"
+  },
+  "P0064": {
+    "description": "The PCM detected a heater-control or heater-resistance problem in the heated oxygen sensor circuit, which can delay sensor warm-up and emissions readiness.",
+    "possible_causes": [
+      "Failed O2 sensor heater element",
+      "Blown fuse or relay issue",
+      "Harness damage near exhaust",
+      "Poor power or ground to the heater circuit"
+    ],
+    "quick_checks": [
+      "Inspect the O2 sensor harness near the exhaust for heat damage",
+      "Check the heater fuse, relay, and power supply",
+      "Measure heater resistance and compare against spec if available",
+      "Verify the PCM can control the heater circuit before replacing the sensor"
+    ],
+    "title": "HO2S Heater Control Circuit High (Bank 2 Sensor 3)"
+  },
+  "P0065": {
+    "description": "The PCM detected a fault in the air-assisted injector control circuit or command response, which can affect fuel atomization and drivability.",
+    "possible_causes": [
+      "Failed air-assist injector solenoid",
+      "Blocked air passage",
+      "Wiring or connector issue",
+      "PCM control problem"
+    ],
+    "quick_checks": [
+      "Inspect the injector air-control wiring and connector",
+      "Check for clogged air passages or carbon buildup",
+      "Verify commanded operation with a scan tool if available",
+      "Confirm the fault is not caused by low supply voltage"
+    ],
+    "title": "Air Assisted Injector Control Range/Performance"
+  },
+  "P0066": {
+    "description": "The PCM detected a fault in the air-assisted injector control circuit or command response, which can affect fuel atomization and drivability.",
+    "possible_causes": [
+      "Failed air-assist injector solenoid",
+      "Blocked air passage",
+      "Wiring or connector issue",
+      "PCM control problem"
+    ],
+    "quick_checks": [
+      "Inspect the injector air-control wiring and connector",
+      "Check for clogged air passages or carbon buildup",
+      "Verify commanded operation with a scan tool if available",
+      "Confirm the fault is not caused by low supply voltage"
+    ],
+    "title": "Air Assisted Injector Control Circuit or Circuit Low"
+  },
+  "P0067": {
+    "description": "The PCM detected a fault in the air-assisted injector control circuit or command response, which can affect fuel atomization and drivability.",
+    "possible_causes": [
+      "Failed air-assist injector solenoid",
+      "Blocked air passage",
+      "Wiring or connector issue",
+      "PCM control problem"
+    ],
+    "quick_checks": [
+      "Inspect the injector air-control wiring and connector",
+      "Check for clogged air passages or carbon buildup",
+      "Verify commanded operation with a scan tool if available",
+      "Confirm the fault is not caused by low supply voltage"
+    ],
+    "title": "Air Assisted Injector Control Circuit High"
+  },
+  "P0068": {
+    "description": "The PCM found an airflow or pressure signal that does not agree with throttle position or other sensor inputs, which usually points to a sensor, wiring, or air-leak problem.",
+    "possible_causes": [
+      "Dirty or failing MAP/MAF sensor",
+      "Vacuum leak or intake leak",
+      "Wiring or connector issue",
+      "Throttle-body or airflow problem"
+    ],
+    "quick_checks": [
+      "Inspect the intake duct and vacuum hoses for leaks",
+      "Compare MAP and MAF readings to RPM and throttle angle",
+      "Clean the sensor only if the service procedure allows it",
+      "Check the connector and sensor ground before replacing the sensor"
+    ],
+    "title": "MAP/MAF - Throttle Position Correlation"
+  },
+  "P0069": {
+    "description": "The PCM found an airflow or pressure signal that does not agree with throttle position or other sensor inputs, which usually points to a sensor, wiring, or air-leak problem.",
+    "possible_causes": [
+      "Dirty or failing MAP/MAF sensor",
+      "Vacuum leak or intake leak",
+      "Wiring or connector issue",
+      "Throttle-body or airflow problem"
+    ],
+    "quick_checks": [
+      "Inspect the intake duct and vacuum hoses for leaks",
+      "Compare MAP and MAF readings to RPM and throttle angle",
+      "Clean the sensor only if the service procedure allows it",
+      "Check the connector and sensor ground before replacing the sensor"
+    ],
+    "title": "Manifold Absolute Pressure - Barometric Pressure Correlation"
+  },
+  "P0070": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Ambient Air Temperature Sensor Circuit"
+  },
+  "P0071": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Ambient Air Temperature Sensor Range/Performance"
+  },
+  "P0072": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Ambient Air Temperature Sensor Circuit Low Input"
+  },
+  "P0073": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Ambient Air Temperature Sensor Circuit High Input"
+  },
+  "P0074": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Ambient Air Temperature Sensor Circuit Intermittent"
+  },
+  "P0075": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit (Bank 1)"
+  },
+  "P0076": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit Low (Bank 1)"
+  },
+  "P0077": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit High (Bank 1)"
+  },
+  "P0078": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit (Bank 1)"
+  },
+  "P0079": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit Low (Bank 1)"
+  },
+  "P0080": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit High (Bank 1)"
+  },
+  "P0081": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit (Bank 2)"
+  },
+  "P0082": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit Low (Bank 2)"
+  },
+  "P0083": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Intake Valve Control Solenoid Circuit High (Bank 2)"
+  },
+  "P0084": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit (Bank 2)"
+  },
+  "P0085": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit Low (Bank 2)"
+  },
+  "P0086": {
+    "description": "The PCM detected a valve timing or camshaft control fault, commonly caused by oiling problems, a sticking solenoid, sensor issues, or mechanical timing trouble.",
+    "possible_causes": [
+      "Dirty or low engine oil",
+      "Sticking VVT or valve-control solenoid",
+      "Cam/crank sensor or wiring problem",
+      "Mechanical timing issue"
+    ],
+    "quick_checks": [
+      "Check oil level and oil condition first",
+      "Inspect the VVT or valve-control solenoid connector and screen",
+      "Compare cam and crank data on a scan tool",
+      "Do not skip a timing-chain or timing-belt check if the fault returns quickly"
+    ],
+    "title": "Exhaust Valve Control Solenoid Circuit High (Bank 2)"
+  },
+  "P0087": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Rail/System Pressure - Too Low"
+  },
+  "P0088": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Rail/System Pressure - Too High"
+  },
+  "P0089": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Pressure Regulator 1 Performance"
+  },
+  "P0090": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Pressure Regulator 1 Control Circuit"
+  },
+  "P0091": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Pressure Regulator 1 Control Circuit Low"
+  },
+  "P0092": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel Pressure Regulator 1 Control Circuit High"
+  },
+  "P0093": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel System Leak Detected - Large Leak"
+  },
+  "P0094": {
+    "description": "The PCM detected a fuel-pressure control fault or leak condition that can cause hard starting, reduced power, or poor fuel delivery.",
+    "possible_causes": [
+      "Failing regulator, valve, or pump",
+      "Restricted fuel supply or leak",
+      "Wiring or connector issue",
+      "Sensor feedback fault"
+    ],
+    "quick_checks": [
+      "Check actual fuel pressure against the requested value",
+      "Inspect regulator, valve, and pump connectors",
+      "Look for leaks, restrictions, or aerated fuel",
+      "Verify power, ground, and control signals before replacing the pump or regulator"
+    ],
+    "title": "Fuel System Leak Detected - Small Leak"
+  },
+  "P0095": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Intake Air Temperature Sensor 2 Circuit Bank 1"
+  },
+  "P0096": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Intake Air Temperature Sensor 2 Circuit Range/Performance Bank 1"
+  },
+  "P0097": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Intake Air Temperature Sensor 2 Circuit Low Bank 1"
+  },
+  "P0098": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Intake Air Temperature Sensor 2 Circuit High Bank 1"
+  },
+  "P0099": {
+    "description": "The PCM saw a temperature-sensor signal outside the expected range, often caused by a bad sensor, damaged wiring, or an actual temperature problem.",
+    "possible_causes": [
+      "Faulty temperature sensor",
+      "Open or shorted wiring",
+      "Poor connector contact",
+      "Real temperature or airflow issue"
+    ],
+    "quick_checks": [
+      "Compare sensor temperature data to ambient or actual engine temperature",
+      "Inspect the sensor connector for spread terminals or moisture",
+      "Check the signal and reference voltage for opens or shorts",
+      "Inspect for airflow or cooling issues that could drive a real temperature fault"
+    ],
+    "title": "Intake Air Temperature Sensor 2 Circuit Intermittent/Erratic Bank 1"
   },
   "P0100": {
     "description": "Problem detected in the MAF circuit.",
@@ -10437,6 +11697,806 @@
       "Compare commanded operation to live scan data if supported"
     ]
   },
+  "P0800": {
+    "description": "The controller detected a transfer-case or 4WD circuit fault that can prevent range changes or correct driveline engagement.",
+    "possible_causes": [
+      "Faulty 4WD or transfer-case switch",
+      "Actuator or motor issue",
+      "Wiring damage",
+      "Transfer-case control module fault"
+    ],
+    "quick_checks": [
+      "Cycle the 4WD or transfer-case selector and verify command response",
+      "Inspect the switch, actuator, and harness",
+      "Check transfer-case fluid and actuator movement if accessible",
+      "Scan the transfer-case module for companion codes"
+    ],
+    "title": "Transfer Case Control System (MIL Request)"
+  },
+  "P0801": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "Reverse Inhibit Control Circuit Malfunction"
+  },
+  "P0802": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "Transmission Control System MIL Request Circuit/Open"
+  },
+  "P0803": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "1-4 Upshift (Skip Shift) Solenoid Control Circuit Malfunction"
+  },
+  "P0804": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "1-4 Upshift (Skip Shift) Lamp Control Circuit Malfunction"
+  },
+  "P0805": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Position Sensor Circuit"
+  },
+  "P0806": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Position Sensor Circuit Range/Performance"
+  },
+  "P0807": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Position Sensor Circuit Low"
+  },
+  "P0808": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Position Sensor Circuit High"
+  },
+  "P0809": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Position Sensor Circuit Intermittent"
+  },
+  "P0810": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Position Control Error"
+  },
+  "P0811": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Excessive Clutch Slippage"
+  },
+  "P0812": {
+    "description": "The controller detected an invalid transmission range or start-enable input, which can come from a switch fault, adjustment problem, or circuit issue.",
+    "possible_causes": [
+      "Misadjusted or failed range switch",
+      "Damaged wiring or corroded connector",
+      "Shifter linkage issue",
+      "Control-module input fault"
+    ],
+    "quick_checks": [
+      "Confirm the range switch or linkage is adjusted correctly",
+      "Inspect connectors for corrosion or water intrusion",
+      "Verify the PCM or TCM sees the correct range input",
+      "Check related start-enable and reverse-lamp circuits"
+    ],
+    "title": "Reverse Input Circuit"
+  },
+  "P0813": {
+    "description": "The controller detected an invalid transmission range or start-enable input, which can come from a switch fault, adjustment problem, or circuit issue.",
+    "possible_causes": [
+      "Misadjusted or failed range switch",
+      "Damaged wiring or corroded connector",
+      "Shifter linkage issue",
+      "Control-module input fault"
+    ],
+    "quick_checks": [
+      "Confirm the range switch or linkage is adjusted correctly",
+      "Inspect connectors for corrosion or water intrusion",
+      "Verify the PCM or TCM sees the correct range input",
+      "Check related start-enable and reverse-lamp circuits"
+    ],
+    "title": "Reverse Output Circuit"
+  },
+  "P0814": {
+    "description": "The controller detected an invalid transmission range or start-enable input, which can come from a switch fault, adjustment problem, or circuit issue.",
+    "possible_causes": [
+      "Misadjusted or failed range switch",
+      "Damaged wiring or corroded connector",
+      "Shifter linkage issue",
+      "Control-module input fault"
+    ],
+    "quick_checks": [
+      "Confirm the range switch or linkage is adjusted correctly",
+      "Inspect connectors for corrosion or water intrusion",
+      "Verify the PCM or TCM sees the correct range input",
+      "Check related start-enable and reverse-lamp circuits"
+    ],
+    "title": "Transmission Range Display Circuit"
+  },
+  "P0815": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Upshift Switch Circuit"
+  },
+  "P0816": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Downshift Switch Circuit"
+  },
+  "P0817": {
+    "description": "The controller detected an invalid transmission range or start-enable input, which can come from a switch fault, adjustment problem, or circuit issue.",
+    "possible_causes": [
+      "Misadjusted or failed range switch",
+      "Damaged wiring or corroded connector",
+      "Shifter linkage issue",
+      "Control-module input fault"
+    ],
+    "quick_checks": [
+      "Confirm the range switch or linkage is adjusted correctly",
+      "Inspect connectors for corrosion or water intrusion",
+      "Verify the PCM or TCM sees the correct range input",
+      "Check related start-enable and reverse-lamp circuits"
+    ],
+    "title": "Starter Disable Circuit"
+  },
+  "P0818": {
+    "description": "The controller detected a transfer-case or 4WD circuit fault that can prevent range changes or correct driveline engagement.",
+    "possible_causes": [
+      "Faulty 4WD or transfer-case switch",
+      "Actuator or motor issue",
+      "Wiring damage",
+      "Transfer-case control module fault"
+    ],
+    "quick_checks": [
+      "Cycle the 4WD or transfer-case selector and verify command response",
+      "Inspect the switch, actuator, and harness",
+      "Check transfer-case fluid and actuator movement if accessible",
+      "Scan the transfer-case module for companion codes"
+    ],
+    "title": "Driveline Disconnect Switch Input Circuit"
+  },
+  "P0819": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "Up and Down Shift Switch to Transmission Range Correlation"
+  },
+  "P0820": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Lever X-Y Position Sensor Circuit"
+  },
+  "P0821": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Lever X Position Circuit"
+  },
+  "P0822": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Lever Y Position Circuit"
+  },
+  "P0823": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Lever X Position Circuit Intermittent"
+  },
+  "P0824": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Lever Y Position Circuit Intermittent"
+  },
+  "P0825": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Lever Push-Pull Switch (Shift Anticipate)"
+  },
+  "P0826": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "Up and Down Shift Switch Circuit"
+  },
+  "P0827": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "Up and Down Shift Switch Circuit Low"
+  },
+  "P0828": {
+    "description": "The PCM detected a fault in this control circuit or sensor input, usually caused by a failed component, wiring problem, or an out-of-range system condition.",
+    "possible_causes": [
+      "Failed sensor or actuator",
+      "Wiring or connector issue",
+      "Poor power or ground",
+      "Control-module fault"
+    ],
+    "quick_checks": [
+      "Inspect the connector and harness closely",
+      "Verify power, ground, and reference voltage",
+      "Compare scan data to expected operation",
+      "Check for companion codes that point to the root cause"
+    ],
+    "title": "Up and Down Shift Switch Circuit High"
+  },
+  "P0829": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "5-6 Shift Malfunction"
+  },
+  "P0830": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Pedal Switch \"A\" Circuit"
+  },
+  "P0831": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Pedal Switch \"A\" Circuit Low"
+  },
+  "P0832": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Pedal Switch \"A\" Circuit High"
+  },
+  "P0833": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Pedal Switch \"B\" Circuit"
+  },
+  "P0834": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Pedal Switch \"B\" Circuit Low"
+  },
+  "P0835": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Pedal Switch \"B\" Circuit High"
+  },
+  "P0836": {
+    "description": "The controller detected a transfer-case or 4WD circuit fault that can prevent range changes or correct driveline engagement.",
+    "possible_causes": [
+      "Faulty 4WD or transfer-case switch",
+      "Actuator or motor issue",
+      "Wiring damage",
+      "Transfer-case control module fault"
+    ],
+    "quick_checks": [
+      "Cycle the 4WD or transfer-case selector and verify command response",
+      "Inspect the switch, actuator, and harness",
+      "Check transfer-case fluid and actuator movement if accessible",
+      "Scan the transfer-case module for companion codes"
+    ],
+    "title": "Four Wheel Drive (4WD) Switch Circuit"
+  },
+  "P0837": {
+    "description": "The controller detected a transfer-case or 4WD circuit fault that can prevent range changes or correct driveline engagement.",
+    "possible_causes": [
+      "Faulty 4WD or transfer-case switch",
+      "Actuator or motor issue",
+      "Wiring damage",
+      "Transfer-case control module fault"
+    ],
+    "quick_checks": [
+      "Cycle the 4WD or transfer-case selector and verify command response",
+      "Inspect the switch, actuator, and harness",
+      "Check transfer-case fluid and actuator movement if accessible",
+      "Scan the transfer-case module for companion codes"
+    ],
+    "title": "Four Wheel Drive (4WD) Switch Circuit Range/Performance"
+  },
+  "P0838": {
+    "description": "The controller detected a transfer-case or 4WD circuit fault that can prevent range changes or correct driveline engagement.",
+    "possible_causes": [
+      "Faulty 4WD or transfer-case switch",
+      "Actuator or motor issue",
+      "Wiring damage",
+      "Transfer-case control module fault"
+    ],
+    "quick_checks": [
+      "Cycle the 4WD or transfer-case selector and verify command response",
+      "Inspect the switch, actuator, and harness",
+      "Check transfer-case fluid and actuator movement if accessible",
+      "Scan the transfer-case module for companion codes"
+    ],
+    "title": "Four Wheel Drive (4WD) Switch Circuit Low"
+  },
+  "P0839": {
+    "description": "The controller detected a transfer-case or 4WD circuit fault that can prevent range changes or correct driveline engagement.",
+    "possible_causes": [
+      "Faulty 4WD or transfer-case switch",
+      "Actuator or motor issue",
+      "Wiring damage",
+      "Transfer-case control module fault"
+    ],
+    "quick_checks": [
+      "Cycle the 4WD or transfer-case selector and verify command response",
+      "Inspect the switch, actuator, and harness",
+      "Check transfer-case fluid and actuator movement if accessible",
+      "Scan the transfer-case module for companion codes"
+    ],
+    "title": "Four Wheel Drive (4WD) Switch Circuit High"
+  },
+  "P0840": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit"
+  },
+  "P0841": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Range/Performance"
+  },
+  "P0842": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Low"
+  },
+  "P0843": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit High"
+  },
+  "P0844": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"A\" Circuit Intermittent"
+  },
+  "P0845": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit"
+  },
+  "P0846": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Range/Performance"
+  },
+  "P0847": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Low"
+  },
+  "P0848": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit High"
+  },
+  "P0849": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Transmission Fluid Pressure Sensor/Switch \"B\" Circuit Intermittent"
+  },
   "P0868": {
     "description": "Transmission fluid pressure low.",
     "possible_causes": [
@@ -10452,6 +12512,614 @@
       "Road test with scan tool if available"
     ],
     "title": "Transmission Fluid Pressure Low"
+  },
+  "P0900": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Actuator Circuit/Open"
+  },
+  "P0901": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Actuator Circuit Range/Performance"
+  },
+  "P0902": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Actuator Circuit Low"
+  },
+  "P0903": {
+    "description": "The controller detected a clutch input or actuator fault that can affect engagement, gear changes, or clutch-release strategy.",
+    "possible_causes": [
+      "Faulty clutch switch, sensor, or actuator",
+      "Wiring or connector problem",
+      "Hydraulic or mechanical clutch issue",
+      "Module adaptation or control fault"
+    ],
+    "quick_checks": [
+      "Inspect the clutch switch, sensor, or actuator connector",
+      "Verify the clutch input changes correctly on a scan tool",
+      "Check clutch hydraulic travel or release operation if equipped",
+      "Look for linkage binding or adaptation faults before replacing parts"
+    ],
+    "title": "Clutch Actuator Circuit High"
+  },
+  "P0904": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Position Circuit"
+  },
+  "P0905": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Position Circuit Range/Performance"
+  },
+  "P0906": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Position Circuit Low"
+  },
+  "P0907": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Position Circuit High"
+  },
+  "P0908": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Position Circuit Intermittent"
+  },
+  "P0909": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Control Error"
+  },
+  "P0910": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Actuator Circuit/Open"
+  },
+  "P0911": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Actuator Circuit Range/Performance"
+  },
+  "P0912": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Actuator Circuit Low"
+  },
+  "P0913": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gate Select Actuator Circuit High"
+  },
+  "P0914": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Position Circuit"
+  },
+  "P0915": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Position Circuit Range/Performance"
+  },
+  "P0916": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Position Circuit Low"
+  },
+  "P0917": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Position Circuit High"
+  },
+  "P0918": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Position Circuit Intermittent"
+  },
+  "P0919": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Position Control Error"
+  },
+  "P0920": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Forward Actuator Circuit/Open"
+  },
+  "P0921": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Forward Actuator Circuit Range/Performance"
+  },
+  "P0922": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Forward Actuator Circuit Low"
+  },
+  "P0923": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Forward Actuator Circuit High"
+  },
+  "P0924": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Reverse Actuator Circuit/Open"
+  },
+  "P0925": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Reverse Actuator Circuit Range/Performance"
+  },
+  "P0926": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Reverse Actuator Circuit Low"
+  },
+  "P0927": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Reverse Actuator Circuit High"
+  },
+  "P0928": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Lock Solenoid/Actuator Control Circuit \"A\"/Open"
+  },
+  "P0929": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Lock Solenoid/Actuator Control Circuit \"A\" Range/Performance"
+  },
+  "P0930": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Lock Solenoid/Actuator Control Circuit \"A\" Low"
+  },
+  "P0931": {
+    "description": "The transmission controller is seeing a problem with the shift-position or shift-command circuit, often caused by a sensor fault, actuator issue, or wiring problem.",
+    "possible_causes": [
+      "Faulty shift-position sensor or actuator",
+      "Wiring or connector issue",
+      "Shifter mechanism binding or misadjustment",
+      "Internal transmission fault"
+    ],
+    "quick_checks": [
+      "Verify the shifter reaches each position cleanly",
+      "Inspect the shifter, range sensor, and actuator wiring",
+      "Watch commanded versus actual gear or lever position on a scan tool",
+      "Check for linkage misadjustment before suspecting internal transmission damage"
+    ],
+    "title": "Gear Shift Lock Solenoid/Actuator Control Circuit \"A\" High"
+  },
+  "P0932": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Hydraulic Pressure Sensor Circuit"
+  },
+  "P0933": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Hydraulic Pressure Sensor Range/Performance"
+  },
+  "P0934": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Hydraulic Pressure Sensor Circuit Low"
+  },
+  "P0935": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Hydraulic Pressure Sensor Circuit High"
+  },
+  "P0936": {
+    "description": "The TCM saw a transmission hydraulic pressure signal outside the expected range, pointing to a pressure sensor fault, wiring issue, low fluid pressure, or an internal transmission problem.",
+    "possible_causes": [
+      "Faulty pressure sensor or switch",
+      "Low or dirty transmission fluid",
+      "Harness or connector damage",
+      "Internal hydraulic or valve-body issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Hydraulic Pressure Sensor Circuit Intermittent"
+  },
+  "P0937": {
+    "description": "The TCM detected an implausible hydraulic oil temperature signal, which can be caused by a failing sensor, wiring issue, or a real transmission temperature problem.",
+    "possible_causes": [
+      "Faulty hydraulic oil temperature sensor",
+      "Wiring or connector damage",
+      "Poor sensor ground or reference",
+      "Actual transmission overheating"
+    ],
+    "quick_checks": [
+      "Check transmission fluid level and condition",
+      "Inspect the transmission connector and harness for oil intrusion or damage",
+      "Compare sensor readings to commanded values with a scan tool",
+      "Do not condemn the transmission before verifying power, ground, and reference signals"
+    ],
+    "title": "Hydraulic Oil Temperature Sensor Circuit"
   },
   "P1000": {
     "description": "Readiness monitors not complete (often after codes cleared).",
