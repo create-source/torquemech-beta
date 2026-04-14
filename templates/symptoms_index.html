@@ -2,6 +2,10 @@
 
 {% block title %}Symptoms | TorqueMech{% endblock %}
 
+{% block page_css %}
+  <link rel="stylesheet" href="/static/quick_find.css?v=1" />
+{% endblock %}
+
 {% block content %}
 <section class="tm-container">
   <div class="card">
@@ -11,6 +15,8 @@
       Search common vehicle symptoms, then move into the matching symptom guide, repair path, or estimate flow.
     </p>
   </div>
+
+  {% include "partials/quick_find.html" %}
 
   {% if platform_sections %}
   <div class="card" style="margin-top:16px;">
@@ -153,3 +159,5 @@
   })();
 </script>
 {% endblock %}
+
+{% block page_js %}<script src="/static/quick_find.js?v=1"></script>{% endblock %}

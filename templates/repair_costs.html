@@ -3,6 +3,7 @@
 {% block title %}Repair Cost Guides | TorqueMech{% endblock %}
 
 {% block page_css %}
+  <link rel="stylesheet" href="/static/quick_find.css?v=1" />
   <meta name="description" content="Browse TorqueMech repair cost guides for common services, then move into the estimator once you know the repair path." />
   <link rel="canonical" href="{{ request.url }}" />
   <style>
@@ -90,6 +91,8 @@
     </div>
   </div>
 </section>
+
+{% include "partials/quick_find.html" %}
 
 <section class="tm-section">
   {% set grouped_cost_guides = [
@@ -215,3 +218,5 @@
   </div>
 </section>
 {% endblock %}
+
+{% block page_js %}<script src="/static/quick_find.js?v=1"></script>{% endblock %}

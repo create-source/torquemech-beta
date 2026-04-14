@@ -3733,6 +3733,26 @@ def build_sitemap_lastmods() -> Dict[str, str]:
 
     return lastmods
 
+def sitemap_priority_for_path(path: str) -> float:
+    normalized = str(path or "").strip()
+
+    if normalized == "/":
+        return 1.0
+
+    if normalized == "/obd":
+        return 0.9
+
+    if normalized in SITEMAP_OBD_RANGE_PATHS:
+        return 0.8
+
+    if normalized.startswith("/cost/"):
+        return 0.7
+
+    if normalized.startswith("/obd/"):
+        return 0.6
+
+    return 0.5
+
 @app.get("/sitemap.xml", response_class=Response)
 def sitemap():
     base_url = "https://torquemech.com"
@@ -3756,6 +3776,7 @@ def sitemap():
         parts = [f"<loc>{base_url}{path}</loc>"]
         if path in lastmods:
             parts.append(f"<lastmod>{lastmods[path]}</lastmod>")
+        parts.append(f"<priority>{sitemap_priority_for_path(path):.1f}</priority>")
         urls.append(f"<url>{''.join(parts)}</url>")
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
