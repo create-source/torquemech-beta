@@ -3,6 +3,7 @@
 {% block title %}{{ page_title or "OBD Code Index | TorqueMech" }}{% endblock %}
 
 {% block page_css %}
+  <link rel="stylesheet" href="/static/quick_find.css?v=1" />
   <meta name="description" content="{{ meta_description or 'Browse TorqueMech OBD trouble codes by code range and open full code pages with causes, quick checks, repair direction, and estimate-ready next steps.' }}" />
   <link rel="canonical" href="{{ request.url }}" />
   <style>
@@ -27,6 +28,40 @@
       font-weight: 700;
       line-height: 1.2;
       text-decoration: none;
+    }
+
+    .obd-index-range-nav {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .obd-index-range-nav__item {
+      display: block;
+      padding: 12px 14px;
+      border: 1px solid var(--tm-border);
+      border-radius: 14px;
+      background: var(--tm-surface);
+      box-shadow: var(--tm-shadow-sm);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .obd-index-range-nav__eyebrow {
+      display: inline-block;
+      margin: 0 0 4px 0;
+      color: var(--tm-text-muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .obd-index-range-nav__label {
+      color: var(--tm-text);
+      font-size: 0.98rem;
+      font-weight: 700;
+      line-height: 1.35;
     }
 
     .obd-index-groups {
@@ -99,6 +134,10 @@
       .obd-index-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .obd-index-range-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
   </style>
 {% endblock %}
@@ -154,8 +193,63 @@
       {% endif %}
       {% endif %}
     </div>
+
+    {% if is_range_page %}
+      {% set prev_href = "" %}
+      {% set prev_label = "" %}
+      {% set next_href = "" %}
+      {% set next_label = "" %}
+      {% if range_slug == "p01xx" %}
+        {% set prev_href = "/obd/p00xx" %}
+        {% set prev_label = "P00xx Air / Fuel / Sensor Codes" %}
+        {% set next_href = "/obd/p02xx" %}
+        {% set next_label = "P02xx Fuel / Injector / Air Metering" %}
+      {% elif range_slug == "p02xx" %}
+        {% set prev_href = "/obd/p01xx" %}
+        {% set prev_label = "P01xx Air / Fuel / Sensor Performance" %}
+        {% set next_href = "/obd/p03xx" %}
+        {% set next_label = "P03xx Ignition / Misfire / Timing" %}
+      {% elif range_slug == "p03xx" %}
+        {% set prev_href = "/obd/p02xx" %}
+        {% set prev_label = "P02xx Fuel / Injector / Air Metering" %}
+        {% set next_href = "/obd/p04xx" %}
+        {% set next_label = "P04xx Emissions / EVAP / Catalyst" %}
+      {% elif range_slug == "p04xx" %}
+        {% set prev_href = "/obd/p03xx" %}
+        {% set prev_label = "P03xx Ignition / Misfire / Timing" %}
+        {% set next_href = "/obd/p05xx" %}
+        {% set next_label = "P05xx Charging / Idle / Voltage" %}
+      {% elif range_slug == "p05xx" %}
+        {% set prev_href = "/obd/p04xx" %}
+        {% set prev_label = "P04xx Emissions / EVAP / Catalyst" %}
+      {% elif range_slug == "p00xx" %}
+        {% set next_href = "/obd/p01xx" %}
+        {% set next_label = "P01xx Air / Fuel / Sensor Performance" %}
+      {% endif %}
+
+      {% if prev_href or next_href %}
+      <div class="obd-index-range-nav">
+        {% if prev_href %}
+        <a class="obd-index-range-nav__item" href="{{ prev_href }}">
+          <div class="obd-index-range-nav__eyebrow">Previous Range</div>
+          <div class="obd-index-range-nav__label">{{ prev_label }}</div>
+        </a>
+        {% endif %}
+        {% if next_href %}
+        <a class="obd-index-range-nav__item" href="{{ next_href }}">
+          <div class="obd-index-range-nav__eyebrow">Next Range</div>
+          <div class="obd-index-range-nav__label">{{ next_label }}</div>
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endif %}
   </div>
 </section>
+
+{% if not is_range_page and quick_find_items %}
+{% include "partials/quick_find.html" %}
+{% endif %}
 
 <section class="tm-section">
   <div class="obd-index-groups">
@@ -207,3 +301,5 @@
 </section>
 {% endif %}
 {% endblock %}
+
+{% block page_js %}<script src="/static/quick_find.js?v=1"></script>{% endblock %}
