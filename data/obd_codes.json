@@ -1988,6 +1988,118 @@
     ],
     "title": "Injector Circuit Malfunction (Cylinder 8)"
   },
+  "P0209": {
+    "title": "Injector Circuit Malfunction - Cylinder 9",
+    "description": "The ECM detected a fault in the injector circuit for cylinder 9.",
+    "possible_causes": [
+      "Failed fuel injector on cylinder 9",
+      "Damaged wiring or connector at injector 9",
+      "Injector driver or control circuit fault"
+    ],
+    "quick_checks": [
+      "Inspect injector 9 connector and harness routing",
+      "Check injector resistance and control signal if accessible",
+      "Look for related misfire or fuel-trim codes before replacing parts"
+    ]
+  },
+  "P0210": {
+    "title": "Injector Circuit Malfunction - Cylinder 10",
+    "description": "The ECM detected a fault in the injector circuit for cylinder 10.",
+    "possible_causes": [
+      "Failed fuel injector on cylinder 10",
+      "Damaged wiring or connector at injector 10",
+      "Injector driver or control circuit fault"
+    ],
+    "quick_checks": [
+      "Inspect injector 10 connector and harness routing",
+      "Check injector resistance and control signal if accessible",
+      "Look for related misfire or fuel-trim codes before replacing parts"
+    ]
+  },
+  "P0211": {
+    "title": "Injector Circuit Malfunction - Cylinder 11",
+    "description": "The ECM detected a fault in the injector circuit for cylinder 11.",
+    "possible_causes": [
+      "Failed fuel injector on cylinder 11",
+      "Damaged wiring or connector at injector 11",
+      "Injector driver or control circuit fault"
+    ],
+    "quick_checks": [
+      "Inspect injector 11 connector and harness routing",
+      "Check injector resistance and control signal if accessible",
+      "Look for related misfire or fuel-trim codes before replacing parts"
+    ]
+  },
+  "P0212": {
+    "title": "Injector Circuit Malfunction - Cylinder 12",
+    "description": "The ECM detected a fault in the injector circuit for cylinder 12.",
+    "possible_causes": [
+      "Failed fuel injector on cylinder 12",
+      "Damaged wiring or connector at injector 12",
+      "Injector driver or control circuit fault"
+    ],
+    "quick_checks": [
+      "Inspect injector 12 connector and harness routing",
+      "Check injector resistance and control signal if accessible",
+      "Look for related misfire or fuel-trim codes before replacing parts"
+    ]
+  },
+  "P0213": {
+    "title": "Cold Start Injector 1 Malfunction",
+    "description": "The ECM detected a fault in cold start injector 1 control.",
+    "possible_causes": [
+      "Failed solenoid or control component",
+      "Damaged wiring or connector",
+      "Control-module or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the related connector and wiring",
+      "Check for command signal and power supply",
+      "Look for companion fuel-system or timing-control codes"
+    ]
+  },
+  "P0214": {
+    "title": "Cold Start Injector 2 Malfunction",
+    "description": "The ECM detected a fault in cold start injector 2 control.",
+    "possible_causes": [
+      "Failed solenoid or control component",
+      "Damaged wiring or connector",
+      "Control-module or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the related connector and wiring",
+      "Check for command signal and power supply",
+      "Look for companion fuel-system or timing-control codes"
+    ]
+  },
+  "P0215": {
+    "title": "Engine Shutoff Solenoid Malfunction",
+    "description": "The ECM detected a fault in the engine shutoff solenoid circuit.",
+    "possible_causes": [
+      "Failed solenoid or control component",
+      "Damaged wiring or connector",
+      "Control-module or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the related connector and wiring",
+      "Check for command signal and power supply",
+      "Look for companion fuel-system or timing-control codes"
+    ]
+  },
+  "P0216": {
+    "title": "Injection Timing Control Circuit Malfunction",
+    "description": "The ECM detected a fault in injection timing control.",
+    "possible_causes": [
+      "Failed solenoid or control component",
+      "Damaged wiring or connector",
+      "Control-module or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the related connector and wiring",
+      "Check for command signal and power supply",
+      "Look for companion fuel-system or timing-control codes"
+    ]
+  },
   "P0217": {
     "description": "Engine coolant temperature reached an overheating threshold.",
     "possible_causes": [
@@ -2092,6 +2204,90 @@
     ],
     "title": "Throttle/Pedal Position Sensor/Switch B Circuit High Input"
   },
+  "P0224": {
+    "title": "Throttle/Pedal Position Sensor/Switch B Circuit Intermittent",
+    "description": "The throttle or pedal position sensor B signal is dropping out intermittently.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0225": {
+    "title": "Throttle/Pedal Position Sensor/Switch C Circuit Malfunction",
+    "description": "The ECM detected a fault in throttle or pedal position sensor C circuit.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0226": {
+    "title": "Throttle/Pedal Position Sensor/Switch C Circuit Range/Performance",
+    "description": "The throttle or pedal position sensor C signal is outside the expected range.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0227": {
+    "title": "Throttle/Pedal Position Sensor/Switch C Circuit Low Input",
+    "description": "The throttle or pedal position sensor C signal is lower than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0228": {
+    "title": "Throttle/Pedal Position Sensor/Switch C Circuit High Input",
+    "description": "The throttle or pedal position sensor C signal is higher than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0229": {
+    "title": "Throttle/Pedal Position Sensor/Switch C Circuit Intermittent",
+    "description": "The throttle or pedal position sensor C signal is dropping out intermittently.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
   "P0230": {
     "description": "Fuel pump primary control circuit fault detected.",
     "possible_causes": [
@@ -2136,6 +2332,20 @@
       "Confirm commanded pump state with scan data if available"
     ],
     "title": "Fuel Pump Secondary Circuit High"
+  },
+  "P0233": {
+    "title": "Fuel Pump Secondary Circuit Intermittent",
+    "description": "The fuel pump secondary control circuit is dropping out intermittently.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
   },
   "P0234": {
     "description": "Boost pressure climbed higher than the system expected.",
@@ -2211,6 +2421,846 @@
       "Compare scan data to a mechanical boost reading if available"
     ],
     "title": "Turbocharger/Supercharger Boost Sensor A Circuit High"
+  },
+  "P0239": {
+    "title": "Turbocharger/Supercharger Boost Sensor B Circuit Range/Performance",
+    "description": "The boost sensor B signal is outside the expected range.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0240": {
+    "title": "Turbocharger/Supercharger Boost Sensor B Circuit Low",
+    "description": "The boost sensor B signal is lower than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0241": {
+    "title": "Turbocharger/Supercharger Boost Sensor B Circuit High",
+    "description": "The boost sensor B signal is higher than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0242": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid B Malfunction",
+    "description": "The ECM detected a fault in wastegate solenoid B control.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0243": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid A Malfunction",
+    "description": "The ECM detected a fault in wastegate solenoid A control.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0244": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid A Range/Performance",
+    "description": "Wastegate solenoid A is not operating within the expected range.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0245": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid A Low",
+    "description": "Wastegate solenoid A circuit is lower than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0246": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid A High",
+    "description": "Wastegate solenoid A circuit is higher than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0247": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid B Low",
+    "description": "Wastegate solenoid B circuit is lower than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0248": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid B High",
+    "description": "Wastegate solenoid B circuit is higher than expected.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0249": {
+    "title": "Turbocharger/Supercharger Wastegate Solenoid B Range/Performance",
+    "description": "Wastegate solenoid B is not operating within the expected range.",
+    "possible_causes": [
+      "Failed sensor or boost-control solenoid",
+      "Damaged wiring or connector",
+      "Turbo plumbing or mechanical boost-control problem"
+    ],
+    "quick_checks": [
+      "Inspect boost-control hoses, connectors, and harness routing",
+      "Compare commanded and actual boost if supported",
+      "Look for sticking wastegate hardware or air leaks"
+    ]
+  },
+  "P0250": {
+    "title": "Injection Pump Fuel Metering Control A Range/Performance",
+    "description": "Injection Pump Fuel Metering Control A control is outside the expected range.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0251": {
+    "title": "Injection Pump Fuel Metering Control A Low",
+    "description": "Injection Pump Fuel Metering Control A circuit signal is lower than expected.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0252": {
+    "title": "Injection Pump Fuel Metering Control A High",
+    "description": "Injection Pump Fuel Metering Control A circuit signal is higher than expected.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0253": {
+    "title": "Injection Pump Fuel Metering Control A Intermittent",
+    "description": "Injection Pump Fuel Metering Control A signal is dropping out intermittently.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0254": {
+    "title": "Injection Pump Fuel Metering Control A Malfunction",
+    "description": "The ECM detected a fault in injection pump fuel metering control A control.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0255": {
+    "title": "Injection Pump Fuel Metering Control A Range/Performance",
+    "description": "Injection Pump Fuel Metering Control A feedback is unstable or out of range.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0256": {
+    "title": "Injection Pump Fuel Metering Control B Range/Performance",
+    "description": "Injection Pump Fuel Metering Control B control is outside the expected range.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0257": {
+    "title": "Injection Pump Fuel Metering Control B Low",
+    "description": "Injection Pump Fuel Metering Control B circuit signal is lower than expected.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0258": {
+    "title": "Injection Pump Fuel Metering Control B High",
+    "description": "Injection Pump Fuel Metering Control B circuit signal is higher than expected.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0259": {
+    "title": "Injection Pump Fuel Metering Control B Intermittent",
+    "description": "Injection Pump Fuel Metering Control B signal is dropping out intermittently.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0260": {
+    "title": "Injection Pump Fuel Metering Control B Malfunction",
+    "description": "The ECM detected a fault in injection pump fuel metering control B control.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0261": {
+    "title": "Injection Pump Fuel Metering Control B Range/Performance",
+    "description": "Injection Pump Fuel Metering Control B feedback is unstable or out of range.",
+    "possible_causes": [
+      "Injection pump control fault",
+      "Damaged wiring or connector",
+      "Fuel control actuator or driver issue"
+    ],
+    "quick_checks": [
+      "Inspect the injection pump control connector and harness",
+      "Check power, ground, and command signal if accessible",
+      "Look for related fuel-pressure or timing-control codes"
+    ]
+  },
+  "P0262": {
+    "title": "Injector Contribution/Balance - Cylinder 1",
+    "description": "Cylinder 1 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 1",
+      "Damaged wiring or connector at injector 1",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 1 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0263": {
+    "title": "Injector Circuit Low - Cylinder 2",
+    "description": "Cylinder 2 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 2",
+      "Damaged wiring or connector at injector 2",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 2 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0264": {
+    "title": "Injector Circuit High - Cylinder 2",
+    "description": "Cylinder 2 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 2",
+      "Damaged wiring or connector at injector 2",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 2 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0265": {
+    "title": "Injector Contribution/Balance - Cylinder 2",
+    "description": "Cylinder 2 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 2",
+      "Damaged wiring or connector at injector 2",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 2 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0266": {
+    "title": "Injector Circuit Low - Cylinder 3",
+    "description": "Cylinder 3 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 3",
+      "Damaged wiring or connector at injector 3",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 3 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0267": {
+    "title": "Injector Circuit High - Cylinder 3",
+    "description": "Cylinder 3 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 3",
+      "Damaged wiring or connector at injector 3",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 3 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0268": {
+    "title": "Injector Contribution/Balance - Cylinder 3",
+    "description": "Cylinder 3 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 3",
+      "Damaged wiring or connector at injector 3",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 3 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0269": {
+    "title": "Injector Circuit Low - Cylinder 4",
+    "description": "Cylinder 4 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 4",
+      "Damaged wiring or connector at injector 4",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 4 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0270": {
+    "title": "Injector Circuit High - Cylinder 4",
+    "description": "Cylinder 4 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 4",
+      "Damaged wiring or connector at injector 4",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 4 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0271": {
+    "title": "Injector Contribution/Balance - Cylinder 4",
+    "description": "Cylinder 4 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 4",
+      "Damaged wiring or connector at injector 4",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 4 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0272": {
+    "title": "Injector Circuit Low - Cylinder 5",
+    "description": "Cylinder 5 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 5",
+      "Damaged wiring or connector at injector 5",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 5 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0273": {
+    "title": "Injector Circuit High - Cylinder 5",
+    "description": "Cylinder 5 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 5",
+      "Damaged wiring or connector at injector 5",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 5 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0274": {
+    "title": "Injector Contribution/Balance - Cylinder 5",
+    "description": "Cylinder 5 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 5",
+      "Damaged wiring or connector at injector 5",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 5 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0275": {
+    "title": "Injector Circuit Low - Cylinder 6",
+    "description": "Cylinder 6 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 6",
+      "Damaged wiring or connector at injector 6",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 6 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0276": {
+    "title": "Injector Circuit High - Cylinder 6",
+    "description": "Cylinder 6 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 6",
+      "Damaged wiring or connector at injector 6",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 6 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0277": {
+    "title": "Injector Contribution/Balance - Cylinder 6",
+    "description": "Cylinder 6 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 6",
+      "Damaged wiring or connector at injector 6",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 6 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0278": {
+    "title": "Injector Circuit Low - Cylinder 7",
+    "description": "Cylinder 7 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 7",
+      "Damaged wiring or connector at injector 7",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 7 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0279": {
+    "title": "Injector Circuit High - Cylinder 7",
+    "description": "Cylinder 7 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 7",
+      "Damaged wiring or connector at injector 7",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 7 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0280": {
+    "title": "Injector Contribution/Balance - Cylinder 7",
+    "description": "Cylinder 7 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 7",
+      "Damaged wiring or connector at injector 7",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 7 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0281": {
+    "title": "Injector Circuit Low - Cylinder 8",
+    "description": "Cylinder 8 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 8",
+      "Damaged wiring or connector at injector 8",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 8 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0282": {
+    "title": "Injector Circuit High - Cylinder 8",
+    "description": "Cylinder 8 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 8",
+      "Damaged wiring or connector at injector 8",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 8 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0283": {
+    "title": "Injector Contribution/Balance - Cylinder 8",
+    "description": "Cylinder 8 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 8",
+      "Damaged wiring or connector at injector 8",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 8 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0284": {
+    "title": "Injector Circuit Low - Cylinder 9",
+    "description": "Cylinder 9 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 9",
+      "Damaged wiring or connector at injector 9",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 9 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0285": {
+    "title": "Injector Circuit High - Cylinder 9",
+    "description": "Cylinder 9 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 9",
+      "Damaged wiring or connector at injector 9",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 9 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0286": {
+    "title": "Injector Contribution/Balance - Cylinder 9",
+    "description": "Cylinder 9 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 9",
+      "Damaged wiring or connector at injector 9",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 9 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0287": {
+    "title": "Injector Circuit Low - Cylinder 10",
+    "description": "Cylinder 10 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 10",
+      "Damaged wiring or connector at injector 10",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 10 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0288": {
+    "title": "Injector Circuit High - Cylinder 10",
+    "description": "Cylinder 10 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 10",
+      "Damaged wiring or connector at injector 10",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 10 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0289": {
+    "title": "Injector Contribution/Balance - Cylinder 10",
+    "description": "Cylinder 10 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 10",
+      "Damaged wiring or connector at injector 10",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 10 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0290": {
+    "title": "Injector Circuit Low - Cylinder 11",
+    "description": "Cylinder 11 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 11",
+      "Damaged wiring or connector at injector 11",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 11 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0291": {
+    "title": "Injector Circuit High - Cylinder 11",
+    "description": "Cylinder 11 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 11",
+      "Damaged wiring or connector at injector 11",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 11 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0292": {
+    "title": "Injector Contribution/Balance - Cylinder 11",
+    "description": "Cylinder 11 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 11",
+      "Damaged wiring or connector at injector 11",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 11 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0293": {
+    "title": "Injector Circuit Low - Cylinder 12",
+    "description": "Cylinder 12 injector circuit signal is lower than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 12",
+      "Damaged wiring or connector at injector 12",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 12 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0294": {
+    "title": "Injector Circuit High - Cylinder 12",
+    "description": "Cylinder 12 injector circuit signal is higher than expected.",
+    "possible_causes": [
+      "Failed injector on cylinder 12",
+      "Damaged wiring or connector at injector 12",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 12 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0295": {
+    "title": "Injector Contribution/Balance - Cylinder 12",
+    "description": "Cylinder 12 injector is not contributing the expected amount of power.",
+    "possible_causes": [
+      "Failed injector on cylinder 12",
+      "Damaged wiring or connector at injector 12",
+      "Fuel pressure or cylinder mechanical problem affecting injector contribution"
+    ],
+    "quick_checks": [
+      "Inspect injector 12 connector, wiring, and resistance",
+      "Check injector command and fuel pressure if possible",
+      "Compare cylinder contribution and look for related misfire codes"
+    ]
+  },
+  "P0297": {
+    "title": "Vehicle Overspeed Condition",
+    "description": "The ECM detected vehicle speed above the programmed limit.",
+    "possible_causes": [
+      "Sensor or control issue",
+      "Mechanical restriction or leak",
+      "Operating condition outside the expected range"
+    ],
+    "quick_checks": [
+      "Check supporting scan data and related codes",
+      "Inspect wiring, hoses, and connectors tied to the system",
+      "Confirm the complaint under the conditions when the code sets"
+    ]
+  },
+  "P0298": {
+    "title": "Engine Oil Over Temperature",
+    "description": "Engine oil temperature is higher than expected.",
+    "possible_causes": [
+      "Sensor or control issue",
+      "Mechanical restriction or leak",
+      "Operating condition outside the expected range"
+    ],
+    "quick_checks": [
+      "Check supporting scan data and related codes",
+      "Inspect wiring, hoses, and connectors tied to the system",
+      "Confirm the complaint under the conditions when the code sets"
+    ]
+  },
+  "P0299": {
+    "title": "Turbocharger/Supercharger Underboost Condition",
+    "description": "Actual boost is lower than the ECM expects.",
+    "possible_causes": [
+      "Sensor or control issue",
+      "Mechanical restriction or leak",
+      "Operating condition outside the expected range"
+    ],
+    "quick_checks": [
+      "Check supporting scan data and related codes",
+      "Inspect wiring, hoses, and connectors tied to the system",
+      "Confirm the complaint under the conditions when the code sets"
+    ]
   },
   "P0300": {
     "description": "The ECM is seeing misfires on multiple cylinders instead of one specific cylinder.",
@@ -6575,6 +7625,20 @@
     ],
     "title": "ECM Memory Check Sum Error"
   },
+  "P0602": {
+    "title": "Control Module Programming Error",
+    "description": "The ECM detected a programming or calibration problem.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
   "P0603": {
     "description": "KAM error detected (often after low voltage).",
     "possible_causes": [
@@ -6589,6 +7653,20 @@
       "Clear code and road test to confirm fix"
     ],
     "title": "ECM Keep Alive Memory Error"
+  },
+  "P0604": {
+    "title": "Control Module Random Access Memory (RAM) Error",
+    "description": "The ECM detected an internal RAM fault.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
   },
   "P0605": {
     "description": "The ECM detected an internal read-only memory fault.",
@@ -6620,6 +7698,188 @@
     ],
     "title": "ECM/PCM Processor"
   },
+  "P0607": {
+    "title": "Control Module Performance",
+    "description": "The ECM detected an internal performance fault.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0608": {
+    "title": "Vehicle Speed Output A Circuit",
+    "description": "The ECM detected a fault in vehicle speed output A circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0609": {
+    "title": "Vehicle Speed Output B Circuit",
+    "description": "The ECM detected a fault in vehicle speed output B circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0610": {
+    "title": "Control Module Vehicle Options Error",
+    "description": "The ECM detected a vehicle-options or configuration mismatch.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0611": {
+    "title": "Fuel Injector Control Module Performance",
+    "description": "The fuel injector control module is not performing as expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0612": {
+    "title": "Fuel Injector Control Module Relay Control",
+    "description": "The ECM detected a fault in fuel injector control module relay control.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0613": {
+    "title": "TCM Processor",
+    "description": "The ECM detected an internal transmission control module processor fault.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0614": {
+    "title": "ECM/TCM Incompatible",
+    "description": "The ECM and TCM calibration or configuration is not compatible.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0615": {
+    "title": "Starter Relay Circuit",
+    "description": "The ECM detected a fault in the starter relay circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0616": {
+    "title": "Starter Relay Circuit Low",
+    "description": "The starter relay circuit signal is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0617": {
+    "title": "Starter Relay Circuit High",
+    "description": "The starter relay circuit signal is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0618": {
+    "title": "Alternative Fuel Control Module Keep Alive Memory Error",
+    "description": "The alternative fuel control module has a keep-alive memory fault.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0619": {
+    "title": "Alternative Fuel Control Module RAM/ROM Error",
+    "description": "The alternative fuel control module detected an internal memory fault.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
   "P0620": {
     "description": "Alternator/generator control circuit fault detected.",
     "possible_causes": [
@@ -6633,6 +7893,412 @@
       "Measure charging system output"
     ],
     "title": "Generator Control Circuit Malfunction"
+  },
+  "P0621": {
+    "title": "Generator Lamp L Control Circuit",
+    "description": "The ECM detected a fault in the generator lamp control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0622": {
+    "title": "Generator Field F Control Circuit",
+    "description": "The ECM detected a fault in the generator field control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0623": {
+    "title": "Generator Lamp Control Circuit",
+    "description": "The ECM detected a fault in the generator lamp control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0624": {
+    "title": "Fuel Cap Lamp Control Circuit",
+    "description": "The ECM detected a fault in the fuel-cap lamp control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0625": {
+    "title": "Generator Field/F Terminal Circuit Low",
+    "description": "The generator field terminal circuit is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0626": {
+    "title": "Generator Field/F Terminal Circuit High",
+    "description": "The generator field terminal circuit is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0627": {
+    "title": "Fuel Pump A Control Circuit/Open",
+    "description": "The ECM detected an open or fault in fuel pump A control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0628": {
+    "title": "Fuel Pump A Control Circuit Low",
+    "description": "Fuel pump A control circuit is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0629": {
+    "title": "Fuel Pump A Control Circuit High",
+    "description": "Fuel pump A control circuit is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0630": {
+    "title": "VIN Not Programmed or Incompatible - ECM/PCM",
+    "description": "The ECM does not have a valid or compatible VIN programmed.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0631": {
+    "title": "VIN Not Programmed or Incompatible - TCM",
+    "description": "The TCM does not have a valid or compatible VIN programmed.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0632": {
+    "title": "Odometer Not Programmed - ECM/PCM",
+    "description": "The ECM does not have odometer data programmed correctly.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0633": {
+    "title": "Immobilizer Key Not Programmed - ECM/PCM",
+    "description": "The immobilizer key data is not programmed correctly in the ECM.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0634": {
+    "title": "Internal Control Module Temperature Too High",
+    "description": "The control module temperature is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0635": {
+    "title": "Power Steering Control Circuit",
+    "description": "The ECM detected a fault in the power steering control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0636": {
+    "title": "Power Steering Control Circuit Low",
+    "description": "The power steering control circuit signal is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0637": {
+    "title": "Power Steering Control Circuit High",
+    "description": "The power steering control circuit signal is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0638": {
+    "title": "Throttle Actuator Control Range/Performance (Bank 1)",
+    "description": "Throttle actuator control on bank 1 is outside the expected range.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0639": {
+    "title": "Throttle Actuator Control Range/Performance (Bank 2)",
+    "description": "Throttle actuator control on bank 2 is outside the expected range.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0640": {
+    "title": "Intake Air Heater Control Circuit",
+    "description": "The ECM detected a fault in intake air heater control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0641": {
+    "title": "Sensor Reference Voltage A Circuit/Open",
+    "description": "The ECM detected an open or fault in reference voltage A circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0642": {
+    "title": "Sensor Reference Voltage A Circuit Low",
+    "description": "Reference voltage A is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0643": {
+    "title": "Sensor Reference Voltage A Circuit High",
+    "description": "Reference voltage A is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0644": {
+    "title": "Driver Display Serial Communication Circuit",
+    "description": "The ECM detected a fault in driver-display serial communication.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0645": {
+    "title": "A/C Clutch Relay Control Circuit",
+    "description": "The ECM detected a fault in A/C clutch relay control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0646": {
+    "title": "A/C Clutch Relay Control Circuit Low",
+    "description": "The A/C clutch relay control circuit is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0647": {
+    "title": "A/C Clutch Relay Control Circuit High",
+    "description": "The A/C clutch relay control circuit is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0648": {
+    "title": "Immobilizer Lamp Control Circuit",
+    "description": "The ECM detected a fault in immobilizer lamp control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0649": {
+    "title": "Speed Control Lamp Control Circuit",
+    "description": "The ECM detected a fault in speed-control lamp control circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
   },
   "P0650": {
     "description": "Malfunction indicator lamp control circuit fault.",
@@ -6649,6 +8315,482 @@
     ],
     "title": "MIL Control Circuit"
   },
+  "P0651": {
+    "title": "Sensor Reference Voltage B Circuit/Open",
+    "description": "The ECM detected an open or fault in reference voltage B circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0652": {
+    "title": "Sensor Reference Voltage B Circuit Low",
+    "description": "Reference voltage B is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0653": {
+    "title": "Sensor Reference Voltage B Circuit High",
+    "description": "Reference voltage B is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0654": {
+    "title": "Engine RPM Output Circuit",
+    "description": "The ECM detected a fault in engine RPM output circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0655": {
+    "title": "Engine Hot Lamp Output Circuit",
+    "description": "The ECM detected a fault in engine-hot lamp output circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0656": {
+    "title": "Fuel Level Output Circuit",
+    "description": "The ECM detected a fault in fuel-level output circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0657": {
+    "title": "Actuator Supply Voltage A Circuit/Open",
+    "description": "The ECM detected an open or fault in actuator supply voltage A circuit.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0658": {
+    "title": "Actuator Supply Voltage A Circuit Low",
+    "description": "Actuator supply voltage A is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0659": {
+    "title": "Actuator Supply Voltage A Circuit High",
+    "description": "Actuator supply voltage A is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0660": {
+    "title": "Intake Manifold Tuning Valve Control Circuit/Open (Bank 1)",
+    "description": "The ECM detected an open or fault in intake manifold tuning valve control on bank 1.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0661": {
+    "title": "Intake Manifold Tuning Valve Control Circuit Low (Bank 1)",
+    "description": "Intake manifold tuning valve control on bank 1 is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0662": {
+    "title": "Intake Manifold Tuning Valve Control Circuit High (Bank 1)",
+    "description": "Intake manifold tuning valve control on bank 1 is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0663": {
+    "title": "Intake Manifold Tuning Valve Control Circuit/Open (Bank 2)",
+    "description": "The ECM detected an open or fault in intake manifold tuning valve control on bank 2.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0664": {
+    "title": "Intake Manifold Tuning Valve Control Circuit Low (Bank 2)",
+    "description": "Intake manifold tuning valve control on bank 2 is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0665": {
+    "title": "Intake Manifold Tuning Valve Control Circuit High (Bank 2)",
+    "description": "Intake manifold tuning valve control on bank 2 is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0666": {
+    "title": "PCM/ECM/TCM Internal Temperature Sensor Range/Performance",
+    "description": "The module internal temperature sensor is outside the expected range.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0667": {
+    "title": "PCM/ECM/TCM Internal Temperature Sensor Circuit Low",
+    "description": "The module internal temperature sensor signal is lower than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0668": {
+    "title": "PCM/ECM/TCM Internal Temperature Sensor Circuit High",
+    "description": "The module internal temperature sensor signal is higher than expected.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0669": {
+    "title": "PCM/ECM/TCM Internal Temperature Sensor Circuit Intermittent",
+    "description": "The module internal temperature sensor signal is dropping out intermittently.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0670": {
+    "title": "Glow Plug Control Module",
+    "description": "The ECM detected a fault in glow plug control module operation.",
+    "possible_causes": [
+      "Control module, relay, sensor, or actuator fault",
+      "Damaged wiring or connector",
+      "Calibration or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect related connectors, power feeds, and grounds",
+      "Check supporting scan data and companion codes",
+      "Confirm the control circuit before replacing the module or actuator"
+    ]
+  },
+  "P0671": {
+    "title": "Cylinder 1 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 1.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 1",
+      "Damaged wiring or connector at cylinder 1 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 1 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0672": {
+    "title": "Cylinder 2 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 2.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 2",
+      "Damaged wiring or connector at cylinder 2 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 2 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0673": {
+    "title": "Cylinder 3 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 3.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 3",
+      "Damaged wiring or connector at cylinder 3 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 3 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0674": {
+    "title": "Cylinder 4 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 4.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 4",
+      "Damaged wiring or connector at cylinder 4 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 4 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0675": {
+    "title": "Cylinder 5 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 5.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 5",
+      "Damaged wiring or connector at cylinder 5 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 5 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0676": {
+    "title": "Cylinder 6 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 6.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 6",
+      "Damaged wiring or connector at cylinder 6 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 6 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0677": {
+    "title": "Cylinder 7 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 7.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 7",
+      "Damaged wiring or connector at cylinder 7 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 7 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0678": {
+    "title": "Cylinder 8 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 8.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 8",
+      "Damaged wiring or connector at cylinder 8 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 8 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0679": {
+    "title": "Cylinder 9 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 9.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 9",
+      "Damaged wiring or connector at cylinder 9 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 9 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0680": {
+    "title": "Cylinder 10 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 10.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 10",
+      "Damaged wiring or connector at cylinder 10 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 10 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0681": {
+    "title": "Cylinder 11 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 11.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 11",
+      "Damaged wiring or connector at cylinder 11 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 11 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0682": {
+    "title": "Cylinder 12 Glow Plug Circuit",
+    "description": "The ECM detected a fault in glow plug circuit for cylinder 12.",
+    "possible_causes": [
+      "Failed glow plug on cylinder 12",
+      "Damaged wiring or connector at cylinder 12 glow plug",
+      "Glow plug control module or power-supply issue"
+    ],
+    "quick_checks": [
+      "Inspect glow plug 12 wiring and connector condition",
+      "Check resistance and power feed to the glow plug circuit",
+      "Look for fuse, relay, or module faults before replacing parts"
+    ]
+  },
+  "P0683": {
+    "title": "Glow Plug Control Module to PCM Communication Circuit",
+    "description": "The ECM detected a communication fault between the glow plug control module and PCM.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0684": {
+    "title": "Glow Plug Control Module to PCM Communication Circuit Range/Performance",
+    "description": "Glow plug control module communication is outside the expected range.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
   "P0685": {
     "description": "ECM/PCM power relay circuit open.",
     "possible_causes": [
@@ -6663,6 +8805,202 @@
       "Clear code and road test to confirm fix"
     ],
     "title": "ECM/PCM Power Relay Circuit Open"
+  },
+  "P0686": {
+    "title": "ECM/PCM Power Relay Control Circuit Low",
+    "description": "The ECM/PCM power relay control circuit is lower than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0687": {
+    "title": "ECM/PCM Power Relay Control Circuit High",
+    "description": "The ECM/PCM power relay control circuit is higher than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0688": {
+    "title": "ECM/PCM Power Relay Sense Circuit/Open",
+    "description": "The ECM detected an open or fault in the ECM/PCM power relay sense circuit.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0689": {
+    "title": "ECM/PCM Power Relay Sense Circuit Low",
+    "description": "The ECM/PCM power relay sense circuit is lower than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0690": {
+    "title": "ECM/PCM Power Relay Sense Circuit High",
+    "description": "The ECM/PCM power relay sense circuit is higher than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0691": {
+    "title": "Cooling Fan 1 Control Circuit Low",
+    "description": "Cooling fan 1 control circuit is lower than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0692": {
+    "title": "Cooling Fan 1 Control Circuit High",
+    "description": "Cooling fan 1 control circuit is higher than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0693": {
+    "title": "Cooling Fan 2 Control Circuit Low",
+    "description": "Cooling fan 2 control circuit is lower than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0694": {
+    "title": "Cooling Fan 2 Control Circuit High",
+    "description": "Cooling fan 2 control circuit is higher than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0695": {
+    "title": "Cooling Fan 3 Control Circuit Low",
+    "description": "Cooling fan 3 control circuit is lower than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0696": {
+    "title": "Cooling Fan 3 Control Circuit High",
+    "description": "Cooling fan 3 control circuit is higher than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0697": {
+    "title": "Sensor Reference Voltage C Circuit/Open",
+    "description": "The ECM detected an open or fault in reference voltage C circuit.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0698": {
+    "title": "Sensor Reference Voltage C Circuit Low",
+    "description": "Reference voltage C is lower than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
+  },
+  "P0699": {
+    "title": "Sensor Reference Voltage C Circuit High",
+    "description": "Reference voltage C is higher than expected.",
+    "possible_causes": [
+      "Relay, module, sensor, or control-circuit fault",
+      "Damaged wiring or connector",
+      "Power-supply or ground issue"
+    ],
+    "quick_checks": [
+      "Inspect related relay, connector, and harness condition",
+      "Check power, ground, and control signal where applicable",
+      "Review companion codes before replacing parts"
+    ]
   },
   "P0700": {
     "description": "TCM requested MIL illumination (transmission fault present).",
@@ -6692,6 +9030,48 @@
       "Note shift quality and fail-safe behavior"
     ],
     "title": "Transmission Control System Range/Performance"
+  },
+  "P0702": {
+    "title": "Transmission Control System Electrical",
+    "description": "The transmission control system detected an electrical fault.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0703": {
+    "title": "Brake Switch B Circuit",
+    "description": "The ECM detected a fault in brake switch B circuit.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0704": {
+    "title": "Clutch Switch Input Circuit Malfunction",
+    "description": "The ECM detected a fault in clutch switch input circuit.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
   },
   "P0705": {
     "description": "Transmission range (PRNDL) sensor circuit fault.",
@@ -6725,6 +9105,48 @@
     ],
     "title": "Transmission Range Sensor Circuit Range/Performance"
   },
+  "P0707": {
+    "title": "Transmission Range Sensor A Circuit Low",
+    "description": "Transmission range sensor A signal is lower than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0708": {
+    "title": "Transmission Range Sensor A Circuit High",
+    "description": "Transmission range sensor A signal is higher than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0709": {
+    "title": "Transmission Range Sensor A Circuit Intermittent",
+    "description": "Transmission range sensor A signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
   "P0710": {
     "description": "Transmission fluid temperature sensor A circuit fault detected.",
     "possible_causes": [
@@ -6755,6 +9177,48 @@
     ],
     "title": "Transmission Fluid Temperature Sensor A Circuit Range/Performance"
   },
+  "P0712": {
+    "title": "Transmission Fluid Temperature Sensor A Circuit Low",
+    "description": "Transmission fluid temperature sensor A signal is lower than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0713": {
+    "title": "Transmission Fluid Temperature Sensor A Circuit High",
+    "description": "Transmission fluid temperature sensor A signal is higher than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0714": {
+    "title": "Transmission Fluid Temperature Sensor A Circuit Intermittent",
+    "description": "Transmission fluid temperature sensor A signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
   "P0715": {
     "description": "Input speed sensor signal problem.",
     "possible_causes": [
@@ -6768,6 +9232,20 @@
       "Check fluid and related codes"
     ],
     "title": "Input/Turbine Speed Sensor Circuit Malfunction"
+  },
+  "P0716": {
+    "title": "Input/Turbine Speed Sensor A Circuit Range/Performance",
+    "description": "The input or turbine speed sensor A signal is outside the expected range.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
   },
   "P0717": {
     "description": "No input/turbine speed sensor signal was detected.",
@@ -6784,6 +9262,34 @@
       "Check for related transmission codes"
     ],
     "title": "Input/Turbine Speed Sensor Circuit No Signal"
+  },
+  "P0718": {
+    "title": "Input/Turbine Speed Sensor A Circuit Intermittent",
+    "description": "The input or turbine speed sensor A signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0719": {
+    "title": "Brake Switch B Circuit Low",
+    "description": "Brake switch B circuit signal is lower than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
   },
   "P0720": {
     "description": "Output speed sensor signal problem.",
@@ -6828,6 +9334,104 @@
       "Road test with scan tool if available"
     ],
     "title": "Output Speed Sensor No Signal"
+  },
+  "P0723": {
+    "title": "Output Speed Sensor Circuit Intermittent",
+    "description": "The output speed sensor signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0724": {
+    "title": "Brake Switch B Circuit High",
+    "description": "Brake switch B circuit signal is higher than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0725": {
+    "title": "Engine Speed Input Circuit Malfunction",
+    "description": "The transmission control system detected a fault in engine speed input.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0726": {
+    "title": "Engine Speed Input Circuit Range/Performance",
+    "description": "Engine speed input is outside the expected range.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0727": {
+    "title": "Engine Speed Input Circuit No Signal",
+    "description": "The transmission control system is not receiving an engine speed signal.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0728": {
+    "title": "Engine Speed Input Circuit Intermittent",
+    "description": "Engine speed input signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0729": {
+    "title": "Gear 6 Incorrect Ratio",
+    "description": "The transmission detected gear 6 ratio outside the expected range.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
   },
   "P0730": {
     "description": "Transmission gear ratio incorrect.",
@@ -6941,6 +9545,48 @@
     ],
     "title": "Reverse Incorrect Ratio"
   },
+  "P0737": {
+    "title": "TCM Engine Speed Output Circuit",
+    "description": "The TCM engine speed output circuit has a fault.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0738": {
+    "title": "TCM Engine Speed Output Circuit Low",
+    "description": "The TCM engine speed output circuit signal is lower than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0739": {
+    "title": "TCM Engine Speed Output Circuit High",
+    "description": "The TCM engine speed output circuit signal is higher than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
   "P0740": {
     "description": "TCC control problem detected.",
     "possible_causes": [
@@ -6987,6 +9633,104 @@
     ],
     "title": "TCC Stuck On"
   },
+  "P0743": {
+    "title": "Torque Converter Clutch Circuit Electrical",
+    "description": "The transmission detected an electrical fault in the torque converter clutch circuit.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0744": {
+    "title": "Torque Converter Clutch Circuit Intermittent",
+    "description": "The torque converter clutch circuit signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0745": {
+    "title": "Pressure Control Solenoid A Malfunction",
+    "description": "The transmission detected a fault in pressure control solenoid A.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0746": {
+    "title": "Pressure Control Solenoid A Performance/Stuck Off",
+    "description": "Pressure control solenoid A is not responding as expected or is stuck off.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0747": {
+    "title": "Pressure Control Solenoid A Stuck On",
+    "description": "Pressure control solenoid A appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0748": {
+    "title": "Pressure Control Solenoid A Electrical",
+    "description": "The transmission detected an electrical fault in pressure control solenoid A.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0749": {
+    "title": "Pressure Control Solenoid A Intermittent",
+    "description": "Pressure control solenoid A signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
   "P0750": {
     "description": "Shift solenoid A control problem.",
     "possible_causes": [
@@ -7016,6 +9760,48 @@
       "Road test with scan tool if available"
     ],
     "title": "Shift Solenoid A Performance"
+  },
+  "P0752": {
+    "title": "Shift Solenoid A Stuck On",
+    "description": "Shift solenoid A appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0753": {
+    "title": "Shift Solenoid A Electrical",
+    "description": "The transmission detected an electrical fault in shift solenoid A.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0754": {
+    "title": "Shift Solenoid A Intermittent",
+    "description": "Shift solenoid A signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
   },
   "P0755": {
     "description": "Shift solenoid B control problem.",
@@ -7047,6 +9833,48 @@
     ],
     "title": "Shift Solenoid B Performance"
   },
+  "P0757": {
+    "title": "Shift Solenoid B Stuck On",
+    "description": "Shift solenoid B appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0758": {
+    "title": "Shift Solenoid B Electrical",
+    "description": "The transmission detected an electrical fault in shift solenoid B.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0759": {
+    "title": "Shift Solenoid B Intermittent",
+    "description": "Shift solenoid B signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
   "P0760": {
     "description": "Shift solenoid C control problem.",
     "possible_causes": [
@@ -7077,6 +9905,258 @@
     ],
     "title": "Shift Solenoid C Performance"
   },
+  "P0762": {
+    "title": "Shift Solenoid C Stuck On",
+    "description": "Shift solenoid C appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0763": {
+    "title": "Shift Solenoid C Electrical",
+    "description": "The transmission detected an electrical fault in shift solenoid C.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0764": {
+    "title": "Shift Solenoid C Intermittent",
+    "description": "Shift solenoid C signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0765": {
+    "title": "Shift Solenoid D Malfunction",
+    "description": "The transmission detected a fault in shift solenoid D.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0766": {
+    "title": "Shift Solenoid D Performance/Stuck Off",
+    "description": "Shift solenoid D is not responding as expected or is stuck off.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0767": {
+    "title": "Shift Solenoid D Stuck On",
+    "description": "Shift solenoid D appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0768": {
+    "title": "Shift Solenoid D Electrical",
+    "description": "The transmission detected an electrical fault in shift solenoid D.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0769": {
+    "title": "Shift Solenoid D Intermittent",
+    "description": "Shift solenoid D signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0770": {
+    "title": "Shift Solenoid E Malfunction",
+    "description": "The transmission detected a fault in shift solenoid E.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0771": {
+    "title": "Shift Solenoid E Performance/Stuck Off",
+    "description": "Shift solenoid E is not responding as expected or is stuck off.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0772": {
+    "title": "Shift Solenoid E Stuck On",
+    "description": "Shift solenoid E appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0773": {
+    "title": "Shift Solenoid E Electrical",
+    "description": "The transmission detected an electrical fault in shift solenoid E.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0774": {
+    "title": "Shift Solenoid E Intermittent",
+    "description": "Shift solenoid E signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0775": {
+    "title": "Pressure Control Solenoid B Malfunction",
+    "description": "The transmission detected a fault in pressure control solenoid B.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0776": {
+    "title": "Pressure Control Solenoid B Performance/Stuck Off",
+    "description": "Pressure control solenoid B is not responding as expected or is stuck off.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0777": {
+    "title": "Pressure Control Solenoid B Stuck On",
+    "description": "Pressure control solenoid B appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0778": {
+    "title": "Pressure Control Solenoid B Electrical",
+    "description": "The transmission detected an electrical fault in pressure control solenoid B.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0779": {
+    "title": "Pressure Control Solenoid B Intermittent",
+    "description": "Pressure control solenoid B signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
   "P0780": {
     "description": "Transmission shift did not occur as commanded.",
     "possible_causes": [
@@ -7090,6 +10170,272 @@
       "Road test with scan tool"
     ],
     "title": "Shift Malfunction"
+  },
+  "P0781": {
+    "title": "1-2 Shift Malfunction",
+    "description": "The transmission detected a problem with the 1-2 shift event.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0782": {
+    "title": "2-3 Shift Malfunction",
+    "description": "The transmission detected a problem with the 2-3 shift event.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0783": {
+    "title": "3-4 Shift Malfunction",
+    "description": "The transmission detected a problem with the 3-4 shift event.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0784": {
+    "title": "4-5 Shift Malfunction",
+    "description": "The transmission detected a problem with the 4-5 shift event.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0785": {
+    "title": "Shift/Timing Solenoid Malfunction",
+    "description": "The transmission detected a fault in the shift or timing solenoid.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0786": {
+    "title": "Shift/Timing Solenoid Range/Performance",
+    "description": "The shift or timing solenoid is outside the expected operating range.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0787": {
+    "title": "Shift/Timing Solenoid Low",
+    "description": "The shift or timing solenoid circuit is lower than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0788": {
+    "title": "Shift/Timing Solenoid High",
+    "description": "The shift or timing solenoid circuit is higher than expected.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0789": {
+    "title": "Shift/Timing Solenoid Intermittent",
+    "description": "The shift or timing solenoid signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0790": {
+    "title": "Normal/Performance Switch Circuit",
+    "description": "The transmission detected a fault in the normal/performance switch circuit.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0791": {
+    "title": "Intermediate Shaft Speed Sensor A Circuit",
+    "description": "The ECM detected a fault in intermediate shaft speed sensor A circuit.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0792": {
+    "title": "Intermediate Shaft Speed Sensor A Circuit Range/Performance",
+    "description": "Intermediate shaft speed sensor A is outside the expected range.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0793": {
+    "title": "Intermediate Shaft Speed Sensor A Circuit No Signal",
+    "description": "The intermediate shaft speed sensor A signal is missing.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0794": {
+    "title": "Intermediate Shaft Speed Sensor A Circuit Intermittent",
+    "description": "The intermediate shaft speed sensor A signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0795": {
+    "title": "Pressure Control Solenoid C Malfunction",
+    "description": "The transmission detected a fault in pressure control solenoid C.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0796": {
+    "title": "Pressure Control Solenoid C Performance/Stuck Off",
+    "description": "Pressure control solenoid C is not responding as expected or is stuck off.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0797": {
+    "title": "Pressure Control Solenoid C Stuck On",
+    "description": "Pressure control solenoid C appears to be stuck on.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0798": {
+    "title": "Pressure Control Solenoid C Electrical",
+    "description": "The transmission detected an electrical fault in pressure control solenoid C.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
+  },
+  "P0799": {
+    "title": "Pressure Control Solenoid C Intermittent",
+    "description": "Pressure control solenoid C signal is dropping out intermittently.",
+    "possible_causes": [
+      "Transmission sensor, solenoid, or switch fault",
+      "Damaged wiring or connector",
+      "Internal transmission or control-module issue"
+    ],
+    "quick_checks": [
+      "Check transmission fluid condition and supporting codes",
+      "Inspect the related connector and harness",
+      "Compare commanded operation to live scan data if supported"
+    ]
   },
   "P0868": {
     "description": "Transmission fluid pressure low.",
