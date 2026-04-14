@@ -107,13 +107,16 @@
 <section class="tm-section">
   <div class="obd-index-groups">
     {% for group in obd_code_groups %}
-    <article class="obd-index-card">
-      <div class="obd-index-head">
-        <h2 style="margin:0;">{{ group["title"] }}</h2>
-        <div class="obd-index-count">{{ group["items"]|length }} code{% if group["items"]|length != 1 %}s{% endif %}</div>
-      </div>
+    <article class="obd-index-card tm-collapsible">
 
-      <div class="obd-index-list">
+      <button type="button" class="obd-index-head tm-collapse-toggle">
+        <h2 style="margin:0;">{{ group["title"] }}</h2>
+        <div class="obd-index-count">
+          {{ group["items"]|length }} code{% if group["items"]|length != 1 %}s{% endif %}
+        </div>
+      </button>
+
+      <div class="obd-index-list tm-collapse-content">
         {% for item in group["items"] %}
         <a class="obd-index-item" href="{{ item.href }}">
           <span class="obd-index-item__code">{{ item.code }}</span>
@@ -134,4 +137,12 @@
     {% endif %}
   </div>
 </section>
+
+<script>
+document.querySelectorAll(".tm-collapse-toggle").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    btn.parentElement.classList.toggle("active");
+  });
+});
+</script>
 {% endblock %}

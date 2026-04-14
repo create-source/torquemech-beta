@@ -225,13 +225,17 @@
   </div>
 
   {% if featured_obd_codes %}
-  <div class="tm-card" style="margin-bottom:20px;">
-    <h2>Featured OBD Codes</h2>
-    <p class="tm-muted" style="margin-bottom:12px;">
-      Open some of TorqueMech's strongest code pages directly.
-    </p>
+  <div class="tm-card tm-collapsible" style="margin-bottom:20px;">
+    <button type="button" class="tm-collapse-toggle">
+      <span>
+        <h2 style="margin:0 0 6px 0;">Featured OBD Codes</h2>
+        <span class="tm-muted">Open some of TorqueMech's strongest code pages directly.</span>
+      </span>
+      <span class="tm-collapse-toggle__chevron">›</span>
+    </button>
 
-    <div class="obd-polish-grid">
+    <div class="tm-collapse-content" style="margin-top:12px;">
+      <div class="obd-polish-grid">
       {% for item in featured_obd_codes %}
       <a href="/obd/{{ item.code | lower }}" class="obd-code-tile">
         <div class="obd-code-tile__code">{{ item.code }}</div>
@@ -242,6 +246,7 @@
         </div>
       </a>
       {% endfor %}
+      </div>
     </div>
   </div>
   {% endif %}
@@ -276,13 +281,17 @@
     </div>
   </div>
 
-  <div class="tm-card" style="margin-bottom:20px;">
-    <h2>Choose a Diagnostic Lane</h2>
-    <p class="tm-muted" style="margin-bottom:14px;">
-      Pick the area you want to work in first.
-    </p>
+  <div class="tm-card tm-collapsible active" style="margin-bottom:20px;">
+    <button type="button" class="tm-collapse-toggle">
+      <span>
+        <h2 style="margin:0 0 6px 0;">Choose a Diagnostic Lane</h2>
+        <span class="tm-muted">Pick the area you want to work in first.</span>
+      </span>
+      <span class="tm-collapse-toggle__chevron">›</span>
+    </button>
 
-    <div class="obd-lane-grid">
+    <div class="tm-collapse-content" style="margin-top:14px;">
+      <div class="obd-lane-grid">
       <a href="/symptoms" class="obd-lane-card">
         <div class="obd-lane-card__eyebrow">Lane 1</div>
         <strong>Symptoms</strong>
@@ -322,6 +331,7 @@
           <span>→</span>
         </div>
       </a>
+      </div>
     </div>
   </div>
 
@@ -381,6 +391,16 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+
+    // Mobile collapsible sections
+    document.querySelectorAll(".tm-collapse-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (window.innerWidth <= 768) {
+          btn.parentElement.classList.toggle("active");
+        }
+      });
+    });
+    
     const yearSelect = document.getElementById("obdVehicleYear");
     const makeSelect = document.getElementById("obdVehicleMake");
     const makeSearch = document.getElementById("obdVehicleMakeSearch");

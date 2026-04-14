@@ -2763,5 +2763,11 @@ if (getEstimateHint) {
         console.warn("Repair guide preload failed:", e);
       }
     });
+
+    document.querySelectorAll(".tm-collapse-toggle").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        btn.parentElement.classList.toggle("active");
+      });
+    });
   })();
 })();

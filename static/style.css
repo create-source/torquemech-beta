@@ -1771,3 +1771,65 @@ h3{
   font-weight: 600;
   color: #1b2733;
 }
+
+/* OBD index collapsible */
+
+.tm-collapse-toggle{
+  width:100%;
+  background:none;
+  border:0;
+  padding:0;
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  text-align:left;
+  cursor:pointer;
+}
+
+@media (max-width:768px){
+
+  .tm-collapsible .tm-collapse-content{
+    display:none;
+  }
+
+  .tm-collapsible.active .tm-collapse-content{
+    display:grid;
+  }
+
+}
+
+.tm-collapse-toggle{
+  width:100%;
+  background:none;
+  border:0;
+  padding:0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+  cursor:pointer;
+  color:inherit;
+}
+
+.tm-collapse-toggle__chevron{
+  font-size:1rem;
+  font-weight:800;
+  line-height:1;
+  transition:transform .18s ease;
+}
+
+.tm-collapsible.active .tm-collapse-toggle__chevron{
+  transform:rotate(90deg);
+}
+
+@media (max-width:768px){
+  .tm-collapsible .tm-collapse-content{
+    display:none;
+  }
+
+  .tm-collapsible.active .tm-collapse-content{
+    display:block;
+  }
+}
