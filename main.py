@@ -2136,6 +2136,62 @@ def build_cost_guide_links(code: str):
 
     return results[:3]
 
+def build_obd_page_metadata(code: str):
+    code = code.upper().strip()
+
+    metadata_map = {
+        "P0300": {
+            "title": "P0300 Random/Multiple Cylinder Misfire: Causes & Repairs | TorqueMech",
+            "description": "P0300 means the engine is misfiring on multiple cylinders. Review common causes, quick checks, likely repairs, and spark plug or coil cost guidance.",
+        },
+        "P0301": {
+            "title": "P0301 Cylinder 1 Misfire: Causes & Repairs | TorqueMech",
+            "description": "P0301 means cylinder 1 is misfiring. See the most likely ignition, fuel, air, or compression causes plus repair paths and cost guidance.",
+        },
+        "P0302": {
+            "title": "P0302 Cylinder 2 Misfire: Causes & Repairs | TorqueMech",
+            "description": "P0302 means cylinder 2 is misfiring. Review the most common ignition, fuel, air, or compression causes, likely repairs, and cost guidance.",
+        },
+        "P0303": {
+            "title": "P0303 Cylinder 3 Misfire: Causes & Repairs | TorqueMech",
+            "description": "P0303 means cylinder 3 is misfiring. Check the most likely ignition, fuel, air, or compression faults, likely repairs, and cost guidance.",
+        },
+        "P0304": {
+            "title": "P0304 Cylinder 4 Misfire: Causes & Repairs | TorqueMech",
+            "description": "P0304 means cylinder 4 is misfiring. Review the most common ignition, fuel, air, or compression causes, likely repairs, and cost guidance.",
+        },
+        "P0171": {
+            "title": "P0171 System Too Lean Bank 1: Causes & Repairs | TorqueMech",
+            "description": "P0171 means bank 1 is running lean. Check for vacuum leaks, airflow problems, and fuel-delivery issues with likely repairs and sensor cost guidance.",
+        },
+        "P0174": {
+            "title": "P0174 System Too Lean Bank 2: Causes & Repairs | TorqueMech",
+            "description": "P0174 means bank 2 is running lean. Review common vacuum leak, airflow, and fuel-delivery causes plus likely repairs and related cost guidance.",
+        },
+        "P0128": {
+            "title": "P0128 Thermostat Below Regulating Temp: Causes & Repairs | TorqueMech",
+            "description": "P0128 means the engine is warming up too slowly, often from a thermostat stuck open. Review cooling-system causes, likely repairs, and thermostat cost guidance.",
+        },
+        "P0420": {
+            "title": "P0420 Catalyst Efficiency Bank 1: Causes & Repairs | TorqueMech",
+            "description": "P0420 means bank 1 catalyst efficiency is below threshold. Review common converter and O2 sensor causes, likely repairs, and related cost guidance.",
+        },
+        "P0430": {
+            "title": "P0430 Catalyst Efficiency Bank 2: Causes & Repairs | TorqueMech",
+            "description": "P0430 means bank 2 catalyst efficiency is below threshold. Review common converter and O2 sensor causes, likely repairs, and related cost guidance.",
+        },
+        "P0562": {
+            "title": "P0562 System Voltage Low: Causes & Repairs | TorqueMech",
+            "description": "P0562 means system voltage is low. Check for a weak battery, charging issues, or wiring faults with likely repairs and battery or alternator cost guidance.",
+        },
+        "P0563": {
+            "title": "P0563 System Voltage High: Causes & Repairs | TorqueMech",
+            "description": "P0563 means system voltage is too high. Review overcharging causes, alternator or regulator repair paths, and battery-related cost guidance.",
+        },
+    }
+
+    return metadata_map.get(code)
+
 @app.get("/obd/{code}", response_class=HTMLResponse)
 async def obd_code_page(request: Request, code: str):
 
@@ -2159,6 +2215,7 @@ async def obd_code_page(request: Request, code: str):
     common_repairs = build_common_repairs(row["code"])
     cost_guide_links = build_cost_guide_links(row["code"])
     diagnostic_summary = build_diagnostic_summary(row["code"])
+    page_metadata = build_obd_page_metadata(row["code"])
 
     # ✅ THIS IS STEP 2
     repair_path = REPAIR_PATHS.get(row["code"])
@@ -2176,6 +2233,8 @@ async def obd_code_page(request: Request, code: str):
             "common_repairs": common_repairs,
             "cost_guide_links": cost_guide_links,
             "diagnostic_summary": diagnostic_summary,
+            "page_title": page_metadata["title"] if page_metadata else "",
+            "meta_description": page_metadata["description"] if page_metadata else "",
             "repair_path": repair_path,
         },
     )

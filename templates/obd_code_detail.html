@@ -1,9 +1,8 @@
 {% extends "layout.html" %}
 
-{% block title %}{{ code }} Code - {{ title }} | TorqueMech{% endblock %}
+{% block title %}{{ page_title or (code ~ " Code - " ~ title ~ " | TorqueMech") }}{% endblock %}
 
 {% block page_css %}
-  <meta name="description" content="{{ code }} means {{ description or title }}. Review common causes, quick checks, related codes, likely repairs, and estimator-ready next steps on TorqueMech." />
   <link rel="canonical" href="{{ request.url }}" />
   <style>
     .obd-cause-list {
