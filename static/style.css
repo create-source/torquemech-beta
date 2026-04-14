@@ -1056,12 +1056,23 @@ canvas,
   color: var(--tm-blue);
 }
 
+.tm-support-email {
+  color: var(--tm-accent);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.tm-support-email:hover {
+  opacity: 0.85;
+}
+
 .tm-footer-support{
   display: inline-flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
   color: var(--tm-text-muted);
+  text-underline-offset: 3px;
 }
 
 /* Mobile */
