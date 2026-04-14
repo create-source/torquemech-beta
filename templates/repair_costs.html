@@ -6,17 +6,43 @@
   <meta name="description" content="Browse TorqueMech repair cost guides for common services, then move into the estimator once you know the repair path." />
   <link rel="canonical" href="{{ request.url }}" />
   <style>
-    .repair-costs-grid {
+    .repair-costs-groups {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 14px;
+      gap: 16px;
+    }
+
+    .repair-costs-group {
+      padding: 18px;
+      border: 1px solid var(--tm-border);
+      border-radius: 18px;
+      background: var(--tm-surface);
+      box-shadow: var(--tm-shadow-sm);
+    }
+
+    .repair-costs-group__title {
+      margin: 0 0 6px 0;
+      color: var(--tm-text);
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+
+    .repair-costs-group__desc {
+      margin: 0 0 14px 0;
+      color: var(--tm-text-muted);
+      line-height: 1.5;
+    }
+
+    .repair-costs-list {
+      display: grid;
+      gap: 10px;
     }
 
     .repair-costs-card {
       display: block;
-      padding: 18px;
+      padding: 14px 16px;
       border: 1px solid var(--tm-border);
-      border-radius: 18px;
+      border-radius: 16px;
       background: var(--tm-surface);
       box-shadow: var(--tm-shadow-sm);
       text-decoration: none;
@@ -43,7 +69,7 @@
     }
 
     @media (min-width: 860px) {
-      .repair-costs-grid {
+      .repair-costs-groups {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
@@ -66,13 +92,68 @@
 </section>
 
 <section class="tm-section">
-  <div class="repair-costs-grid">
-    {% for guide in cost_guides %}
-    <a class="repair-costs-card" href="{{ guide.href }}">
-      <div class="repair-costs-card__title">{{ guide.title }}</div>
-      <p class="repair-costs-card__desc">{{ guide.description }}</p>
-      <div class="repair-costs-card__footer">Open cost guide →</div>
-    </a>
+  {% set grouped_cost_guides = [
+    {
+      "title": "Ignition / Misfire",
+      "description": "Common tune-up and ignition repairs tied to misfire and rough-running complaints.",
+      "hrefs": ["/cost/spark-plug-replacement", "/cost/ignition-coil-replacement"]
+    },
+    {
+      "title": "Sensors / Fuel / Air",
+      "description": "Airflow, fuel-delivery, and intake-related services that often follow drivability faults.",
+      "hrefs": ["/cost/fuel-pump-replacement", "/cost/mass-air-flow-sensor-replacement"]
+    },
+    {
+      "title": "Cooling / Temperature",
+      "description": "Cooling-system repairs tied to leaks, overheating, and poor warm-up behavior.",
+      "hrefs": ["/cost/radiator-replacement", "/cost/water-pump-replacement", "/cost/thermostat-replacement"]
+    },
+    {
+      "title": "Charging / Electrical",
+      "description": "Battery, charging, and starting-system repairs for low-voltage and no-start issues.",
+      "hrefs": ["/cost/alternator-replacement", "/cost/battery-replacement", "/cost/starter-replacement"]
+    },
+    {
+      "title": "Emissions / Exhaust",
+      "description": "Sensor and converter cost guides often connected to emissions and catalyst faults.",
+      "hrefs": ["/cost/oxygen-sensor-replacement", "/cost/catalytic-converter-replacement"]
+    },
+    {
+      "title": "Steering / Suspension",
+      "description": "Front-end and suspension repairs tied to looseness, noise, and unstable handling.",
+      "hrefs": ["/cost/control-arm-replacement", "/cost/wheel-bearing-replacement", "/cost/sway-bar-link-replacement"]
+    },
+    {
+      "title": "Brakes",
+      "description": "Brake service pricing for wear items, pulsation, and sticking hardware complaints.",
+      "hrefs": ["/cost/brake-pad-replacement", "/cost/brake-rotor-replacement", "/cost/brake-caliper-replacement"]
+    },
+    {
+      "title": "Accessory / HVAC",
+      "description": "Accessory-drive and climate-system repairs that show up in common service visits.",
+      "hrefs": ["/cost/serpentine-belt-replacement", "/cost/ac-compressor-replacement"]
+    }
+  ] %}
+
+  <div class="repair-costs-groups">
+    {% for category in grouped_cost_guides %}
+    {% set category_guides = cost_guides | selectattr("href", "in", category.hrefs) | list %}
+    {% if category_guides %}
+    <article class="repair-costs-group">
+      <h2 class="repair-costs-group__title">{{ category.title }}</h2>
+      <p class="repair-costs-group__desc">{{ category.description }}</p>
+
+      <div class="repair-costs-list">
+        {% for guide in category_guides %}
+        <a class="repair-costs-card" href="{{ guide.href }}">
+          <div class="repair-costs-card__title">{{ guide.title }}</div>
+          <p class="repair-costs-card__desc">{{ guide.description }}</p>
+          <div class="repair-costs-card__footer">Open cost guide ?</div>
+        </a>
+        {% endfor %}
+      </div>
+    </article>
+    {% endif %}
     {% endfor %}
   </div>
 </section>
