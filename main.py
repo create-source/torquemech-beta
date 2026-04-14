@@ -1460,6 +1460,137 @@ def obd(request: Request):
         },
     )
 
+OBD_RANGE_PAGE_CONFIG = {
+    "p00xx": {
+        "prefixes": ("P00",),
+        "title": "P00xx OBD Codes",
+        "group_title": "P00xx Air / Fuel / Sensor Codes",
+        "intro": "Browse P00xx OBD trouble codes covering core air metering, fuel, and sensor faults, then open the full TorqueMech code page for causes, checks, and repair direction.",
+        "meta_description": "Browse P00xx OBD trouble codes on TorqueMech with plain-English meanings, common causes, quick checks, and related repair guidance.",
+    },
+    "p01xx": {
+        "prefixes": ("P01",),
+        "title": "P01xx OBD Codes",
+        "group_title": "P01xx Air / Fuel / Sensor Codes",
+        "intro": "Browse P01xx OBD trouble codes related to air, fuel, and sensor performance, then open each TorqueMech guide for causes, quick checks, and likely repairs.",
+        "meta_description": "Browse P01xx OBD trouble codes on TorqueMech with plain-English meanings, common causes, quick checks, and likely repair direction.",
+    },
+    "p02xx": {
+        "prefixes": ("P02",),
+        "title": "P02xx OBD Codes",
+        "group_title": "P02xx Fuel / Injector Codes",
+        "intro": "Browse P02xx OBD trouble codes focused on fuel delivery, injectors, and mixture-control faults, then open the full TorqueMech code pages for diagnostic direction.",
+        "meta_description": "Browse P02xx OBD trouble codes on TorqueMech for fuel and injector faults with plain-English meanings, causes, and repair direction.",
+    },
+    "p03xx": {
+        "prefixes": ("P03",),
+        "title": "P03xx OBD Codes",
+        "group_title": "P03xx Ignition / Misfire Codes",
+        "intro": "Browse P03xx OBD trouble codes for ignition, misfire, crank, and cam faults, then open the full TorqueMech guides for causes, checks, and repair next steps.",
+        "meta_description": "Browse P03xx OBD trouble codes on TorqueMech for ignition and misfire issues with code meanings, likely causes, and repair guidance.",
+    },
+    "p04xx": {
+        "prefixes": ("P04",),
+        "title": "P04xx OBD Codes",
+        "group_title": "P04xx Emissions / EVAP / Catalyst Codes",
+        "intro": "Browse P04xx OBD trouble codes related to emissions, EVAP, EGR, and catalyst performance, then open each TorqueMech code guide for diagnostic direction.",
+        "meta_description": "Browse P04xx OBD trouble codes on TorqueMech for emissions, EVAP, and catalyst faults with meanings, causes, and repair direction.",
+    },
+    "p05xx": {
+        "prefixes": ("P05",),
+        "title": "P05xx OBD Codes",
+        "group_title": "P05xx Idle / Speed / Electrical Codes",
+        "intro": "Browse P05xx OBD trouble codes covering idle control, speed signals, and charging or electrical faults, then open the full TorqueMech guides for next steps.",
+        "meta_description": "Browse P05xx OBD trouble codes on TorqueMech for idle, speed, and electrical faults with code meanings, causes, and repair guidance.",
+    },
+}
+
+def build_obd_range_group(range_slug: str) -> Tuple[List[Dict[str, Any]], int, Dict[str, str] | None]:
+    config = OBD_RANGE_PAGE_CONFIG.get(str(range_slug or "").lower())
+    if not config or not OBD_SEED_JSON_PATH.exists():
+        return [], 0, config
+
+    try:
+        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
+        if not isinstance(data, dict):
+            return [], 0, config
+    except Exception:
+        return [], 0, config
+
+    items: List[Dict[str, str]] = []
+    prefixes = tuple(config["prefixes"])
+
+    for raw_code, item in data.items():
+        code = "".join(ch for ch in str(raw_code or "").upper() if ch.isalnum())[:7]
+        if len(code) < 4 or not code.startswith(prefixes):
+            continue
+
+        title = str((item or {}).get("title") or (item or {}).get("description") or "").strip()
+        if not title:
+            continue
+
+        items.append(
+            {
+                "code": code,
+                "title": title,
+                "href": f"/obd/{code.lower()}",
+            }
+        )
+
+    items.sort(key=lambda item: item["code"])
+
+    group = {
+        "id": range_slug.lower(),
+        "title": config["group_title"],
+        "items": items,
+    }
+    return [group], len(items), config
+
+def render_obd_range_page(request: Request, range_slug: str):
+    metric_incr("page_obd_lookup")
+    obd_code_groups, total_codes, config = build_obd_range_group(range_slug)
+    if not config:
+        raise HTTPException(status_code=404, detail="OBD code range not found")
+
+    return templates.TemplateResponse(
+        "obd_index.html",
+        {
+            "request": request,
+            "obd_code_groups": obd_code_groups,
+            "total_codes": total_codes,
+            "page_title": f"{config['title']} | TorqueMech",
+            "meta_description": config["meta_description"],
+            "intro_title": config["title"],
+            "intro_body": config["intro"],
+            "is_range_page": True,
+            "range_slug": range_slug.lower(),
+        },
+    )
+
+@app.get("/obd/p00xx", response_class=HTMLResponse)
+def obd_p00xx(request: Request):
+    return render_obd_range_page(request, "p00xx")
+
+@app.get("/obd/p01xx", response_class=HTMLResponse)
+def obd_p01xx(request: Request):
+    return render_obd_range_page(request, "p01xx")
+
+@app.get("/obd/p02xx", response_class=HTMLResponse)
+def obd_p02xx(request: Request):
+    return render_obd_range_page(request, "p02xx")
+
+@app.get("/obd/p03xx", response_class=HTMLResponse)
+def obd_p03xx(request: Request):
+    return render_obd_range_page(request, "p03xx")
+
+@app.get("/obd/p04xx", response_class=HTMLResponse)
+def obd_p04xx(request: Request):
+    return render_obd_range_page(request, "p04xx")
+
+@app.get("/obd/p05xx", response_class=HTMLResponse)
+def obd_p05xx(request: Request):
+    return render_obd_range_page(request, "p05xx")
+
 def build_featured_obd_codes():
     return [
         {"code": "P0300", "title": "Random/Multiple Cylinder Misfire"},
@@ -2192,6 +2323,294 @@ def build_obd_page_metadata(code: str):
 
     return metadata_map.get(code)
 
+def build_obd_content_refinement(code: str):
+    code = code.upper().strip()
+
+    refinements = {
+        "P0300": {
+            "meaning": "P0300 means the ECM has detected misfires across multiple cylinders instead of one isolated cylinder. The next step is separating an ignition problem from a fuel, air, or engine condition affecting more than one cylinder.",
+            "symptoms": [
+                "Rough idle or shaking at a stop",
+                "Hesitation or stumbling under load",
+                "Flashing check-engine light during active misfire",
+            ],
+            "quick_checks": [
+                "Check whether cylinder-specific misfire codes are stored with P0300",
+                "Inspect spark plugs, coil boots, and plug wells for wear, oil, or carbon tracking",
+                "Check for intake or vacuum leaks at hoses, PCV plumbing, and the air duct",
+                "Review fuel trims and fuel pressure before condemning ignition parts alone",
+            ],
+        },
+        "P0301": {
+            "meaning": "P0301 means cylinder 1 is misfiring often enough for the ECM to flag it. Diagnosis should confirm whether the fault follows the plug or coil, stays with the injector, or points to a mechanical problem in that cylinder.",
+            "symptoms": [
+                "Rough idle or shake tied to one cylinder",
+                "Hesitation or light bucking on acceleration",
+                "Fuel smell or flashing MIL if the misfire is severe",
+            ],
+            "quick_checks": [
+                "Swap the cylinder 1 coil with another cylinder and see whether the misfire follows",
+                "Inspect the cylinder 1 spark plug for wear, gap, oil, or fuel fouling",
+                "Check injector connector fit and listen for injector operation on cylinder 1",
+                "Run compression or leak-down testing if the misfire stays on cylinder 1",
+            ],
+        },
+        "P0302": {
+            "meaning": "P0302 means cylinder 2 is misfiring often enough for the ECM to detect it. The most useful next step is confirming whether the fault tracks with the ignition parts, fuel injector, intake leak, or cylinder condition.",
+            "symptoms": [
+                "Rough idle or uneven engine note",
+                "Reduced power or stumble on throttle",
+                "Fuel smell or flashing MIL during a heavy misfire",
+            ],
+            "quick_checks": [
+                "Swap the cylinder 2 coil with another cylinder and see whether the misfire follows",
+                "Inspect the cylinder 2 spark plug for wear, gap, oil, or fuel fouling",
+                "Check injector connector fit and listen for injector operation on cylinder 2",
+                "Run compression or leak-down testing if the misfire stays on cylinder 2",
+            ],
+        },
+        "P0303": {
+            "meaning": "P0303 means cylinder 3 is misfiring often enough for the ECM to flag it. Good diagnosis confirms whether the problem follows the plug or coil, stays with the injector, or points to compression loss on that cylinder.",
+            "symptoms": [
+                "Noticeable shake at idle",
+                "Hesitation or stumble under load",
+                "Reduced fuel economy while the misfire is active",
+            ],
+            "quick_checks": [
+                "Swap the cylinder 3 coil with another cylinder and see whether the misfire follows",
+                "Inspect the cylinder 3 spark plug for wear, gap, oil, or fuel fouling",
+                "Check injector connector fit and listen for injector operation on cylinder 3",
+                "Run compression or leak-down testing if the misfire stays on cylinder 3",
+            ],
+        },
+        "P0304": {
+            "meaning": "P0304 means cylinder 4 is misfiring often enough for the ECM to detect it. The repair path usually becomes clear once you confirm whether the fault follows ignition parts, stays with fuel delivery, or points to a mechanical issue.",
+            "symptoms": [
+                "Rough idle or steady vibration",
+                "Hesitation or weak pull during acceleration",
+                "Flashing MIL if the misfire is strong enough to threaten the catalyst",
+            ],
+            "quick_checks": [
+                "Swap the cylinder 4 coil with another cylinder and see whether the misfire follows",
+                "Inspect the cylinder 4 spark plug for wear, gap, oil, or fuel fouling",
+                "Check injector connector fit and listen for injector operation on cylinder 4",
+                "Run compression or leak-down testing if the misfire stays on cylinder 4",
+            ],
+        },
+        "P0171": {
+            "meaning": "P0171 means bank 1 is running lean because the engine is seeing more air than expected, less fuel than needed, or an airflow reading that is off. The fault is often a vacuum leak, MAF problem, or low-fuel-delivery issue rather than a single bad part by itself.",
+            "symptoms": [
+                "Rough idle or light surge at idle",
+                "Hesitation on tip-in or light acceleration",
+                "Poor cold-start behavior or reduced fuel economy",
+            ],
+            "quick_checks": [
+                "Check short- and long-term fuel trims at idle and at cruise",
+                "Inspect intake boots, PCV hoses, and vacuum lines for leaks after the MAF",
+                "Inspect and clean the MAF sensor and confirm the air filter box is sealed",
+                "Check fuel pressure or delivery volume if trims stay lean under load",
+            ],
+        },
+        "P0174": {
+            "meaning": "P0174 means bank 2 is running lean because the ECM is correcting for too much air, too little fuel, or an inaccurate airflow signal on that bank. Common root causes include vacuum leaks, MAF issues, and fuel-delivery problems that affect both banks or bank 2 more strongly.",
+            "symptoms": [
+                "Light surge or rough idle",
+                "Hesitation during part-throttle driving",
+                "Weak cold-start or lean stumble symptoms",
+            ],
+            "quick_checks": [
+                "Check short- and long-term fuel trims at idle and cruise to see when the lean condition appears",
+                "Inspect intake boots, PCV plumbing, and vacuum lines for leaks after the MAF",
+                "Inspect and clean the MAF sensor and confirm the intake tract is sealed",
+                "Check fuel pressure or delivery volume if trims stay lean under load",
+            ],
+        },
+        "P0420": {
+            "meaning": "P0420 means bank 1 catalyst efficiency tested below the expected threshold after the ECM compared upstream and downstream oxygen sensor behavior. The converter may be weak, but exhaust leaks, sensor faults, or an unresolved misfire or fuel-control problem can set the same code.",
+            "symptoms": [
+                "Often no clear drivability symptom",
+                "Failed emissions readiness or inspection",
+                "Possible sulfur smell or loss of power if the converter is restricted",
+            ],
+            "quick_checks": [
+                "Fix active misfire, rich-running, or fuel-trim codes before blaming the converter",
+                "Check for exhaust leaks ahead of the converter and oxygen sensors",
+                "Compare upstream and downstream O2 sensor behavior on a scan tool",
+                "Confirm the engine reaches normal operating temperature before final catalyst judgment",
+            ],
+        },
+        "P0430": {
+            "meaning": "P0430 means bank 2 catalyst efficiency tested below the expected threshold after the ECM compared upstream and downstream oxygen sensor behavior. The converter may be aging, but exhaust leaks, sensor faults, or unresolved fueling issues can also trigger it.",
+            "symptoms": [
+                "Often no obvious drivability complaint",
+                "Failed emissions readiness or inspection",
+                "Possible sulfur smell or power loss if the converter is restricted",
+            ],
+            "quick_checks": [
+                "Fix active misfire, rich-running, or fuel-trim codes before blaming the converter",
+                "Check for exhaust leaks ahead of the bank 2 converter and sensors",
+                "Compare upstream and downstream bank 2 O2 sensor behavior on a scan tool",
+                "Confirm the engine reaches normal operating temperature before final catalyst judgment",
+            ],
+        },
+        "P0455": {
+            "meaning": "P0455 means the EVAP system detected a large leak during its self-test. In many cases the leak is simple, like a loose gas cap or disconnected hose, but a stuck valve or cracked line can also keep the system from sealing.",
+            "symptoms": [
+                "Check-engine light with little or no drivability change",
+                "Fuel vapor smell near the vehicle in some cases",
+                "Readiness monitor or emissions test failure",
+            ],
+            "quick_checks": [
+                "Check that the gas cap is present, tightened correctly, and sealing",
+                "Inspect EVAP hoses and canister connections for a disconnected or split line",
+                "Command the purge and vent valves if possible and verify they seal when closed",
+                "Smoke test the EVAP system if the leak is not obvious on inspection",
+            ],
+        },
+        "P0442": {
+            "meaning": "P0442 means the EVAP system detected a small leak that is harder to see than a gross leak. The fault is commonly a weak gas-cap seal, a small hose crack, or a valve that is not fully sealing during the monitor test.",
+            "symptoms": [
+                "Check-engine light with no major drivability complaint",
+                "Usually no noticeable change in how the vehicle runs",
+                "Readiness monitor or emissions test failure",
+            ],
+            "quick_checks": [
+                "Inspect the gas cap seal and make sure the cap tightens correctly",
+                "Inspect EVAP lines near the canister and tank for small cracks or loose fittings",
+                "Verify the purge and vent valves are sealing when commanded closed",
+                "Run a smoke test if the leak is not visible during inspection",
+            ],
+        },
+        "P0456": {
+            "meaning": "P0456 means the EVAP system detected a very small leak during its self-test. The leak is usually a minor seep at the gas cap, hose, fitting, or valve rather than a hose that is fully disconnected.",
+            "symptoms": [
+                "Check-engine light with no real drivability change",
+                "Usually no fuel-control or idle complaint",
+                "Readiness monitor or emissions test failure",
+            ],
+            "quick_checks": [
+                "Inspect the gas cap seal for hardening, cracks, or poor fit",
+                "Inspect the canister, vent valve, and nearby lines for subtle seepage",
+                "Verify purge and vent valves are not leaking when closed",
+                "Smoke test the EVAP system for a tiny leak source",
+            ],
+        },
+        "P0128": {
+            "meaning": "P0128 means the engine is taking too long to reach normal operating temperature. A thermostat stuck open is the most common cause, but low coolant level, trapped air, or a temperature-sensor issue can also mislead the monitor.",
+            "symptoms": [
+                "Weak cabin heat in cool weather",
+                "Temperature gauge staying low longer than normal",
+                "Reduced fuel economy from extended warm-up",
+            ],
+            "quick_checks": [
+                "Compare scan-tool coolant temperature to actual warm-up behavior from a cold start",
+                "Check coolant level and make sure the system is properly full with no trapped air",
+                "Inspect the thermostat housing area for seepage or poor sealing",
+                "Compare ECT data to ambient temperature if a sensor issue is suspected",
+            ],
+        },
+        "P0101": {
+            "meaning": "P0101 means the mass air flow signal is outside the expected range for the current load and RPM. That can be caused by a dirty or failing MAF sensor, unmetered air entering the intake, or an intake setup that changes airflow readings.",
+            "symptoms": [
+                "Hesitation or flat throttle response",
+                "Rough idle or light surge",
+                "Poor fuel economy or transmission shift feel changes on some vehicles",
+            ],
+            "quick_checks": [
+                "Inspect the intake boot, clamps, and ducting for unmetered air leaks",
+                "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
+                "Check the air filter and intake tract for restriction or poor sealing",
+                "Compare MAF readings to expected load and RPM on the scan tool",
+            ],
+        },
+        "P0138": {
+            "meaning": "P0138 means the downstream oxygen sensor on bank 1 is staying high or reading richer than expected for too long. The sensor itself may be failing, but wiring faults or an actual rich-running condition can also hold the signal high.",
+            "symptoms": [
+                "Check-engine light with little or no drivability change",
+                "Possible rich-running smell if fueling is actually excessive",
+                "Failed emissions readiness or inspection",
+            ],
+            "quick_checks": [
+                "Check for signs of rich running or fuel-control faults before replacing the sensor",
+                "Inspect the bank 1 sensor 2 wiring near the exhaust for heat damage or shorting",
+                "Verify downstream sensor voltage behavior on the scan tool",
+                "Confirm there is no exhaust contamination or connector damage affecting the reading",
+            ],
+        },
+        "P0141": {
+            "meaning": "P0141 means the heater circuit for the downstream oxygen sensor on bank 1 is not working as expected. The sensor may be bad, but a blown fuse, poor power supply, ground issue, or damaged wiring can set the same code.",
+            "symptoms": [
+                "Check-engine light with no major drivability complaint",
+                "Delayed oxygen-sensor readiness on cold start",
+                "Failed emissions readiness or inspection",
+            ],
+            "quick_checks": [
+                "Inspect the downstream sensor wiring away from the hot exhaust",
+                "Verify heater circuit power, ground, and related fuse protection",
+                "Check connector condition and terminal tension at bank 1 sensor 2",
+                "Confirm the heater fault with scan data or meter checks before replacing parts",
+            ],
+        },
+        "P0158": {
+            "meaning": "P0158 means the downstream oxygen sensor on bank 2 is staying high or reading richer than expected for too long. The fault can be a biased sensor, damaged wiring, or a real rich-running condition that keeps the signal elevated.",
+            "symptoms": [
+                "Check-engine light with little or no drivability change",
+                "Possible rich exhaust smell if the engine is actually overfueling",
+                "Failed emissions readiness or inspection",
+            ],
+            "quick_checks": [
+                "Check for rich-running signs or related fuel-control codes first",
+                "Inspect the bank 2 sensor 2 wiring near the exhaust for heat damage or shorting",
+                "Verify downstream sensor voltage behavior on the scan tool",
+                "Confirm connector condition and harness routing before replacing the sensor",
+            ],
+        },
+        "P0562": {
+            "meaning": "P0562 means system voltage dropped below the expected range. The most common causes are a weak battery, low alternator output, or excessive resistance at the battery, ground, or charging connections.",
+            "symptoms": [
+                "Slow cranking or intermittent no-start",
+                "Dim lights or unstable electrical accessories",
+                "Multiple low-voltage communication or module codes",
+            ],
+            "quick_checks": [
+                "Check resting battery voltage and perform a battery load or conductance test",
+                "Measure charging voltage with the engine running and electrical load applied",
+                "Inspect battery terminals, main grounds, and charging-cable connections for voltage drop",
+                "Check for a belt or alternator-drive issue if charging output is low",
+            ],
+        },
+        "P0563": {
+            "meaning": "P0563 means system voltage is higher than expected, pointing to an overcharging condition. The fault often traces to an alternator or regulator issue, but poor sensing connections or control-circuit problems can also push voltage too high.",
+            "symptoms": [
+                "Battery warning light or electrical system warning",
+                "Bright lights or erratic accessory behavior",
+                "Battery smell, heat, or repeated battery failure after overcharging",
+            ],
+            "quick_checks": [
+                "Measure charging voltage at idle and with electrical load applied",
+                "Inspect regulator and alternator control wiring for faults or poor sensing",
+                "Inspect battery terminals and sensing connections for poor contact",
+                "Do not keep driving if charging voltage is far above normal",
+            ],
+        },
+        "P0118": {
+            "meaning": "P0118 means the coolant temperature signal is reading colder than expected because the sensor circuit is open or the signal is stuck high. That can come from an unplugged sensor, damaged wiring, corrosion, or a failed coolant temperature sensor.",
+            "symptoms": [
+                "Hard cold starts or overly rich warm-up fueling",
+                "Cooling fans running unexpectedly on some vehicles",
+                "Poor fuel economy while the fault is active",
+            ],
+            "quick_checks": [
+                "Make sure the coolant temperature sensor connector is fully seated",
+                "Inspect the wiring for breaks, corrosion, or coolant intrusion",
+                "Compare ECT reading to ambient temperature on a cold engine",
+                "Check sensor resistance or reference voltage if the signal stays unrealistically cold",
+            ],
+        },
+    }
+
+    return refinements.get(code)
+
 @app.get("/obd/{code}", response_class=HTMLResponse)
 async def obd_code_page(request: Request, code: str):
 
@@ -2216,9 +2635,28 @@ async def obd_code_page(request: Request, code: str):
     cost_guide_links = build_cost_guide_links(row["code"])
     diagnostic_summary = build_diagnostic_summary(row["code"])
     page_metadata = build_obd_page_metadata(row["code"])
+    content_refinement = build_obd_content_refinement(row["code"])
 
     # ✅ THIS IS STEP 2
     repair_path = REPAIR_PATHS.get(row["code"])
+    display_description = (
+        content_refinement["meaning"]
+        if content_refinement and content_refinement.get("meaning")
+        else row["description"] or ""
+    )
+    if content_refinement and content_refinement.get("symptoms"):
+        display_symptoms = list(content_refinement["symptoms"])
+    elif repair_path and repair_path.get("symptoms"):
+        display_symptoms = list(repair_path["symptoms"])
+    else:
+        display_symptoms = []
+
+    if content_refinement and content_refinement.get("quick_checks"):
+        display_quick_checks = list(content_refinement["quick_checks"])
+    else:
+        display_quick_checks = list(quick_checks)
+        if repair_path and repair_path.get("electrical") and repair_path["electrical"].get("items"):
+            display_quick_checks.extend(repair_path["electrical"]["items"])
 
     return templates.TemplateResponse(
         "obd_code_detail.html",
@@ -2227,8 +2665,12 @@ async def obd_code_page(request: Request, code: str):
             "code": row["code"],
             "title": row["title"] or "",
             "description": row["description"] or "",
+            "display_description": display_description,
             "possible_causes": possible_causes,
             "quick_checks": quick_checks,
+            "display_symptoms": display_symptoms,
+            "display_quick_checks": display_quick_checks,
+            "use_inline_quality_sections": bool(content_refinement),
             "related_codes": related_codes,
             "common_repairs": common_repairs,
             "cost_guide_links": cost_guide_links,

@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 
-{% block title %}OBD Code Index | TorqueMech{% endblock %}
+{% block title %}{{ page_title or "OBD Code Index | TorqueMech" }}{% endblock %}
 
 {% block page_css %}
-  <meta name="description" content="Browse TorqueMech OBD trouble codes by code range and open full code pages with causes, quick checks, repair direction, and estimate-ready next steps." />
+  <meta name="description" content="{{ meta_description or 'Browse TorqueMech OBD trouble codes by code range and open full code pages with causes, quick checks, repair direction, and estimate-ready next steps.' }}" />
   <link rel="canonical" href="{{ request.url }}" />
   <style>
     .obd-index-jumps {
@@ -107,13 +107,18 @@
 <section class="tm-section">
   <div class="tm-card">
     <div class="tm-eyebrow">TorqueMech Diagnostics</div>
-    <h1 class="tm-page-title">Browse OBD Trouble Codes</h1>
+    <h1 class="tm-page-title">{{ intro_title or "Browse OBD Trouble Codes" }}</h1>
     <p class="tm-muted">
-      OBD trouble codes are diagnostic fault codes your vehicle stores when the system detects a problem. Use this index to browse code families, then open the full TorqueMech code page for plain-English meaning, common causes, quick checks, likely repairs, and related cost context.
+      {{ intro_body or "OBD trouble codes are diagnostic fault codes your vehicle stores when the system detects a problem. Use this index to browse code families, then open the full TorqueMech code page for plain-English meaning, common causes, quick checks, likely repairs, and related cost context." }}
     </p>
     <div class="tm-actions" style="margin-top:14px;">
+      {% if is_range_page %}
+      <a class="tm-btn tm-btn-primary" href="/obd">Back to OBD Hub</a>
+      <a class="tm-btn tm-btn-secondary" href="/diagnostics">Browse Diagnostics</a>
+      {% else %}
       <a class="tm-btn tm-btn-primary" href="/diagnostics">Browse Diagnostics</a>
       <a class="tm-btn tm-btn-secondary" href="/obd-codes">Open Full OBD Index</a>
+      {% endif %}
     </div>
     <p class="tm-muted" style="margin:14px 0 0;">
       Showing {{ total_codes }} code{% if total_codes != 1 %}s{% endif %} from the current TorqueMech OBD dataset.
@@ -121,6 +126,14 @@
 
     {% set existing_group_ids = obd_code_groups | map(attribute='id') | list %}
     <div class="obd-index-jumps">
+      {% if is_range_page %}
+      <a class="obd-index-jump" href="/obd/p00xx">P00xx</a>
+      <a class="obd-index-jump" href="/obd/p01xx">P01xx</a>
+      <a class="obd-index-jump" href="/obd/p02xx">P02xx</a>
+      <a class="obd-index-jump" href="/obd/p03xx">P03xx</a>
+      <a class="obd-index-jump" href="/obd/p04xx">P04xx</a>
+      <a class="obd-index-jump" href="/obd/p05xx">P05xx</a>
+      {% else %}
       {% if "p00_p01" in existing_group_ids %}
       <a class="obd-index-jump" href="#group-p00_p01">Air / Fuel / Sensors</a>
       {% endif %}
@@ -138,6 +151,7 @@
       {% endif %}
       {% if "p00_p01" in existing_group_ids %}
       <a class="obd-index-jump" href="#group-p00_p01">Cooling / Temperature</a>
+      {% endif %}
       {% endif %}
     </div>
   </div>
@@ -174,6 +188,7 @@
   </div>
 </section>
 
+{% if not is_range_page %}
 <section class="tm-section">
   <div class="tm-card">
     <h2 style="margin-top:0;">Common Repair Costs</h2>
@@ -190,4 +205,5 @@
     </div>
   </div>
 </section>
+{% endif %}
 {% endblock %}
