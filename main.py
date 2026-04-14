@@ -1425,6 +1425,125 @@ def build_platform_sections(current_href: str = "") -> List[Dict[str, str]]:
         return sections
 
     return [section for section in sections if section.get("href") != current_href]
+
+def build_quick_find_items() -> List[Dict[str, str]]:
+    items: List[Dict[str, str]] = []
+    seen_hrefs: set[str] = set()
+
+    def add_item(
+        *,
+        href: str,
+        item_type: str,
+        title: str,
+        subtitle: str = "",
+        code: str = "",
+        keywords: str = "",
+    ) -> None:
+        href = str(href or "").strip()
+        if not href or href in seen_hrefs:
+            return
+
+        seen_hrefs.add(href)
+        items.append(
+            {
+                "href": href,
+                "type": item_type,
+                "title": str(title or "").strip(),
+                "subtitle": str(subtitle or "").strip(),
+                "code": str(code or "").strip().lower(),
+                "search": " ".join(
+                    filter(
+                        None,
+                        [
+                            str(code or "").strip(),
+                            str(title or "").strip(),
+                            str(subtitle or "").strip(),
+                            str(keywords or "").strip(),
+                        ],
+                    )
+                ),
+            }
+        )
+
+    if OBD_SEED_JSON_PATH.exists():
+        try:
+            obd_data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
+        except Exception:
+            obd_data = {}
+
+        if isinstance(obd_data, dict):
+            for raw_code, item in sorted(obd_data.items()):
+                code = "".join(ch for ch in str(raw_code or "").upper() if ch.isalnum())[:7]
+                if len(code) < 4:
+                    continue
+
+                title = str((item or {}).get("title") or "").strip()
+                description = str((item or {}).get("description") or "").strip()
+                if not title:
+                    continue
+
+                add_item(
+                    href=f"/obd/{code.lower()}",
+                    item_type="OBD Code",
+                    title=code,
+                    subtitle=title,
+                    code=code,
+                    keywords=description,
+                )
+
+    for guide in build_repair_cost_guide_cards():
+        href = str(guide.get("href") or "").strip()
+        title = str(guide.get("title") or "").strip()
+        description = str(guide.get("description") or "").strip()
+        slug_keywords = href.removeprefix("/cost/").replace("-", " ")
+        add_item(
+            href=href,
+            item_type="Cost Guide",
+            title=title,
+            subtitle=description,
+            keywords=slug_keywords,
+        )
+
+    repair_guides = load_normalized_repair_guides_map()
+    for entry in load_symptom_entries(repair_guides):
+        add_item(
+            href=str(entry.get("detail_href") or f"/symptoms/{entry.get('slug', '')}").strip(),
+            item_type="Symptom",
+            title=str(entry.get("title") or "").strip(),
+            subtitle=str(entry.get("summary") or "").strip(),
+            keywords=" ".join(
+                filter(
+                    None,
+                    [
+                        str(entry.get("system") or "").strip(),
+                        " ".join(entry.get("possible_causes") or []),
+                        " ".join(entry.get("common_sounds") or []),
+                        str(entry.get("slug") or "").replace("-", " "),
+                    ],
+                )
+            ),
+        )
+
+    for slug, guide in sorted(repair_guides.items(), key=lambda item: item[0]):
+        add_item(
+            href=f"/repair-guides/{slug}",
+            item_type="Repair Guide",
+            title=str(guide.get("title") or slug.replace("-", " ").title()).strip(),
+            subtitle=str(guide.get("summary") or "").strip(),
+            keywords=" ".join(
+                filter(
+                    None,
+                    [
+                        str(guide.get("category") or "").strip(),
+                        str(guide.get("subcategory") or "").strip(),
+                        " ".join(guide.get("symptoms") or []),
+                        slug.replace("-", " "),
+                    ],
+                )
+            ),
+        )
+
+    return items
    
 # ============================================================
 # Template Routes
@@ -1435,7 +1554,10 @@ def home(request: Request):
     metric_incr("page_home")
     return templates.TemplateResponse(
         "home.html",
-        {"request": request},
+        {
+            "request": request,
+            "quick_find_items": build_quick_find_items(),
+        },
     )
 
 
@@ -1457,6 +1579,7 @@ def obd(request: Request):
             "request": request,
             "obd_code_groups": obd_code_groups,
             "total_codes": total_codes,
+            "quick_find_items": build_quick_find_items(),
         },
     )
 
@@ -3004,6 +3127,7 @@ async def symptoms_index(request: Request):
             "platform_sections": build_platform_sections("/symptoms"),
             "page_title": "Symptoms | TorqueMech",
             "meta_description": "Search common vehicle symptoms and open the matching TorqueMech symptom guide.",
+            "quick_find_items": build_quick_find_items(),
         },
     )
 
@@ -3338,6 +3462,7 @@ async def repair_costs(request: Request):
         {
             "request": request,
             "cost_guides": build_repair_cost_guide_cards(),
+            "quick_find_items": build_quick_find_items(),
         }
     )
 
