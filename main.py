@@ -1541,6 +1541,25 @@ def build_related_codes(code: str):
             }
         )
 
+    curated_related_map = {
+        "P0300": ["P0301", "P0302", "P0303", "P0304"],
+        "P0301": ["P0300", "P0302", "P0303", "P0304"],
+        "P0302": ["P0300", "P0301", "P0303", "P0304"],
+        "P0303": ["P0300", "P0301", "P0302", "P0304"],
+        "P0304": ["P0300", "P0301", "P0302", "P0303"],
+        "P0171": ["P0174"],
+        "P0128": [],
+        "P0420": ["P0430"],
+        "P0430": ["P0420"],
+        "P0562": ["P0563"],
+        "P0563": ["P0562"],
+    }
+
+    if code in curated_related_map:
+        for candidate_code in curated_related_map[code]:
+            add_candidate(candidate_code)
+        return related[:max_items]
+
     clusters = {
         "maf": [
             ("P0100", "Mass or Volume Air Flow Circuit Malfunction"),

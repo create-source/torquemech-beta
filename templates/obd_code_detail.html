@@ -81,6 +81,45 @@
       padding-top: 2px;
     }
 
+    .obd-related-codes-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .obd-related-code-chip {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.55);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .obd-related-code-chip__code {
+      margin: 0 0 4px 0;
+      color: var(--tm-text);
+      font-size: 0.98rem;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: 0.03em;
+    }
+
+    .obd-related-code-chip__label {
+      color: var(--tm-text-muted);
+      line-height: 1.45;
+    }
+
+    .obd-related-code-chip__footer {
+      color: var(--tm-text-muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
     .obd-cost-guides-grid {
       display: grid;
       gap: 10px;
@@ -132,6 +171,14 @@
     @media (max-width: 640px) {
       .obd-repair-row__cta {
         flex-shrink: 0;
+      }
+
+      .obd-related-code-chip {
+        flex-direction: column;
+      }
+
+      .obd-related-code-chip__footer {
+        white-space: normal;
       }
 
       .obd-cost-guide-mini {
@@ -348,18 +395,18 @@
 {% if related_codes %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Related Codes</h2>
-    <div style="display:grid; gap:10px;">
+    <h2>Related OBD Codes</h2>
+    <p class="tm-muted" style="margin:0 0 14px 0;">
+      Browse the closest code-family pages when the same fault pattern often shows up nearby.
+    </p>
+    <div class="obd-related-codes-grid">
       {% for item in related_codes %}
-      <a
-        href="/obd/{{ item.code | lower }}"
-        style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px 14px; border:1px solid rgba(15, 23, 42, 0.10); border-radius:14px; text-decoration:none; color:inherit; background:rgba(255,255,255,0.55);"
-      >
+      <a href="/obd/{{ item.code | lower }}" class="obd-related-code-chip">
         <div>
-          <div style="font-weight:800; margin-bottom:4px;">{{ item.code }}</div>
-          <div class="tm-muted">{{ item.label }}</div>
+          <div class="obd-related-code-chip__code">{{ item.code }}</div>
+          <div class="obd-related-code-chip__label">{{ item.label }}</div>
         </div>
-        <div class="tm-muted" style="white-space:nowrap;">Open -></div>
+        <div class="obd-related-code-chip__footer">Open code guide →</div>
       </a>
       {% endfor %}
     </div>
