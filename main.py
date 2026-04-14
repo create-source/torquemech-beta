@@ -3490,27 +3490,25 @@ SITEMAP_STATIC_PATHS = [
     "/disclaimer",
 ]
 
-SITEMAP_CURATED_OBD_PATHS = [
-    "/obd/P0300",
-    "/obd/P0301",
-    "/obd/P0302",
-    "/obd/P0303",
-    "/obd/P0304",
-    "/obd/P0171",
-    "/obd/P0174",
-    "/obd/P0420",
-    "/obd/P0442",
-    "/obd/P0455",
-    "/obd/P0101",
-    "/obd/P0113",
-    "/obd/P0128",
-    "/obd/P0401",
-    "/obd/P0430",
-    "/obd/P0507",
-    "/obd/P0700",
-    "/obd/P0741",
-    "/obd/P0456",
-]
+def build_sitemap_obd_detail_paths() -> List[str]:
+    if not OBD_SEED_JSON_PATH.exists():
+        return []
+
+    try:
+        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
+        if not isinstance(data, dict):
+            return []
+    except Exception:
+        return []
+
+    paths: List[str] = []
+    for raw_code in sorted(data):
+        code = "".join(ch for ch in str(raw_code or "").upper() if ch.isalnum())[:7]
+        if len(code) < 4:
+            continue
+        paths.append(f"/obd/{code.lower()}")
+
+    return paths
 
 def latest_lastmod_for_files(files: List[Path]) -> Optional[str]:
     timestamps: List[float] = []
@@ -3540,7 +3538,7 @@ def build_sitemap_lastmods() -> Dict[str, str]:
     lastmod_sources: Dict[str, List[Path]] = {
         "/": [BASE_DIR / "main.py", TEMPLATES_DIR / "home.html"],
         "/repair-costs": [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_costs.html"],
-        "/obd": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd.html", BASE_DIR / "data" / "obd_codes.json"],
+        "/obd": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_index.html", BASE_DIR / "data" / "obd_codes.json"],
         "/obd-codes": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_codes_index.html", BASE_DIR / "data" / "obd_codes.json"],
     }
 
@@ -3552,7 +3550,7 @@ def build_sitemap_lastmods() -> Dict[str, str]:
         template_name = f"cost_{slug.replace('-', '_')}.html"
         lastmod_sources[href] = [*shared_cost_sources, TEMPLATES_DIR / template_name]
 
-    for path in SITEMAP_CURATED_OBD_PATHS:
+    for path in build_sitemap_obd_detail_paths():
         lastmod_sources[path] = list(shared_obd_sources)
 
     for path, source_files in lastmod_sources.items():
@@ -3568,7 +3566,7 @@ def sitemap():
     paths = [
         *SITEMAP_STATIC_PATHS,
         *[item["href"] for item in build_repair_cost_guide_cards() if item.get("href")],
-        *SITEMAP_CURATED_OBD_PATHS,
+        *build_sitemap_obd_detail_paths(),
     ]
     seen_paths: set[str] = set()
     unique_paths: List[str] = []
