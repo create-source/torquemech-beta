@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block title %}Repair Cost Guides | TorqueMech{% endblock %}
+
+{% block content %}
+
+<section class="tm-section">
+  <div class="tm-container">
+
+    <h1>Automotive Repair Cost Guides</h1>
+
+    <p class="tm-muted">
+      Explore common automotive repair costs and compare typical parts and labor ranges.
+      Each guide includes repair factors, symptoms, and an estimate builder.
+    </p>
+
+    <div class="tm-card-grid">
+
+      <a class="tm-card" href="/cost/spark-plug-replacement">
+        <h3>Spark Plug Replacement</h3>
+        <p>Cost breakdown, symptoms, and estimate builder.</p>
+      </a>
+
+      <a class="tm-card" href="/cost/oxygen-sensor-replacement">
+        <h3>Oxygen Sensor Replacement</h3>
+        <p>Typical replacement cost and diagnostic symptoms.</p>
+      </a>
+
+      <a class="tm-card" href="/cost/starter-replacement">
+        <h3>Starter Replacement</h3>
+        <p>Labor time, parts cost, and starting failure symptoms.</p>
+      </a>
+
+      <a class="tm-card" href="/cost/water-pump-replacement">
+        <h3>Water Pump Replacement</h3>
+        <p>Cooling system failure signs and repair cost range.</p>
+      </a>
+
+      <a class="tm-card" href="/cost/fuel-pump-replacement">
+        <h3>Fuel Pump Replacement</h3>
+        <p>Fuel delivery failure symptoms and replacement cost.</p>
+      </a>
+
+      <a class="tm-card" href="/cost/control-arm-replacement">
+        <h3>Control Arm Replacement</h3>
+        <p>Suspension noise, tire wear, and repair cost factors.</p>
+      </a>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

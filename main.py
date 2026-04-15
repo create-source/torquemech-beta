@@ -2180,7 +2180,7 @@ def build_cost_guide_links(code: str):
             {
                 "label": "Mass Air Flow Sensor Replacement Cost",
                 "href": "/cost/mass-air-flow-sensor-replacement",
-                "description": "A strong next cost check when the airflow signal or contamination points back to the MAF sensor.",
+                "description": "A strong next cost check when airflow readings or contamination point back to the MAF sensor.",
             },
         ],
         "P0138": [
@@ -2195,6 +2195,48 @@ def build_cost_guide_links(code: str):
                 "label": "Ignition Coil Replacement Cost",
                 "href": "/cost/ignition-coil-replacement",
                 "description": "The strongest cost guide when the coil A circuit fault points to a failed coil after wiring checks.",
+            },
+        ],
+        "P0441": [
+            {
+                "label": "EVAP Purge Valve Replacement Cost",
+                "href": "/cost/evap-purge-valve-replacement",
+                "description": "A strong next cost check when EVAP flow faults point to a purge valve that is sticking or not sealing correctly.",
+            },
+        ],
+        "P0442": [
+            {
+                "label": "EVAP Purge Valve Replacement Cost",
+                "href": "/cost/evap-purge-valve-replacement",
+                "description": "Useful when smoke testing or EVAP diagnosis points to purge-valve leakage as part of the small-leak fault.",
+            },
+        ],
+        "P0455": [
+            {
+                "label": "EVAP Purge Valve Replacement Cost",
+                "href": "/cost/evap-purge-valve-replacement",
+                "description": "Relevant when large-leak diagnosis shows the purge valve is stuck open or not sealing.",
+            },
+        ],
+        "P0507": [
+            {
+                "label": "Throttle Body Replacement Cost",
+                "href": "/cost/throttle-body-replacement",
+                "description": "A strong next cost check when idle speed stays high because the throttle body is sticking, worn, or failing electronically.",
+            },
+        ],
+        "P0340": [
+            {
+                "label": "Camshaft Position Sensor Replacement Cost",
+                "href": "/cost/camshaft-position-sensor-replacement",
+                "description": "A direct cost guide when testing confirms the camshaft position sensor or its signal is the fault.",
+            },
+        ],
+        "P0341": [
+            {
+                "label": "Camshaft Position Sensor Replacement Cost",
+                "href": "/cost/camshaft-position-sensor-replacement",
+                "description": "Useful when timing-signal diagnostics point to a weak or erratic camshaft position sensor.",
             },
         ],
         "P0562": [
@@ -2222,6 +2264,13 @@ def build_cost_guide_links(code: str):
             },
         ],
         "P0171": [
+            {
+                "label": "Mass Air Flow Sensor Replacement Cost",
+                "href": "/cost/mass-air-flow-sensor-replacement",
+                "description": "A strong next cost check when airflow readings or contamination point to the MAF sensor as the lean-condition trigger.",
+            },
+        ],
+        "P0174": [
             {
                 "label": "Mass Air Flow Sensor Replacement Cost",
                 "href": "/cost/mass-air-flow-sensor-replacement",
@@ -2354,6 +2403,21 @@ def build_cost_guide_links(code: str):
                         "label": "Water Pump Replacement Cost",
                         "href": "/cost/water-pump-replacement",
                         "description": "Useful when overheating or circulation tests point to pump flow or bearing failure.",
+                    },
+                ],
+            },
+            {
+                "matches": lambda current: current in {"P0117", "P0118"},
+                "guides": [
+                    {
+                        "label": "Thermostat Replacement Cost",
+                        "href": "/cost/thermostat-replacement",
+                        "description": "Relevant when cooling-system diagnosis is part of the temperature-sensor fault path.",
+                    },
+                    {
+                        "label": "Water Pump Replacement Cost",
+                        "href": "/cost/water-pump-replacement",
+                        "description": "Useful when broader cooling-system testing points to circulation or pump-related problems.",
                     },
                 ],
             },
@@ -3637,6 +3701,7 @@ SITEMAP_STATIC_PATHS = [
     "/obd-codes",
     "/repair-guides",
     "/repair-costs",
+    "/cost",
     "/about",
     "/privacy",
     "/terms",
@@ -5269,5 +5334,12 @@ async def cost_throttle_body(request: Request):
 async def cost_camshaft_sensor(request: Request):
     return templates.TemplateResponse(
         "cost_camshaft_position_sensor_replacement.html",
+        {"request": request}
+    )
+
+@app.get("/cost")
+def cost_index(request: Request):
+    return templates.TemplateResponse(
+        "cost_index.html",
         {"request": request}
     )
