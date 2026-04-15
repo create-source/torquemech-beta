@@ -1833,3 +1833,34 @@ h3{
     display:block;
   }
 }
+
+.tm-difficulty-easy {
+  font-size:1.9rem;
+  font-weight:900;
+  color:#22c55e;
+  margin:0 0 8px;
+}
+
+.tm-difficulty-moderate {
+  font-size:1.9rem;
+  font-weight:900;
+  color:#f59e0b;
+  margin:0 0 8px;
+}
+
+.tm-difficulty-advanced {
+  font-size:1.9rem;
+  font-weight:900;
+  color:#ef4444;
+  margin:0 0 8px;
+}
+
+.tm-difficulty-easy,
+.tm-difficulty-moderate,
+.tm-difficulty-advanced {
+  color: inherit;
+}
+
+.tm-difficulty-easy { color: #22c55e !important; }
+.tm-difficulty-moderate { color: #f59e0b !important; }
+.tm-difficulty-advanced { color: #ef4444 !important; }
