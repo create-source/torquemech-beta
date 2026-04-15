@@ -5232,3 +5232,42 @@ def shared_estimate_short_link(maybe_estimate_id: str):
         url=f"/estimate/share/{maybe_estimate_id}",
         status_code=307,
     )
+
+@app.get("/cost/ignition-coil-replacement", response_class=HTMLResponse)
+async def cost_ignition_coil(request: Request):
+    return templates.TemplateResponse(
+        "cost_ignition_coil_replacement.html",
+        {"request": request}
+    )
+
+
+@app.get("/cost/mass-air-flow-sensor-replacement", response_class=HTMLResponse)
+async def cost_maf(request: Request):
+    return templates.TemplateResponse(
+        "cost_mass_air_flow_sensor_replacement.html",
+        {"request": request}
+    )
+
+
+@app.get("/cost/evap-purge-valve-replacement", response_class=HTMLResponse)
+async def cost_purge_valve(request: Request):
+    return templates.TemplateResponse(
+        "cost_evap_purge_valve_replacement.html",
+        {"request": request}
+    )
+
+
+@app.get("/cost/throttle-body-replacement", response_class=HTMLResponse)
+async def cost_throttle_body(request: Request):
+    return templates.TemplateResponse(
+        "cost_throttle_body_replacement.html",
+        {"request": request}
+    )
+
+
+@app.get("/cost/camshaft-position-sensor-replacement", response_class=HTMLResponse)
+async def cost_camshaft_sensor(request: Request):
+    return templates.TemplateResponse(
+        "cost_camshaft_position_sensor_replacement.html",
+        {"request": request}
+    )
