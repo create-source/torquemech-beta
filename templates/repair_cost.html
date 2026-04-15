@@ -63,6 +63,16 @@
     </div>
   </div>
 
+  <div class="tm-card" style="margin-top:16px;">
+    <h2>Repair Difficulty</h2>
+    <p style="font-size:1.1rem; font-weight:700;">
+      {{ guide.difficulty or "Moderate" }}
+    </p>
+    <p class="tm-muted" style="margin-bottom:0;">
+      Estimated difficulty based on access, tools, and mechanical complexity.
+    </p>
+  </div>
+
   {% if guide.tools %}
   <div class="tm-card" style="margin-top:16px;">
   <h2>Tools Required</h2>
