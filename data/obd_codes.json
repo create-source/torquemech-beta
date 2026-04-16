@@ -1660,7 +1660,8 @@
       "P0100",
       "P0102",
       "P0103",
-      "P0104"
+      "P0171",
+      "P0174"
     ],
     "symptoms": [
       "Hesitation or flat throttle response",
@@ -2072,6 +2073,7 @@
     ],
     "related_codes": [
       "P0115",
+      "P0116",
       "P0117",
       "P0118"
     ],
@@ -2248,8 +2250,9 @@
       "Verify downstream sensor voltage behavior on the scan tool"
     ],
     "related_codes": [
-      "P0141",
+      "P0139",
       "P0140",
+      "P0141",
       "P0420"
     ],
     "symptoms": [
@@ -2319,6 +2322,7 @@
     ],
     "related_codes": [
       "P0138",
+      "P0139",
       "P0140",
       "P0420"
     ],
@@ -2801,6 +2805,7 @@
     "related_codes": [
       "P0174",
       "P0172",
+      "P0175",
       "P0101"
     ],
     "symptoms": [
@@ -2877,6 +2882,7 @@
     ],
     "related_codes": [
       "P0171",
+      "P0172",
       "P0175",
       "P0101"
     ],
@@ -6586,6 +6592,7 @@
     "related_codes": [
       "P0430",
       "P0138",
+      "P0139",
       "P0141"
     ],
     "symptoms": [
@@ -6915,9 +6922,11 @@
       "Check purge/vent valve operation"
     ],
     "related_codes": [
+      "P0441",
       "P0442",
       "P0446",
-      "P0455"
+      "P0455",
+      "P0456"
     ],
     "symptoms": [
       "Check-engine light with no major drivability complaint",
@@ -6966,6 +6975,8 @@
     ],
     "related_codes": [
       "P0440",
+      "P0441",
+      "P0446",
       "P0455",
       "P0456"
     ],
@@ -7047,8 +7058,10 @@
     ],
     "related_codes": [
       "P0440",
+      "P0441",
       "P0442",
-      "P0455"
+      "P0455",
+      "P0456"
     ],
     "symptoms": [
       "Check-engine light with no major drivability change",
@@ -7203,7 +7216,9 @@
     ],
     "related_codes": [
       "P0440",
+      "P0441",
       "P0442",
+      "P0446",
       "P0456"
     ],
     "symptoms": [
