@@ -1672,6 +1672,19 @@
   },
   "P0102": {
     "description": "MAF signal voltage/reading is too low.",
+    "causes": [
+      "Unplugged or failing mass air flow sensor",
+      "Wiring open or short to ground in the MAF circuit",
+      "Air intake restriction reducing measured airflow",
+      "Unmetered air leak skewing the signal"
+    ],
+    "diagnostic_steps": [
+      "Make sure the MAF connector is fully seated and the terminals are clean",
+      "Inspect the harness for opens, rubbed-through spots, or poor ground",
+      "Check the air filter and intake ducting for restriction or collapse",
+      "Compare MAF data to expected airflow at idle and snap throttle"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "MAF unplugged/failed",
       "Wiring open/short to ground",
@@ -1683,6 +1696,17 @@
       "Inspect wiring for opens",
       "Verify 5V reference and ground",
       "Check intake for restrictions"
+    ],
+    "related_codes": [
+      "P0100",
+      "P0101",
+      "P0103",
+      "P0113"
+    ],
+    "symptoms": [
+      "Hesitation or weak throttle response",
+      "Rough idle or lean stumble",
+      "Poor fuel economy or reduced power"
     ],
     "title": "Mass or Volume Air Flow Circuit Low Input"
   },
@@ -1736,6 +1760,19 @@
   },
   "P0106": {
     "description": "MAP signal out of expected range or not correlating with engine load.",
+    "causes": [
+      "MAP sensor drifting or responding slowly",
+      "Vacuum leak affecting manifold pressure",
+      "Blocked MAP port or hose on older systems",
+      "Restricted exhaust or engine mechanical problem"
+    ],
+    "diagnostic_steps": [
+      "Compare MAP readings to key-on barometric pressure and live engine load",
+      "Inspect vacuum hoses and intake plumbing for leaks",
+      "Inspect the MAP port or hose for oil, carbon, or blockage",
+      "Check for exhaust restriction or other load-related faults if MAP data stays off"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "MAP sensor drift",
       "Vacuum leak",
@@ -1746,6 +1783,17 @@
       "Compare MAP to TPS/RPM",
       "Check for vacuum leaks",
       "Inspect sensor port for blockage"
+    ],
+    "related_codes": [
+      "P0105",
+      "P0107",
+      "P0108",
+      "P0129"
+    ],
+    "symptoms": [
+      "Hesitation or flat acceleration",
+      "Idle quality problems",
+      "Poor power or reduced fuel economy"
     ],
     "title": "MAP/BARO Range/Performance"
   },
@@ -1832,6 +1880,19 @@
   },
   "P0113": {
     "description": "The intake air temperature signal is reading colder than expected because the circuit is open or the sensor signal is stuck high.",
+    "causes": [
+      "Unplugged intake air temperature sensor",
+      "Open circuit or broken wiring in the IAT signal path",
+      "Failed intake air temperature sensor",
+      "Corrosion or poor terminal fit at the connector"
+    ],
+    "diagnostic_steps": [
+      "Make sure the IAT connector is fully seated and locked",
+      "Inspect the harness for broken, stretched, or corroded wires",
+      "Compare IAT reading to ambient temperature on a cold engine",
+      "Check sensor resistance and circuit integrity before replacing parts"
+    ],
+    "difficulty": "Easy",
     "possible_causes": [
       "Unplugged intake air temperature sensor",
       "Open circuit or broken wiring in the IAT signal path",
@@ -1841,6 +1902,17 @@
       "Make sure the IAT connector is fully seated",
       "Inspect the harness for broken, stretched, or corroded wires",
       "Compare IAT reading to ambient temperature and check sensor resistance"
+    ],
+    "related_codes": [
+      "P0101",
+      "P0102",
+      "P0112",
+      "P0114"
+    ],
+    "symptoms": [
+      "Check-engine light with little drivability change",
+      "Cold-start fueling may feel off",
+      "Fuel economy can drop if the reading stays inaccurate"
     ],
     "title": "Intake Air Temperature Circuit High Input"
   },
@@ -1903,6 +1975,19 @@
   },
   "P0118": {
     "description": "The coolant temperature signal is reading colder than expected because the sensor circuit is open or the signal is stuck high.",
+    "causes": [
+      "Unplugged coolant temperature sensor",
+      "Open circuit or broken wiring in the ECT sensor path",
+      "Failed engine coolant temperature sensor",
+      "Coolant intrusion or corrosion at the connector"
+    ],
+    "diagnostic_steps": [
+      "Make sure the coolant temperature sensor connector is fully seated",
+      "Inspect the wiring for breaks, corrosion, or coolant intrusion",
+      "Compare ECT reading to ambient temperature on a cold engine",
+      "Check sensor resistance and circuit integrity before replacing parts"
+    ],
+    "difficulty": "Easy",
     "possible_causes": [
       "Unplugged coolant temperature sensor",
       "Open circuit or broken wiring in the ECT sensor circuit",
@@ -1912,6 +1997,17 @@
       "Make sure the coolant temperature sensor connector is fully seated",
       "Inspect the wiring for breaks, corrosion, or coolant intrusion",
       "Compare ECT reading to ambient temperature and check sensor resistance"
+    ],
+    "related_codes": [
+      "P0115",
+      "P0117",
+      "P0119",
+      "P0128"
+    ],
+    "symptoms": [
+      "Hard cold starts or rich-running behavior",
+      "Cooling-fan operation may be abnormal",
+      "Fuel economy can drop while warm-up strategy stays on too long"
     ],
     "title": "Engine Coolant Temperature Circuit High Input"
   },
@@ -2101,6 +2197,19 @@
   },
   "P0130": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failing upstream oxygen sensor on bank 1 sensor 1",
+      "Damaged wiring or poor terminal contact in the sensor circuit",
+      "Exhaust leak ahead of the sensor",
+      "Rich or lean running condition affecting the signal"
+    ],
+    "diagnostic_steps": [
+      "Check for fuel-trim, misfire, or exhaust-leak issues first",
+      "Inspect the bank 1 sensor 1 harness near the exhaust for damage",
+      "Watch the upstream O2 sensor switch activity on the scan tool",
+      "Verify power, ground, and signal integrity before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2112,6 +2221,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0131",
+      "P0132",
+      "P0134",
+      "P0135"
+    ],
+    "symptoms": [
+      "Check-engine light with unstable fuel trims",
+      "Rough idle or light hesitation",
+      "Reduced fuel economy"
     ],
     "title": "O2 Sensor Circuit Malfunction (Bank 1 Sensor 1)"
   },
@@ -2181,6 +2301,19 @@
   },
   "P0135": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failed heater element in bank 1 sensor 1",
+      "Open or short in the heater wiring",
+      "Blown fuse or missing heater power supply",
+      "Loose or corroded connector at the sensor"
+    ],
+    "diagnostic_steps": [
+      "Inspect the bank 1 sensor 1 connector and wiring near the exhaust",
+      "Verify heater-circuit power, ground, and fuse protection",
+      "Check heater resistance if service information supports it",
+      "Confirm the heater fault before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2192,6 +2325,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0130",
+      "P0131",
+      "P0134",
+      "P0141"
+    ],
+    "symptoms": [
+      "Check-engine light with little immediate drivability change",
+      "Oxygen-sensor monitor may run slowly",
+      "Failed emissions readiness or inspection"
     ],
     "title": "O2 Sensor Heater Circuit Malfunction (Bank 1 Sensor 1)"
   },
@@ -2453,6 +2597,19 @@
   },
   "P0150": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failing upstream oxygen sensor on bank 2 sensor 1",
+      "Damaged wiring or poor terminal contact in the sensor circuit",
+      "Exhaust leak ahead of the sensor on bank 2",
+      "Rich or lean running condition affecting the signal"
+    ],
+    "diagnostic_steps": [
+      "Check for bank 2 fuel-trim, misfire, or exhaust-leak issues first",
+      "Inspect the bank 2 sensor 1 harness near the exhaust for damage",
+      "Watch the upstream O2 sensor switch activity on the scan tool",
+      "Verify power, ground, and signal integrity before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2464,6 +2621,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0151",
+      "P0152",
+      "P0153",
+      "P0155"
+    ],
+    "symptoms": [
+      "Check-engine light with unstable fuel trims",
+      "Rough idle or part-throttle hesitation",
+      "Reduced fuel economy"
     ],
     "title": "O2 Sensor Circuit Malfunction (Bank 2 Sensor 1)"
   },
@@ -2533,6 +2701,19 @@
   },
   "P0155": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failed heater element in bank 2 sensor 1",
+      "Open or short in the heater wiring",
+      "Blown fuse or missing heater power supply",
+      "Loose or corroded connector at the sensor"
+    ],
+    "diagnostic_steps": [
+      "Inspect the bank 2 sensor 1 connector and wiring near the exhaust",
+      "Verify heater-circuit power, ground, and fuse protection",
+      "Check heater resistance if service information supports it",
+      "Confirm the heater fault before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2544,6 +2725,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0150",
+      "P0151",
+      "P0153",
+      "P0154"
+    ],
+    "symptoms": [
+      "Check-engine light with little immediate drivability change",
+      "Oxygen-sensor monitor may run slowly",
+      "Failed emissions readiness or inspection"
     ],
     "title": "O2 Sensor Heater Circuit Malfunction (Bank 2 Sensor 1)"
   },
@@ -4885,6 +5077,20 @@
   },
   "P0305": {
     "description": "The ECM detected a misfire on cylinder 5.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 5",
+      "Weak ignition coil, boot, or plug wire for cylinder 5",
+      "Fuel injector issue on cylinder 5",
+      "Vacuum leak affecting the cylinder 5 runner",
+      "Low compression or valve sealing problem on cylinder 5"
+    ],
+    "diagnostic_steps": [
+      "Swap the coil or plug with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 5 spark plug, boot, and plug well for wear or oil intrusion",
+      "Check injector operation and connector condition on cylinder 5",
+      "Perform compression or leak-down testing if the misfire stays on the same hole"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn spark plug",
       "Faulty ignition coil or plug wire",
@@ -4898,11 +5104,36 @@
       "Check injector connector and fuel trim",
       "Perform compression/leak-down if persistent",
       "Check for intake/vacuum leak near that runner"
+    ],
+    "related_codes": [
+      "P0300",
+      "P0304",
+      "P0306",
+      "P0307"
+    ],
+    "symptoms": [
+      "Rough idle or steady shake",
+      "Hesitation or stumble under load",
+      "Fuel smell or flashing MIL if the misfire is severe"
     ],
     "title": "Cylinder 5 Misfire Detected"
   },
   "P0306": {
     "description": "The ECM detected a misfire on cylinder 6.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 6",
+      "Weak ignition coil, boot, or plug wire for cylinder 6",
+      "Fuel injector issue on cylinder 6",
+      "Vacuum leak affecting the cylinder 6 runner",
+      "Low compression or valve sealing problem on cylinder 6"
+    ],
+    "diagnostic_steps": [
+      "Swap the coil or plug with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 6 spark plug, boot, and plug well for wear or oil intrusion",
+      "Check injector operation and connector condition on cylinder 6",
+      "Perform compression or leak-down testing if the misfire stays on the same hole"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn spark plug",
       "Faulty ignition coil or plug wire",
@@ -4916,6 +5147,17 @@
       "Check injector connector and fuel trim",
       "Perform compression/leak-down if persistent",
       "Check for intake/vacuum leak near that runner"
+    ],
+    "related_codes": [
+      "P0300",
+      "P0305",
+      "P0307",
+      "P0308"
+    ],
+    "symptoms": [
+      "Rough idle or uneven engine note",
+      "Weak pull or stumble during acceleration",
+      "Fuel smell or flashing MIL if the misfire gets severe"
     ],
     "title": "Cylinder 6 Misfire Detected"
   },
@@ -6307,6 +6549,19 @@
   },
   "P0402": {
     "description": "EGR flow is higher than expected.",
+    "causes": [
+      "EGR valve stuck open",
+      "Control solenoid holding the valve on",
+      "Carbon preventing the EGR valve from seating",
+      "Feedback sensor reporting flow incorrectly"
+    ],
+    "diagnostic_steps": [
+      "Inspect the EGR valve for sticking or carbon buildup",
+      "Check whether the valve is being commanded open when it should be closed",
+      "Inspect vacuum or electronic control components for constant EGR command",
+      "Compare EGR feedback data to actual engine behavior if equipped"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "EGR valve stuck open",
       "Control solenoid issue",
@@ -6316,6 +6571,17 @@
       "Inspect EGR valve for sticking",
       "Check control solenoid",
       "Check for rough idle/stall symptoms"
+    ],
+    "related_codes": [
+      "P0401",
+      "P0403",
+      "P0405",
+      "P0406"
+    ],
+    "symptoms": [
+      "Rough idle or stalling",
+      "Stumble off idle",
+      "Check-engine light with reduced combustion stability"
     ],
     "title": "Exhaust Gas Recirculation Flow Excessive Detected"
   },
@@ -6420,6 +6686,19 @@
   },
   "P0410": {
     "description": "Secondary air injection did not operate as expected.",
+    "causes": [
+      "Secondary air pump failure",
+      "Relay or fuse problem in the air-injection circuit",
+      "Stuck check valve or blocked air passage",
+      "Vacuum control fault on vacuum-operated systems"
+    ],
+    "diagnostic_steps": [
+      "Listen for secondary air pump operation on a cold start",
+      "Check the related fuse, relay, and power supply to the pump",
+      "Inspect the air hoses and check valves for blockage or heat damage",
+      "Look for exhaust backflow or water intrusion that may have damaged the pump"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Air pump failure",
       "Relay/fuse issue",
@@ -6431,6 +6710,16 @@
       "Inspect fuses/relays",
       "Inspect hoses and check valves",
       "Check for exhaust backflow into pump"
+    ],
+    "related_codes": [
+      "P0411",
+      "P0412",
+      "P0418"
+    ],
+    "symptoms": [
+      "Check-engine light after cold starts",
+      "Usually little or no drivability complaint once warm",
+      "Failed emissions readiness or inspection"
     ],
     "title": "Secondary Air Injection System Malfunction"
   },
@@ -6937,6 +7226,19 @@
   },
   "P0441": {
     "description": "Purge flow is not as expected.",
+    "causes": [
+      "Purge valve stuck open or not sealing",
+      "Blocked or pinched EVAP line",
+      "Faulty purge-solenoid control circuit",
+      "Incorrect tank pressure response during purge"
+    ],
+    "diagnostic_steps": [
+      "Command the purge valve and verify it responds if scan-tool control is available",
+      "Inspect vacuum lines and EVAP hoses to the purge valve",
+      "Check whether the purge valve seals when de-energized",
+      "Review tank-pressure response during purge if the scan data supports it"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Stuck purge valve",
       "Blocked EVAP line",
@@ -6946,6 +7248,18 @@
       "Command purge valve with scan tool (if available)",
       "Inspect vacuum lines to purge valve",
       "Check purge valve for sticking"
+    ],
+    "related_codes": [
+      "P0440",
+      "P0442",
+      "P0446",
+      "P0455",
+      "P0456"
+    ],
+    "symptoms": [
+      "Check-engine light with possible hard-start after refueling",
+      "Occasional rough idle if the purge valve is stuck open",
+      "Failed emissions readiness or inspection"
     ],
     "title": "Evaporative Emission Control System Incorrect Purge Flow"
   },
@@ -7230,6 +7544,19 @@
   },
   "P0456": {
     "description": "The EVAP system detected a very small leak, which usually means a seal, cap, or hose is seeping rather than fully open.",
+    "causes": [
+      "Gas cap seal starting to leak",
+      "Very small seep in an EVAP hose or fitting",
+      "Vent valve or purge valve seepage",
+      "Minor leak at the canister or filler-neck seal"
+    ],
+    "diagnostic_steps": [
+      "Inspect the gas cap seal for hardening, cracks, or poor fit",
+      "Inspect EVAP hoses and canister connections for subtle seepage",
+      "Verify the purge and vent valves seal when commanded closed",
+      "Smoke test the EVAP system for a very small leak source"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Gas cap seal starting to leak",
       "Very small seep in an EVAP hose or fitting",
@@ -7239,6 +7566,18 @@
       "Inspect the gas cap seal for hardening, cracking, or poor fit",
       "Smoke test the EVAP system for a tiny leak source",
       "Inspect the canister, vent valve, and lines for subtle seepage"
+    ],
+    "related_codes": [
+      "P0440",
+      "P0441",
+      "P0442",
+      "P0446",
+      "P0455"
+    ],
+    "symptoms": [
+      "Check-engine light with no major drivability complaint",
+      "Usually no noticeable change in how the vehicle runs",
+      "Readiness monitor or emissions test failure"
     ],
     "title": "Evaporative Emission Control System Leak Detected (Very Small Leak)"
   },
@@ -7930,6 +8269,19 @@
   },
   "P0505": {
     "description": "Idle control is not operating as expected.",
+    "causes": [
+      "Dirty throttle body or sticking throttle plate",
+      "Idle air control valve failure on systems that use one",
+      "Vacuum leak affecting idle control",
+      "Idle relearn needed after battery or throttle service"
+    ],
+    "diagnostic_steps": [
+      "Inspect the intake tract and vacuum hoses for leaks",
+      "Inspect and clean the throttle body if carbon buildup is present",
+      "Test the idle air control valve if the system uses one",
+      "Perform the idle relearn procedure if the vehicle requires it"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Dirty throttle body",
       "IAC valve failure (if equipped)",
@@ -7940,11 +8292,35 @@
       "Check for vacuum leaks",
       "Perform idle relearn if applicable"
     ],
+    "related_codes": [
+      "P0506",
+      "P0507",
+      "P0508",
+      "P0509"
+    ],
+    "symptoms": [
+      "Idle speed hunts or will not stabilize",
+      "Stalling or near-stall at stops",
+      "Idle speed higher or lower than normal"
+    ],
     "title": "Idle Air Control System Malfunction"
   },
   "P0506": {
     "title": "Idle Control System RPM Lower Than Expected",
     "description": "Idle speed is lower than the ECM expects.",
+    "causes": [
+      "Dirty throttle body reducing airflow at idle",
+      "Idle air control or throttle actuator not opening enough",
+      "Vacuum leak compensation problem or incorrect relearn",
+      "Electrical fault in the idle-control circuit"
+    ],
+    "diagnostic_steps": [
+      "Inspect the related connector and harness for idle-control components",
+      "Inspect and clean the throttle body if carbon buildup is present",
+      "Compare commanded idle data to actual idle speed on the scan tool",
+      "Perform the idle relearn procedure if the vehicle requires it"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Failed sensor or idle control component",
       "Damaged wiring or connector",
@@ -7954,6 +8330,16 @@
       "Inspect the related connector and harness",
       "Compare live data to vehicle behavior",
       "Check for mechanical sticking or adjustment problems"
+    ],
+    "related_codes": [
+      "P0505",
+      "P0507",
+      "P2176"
+    ],
+    "symptoms": [
+      "Idle speed drops too low at stops",
+      "Engine may stumble or stall at idle",
+      "Low idle with vibration or roughness"
     ]
   },
   "P0507": {
