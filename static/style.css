@@ -1834,33 +1834,32 @@ h3{
   }
 }
 
+
+/* Repair Difficulty */
+
 .tm-difficulty-easy {
-  font-size:1.9rem;
-  font-weight:900;
-  color:#22c55e;
-  margin:0 0 8px;
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: #22c55e !important;
+  margin: 0 0 8px;
 }
 
 .tm-difficulty-moderate {
-  font-size:1.9rem;
-  font-weight:900;
-  color:#f59e0b;
-  margin:0 0 8px;
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: #f59e0b !important;
+  margin: 0 0 8px;
 }
 
 .tm-difficulty-advanced {
-  font-size:1.9rem;
-  font-weight:900;
-  color:#ef4444;
-  margin:0 0 8px;
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: #ef4444 !important;
+  margin: 0 0 8px;
 }
 
-.tm-difficulty-easy,
-.tm-difficulty-moderate,
-.tm-difficulty-advanced {
-  color: inherit;
+.tm-stats {
+  margin-top: 28px;
+  padding-top: 10px;
+  border-top: 1px solid var(--tm-border);
 }
-
-.tm-difficulty-easy { color: #22c55e !important; }
-.tm-difficulty-moderate { color: #f59e0b !important; }
-.tm-difficulty-advanced { color: #ef4444 !important; }
