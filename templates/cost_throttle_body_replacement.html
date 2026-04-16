@@ -3,7 +3,7 @@
 {% block title %}Throttle Body Replacement Cost | TorqueMech{% endblock %}
 
 {% block page_css %}
-  <meta name="description" content="Throttle Body Replacement Cost depends on coil access, cylinder count, and whether plugs or boots are serviced at the same time. Use TorqueMech for a mechanic-first baseline." />
+  <meta name="description" content="Throttle body replacement cost depends on throttle design, diagnosis time, relearn requirements, and parts quality. Use TorqueMech for a mechanic-first baseline." />
   <link rel="canonical" href="{{ request.url }}" />
   <script type="application/ld+json">
     {
@@ -14,7 +14,7 @@
           "@id": "https://torquemech.com/cost/throttle-body-replacement#webpage",
           "url": "https://torquemech.com/cost/throttle-body-replacement",
           "name": "Throttle Body Replacement Cost | TorqueMech",
-          "description": "Throttle Body Replacement Cost depends on coil access, cylinder count, and whether plugs or boots are serviced at the same time.",
+          "description": "Throttle body replacement cost depends on throttle design, diagnosis time, relearn requirements, and parts quality.",
           "isPartOf": {
             "@id": "https://torquemech.com/#website"
           },
@@ -27,7 +27,7 @@
           "@id": "https://torquemech.com/cost/throttle-body-replacement#service",
           "name": "Throttle Body Replacement",
           "serviceType": "Throttle Body Replacement",
-          "description": "Typical Throttle Body Replacement pricing guidance for misfire diagnosis, rough-running complaints, and confirmed coil failures.",
+          "description": "Typical throttle body replacement pricing guidance for electronic throttle faults, sticking throttle plates, and confirmed actuator failures.",
           "url": "https://torquemech.com/cost/throttle-body-replacement",
           "provider": {
             "@type": "Organization",
@@ -43,8 +43,8 @@
             "priceSpecification": {
               "@type": "PriceSpecification",
               "priceCurrency": "USD",
-              "minPrice": 180,
-              "maxPrice": 550
+              "minPrice": 250,
+              "maxPrice": 900
             }
           }
         },
@@ -83,7 +83,7 @@
     <div class="eyebrow">TorqueMech Cost Guide</div>
     <h1>Throttle Body Replacement Cost</h1>
     <p class="tm-pageLead">
-      Throttle Body Replacement Cost usually depends on how many coils are involved, how easy they are to reach, and whether spark plugs or boots should be serviced at the same time.
+      Throttle body replacement cost usually depends on electronic throttle design, diagnosis time, access to the intake assembly, and whether a relearn procedure is needed after installation.
       This page gives you a practical baseline before you move into the estimator.
     </p>
     <p class="tm-muted" style="margin-top:10px;">
@@ -94,12 +94,28 @@
     </div>
   </section>
 
-  <section class="tm-grid-4 tm-section">
+  <section class="tm-grid-4 tm-guide-grid tm-section">
     <article class="tm-card">
       <h2>Average Cost</h2>
-      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$180 to $550+</p>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$250 to $900+</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Total cost changes with coil count, labor access, and whether the repair is a single failed coil or part of a broader tune-up.
+        Total cost changes with throttle body design, diagnosis time, relearn requirements, and whether the replacement includes a new gasket or intake hardware.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 2.5 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Many throttle bodies are easy to reach at the intake entrance, but diagnosis, relearn steps, and tight intake packaging can add labor.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$150 to $650+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Price varies based on electronic throttle design, OE versus aftermarket quality, and whether the assembly includes sensors or an actuator motor.
       </p>
     </article>
 
@@ -107,23 +123,7 @@
       <h2>Repair Difficulty</h2>
       <p class="tm-difficulty-easy">Easy</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Throttle body replacement is usually straightforward because the unit sits at the intake entrance. Most jobs require basic tools and minimal disassembly.
-      </p>
-    </article>
-
-    <article class="tm-card">
-      <h2>Labor Time</h2>
-      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">0.5 to 1.5 hours</p>
-      <p class="tm-muted" style="margin-bottom:0;">
-        Coil-on-plug engines are usually quick, but intake removal or rear-bank access can add labor.
-      </p>
-    </article>
-
-    <article class="tm-card">
-      <h2>Parts Cost</h2>
-      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$50 to $250+ per coil</p>
-      <p class="tm-muted" style="margin-bottom:0;">
-        Price varies based on brand, OE versus aftermarket quality, and whether boots or related ignition parts are replaced too.
+        Easy. Usually accessible with basic tools and minimal intake disassembly.
       </p>
     </article>
   </section>
@@ -132,22 +132,22 @@
     <article class="tm-card">
       <h2>Common Symptoms</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Engine misfire under load or at idle</li>
-        <li>Check engine light with ignition or misfire codes</li>
-        <li>Rough idle or hesitation on acceleration</li>
-        <li>Noticeable loss of power</li>
-        <li>Poor fuel economy from incomplete combustion</li>
+        <li>Check engine light with electronic throttle or throttle-position codes</li>
+        <li>Rough idle, stalling, or unstable idle speed</li>
+        <li>Poor throttle response or reduced power</li>
+        <li>High idle or sticking throttle feel</li>
+        <li>Limp mode or limited acceleration</li>
       </ul>
     </article>
 
     <article class="tm-card">
       <h2>What Affects Cost</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Single coil replacement versus multiple coils</li>
-        <li>Engine layout and access to rear-bank cylinders</li>
-        <li>Whether spark plugs or boots should be replaced at the same visit</li>
-        <li>Need for diagnosis before parts replacement</li>
-        <li>OE, premium aftermarket, or budget ignition parts</li>
+        <li>Electronic throttle design and vehicle application</li>
+        <li>Need for diagnosis before replacing the assembly</li>
+        <li>Throttle relearn or calibration requirements</li>
+        <li>Condition of the intake duct, gasket, and connector</li>
+        <li>OE, premium aftermarket, or budget throttle body quality</li>
       </ul>
     </article>
   </section>
@@ -156,14 +156,14 @@
     <article class="tm-card">
       <h2>Service Overview</h2>
       <p class="tm-muted">
-        Coil quotes are most accurate when the root cause is confirmed first. Good shops check the misfire pattern, inspect the plug condition, and make sure the issue is not coming from fuel delivery or compression before replacing ignition parts.
+        Throttle body estimates are most accurate when the root cause is confirmed first. Good shops check for carbon buildup, wiring issues, and vacuum leaks before replacing the throttle body assembly.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
-        <li>Confirm the fault with scan data, misfire counters, or coil swapping</li>
-        <li>Inspect plugs, boots, and connectors for heat or oil damage</li>
-        <li>Remove engine covers or intake components if access is tight</li>
-        <li>Install the replacement coil and clear the fault</li>
-        <li>Verify smooth operation under idle and load</li>
+        <li>Confirm the fault with scan data and throttle-position testing</li>
+        <li>Inspect the intake duct, connector, and throttle plate condition</li>
+        <li>Remove the intake tube and related components for access</li>
+        <li>Install the replacement throttle body and any required gasket</li>
+        <li>Perform relearn steps and verify smooth idle and throttle response</li>
       </ul>
     </article>
   </section>
@@ -172,7 +172,7 @@
     <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to build an Throttle Body Replacement estimate with your labor rate, selected service, and vehicle context.
+        Use TorqueMech to build a throttle body replacement estimate with your labor rate, selected service, and vehicle context.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
         <a class="tm-btn tm-btn-primary" href="/estimator?service=throttle_body_replacement">Estimate Throttle Body Replacement</a>
