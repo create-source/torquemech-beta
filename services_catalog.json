@@ -447,13 +447,13 @@
         },
         {
           "code": "timing_chain_service",
-          "name": "Timing Chain Service",
+          "name": "Timing System Inspection",
           "labor_hours_min": 0.8,
           "labor_hours_max": 3.0
         },
         {
           "code": "timing_chain_guide_replacement",
-          "name": "Timing Chain Guide Replacement",
+          "name": "Timing Chain Kit Replacement",
           "labor_hours_min": 6.0,
           "labor_hours_max": 18.0
         }

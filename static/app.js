@@ -430,6 +430,21 @@
   let serviceSearch = null;
   let serviceResults = null;
 
+  const TIMING_SERVICE_CODES = {
+    timingBelt: "timing_belt_replacement",
+    timingChainKit: "timing_chain_guide_replacement",
+    timingChainLegacy: "timing_chain_service",
+  };
+
+  const TIMING_SYSTEM_SUPPORT = {
+    TOYOTA: {
+      SEQUOIA: {
+        type: "chain",
+        show: [TIMING_SERVICE_CODES.timingChainKit],
+      },
+    },
+  };
+
   if (serviceEl) {
     serviceSearch = serviceEl.parentElement?.querySelector(".service-search");
     if (!serviceSearch) {
@@ -1309,6 +1324,37 @@ const confidenceEl = document.getElementById("laborConfidence");
     hideServiceResults();
   }
 
+  function getTimingSystemConfig(vehicle) {
+    const make = String(vehicle?.make || "").trim().toUpperCase();
+    const model = String(vehicle?.model || "").trim().toUpperCase();
+
+    if (!make || !model) return null;
+    return TIMING_SYSTEM_SUPPORT[make]?.[model] || null;
+  }
+
+  function filterServicesForActiveVehicle(svcs) {
+    const services = Array.isArray(svcs) ? [...svcs] : [];
+    const timingConfig = getTimingSystemConfig(getActiveVehicle());
+    const hiddenTimingCodes = new Set([TIMING_SERVICE_CODES.timingChainLegacy]);
+
+    if (!timingConfig) {
+      hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingChainKit);
+      return services.filter((service) => !hiddenTimingCodes.has(service.code));
+    }
+
+    if (timingConfig.type === "chain") {
+      hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingBelt);
+      return services.filter((service) => !hiddenTimingCodes.has(service.code));
+    }
+
+    if (timingConfig.type === "belt") {
+      hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingChainKit);
+      return services.filter((service) => !hiddenTimingCodes.has(service.code));
+    }
+
+    return services.filter((service) => !hiddenTimingCodes.has(service.code));
+  }
+
   async function loadCategories() {
     if (!categoryEl) return;
     categoryEl.innerHTML = `<option value="">Select category…</option>`;
@@ -1331,7 +1377,9 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     if (!categoryKey) return;
 
-    const svcs = await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`);
+    const svcs = filterServicesForActiveVehicle(
+      await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`)
+    );
     serviceOptions = svcs.map((s) => ({
       code: s.code || "",
       name: s.name || s.code || "Service",
@@ -2591,6 +2639,7 @@ if (getEstimateHint) {
           vehicle.model = model;
           syncEstimateMeta();
           window.estimateState = estimateState;
+          void loadServices(categoryEl?.value || "");
           updateEstimateButtonState();
           refreshQuotePreview();
         },
