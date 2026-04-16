@@ -251,39 +251,17 @@
 
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Code Meaning</h2>
+    <h2>Code Overview</h2>
     <p style="margin:0;">{{ display_description or description or title }}</p>
-
-    {% if use_inline_quality_sections and display_symptoms %}
-    <div class="obd-detail-subsection">
-      <h3 class="obd-detail-subsection__title">Symptoms</h3>
-      <ul class="obd-detail-subsection__list">
-        {% for symptom in display_symptoms %}
-        <li>{{ symptom }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-
-    {% if use_inline_quality_sections and display_quick_checks %}
-    <div class="obd-detail-subsection">
-      <h3 class="obd-detail-subsection__title">Quick Diagnostic Checks</h3>
-      <ul class="obd-detail-subsection__list">
-        {% for item in display_quick_checks %}
-        <li>{{ item }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
   </div>
 </section>
 
-{% if possible_causes %}
+{% if display_causes %}
 <section class="tm-section">
   <div class="tm-card">
     <h2>Common Causes</h2>
     <ul class="obd-cause-list">
-      {% for cause in possible_causes %}
+      {% for cause in display_causes %}
       {% set cause_lower = cause | lower %}
       {% set cause_href = "" %}
       {% if "oxygen sensor" in cause_lower or "air-fuel sensor" in cause_lower %}
@@ -322,12 +300,12 @@
 </section>
 {% endif %}
 
-{% if not use_inline_quality_sections and repair_path and repair_path.symptoms %}
+{% if display_symptoms %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>What You May Notice</h2>
+    <h2>Symptoms</h2>
     <ul style="margin:0; padding-left:18px; line-height:1.7;">
-      {% for symptom in repair_path.symptoms %}
+      {% for symptom in display_symptoms %}
       <li>{{ symptom }}</li>
       {% endfor %}
     </ul>
@@ -335,35 +313,34 @@
 </section>
 {% endif %}
 
-{% if not use_inline_quality_sections and display_quick_checks %}
+{% if display_diagnostic_steps %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Quick Diagnostic Checks</h2>
-    <ul style="margin:0; padding-left:18px; line-height:1.7;">
-      {% for item in display_quick_checks %}
+    <h2>Diagnostic Steps</h2>
+    <ol style="margin:0; padding-left:20px; line-height:1.7;">
+      {% for item in display_diagnostic_steps %}
       <li>{{ item }}</li>
       {% endfor %}
-    </ul>
+    </ol>
   </div>
 </section>
 {% endif %}
 
-{% if not use_inline_quality_sections and repair_path and repair_path.electrical and repair_path.electrical["items"] %}
+{% if display_difficulty %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>{{ repair_path.electrical.title or "Electrical Focus" }}</h2>
-    <ul style="margin:0; padding-left:18px; line-height:1.7;">
-      {% for item in repair_path.electrical["items"] %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
+    <h2>Repair Difficulty</h2>
+    <p class="tm-difficulty-{{ display_difficulty | lower }}" style="margin-bottom:8px;">{{ display_difficulty }}</p>
+    <p class="tm-muted" style="margin:0;">
+      General difficulty estimate for the most common repair path.
+    </p>
   </div>
 </section>
 {% endif %}
 
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Likely Repairs</h2>
+    <h2>Likely Repairs & Cost Guides</h2>
     <p class="tm-muted" style="margin:0 0 14px 0;">
       Use test results to confirm the fault before pricing the repair.
     </p>
@@ -405,17 +382,10 @@
     {% else %}
     <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">Open Estimator</a>
     {% endif %}
-  </div>
-</section>
 
-{% if cost_guide_links %}
-<section class="tm-section">
-  <div class="obd-cost-guides-shell">
-    <h2>Related Cost Guides</h2>
-    <p class="tm-muted" style="margin:0 0 14px 0;">
-      Use these only when testing has already pointed you to a matching repair path.
-    </p>
-    <div class="obd-cost-guides-grid">
+    {% if cost_guide_links %}
+    <div class="obd-detail-subsection obd-cost-guides-shell">
+      <div class="obd-cost-guides-grid">
       {% for item in cost_guide_links %}
       <div class="obd-cost-guide-mini">
         <div>
@@ -427,10 +397,11 @@
         </a>
       </div>
       {% endfor %}
+      </div>
     </div>
+    {% endif %}
   </div>
 </section>
-{% endif %}
 
 {% if related_codes %}
 <section class="tm-section">

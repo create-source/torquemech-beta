@@ -1631,6 +1631,19 @@
   },
   "P0101": {
     "description": "The mass air flow signal is outside the expected range for the current engine load and RPM.",
+    "causes": [
+      "Dirty or failing mass air flow sensor",
+      "Air leak between the MAF and throttle body",
+      "Incorrect aftermarket intake or wrong MAF housing",
+      "Restricted air filter or intake ducting"
+    ],
+    "diagnostic_steps": [
+      "Inspect the intake boot, clamps, and ducting for unmetered air leaks",
+      "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
+      "Check the air filter and intake tract for restriction or poor sealing",
+      "Compare MAF readings to expected load and RPM on the scan tool"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Dirty or failing mass air flow sensor",
       "Air leak between the MAF and throttle body",
@@ -1642,6 +1655,17 @@
       "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
       "Check the air filter and intake tract for restriction or poor sealing",
       "Compare MAF readings to expected load and RPM on the scan tool"
+    ],
+    "related_codes": [
+      "P0100",
+      "P0102",
+      "P0103",
+      "P0104"
+    ],
+    "symptoms": [
+      "Hesitation or flat throttle response",
+      "Rough idle or light surge",
+      "Poor fuel economy or odd shift feel on some vehicles"
     ],
     "title": "Mass or Volume Air Flow Circuit Range/Performance"
   },
@@ -2024,6 +2048,18 @@
   },
   "P0128": {
     "description": "The engine is taking too long to reach normal operating temperature, usually because the thermostat is stuck open.",
+    "causes": [
+      "Thermostat stuck open",
+      "Low coolant level or trapped air in the cooling system",
+      "Coolant temperature sensor or wiring issue"
+    ],
+    "diagnostic_steps": [
+      "Compare scan-tool coolant temperature to actual engine warm-up behavior from a cold start",
+      "Check coolant level and make sure the cooling system is full with no trapped air",
+      "Inspect the thermostat housing area for seepage or poor sealing",
+      "Compare coolant-temperature data to ambient if a sensor fault is suspected"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Thermostat stuck open",
       "Low coolant level or trapped air in the cooling system",
@@ -2033,6 +2069,16 @@
       "Compare scan-tool coolant temperature to actual engine warm-up behavior",
       "Inspect the thermostat housing area for seepage or poor sealing",
       "Check coolant level and make sure the system is properly full"
+    ],
+    "related_codes": [
+      "P0115",
+      "P0117",
+      "P0118"
+    ],
+    "symptoms": [
+      "Weak cabin heat in cool weather",
+      "Temperature gauge staying low longer than normal",
+      "Reduced fuel economy from extended warm-up"
     ],
     "title": "Coolant Thermostat Below Regulating Temp"
   },
@@ -2678,6 +2724,20 @@
   },
   "P0171": {
     "description": "Bank 1 is running lean because the engine is seeing too much air, too little fuel, or an airflow reading that is off.",
+    "causes": [
+      "Vacuum leak after the MAF sensor",
+      "Dirty or failing mass air flow sensor",
+      "Low fuel pressure or weak fuel delivery",
+      "Restricted or weak injector on bank 1",
+      "Exhaust leak ahead of the upstream O2 sensor"
+    ],
+    "diagnostic_steps": [
+      "Check short- and long-term fuel trims at idle and cruise",
+      "Inspect intake boots, PCV hoses, and vacuum lines for leaks after the MAF",
+      "Inspect and clean the MAF sensor and verify the air filter box is sealed",
+      "Check fuel pressure or delivery volume if trims stay lean under load"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Vacuum leak after the MAF sensor",
       "Dirty or failing mass air flow sensor",
@@ -2691,6 +2751,16 @@
       "Inspect and clean the MAF sensor and verify the air filter is sealed",
       "Check fuel pressure or fuel delivery volume if available",
       "Look for exhaust leaks ahead of the front O2 sensor"
+    ],
+    "related_codes": [
+      "P0174",
+      "P0172",
+      "P0101"
+    ],
+    "symptoms": [
+      "Rough idle or light surge at idle",
+      "Hesitation on tip-in or light acceleration",
+      "Poor cold-start behavior or reduced fuel economy"
     ],
     "title": "System Too Lean (Bank 1)"
   },
@@ -2731,6 +2801,20 @@
   },
   "P0174": {
     "description": "The engine is running lean on bank 2.",
+    "causes": [
+      "Vacuum leak on the intake side",
+      "Dirty or failing mass air flow sensor",
+      "Low fuel pressure or weak fuel delivery",
+      "Exhaust leak ahead of the upstream O2 sensor",
+      "Injector restriction on bank 2"
+    ],
+    "diagnostic_steps": [
+      "Check short- and long-term fuel trims at idle and cruise",
+      "Inspect intake boots, PCV plumbing, and vacuum hoses for leaks after the MAF",
+      "Inspect and clean the MAF sensor and confirm the intake tract is sealed",
+      "Check fuel pressure or delivery volume if trims stay lean under load"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Vacuum leak",
       "Dirty/failed MAF sensor",
@@ -2744,6 +2828,16 @@
       "Clean/inspect MAF and air filter",
       "Check fuel pressure",
       "Check for exhaust leaks upstream"
+    ],
+    "related_codes": [
+      "P0171",
+      "P0175",
+      "P0101"
+    ],
+    "symptoms": [
+      "Light surge or rough idle",
+      "Hesitation during part-throttle driving",
+      "Lean stumble or weak cold-start behavior"
     ],
     "title": "System Too Lean (Bank 2)"
   },
@@ -4524,6 +4618,20 @@
   },
   "P0300": {
     "description": "The ECM is seeing misfires on multiple cylinders instead of one specific cylinder.",
+    "causes": [
+      "Worn spark plugs",
+      "Weak ignition coils or coil boots",
+      "Vacuum leak or intake air leak",
+      "Low fuel pressure or weak fuel delivery",
+      "Dirty or skewed mass air flow sensor"
+    ],
+    "diagnostic_steps": [
+      "Check whether cylinder-specific misfire codes are stored with P0300",
+      "Inspect spark plugs, coil boots, and plug wells for wear, oil, or carbon tracking",
+      "Check for vacuum leaks at hoses, PCV plumbing, and the intake boot",
+      "Review fuel trims and fuel pressure before condemning ignition parts alone"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn spark plugs",
       "Weak ignition coils or coil boots",
@@ -4538,10 +4646,35 @@
       "Review fuel trims and fuel pressure if that data is available",
       "Inspect the MAF sensor and air filter housing for contamination or leaks"
     ],
+    "related_codes": [
+      "P0301",
+      "P0302",
+      "P0303",
+      "P0304"
+    ],
+    "symptoms": [
+      "Rough idle or shaking at a stop",
+      "Hesitation or stumbling under load",
+      "Flashing check-engine light during active misfire"
+    ],
     "title": "Random/Multiple Cylinder Misfire Detected"
   },
   "P0301": {
     "description": "Cylinder 1 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 1",
+      "Weak ignition coil, boot, or plug wire for cylinder 1",
+      "Fuel injector issue on cylinder 1",
+      "Vacuum leak affecting the cylinder 1 intake runner",
+      "Low compression or valve sealing problem on cylinder 1"
+    ],
+    "diagnostic_steps": [
+      "Swap the cylinder 1 coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 1 spark plug for wear, gap, oil, or fuel fouling",
+      "Check injector connector fit and listen for injector operation on cylinder 1",
+      "Run compression or leak-down testing if the misfire stays on cylinder 1"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn or fouled spark plug on cylinder 1",
       "Weak ignition coil, boot, or plug wire for cylinder 1",
@@ -4556,10 +4689,35 @@
       "Look for an intake or vacuum leak near the cylinder 1 runner",
       "Run compression or leak-down testing if the misfire stays on cylinder 1"
     ],
+    "related_codes": [
+      "P0300",
+      "P0302",
+      "P0303",
+      "P0304"
+    ],
+    "symptoms": [
+      "Rough idle or shake tied to cylinder 1",
+      "Hesitation or light bucking on acceleration",
+      "Fuel smell or flashing MIL if the misfire is severe"
+    ],
     "title": "Cylinder 1 Misfire Detected"
   },
   "P0302": {
     "description": "Cylinder 2 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 2",
+      "Weak ignition coil, boot, or plug wire for cylinder 2",
+      "Fuel injector issue on cylinder 2",
+      "Vacuum leak affecting the cylinder 2 intake runner",
+      "Low compression or valve sealing problem on cylinder 2"
+    ],
+    "diagnostic_steps": [
+      "Swap the cylinder 2 coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 2 spark plug for wear, gap, oil, or fuel fouling",
+      "Check injector connector fit and listen for injector operation on cylinder 2",
+      "Run compression or leak-down testing if the misfire stays on cylinder 2"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn or fouled spark plug on cylinder 2",
       "Weak ignition coil, boot, or plug wire for cylinder 2",
@@ -4574,10 +4732,35 @@
       "Look for an intake or vacuum leak near the cylinder 2 runner",
       "Run compression or leak-down testing if the misfire stays on cylinder 2"
     ],
+    "related_codes": [
+      "P0300",
+      "P0301",
+      "P0303",
+      "P0304"
+    ],
+    "symptoms": [
+      "Rough idle or uneven engine note",
+      "Reduced power or stumble on throttle",
+      "Fuel smell or flashing MIL during a heavy misfire"
+    ],
     "title": "Cylinder 2 Misfire Detected"
   },
   "P0303": {
     "description": "Cylinder 3 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 3",
+      "Weak ignition coil, boot, or plug wire for cylinder 3",
+      "Fuel injector issue on cylinder 3",
+      "Vacuum leak affecting the cylinder 3 intake runner",
+      "Low compression or valve sealing problem on cylinder 3"
+    ],
+    "diagnostic_steps": [
+      "Swap the cylinder 3 coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 3 spark plug for wear, gap, oil, or fuel fouling",
+      "Check injector connector fit and listen for injector operation on cylinder 3",
+      "Run compression or leak-down testing if the misfire stays on cylinder 3"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn or fouled spark plug on cylinder 3",
       "Weak ignition coil, boot, or plug wire for cylinder 3",
@@ -4592,10 +4775,35 @@
       "Look for an intake or vacuum leak near the cylinder 3 runner",
       "Run compression or leak-down testing if the misfire stays on cylinder 3"
     ],
+    "related_codes": [
+      "P0300",
+      "P0301",
+      "P0302",
+      "P0304"
+    ],
+    "symptoms": [
+      "Noticeable shake at idle",
+      "Hesitation or stumble under load",
+      "Reduced fuel economy while the misfire is active"
+    ],
     "title": "Cylinder 3 Misfire Detected"
   },
   "P0304": {
     "description": "Cylinder 4 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 4",
+      "Weak ignition coil, boot, or plug wire for cylinder 4",
+      "Fuel injector issue on cylinder 4",
+      "Vacuum leak affecting the cylinder 4 intake runner",
+      "Low compression or valve sealing problem on cylinder 4"
+    ],
+    "diagnostic_steps": [
+      "Swap the cylinder 4 coil with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 4 spark plug for wear, gap, oil, or fuel fouling",
+      "Check injector connector fit and listen for injector operation on cylinder 4",
+      "Run compression or leak-down testing if the misfire stays on cylinder 4"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn or fouled spark plug on cylinder 4",
       "Weak ignition coil, boot, or plug wire for cylinder 4",
@@ -4609,6 +4817,17 @@
       "Check the injector connector and listen for injector operation",
       "Look for an intake or vacuum leak near the cylinder 4 runner",
       "Run compression or leak-down testing if the misfire stays on cylinder 4"
+    ],
+    "related_codes": [
+      "P0300",
+      "P0301",
+      "P0302",
+      "P0303"
+    ],
+    "symptoms": [
+      "Rough idle or steady vibration",
+      "Hesitation or weak pull during acceleration",
+      "Flashing MIL if the misfire is strong enough to threaten the catalyst"
     ],
     "title": "Cylinder 4 Misfire Detected"
   },
@@ -6270,6 +6489,19 @@
   },
   "P0420": {
     "description": "Bank 1 catalyst efficiency is below threshold after the monitor compared upstream and downstream O2 sensor behavior.",
+    "causes": [
+      "Aging catalytic converter",
+      "Exhaust leak ahead of the converter or O2 sensor",
+      "Lazy or inaccurate downstream oxygen sensor",
+      "Upstream fueling or misfire problem that damaged the catalyst"
+    ],
+    "diagnostic_steps": [
+      "Fix active misfire or rich-running codes before blaming the converter",
+      "Check for exhaust leaks ahead of the converter and oxygen sensors",
+      "Compare upstream and downstream O2 sensor behavior on a scan tool",
+      "Confirm the engine reaches normal operating temperature before final catalyst judgment"
+    ],
+    "difficulty": "Advanced",
     "possible_causes": [
       "Aging catalytic converter",
       "Exhaust leak ahead of the converter or O2 sensor",
@@ -6281,6 +6513,16 @@
       "Check for exhaust leaks ahead of the converter and sensors",
       "Compare upstream and downstream O2 sensor behavior on the scan tool",
       "Review fuel trims and confirm the engine reaches normal operating temperature"
+    ],
+    "related_codes": [
+      "P0430",
+      "P0138",
+      "P0141"
+    ],
+    "symptoms": [
+      "Often no clear drivability complaint",
+      "Failed emissions readiness or inspection",
+      "Sulfur smell or power loss if the converter is restricted"
     ],
     "title": "Catalyst System Efficiency Below Threshold (Bank 1)"
   },
@@ -6608,6 +6850,18 @@
   },
   "P0442": {
     "description": "The EVAP system detected a small leak, often from the gas cap seal or a minor seep at a hose or valve.",
+    "causes": [
+      "Loose or weak-sealing gas cap",
+      "Small crack or loose connection in an EVAP hose",
+      "Canister vent or purge valve not sealing completely"
+    ],
+    "diagnostic_steps": [
+      "Inspect the gas cap seal and make sure the cap tightens correctly",
+      "Inspect EVAP lines near the canister and tank for small cracks or loose fittings",
+      "Verify the purge and vent valves seal when commanded closed",
+      "Run a smoke test if the leak is not obvious during inspection"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Loose or weak-sealing gas cap",
       "Small crack or loose connection in an EVAP hose",
@@ -6617,6 +6871,16 @@
       "Inspect the gas cap seal and make sure the cap tightens correctly",
       "Inspect EVAP lines near the canister and fuel tank for small damage",
       "Run a smoke test if the leak is not obvious during visual inspection"
+    ],
+    "related_codes": [
+      "P0440",
+      "P0455",
+      "P0456"
+    ],
+    "symptoms": [
+      "Check-engine light with no major drivability complaint",
+      "Usually no noticeable change in how the vehicle runs",
+      "Readiness monitor or emissions test failure"
     ],
     "title": "Evaporative Emission Control System Leak Detected (Small Leak)"
   },

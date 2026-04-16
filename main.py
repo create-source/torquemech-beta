@@ -612,6 +612,71 @@ def obd_seed_from_json_if_empty() -> None:
     conn.commit()
     conn.close()
 
+
+def load_obd_seed_entry(code: str) -> Dict[str, Any] | None:
+    norm = "".join(ch for ch in (code or "").upper() if ch.isalnum())[:7]
+    if len(norm) < 4 or not OBD_SEED_JSON_PATH.exists():
+        return None
+
+    try:
+        data = json.loads(OBD_SEED_JSON_PATH.read_text(encoding="utf-8-sig"))
+    except Exception:
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    entry = data.get(norm)
+    return entry if isinstance(entry, dict) else None
+
+
+def normalize_obd_text_list(items: Any) -> List[str]:
+    if not isinstance(items, list):
+        return []
+
+    normalized: List[str] = []
+    for item in items:
+        text = str(item or "").strip()
+        if text and text not in normalized:
+            normalized.append(text)
+    return normalized
+
+
+def normalize_obd_difficulty(value: Any) -> str | None:
+    normalized = str(value or "").strip().lower()
+    difficulty_map = {
+        "easy": "Easy",
+        "moderate": "Moderate",
+        "advanced": "Advanced",
+    }
+    return difficulty_map.get(normalized)
+
+
+def normalize_obd_related_code_list(items: Any) -> List[str]:
+    if not isinstance(items, list):
+        return []
+
+    normalized: List[str] = []
+    seen: set[str] = set()
+    for item in items:
+        code = "".join(ch for ch in str(item or "").upper() if ch.isalnum())[:7]
+        if len(code) < 4 or code in seen:
+            continue
+        seen.add(code)
+        normalized.append(code)
+    return normalized
+
+
+def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
+    seed_entry = load_obd_seed_entry(code) or {}
+    return {
+        "causes": normalize_obd_text_list(seed_entry.get("causes")),
+        "symptoms": normalize_obd_text_list(seed_entry.get("symptoms")),
+        "diagnostic_steps": normalize_obd_text_list(seed_entry.get("diagnostic_steps")),
+        "difficulty": normalize_obd_difficulty(seed_entry.get("difficulty")),
+        "related_codes": normalize_obd_related_code_list(seed_entry.get("related_codes")),
+    }
+
 from fastapi import Query
 
 OBD_IMPORT_KEY = os.getenv("TORQUEMECH_OBD_IMPORT_KEY", ADMIN_KEY)
@@ -1795,7 +1860,7 @@ def build_fallback_related_code_candidates(code: str, available_titles: Dict[str
     return candidates
 
 
-def build_related_codes(code: str):
+def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
     code = code.upper().strip()
     available_titles = load_available_obd_titles()
     if code not in available_titles:
@@ -1816,6 +1881,14 @@ def build_related_codes(code: str):
                 "label": available_titles.get(candidate_code) or fallback_label or candidate_code,
             }
         )
+
+    for candidate_code in preferred_codes or []:
+        if len(related) >= max_items:
+            break
+        add_candidate(candidate_code)
+
+    if len(related) >= max_items:
+        return related[:max_items]
 
     curated_related_map = {
         "P0300": ["P0301", "P0302", "P0303", "P0304"],
@@ -2842,10 +2915,11 @@ async def obd_code_page(request: Request, code: str):
     if not row:
         raise HTTPException(status_code=404, detail="OBD code not found")
 
-    possible_causes = json.loads(row["possible_causes"] or "[]")
+    possible_causes = normalize_obd_text_list(json.loads(row["possible_causes"] or "[]"))
     quick_checks = json.loads(row["quick_checks"] or "[]")
+    knowledge_sections = build_obd_knowledge_sections(row["code"])
 
-    related_codes = build_related_codes(row["code"])
+    related_codes = build_related_codes(row["code"], knowledge_sections["related_codes"])
     common_repairs = build_common_repairs(row["code"])
     cost_guide_links = build_cost_guide_links(row["code"])
     diagnostic_summary = build_diagnostic_summary(row["code"])
@@ -2873,6 +2947,10 @@ async def obd_code_page(request: Request, code: str):
         if repair_path and repair_path.get("electrical") and repair_path["electrical"].get("items"):
             display_quick_checks.extend(repair_path["electrical"]["items"])
 
+    display_causes = knowledge_sections["causes"] or possible_causes
+    display_symptoms = knowledge_sections["symptoms"] or display_symptoms
+    display_diagnostic_steps = knowledge_sections["diagnostic_steps"] or normalize_obd_text_list(display_quick_checks)
+
     return templates.TemplateResponse(
         "obd_code_detail.html",
         {
@@ -2881,11 +2959,10 @@ async def obd_code_page(request: Request, code: str):
             "title": row["title"] or "",
             "description": row["description"] or "",
             "display_description": display_description,
-            "possible_causes": possible_causes,
-            "quick_checks": quick_checks,
+            "display_causes": display_causes,
             "display_symptoms": display_symptoms,
-            "display_quick_checks": display_quick_checks,
-            "use_inline_quality_sections": bool(content_refinement),
+            "display_diagnostic_steps": display_diagnostic_steps,
+            "display_difficulty": knowledge_sections["difficulty"],
             "related_codes": related_codes,
             "common_repairs": common_repairs,
             "cost_guide_links": cost_guide_links,
