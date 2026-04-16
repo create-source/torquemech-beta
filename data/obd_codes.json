@@ -1799,6 +1799,19 @@
   },
   "P0107": {
     "description": "MAP signal low.",
+    "causes": [
+      "Short to ground in the MAP signal circuit",
+      "Failed MAP sensor reading too low",
+      "Low reference voltage or poor ground at the sensor",
+      "Blocked sensor port on systems that use a MAP hose or port"
+    ],
+    "diagnostic_steps": [
+      "Inspect the MAP connector and harness for rubbed-through or grounded wiring",
+      "Verify reference voltage and ground at the sensor",
+      "Compare MAP data to key-on barometric pressure and engine load",
+      "Inspect the sensor port or hose for blockage if equipped"
+    ],
+    "difficulty": "Easy",
     "possible_causes": [
       "Short to ground",
       "Sensor failure"
@@ -1808,10 +1821,33 @@
       "Check reference voltage",
       "Verify sensor output"
     ],
+    "related_codes": [
+      "P0106",
+      "P0108",
+      "P0129"
+    ],
+    "symptoms": [
+      "Hesitation or weak acceleration",
+      "Poor idle quality",
+      "Reduced power or poor fuel economy"
+    ],
     "title": "MAP/BARO Low Input"
   },
   "P0108": {
     "description": "MAP signal high/open.",
+    "causes": [
+      "Open circuit in the MAP signal or ground path",
+      "Failed MAP sensor reading too high",
+      "Vacuum hose off or port unplugged on older systems",
+      "Poor connector fit or corrosion at the sensor"
+    ],
+    "diagnostic_steps": [
+      "Inspect the MAP connector, wiring, and vacuum source if the system uses one",
+      "Verify reference voltage, ground, and signal integrity at the sensor",
+      "Compare MAP data to key-on barometric pressure and live engine load",
+      "Check for an unplugged hose or port before replacing the sensor"
+    ],
+    "difficulty": "Easy",
     "possible_causes": [
       "Open circuit",
       "Sensor failure",
@@ -1821,6 +1857,16 @@
       "Inspect vacuum hose/port",
       "Inspect wiring/connector",
       "Verify sensor output"
+    ],
+    "related_codes": [
+      "P0106",
+      "P0107",
+      "P0129"
+    ],
+    "symptoms": [
+      "Hard starting or rich-running behavior",
+      "Idle quality problems",
+      "Poor throttle response or reduced fuel economy"
     ],
     "title": "MAP/BARO High Input"
   },
@@ -1962,6 +2008,19 @@
   },
   "P0117": {
     "description": "ECT signal indicates very hot (low voltage).",
+    "causes": [
+      "Short to ground in the ECT signal circuit",
+      "Failed coolant temperature sensor reading too hot",
+      "Connector contamination or damaged terminals",
+      "Wiring rubbed through near the engine or thermostat housing"
+    ],
+    "diagnostic_steps": [
+      "Inspect the coolant temperature sensor connector for coolant intrusion or corrosion",
+      "Check the harness for a short to ground or damaged insulation",
+      "Compare ECT reading to actual engine temperature on a cold start",
+      "Verify sensor resistance and reference voltage before replacing parts"
+    ],
+    "difficulty": "Easy",
     "possible_causes": [
       "Short to ground",
       "ECT sensor failed"
@@ -1970,6 +2029,17 @@
       "Inspect wiring",
       "Check resistance vs temp",
       "Verify reference voltage"
+    ],
+    "related_codes": [
+      "P0115",
+      "P0118",
+      "P0119",
+      "P0128"
+    ],
+    "symptoms": [
+      "Hard warm restarts or lean cold-start behavior",
+      "Cooling fans may run more than expected",
+      "Check-engine light with temperature data stuck too hot"
     ],
     "title": "Engine Coolant Temperature Circuit Low Input"
   },
@@ -2100,6 +2170,19 @@
   },
   "P0125": {
     "description": "Engine did not reach closed-loop temperature in expected time.",
+    "causes": [
+      "Thermostat stuck open",
+      "Low coolant level or trapped air in the cooling system",
+      "ECT sensor reading colder than actual",
+      "Cooling fan running too much or too early"
+    ],
+    "diagnostic_steps": [
+      "Review the coolant warm-up curve from a cold start on the scan tool",
+      "Inspect thermostat operation and housing for signs of poor sealing",
+      "Verify coolant level and bleed air from the system if needed",
+      "Check whether the cooling fan is running when it should not"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Thermostat stuck open",
       "Low coolant/air pocket",
@@ -2111,6 +2194,17 @@
       "Inspect thermostat operation",
       "Verify coolant level/bleed air",
       "Check fan operation"
+    ],
+    "related_codes": [
+      "P0117",
+      "P0118",
+      "P0126",
+      "P0128"
+    ],
+    "symptoms": [
+      "Weak cabin heat in cool weather",
+      "Extended warm-up before closed loop",
+      "Reduced fuel economy from staying in warm-up strategy too long"
     ],
     "title": "Insufficient Coolant Temp for Closed Loop"
   },
@@ -2408,6 +2502,19 @@
   },
   "P0139": {
     "description": "Bank 1 downstream oxygen sensor is switching too slowly.",
+    "causes": [
+      "Aging downstream oxygen sensor on bank 1 sensor 2",
+      "Exhaust leak affecting downstream sensor readings",
+      "Catalyst efficiency problem slowing sensor response",
+      "Rich or lean running condition affecting the monitor"
+    ],
+    "diagnostic_steps": [
+      "Watch bank 1 sensor 2 response on a scan tool after the engine is fully warm",
+      "Check for exhaust leaks ahead of the downstream sensor",
+      "Look for companion fuel-trim, misfire, or catalyst codes first",
+      "Compare downstream sensor behavior to catalyst and fueling conditions before replacing parts"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Aging O2 sensor",
       "Exhaust leak",
@@ -2419,10 +2526,34 @@
       "Check for exhaust leaks ahead of the sensor",
       "Look for fuel trim or catalyst-related companion codes"
     ],
+    "related_codes": [
+      "P0138",
+      "P0140",
+      "P0141",
+      "P0420"
+    ],
+    "symptoms": [
+      "Check-engine light with little or no drivability change",
+      "Failed emissions readiness or inspection",
+      "Catalyst monitor may not complete normally"
+    ],
     "title": "O2 Sensor Circuit Slow Response (Bank 1, Sensor 2)"
   },
   "P0140": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failed downstream oxygen sensor on bank 1 sensor 2",
+      "Damaged wiring or poor terminal contact in the sensor circuit",
+      "Exhaust leak affecting the downstream reading",
+      "Sensor stuck inactive because of a separate fueling or catalyst problem"
+    ],
+    "diagnostic_steps": [
+      "Check for exhaust leaks and catalyst-related codes first",
+      "Inspect the bank 1 sensor 2 wiring and connector near the exhaust",
+      "Watch downstream sensor activity on the scan tool after warm-up",
+      "Verify power, ground, and signal integrity before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2434,6 +2565,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0138",
+      "P0139",
+      "P0141",
+      "P0420"
+    ],
+    "symptoms": [
+      "Check-engine light with little or no drivability change",
+      "Failed emissions readiness or inspection",
+      "Downstream O2 data may stay flat on the scan tool"
     ],
     "title": "O2 Sensor Circuit No Activity Detected (Bank 1 Sensor 2)"
   },
@@ -2741,6 +2883,19 @@
   },
   "P0156": {
     "description": "Downstream O2 sensor circuit issue (B2S2).",
+    "causes": [
+      "Failed downstream oxygen sensor on bank 2 sensor 2",
+      "Damaged wiring or poor terminal contact in the sensor circuit",
+      "Exhaust leak affecting the downstream reading on bank 2",
+      "Sensor contamination or low activity from a catalyst issue"
+    ],
+    "diagnostic_steps": [
+      "Inspect the bank 2 sensor 2 wiring and connector near the exhaust",
+      "Check for exhaust leaks ahead of the downstream sensor",
+      "Watch downstream sensor activity on the scan tool after warm-up",
+      "Verify the circuit and sensor response before replacing parts"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring issue",
@@ -2750,6 +2905,17 @@
       "Inspect exhaust leaks",
       "Inspect wiring",
       "Verify sensor activity"
+    ],
+    "related_codes": [
+      "P0157",
+      "P0158",
+      "P0159",
+      "P0161"
+    ],
+    "symptoms": [
+      "Check-engine light with little or no drivability complaint",
+      "Failed emissions readiness or inspection",
+      "Downstream O2 data may stay flat or erratic"
     ],
     "title": "O2 Sensor Circuit Malfunction (Bank 2 Sensor 2)"
   },
@@ -2815,6 +2981,19 @@
   },
   "P0161": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failed heater element in bank 2 sensor 2",
+      "Open or short in the heater wiring",
+      "Blown fuse or missing heater power supply",
+      "Loose or corroded connector at the downstream sensor"
+    ],
+    "diagnostic_steps": [
+      "Inspect the bank 2 sensor 2 connector and wiring near the exhaust",
+      "Verify heater-circuit power, ground, and fuse protection",
+      "Check heater resistance if service information supports it",
+      "Confirm the heater fault before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2826,6 +3005,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0156",
+      "P0157",
+      "P0158",
+      "P0159"
+    ],
+    "symptoms": [
+      "Check-engine light with little immediate drivability change",
+      "Oxygen-sensor monitor may run slowly",
+      "Failed emissions readiness or inspection"
     ],
     "title": "O2 Sensor Heater Circuit Malfunction (Bank 2 Sensor 2)"
   },
@@ -3009,6 +3199,20 @@
   },
   "P0172": {
     "description": "The engine is running rich on bank 1.",
+    "causes": [
+      "Leaking injector on bank 1",
+      "Fuel pressure too high or regulator fault",
+      "Dirty or skewed mass air flow sensor",
+      "Coolant temperature sensor reading colder than actual",
+      "Restricted intake airflow"
+    ],
+    "diagnostic_steps": [
+      "Check short- and long-term fuel trims to confirm a true rich condition",
+      "Inspect for leaking injectors or fuel odor and check fuel pressure",
+      "Review MAF and coolant-temperature readings for values that do not make sense",
+      "Inspect the air filter and intake tract for restriction"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Leaking injector",
       "Fuel pressure too high",
@@ -3022,6 +3226,17 @@
       "Check fuel pressure/regulator",
       "Verify ECT reading is realistic",
       "Inspect air filter/intake"
+    ],
+    "related_codes": [
+      "P0171",
+      "P0175",
+      "P0101",
+      "P0117"
+    ],
+    "symptoms": [
+      "Fuel smell from the exhaust",
+      "Rough idle or loaded-up running",
+      "Poor fuel economy or black soot at the tailpipe"
     ],
     "title": "System Too Rich (Bank 1)"
   },
@@ -3087,6 +3302,20 @@
   },
   "P0175": {
     "description": "The engine is running rich on bank 2.",
+    "causes": [
+      "Leaking injector on bank 2",
+      "Fuel pressure too high or regulator fault",
+      "Dirty or skewed mass air flow sensor",
+      "Coolant temperature sensor reading colder than actual",
+      "Restricted intake airflow"
+    ],
+    "diagnostic_steps": [
+      "Check short- and long-term fuel trims to confirm the rich condition on bank 2",
+      "Inspect for leaking injectors or fuel odor and check fuel pressure",
+      "Review MAF and coolant-temperature readings for values that do not make sense",
+      "Inspect the air filter and intake tract for restriction"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Leaking injector",
       "Fuel pressure too high",
@@ -3100,6 +3329,17 @@
       "Check fuel pressure/regulator",
       "Verify ECT reading is realistic",
       "Inspect air filter/intake"
+    ],
+    "related_codes": [
+      "P0174",
+      "P0172",
+      "P0101",
+      "P0117"
+    ],
+    "symptoms": [
+      "Fuel smell from the exhaust",
+      "Rough idle or loaded-up running",
+      "Poor fuel economy or black soot at the tailpipe"
     ],
     "title": "System Too Rich (Bank 2)"
   },
@@ -5163,6 +5403,20 @@
   },
   "P0307": {
     "description": "The ECM detected a misfire on cylinder 7.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 7",
+      "Weak ignition coil, boot, or plug wire for cylinder 7",
+      "Fuel injector issue on cylinder 7",
+      "Vacuum leak affecting the cylinder 7 runner",
+      "Low compression or valve sealing problem on cylinder 7"
+    ],
+    "diagnostic_steps": [
+      "Swap the coil or plug with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 7 spark plug, boot, and plug well for wear or oil intrusion",
+      "Check injector operation and connector condition on cylinder 7",
+      "Perform compression or leak-down testing if the misfire stays on the same hole"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn spark plug",
       "Faulty ignition coil or plug wire",
@@ -5176,11 +5430,36 @@
       "Check injector connector and fuel trim",
       "Perform compression/leak-down if persistent",
       "Check for intake/vacuum leak near that runner"
+    ],
+    "related_codes": [
+      "P0300",
+      "P0306",
+      "P0308",
+      "P0309"
+    ],
+    "symptoms": [
+      "Rough idle or steady shake",
+      "Hesitation or stumble under load",
+      "Fuel smell or flashing MIL if the misfire is severe"
     ],
     "title": "Cylinder 7 Misfire Detected"
   },
   "P0308": {
     "description": "The ECM detected a misfire on cylinder 8.",
+    "causes": [
+      "Worn or fouled spark plug on cylinder 8",
+      "Weak ignition coil, boot, or plug wire for cylinder 8",
+      "Fuel injector issue on cylinder 8",
+      "Vacuum leak affecting the cylinder 8 runner",
+      "Low compression or valve sealing problem on cylinder 8"
+    ],
+    "diagnostic_steps": [
+      "Swap the coil or plug with another cylinder and see whether the misfire follows",
+      "Inspect the cylinder 8 spark plug, boot, and plug well for wear or oil intrusion",
+      "Check injector operation and connector condition on cylinder 8",
+      "Perform compression or leak-down testing if the misfire stays on the same hole"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Worn spark plug",
       "Faulty ignition coil or plug wire",
@@ -5194,6 +5473,17 @@
       "Check injector connector and fuel trim",
       "Perform compression/leak-down if persistent",
       "Check for intake/vacuum leak near that runner"
+    ],
+    "related_codes": [
+      "P0300",
+      "P0307",
+      "P0309",
+      "P0310"
+    ],
+    "symptoms": [
+      "Rough idle or uneven engine note",
+      "Weak pull or stumble during acceleration",
+      "Fuel smell or flashing MIL if the misfire gets severe"
     ],
     "title": "Cylinder 8 Misfire Detected"
   },
@@ -6616,6 +6906,19 @@
   },
   "P0405": {
     "description": "EGR feedback/position sensor signal low.",
+    "causes": [
+      "Failed EGR position sensor reading too low",
+      "Short to ground in the EGR feedback circuit",
+      "Damaged wiring or poor terminal contact",
+      "Fault inside the EGR valve assembly on integrated systems"
+    ],
+    "diagnostic_steps": [
+      "Inspect EGR wiring and connectors for damage or contamination",
+      "Verify the 5-volt reference, ground, and signal circuit",
+      "Check the EGR position signal sweep while commanding the valve if possible",
+      "Confirm the circuit fault before replacing the valve or sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Sensor failure",
       "Short to ground",
@@ -6626,10 +6929,34 @@
       "Check 5V reference",
       "Verify sensor output sweep"
     ],
+    "related_codes": [
+      "P0401",
+      "P0402",
+      "P0403",
+      "P0406"
+    ],
+    "symptoms": [
+      "Check-engine light with possible rough idle",
+      "EGR command may not match actual valve position",
+      "Failed emissions test or unstable part-throttle behavior"
+    ],
     "title": "EGR Sensor A Circuit Low"
   },
   "P0406": {
     "description": "EGR feedback/position sensor signal high/open.",
+    "causes": [
+      "Failed EGR position sensor reading too high",
+      "Open circuit in the EGR feedback signal or ground path",
+      "Damaged wiring or poor terminal contact",
+      "Fault inside the EGR valve assembly on integrated systems"
+    ],
+    "diagnostic_steps": [
+      "Inspect EGR wiring and connectors for broken, loose, or corroded terminals",
+      "Verify the 5-volt reference, ground, and signal circuit",
+      "Check the EGR position signal sweep while commanding the valve if possible",
+      "Confirm the circuit fault before replacing the valve or sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Open circuit",
       "Sensor failure",
@@ -6639,6 +6966,17 @@
       "Check connector seated",
       "Inspect wiring for breaks",
       "Verify sensor voltage"
+    ],
+    "related_codes": [
+      "P0401",
+      "P0402",
+      "P0403",
+      "P0405"
+    ],
+    "symptoms": [
+      "Check-engine light with possible rough idle",
+      "EGR command may not match actual valve position",
+      "Failed emissions test or unstable part-throttle behavior"
     ],
     "title": "EGR Sensor A Circuit High"
   },
@@ -7460,6 +7798,19 @@
   },
   "P0452": {
     "description": "EVAP pressure sensor signal low.",
+    "causes": [
+      "Fuel tank pressure sensor reading too low",
+      "Short to ground in the EVAP pressure-sensor circuit",
+      "Damaged wiring or poor terminal contact",
+      "Sensor reference or ground fault in the EVAP circuit"
+    ],
+    "diagnostic_steps": [
+      "Inspect the EVAP pressure sensor connector and nearby wiring",
+      "Verify reference voltage, ground, and signal integrity at the sensor",
+      "Compare tank-pressure data to expected resting values on the scan tool",
+      "Check for related EVAP wiring or sensor faults before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Valve/sensor failure",
       "Wiring/connectors issue",
@@ -7470,11 +7821,35 @@
       "Inspect wiring/connectors",
       "Command purge/vent (if available)",
       "Smoke test EVAP system if available"
+    ],
+    "related_codes": [
+      "P0440",
+      "P0441",
+      "P0453",
+      "P0454"
+    ],
+    "symptoms": [
+      "Check-engine light with no major drivability complaint",
+      "EVAP monitor may not complete normally",
+      "Possible emissions test failure"
     ],
     "title": "EVAP Pressure Sensor Low Input"
   },
   "P0453": {
     "description": "EVAP pressure sensor signal high/open.",
+    "causes": [
+      "Fuel tank pressure sensor reading too high",
+      "Open circuit in the EVAP pressure-sensor signal or ground path",
+      "Damaged wiring or poor terminal contact",
+      "Sensor reference or ground fault in the EVAP circuit"
+    ],
+    "diagnostic_steps": [
+      "Inspect the EVAP pressure sensor connector and nearby wiring",
+      "Verify reference voltage, ground, and signal integrity at the sensor",
+      "Compare tank-pressure data to expected resting values on the scan tool",
+      "Check for related EVAP wiring or sensor faults before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Valve/sensor failure",
       "Wiring/connectors issue",
@@ -7485,6 +7860,17 @@
       "Inspect wiring/connectors",
       "Command purge/vent (if available)",
       "Smoke test EVAP system if available"
+    ],
+    "related_codes": [
+      "P0440",
+      "P0441",
+      "P0452",
+      "P0454"
+    ],
+    "symptoms": [
+      "Check-engine light with no major drivability complaint",
+      "EVAP monitor may not complete normally",
+      "Possible emissions test failure"
     ],
     "title": "EVAP Pressure Sensor High Input"
   },
