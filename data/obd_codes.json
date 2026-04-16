@@ -1615,6 +1615,19 @@
   },
   "P0100": {
     "description": "Problem detected in the MAF circuit.",
+    "causes": [
+      "Dirty or failing mass air flow sensor",
+      "Wiring or connector fault in the MAF circuit",
+      "Air leak or intake turbulence affecting the sensor reading",
+      "Poor sensor power or ground supply"
+    ],
+    "diagnostic_steps": [
+      "Inspect the MAF connector and harness for damage or poor terminal fit",
+      "Check for intake leaks or loose ducting downstream of the MAF sensor",
+      "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
+      "Compare MAF data to expected airflow and verify power and ground"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Dirty/failed MAF sensor",
       "Wiring/connectors issue",
@@ -1626,6 +1639,17 @@
       "Check for intake leaks downstream of MAF",
       "Clean MAF sensor (MAF-safe cleaner)",
       "Compare MAF g/s readings to expected"
+    ],
+    "related_codes": [
+      "P0101",
+      "P0102",
+      "P0103",
+      "P0104"
+    ],
+    "symptoms": [
+      "Rough idle or light surge",
+      "Hesitation or flat throttle response",
+      "Poor fuel economy or reduced power"
     ],
     "title": "Mass or Volume Air Flow Circuit Malfunction"
   },
@@ -1712,6 +1736,19 @@
   },
   "P0103": {
     "description": "MAF signal voltage/reading is too high.",
+    "causes": [
+      "Failing or contaminated mass air flow sensor",
+      "Short to voltage in the MAF signal circuit",
+      "Oil contamination from an oiled filter",
+      "Incorrect intake setup or turbulence at the sensor"
+    ],
+    "diagnostic_steps": [
+      "Inspect the MAF wiring for short-to-voltage damage",
+      "Inspect and clean the MAF sensor if contamination is present",
+      "Check for oil contamination or an aftermarket intake affecting the signal",
+      "Compare live MAF readings to expected airflow at idle and under load"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "MAF failed",
       "Short to voltage",
@@ -1724,10 +1761,34 @@
       "Check for oil contamination from oiled filter",
       "Compare readings on scan tool"
     ],
+    "related_codes": [
+      "P0100",
+      "P0101",
+      "P0102",
+      "P0104"
+    ],
+    "symptoms": [
+      "Rich-running behavior or loaded-up idle",
+      "Hesitation or surge during acceleration",
+      "Poor fuel economy"
+    ],
     "title": "Mass or Volume Air Flow Circuit High Input"
   },
   "P0104": {
     "description": "The mass air flow sensor signal is intermittent or unstable.",
+    "causes": [
+      "Dirty or failing mass air flow sensor",
+      "Loose connector or poor terminal contact",
+      "Damaged wiring causing signal dropouts",
+      "Air leak or intake turbulence affecting the reading"
+    ],
+    "diagnostic_steps": [
+      "Wiggle-test the MAF connector and harness while watching live data",
+      "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
+      "Check intake ducting, clamps, and boots for leaks or poor fitment",
+      "Look for signal dropouts on the scan tool before replacing parts"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Dirty or failing MAF sensor",
       "Loose connector",
@@ -1740,10 +1801,34 @@
       "Check intake ducting and clamps",
       "Watch for signal dropouts on live data"
     ],
+    "related_codes": [
+      "P0100",
+      "P0101",
+      "P0102",
+      "P0103"
+    ],
+    "symptoms": [
+      "Intermittent hesitation or stumble",
+      "Idle quality changes that come and go",
+      "Unstable airflow readings on the scan tool"
+    ],
     "title": "Mass or Volume Air Flow Circuit Intermittent"
   },
   "P0105": {
     "description": "MAP/BARO sensor circuit fault detected.",
+    "causes": [
+      "MAP sensor failure",
+      "Wiring or connector fault in the MAP circuit",
+      "Vacuum hose or sensor-port problem on systems that use one",
+      "Engine condition affecting manifold vacuum"
+    ],
+    "diagnostic_steps": [
+      "Compare MAP readings to expected values at key-on and idle",
+      "Inspect the vacuum hose or sensor port for leaks or blockage if equipped",
+      "Verify 5-volt reference, ground, and signal integrity at the sensor",
+      "Inspect connector pins and harness condition before replacing parts"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "MAP sensor failure",
       "Wiring/connectors issue",
@@ -1755,6 +1840,17 @@
       "Inspect vacuum line/port",
       "Check 5V reference and ground",
       "Inspect connector pins"
+    ],
+    "related_codes": [
+      "P0106",
+      "P0107",
+      "P0108",
+      "P0109"
+    ],
+    "symptoms": [
+      "Rough idle or hesitation",
+      "Poor power or weak acceleration",
+      "Fuel economy may drop if load calculations are off"
     ],
     "title": "MAP/BARO Circuit Malfunction"
   },
@@ -1873,6 +1969,19 @@
   "P0109": {
     "title": "Manifold Absolute Pressure/Barometric Pressure Circuit Circuit Intermittent",
     "description": "The MAP or BARO sensor signal is cutting in and out intermittently.",
+    "causes": [
+      "Failing MAP or BARO sensor",
+      "Damaged wiring or loose connector at the sensor",
+      "Intermittent open or short in the circuit",
+      "Loose vacuum source or sensor-port issue on applicable systems"
+    ],
+    "diagnostic_steps": [
+      "Wiggle-test the MAP or BARO connector and harness while watching scan data",
+      "Verify reference voltage, ground, and signal integrity at the sensor",
+      "Compare scan data to a realistic barometric or load-related reading",
+      "Inspect the vacuum hose or sensor port if the system uses one"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Failed MAP or BARO sensor",
       "Damaged wiring or connector at the MAP or BARO sensor",
@@ -1882,6 +1991,17 @@
       "Inspect the MAP or BARO sensor connector and wiring",
       "Verify reference voltage, ground, and signal",
       "Compare scan data to a realistic known-good reading"
+    ],
+    "related_codes": [
+      "P0105",
+      "P0106",
+      "P0107",
+      "P0108"
+    ],
+    "symptoms": [
+      "Intermittent hesitation or surge",
+      "Unstable idle quality",
+      "MAP or BARO readings that drop out unexpectedly"
     ]
   },
   "P0110": {
@@ -2380,6 +2500,19 @@
   },
   "P0131": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failing upstream oxygen sensor on bank 1 sensor 1",
+      "Exhaust leak ahead of the sensor",
+      "Wiring fault or poor terminal contact in the sensor circuit",
+      "Actual lean-running condition on bank 1"
+    ],
+    "diagnostic_steps": [
+      "Check fuel trims, misfire codes, and exhaust leaks before condemning the sensor",
+      "Inspect the bank 1 sensor 1 harness near the exhaust for damage",
+      "Watch upstream sensor switching and voltage behavior on the scan tool",
+      "Verify the circuit and confirm the engine is not actually running lean"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2391,11 +2524,36 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0130",
+      "P0132",
+      "P0133",
+      "P0134",
+      "P0171"
+    ],
+    "symptoms": [
+      "Check-engine light with lean fuel trims",
+      "Rough idle or hesitation",
+      "Poor fuel economy or drivability complaint"
     ],
     "title": "O2 Sensor Circuit Low Voltage (Bank 1 Sensor 1)"
   },
   "P0132": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failing upstream oxygen sensor on bank 1 sensor 1",
+      "Engine running rich from a separate fuel-control problem",
+      "Short to voltage in the sensor circuit",
+      "Sensor contamination affecting the reading"
+    ],
+    "diagnostic_steps": [
+      "Check for rich-running or injector-related companion faults first",
+      "Inspect the bank 1 sensor 1 harness for shorting or heat damage",
+      "Watch upstream sensor voltage behavior on the scan tool",
+      "Confirm the engine is not actually running rich before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2407,11 +2565,36 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0130",
+      "P0131",
+      "P0133",
+      "P0134",
+      "P0172"
+    ],
+    "symptoms": [
+      "Check-engine light with rich-running behavior",
+      "Loaded-up idle or hesitation",
+      "Poor fuel economy"
     ],
     "title": "O2 Sensor Circuit High Voltage (Bank 1 Sensor 1)"
   },
   "P0133": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Aging upstream oxygen sensor on bank 1 sensor 1",
+      "Exhaust leak affecting the sensor reading",
+      "Sensor contamination slowing response",
+      "Rich or lean running condition affecting switching"
+    ],
+    "diagnostic_steps": [
+      "Watch the bank 1 sensor 1 switching rate after the engine is fully warm",
+      "Check for exhaust leaks ahead of the sensor",
+      "Review fuel trims and misfire data before replacing the sensor",
+      "Confirm the sensor is slow to respond under changing fuel conditions"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2423,11 +2606,36 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0130",
+      "P0131",
+      "P0132",
+      "P0134",
+      "P0135"
+    ],
+    "symptoms": [
+      "Check-engine light with unstable fuel control",
+      "Hesitation or light surge",
+      "Failed emissions readiness or inspection"
     ],
     "title": "O2 Sensor Circuit Slow Response (Bank 1 Sensor 1)"
   },
   "P0134": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failed upstream oxygen sensor on bank 1 sensor 1",
+      "Damaged wiring or poor terminal contact in the sensor circuit",
+      "Exhaust leak affecting sensor activity",
+      "Sensor not heating or becoming active as expected"
+    ],
+    "diagnostic_steps": [
+      "Check for exhaust leaks and related fuel-trim faults first",
+      "Inspect the bank 1 sensor 1 wiring and connector near the exhaust",
+      "Watch upstream sensor activity on the scan tool after warm-up",
+      "Verify power, ground, and signal integrity before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2439,6 +2647,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0130",
+      "P0131",
+      "P0133",
+      "P0135"
+    ],
+    "symptoms": [
+      "Check-engine light with little sensor switching",
+      "Rough idle or hesitation",
+      "Poor fuel economy or failed emissions readiness"
     ],
     "title": "O2 Sensor Circuit No Activity Detected (Bank 1 Sensor 1)"
   },
@@ -2484,6 +2703,19 @@
   },
   "P0136": {
     "description": "Downstream O2 sensor circuit issue (B1S2).",
+    "causes": [
+      "Failing downstream oxygen sensor on bank 1 sensor 2",
+      "Wiring or connector fault in the sensor circuit",
+      "Exhaust leak ahead of the downstream sensor",
+      "Catalyst issue affecting downstream sensor behavior"
+    ],
+    "diagnostic_steps": [
+      "Inspect the bank 1 sensor 2 wiring and connector near the exhaust",
+      "Check for exhaust leaks ahead of the downstream sensor",
+      "Verify downstream sensor activity on the scan tool after warm-up",
+      "Look for catalyst-related companion codes before replacing parts"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring issue",
@@ -2493,6 +2725,18 @@
       "Check exhaust leaks",
       "Inspect wiring",
       "Verify sensor activity"
+    ],
+    "related_codes": [
+      "P0138",
+      "P0139",
+      "P0140",
+      "P0141",
+      "P0420"
+    ],
+    "symptoms": [
+      "Check-engine light with little or no drivability complaint",
+      "Failed emissions readiness or inspection",
+      "Downstream O2 data may appear flat or erratic"
     ],
     "title": "O2 Sensor Circuit Malfunction (Bank 1 Sensor 2)"
   },
@@ -2828,6 +3072,19 @@
   },
   "P0151": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failing upstream oxygen sensor on bank 2 sensor 1",
+      "Exhaust leak ahead of the sensor on bank 2",
+      "Wiring fault or poor terminal contact in the sensor circuit",
+      "Actual lean-running condition on bank 2"
+    ],
+    "diagnostic_steps": [
+      "Check fuel trims, misfire codes, and exhaust leaks on bank 2 first",
+      "Inspect the bank 2 sensor 1 harness near the exhaust for damage",
+      "Watch upstream sensor switching and voltage behavior on the scan tool",
+      "Verify the circuit and confirm the engine is not actually running lean"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2839,11 +3096,36 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0150",
+      "P0152",
+      "P0153",
+      "P0154",
+      "P0174"
+    ],
+    "symptoms": [
+      "Check-engine light with lean fuel trims on bank 2",
+      "Rough idle or hesitation",
+      "Poor fuel economy or drivability complaint"
     ],
     "title": "O2 Sensor Circuit Low Voltage (Bank 2 Sensor 1)"
   },
   "P0152": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failing upstream oxygen sensor on bank 2 sensor 1",
+      "Engine running rich from a separate fuel-control problem",
+      "Short to voltage in the sensor circuit",
+      "Sensor contamination affecting the reading"
+    ],
+    "diagnostic_steps": [
+      "Check for rich-running or injector-related companion faults first",
+      "Inspect the bank 2 sensor 1 harness for shorting or heat damage",
+      "Watch upstream sensor voltage behavior on the scan tool",
+      "Confirm the engine is not actually running rich before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2855,11 +3137,36 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0150",
+      "P0151",
+      "P0153",
+      "P0154",
+      "P0175"
+    ],
+    "symptoms": [
+      "Check-engine light with rich-running behavior",
+      "Loaded-up idle or hesitation",
+      "Poor fuel economy"
     ],
     "title": "O2 Sensor Circuit High Voltage (Bank 2 Sensor 1)"
   },
   "P0153": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Aging upstream oxygen sensor on bank 2 sensor 1",
+      "Exhaust leak affecting the sensor reading",
+      "Sensor contamination slowing response",
+      "Rich or lean running condition affecting switching"
+    ],
+    "diagnostic_steps": [
+      "Watch the bank 2 sensor 1 switching rate after the engine is fully warm",
+      "Check for exhaust leaks ahead of the sensor",
+      "Review fuel trims and misfire data before replacing the sensor",
+      "Confirm the sensor is slow to respond under changing fuel conditions"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2871,11 +3178,36 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0150",
+      "P0151",
+      "P0152",
+      "P0154",
+      "P0155"
+    ],
+    "symptoms": [
+      "Check-engine light with unstable fuel control",
+      "Hesitation or light surge",
+      "Failed emissions readiness or inspection"
     ],
     "title": "O2 Sensor Circuit Slow Response (Bank 2 Sensor 1)"
   },
   "P0154": {
     "description": "An oxygen sensor circuit issue was detected.",
+    "causes": [
+      "Failed upstream oxygen sensor on bank 2 sensor 1",
+      "Damaged wiring or poor terminal contact in the sensor circuit",
+      "Exhaust leak affecting sensor activity",
+      "Sensor not heating or becoming active as expected"
+    ],
+    "diagnostic_steps": [
+      "Check for exhaust leaks and related fuel-trim faults on bank 2 first",
+      "Inspect the bank 2 sensor 1 wiring and connector near the exhaust",
+      "Watch upstream sensor activity on the scan tool after warm-up",
+      "Verify power, ground, and signal integrity before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "O2 sensor aging/failure",
       "Wiring/connectors damage",
@@ -2887,6 +3219,17 @@
       "Inspect O2 sensor wiring away from hot exhaust",
       "Verify heater fuse/relay (if heater code)",
       "Check fuel trims/misfires first"
+    ],
+    "related_codes": [
+      "P0150",
+      "P0151",
+      "P0153",
+      "P0155"
+    ],
+    "symptoms": [
+      "Check-engine light with little sensor switching",
+      "Rough idle or hesitation",
+      "Poor fuel economy or failed emissions readiness"
     ],
     "title": "O2 Sensor Circuit No Activity Detected (Bank 2 Sensor 1)"
   },
