@@ -2224,6 +2224,19 @@
   },
   "P0138": {
     "description": "The downstream oxygen sensor on bank 1 is stuck high or reading richer than expected for too long.",
+    "causes": [
+      "Failing downstream oxygen sensor on bank 1 sensor 2",
+      "Engine running rich from a separate fuel-control problem",
+      "Short to voltage or wiring damage in the sensor circuit",
+      "Sensor contamination from coolant, oil, or exhaust issues"
+    ],
+    "diagnostic_steps": [
+      "Check for rich-running or catalyst-related companion codes first",
+      "Inspect the bank 1 sensor 2 harness near the exhaust for melting or shorting",
+      "Verify downstream sensor voltage behavior on the scan tool after warm-up",
+      "Confirm the engine is not actually running rich before replacing the sensor"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Failing downstream oxygen sensor",
       "Engine running rich",
@@ -2233,6 +2246,16 @@
       "Check for signs of rich running or fuel-control faults first",
       "Inspect the sensor wiring near the exhaust for damage or shorting",
       "Verify downstream sensor voltage behavior on the scan tool"
+    ],
+    "related_codes": [
+      "P0141",
+      "P0140",
+      "P0420"
+    ],
+    "symptoms": [
+      "Check-engine light with little or no drivability change",
+      "Failed emissions readiness or inspection",
+      "Rich exhaust smell if a fueling fault is also present"
     ],
     "title": "O2 Sensor Circuit High Voltage (Bank 1 Sensor 2)"
   },
@@ -2269,6 +2292,19 @@
   },
   "P0141": {
     "description": "The heater circuit for the downstream oxygen sensor on bank 1 is not working as expected.",
+    "causes": [
+      "Failed heater element in bank 1 sensor 2",
+      "Damaged wiring or connector near the sensor",
+      "Blown fuse or missing heater power supply",
+      "High resistance in the heater control circuit"
+    ],
+    "diagnostic_steps": [
+      "Inspect the downstream sensor wiring and connector away from the hot exhaust",
+      "Verify heater-circuit power, ground, and related fuse protection",
+      "Check connector fit and terminal tension at bank 1 sensor 2",
+      "Confirm the heater fault with scan data or meter checks before replacing parts"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Failed downstream oxygen sensor heater",
       "Damaged wiring or connector at bank 1 sensor 2",
@@ -2280,6 +2316,16 @@
       "Verify heater circuit power, ground, and related fuse protection",
       "Check connector condition and terminal tension at bank 1 sensor 2",
       "Confirm the heater circuit fault with scan data or meter checks"
+    ],
+    "related_codes": [
+      "P0138",
+      "P0140",
+      "P0420"
+    ],
+    "symptoms": [
+      "Check-engine light with no major drivability complaint",
+      "Oxygen-sensor monitor takes longer to run",
+      "Failed emissions readiness or inspection"
     ],
     "title": "O2 Sensor Heater Circuit Malfunction (Bank 1 Sensor 2)"
   },
@@ -6218,6 +6264,19 @@
   },
   "P0401": {
     "description": "EGR flow is lower than expected.",
+    "causes": [
+      "Carbon buildup restricting EGR passages",
+      "Faulty or sticking EGR valve",
+      "Vacuum control problem on older systems",
+      "EGR flow feedback sensor reading incorrectly"
+    ],
+    "diagnostic_steps": [
+      "Inspect and clean the EGR valve and passages if carbon buildup is visible",
+      "Command the EGR system and verify the valve actually moves",
+      "Check vacuum supply or control-solenoid operation on vacuum-operated systems",
+      "Compare EGR feedback or DPFE readings to commanded flow if equipped"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Carbon clogged EGR passages",
       "Faulty EGR valve",
@@ -6227,6 +6286,16 @@
       "Inspect/clean EGR valve and passages",
       "Check vacuum lines/solenoid (if equipped)",
       "Verify DPFE/feedback sensor readings (if equipped)"
+    ],
+    "related_codes": [
+      "P0402",
+      "P0403",
+      "P0405"
+    ],
+    "symptoms": [
+      "Check-engine light with little drivability change",
+      "Light pinging or spark knock under load",
+      "Failed emissions test or elevated NOx"
     ],
     "title": "Exhaust Gas Recirculation Flow Insufficient Detected"
   },
@@ -6820,6 +6889,19 @@
   },
   "P0440": {
     "description": "General EVAP system fault detected.",
+    "causes": [
+      "Loose or damaged gas cap",
+      "EVAP hose leak or disconnected line",
+      "Purge or vent valve fault",
+      "Charcoal canister or pressure-sensor issue"
+    ],
+    "diagnostic_steps": [
+      "Inspect the gas cap seal and make sure the cap tightens correctly",
+      "Inspect EVAP hoses and canister connections for cracks or loose fittings",
+      "Command the purge and vent valves if scan-tool control is available",
+      "Smoke test the EVAP system if the fault is not obvious during inspection"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Loose/damaged gas cap",
       "EVAP hose leak",
@@ -6831,6 +6913,16 @@
       "Inspect EVAP hoses for cracks",
       "Smoke test EVAP system if available",
       "Check purge/vent valve operation"
+    ],
+    "related_codes": [
+      "P0442",
+      "P0446",
+      "P0455"
+    ],
+    "symptoms": [
+      "Check-engine light with no major drivability complaint",
+      "Fuel vapor smell around the vehicle in some cases",
+      "Failed emissions readiness or inspection"
     ],
     "title": "Evaporative Emission Control System Malfunction"
   },
@@ -6929,6 +7021,19 @@
   },
   "P0446": {
     "description": "Vent valve control circuit fault detected.",
+    "causes": [
+      "EVAP vent valve stuck closed or not responding",
+      "Blocked vent filter or restricted canister vent path",
+      "Wiring or connector fault in the vent control circuit",
+      "Charcoal canister issue affecting vent flow"
+    ],
+    "diagnostic_steps": [
+      "Inspect the vent valve, vent filter, and nearby hoses for blockage or damage",
+      "Check vent-valve power, ground, and connector condition",
+      "Command the vent valve with the scan tool and verify response if supported",
+      "Smoke test or flow-test the EVAP system if the circuit checks good"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Valve/sensor failure",
       "Wiring/connectors issue",
@@ -6939,6 +7044,16 @@
       "Inspect wiring/connectors",
       "Command purge/vent (if available)",
       "Smoke test EVAP system if available"
+    ],
+    "related_codes": [
+      "P0440",
+      "P0442",
+      "P0455"
+    ],
+    "symptoms": [
+      "Check-engine light with no major drivability change",
+      "Fuel tank may be slow or difficult to fill",
+      "Failed emissions readiness or inspection"
     ],
     "title": "EVAP Vent Control Circuit"
   },
@@ -7063,6 +7178,19 @@
   },
   "P0455": {
     "description": "The EVAP system detected a large leak, usually because a hose is disconnected, the gas cap is missing, or a valve is stuck open.",
+    "causes": [
+      "Gas cap loose, missing, or not sealing",
+      "Disconnected or split EVAP hose",
+      "Vent valve or purge valve stuck open",
+      "Cracked canister or filler-neck sealing issue"
+    ],
+    "diagnostic_steps": [
+      "Confirm the gas cap is installed correctly and the seal is not damaged",
+      "Inspect EVAP hoses and canister connections for an obvious disconnection or split line",
+      "Verify the purge and vent valves seal when commanded closed",
+      "Smoke test the EVAP system if the leak source is not obvious"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Gas cap loose, missing, or not sealing",
       "Disconnected or split EVAP hose",
@@ -7072,6 +7200,16 @@
       "Check that the gas cap is installed correctly and seals tightly",
       "Inspect EVAP hoses and canister connections for obvious disconnection",
       "Smoke test the EVAP system and verify vent-valve sealing if needed"
+    ],
+    "related_codes": [
+      "P0440",
+      "P0442",
+      "P0456"
+    ],
+    "symptoms": [
+      "Check-engine light with little or no drivability complaint",
+      "Fuel vapor smell around the vehicle",
+      "Failed emissions readiness or inspection"
     ],
     "title": "Evaporative Emission Control System Leak Detected (Gross Leak)"
   },
@@ -7805,6 +7943,19 @@
   },
   "P0507": {
     "description": "Idle speed is higher than the PCM expects at closed throttle.",
+    "causes": [
+      "Dirty throttle body or sticking throttle plate",
+      "Vacuum leak letting in extra air",
+      "Idle relearn needed after battery or throttle service",
+      "Throttle actuator or idle-control fault"
+    ],
+    "diagnostic_steps": [
+      "Inspect the intake tract and vacuum hoses for unmetered air leaks",
+      "Inspect and clean the throttle body if carbon buildup is present",
+      "Perform the idle or throttle relearn procedure if the vehicle requires it",
+      "Review throttle-angle and idle-control data before replacing parts"
+    ],
+    "difficulty": "Moderate",
     "possible_causes": [
       "Dirty throttle body",
       "Vacuum leak",
@@ -7816,6 +7967,16 @@
       "Check throttle body for carbon buildup",
       "Perform idle relearn if applicable",
       "Scan for related throttle or idle control codes"
+    ],
+    "related_codes": [
+      "P0505",
+      "P0506",
+      "P2176"
+    ],
+    "symptoms": [
+      "Idle speed stays higher than normal",
+      "RPM hangs or flares between shifts or when coming to a stop",
+      "Idle surge or unstable idle speed"
     ],
     "title": "Idle Control System RPM Higher Than Expected"
   },
@@ -10528,6 +10689,19 @@
   },
   "P0700": {
     "description": "TCM requested MIL illumination (transmission fault present).",
+    "causes": [
+      "Transmission fault stored in the TCM",
+      "Transmission wiring, power, or ground issue",
+      "Shift solenoid or transmission sensor failure",
+      "Fluid, pressure, or internal transmission problem"
+    ],
+    "diagnostic_steps": [
+      "Scan the transmission control module for the companion fault codes first",
+      "Check transmission fluid level and condition if the unit has a serviceable dipstick",
+      "Inspect transmission connectors, power feeds, and grounds",
+      "Diagnose the companion TCM codes before replacing major parts"
+    ],
+    "difficulty": "Advanced",
     "possible_causes": [
       "Transmission fault stored in TCM",
       "Wiring issue",
@@ -10537,6 +10711,16 @@
       "Scan TCM for specific codes",
       "Check transmission fluid level/condition",
       "Inspect related connectors"
+    ],
+    "related_codes": [
+      "P0701",
+      "P0715",
+      "P0720"
+    ],
+    "symptoms": [
+      "Check-engine light with one or more transmission companion codes",
+      "Harsh shifting, delayed engagement, or limp mode",
+      "Transmission warning behavior even when the engine runs normally"
     ],
     "title": "Transmission Control System Malfunction"
   },
