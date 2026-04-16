@@ -2172,6 +2172,21 @@ def build_cost_guide_links(code: str):
         for item in build_repair_cost_guide_cards()
         if item.get("href")
     }
+    supplemental_live_cost_guides = {
+        "/cost/camshaft-position-sensor-replacement": {
+            "title": "Camshaft Position Sensor Replacement Cost",
+            "href": "/cost/camshaft-position-sensor-replacement",
+        },
+        "/cost/evap-purge-valve-replacement": {
+            "title": "EVAP Purge Valve Replacement Cost",
+            "href": "/cost/evap-purge-valve-replacement",
+        },
+        "/cost/throttle-body-replacement": {
+            "title": "Throttle Body Replacement Cost",
+            "href": "/cost/throttle-body-replacement",
+        },
+    }
+    live_cost_guides.update(supplemental_live_cost_guides)
 
     results: List[Dict[str, str]] = []
     seen_hrefs: set[str] = set()
@@ -2284,11 +2299,39 @@ def build_cost_guide_links(code: str):
                 "description": "Useful when smoke testing or EVAP diagnosis points to purge-valve leakage as part of the small-leak fault.",
             },
         ],
+        "P0440": [
+            {
+                "label": "EVAP Purge Valve Replacement Cost",
+                "href": "/cost/evap-purge-valve-replacement",
+                "description": "A conservative next cost check when general EVAP diagnosis points to a purge valve that is leaking or not controlling flow correctly.",
+            },
+        ],
         "P0455": [
             {
                 "label": "EVAP Purge Valve Replacement Cost",
                 "href": "/cost/evap-purge-valve-replacement",
                 "description": "Relevant when large-leak diagnosis shows the purge valve is stuck open or not sealing.",
+            },
+        ],
+        "P0456": [
+            {
+                "label": "EVAP Purge Valve Replacement Cost",
+                "href": "/cost/evap-purge-valve-replacement",
+                "description": "Useful when very small leak diagnosis traces back to purge-valve seepage or poor sealing.",
+            },
+        ],
+        "P0505": [
+            {
+                "label": "Throttle Body Replacement Cost",
+                "href": "/cost/throttle-body-replacement",
+                "description": "A strong next cost check when idle control faults point to a sticking, worn, or failing throttle body.",
+            },
+        ],
+        "P0506": [
+            {
+                "label": "Throttle Body Replacement Cost",
+                "href": "/cost/throttle-body-replacement",
+                "description": "Useful when low-idle diagnosis points to carbon buildup or a throttle body that is not controlling airflow correctly.",
             },
         ],
         "P0507": [
@@ -2355,6 +2398,20 @@ def build_cost_guide_links(code: str):
                 "label": "Thermostat Replacement Cost",
                 "href": "/cost/thermostat-replacement",
                 "description": "The strongest cost guide when slow warm-up and temperature data point to a thermostat stuck open.",
+            },
+        ],
+        "P0116": [
+            {
+                "label": "Thermostat Replacement Cost",
+                "href": "/cost/thermostat-replacement",
+                "description": "A strong next cost check when coolant-temperature range faults track back to a thermostat that is not regulating correctly.",
+            },
+        ],
+        "P0125": [
+            {
+                "label": "Thermostat Replacement Cost",
+                "href": "/cost/thermostat-replacement",
+                "description": "The strongest cost guide when the engine takes too long to reach closed-loop temperature because the thermostat is stuck open.",
             },
         ],
         "P0420": [
@@ -2435,7 +2492,7 @@ def build_cost_guide_links(code: str):
                 ],
             },
             {
-                "matches": lambda current: current.startswith("P030") or current == "P0316",
+                "matches": lambda current: current.startswith("P030") or current in {"P0310", "P0311", "P0312", "P0316"},
                 "guides": [
                     {
                         "label": "Spark Plug Replacement Cost",
