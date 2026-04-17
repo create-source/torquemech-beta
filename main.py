@@ -2278,6 +2278,41 @@ def build_cost_guide_links(code: str):
                 "description": "A strong fit when testing confirms the downstream oxygen sensor is biased high or no longer reporting accurately.",
             },
         ],
+        "P0401": [
+            {
+                "label": "EGR Valve Replacement Cost",
+                "href": "/cost/egr-valve-replacement",
+                "description": "A conservative next cost check when EGR flow stays low because the valve is sticking, restricted, or no longer responding correctly.",
+            },
+        ],
+        "P0403": [
+            {
+                "label": "EGR Valve Replacement Cost",
+                "href": "/cost/egr-valve-replacement",
+                "description": "Relevant when EGR circuit testing points to a failed valve actuator or solenoid after wiring and power checks.",
+            },
+        ],
+        "P0404": [
+            {
+                "label": "EGR Valve Replacement Cost",
+                "href": "/cost/egr-valve-replacement",
+                "description": "A strong next cost check when EGR range or position testing confirms the valve is sticking or not tracking command correctly.",
+            },
+        ],
+        "P0405": [
+            {
+                "label": "EGR Valve Replacement Cost",
+                "href": "/cost/egr-valve-replacement",
+                "description": "Useful when the EGR position signal fault traces back to the valve assembly or its integrated feedback sensor.",
+            },
+        ],
+        "P0406": [
+            {
+                "label": "EGR Valve Replacement Cost",
+                "href": "/cost/egr-valve-replacement",
+                "description": "Useful when the EGR position signal fault traces back to the valve assembly or its integrated feedback sensor.",
+            },
+        ],
         "P0351": [
             {
                 "label": "Ignition Coil Replacement Cost",
