@@ -2791,6 +2791,62 @@ def build_obd_page_metadata(code: str):
 
     return metadata_map.get(code)
 
+def build_obd_structured_data(code: str, page_title: str, description: str, url: str):
+    code = code.upper().strip()
+    page_title = str(page_title or "").strip()
+    description = str(description or "").strip()
+    url = str(url or "").strip()
+
+    schema_focus_map = {
+        "P0303": {
+            "page_focus": "Cylinder 3 misfire diagnosis",
+            "start_here": "Spark plug or ignition coil on cylinder 3",
+        },
+        "P0171": {
+            "page_focus": "Bank 1 lean condition diagnosis",
+            "start_here": "Vacuum leak after the mass air flow sensor",
+        },
+        "P0128": {
+            "page_focus": "Slow warm-up and thermostat diagnosis",
+            "start_here": "Thermostat stuck open",
+        },
+        "P0446": {
+            "page_focus": "EVAP vent control circuit diagnosis",
+            "start_here": "EVAP vent valve stuck closed or failing",
+        },
+        "P0507": {
+            "page_focus": "High idle and throttle body diagnosis",
+            "start_here": "Dirty or sticking throttle body",
+        },
+    }
+
+    focus = schema_focus_map.get(code)
+    if not focus or not page_title or not description or not url:
+        return None
+
+    return {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": page_title,
+        "name": page_title,
+        "description": description,
+        "url": url,
+        "articleSection": "OBD Diagnostic Guide",
+        "author": {
+            "@type": "Organization",
+            "name": "TorqueMech",
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": url,
+        },
+        "about": [
+            {"@type": "Thing", "name": f"OBD-II code {code}"},
+            {"@type": "Thing", "name": focus["page_focus"]},
+            {"@type": "Thing", "name": focus["start_here"]},
+        ],
+    }
+
 def build_obd_content_refinement(code: str):
     code = code.upper().strip()
 
@@ -3105,6 +3161,11 @@ async def obd_code_page(request: Request, code: str):
     diagnostic_summary = build_diagnostic_summary(row["code"])
     page_metadata = build_obd_page_metadata(row["code"])
     content_refinement = build_obd_content_refinement(row["code"])
+    page_title = (
+        page_metadata["title"]
+        if page_metadata and page_metadata.get("title")
+        else f'{row["code"]} Code - {row["title"] or ""} | TorqueMech'
+    )
 
     # ✅ THIS IS STEP 2
     repair_path = REPAIR_PATHS.get(row["code"])
@@ -3130,6 +3191,17 @@ async def obd_code_page(request: Request, code: str):
     display_causes = knowledge_sections["causes"] or possible_causes
     display_symptoms = knowledge_sections["symptoms"] or display_symptoms
     display_diagnostic_steps = knowledge_sections["diagnostic_steps"] or normalize_obd_text_list(display_quick_checks)
+    page_description = (
+        page_metadata["description"]
+        if page_metadata and page_metadata.get("description")
+        else display_description
+    )
+    structured_data = build_obd_structured_data(
+        row["code"],
+        page_title,
+        page_description,
+        str(request.url),
+    )
 
     return templates.TemplateResponse(
         "obd_code_detail.html",
@@ -3147,8 +3219,9 @@ async def obd_code_page(request: Request, code: str):
             "common_repairs": common_repairs,
             "cost_guide_links": cost_guide_links,
             "diagnostic_summary": diagnostic_summary,
-            "page_title": page_metadata["title"] if page_metadata else "",
-            "meta_description": page_metadata["description"] if page_metadata else "",
+            "page_title": page_title,
+            "meta_description": page_description,
+            "structured_data": structured_data,
             "repair_path": repair_path,
         },
     )

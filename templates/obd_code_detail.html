@@ -4,6 +4,11 @@
 
 {% block page_css %}
   <link rel="canonical" href="{{ request.url }}" />
+  {% if structured_data %}
+  <script type="application/ld+json">
+    {{ structured_data | tojson(indent=2) }}
+  </script>
+  {% endif %}
   <style>
     .obd-cause-list {
       margin: 0;
