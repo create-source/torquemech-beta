@@ -2131,6 +2131,12 @@ def build_common_repairs(code: str):
             {"label": "Downstream oxygen sensor replacement", "service_query": "oxygen sensor replacement downstream"},
             {"label": "Catalytic converter replacement", "service_query": "catalytic converter replacement"},
         ],
+        "P0505": [
+            {"label": "Throttle body replacement", "service_query": "throttle body replacement"},
+        ],
+        "P0506": [
+            {"label": "Throttle body replacement", "service_query": "throttle body replacement"},
+        ],
         "P0507": [
             {"label": "Throttle body cleaning", "service_query": "throttle body cleaning"},
             {"label": "Throttle body service", "service_query": "throttle body service"},
@@ -2169,6 +2175,12 @@ def build_common_repairs(code: str):
             {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
             {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
             {"label": "EVAP purge valve replacement", "service_query": "evap purge valve replacement"},
+        ],
+        "P0446": [
+            {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
+        ],
+        "P0449": [
+            {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
         ],
         "P0455": [
             {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
@@ -2366,6 +2378,20 @@ def build_cost_guide_links(code: str):
                 "label": "EVAP Purge Valve Replacement Cost",
                 "href": "/cost/evap-purge-valve-replacement",
                 "description": "A conservative next cost check when general EVAP diagnosis points to a purge valve that is leaking or not controlling flow correctly.",
+            },
+        ],
+        "P0446": [
+            {
+                "label": "EVAP Vent Valve Replacement Cost",
+                "href": "/cost/evap-vent-valve-replacement",
+                "description": "A direct cost guide when EVAP vent testing points to a stuck, restricted, or failed vent valve.",
+            },
+        ],
+        "P0449": [
+            {
+                "label": "EVAP Vent Valve Replacement Cost",
+                "href": "/cost/evap-vent-valve-replacement",
+                "description": "Useful when the EVAP vent solenoid or valve control fault traces back to the vent valve assembly.",
             },
         ],
         "P0455": [
