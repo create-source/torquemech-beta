@@ -348,14 +348,33 @@
     {% if common_repairs %}
     <div class="obd-repair-rows">
       {% for item in common_repairs %}
+      {% set repair_cost_match = namespace(guide=None) %}
+      {% for guide in cost_guide_links %}
+        {% set row_label_lower = item.label | lower %}
+        {% set guide_label_lower = guide.label | lower %}
+        {% if row_label_lower in guide_label_lower or guide_label_lower in row_label_lower %}
+          {% set repair_cost_match.guide = guide %}
+        {% endif %}
+      {% endfor %}
       <div class="obd-repair-row">
         <div class="obd-repair-row__head">
           <div class="obd-repair-row__title">{{ item.label }}</div>
-          <a
-            class="tm-btn tm-btn-secondary obd-repair-row__cta"
-            href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
-            Estimate →
-          </a>
+
+          <div style="display:flex; gap:8px; align-items:center;">
+
+            <a class="tm-btn tm-btn-secondary obd-repair-row__cta"
+              href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
+              Estimate →
+            </a>
+
+            {% if repair_cost_match.guide %}
+            <a class="tm-btn tm-btn-secondary obd-repair-row__cta"
+              href="{{ repair_cost_match.guide.href }}">
+              View Cost Guide
+            </a>
+            {% endif %}
+
+          </div>
         </div>
         <p class="obd-repair-row__desc">Estimator-ready next step for a confirmed repair path.</p>
       </div>
@@ -364,12 +383,28 @@
     {% elif repair_path and repair_path.repairs %}
     <div class="obd-repair-rows">
       {% for item in repair_path.repairs %}
+      {% set repair_cost_match = namespace(guide=None) %}
+      {% for guide in cost_guide_links %}
+        {% set row_label_lower = item.label | lower %}
+        {% set guide_label_lower = guide.label | lower %}
+        {% if row_label_lower in guide_label_lower or guide_label_lower in row_label_lower %}
+          {% set repair_cost_match.guide = guide %}
+        {% endif %}
+      {% endfor %}
       <div class="obd-repair-row">
         <div class="obd-repair-row__head">
           <div class="obd-repair-row__title">{{ item.label }}</div>
-          <a class="tm-btn tm-btn-secondary obd-repair-row__cta" href="/estimator?obd={{ code }}">
-            Estimate →
-          </a>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <a class="tm-btn tm-btn-secondary obd-repair-row__cta" href="/estimator?obd={{ code }}">
+              Estimate →
+            </a>
+            {% if repair_cost_match.guide %}
+            <a class="tm-btn tm-btn-secondary obd-repair-row__cta"
+              href="{{ repair_cost_match.guide.href }}">
+              View Cost Guide
+            </a>
+            {% endif %}
+          </div>
         </div>
         {% if item.labor_range %}
         <p class="obd-repair-row__desc">Typical labor: {{ item.labor_range }}</p>
@@ -383,23 +418,6 @@
     <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">Open Estimator</a>
     {% endif %}
 
-    {% if cost_guide_links %}
-    <div class="obd-detail-subsection obd-cost-guides-shell">
-      <div class="obd-cost-guides-grid">
-      {% for item in cost_guide_links %}
-      <div class="obd-cost-guide-mini">
-        <div>
-          <div class="obd-cost-guide-mini__title">{{ item.label }}</div>
-          <p class="obd-cost-guide-mini__desc">{{ item.description }}</p>
-        </div>
-        <a class="tm-btn tm-btn-secondary obd-cost-guide-mini__cta" href="{{ item.href }}">
-          View Cost Guide
-        </a>
-      </div>
-      {% endfor %}
-      </div>
-    </div>
-    {% endif %}
   </div>
 </section>
 
