@@ -3775,6 +3775,11 @@ def build_repair_cost_guide_cards():
             "href": "/cost/egr-valve-replacement",
         },
         {
+            "title": "EVAP Vent Valve Replacement Cost",
+            "description": "Useful when EVAP vent faults, blocked venting, or leak testing point to a stuck, contaminated, or failed vent valve.",
+            "href": "/cost/evap-vent-valve-replacement",
+        },
+        {
             "label": "Engine Coolant Temperature Sensor Replacement Cost",
             "href": "/cost/engine-coolant-temperature-sensor-replacement",
             "description": "Used when temperature readings are inaccurate, causing poor fuel mix or cooling issues."
@@ -5566,6 +5571,14 @@ async def cost_maf(request: Request):
 async def cost_purge_valve(request: Request):
     return templates.TemplateResponse(
         "cost_evap_purge_valve_replacement.html",
+        {"request": request}
+    )
+
+
+@app.get("/cost/evap-vent-valve-replacement", response_class=HTMLResponse)
+async def cost_vent_valve(request: Request):
+    return templates.TemplateResponse(
+        "cost_evap_vent_valve_replacement.html",
         {"request": request}
     )
 
