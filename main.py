@@ -2104,6 +2104,21 @@ def build_common_repairs(code: str):
         "P0406": [
             {"label": "EGR valve replacement", "service_query": "egr valve replacement"},
         ],
+        "P0116": [
+            {"label": "Engine coolant temperature sensor replacement", "service_query": "engine coolant temperature sensor replacement"},
+        ],
+        "P0117": [
+            {"label": "Engine coolant temperature sensor replacement", "service_query": "engine coolant temperature sensor replacement"},
+        ],
+        "P0118": [
+            {"label": "Engine coolant temperature sensor replacement", "service_query": "engine coolant temperature sensor replacement"},
+        ],
+        "P0119": [
+            {"label": "Engine coolant temperature sensor replacement", "service_query": "engine coolant temperature sensor replacement"},
+        ],
+        "P0125": [
+            {"label": "Engine coolant temperature sensor replacement", "service_query": "engine coolant temperature sensor replacement"},
+        ],
         "P0420": [
             {"label": "Catalyst efficiency diagnosis", "service_query": "catalyst efficiency diagnosis"},
             {"label": "Exhaust leak repair", "service_query": "exhaust leak repair"},
@@ -2449,16 +2464,21 @@ def build_cost_guide_links(code: str):
         ],
         "P0116": [
             {
+                "label": "Engine Coolant Temperature Sensor Replacement Cost",
+                "href": "/cost/engine-coolant-temperature-sensor-replacement",
+                "description": "Used when coolant temperature readings are inaccurate or inconsistent.",
+            },
+            {
                 "label": "Thermostat Replacement Cost",
                 "href": "/cost/thermostat-replacement",
-                "description": "A strong next cost check when coolant-temperature range faults track back to a thermostat that is not regulating correctly.",
+                "description": "Common when the engine warms up too slowly or runs outside normal temperature range.",
             },
         ],
         "P0125": [
             {
                 "label": "Thermostat Replacement Cost",
                 "href": "/cost/thermostat-replacement",
-                "description": "The strongest cost guide when the engine takes too long to reach closed-loop temperature because the thermostat is stuck open.",
+                "description": "Most common cause when the engine fails to reach normal operating temperature.",
             },
         ],
         "P0420": [
@@ -2490,6 +2510,28 @@ def build_cost_guide_links(code: str):
                 "label": "Oxygen Sensor Replacement Cost",
                 "href": "/cost/oxygen-sensor-replacement",
                 "description": "Useful when diagnosis confirms the upstream air-fuel or oxygen sensor is biased lean.",
+            },
+        ],
+
+        "P0117": [
+            {
+                "label": "Engine Coolant Temperature Sensor Replacement Cost",
+                "href": "/cost/engine-coolant-temperature-sensor-replacement",
+                "description": "Useful when inaccurate coolant temperature readings affect engine performance or warm-up behavior.",
+            },
+        ],
+        "P0118": [
+            {
+                "label": "Engine Coolant Temperature Sensor Replacement Cost",
+                "href": "/cost/engine-coolant-temperature-sensor-replacement",
+                "description": "Useful when inaccurate coolant temperature readings affect engine performance or warm-up behavior.",
+            },
+        ],
+        "P0119": [
+            {
+                "label": "Engine Coolant Temperature Sensor Replacement Cost",
+                "href": "/cost/engine-coolant-temperature-sensor-replacement",
+                "description": "Useful when inaccurate coolant temperature readings affect engine performance or warm-up behavior.",
             },
         ],
     }
@@ -3732,6 +3774,12 @@ def build_repair_cost_guide_cards():
             "description": "Useful when EGR flow, control, or feedback diagnosis confirms the valve is sticking, restricted, or failing mechanically.",
             "href": "/cost/egr-valve-replacement",
         },
+        {
+            "label": "Engine Coolant Temperature Sensor Replacement Cost",
+            "href": "/cost/engine-coolant-temperature-sensor-replacement",
+            "description": "Used when temperature readings are inaccurate, causing poor fuel mix or cooling issues."
+        }
+
     ]
 
 @app.get("/repair-costs", response_class=HTMLResponse)
@@ -3785,6 +3833,13 @@ def fuel_pump_cost(request: Request):
     return templates.TemplateResponse(
         "cost_fuel_pump_replacement.html",
         {"request": request},
+    )
+
+@app.get("/cost/engine-coolant-temperature-sensor-replacement")
+def cost_ect_sensor(request: Request):
+    return templates.TemplateResponse(
+        "cost_engine_coolant_temperature_sensor_replacement.html",
+        {"request": request}
     )
 
 @app.get("/repair-guides", response_class=HTMLResponse)
