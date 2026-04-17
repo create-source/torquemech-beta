@@ -3571,6 +3571,13 @@ def catalytic_converter_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/egr-valve-replacement", response_class=HTMLResponse)
+def egr_valve_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_egr_valve_replacement.html",
+        {"request": request},
+    )
+
 def build_repair_cost_guide_cards():
     return [
         {
@@ -3672,6 +3679,11 @@ def build_repair_cost_guide_cards():
             "title": "Catalytic Converter Replacement Cost",
             "description": "Emissions repair pricing when catalyst-efficiency testing confirms the converter is the failure point.",
             "href": "/cost/catalytic-converter-replacement",
+        },
+        {
+            "title": "EGR Valve Replacement Cost",
+            "description": "Useful when EGR flow, control, or feedback diagnosis confirms the valve is sticking, restricted, or failing mechanically.",
+            "href": "/cost/egr-valve-replacement",
         },
     ]
 
