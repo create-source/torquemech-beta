@@ -2409,9 +2409,10 @@
   "P0128": {
     "description": "The engine is taking too long to reach normal operating temperature, usually because the thermostat is stuck open.",
     "causes": [
-      "Thermostat stuck open",
-      "Low coolant level or trapped air in the cooling system",
-      "Coolant temperature sensor or wiring issue"
+      "Thermostat stuck open or opening too early (start here — most common)",
+      "Low coolant level affecting temperature regulation",
+      "Faulty engine coolant temperature sensor giving inaccurate readings",
+      "Cooling system flow issues or trapped air"
     ],
     "diagnostic_steps": [
       "Compare scan-tool coolant temperature to actual engine warm-up behavior from a cold start",
@@ -3645,11 +3646,10 @@
   "P0171": {
     "description": "Bank 1 is running lean because the engine is seeing too much air, too little fuel, or an airflow reading that is off.",
     "causes": [
-      "Vacuum leak after the MAF sensor",
-      "Dirty or failing mass air flow sensor",
+      "Vacuum leak after the mass air flow sensor (start here — most common)",
+      "Dirty or biased mass air flow sensor causing under-reported airflow",
       "Low fuel pressure or weak fuel delivery",
-      "Restricted or weak injector on bank 1",
-      "Exhaust leak ahead of the upstream O2 sensor"
+      "PCV hose or intake boot leak allowing unmetered air in"
     ],
     "diagnostic_steps": [
       "Check short- and long-term fuel trims at idle and cruise",
@@ -5720,16 +5720,15 @@
   "P0303": {
     "description": "Cylinder 3 is misfiring, which usually points to an ignition, fuel, air, or compression issue on that cylinder.",
     "causes": [
-      "Worn or fouled spark plug on cylinder 3",
-      "Weak ignition coil, boot, or plug wire for cylinder 3",
-      "Fuel injector issue on cylinder 3",
-      "Vacuum leak affecting the cylinder 3 intake runner",
-      "Low compression or valve sealing problem on cylinder 3"
+      "Faulty spark plug or ignition coil on cylinder 3 (start here — most common)",
+      "Fuel injector issue on cylinder 3 causing improper fuel delivery",
+      "Vacuum leak affecting cylinder 3 intake runner",
+      "Low compression or valve sealing issue on cylinder 3"
     ],
     "diagnostic_steps": [
-      "Swap the cylinder 3 coil with another cylinder and see whether the misfire follows",
-      "Inspect the cylinder 3 spark plug for wear, gap, oil, or fuel fouling",
-      "Check injector connector fit and listen for injector operation on cylinder 3",
+      "Swap the cylinder 3 ignition coil with another cylinder and see if the misfire follows (fastest test)",
+      "Inspect the spark plug on cylinder 3 for wear, fouling, or incorrect gap",
+      "Check injector connector and listen for injector operation on cylinder 3",
       "Run compression or leak-down testing if the misfire stays on cylinder 3"
     ],
     "difficulty": "Moderate",
@@ -8297,10 +8296,10 @@
   "P0446": {
     "description": "Vent valve control circuit fault detected.",
     "causes": [
-      "EVAP vent valve stuck closed or not responding",
-      "Blocked vent filter or restricted canister vent path",
-      "Wiring or connector fault in the vent control circuit",
-      "Charcoal canister issue affecting vent flow"
+      "EVAP vent valve stuck closed or failing (start here — most common)",
+      "Blocked or restricted vent line or charcoal canister",
+      "Wiring or connector issue in the vent control circuit",
+      "Faulty EVAP vent control solenoid operation"
     ],
     "diagnostic_steps": [
       "Inspect the vent valve, vent filter, and nearby hoses for blockage or damage",
