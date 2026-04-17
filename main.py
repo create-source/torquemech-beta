@@ -2092,6 +2092,18 @@ def build_common_repairs(code: str):
             {"label": "EGR valve replacement", "service_query": "egr valve replacement"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
         ],
+        "P0403": [
+            {"label": "EGR valve replacement", "service_query": "egr valve replacement"},
+        ],
+        "P0404": [
+            {"label": "EGR valve replacement", "service_query": "egr valve replacement"},
+        ],
+        "P0405": [
+            {"label": "EGR valve replacement", "service_query": "egr valve replacement"},
+        ],
+        "P0406": [
+            {"label": "EGR valve replacement", "service_query": "egr valve replacement"},
+        ],
         "P0420": [
             {"label": "Catalyst efficiency diagnosis", "service_query": "catalyst efficiency diagnosis"},
             {"label": "Exhaust leak repair", "service_query": "exhaust leak repair"},
