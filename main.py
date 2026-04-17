@@ -2744,24 +2744,24 @@ def build_obd_page_metadata(code: str):
             "description": "P0302 means cylinder 2 is misfiring. Review the most common ignition, fuel, air, or compression causes, likely repairs, and cost guidance.",
         },
         "P0303": {
-            "title": "P0303 Cylinder 3 Misfire: Causes & Repairs | TorqueMech",
-            "description": "P0303 means cylinder 3 is misfiring. Check the most likely ignition, fuel, air, or compression faults, likely repairs, and cost guidance.",
+            "title": "P0303 Cylinder 3 Misfire: Start With Plug or Coil | TorqueMech",
+            "description": "P0303 means cylinder 3 is misfiring. Start with the plug or coil, then check injector, intake-runner leak, and compression faults with practical repair guidance.",
         },
         "P0304": {
             "title": "P0304 Cylinder 4 Misfire: Causes & Repairs | TorqueMech",
             "description": "P0304 means cylinder 4 is misfiring. Review the most common ignition, fuel, air, or compression causes, likely repairs, and cost guidance.",
         },
         "P0171": {
-            "title": "P0171 System Too Lean Bank 1: Causes & Repairs | TorqueMech",
-            "description": "P0171 means bank 1 is running lean. Check for vacuum leaks, airflow problems, and fuel-delivery issues with likely repairs and sensor cost guidance.",
+            "title": "P0171 System Too Lean Bank 1: Start With Vacuum Leaks | TorqueMech",
+            "description": "P0171 means bank 1 is running lean. Start with vacuum leaks after the MAF, then check airflow readings and fuel-delivery issues with mechanic-first repair guidance.",
         },
         "P0174": {
             "title": "P0174 System Too Lean Bank 2: Causes & Repairs | TorqueMech",
             "description": "P0174 means bank 2 is running lean. Review common vacuum leak, airflow, and fuel-delivery causes plus likely repairs and related cost guidance.",
         },
         "P0128": {
-            "title": "P0128 Thermostat Below Regulating Temp: Causes & Repairs | TorqueMech",
-            "description": "P0128 means the engine is warming up too slowly, often from a thermostat stuck open. Review cooling-system causes, likely repairs, and thermostat cost guidance.",
+            "title": "P0128 Thermostat Below Regulating Temp: Start With Thermostat | TorqueMech",
+            "description": "P0128 usually points to a thermostat stuck open. Start with thermostat diagnosis, then check coolant level and temperature-sensor faults with practical repair guidance.",
         },
         "P0420": {
             "title": "P0420 Catalyst Efficiency Bank 1: Causes & Repairs | TorqueMech",
@@ -2770,6 +2770,14 @@ def build_obd_page_metadata(code: str):
         "P0430": {
             "title": "P0430 Catalyst Efficiency Bank 2: Causes & Repairs | TorqueMech",
             "description": "P0430 means bank 2 catalyst efficiency is below threshold. Review common converter and O2 sensor causes, likely repairs, and related cost guidance.",
+        },
+        "P0446": {
+            "title": "P0446 EVAP Vent Control Circuit: Start With Vent Valve | TorqueMech",
+            "description": "P0446 usually points to an EVAP vent valve stuck closed or failing. Start with the vent valve and vent path, then check control-circuit faults with practical repair guidance.",
+        },
+        "P0507": {
+            "title": "P0507 Idle Control RPM High: Start With Throttle Body | TorqueMech",
+            "description": "P0507 means idle speed is too high. Start with throttle body carbon or sticking issues, then check relearn and vacuum-leak faults with mechanic-first repair guidance.",
         },
         "P0562": {
             "title": "P0562 System Voltage Low: Causes & Repairs | TorqueMech",
