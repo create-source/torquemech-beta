@@ -364,8 +364,11 @@
       <div class="obd-repair-row">
         <div class="obd-repair-row__head">
           <div class="obd-repair-row__title">{{ item.label }}</div>
+          
+        </div>
+        <p class="obd-repair-row__desc">Estimator-ready next step for a confirmed repair path.</p>
 
-          <div style="display:flex; gap:8px; align-items:center;">
+        <div class="obd-repair-row__actions">
 
             <a class="tm-btn tm-btn-secondary obd-repair-row__cta"
               href="/estimator?obd={{ code }}&repair={{ item.service_query | urlencode }}">
@@ -380,8 +383,6 @@
             {% endif %}
 
           </div>
-        </div>
-        <p class="obd-repair-row__desc">Estimator-ready next step for a confirmed repair path.</p>
       </div>
       {% endfor %}
     </div>
@@ -399,7 +400,7 @@
       <div class="obd-repair-row">
         <div class="obd-repair-row__head">
           <div class="obd-repair-row__title">{{ item.label }}</div>
-          <div style="display:flex; gap:8px; align-items:center;">
+          <div class="obd-repair-row__actions">
             <a class="tm-btn tm-btn-secondary obd-repair-row__cta" href="/estimator?obd={{ code }}">
               Estimate →
             </a>

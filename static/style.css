@@ -1863,3 +1863,43 @@ h3{
   padding-top: 10px;
   border-top: 1px solid var(--tm-border);
 }
+
+.obd-repair-row__head {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.obd-repair-row__title {
+  margin: 0;
+  color: var(--tm-text);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.obd-repair-row__desc {
+  margin: 0 0 10px 0;
+  color: var(--tm-text-muted);
+  font-size: 0.93rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.obd-repair-row__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.obd-repair-row__cta {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .obd-repair-row__actions {
+    width: 100%;
+  }
+}
