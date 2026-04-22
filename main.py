@@ -3058,6 +3058,13 @@ def build_obd_content_refinement(code: str):
         },
         "P0442": {
             "meaning": "P0442 means the EVAP system detected a small leak that is harder to see than a gross leak. The fault is commonly a weak gas-cap seal, a small hose crack, or a valve that is not fully sealing during the monitor test.",
+            "diagnostic_insight_intro": "P0442 indicates a small leak in the EVAP system, often caused by minor sealing issues such as a worn gas cap, small hose cracks, or loose connections.",
+            "diagnostic_insight_points": [
+                "Small leaks can be harder to detect and may require smoke testing for accurate diagnosis.",
+                "A loose or aging gas cap is a common starting point, but not always the root cause.",
+                "If P0455 or P0446 are also present, use them together to narrow down the issue.",
+                "Minor leaks can still trigger the check engine light and should be resolved to restore proper EVAP function.",
+            ],
             "symptoms": [
                 "Check-engine light with no major drivability complaint",
                 "Usually no noticeable change in how the vehicle runs",
