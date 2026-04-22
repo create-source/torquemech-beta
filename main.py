@@ -3037,6 +3037,13 @@ def build_obd_content_refinement(code: str):
         },
         "P0455": {
             "meaning": "P0455 means the EVAP system detected a large leak during its self-test. In many cases the leak is simple, like a loose gas cap or disconnected hose, but a stuck valve or cracked line can also keep the system from sealing.",
+            "diagnostic_insight_intro": "P0455 indicates a large leak in the EVAP system, often caused by an open system condition such as a loose or missing gas cap, disconnected hose, or failed EVAP component.",
+            "diagnostic_insight_points": [
+                "A loose or damaged gas cap is a common cause, but larger leaks can come from cracked hoses or disconnected lines.",
+                "Smoke testing is often the fastest way to locate EVAP leaks.",
+                "If P0442 or P0446 are also present, use them to narrow down the leak location or vent control issues.",
+                "Addressing the leak source is necessary before clearing the code, as it will quickly return if unresolved.",
+            ],
             "symptoms": [
                 "Check-engine light with little or no drivability change",
                 "Fuel vapor smell near the vehicle in some cases",
