@@ -331,6 +331,24 @@
 </section>
 {% endif %}
 
+{% if display_diagnostic_insight_intro or display_diagnostic_insight_points %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Diagnostic Insight</h2>
+    {% if display_diagnostic_insight_intro %}
+    <p class="tm-muted" style="margin:0 0 12px 0;">{{ display_diagnostic_insight_intro }}</p>
+    {% endif %}
+    {% if display_diagnostic_insight_points %}
+    <ul style="margin:0; padding-left:18px; line-height:1.7;">
+      {% for item in display_diagnostic_insight_points %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 {% if display_difficulty %}
 <section class="tm-section">
   <div class="tm-card">

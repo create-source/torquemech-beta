@@ -2853,6 +2853,12 @@ def build_obd_content_refinement(code: str):
     refinements = {
         "P0300": {
             "meaning": "P0300 means the ECM has detected misfires across multiple cylinders instead of one isolated cylinder. The next step is separating an ignition problem from a fuel, air, or engine condition affecting more than one cylinder.",
+            "diagnostic_insight_intro": "P0300 points to a shared problem affecting multiple cylinders, not just one isolated hole.",
+            "diagnostic_insight_points": [
+                "Multiple-cylinder misfires usually mean ignition, fuel delivery, airflow, or timing should be checked before replacing single-cylinder parts.",
+                "If cylinder-specific codes appear with P0300, use them to narrow the first physical checks.",
+                "A flashing check-engine light means catalyst damage risk is higher.",
+            ],
             "symptoms": [
                 "Rough idle or shaking at a stop",
                 "Hesitation or stumbling under load",
@@ -2867,6 +2873,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0301": {
             "meaning": "P0301 means cylinder 1 is misfiring often enough for the ECM to flag it. Diagnosis should confirm whether the fault follows the plug or coil, stays with the injector, or points to a mechanical problem in that cylinder.",
+            "diagnostic_insight_intro": "A cylinder-specific misfire usually means the fault is localized to that cylinder's ignition, fuel delivery, or mechanical condition.",
+            "diagnostic_insight_points": [
+                "If the misfire follows a coil or spark plug swap, the part is the likely cause.",
+                "If it stays on cylinder 1, injector or compression testing becomes more important.",
+                "Cold-start misfires that improve when warm can point to ignition weakness or minor sealing problems.",
+            ],
             "symptoms": [
                 "Rough idle or shake tied to one cylinder",
                 "Hesitation or light bucking on acceleration",
@@ -2881,6 +2893,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0302": {
             "meaning": "P0302 means cylinder 2 is misfiring often enough for the ECM to detect it. The most useful next step is confirming whether the fault tracks with the ignition parts, fuel injector, intake leak, or cylinder condition.",
+            "diagnostic_insight_intro": "P0302 should be treated as a focused cylinder fault until testing proves otherwise.",
+            "diagnostic_insight_points": [
+                "Swap-based testing is often the fastest way to separate ignition faults from engine faults.",
+                "If the misfire remains fixed on cylinder 2, move to injector and compression checks.",
+                "Under-load misfires often raise fuel delivery suspicion.",
+            ],
             "symptoms": [
                 "Rough idle or uneven engine note",
                 "Reduced power or stumble on throttle",
@@ -2895,6 +2913,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0303": {
             "meaning": "P0303 means cylinder 3 is misfiring often enough for the ECM to flag it. Good diagnosis confirms whether the problem follows the plug or coil, stays with the injector, or points to compression loss on that cylinder.",
+            "diagnostic_insight_intro": "P0303 is typically isolated to ignition, fuel delivery, or mechanical condition within cylinder 3.",
+            "diagnostic_insight_points": [
+                "If the misfire is worse on cold start and improves when warm, suspect ignition weakness or minor sealing issues.",
+                "If the misfire is constant under load, fuel delivery becomes more likely.",
+                "If the misfire does not move when swapping components, compression or internal engine issues should be considered.",
+            ],
             "symptoms": [
                 "Noticeable shake at idle",
                 "Hesitation or stumble under load",
@@ -2909,6 +2933,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0304": {
             "meaning": "P0304 means cylinder 4 is misfiring often enough for the ECM to detect it. The repair path usually becomes clear once you confirm whether the fault follows ignition parts, stays with fuel delivery, or points to a mechanical issue.",
+            "diagnostic_insight_intro": "P0304 usually becomes clear once you confirm whether the fault follows ignition parts or stays with the cylinder.",
+            "diagnostic_insight_points": [
+                "A moved misfire usually means the swapped part is bad.",
+                "A fixed misfire often means injector, compression, or valve-sealing checks come next.",
+                "A severe active misfire should be repaired quickly to reduce catalyst risk.",
+            ],
             "symptoms": [
                 "Rough idle or steady vibration",
                 "Hesitation or weak pull during acceleration",
@@ -3191,6 +3221,16 @@ async def obd_code_page(request: Request, code: str):
     display_causes = knowledge_sections["causes"] or possible_causes
     display_symptoms = knowledge_sections["symptoms"] or display_symptoms
     display_diagnostic_steps = knowledge_sections["diagnostic_steps"] or normalize_obd_text_list(display_quick_checks)
+    display_diagnostic_insight_intro = (
+        content_refinement.get("diagnostic_insight_intro", "")
+        if content_refinement
+        else ""
+    )
+    display_diagnostic_insight_points = normalize_obd_text_list(
+        content_refinement.get("diagnostic_insight_points")
+        if content_refinement
+        else []
+    )
     page_description = (
         page_metadata["description"]
         if page_metadata and page_metadata.get("description")
@@ -3214,6 +3254,8 @@ async def obd_code_page(request: Request, code: str):
             "display_causes": display_causes,
             "display_symptoms": display_symptoms,
             "display_diagnostic_steps": display_diagnostic_steps,
+            "display_diagnostic_insight_intro": display_diagnostic_insight_intro,
+            "display_diagnostic_insight_points": display_diagnostic_insight_points,
             "display_difficulty": knowledge_sections["difficulty"],
             "related_codes": related_codes,
             "common_repairs": common_repairs,
