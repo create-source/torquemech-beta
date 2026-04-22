@@ -2995,6 +2995,13 @@ def build_obd_content_refinement(code: str):
         },
         "P0420": {
             "meaning": "P0420 means bank 1 catalyst efficiency tested below the expected threshold after the ECM compared upstream and downstream oxygen sensor behavior. The converter may be weak, but exhaust leaks, sensor faults, or an unresolved misfire or fuel-control problem can set the same code.",
+            "diagnostic_insight_intro": "P0420 usually indicates the catalytic converter is no longer operating efficiently, but upstream issues like misfires or incorrect air-fuel mixture often cause the failure.",
+            "diagnostic_insight_points": [
+                "A failing catalytic converter is common, but unresolved misfires or rich/lean conditions can trigger this code first.",
+                "If misfire or fuel trim codes are present, they should be diagnosed before replacing the converter.",
+                "Oxygen sensor readings should be compared upstream vs downstream to confirm catalyst efficiency.",
+                "Replacing the converter without addressing root causes can lead to repeat failure.",
+            ],
             "symptoms": [
                 "Often no clear drivability symptom",
                 "Failed emissions readiness or inspection",
