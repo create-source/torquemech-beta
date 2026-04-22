@@ -3063,6 +3063,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0128": {
             "meaning": "P0128 means the engine is taking too long to reach normal operating temperature. A thermostat stuck open is the most common cause, but low coolant level, trapped air, or a temperature-sensor issue can also mislead the monitor.",
+            "diagnostic_insight_intro": "P0128 usually means the engine is warming up too slowly, most often because the thermostat is stuck open or coolant temperature data is misleading.",
+            "diagnostic_insight_points": [
+                "If the engine temperature stays low on the highway as well as in town, the thermostat stays high on the suspect list.",
+                "Weak cabin heat and long warm-up time support a thermostat-first diagnosis.",
+                "Do not ignore coolant level or sensor accuracy before replacing parts.",
+            ],
             "symptoms": [
                 "Weak cabin heat in cool weather",
                 "Temperature gauge staying low longer than normal",
@@ -3073,6 +3079,22 @@ def build_obd_content_refinement(code: str):
                 "Check coolant level and make sure the system is properly full with no trapped air",
                 "Inspect the thermostat housing area for seepage or poor sealing",
                 "Compare ECT data to ambient temperature if a sensor issue is suspected",
+            ],
+        },
+        "P0446": {
+            "diagnostic_insight_intro": "P0446 usually points to an EVAP vent control problem, often involving a stuck vent valve, restricted vent path, or control-circuit fault.",
+            "diagnostic_insight_points": [
+                "A blocked or contaminated vent valve can prevent the EVAP system from sealing or venting correctly.",
+                "Dust, rust, or charcoal contamination near the canister and vent assembly often matters more than the gas cap on this code.",
+                "Circuit testing should come earlier if the valve does not respond to commands.",
+            ],
+        },
+        "P0507": {
+            "diagnostic_insight_intro": "P0507 means idle speed is higher than expected, usually because extra air is entering the engine or the throttle body is not returning to the expected idle position.",
+            "diagnostic_insight_points": [
+                "Carbon buildup, throttle-body sticking, or idle relearn issues are common first checks.",
+                "If idle stays high after throttle inspection, vacuum leaks should move up the list quickly.",
+                "Looking at commanded throttle angle and idle behavior can save time before replacing parts.",
             ],
         },
         "P0101": {
