@@ -3016,6 +3016,13 @@ def build_obd_content_refinement(code: str):
         },
         "P0430": {
             "meaning": "P0430 means bank 2 catalyst efficiency tested below the expected threshold after the ECM compared upstream and downstream oxygen sensor behavior. The converter may be aging, but exhaust leaks, sensor faults, or unresolved fueling issues can also trigger it.",
+            "diagnostic_insight_intro": "P0430 indicates reduced catalytic converter efficiency on bank 2, often caused by the same upstream issues that affect bank 1 such as misfires or improper air-fuel ratios.",
+            "diagnostic_insight_points": [
+                "Bank 2 issues should be compared with bank 1 to determine if the problem is isolated or system-wide.",
+                "If both P0420 and P0430 are present, suspect a shared cause like fuel mixture or sensor data issues.",
+                "Oxygen sensor behavior should be analyzed to confirm converter performance.",
+                "Addressing root causes before replacing the catalytic converter helps prevent repeat failures.",
+            ],
             "symptoms": [
                 "Often no obvious drivability complaint",
                 "Failed emissions readiness or inspection",
