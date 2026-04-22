@@ -2953,6 +2953,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0171": {
             "meaning": "P0171 means bank 1 is running lean because the engine is seeing more air than expected, less fuel than needed, or an airflow reading that is off. The fault is often a vacuum leak, MAF problem, or low-fuel-delivery issue rather than a single bad part by itself.",
+            "diagnostic_insight_intro": "P0171 usually means bank 1 is getting too much unmetered air, not enough fuel, or an airflow reading the ECM cannot trust.",
+            "diagnostic_insight_points": [
+                "A lean code at idle often points to a vacuum leak after the mass air flow sensor.",
+                "If fuel trims stay lean under load, fuel delivery should move higher on the suspect list.",
+                "Cleaning or replacing parts too early can waste time if trim data has not been reviewed first.",
+            ],
             "symptoms": [
                 "Rough idle or light surge at idle",
                 "Hesitation on tip-in or light acceleration",
@@ -2967,6 +2973,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0174": {
             "meaning": "P0174 means bank 2 is running lean because the ECM is correcting for too much air, too little fuel, or an inaccurate airflow signal on that bank. Common root causes include vacuum leaks, MAF issues, and fuel-delivery problems that affect both banks or bank 2 more strongly.",
+            "diagnostic_insight_intro": "P0174 should be read as a bank 2 lean condition until testing shows whether the problem is isolated or affecting both banks.",
+            "diagnostic_insight_points": [
+                "If both banks are lean, shared causes like a MAF issue or low fuel pressure become more likely.",
+                "If bank 2 is lean by itself, look harder for bank-specific vacuum leaks or intake sealing issues.",
+                "Fuel-trim behavior at idle versus cruise helps separate airflow leaks from fuel-supply problems.",
+            ],
             "symptoms": [
                 "Light surge or rough idle",
                 "Hesitation during part-throttle driving",
