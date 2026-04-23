@@ -3138,17 +3138,24 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0101": {
-            "meaning": "P0101 means the mass air flow signal is outside the expected range for the current load and RPM. That can be caused by a dirty or failing MAF sensor, unmetered air entering the intake, or an intake setup that changes airflow readings.",
+            "meaning": "P0101 means the mass air flow signal is outside the expected range for the current engine load and RPM. The sensor may be dirty or failing, but intake leaks, wiring faults, air-filter housing problems, or fuel-trim issues can also make the airflow reading look implausible.",
+            "diagnostic_insight_intro": "P0101 should be treated as an airflow plausibility problem before assuming the MAF sensor itself is bad.",
+            "diagnostic_insight_points": [
+                "Unmetered air after the MAF can make scan data look wrong even when the sensor is reporting honestly.",
+                "Fuel trims and MAF readings should be reviewed together before replacing parts.",
+                "Connector, harness, air filter, and intake-duct condition can matter as much as sensor contamination.",
+            ],
             "symptoms": [
-                "Hesitation or flat throttle response",
-                "Rough idle or light surge",
-                "Poor fuel economy or transmission shift feel changes on some vehicles",
+                "Hesitation or poor throttle response",
+                "Rough idle or surge",
+                "Reduced fuel economy",
             ],
             "quick_checks": [
-                "Inspect the intake boot, clamps, and ducting for unmetered air leaks",
+                "Inspect the intake duct, clamps, and boots after the MAF for leaks",
                 "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
-                "Check the air filter and intake tract for restriction or poor sealing",
-                "Compare MAF readings to expected load and RPM on the scan tool",
+                "Check air filter housing sealing and intake tract contamination",
+                "Review fuel trims and MAF readings against engine load and RPM on scan data",
+                "Inspect the MAF connector and harness for loose terminals, corrosion, or damage",
             ],
         },
         "P0138": {
