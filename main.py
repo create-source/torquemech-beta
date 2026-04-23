@@ -3115,17 +3115,24 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0456": {
-            "meaning": "P0456 means the EVAP system detected a very small leak during its self-test. The leak is usually a minor seep at the gas cap, hose, fitting, or valve rather than a hose that is fully disconnected.",
+            "meaning": "P0456 means the EVAP system detected a very small leak during its self-test. A gas cap seal is still a valid first check, but this is not automatically just a gas cap issue; tiny hose or fitting seepage, purge or vent valves not sealing fully, canister seepage, line seepage, or tank-side plumbing leaks can set the same code.",
+            "diagnostic_insight_intro": "P0456 should be treated as a very small EVAP leak until testing shows whether the seep is at the cap, fitting, valve, canister, line, or tank-side plumbing.",
+            "diagnostic_insight_points": [
+                "Very small leaks can be hard to see and often need smoke testing or careful pressure testing to confirm.",
+                "A weak gas cap seal is a reasonable first check, but valve sealing and fitting seepage should stay on the list.",
+                "If P0442, P0455, or P0446 are also present, use those codes to compare leak size and vent-control direction.",
+            ],
             "symptoms": [
-                "Check-engine light with no real drivability change",
-                "Usually no fuel-control or idle complaint",
-                "Readiness monitor or emissions test failure",
+                "Check engine light with little or no major drivability change",
+                "Emissions readiness failure",
+                "Occasional fuel vapor smell in some cases",
             ],
             "quick_checks": [
-                "Inspect the gas cap seal for hardening, cracks, or poor fit",
-                "Inspect the canister, vent valve, and nearby lines for subtle seepage",
-                "Verify purge and vent valves are not leaking when closed",
-                "Smoke test the EVAP system for a tiny leak source",
+                "Inspect gas cap seal condition and cap fitment",
+                "Inspect EVAP hoses, fittings, and line connections for subtle seepage",
+                "Verify purge and vent valves seal correctly",
+                "Inspect the canister and nearby plumbing for small leaks",
+                "Smoke test the system if the leak is not obvious",
             ],
         },
         "P0128": {
