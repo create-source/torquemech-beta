@@ -3206,6 +3206,69 @@ def build_obd_content_refinement(code: str):
                 "Confirm cylinder 1 spark and compression before condemning fuel control alone",
             ],
         },
+        "P0202": {
+            "meaning": "P0202 means the injector circuit for cylinder 2 is malfunctioning. The injector may have failed, but damaged wiring, poor connector terminal fit, an open or short in the control circuit, or a PCM driver issue in rarer cases can set the same code.",
+            "diagnostic_insight_intro": "P0202 should be diagnosed as a cylinder 2 injector circuit fault before the injector itself is condemned.",
+            "diagnostic_insight_points": [
+                "A circuit code can come from the connector, harness, power feed, or control side, not just the injector.",
+                "If cylinder 2 also misfires, confirm spark and compression so fuel control is not blamed for a different fault.",
+                "Resistance, pulse, and terminal-fit checks usually come before injector replacement.",
+            ],
+            "symptoms": [
+                "Rough idle or cylinder 2 misfire",
+                "Hesitation or reduced power",
+                "Fuel smell or poor fuel economy in some cases",
+            ],
+            "quick_checks": [
+                "Inspect cylinder 2 injector connector fit and terminal condition",
+                "Check for harness damage, rub-through, or corrosion near the injector",
+                "Verify injector resistance if appropriate for the application",
+                "Verify injector power and control pulse with proper test equipment",
+                "Confirm cylinder 2 spark and compression before condemning fuel control alone",
+            ],
+        },
+        "P0203": {
+            "meaning": "P0203 means the injector circuit for cylinder 3 is malfunctioning. The injector may have failed, but damaged wiring, poor connector terminal fit, an open or short in the control circuit, or a PCM driver issue in rarer cases can set the same code.",
+            "diagnostic_insight_intro": "P0203 should be diagnosed as a cylinder 3 injector circuit fault before the injector itself is condemned.",
+            "diagnostic_insight_points": [
+                "A circuit code can come from the connector, harness, power feed, or control side, not just the injector.",
+                "If cylinder 3 also misfires, confirm spark and compression so fuel control is not blamed for a different fault.",
+                "Resistance, pulse, and terminal-fit checks usually come before injector replacement.",
+            ],
+            "symptoms": [
+                "Rough idle or cylinder 3 misfire",
+                "Hesitation or reduced power",
+                "Fuel smell or poor fuel economy in some cases",
+            ],
+            "quick_checks": [
+                "Inspect cylinder 3 injector connector fit and terminal condition",
+                "Check for harness damage, rub-through, or corrosion near the injector",
+                "Verify injector resistance if appropriate for the application",
+                "Verify injector power and control pulse with proper test equipment",
+                "Confirm cylinder 3 spark and compression before condemning fuel control alone",
+            ],
+        },
+        "P0204": {
+            "meaning": "P0204 means the injector circuit for cylinder 4 is malfunctioning. The injector may have failed, but damaged wiring, poor connector terminal fit, an open or short in the control circuit, or a PCM driver issue in rarer cases can set the same code.",
+            "diagnostic_insight_intro": "P0204 should be diagnosed as a cylinder 4 injector circuit fault before the injector itself is condemned.",
+            "diagnostic_insight_points": [
+                "A circuit code can come from the connector, harness, power feed, or control side, not just the injector.",
+                "If cylinder 4 also misfires, confirm spark and compression so fuel control is not blamed for a different fault.",
+                "Resistance, pulse, and terminal-fit checks usually come before injector replacement.",
+            ],
+            "symptoms": [
+                "Rough idle or cylinder 4 misfire",
+                "Hesitation or reduced power",
+                "Fuel smell or poor fuel economy in some cases",
+            ],
+            "quick_checks": [
+                "Inspect cylinder 4 injector connector fit and terminal condition",
+                "Check for harness damage, rub-through, or corrosion near the injector",
+                "Verify injector resistance if appropriate for the application",
+                "Verify injector power and control pulse with proper test equipment",
+                "Confirm cylinder 4 spark and compression before condemning fuel control alone",
+            ],
+        },
         "P0138": {
             "meaning": "P0138 means the downstream oxygen sensor on bank 1 is staying high or reading richer than expected for too long. The sensor itself may be failing, but wiring faults or an actual rich-running condition can also hold the signal high.",
             "symptoms": [
