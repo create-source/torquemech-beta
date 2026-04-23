@@ -3415,6 +3415,28 @@ def build_obd_content_refinement(code: str):
                 "Do not keep driving if charging voltage is far above normal",
             ],
         },
+        "P0117": {
+            "meaning": "P0117 means the coolant temperature signal is reading hotter than expected because the signal is low or the circuit is shorted low. It is not automatically just a bad coolant temperature sensor; a shorted sensor circuit, damaged wiring, connector contamination, failed sensor, poor reference or ground behavior, or real overheating and low coolant in some cases can set the same code.",
+            "diagnostic_insight_intro": "P0117 should be treated as a coolant-temperature circuit-low fault until testing confirms whether the engine is actually hot or the signal is being pulled low.",
+            "diagnostic_insight_points": [
+                "A hot-looking ECT reading on a cold engine often points to a shorted circuit, contaminated connector, or failed sensor.",
+                "Real overheating and low coolant still need to be ruled out before treating the reading as false.",
+                "Connector, wiring, reference, and ground checks usually come before replacing the sensor.",
+            ],
+            "symptoms": [
+                "Check engine light",
+                "Hard starting or poor fuel control in some cases",
+                "Cooling fan behavior issues",
+                "Possible overheating concern or false hot reading",
+            ],
+            "quick_checks": [
+                "Inspect coolant temperature sensor connector fit and terminal condition",
+                "Inspect wiring for shorts, rub-through, corrosion, or coolant intrusion",
+                "Compare ECT reading to actual engine condition",
+                "Verify sensor and reference behavior if appropriate",
+                "Confirm coolant level and real engine temperature before blaming the sensor alone",
+            ],
+        },
         "P0118": {
             "meaning": "P0118 means the coolant temperature signal is reading colder than expected because the circuit is open or the signal is stuck high. It is not automatically just a bad coolant temperature sensor; an unplugged sensor, damaged wiring, connector corrosion, open circuit, failed sensor, or less common PCM and reference-voltage issue can set the same code.",
             "diagnostic_insight_intro": "P0118 should be treated as a coolant-temperature circuit-high fault before the sensor itself is condemned.",
