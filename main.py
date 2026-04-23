@@ -3318,17 +3318,24 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0141": {
-            "meaning": "P0141 means the heater circuit for the downstream oxygen sensor on bank 1 is not working as expected. The sensor may be bad, but a blown fuse, poor power supply, ground issue, or damaged wiring can set the same code.",
+            "meaning": "P0141 means the heater circuit for bank 1 sensor 2 is not operating as expected. It is not automatically just a bad oxygen sensor; a failed downstream O2 heater, blown fuse, damaged wiring, poor connector contact, heater power fault, or ground fault can set the same code.",
+            "diagnostic_insight_intro": "P0141 should be treated as a downstream O2 heater-circuit fault before the sensor itself is condemned.",
+            "diagnostic_insight_points": [
+                "The heater circuit needs verified power and ground before the sensor is blamed.",
+                "Wiring near the exhaust can be damaged by heat, road debris, or poor routing.",
+                "Fuse, connector, and terminal checks usually come before replacing the downstream sensor.",
+            ],
             "symptoms": [
-                "Check-engine light with no major drivability complaint",
-                "Delayed oxygen-sensor readiness on cold start",
-                "Failed emissions readiness or inspection",
+                "Check engine light with little or no major drivability change",
+                "Delayed oxygen-sensor monitor readiness",
+                "Emissions test failure in some cases",
             ],
             "quick_checks": [
-                "Inspect the downstream sensor wiring away from the hot exhaust",
-                "Verify heater circuit power, ground, and related fuse protection",
-                "Check connector condition and terminal tension at bank 1 sensor 2",
-                "Confirm the heater fault with scan data or meter checks before replacing parts",
+                "Inspect downstream O2 sensor wiring near the exhaust",
+                "Inspect connector fit and terminal condition at bank 1 sensor 2",
+                "Verify heater power and ground",
+                "Check related fuse protection if applicable",
+                "Confirm the heater fault before condemning the sensor alone",
             ],
         },
         "P0158": {
