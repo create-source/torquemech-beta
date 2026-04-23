@@ -507,6 +507,20 @@ button:active{
   background: var(--tm-surface-2);
 }
 
+.estimator-final-actions{
+  margin-top: 26px;
+}
+
+.estimator-final-cta{
+  width: 100%;
+  min-height: 58px;
+  padding: 16px 20px;
+  font-size: 15px;
+  font-weight: 900;
+  border-radius: 10px;
+  box-shadow: 0 14px 28px rgba(17,179,173,.26);
+}
+
 .tm-btn-ghost{
   background: transparent;
   color: var(--tm-blue);
