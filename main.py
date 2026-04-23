@@ -3240,6 +3240,29 @@ def build_obd_content_refinement(code: str):
                 "Inspect the MAF connector and harness for loose terminals, corrosion, or damage",
             ],
         },
+        "P0110": {
+            "meaning": "P0110 means the intake air temperature circuit is malfunctioning. It is not automatically just a bad IAT sensor; an unplugged sensor, damaged wiring, connector corrosion, an open or shorted circuit, failed sensor, or integrated MAF/IAT assembly issue can set the same code.",
+            "diagnostic_insight_intro": "P0110 should be treated as an intake-temperature circuit fault before the IAT sensor itself is condemned.",
+            "diagnostic_insight_points": [
+                "The IAT reading should be compared with ambient temperature before parts are replaced.",
+                "Connector corrosion, wiring damage, or an open or shorted circuit can mimic a failed sensor.",
+                "On vehicles with an integrated MAF/IAT assembly, confirming the sensor location changes the repair path.",
+            ],
+            "symptoms": [
+                "Check engine light",
+                "Hard starting in some conditions",
+                "Rich or lean fuel behavior in some cases",
+                "Hesitation or drivability issues on some vehicles",
+                "Poor fuel economy",
+            ],
+            "quick_checks": [
+                "Inspect IAT connector fit and terminal condition",
+                "Inspect wiring for damage, corrosion, or intake-area heat damage",
+                "Compare IAT reading to ambient temperature on a cold engine",
+                "Verify reference or resistance behavior if appropriate",
+                "Confirm whether the IAT is integrated into the MAF housing before replacing parts",
+            ],
+        },
         "P0113": {
             "meaning": "P0113 means the intake air temperature signal is reading colder than expected because the circuit is open or the signal is stuck high. It is not automatically just a bad IAT sensor; an unplugged sensor, damaged wiring, connector corrosion, open circuit, failed sensor, or integrated MAF/IAT assembly issue can set the same code.",
             "diagnostic_insight_intro": "P0113 should be treated as an intake-temperature circuit-high fault before the IAT sensor itself is condemned.",
