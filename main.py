@@ -3150,11 +3150,24 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0446": {
-            "diagnostic_insight_intro": "P0446 usually points to an EVAP vent control problem, often involving a stuck vent valve, restricted vent path, or control-circuit fault.",
+            "meaning": "P0446 usually points to an EVAP vent control problem. The fault is often a stuck or restricted vent valve, blocked vent path, contamination near the canister, or a control-circuit issue rather than just a loose gas cap.",
+            "diagnostic_insight_intro": "P0446 should be treated as an EVAP vent-control fault until testing proves whether the valve, vent path, or circuit is responsible.",
             "diagnostic_insight_points": [
-                "A blocked or contaminated vent valve can prevent the EVAP system from sealing or venting correctly.",
-                "Dust, rust, or charcoal contamination near the canister and vent assembly often matters more than the gas cap on this code.",
-                "Circuit testing should come earlier if the valve does not respond to commands.",
+                "A failed vent valve or restricted vent filter can keep the EVAP system from sealing or venting correctly.",
+                "Dust, rust, or charcoal contamination near the canister and vent assembly often matters more than the gas cap.",
+                "Circuit and connector testing should come earlier if the valve does not respond to commands.",
+            ],
+            "symptoms": [
+                "Check engine light with little or no major drivability change",
+                "Possible fueling shutoff or slow fill complaints on some vehicles",
+                "Emissions readiness failure",
+            ],
+            "quick_checks": [
+                "Inspect the EVAP vent valve and vent path for restriction",
+                "Inspect for dirt, dust, rust, or charcoal contamination near the canister",
+                "Inspect vent valve wiring and connector condition",
+                "Command the vent valve if possible and verify response",
+                "Smoke test or run an EVAP system test if the fault is not obvious",
             ],
         },
         "P0507": {
