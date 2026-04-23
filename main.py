@@ -3072,6 +3072,27 @@ def build_obd_content_refinement(code: str):
                 "Avoid condemning the converter before ruling out upstream causes",
             ],
         },
+        "P0440": {
+            "meaning": "P0440 means the EVAP system detected a general malfunction during its self-test. It is not automatically just a gas cap issue; a gas cap sealing problem, purge valve fault, vent valve fault, hose or line leak, canister issue, or wiring and control issue can all set the same code.",
+            "diagnostic_insight_intro": "P0440 should be treated as a general EVAP system fault until testing narrows whether the leak or control problem is on the cap, purge, vent, hose, line, or canister side.",
+            "diagnostic_insight_points": [
+                "A gas cap is a good first check, but purge and vent valve operation should not be skipped.",
+                "General EVAP faults often need smoke or system testing because the code does not identify one exact leak point.",
+                "If P0442, P0455, or P0446 are also present, use those codes to narrow leak size or vent-control direction.",
+            ],
+            "symptoms": [
+                "Check engine light with little or no major drivability change",
+                "Emissions readiness failure",
+                "Possible fuel vapor smell in some cases",
+            ],
+            "quick_checks": [
+                "Inspect gas cap seal condition and cap fitment",
+                "Inspect EVAP hoses and lines for leaks or disconnections",
+                "Inspect purge and vent valve operation",
+                "Inspect the canister and nearby plumbing",
+                "Smoke test or run an EVAP system test if the problem is not obvious",
+            ],
+        },
         "P0455": {
             "meaning": "P0455 means the EVAP system detected a large leak during its self-test. A loose or missing gas cap is an easy first check, but disconnected EVAP hoses, cracked lines, purge or vent valves stuck open or not sealing, canister leaks, or tank-side plumbing leaks can set the same code.",
             "diagnostic_insight_intro": "P0455 should be treated as a large EVAP leak until testing shows whether the system is open at the cap, hose, valve, canister, or tank-side plumbing.",
