@@ -2,11 +2,29 @@ from typing import Dict, List, Any
 
 
 LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
+    "spark_plug": [
+        {"label": "Access ignition coils or plug wires", "weight": 0.25},
+        {"label": "Remove plugs and inspect wells and threads", "weight": 0.25},
+        {"label": "Install plugs to proper torque and spec", "weight": 0.30},
+        {"label": "Reassemble and verify smooth operation", "weight": 0.20},
+    ],
+    "ignition_coil": [
+        {"label": "Confirm cylinder location and access coil", "weight": 0.20},
+        {"label": "Inspect connector, boot, and plug well", "weight": 0.25},
+        {"label": "Replace coil and transfer seals if needed", "weight": 0.30},
+        {"label": "Clear codes and verify misfire data", "weight": 0.25},
+    ],
     "brakes": [
         {"label": "Wheel removal", "weight": 0.15},
         {"label": "Brake component access", "weight": 0.20},
         {"label": "Remove and install parts", "weight": 0.40},
         {"label": "Reassembly and safety check", "weight": 0.25},
+    ],
+    "brake_pad": [
+        {"label": "Lift vehicle and remove wheels", "weight": 0.15},
+        {"label": "Inspect pads, caliper slides, and hardware", "weight": 0.20},
+        {"label": "Replace pads and service contact points", "weight": 0.40},
+        {"label": "Reassemble, torque wheels, and verify pedal feel", "weight": 0.25},
     ],
     "electrical": [
         {"label": "Battery disconnect and prep", "weight": 0.10},
@@ -14,11 +32,35 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         {"label": "Disconnect and reconnect wiring", "weight": 0.30},
         {"label": "Install and verification", "weight": 0.35},
     ],
+    "alternator": [
+        {"label": "Disconnect battery and inspect belt routing", "weight": 0.15},
+        {"label": "Access alternator and electrical connections", "weight": 0.25},
+        {"label": "Replace alternator and set belt tension path", "weight": 0.35},
+        {"label": "Verify charging output and warning lights", "weight": 0.25},
+    ],
+    "starter": [
+        {"label": "Disconnect battery and confirm starter access", "weight": 0.15},
+        {"label": "Inspect main cable, trigger wire, and mounting", "weight": 0.25},
+        {"label": "Replace starter and secure connections", "weight": 0.35},
+        {"label": "Verify crank speed and no-start symptoms", "weight": 0.25},
+    ],
     "cooling": [
         {"label": "Component access", "weight": 0.20},
         {"label": "Drain and manage fluids", "weight": 0.20},
         {"label": "Remove and install parts", "weight": 0.35},
         {"label": "Refill, bleed, and verify", "weight": 0.25},
+    ],
+    "water_pump": [
+        {"label": "Access pump, belt drive, and cooling hoses", "weight": 0.20},
+        {"label": "Drain coolant and inspect leak path", "weight": 0.20},
+        {"label": "Replace pump and clean sealing surface", "weight": 0.35},
+        {"label": "Refill, bleed, and verify temperature control", "weight": 0.25},
+    ],
+    "thermostat": [
+        {"label": "Access thermostat housing and hose connections", "weight": 0.20},
+        {"label": "Drain coolant to service level", "weight": 0.20},
+        {"label": "Replace thermostat and housing seal", "weight": 0.35},
+        {"label": "Refill, bleed, and verify warm-up behavior", "weight": 0.25},
     ],
     "suspension": [
         {"label": "Wheel removal", "weight": 0.15},
@@ -32,6 +74,12 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         {"label": "Remove and install parts", "weight": 0.35},
         {"label": "Reassembly and verification", "weight": 0.20},
     ],
+    "valve_cover_gasket": [
+        {"label": "Access valve cover and protect surrounding components", "weight": 0.25},
+        {"label": "Disconnect coils, hoses, and harness retainers", "weight": 0.20},
+        {"label": "Replace gasket and clean sealing surfaces", "weight": 0.35},
+        {"label": "Reassemble and inspect for oil leaks", "weight": 0.20},
+    ],
     "engine_major": [
         {"label": "Prep and system disconnection", "weight": 0.15},
         {"label": "Accessory and support removal", "weight": 0.25},
@@ -44,7 +92,7 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
 LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
     "brake_pad_replacement": {
         "display_name": "Brake Pad Replacement",
-        "template": "brakes",
+        "template": "brake_pad",
         "labor_hours": {"min": 1.0, "avg": 1.8, "max": 3.0},
     },
     "brake_rotor_replacement": {
@@ -66,13 +114,23 @@ LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
 
     "front_brake_pad_replacement": {
         "display_name": "Front Brake Pad Replacement",
-        "template": "brakes",
+        "template": "brake_pad",
         "labor_hours": {"min": 1.0, "avg": 1.5, "max": 2.5},
     },
 
     "rear_brake_pad_replacement": {
         "display_name": "Rear Brake Pad Replacement",
-        "template": "brakes",
+        "template": "brake_pad",
+        "labor_hours": {"min": 1.0, "avg": 1.5, "max": 2.5},
+    },
+    "front_brake_pads_replacement": {
+        "display_name": "Front Brake Pads Replacement",
+        "template": "brake_pad",
+        "labor_hours": {"min": 1.0, "avg": 1.5, "max": 2.5},
+    },
+    "rear_brake_pads_replacement": {
+        "display_name": "Rear Brake Pads Replacement",
+        "template": "brake_pad",
         "labor_hours": {"min": 1.0, "avg": 1.5, "max": 2.5},
     },
 
@@ -95,17 +153,17 @@ LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
     },
     "alternator_replacement": {
         "display_name": "Alternator Replacement",
-        "template": "electrical",
+        "template": "alternator",
         "labor_hours": {"min": 1.2, "avg": 2.0, "max": 3.5},
     },
     "starter_replacement": {
         "display_name": "Starter Replacement",
-        "template": "electrical",
+        "template": "starter",
         "labor_hours": {"min": 1.4, "avg": 2.3, "max": 4.0},
     },
     "water_pump_replacement": {
         "display_name": "Water Pump Replacement",
-        "template": "cooling",
+        "template": "water_pump",
         "labor_hours": {"min": 2.0, "avg": 3.5, "max": 6.0},
     },
     "strut_replacement": {
@@ -115,8 +173,23 @@ LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
     },
     "spark_plug_replacement": {
         "display_name": "Spark Plug Replacement",
-        "template": "engine_minor",
+        "template": "spark_plug",
         "labor_hours": {"min": 1.0, "avg": 2.0, "max": 5.0},
+    },
+    "spark_plug_replacement_4_cyl": {
+        "display_name": "Spark Plug Replacement (4-Cyl)",
+        "template": "spark_plug",
+        "labor_hours": {"min": 1.0, "avg": 1.8, "max": 4.0},
+    },
+    "spark_plug_replacement_v6_v8": {
+        "display_name": "Spark Plug Replacement (V6/V8)",
+        "template": "spark_plug",
+        "labor_hours": {"min": 1.0, "avg": 2.5, "max": 5.0},
+    },
+    "ignition_coil_replacement_each": {
+        "display_name": "Ignition Coil Replacement (each)",
+        "template": "ignition_coil",
+        "labor_hours": {"min": 0.5, "avg": 1.2, "max": 3.0},
     },
     "engine_replacement": {
         "display_name": "Engine Replacement",
@@ -132,8 +205,13 @@ LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
 
     "valve_cover_gasket_replacement": {
         "display_name": "Valve Cover Gasket Replacement",
-        "template": "engine_minor",
+        "template": "valve_cover_gasket",
         "labor_hours": {"min": 1.5, "avg": 2.5, "max": 4.0},
+    },
+    "thermostat_replacement": {
+        "display_name": "Thermostat Replacement",
+        "template": "thermostat",
+        "labor_hours": {"min": 1.0, "avg": 2.0, "max": 4.0},
     },
 }
 
