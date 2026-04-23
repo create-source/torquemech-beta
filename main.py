@@ -4639,6 +4639,22 @@ def devtools_json():
 def favicon():
     return FileResponse(str(STATIC_DIR / "favicon.ico"))
 
+
+@app.get("/favicon-48.png")
+def favicon_48():
+    return FileResponse(str(STATIC_DIR / "favicon-48.png"), media_type="image/png")
+
+
+@app.get("/icon-192.png")
+def icon_192():
+    return FileResponse(str(STATIC_DIR / "icon-192.png"), media_type="image/png")
+
+
+@app.get("/icon-512.png")
+def icon_512():
+    return FileResponse(str(STATIC_DIR / "icon-512.png"), media_type="image/png")
+
+
 # ✅ Clean legal routes
 FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScqx74MW1pDdyA-I7GHL1vo5TyS6iaQ3QhJogQtkXvfjiaBrA/viewform?usp=sf_link"
 
