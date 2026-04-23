@@ -2204,7 +2204,74 @@ def build_common_repairs(code: str):
         ],
     }
 
-    return repair_map.get(code, [])
+    repair_guidance_map = {
+        "P0300": {
+            "Spark plug replacement": "Price this after plug wear, fouling, or gap problems are confirmed across the misfiring cylinders.",
+            "Ignition coil replacement": "Use this path when coil output, boots, or swap testing points to ignition weakness.",
+            "Vacuum leak smoke test": "Useful when trims, idle quality, or multiple-cylinder misfires point to unmetered air.",
+            "Fuel system diagnostic": "Move here when misfires are load-related or fuel pressure and trims look suspect.",
+            "Mass air flow sensor replacement": "Price only after airflow data or contamination points to the MAF as the shared trigger.",
+        },
+        "P0301": {
+            "Spark plug replacement": "A strong estimate path when the cylinder 1 plug is worn, fouled, oil-soaked, or the misfire follows the plug.",
+            "Ignition coil replacement": "Use this after the cylinder 1 misfire follows the coil or coil output testing confirms the fault.",
+            "Fuel injector replacement": "Price this when the misfire stays on cylinder 1 after ignition checks and injector testing confirms a fuel fault.",
+            "Vacuum leak smoke test": "Useful when cylinder 1 is near an intake leak or fuel trims point to unmetered air.",
+        },
+        "P0302": {
+            "Spark plug replacement": "A strong estimate path when the cylinder 2 plug is worn, fouled, oil-soaked, or the misfire follows the plug.",
+            "Ignition coil replacement": "Use this after the cylinder 2 misfire follows the coil or coil output testing confirms the fault.",
+            "Fuel injector replacement": "Price this when the misfire stays on cylinder 2 after ignition checks and injector testing confirms a fuel fault.",
+            "Vacuum leak smoke test": "Useful when cylinder 2 is near an intake leak or fuel trims point to unmetered air.",
+        },
+        "P0303": {
+            "Spark plug replacement": "A strong estimate path when the cylinder 3 plug is worn, fouled, oil-soaked, or the misfire follows the plug.",
+            "Ignition coil replacement": "Use this after the cylinder 3 misfire follows the coil or coil output testing confirms the fault.",
+            "Fuel injector replacement": "Price this when the misfire stays on cylinder 3 after ignition checks and injector testing confirms a fuel fault.",
+            "Vacuum leak smoke test": "Useful when cylinder 3 is near an intake leak or fuel trims point to unmetered air.",
+        },
+        "P0304": {
+            "Spark plug replacement": "A strong estimate path when the cylinder 4 plug is worn, fouled, oil-soaked, or the misfire follows the plug.",
+            "Ignition coil replacement": "Use this after the cylinder 4 misfire follows the coil or coil output testing confirms the fault.",
+            "Fuel injector replacement": "Price this when the misfire stays on cylinder 4 after ignition checks and injector testing confirms a fuel fault.",
+            "Vacuum leak smoke test": "Useful when cylinder 4 is near an intake leak or fuel trims point to unmetered air.",
+        },
+        "P0171": {
+            "Vacuum leak smoke test": "Start here when bank 1 trims are leaner at idle and the leak may be after the MAF.",
+            "Mass air flow sensor replacement": "Price this only after MAF readings, contamination, or airflow plausibility checks point to the sensor.",
+            "Fuel system diagnostic": "Move here when trims stay lean under load or pressure and volume testing are suspect.",
+            "PCV system service": "Use this path when PCV plumbing or crankcase ventilation is pulling in unmetered air.",
+        },
+        "P0174": {
+            "Vacuum leak smoke test": "Start here when bank 2 trims are leaner at idle and a bank-side leak is likely.",
+            "Mass air flow sensor replacement": "Price this only after MAF readings, contamination, or airflow plausibility checks point to the sensor.",
+            "Fuel system diagnostic": "Move here when both banks stay lean under load or fuel delivery testing is suspect.",
+            "PCV system service": "Use this path when PCV routing or crankcase ventilation is pulling in unmetered air.",
+        },
+        "P0128": {
+            "Thermostat replacement": "The strongest estimate path when live temperature data and warm-up behavior point to a stuck-open thermostat.",
+            "Coolant temperature sensor replacement": "Use this only when scan data, connector checks, or resistance testing shows inaccurate temperature reporting.",
+            "Thermostat housing replacement": "Price this when the thermostat is integrated into the housing or the housing seal is leaking.",
+        },
+        "P0446": {
+            "EVAP vent valve replacement": "A direct estimate path when command testing, restriction checks, or contamination points to the vent valve or vent assembly.",
+        },
+        "P0507": {
+            "Throttle body cleaning": "Start here when carbon buildup or a sticking throttle plate is visible and the throttle body still responds correctly.",
+            "Throttle body service": "Use this when cleaning, inspection, and relearn are needed before replacement is justified.",
+            "Vacuum leak smoke test": "Move here when idle stays high after throttle inspection or fuel trims suggest extra air.",
+            "Throttle body replacement": "Price this when throttle data, sticking, or actuator testing confirms the assembly is the fault.",
+        },
+    }
+
+    repairs = [dict(item) for item in repair_map.get(code, [])]
+    guidance = repair_guidance_map.get(code, {})
+    for item in repairs:
+        description = guidance.get(item.get("label", ""))
+        if description:
+            item["description"] = description
+
+    return repairs
 
 def build_cost_guide_links(code: str):
     code = code.upper().strip()
@@ -2523,6 +2590,11 @@ def build_cost_guide_links(code: str):
                 "label": "Thermostat Replacement Cost",
                 "href": "/cost/thermostat-replacement",
                 "description": "The strongest cost guide when slow warm-up and temperature data point to a thermostat stuck open.",
+            },
+            {
+                "label": "Engine Coolant Temperature Sensor Replacement Cost",
+                "href": "/cost/engine-coolant-temperature-sensor-replacement",
+                "description": "Relevant when live data or circuit checks show the temperature reading is misleading the warm-up monitor.",
             },
         ],
         "P0116": [
