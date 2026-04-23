@@ -3416,17 +3416,25 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0118": {
-            "meaning": "P0118 means the coolant temperature signal is reading colder than expected because the sensor circuit is open or the signal is stuck high. That can come from an unplugged sensor, damaged wiring, corrosion, or a failed coolant temperature sensor.",
+            "meaning": "P0118 means the coolant temperature signal is reading colder than expected because the circuit is open or the signal is stuck high. It is not automatically just a bad coolant temperature sensor; an unplugged sensor, damaged wiring, connector corrosion, open circuit, failed sensor, or less common PCM and reference-voltage issue can set the same code.",
+            "diagnostic_insight_intro": "P0118 should be treated as a coolant-temperature circuit-high fault before the sensor itself is condemned.",
+            "diagnostic_insight_points": [
+                "A cold-looking ECT reading on a warm engine often points to an open circuit or poor connection.",
+                "Connector corrosion, coolant intrusion, or broken wiring can mimic a failed sensor.",
+                "Cold-engine scan data should be compared to ambient temperature before parts are replaced.",
+            ],
             "symptoms": [
-                "Hard cold starts or overly rich warm-up fueling",
-                "Cooling fans running unexpectedly on some vehicles",
-                "Poor fuel economy while the fault is active",
+                "Hard cold starts or rich-running behavior",
+                "Poor fuel economy",
+                "Cooling fan behavior issues on some vehicles",
+                "Check engine light",
             ],
             "quick_checks": [
-                "Make sure the coolant temperature sensor connector is fully seated",
-                "Inspect the wiring for breaks, corrosion, or coolant intrusion",
+                "Inspect coolant temperature sensor connector fit and terminal condition",
+                "Inspect wiring for breaks, corrosion, or coolant intrusion",
                 "Compare ECT reading to ambient temperature on a cold engine",
-                "Check sensor resistance or reference voltage if the signal stays unrealistically cold",
+                "Verify reference voltage or sensor resistance if appropriate",
+                "Confirm coolant level and basic cooling condition before blaming the sensor alone",
             ],
         },
     }
