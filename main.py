@@ -2475,12 +2475,22 @@ def build_cost_guide_links(code: str):
                 "href": "/cost/mass-air-flow-sensor-replacement",
                 "description": "A strong next cost check when airflow readings or contamination point to the MAF sensor as the lean-condition trigger.",
             },
+            {
+                "label": "Fuel Pump Replacement Cost",
+                "href": "/cost/fuel-pump-replacement",
+                "description": "Relevant when fuel-pressure or volume testing shows low fuel delivery is causing the lean condition.",
+            },
         ],
         "P0174": [
             {
                 "label": "Mass Air Flow Sensor Replacement Cost",
                 "href": "/cost/mass-air-flow-sensor-replacement",
                 "description": "A strong next cost check when airflow readings or contamination point to the MAF sensor as the lean-condition trigger.",
+            },
+            {
+                "label": "Fuel Pump Replacement Cost",
+                "href": "/cost/fuel-pump-replacement",
+                "description": "Relevant when fuel-pressure or volume testing shows low fuel delivery is causing the lean condition.",
             },
         ],
         "P0128": [
