@@ -1,0 +1,236 @@
+{% extends "layout.html" %}
+
+{% block title %}Fuel Injector Replacement Cost | TorqueMech{% endblock %}
+
+{% block page_css %}
+  <meta name="description" content="Fuel injector replacement cost depends on injector access, diagnosis, parts quality, and whether the fault is isolated to one cylinder. Use TorqueMech for a mechanic-first baseline." />
+  <link rel="canonical" href="{{ request.url }}" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://torquemech.com/cost/fuel-injector-replacement#webpage",
+          "url": "https://torquemech.com/cost/fuel-injector-replacement",
+          "name": "Fuel Injector Replacement Cost | TorqueMech",
+          "description": "Fuel injector replacement cost depends on injector access, diagnosis, parts quality, and whether the fault is isolated to one cylinder.",
+          "isPartOf": {
+            "@id": "https://torquemech.com/#organization"
+          },
+          "breadcrumb": {
+            "@id": "https://torquemech.com/cost/fuel-injector-replacement#breadcrumb"
+          }
+        },
+        {
+          "@type": "Service",
+          "@id": "https://torquemech.com/cost/fuel-injector-replacement#service",
+          "name": "Fuel Injector Replacement",
+          "serviceType": "Fuel Injector Replacement",
+          "description": "Typical fuel injector replacement pricing guidance for cylinder-specific fueling faults, misfire complaints, and confirmed injector failures.",
+          "url": "https://torquemech.com/cost/fuel-injector-replacement",
+          "provider": {
+            "@type": "Organization",
+            "@id": "https://torquemech.com/#organization",
+            "name": "TorqueMech"
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "United States"
+          },
+          "offers": {
+            "@type": "Offer",
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "priceCurrency": "USD",
+              "minPrice": 180,
+              "maxPrice": 900
+            }
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://torquemech.com/cost/fuel-injector-replacement#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://torquemech.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Repair Costs",
+              "item": "https://torquemech.com/repair-costs"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Fuel Injector Replacement Cost",
+              "item": "https://torquemech.com/cost/fuel-injector-replacement"
+            }
+          ]
+        }
+      ]
+    }
+  </script>
+{% endblock %}
+
+{% block content %}
+<section class="tm-page">
+  <section class="tm-hero tm-section" style="padding:28px 24px;">
+    <div class="eyebrow">TorqueMech Cost Guide</div>
+    <h1>Fuel Injector Replacement Cost</h1>
+    <p class="tm-pageLead">
+      Fuel injector replacement cost usually depends on injector access, cylinder location, diagnosis time, and whether the rough-running complaint is confirmed as an injector fault instead of ignition or compression.
+      This page gives a practical baseline before moving into the estimator.
+    </p>
+    <div class="tm-actions">
+      <a class="tm-btn tm-btn-primary" href="/estimator?service=fuel_injector_replacement_each">Estimate Fuel Injector Replacement</a>
+    </div>
+  </section>
+
+  <section class="tm-grid-4 tm-guide-grid tm-section">
+    <article class="tm-card">
+      <h2>Average Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$180 to $900+</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Typical total depends on injector count, access, labor rate, and whether seals, fuel rail removal, or added diagnosis are needed.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Labor Time</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 4.0 hours</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Some port injectors are easy to reach, while direct-injection layouts or buried rails can add access time.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Parts Cost</h2>
+      <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$50 to $450+ each</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Injector price varies by engine design, OE versus aftermarket quality, direct injection, and whether seals or rail hardware are included.
+      </p>
+    </article>
+
+    <article class="tm-card">
+      <h2>Repair Difficulty</h2>
+      <p class="tm-difficulty-moderate">Moderate</p>
+      <p class="tm-muted" style="margin-bottom:0;">
+        Moderate. Diagnosis matters, and access can require careful fuel-pressure relief, rail removal, and seal handling.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-grid-2 tm-section">
+    <article class="tm-card">
+      <h2>Common Symptoms</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Single-cylinder misfire that stays on the same cylinder</li>
+        <li>Rough idle or shaking at a stop</li>
+        <li>Hard starting or fuel smell in some cases</li>
+        <li>Hesitation, stumble, or weak acceleration</li>
+        <li>Poor fuel economy or failed emissions readiness</li>
+      </ul>
+    </article>
+
+    <article class="tm-card">
+      <h2>What Affects Cost</h2>
+      <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li>Port injection versus direct injection</li>
+        <li>Injector access and fuel rail removal time</li>
+        <li>Single injector replacement versus a matched set</li>
+        <li>Need for injector balance, contribution, or wiring tests</li>
+        <li>Seal, O-ring, or fuel rail hardware condition</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Service Overview</h2>
+      <p class="tm-muted">
+        Injector quotes are most accurate after confirming the injector is actually the fault. A solid diagnostic path checks scan data, cylinder contribution, injector balance behavior, connector condition, and whether ignition or compression is causing the misfire first.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li>Confirm the misfire or fuel-delivery fault with scan data</li>
+        <li>Check injector connector fit, wiring, and command behavior</li>
+        <li>Compare cylinder contribution or injector balance where available</li>
+        <li>Relieve fuel pressure and remove rail components as required</li>
+        <li>Install the injector and seals, then verify smooth operation</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Can You Drive With a Bad Fuel Injector?</h2>
+      <p class="tm-muted">
+        Short-distance driving may still be possible in some cases, but a bad injector can cause a misfire, hard starts, poor fuel economy, and rough drivability. A leaking injector can also create rich-running or fuel-smell concerns.
+      </p>
+      <p class="tm-muted">
+        Continuing to drive with an active injector-related misfire can stress the catalytic converter and make the repair path more expensive. A flashing check engine light means the vehicle should not be driven farther than necessary.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Replace the Injector or Diagnose First?</h2>
+      <p class="tm-muted">
+        Not every cylinder misfire is an injector. Spark plugs, ignition coils, vacuum leaks, compression loss, wiring faults, and fuel-pressure issues can all point the scan tool toward the same cylinder.
+      </p>
+      <p class="tm-muted">
+        A mechanic-first diagnosis checks misfire counters, plug and coil behavior, injector command, connector condition, and fuel pressure before replacing parts. That keeps the estimate tied to the confirmed failure.
+      </p>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Estimate This Repair</h2>
+      <p class="tm-muted">
+        Use TorqueMech to build a fuel injector replacement estimate with your labor rate, selected service, and vehicle context.
+      </p>
+      <div class="tm-actions" style="margin-top:14px;">
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=fuel_injector_replacement_each">Estimate Fuel Injector Replacement</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Common OBD Codes Related to Fuel Injector Replacement</h2>
+      <p class="tm-muted">
+        Injector faults often show up as a cylinder-specific misfire after ignition and compression checks are ruled out.
+      </p>
+      <p class="tm-muted">
+        If the misfire stays on the same cylinder after plug and coil swaps, injector testing becomes more important.
+      </p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/obd/p0301">P0301 &ndash; Cylinder 1 Misfire</a></li>
+        <li><a href="/obd/p0302">P0302 &ndash; Cylinder 2 Misfire</a></li>
+        <li><a href="/obd/p0303">P0303 &ndash; Cylinder 3 Misfire</a></li>
+        <li><a href="/obd/p0304">P0304 &ndash; Cylinder 4 Misfire</a></li>
+        <li><a href="/obd/p0201">P0201 &ndash; Injector Circuit Malfunction (Cylinder 1)</a></li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
+      <h2>Related Cost Guides</h2>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/spark-plug-replacement">Spark Plug Replacement Cost</a></li>
+        <li><a href="/cost/ignition-coil-replacement">Ignition Coil Replacement Cost</a></li>
+        <li><a href="/cost/mass-air-flow-sensor-replacement">Mass Air Flow Sensor Replacement Cost</a></li>
+        <li><a href="/cost/fuel-pump-replacement">Fuel Pump Replacement Cost</a></li>
+      </ul>
+    </article>
+  </section>
+</section>
+{% endblock %}

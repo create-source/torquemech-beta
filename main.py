@@ -2256,6 +2256,11 @@ def build_cost_guide_links(code: str):
                 "href": "/cost/ignition-coil-replacement",
                 "description": "A strong next cost check when the misfire path points to a weak or failing coil.",
             },
+            {
+                "label": "Fuel Injector Replacement Cost",
+                "href": "/cost/fuel-injector-replacement",
+                "description": "Relevant when injector balance, command, or cylinder contribution testing points to a fuel delivery fault.",
+            },
         ],
         "P0301": [
             {
@@ -2267,6 +2272,11 @@ def build_cost_guide_links(code: str):
                 "label": "Ignition Coil Replacement Cost",
                 "href": "/cost/ignition-coil-replacement",
                 "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
+            },
+            {
+                "label": "Fuel Injector Replacement Cost",
+                "href": "/cost/fuel-injector-replacement",
+                "description": "Relevant when the cylinder-specific misfire stays fixed after ignition checks and injector testing confirms the fault.",
             },
         ],
         "P0302": [
@@ -2280,6 +2290,11 @@ def build_cost_guide_links(code: str):
                 "href": "/cost/ignition-coil-replacement",
                 "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
             },
+            {
+                "label": "Fuel Injector Replacement Cost",
+                "href": "/cost/fuel-injector-replacement",
+                "description": "Relevant when the cylinder-specific misfire stays fixed after ignition checks and injector testing confirms the fault.",
+            },
         ],
         "P0303": [
             {
@@ -2292,6 +2307,11 @@ def build_cost_guide_links(code: str):
                 "href": "/cost/ignition-coil-replacement",
                 "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
             },
+            {
+                "label": "Fuel Injector Replacement Cost",
+                "href": "/cost/fuel-injector-replacement",
+                "description": "Relevant when the cylinder-specific misfire stays fixed after ignition checks and injector testing confirms the fault.",
+            },
         ],
         "P0304": [
             {
@@ -2303,6 +2323,11 @@ def build_cost_guide_links(code: str):
                 "label": "Ignition Coil Replacement Cost",
                 "href": "/cost/ignition-coil-replacement",
                 "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
+            },
+            {
+                "label": "Fuel Injector Replacement Cost",
+                "href": "/cost/fuel-injector-replacement",
+                "description": "Relevant when the cylinder-specific misfire stays fixed after ignition checks and injector testing confirms the fault.",
             },
         ],
         "P0101": [
@@ -3864,6 +3889,13 @@ def ignition_coil_cost(request: Request):
         {"request": request},
     )
 
+@app.get("/cost/fuel-injector-replacement", response_class=HTMLResponse)
+def fuel_injector_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_fuel_injector_replacement.html",
+        {"request": request},
+    )
+
 @app.get("/cost/thermostat-replacement", response_class=HTMLResponse)
 def thermostat_cost(request: Request):
     return templates.TemplateResponse(
@@ -3940,6 +3972,11 @@ def build_repair_cost_guide_cards():
             "title": "Ignition Coil Replacement Cost",
             "description": "Helpful for misfire diagnosis, rough-running complaints, and coil-related ignition failures.",
             "href": "/cost/ignition-coil-replacement",
+        },
+        {
+            "title": "Fuel Injector Replacement Cost",
+            "description": "Fuel-delivery pricing guidance for cylinder-specific misfires, rough-running complaints, and confirmed injector faults.",
+            "href": "/cost/fuel-injector-replacement",
         },
         {
             "title": "Brake Rotor Replacement Cost",
