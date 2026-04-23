@@ -3346,17 +3346,24 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0158": {
-            "meaning": "P0158 means the downstream oxygen sensor on bank 2 is staying high or reading richer than expected for too long. The fault can be a biased sensor, damaged wiring, or a real rich-running condition that keeps the signal elevated.",
+            "meaning": "P0158 means bank 2 sensor 2 is staying high or reading richer than expected for too long. It is not automatically just a bad oxygen sensor; a biased or failing downstream O2 sensor, wiring short or high-voltage issue, rich-running condition, exhaust contamination, or connector and harness damage can hold the signal high.",
+            "diagnostic_insight_intro": "P0158 should be treated as a bank 2 downstream O2 high-voltage signal fault before the sensor itself is condemned.",
+            "diagnostic_insight_points": [
+                "Scan data should confirm whether bank 2 sensor 2 is truly stuck high or only reacting to a rich-running condition.",
+                "Wiring and connector damage near the exhaust can create a false high-voltage signal.",
+                "Fuel-control and contamination checks should come before replacing the downstream sensor.",
+            ],
             "symptoms": [
-                "Check-engine light with little or no drivability change",
-                "Possible rich exhaust smell if the engine is actually overfueling",
-                "Failed emissions readiness or inspection",
+                "Check engine light with little or no major drivability change",
+                "Emissions readiness failure",
+                "Rich smell or poor fuel economy in some cases",
             ],
             "quick_checks": [
-                "Check for rich-running signs or related fuel-control codes first",
-                "Inspect the bank 2 sensor 2 wiring near the exhaust for heat damage or shorting",
-                "Verify downstream sensor voltage behavior on the scan tool",
-                "Confirm connector condition and harness routing before replacing the sensor",
+                "Inspect downstream O2 wiring near the exhaust",
+                "Inspect connector condition at bank 2 sensor 2",
+                "Review scan data before replacing parts",
+                "Check for rich-running or fuel-control issues",
+                "Confirm the high reading is not caused by wiring or contamination",
             ],
         },
         "P0562": {
