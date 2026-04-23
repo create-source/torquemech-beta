@@ -4637,7 +4637,11 @@ def devtools_json():
 
 @app.get("/favicon.ico")
 def favicon():
-    return FileResponse(str(STATIC_DIR / "favicon.ico"))
+    return FileResponse(
+        str(STATIC_DIR / "favicon.ico"),
+        media_type="image/x-icon",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
 @app.get("/favicon-48.png")
