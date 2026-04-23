@@ -62,6 +62,12 @@
           "labor_hours_max": 1.0
         },
         {
+          "code": "serpentine_belt_replacement",
+          "name": "Serpentine Belt Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5
+        },
+        {
           "code": "transmission_filter_replacement",
           "name": "Transmission Filter Replacement",
           "labor_hours_min": 0.2,
