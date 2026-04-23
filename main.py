@@ -3158,11 +3158,24 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0507": {
-            "diagnostic_insight_intro": "P0507 means idle speed is higher than expected, usually because extra air is entering the engine or the throttle body is not returning to the expected idle position.",
+            "meaning": "P0507 means idle speed is higher than the ECM expects. The fault is often caused by extra air entering the engine or throttle control not returning to the expected idle position, but throttle body faults, wiring issues, vacuum leaks, PCV leaks, intake leaks, or idle relearn problems can all create the same high-idle condition.",
+            "diagnostic_insight_intro": "P0507 should be treated as a high-idle airflow and throttle-control problem before replacing the throttle body.",
             "diagnostic_insight_points": [
-                "Carbon buildup, throttle-body sticking, or idle relearn issues are common first checks.",
-                "If idle stays high after throttle inspection, vacuum leaks should move up the list quickly.",
-                "Looking at commanded throttle angle and idle behavior can save time before replacing parts.",
+                "Carbon buildup, throttle-body sticking, or an incomplete idle relearn are common first checks.",
+                "If idle stays high after throttle inspection, vacuum, PCV, and intake leaks should move up the list quickly.",
+                "Commanded throttle angle, actual throttle position, and idle behavior should be reviewed before parts are replaced.",
+            ],
+            "symptoms": [
+                "High idle or hanging RPM",
+                "Rough, unstable, or surging idle after warm-up",
+                "Check engine light",
+            ],
+            "quick_checks": [
+                "Inspect the throttle body for carbon buildup or sticking",
+                "Verify whether an idle relearn or throttle relearn may be needed",
+                "Inspect vacuum and PCV hoses for leaks",
+                "Inspect the intake tract for unmetered air leaks",
+                "Review idle data and throttle position on scan data before replacing parts",
             ],
         },
         "P0101": {
