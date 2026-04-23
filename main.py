@@ -3240,6 +3240,28 @@ def build_obd_content_refinement(code: str):
                 "Inspect the MAF connector and harness for loose terminals, corrosion, or damage",
             ],
         },
+        "P0113": {
+            "meaning": "P0113 means the intake air temperature signal is reading colder than expected because the circuit is open or the signal is stuck high. It is not automatically just a bad IAT sensor; an unplugged sensor, damaged wiring, connector corrosion, open circuit, failed sensor, or integrated MAF/IAT assembly issue can set the same code.",
+            "diagnostic_insight_intro": "P0113 should be treated as an intake-temperature circuit-high fault before the IAT sensor itself is condemned.",
+            "diagnostic_insight_points": [
+                "A cold-looking IAT reading on a warm intake usually points to an open circuit, poor connection, or sensor signal problem.",
+                "Some vehicles build the IAT into the MAF housing, so the sensor location and assembly design should be confirmed first.",
+                "Connector, wiring, and ambient-temperature comparisons usually come before replacing parts.",
+            ],
+            "symptoms": [
+                "Check engine light",
+                "Hard cold-start behavior in some cases",
+                "Rich-running behavior or poor fuel economy",
+                "Hesitation or drivability issues on some vehicles",
+            ],
+            "quick_checks": [
+                "Inspect IAT connector fit and terminal condition",
+                "Inspect wiring for breaks, corrosion, or intake-area damage",
+                "Compare IAT reading to ambient temperature on a cold engine",
+                "Verify reference or resistance behavior if appropriate",
+                "Confirm whether the IAT is integrated into the MAF housing before replacing parts",
+            ],
+        },
         "P0201": {
             "meaning": "P0201 means the injector circuit for cylinder 1 is malfunctioning. The injector may have failed, but damaged wiring, poor connector terminal fit, an open or short in the control circuit, or a PCM driver issue in rarer cases can set the same code.",
             "diagnostic_insight_intro": "P0201 should be diagnosed as a cylinder 1 injector circuit fault before the injector itself is condemned.",
