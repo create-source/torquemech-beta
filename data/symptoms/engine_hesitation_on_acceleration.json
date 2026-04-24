@@ -1,0 +1,73 @@
+{
+  "slug": "engine-hesitation-on-acceleration",
+  "title": "Engine Hesitation on Acceleration",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for engine hesitation on acceleration.",
+  "intro": "Engine hesitation on acceleration usually means airflow, fuel delivery, or combustion timing is not keeping up when the throttle opens. The quickest split is whether the hesitation is lean and surge-like, misfire-related, or tied to a bad airflow signal the ECM cannot trust.",
+  "common_sounds": [
+    "Flat spot when first getting into the throttle",
+    "Light surge or stumble before power comes in",
+    "Hesitation that is worse merging, climbing, or passing",
+    "Occasional backfire or pop if the fault is severe"
+  ],
+  "quick_checks": [
+    "Scan for lean, misfire, and airflow-performance codes before replacing parts",
+    "Review short- and long-term fuel trims at idle and under load",
+    "Inspect the intake tract and clamps after the MAF",
+    "Check spark plug and coil condition if hesitation feels like a light miss under load",
+    "Check fuel delivery if trims stay lean or power falls off as demand rises"
+  ],
+  "common_causes": [
+    "Contaminated or inaccurate MAF signal",
+    "Weak fuel pump or low fuel delivery",
+    "Lean condition from intake or vacuum leak",
+    "Worn spark plugs or weak ignition coils",
+    "Throttle body airflow or control issue"
+  ],
+  "diagnostic_paths": [
+    "If fuel trims go lean as throttle opens, verify intake leaks and weak fuel delivery before condemning ignition parts.",
+    "If hesitation comes with a clear miss or bucking, start with plug and coil checks before moving deeper.",
+    "If airflow readings do not match load and RPM, the MAF path becomes a stronger next step."
+  ],
+  "related_obd_codes": [
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
+    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0507", "title": "Idle speed higher than expected", "href": "/obd/p0507" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "A strong next path when hesitation follows biased airflow data and intake inspection supports the sensor path.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "Fuel Pump Replacement Cost",
+      "description": "Relevant when the hesitation grows worse under heavier throttle and fuel delivery tests weak.",
+      "cost_guide_href": "/cost/fuel-pump-replacement",
+      "estimator_href": "/estimator?service=fuel_pump_replacement_in_tank"
+    },
+    {
+      "title": "Throttle Body Replacement Cost",
+      "description": "Useful when throttle response and airflow control are unstable after inspection and relearn checks.",
+      "cost_guide_href": "/cost/throttle-body-replacement",
+      "estimator_href": "/estimator?service=throttle_body_replacement"
+    },
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A practical next path when hesitation is tied to weak spark demand under load.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Worth pricing when plug condition is acceptable but load-related ignition weakness is still present.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

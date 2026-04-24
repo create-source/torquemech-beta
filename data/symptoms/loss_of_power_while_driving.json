@@ -1,0 +1,73 @@
+{
+  "slug": "loss-of-power-while-driving",
+  "title": "Loss of Power While Driving",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for loss of power while driving.",
+  "intro": "Loss of power while driving usually means the engine cannot make or deliver normal airflow, fuel, spark, or exhaust flow under load. The most useful split is whether the engine is actively misfiring, running lean, or feeling restricted even without a strong shake.",
+  "common_sounds": [
+    "Vehicle struggles to accelerate or climb hills",
+    "Throttle response feels flat or delayed",
+    "Power falls off at highway speed or under heavier load",
+    "Engine may surge, hesitate, or smell hot from the exhaust"
+  ],
+  "quick_checks": [
+    "Scan for misfire, lean-condition, airflow, and catalyst-efficiency codes",
+    "Note whether the power loss is paired with shaking, surge, or a flashing MIL",
+    "Review fuel trims, airflow readings, and misfire counters on scan data",
+    "Check spark plug and ignition coil condition if power loss feels like cylinder drop-out",
+    "Consider catalyst restriction if power loss builds with heat and exhaust smell"
+  ],
+  "common_causes": [
+    "Weak fuel delivery",
+    "Misfire under load from plugs or coils",
+    "Contaminated or inaccurate MAF signal",
+    "Lean condition from intake leak or airflow issue",
+    "Catalytic converter restriction or efficiency failure"
+  ],
+  "diagnostic_paths": [
+    "If power loss comes with bucking or a flashing MIL, start with misfire diagnosis before chasing exhaust restriction.",
+    "If trims stay lean under load, weak fuel delivery and shared airflow faults move higher on the list.",
+    "If the engine feels progressively choked and hot, compare catalyst data and upstream causes before pricing the converter."
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
+    { "code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420" },
+    { "code": "P0430", "title": "Catalyst efficiency below threshold bank 2", "href": "/obd/p0430" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Fuel Pump Replacement Cost",
+      "description": "A strong next path when the engine goes weak under sustained load and fuel delivery is suspect.",
+      "cost_guide_href": "/cost/fuel-pump-replacement",
+      "estimator_href": "/estimator?service=fuel_pump_replacement_in_tank"
+    },
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Relevant when airflow data does not match engine load and drivability falls off without a hard miss.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Useful when power loss is really a load-related ignition miss on one or more cylinders.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "Worth pricing when worn plugs are contributing to weak combustion under throttle.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Catalytic Converter Replacement Cost",
+      "description": "A valid next path only after upstream misfire, fueling, and O2-data problems are checked.",
+      "cost_guide_href": "/cost/catalytic-converter-replacement",
+      "estimator_href": "/estimator?service=catalytic_converter_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

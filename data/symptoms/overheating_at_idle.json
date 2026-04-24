@@ -1,0 +1,65 @@
+{
+  "slug": "overheating-at-idle",
+  "title": "Overheating at Idle",
+  "category": "Cooling System",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for overheating at idle.",
+  "intro": "Overheating at idle usually means coolant flow, heat rejection, or temperature-control strategy is failing when the vehicle is not moving enough air through the cooling system. The best split is whether the engine cools back down once road speed increases or runs hot in every condition.",
+  "common_sounds": [
+    "Temperature climbs while stopped or in traffic",
+    "Cooling fan may run constantly or seem out of sync",
+    "Heater output may change as temperature rises",
+    "Coolant smell or overflow after long idling"
+  ],
+  "quick_checks": [
+    "Verify coolant level and look for obvious external leaks before replacing parts",
+    "Compare scan-data coolant temperature to gauge behavior",
+    "Note whether the engine runs cooler once vehicle speed increases",
+    "Check for trapped air, poor circulation, or weak heater performance",
+    "Inspect whether temperature data looks believable before blaming the sensor or thermostat alone"
+  ],
+  "common_causes": [
+    "Low coolant level or external coolant loss",
+    "Weak water pump circulation",
+    "Restricted radiator or poor heat rejection",
+    "Thermostat sticking or not controlling coolant flow correctly",
+    "Cooling fan or fan-control issue in some cases"
+  ],
+  "diagnostic_paths": [
+    "If the engine overheats mostly at idle and improves on the road, radiator airflow, fan operation, and low-speed heat rejection matter more.",
+    "If heater output goes weak and coolant circulation looks poor, water pump and thermostat diagnosis move higher on the list.",
+    "If scan data is clearly wrong, verify the coolant temperature signal before making a thermostat-only decision."
+  ],
+  "related_obd_codes": [
+    { "code": "P0117", "title": "Coolant temperature circuit low input", "href": "/obd/p0117" },
+    { "code": "P0118", "title": "Coolant temperature circuit high input", "href": "/obd/p0118" },
+    { "code": "P0128", "title": "Coolant thermostat below regulating temperature", "href": "/obd/p0128" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Radiator Replacement Cost",
+      "description": "A practical next path when heat rejection is poor, the radiator is leaking, or flow through the core is restricted.",
+      "cost_guide_href": "/cost/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    },
+    {
+      "title": "Water Pump Replacement Cost",
+      "description": "Relevant when circulation looks weak, heater performance changes, or cooling falls off badly at low speed.",
+      "cost_guide_href": "/cost/water-pump-replacement",
+      "estimator_href": "/estimator?service=water_pump_replacement"
+    },
+    {
+      "title": "Thermostat Replacement Cost",
+      "description": "A strong next path when coolant flow control looks erratic or warm-up behavior and overheating overlap.",
+      "cost_guide_href": "/cost/thermostat-replacement",
+      "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Engine Coolant Temperature Sensor Replacement Cost",
+      "description": "Useful when scan data or fan behavior suggests the temperature signal is misleading diagnosis.",
+      "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement",
+      "estimator_href": "/estimator?service=coolant_temperature_sensor_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

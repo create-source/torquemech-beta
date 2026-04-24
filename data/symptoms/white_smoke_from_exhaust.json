@@ -1,0 +1,73 @@
+{
+  "slug": "white-smoke-from-exhaust",
+  "title": "White Smoke From Exhaust",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for white smoke from the exhaust.",
+  "intro": "White smoke from the exhaust can be simple condensation, but persistent white smoke with a sweet smell, rough running, or coolant loss usually means coolant is entering combustion or the exhaust stream. The first split is whether the smoke is brief and harmless on a cold morning or continues after the engine is fully warm.",
+  "common_sounds": [
+    "White vapor that lingers after warm-up",
+    "Sweet-smelling exhaust in more serious cases",
+    "Rough idle or start-up misfire if one cylinder is affected",
+    "Coolant loss or overheating may appear with the smoke"
+  ],
+  "quick_checks": [
+    "Confirm whether the smoke clears fully after normal warm-up or stays present hot",
+    "Check coolant level and look for ongoing coolant loss before replacing bolt-on parts",
+    "Scan for misfire, coolant-temperature, and catalyst-efficiency codes",
+    "Inspect spark plugs if one cylinder is rough or likely coolant-fouled",
+    "Treat persistent sweet-smelling white smoke with overheating as a serious fault path"
+  ],
+  "common_causes": [
+    "Normal condensation on a cold start",
+    "Coolant entering combustion or the exhaust stream",
+    "Start-up misfire from one coolant-fouled cylinder",
+    "Cooling-system problem contributing to repeated overheating",
+    "In some cases, overfueling or raw-fuel vapor can be mistaken for white smoke"
+  ],
+  "diagnostic_paths": [
+    "If the smoke disappears after warm-up and coolant level stays steady, condensation is more likely than a repair-grade fault.",
+    "If the smoke stays thick, sweet-smelling, and paired with coolant loss or overheating, an internal engine leak becomes more likely than a simple external bolt-on repair.",
+    "If the smoke is paired with a misfire on one cylinder, inspect plugs and cooling clues before assuming the fault is only ignition-related."
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0117", "title": "Coolant temperature circuit low input", "href": "/obd/p0117" },
+    { "code": "P0118", "title": "Coolant temperature circuit high input", "href": "/obd/p0118" },
+    { "code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "Useful when one cylinder plug is fouled and a start-up misfire is part of the symptom path.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Radiator Replacement Cost",
+      "description": "A reasonable next path when white smoke is paired with coolant loss and an external cooling failure is still part of the diagnosis.",
+      "cost_guide_href": "/cost/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    },
+    {
+      "title": "Water Pump Replacement Cost",
+      "description": "Relevant when overheating and poor coolant circulation are contributing to the cooling-side fault pattern.",
+      "cost_guide_href": "/cost/water-pump-replacement",
+      "estimator_href": "/estimator?service=water_pump_replacement"
+    },
+    {
+      "title": "Thermostat Replacement Cost",
+      "description": "Worth pricing when temperature-control problems overlap with the exhaust-smoke complaint, but only after the more serious internal leak path is considered.",
+      "cost_guide_href": "/cost/thermostat-replacement",
+      "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Engine Coolant Temperature Sensor Replacement Cost",
+      "description": "Useful only when the temperature signal itself is misleading the cooling diagnosis rather than causing the smoke directly.",
+      "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement",
+      "estimator_href": "/estimator?service=coolant_temperature_sensor_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

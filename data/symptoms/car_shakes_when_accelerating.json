@@ -1,0 +1,73 @@
+{
+  "slug": "car-shakes-when-accelerating",
+  "title": "Car Shakes When Accelerating",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps when the car shakes under acceleration.",
+  "intro": "A shake on acceleration often points to a load-related misfire, lean fuel delivery problem, or airflow fault when the engine is asked to make power. If the shake comes with hesitation, a flashing check engine light, or a stored misfire code, engine-performance diagnosis should come before guessing at parts.",
+  "common_sounds": [
+    "Shudder or shake that gets worse with throttle",
+    "Stumble or bucking under moderate to heavy load",
+    "Flashing check engine light during acceleration",
+    "Loss of smooth power as RPM climbs"
+  ],
+  "quick_checks": [
+    "Scan for P0300 through P0304, lean-condition codes, and airflow-performance codes",
+    "Note whether the shake happens only under load or also at idle",
+    "Inspect spark plugs and coils before moving deeper into fuel or catalyst faults",
+    "Check fuel trims and fuel delivery if the shake gets worse climbing hills or under heavier throttle",
+    "Inspect intake ducting and MAF-related connections if hesitation is paired with airflow codes"
+  ],
+  "common_causes": [
+    "Ignition misfire under load",
+    "Weak fuel delivery or injector fault",
+    "Contaminated or inaccurate MAF signal",
+    "Lean condition from intake or vacuum leak",
+    "Catalyst restriction or exhaust backpressure problem in some cases"
+  ],
+  "diagnostic_paths": [
+    "If the shake comes with a flashing MIL or clear cylinder-drop feel, start with misfire diagnosis before chasing sensors.",
+    "If the engine goes lean under load, fuel pump output and shared fuel-delivery issues move higher on the list.",
+    "If power falls off without a strong misfire but airflow data looks implausible, verify the MAF path before replacing ignition parts."
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A strong first repair path when the shake is tied to worn plugs or load-related spark breakdown.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Relevant when the shake follows a weak coil or gets noticeably worse as cylinder demand rises.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Fuel Pump Replacement Cost",
+      "description": "A useful next path when acceleration load exposes weak pressure or volume delivery.",
+      "cost_guide_href": "/cost/fuel-pump-replacement",
+      "estimator_href": "/estimator?service=fuel_pump_replacement_in_tank"
+    },
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Worth pricing when hesitation and shake line up with biased airflow data or contamination.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "Catalytic Converter Replacement Cost",
+      "description": "Only use this path after misfire and fueling causes are checked if power loss suggests restriction.",
+      "cost_guide_href": "/cost/catalytic-converter-replacement",
+      "estimator_href": "/estimator?service=catalytic_converter_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

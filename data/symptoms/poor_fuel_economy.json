@@ -1,0 +1,73 @@
+{
+  "slug": "poor-fuel-economy",
+  "title": "Poor Fuel Economy",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for poor fuel economy complaints.",
+  "intro": "Poor fuel economy usually means the engine is using more fuel than normal because of misfire, bad airflow data, incorrect temperature input, rich-running control problems, or exhaust inefficiency. The useful split is whether the mileage drop is paired with rough running, lean or rich codes, or a slow warm-up complaint.",
+  "common_sounds": [
+    "Fuel gauge dropping faster than normal",
+    "Heavy exhaust smell or richer-than-normal exhaust note",
+    "Engine may still drive acceptably but use noticeably more fuel",
+    "Mileage drop may come with rough idle, hesitation, or long warm-up"
+  ],
+  "quick_checks": [
+    "Scan for lean, misfire, oxygen sensor, catalyst, and coolant-temperature codes",
+    "Review fuel trims and O2 sensor behavior before replacing parts",
+    "Check whether the engine is reaching normal operating temperature",
+    "Inspect spark plugs and ignition parts if poor mileage is paired with rough running",
+    "Inspect the MAF path if airflow readings and fuel trims do not make sense together"
+  ],
+  "common_causes": [
+    "Worn spark plugs or weak ignition causing incomplete combustion",
+    "Contaminated or inaccurate MAF signal",
+    "Oxygen sensor or fuel-control fault affecting mixture",
+    "Thermostat stuck open causing long warm-up and rich operation",
+    "Catalyst or exhaust efficiency issues in some cases"
+  ],
+  "diagnostic_paths": [
+    "If the mileage drop comes with rough idle or hesitation, start with ignition and misfire checks before chasing sensors.",
+    "If the engine warms up slowly and cabin heat is weak, temperature control and thermostat faults move higher on the list.",
+    "If O2 data, trims, and exhaust smell point rich, verify sensor behavior and upstream causes before replacing the converter."
+  ],
+  "related_obd_codes": [
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
+    { "code": "P0138", "title": "Bank 1 sensor 2 O2 signal high", "href": "/obd/p0138" },
+    { "code": "P0158", "title": "Bank 2 sensor 2 O2 signal high", "href": "/obd/p0158" },
+    { "code": "P0128", "title": "Coolant thermostat below regulating temperature", "href": "/obd/p0128" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A strong next path when poor mileage is tied to worn plugs, misfire, or incomplete combustion.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Relevant when airflow calculation is skewing fuel control and hurting mileage.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "Oxygen Sensor Replacement Cost",
+      "description": "Useful when scan data points to biased O2 readings or heater faults affecting mixture control.",
+      "cost_guide_href": "/cost/oxygen-sensor-replacement",
+      "estimator_href": "/estimator?service=oxygen_sensor_replacement_upstream"
+    },
+    {
+      "title": "Thermostat Replacement Cost",
+      "description": "Worth pricing when slow warm-up and weak heat line up with the mileage drop.",
+      "cost_guide_href": "/cost/thermostat-replacement",
+      "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Catalytic Converter Replacement Cost",
+      "description": "Only use this path after upstream fueling and sensor problems are checked if exhaust efficiency is part of the complaint.",
+      "cost_guide_href": "/cost/catalytic-converter-replacement",
+      "estimator_href": "/estimator?service=catalytic_converter_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}
