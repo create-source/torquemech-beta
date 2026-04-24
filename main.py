@@ -718,7 +718,35 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": catalyst_diagnostic_steps,
         },
     }
-    overrides = lean_overrides.get(norm, {}) or catalyst_overrides.get(norm, {})
+    evap_causes_by_vehicle = [
+        "Toyota Camry: loose gas caps, purge valve leakage, cracked EVAP hoses, and canister-side leaks are common EVAP leak starting points.",
+        "Ford F-150: vent valve failures, rusted EVAP lines, cracked hoses, and canister-area leaks are frequent P0455/P0456 causes.",
+        "Chevy Silverado: charcoal canister vent valve issues, tank vent problems, and rear EVAP hose leaks commonly trigger EVAP leak codes.",
+        "Honda Accord: purge solenoid leaks, fuel cap sealing issues, and small EVAP hose cracks often trigger EVAP leak faults.",
+    ]
+    evap_diagnostic_steps = [
+        "Inspect the fuel cap seal and filler neck first, but avoid stopping there if the code returns after cap replacement.",
+        "If the code returns after replacing the gas cap, inspect purge valve sealing, vent valve sealing, and EVAP hose connections next.",
+        "If fuel smell is strongest near the rear of the vehicle, inspect the charcoal canister, filler neck, tank seals, and rear EVAP lines.",
+        "If the vehicle is difficult to refuel or the pump clicks off repeatedly, inspect the vent valve and vent path for restriction.",
+        "If repeated EVAP leak codes appear without drivability symptoms, focus on leak testing outside normal engine operation instead of engine-performance parts.",
+        "If a smoke test shows a small leak near the tank area, inspect hoses, canister fittings, fuel-pump seal, and vent seals before replacing larger components.",
+    ]
+    evap_overrides = {
+        "P0455": {
+            "causes": evap_causes_by_vehicle,
+            "diagnostic_steps": evap_diagnostic_steps,
+        },
+        "P0456": {
+            "causes": evap_causes_by_vehicle,
+            "diagnostic_steps": evap_diagnostic_steps,
+        },
+    }
+    overrides = (
+        lean_overrides.get(norm, {})
+        or catalyst_overrides.get(norm, {})
+        or evap_overrides.get(norm, {})
+    )
     return {
         "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
         "symptoms": normalize_obd_text_list(seed_entry.get("symptoms")),
@@ -3303,11 +3331,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0455": {
             "meaning": "P0455 means the EVAP system detected a large leak during its self-test. A loose or missing gas cap is an easy first check, but disconnected EVAP hoses, cracked lines, purge or vent valves stuck open or not sealing, canister leaks, or tank-side plumbing leaks can set the same code.",
-            "diagnostic_insight_intro": "P0455 should be treated as a large EVAP leak until testing shows whether the system is open at the cap, hose, valve, canister, or tank-side plumbing.",
+            "diagnostic_insight_intro": "P0455 should be diagnosed as a large EVAP sealing failure, with testing focused on what prevents the system from closing and holding pressure or vacuum.",
             "diagnostic_insight_points": [
-                "A loose or damaged gas cap is common, but a disconnected hose or stuck-open valve can create the same large-leak result.",
-                "Smoke testing is often the fastest way to locate the open point when visual checks do not find it.",
-                "If P0442 or P0446 are also present, use those codes to narrow leak size, vent behavior, or valve-control direction.",
+                "A loose or damaged gas cap is common, but a disconnected hose, stuck-open purge valve, stuck-open vent valve, or canister-side opening can create the same large-leak result.",
+                "If the code returns after a cap replacement, command or bench-test the purge and vent valves before replacing the canister or tank-side parts.",
+                "Fuel smell near the rear of the vehicle moves attention toward the filler neck, tank seal, charcoal canister, and rear EVAP lines.",
+                "Large leaks usually need smoke testing or sealed-system testing because normal engine drivability can feel completely unchanged.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3315,11 +3344,11 @@ def build_obd_content_refinement(code: str):
                 "Fuel vapor smell in some cases",
             ],
             "quick_checks": [
-                "Inspect gas cap presence, seal condition, and cap fitment",
-                "Inspect EVAP hoses and lines for a disconnected or split line",
-                "Verify purge and vent valves are sealing correctly",
-                "Inspect canister and tank-side plumbing for leaks or loose connections",
-                "Smoke test the system if the fault is not obvious",
+                "Inspect gas cap presence, seal condition, cap fitment, and filler-neck sealing surface",
+                "Inspect EVAP hoses and lines for disconnected, split, rusted, or collapsed sections",
+                "Verify purge and vent valves seal correctly when commanded closed",
+                "Inspect canister, tank-side plumbing, fuel-pump seal, and filler neck for leaks or loose connections",
+                "Smoke test the system if visual checks do not reveal the open point",
             ],
         },
         "P0442": {
@@ -3345,11 +3374,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0456": {
             "meaning": "P0456 means the EVAP system detected a very small leak during its self-test. A gas cap seal is still a valid first check, but this is not automatically just a gas cap issue; tiny hose or fitting seepage, purge or vent valves not sealing fully, canister seepage, line seepage, or tank-side plumbing leaks can set the same code.",
-            "diagnostic_insight_intro": "P0456 should be treated as a very small EVAP leak until testing shows whether the seep is at the cap, fitting, valve, canister, line, or tank-side plumbing.",
+            "diagnostic_insight_intro": "P0456 should be diagnosed as a very small EVAP sealing loss, where careful smoke testing and valve sealing checks usually matter more than parts guessing.",
             "diagnostic_insight_points": [
-                "Very small leaks can be hard to see and often need smoke testing or careful pressure testing to confirm.",
-                "A weak gas cap seal is a reasonable first check, but valve sealing and fitting seepage should stay on the list.",
-                "If P0442, P0455, or P0446 are also present, use those codes to compare leak size and vent-control direction.",
+                "Very small leaks often come from cap seals, cracked hose ends, canister fittings, filler-neck corrosion, or valve seepage that may not be visible during a quick inspection.",
+                "If the code returns after a cap replacement, inspect purge solenoid seepage, vent valve sealing, and tank-area hoses before moving to larger components.",
+                "Smoke near the tank area should lead to hose, canister, fuel-pump seal, filler-neck, and vent-seal inspection before condemning the tank or canister assembly.",
+                "Repeated small-leak codes with no drivability symptoms are normal for EVAP faults; the leak is often outside the engine's normal air and fuel operation.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3357,11 +3387,11 @@ def build_obd_content_refinement(code: str):
                 "Occasional fuel vapor smell in some cases",
             ],
             "quick_checks": [
-                "Inspect gas cap seal condition and cap fitment",
-                "Inspect EVAP hoses, fittings, and line connections for subtle seepage",
-                "Verify purge and vent valves seal correctly",
-                "Inspect the canister and nearby plumbing for small leaks",
-                "Smoke test the system if the leak is not obvious",
+                "Inspect gas cap seal condition, cap fitment, and filler-neck sealing surface",
+                "Inspect EVAP hoses, fittings, and line connections for subtle cracks or seepage",
+                "Verify purge and vent valves seal correctly and do not leak when closed",
+                "Inspect the canister, tank seals, filler neck, and nearby plumbing for small leaks",
+                "Smoke test the system carefully if the leak is not obvious",
             ],
         },
         "P0128": {
