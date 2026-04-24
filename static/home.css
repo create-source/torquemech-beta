@@ -320,10 +320,21 @@ body.dark .tm-homeKnowledgeItem,
 
   .tm-homeSearch__bar{
     flex-direction: column;
+    gap: 0;
+  }
+
+  .tm-homeSearch__bar .tm-search-input{
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .tm-homeSearch__cta{
     width: 100%;
+    min-height: 44px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
   }
 }
 
