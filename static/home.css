@@ -321,9 +321,15 @@ body.dark .tm-homeKnowledgeItem,
   .tm-homeSearch__bar{
     flex-direction: column;
     gap: 0;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
   .tm-homeSearch__bar .tm-search-input{
+    width: 100%;
+    border-radius: 0;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
@@ -331,6 +337,8 @@ body.dark .tm-homeKnowledgeItem,
   .tm-homeSearch__cta{
     width: 100%;
     min-height: 44px;
+    margin: 0;
+    box-shadow: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     border-bottom-left-radius: 12px;
