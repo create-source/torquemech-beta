@@ -694,7 +694,31 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": lean_diagnostic_steps,
         },
     }
-    overrides = lean_overrides.get(norm, {})
+    catalyst_causes_by_vehicle = [
+        "Toyota Camry: aging catalytic converters, upstream air/fuel sensor issues, and unresolved fuel-control faults are common catalyst-code starting points.",
+        "Ford F-150: exhaust leaks near the manifolds, aging converters, and converter efficiency failures are common P0420/P0430 causes.",
+        "Chevy Silverado: misfire damage, rich-running conditions, and converter overheating often trigger catalyst efficiency codes.",
+        "Honda Accord: aging converters, upstream or downstream O2 sensor performance issues, and fuel-control problems are frequent catalyst-code causes.",
+    ]
+    catalyst_diagnostic_steps = [
+        "Compare upstream and downstream O2 or air/fuel sensor activity after the engine is fully warm and in closed loop.",
+        "If the rear O2 sensor waveform closely follows the front sensor, catalyst oxygen storage is weak and converter efficiency becomes more likely.",
+        "If there is recent misfire history, inspect ignition, injector, compression, and fuel faults before replacing the converter.",
+        "If there is sulfur smell, excessive converter heat, or glowing converter symptoms, inspect for rich-running, leaking injectors, or fuel-control faults.",
+        "If the engine burns oil or consumes coolant, inspect for converter contamination risk before condemning the catalyst alone.",
+        "If both catalyst codes appear with fuel-trim, rich, lean, or MAF codes, diagnose the upstream fuel-control issue before calling both converters failed.",
+    ]
+    catalyst_overrides = {
+        "P0420": {
+            "causes": catalyst_causes_by_vehicle,
+            "diagnostic_steps": catalyst_diagnostic_steps,
+        },
+        "P0430": {
+            "causes": catalyst_causes_by_vehicle,
+            "diagnostic_steps": catalyst_diagnostic_steps,
+        },
+    }
+    overrides = lean_overrides.get(norm, {}) or catalyst_overrides.get(norm, {})
     return {
         "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
         "symptoms": normalize_obd_text_list(seed_entry.get("symptoms")),
@@ -3214,11 +3238,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0420": {
             "meaning": "P0420 means catalyst efficiency on bank 1 tested below the expected threshold after the ECM compared upstream and downstream oxygen sensor behavior. It is not automatically a bad catalytic converter; exhaust leaks, biased or slow oxygen sensor data, unresolved misfires, rich/lean operation, or other fueling problems can set the same code or damage catalyst performance.",
-            "diagnostic_insight_intro": "P0420 should be treated as a catalyst-efficiency fault after upstream misfire, fueling, exhaust leak, and sensor-data problems are checked.",
+            "diagnostic_insight_intro": "P0420 should be diagnosed by comparing catalyst monitor data with upstream engine health before the bank 1 converter is condemned.",
             "diagnostic_insight_points": [
-                "An aging or damaged converter is possible, but unresolved misfires or rich/lean conditions should be diagnosed first.",
-                "Exhaust leaks ahead of the converter or biased oxygen sensor data can make catalyst testing look worse than it is.",
-                "Replacing the converter before correcting upstream causes can lead to repeat failure.",
+                "If the downstream O2 sensor on bank 1 mirrors the upstream sensor after warm-up, weak catalyst oxygen storage becomes more likely.",
+                "Recent misfire, rich-running, lean-running, or fuel-trim history should be corrected first because those faults can damage the converter or create a false efficiency failure.",
+                "Exhaust leaks ahead of or near the bank 1 converter can pull oxygen into the stream and make catalyst data look worse than the converter really is.",
+                "Oil burning, coolant consumption, or fuel contamination can poison the catalyst, so converter replacement without fixing the source can lead to repeat failure.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3226,20 +3251,21 @@ def build_obd_content_refinement(code: str):
                 "Possible sulfur smell or loss of power if the converter is restricted",
             ],
             "quick_checks": [
-                "Check for active misfire, fuel-trim, rich, or lean codes before blaming the converter",
-                "Inspect for exhaust leaks ahead of the bank 1 converter",
-                "Compare upstream and downstream O2 sensor behavior on scan data",
-                "Verify the engine reaches normal operating temperature",
-                "Avoid condemning the converter before ruling out upstream causes",
+                "Check for current or history misfire, fuel-trim, rich, lean, MAF, or oxygen-sensor codes before blaming the converter",
+                "Inspect for exhaust leaks at the manifold, flex pipe, flange, and pipe joints ahead of the bank 1 converter",
+                "Compare upstream and downstream bank 1 O2 or air/fuel sensor behavior on scan data after full warm-up",
+                "Check for rich-running signs such as sulfur smell, excessive converter heat, fuel smell, or poor fuel economy",
+                "Inspect oil or coolant consumption concerns before replacing a contaminated converter",
             ],
         },
         "P0430": {
             "meaning": "P0430 means catalyst efficiency on bank 2 tested below the expected threshold after the ECM compared upstream and downstream oxygen sensor behavior. It is not automatically a bad catalytic converter; exhaust leaks, biased or slow oxygen sensor data, unresolved misfires, rich/lean operation, or other fueling problems can set the same code or damage catalyst performance.",
-            "diagnostic_insight_intro": "P0430 should be treated as a bank 2 catalyst-efficiency fault after upstream misfire, fueling, exhaust leak, and sensor-data problems are checked.",
+            "diagnostic_insight_intro": "P0430 should be diagnosed by comparing catalyst monitor data with upstream engine health before the bank 2 converter is condemned.",
             "diagnostic_insight_points": [
-                "An aging or damaged converter is possible, but unresolved misfires or rich/lean conditions should be diagnosed first.",
-                "Exhaust leaks ahead of the bank 2 converter or biased oxygen sensor data can make catalyst testing look worse than it is.",
-                "Replacing the converter before correcting upstream causes can lead to repeat failure.",
+                "If the downstream O2 sensor on bank 2 mirrors the upstream sensor after warm-up, weak catalyst oxygen storage becomes more likely.",
+                "Recent misfire, rich-running, lean-running, or fuel-trim history should be corrected first because those faults can damage the converter or create a false efficiency failure.",
+                "Exhaust leaks ahead of or near the bank 2 converter can pull oxygen into the stream and make catalyst data look worse than the converter really is.",
+                "Oil burning, coolant consumption, or fuel contamination can poison the catalyst, so converter replacement without fixing the source can lead to repeat failure.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3247,11 +3273,11 @@ def build_obd_content_refinement(code: str):
                 "Possible sulfur smell or power loss if the converter is restricted",
             ],
             "quick_checks": [
-                "Check for active misfire, fuel-trim, rich, or lean codes before blaming the converter",
-                "Inspect for exhaust leaks ahead of the bank 2 converter",
-                "Compare upstream and downstream bank 2 O2 sensor behavior on scan data",
-                "Verify the engine reaches normal operating temperature",
-                "Avoid condemning the converter before ruling out upstream causes",
+                "Check for current or history misfire, fuel-trim, rich, lean, MAF, or oxygen-sensor codes before blaming the converter",
+                "Inspect for exhaust leaks at the manifold, flex pipe, flange, and pipe joints ahead of the bank 2 converter",
+                "Compare upstream and downstream bank 2 O2 or air/fuel sensor behavior on scan data after full warm-up",
+                "Check for rich-running signs such as sulfur smell, excessive converter heat, fuel smell, or poor fuel economy",
+                "Inspect oil or coolant consumption concerns before replacing a contaminated converter",
             ],
         },
         "P0440": {
