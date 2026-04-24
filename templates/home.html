@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% block title %}TorqueMech | Automotive Diagnostics, OBD Repair Guides & Estimates{% endblock %}
 {% block page_css %}
 <link rel="stylesheet" href="/static/quick_find.css?v=1">
 <link rel="stylesheet" href="/static/home.css?v=3">
@@ -111,24 +112,24 @@
       <span class="tm-panelDot green"></span>
       <span class="tm-panelLabel">TorqueMech Diagnostic System</span>
     </div>
-    <div class="tm-homeHero__eyebrow">TorqueMech Beta</div>
+    <div class="tm-homeHero__eyebrow">TorqueMech Diagnostic Platform</div>
 
     <h1 class="tm-homeHero__title">
-      Repair estimates.<br>
-      Diagnostic workflow.
+      Automotive diagnostics.<br>
+      Repair intelligence.
     </h1>
 
     <p class="tm-homeHero__lead">
-      Built for real repair work. Estimate faster. Diagnose smarter.
+      TorqueMech helps you move from symptoms and OBD codes to likely repair paths, cost guides, and estimate-ready service decisions without guessing.
     </p>
 
     <div class="tm-homeHero__actions">
-      <a href="/estimator" class="tm-btn tm-btn-primary">Start Estimate</a>
-      <a href="/repair-guides" class="tm-btn tm-btn-secondary">Repair Guides</a>
+      <a href="/estimator" class="tm-btn tm-btn-primary">Build Repair Estimate</a>
+      <a href="/obd/p0300" class="tm-btn tm-btn-secondary">Browse OBD Workflow</a>
     </div>
 
     <p class="tm-homeHero__note">
-      Pricing may vary by vehicle condition and region.
+      Symptom -> OBD code -> diagnostic guide -> repair path -> estimate.
     </p>
   </div>
 </section>
@@ -137,24 +138,40 @@
 
 <section class="tm-homeSection">
   <div class="tm-homeSection__head">
-    <h2>Core Tools</h2>
-    <p>Professional diagnostic and repair estimate tools built for real workflow.</p>
+    <h2>How TorqueMech Works</h2>
+    <p>A mechanic-first workflow that connects what the vehicle is doing to the repair decision and the estimate.</p>
   </div>
 
   <div class="tm-homeTools">
-    <a href="/estimator" class="tm-homeToolCard">
+    <a href="/symptoms" class="tm-homeToolCard">
       <div class="tm-homeToolCard__icon">📄</div>
       <div>
-        <h3>Estimator</h3>
-        <p>Select the vehicle, choose the service, and generate a structured estimate.</p>
+        <h3>Start With the Symptom</h3>
+        <p>Use rough idle, hesitation, flashing check-engine light, and other complaint pages to narrow the first diagnostic path.</p>
+      </div>
+    </a>
+
+    <a href="/obd/p0300" class="tm-homeToolCard">
+      <div class="tm-homeToolCard__icon">🔧</div>
+      <div>
+        <h3>Confirm the OBD Fault</h3>
+        <p>Open code pages for plain-English meaning, likely causes, quick checks, and the repair paths that fit the fault.</p>
       </div>
     </a>
 
     <a href="/repair-guides" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">🔧</div>
+      <div class="tm-homeToolCard__icon">🗺️</div>
       <div>
-        <h3>Repair Guides</h3>
-        <p>Step-by-step service guidance, labor ranges, and estimate-ready procedures.</p>
+        <h3>Follow the Diagnostic Logic</h3>
+        <p>Use repair guides to understand how professionals test common misfire, lean, idle, and cooling complaints before replacing parts.</p>
+      </div>
+    </a>
+
+    <a href="/estimator" class="tm-homeToolCard">
+      <div class="tm-homeToolCard__icon">🧾</div>
+      <div>
+        <h3>Build the Estimate</h3>
+        <p>Turn a confirmed repair path into a structured estimate with service-level labor, pricing context, and customer-ready output.</p>
       </div>
     </a>
   </div>
@@ -309,13 +326,13 @@
 
 <section class="tm-homeSection">
   <div class="tm-homeFeatureCard">
-    <div class="tm-homeFeatureCard__eyebrow">TorqueMech Knowledge</div>
+    <div class="tm-homeFeatureCard__eyebrow">Why TorqueMech Exists</div>
 
     <div class="tm-homeFeatureCard__header">
       <div>
-        <h2>Diagnostic Workflow</h2>
+        <h2>Built for real diagnostic workflow, not just price lookups.</h2>
         <p>
-          Start with common symptoms, move into repair guidance, and build toward a stronger repair knowledge system.
+          Most repair questions do not start with a confirmed part. They start with a symptom, a trouble code, or a quote that needs better diagnostic context.
         </p>
       </div>
     </div>
@@ -323,22 +340,60 @@
     <div class="tm-homeKnowledgeList">
       <a class="tm-homeKnowledgeItem" href="/symptoms">
         <div>
-          <strong>Diagnostic Guides</strong>
-          <span>Quick references for common vehicle problems and symptom paths.</span>
+          <strong>Diagnosis before parts</strong>
+          <span>TorqueMech is built to explain the fault path first so the estimate follows the diagnosis instead of guesswork.</span>
+        </div>
+      </a>
+
+      <a class="tm-homeKnowledgeItem" href="/obd/p0171">
+        <div>
+          <strong>OBD plus repair intelligence</strong>
+          <span>Code pages, symptom guides, and repair-cost pages are connected so lean codes, misfires, cooling faults, and EVAP issues stay in one workflow.</span>
+        </div>
+      </a>
+
+      <a class="tm-homeKnowledgeItem" href="/estimator">
+        <div>
+          <strong>Estimate-ready output</strong>
+          <span>Once the likely repair path is clear, the estimator gives owners, mobile mechanics, and small shops a faster pricing handoff.</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="tm-homeSection">
+  <div class="tm-homeFeatureCard">
+    <div class="tm-homeFeatureCard__eyebrow">TorqueMech Users</div>
+
+    <div class="tm-homeFeatureCard__header">
+      <div>
+        <h2>Built for DIY owners, mobile mechanics, and small shops.</h2>
+        <p>
+          The platform is meant for people who need clearer diagnostic direction, stronger repair context, and faster estimate handoff without extra noise.
+        </p>
+      </div>
+    </div>
+
+    <div class="tm-homeKnowledgeList">
+      <a class="tm-homeKnowledgeItem" href="/knowledge">
+        <div>
+          <strong>DIY owners</strong>
+          <span>Use symptom pages, OBD guidance, and repair-cost context to understand what likely needs testing before approving work.</span>
         </div>
       </a>
 
       <a class="tm-homeKnowledgeItem" href="/repair-guides">
         <div>
-          <strong>Repair Guides</strong>
-          <span>Browse procedures, labor ranges, and estimate-ready service pages.</span>
+          <strong>Mobile mechanics</strong>
+          <span>Jump from complaint to code to likely repair path faster when you need clean field-ready diagnostic direction.</span>
         </div>
       </a>
 
-      <a class="tm-homeKnowledgeItem" href="/knowledge">
+      <a class="tm-homeKnowledgeItem" href="/estimator">
         <div>
-          <strong>Knowledge Hub</strong>
-          <span>Browse TorqueMech's growing library of symptoms, repair guides, and diagnostics.</span>
+          <strong>Small shops</strong>
+          <span>Use the estimator and cost-guide flow to build cleaner quotes once the fault path has been narrowed and confirmed.</span>
         </div>
       </a>
     </div>
@@ -348,7 +403,7 @@
 <section class="tm-homeSection">
   <div class="tm-homeSection__head">
     <h2>Common Diagnostic Guides</h2>
-    <p>Quick references for issues you want to identify fast.</p>
+    <p>Open symptom-first diagnostic pages when you know what the vehicle is doing before you know which code or repair is involved.</p>
   </div>
 
   <div class="tm-homeSearch">
@@ -356,7 +411,7 @@
       id="diagSearch"
       class="tm-search-input"
       type="text"
-      placeholder="Search symptoms: misfire, rough idle, won't start..."
+      placeholder="Search symptoms and workflows: rough idle, cold start misfire, poor fuel economy..."
       autocomplete="off"
     />
     <div id="diagSuggestions" class="tm-search-suggestions"></div>
@@ -364,7 +419,7 @@
 </section>
 
 <section class="tm-homeQuote">
-  <p class="tm-homeQuote__text">&ldquo;Really helpful tool for quick repair estimates.&rdquo;</p>
+  <p class="tm-homeQuote__text">&ldquo;It reads more like a diagnostic platform than a generic repair calculator, which is exactly what I need in the field.&rdquo;</p>
   <p class="tm-homeQuote__author">&mdash; Anthony, Mobile Mechanic</p>
 </section>
 
@@ -374,28 +429,40 @@ const suggestions = document.getElementById("diagSuggestions");
 
 const diagnosticGuides = [
   {
-    title: "Engine Misfire",
-    href: "/symptoms/engine-misfire",
-    summary: "Rough running engine, shaking, or power loss.",
-    search: ["misfire","engine shaking","engine vibration","rough running"]
-  },
-  {
-    title: "Car Won't Start",
-    href: "/symptoms/car-wont-start",
-    summary: "Diagnose battery, starter, or ignition problems.",
-    search: ["won't start","no start","battery dead","starter issue"]
+    title: "Engine Misfire at Idle",
+    href: "/symptoms/engine-misfire-at-idle",
+    summary: "Use a symptom-first path for cylinder misfire, shake, and idle instability.",
+    search: ["misfire","engine shaking","engine vibration","rough running","engine misfire at idle"]
   },
   {
     title: "Rough Idle",
     href: "/symptoms/rough-idle",
-    summary: "Engine shaking or unstable idle speed.",
-    search: ["rough idle","engine shaking idle","unstable rpm"]
+    summary: "Follow rough-idle diagnosis through lean, vacuum-leak, throttle, and misfire paths.",
+    search: ["rough idle","engine shaking idle","unstable rpm","high idle"]
   },
   {
-    title: "Check Engine Light",
-    href: "/symptoms/check-engine-light",
-    summary: "Understand why the warning light appears.",
-    search: ["check engine","engine light","warning light","obd code"]
+    title: "Cold Start Misfire",
+    href: "/symptoms/cold-start-misfire",
+    summary: "Narrow cold-start misfire causes before guessing at coils, plugs, or fueling faults.",
+    search: ["cold start misfire","morning misfire","misfire when cold","cold engine shake"]
+  },
+  {
+    title: "Check Engine Light Flashing",
+    href: "/symptoms/check-engine-light-flashing",
+    summary: "Understand urgent misfire and catalyst-risk situations fast.",
+    search: ["check engine","engine light","warning light","flashing check engine light","obd code"]
+  },
+  {
+    title: "Poor Fuel Economy",
+    href: "/symptoms/poor-fuel-economy",
+    summary: "Trace fuel-mileage complaints through airflow, oxygen sensor, thermostat, and fueling faults.",
+    search: ["poor fuel economy","bad gas mileage","burning more fuel","rich running"]
+  },
+  {
+    title: "Loss of Power While Driving",
+    href: "/symptoms/loss-of-power-while-driving",
+    summary: "Follow drivability power-loss complaints into misfire, lean, fuel-delivery, and catalyst paths.",
+    search: ["loss of power","reduced power","car slow to accelerate","weak acceleration"]
   }
 ];
 
