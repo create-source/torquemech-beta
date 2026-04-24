@@ -1917,3 +1917,6 @@ h3{
     width: 100%;
   }
 }
+.tm-section .tm-card + .tm-card {
+    margin-top: 1rem;
+}
