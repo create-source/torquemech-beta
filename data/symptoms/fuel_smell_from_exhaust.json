@@ -1,0 +1,73 @@
+{
+  "slug": "fuel-smell-from-exhaust",
+  "title": "Fuel Smell From Exhaust",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for fuel smell from the exhaust.",
+  "intro": "A fuel smell from the exhaust usually means the engine is running rich, misfiring, or sending unburned fuel into the exhaust stream. The useful split is whether the smell is coming from an active misfire, a leaking injector, or control data that is commanding too much fuel.",
+  "common_sounds": [
+    "Raw fuel smell at idle or after a hot soak",
+    "Rough idle or stumble with the odor",
+    "Dark exhaust or heavy exhaust smell on acceleration",
+    "Fuel economy dropping without another obvious cause"
+  ],
+  "quick_checks": [
+    "Scan for misfire, O2-sensor, and catalyst-efficiency codes before replacing parts",
+    "Inspect spark plugs for fuel fouling or one wet cylinder",
+    "Review fuel trims and O2 sensor behavior on scan data",
+    "Listen for injector issues and consider whether one cylinder is leaking down",
+    "Do not ignore sulfur smell or power loss if catalyst damage may already be developing"
+  ],
+  "common_causes": [
+    "Active misfire leaving raw fuel in the exhaust",
+    "Leaking or sticking fuel injector",
+    "Biased oxygen sensor or rich-running control fault",
+    "Incorrect airflow or temperature input causing overfueling",
+    "Catalytic converter no longer cleaning up the exhaust stream efficiently"
+  ],
+  "diagnostic_paths": [
+    "If the fuel smell comes with a clear misfire, start with P030x ignition and injector checks before chasing sensors.",
+    "If fuel trims are rich without a strong misfire, compare upstream and downstream O2 data and verify airflow inputs.",
+    "If one cylinder plug is wet or heavily fuel-fouled, injector leak-down becomes more important."
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0138", "title": "Bank 1 sensor 2 O2 signal high", "href": "/obd/p0138" },
+    { "code": "P0158", "title": "Bank 2 sensor 2 O2 signal high", "href": "/obd/p0158" },
+    { "code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420" },
+    { "code": "P0430", "title": "Catalyst efficiency below threshold bank 2", "href": "/obd/p0430" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Oxygen Sensor Replacement Cost",
+      "description": "Relevant when scan data shows biased sensor behavior or heater issues behind a rich-reading path.",
+      "cost_guide_href": "/cost/oxygen-sensor-replacement",
+      "estimator_href": "/estimator?service=oxygen_sensor_replacement_upstream"
+    },
+    {
+      "title": "Fuel Injector Replacement Cost",
+      "description": "A strong next path when one cylinder is wet, rich, or leaking down after the engine sits.",
+      "cost_guide_href": "/cost/fuel-injector-replacement",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
+    },
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "Useful when incomplete combustion and plug fouling are contributing to the raw-fuel smell.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Relevant when weak spark is leaving unburned fuel in the exhaust stream.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Catalytic Converter Replacement Cost",
+      "description": "Only use this path after upstream misfire or rich-running causes are ruled out or repaired.",
+      "cost_guide_href": "/cost/catalytic-converter-replacement",
+      "estimator_href": "/estimator?service=catalytic_converter_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

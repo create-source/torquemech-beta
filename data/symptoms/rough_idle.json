@@ -1,0 +1,73 @@
+{
+  "slug": "rough-idle",
+  "title": "Rough Idle",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for rough idle complaints.",
+  "intro": "Rough idle usually means combustion quality or airflow control is unstable at low RPM. The quickest separation is whether the engine is misfiring, running lean, or idling poorly because extra air is getting in or the throttle is not settling correctly.",
+  "common_sounds": [
+    "Shaking or vibration while stopped",
+    "Idle speed dips, hunts, or feels uneven",
+    "Light stumble when shifting into gear",
+    "Uneven exhaust note at idle"
+  ],
+  "quick_checks": [
+    "Scan for pending misfire, lean-condition, or high-idle codes before replacing parts",
+    "Watch fuel trims and idle speed data at hot idle",
+    "Inspect intake ducting, PCV plumbing, and vacuum hoses after the MAF",
+    "Inspect spark plugs and ignition coils if the engine has a clear cylinder-drop feel",
+    "Inspect the throttle body for carbon buildup or sticking"
+  ],
+  "common_causes": [
+    "Vacuum leak after the mass air flow sensor",
+    "Dirty or sticking throttle body",
+    "Worn spark plugs or weak ignition coils",
+    "Contaminated or inaccurate MAF signal",
+    "PCV leak or intake gasket leak"
+  ],
+  "diagnostic_paths": [
+    "If idle speed hangs high or fuel trims climb lean at idle, inspect for vacuum leaks and throttle-body issues first.",
+    "If the engine feels like one cylinder is dropping out, start with misfire codes and ignition or injector checks.",
+    "If airflow and fuel-trim data look implausible together, verify the MAF signal before replacing parts."
+  ],
+  "related_obd_codes": [
+    { "code": "P0507", "title": "Idle speed higher than expected", "href": "/obd/p0507" },
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
+    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Throttle Body Replacement Cost",
+      "description": "A strong next path when idle control stays unstable after inspection, cleaning, and relearn checks.",
+      "cost_guide_href": "/cost/throttle-body-replacement",
+      "estimator_href": "/estimator?service=throttle_body_replacement"
+    },
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Relevant when scan data and intake inspection point to biased airflow readings.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "PCV Valve Replacement Cost",
+      "description": "Useful when crankcase ventilation is pulling in unmetered air and upsetting idle quality.",
+      "cost_guide_href": "/cost/pcv-valve-replacement",
+      "estimator_href": "/estimator?service=pcv_valve_replacement"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "A practical next path when smoke testing or bank-side leak checks point to an intake sealing problem.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    },
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "Worth pricing when rough idle is tied to worn plugs, weak spark, or overdue tune-up history.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

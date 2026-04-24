@@ -1,0 +1,73 @@
+{
+  "slug": "hard-start-after-sitting-overnight",
+  "title": "Hard Start After Sitting Overnight",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for hard start after sitting overnight.",
+  "intro": "A hard start after sitting overnight usually points to fuel pressure loss, weak ignition on a cold engine, incorrect cold-enrichment data, or a fuel injector that is leaking down while the engine rests. The first split is whether the engine cranks long and then starts cleanly, or starts rough and misfires right away.",
+  "common_sounds": [
+    "Long crank before the engine fires on the first cold start",
+    "Start-up stumble or rough idle for the first few seconds",
+    "Fuel smell right after the engine finally starts",
+    "Cold-start complaint that is much milder after the engine has been driven"
+  ],
+  "quick_checks": [
+    "Compare coolant temperature data to ambient before the first start of the day",
+    "Check for pending misfire, lean-condition, or temperature-sensor codes",
+    "Inspect spark plugs for fouling after the overnight no-start or hard-start event",
+    "Consider fuel pressure bleed-down or injector leak-down if the engine cranks long before firing",
+    "Watch fuel trims after start-up for signs of a vacuum leak or weak fuel delivery"
+  ],
+  "common_causes": [
+    "Fuel pump or check-valve bleed-down",
+    "Leaking fuel injector after shutdown",
+    "Worn spark plugs or weak ignition coils on a cold engine",
+    "Incorrect coolant temperature sensor data during cold enrichment",
+    "Vacuum leak or intake leak creating a lean cold start"
+  ],
+  "diagnostic_paths": [
+    "If the engine cranks long and then runs normally, fuel pressure bleed-down or injector leak-down moves higher on the list.",
+    "If the engine starts rough only when cold, check ignition strength, intake leaks, and temperature input before replacing parts.",
+    "If trims go lean right after start-up, inspect intake leaks and weak fuel delivery rather than blaming ignition first."
+  ],
+  "related_obd_codes": [
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
+    { "code": "P0118", "title": "Coolant temperature circuit high input", "href": "/obd/p0118" },
+    { "code": "P0117", "title": "Coolant temperature circuit low input", "href": "/obd/p0117" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Fuel Pump Replacement Cost",
+      "description": "A useful next path when overnight pressure bleed-down or weak morning fuel delivery is the core issue.",
+      "cost_guide_href": "/cost/fuel-pump-replacement",
+      "estimator_href": "/estimator?service=fuel_pump_replacement_in_tank"
+    },
+    {
+      "title": "Fuel Injector Replacement Cost",
+      "description": "Relevant when one injector leaks down overnight or causes one-cylinder rich start-up problems.",
+      "cost_guide_href": "/cost/fuel-injector-replacement",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
+    },
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A practical next path when cold-start spark demand exposes worn, fouled, or weak plugs.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Useful when a cold-start misfire follows a weak coil before the engine warms up.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Engine Coolant Temperature Sensor Replacement Cost",
+      "description": "Worth pricing when false cold or false hot input is causing bad cold-start fueling strategy.",
+      "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement",
+      "estimator_href": "/estimator?service=coolant_temperature_sensor_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

@@ -1,0 +1,73 @@
+{
+  "slug": "cold-start-misfire",
+  "title": "Cold Start Misfire",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for cold start misfire complaints.",
+  "intro": "A cold start misfire that improves as the engine warms up usually points to ignition weakness, fuel imbalance, minor sealing leakage, or bad temperature input during cold enrichment. The useful clue is whether the miss clears as temperature rises or stays fixed on one cylinder.",
+  "common_sounds": [
+    "Rough shake or stumble for the first few seconds after start-up",
+    "Uneven exhaust note on a cold engine",
+    "Brief fuel smell or raw exhaust smell after start",
+    "Misfire that improves noticeably once the engine warms up"
+  ],
+  "quick_checks": [
+    "Note whether the misfire clears as coolant temperature rises",
+    "Inspect spark plugs and coils before the engine fully warms up",
+    "Compare cold-start coolant temperature data to ambient temperature",
+    "Watch fuel trims during cold idle for signs of an intake leak",
+    "Check whether one cylinder stays weak after the engine warms up"
+  ],
+  "common_causes": [
+    "Worn spark plugs or weak ignition coils",
+    "Leaking or restricted fuel injector",
+    "Intake gasket or PCV leak that is worse cold",
+    "Minor compression or valve-sealing problem",
+    "Incorrect coolant temperature input during cold enrichment"
+  ],
+  "diagnostic_paths": [
+    "If the misfire follows the plug or coil during swap testing, ignition stays high on the suspect list.",
+    "If fuel trims go lean during cold idle and improve warm, inspect intake gaskets, PCV routing, and vacuum leaks.",
+    "If coolant temperature data is clearly wrong on a cold engine, verify the sensor before chasing other parts."
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0118", "title": "Coolant temperature circuit high input", "href": "/obd/p0118" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A smart next path when cold-start ignition demand exposes worn or fouled plugs.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Useful when coil swap testing shows the weak spark follows the coil.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Fuel Injector Replacement Cost",
+      "description": "Relevant when one cylinder stays fuel-fouled or injector balance behavior points to a fueling fault.",
+      "cost_guide_href": "/cost/fuel-injector-replacement",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "A strong next path when cold-idle trims point to a sealing leak that improves as parts expand.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    },
+    {
+      "title": "Engine Coolant Temperature Sensor Replacement Cost",
+      "description": "Worth pricing when cold-start temperature data is misleading fueling and warm-up strategy.",
+      "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement",
+      "estimator_href": "/estimator?service=coolant_temperature_sensor_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

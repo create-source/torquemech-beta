@@ -1,0 +1,67 @@
+{
+  "slug": "check-engine-light-flashing",
+  "title": "Check Engine Light Flashing",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps when the check engine light is flashing.",
+  "intro": "A flashing check engine light usually means an active misfire severe enough to risk catalytic converter damage. Treat it as a drivability problem first, then separate whether the miss is isolated to one cylinder or tied to a shared ignition, fuel, or airflow problem.",
+  "common_sounds": [
+    "Heavy shaking or bucking under load",
+    "Sharp stumble or cylinder drop at idle",
+    "Raw fuel smell from the exhaust",
+    "Noticeable power loss while the light is flashing"
+  ],
+  "quick_checks": [
+    "Avoid heavy driving until the active misfire is identified",
+    "Scan immediately for P0300 through P0304 and any related fuel-trim codes",
+    "Inspect spark plugs, ignition coils, and coil boots first on the affected cylinder",
+    "Check injector operation if the same cylinder keeps dropping out",
+    "Verify whether the misfire is random or tied to one cylinder before replacing parts"
+  ],
+  "common_causes": [
+    "Active ignition misfire",
+    "Faulty fuel injector on one cylinder",
+    "Shared airflow or vacuum leak issue",
+    "Compression or valve-sealing problem",
+    "Rich or lean operation severe enough to trigger misfire"
+  ],
+  "diagnostic_paths": [
+    "If a cylinder-specific code is present, start with plug and coil swap testing before moving deeper.",
+    "If P0300 is active, shared ignition, fuel-delivery, and airflow checks matter more than single-cylinder guesses.",
+    "If catalyst-efficiency codes appear later, diagnose the upstream misfire cause before condemning the converter."
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
+    { "code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420" },
+    { "code": "P0430", "title": "Catalyst efficiency below threshold bank 2", "href": "/obd/p0430" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A common first repair path when the active misfire is tied to worn or fouled plugs.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Relevant when the misfire follows the coil or ignition output is clearly weak under load.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Fuel Injector Replacement Cost",
+      "description": "A strong next path when one cylinder stays dead after ignition checks and injector testing points to fuel control.",
+      "cost_guide_href": "/cost/fuel-injector-replacement",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
+    },
+    {
+      "title": "Catalytic Converter Replacement Cost",
+      "description": "Only price this after the active misfire or fueling problem is diagnosed so the replacement converter is not damaged again.",
+      "cost_guide_href": "/cost/catalytic-converter-replacement",
+      "estimator_href": "/estimator?service=catalytic_converter_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

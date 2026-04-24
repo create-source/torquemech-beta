@@ -1254,6 +1254,74 @@ def build_estimator_links(raw_estimator_link: Any, related_guides: List[Dict[str
     return dedupe_link_items(estimator_links)
 
 
+def normalize_symptom_obd_codes(raw_items: Any) -> List[Dict[str, str]]:
+    if not isinstance(raw_items, list):
+        return []
+
+    items: List[Dict[str, str]] = []
+    for item in raw_items:
+        if isinstance(item, dict):
+            code = "".join(ch for ch in str(item.get("code") or "").upper() if ch.isalnum())[:7]
+            title = str(item.get("title") or "").strip()
+            href = str(item.get("href") or "").strip()
+        else:
+            code = "".join(ch for ch in str(item or "").upper() if ch.isalnum())[:7]
+            title = ""
+            href = ""
+
+        if not code:
+            continue
+
+        if not href:
+            href = f"/obd/{code.lower()}"
+
+        items.append(
+            {
+                "code": code,
+                "title": title or code,
+                "href": href,
+            }
+        )
+
+    return dedupe_link_items(items)
+
+
+def normalize_symptom_recommended_repairs(raw_items: Any) -> List[Dict[str, str]]:
+    if not isinstance(raw_items, list):
+        return []
+
+    repairs: List[Dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+
+        title = str(item.get("title") or item.get("name") or "").strip()
+        description = str(item.get("description") or "").strip()
+        cost_guide_href = str(item.get("cost_guide_href") or item.get("href") or "").strip()
+        estimator_href = str(item.get("estimator_href") or item.get("estimator_link") or "").strip()
+
+        if not title or not (cost_guide_href or estimator_href):
+            continue
+
+        dedupe_key = (cost_guide_href or estimator_href, title.lower())
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+
+        repairs.append(
+            {
+                "title": title,
+                "description": description,
+                "cost_guide_href": cost_guide_href,
+                "estimator_href": estimator_href,
+            }
+        )
+
+    return repairs
+
+
 def normalize_diagnostic_entry(raw_entry: Any, *, file_slug: str, repair_guides: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     raw = dict(raw_entry) if isinstance(raw_entry, dict) else {}
 
@@ -1309,6 +1377,9 @@ def normalize_symptom_entry(raw_entry: Any, *, file_slug: str, repair_guides: Di
         "common_sounds": normalize_repair_guide_list(raw.get("common_sounds")),
         "quick_checks": normalize_repair_guide_list(raw.get("quick_checks")),
         "possible_causes": possible_causes,
+        "diagnostic_paths": normalize_repair_guide_list(raw.get("diagnostic_paths")),
+        "related_obd_codes": normalize_symptom_obd_codes(raw.get("related_obd_codes")),
+        "recommended_repairs": normalize_symptom_recommended_repairs(raw.get("recommended_repairs")),
         "related_repair_guides": related_repair_guides,
         "estimator_links": estimator_links,
         "diagnostic_tools_link": str(raw.get("diagnostic_tools_link") or "/diagnostics").strip() or "/diagnostics",
@@ -1583,6 +1654,8 @@ def build_quick_find_items() -> List[Dict[str, str]]:
                         str(entry.get("system") or "").strip(),
                         " ".join(entry.get("possible_causes") or []),
                         " ".join(entry.get("common_sounds") or []),
+                        " ".join(item.get("code") or "" for item in entry.get("related_obd_codes") or []),
+                        " ".join(item.get("title") or "" for item in entry.get("recommended_repairs") or []),
                         str(entry.get("slug") or "").replace("-", " "),
                     ],
                 )
@@ -3980,6 +4053,9 @@ async def symptoms_index(request: Request):
                     entry.get("system"),
                     " ".join(entry.get("possible_causes") or []),
                     " ".join(entry.get("common_sounds") or []),
+                    " ".join(entry.get("diagnostic_paths") or []),
+                    " ".join(item.get("code") or "" for item in entry.get("related_obd_codes") or []),
+                    " ".join(item.get("title") or "" for item in entry.get("recommended_repairs") or []),
                 ],
             )
         )
@@ -4568,6 +4644,17 @@ def build_sitemap_obd_detail_paths() -> List[str]:
 
     return paths
 
+
+def build_sitemap_symptom_paths() -> List[str]:
+    symptoms_dir = DATA_DIR / "symptoms"
+    if not symptoms_dir.exists():
+        return []
+
+    return [
+        f"/symptoms/{file.stem.replace('_', '-')}"
+        for file in sorted(symptoms_dir.glob("*.json"))
+    ]
+
 def latest_lastmod_for_files(files: List[Path]) -> Optional[str]:
     timestamps: List[float] = []
 
@@ -4592,12 +4679,15 @@ def build_sitemap_lastmods() -> Dict[str, str]:
         BASE_DIR / "repair_paths.py",
         TEMPLATES_DIR / "obd_code_detail.html",
     ]
+    shared_symptom_sources = [BASE_DIR / "main.py", TEMPLATES_DIR / "symptom_page.html"]
+    symptom_files = sorted((BASE_DIR / "data" / "symptoms").glob("*.json"))
 
     lastmod_sources: Dict[str, List[Path]] = {
         "/": [BASE_DIR / "main.py", TEMPLATES_DIR / "home.html"],
         "/repair-costs": [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_costs.html"],
         "/obd": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_index.html", BASE_DIR / "data" / "obd_codes.json"],
         "/obd-codes": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_codes_index.html", BASE_DIR / "data" / "obd_codes.json"],
+        "/symptoms": [BASE_DIR / "main.py", TEMPLATES_DIR / "symptoms_index.html", *symptom_files],
     }
 
     shared_obd_index_sources = [
@@ -4616,6 +4706,10 @@ def build_sitemap_lastmods() -> Dict[str, str]:
 
     for path in build_sitemap_obd_detail_paths():
         lastmod_sources[path] = list(shared_obd_sources)
+
+    for file in symptom_files:
+        path = f"/symptoms/{file.stem.replace('_', '-')}"
+        lastmod_sources[path] = [*shared_symptom_sources, file]
 
     for path in SITEMAP_OBD_RANGE_PATHS:
         lastmod_sources[path] = list(shared_obd_index_sources)
@@ -4645,6 +4739,9 @@ def sitemap_priority_for_path(path: str) -> float:
     if normalized.startswith("/obd/"):
         return 0.6
 
+    if normalized.startswith("/symptoms/"):
+        return 0.6
+
     return 0.5
 
 @app.get("/sitemap.xml", response_class=Response)
@@ -4655,6 +4752,7 @@ def sitemap():
         *SITEMAP_OBD_RANGE_PATHS,
         *[item["href"] for item in build_repair_cost_guide_cards() if item.get("href")],
         *build_sitemap_obd_detail_paths(),
+        *build_sitemap_symptom_paths(),
     ]
     seen_paths: set[str] = set()
     unique_paths: List[str] = []

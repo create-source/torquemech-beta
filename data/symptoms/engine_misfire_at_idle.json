@@ -1,0 +1,67 @@
+{
+  "slug": "engine-misfire-at-idle",
+  "title": "Engine Misfire at Idle",
+  "category": "Engine Performance",
+  "summary": "Common causes, likely diagnostic paths, OBD references, and repair-next steps for engine misfire at idle.",
+  "intro": "A misfire at idle usually means one cylinder is not burning the mixture cleanly at low RPM. The fastest separation is whether the fault follows ignition parts, stays with one injector or cylinder, or points to a shared air-fuel problem.",
+  "common_sounds": [
+    "Sharp shake or stumble while stopped",
+    "Uneven exhaust pulse at idle",
+    "Light pop through the exhaust or intake",
+    "Flashing check engine light if the misfire gets severe"
+  ],
+  "quick_checks": [
+    "Scan for P0300 through P0304 and note whether the fault is random or cylinder-specific",
+    "Swap the suspect coil or spark plug if the code is tied to one cylinder",
+    "Inspect injector connector fit and listen for injector operation on the affected cylinder",
+    "Check fuel trims and inspect for vacuum leaks if multiple cylinders misfire at idle",
+    "Run compression testing if the same cylinder keeps misfiring"
+  ],
+  "common_causes": [
+    "Worn or fouled spark plug",
+    "Weak ignition coil or coil boot",
+    "Faulty or restricted fuel injector",
+    "Vacuum leak near one intake runner or across the intake",
+    "Low compression or a sealing problem in one cylinder"
+  ],
+  "diagnostic_paths": [
+    "If one cylinder keeps showing up, start with plug and coil swap testing before moving to injector or compression checks.",
+    "If multiple cylinders misfire at idle, shared ignition, airflow, or fuel-delivery problems move higher on the list.",
+    "If the check engine light flashes, repair the active misfire quickly to reduce catalyst damage risk."
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
+    { "code": "P0303", "title": "Cylinder 3 misfire", "href": "/obd/p0303" },
+    { "code": "P0304", "title": "Cylinder 4 misfire", "href": "/obd/p0304" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A strong next path when the misfire follows the plug or plug condition is clearly worn or fouled.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Use this path when the misfire follows the coil or coil output is clearly weak.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Fuel Injector Replacement Cost",
+      "description": "Relevant when the misfire stays with one cylinder after ignition checks and injector testing confirms a fuel fault.",
+      "cost_guide_href": "/cost/fuel-injector-replacement",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "Useful when smoke testing or runner-area leak checks show idle misfire is being caused by unmetered air.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    }
+  ],
+  "estimator_link": "/estimator",
+  "diagnostic_tools_link": "/diagnostics"
+}

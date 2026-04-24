@@ -39,10 +39,36 @@
 {% if symptom.possible_causes %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Possible Causes</h2>
+    <h2>Common Causes</h2>
     <ul class="tm-list">
       {% for cause in symptom.possible_causes %}
       <li>{{ cause }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if symptom.diagnostic_paths %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Likely Diagnostic Paths</h2>
+    <ul class="tm-list">
+      {% for item in symptom.diagnostic_paths %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if symptom.related_obd_codes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related OBD Codes</h2>
+    <ul class="tm-list">
+      {% for item in symptom.related_obd_codes %}
+      <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
       {% endfor %}
     </ul>
   </div>
@@ -62,7 +88,35 @@
           <a href="{{ cause.estimator_link }}">Open Estimator &rarr;</a>
         </div>
         {% endif %}
-        <a href="{{ cause.repair_guide_link }}">Open Repair Guide →</a>
+        <a href="{{ cause.repair_guide_link }}">Open Repair Guide &rarr;</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if symptom.recommended_repairs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Recommended Next Repair Paths</h2>
+    <div class="tm-stack">
+      {% for item in symptom.recommended_repairs %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
+        {% endif %}
+        {% if item.cost_guide_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.cost_guide_href }}">Open Cost Guide &rarr;</a>
+        </div>
+        {% endif %}
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.estimator_href }}">Open Estimator &rarr;</a>
+        </div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
@@ -75,7 +129,7 @@
   <div class="tm-card">
     <h2>Diagnostic Tools</h2>
     <p class="tm-muted">Use TorqueMech diagnostic flow for symptom-based troubleshooting.</p>
-    <a href="{{ symptom.diagnostic_tools_link }}">Open Diagnostic Tools →</a>
+    <a href="{{ symptom.diagnostic_tools_link }}">Open Diagnostic Tools &rarr;</a>
   </div>
   {% endif %}
 
@@ -83,7 +137,7 @@
   <div class="tm-card">
     <h2>Need a Quick Estimate?</h2>
     <p class="tm-muted">Go directly into the estimator if the repair is already known.</p>
-    <a href="{{ symptom.estimator_link }}">Open Estimator →</a>
+    <a href="{{ symptom.estimator_link }}">Open Estimator &rarr;</a>
   </div>
   {% endif %}
 </section>
