@@ -129,22 +129,22 @@
     <article class="tm-card">
       <h2>Common Symptoms</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Check engine light with coolant-temperature sensor codes</li>
-        <li>Hard starting or rich running from incorrect temperature data</li>
-        <li>Cooling fans running at the wrong time</li>
-        <li>Poor fuel economy</li>
-        <li>Temperature reading that does not match engine conditions</li>
+        <li>Check engine light with coolant-temperature circuit or sensor codes</li>
+        <li>Hard starting, rich running, or poor fuel control from incorrect temperature input</li>
+        <li>Cooling fans running too early, too late, or at the wrong time</li>
+        <li>Poor fuel economy caused by false cold or false hot readings</li>
+        <li>Temperature data that does not match actual engine conditions</li>
       </ul>
     </article>
 
     <article class="tm-card">
-      <h2>What Affects Cost</h2>
+      <h2>When Coolant Temperature Sensor Replacement Is Needed</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Sensor access and cooling-system packaging</li>
-        <li>Need to drain, top off, or bleed coolant</li>
-        <li>Connector corrosion or terminal damage</li>
-        <li>Wiring checks before replacement</li>
-        <li>Whether thermostat or coolant-level problems are also present</li>
+        <li>Cold-start scan data does not match ambient temperature or actual engine condition</li>
+        <li>Connector and wiring checks are good but the ECT signal stays biased or implausible</li>
+        <li>Cooling fan behavior and fuel control issues track back to bad temperature input</li>
+        <li>Coolant level, trapped air, and thermostat operation have been checked first</li>
+        <li>Sensor or circuit testing confirms the temperature input is the real fault path</li>
       </ul>
     </article>
   </section>
@@ -193,10 +193,10 @@
     <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to build an engine coolant temperature sensor replacement estimate with your labor rate, selected service, and vehicle context.
+        Use TorqueMech to turn a confirmed coolant temperature sensor fault into an estimate. The handoff is strongest after live data and circuit checks show the sensor path is real.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
-        <a class="tm-btn tm-btn-primary" href="/estimator?service=coolant_temperature_sensor_replacement">Estimate Coolant Temperature Sensor Replacement</a>
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=coolant_temperature_sensor_replacement">Build Coolant Sensor Estimate</a>
       </div>
     </article>
   </section>
@@ -205,7 +205,7 @@
     <article class="tm-card">
       <h2>Common OBD Codes Related to Coolant Temperature Sensor Replacement</h2>
       <p class="tm-muted">
-        Sensor replacement becomes more likely when live data or circuit checks confirm the coolant temperature reading is inaccurate.
+        Sensor replacement becomes more credible when live data or circuit checks confirm the coolant temperature signal is inaccurate instead of the cooling system simply warming up slowly.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
         <li><a href="/obd/p0128">P0128</a> - Coolant thermostat below regulating temperature</li>

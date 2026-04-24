@@ -129,22 +129,22 @@
     <article class="tm-card">
       <h2>Common Symptoms</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Hesitation, surging, or poor throttle response</li>
-        <li>Lean-running fault codes or airflow-related faults</li>
-        <li>Rough idle or intermittent stalling</li>
-        <li>Poor fuel economy</li>
-        <li>Reduced power with no obvious mechanical noise</li>
+        <li>Hesitation, surging, or poor throttle response without obvious mechanical noise</li>
+        <li>Lean-condition or airflow-performance fault codes</li>
+        <li>Rough idle, unstable idle, or intermittent stalling</li>
+        <li>Poor fuel economy from incorrect airflow calculation</li>
+        <li>Reduced power when the ECM cannot trust the airflow signal</li>
       </ul>
     </article>
 
     <article class="tm-card">
-      <h2>What Affects Cost</h2>
+      <h2>When Mass Air Flow Sensor Replacement Is Needed</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Sensor-only replacement versus sensor-and-housing assembly</li>
-        <li>Time spent ruling out intake leaks or wiring faults</li>
-        <li>Vehicle application and sensor quality</li>
-        <li>Air filter condition and intake contamination</li>
-        <li>Need to clean or repair intake tubing during the visit</li>
+        <li>P0101-type airflow data stays implausible after intake leaks are ruled out</li>
+        <li>Fuel trims and scan data point to a contaminated or biased MAF signal</li>
+        <li>The intake duct, air filter housing, and clamps are sealed but the airflow reading still does not make sense</li>
+        <li>Connector and wiring checks do not explain the bad airflow signal</li>
+        <li>Cleaning or inspection does not restore normal airflow behavior</li>
       </ul>
     </article>
   </section>
@@ -191,12 +191,26 @@
 
   <section class="tm-section">
     <article class="tm-card">
+      <h2>Common OBD Codes Related to Mass Air Flow Sensor Replacement</h2>
+      <p class="tm-muted">
+        MAF replacement becomes more credible when airflow data, fuel trims, and intake inspection support the sensor path instead of a vacuum leak or fuel-delivery fault.
+      </p>
+      <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
+        <li><a href="/obd/p0101">P0101</a> - Mass or volume air flow circuit range/performance</li>
+        <li><a href="/obd/p0171">P0171</a> - System too lean bank 1</li>
+        <li><a href="/obd/p0174">P0174</a> - System too lean bank 2</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="tm-section">
+    <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to build a mass air flow sensor replacement estimate with your labor rate, selected service, and vehicle context.
+        Use TorqueMech to turn a confirmed MAF diagnosis into an estimate. This estimator handoff makes the most sense after scan data and intake checks support the sensor as the repair path.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
-        <a class="tm-btn tm-btn-primary" href="/estimator?service=mass_air_flow_sensor_replacement">Estimate Mass Air Flow Sensor Replacement</a>
+        <a class="tm-btn tm-btn-primary" href="/estimator?service=mass_air_flow_sensor_replacement">Build MAF Sensor Estimate</a>
       </div>
     </article>
   </section>
@@ -204,11 +218,11 @@
   <section class="tm-section">
     <article class="tm-card">
       <h2>Related Cost Guides</h2>
-      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <p class="tm-muted">Compare this repair with a few other live TorqueMech guides commonly tied to lean and airflow diagnosis.</p>
       <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
         <li><a href="/cost/oxygen-sensor-replacement">Oxygen Sensor Replacement Cost</a></li>
-        <li><a href="/cost/ignition-coil-replacement">Ignition Coil Replacement Cost</a></li>
-        <li><a href="/cost/spark-plug-replacement">Spark Plug Replacement Cost</a></li>
+        <li><a href="/cost/throttle-body-replacement">Throttle Body Replacement Cost</a></li>
+        <li><a href="/cost/fuel-pump-replacement">Fuel Pump Replacement Cost</a></li>
         <li><a href="/cost/catalytic-converter-replacement">Catalytic Converter Replacement Cost</a></li>
       </ul>
     </article>
