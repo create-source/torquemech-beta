@@ -742,10 +742,35 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": evap_diagnostic_steps,
         },
     }
+    airflow_causes_by_vehicle = [
+        "Toyota Camry: dirty MAF sensors, cracked intake boots, loose air-box seals, and intake leaks after the MAF are common airflow-code starting points.",
+        "Ford F-150: cracked intake tubes, contaminated MAF sensors, loose clamps, and unmetered air after the MAF are frequent P0101/P0113 causes.",
+        "Chevy Silverado: vacuum leaks, intake duct leaks, and MAF contamination from oiled aftermarket filters are common airflow and IAT fault triggers.",
+        "Honda Accord: intake leaks, damaged sensor connectors, and MAF/IAT harness issues often trigger airflow or intake-temperature codes.",
+    ]
+    airflow_diagnostic_steps = [
+        "If P0101 appears with P0171 or P0174, inspect for unmetered air after the MAF before replacing the MAF sensor.",
+        "If high idle appears with positive fuel trims, inspect intake boots, vacuum hoses, PCV plumbing, and throttle-body gasket areas for leaks.",
+        "If unplugging the MAF improves idle quality, compare MAF readings and connector integrity because the airflow signal may be biased.",
+        "If MAF grams per second is unusually low at hot idle, inspect for sensor contamination, airflow restriction, dirty sensing wires, or intake duct problems.",
+        "If P0113 appears with cold-start issues, inspect the IAT connector, signal wiring, reference behavior, and sensor voltage before replacing parts.",
+        "If the IAT reading is stuck extremely cold, inspect for an open circuit, unplugged sensor, poor terminal fit, or integrated MAF/IAT assembly fault.",
+    ]
+    airflow_overrides = {
+        "P0101": {
+            "causes": airflow_causes_by_vehicle,
+            "diagnostic_steps": airflow_diagnostic_steps,
+        },
+        "P0113": {
+            "causes": airflow_causes_by_vehicle,
+            "diagnostic_steps": airflow_diagnostic_steps,
+        },
+    }
     overrides = (
         lean_overrides.get(norm, {})
         or catalyst_overrides.get(norm, {})
         or evap_overrides.get(norm, {})
+        or airflow_overrides.get(norm, {})
     )
     return {
         "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
@@ -3459,11 +3484,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0101": {
             "meaning": "P0101 means the mass air flow signal is outside the expected range for the current engine load and RPM. The sensor may be dirty or failing, but intake leaks, wiring faults, air-filter housing problems, or fuel-trim issues can also make the airflow reading look implausible.",
-            "diagnostic_insight_intro": "P0101 should be treated as an airflow plausibility problem before assuming the MAF sensor itself is bad.",
+            "diagnostic_insight_intro": "P0101 should be diagnosed as an airflow plausibility problem: compare MAF data, fuel trims, and intake sealing before condemning the sensor.",
             "diagnostic_insight_points": [
-                "Unmetered air after the MAF can make scan data look wrong even when the sensor is reporting honestly.",
-                "Fuel trims and MAF readings should be reviewed together before replacing parts.",
-                "Connector, harness, air filter, and intake-duct condition can matter as much as sensor contamination.",
+                "If P0101 appears with P0171 or P0174, inspect intake leaks and unmetered air after the MAF before replacing the sensor.",
+                "High idle with positive fuel trims usually points toward an intake, vacuum, PCV, or throttle-body gasket leak rather than a standalone MAF failure.",
+                "If unplugging the MAF improves idle, the airflow signal may be biased, but connector fit, harness condition, contamination, and intake leaks still need checks.",
+                "A MAF grams-per-second reading that is unusually low at hot idle points toward contamination, airflow restriction, dirty sensing wires, or a leaking intake path.",
             ],
             "symptoms": [
                 "Hesitation or poor throttle response",
@@ -3471,11 +3497,11 @@ def build_obd_content_refinement(code: str):
                 "Reduced fuel economy",
             ],
             "quick_checks": [
-                "Inspect the intake duct, clamps, and boots after the MAF for leaks",
-                "Inspect and clean the MAF sensor with MAF-safe cleaner if appropriate",
-                "Check air filter housing sealing and intake tract contamination",
-                "Review fuel trims and MAF readings against engine load and RPM on scan data",
-                "Inspect the MAF connector and harness for loose terminals, corrosion, or damage",
+                "Inspect the intake duct, clamps, boots, PCV plumbing, and throttle-body gasket area after the MAF for leaks",
+                "Review fuel trims at idle and cruise with MAF grams-per-second readings against engine load and RPM",
+                "Inspect and clean the MAF sensor with MAF-safe cleaner if contamination is visible or data is biased low",
+                "Check air filter housing sealing, aftermarket filter oil contamination, and intake tract restrictions",
+                "Inspect the MAF connector and harness for loose terminals, corrosion, spread pins, or wiring damage",
             ],
         },
         "P0110": {
@@ -3503,11 +3529,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0113": {
             "meaning": "P0113 means the intake air temperature signal is reading colder than expected because the circuit is open or the signal is stuck high. It is not automatically just a bad IAT sensor; an unplugged sensor, damaged wiring, connector corrosion, open circuit, failed sensor, or integrated MAF/IAT assembly issue can set the same code.",
-            "diagnostic_insight_intro": "P0113 should be treated as an intake-temperature circuit-high fault before the IAT sensor itself is condemned.",
+            "diagnostic_insight_intro": "P0113 should be diagnosed as an intake-temperature circuit-high fault, where the scan reading, connector condition, and signal circuit come before parts replacement.",
             "diagnostic_insight_points": [
-                "A cold-looking IAT reading on a warm intake usually points to an open circuit, poor connection, or sensor signal problem.",
-                "Some vehicles build the IAT into the MAF housing, so the sensor location and assembly design should be confirmed first.",
-                "Connector, wiring, and ambient-temperature comparisons usually come before replacing parts.",
+                "A cold-looking IAT reading on a warm intake usually points to an open circuit, unplugged sensor, poor terminal fit, or signal circuit problem.",
+                "Cold-start issues with P0113 should push connector, wiring, and sensor-voltage checks ahead of replacing the MAF or IAT assembly.",
+                "Some vehicles build the IAT into the MAF housing, so sensor location and assembly design should be confirmed before ordering parts.",
+                "If the IAT value is stuck at an extreme low temperature, inspect for an open circuit or poor ground/reference behavior rather than assuming normal temperature drift.",
             ],
             "symptoms": [
                 "Check engine light",
@@ -3516,11 +3543,11 @@ def build_obd_content_refinement(code: str):
                 "Hesitation or drivability issues on some vehicles",
             ],
             "quick_checks": [
-                "Inspect IAT connector fit and terminal condition",
-                "Inspect wiring for breaks, corrosion, or intake-area damage",
-                "Compare IAT reading to ambient temperature on a cold engine",
-                "Verify reference or resistance behavior if appropriate",
-                "Confirm whether the IAT is integrated into the MAF housing before replacing parts",
+                "Inspect IAT connector fit, terminal tension, corrosion, and lock-tab condition",
+                "Inspect wiring for opens, breaks, corrosion, rub-through, or intake-area damage",
+                "Compare IAT reading to ambient temperature on a cold engine before startup",
+                "Verify signal voltage, reference behavior, and resistance behavior if appropriate for the sensor design",
+                "Confirm whether the IAT is integrated into the MAF housing before replacing separate parts",
             ],
         },
         "P0201": {
