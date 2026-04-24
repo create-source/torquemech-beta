@@ -766,11 +766,40 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": airflow_diagnostic_steps,
         },
     }
+    downstream_o2_causes_by_vehicle = [
+        "Toyota Camry: aging downstream O2 sensors, catalyst efficiency concerns, and exhaust-side wiring wear are common downstream-sensor code starting points.",
+        "Ford F-150: wiring damage near exhaust heat, heater circuit failures, and connector issues are frequent P0138/P0141/P0158 causes.",
+        "Chevy Silverado: rich-running conditions, downstream sensor contamination, and exhaust-area harness damage are common causes.",
+        "Honda Accord: downstream sensor aging, heater circuit faults, and connector or harness issues often trigger these codes.",
+    ]
+    downstream_o2_diagnostic_steps = [
+        "If the rear O2 sensor is stuck high with no major drivability issue, inspect downstream sensor bias, catalyst behavior, and exhaust-side wiring first.",
+        "If a heater circuit code is strongest during cold starts, verify heater power, ground, fuse protection, and wiring before replacing the sensor.",
+        "If rich-running symptoms appear with high O2 voltage, inspect fuel control, fuel pressure, leaking injectors, and trim data before replacing the sensor.",
+        "Inspect for exhaust leaks before the downstream sensor because added oxygen can cause false switching behavior and inaccurate catalyst or sensor readings.",
+        "If catalyst codes repeat with downstream O2 faults, confirm converter condition and upstream fuel control before replacing sensors only.",
+        "Inspect harness routing near hot exhaust, melted insulation, loose terminals, and connector contamination before condemning the downstream sensor.",
+    ]
+    downstream_o2_overrides = {
+        "P0138": {
+            "causes": downstream_o2_causes_by_vehicle,
+            "diagnostic_steps": downstream_o2_diagnostic_steps,
+        },
+        "P0141": {
+            "causes": downstream_o2_causes_by_vehicle,
+            "diagnostic_steps": downstream_o2_diagnostic_steps,
+        },
+        "P0158": {
+            "causes": downstream_o2_causes_by_vehicle,
+            "diagnostic_steps": downstream_o2_diagnostic_steps,
+        },
+    }
     overrides = (
         lean_overrides.get(norm, {})
         or catalyst_overrides.get(norm, {})
         or evap_overrides.get(norm, {})
         or airflow_overrides.get(norm, {})
+        or downstream_o2_overrides.get(norm, {})
     )
     return {
         "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
@@ -3636,11 +3665,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0138": {
             "meaning": "P0138 means bank 1 sensor 2 is staying high or reading richer than expected for too long. It is not automatically just a bad oxygen sensor; a biased or failing downstream O2 sensor, wiring short or high-voltage issue, rich-running condition, exhaust contamination, or connector and harness damage can hold the signal high.",
-            "diagnostic_insight_intro": "P0138 should be treated as a downstream O2 high-voltage signal fault before the sensor itself is condemned.",
+            "diagnostic_insight_intro": "P0138 should be diagnosed as a bank 1 downstream O2 high-voltage fault by separating true rich exhaust, biased sensor output, and exhaust-side wiring problems.",
             "diagnostic_insight_points": [
-                "Scan data should confirm whether bank 1 sensor 2 is truly stuck high or only reacting to a rich-running condition.",
-                "Wiring and connector damage near the exhaust can create a false high-voltage signal.",
-                "Fuel-control and contamination checks should come before replacing the downstream sensor.",
+                "A rear O2 sensor stuck high with no major drivability issue often points toward downstream sensor bias, catalyst behavior, or wiring rather than a primary fuel-control failure.",
+                "Rich-running symptoms with high O2 voltage should move fuel trims, fuel pressure, injector leakage, and upstream sensor data ahead of sensor replacement.",
+                "Exhaust leaks before the downstream sensor can distort oxygen content and create misleading switching or catalyst data.",
+                "Repeated catalyst codes with downstream O2 issues should trigger converter condition checks before replacing sensors only.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3648,20 +3678,21 @@ def build_obd_content_refinement(code: str):
                 "Rich smell or poor fuel economy in some cases",
             ],
             "quick_checks": [
-                "Inspect downstream O2 wiring near the exhaust",
-                "Inspect connector condition at bank 1 sensor 2",
-                "Review scan data before replacing parts",
-                "Check for rich-running or fuel-control issues",
-                "Confirm the high reading is not caused by wiring or contamination",
+                "Compare bank 1 sensor 2 voltage behavior with upstream sensor activity after full warm-up",
+                "Inspect downstream O2 wiring near the exhaust for melted insulation, shorts, rub-through, or poor routing",
+                "Inspect connector condition, terminal fit, and contamination at bank 1 sensor 2",
+                "Check fuel trims, fuel pressure, and rich-running signs before replacing the sensor",
+                "Inspect for exhaust leaks ahead of bank 1 sensor 2 and catalyst-related companion codes",
             ],
         },
         "P0141": {
             "meaning": "P0141 means the heater circuit for bank 1 sensor 2 is not operating as expected. It is not automatically just a bad oxygen sensor; a failed downstream O2 heater, blown fuse, damaged wiring, poor connector contact, heater power fault, or ground fault can set the same code.",
-            "diagnostic_insight_intro": "P0141 should be treated as a downstream O2 heater-circuit fault before the sensor itself is condemned.",
+            "diagnostic_insight_intro": "P0141 should be diagnosed as a bank 1 sensor 2 heater-circuit fault, with power, ground, fuse, and exhaust-area wiring checks before the sensor is condemned.",
             "diagnostic_insight_points": [
-                "The heater circuit needs verified power and ground before the sensor is blamed.",
-                "Wiring near the exhaust can be damaged by heat, road debris, or poor routing.",
-                "Fuse, connector, and terminal checks usually come before replacing the downstream sensor.",
+                "A heater circuit fault that appears during cold-start monitor activity points strongly toward heater power, ground, fuse protection, or circuit resistance checks.",
+                "Wiring near the exhaust can melt, rub through, or lose terminal tension, creating the same fault as an open heater inside the sensor.",
+                "Heater resistance and command checks help separate a failed sensor heater from a power-supply or ground-side fault.",
+                "If catalyst or downstream signal codes are also present, verify the heater repair restores sensor readiness before chasing converter efficiency.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3669,20 +3700,21 @@ def build_obd_content_refinement(code: str):
                 "Emissions test failure in some cases",
             ],
             "quick_checks": [
-                "Inspect downstream O2 sensor wiring near the exhaust",
-                "Inspect connector fit and terminal condition at bank 1 sensor 2",
-                "Verify heater power and ground",
-                "Check related fuse protection if applicable",
-                "Confirm the heater fault before condemning the sensor alone",
+                "Inspect downstream O2 sensor wiring near the exhaust for heat damage, poor routing, or rubbed insulation",
+                "Inspect connector fit, terminal tension, and corrosion at bank 1 sensor 2",
+                "Verify heater power, ground, and voltage drop across the heater circuit",
+                "Check related fuse protection and shared heater feeds if applicable",
+                "Confirm heater resistance or circuit behavior before condemning the sensor alone",
             ],
         },
         "P0158": {
             "meaning": "P0158 means bank 2 sensor 2 is staying high or reading richer than expected for too long. It is not automatically just a bad oxygen sensor; a biased or failing downstream O2 sensor, wiring short or high-voltage issue, rich-running condition, exhaust contamination, or connector and harness damage can hold the signal high.",
-            "diagnostic_insight_intro": "P0158 should be treated as a bank 2 downstream O2 high-voltage signal fault before the sensor itself is condemned.",
+            "diagnostic_insight_intro": "P0158 should be diagnosed as a bank 2 downstream O2 high-voltage fault by separating true rich exhaust, biased sensor output, and exhaust-side wiring problems.",
             "diagnostic_insight_points": [
-                "Scan data should confirm whether bank 2 sensor 2 is truly stuck high or only reacting to a rich-running condition.",
-                "Wiring and connector damage near the exhaust can create a false high-voltage signal.",
-                "Fuel-control and contamination checks should come before replacing the downstream sensor.",
+                "A rear O2 sensor stuck high with no major drivability issue often points toward downstream sensor bias, catalyst behavior, or wiring rather than a primary fuel-control failure.",
+                "Rich-running symptoms with high O2 voltage should move fuel trims, fuel pressure, injector leakage, and upstream sensor data ahead of sensor replacement.",
+                "Exhaust leaks before the downstream sensor can distort oxygen content and create misleading switching or catalyst data.",
+                "Repeated catalyst codes with downstream O2 issues should trigger converter condition checks before replacing sensors only.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3690,11 +3722,11 @@ def build_obd_content_refinement(code: str):
                 "Rich smell or poor fuel economy in some cases",
             ],
             "quick_checks": [
-                "Inspect downstream O2 wiring near the exhaust",
-                "Inspect connector condition at bank 2 sensor 2",
-                "Review scan data before replacing parts",
-                "Check for rich-running or fuel-control issues",
-                "Confirm the high reading is not caused by wiring or contamination",
+                "Compare bank 2 sensor 2 voltage behavior with upstream sensor activity after full warm-up",
+                "Inspect downstream O2 wiring near the exhaust for melted insulation, shorts, rub-through, or poor routing",
+                "Inspect connector condition, terminal fit, and contamination at bank 2 sensor 2",
+                "Check fuel trims, fuel pressure, and rich-running signs before replacing the sensor",
+                "Inspect for exhaust leaks ahead of bank 2 sensor 2 and catalyst-related companion codes",
             ],
         },
         "P0562": {
