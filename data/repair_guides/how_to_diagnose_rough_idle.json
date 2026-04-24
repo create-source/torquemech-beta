@@ -1,0 +1,100 @@
+{
+  "slug": "how-to-diagnose-rough-idle",
+  "title": "How to Diagnose Rough Idle",
+  "category": "Engine",
+  "subcategory": "Diagnostics",
+  "sort_order": 24,
+  "summary": "Mechanic-first diagnostic guide for separating misfire, vacuum leak, airflow, and throttle-control causes behind rough idle complaints.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Engine shakes or feels uneven at a stop",
+    "Idle speed dips, hunts, or feels unstable",
+    "Light stumble when shifting into gear",
+    "Idle may improve slightly once RPM rises",
+    "May appear with lean, misfire, or high-idle codes"
+  ],
+  "diagnostic_logic": [
+    "Rough idle is usually either a combustion-quality problem or an idle-air control problem.",
+    "If one cylinder is clearly dropping out, misfire diagnosis comes first.",
+    "If trims go lean at idle or RPM hangs high, vacuum leaks, PCV faults, and throttle-body issues move up the list."
+  ],
+  "likely_causes": [
+    "Worn spark plugs or weak ignition coils",
+    "Vacuum leak after the MAF sensor",
+    "Dirty or sticking throttle body",
+    "Contaminated or inaccurate MAF signal",
+    "PCV or intake manifold gasket leak"
+  ],
+  "testing_approach": [
+    "Scan for lean, misfire, airflow, and high-idle codes before replacing parts.",
+    "Watch idle speed, fuel trims, and misfire counters together instead of chasing one number alone.",
+    "Inspect intake ducting, PCV plumbing, and vacuum hoses after the MAF sensor.",
+    "Check spark plug and coil condition if the idle feels like one cylinder is dropping out.",
+    "Inspect the throttle body for carbon buildup or sticking before condemning the assembly."
+  ],
+  "tools_required": [
+    "Scan tool with fuel-trim, idle-speed, and misfire data",
+    "Basic hand tools for intake and ignition inspection",
+    "Smoke test equipment when leak checks are needed",
+    "Flashlight and mirror for intake-side inspection"
+  ],
+  "pro_tips": [
+    "A rough idle that smooths out off idle usually narrows the search faster than a complaint present everywhere.",
+    "Fuel trims at hot idle tell a more useful leak story than trims taken only at cruise.",
+    "Throttle-body carbon can mimic more expensive faults if it is ignored."
+  ],
+  "common_mistakes": [
+    "Replacing the throttle body before checking for vacuum leaks and plug condition",
+    "Treating every rough idle like a single-cylinder ignition problem",
+    "Ignoring PCV leaks and intake sealing problems on lean idle complaints",
+    "Replacing the MAF before checking intake ducting and fuel-trim behavior"
+  ],
+  "related_obd_codes": [
+    { "code": "P0507", "title": "Idle speed higher than expected", "href": "/obd/p0507" },
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
+    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Throttle Body Replacement Cost",
+      "description": "A good next path when idle-air control and throttle response stay unstable after inspection and relearn checks.",
+      "cost_guide_href": "/cost/throttle-body-replacement",
+      "estimator_href": "/estimator?service=throttle_body_replacement"
+    },
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Relevant when rough idle is tied to implausible airflow data.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "PCV Valve Replacement Cost",
+      "description": "Worth checking when crankcase ventilation is upsetting idle quality.",
+      "cost_guide_href": "/cost/pcv-valve-replacement",
+      "estimator_href": "/estimator?service=pcv_valve_replacement"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "Use this path when smoke testing or trim behavior points to intake sealing problems.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    },
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A practical next path when rough idle includes plug wear or weak spark symptoms.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Rough-idle diagnosis often starts from engine shake at a stop, unstable idle speed, or a lean or misfire code path.",
+    "common_symptoms_link": "/symptoms/rough-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Open Estimator",
+    "estimator_link": "/estimator"
+  }
+}

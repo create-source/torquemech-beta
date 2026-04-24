@@ -1,0 +1,94 @@
+{
+  "slug": "how-to-diagnose-lean-condition-p0171-p0174",
+  "title": "How to Diagnose Lean Condition (P0171 / P0174)",
+  "category": "Engine",
+  "subcategory": "Diagnostics",
+  "sort_order": 23,
+  "summary": "Mechanic-first diagnostic guide for separating vacuum leaks, airflow errors, and weak fuel delivery behind P0171 and P0174 lean-condition faults.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Rough idle or light surge",
+    "Hesitation or weak throttle response",
+    "Poor fuel economy or light drivability loss",
+    "Cold-start roughness in some cases",
+    "Bank 1, bank 2, or both banks showing lean trim behavior"
+  ],
+  "diagnostic_logic": [
+    "First decide whether the lean condition affects one bank or both banks.",
+    "If both banks are lean, shared causes like MAF error, weak fuel delivery, or a major intake leak move higher.",
+    "If only one bank is lean, bank-side intake sealing, runner leaks, or localized hose faults become more important."
+  ],
+  "likely_causes": [
+    "Vacuum leak after the MAF sensor",
+    "Intake manifold gasket leak",
+    "PCV leak or crankcase ventilation fault",
+    "Contaminated or inaccurate MAF signal",
+    "Weak fuel pressure or fuel delivery"
+  ],
+  "testing_approach": [
+    "Compare short- and long-term fuel trims at idle and again under load or cruise.",
+    "Inspect intake ducting, clamps, and PCV routing before replacing the MAF sensor.",
+    "Use smoke testing when the leak is not obvious or when bank-specific trims point to intake sealing.",
+    "If trims stay lean under load, move fuel-delivery testing higher on the list.",
+    "Verify that airflow readings make sense for engine load and RPM before condemning parts."
+  ],
+  "tools_required": [
+    "Scan tool with fuel-trim and airflow data",
+    "Smoke test equipment or controlled leak-test method",
+    "Basic hand tools for intake inspection",
+    "Fuel-pressure or fuel-delivery test method when needed"
+  ],
+  "pro_tips": [
+    "Idle-only lean behavior is often a better vacuum-leak clue than a lean condition that stays strong under load.",
+    "Both-bank lean faults usually justify checking shared systems before one-bank parts.",
+    "A dirty MAF and a small intake leak can exist together, so scan data matters."
+  ],
+  "common_mistakes": [
+    "Replacing the O2 sensor just because the code says lean",
+    "Replacing the MAF before checking intake ducting, hose routing, and fuel trims",
+    "Ignoring bank-specific trim differences that narrow the search quickly",
+    "Skipping fuel-delivery testing when the lean condition is worse under load"
+  ],
+  "related_obd_codes": [
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
+    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
+    { "code": "P0507", "title": "Idle speed higher than expected", "href": "/obd/p0507" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Use this path when airflow data or contamination clearly supports the MAF as the lean trigger.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "Fuel Pump Replacement Cost",
+      "description": "A strong next step when trims stay lean under load and fuel delivery tests weak.",
+      "cost_guide_href": "/cost/fuel-pump-replacement",
+      "estimator_href": "/estimator?service=fuel_pump_replacement_in_tank"
+    },
+    {
+      "title": "PCV Valve Replacement Cost",
+      "description": "Relevant when crankcase ventilation is pulling in unmetered air.",
+      "cost_guide_href": "/cost/pcv-valve-replacement",
+      "estimator_href": "/estimator?service=pcv_valve_replacement"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "Worth checking when smoke testing or bank-side trims point to intake sealing faults.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Lean-condition diagnosis usually starts from rough idle, hesitation, poor fuel economy, or a P0171 or P0174 code path.",
+    "common_symptoms_link": "/symptoms/engine-hesitation-on-acceleration",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Open Estimator",
+    "estimator_link": "/estimator"
+  }
+}

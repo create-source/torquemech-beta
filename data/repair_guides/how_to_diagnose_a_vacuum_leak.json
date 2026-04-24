@@ -1,0 +1,94 @@
+{
+  "slug": "how-to-diagnose-a-vacuum-leak",
+  "title": "How to Diagnose a Vacuum Leak",
+  "category": "Engine",
+  "subcategory": "Diagnostics",
+  "sort_order": 21,
+  "summary": "Mechanic-first diagnostic guide for isolating vacuum and unmetered-air leaks behind rough idle, lean codes, and high idle complaints.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Rough idle or unstable hot idle",
+    "High idle or hanging RPM",
+    "Lean surge or hesitation on light throttle",
+    "Cold-start roughness that improves warm",
+    "Lean-condition or airflow-performance codes"
+  ],
+  "diagnostic_logic": [
+    "Start by deciding whether the leak is affecting only idle or both idle and part-throttle driving.",
+    "If both banks are lean, shared leaks after the MAF or PCV routing move higher on the list.",
+    "If one bank is leaner than the other, bank-side intake sealing or runner leaks become more important."
+  ],
+  "likely_causes": [
+    "Split vacuum hose or disconnected line",
+    "PCV valve or PCV hose leak",
+    "Intake manifold gasket leak",
+    "Intake duct leak after the mass air flow sensor",
+    "Throttle body or intake sealing leak"
+  ],
+  "testing_approach": [
+    "Compare short- and long-term fuel trims at hot idle and again at raised RPM or cruise.",
+    "Inspect intake ducting, hose connections, and PCV routing after the MAF before replacing sensors.",
+    "Listen for obvious hiss points, but use smoke testing when the leak is not visually clear.",
+    "Pay attention to whether only one bank is lean or whether the leak affects the whole intake path.",
+    "Verify the MAF signal is plausible before blaming a vacuum leak for every lean condition."
+  ],
+  "tools_required": [
+    "Scan tool with fuel-trim and idle data",
+    "Smoke test equipment or other controlled leak-test method",
+    "Basic hand tools for intake and hose inspection",
+    "Flashlight and mirror for intake-side access"
+  ],
+  "pro_tips": [
+    "Idle-only lean behavior usually points to a smaller leak than a lean condition that stays strong under load.",
+    "PCV leaks often act like hidden vacuum leaks and can distort fuel trims badly.",
+    "Bank-specific trim differences help narrow the search before parts are removed."
+  ],
+  "common_mistakes": [
+    "Replacing the MAF too early without checking intake ducting and PCV plumbing",
+    "Ignoring bank-specific trim differences that point to one side of the intake",
+    "Relying only on sound instead of smoke testing when the leak is subtle",
+    "Treating every lean code as a vacuum leak even when weak fuel delivery fits better"
+  ],
+  "related_obd_codes": [
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
+    { "code": "P0507", "title": "Idle speed higher than expected", "href": "/obd/p0507" },
+    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "PCV Valve Replacement Cost",
+      "description": "A strong next path when crankcase ventilation is pulling in unmetered air.",
+      "cost_guide_href": "/cost/pcv-valve-replacement",
+      "estimator_href": "/estimator?service=pcv_valve_replacement"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "Relevant when smoke testing or bank-side trim behavior points to intake sealing problems.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    },
+    {
+      "title": "Throttle Body Replacement Cost",
+      "description": "Worth checking when extra idle air is being driven by throttle-body sticking or sealing issues.",
+      "cost_guide_href": "/cost/throttle-body-replacement",
+      "estimator_href": "/estimator?service=throttle_body_replacement"
+    },
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Use this path only after intake leaks are checked and airflow data still looks implausible.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Vacuum-leak diagnosis usually starts from rough idle, lean codes, high idle, or cold-start drivability complaints.",
+    "common_symptoms_link": "/symptoms/rough-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Open Estimator",
+    "estimator_link": "/estimator"
+  }
+}

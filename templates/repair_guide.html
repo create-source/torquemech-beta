@@ -72,6 +72,45 @@
 </section>
 {% endif %}
 
+{% if guide.diagnostic_logic %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Diagnostic Logic</h2>
+    <ul class="tm-list">
+      {% for item in guide.diagnostic_logic %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.likely_causes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Likely Causes</h2>
+    <ul class="tm-list">
+      {% for item in guide.likely_causes %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.testing_approach %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Testing Approach</h2>
+    <ul class="tm-list">
+      {% for item in guide.testing_approach %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
 {% if guide.labor_range or guide.labor_cost %}
 <section class="tm-section tm-two-col">
   {% if guide.labor_range %}
@@ -276,6 +315,60 @@
 </section>
 {% endif %}
 
+{% if guide.common_mistakes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Mistakes</h2>
+    <ul class="tm-list">
+      {% for item in guide.common_mistakes %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.related_obd_codes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related OBD Codes</h2>
+    <ul class="tm-list">
+      {% for item in guide.related_obd_codes %}
+      <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.recommended_repairs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Recommended Repair Paths</h2>
+    <div class="tm-stack">
+      {% for item in guide.recommended_repairs %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
+        {% endif %}
+        {% if item.cost_guide_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.cost_guide_href }}">Open Cost Guide &rarr;</a>
+        </div>
+        {% endif %}
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.estimator_href }}">Open Estimator &rarr;</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if guide.estimate %}
 <section class="tm-section">
   <div class="tm-card">
@@ -286,7 +379,7 @@
       id="estimateRepairBtn"
       data-estimator-link="{{ guide.estimate.estimator_link }}"
       data-service-code="{{ guide.estimate.service_code }}"
-      href="{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}"
+      href="{% if guide.estimate.service_code %}{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}{% else %}{{ guide.estimate.estimator_link }}{% endif %}"
     >
       {{ guide.estimate.cta_label }} ->
     </a>

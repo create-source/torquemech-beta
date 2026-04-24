@@ -1,0 +1,83 @@
+{
+  "slug": "how-to-test-an-ignition-coil",
+  "title": "How to Test an Ignition Coil",
+  "category": "Engine",
+  "subcategory": "Diagnostics",
+  "sort_order": 22,
+  "summary": "Mechanic-first diagnostic guide for proving whether an ignition coil is actually the cause of a misfire before replacement.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Single-cylinder or load-related misfire",
+    "Rough idle or stumble on acceleration",
+    "Flashing check engine light during a severe miss",
+    "Power loss under load with spark-related drivability complaints",
+    "Fuel smell from incomplete combustion in active misfire conditions"
+  ],
+  "diagnostic_logic": [
+    "A coil should be proved weak or faulty before replacement, not blamed automatically because a misfire code is stored.",
+    "If the misfire follows the coil when swapped, coil replacement becomes a much stronger repair path.",
+    "If the misfire stays on the same cylinder, injector, compression, plug, or wiring faults move back up the list."
+  ],
+  "likely_causes": [
+    "Internal ignition coil failure",
+    "Damaged coil boot or carbon tracking",
+    "Oil intrusion into the plug well",
+    "Poor connector contact or wiring issue",
+    "Worn spark plug overloading the coil"
+  ],
+  "testing_approach": [
+    "Confirm the misfire pattern with scan data and identify whether it is tied to one cylinder.",
+    "Inspect the plug and coil boot for oil, cracking, heat damage, or carbon tracking before swapping parts.",
+    "Use swap testing with a known-good cylinder when the ignition layout allows it.",
+    "Verify coil power, ground, or control behavior if the fault does not follow the coil cleanly.",
+    "Check spark plug condition before condemning the coil alone."
+  ],
+  "tools_required": [
+    "Scan tool with misfire counters",
+    "Basic hand tools for coil and plug access",
+    "Known-good cylinder or ignition part for swap testing",
+    "Electrical test method for coil feed and control checks",
+    "Flashlight for plug well and boot inspection"
+  ],
+  "pro_tips": [
+    "A bad plug can make a good coil look weak, so plug condition still matters.",
+    "Oil in a plug well is a clue, not just a mess to clean up.",
+    "Load-related misfires often expose weak coils faster than idle checks alone."
+  ],
+  "common_mistakes": [
+    "Replacing the coil without checking the spark plug on that cylinder",
+    "Ignoring connector fit or harness damage near the coil",
+    "Replacing every coil when only one has been proven weak",
+    "Missing oil intrusion that will damage the replacement coil boot too"
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
+    { "code": "P0303", "title": "Cylinder 3 misfire", "href": "/obd/p0303" },
+    { "code": "P0304", "title": "Cylinder 4 misfire", "href": "/obd/p0304" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "The direct next step once coil swap testing or output checks confirm the fault.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A strong companion path when worn plugs are overloading the coil or contributing to the misfire.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Ignition-coil testing usually starts from cylinder-specific misfire, load-related hesitation, or a flashing MIL during acceleration.",
+    "common_symptoms_link": "/symptoms/car-shakes-when-accelerating",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Open Estimator",
+    "estimator_link": "/estimator"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "slug": "how-to-diagnose-a-cylinder-misfire",
+  "title": "How to Diagnose a Cylinder Misfire",
+  "category": "Engine",
+  "subcategory": "Diagnostics",
+  "sort_order": 20,
+  "summary": "Mechanic-first diagnostic guide for separating ignition, fuel, air, and mechanical causes behind a cylinder misfire.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Rough idle or shake from one cylinder dropping out",
+    "Hesitation or bucking under load",
+    "Flashing check engine light if the misfire is severe",
+    "Fuel smell from the exhaust in active misfire conditions",
+    "Noticeable power loss tied to one cylinder or a shared misfire pattern"
+  ],
+  "diagnostic_logic": [
+    "Start by separating a single-cylinder misfire from a shared misfire affecting multiple cylinders.",
+    "If the code is cylinder-specific, confirm whether the fault follows the plug or coil before moving to injector or compression testing.",
+    "If the code is P0300 or multiple cylinders are involved, shared ignition, fuel-delivery, airflow, or timing issues matter more than a single bad part guess."
+  ],
+  "likely_causes": [
+    "Worn or fouled spark plug",
+    "Weak ignition coil or damaged coil boot",
+    "Faulty or restricted fuel injector",
+    "Vacuum leak near one intake runner or across the intake",
+    "Low compression, valve-sealing problem, or other mechanical fault"
+  ],
+  "testing_approach": [
+    "Confirm which code or cylinder pattern is active and whether the misfire is present at idle, under load, or both.",
+    "Use swap testing on the spark plug or ignition coil when the fault is isolated to one cylinder.",
+    "Inspect the suspect plug for wear, gap, oil intrusion, or fuel fouling before condemning the injector.",
+    "Verify injector operation and connector condition if the misfire stays on the same cylinder after ignition checks.",
+    "Move to compression or leak-down testing if the misfire does not follow ignition parts and stays fixed on one cylinder."
+  ],
+  "tools_required": [
+    "Scan tool with misfire counters and fuel-trim data",
+    "Basic hand tools for plug and coil access",
+    "Spark tester or known-good ignition part for swap testing",
+    "Fuel injector listening or control test method",
+    "Compression or leak-down test equipment when needed"
+  ],
+  "pro_tips": [
+    "A flashing MIL raises catalyst-damage risk, so active misfires should be diagnosed quickly.",
+    "Cylinder-specific misfires are usually faster to narrow down than random shared misfires.",
+    "Fuel trim behavior helps show whether unmetered air is pushing the misfire path."
+  ],
+  "common_mistakes": [
+    "Replacing the injector before checking whether the misfire follows the plug or coil",
+    "Ignoring fuel trims and intake leaks when multiple cylinders are involved",
+    "Condemning ignition parts without checking plug well oil intrusion or boot damage",
+    "Skipping compression testing when the same cylinder keeps misfiring after swap tests"
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
+    { "code": "P0303", "title": "Cylinder 3 misfire", "href": "/obd/p0303" },
+    { "code": "P0304", "title": "Cylinder 4 misfire", "href": "/obd/p0304" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A strong first repair path when plug condition or swap testing points to worn or fouled plugs.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Use this path when the misfire follows the coil or ignition output is clearly weak.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Fuel Injector Replacement Cost",
+      "description": "Relevant when the fault stays on one cylinder after ignition checks and injector testing confirms the fuel side.",
+      "cost_guide_href": "/cost/fuel-injector-replacement",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "Worth checking when runner-area leak testing shows unmetered air is causing the misfire.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Cylinder misfire diagnosis usually starts from rough idle, hesitation, shaking under acceleration, or a flashing check engine light.",
+    "common_symptoms_link": "/symptoms/engine-misfire-at-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Open Estimator",
+    "estimator_link": "/estimator"
+  }
+}

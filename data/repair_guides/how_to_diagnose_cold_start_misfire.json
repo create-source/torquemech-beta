@@ -1,0 +1,101 @@
+{
+  "slug": "how-to-diagnose-cold-start-misfire",
+  "title": "How to Diagnose Cold Start Misfire",
+  "category": "Engine",
+  "subcategory": "Diagnostics",
+  "sort_order": 25,
+  "summary": "Mechanic-first diagnostic guide for separating ignition weakness, intake leaks, injector faults, and bad temperature input behind a cold start misfire.",
+  "vehicle_optional": true,
+  "symptoms": [
+    "Rough shake or stumble during the first seconds after start-up",
+    "Cold-start misfire that improves noticeably warm",
+    "Fuel smell or uneven exhaust note during the first minute of operation",
+    "Long crank or hard first start in some cases",
+    "May overlap with lean, misfire, or coolant-temperature codes"
+  ],
+  "diagnostic_logic": [
+    "A cold-start misfire that improves warm usually points to ignition weakness, sealing leakage, injector imbalance, or incorrect cold-enrichment input.",
+    "If the misfire stays on one cylinder after warm-up, the fault is less likely to be a simple cold-only condition.",
+    "If the miss is worst only at cold idle, intake leaks and false temperature data deserve more attention."
+  ],
+  "likely_causes": [
+    "Worn spark plugs or weak ignition coils",
+    "Leaking or restricted fuel injector",
+    "Intake manifold gasket or PCV leak that is worse cold",
+    "Minor compression or valve-sealing problem",
+    "Incorrect coolant temperature sensor data during cold enrichment"
+  ],
+  "testing_approach": [
+    "Compare coolant temperature data to ambient before the first start of the day.",
+    "Note whether the misfire clears completely warm or stays tied to one cylinder.",
+    "Inspect plug and coil condition before the engine is fully heat-soaked and symptoms fade.",
+    "Watch fuel trims during cold idle to see whether the engine is leaning out from an intake leak.",
+    "Move to injector or compression checks if the same cylinder stays weak after ignition tests."
+  ],
+  "tools_required": [
+    "Scan tool with coolant-temperature, fuel-trim, and misfire data",
+    "Basic hand tools for plug, coil, and intake inspection",
+    "Known-good ignition part for swap testing when appropriate",
+    "Compression or leak-down test equipment when the miss stays fixed",
+    "Smoke test method when intake leaks are suspected"
+  ],
+  "pro_tips": [
+    "Cold-start data is most useful before the engine has any time to warm up.",
+    "A problem that fades warm is still diagnosable if the first-start clues are captured early.",
+    "Temperature input that is wrong at cold start can distort the whole fueling strategy."
+  ],
+  "common_mistakes": [
+    "Testing only after the engine is warm and the symptom has mostly disappeared",
+    "Blaming ignition first when fuel trims point to a cold intake leak",
+    "Ignoring coolant temperature plausibility during cold-enrichment diagnosis",
+    "Replacing injectors before proving the cylinder does not simply follow a plug or coil"
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0118", "title": "Coolant temperature circuit high input", "href": "/obd/p0118" },
+    { "code": "P0117", "title": "Coolant temperature circuit low input", "href": "/obd/p0117" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Replacement Cost",
+      "description": "A strong next path when cold-start spark demand exposes worn or fouled plugs.",
+      "cost_guide_href": "/cost/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Replacement Cost",
+      "description": "Use this path when a weak coil shows up most clearly before the engine warms up.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Fuel Injector Replacement Cost",
+      "description": "Relevant when one cylinder stays fuel-fouled or injector behavior points to a cold fuel imbalance.",
+      "cost_guide_href": "/cost/fuel-injector-replacement",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
+    },
+    {
+      "title": "Intake Manifold Gasket Replacement Cost",
+      "description": "Worth checking when cold-idle trims and smoke testing point to a sealing leak that improves warm.",
+      "cost_guide_href": "/cost/intake-manifold-gasket-replacement",
+      "estimator_href": "/estimator?service=intake_manifold_gasket_replacement"
+    },
+    {
+      "title": "Engine Coolant Temperature Sensor Replacement Cost",
+      "description": "A strong next path when false temperature input is distorting cold-start fueling strategy.",
+      "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement",
+      "estimator_href": "/estimator?service=coolant_temperature_sensor_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Cold-start misfire diagnosis usually starts from first-start roughness, hard starting after sitting, or a misfire that fades warm.",
+    "common_symptoms_link": "/symptoms/cold-start-misfire",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Open Estimator",
+    "estimator_link": "/estimator"
+  }
+}

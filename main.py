@@ -1022,6 +1022,10 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
         normalized["sort_order"] = 999
 
     normalized["symptoms"] = normalize_repair_guide_list(guide.get("symptoms"))
+    normalized["diagnostic_logic"] = normalize_repair_guide_list(guide.get("diagnostic_logic"))
+    normalized["likely_causes"] = normalize_repair_guide_list(guide.get("likely_causes"))
+    normalized["testing_approach"] = normalize_repair_guide_list(guide.get("testing_approach"))
+    normalized["common_mistakes"] = normalize_repair_guide_list(guide.get("common_mistakes"))
     normalized["repair_overview"] = normalize_repair_guide_list(guide.get("repair_overview"))
     normalized["tools_required"] = normalize_repair_guide_list(
         guide.get("tools_required") or guide.get("tools")
@@ -1035,6 +1039,8 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     )
     normalized["bolt_sizes"] = normalize_repair_guide_list(guide.get("bolt_sizes"))
     normalized["coming_next"] = normalize_repair_guide_list(guide.get("coming_next"))
+    normalized["related_obd_codes"] = normalize_symptom_obd_codes(guide.get("related_obd_codes"))
+    normalized["recommended_repairs"] = normalize_symptom_recommended_repairs(guide.get("recommended_repairs"))
 
     normalized["labor_range"] = normalize_repair_guide_range(
         guide.get("labor_range"), "min_hours", "max_hours"
@@ -1675,6 +1681,9 @@ def build_quick_find_items() -> List[Dict[str, str]]:
                         str(guide.get("category") or "").strip(),
                         str(guide.get("subcategory") or "").strip(),
                         " ".join(guide.get("symptoms") or []),
+                        " ".join(guide.get("likely_causes") or []),
+                        " ".join(guide.get("testing_approach") or []),
+                        " ".join(item.get("code") or "" for item in guide.get("related_obd_codes") or []),
                         slug.replace("-", " "),
                     ],
                 )
@@ -4655,6 +4664,17 @@ def build_sitemap_symptom_paths() -> List[str]:
         for file in sorted(symptoms_dir.glob("*.json"))
     ]
 
+
+def build_sitemap_repair_guide_paths() -> List[str]:
+    repair_guides_dir = DATA_DIR / "repair_guides"
+    if not repair_guides_dir.exists():
+        return []
+
+    return [
+        f"/repair-guides/{file.stem.replace('_', '-')}"
+        for file in sorted(repair_guides_dir.glob("*.json"))
+    ]
+
 def latest_lastmod_for_files(files: List[Path]) -> Optional[str]:
     timestamps: List[float] = []
 
@@ -4681,6 +4701,8 @@ def build_sitemap_lastmods() -> Dict[str, str]:
     ]
     shared_symptom_sources = [BASE_DIR / "main.py", TEMPLATES_DIR / "symptom_page.html"]
     symptom_files = sorted((BASE_DIR / "data" / "symptoms").glob("*.json"))
+    shared_repair_guide_sources = [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_guide.html"]
+    repair_guide_files = sorted((BASE_DIR / "data" / "repair_guides").glob("*.json"))
 
     lastmod_sources: Dict[str, List[Path]] = {
         "/": [BASE_DIR / "main.py", TEMPLATES_DIR / "home.html"],
@@ -4688,6 +4710,7 @@ def build_sitemap_lastmods() -> Dict[str, str]:
         "/obd": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_index.html", BASE_DIR / "data" / "obd_codes.json"],
         "/obd-codes": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_codes_index.html", BASE_DIR / "data" / "obd_codes.json"],
         "/symptoms": [BASE_DIR / "main.py", TEMPLATES_DIR / "symptoms_index.html", *symptom_files],
+        "/repair-guides": [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_guides_index.html", *repair_guide_files],
     }
 
     shared_obd_index_sources = [
@@ -4710,6 +4733,10 @@ def build_sitemap_lastmods() -> Dict[str, str]:
     for file in symptom_files:
         path = f"/symptoms/{file.stem.replace('_', '-')}"
         lastmod_sources[path] = [*shared_symptom_sources, file]
+
+    for file in repair_guide_files:
+        path = f"/repair-guides/{file.stem.replace('_', '-')}"
+        lastmod_sources[path] = [*shared_repair_guide_sources, file]
 
     for path in SITEMAP_OBD_RANGE_PATHS:
         lastmod_sources[path] = list(shared_obd_index_sources)
@@ -4742,6 +4769,9 @@ def sitemap_priority_for_path(path: str) -> float:
     if normalized.startswith("/symptoms/"):
         return 0.6
 
+    if normalized.startswith("/repair-guides/"):
+        return 0.6
+
     return 0.5
 
 @app.get("/sitemap.xml", response_class=Response)
@@ -4753,6 +4783,7 @@ def sitemap():
         *[item["href"] for item in build_repair_cost_guide_cards() if item.get("href")],
         *build_sitemap_obd_detail_paths(),
         *build_sitemap_symptom_paths(),
+        *build_sitemap_repair_guide_paths(),
     ]
     seen_paths: set[str] = set()
     unique_paths: List[str] = []
