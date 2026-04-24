@@ -668,11 +668,37 @@ def normalize_obd_related_code_list(items: Any) -> List[str]:
 
 
 def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
+    norm = "".join(ch for ch in (code or "").upper() if ch.isalnum())[:7]
     seed_entry = load_obd_seed_entry(code) or {}
+    lean_causes_by_vehicle = [
+        "Toyota Camry: intake manifold gasket leaks, cracked intake boots, and MAF contamination are common lean-code starting points.",
+        "Ford F-150: vacuum leaks, PCV hose failures, intake duct leaks, and unmetered air after the MAF are common P0171/P0174 causes.",
+        "Chevy Silverado: intake manifold leaks, dirty MAF sensors, and small vacuum leaks are frequent lean-code triggers.",
+        "Honda Accord: vacuum leaks, intake tube leaks, and fuel-trim imbalance commonly trigger lean codes before an oxygen sensor is at fault.",
+    ]
+    lean_diagnostic_steps = [
+        "Review short- and long-term fuel trims at idle, 2500 RPM, and steady cruise before replacing sensors.",
+        "If rough idle is strongest at idle, inspect vacuum leaks, PCV hoses, intake boots, brake-booster hose, and manifold gasket areas first.",
+        "If the lean condition appears mainly under load, inspect fuel pressure, fuel volume, restricted filters, weak pumps, and injector delivery.",
+        "If P0171 and P0174 appear together, inspect shared intake leaks, MAF contamination, intake duct leaks, PCV faults, and other unmetered air sources.",
+        "If fuel trims are heavily positive at idle but improve with RPM, a vacuum or intake leak is more likely.",
+        "If trims get worse at highway speed or under load, fuel delivery or MAF accuracy becomes more likely than a small vacuum leak.",
+    ]
+    lean_overrides = {
+        "P0171": {
+            "causes": lean_causes_by_vehicle,
+            "diagnostic_steps": lean_diagnostic_steps,
+        },
+        "P0174": {
+            "causes": lean_causes_by_vehicle,
+            "diagnostic_steps": lean_diagnostic_steps,
+        },
+    }
+    overrides = lean_overrides.get(norm, {})
     return {
-        "causes": normalize_obd_text_list(seed_entry.get("causes")),
+        "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
         "symptoms": normalize_obd_text_list(seed_entry.get("symptoms")),
-        "diagnostic_steps": normalize_obd_text_list(seed_entry.get("diagnostic_steps")),
+        "diagnostic_steps": normalize_obd_text_list(overrides.get("diagnostic_steps") or seed_entry.get("diagnostic_steps")),
         "difficulty": normalize_obd_difficulty(seed_entry.get("difficulty")),
         "related_codes": normalize_obd_related_code_list(seed_entry.get("related_codes")),
     }
@@ -3144,11 +3170,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0171": {
             "meaning": "P0171 means bank 1 is running lean because the ECM is correcting for too much air, too little fuel, or an airflow signal it cannot trust. It is not automatically a bad oxygen sensor or MAF sensor; vacuum leaks, intake leaks after the MAF, weak fuel delivery, PCV leaks, and bank 1 intake sealing problems can all set the same code.",
-            "diagnostic_insight_intro": "P0171 should be treated as a bank 1 lean condition until fuel-trim data shows whether the issue is isolated or shared across both banks.",
+            "diagnostic_insight_intro": "P0171 should be diagnosed from fuel-trim behavior first: find when bank 1 goes lean, then decide whether the fault acts like unmetered air, low fuel delivery, or bad airflow reporting.",
             "diagnostic_insight_points": [
-                "If both banks are lean, shared causes like intake leaks after the MAF, inaccurate MAF readings, or low fuel pressure move higher on the list.",
-                "If only bank 1 is lean, bank-specific vacuum leaks, PCV routing, or intake gasket sealing deserve closer inspection.",
-                "Fuel-trim behavior at idle versus cruise helps separate air leaks from fuel-supply problems before sensors are replaced.",
+                "High positive trims at idle that improve with RPM usually point toward a vacuum leak, PCV leak, intake gasket leak, or another unmetered-air source near bank 1.",
+                "Trims that get worse during cruise or acceleration point more toward fuel pressure, fuel volume, injector delivery, or MAF under-reporting than a small idle-only leak.",
+                "If P0171 appears with P0174, treat it as a shared-air or shared-fuel problem first: intake duct leak, dirty MAF, PCV fault, low fuel pressure, or unmetered air after the MAF.",
+                "An oxygen sensor can report the lean condition correctly; replacing it before smoke testing, trim comparison, and MAF/fuel checks often misses the root cause.",
             ],
             "symptoms": [
                 "Rough idle or light surge at idle",
@@ -3156,20 +3183,21 @@ def build_obd_content_refinement(code: str):
                 "Weak cold-start behavior or reduced fuel economy",
             ],
             "quick_checks": [
-                "Compare short- and long-term fuel trims at idle and cruise to see when the lean condition appears",
-                "Inspect intake boots, PCV plumbing, and vacuum lines after the MAF for leaks",
-                "Inspect for bank 1 intake, gasket, or hose leaks where the engine layout allows",
-                "Inspect and verify MAF readings before replacing airflow or oxygen-sensor parts",
-                "Check fuel pressure or delivery volume if trims stay lean under load",
+                "Compare short- and long-term fuel trims at idle, 2500 RPM, and steady cruise to see when bank 1 goes lean",
+                "Smoke test the intake and inspect intake boots, PCV plumbing, brake-booster hose, and vacuum lines after the MAF",
+                "Inspect the bank 1 intake gasket area and nearby hose connections when trims are idle-heavy or bank-specific",
+                "Inspect MAF contamination and compare airflow data to engine load before replacing oxygen-sensor or airflow parts",
+                "Check fuel pressure and fuel volume if trims stay lean under load or worsen at highway speed",
             ],
         },
         "P0174": {
             "meaning": "P0174 means bank 2 is running lean because the ECM is correcting for too much air, too little fuel, or an airflow signal it cannot trust. It is not automatically a bad oxygen sensor or MAF sensor; vacuum leaks, intake leaks after the MAF, weak fuel delivery, PCV leaks, and bank-specific intake sealing problems can all set the same code.",
-            "diagnostic_insight_intro": "P0174 should be treated as a bank 2 lean condition until fuel-trim data shows whether the issue is isolated or shared across both banks.",
+            "diagnostic_insight_intro": "P0174 should be diagnosed from fuel-trim behavior first: find when bank 2 goes lean, then decide whether the fault acts like unmetered air, low fuel delivery, or bad airflow reporting.",
             "diagnostic_insight_points": [
-                "If both banks are lean, shared causes like intake leaks after the MAF, inaccurate MAF readings, or low fuel pressure move higher on the list.",
-                "If only bank 2 is lean, bank-specific vacuum leaks, PCV routing, or intake gasket sealing deserve closer inspection.",
-                "Fuel-trim behavior at idle versus cruise helps separate air leaks from fuel-supply problems before sensors are replaced.",
+                "High positive trims at idle that improve with RPM usually point toward a vacuum leak, PCV leak, intake gasket leak, or another unmetered-air source near bank 2.",
+                "Trims that get worse during cruise or acceleration point more toward fuel pressure, fuel volume, injector delivery, or MAF under-reporting than a small idle-only leak.",
+                "If P0174 appears with P0171, treat it as a shared-air or shared-fuel problem first: intake duct leak, dirty MAF, PCV fault, low fuel pressure, or unmetered air after the MAF.",
+                "An oxygen sensor can report the lean condition correctly; replacing it before smoke testing, trim comparison, and MAF/fuel checks often misses the root cause.",
             ],
             "symptoms": [
                 "Light surge or rough idle",
@@ -3177,11 +3205,11 @@ def build_obd_content_refinement(code: str):
                 "Weak cold-start behavior or reduced fuel economy",
             ],
             "quick_checks": [
-                "Compare short- and long-term fuel trims at idle and cruise to see when the lean condition appears",
-                "Inspect intake boots, PCV plumbing, and vacuum lines after the MAF for leaks",
-                "Inspect for bank 2 intake, gasket, or hose leaks where the engine layout allows",
-                "Inspect and verify MAF readings before replacing airflow or oxygen-sensor parts",
-                "Check fuel pressure or delivery volume if trims stay lean under load",
+                "Compare short- and long-term fuel trims at idle, 2500 RPM, and steady cruise to see when bank 2 goes lean",
+                "Smoke test the intake and inspect intake boots, PCV plumbing, brake-booster hose, and vacuum lines after the MAF",
+                "Inspect the bank 2 intake gasket area and nearby hose connections when trims are idle-heavy or bank-specific",
+                "Inspect MAF contamination and compare airflow data to engine load before replacing oxygen-sensor or airflow parts",
+                "Check fuel pressure and fuel volume if trims stay lean under load or worsen at highway speed",
             ],
         },
         "P0420": {
