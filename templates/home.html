@@ -407,13 +407,16 @@
   </div>
 
   <div class="tm-homeSearch">
-    <input
-      id="diagSearch"
-      class="tm-search-input"
-      type="text"
-      placeholder="Search symptoms and workflows: rough idle, cold start misfire, poor fuel economy..."
-      autocomplete="off"
-    />
+    <div class="tm-homeSearch__bar">
+      <input
+        id="diagSearch"
+        class="tm-search-input"
+        type="text"
+        placeholder="Search symptoms and workflows: rough idle, cold start misfire, poor fuel economy..."
+        autocomplete="off"
+      />
+      <button id="diagSearchCta" type="button" class="tm-btn tm-btn-primary tm-homeSearch__cta">Start Diagnosis</button>
+    </div>
     <div id="diagSuggestions" class="tm-search-suggestions"></div>
   </div>
 </section>
@@ -425,6 +428,7 @@
 
 <script>
 const search = document.getElementById("diagSearch");
+const searchCta = document.getElementById("diagSearchCta");
 const suggestions = document.getElementById("diagSuggestions");
 
 const diagnosticGuides = [
@@ -494,6 +498,30 @@ function showSuggestions(term) {
   suggestions.style.display = "block";
 }
 
+function getBestDiagnosticGuide(term) {
+  const normalized = (term || "").trim().toLowerCase();
+
+  if (!normalized) {
+    return null;
+  }
+
+  return diagnosticGuides.find(g =>
+    g.title.toLowerCase().includes(normalized) ||
+    g.search.some(s => s.includes(normalized))
+  ) || null;
+}
+
+function startDiagnosis() {
+  const bestMatch = getBestDiagnosticGuide(search ? search.value : "");
+
+  if (bestMatch) {
+    window.location.href = bestMatch.href;
+    return;
+  }
+
+  window.location.href = "/symptoms";
+}
+
 if (search && suggestions) {
   search.addEventListener("input", function () {
     showSuggestions(this.value.trim().toLowerCase());
@@ -507,6 +535,19 @@ if (search && suggestions) {
     setTimeout(() => {
       suggestions.style.display = "none";
     }, 150);
+  });
+
+  search.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      startDiagnosis();
+    }
+  });
+}
+
+if (searchCta) {
+  searchCta.addEventListener("click", function () {
+    startDiagnosis();
   });
 }
 
