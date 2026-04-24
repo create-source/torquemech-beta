@@ -33,7 +33,7 @@
   <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
   <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
 
-  <link rel="stylesheet" href="/static/style.css?v=32">
+  <link rel="stylesheet" href="/static/style.css?v=34">
   <script src="/static/app.js?v=33" defer></script>
   {% block page_css %}{% endblock %}
 </head>
@@ -73,7 +73,7 @@
   </footer>
 
   <script src="/static/nav.js?v=4"></script>
-  <script src="/static/feedback.js?v=4"></script>
+  <script src="/static/feedback.js?v=5"></script>
   {% block page_js %}{% endblock %}
 
   <div id="feedbackModal" class="tm-modal" hidden>
@@ -115,6 +115,16 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="feedbackReminder" class="tm-feedback-reminder" hidden aria-live="polite">
+    <button type="button" class="tm-feedback-reminder__close" id="feedbackReminderClose" aria-label="Dismiss feedback reminder">✕</button>
+    <p class="tm-feedback-reminder__title">Help improve TorqueMech Beta</p>
+    <p class="tm-feedback-reminder__text">Quick feedback helps us make the diagnostic tools better.</p>
+    <div class="tm-feedback-reminder__actions">
+      <button type="button" class="tm-btn tm-btn-primary" id="feedbackReminderSend">Send Feedback</button>
+      <button type="button" class="tm-btn tm-btn-ghost" id="feedbackReminderLater">Maybe later</button>
     </div>
   </div>
 </body>
