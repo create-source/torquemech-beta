@@ -3188,8 +3188,8 @@ def build_obd_page_metadata(code: str):
             "description": "P0507 means idle speed is too high. Start with throttle body carbon or sticking issues, then check relearn and vacuum-leak faults with mechanic-first repair guidance.",
         },
         "P0562": {
-            "title": "P0562 System Voltage Low: Causes & Repairs | TorqueMech",
-            "description": "P0562 means system voltage is low. Check for a weak battery, charging issues, or wiring faults with likely repairs and battery or alternator cost guidance.",
+            "title": "P0562 Code: System Voltage Low Causes, Battery Symptoms & Alternator Fix Guide | TorqueMech",
+            "description": "Diagnose P0562 system voltage low issues, battery warning signs, charging system symptoms, alternator failure clues, and when repairs are actually needed before no-start problems worsen.",
         },
         "P0563": {
             "title": "P0563 System Voltage High: Causes & Repairs | TorqueMech",
