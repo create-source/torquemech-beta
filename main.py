@@ -3152,8 +3152,10 @@ def build_obd_page_metadata(code: str):
             "description": "P0302 means cylinder 2 is misfiring. Review the most common ignition, fuel, air, or compression causes, likely repairs, and cost guidance.",
         },
         "P0303": {
-            "title": "P0303 Cylinder 3 Misfire: Start With Plug or Coil | TorqueMech",
-            "description": "P0303 means cylinder 3 is misfiring. Start with the plug or coil, then check injector, intake-runner leak, and compression faults with practical repair guidance.",
+            "title": "P0303 Code: Cylinder 3 Misfire Causes, Symptoms & Repair Cost Guide | TorqueMech",
+            "description": "Diagnose P0303 cylinder 3 misfire causes, cold-start symptoms, ignition coil vs injector clues, repair costs, and when compression or head gasket issues should be checked.",
+            "schema_title": "P0303 Cylinder 3 Misfire: Start With Plug or Coil | TorqueMech",
+            "schema_description": "P0303 means cylinder 3 is misfiring. Start with the plug or coil, then check injector, intake-runner leak, and compression faults with practical repair guidance.",
         },
         "P0304": {
             "title": "P0304 Cylinder 4 Misfire: Causes & Repairs | TorqueMech",
@@ -3983,10 +3985,20 @@ async def obd_code_page(request: Request, code: str):
         if page_metadata and page_metadata.get("description")
         else display_description
     )
+    schema_page_title = (
+        page_metadata["schema_title"]
+        if page_metadata and page_metadata.get("schema_title")
+        else page_title
+    )
+    schema_page_description = (
+        page_metadata["schema_description"]
+        if page_metadata and page_metadata.get("schema_description")
+        else page_description
+    )
     structured_data = build_obd_structured_data(
         row["code"],
-        page_title,
-        page_description,
+        schema_page_title,
+        schema_page_description,
         str(request.url),
     )
 
