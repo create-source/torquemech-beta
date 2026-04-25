@@ -2190,7 +2190,7 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
     related: List[Dict[str, str]] = []
     seen_codes = {code}
 
-    def add_candidate(candidate_code: str, fallback_label: str = "") -> None:
+    def add_candidate(candidate_code: str, fallback_label: str = "", prefer_fallback: bool = False) -> None:
         candidate_code = str(candidate_code or "").upper().strip()
         if not candidate_code or candidate_code in seen_codes or candidate_code not in available_titles:
             return
@@ -2198,7 +2198,11 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         related.append(
             {
                 "code": candidate_code,
-                "label": available_titles.get(candidate_code) or fallback_label or candidate_code,
+                "label": (
+                    fallback_label
+                    if prefer_fallback and fallback_label
+                    else available_titles.get(candidate_code) or fallback_label or candidate_code
+                ),
             }
         )
 
@@ -2225,10 +2229,19 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0562": ["P0563"],
         "P0563": ["P0562"],
     }
+    curated_related_labels = {
+        "P0303": {
+            "P0300": "Random/multiple misfire diagnosis when more cylinders join the fault",
+            "P0301": "Cylinder 1 misfire comparison for single-cylinder testing",
+            "P0302": "Cylinder 2 misfire comparison for plug, coil, and injector checks",
+            "P0304": "Cylinder 4 misfire comparison when nearby cylinders show similar symptoms",
+        },
+    }
 
     if code in curated_related_map:
         for candidate_code in curated_related_map[code]:
-            add_candidate(candidate_code)
+            related_label = curated_related_labels.get(code, {}).get(candidate_code, "")
+            add_candidate(candidate_code, related_label, bool(related_label))
         return related[:max_items]
 
     clusters = {
@@ -2545,9 +2558,9 @@ def build_common_repairs(code: str):
             "Vacuum leak smoke test": "Useful when cylinder 2 is near an intake leak or fuel trims point to unmetered air.",
         },
         "P0303": {
-            "Spark plug replacement": "A strong estimate path when the cylinder 3 plug is worn, fouled, oil-soaked, or the misfire follows the plug.",
-            "Ignition coil replacement": "Use this after the cylinder 3 misfire follows the coil or coil output testing confirms the fault.",
-            "Fuel injector replacement": "Price this when the misfire stays on cylinder 3 after ignition checks and injector testing confirms a fuel fault.",
+            "Spark plug replacement": "A strong estimate path when the cylinder 3 plug is fouled, oil-soaked, incorrectly gapped, carbon tracked, or the cold-start misfire follows the plug.",
+            "Ignition coil replacement": "Use this when the cylinder 3 misfire follows the coil after a swap, gets worse under load, or boot tracking and coil-output checks confirm ignition breakdown.",
+            "Fuel injector replacement": "Price this when the misfire stays on cylinder 3 after coil and plug swaps, and injector balance or contribution testing separates fuel delivery from ignition.",
             "Vacuum leak smoke test": "Useful when cylinder 3 is near an intake leak or fuel trims point to unmetered air.",
         },
         "P0304": {
@@ -2687,17 +2700,17 @@ def build_cost_guide_links(code: str):
             {
                 "label": "Spark Plug Replacement Cost",
                 "href": "/cost/spark-plug-replacement",
-                "description": "A strong next cost check when the cylinder-specific misfire tracks back to the plug.",
+                "description": "A strong next cost check when cylinder 3 shows plug fouling, gap problems, carbon tracking, or cold-start misfire clues that follow the plug.",
             },
             {
                 "label": "Ignition Coil Replacement Cost",
                 "href": "/cost/ignition-coil-replacement",
-                "description": "Useful when the cylinder-specific misfire follows the coil or a coil output problem is confirmed.",
+                "description": "Useful when the cylinder 3 misfire follows the coil after a swap, worsens under load, or coil boot tracking points to ignition breakdown.",
             },
             {
                 "label": "Fuel Injector Replacement Cost",
                 "href": "/cost/fuel-injector-replacement",
-                "description": "Relevant when the cylinder-specific misfire stays fixed after ignition checks and injector testing confirms the fault.",
+                "description": "Relevant when the misfire stays on cylinder 3 after coil and plug swaps, and injector balance testing points to fuel delivery instead of ignition.",
             },
         ],
         "P0304": [
@@ -3182,6 +3195,10 @@ def build_obd_page_metadata(code: str):
             "title": "P0304 Cylinder 4 Misfire: Causes & Repairs | TorqueMech",
             "description": "P0304 means cylinder 4 is misfiring. Review the most common ignition, fuel, air, or compression causes, likely repairs, and cost guidance.",
         },
+        "P0373": {
+            "title": "P0373 Code: Timing Reference Signal Causes, Symptoms & Fix Guide | TorqueMech",
+            "description": "Diagnose P0373 timing reference signal faults, crankshaft sensor symptoms, warm restart stalls, unstable RPM signals, and when timing chain or reluctor problems should be checked.",
+        },
         "P0171": {
             "title": "P0171 System Too Lean Bank 1: Start With Vacuum Leaks | TorqueMech",
             "description": "P0171 means bank 1 is running lean. Start with vacuum leaks after the MAF, then check airflow readings and fuel-delivery issues with mechanic-first repair guidance.",
@@ -3349,13 +3366,14 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0303": {
-            "meaning": "P0303 means cylinder 3 is misfiring often enough for the ECM to flag it. Good diagnosis confirms whether the problem follows the plug or coil, stays with the injector, or points to compression loss on that cylinder.",
-            "diagnostic_insight_intro": "P0303 should be narrowed by condition and movement: whether cylinder 3 misfires cold, under load, or remains fixed after component swaps changes the repair path.",
+            "meaning": "P0303 means cylinder 3 is misfiring often enough for the ECM to flag it. Good diagnosis confirms whether the problem follows the plug or coil, stays with the injector, or points to compression loss, leak-down failure, or a small coolant seep on that cylinder.",
+            "diagnostic_insight_intro": "P0303 should be narrowed by condition and movement: whether cylinder 3 misfires cold, under load, or remains fixed after plug and coil swaps determines whether ignition, injector, compression, or head gasket testing comes next.",
             "diagnostic_insight_points": [
-                "If the misfire follows a cylinder 3 coil or plug swap, the swapped ignition part becomes the leading suspect.",
-                "Cold-start misfire that improves warm can point to injector leakdown, coolant seep, or valve sealing rather than a simple coil fault.",
-                "Load-related misfire keeps coil breakdown, plug gap, and boot tracking high on the list.",
-                "If the fault stays on cylinder 3 with clean plugs, compression, leak-down, and injector balance testing become important.",
+                "If the misfire follows a cylinder 3 coil swap, ignition coil replacement becomes a stronger path; if it follows the plug, inspect fouling, gap, carbon tracking, and plug condition first.",
+                "Cold-start misfire that improves warm can point to injector leakdown, plug fouling, valve sealing, or small head gasket coolant seep rather than a simple coil fault.",
+                "Load-related misfire keeps coil breakdown, plug gap, plug-wire or boot tracking, and spark leakage high on the list.",
+                "If the fault stays on cylinder 3 after plug and coil swaps, injector balance, contribution testing, compression testing, and leak-down testing become important.",
+                "Repeated same-cylinder misfire after ignition parts replacement should raise suspicion for fuel injector, compression, valve sealing, or coolant intrusion issues.",
             ],
             "symptoms": [
                 "Noticeable shake at idle",
@@ -3365,8 +3383,10 @@ def build_obd_content_refinement(code: str):
             "quick_checks": [
                 "Swap the cylinder 3 coil with another cylinder and see whether the misfire follows",
                 "Inspect the cylinder 3 spark plug for wear, gap, oil, fuel fouling, coolant staining, or a washed-clean tip",
+                "Check for coil boot carbon tracking, spark leakage, and load-related ignition breakdown if the misfire worsens under acceleration",
                 "Check injector connector fit, injector operation, and leakdown or balance if the misfire stays on cylinder 3",
                 "Run compression and leak-down testing if ignition and injector checks do not move the fault",
+                "Inspect for cold-start coolant seep clues such as coolant loss, a washed-clean plug, or overnight rough running",
                 "Inspect for intake runner or vacuum leaks near cylinder 3 if trims suggest unmetered air",
             ],
         },
