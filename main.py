@@ -794,12 +794,37 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": downstream_o2_diagnostic_steps,
         },
     }
+    temperature_causes_by_vehicle = [
+        "Toyota Camry: stuck-open thermostats, coolant temperature sensor drift, and low coolant are common temperature-code starting points.",
+        "Ford F-150: thermostat failures, coolant temperature connector corrosion, and harness issues are frequent P0128/P0110-adjacent causes.",
+        "Chevy Silverado: coolant level issues, thermostat wear, connector problems, and sensor data drift often trigger temperature-related codes.",
+        "Honda Accord: aging thermostats, ECT sensor issues, IAT connector faults, and intake-temperature circuit problems are common.",
+    ]
+    temperature_diagnostic_steps = [
+        "If the engine takes too long to reach operating temperature, verify warm-up data because the thermostat is likely stuck open.",
+        "If cabin heat is weak at idle, inspect coolant level, coolant flow, air pockets, and thermostat behavior before replacing sensors.",
+        "If the temperature gauge is inconsistent, compare ECT sensor readings to ambient temperature, infrared readings, and scan data before replacing parts.",
+        "If P0128 returns after thermostat replacement, inspect coolant level, ECT sensor accuracy, connector condition, and thermostat housing sealing.",
+        "If P0110 appears with cold-start drivability issues, inspect intake air temperature sensor wiring, connector fit, and signal voltage before replacing components.",
+        "If IAT or ECT data is implausible on a cold engine, diagnose the circuit and connector before assuming the sensor is the only fault.",
+    ]
+    temperature_overrides = {
+        "P0128": {
+            "causes": temperature_causes_by_vehicle,
+            "diagnostic_steps": temperature_diagnostic_steps,
+        },
+        "P0110": {
+            "causes": temperature_causes_by_vehicle,
+            "diagnostic_steps": temperature_diagnostic_steps,
+        },
+    }
     overrides = (
         lean_overrides.get(norm, {})
         or catalyst_overrides.get(norm, {})
         or evap_overrides.get(norm, {})
         or airflow_overrides.get(norm, {})
         or downstream_o2_overrides.get(norm, {})
+        or temperature_overrides.get(norm, {})
     )
     return {
         "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
@@ -3450,11 +3475,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0128": {
             "meaning": "P0128 means the engine coolant temperature is not reaching the expected operating range quickly enough. A thermostat stuck open is common, but low coolant level, inaccurate coolant temperature sensor data, cooling fan issues, wiring faults, or sensor faults can also mislead the monitor.",
-            "diagnostic_insight_intro": "P0128 should be treated as a warm-up and coolant-temperature plausibility problem before replacing parts.",
+            "diagnostic_insight_intro": "P0128 should be diagnosed from warm-up behavior and ECT plausibility: prove whether the engine is truly running too cool or the temperature data is misleading.",
             "diagnostic_insight_points": [
-                "If live coolant temperature stays low after a cold start and on the highway, the thermostat stays high on the suspect list.",
-                "Weak cabin heat, long warm-up time, and reduced fuel economy support a thermostat-first diagnosis.",
-                "Coolant level, fan behavior, sensor data, and wiring condition should be checked before blaming one part.",
+                "If live coolant temperature rises slowly and stays low during cruise, a stuck-open thermostat stays high on the suspect list.",
+                "Weak cabin heat at idle should push coolant level, air pockets, heater flow, and thermostat behavior ahead of sensor replacement.",
+                "An inconsistent gauge or scan reading should be compared against cold-engine ambient temperature and external temperature checks before parts are replaced.",
+                "If P0128 returns after thermostat replacement, inspect coolant level, ECT sensor accuracy, connector condition, thermostat housing sealing, and cooling fan behavior.",
             ],
             "symptoms": [
                 "Poor cabin heat or longer warm-up time",
@@ -3462,11 +3488,11 @@ def build_obd_content_refinement(code: str):
                 "Check engine light or unstable temperature behavior",
             ],
             "quick_checks": [
-                "Verify coolant level and condition before replacing parts",
-                "Monitor live coolant temperature data from a cold start",
-                "Compare warm-up behavior to expected thermostat opening behavior",
-                "Inspect thermostat behavior before replacing coolant temperature sensors",
-                "Inspect coolant temperature sensor readings, connector, and wiring if data looks inconsistent",
+                "Verify coolant level, coolant condition, and trapped-air concerns before replacing parts",
+                "Monitor live ECT data from a cold start through normal operating temperature",
+                "Compare warm-up behavior to expected thermostat opening behavior and highway temperature stability",
+                "Compare ECT scan data with ambient temperature on a cold engine and external temperature checks when readings look inconsistent",
+                "Inspect ECT connector, wiring, thermostat housing, and cooling fan behavior if the code returns after thermostat service",
             ],
         },
         "P0446": {
@@ -3535,11 +3561,12 @@ def build_obd_content_refinement(code: str):
         },
         "P0110": {
             "meaning": "P0110 means the intake air temperature circuit is malfunctioning. It is not automatically just a bad IAT sensor; an unplugged sensor, damaged wiring, connector corrosion, an open or shorted circuit, failed sensor, or integrated MAF/IAT assembly issue can set the same code.",
-            "diagnostic_insight_intro": "P0110 should be treated as an intake-temperature circuit fault before the IAT sensor itself is condemned.",
+            "diagnostic_insight_intro": "P0110 should be diagnosed as an intake-temperature signal circuit problem, with scan data, connector checks, and voltage behavior leading the repair path.",
             "diagnostic_insight_points": [
-                "The IAT reading should be compared with ambient temperature before parts are replaced.",
-                "Connector corrosion, wiring damage, or an open or shorted circuit can mimic a failed sensor.",
-                "On vehicles with an integrated MAF/IAT assembly, confirming the sensor location changes the repair path.",
+                "Cold-start drivability issues with P0110 should move IAT signal voltage, connector fit, and wiring integrity ahead of parts replacement.",
+                "The IAT reading should be compared with ambient temperature on a cold engine before deciding whether the signal is biased.",
+                "Connector corrosion, loose terminals, wiring damage, opens, or shorts can mimic a failed sensor.",
+                "On vehicles with an integrated MAF/IAT assembly, confirming the sensor location changes whether the repair is a sensor, connector, harness, or MAF assembly path.",
             ],
             "symptoms": [
                 "Check engine light",
@@ -3549,11 +3576,11 @@ def build_obd_content_refinement(code: str):
                 "Poor fuel economy",
             ],
             "quick_checks": [
-                "Inspect IAT connector fit and terminal condition",
-                "Inspect wiring for damage, corrosion, or intake-area heat damage",
-                "Compare IAT reading to ambient temperature on a cold engine",
-                "Verify reference or resistance behavior if appropriate",
-                "Confirm whether the IAT is integrated into the MAF housing before replacing parts",
+                "Inspect IAT connector fit, terminal tension, corrosion, and lock-tab condition",
+                "Inspect wiring for opens, shorts, rub-through, corrosion, or intake-area heat damage",
+                "Compare IAT reading to ambient temperature on a cold engine before startup",
+                "Verify signal voltage, reference behavior, and resistance behavior if appropriate for the sensor design",
+                "Confirm whether the IAT is integrated into the MAF housing before replacing separate parts",
             ],
         },
         "P0113": {
