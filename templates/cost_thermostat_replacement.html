@@ -96,7 +96,7 @@
       <h2>Average Cost</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$220 to $600+</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Typical total depends on thermostat housing design, coolant type, and how much teardown is needed to reach the part.
+        Typical total depends on whether the thermostat is stuck open or stuck closed, housing design, coolant type, and how much teardown is needed to reach the part.
       </p>
     </article>
 
@@ -104,7 +104,7 @@
       <h2>Labor Time</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 3.0 hours</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Some thermostats sit right up front, while others are buried under intake plumbing or tight cooling-system packaging.
+        Engine layout and access drive labor time. Some thermostats sit up front, while others are buried under intake plumbing or tight cooling-system packaging.
       </p>
     </article>
 
@@ -112,7 +112,7 @@
       <h2>Parts Cost</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$25 to $180+</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Price changes based on whether the repair uses a simple thermostat, a full housing assembly, or added seals and coolant.
+        Price changes based on whether the repair uses a simple thermostat, a full thermostat housing assembly, added seals, and fresh coolant.
       </p>
     </article>
 
@@ -140,11 +140,12 @@
     <article class="tm-card">
       <h2>When Thermostat Replacement Is Needed</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>The engine stays too cool on the highway as well as around town</li>
-        <li>Warm-up time is long and heater output stays weak</li>
-        <li>P0128 or similar temperature behavior points to a stuck-open thermostat</li>
-        <li>Overheating or erratic coolant circulation suggests the thermostat is sticking or not controlling flow correctly</li>
-        <li>Coolant level and temperature-sensor data have been checked so the thermostat is the more credible fault</li>
+        <li>The engine takes too long to warm up or stays too cool on the highway</li>
+        <li>Cabin heat is weak at idle or on cold mornings even after the engine should be warm</li>
+        <li>A repeated <a href="/obd/p0128">P0128</a> check engine light returns after reset</li>
+        <li>Overheating appears after a partial cooling-system repair or erratic coolant circulation suggests the thermostat is sticking</li>
+        <li>Visible coolant seep appears around the thermostat housing, outlet, gasket, or nearby hose connection</li>
+        <li>Coolant level and <a href="/cost/engine-coolant-temperature-sensor-replacement">coolant temperature sensor</a> data have been checked so the thermostat is the more credible fault</li>
       </ul>
     </article>
   </section>
@@ -153,14 +154,15 @@
     <article class="tm-card">
       <h2>Service Overview</h2>
       <p class="tm-muted">
-        A thermostat quote usually starts with confirming the cooling system is behaving the way the code or gauge suggests. Good shops verify sensor readings, coolant level, and circulation before replacing the thermostat so the real failure is not missed.
+        A thermostat quote usually starts with confirming the cooling system is behaving the way the code or gauge suggests. A stuck-open thermostat often creates slow warm-up and weak heat, while a stuck-closed or sticking thermostat can raise urgency because overheating can lead to secondary engine damage. Good shops verify sensor readings, coolant level, and circulation before replacing the thermostat so the real failure is not missed.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
         <li>Confirm coolant-temperature behavior with scan data or gauge readings</li>
         <li>Drain coolant and access the thermostat housing</li>
-        <li>Replace the thermostat or thermostat housing and install new seals</li>
-        <li>Refill and bleed the cooling system properly</li>
+        <li>Replace the thermostat or full thermostat housing assembly when the design requires it</li>
+        <li>Refill with the correct coolant and bleed the cooling system to prevent air pockets</li>
         <li>Recheck operating temperature and heater performance</li>
+        <li>Inspect for leaks around the housing, hoses, and outlet after the engine reaches temperature</li>
       </ul>
     </article>
   </section>
@@ -169,12 +171,13 @@
     <article class="tm-card">
       <h2>Common OBD Codes Related to Thermostat Replacement</h2>
       <p class="tm-muted">
-        Thermostat replacement becomes more credible when warm-up behavior and coolant data point to flow control rather than a misleading sensor signal alone.
+        Thermostat replacement becomes more credible when <a href="/obd/p0128">P0128 diagnosis</a>, warm-up behavior, and coolant data point to flow control rather than a misleading sensor signal alone. If temperature data does not match the actual engine condition, check the coolant temperature sensor path before replacing cooling-system parts.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
         <li><a href="/obd/p0128">P0128</a> - Coolant thermostat below regulating temperature</li>
         <li><a href="/obd/p0118">P0118</a> - Engine coolant temperature circuit high input</li>
         <li><a href="/obd/p0117">P0117</a> - Engine coolant temperature circuit low input</li>
+        <li><a href="/diagnostics">Overheating diagnostic workflow</a> - Cooling-system direction when temperature behavior is unstable</li>
       </ul>
     </article>
   </section>
@@ -183,7 +186,7 @@
     <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to turn a confirmed thermostat fault into an estimate. This handoff works best after warm-up behavior, coolant level, and temperature data support the thermostat path.
+        Use TorqueMech to turn a confirmed thermostat fault into an estimate. This handoff works best after warm-up behavior, coolant level, bleeding needs, thermostat housing design, and temperature data support the thermostat path.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
         <a class="tm-btn tm-btn-primary" href="/estimator?service=thermostat_replacement">Build Thermostat Estimate</a>
