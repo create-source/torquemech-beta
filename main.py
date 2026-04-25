@@ -876,6 +876,26 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": low_voltage_diagnostic_steps,
         },
     }
+    timing_reference_causes = [
+        "Crankshaft position sensor signal irregularity or dropout",
+        "Cam/crank correlation issues affecting the timing reference signal",
+        "Damaged reluctor wheel teeth, debris, excessive air gap, or signal interruption",
+        "Connector corrosion, loose terminals, or wiring faults near CKP or CMP sensors",
+        "Timing chain stretch or mechanical timing movement creating unstable reference timing",
+    ]
+    timing_reference_diagnostic_steps = [
+        "If intermittent no-start or stalling happens during warm restart, inspect crank reference signal stability before replacing unrelated parts.",
+        "If the tachometer drops out during cranking, verify CKP signal loss and power or ground integrity at the sensor circuit.",
+        "If scan data shows an unstable RPM signal, confirm the signal with circuit and waveform testing before replacing parts.",
+        "Use CKP and CMP waveform testing to compare signal shape, dropout, and correlation instead of relying on blind sensor replacement.",
+        "If timing-reference faults return after sensor replacement, inspect reluctor condition, sensor air gap, timing chain stretch, and mechanical timing.",
+    ]
+    timing_reference_overrides = {
+        "P0373": {
+            "causes": timing_reference_causes,
+            "diagnostic_steps": timing_reference_diagnostic_steps,
+        },
+    }
     overrides = (
         misfire_overrides.get(norm, {})
         or lean_overrides.get(norm, {})
@@ -885,6 +905,7 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
         or downstream_o2_overrides.get(norm, {})
         or temperature_overrides.get(norm, {})
         or low_voltage_overrides.get(norm, {})
+        or timing_reference_overrides.get(norm, {})
     )
     return {
         "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
@@ -3864,6 +3885,30 @@ def build_obd_content_refinement(code: str):
                 "Inspect regulator and alternator control wiring for faults or poor sensing",
                 "Inspect battery terminals and sensing connections for poor contact",
                 "Do not keep driving if charging voltage is far above normal",
+            ],
+        },
+        "P0373": {
+            "meaning": "P0373 means the high-resolution timing reference signal B has too few pulses for the ECM to trust engine position. The fault can come from crankshaft or camshaft position signal dropout, a damaged reluctor, wiring or connector issues near the CKP/CMP sensors, or mechanical timing instability.",
+            "diagnostic_insight_intro": "P0373 should be diagnosed as an engine-position signal integrity problem. The repair path depends on whether the RPM signal drops out, the CKP/CMP waveforms lose pulses, or mechanical timing and reluctor condition are disturbing the reference signal.",
+            "diagnostic_insight_points": [
+                "Intermittent no-start or warm restart stalling points strongly toward a crank reference signal that becomes unstable with heat or vibration.",
+                "A tachometer that drops out during cranking supports CKP signal loss, but sensor power, ground, connector fit, and harness routing still need to be verified.",
+                "Unstable RPM data on the scan tool should be confirmed with waveform testing before a sensor is condemned.",
+                "CKP/CMP waveform comparison is stronger than blind sensor replacement because it can reveal missing pulses, poor amplitude, noise, or correlation errors.",
+                "A repeat timing-reference fault after sensor replacement should move the diagnosis toward reluctor wheel damage, sensor air gap, timing chain stretch, or mechanical timing movement.",
+            ],
+            "symptoms": [
+                "Intermittent no-start or extended crank",
+                "Stalling, especially during warm restart or low-speed operation",
+                "Tachometer dropout or unstable RPM signal during cranking",
+                "Rough running, misfire-like behavior, or reduced power in some cases",
+            ],
+            "quick_checks": [
+                "Review cranking RPM and scan data for unstable or missing engine-speed signal",
+                "Inspect CKP and CMP sensor connectors, terminal tension, corrosion, and harness routing near heat or moving components",
+                "Scope CKP and CMP waveforms for missing pulses, poor amplitude, noise, or cam/crank correlation problems",
+                "Inspect reluctor wheel condition, sensor air gap, and mounting if waveform data shows signal interruption",
+                "Check timing chain stretch or mechanical timing if the fault returns after sensor and wiring checks",
             ],
         },
         "P0117": {
