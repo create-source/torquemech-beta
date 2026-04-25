@@ -96,7 +96,7 @@
       <h2>Estimated Cost</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">$350 to $900+</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Typical total depends on labor access and whether the replacement uses a remanufactured, aftermarket, or OE-quality alternator.
+        Typical total depends on charging-system testing, engine bay access, belt routing, and whether the replacement uses a remanufactured, aftermarket, or OE-quality alternator.
       </p>
     </article>
 
@@ -104,7 +104,7 @@
       <h2>Labor Time</h2>
       <p style="font-size:1.9rem; font-weight:900; color:var(--tm-text); margin:0 0 8px;">1.0 to 3.0 hours</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Some alternators are easy to reach, while others require shields, intake parts, or tighter front-end access.
+        Engine bay access and belt routing can significantly affect labor time. Some alternators are easy to reach, while others require shields, intake parts, or tighter front-end access.
       </p>
     </article>
 
@@ -120,7 +120,7 @@
       <h2>Repair Difficulty</h2>
       <p class="tm-difficulty-moderate">Moderate</p>
       <p class="tm-muted" style="margin-bottom:0;">
-        Moderate. Access varies by engine layout, and some vehicles need shields or intake parts removed.
+        Moderate. Access varies by engine layout, and some vehicles naturally overlap with serpentine belt, tensioner, or idler pulley service.
       </p>
     </article>
   </section>
@@ -129,11 +129,12 @@
     <article class="tm-card">
       <h2>Replacement Signs</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Battery warning light on the dash</li>
-        <li>Repeated dead battery or slow cranking</li>
-        <li>Dim headlights or flickering interior lights</li>
-        <li>Electrical accessories running weak or intermittent</li>
-        <li>Charging voltage testing out of range</li>
+        <li>Battery repeatedly dies after replacement or recharge</li>
+        <li>Dim headlights at idle or with accessories on</li>
+        <li>Charging system warning light stays on</li>
+        <li>Voltage drops under blower motor, rear defroster, or A/C load</li>
+        <li>Whining, grinding, or bearing noise near the alternator pulley</li>
+        <li>Charging voltage tests low, unstable, or out of range</li>
       </ul>
     </article>
 
@@ -142,9 +143,10 @@
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
         <li>Alternator location and engine bay access</li>
         <li>Vehicle make, model, and engine package</li>
-        <li>Charging-system testing before replacement</li>
-        <li>Drive belt condition and related hardware</li>
+        <li>Charging-system testing before replacement so weak batteries, cables, or grounds are not misdiagnosed</li>
+        <li>Drive belt routing, serpentine belt condition, tensioner condition, and related idler hardware</li>
         <li>Part type: remanufactured, aftermarket, or OE</li>
+        <li>Risk of no-start complaints and battery damage if the charging fault is delayed</li>
       </ul>
     </article>
   </section>
@@ -153,14 +155,15 @@
     <article class="tm-card">
       <h2>Service Overview</h2>
       <p class="tm-muted">
-        A solid alternator quote usually starts with charging-system confirmation first. Good shops check output, inspect the belt drive, and make sure the battery or wiring is not the real failure before replacing the unit.
+        A solid alternator quote starts with charging-system confirmation first. Good shops test the battery, measure alternator output under load, inspect voltage drop at cables and grounds, and make sure the belt drive is not slipping before replacing the unit. A weak battery can mimic alternator failure, and delaying a true charging fault can lead to no-start situations or shorten battery life.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
-        <li>Confirm low or unstable charging voltage</li>
-        <li>Inspect belt condition and tensioner operation</li>
+        <li>Test battery condition before condemning the alternator</li>
+        <li>Confirm low or unstable charging voltage with electrical load applied</li>
+        <li>Inspect belt condition, belt routing, tensioner operation, and idler pulley noise</li>
         <li>Remove shields or front-drive components as needed</li>
         <li>Install the replacement alternator and reconnect wiring</li>
-        <li>Retest charging voltage after the repair</li>
+        <li>Retest charging voltage, battery recovery, and accessory-load behavior after the repair</li>
       </ul>
     </article>
   </section>
@@ -169,7 +172,7 @@
     <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to build an alternator replacement estimate with your labor rate, selected service, and vehicle context.
+        Use TorqueMech to build an alternator replacement estimate after battery testing and charging-system diagnosis confirm the alternator path. The estimate is stronger when belt, tensioner, idler, and access needs are already understood.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
         <a class="tm-btn tm-btn-primary" href="/estimator?service=alternator_replacement">Estimate Alternator Replacement</a>
@@ -180,12 +183,14 @@
   <section class="tm-section">
     <article class="tm-card">
       <h2>Related Cost Guides</h2>
-      <p class="tm-muted">Compare this repair with a few other live TorqueMech cost guides.</p>
+      <p class="tm-muted">Compare this repair with charging, belt-drive, and no-start guides that commonly overlap with alternator diagnosis.</p>
       <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
+        <li><a href="/cost/battery-replacement">Battery Replacement Cost</a></li>
         <li><a href="/cost/starter-replacement">Starter Replacement Cost</a></li>
         <li><a href="/cost/serpentine-belt-replacement">Serpentine Belt Replacement Cost</a></li>
-        <li><a href="/cost/radiator-replacement">Radiator Replacement Cost</a></li>
-        <li><a href="/cost/spark-plug-replacement">Spark Plug Replacement Cost</a></li>
+        <li><a href="/obd/p0562">P0562 Low System Voltage Diagnosis</a></li>
+        <li><a href="/obd/p0563">P0563 High System Voltage Diagnosis</a></li>
+        <li><a href="/electrical/wiring/starter">Starter vs Alternator Troubleshooting</a></li>
       </ul>
     </article>
   </section>
