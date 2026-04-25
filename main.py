@@ -3172,8 +3172,8 @@ def build_obd_page_metadata(code: str):
             "description": "P0128 usually points to a thermostat stuck open. Start with thermostat diagnosis, then check coolant level and temperature-sensor faults with practical repair guidance.",
         },
         "P0420": {
-            "title": "P0420 Catalyst Efficiency Bank 1: Causes & Repairs | TorqueMech",
-            "description": "P0420 means bank 1 catalyst efficiency is below threshold. Review common converter and O2 sensor causes, likely repairs, and related cost guidance.",
+            "title": "P0420 Code: Causes, Symptoms, Catalytic Converter Cost & Fix Guide | TorqueMech",
+            "description": "Diagnose P0420 catalyst efficiency issues, common causes, O2 sensor behavior, catalytic converter replacement cost, and when repairs are actually needed before expensive damage gets worse.",
         },
         "P0430": {
             "title": "P0430 Catalyst Efficiency Bank 2: Causes & Repairs | TorqueMech",
