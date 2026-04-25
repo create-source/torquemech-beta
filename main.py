@@ -818,8 +818,47 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": temperature_diagnostic_steps,
         },
     }
+    misfire_causes = [
+        "Ignition coil breakdown under load or heat soak",
+        "Spark plug fouling, worn electrodes, incorrect gap, or oil contamination",
+        "Injector leakage causing cold-start misfire or fuel-washed plug tips",
+        "Low compression, valve sealing problems, or worn valvetrain components",
+        "Small head gasket seep causing overnight coolant intrusion into one cylinder",
+        "Vacuum leaks, intake runner leaks, or PCV leaks affecting cylinder balance",
+    ]
+    misfire_diagnostic_steps = [
+        "If the misfire happens only on cold start, inspect for injector leakage, coolant seep, or valve sealing issues before replacing coils only.",
+        "If the misfire appears under acceleration or load, inspect ignition coil output, plug gap, plug condition, and coil boots for breakdown.",
+        "If the same-cylinder misfire stays after a coil swap, move toward injector testing, compression testing, and leak-down testing.",
+        "If coolant loss appears with an overnight rough start, head gasket seep or coolant intrusion suspicion increases.",
+        "If the misfire repeats with clean plugs and no obvious ignition fault, compression and leak-down testing become important.",
+        "If multiple cylinders misfire with positive fuel trims, inspect vacuum leaks, intake leaks, PCV leaks, and shared fuel delivery.",
+    ]
+    misfire_overrides = {
+        "P0300": {
+            "causes": misfire_causes,
+            "diagnostic_steps": misfire_diagnostic_steps,
+        },
+        "P0301": {
+            "causes": misfire_causes,
+            "diagnostic_steps": misfire_diagnostic_steps,
+        },
+        "P0302": {
+            "causes": misfire_causes,
+            "diagnostic_steps": misfire_diagnostic_steps,
+        },
+        "P0303": {
+            "causes": misfire_causes,
+            "diagnostic_steps": misfire_diagnostic_steps,
+        },
+        "P0304": {
+            "causes": misfire_causes,
+            "diagnostic_steps": misfire_diagnostic_steps,
+        },
+    }
     overrides = (
-        lean_overrides.get(norm, {})
+        misfire_overrides.get(norm, {})
+        or lean_overrides.get(norm, {})
         or catalyst_overrides.get(norm, {})
         or evap_overrides.get(norm, {})
         or airflow_overrides.get(norm, {})
@@ -3201,11 +3240,12 @@ def build_obd_content_refinement(code: str):
     refinements = {
         "P0300": {
             "meaning": "P0300 means the ECM has detected misfires across multiple cylinders instead of one isolated cylinder. The next step is separating an ignition problem from a fuel, air, or engine condition affecting more than one cylinder.",
-            "diagnostic_insight_intro": "P0300 points to a shared problem affecting multiple cylinders, not just one isolated hole.",
+            "diagnostic_insight_intro": "P0300 should be diagnosed by pattern first: identify whether the misfire is cold-start, load-related, fuel-trim related, or random across cylinders.",
             "diagnostic_insight_points": [
-                "Multiple-cylinder misfires usually mean ignition, fuel delivery, airflow, or timing should be checked before replacing single-cylinder parts.",
-                "If cylinder-specific codes appear with P0300, use them to narrow the first physical checks.",
-                "A flashing check-engine light means catalyst damage risk is higher.",
+                "Cold-start-only misfires that clear quickly raise suspicion for injector leakage, coolant seep, or valve sealing before random coil replacement.",
+                "Misfires under acceleration or load often point toward coil breakdown, plug gap issues, weak fuel delivery, or plug boots tracking under demand.",
+                "Positive fuel trims with multiple misfires push vacuum leaks, intake leaks, PCV leaks, and MAF/fuel delivery checks higher on the list.",
+                "A flashing check-engine light means active catalyst-damaging misfire, so diagnosis should move quickly before converter damage follows.",
             ],
             "symptoms": [
                 "Rough idle or shaking at a stop",
@@ -3213,19 +3253,21 @@ def build_obd_content_refinement(code: str):
                 "Flashing check-engine light during active misfire",
             ],
             "quick_checks": [
-                "Check whether cylinder-specific misfire codes are stored with P0300",
-                "Inspect spark plugs, coil boots, and plug wells for wear, oil, or carbon tracking",
-                "Check for intake or vacuum leaks at hoses, PCV plumbing, and the air duct",
-                "Review fuel trims and fuel pressure before condemning ignition parts alone",
+                "Check freeze-frame data to see whether misfires happen cold, hot, idle-only, or under load",
+                "Inspect spark plugs, plug gap, coil boots, plug wells, and carbon tracking across affected cylinders",
+                "Review fuel trims, MAF data, and fuel pressure before condemning ignition parts alone",
+                "Inspect vacuum leaks, PCV plumbing, intake gaskets, and air duct leaks that affect multiple cylinders",
+                "Use compression or leak-down testing if misfires repeat with clean plugs and no obvious ignition fault",
             ],
         },
         "P0301": {
             "meaning": "P0301 means cylinder 1 is misfiring often enough for the ECM to flag it. Diagnosis should confirm whether the fault follows the plug or coil, stays with the injector, or points to a mechanical problem in that cylinder.",
-            "diagnostic_insight_intro": "A cylinder-specific misfire usually means the fault is localized to that cylinder's ignition, fuel delivery, or mechanical condition.",
+            "diagnostic_insight_intro": "P0301 should be diagnosed by proving whether cylinder 1 loses spark, fuel control, compression, or sealing under the condition where the misfire occurs.",
             "diagnostic_insight_points": [
-                "If the misfire follows a coil or spark plug swap, the part is the likely cause.",
-                "If it stays on cylinder 1, injector or compression testing becomes more important.",
-                "Cold-start misfires that improve when warm can point to ignition weakness or minor sealing problems.",
+                "If the misfire follows a coil or plug swap, ignition is the likely repair path; if it stays on cylinder 1, injector and mechanical testing move up.",
+                "Cold-start-only cylinder 1 misfire can point to injector leakdown, coolant intrusion, or valve sealing that improves as the engine warms.",
+                "Misfire under load points toward coil breakdown, plug gap, plug fouling, or boot tracking before compression faults.",
+                "Coolant loss with overnight rough start increases suspicion for small head gasket seep into cylinder 1.",
             ],
             "symptoms": [
                 "Rough idle or shake tied to one cylinder",
@@ -3234,18 +3276,20 @@ def build_obd_content_refinement(code: str):
             ],
             "quick_checks": [
                 "Swap the cylinder 1 coil with another cylinder and see whether the misfire follows",
-                "Inspect the cylinder 1 spark plug for wear, gap, oil, or fuel fouling",
-                "Check injector connector fit and listen for injector operation on cylinder 1",
-                "Run compression or leak-down testing if the misfire stays on cylinder 1",
+                "Inspect the cylinder 1 spark plug for wear, gap, oil, fuel fouling, coolant staining, or a washed-clean tip",
+                "Check injector connector fit, injector operation, and leakdown or balance if the misfire stays on cylinder 1",
+                "Run compression and leak-down testing if ignition and injector checks do not move the fault",
+                "Inspect for intake runner or vacuum leaks near cylinder 1 if trims suggest unmetered air",
             ],
         },
         "P0302": {
             "meaning": "P0302 means cylinder 2 is misfiring often enough for the ECM to detect it. The most useful next step is confirming whether the fault tracks with the ignition parts, fuel injector, intake leak, or cylinder condition.",
-            "diagnostic_insight_intro": "P0302 should be treated as a focused cylinder fault until testing proves otherwise.",
+            "diagnostic_insight_intro": "P0302 should be treated as a focused cylinder 2 fault until swap testing, injector checks, and compression data prove whether the cause is ignition, fuel, air, or mechanical.",
             "diagnostic_insight_points": [
-                "Swap-based testing is often the fastest way to separate ignition faults from engine faults.",
-                "If the misfire remains fixed on cylinder 2, move to injector and compression checks.",
-                "Under-load misfires often raise fuel delivery suspicion.",
+                "Swap-based testing is the fastest way to separate coil or plug faults from cylinder 2 injector or mechanical faults.",
+                "Cold-start-only cylinder 2 misfire can point to injector leakage, coolant seep, or valve sealing issues.",
+                "Under-load cylinder 2 misfire usually keeps coil breakdown, plug gap, and plug boot tracking high on the list.",
+                "If the plug looks clean but the misfire repeats, compression and leak-down testing become more important.",
             ],
             "symptoms": [
                 "Rough idle or uneven engine note",
@@ -3254,18 +3298,20 @@ def build_obd_content_refinement(code: str):
             ],
             "quick_checks": [
                 "Swap the cylinder 2 coil with another cylinder and see whether the misfire follows",
-                "Inspect the cylinder 2 spark plug for wear, gap, oil, or fuel fouling",
-                "Check injector connector fit and listen for injector operation on cylinder 2",
-                "Run compression or leak-down testing if the misfire stays on cylinder 2",
+                "Inspect the cylinder 2 spark plug for wear, gap, oil, fuel fouling, coolant staining, or a washed-clean tip",
+                "Check injector connector fit, injector operation, and leakdown or balance if the misfire stays on cylinder 2",
+                "Run compression and leak-down testing if ignition and injector checks do not move the fault",
+                "Inspect for intake runner or vacuum leaks near cylinder 2 if trims suggest unmetered air",
             ],
         },
         "P0303": {
             "meaning": "P0303 means cylinder 3 is misfiring often enough for the ECM to flag it. Good diagnosis confirms whether the problem follows the plug or coil, stays with the injector, or points to compression loss on that cylinder.",
-            "diagnostic_insight_intro": "P0303 is typically isolated to ignition, fuel delivery, or mechanical condition within cylinder 3.",
+            "diagnostic_insight_intro": "P0303 should be narrowed by condition and movement: whether cylinder 3 misfires cold, under load, or remains fixed after component swaps changes the repair path.",
             "diagnostic_insight_points": [
-                "If the misfire is worse on cold start and improves when warm, suspect ignition weakness or minor sealing issues.",
-                "If the misfire is constant under load, fuel delivery becomes more likely.",
-                "If the misfire does not move when swapping components, compression or internal engine issues should be considered.",
+                "If the misfire follows a cylinder 3 coil or plug swap, the swapped ignition part becomes the leading suspect.",
+                "Cold-start misfire that improves warm can point to injector leakdown, coolant seep, or valve sealing rather than a simple coil fault.",
+                "Load-related misfire keeps coil breakdown, plug gap, and boot tracking high on the list.",
+                "If the fault stays on cylinder 3 with clean plugs, compression, leak-down, and injector balance testing become important.",
             ],
             "symptoms": [
                 "Noticeable shake at idle",
@@ -3274,18 +3320,20 @@ def build_obd_content_refinement(code: str):
             ],
             "quick_checks": [
                 "Swap the cylinder 3 coil with another cylinder and see whether the misfire follows",
-                "Inspect the cylinder 3 spark plug for wear, gap, oil, or fuel fouling",
-                "Check injector connector fit and listen for injector operation on cylinder 3",
-                "Run compression or leak-down testing if the misfire stays on cylinder 3",
+                "Inspect the cylinder 3 spark plug for wear, gap, oil, fuel fouling, coolant staining, or a washed-clean tip",
+                "Check injector connector fit, injector operation, and leakdown or balance if the misfire stays on cylinder 3",
+                "Run compression and leak-down testing if ignition and injector checks do not move the fault",
+                "Inspect for intake runner or vacuum leaks near cylinder 3 if trims suggest unmetered air",
             ],
         },
         "P0304": {
             "meaning": "P0304 means cylinder 4 is misfiring often enough for the ECM to detect it. The repair path usually becomes clear once you confirm whether the fault follows ignition parts, stays with fuel delivery, or points to a mechanical issue.",
-            "diagnostic_insight_intro": "P0304 usually becomes clear once you confirm whether the fault follows ignition parts or stays with the cylinder.",
+            "diagnostic_insight_intro": "P0304 usually becomes clear once cylinder 4 is tested by condition, swap movement, injector behavior, and mechanical sealing.",
             "diagnostic_insight_points": [
-                "A moved misfire usually means the swapped part is bad.",
-                "A fixed misfire often means injector, compression, or valve-sealing checks come next.",
-                "A severe active misfire should be repaired quickly to reduce catalyst risk.",
+                "A misfire that moves with the coil or plug usually confirms ignition; a fixed cylinder 4 misfire needs injector, compression, and leak-down checks.",
+                "Cold-start-only cylinder 4 misfire can come from injector leakage, coolant seep, or valve sealing that changes as the engine warms.",
+                "Misfire under load points toward coil breakdown, plug gap, plug fouling, or boot tracking before replacing unrelated parts.",
+                "Coolant loss, a washed-clean plug, or overnight rough start raises suspicion for small head gasket seep.",
             ],
             "symptoms": [
                 "Rough idle or steady vibration",
@@ -3294,9 +3342,10 @@ def build_obd_content_refinement(code: str):
             ],
             "quick_checks": [
                 "Swap the cylinder 4 coil with another cylinder and see whether the misfire follows",
-                "Inspect the cylinder 4 spark plug for wear, gap, oil, or fuel fouling",
-                "Check injector connector fit and listen for injector operation on cylinder 4",
-                "Run compression or leak-down testing if the misfire stays on cylinder 4",
+                "Inspect the cylinder 4 spark plug for wear, gap, oil, fuel fouling, coolant staining, or a washed-clean tip",
+                "Check injector connector fit, injector operation, and leakdown or balance if the misfire stays on cylinder 4",
+                "Run compression and leak-down testing if ignition and injector checks do not move the fault",
+                "Inspect for intake runner or vacuum leaks near cylinder 4 if trims suggest unmetered air",
             ],
         },
         "P0171": {
