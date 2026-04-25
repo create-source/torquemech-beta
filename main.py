@@ -2220,7 +2220,7 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0302": ["P0300", "P0301", "P0303", "P0304"],
         "P0303": ["P0300", "P0301", "P0302", "P0304"],
         "P0304": ["P0300", "P0301", "P0302", "P0303"],
-        "P0171": ["P0174"],
+        "P0171": ["P0174", "P0101", "P0113", "P0420", "P0300"],
         "P0128": ["P0117", "P0118"],
         "P0446": ["P0442", "P0455", "P0456"],
         "P0507": ["P0505"],
@@ -2241,6 +2241,13 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
             "P0171": "Fuel trim diagnosis before converter replacement",
             "P0300": "Misfire diagnosis because repeated misfires can damage the converter",
             "P0138": "Downstream O2 sensor behavior check before calling the converter failed",
+        },
+        "P0171": {
+            "P0174": "Bank 2 lean comparison when both banks suggest shared air or fuel delivery problems",
+            "P0101": "MAF plausibility diagnosis before replacing airflow parts",
+            "P0113": "Intake temperature and MAF/IAT circuit context for airflow faults",
+            "P0420": "Catalyst efficiency risk when lean fuel trim problems stay unresolved",
+            "P0300": "Misfire diagnosis when lean running creates stumble under load",
         },
     }
 
@@ -2576,10 +2583,10 @@ def build_common_repairs(code: str):
             "Vacuum leak smoke test": "Useful when cylinder 4 is near an intake leak or fuel trims point to unmetered air.",
         },
         "P0171": {
-            "Vacuum leak smoke test": "Start here when bank 1 trims are leaner at idle and the leak may be after the MAF.",
-            "Mass air flow sensor replacement": "Price this only after MAF readings, contamination, or airflow plausibility checks point to the sensor.",
-            "Fuel system diagnostic": "Move here when trims stay lean under load or pressure and volume testing are suspect.",
-            "PCV system service": "Use this path when PCV plumbing or crankcase ventilation is pulling in unmetered air.",
+            "Vacuum leak smoke test": "Start here when bank 1 trims are leaner at idle, smoke testing may reveal intake manifold, PCV, hose, or post-MAF air leaks before parts are replaced.",
+            "Mass air flow sensor replacement": "Price this only after unmetered air is ruled out and MAF grams-per-second, unplug behavior, contamination, or P0101-style plausibility checks confirm the sensor.",
+            "Fuel system diagnostic": "Move here when trims get worse at higher RPM, acceleration, or load and fuel pressure or volume drop points toward weak fuel delivery.",
+            "PCV system service": "Use this path when PCV plumbing or crankcase ventilation is pulling in unmetered air and affecting idle trims more than load trims.",
         },
         "P0174": {
             "Vacuum leak smoke test": "Start here when bank 2 trims are leaner at idle and a bank-side leak is likely.",
@@ -2910,12 +2917,12 @@ def build_cost_guide_links(code: str):
             {
                 "label": "Mass Air Flow Sensor Replacement Cost",
                 "href": "/cost/mass-air-flow-sensor-replacement",
-                "description": "A strong next cost check when airflow readings or contamination point to the MAF sensor as the lean-condition trigger.",
+                "description": "A strong next cost check only after unmetered air is ruled out and low MAF g/s readings, unplug behavior, contamination, or P0101-style data confirms airflow reporting.",
             },
             {
                 "label": "Fuel Pump Replacement Cost",
                 "href": "/cost/fuel-pump-replacement",
-                "description": "Relevant when fuel-pressure or volume testing shows low fuel delivery is causing the lean condition.",
+                "description": "Relevant when fuel pressure drops under acceleration, trims worsen at higher RPM or load, and weak fuel delivery is separated from intake leaks or MAF error.",
             },
         ],
         "P0174": [
@@ -3425,13 +3432,15 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0171": {
-            "meaning": "P0171 means bank 1 is running lean because the ECM is correcting for too much air, too little fuel, or an airflow signal it cannot trust. It is not automatically a bad oxygen sensor or MAF sensor; vacuum leaks, intake leaks after the MAF, weak fuel delivery, PCV leaks, and bank 1 intake sealing problems can all set the same code.",
-            "diagnostic_insight_intro": "P0171 should be diagnosed from fuel-trim behavior first: find when bank 1 goes lean, then decide whether the fault acts like unmetered air, low fuel delivery, or bad airflow reporting.",
+            "meaning": "P0171 means bank 1 is running lean because the ECM is correcting for too much air, too little fuel, or an airflow signal it cannot trust. It is not automatically a bad oxygen sensor or MAF sensor; vacuum leaks, intake leaks after the MAF, PCV leaks, weak fuel delivery, low MAF reporting, and bank 1 intake sealing problems can all set the same code.",
+            "diagnostic_insight_intro": "P0171 should be diagnosed from fuel-trim behavior first: find when bank 1 goes lean, then decide whether the fault acts like unmetered air, low fuel delivery, bad airflow reporting, or a lean misfire pattern.",
             "diagnostic_insight_points": [
-                "High positive trims at idle that improve with RPM usually point toward a vacuum leak, PCV leak, intake gasket leak, or another unmetered-air source near bank 1.",
-                "Trims that get worse during cruise or acceleration point more toward fuel pressure, fuel volume, injector delivery, or MAF under-reporting than a small idle-only leak.",
-                "If P0171 appears with P0174, treat it as a shared-air or shared-fuel problem first: intake duct leak, dirty MAF, PCV fault, low fuel pressure, or unmetered air after the MAF.",
-                "An oxygen sensor can report the lean condition correctly; replacing it before smoke testing, trim comparison, and MAF/fuel checks often misses the root cause.",
+                "High positive trims at idle that improve with RPM usually point toward a vacuum leak, PCV leak, intake manifold gasket leak, or another unmetered-air source near bank 1.",
+                "Smoke testing should come before replacing MAF or oxygen-sensor parts when trims look like an idle-heavy intake, PCV, hose, or manifold leak.",
+                "Trims that get worse during cruise, acceleration, or higher RPM point more toward fuel pressure, fuel volume, injector delivery, or MAF under-reporting than a small idle-only leak.",
+                "If P0101, P0113, or suspicious MAF data appears with P0171, inspect unmetered air after the MAF, low MAF g/s readings, connector behavior, and unplug response before pricing a sensor.",
+                "Lean misfire symptoms or P0300 history under load should separate weak fuel delivery from ignition faults before coils, plugs, or injectors are blamed.",
+                "Unresolved lean operation can overheat or damage the catalyst, so P0420 and converter replacement decisions should wait until fuel trims are corrected.",
             ],
             "symptoms": [
                 "Rough idle or light surge at idle",
@@ -3442,8 +3451,9 @@ def build_obd_content_refinement(code: str):
                 "Compare short- and long-term fuel trims at idle, 2500 RPM, and steady cruise to see when bank 1 goes lean",
                 "Smoke test the intake and inspect intake boots, PCV plumbing, brake-booster hose, and vacuum lines after the MAF",
                 "Inspect the bank 1 intake gasket area and nearby hose connections when trims are idle-heavy or bank-specific",
-                "Inspect MAF contamination and compare airflow data to engine load before replacing oxygen-sensor or airflow parts",
-                "Check fuel pressure and fuel volume if trims stay lean under load or worsen at highway speed",
+                "Inspect MAF contamination, low grams-per-second readings, and unplug behavior before replacing oxygen-sensor or airflow parts",
+                "Check fuel pressure and fuel volume if trims stay lean under load, worsen at highway speed, or lean misfire symptoms appear",
+                "Review P0300 misfire history and P0420 catalyst history before treating the lean code as an isolated sensor fault",
             ],
         },
         "P0174": {
