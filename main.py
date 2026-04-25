@@ -856,6 +856,26 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
             "diagnostic_steps": misfire_diagnostic_steps,
         },
     }
+    low_voltage_causes = [
+        "Weak battery that no longer holds proper charge under load",
+        "Alternator output failure when headlights, blower motor, AC, or other electrical loads are applied",
+        "Loose grounds, corroded battery terminals, or charging-cable voltage drop",
+        "Serpentine belt slip, weak tensioner, or pulley issue reducing alternator output",
+        "Parasitic drain confusion creating repeated low-voltage or no-start symptoms after parking",
+    ]
+    low_voltage_diagnostic_steps = [
+        "If voltage is mostly low at idle, inspect alternator output, belt condition, belt tension, and pulley behavior first.",
+        "If the battery repeatedly dies after replacement, perform a charging-system load test before replacing more parts.",
+        "If voltage drops with headlights, blower motor, rear defroster, or AC load, charging-system weakness or cable voltage drop becomes more likely.",
+        "If the battery warning light appears with P0562, confirm charging voltage before replacing the battery only.",
+        "If no-start symptoms repeat after parking overnight, separate parasitic draw testing from charging failure diagnosis.",
+    ]
+    low_voltage_overrides = {
+        "P0562": {
+            "causes": low_voltage_causes,
+            "diagnostic_steps": low_voltage_diagnostic_steps,
+        },
+    }
     overrides = (
         misfire_overrides.get(norm, {})
         or lean_overrides.get(norm, {})
@@ -864,6 +884,7 @@ def build_obd_knowledge_sections(code: str) -> Dict[str, Any]:
         or airflow_overrides.get(norm, {})
         or downstream_o2_overrides.get(norm, {})
         or temperature_overrides.get(norm, {})
+        or low_voltage_overrides.get(norm, {})
     )
     return {
         "causes": normalize_obd_text_list(overrides.get("causes") or seed_entry.get("causes")),
@@ -3806,17 +3827,27 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0562": {
-            "meaning": "P0562 means system voltage dropped below the expected range. The most common causes are a weak battery, low alternator output, or excessive resistance at the battery, ground, or charging connections.",
+            "meaning": "P0562 means system voltage dropped below the expected range. The fault is usually found by proving whether the battery cannot hold charge, the alternator cannot maintain output under load, or resistance in the battery, ground, belt-drive, or charging-cable path is pulling voltage down.",
+            "diagnostic_insight_intro": "P0562 should be diagnosed as a low-voltage system fault, not just a battery code. Charging output, cable voltage drop, belt drive, and parasitic draw behavior all need to be separated before parts are replaced.",
+            "diagnostic_insight_points": [
+                "Low voltage mainly at idle should move alternator output, belt slip, weak tensioner, and pulley condition high on the test list.",
+                "A new battery that keeps going dead points toward charging-system load testing or parasitic draw testing before another battery is installed.",
+                "Voltage that falls when headlights, blower motor, rear defroster, or AC are switched on usually indicates charging weakness, cable resistance, or ground voltage drop.",
+                "A battery warning light with P0562 should be confirmed with charging-voltage data before the repair is treated as battery-only.",
+                "Overnight no-start complaints need a separate parasitic-draw test so a drain is not confused with an alternator output failure.",
+            ],
             "symptoms": [
                 "Slow cranking or intermittent no-start",
                 "Dim lights or unstable electrical accessories",
+                "Battery warning light or repeated dead battery complaints",
                 "Multiple low-voltage communication or module codes",
             ],
             "quick_checks": [
-                "Check resting battery voltage and perform a battery load or conductance test",
-                "Measure charging voltage with the engine running and electrical load applied",
-                "Inspect battery terminals, main grounds, and charging-cable connections for voltage drop",
-                "Check for a belt or alternator-drive issue if charging output is low",
+                "Check resting battery voltage and perform a battery load or conductance test before condemning the alternator",
+                "Measure charging voltage at idle, raised RPM, and with headlights, blower motor, AC, and rear defroster load applied",
+                "Inspect battery terminals, main grounds, alternator output cable, and charging-cable connections for voltage drop",
+                "Inspect serpentine belt condition, tensioner operation, pulley slip, and alternator-drive behavior if output is low",
+                "If the battery is dead after sitting, perform parasitic-draw testing separately from charging-system testing",
             ],
         },
         "P0563": {
