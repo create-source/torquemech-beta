@@ -4887,7 +4887,7 @@ def build_repair_cost_guide_cards():
         },
         {
             "title": "Radiator Replacement Cost",
-            "description": "Cooling system pricing guidance when leaks, overheating, or cracked tanks show up.",
+            "description": "Cooling-system pricing guidance for radiator leaks, cracked tanks, overheating under load, coolant loss, and pressure-test confirmed replacement.",
             "href": "/cost/radiator-replacement",
         },
         {
