@@ -2215,7 +2215,7 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         return related[:max_items]
 
     curated_related_map = {
-        "P0300": ["P0301", "P0302", "P0303", "P0304"],
+        "P0300": ["P0301", "P0302", "P0303", "P0304", "P0171"],
         "P0301": ["P0300", "P0302", "P0303", "P0304"],
         "P0302": ["P0300", "P0301", "P0303", "P0304"],
         "P0303": ["P0300", "P0301", "P0302", "P0304"],
@@ -2235,6 +2235,13 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0563": ["P0562"],
     }
     curated_related_labels = {
+        "P0300": {
+            "P0301": "Cylinder 1 misfire isolation when the random pattern narrows to one cylinder",
+            "P0302": "Cylinder 2 misfire comparison for coil swap, plug inspection, and injector checks",
+            "P0303": "Cylinder 3 misfire path when the fault stays on one cylinder after ignition checks",
+            "P0304": "Cylinder 4 misfire comparison for same-cylinder versus random misfire logic",
+            "P0171": "Lean fuel-trim diagnosis when unmetered air or weak fuel delivery creates misfires",
+        },
         "P0303": {
             "P0300": "Random/multiple misfire diagnosis when more cylinders join the fault",
             "P0301": "Cylinder 1 misfire comparison for single-cylinder testing",
@@ -2408,8 +2415,10 @@ def build_common_repairs(code: str):
         "P0300": [
             {"label": "Spark plug replacement", "service_query": "spark plug replacement"},
             {"label": "Ignition coil replacement", "service_query": "ignition coil replacement"},
+            {"label": "Fuel injector replacement", "service_query": "fuel injector replacement"},
             {"label": "Vacuum leak smoke test", "service_query": "vacuum leak diagnosis"},
             {"label": "Fuel system diagnostic", "service_query": "fuel system diagnostic"},
+            {"label": "Compression and leak-down testing", "service_query": "engine diagnostic"},
             {"label": "Mass air flow sensor replacement", "service_query": "mass air flow sensor"},
         ],
         "P0301": [
@@ -2614,11 +2623,13 @@ def build_common_repairs(code: str):
 
     repair_guidance_map = {
         "P0300": {
-            "Spark plug replacement": "Price this after plug wear, fouling, or gap problems are confirmed across the misfiring cylinders.",
-            "Ignition coil replacement": "Use this path when coil output, boots, or swap testing points to ignition weakness.",
-            "Vacuum leak smoke test": "Useful when trims, idle quality, or multiple-cylinder misfires point to unmetered air.",
-            "Fuel system diagnostic": "Move here when misfires are load-related or fuel pressure and trims look suspect.",
-            "Mass air flow sensor replacement": "Price only after airflow data or contamination points to the MAF as the shared trigger.",
+            "Spark plug replacement": "Price this after plug fouling, worn electrodes, gap problems, carbon tracking, or plug-swap patterns are confirmed across the affected cylinders.",
+            "Ignition coil replacement": "Use this path when misfires get worse under load, coil output is weak, boots show tracking, or a cylinder-specific misfire follows a coil swap.",
+            "Fuel injector replacement": "Price this when injector balance, contribution, leakdown, or same-cylinder behavior separates fuel delivery from ignition failure.",
+            "Vacuum leak smoke test": "Useful when positive fuel trims, idle quality, or multiple-cylinder misfires point to unmetered air causing lean misfire behavior.",
+            "Fuel system diagnostic": "Move here when misfires are load-related or fuel pressure drops under acceleration, separating weak delivery from ignition breakdown.",
+            "Compression and leak-down testing": "Use this when misfires repeat after ignition repairs, cold-start coolant seep is suspected, or mechanical sealing needs to be separated from spark and fuel faults.",
+            "Mass air flow sensor replacement": "Price only after airflow data, fuel trims, contamination, or P0171-style lean evidence points to the MAF as the shared trigger.",
         },
         "P0301": {
             "Spark plug replacement": "A strong estimate path when the cylinder 1 plug is worn, fouled, oil-soaked, or the misfire follows the plug.",
@@ -2771,17 +2782,27 @@ def build_cost_guide_links(code: str):
             {
                 "label": "Spark Plug Replacement Cost",
                 "href": "/cost/spark-plug-replacement",
-                "description": "Useful when testing confirms worn or fouled plugs are driving the misfire.",
+                "description": "Useful when plug fouling, incorrect gap, carbon tracking, or plug-swap testing confirms the misfire source.",
             },
             {
                 "label": "Ignition Coil Replacement Cost",
                 "href": "/cost/ignition-coil-replacement",
-                "description": "A strong next cost check when the misfire path points to a weak or failing coil.",
+                "description": "A strong next cost check when load-related misfire, boot tracking, weak coil output, or coil-swap behavior points to ignition breakdown.",
             },
             {
                 "label": "Fuel Injector Replacement Cost",
                 "href": "/cost/fuel-injector-replacement",
-                "description": "Relevant when injector balance, command, or cylinder contribution testing points to a fuel delivery fault.",
+                "description": "Relevant when injector balance, leakdown, command, or cylinder contribution testing separates a fuel fault from ignition failure.",
+            },
+            {
+                "label": "Fuel Pump Replacement Cost",
+                "href": "/cost/fuel-pump-replacement",
+                "description": "Relevant when fuel pressure drops under load and lean misfire behavior points to weak delivery instead of coils or plugs.",
+            },
+            {
+                "label": "Catalytic Converter Replacement Cost",
+                "href": "/cost/catalytic-converter-replacement",
+                "description": "Use only after active misfires and fuel-trim faults are corrected, since unresolved P0300 can damage the converter and trigger P0420.",
             },
         ],
         "P0301": [
@@ -3469,13 +3490,15 @@ def build_obd_content_refinement(code: str):
 
     refinements = {
         "P0300": {
-            "meaning": "P0300 means the ECM has detected misfires across multiple cylinders instead of one isolated cylinder. The next step is separating an ignition problem from a fuel, air, or engine condition affecting more than one cylinder.",
-            "diagnostic_insight_intro": "P0300 should be diagnosed by pattern first: identify whether the misfire is cold-start, load-related, fuel-trim related, or random across cylinders.",
+            "meaning": "P0300 means the ECM has detected misfires across multiple cylinders instead of one isolated cylinder. The next step is separating a random misfire pattern from a cylinder-specific fault, then proving whether ignition, fuel delivery, air leaks, or mechanical sealing is driving the failure.",
+            "diagnostic_insight_intro": "P0300 should be diagnosed by pattern first: identify whether the misfire is cold-start, load-related, fuel-trim related, same-cylinder after swaps, or truly random across cylinders.",
             "diagnostic_insight_points": [
-                "Cold-start-only misfires that clear quickly raise suspicion for injector leakage, coolant seep, or valve sealing before random coil replacement.",
-                "Misfires under acceleration or load often point toward coil breakdown, plug gap issues, weak fuel delivery, or plug boots tracking under demand.",
-                "Positive fuel trims with multiple misfires push vacuum leaks, intake leaks, PCV leaks, and MAF/fuel delivery checks higher on the list.",
-                "A flashing check-engine light means active catalyst-damaging misfire, so diagnosis should move quickly before converter damage follows.",
+                "If the scan data starts pointing to P0301, P0302, P0303, or P0304, isolate that cylinder with coil swaps, plug inspection, and injector checks instead of treating the fault as random.",
+                "Cold-start-only misfires that clear quickly raise suspicion for injector leakage, small coolant seep, or valve sealing before random coil replacement.",
+                "Misfires under acceleration or load often point toward coil breakdown, plug gap issues, carbon or boot tracking, weak fuel delivery, or plug boots arcing under demand.",
+                "Positive fuel trims with multiple misfires push P0171-style lean diagnosis, vacuum leaks, intake leaks, PCV leaks, MAF data, and fuel pressure checks higher on the list.",
+                "If misfires repeat after plugs or coils and the same cylinders stay involved, compression and leak-down testing help separate mechanical failure from ignition diagnosis.",
+                "A flashing check-engine light means active catalyst-damaging misfire; correct misfire and fuel-trim causes before pricing converter work for P0420.",
             ],
             "symptoms": [
                 "Rough idle or shaking at a stop",
@@ -3485,9 +3508,11 @@ def build_obd_content_refinement(code: str):
             "quick_checks": [
                 "Check freeze-frame data to see whether misfires happen cold, hot, idle-only, or under load",
                 "Inspect spark plugs, plug gap, coil boots, plug wells, and carbon tracking across affected cylinders",
-                "Review fuel trims, MAF data, and fuel pressure before condemning ignition parts alone",
+                "Use coil swaps and plug inspection to separate same-cylinder faults from random misfire behavior",
+                "Review fuel trims, MAF data, injector balance, and fuel pressure before condemning ignition parts alone",
                 "Inspect vacuum leaks, PCV plumbing, intake gaskets, and air duct leaks that affect multiple cylinders",
-                "Use compression or leak-down testing if misfires repeat with clean plugs and no obvious ignition fault",
+                "Use compression or leak-down testing if misfires repeat after ignition repairs or cold-start coolant seep is suspected",
+                "Check catalyst-risk codes such as P0420 after active misfire and fuel-trim faults are corrected",
             ],
         },
         "P0301": {
