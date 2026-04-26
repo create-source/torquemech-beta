@@ -2227,7 +2227,7 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0507": ["P0505"],
         "P0420": ["P0430", "P0171", "P0300", "P0138"],
         "P0430": ["P0420"],
-        "P0562": ["P0563"],
+        "P0562": ["P0563", "P0620"],
         "P0563": ["P0562"],
     }
     curated_related_labels = {
@@ -2256,6 +2256,10 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
             "P0113": "Intake temperature and MAF/IAT circuit context for shared airflow faults",
             "P0430": "Bank 2 catalyst efficiency risk when lean fuel trim problems stay unresolved",
             "P0300": "Misfire diagnosis when lean running creates stumble under load",
+        },
+        "P0562": {
+            "P0563": "Charging voltage comparison when the system alternates between low and high voltage behavior",
+            "P0620": "Generator control circuit diagnosis when alternator output or command testing is suspect",
         },
     }
 
@@ -2503,6 +2507,8 @@ def build_common_repairs(code: str):
             {"label": "Battery replacement", "service_query": "battery replacement"},
             {"label": "Alternator replacement", "service_query": "alternator replacement"},
             {"label": "Charging system diagnostic", "service_query": "electrical diagnostic"},
+            {"label": "Serpentine belt replacement", "service_query": "serpentine belt replacement"},
+            {"label": "Starter system diagnostic", "service_query": "starter diagnostic"},
         ],
         "P0563": [
             {"label": "Alternator replacement", "service_query": "alternator replacement"},
@@ -2621,6 +2627,13 @@ def build_common_repairs(code: str):
             "Exhaust leak repair": "Use this path when leaks ahead of the bank 1 converter or near the sensor can distort oxygen readings and mimic weak catalyst efficiency.",
             "Downstream oxygen sensor replacement": "Price this only when rear O2 testing shows biased, slow, or inaccurate behavior rather than simply replacing sensors because P0420 is present.",
             "Catalytic converter replacement": "Move here when repeated P0420, downstream O2 mirroring upstream O2, sulfur smell, overheating, or restriction points to true converter failure after misfire and fuel-trim causes are corrected.",
+        },
+        "P0562": {
+            "Battery replacement": "Price this when load or conductance testing proves the battery cannot hold charge after charging output, parasitic draw, and cable voltage drop are separated.",
+            "Alternator replacement": "Use this path only after charging-system testing confirms low alternator output under electrical load, battery warning light behavior, or alternator control failure.",
+            "Charging system diagnostic": "Start here when repeated dead batteries, dim lights, or P0562 could be caused by alternator output, weak battery, poor grounds, corroded terminals, or cable voltage drop.",
+            "Serpentine belt replacement": "Use this path when belt slip, pulley noise, weak tensioner action, or charging fluctuation at idle points to accessory-drive loss before major electrical parts are replaced.",
+            "Starter system diagnostic": "Move here when the complaint is intermittent no-start or no-crank and voltage drop during start attempts must separate battery, starter, alternator, and ground faults.",
         },
     }
 
@@ -2901,12 +2914,22 @@ def build_cost_guide_links(code: str):
             {
                 "label": "Battery Replacement Cost",
                 "href": "/cost/battery-replacement",
-                "description": "Useful when low system voltage starts with a weak battery that fails load or conductance testing.",
+                "description": "Useful when load testing proves the battery is weak after overnight drain, charging output, and cable voltage-drop issues are separated.",
             },
             {
                 "label": "Alternator Replacement Cost",
                 "href": "/cost/alternator-replacement",
-                "description": "A strong next cost check when charging voltage stays low because the alternator is not keeping up.",
+                "description": "A strong next cost check when charging-system testing confirms low alternator output under load, battery warning light behavior, or alternator control failure.",
+            },
+            {
+                "label": "Serpentine Belt Replacement Cost",
+                "href": "/cost/serpentine-belt-replacement",
+                "description": "Relevant when belt slip, pulley noise, weak tensioner action, or idle charging fluctuation reduces alternator output.",
+            },
+            {
+                "label": "Starter Replacement Cost",
+                "href": "/cost/starter-replacement",
+                "description": "Useful when no-start complaints require battery-versus-starter-versus-alternator separation and voltage drop during crank testing.",
             },
         ],
         "P0563": [
@@ -3908,13 +3931,14 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0562": {
-            "meaning": "P0562 means system voltage dropped below the expected range. The fault is usually found by proving whether the battery cannot hold charge, the alternator cannot maintain output under load, or resistance in the battery, ground, belt-drive, or charging-cable path is pulling voltage down.",
-            "diagnostic_insight_intro": "P0562 should be diagnosed as a low-voltage system fault, not just a battery code. Charging output, cable voltage drop, belt drive, and parasitic draw behavior all need to be separated before parts are replaced.",
+            "meaning": "P0562 means system voltage dropped below the expected range. The fault is usually found by proving whether the battery cannot hold charge, the alternator cannot maintain output under load, belt-drive slip is reducing output, or resistance in the battery, ground, starter, or charging-cable path is pulling voltage down.",
+            "diagnostic_insight_intro": "P0562 should be diagnosed as a low-voltage system fault, not just a battery or alternator code. Charging output, battery health, starter voltage drop, belt drive, grounds, terminals, and parasitic draw behavior all need to be separated before parts are replaced.",
             "diagnostic_insight_points": [
-                "Low voltage mainly at idle should move alternator output, belt slip, weak tensioner, and pulley condition high on the test list.",
-                "A new battery that keeps going dead points toward charging-system load testing or parasitic draw testing before another battery is installed.",
-                "Voltage that falls when headlights, blower motor, rear defroster, or AC are switched on usually indicates charging weakness, cable resistance, or ground voltage drop.",
-                "A battery warning light with P0562 should be confirmed with charging-voltage data before the repair is treated as battery-only.",
+                "Low voltage mainly at idle should move alternator output, belt slip, weak tensioner, idler condition, and pulley noise high on the test list.",
+                "A new battery that keeps going dead points toward charging-system load testing, parasitic draw testing, or cable voltage-drop checks before another battery is installed.",
+                "Voltage that falls when headlights, blower motor, rear defroster, or AC are switched on usually indicates charging weakness, cable resistance, corroded terminals, or engine ground voltage drop.",
+                "A battery warning light with P0562 should be confirmed with charging-voltage and alternator-output data before the repair is treated as battery-only.",
+                "Intermittent no-start or no-crank complaints need battery, starter, alternator, and ground voltage-drop testing during start attempts.",
                 "Overnight no-start complaints need a separate parasitic-draw test so a drain is not confused with an alternator output failure.",
             ],
             "symptoms": [
@@ -3926,8 +3950,9 @@ def build_obd_content_refinement(code: str):
             "quick_checks": [
                 "Check resting battery voltage and perform a battery load or conductance test before condemning the alternator",
                 "Measure charging voltage at idle, raised RPM, and with headlights, blower motor, AC, and rear defroster load applied",
-                "Inspect battery terminals, main grounds, alternator output cable, and charging-cable connections for voltage drop",
-                "Inspect serpentine belt condition, tensioner operation, pulley slip, and alternator-drive behavior if output is low",
+                "Inspect battery terminals, main grounds, engine ground straps, alternator output cable, and charging-cable connections for voltage drop",
+                "Inspect serpentine belt condition, tensioner operation, idler noise, pulley slip, and alternator-drive behavior if output is low",
+                "Measure voltage drop during crank attempts if the complaint includes intermittent no-start or slow/no-crank behavior",
                 "If the battery is dead after sitting, perform parasitic-draw testing separately from charging-system testing",
             ],
         },
