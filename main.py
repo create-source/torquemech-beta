@@ -2222,7 +2222,7 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0304": ["P0300", "P0301", "P0302", "P0303"],
         "P0171": ["P0174", "P0101", "P0113", "P0420", "P0300"],
         "P0174": ["P0171", "P0101", "P0113", "P0430", "P0300"],
-        "P0128": ["P0117", "P0118"],
+        "P0128": ["P0117", "P0118", "P0217"],
         "P0446": ["P0442", "P0455", "P0456"],
         "P0507": ["P0505"],
         "P0420": ["P0430", "P0171", "P0300", "P0138"],
@@ -2260,6 +2260,11 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0562": {
             "P0563": "Charging voltage comparison when the system alternates between low and high voltage behavior",
             "P0620": "Generator control circuit diagnosis when alternator output or command testing is suspect",
+        },
+        "P0128": {
+            "P0117": "Coolant temperature sensor low-signal check before blaming the thermostat",
+            "P0118": "Coolant temperature sensor high-signal check when scan data looks false",
+            "P0217": "Overheating workflow if temperature problems continue after cooling-system service",
         },
     }
 
@@ -2446,6 +2451,8 @@ def build_common_repairs(code: str):
             {"label": "Thermostat replacement", "service_query": "thermostat replacement"},
             {"label": "Coolant temperature sensor replacement", "service_query": "coolant temperature sensor replacement"},
             {"label": "Thermostat housing replacement", "service_query": "thermostat housing replacement"},
+            {"label": "Water pump replacement", "service_query": "water pump replacement"},
+            {"label": "Cooling system diagnostic", "service_query": "cooling system diagnostic"},
         ],
         "P0401": [
             {"label": "EGR diagnosis", "service_query": "egr diagnosis"},
@@ -2609,9 +2616,11 @@ def build_common_repairs(code: str):
             "PCV system service": "Use this path when PCV routing or crankcase ventilation is pulling in unmetered air and affecting idle trims more than load trims.",
         },
         "P0128": {
-            "Thermostat replacement": "The strongest estimate path when live temperature data and warm-up behavior point to a stuck-open thermostat.",
-            "Coolant temperature sensor replacement": "Use this only when scan data, connector checks, or resistance testing shows inaccurate temperature reporting.",
-            "Thermostat housing replacement": "Price this when the thermostat is integrated into the housing or the housing seal is leaking.",
+            "Thermostat replacement": "The strongest estimate path when slow warm-up, repeat P0128 after clearing, and live temperature data confirm a thermostat stuck open instead of a false reading.",
+            "Coolant temperature sensor replacement": "Use this only when scan data, ECT plausibility checks, connector condition, or resistance testing shows false low-temperature reporting.",
+            "Thermostat housing replacement": "Price this when the thermostat is integrated into the housing, the housing seal is leaking, or trapped air and sealing concerns repeat after service.",
+            "Water pump replacement": "Move here when poor coolant circulation, weak heater output, pump noise, or flow testing points to coolant movement instead of thermostat control.",
+            "Cooling system diagnostic": "Start here when overheating, trapped air, low coolant, weak cabin heat at idle, or repeated temperature fluctuation continues after thermostat work.",
         },
         "P0446": {
             "EVAP vent valve replacement": "A direct estimate path when command testing, restriction checks, or contamination points to the vent valve or vent assembly.",
@@ -2972,12 +2981,22 @@ def build_cost_guide_links(code: str):
             {
                 "label": "Thermostat Replacement Cost",
                 "href": "/cost/thermostat-replacement",
-                "description": "The strongest cost guide when slow warm-up and temperature data point to a thermostat stuck open.",
+                "description": "The strongest cost guide when slow warm-up, repeat P0128 after clearing, and scan data confirm the thermostat is stuck open before replacement.",
             },
             {
                 "label": "Engine Coolant Temperature Sensor Replacement Cost",
                 "href": "/cost/engine-coolant-temperature-sensor-replacement",
-                "description": "Relevant when live data or circuit checks show the temperature reading is misleading the warm-up monitor.",
+                "description": "Relevant when ECT plausibility checks show false low-temperature readings or sensor data is misleading the warm-up monitor.",
+            },
+            {
+                "label": "Water Pump Replacement Cost",
+                "href": "/cost/water-pump-replacement",
+                "description": "Useful when weak coolant flow, pump noise, poor circulation, or heater performance points away from a thermostat-only repair.",
+            },
+            {
+                "label": "Radiator Replacement Cost",
+                "href": "/cost/radiator-replacement",
+                "description": "Relevant when overheating, repeated temperature fluctuation, leaks, or broader cooling-system diagnosis continues after thermostat service.",
             },
         ],
         "P0116": [
@@ -3648,13 +3667,15 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0128": {
-            "meaning": "P0128 means the engine coolant temperature is not reaching the expected operating range quickly enough. A thermostat stuck open is common, but low coolant level, inaccurate coolant temperature sensor data, cooling fan issues, wiring faults, or sensor faults can also mislead the monitor.",
-            "diagnostic_insight_intro": "P0128 should be diagnosed from warm-up behavior and ECT plausibility: prove whether the engine is truly running too cool or the temperature data is misleading.",
+            "meaning": "P0128 means the engine coolant temperature is not reaching the expected operating range quickly enough. A thermostat stuck open is common, but low coolant level, trapped air, inaccurate coolant temperature sensor data, poor coolant flow, cooling fan issues, wiring faults, or sensor faults can also mislead the monitor.",
+            "diagnostic_insight_intro": "P0128 should be diagnosed from warm-up behavior, heater performance, coolant level, and ECT plausibility: prove whether the engine is truly running too cool or the temperature data is misleading.",
             "diagnostic_insight_points": [
-                "If live coolant temperature rises slowly and stays low during cruise, a stuck-open thermostat stays high on the suspect list.",
-                "Weak cabin heat at idle should push coolant level, air pockets, heater flow, and thermostat behavior ahead of sensor replacement.",
-                "An inconsistent gauge or scan reading should be compared against cold-engine ambient temperature and external temperature checks before parts are replaced.",
-                "If P0128 returns after thermostat replacement, inspect coolant level, ECT sensor accuracy, connector condition, thermostat housing sealing, and cooling fan behavior.",
+                "If live coolant temperature rises slowly and stays low during cruise, a stuck-open thermostat stays high on the suspect list, especially when P0128 returns after clearing.",
+                "Weak cabin heat at idle should push coolant level, trapped air, heater-core flow, water pump circulation, and thermostat behavior ahead of sensor replacement.",
+                "An inconsistent gauge or scan reading should be compared against cold-engine ambient temperature, infrared readings, and ECT sensor plausibility before parts are replaced.",
+                "False low-temperature readings from the ECT sensor or connector can mimic thermostat failure, so scan data confirmation matters before pricing parts.",
+                "If P0128 returns after thermostat replacement, inspect coolant level, air pockets, ECT sensor accuracy, connector condition, thermostat housing sealing, cooling fan behavior, and coolant flow.",
+                "Overheating or repeated temperature fluctuation after thermostat service should move the diagnosis toward broader cooling-system flow, radiator, water pump, or trapped-air checks.",
             ],
             "symptoms": [
                 "Poor cabin heat or longer warm-up time",
@@ -3662,11 +3683,13 @@ def build_obd_content_refinement(code: str):
                 "Check engine light or unstable temperature behavior",
             ],
             "quick_checks": [
-                "Verify coolant level, coolant condition, and trapped-air concerns before replacing parts",
-                "Monitor live ECT data from a cold start through normal operating temperature",
-                "Compare warm-up behavior to expected thermostat opening behavior and highway temperature stability",
+                "Verify coolant level, coolant condition, and trapped-air concerns before replacing thermostat or sensor parts",
+                "Monitor live ECT data from a cold start through normal operating temperature and confirm sensor plausibility",
+                "Compare warm-up behavior to expected thermostat opening behavior and highway temperature stability before replacing the thermostat",
                 "Compare ECT scan data with ambient temperature on a cold engine and external temperature checks when readings look inconsistent",
-                "Inspect ECT connector, wiring, thermostat housing, and cooling fan behavior if the code returns after thermostat service",
+                "Check heater performance at idle and under RPM to separate thermostat behavior from coolant flow or air-pocket problems",
+                "Inspect ECT connector, wiring, thermostat housing, cooling fan behavior, and coolant flow if the code returns after thermostat service",
+                "Escalate to overheating or cooling-system diagnosis if temperature swings, weak flow, or overheating continues after thermostat replacement",
             ],
         },
         "P0446": {
