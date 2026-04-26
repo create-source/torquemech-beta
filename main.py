@@ -2224,6 +2224,8 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0174": ["P0171", "P0101", "P0113", "P0430", "P0300"],
         "P0128": ["P0117", "P0118", "P0217"],
         "P0446": ["P0442", "P0455", "P0456"],
+        "P0455": ["P0456", "P0442", "P0446", "P0441", "P0449"],
+        "P0456": ["P0442", "P0455", "P0446", "P0441", "P0449"],
         "P0507": ["P0505"],
         "P0420": ["P0430", "P0171", "P0300", "P0138"],
         "P0430": ["P0420"],
@@ -2265,6 +2267,20 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
             "P0117": "Coolant temperature sensor low-signal check before blaming the thermostat",
             "P0118": "Coolant temperature sensor high-signal check when scan data looks false",
             "P0217": "Overheating workflow if temperature problems continue after cooling-system service",
+        },
+        "P0455": {
+            "P0456": "Small-leak comparison when the large EVAP leak becomes intermittent",
+            "P0442": "Small EVAP leak workflow when smoke testing finds a smaller seep",
+            "P0446": "Vent valve and vent-path diagnosis for sealing or refueling issues",
+            "P0441": "Purge valve flow diagnosis when the purge side may be sticking open",
+            "P0449": "Vent valve control check when the vent circuit affects sealing",
+        },
+        "P0456": {
+            "P0442": "Small EVAP leak comparison for cap, hose, valve, and canister seepage",
+            "P0455": "Large-leak comparison when the EVAP system cannot seal at all",
+            "P0446": "Vent valve and vent-path diagnosis for sealing or refueling issues",
+            "P0441": "Purge valve flow diagnosis when purge seepage may be present",
+            "P0449": "Vent valve control check when the vent circuit affects sealing",
         },
     }
 
@@ -2555,13 +2571,17 @@ def build_common_repairs(code: str):
             {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
             {"label": "EVAP system diagnosis", "service_query": "evap system diagnosis"},
             {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
+            {"label": "EVAP purge valve replacement", "service_query": "evap purge valve replacement"},
             {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
+            {"label": "Charcoal canister and tank-area inspection", "service_query": "evap system diagnosis"},
         ],
         "P0456": [
             {"label": "Gas cap replacement", "service_query": "gas cap replacement"},
             {"label": "EVAP leak smoke test", "service_query": "evap leak smoke test"},
             {"label": "EVAP small leak diagnosis", "service_query": "evap small leak diagnosis"},
+            {"label": "EVAP purge valve replacement", "service_query": "evap purge valve replacement"},
             {"label": "EVAP vent valve replacement", "service_query": "evap vent valve replacement"},
+            {"label": "Charcoal canister and tank-area inspection", "service_query": "evap system diagnosis"},
         ],
         "P2195": [
             {"label": "Air fuel ratio sensor replacement", "service_query": "air fuel ratio sensor replacement"},
@@ -2643,6 +2663,22 @@ def build_common_repairs(code: str):
             "Charging system diagnostic": "Start here when repeated dead batteries, dim lights, or P0562 could be caused by alternator output, weak battery, poor grounds, corroded terminals, or cable voltage drop.",
             "Serpentine belt replacement": "Use this path when belt slip, pulley noise, weak tensioner action, or charging fluctuation at idle points to accessory-drive loss before major electrical parts are replaced.",
             "Starter system diagnostic": "Move here when the complaint is intermittent no-start or no-crank and voltage drop during start attempts must separate battery, starter, alternator, and ground faults.",
+        },
+        "P0455": {
+            "Gas cap replacement": "Use this only after inspecting cap fit, seal condition, and filler-neck surface; if P0455 returns after a cap, the leak diagnosis should continue.",
+            "EVAP system diagnosis": "Start here when the EVAP system will not seal and purge, vent, hose, canister, filler-neck, or tank-area faults all remain possible.",
+            "EVAP leak smoke test": "Use smoke testing to confirm the open point before replacing multiple EVAP parts, especially when visual checks do not show a disconnected hose.",
+            "EVAP purge valve replacement": "Price this when command or bench testing shows the purge valve is sticking open and pulling the EVAP system out of seal.",
+            "EVAP vent valve replacement": "Use this when vent valve sealing or vent-path restriction prevents the system from closing, causes readiness failures, or creates hard refueling.",
+            "Charcoal canister and tank-area inspection": "Move here when rear fuel smell, strong odor after fill-up, canister cracking, filler-neck corrosion, or tank-side hose leaks are suspected.",
+        },
+        "P0456": {
+            "Gas cap replacement": "Use this only after inspecting cap seal, cap fit, and filler-neck surface; repeat P0456 after cap replacement needs leak testing rather than another cap.",
+            "EVAP leak smoke test": "Use careful smoke testing to confirm the small leak location before replacing purge valves, vent valves, hoses, or canister parts by guesswork.",
+            "EVAP small leak diagnosis": "Start here when the code repeats without drivability symptoms and the leak may be a tiny hose, fitting, valve, canister, or filler-neck seep.",
+            "EVAP purge valve replacement": "Price this when purge solenoid seepage or a purge valve that will not fully close is confirmed during sealing tests.",
+            "EVAP vent valve replacement": "Use this when vent valve sealing failure, vent restriction, readiness issues, or refueling difficulty points to the vent side.",
+            "Charcoal canister and tank-area inspection": "Move here when smoke appears near the tank, rear fuel smell is present, or canister, filler-neck, hose, tank seal, and fuel-pump seal checks are needed.",
         },
     }
 
@@ -2874,14 +2910,24 @@ def build_cost_guide_links(code: str):
             {
                 "label": "EVAP Purge Valve Replacement Cost",
                 "href": "/cost/evap-purge-valve-replacement",
-                "description": "Relevant when large-leak diagnosis shows the purge valve is stuck open or not sealing.",
+                "description": "Relevant when command or sealing tests confirm the purge valve is stuck open, causing repeat EVAP codes after gas cap checks.",
+            },
+            {
+                "label": "EVAP Vent Valve Replacement Cost",
+                "href": "/cost/evap-vent-valve-replacement",
+                "description": "Useful when vent valve sealing failure, vent restriction, hard refueling, or EVAP readiness problems point to the vent side.",
             },
         ],
         "P0456": [
             {
                 "label": "EVAP Purge Valve Replacement Cost",
                 "href": "/cost/evap-purge-valve-replacement",
-                "description": "Useful when very small leak diagnosis traces back to purge-valve seepage or poor sealing.",
+                "description": "Useful when small-leak smoke testing traces the fault to purge-valve seepage or a valve that will not fully close.",
+            },
+            {
+                "label": "EVAP Vent Valve Replacement Cost",
+                "href": "/cost/evap-vent-valve-replacement",
+                "description": "Relevant when vent valve seepage, vent restriction, refueling difficulty, or readiness failures keep the EVAP monitor from passing.",
             },
         ],
         "P0505": [
@@ -3602,12 +3648,13 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0455": {
-            "meaning": "P0455 means the EVAP system detected a large leak during its self-test. A loose or missing gas cap is an easy first check, but disconnected EVAP hoses, cracked lines, purge or vent valves stuck open or not sealing, canister leaks, or tank-side plumbing leaks can set the same code.",
-            "diagnostic_insight_intro": "P0455 should be diagnosed as a large EVAP sealing failure, with testing focused on what prevents the system from closing and holding pressure or vacuum.",
+            "meaning": "P0455 means the EVAP system detected a large leak during its self-test. A loose or missing gas cap is an easy first check, but a repeat code after cap replacement usually points toward disconnected EVAP hoses, cracked lines, purge or vent valves stuck open or not sealing, canister leaks, filler-neck problems, or tank-side plumbing leaks.",
+            "diagnostic_insight_intro": "P0455 should be diagnosed as a large EVAP sealing failure, with testing focused on what prevents the system from closing and holding pressure or vacuum before multiple parts are replaced.",
             "diagnostic_insight_points": [
-                "A loose or damaged gas cap is common, but a disconnected hose, stuck-open purge valve, stuck-open vent valve, or canister-side opening can create the same large-leak result.",
-                "If the code returns after a cap replacement, command or bench-test the purge and vent valves before replacing the canister or tank-side parts.",
-                "Fuel smell near the rear of the vehicle moves attention toward the filler neck, tank seal, charcoal canister, and rear EVAP lines.",
+                "A loose or damaged gas cap is common, but the cap should not end diagnosis if the seal, filler neck, and code return pattern do not confirm it.",
+                "If the code returns after a cap replacement, command or bench-test the purge valve and vent valve for sealing before replacing the canister or tank-side parts.",
+                "Fuel smell near the rear of the vehicle or a strong odor after fill-up moves attention toward the filler neck, tank seal, charcoal canister, and rear EVAP lines.",
+                "Hard refueling or the pump clicking off repeatedly points toward vent restriction, vent valve problems, or tank pressure behavior rather than a simple cap fault.",
                 "Large leaks usually need smoke testing or sealed-system testing because normal engine drivability can feel completely unchanged.",
             ],
             "symptoms": [
@@ -3619,7 +3666,8 @@ def build_obd_content_refinement(code: str):
                 "Inspect gas cap presence, seal condition, cap fitment, and filler-neck sealing surface",
                 "Inspect EVAP hoses and lines for disconnected, split, rusted, or collapsed sections",
                 "Verify purge and vent valves seal correctly when commanded closed",
-                "Inspect canister, tank-side plumbing, fuel-pump seal, and filler neck for leaks or loose connections",
+                "Inspect canister, tank-side plumbing, fuel-pump seal, and filler neck for leaks, cracks, or loose connections",
+                "Ask about hard refueling, fuel smell after fill-up, and tank pressure symptoms to guide vent-side diagnosis",
                 "Smoke test the system if visual checks do not reveal the open point",
             ],
         },
@@ -3645,13 +3693,14 @@ def build_obd_content_refinement(code: str):
             ],
         },
         "P0456": {
-            "meaning": "P0456 means the EVAP system detected a very small leak during its self-test. A gas cap seal is still a valid first check, but this is not automatically just a gas cap issue; tiny hose or fitting seepage, purge or vent valves not sealing fully, canister seepage, line seepage, or tank-side plumbing leaks can set the same code.",
-            "diagnostic_insight_intro": "P0456 should be diagnosed as a very small EVAP sealing loss, where careful smoke testing and valve sealing checks usually matter more than parts guessing.",
+            "meaning": "P0456 means the EVAP system detected a very small leak during its self-test. A gas cap seal is still a valid first check, but repeat P0456 after cap replacement usually points toward tiny hose or fitting seepage, purge or vent valves not sealing fully, canister seepage, filler-neck corrosion, line seepage, or tank-side plumbing leaks.",
+            "diagnostic_insight_intro": "P0456 should be diagnosed as a very small EVAP sealing loss, where careful smoke testing, cap and filler-neck inspection, and valve sealing checks usually matter more than parts guessing.",
             "diagnostic_insight_points": [
                 "Very small leaks often come from cap seals, cracked hose ends, canister fittings, filler-neck corrosion, or valve seepage that may not be visible during a quick inspection.",
                 "If the code returns after a cap replacement, inspect purge solenoid seepage, vent valve sealing, and tank-area hoses before moving to larger components.",
                 "Smoke near the tank area should lead to hose, canister, fuel-pump seal, filler-neck, and vent-seal inspection before condemning the tank or canister assembly.",
                 "Repeated small-leak codes with no drivability symptoms are normal for EVAP faults; the leak is often outside the engine's normal air and fuel operation.",
+                "Hard refueling, pump shutoff, or fuel smell after filling can point toward vent-side restriction or tank-area sealing issues.",
             ],
             "symptoms": [
                 "Check engine light with little or no major drivability change",
@@ -3663,6 +3712,7 @@ def build_obd_content_refinement(code: str):
                 "Inspect EVAP hoses, fittings, and line connections for subtle cracks or seepage",
                 "Verify purge and vent valves seal correctly and do not leak when closed",
                 "Inspect the canister, tank seals, filler neck, and nearby plumbing for small leaks",
+                "Ask about hard refueling, fuel smell after fill-up, and repeated readiness failures",
                 "Smoke test the system carefully if the leak is not obvious",
             ],
         },
