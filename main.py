@@ -4922,7 +4922,7 @@ def build_repair_cost_guide_cards():
         },
         {
             "title": "Brake Rotor Replacement Cost",
-            "description": "Labor and parts context when brake pulsation, scoring, or rotor wear is part of the job.",
+            "description": "Brake repair pricing guidance for rotor vibration, pedal pulsation, scoring, heat spots, seized hardware, and pad or caliper overlap.",
             "href": "/cost/brake-rotor-replacement",
         },
         {
