@@ -83,8 +83,8 @@
     <div class="eyebrow">TorqueMech Cost Guide</div>
     <h1>Ignition Coil Replacement Cost</h1>
     <p class="tm-pageLead">
-      Ignition coil replacement cost usually depends on how many coils are involved, how easy they are to reach, and whether spark plugs or boots should be serviced at the same time.
-      This page gives you a practical baseline before you move into the estimator.
+      Ignition coil replacement cost usually depends on how many coils are involved, how easy they are to reach, and whether misfire diagnosis confirms the coil instead of a spark plug, injector, wiring, compression, or coolant-related fault.
+      This page gives you a practical baseline before you move into the estimator, so the failure path is confirmed before ignition parts are replaced.
     </p>
     <p class="tm-muted" style="margin-top:10px;">
       <a href="/repair-costs">Browse all repair cost guides</a>
@@ -132,10 +132,11 @@
     <article class="tm-card">
       <h2>Common Symptoms</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>Cylinder-specific or multiple-cylinder misfire at idle or under load</li>
+        <li><a href="/obd/p0300">P0300</a> random misfire warning or cylinder-specific misfire at idle or under load</li>
+        <li><a href="/obd/p0303">P0303</a> cylinder 3 misfire or another repeated same-cylinder misfire code</li>
         <li>Check engine light with misfire or ignition-related codes</li>
         <li>Rough idle or cold-start misfire on the same cylinder</li>
-        <li>Misfire becomes worse under acceleration or load</li>
+        <li>Hesitation or misfire becomes worse under acceleration, hill climbs, or load</li>
         <li>Flashing check engine light during acceleration</li>
         <li>Noticeable power loss when the weak coil is under higher demand</li>
         <li>Poor fuel economy from incomplete combustion</li>
@@ -146,12 +147,13 @@
       <h2>When Ignition Coil Replacement Is Needed</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
         <li>The misfire follows the coil during swap testing</li>
+        <li>The same cylinder misfires again after spark plug replacement and plug condition is no longer the best explanation</li>
         <li>The misfire gets worse under acceleration, hill climbs, or heavy engine load</li>
         <li>The coil boot, body, or connector shows heat damage, cracking, oil contamination, or carbon tracking</li>
         <li>A flashing check engine light appears during an active ignition misfire</li>
-        <li>Scan data and ignition testing point to weak coil output on one cylinder or bank</li>
+        <li>Scan data and ignition testing point to weak coil output on one cylinder or bank instead of injector pulse or fuel delivery</li>
         <li>Spark plug condition has been checked so the coil is not being blamed for a plug gap, fouling, or wear issue</li>
-        <li>The same cylinder keeps misfiring after coil swapping, which points diagnosis toward injector, wiring, compression, or leak-down testing instead of another coil</li>
+        <li>The same cylinder keeps misfiring after coil swapping, which points diagnosis toward injector, wiring, compression, leak-down testing, coolant seep, or head gasket clues instead of another coil</li>
       </ul>
     </article>
   </section>
@@ -160,11 +162,12 @@
     <article class="tm-card">
       <h2>Service Overview</h2>
       <p class="tm-muted">
-        Coil quotes are most accurate when the root cause is confirmed first. Good shops check the misfire pattern, inspect plug condition, and prove the issue is not coming from fuel delivery, injector leakage, compression loss, or wiring before replacing ignition parts.
+        Coil quotes are most accurate when the root cause is confirmed first. Good shops check the misfire pattern, inspect plug condition, and prove the issue is not coming from fuel delivery, injector leakage, compression loss, coolant intrusion, or wiring before replacing ignition parts.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
         <li>Confirm the fault with scan data, misfire counters, or coil swapping</li>
         <li>Inspect plugs, boots, and connectors for heat, oil, carbon tracking, or gap-related problems</li>
+        <li>Rule out injector, compression, leak-down, coolant seep, or head gasket clues when the misfire stays on the same cylinder</li>
         <li>Consider spark plug replacement at the same time when plug access overlaps or plug wear contributed to the coil failure</li>
         <li>Remove engine covers or intake components if access is tight</li>
         <li>Install the replacement coil and clear the fault</li>
@@ -177,7 +180,7 @@
     <article class="tm-card">
       <h2>Can You Drive With a Bad Ignition Coil?</h2>
       <p class="tm-muted">
-        Short-distance driving may still be possible in some cases, but a bad coil can leave the engine misfiring under idle or load. Continuing to drive with a misfire can damage the catalytic converter, hurt fuel economy, and make drivability worse.
+        Short-distance driving may still be possible in some cases, but a bad coil can leave the engine misfiring under idle or load. Continuing to drive with a P0300-style active misfire can damage the catalytic converter, hurt fuel economy, and make drivability worse.
       </p>
       <p class="tm-muted">
         If the check engine light is flashing, the vehicle should not be driven any farther than necessary. That usually means the misfire is active enough to risk catalyst damage.
@@ -189,10 +192,10 @@
     <article class="tm-card">
       <h2>Replace the Coil or Diagnose First?</h2>
       <p class="tm-muted">
-        Not every misfire is caused by a bad ignition coil. <a href="/cost/spark-plug-replacement">Spark plugs</a>, fuel injectors, vacuum leaks, compression issues, and wiring faults can all create similar symptoms.
+        Not every misfire is caused by a bad ignition coil. <a href="/cost/spark-plug-replacement">Spark plugs</a>, <a href="/cost/fuel-injector-replacement">fuel injectors</a>, vacuum leaks, compression issues, coolant seep, head gasket clues, and wiring faults can all create similar symptoms.
       </p>
       <p class="tm-muted">
-        A mechanic-first diagnosis checks scan data, misfire counters, coil swapping results, and spark plug condition before replacing parts. If the misfire stays on the same cylinder after a coil swap, the next step often becomes injector testing, compression testing, or leak-down testing instead of another coil.
+        A mechanic-first diagnosis checks scan data, misfire counters, coil swapping results, and spark plug condition before replacing parts. If the misfire stays on the same cylinder after a coil swap, the next step often becomes injector testing, compression testing, leak-down testing, or checking for coolant intrusion instead of another coil.
       </p>
     </article>
   </section>
@@ -201,7 +204,7 @@
     <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to turn a confirmed ignition coil fault into a labor and parts estimate. The estimator works best once scan data, coil swapping, plug inspection, or output testing points to the coil instead of injector or compression faults.
+        Use TorqueMech to turn a confirmed ignition coil fault into a labor and parts estimate. The estimator works best once scan data, coil swapping, plug inspection, or output testing points to the coil instead of spark plug, injector, wiring, compression, or leak-down faults.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
         <a class="tm-btn tm-btn-primary" href="/estimator?service=ignition_coil_replacement_each">Build Ignition Coil Estimate</a>
@@ -213,7 +216,7 @@
     <article class="tm-card">
       <h2>Common OBD Codes Related to Ignition Coil Replacement</h2>
       <p class="tm-muted">
-        Ignition coil faults are a common confirmed repair path for both single-cylinder and multiple-cylinder misfires. These OBD pages help connect the code to the ignition side of the diagnosis while still leaving room for injector, plug, compression, and leak-down checks.
+        Ignition coil faults are a common confirmed repair path for both single-cylinder and multiple-cylinder misfires. These OBD pages help connect the code to the ignition side of the diagnosis while still leaving room for injector, plug, compression, coolant seep, and leak-down checks.
       </p>
       <p class="tm-muted">
         If the misfire follows the coil when it is swapped to another cylinder, coil replacement becomes a much stronger estimate path.
@@ -239,6 +242,9 @@
         <li><a href="/cost/catalytic-converter-replacement">Catalytic Converter Replacement Cost</a></li>
         <li><a href="/obd/p0300">P0300 Misfire Diagnosis</a></li>
         <li><a href="/obd/p0303">P0303 Cylinder Misfire Diagnosis</a></li>
+        <li><a href="/repair-guides/how-to-test-an-ignition-coil">How to Test an Ignition Coil</a></li>
+        <li><a href="/symptoms/engine-misfire-at-idle">Engine Misfire at Idle Diagnosis</a></li>
+        <li><a href="/symptoms/check-engine-light-flashing">Flashing Check Engine Light Diagnosis</a></li>
       </ul>
     </article>
   </section>
