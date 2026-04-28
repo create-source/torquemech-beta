@@ -83,8 +83,8 @@
     <div class="eyebrow">TorqueMech Cost Guide</div>
     <h1>Fuel Pump Replacement Cost</h1>
     <p class="tm-pageLead">
-      Fuel pump replacement cost usually depends on whether the pump is mounted inside the tank, how much fuel system diagnosis is needed, and how much labor it takes to reach the module safely.
-      This page gives a clean baseline so you can understand the job before moving into the estimator.
+      Fuel pump replacement cost usually depends on whether the pump is mounted inside the tank, how much fuel delivery diagnosis is needed, and whether weak pressure is confirmed instead of an injector, ignition, relay, fuse, or voltage-drop issue.
+      This page gives a clean baseline so you can understand the job before moving into the estimator with the failure path confirmed.
     </p>
     <div class="tm-actions">
       <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
@@ -131,10 +131,11 @@
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
         <li>Long crank or hard starting</li>
         <li>Engine cranks but will not start with weak or no fuel pressure</li>
-        <li>Starts, then stalls or loses power under load</li>
+        <li>Starts, then dies as fuel pressure falls off</li>
+        <li>Weak acceleration, hesitation, or loss of power under load</li>
         <li>Hard hot restarts after driving</li>
         <li>Whining noise from the fuel tank area</li>
-        <li>Repeated lean-condition or fuel starvation symptoms</li>
+        <li>Repeated <a href="/obd/p0171">lean-condition</a> or fuel starvation symptoms after ignition and injector checks</li>
       </ul>
     </article>
 
@@ -143,10 +144,10 @@
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
         <li>In-tank versus external pump design</li>
         <li>Fuel tank access and amount of fuel in the tank</li>
-        <li>Need to confirm actual fuel pressure before replacement</li>
+        <li>Need to confirm actual fuel pressure and volume before replacement</li>
         <li>Full fuel pump module replacement versus pump-only service</li>
         <li>OEM versus aftermarket pump reliability and warranty quality</li>
-        <li>Filter restriction, wiring, relay, or voltage-drop issues that must be ruled out first</li>
+        <li>Filter restriction, injector faults, wiring, relay, fuse, or voltage-drop issues that must be ruled out first</li>
       </ul>
     </article>
   </section>
@@ -155,13 +156,14 @@
     <article class="tm-card">
       <h2>Service Overview</h2>
       <p class="tm-muted">
-        Fuel pump quotes are most accurate after confirming weak fuel delivery is actually the problem. Good diagnosis checks fuel pressure under key-on, idle, and load conditions, then verifies pump command, voltage supply, relay behavior, ground quality, and whether the symptom is really ignition, airflow, injector, or sensor related.
+        Fuel pump quotes are most accurate after confirming weak fuel delivery is actually the problem. Good diagnosis checks fuel pressure under key-on, idle, and load conditions, then verifies pump command, voltage supply, relay behavior, fuse integrity, ground quality, and whether the symptom is really ignition, airflow, injector, or sensor related.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
         <li>Confirm fuel pressure and volume before replacing the pump</li>
-        <li>Inspect pump power, ground, relay, and fuse operation</li>
+        <li>Inspect pump power, ground, relay, fuse operation, and voltage drop under load</li>
         <li>Check for restricted filters, strainers, or fuel lines where applicable</li>
-        <li>Compare low fuel pressure symptoms with lean-code and no-start data</li>
+        <li>Separate injector problems from pump supply problems with pressure, command, and scan data</li>
+        <li>Compare low fuel pressure symptoms with lean-code, crank-no-start, and starts-then-dies data</li>
         <li>Access the pump module or tank assembly safely, including tank removal when required</li>
         <li>Verify pressure, starting behavior, and road-test performance after repair</li>
       </ul>
@@ -172,7 +174,7 @@
     <article class="tm-card">
       <h2>Can You Drive With a Weak or Failing Fuel Pump?</h2>
       <p class="tm-muted">
-        The vehicle may still run at first, but hesitation, low-power operation, <a href="/obd/p0171">lean codes</a>, hard starts, hot restart trouble, stalling, and no-start conditions can develop as fuel delivery gets weaker.
+        The vehicle may still run at first, but hesitation, weak acceleration, low-power operation, <a href="/obd/p0171">lean codes</a>, hard starts, hot restart trouble, stalling, and no-start conditions can develop as fuel delivery gets weaker.
       </p>
       <p class="tm-muted">
         Weak fuel delivery can mimic ignition, airflow, or injector problems, so pressure testing and scan data matter before the repair path gets narrowed to the pump.
@@ -184,10 +186,10 @@
     <article class="tm-card">
       <h2>Replace the Fuel Pump or Diagnose First?</h2>
       <p class="tm-muted">
-        Not every lean or no-start complaint means the pump itself is bad. A clogged filter or strainer, wiring issue, relay fault, low voltage, injector issue, or fuel-pressure regulator problem can create similar symptoms.
+        Not every lean or no-start complaint means the pump itself is bad. A clogged filter or strainer, wiring issue, relay fault, fuse issue, low voltage, voltage drop, injector issue, ignition fault, or fuel-pressure regulator problem can create similar symptoms.
       </p>
       <p class="tm-muted">
-        A mechanic-first diagnosis verifies scan data, fuel pressure, pump command, voltage supply, and injector-versus-fuel-delivery behavior before replacement. That keeps the estimate tied to the confirmed fuel-delivery fault instead of a guessed no-start repair.
+        A mechanic-first diagnosis verifies scan data, fuel pressure, pump command, voltage supply, voltage drop, and injector-versus-fuel-delivery behavior before replacement. If the no-start returns after plugs, coils, sensors, or injector work, pressure testing keeps the estimate tied to the confirmed fuel-delivery fault instead of a guessed repair.
       </p>
     </article>
   </section>
@@ -196,7 +198,7 @@
     <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to build a fuel pump replacement estimate after fuel pressure, pump command, tank access, module type, and related filter or wiring concerns are understood.
+        Use TorqueMech to build a fuel pump replacement estimate after fuel pressure, pump command, relay and fuse checks, voltage drop, tank access, module type, and related filter or wiring concerns are understood.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
         <a class="tm-btn tm-btn-primary" href="/estimator?service=fuel_pump_replacement_in_tank">Estimate Fuel Pump Replacement</a>
@@ -208,7 +210,7 @@
     <article class="tm-card">
       <h2>Common OBD Codes Related to Fuel Pump Replacement</h2>
       <p class="tm-muted">
-        Fuel pump diagnosis becomes more likely when lean codes stay present under load after intake leaks, airflow data, and injector behavior are checked.
+        Fuel pump diagnosis becomes more likely when lean codes stay present under load after intake leaks, airflow data, ignition behavior, and injector behavior are checked. A pressure-confirmed fuel delivery fault is a stronger repair path than replacing a pump from symptoms alone.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
         <li><a href="/obd/p0171">P0171</a> - System too lean bank 1</li>
@@ -229,6 +231,9 @@
         <li><a href="/cost/alternator-replacement">Alternator Replacement Cost</a></li>
         <li><a href="/obd/p0171">P0171 Lean Condition Diagnosis</a></li>
         <li><a href="/diagnostics">No-Start Diagnostic Workflow</a></li>
+        <li><a href="/repair-guides/how-to-diagnose-lean-condition-p0171-p0174">Fuel System Lean Diagnosis</a></li>
+        <li><a href="/symptoms/hard-start-after-sitting-overnight">Hard Start / Crank-No-Start Path</a></li>
+        <li><a href="/symptoms/loss-of-power-while-driving">Loss of Power Under Load Diagnosis</a></li>
       </ul>
     </article>
   </section>
