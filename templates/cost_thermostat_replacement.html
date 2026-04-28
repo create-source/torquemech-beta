@@ -83,8 +83,8 @@
     <div class="eyebrow">TorqueMech Cost Guide</div>
     <h1>Thermostat Replacement Cost</h1>
     <p class="tm-pageLead">
-      Thermostat replacement cost usually depends on housing location, coolant refill and bleed time, and whether hoses, sensors, or gaskets are serviced during the job.
-      This page gives you a clean baseline before you move into the estimator.
+      Thermostat replacement cost usually depends on housing location, coolant refill and bleed time, and whether the diagnosis points to a stuck thermostat instead of low coolant, trapped air, a coolant temperature sensor, radiator, or water pump issue.
+      This page gives you a clean baseline before you move into the estimator, so the failure path is confirmed before parts are replaced.
     </p>
     <div class="tm-actions">
       <a class="tm-btn tm-btn-primary" href="/estimator?service=thermostat_replacement">Estimate Thermostat Replacement</a>
@@ -129,9 +129,11 @@
     <article class="tm-card">
       <h2>Common Symptoms</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
+        <li><a href="/obd/p0128">P0128</a> warning returns after clearing or after a short drive cycle</li>
         <li>Engine takes too long to reach normal operating temperature</li>
         <li>Temperature gauge runs colder or hotter than expected</li>
-        <li>Weak cabin heat during normal driving</li>
+        <li>Weak cabin heat during normal driving or on cold mornings</li>
+        <li>Stuck-open thermostat symptoms such as slow warm-up, poor heater performance, and low operating temperature</li>
         <li>Check engine light with coolant-temperature or warm-up related codes</li>
         <li>Intermittent overheating or unstable temperature behavior depending on load</li>
       </ul>
@@ -140,12 +142,12 @@
     <article class="tm-card">
       <h2>When Thermostat Replacement Is Needed</h2>
       <ul style="margin:0; padding-left:18px; line-height:1.7;">
-        <li>The engine takes too long to warm up or stays too cool on the highway</li>
+        <li>The engine takes too long to warm up or stays too cool on the highway after coolant level is confirmed</li>
         <li>Cabin heat is weak at idle or on cold mornings even after the engine should be warm</li>
-        <li>A repeated <a href="/obd/p0128">P0128</a> check engine light returns after reset</li>
-        <li>Overheating appears after a partial cooling-system repair or erratic coolant circulation suggests the thermostat is sticking</li>
+        <li>A repeated <a href="/obd/p0128">P0128</a> check engine light returns after reset and scan data shows slow warm-up</li>
+        <li>Overheating appears after a partial cooling-system repair or erratic coolant circulation suggests the thermostat is sticking instead of a water pump flow issue</li>
         <li>Visible coolant seep appears around the thermostat housing, outlet, gasket, or nearby hose connection</li>
-        <li>Coolant level and <a href="/cost/engine-coolant-temperature-sensor-replacement">coolant temperature sensor</a> data have been checked so the thermostat is the more credible fault</li>
+        <li>Coolant level, trapped air, false low-temp readings, and <a href="/cost/engine-coolant-temperature-sensor-replacement">coolant temperature sensor</a> data have been checked so the thermostat is the more credible fault</li>
       </ul>
     </article>
   </section>
@@ -154,10 +156,11 @@
     <article class="tm-card">
       <h2>Service Overview</h2>
       <p class="tm-muted">
-        A thermostat quote usually starts with confirming the cooling system is behaving the way the code or gauge suggests. A stuck-open thermostat often creates slow warm-up and weak heat, while a stuck-closed or sticking thermostat can raise urgency because overheating can lead to secondary engine damage. Good shops verify sensor readings, coolant level, and circulation before replacing the thermostat so the real failure is not missed.
+        A thermostat quote usually starts with confirming the cooling system is behaving the way the code, gauge, and scan data suggest. A stuck-open thermostat often creates slow warm-up, weak cabin heat, and repeated P0128 faults, while a stuck-closed or sticking thermostat can raise urgency because overheating can lead to secondary engine damage. Good shops verify sensor readings, coolant level, trapped air, and circulation before replacing the thermostat so a coolant sensor, low coolant condition, radiator restriction, or water pump issue is not mistaken for the real failure.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
-        <li>Confirm coolant-temperature behavior with scan data or gauge readings</li>
+        <li>Confirm coolant-temperature behavior with scan data, gauge readings, and actual warm-up behavior</li>
+        <li>Check coolant level, trapped air after coolant service, and false low-temperature sensor readings</li>
         <li>Drain coolant and access the thermostat housing</li>
         <li>Replace the thermostat or full thermostat housing assembly when the design requires it</li>
         <li>Refill with the correct coolant and bleed the cooling system to prevent air pockets</li>
@@ -171,7 +174,7 @@
     <article class="tm-card">
       <h2>Common OBD Codes Related to Thermostat Replacement</h2>
       <p class="tm-muted">
-        Thermostat replacement becomes more credible when <a href="/obd/p0128">P0128 diagnosis</a>, warm-up behavior, and coolant data point to flow control rather than a misleading sensor signal alone. If temperature data does not match the actual engine condition, check the coolant temperature sensor path before replacing cooling-system parts.
+        Thermostat replacement becomes more credible when <a href="/obd/p0128">P0128 diagnosis</a>, warm-up behavior, and coolant data point to flow control rather than a misleading sensor signal alone. If temperature data does not match the actual engine condition, check the coolant temperature sensor path, low-coolant condition, air pockets, and water pump circulation before replacing cooling-system parts.
       </p>
       <ul style="margin:14px 0 0; padding-left:18px; line-height:1.7;">
         <li><a href="/obd/p0128">P0128</a> - Coolant thermostat below regulating temperature</li>
@@ -186,7 +189,7 @@
     <article class="tm-card">
       <h2>Estimate This Repair</h2>
       <p class="tm-muted">
-        Use TorqueMech to turn a confirmed thermostat fault into an estimate. This handoff works best after warm-up behavior, coolant level, bleeding needs, thermostat housing design, and temperature data support the thermostat path.
+        Use TorqueMech to turn a confirmed thermostat fault into an estimate. This handoff works best after P0128 history, scan data, warm-up behavior, coolant level, bleeding needs, thermostat housing design, and temperature data support the thermostat path.
       </p>
       <div class="tm-actions" style="margin-top:14px;">
         <a class="tm-btn tm-btn-primary" href="/estimator?service=thermostat_replacement">Build Thermostat Estimate</a>
@@ -197,11 +200,14 @@
   <section class="tm-section">
     <article class="tm-card">
       <h2>Related Cost Guides</h2>
-      <p class="tm-muted">Compare this repair with a few other live TorqueMech guides commonly tied to cooling-system diagnosis.</p>
+      <p class="tm-muted">Compare this repair with cooling-system guides that commonly overlap with thermostat diagnosis, overheating checks, and false temperature readings.</p>
       <ul style="margin:0; padding-left:18px; line-height:1.8; columns:2; column-gap:24px;">
         <li><a href="/cost/engine-coolant-temperature-sensor-replacement">Engine Coolant Temperature Sensor Replacement Cost</a></li>
         <li><a href="/cost/radiator-replacement">Radiator Replacement Cost</a></li>
         <li><a href="/cost/water-pump-replacement">Water Pump Replacement Cost</a></li>
+        <li><a href="/obd/p0128">P0128 Thermostat Diagnosis</a></li>
+        <li><a href="/symptoms/overheating-at-idle">Overheating at Idle Diagnosis</a></li>
+        <li><a href="/diagnostics">Cooling-System Diagnostic Workflows</a></li>
       </ul>
     </article>
   </section>
