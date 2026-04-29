@@ -1210,6 +1210,58 @@ canvas,
     flex: 1 1 0;
   }
 
+  .tm-card[aria-label="Service"] .grid2{
+    gap: 16px;
+  }
+
+  .tm-card[aria-label="Service"] input:not([type="checkbox"]):not([type="radio"]),
+  .tm-card[aria-label="Service"] select,
+  .tm-card[aria-label="Service"] textarea,
+  #draftsCard select{
+    min-height: 52px;
+  }
+
+  .tm-card[aria-label="Service"] .tm-btn,
+  #draftsCard .tm-btn{
+    min-height: 46px;
+    padding-inline: 16px;
+  }
+
+  .tm-card[aria-label="Service"] .actions,
+  .tm-card[aria-label="Service"] .inline-actions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  #draftsCard > div[style*="display:flex"],
+  #estimateSavedBlock > div[style*="display:flex"]{
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+
+  #saveDraftBtn,
+  #draftsCard select{
+    flex: 1 1 100%;
+    min-width: 0 !important;
+  }
+
+  #loadDraftBtn,
+  #deleteDraftBtn{
+    flex: 1 1 calc(50% - 6px);
+  }
+
+  #estimateSavedBlock .tm-btn{
+    flex: 1 1 100%;
+  }
+
+  #draftsMsg,
+  #estimateSavedLinkText{
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
   .tm-trust-page{
     padding-top: 22px;
   }
@@ -1757,10 +1809,15 @@ h3{
   .tm-estimate-total-bar{
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
+    padding: 18px 16px;
   }
 
   .tm-estimate-total-bar__value{
-    font-size: 1.75rem;
+    width: 100%;
+    font-size: 1.9rem;
+    line-height: 1.08;
+    overflow-wrap: anywhere;
   }
 
   .section-header--vehicles h2 {
