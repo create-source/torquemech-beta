@@ -20,6 +20,12 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         {"label": "Remove and install parts", "weight": 0.40},
         {"label": "Reassembly and safety check", "weight": 0.25},
     ],
+    "brake_rotor": [
+        {"label": "Lift vehicle and remove wheels", "weight": 0.15},
+        {"label": "Access caliper bracket and rotor hardware", "weight": 0.25},
+        {"label": "Remove rotor and clean hub mating surface", "weight": 0.35},
+        {"label": "Reassemble, torque wheels, and verify brake feel", "weight": 0.25},
+    ],
     "brake_pad": [
         {"label": "Lift vehicle and remove wheels", "weight": 0.15},
         {"label": "Inspect pads, caliper slides, and hardware", "weight": 0.20},
@@ -31,6 +37,12 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         {"label": "Component access", "weight": 0.25},
         {"label": "Disconnect and reconnect wiring", "weight": 0.30},
         {"label": "Install and verification", "weight": 0.35},
+    ],
+    "battery": [
+        {"label": "Verify battery condition and charging concern", "weight": 0.20},
+        {"label": "Access battery, hold-down, and terminals", "weight": 0.25},
+        {"label": "Replace battery and clean connections", "weight": 0.30},
+        {"label": "Test charging output and reset memory items if needed", "weight": 0.25},
     ],
     "alternator": [
         {"label": "Disconnect battery and inspect belt routing", "weight": 0.15},
@@ -50,6 +62,12 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         {"label": "Remove and install parts", "weight": 0.35},
         {"label": "Refill, bleed, and verify", "weight": 0.25},
     ],
+    "radiator": [
+        {"label": "Confirm leak or cooling restriction and access radiator", "weight": 0.20},
+        {"label": "Drain coolant and disconnect hoses, fans, or brackets", "weight": 0.25},
+        {"label": "Replace radiator and transfer required hardware", "weight": 0.30},
+        {"label": "Refill, bleed, pressure-test, and verify temperature control", "weight": 0.25},
+    ],
     "water_pump": [
         {"label": "Access pump, belt drive, and cooling hoses", "weight": 0.20},
         {"label": "Drain coolant and inspect leak path", "weight": 0.20},
@@ -61,6 +79,18 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         {"label": "Drain coolant to service level", "weight": 0.20},
         {"label": "Replace thermostat and housing seal", "weight": 0.35},
         {"label": "Refill, bleed, and verify warm-up behavior", "weight": 0.25},
+    ],
+    "fuel_pump": [
+        {"label": "Confirm fuel pressure and pump command", "weight": 0.20},
+        {"label": "Access pump module, tank, lines, or service panel", "weight": 0.30},
+        {"label": "Replace pump/module and secure fuel connections", "weight": 0.30},
+        {"label": "Prime system, leak-check, and verify pressure under load", "weight": 0.20},
+    ],
+    "catalytic_converter": [
+        {"label": "Confirm catalyst efficiency and affected bank", "weight": 0.20},
+        {"label": "Access converter, oxygen sensors, and exhaust hardware", "weight": 0.25},
+        {"label": "Remove converter and install emissions-compliant replacement", "weight": 0.35},
+        {"label": "Verify downstream O2 behavior and code readiness", "weight": 0.20},
     ],
     "suspension": [
         {"label": "Wheel removal", "weight": 0.15},
@@ -88,6 +118,24 @@ LABOR_BREAKDOWN_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
     ],
 }
 
+LABOR_SERVICE_EXPLANATIONS: Dict[str, str] = {
+    "alternator_replacement": "Time varies because the technician confirms charging output, checks belt routing and battery condition, then works around engine-bay access before verifying warning lights and voltage under load.",
+    "thermostat_replacement": "Labor includes confirming slow warm-up or P0128 behavior, accessing the housing, managing coolant loss, then refilling and bleeding the system so air pockets do not create false overheating symptoms.",
+    "ignition_coil_replacement_each": "The estimate includes proving the misfire path first, inspecting the plug well and connector, replacing the coil, then clearing codes and confirming misfire counters under idle and load.",
+    "spark_plug_replacement": "Time changes with engine layout because coils, wires, covers, or intake parts may need removal before plugs can be inspected, torqued correctly, and verified for smooth operation.",
+    "spark_plug_replacement_4_cyl": "Time changes with access because coils or plug wires still need removal, plug wells are inspected, plugs are torqued correctly, and operation is verified after installation.",
+    "spark_plug_replacement_v6_v8": "V6 and V8 plug labor can climb when rear-bank plugs sit under tight intake or cowl access, so the job includes careful removal, torque control, and verification after reassembly.",
+    "fuel_pump_replacement_in_tank": "Labor is driven by confirming fuel pressure first, checking relay/fuse/voltage supply, safely accessing the tank module, then priming and leak-checking the system after replacement.",
+    "fuel_pump_replacement_external": "Labor is driven by confirming pressure and power supply first, accessing the external pump and fuel lines safely, then leak-checking and verifying pressure under load.",
+    "catalytic_converter_replacement": "Converter labor includes confirming catalyst efficiency and downstream O2 behavior before replacement, then dealing with exhaust access, sensors, rusted hardware, and emissions-compliant verification.",
+    "front_brake_rotors_replacement": "Rotor time includes lifting the vehicle, removing wheels and caliper brackets, cleaning hub surfaces so the new rotor sits true, then reassembling and verifying brake feel.",
+    "rear_brake_rotors_replacement": "Rear rotor time includes wheel and caliper access, possible parking-brake hardware considerations, hub cleaning, and final brake feel verification after reassembly.",
+    "brake_rotor_replacement": "Rotor time includes lifting the vehicle, removing wheels and caliper brackets, cleaning hub surfaces so the new rotor sits true, then reassembling and verifying brake feel.",
+    "radiator_replacement": "Radiator labor includes confirming the leak or restriction, removing hoses/fans/brackets as needed, transferring hardware, then refilling, bleeding, pressure-testing, and checking temperature control.",
+    "battery_replacement": "Battery labor includes confirming the battery path, accessing hold-downs and terminals, cleaning connections, installing the battery, and checking charging output or reset needs afterward.",
+    "starter_replacement": "Starter labor includes confirming the no-crank path, disconnecting the battery, accessing tight mounting and cable connections, then verifying crank speed and start behavior after installation.",
+}
+
 
 LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
     "brake_pad_replacement": {
@@ -97,8 +145,18 @@ LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
     },
     "brake_rotor_replacement": {
         "display_name": "Brake Rotor Replacement",
-        "template": "brakes",
+        "template": "brake_rotor",
         "labor_hours": {"min": 1.2, "avg": 2.0, "max": 3.2},
+    },
+    "front_brake_rotors_replacement": {
+        "display_name": "Front Brake Rotors Replacement",
+        "template": "brake_rotor",
+        "labor_hours": {"min": 1.2, "avg": 2.0, "max": 6.0},
+    },
+    "rear_brake_rotors_replacement": {
+        "display_name": "Rear Brake Rotors Replacement",
+        "template": "brake_rotor",
+        "labor_hours": {"min": 1.2, "avg": 2.0, "max": 6.0},
     },
     "front_brake_pads_and_rotors_replacement": {
         "display_name": "Front Brake Pads & Rotors Replacement",
@@ -136,13 +194,13 @@ LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
 
     "battery_replacement": {
         "display_name": "Battery Replacement",
-        "template": "electrical",
+        "template": "battery",
         "labor_hours": {"min": 0.3, "avg": 0.5, "max": 1.0},
     },
 
     "radiator_replacement": {
         "display_name": "Radiator Replacement",
-        "template": "cooling",
+        "template": "radiator",
         "labor_hours": {"min": 2.0, "avg": 3.0, "max": 5.0},
     },
 
@@ -212,6 +270,21 @@ LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
         "display_name": "Thermostat Replacement",
         "template": "thermostat",
         "labor_hours": {"min": 1.0, "avg": 2.0, "max": 4.0},
+    },
+    "fuel_pump_replacement_in_tank": {
+        "display_name": "Fuel Pump Replacement (In-Tank)",
+        "template": "fuel_pump",
+        "labor_hours": {"min": 1.2, "avg": 3.6, "max": 6.0},
+    },
+    "fuel_pump_replacement_external": {
+        "display_name": "Fuel Pump Replacement (External)",
+        "template": "fuel_pump",
+        "labor_hours": {"min": 1.2, "avg": 2.4, "max": 6.0},
+    },
+    "catalytic_converter_replacement": {
+        "display_name": "Catalytic Converter Replacement",
+        "template": "catalytic_converter",
+        "labor_hours": {"min": 6.0, "avg": 12.0, "max": 18.0},
     },
 }
 
@@ -354,6 +427,7 @@ def build_labor_breakdown(
             "selected": round_hours(selected_hours),
         },
         "steps": steps,
+        "why": LABOR_SERVICE_EXPLANATIONS.get(service_key),
         "disclaimer": (
             "This shows how labor time is typically distributed for this service. "
             "Actual time may vary depending on vehicle condition and access."
