@@ -6,6 +6,7 @@
     <div class="tm-eyebrow">TorqueMech Symptom Guide</div>
     <h1 class="tm-page-title">{{ symptom.title }}</h1>
     <p class="tm-muted">{{ symptom.summary }}</p>
+    <p class="tm-muted">Use the symptom as the starting point, then confirm likely causes with checks, OBD context, and repair guides before estimating or replacing parts.</p>
     <p>{{ symptom.intro }}</p>
   </div>
 </section>
@@ -66,6 +67,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related OBD Codes</h2>
+    <p class="tm-muted">Move into code lookup when a scan tool confirms one of these faults, then use the code page to narrow causes before pricing the repair.</p>
     <ul class="tm-list">
       {% for item in symptom.related_obd_codes %}
       <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
@@ -79,6 +81,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Repair Guides</h2>
+    <p class="tm-muted">Use these guides to confirm the failure path before opening an estimate, especially when multiple parts can cause the same symptom.</p>
     <div class="tm-stack">
       {% for cause in symptom.likely_causes %}
       <div class="tm-linked-card">
@@ -100,6 +103,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Recommended Next Repair Paths</h2>
+    <p class="tm-muted">Compare likely repair paths before replacing parts. Cost guides and estimates are strongest after symptoms, checks, and code evidence point in the same direction.</p>
     <div class="tm-stack">
       {% for item in symptom.recommended_repairs %}
       <div class="tm-linked-card">
@@ -128,7 +132,7 @@
   {% if symptom.diagnostic_tools_link %}
   <div class="tm-card">
     <h2>Diagnostic Tools</h2>
-    <p class="tm-muted">Use TorqueMech diagnostic flow for symptom-based troubleshooting.</p>
+    <p class="tm-muted">Use TorqueMech diagnostic flow to move from symptom checking into code context, likely causes, and repair guide confirmation.</p>
     <a href="{{ symptom.diagnostic_tools_link }}">Open Diagnostic Tools &rarr;</a>
   </div>
   {% endif %}
@@ -136,7 +140,7 @@
   {% if symptom.estimator_link %}
   <div class="tm-card">
     <h2>Need a Quick Estimate?</h2>
-    <p class="tm-muted">Go directly into the estimator if the repair is already known.</p>
+    <p class="tm-muted">Open the estimator when the likely repair path is known and you are ready to compare labor, parts, and customer-ready quote context.</p>
     <a href="{{ symptom.estimator_link }}">Open Estimator &rarr;</a>
   </div>
   {% endif %}
