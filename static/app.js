@@ -488,7 +488,6 @@
   const statusBox = $("statusBox");
   const clearBtn = $("clearBtn");
   const generateAllBtn = $("generateAllBtn");
-  const emailEstimateBtn = $("emailEstimateBtn");
   const addLineBtn = $("addLineBtn");
   const addServiceHint = $("addServiceHint");
   const getEstimateHint = $("getEstimateHint");
@@ -1580,7 +1579,6 @@ const confidenceEl = document.getElementById("laborConfidence");
   });
 
   emailQuoteBtn?.addEventListener("click", emailEstimate);
-  emailEstimateBtn?.addEventListener("click", emailEstimate);
 
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && confirmModal && !confirmModal.classList.contains("hidden")) closeConfirm();
@@ -1768,9 +1766,6 @@ const confidenceEl = document.getElementById("laborConfidence");
   // ----- Line Items UI (Service cards) -----
   function renderLineItems() {
     renderEstimateTotalBar();
-    if (emailEstimateBtn) {
-      emailEstimateBtn.hidden = lineItems.length === 0;
-    }
     if (!lineItemsWrap || !lineItemsList) return;
 
     lineItemsWrap.classList.toggle("hidden", lineItems.length === 0);
