@@ -488,6 +488,7 @@
   const statusBox = $("statusBox");
   const clearBtn = $("clearBtn");
   const generateAllBtn = $("generateAllBtn");
+  const emailEstimateBtn = $("emailEstimateBtn");
   const addLineBtn = $("addLineBtn");
   const addServiceHint = $("addServiceHint");
   const getEstimateHint = $("getEstimateHint");
@@ -513,6 +514,7 @@
   const confirmCloseBtn = $("confirmCloseBtn");
   const confirmAddBtn = $("confirmAddBtn");
   const copyQuoteBtn = $("copyQuoteBtn");
+  const emailQuoteBtn = $("emailQuoteBtn");
   const quotePreviewEl = $("quotePreview");
   const confirmMsg = $("confirmMsg");
   const confirmServiceText = $("confirmServiceText");
@@ -965,6 +967,46 @@ const confidenceEl = document.getElementById("laborConfidence");
     lines.push("This is an estimate. Final pricing may vary after inspection.");
 
     return lines.join("\n");
+  }
+
+  function buildEstimateEmailSubject() {
+    const currentVehicle = getCurrentVehicleSnapshot();
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
+    const serviceCount = lineItems.length;
+    const serviceText = serviceCount === 1
+      ? lineItems[0]?.serviceText
+      : `${serviceCount} Service Estimate`;
+
+    return [vehicle, serviceText || "Repair Estimate"].filter(Boolean).join(" - ");
+  }
+
+  function buildEstimateEmailBody() {
+    const lines = [buildQuoteMessage()];
+    const path = window.location?.pathname || "";
+
+    if (path.startsWith("/estimate/share/")) {
+      lines.push("");
+      lines.push(`Estimate link: ${window.location.href}`);
+    }
+
+    return lines.join("\n");
+  }
+
+  function emailEstimate() {
+    if (!lineItems.length) {
+      setStatus("error", "Add at least one service before emailing an estimate.");
+      if (confirmMsg) confirmMsg.textContent = "Add at least one service before emailing an estimate.";
+      return;
+    }
+
+    refreshQuotePreview();
+
+    const subject = encodeURIComponent(buildEstimateEmailSubject());
+    const body = encodeURIComponent(buildEstimateEmailBody());
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+
+    if (confirmMsg) confirmMsg.textContent = "Opening your email app with this estimate.";
+    setStatus("ok", "Opening your email app with this estimate.");
   }
 
   function calcLineItemEstimate(it) {
@@ -1537,6 +1579,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
   });
 
+  emailQuoteBtn?.addEventListener("click", emailEstimate);
+  emailEstimateBtn?.addEventListener("click", emailEstimate);
+
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && confirmModal && !confirmModal.classList.contains("hidden")) closeConfirm();
   });
@@ -1723,6 +1768,9 @@ const confidenceEl = document.getElementById("laborConfidence");
   // ----- Line Items UI (Service cards) -----
   function renderLineItems() {
     renderEstimateTotalBar();
+    if (emailEstimateBtn) {
+      emailEstimateBtn.hidden = lineItems.length === 0;
+    }
     if (!lineItemsWrap || !lineItemsList) return;
 
     lineItemsWrap.classList.toggle("hidden", lineItems.length === 0);
