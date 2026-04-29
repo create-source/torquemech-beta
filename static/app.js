@@ -1388,20 +1388,86 @@ const confidenceEl = document.getElementById("laborConfidence");
     serviceSearch.value = serviceEl.value ? selectedText : "";
   }
 
+  const SERVICE_SEARCH_ALIASES = {
+    engine: [
+      "oil change",
+      "engine air filter",
+      "spark plug",
+      "ignition coil",
+      "coolant flush",
+      "thermostat",
+      "timing belt",
+      "timing chain",
+      "valve cover gasket",
+      "engine diagnostic",
+      "diagnostic",
+    ],
+    brake: ["brake pad", "brake rotor", "brake caliper", "brake fluid", "brake fluid flush"],
+    battery: ["battery", "alternator", "starter", "charging", "no start"],
+    overheat: ["thermostat", "radiator", "water pump", "coolant flush", "cooling", "coolant"],
+    overheating: ["thermostat", "radiator", "water pump", "coolant flush", "cooling", "coolant"],
+    misfire: ["spark plug", "ignition coil", "fuel injector", "injector", "engine diagnostic", "diagnostic"],
+  };
+
+  function normalizeServiceSearch(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function compactServiceSearch(value) {
+    return normalizeServiceSearch(value).replace(/\s+/g, "");
+  }
+
+  function serviceSearchText(service) {
+    return [
+      service.name,
+      service.code,
+      service.category,
+      service.categoryName,
+      service.description,
+      service.summary,
+      service.meta,
+      Array.isArray(service.keywords) ? service.keywords.join(" ") : service.keywords,
+      Array.isArray(service.aliases) ? service.aliases.join(" ") : service.aliases,
+    ].join(" ");
+  }
+
+  function serviceMatchesSearch(service, query) {
+    const normalizedQuery = normalizeServiceSearch(query);
+    const compactQuery = compactServiceSearch(query);
+    const searchableText = serviceSearchText(service);
+    const normalizedText = normalizeServiceSearch(searchableText);
+    const compactText = compactServiceSearch(searchableText);
+
+    if (!normalizedQuery) return false;
+    if (normalizedText.includes(normalizedQuery) || compactText.includes(compactQuery)) {
+      return true;
+    }
+
+    const aliasTerms = SERVICE_SEARCH_ALIASES[compactQuery] || SERVICE_SEARCH_ALIASES[normalizedQuery] || [];
+    return aliasTerms.some((term) => {
+      const normalizedTerm = normalizeServiceSearch(term);
+      const compactTerm = compactServiceSearch(term);
+      return normalizedText.includes(normalizedTerm) || compactText.includes(compactTerm);
+    });
+  }
+
   function renderServiceResults(query) {
     if (!serviceSearch || !serviceResults || serviceSearch.disabled) {
       hideServiceResults();
       return;
     }
 
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = normalizeServiceSearch(query);
     if (!normalizedQuery) {
       hideServiceResults();
       return;
     }
 
     const filtered = serviceOptions
-      .filter((service) => service.name.toLowerCase().includes(normalizedQuery))
+      .filter((service) => serviceMatchesSearch(service, normalizedQuery))
       .slice(0, 8);
 
     if (!filtered.length) {
@@ -1514,9 +1580,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     const svcs = filterServicesForActiveVehicle(
       await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`)
     );
+    const categoryName = categoryEl?.options[categoryEl.selectedIndex]?.textContent || "";
     serviceOptions = svcs.map((s) => ({
       code: s.code || "",
       name: s.name || s.code || "Service",
+      category: s.category || categoryKey || "",
+      categoryName,
+      description: s.description || "",
+      summary: s.summary || "",
+      meta: s.meta || "",
+      keywords: s.keywords || "",
+      aliases: s.aliases || "",
     }));
     for (const s of svcs) {
       const opt = document.createElement("option");
