@@ -217,19 +217,36 @@
       <h2>Saved Estimates</h2>
       <p class="tm-hint">Keep this estimate on this device so you can return later for customer approval, updated parts pricing, or repair-path comparison.</p>
 
+      <div class="tm-card" id="draftRecoveryBlock" style="margin:12px 0; padding:14px 16px;">
+        <div style="font-weight:800; margin-bottom:6px;">Worked on an estimate before?</div>
+        <div class="tm-hint" style="margin-bottom:10px;">Reopen your saved estimate instantly.</div>
+        <button id="loadSavedEstimatePromptBtn" type="button" class="tm-btn tm-btn-secondary">Load Saved Estimate</button>
+      </div>
+
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary">Save Draft</button>
+        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary">Save This Estimate for Later</button>
 
         <select id="draftsSelect" class="input" style="min-width:260px;">
           <option value="">— Select a device-saved estimate —</option>
         </select>
 
-        <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary">Load</button>
+        <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary">Open</button>
         <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger">Delete</button>
       </div>
       
 
       <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;"></div>
+
+      <div id="estimateSavedBlock" class="tm-card" style="margin-top:12px; padding:14px 16px;" hidden>
+        <div style="font-weight:800; margin-bottom:6px;">Estimate Saved Successfully</div>
+        <div class="tm-hint" style="margin-bottom:10px;">Your repair estimate is stored and can be reopened anytime using your unique share link.</div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+          <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Link</button>
+          <button id="openSavedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">Open Saved Estimate</button>
+          <button id="downloadSavedEstimatePdfBtn" type="button" class="tm-btn tm-btn-primary">Download PDF</button>
+        </div>
+        <div id="estimateSavedLinkText" class="tm-hint" style="margin-top:10px;"></div>
+      </div>
     </div>
 
       <div class="actions estimator-final-actions">
