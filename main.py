@@ -6349,6 +6349,19 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
             c.drawString(72, y, "Labor Breakdown")
             y -= 14
 
+            why = str(lb.get("why") or "").strip()
+            if why:
+                c.setFont("Helvetica-Bold", 10)
+                c.drawString(82, y, "Why this service takes time")
+                y -= 12
+
+                c.setFont("Helvetica", 9)
+                for line in wrap_text(why, max_chars=92)[:3]:
+                    c.drawString(82, y, line)
+                    y -= 11
+
+                y -= 3
+
             c.setFont("Helvetica", 10)
 
             for step in lb["steps"]:
@@ -6501,7 +6514,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         for it in (req.lineItems or []):
             y = pdf_ensure_space(
                 c, w, h, y,
-                needed=140,
+                needed=180,
                 title="Repair Estimate",
                 vehicle_line=vehicle_line,
                 left=LEFT, right=RIGHT,
@@ -6560,6 +6573,22 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                         c.drawString(X_SERVICE + 20, y, f"Typical range: {rmin:.1f} - {rmax:.1f} hrs")
                         c.setFillGray(0)
                         y -= 10
+
+                why = str(lb.get("why") or "").strip()
+                if why:
+                    c.setFont("Helvetica-Bold", 8)
+                    c.drawString(X_SERVICE + 20, y, "Why this service takes time")
+                    y -= 10
+
+                    c.setFont("Helvetica", 8)
+                    c.setFillGray(0.25)
+                    for line in wrap_text(why, max_chars=92)[:3]:
+                        c.drawString(X_SERVICE + 26, y, line)
+                        y -= 10
+                    c.setFillGray(0)
+                    y -= 2
+
+                c.setFont("Helvetica-Bold", 8)
                 c.drawString(X_SERVICE + 20, y, "Labor Breakdown")
                 y -= 11
 
