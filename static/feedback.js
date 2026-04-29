@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) throw new Error("Request failed");
 
-      statusEl.textContent = "Thanks — feedback received.";
+      statusEl.textContent = "Thanks — repair intelligence feedback received.";
       form.reset();
 
       setTimeout(() => closeModal(), 700);

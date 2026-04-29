@@ -81,12 +81,12 @@
 
     <div class="tm-modal__panel" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
       <div class="tm-modal__head">
-        <h2 id="fbTitle">Send Feedback</h2>
+        <h2 id="fbTitle">Help Improve Repair Intelligence</h2>
         <button type="button" class="tm-iconBtn" id="feedbackCloseBtn" aria-label="Close">✕</button>
       </div>
 
       <p class="tm-muted" style="margin:0 0 10px;">
-        Tell us what didn’t work, what was unclear, or what you expected to see.
+        Tell us where the repair path needs work: missing services, unclear estimates, pricing confusion, OBD code gaps, repair guide gaps, trust concerns, or feature friction.
       </p>
 
       <form id="feedbackForm">
@@ -104,7 +104,7 @@
         <div style="margin-top:12px;">
           <label class="tm-label">Message *</label>
           <textarea class="input" id="fbMessage" rows="5" required maxlength="2000"
-            placeholder="Example: I searched P0300 and expected…"></textarea>
+            placeholder="Example: I searched P0300 and expected a clearer misfire path, or this estimate felt unclear because..."></textarea>
         </div>
 
         <div class="tm-row tm-modal-actions">
@@ -120,8 +120,8 @@
 
   <div id="feedbackReminder" class="tm-feedback-reminder" hidden aria-live="polite">
     <button type="button" class="tm-feedback-reminder__close" id="feedbackReminderClose" aria-label="Dismiss feedback reminder">✕</button>
-    <p class="tm-feedback-reminder__title">Help improve TorqueMech Beta</p>
-    <p class="tm-feedback-reminder__text">Quick feedback helps us make the diagnostic tools better.</p>
+    <p class="tm-feedback-reminder__title">Help improve TorqueMech repair intelligence</p>
+    <p class="tm-feedback-reminder__text">Tell us what was missing, unclear, or hard to trust so we can improve estimates, OBD paths, and repair guides.</p>
     <div class="tm-feedback-reminder__actions">
       <button type="button" class="tm-btn tm-btn-primary" id="feedbackReminderSend">Send Feedback</button>
       <button type="button" class="tm-btn tm-btn-ghost" id="feedbackReminderLater">Maybe later</button>
