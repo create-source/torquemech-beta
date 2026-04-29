@@ -14,9 +14,9 @@
     <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
       <div style="font-weight:800; margin-bottom:8px;">Labor, parts, and service intelligence</div>
       <div class="tm-muted" style="line-height:1.6;">
-        1. Select the vehicle so labor ranges match the repair context<br>
-        2. Choose one likely service or compare multiple repair paths<br>
-        3. Review labor time, parts, and rate inputs before replacing parts<br>
+        1. Select the vehicle so labor guidance reflects real service access and layout<br>
+        2. Choose the diagnosed repair or compare multiple likely repair paths<br>
+        3. Review labor time, parts, and rate inputs before authorizing replacement<br>
         4. Generate a decision-ready estimate for drivers, DIY owners, mobile mechanics, and small shops
       </div>
     </div>
@@ -93,7 +93,7 @@
     <div id="lineItemsWrap" class="line-items hidden">
       <div class="line-items-head">
         <div class="line-items-title">Services to estimate</div>
-        <div class="line-items-hint">Add likely repairs to compare labor, parts, and totals before committing to a fix.</div>
+        <div class="line-items-hint">Add diagnosed or likely repairs to compare labor, parts, and totals before committing to a fix.</div>
       </div>
 
       <div id="lineItemsList" class="line-items-list"></div>
@@ -155,7 +155,7 @@
         </div>
 
         <p class="recalc-note">
-          Adjust labor hours, parts price, or labor rate when a diagnosis, cost guide, or OBD result points to a different repair path,
+          Adjust labor hours, parts price, or labor rate when diagnosis, a cost guide, or OBD evidence points to a different repair path,
           then click the corresponding <strong>“Recalculate”</strong> button on that service card.
         </p>
             
@@ -163,13 +163,13 @@
 
       <div class="labor-help">
         <span class="tm-hint">
-          Estimates combine typical labor time ranges with your parts and rate inputs, helping you compare likely repairs before authorizing work or replacing parts.
+          Labor guidance reflects service access, removal steps, testing, and verification where available, then combines with your parts and rate inputs for a more useful repair decision.
         </span>
         
       </div>
 
       <div class="inline-actions" style="margin-top:10px;">
-      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select the service that best matches the diagnosis, then click “Get Estimate” to review labor, parts, and total cost.</div>
+      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select the service that best matches the diagnosis, then click “Get Estimate” to review labor logic, parts, and total cost.</div>
         <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary">
           Get Estimate
         </button>
@@ -236,7 +236,7 @@
         {% if shared_id %}
         <div class="tm-hint">This shared estimate is ready for review and customer approval, with PDF, email, and share handoff support for professional repair decisions.</div>
         {% endif %}
-        <div class="tm-hint">Generate one estimate set when you want to compare multiple services, likely repairs, or diagnosis paths side by side.</div>
+        <div class="tm-hint">Generate one estimate set when you want to compare multiple services, likely repairs, or diagnosis paths with labor, parts, and totals side by side.</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta">
           Generate All Service Estimates
         </button>
