@@ -6349,6 +6349,19 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
             c.drawString(72, y, "Labor Breakdown")
             y -= 14
 
+            repair_summary = str(lb.get("repair_summary") or "").strip()
+            if repair_summary:
+                c.setFont("Helvetica-Bold", 10)
+                c.drawString(82, y, "Recommended Repair Summary")
+                y -= 12
+
+                c.setFont("Helvetica", 9)
+                for line in wrap_text(repair_summary, max_chars=92)[:3]:
+                    c.drawString(82, y, line)
+                    y -= 11
+
+                y -= 3
+
             why = str(lb.get("why") or "").strip()
             if why:
                 c.setFont("Helvetica-Bold", 10)
@@ -6514,7 +6527,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         for it in (req.lineItems or []):
             y = pdf_ensure_space(
                 c, w, h, y,
-                needed=180,
+                needed=210,
                 title="Repair Estimate",
                 vehicle_line=vehicle_line,
                 left=LEFT, right=RIGHT,
@@ -6573,6 +6586,20 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                         c.drawString(X_SERVICE + 20, y, f"Typical range: {rmin:.1f} - {rmax:.1f} hrs")
                         c.setFillGray(0)
                         y -= 10
+
+                repair_summary = str(lb.get("repair_summary") or "").strip()
+                if repair_summary:
+                    c.setFont("Helvetica-Bold", 8)
+                    c.drawString(X_SERVICE + 20, y, "Recommended Repair Summary")
+                    y -= 10
+
+                    c.setFont("Helvetica", 8)
+                    c.setFillGray(0.25)
+                    for line in wrap_text(repair_summary, max_chars=92)[:3]:
+                        c.drawString(X_SERVICE + 26, y, line)
+                        y -= 10
+                    c.setFillGray(0)
+                    y -= 2
 
                 why = str(lb.get("why") or "").strip()
                 if why:

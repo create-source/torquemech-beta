@@ -136,6 +136,24 @@ LABOR_SERVICE_EXPLANATIONS: Dict[str, str] = {
     "starter_replacement": "Starter labor includes confirming the no-crank path, disconnecting the battery, accessing tight mounting and cable connections, then verifying crank speed and start behavior after installation.",
 }
 
+LABOR_SERVICE_REPAIR_SUMMARIES: Dict[str, str] = {
+    "alternator_replacement": "Recommended when charging tests confirm weak or unstable alternator output. Replacement restores battery charging and helps prevent repeat dead-battery or no-start complaints.",
+    "thermostat_replacement": "Recommended when warm-up data, P0128 history, or cooling behavior points to a sticking thermostat. Delaying repair can leave weak heat, poor temperature control, or overheating risk unresolved.",
+    "ignition_coil_replacement_each": "Recommended when misfire data or coil swap testing confirms a weak coil. Delaying repair can worsen rough running and may damage the catalytic converter during an active misfire.",
+    "spark_plug_replacement": "Recommended when plug wear, fouling, or service interval supports replacement. Delaying repair can cause misfires, poor fuel economy, hard starts, and extra ignition coil stress.",
+    "spark_plug_replacement_4_cyl": "Recommended when plug wear, fouling, or service interval supports replacement. Delaying repair can cause misfires, poor fuel economy, hard starts, and extra ignition coil stress.",
+    "spark_plug_replacement_v6_v8": "Recommended when plug wear, fouling, or service interval supports replacement. Delaying repair can cause misfires, poor fuel economy, hard starts, and extra ignition coil stress.",
+    "fuel_pump_replacement_in_tank": "Recommended when pressure and command testing confirm weak fuel delivery from the pump. Delaying repair can lead to stalling, hard starts, or a crank-no-start condition.",
+    "fuel_pump_replacement_external": "Recommended when pressure and command testing confirm weak fuel delivery from the pump. Delaying repair can lead to stalling, hard starts, or a crank-no-start condition.",
+    "catalytic_converter_replacement": "Recommended when catalyst-efficiency testing confirms converter failure after upstream causes are checked. Delaying repair can cause emissions failure, poor power, and repeat catalyst codes.",
+    "front_brake_rotors_replacement": "Recommended when rotor wear, scoring, pulsation, or thickness confirms rotor service. Delaying repair can reduce braking quality and accelerate pad or caliper wear.",
+    "rear_brake_rotors_replacement": "Recommended when rotor wear, scoring, pulsation, or thickness confirms rotor service. Delaying repair can reduce braking quality and accelerate pad or parking-brake hardware wear.",
+    "brake_rotor_replacement": "Recommended when rotor wear, scoring, pulsation, or thickness confirms rotor service. Delaying repair can reduce braking quality and accelerate pad or caliper wear.",
+    "radiator_replacement": "Recommended when leak, restriction, or cooling-system testing confirms radiator failure. Delaying repair can lead to coolant loss, overheating, and engine damage risk.",
+    "battery_replacement": "Recommended when battery testing confirms low capacity or repeated failure to hold charge. Delaying repair can cause unreliable starts and added strain on the charging system.",
+    "starter_replacement": "Recommended when no-crank testing confirms starter failure after battery and cable checks. Delaying repair can leave the vehicle unable to start without warning.",
+}
+
 
 LABOR_SERVICE_PROFILES: Dict[str, Dict[str, Any]] = {
     "brake_pad_replacement": {
@@ -428,6 +446,7 @@ def build_labor_breakdown(
         },
         "steps": steps,
         "why": LABOR_SERVICE_EXPLANATIONS.get(service_key),
+        "repair_summary": LABOR_SERVICE_REPAIR_SUMMARIES.get(service_key),
         "disclaimer": (
             "This shows how labor time is typically distributed for this service. "
             "Actual time may vary depending on vehicle condition and access."
