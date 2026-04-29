@@ -667,13 +667,13 @@
     if (!draftsSelect) return;
 
     const drafts = getDrafts();
-    draftsSelect.innerHTML = `<option value="">— Select a saved draft —</option>` +
+    draftsSelect.innerHTML = `<option value="">— Select a device-saved estimate —</option>` +
       drafts.map(d => `<option value="${d.id}">${draftLabel(d)}</option>`).join("");
 
     if (draftsMsg) {
       draftsMsg.textContent = drafts.length
-        ? `Saved on this device: ${drafts.length}`
-        : "No saved drafts yet.";
+        ? `Saved on this device: ${drafts.length}. Load one to continue an estimate, compare repair paths, or prepare customer approval.`
+        : "No saved estimates on this device yet. Build an estimate, then save it here to return later.";
     }
   }
 
@@ -806,7 +806,7 @@
       refreshQuotePreview();
       updateEstimateButtonState();
 
-      if (draftsMsg) draftsMsg.textContent = `Loaded: ${d.title}`;
+      if (draftsMsg) draftsMsg.textContent = `Loaded from this device: ${d.title}`;
     }
 
   function saveCurrentDraft() {
@@ -819,20 +819,20 @@
     setDrafts(drafts);
     refreshDraftsUI();
 
-    if (draftsMsg) draftsMsg.textContent = `Saved: ${d.title}`;
+    if (draftsMsg) draftsMsg.textContent = `Saved on this device for later approval, parts pricing, or repair comparison: ${d.title}`;
   }
 
   async function loadSelectedDraft() {
     const id = draftsSelect?.value;
     if (!id) {
-      if (draftsMsg) draftsMsg.textContent = "Select a saved draft first.";
+      if (draftsMsg) draftsMsg.textContent = "Select a device-saved estimate to continue.";
       return;
     }
 
     const drafts = getDrafts();
     const d = drafts.find(x => x.id === id);
     if (!d) {
-      if (draftsMsg) draftsMsg.textContent = "Draft not found.";
+      if (draftsMsg) draftsMsg.textContent = "Saved estimate not found on this device.";
       return;
     }
 
@@ -842,7 +842,7 @@
   function deleteSelectedDraft() {
     const id = draftsSelect?.value;
     if (!id) {
-      if (draftsMsg) draftsMsg.textContent = "Select a saved draft first.";
+      if (draftsMsg) draftsMsg.textContent = "Select a device-saved estimate first.";
       return;
     }
 
@@ -851,7 +851,7 @@
     refreshDraftsUI();
     if (draftsSelect) draftsSelect.value = "";
 
-    if (draftsMsg) draftsMsg.textContent = "Draft deleted.";
+    if (draftsMsg) draftsMsg.textContent = "Saved estimate deleted from this device.";
   }
 
   let laborHoursTouched = false;
