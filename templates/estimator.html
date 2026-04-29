@@ -21,6 +21,28 @@
       </div>
     </div>
 
+    {% if shared_id %}
+    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
+      <div style="font-weight:800; margin-bottom:8px;">Shared TorqueMech Estimate</div>
+      <p class="tm-muted" style="margin:0 0 8px 0;">
+        This estimate was created using TorqueMech’s repair estimator and can be reviewed, saved, or converted into a PDF.
+      </p>
+      <p class="tm-hint" style="margin:0 0 12px 0;">
+        Prices are estimates and may vary by vehicle condition, parts quality, labor rate, location, and diagnostic findings.
+      </p>
+      <div class="tm-muted" style="line-height:1.7; margin-bottom:12px;">
+        <strong>Estimate Snapshot</strong><br>
+        Vehicle: <span id="sharedSnapshotVehicle">—</span><br>
+        Services: <span id="sharedSnapshotServices">—</span><br>
+        Estimated Total: <span id="sharedSnapshotTotal">$0.00</span>
+      </div>
+      <div class="tm-actions">
+        <button id="sharedDownloadPdfBtn" type="button" class="tm-btn tm-btn-primary">Download PDF</button>
+        <a href="/estimator" class="tm-btn tm-btn-secondary">Start a New Estimate</a>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Vehicles -->
     <section class="tm-card" aria-label="Vehicles" style="margin-top:14px;">
       <div class="section-header--vehicles">
@@ -219,8 +241,7 @@
 
       <div class="tm-card" id="draftRecoveryBlock" style="margin:12px 0; padding:14px 16px;">
         <div style="font-weight:800; margin-bottom:6px;">Worked on an estimate before?</div>
-        <div class="tm-hint" style="margin-bottom:10px;">Reopen your saved estimate instantly.</div>
-        <button id="loadSavedEstimatePromptBtn" type="button" class="tm-btn tm-btn-secondary">Load Saved Estimate</button>
+        <div class="tm-hint">Your saved estimates are listed below and can be reopened anytime.</div>
       </div>
 
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">

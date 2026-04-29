@@ -504,6 +504,10 @@
   const lineItemsList = $("lineItemsList");
   const estimateTotalBar = $("estimateTotalBar");
   const estimateTotalValue = $("estimateTotalValue");
+  const sharedSnapshotVehicle = $("sharedSnapshotVehicle");
+  const sharedSnapshotServices = $("sharedSnapshotServices");
+  const sharedSnapshotTotal = $("sharedSnapshotTotal");
+  const sharedDownloadPdfBtn = $("sharedDownloadPdfBtn");
 
   // Preview (optional)
   const estimatePreview = $("estimatePreview");
@@ -668,6 +672,60 @@
     return `${d.title} • ${new Date(d.savedAt).toLocaleString()}`;
   }
 
+  function createShareId() {
+    if (window.crypto?.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+
+    const randomByte = () => {
+      const bytes = new Uint8Array(1);
+      if (window.crypto?.getRandomValues) {
+        window.crypto.getRandomValues(bytes);
+        return bytes[0];
+      }
+      return Math.floor(Math.random() * 256);
+    };
+
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
+      (Number(c) ^ ((randomByte() & 15) >> (Number(c) / 4))).toString(16)
+    );
+  }
+
+  function buildShareLink(d) {
+    if (!d?.shareId) return "";
+    return `${window.location.origin}/estimate/share/${encodeURIComponent(d.shareId)}`;
+  }
+
+  function showEstimateSavedBlock(d) {
+    lastSavedEstimateLink = buildShareLink(d);
+    if (!estimateSavedBlock || !lastSavedEstimateLink) return;
+
+    estimateSavedBlock.hidden = false;
+    if (estimateSavedLinkText) {
+      estimateSavedLinkText.textContent = lastSavedEstimateLink;
+    }
+  }
+
+  function sharedEstimateIdFromPath() {
+    const match = String(window.location.pathname || "").match(/^\/estimate\/share\/([0-9a-f-]{36})$/i);
+    return match ? match[1] : "";
+  }
+
+  async function loadSharedEstimateFromPath() {
+    const shareId = sharedEstimateIdFromPath();
+    if (!shareId) return;
+
+    const draft = getDrafts().find((d) => String(d.shareId || "").toLowerCase() === shareId.toLowerCase());
+    if (!draft) {
+      if (draftsMsg) draftsMsg.textContent = "This share link is ready, but the saved estimate is not stored on this device.";
+      return;
+    }
+
+    await applyDraft(draft);
+    showEstimateSavedBlock(draft);
+    if (draftsMsg) draftsMsg.textContent = `Opened saved estimate from this device: ${draft.title}`;
+  }
+
   function refreshDraftsUI() {
     if (!draftsSelect) return;
 
@@ -693,6 +751,7 @@
     const currentVehicle = getCurrentVehicleSnapshot();
     return {
       id: String(Date.now()),
+      shareId: createShareId(),
       savedAt: Date.now(),
       title: buildDraftTitle(),
 
@@ -823,6 +882,8 @@
 
     setDrafts(drafts);
     refreshDraftsUI();
+    if (draftsSelect) draftsSelect.value = d.id;
+    showEstimateSavedBlock(d);
 
     if (draftsMsg) draftsMsg.textContent = `Saved on this device for later approval, parts pricing, or repair comparison: ${d.title}`;
   }
@@ -924,6 +985,26 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
     if (estimateTotalBar) {
       estimateTotalBar.dataset.empty = lineItems.length ? "false" : "true";
+    }
+    renderSharedEstimateSnapshot();
+  }
+
+  function renderSharedEstimateSnapshot() {
+    if (!sharedSnapshotVehicle && !sharedSnapshotServices && !sharedSnapshotTotal) return;
+
+    const currentVehicle = getCurrentVehicleSnapshot();
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
+
+    if (sharedSnapshotVehicle) {
+      sharedSnapshotVehicle.textContent = vehicle || "Not selected";
+    }
+    if (sharedSnapshotServices) {
+      sharedSnapshotServices.textContent = lineItems.length
+        ? `${lineItems.length} service${lineItems.length === 1 ? "" : "s"}`
+        : "No services added";
+    }
+    if (sharedSnapshotTotal) {
+      sharedSnapshotTotal.textContent = formatRunningTotal(quoteTotal());
     }
   }
 
@@ -1222,6 +1303,12 @@ const confidenceEl = document.getElementById("laborConfidence");
   const loadDraftBtn = $("loadDraftBtn");
   const deleteDraftBtn = $("deleteDraftBtn");
   const draftsMsg = $("draftsMsg");
+  const estimateSavedBlock = $("estimateSavedBlock");
+  const copySavedEstimateLinkBtn = $("copySavedEstimateLinkBtn");
+  const openSavedEstimateBtn = $("openSavedEstimateBtn");
+  const downloadSavedEstimatePdfBtn = $("downloadSavedEstimatePdfBtn");
+  const estimateSavedLinkText = $("estimateSavedLinkText");
+  let lastSavedEstimateLink = "";
 
   // ---- Years / Makes / Models ----
   function populateYears() {
@@ -2566,6 +2653,41 @@ if (getEstimateHint) {
     await loadSelectedDraft();
   });
   deleteDraftBtn?.addEventListener("click", deleteSelectedDraft);
+  copySavedEstimateLinkBtn?.addEventListener("click", async () => {
+    if (!lastSavedEstimateLink) return;
+
+    try {
+      await navigator.clipboard.writeText(lastSavedEstimateLink);
+      if (draftsMsg) draftsMsg.textContent = "Saved estimate link copied.";
+      setStatus("ok", "Saved estimate link copied.");
+    } catch (e) {
+      if (draftsMsg) draftsMsg.textContent = "Copy failed. Select the link manually.";
+      setStatus("error", `Copy failed: ${e.message}`);
+    }
+  });
+  openSavedEstimateBtn?.addEventListener("click", () => {
+    if (lastSavedEstimateLink) {
+      window.location.href = lastSavedEstimateLink;
+    }
+  });
+  downloadSavedEstimatePdfBtn?.addEventListener("click", () => {
+    if (!lineItems.length) {
+      setStatus("error", "Load or build an estimate before downloading a PDF.");
+      return;
+    }
+
+    openConfirm();
+    if (confirmMsg) confirmMsg.textContent = "Review the saved estimate, then click Generate PDF.";
+  });
+  sharedDownloadPdfBtn?.addEventListener("click", () => {
+    if (!lineItems.length) {
+      setStatus("error", "Load or build an estimate before downloading a PDF.");
+      return;
+    }
+
+    openConfirm();
+    if (confirmMsg) confirmMsg.textContent = "Review the shared estimate, then click Generate PDF.";
+  });
 
   addVehicleBtn?.addEventListener("click", () => {
     addVehicleCard();
@@ -2704,6 +2826,7 @@ if (getEstimateHint) {
           window.estimateState = estimateState;
           void loadServices(categoryEl?.value || "");
           updateEstimateButtonState();
+          renderSharedEstimateSnapshot();
           refreshQuotePreview();
         },
       });
@@ -2799,6 +2922,8 @@ if (getEstimateHint) {
       setStatus("error", `Init failed: ${e.message}`);
     }
   })();
+
+  initReady.then(() => loadSharedEstimateFromPath());
 
   // ---- Repair Guide → Estimator preload ----
   (function preloadFromRepairGuide() {
