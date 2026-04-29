@@ -105,6 +105,12 @@
       modelResults.innerHTML = "";
     };
 
+    const normalizeModelSearch = (value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+
     const renderMakeResults = (query) => {
       const normalizedQuery = query.trim().toLowerCase();
 
@@ -167,7 +173,7 @@
         return;
       }
 
-      const normalizedQuery = query.trim().toLowerCase();
+      const normalizedQuery = normalizeModelSearch(query);
 
       if (!normalizedQuery) {
         hideModelResults();
@@ -175,7 +181,7 @@
       }
 
       const filtered = models
-        .filter((model) => model.toLowerCase().includes(normalizedQuery))
+        .filter((model) => normalizeModelSearch(model).includes(normalizedQuery))
         .slice(0, 8);
 
       if (!filtered.length) {
