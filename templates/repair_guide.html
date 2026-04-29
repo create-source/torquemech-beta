@@ -6,6 +6,7 @@
     <div class="tm-eyebrow">TorqueMech Repair Guide</div>
     <h1 class="tm-page-title">{{ guide.title }}</h1>
     <p class="tm-muted">{{ guide.summary }}</p>
+    <p class="tm-muted">Use this guide to confirm the failure path before replacement, then move into pricing once symptoms, tests, and root-cause evidence point to the same repair.</p>
   </div>
 </section>
 
@@ -345,6 +346,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Recommended Repair Paths</h2>
+    <p class="tm-muted">Compare these paths before replacing parts. Cost guides and estimator links are most useful after testing confirms which repair is actually responsible.</p>
     <div class="tm-stack">
       {% for item in guide.recommended_repairs %}
       <div class="tm-linked-card">
@@ -373,7 +375,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Estimate This Repair</h2>
-    <p class="tm-muted">Move directly from this repair guide into the estimator.</p>
+    <p class="tm-muted">Once the likely fault is confirmed, move from testing to pricing. The estimator helps compare labor, parts, and service context for customer approval or a professional quote.</p>
     <a
       class="tm-btn tm-btn-primary"
       id="estimateRepairBtn"
