@@ -1789,8 +1789,16 @@ const confidenceEl = document.getElementById("laborConfidence");
                   Typical range: ${Number(it.laborBreakdown.labor_hours?.min || 0).toFixed(1)} - ${Number(it.laborBreakdown.labor_hours?.max || 0).toFixed(1)} hrs
                 </div>
 
+                ${it.laborBreakdown.repair_summary ? `
+                  <p class="tm-labor-note">
+                    <strong>Recommended Repair Summary</strong><br>
+                    ${it.laborBreakdown.repair_summary}
+                  </p>
+                ` : ""}
+
                 ${it.laborBreakdown.why ? `
                   <p class="tm-labor-note">
+                    <strong>Why This Service Takes Time</strong><br>
                     ${it.laborBreakdown.why}
                   </p>
                 ` : ""}
