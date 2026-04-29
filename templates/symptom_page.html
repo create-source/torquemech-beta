@@ -67,7 +67,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related OBD Codes</h2>
-    <p class="tm-muted">Move into code lookup when a scan tool confirms one of these faults, then use the code page to narrow causes before pricing the repair.</p>
+    <p class="tm-muted">Move into code lookup when a scan tool confirms one of these faults, then use the code page to separate misfire, lean, EVAP, cooling, or charging causes before pricing the repair.</p>
     <ul class="tm-list">
       {% for item in symptom.related_obd_codes %}
       <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
@@ -81,7 +81,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Repair Guides</h2>
-    <p class="tm-muted">Use these guides to confirm the failure path before opening an estimate, especially when multiple parts can cause the same symptom.</p>
+    <p class="tm-muted">Use these guides to confirm the failure path before opening an estimate, especially when spark, fuel, airflow, cooling, EVAP, or charging faults can create the same symptom.</p>
     <div class="tm-stack">
       {% for cause in symptom.likely_causes %}
       <div class="tm-linked-card">
@@ -103,7 +103,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Recommended Next Repair Paths</h2>
-    <p class="tm-muted">Compare likely repair paths before replacing parts. Cost guides and estimates are strongest after symptoms, checks, and code evidence point in the same direction.</p>
+    <p class="tm-muted">Compare likely repair paths before replacing parts. Cost guides and estimates are strongest after symptoms, checks, code evidence, and repair-guide logic point in the same direction.</p>
     <div class="tm-stack">
       {% for item in symptom.recommended_repairs %}
       <div class="tm-linked-card">

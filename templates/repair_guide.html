@@ -333,6 +333,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related OBD Codes</h2>
+    <p class="tm-muted">Use related codes to connect this guide back to the scan-data pattern, then compare the matching cost guide or estimator path only after the root cause is narrowed.</p>
     <ul class="tm-list">
       {% for item in guide.related_obd_codes %}
       <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
@@ -346,7 +347,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Recommended Repair Paths</h2>
-    <p class="tm-muted">Compare these paths before replacing parts. Cost guides and estimator links are most useful after testing confirms which repair is actually responsible.</p>
+    <p class="tm-muted">Compare these paths before replacing parts. Cost guides and estimator links are most useful after testing separates overlapping causes such as spark versus injector, vacuum leak versus MAF, EVAP purge versus vent, thermostat versus sensor, or battery versus alternator.</p>
     <div class="tm-stack">
       {% for item in guide.recommended_repairs %}
       <div class="tm-linked-card">
