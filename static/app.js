@@ -5,6 +5,18 @@
 */
 // static/app.js — CLEAN (Beta-stable)
 (() => {
+  function trackClarity(eventName, data) {
+    try {
+      if (typeof window.tmTrackClarity === "function") {
+        window.tmTrackClarity(eventName, data || {});
+      } else if (typeof window.clarity === "function") {
+        window.clarity("event", eventName, data || {});
+      }
+    } catch (_) {}
+  }
+
+  let searchDebounceTimer = null;
+
   async function vehicleUiApiJSON(url, opts) {
     const response = await fetch(url, opts);
     if (!response.ok) {
@@ -2643,6 +2655,12 @@ if (getEstimateHint) {
       
       editingLineItem = null;
       lastEstimate = { req, res };
+      trackClarity("estimate_generated", {
+        source: "get_estimate",
+        service_code: it.serviceCode,
+        service_name: it.serviceText,
+        estimate_total: Number(it.estimate || 0)
+      });
 
       renderLineItems();
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
@@ -2742,6 +2760,12 @@ if (getEstimateHint) {
       try {
         if (it.pricingMode === "flat") {
           it.estimate = calcLineItemEstimate(it);
+          trackClarity("estimate_generated", {
+            source: "line_item_recalculate",
+            service_code: it.serviceCode,
+            service_name: it.serviceText,
+            estimate_total: Number(it.estimate || 0)
+          });
           renderLineItems();
           setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
           return;
@@ -2771,6 +2795,12 @@ if (getEstimateHint) {
         }
 
         it.estimate = calcLineItemEstimate(it);
+        trackClarity("estimate_generated", {
+          source: "line_item_recalculate",
+          service_code: it.serviceCode,
+          service_name: it.serviceText,
+          estimate_total: Number(it.estimate || 0)
+        });
 
         renderLineItems();
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
@@ -2872,6 +2902,11 @@ if (getEstimateHint) {
       a.remove();
 
       setStatus("ok", "PDF ready.");
+      trackClarity("pdf_generated", {
+        source: "estimate_pdf_multi",
+        service_count: lineItems.length,
+        estimate_total: lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0)
+      });
 
       if (confirmMsg) {
         confirmMsg.innerHTML = `
@@ -3095,10 +3130,23 @@ if (getEstimateHint) {
 
   serviceSearch?.addEventListener("input", async () => {
     if (!serviceEl) return;
+
+    const searchValue = serviceSearch.value.trim();
+
+    clearTimeout(searchDebounceTimer);
+
+    if (searchValue.length >= 2) {
+      searchDebounceTimer = setTimeout(() => {
+        trackClarity("search_submit", { query: searchValue });
+      }, 500); // 500ms delay
+    }
+
     serviceEl.value = "";
+
     if (getServiceSearchCluster(serviceSearch.value)) {
       await ensureAllServiceOptions();
     }
+
     renderServiceResults(serviceSearch.value);
     await loadServiceMeta("");
     updateEstimateButtonState();
@@ -3127,8 +3175,21 @@ if (getEstimateHint) {
       await loadServices(serviceCategory);
     }
     applyServiceSelection(serviceCode);
+    trackClarity("service_selected", {
+      service_code: serviceCode,
+      category: serviceCategory || categoryEl?.value || "",
+      service_name: serviceEl?.options?.[serviceEl.selectedIndex]?.textContent?.trim() || ""
+    });
     await loadServiceMeta(serviceEl.value);
     updateEstimateButtonState();
+  });
+
+  serviceEl?.addEventListener("change", () => {
+    trackClarity("service_selected", {
+      service_code: serviceEl.value || "",
+      category: categoryEl?.value || "",
+      service_name: serviceEl.options?.[serviceEl.selectedIndex]?.textContent?.trim() || ""
+    });
   });
 
   function syncTopVehicleToState() {
@@ -3424,6 +3485,11 @@ if (getEstimateHint) {
 
       renderLineItems();
       setStatus("ok", "All service estimates generated.");
+      trackClarity("estimate_generated", {
+        source: "generate_all",
+        service_count: lineItems.length,
+        estimate_total: lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0)
+      });
       openConfirm();
 
     } catch (e) {
