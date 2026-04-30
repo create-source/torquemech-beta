@@ -743,6 +743,11 @@
 
   function refreshDraftsUI() {
     if (!draftsSelect) return;
+    if (document.getElementById("draftsCard")?.dataset.savedEstimatesDisabled === "true") {
+      draftsSelect.innerHTML = `<option value="">â€” Saved estimates coming soon â€”</option>`;
+      if (draftsMsg) draftsMsg.textContent = "Estimates are not saved yet. Export as PDF to keep a copy.";
+      return;
+    }
 
     const drafts = getDrafts();
     draftsSelect.innerHTML = `<option value="">— Select a device-saved estimate —</option>` +
@@ -1799,6 +1804,37 @@ const confidenceEl = document.getElementById("laborConfidence");
     ].join(" ");
   }
 
+  function escapeServiceResultHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function getServiceHelperText(service) {
+    const direct = String(service.summary || service.description || service.meta || "").trim();
+    if (direct) return direct;
+
+    const keywordText = Array.isArray(service.keywords)
+      ? service.keywords.slice(0, 4).join(", ")
+      : String(service.keywords || "").trim();
+    if (keywordText) {
+      return `Related to ${keywordText}.`;
+    }
+
+    const name = String(service.name || "").toLowerCase();
+    const category = String(service.categoryName || service.category || "service").toLowerCase();
+    if (name.includes("thermostat")) return "Common fix for overheating or temperature fluctuation.";
+    if (name.includes("brake")) return "Useful when brake noise, vibration, or stopping performance points to this repair.";
+    if (name.includes("battery")) return "Common starting point for no-start, weak crank, or low-voltage complaints.";
+    if (name.includes("alternator")) return "Helps address battery light, charging problems, or repeated dead battery symptoms.";
+    if (name.includes("spark") || name.includes("coil") || name.includes("misfire")) return "Common path for misfire, rough idle, or hesitation diagnosis.";
+    if (name.includes("radiator") || name.includes("water pump") || name.includes("coolant")) return "Relevant when overheating, leaks, or cooling-system faults are suspected.";
+    return `Relevant ${category} service when diagnosis points to this repair path.`;
+  }
+
   function getServiceCategoryName(categoryKey) {
     const selectedOption = categoryEl?.querySelector(`option[value="${categoryKey}"]`);
     const knownCategory = serviceCategories.find((category) => category.key === categoryKey);
@@ -1941,7 +1977,9 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     serviceResults.innerHTML = filtered
       .map(
-        (service) => `
+        (service) => {
+          const helperText = escapeServiceResultHtml(getServiceHelperText(service));
+          return `
           <button
             type="button"
             class="service-result-item"
@@ -1959,8 +1997,12 @@ const confidenceEl = document.getElementById("laborConfidence");
               cursor:pointer;
               font-size:16px;
             "
-          >${service.name}</button>
-        `
+          >
+            <span style="display:block; font-weight:700;">${escapeServiceResultHtml(service.name)}</span>
+            <span class="tm-muted" style="display:block; margin-top:4px; font-size:12px; line-height:1.35;">${helperText}</span>
+          </button>
+        `;
+        }
       )
       .join("");
 
@@ -2914,6 +2956,13 @@ if (getEstimateHint) {
           <a href="${pdfUrl}" download="torquemech_estimate.pdf">Download PDF</a>
           &nbsp;|&nbsp;
           <a href="${pdfUrl}" target="_blank" rel="noopener">Open PDF</a>
+          <div class="tm-card" style="margin-top:12px; padding:12px 14px;" aria-label="TorqueMech Pro PDF preview">
+            <div style="font-weight:800;">Make this estimate customer-ready with your shop branding.</div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+              <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>
+              <a class="tm-btn tm-btn-ghost" href="/shop-profile">Shop Profile</a>
+            </div>
+          </div>
         `;
       }
 

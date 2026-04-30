@@ -512,7 +512,11 @@ function getBestDiagnosticGuide(term) {
 }
 
 function startDiagnosis() {
-  const bestMatch = getBestDiagnosticGuide(search ? search.value : "");
+  const query = search ? search.value.trim() : "";
+  if (typeof window.tmTrackClarity === "function") {
+    window.tmTrackClarity("search_submit", { query, source: "home_diagnosis_search" });
+  }
+  const bestMatch = getBestDiagnosticGuide(query);
 
   if (bestMatch) {
     window.location.href = bestMatch.href;

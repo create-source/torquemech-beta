@@ -478,6 +478,9 @@
     const value = document.getElementById("diagSearchInput").value.trim().toLowerCase();
 
     if (!value) return;
+    if (typeof window.tmTrackClarity === "function") {
+      window.tmTrackClarity("search_submit", { query: value, source: "obd_diagnostics_search" });
+    }
 
     if (/^p\d{4}$/i.test(value) || /^u\d{4}$/i.test(value) || /^b\d{4}$/i.test(value) || /^c\d{4}$/i.test(value)) {
       window.location.href = "/obd/" + value;

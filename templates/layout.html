@@ -42,6 +42,21 @@
           t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
           y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       })(window, document, "clarity", "script", "wj2d9fedvw");
+      window.tmTrackClarity = function(eventName, data){
+          try {
+              if (typeof window.clarity === "function") {
+                  window.clarity("event", eventName, data || {});
+              }
+          } catch (_) {}
+      };
+      document.addEventListener("click", function(event){
+          var target = event.target && event.target.closest
+              ? event.target.closest('a[href="/shop-profile/pdf-preview"], button[name="next"][value="preview"]')
+              : null;
+          if (target) {
+              window.tmTrackClarity("pro_preview_clicked", { source: window.location.pathname });
+          }
+      }, true);
   </script>
   {% block page_css %}{% endblock %}
 </head>

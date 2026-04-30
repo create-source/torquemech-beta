@@ -99,4 +99,17 @@
     </form>
   </article>
 </section>
+<script>
+  if (typeof window.tmTrackClarity === "function") {
+    window.tmTrackClarity("shop_profile_loaded", { saved: {{ "true" if saved else "false" }} });
+  }
+
+  document.getElementById("shop-profile-form")?.addEventListener("submit", function (event) {
+    if (typeof window.tmTrackClarity !== "function") return;
+    const submitter = event.submitter;
+    window.tmTrackClarity("profile_saved", {
+      source: submitter?.value === "preview" ? "save_and_preview" : "save_shop_profile"
+    });
+  });
+</script>
 {% endblock %}
