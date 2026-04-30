@@ -1310,6 +1310,8 @@ async def shop_profile_save(request: Request):
             "custom_footer_note": form_value("custom_footer_note"),
         }
     )
+    if form_value("next") == "preview":
+        return RedirectResponse("/shop-profile/pdf-preview", status_code=303)
     return RedirectResponse("/shop-profile?saved=1", status_code=303)
 
 # ============================================================
@@ -6603,8 +6605,7 @@ def build_pro_pdf_bytes(profile: Optional[Dict[str, Any]] = None, estimate_data:
     y = pdf_draw_pro_header(c, w, h, profile)
 
     c.setFillColorRGB(0.965, 0.985, 0.985)
-    c.setStrokeColorRGB(0.76, 0.86, 0.88)
-    c.roundRect(left, y - 78, w - left - right, 78, 6, fill=1, stroke=1)
+    c.roundRect(left, y - 78, w - left - right, 78, 6, fill=1, stroke=0)
     c.setFillGray(0)
     c.setFont("Helvetica-Bold", 9.5)
     c.setFillColorRGB(0.26, 0.34, 0.43)

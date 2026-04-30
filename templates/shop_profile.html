@@ -19,7 +19,7 @@
         warranty notes, quote expiration terms, and footer language for professional estimate layouts.
       </p>
       <div class="tm-pro-actions">
-        <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>
+        <button class="tm-btn tm-btn-secondary" type="submit" form="shop-profile-form" name="next" value="preview">Save &amp; Preview Pro PDF</button>
       </div>
     </section>
 
@@ -30,7 +30,7 @@
       </div>
     {% endif %}
 
-    <form method="post" action="/shop-profile" style="margin-top:18px;">
+    <form id="shop-profile-form" method="post" action="/shop-profile" style="margin-top:18px;">
       <div class="grid2">
         <div>
           <label for="shop_name">Shop Name</label>
@@ -93,7 +93,7 @@
 
       <div class="tm-actions" style="margin-top:18px;">
         <button class="tm-btn tm-btn-primary" type="submit">Save Shop Profile</button>
-        <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>
+        <button class="tm-btn tm-btn-secondary" type="submit" name="next" value="preview">Save &amp; Preview Pro PDF</button>
         <a class="tm-btn tm-btn-secondary" href="/estimator">Back to Estimator</a>
       </div>
     </form>
