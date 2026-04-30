@@ -433,6 +433,9 @@
   const categoryEl = $("category");
   const serviceEl = $("service");
   let serviceOptions = [];
+  let serviceCategories = [];
+  let allServiceOptions = [];
+  let allServiceOptionsVehicleKey = "";
   let serviceSearch = null;
   let serviceResults = null;
 
@@ -1409,6 +1412,356 @@ const confidenceEl = document.getElementById("laborConfidence");
     misfire: ["spark plug", "ignition coil", "fuel injector", "injector", "engine diagnostic", "diagnostic"],
   };
 
+  const SERVICE_SEARCH_CLUSTERS = {
+    overheating: {
+      codes: [
+        "thermostat_replacement",
+        "radiator_replacement",
+        "water_pump_replacement",
+        "coolant_flush",
+        "cooling_system_pressure_test",
+        "coolant_temperature_sensor_replacement",
+        "cooling_fan_assembly_replacement",
+        "cooling_fan_motor_replacement",
+        "overheating_diagnosis",
+      ],
+      terms: ["overheat", "overheating", "cooling fan", "coolant leak", "pressure test"],
+    },
+    overheat: {
+      codes: [
+        "thermostat_replacement",
+        "radiator_replacement",
+        "water_pump_replacement",
+        "coolant_flush",
+        "cooling_system_pressure_test",
+        "coolant_temperature_sensor_replacement",
+        "cooling_fan_assembly_replacement",
+        "cooling_fan_motor_replacement",
+        "overheating_diagnosis",
+      ],
+      terms: ["overheat", "overheating", "cooling fan", "coolant leak", "pressure test"],
+    },
+    misfire: {
+      codes: [
+        "misfire_diagnosis",
+        "spark_plug_replacement_4_cyl",
+        "spark_plug_replacement_v6_v8",
+        "ignition_coil_replacement_each",
+        "compression_test",
+        "cylinder_leak_down_test",
+        "fuel_injector_replacement_each",
+        "vacuum_leak_diagnosis_smoke_test",
+      ],
+      terms: ["misfire", "p0300", "p0303", "spark plug", "ignition coil", "injector", "compression"],
+    },
+    roughidle: {
+      codes: [
+        "misfire_diagnosis",
+        "spark_plug_replacement_4_cyl",
+        "spark_plug_replacement_v6_v8",
+        "ignition_coil_replacement_each",
+        "vacuum_leak_diagnosis_smoke_test",
+        "throttle_body_cleaning",
+        "throttle_body_replacement",
+        "throttle_body_service",
+        "mass_air_flow_sensor_replacement",
+        "map_sensor_replacement",
+        "pcv_valve_replacement",
+        "fuel_trim_diagnosis",
+      ],
+      terms: ["rough idle", "idle", "stall", "vacuum leak", "throttle body", "maf"],
+    },
+    nostart: {
+      codes: [
+        "no_start_diagnosis",
+        "starter_diagnosis",
+        "alternator_diagnosis",
+        "battery_replacement",
+        "battery_cable_replacement",
+        "no_crank_diagnosis",
+        "crank_no_start_diagnosis",
+        "fuel_pump_replacement_in_tank",
+        "fuel_pump_replacement_external",
+        "fuel_pressure_test",
+        "fuel_system_diagnostic",
+      ],
+      terms: ["no start", "won't start", "starter", "alternator", "battery", "fuel pump"],
+    },
+    nocrank: {
+      codes: [
+        "no_crank_diagnosis",
+        "starter_diagnosis",
+        "starter_replacement",
+        "starter_relay_replacement",
+        "battery_replacement",
+        "battery_cable_replacement",
+        "ground_strap_repair",
+        "electrical_diagnostic",
+      ],
+      terms: ["no crank", "won't crank", "clicking", "starter", "battery cable", "ground"],
+    },
+    cranknostart: {
+      codes: [
+        "crank_no_start_diagnosis",
+        "no_start_diagnosis",
+        "no_start_fuel_diagnosis",
+        "fuel_pressure_test",
+        "fuel_pump_replacement_in_tank",
+        "fuel_pump_replacement_external",
+        "fuel_pump_control_module_replacement",
+        "crankshaft_position_sensor_replacement",
+        "camshaft_position_sensor_replacement",
+        "compression_test",
+      ],
+      terms: ["crank no start", "cranks but won't start", "fuel pressure", "spark", "compression"],
+    },
+    startsthendies: {
+      codes: [
+        "crank_no_start_diagnosis",
+        "fuel_pump_replacement_in_tank",
+        "fuel_pump_replacement_external",
+        "fuel_pump_control_module_replacement",
+        "fuel_pressure_test",
+        "mass_air_flow_sensor_replacement",
+        "throttle_body_cleaning",
+        "throttle_body_service",
+        "fuel_trim_diagnosis",
+      ],
+      terms: ["starts then dies", "stall", "fuel pressure", "maf", "throttle body"],
+    },
+    hesitation: {
+      codes: [
+        "driveability_diagnosis",
+        "fuel_trim_diagnosis",
+        "mass_air_flow_sensor_replacement",
+        "spark_plug_replacement_4_cyl",
+        "spark_plug_replacement_v6_v8",
+        "ignition_coil_replacement_each",
+        "fuel_injector_replacement_each",
+        "fuel_pressure_test",
+        "throttle_body_service",
+      ],
+      terms: ["hesitation", "stumble", "under load", "driveability", "fuel trim"],
+    },
+    lossofpower: {
+      codes: [
+        "driveability_diagnosis",
+        "fuel_pressure_test",
+        "fuel_pump_replacement_in_tank",
+        "fuel_pump_replacement_external",
+        "mass_air_flow_sensor_replacement",
+        "catalytic_converter_replacement",
+        "catalyst_efficiency_diagnosis",
+        "fuel_trim_diagnosis",
+      ],
+      terms: ["loss of power", "low power", "under load", "catalyst", "fuel pressure"],
+    },
+    poorfueleconomy: {
+      codes: [
+        "driveability_diagnosis",
+        "fuel_trim_diagnosis",
+        "mass_air_flow_sensor_replacement",
+        "oxygen_sensor_replacement_upstream",
+        "oxygen_sensor_replacement_downstream",
+        "air_fuel_ratio_sensor_replacement",
+        "spark_plug_replacement_4_cyl",
+        "spark_plug_replacement_v6_v8",
+        "fuel_injector_cleaning_on_car",
+      ],
+      terms: ["poor fuel economy", "mpg", "fuel trim", "oxygen sensor", "air fuel"],
+    },
+    shaking: {
+      codes: [
+        "misfire_diagnosis",
+        "engine_mount_replacement",
+        "tire_balance",
+        "road_force_balance_if_available",
+        "wheel_alignment_4_wheel",
+        "brake_vibration_diagnosis",
+        "noise_vibration_harshness_nvh_diagnosis",
+        "driveline_vibration_diagnosis",
+      ],
+      terms: ["shaking", "shake", "vibration", "misfire", "engine mount", "balance"],
+    },
+    vibration: {
+      codes: [
+        "noise_vibration_harshness_nvh_diagnosis",
+        "brake_vibration_diagnosis",
+        "driveline_vibration_diagnosis",
+        "engine_mount_replacement",
+        "tire_balance",
+        "road_force_balance_if_available",
+        "wheel_alignment_4_wheel",
+        "wheel_bearing_replacement_front",
+        "wheel_bearing_replacement_rear",
+      ],
+      terms: ["vibration", "shake", "wheel balance", "driveline", "bearing"],
+    },
+    brakenoise: {
+      codes: [
+        "brake_noise_diagnosis",
+        "front_brake_pads_replacement",
+        "rear_brake_pads_replacement",
+        "front_brake_rotors_replacement",
+        "rear_brake_rotors_replacement",
+        "brake_caliper_replacement_each",
+        "brake_hardware_kit_replacement",
+        "brake_drum_service_if_applicable",
+        "brake_shoe_replacement_if_applicable",
+      ],
+      terms: ["brake noise", "squeal", "grinding", "pads", "rotors", "caliper"],
+    },
+    grinding: {
+      codes: [
+        "brake_noise_diagnosis",
+        "front_brake_pads_replacement",
+        "rear_brake_pads_replacement",
+        "front_brake_rotors_replacement",
+        "rear_brake_rotors_replacement",
+        "wheel_bearing_replacement_front",
+        "wheel_bearing_replacement_rear",
+      ],
+      terms: ["grinding", "brake noise", "wheel bearing", "rotor"],
+    },
+    clunk: {
+      codes: [
+        "suspension_noise_diagnosis",
+        "control_arm_replacement_each",
+        "ball_joint_replacement_each",
+        "sway_bar_link_replacement",
+        "front_struts_replacement_pair",
+        "rear_shocks_replacement_pair",
+        "engine_mount_replacement",
+      ],
+      terms: ["clunk", "suspension noise", "control arm", "ball joint", "sway bar"],
+    },
+    squeak: {
+      codes: [
+        "suspension_noise_diagnosis",
+        "brake_noise_diagnosis",
+        "sway_bar_bushing_replacement",
+        "control_arm_replacement_each",
+        "front_struts_replacement_pair",
+        "rear_shocks_replacement_pair",
+        "belt_tensioner_replacement",
+        "idler_pulley_replacement",
+      ],
+      terms: ["squeak", "squeal", "suspension noise", "brake noise", "belt noise"],
+    },
+    pulling: {
+      codes: [
+        "steering_pull_diagnosis",
+        "wheel_alignment_2_wheel",
+        "wheel_alignment_4_wheel",
+        "tie_rod_end_replacement_each",
+        "inner_tie_rod_replacement_each",
+        "brake_caliper_replacement_each",
+        "control_arm_replacement_each",
+      ],
+      terms: ["pulling", "pulls", "alignment", "steering pull", "caliper"],
+    },
+    wandering: {
+      codes: [
+        "steering_pull_diagnosis",
+        "wheel_alignment_4_wheel",
+        "tie_rod_end_replacement_each",
+        "inner_tie_rod_replacement_each",
+        "ball_joint_replacement_each",
+        "control_arm_replacement_each",
+        "steering_rack_replacement",
+      ],
+      terms: ["wandering", "loose steering", "alignment", "tie rod", "ball joint"],
+    },
+    acnotcold: {
+      codes: [
+        "a_c_performance_check",
+        "a_c_system_diagnosis",
+        "a_c_recharge",
+        "evacuate_and_recharge",
+        "a_c_leak_test_uv_dye_electronic",
+        "a_c_compressor_replacement",
+        "a_c_condenser_replacement",
+        "a_c_pressure_switch_replacement",
+      ],
+      terms: ["ac not cold", "a c not cold", "air conditioning", "recharge", "compressor"],
+    },
+    weakheat: {
+      codes: [
+        "climate_control_diagnosis",
+        "heater_core_replacement",
+        "thermostat_replacement",
+        "coolant_flush",
+        "coolant_temperature_sensor_replacement",
+        "heater_control_valve_replacement",
+        "blend_door_actuator_replacement",
+      ],
+      terms: ["weak heat", "no heat", "heater", "heater core", "blend door", "thermostat"],
+    },
+    fluidleak: {
+      codes: [
+        "fluid_leak_diagnosis",
+        "oil_leak_inspection",
+        "coolant_leak_diagnosis",
+        "transmission_leak_diagnosis",
+        "brake_line_repair",
+        "power_steering_hose_replacement",
+        "fuel_leak_inspection",
+        "a_c_line_repair_replacement",
+      ],
+      terms: ["fluid leak", "leak", "oil leak", "coolant leak", "transmission leak"],
+    },
+    oilleak: {
+      codes: [
+        "oil_leak_inspection",
+        "fluid_leak_diagnosis",
+        "valve_cover_gasket_replacement",
+        "oil_pan_gasket_replacement",
+        "oil_filter_housing_gasket_replacement",
+        "rear_main_seal_replacement",
+        "front_crank_seal_replacement",
+        "camshaft_seal_replacement",
+      ],
+      terms: ["oil leak", "burning oil", "gasket", "seal"],
+    },
+    coolantleak: {
+      codes: [
+        "coolant_leak_diagnosis",
+        "cooling_system_pressure_test",
+        "radiator_replacement",
+        "water_pump_replacement",
+        "upper_radiator_hose_replacement",
+        "lower_radiator_hose_replacement",
+        "coolant_reservoir_replacement",
+        "heater_hose_replacement_set",
+      ],
+      terms: ["coolant leak", "antifreeze", "pressure test", "radiator hose"],
+    },
+    burningsmell: {
+      codes: [
+        "fluid_leak_diagnosis",
+        "oil_leak_inspection",
+        "valve_cover_gasket_replacement",
+        "exhaust_leak_repair",
+        "brake_caliper_replacement_each",
+        "electrical_diagnostic",
+        "wiring_diagnosis",
+      ],
+      terms: ["burning smell", "burning oil", "burning rubber", "electrical smell"],
+    },
+    fuelsmell: {
+      codes: [
+        "fuel_leak_inspection",
+        "fuel_line_repair_replacement",
+        "evap_leak_test_smoke_test",
+        "evap_purge_valve_replacement",
+        "evap_vent_valve_replacement",
+        "fuel_tank_replacement_if_applicable",
+        "fuel_injector_seal_replacement",
+      ],
+      terms: ["fuel smell", "gas smell", "fuel leak", "evap", "gasoline"],
+    },
+  };
+
   function normalizeServiceSearch(value) {
     return String(value || "")
       .toLowerCase()
@@ -1434,6 +1787,79 @@ const confidenceEl = document.getElementById("laborConfidence");
     ].join(" ");
   }
 
+  function getServiceCategoryName(categoryKey) {
+    const selectedOption = categoryEl?.querySelector(`option[value="${categoryKey}"]`);
+    const knownCategory = serviceCategories.find((category) => category.key === categoryKey);
+    return selectedOption?.textContent || knownCategory?.name || categoryKey || "";
+  }
+
+  function mapServiceSearchOption(service, categoryKey, categoryName) {
+    return {
+      code: service.code || "",
+      name: service.name || service.code || "Service",
+      category: service.category || categoryKey || "",
+      categoryName: categoryName || getServiceCategoryName(categoryKey),
+      description: service.description || "",
+      summary: service.summary || "",
+      meta: service.meta || "",
+      keywords: service.keywords || "",
+      aliases: service.aliases || "",
+    };
+  }
+
+  function getServiceSearchVehicleKey() {
+    const activeVehicle = typeof getActiveVehicle === "function" ? getActiveVehicle() : null;
+    return [
+      activeVehicle?.year || "",
+      activeVehicle?.make || "",
+      activeVehicle?.model || "",
+    ].join("|");
+  }
+
+  async function ensureAllServiceOptions() {
+    const vehicleKey = getServiceSearchVehicleKey();
+    if (allServiceOptions.length && allServiceOptionsVehicleKey === vehicleKey) {
+      return allServiceOptions;
+    }
+
+    if (!serviceCategories.length) {
+      serviceCategories = await apiJSON("/api/categories");
+    }
+
+    const groupedServices = await Promise.all(
+      serviceCategories.map(async (category) => {
+        try {
+          const categoryKey = category.key || "";
+          const categoryName = category.name || categoryKey;
+          const services = filterServicesForActiveVehicle(
+            await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`)
+          );
+          return services.map((service) => mapServiceSearchOption(service, categoryKey, categoryName));
+        } catch {
+          return [];
+        }
+      })
+    );
+
+    const seenCodes = new Set();
+    allServiceOptions = groupedServices
+      .flat()
+      .filter((service) => {
+        const serviceKey = service.code || service.name;
+        if (!serviceKey || seenCodes.has(serviceKey)) return false;
+        seenCodes.add(serviceKey);
+        return true;
+      });
+    allServiceOptionsVehicleKey = vehicleKey;
+    return allServiceOptions;
+  }
+
+  function getServiceSearchCluster(query) {
+    const normalizedQuery = normalizeServiceSearch(query);
+    const compactQuery = compactServiceSearch(query);
+    return SERVICE_SEARCH_CLUSTERS[compactQuery] || SERVICE_SEARCH_CLUSTERS[normalizedQuery] || null;
+  }
+
   function serviceMatchesSearch(service, query) {
     const normalizedQuery = normalizeServiceSearch(query);
     const compactQuery = compactServiceSearch(query);
@@ -1444,6 +1870,23 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!normalizedQuery) return false;
     if (normalizedText.includes(normalizedQuery) || compactText.includes(compactQuery)) {
       return true;
+    }
+
+    const cluster = getServiceSearchCluster(query);
+    if (cluster) {
+      const clusterCodes = Array.isArray(cluster.codes) ? cluster.codes : [];
+      if (clusterCodes.includes(service.code)) {
+        return true;
+      }
+
+      const clusterTerms = Array.isArray(cluster.terms) ? cluster.terms : [];
+      if (clusterTerms.some((term) => {
+        const normalizedTerm = normalizeServiceSearch(term);
+        const compactTerm = compactServiceSearch(term);
+        return normalizedText.includes(normalizedTerm) || compactText.includes(compactTerm);
+      })) {
+        return true;
+      }
     }
 
     const aliasTerms = SERVICE_SEARCH_ALIASES[compactQuery] || SERVICE_SEARCH_ALIASES[normalizedQuery] || [];
@@ -1466,8 +1909,17 @@ const confidenceEl = document.getElementById("laborConfidence");
       return;
     }
 
-    const filtered = serviceOptions
-      .filter((service) => serviceMatchesSearch(service, normalizedQuery))
+    const cluster = getServiceSearchCluster(normalizedQuery);
+    const searchOptions = cluster && allServiceOptions.length ? allServiceOptions : serviceOptions;
+    const seenServiceCodes = new Set();
+    const filtered = searchOptions
+      .filter((service) => {
+        if (!serviceMatchesSearch(service, normalizedQuery)) return false;
+        const serviceKey = service.code || service.name;
+        if (seenServiceCodes.has(serviceKey)) return false;
+        seenServiceCodes.add(serviceKey);
+        return true;
+      })
       .slice(0, 8);
 
     if (!filtered.length) {
@@ -1482,6 +1934,7 @@ const confidenceEl = document.getElementById("laborConfidence");
             type="button"
             class="service-result-item"
             data-service-code="${service.code}"
+            data-service-category="${service.category || ""}"
             style="
               display:block;
               width:100%;
@@ -1559,6 +2012,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!categoryEl) return;
     categoryEl.innerHTML = `<option value="">Select category…</option>`;
     const cats = await apiJSON("/api/categories");
+    serviceCategories = cats;
+    allServiceOptions = [];
+    allServiceOptionsVehicleKey = "";
     for (const c of cats) {
       const opt = document.createElement("option");
       opt.value = c.key;
@@ -1581,17 +2037,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`)
     );
     const categoryName = categoryEl?.options[categoryEl.selectedIndex]?.textContent || "";
-    serviceOptions = svcs.map((s) => ({
-      code: s.code || "",
-      name: s.name || s.code || "Service",
-      category: s.category || categoryKey || "",
-      categoryName,
-      description: s.description || "",
-      summary: s.summary || "",
-      meta: s.meta || "",
-      keywords: s.keywords || "",
-      aliases: s.aliases || "",
-    }));
+    serviceOptions = svcs.map((s) => mapServiceSearchOption(s, categoryKey, categoryName));
     for (const s of svcs) {
       const opt = document.createElement("option");
       opt.value = s.code || "";
@@ -2650,13 +3096,19 @@ if (getEstimateHint) {
   serviceSearch?.addEventListener("input", async () => {
     if (!serviceEl) return;
     serviceEl.value = "";
+    if (getServiceSearchCluster(serviceSearch.value)) {
+      await ensureAllServiceOptions();
+    }
     renderServiceResults(serviceSearch.value);
     await loadServiceMeta("");
     updateEstimateButtonState();
   });
 
-  serviceSearch?.addEventListener("focus", () => {
+  serviceSearch?.addEventListener("focus", async () => {
     if (serviceSearch.value.trim()) {
+      if (getServiceSearchCluster(serviceSearch.value)) {
+        await ensureAllServiceOptions();
+      }
       renderServiceResults(serviceSearch.value);
     }
   });
@@ -2668,7 +3120,13 @@ if (getEstimateHint) {
   serviceResults?.addEventListener("click", async (event) => {
     const resultButton = event.target.closest(".service-result-item");
     if (!resultButton) return;
-    applyServiceSelection(resultButton.dataset.serviceCode || "");
+    const serviceCode = resultButton.dataset.serviceCode || "";
+    const serviceCategory = resultButton.dataset.serviceCategory || "";
+    if (serviceCategory && categoryEl && categoryEl.value !== serviceCategory) {
+      categoryEl.value = serviceCategory;
+      await loadServices(serviceCategory);
+    }
+    applyServiceSelection(serviceCode);
     await loadServiceMeta(serviceEl.value);
     updateEstimateButtonState();
   });

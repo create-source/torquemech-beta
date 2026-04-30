@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block title %}Shop Profile | TorqueMech{% endblock %}
+
+{% block content %}
+<section class="tm-section">
+  <article class="tm-card" style="max-width:900px; margin:0 auto;">
+    <div class="tm-eyebrow">TorqueMech Pro Foundation</div>
+    <h1 class="tm-page-title">Shop Profile</h1>
+    <p class="tm-muted">
+      Store default shop details for future branded estimate output. This does not change the current free estimator or PDF behavior.
+    </p>
+
+    <section class="tm-pro-upgrade-card" aria-label="Professional PDF profile details">
+      <span class="tm-pro-pill">Professional PDF Foundation</span>
+      <h2 style="margin:10px 0 8px;">Shop details for future customer-ready PDFs</h2>
+      <p class="tm-hint">
+        This profile is where TorqueMech can pull business identity, contact details, logo references,
+        warranty notes, quote expiration terms, and footer language for professional estimate layouts.
+      </p>
+      <div class="tm-pro-actions">
+        <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>
+      </div>
+    </section>
+
+    {% if saved %}
+      <div class="tm-card" style="margin:16px 0; padding:14px 16px;">
+        <strong>Shop profile saved.</strong>
+        <div class="tm-hint" style="margin-top:6px;">These settings are stored locally for future TorqueMech Pro profile features.</div>
+      </div>
+    {% endif %}
+
+    <form method="post" action="/shop-profile" style="margin-top:18px;">
+      <div class="grid2">
+        <div>
+          <label for="shop_name">Shop Name</label>
+          <input id="shop_name" name="shop_name" type="text" value="{{ profile.shop_name }}" maxlength="160">
+        </div>
+        <div>
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" type="tel" value="{{ profile.phone }}" maxlength="80">
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" value="{{ profile.email }}" maxlength="160">
+        </div>
+        <div>
+          <label for="website">Website</label>
+          <input id="website" name="website" type="url" value="{{ profile.website }}" maxlength="220">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label for="address">Address</label>
+        <textarea id="address" name="address" rows="3" maxlength="400">{{ profile.address }}</textarea>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label for="logo_url">Logo URL</label>
+        <input id="logo_url" name="logo_url" type="url" value="{{ profile.logo_url }}" maxlength="500">
+        <div class="tm-hint" style="margin-top:6px;">Stored for future branded PDF support. Current PDFs remain unchanged.</div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label for="labor_rate_default">Default Labor Rate</label>
+          <input id="labor_rate_default" name="labor_rate_default" type="number" min="0" step="0.01" value="{{ profile.labor_rate_default }}">
+        </div>
+        <div>
+          <label for="tax_rate_default">Default Tax Rate (%)</label>
+          <input id="tax_rate_default" name="tax_rate_default" type="number" min="0" step="0.001" value="{{ profile.tax_rate_default }}">
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label for="quote_expiration_days">Quote Expiration Days</label>
+          <input id="quote_expiration_days" name="quote_expiration_days" type="number" min="0" step="1" value="{{ profile.quote_expiration_days }}">
+        </div>
+        <div>
+          <label for="warranty_note">Warranty Note</label>
+          <input id="warranty_note" name="warranty_note" type="text" value="{{ profile.warranty_note }}" maxlength="300">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label for="custom_footer_note">Custom Footer Note</label>
+        <textarea id="custom_footer_note" name="custom_footer_note" rows="3" maxlength="500">{{ profile.custom_footer_note }}</textarea>
+      </div>
+
+      <div class="tm-actions" style="margin-top:18px;">
+        <button class="tm-btn tm-btn-primary" type="submit">Save Shop Profile</button>
+        <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>
+        <a class="tm-btn tm-btn-secondary" href="/estimator">Back to Estimator</a>
+      </div>
+    </form>
+  </article>
+</section>
+{% endblock %}

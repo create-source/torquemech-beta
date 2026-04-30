@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote
 
 import httpx
 import qrcode
@@ -240,6 +240,140 @@ def app_db_conn(*, row_factory: bool = False) -> sqlite3.Connection:
     if row_factory:
         conn.row_factory = sqlite3.Row
     return conn
+
+
+DEFAULT_SHOP_PROFILE: Dict[str, Any] = {
+    "shop_name": "",
+    "phone": "",
+    "email": "",
+    "address": "",
+    "website": "",
+    "logo_url": "",
+    "labor_rate_default": 90.0,
+    "tax_rate_default": 0.0,
+    "warranty_note": "",
+    "quote_expiration_days": 30,
+    "custom_footer_note": "",
+}
+
+
+def init_shop_profile_db() -> None:
+    conn = app_db_conn()
+    try:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS shop_profile (
+              id INTEGER PRIMARY KEY CHECK (id = 1),
+              shop_name TEXT,
+              phone TEXT,
+              email TEXT,
+              address TEXT,
+              website TEXT,
+              logo_url TEXT,
+              labor_rate_default REAL,
+              tax_rate_default REAL,
+              warranty_note TEXT,
+              quote_expiration_days INTEGER,
+              custom_footer_note TEXT,
+              updated_at TEXT NOT NULL
+            )
+            """
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def normalize_shop_profile(raw: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    profile = dict(DEFAULT_SHOP_PROFILE)
+    if raw:
+        for key in profile:
+            value = raw.get(key)
+            if value is not None:
+                profile[key] = value
+
+    for key in ("shop_name", "phone", "email", "address", "website", "logo_url", "warranty_note", "custom_footer_note"):
+        profile[key] = str(profile.get(key) or "").strip()
+
+    try:
+        profile["labor_rate_default"] = max(0.0, float(profile.get("labor_rate_default") or 0.0))
+    except (TypeError, ValueError):
+        profile["labor_rate_default"] = DEFAULT_SHOP_PROFILE["labor_rate_default"]
+
+    try:
+        profile["tax_rate_default"] = max(0.0, float(profile.get("tax_rate_default") or 0.0))
+    except (TypeError, ValueError):
+        profile["tax_rate_default"] = DEFAULT_SHOP_PROFILE["tax_rate_default"]
+
+    try:
+        profile["quote_expiration_days"] = max(0, int(profile.get("quote_expiration_days") or 0))
+    except (TypeError, ValueError):
+        profile["quote_expiration_days"] = DEFAULT_SHOP_PROFILE["quote_expiration_days"]
+
+    return profile
+
+
+def load_shop_profile() -> Dict[str, Any]:
+    try:
+        init_shop_profile_db()
+        conn = app_db_conn(row_factory=True)
+        try:
+            row = conn.execute("SELECT * FROM shop_profile WHERE id = 1").fetchone()
+            return normalize_shop_profile(dict(row) if row else None)
+        finally:
+            conn.close()
+    except Exception:
+        logging.exception("SHOP_PROFILE_LOAD_FAILED")
+        return normalize_shop_profile(None)
+
+
+def save_shop_profile(profile_data: Dict[str, Any]) -> Dict[str, Any]:
+    profile = normalize_shop_profile(profile_data)
+    init_shop_profile_db()
+    conn = app_db_conn()
+    try:
+        conn.execute(
+            """
+            INSERT INTO shop_profile (
+              id, shop_name, phone, email, address, website, logo_url,
+              labor_rate_default, tax_rate_default, warranty_note,
+              quote_expiration_days, custom_footer_note, updated_at
+            )
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              shop_name = excluded.shop_name,
+              phone = excluded.phone,
+              email = excluded.email,
+              address = excluded.address,
+              website = excluded.website,
+              logo_url = excluded.logo_url,
+              labor_rate_default = excluded.labor_rate_default,
+              tax_rate_default = excluded.tax_rate_default,
+              warranty_note = excluded.warranty_note,
+              quote_expiration_days = excluded.quote_expiration_days,
+              custom_footer_note = excluded.custom_footer_note,
+              updated_at = excluded.updated_at
+            """,
+            (
+                profile["shop_name"],
+                profile["phone"],
+                profile["email"],
+                profile["address"],
+                profile["website"],
+                profile["logo_url"],
+                profile["labor_rate_default"],
+                profile["tax_rate_default"],
+                profile["warranty_note"],
+                profile["quote_expiration_days"],
+                profile["custom_footer_note"],
+                datetime.utcnow().isoformat(),
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return profile
 
 
 def normalize_repair_guide_slug(value: str) -> str:
@@ -1139,6 +1273,45 @@ def terms(request: Request):
 def disclaimer(request: Request):
     return templates.TemplateResponse("disclaimer.html", {"request": request})
 
+
+@app.get("/shop-profile", response_class=HTMLResponse, include_in_schema=False)
+def shop_profile_form(request: Request, saved: str = ""):
+    return templates.TemplateResponse(
+        "shop_profile.html",
+        {
+            "request": request,
+            "profile": load_shop_profile(),
+            "saved": saved == "1",
+        },
+    )
+
+
+@app.post("/shop-profile", include_in_schema=False)
+async def shop_profile_save(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    form = parse_qs(raw_body, keep_blank_values=True)
+
+    def form_value(name: str) -> str:
+        values = form.get(name) or [""]
+        return values[0]
+
+    save_shop_profile(
+        {
+            "shop_name": form_value("shop_name"),
+            "phone": form_value("phone"),
+            "email": form_value("email"),
+            "address": form_value("address"),
+            "website": form_value("website"),
+            "logo_url": form_value("logo_url"),
+            "labor_rate_default": form_value("labor_rate_default"),
+            "tax_rate_default": form_value("tax_rate_default"),
+            "warranty_note": form_value("warranty_note"),
+            "quote_expiration_days": form_value("quote_expiration_days"),
+            "custom_footer_note": form_value("custom_footer_note"),
+        }
+    )
+    return RedirectResponse("/shop-profile?saved=1", status_code=303)
+
 # ============================================================
 # Startup Checks
 # ============================================================
@@ -1163,6 +1336,7 @@ def startup_checks() -> None:
 
     init_db()
     init_metrics_db()
+    init_shop_profile_db()
     init_obd_db()
     obd_seed_from_json_if_empty() 
     _ = load_services_catalog()
@@ -5654,8 +5828,15 @@ def load_services_catalog() -> Dict[str, Any]:
         category_key = category.get("key", "default")
 
         for service in category.get("services", []):
+            service_code = service.get("code")
+            if service_code in services_lookup:
+                logging.error("Duplicate service code in services_catalog.json: %s", service_code)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Duplicate service code in services_catalog.json: {service_code}",
+                )
             service["category"] = category_key
-            services_lookup[service["code"]] = service
+            services_lookup[service_code] = service
 
     _services_cache = {
         "raw": data,
@@ -6283,6 +6464,309 @@ def pdf_draw_footer(c, w):
     c.drawCentredString(w / 2, 40, "Generated by TorqueMech — Free Beta Version")
     c.drawCentredString(w / 2, 28, "Upgrade to Pro for white-label estimates")
     c.setFillGray(0)
+
+
+PDF_MODE_FREE = "free"
+PDF_MODE_PRO = "pro"
+
+
+def pdf_draw_wrapped_lines(c, text: str, x: float, y: float, *, max_chars: int = 86, leading: int = 12, limit: int = 6) -> float:
+    c.setFillGray(0)
+    for line in wrap_text(text or "", max_chars=max_chars)[:limit]:
+        c.drawString(x, y, line)
+        y -= leading
+    return y
+
+
+def pdf_format_money(value: Any, default: str = "$0.00") -> str:
+    if isinstance(value, str):
+        return value.strip() or default
+    try:
+        return f"${float(value):,.2f}"
+    except (TypeError, ValueError):
+        return default
+
+
+def pdf_draw_pro_logo_placeholder(c, profile: Dict[str, Any], x: float, y: float, *, width: float = 112, height: float = 42) -> None:
+    logo_url = str(profile.get("logo_url") or "").strip()
+    if not logo_url:
+        shop_name = str(profile.get("shop_name") or "").strip() or "Shop Estimate"
+        c.setFont("Helvetica-Bold", 21)
+        c.setFillColorRGB(1, 1, 1)
+        c.drawString(x, y + 18, shop_name[:34])
+        c.setFillGray(0)
+        return
+
+    c.setStrokeColorRGB(0.68, 0.77, 0.86)
+    c.setFillColorRGB(0.93, 0.96, 0.99)
+    c.roundRect(x, y, width, height, 6, fill=1, stroke=1)
+    c.setFillColorRGB(0.08, 0.15, 0.24)
+    c.setFont("Helvetica-Bold", 8)
+    c.drawCentredString(x + width / 2, y + 24, "Logo configured")
+    c.setFont("Helvetica", 7)
+    c.drawCentredString(x + width / 2, y + 12, "Preview placeholder")
+    c.setFillGray(0)
+    c.setStrokeGray(0)
+
+
+def pdf_draw_pro_header(c, w: float, h: float, profile: Dict[str, Any]) -> float:
+    left = 48
+    right = 48
+    top = h - 34
+
+    c.setFillColorRGB(0.04, 0.12, 0.20)
+    c.rect(0, h - 94, w, 94, fill=1, stroke=0)
+    c.setFillColorRGB(0.08, 0.52, 0.50)
+    c.rect(0, h - 96, w, 2, fill=1, stroke=0)
+
+    pdf_draw_pro_logo_placeholder(c, profile, left, h - 74, width=264, height=44)
+
+    shop_name = str(profile.get("shop_name") or "").strip() or "Shop Profile"
+    contact_lines = [
+        str(profile.get("phone") or "").strip(),
+        str(profile.get("email") or "").strip(),
+        str(profile.get("address") or "").strip().replace("\r", " ").replace("\n", ", "),
+        str(profile.get("website") or "").strip(),
+    ]
+    contact_lines = [line for line in contact_lines if line]
+    contact_x = w - right
+
+    c.setFillColorRGB(1, 1, 1)
+    c.setFont("Helvetica-Bold", 7.5)
+    c.drawRightString(contact_x, top - 2, "SHOP CONTACT")
+    c.setFont("Helvetica", 8.2)
+    contact_y = top - 15
+    if contact_lines:
+        for line in contact_lines[:4]:
+            c.drawRightString(contact_x, contact_y, line[:56])
+            contact_y -= 10.5
+    else:
+        c.drawRightString(contact_x, contact_y, shop_name[:42])
+
+    c.setFillGray(0)
+    y = h - 120
+    c.setFont("Helvetica-Bold", 21)
+    c.setFillColorRGB(0.05, 0.09, 0.16)
+    c.drawString(left, y, "Service Estimate")
+    c.setFont("Helvetica", 9)
+    c.setFillColorRGB(0.36, 0.42, 0.50)
+    c.drawRightString(w - right, y + 6, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
+    c.setFillGray(0)
+    return y - 24
+
+
+def pdf_draw_pro_footer(c, w: float, profile: Dict[str, Any]) -> None:
+    footer_note = str(profile.get("custom_footer_note") or "").strip()
+    c.setStrokeColorRGB(0.86, 0.89, 0.93)
+    c.line(48, 58, w - 48, 58)
+    c.setStrokeGray(0)
+    c.setFont("Helvetica", 8)
+    c.setFillColorRGB(0.28, 0.34, 0.42)
+    if footer_note:
+        c.drawCentredString(w / 2, 43, footer_note[:130])
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(w / 2, 30, "Generated by TorqueMech Pro")
+    else:
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(w / 2, 36, "Generated by TorqueMech Pro")
+    c.setFillGray(0)
+
+
+def build_pro_pdf_bytes(profile: Optional[Dict[str, Any]] = None, estimate_data: Optional[Dict[str, Any]] = None, *, pdf_mode: str = PDF_MODE_PRO) -> bytes:
+    if pdf_mode != PDF_MODE_PRO:
+        raise ValueError("Pro PDF builder only supports pdf_mode='pro'.")
+
+    profile = normalize_shop_profile(profile or load_shop_profile())
+    estimate_data = estimate_data or {}
+    vehicle = str(estimate_data.get("vehicle") or "Sample Vehicle")
+    customer_name = str(estimate_data.get("customer_name") or "Customer Review Copy")
+    services = estimate_data.get("services") or [
+        {
+            "name": "Alternator Replacement",
+            "labor_hours": "2.0",
+            "parts": "$285.00",
+            "labor_cost": "$180.00",
+            "total": "$465.00",
+        }
+    ]
+    subtotal = str(estimate_data.get("subtotal") or estimate_data.get("estimated_total") or "$465.00")
+    tax = str(estimate_data.get("tax") or "$0.00")
+    estimated_total = str(estimate_data.get("estimated_total") or subtotal)
+
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=letter)
+    w, h = letter
+    c.setTitle("TorqueMech Pro Estimate Preview")
+
+    left = 48
+    right = 48
+    y = pdf_draw_pro_header(c, w, h, profile)
+
+    c.setFillColorRGB(0.965, 0.985, 0.985)
+    c.setStrokeColorRGB(0.76, 0.86, 0.88)
+    c.roundRect(left, y - 78, w - left - right, 78, 6, fill=1, stroke=1)
+    c.setFillGray(0)
+    c.setFont("Helvetica-Bold", 9.5)
+    c.setFillColorRGB(0.26, 0.34, 0.43)
+    c.drawString(left + 16, y - 19, "ESTIMATE SUMMARY")
+    c.setFillGray(0)
+    c.setFont("Helvetica", 10.5)
+    c.drawString(left + 16, y - 41, f"Customer: {customer_name}")
+    c.drawString(left + 16, y - 60, f"Vehicle: {vehicle}")
+    c.setFont("Helvetica-Bold", 19)
+    c.setFillColorRGB(0.04, 0.12, 0.20)
+    c.drawRightString(w - right - 16, y - 30, estimated_total)
+    c.setFont("Helvetica", 8)
+    c.setFillColorRGB(0.38, 0.44, 0.52)
+    c.drawRightString(w - right - 16, y - 46, "Total Estimate")
+    c.drawRightString(w - right - 16, y - 61, datetime.now().strftime("%Y-%m-%d"))
+    c.setFillGray(0)
+    c.setStrokeGray(0)
+    y -= 104
+
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(left, y, "Service Line Items")
+    y -= 18
+    c.setStrokeColorRGB(0.86, 0.89, 0.93)
+    c.line(left, y, w - right, y)
+    c.setStrokeGray(0)
+    y -= 16
+
+    x_hours = 320
+    x_parts = 400
+    x_labor = 480
+    x_total = w - right
+
+    c.setFont("Helvetica-Bold", 8.5)
+    c.setFillColorRGB(0.36, 0.43, 0.52)
+    c.drawString(left, y, "Service")
+    c.drawRightString(x_hours, y, "Hours")
+    c.drawRightString(x_parts, y, "Parts")
+    c.drawRightString(x_labor, y, "Labor")
+    c.drawRightString(x_total, y, "Total")
+    c.setFillGray(0)
+    y -= 10
+    c.setStrokeColorRGB(0.82, 0.86, 0.91)
+    c.line(left, y, x_total, y)
+    c.setStrokeGray(0)
+    y -= 15
+
+    for service in services[:8]:
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColorRGB(0.05, 0.09, 0.16)
+        c.drawString(left, y, str(service.get("name") or "Service")[:48])
+        c.setFont("Helvetica", 10)
+        c.setFillColorRGB(0.16, 0.22, 0.30)
+        c.drawRightString(x_hours, y, str(service.get("labor_hours") or service.get("hours") or "0.0"))
+        c.drawRightString(x_parts, y, pdf_format_money(service.get("parts") or service.get("parts_cost")))
+        c.drawRightString(x_labor, y, pdf_format_money(service.get("labor_cost") or service.get("labor")))
+        c.setFont("Helvetica-Bold", 10)
+        c.drawRightString(x_total, y, pdf_format_money(service.get("total")))
+        c.setFillGray(0)
+        y -= 13
+        c.setStrokeColorRGB(0.91, 0.93, 0.96)
+        c.line(left, y, x_total, y)
+        c.setStrokeGray(0)
+        y -= 12
+
+    y -= 16
+    totals_w = 228
+    totals_x = w - right - totals_w
+    c.setFillColorRGB(0.93, 0.975, 0.97)
+    c.setStrokeColorRGB(0.52, 0.72, 0.72)
+    c.roundRect(totals_x, y - 94, totals_w, 94, 6, fill=1, stroke=1)
+    c.setFillGray(0)
+    c.setFont("Helvetica", 9)
+    c.drawString(totals_x + 18, y - 22, "Subtotal")
+    c.drawRightString(w - right - 18, y - 22, subtotal)
+    c.drawString(totals_x + 18, y - 42, "Tax")
+    c.drawRightString(w - right - 18, y - 42, tax)
+    c.setStrokeColorRGB(0.72, 0.82, 0.82)
+    c.line(totals_x + 18, y - 57, w - right - 18, y - 57)
+    c.setStrokeGray(0)
+    c.setFont("Helvetica-Bold", 14)
+    c.setFillColorRGB(0.03, 0.11, 0.18)
+    c.drawString(totals_x + 18, y - 78, "Total Estimate")
+    c.drawRightString(w - right - 18, y - 78, estimated_total)
+    c.setFillGray(0)
+    y -= 122
+
+    c.setFillColorRGB(0.985, 0.99, 1.0)
+    c.setStrokeColorRGB(0.84, 0.89, 0.94)
+    c.roundRect(left, y - 86, w - left - right, 86, 6, fill=1, stroke=1)
+    c.setFillGray(0)
+    c.setFont("Helvetica-Bold", 11.5)
+    c.drawString(left + 18, y - 22, "Warranty & Terms")
+    terms_y = y - 42
+    c.setFont("Helvetica", 9.2)
+
+    warranty_note = str(profile.get("warranty_note") or "").strip()
+    quote_days = int(profile.get("quote_expiration_days") or 0)
+    terms = []
+    if warranty_note:
+        terms.append(warranty_note)
+    if quote_days:
+        terms.append(f"Quote valid for {quote_days} days unless parts pricing, labor rate, or diagnostic findings change.")
+    if not terms:
+        terms.append("Final repair cost may vary after inspection, diagnostic confirmation, parts selection, and vehicle condition review.")
+
+    for term in terms[:2]:
+        terms_y = pdf_draw_wrapped_lines(c, term, left + 18, terms_y, max_chars=92, leading=12, limit=2)
+
+    y -= 122
+
+    c.setFont("Helvetica-Bold", 11)
+    c.drawCentredString(w / 2, y, "Customer Approval")
+    y -= 17
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(w / 2, y, "By signing, you approve the above repair estimate pending final inspection.")
+    y -= 28
+    c.setStrokeColorRGB(0.48, 0.58, 0.68)
+    c.setLineWidth(1.2)
+    c.line(left, y, left + 220, y)
+    c.line(left + 280, y, w - right, y)
+    c.setLineWidth(1)
+    c.setStrokeGray(0)
+    c.setFont("Helvetica", 8)
+    c.setFillColorRGB(0.38, 0.44, 0.52)
+    c.drawString(left, y - 12, "Customer Signature")
+    c.drawString(left + 280, y - 12, "Date")
+    c.setFillGray(0)
+
+    pdf_draw_pro_footer(c, w, profile)
+    c.save()
+    buf.seek(0)
+    return buf.getvalue()
+
+
+@app.get("/shop-profile/pdf-preview", include_in_schema=False)
+def shop_profile_pdf_preview() -> Response:
+    profile = load_shop_profile()
+    content = build_pro_pdf_bytes(
+        profile,
+        {
+            "vehicle": "2018 Toyota Camry",
+            "customer_name": "Sample Customer",
+            "estimated_total": "$465.00",
+            "subtotal": "$465.00",
+            "tax": "$0.00",
+            "services": [
+                {
+                    "name": "Alternator Replacement",
+                    "labor_hours": "2.0",
+                    "parts": "$285.00",
+                    "labor_cost": "$180.00",
+                    "total": "$465.00",
+                },
+            ],
+        },
+        pdf_mode=PDF_MODE_PRO,
+    )
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "inline; filename=torquemech_pro_preview.pdf"},
+    )
 
 # ===============================
 # PDF

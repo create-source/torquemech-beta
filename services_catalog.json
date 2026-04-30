@@ -68,12 +68,6 @@
           "labor_hours_max": 1.5
         },
         {
-          "code": "transmission_filter_replacement",
-          "name": "Transmission Filter Replacement",
-          "labor_hours_min": 0.2,
-          "labor_hours_max": 1.0
-        },
-        {
           "code": "differential_breather_service",
           "name": "Differential Breather Service",
           "labor_hours_min": 0.8,
@@ -92,38 +86,8 @@
           "labor_hours_max": 3.0
         },
         {
-          "code": "brake_fluid_flush",
-          "name": "Brake Fluid Flush",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
-        },
-        {
-          "code": "power_steering_fluid_service",
-          "name": "Power Steering Fluid Service",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
-        },
-        {
           "code": "transmission_fluid_service_drain_and_fill",
           "name": "Transmission Fluid Service (Drain & Fill)",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
-        },
-        {
-          "code": "transmission_fluid_flush_if_applicable",
-          "name": "Transmission Fluid Flush (If Applicable)",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
-        },
-        {
-          "code": "differential_fluid_service",
-          "name": "Differential Fluid Service",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
-        },
-        {
-          "code": "transfer_case_fluid_service",
-          "name": "Transfer Case Fluid Service",
           "labor_hours_min": 0.8,
           "labor_hours_max": 3.0
         },
@@ -176,18 +140,6 @@
           "labor_hours_max": 2.0
         },
         {
-          "code": "wheel_alignment_2_wheel",
-          "name": "Wheel Alignment (2-Wheel)",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
-        },
-        {
-          "code": "wheel_alignment_4_wheel",
-          "name": "Wheel Alignment (4-Wheel)",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
-        },
-        {
           "code": "road_force_balance_if_available",
           "name": "Road Force Balance (If Available)",
           "labor_hours_min": 0.8,
@@ -212,22 +164,10 @@
           "labor_hours_max": 2.5
         },
         {
-          "code": "battery_replacement",
-          "name": "Battery Replacement",
-          "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
-        },
-        {
           "code": "battery_terminal_cleaning",
           "name": "Battery Terminal Cleaning",
           "labor_hours_min": 0.2,
           "labor_hours_max": 1.0
-        },
-        {
-          "code": "battery_cable_replacement",
-          "name": "Battery Cable Replacement",
-          "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
         },
         {
           "code": "charging_system_test",
@@ -282,6 +222,30 @@
           "name": "Ignition System Diagnosis",
           "labor_hours_min": 0.8,
           "labor_hours_max": 2.5
+        },
+        {
+          "code": "misfire_diagnosis",
+          "name": "Misfire Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "summary": "Diagnose rough idle, flashing check engine light, hesitation, and P0300/P030x misfire complaints before replacing ignition, injector, or compression-related parts.",
+          "keywords": ["misfire", "rough idle", "p0300", "p0303", "flashing check engine light", "hesitation"]
+        },
+        {
+          "code": "compression_test",
+          "name": "Compression Test",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "summary": "Measure cylinder compression to separate ignition or fuel faults from internal engine sealing problems.",
+          "keywords": ["compression", "low compression", "misfire", "no start", "engine mechanical"]
+        },
+        {
+          "code": "cylinder_leak_down_test",
+          "name": "Cylinder Leak-Down Test",
+          "labor_hours_min": 1.2,
+          "labor_hours_max": 3.5,
+          "summary": "Pinpoint cylinder sealing loss through valves, piston rings, head gasket, or cooling system paths after a weak compression result.",
+          "keywords": ["leak down", "leakdown", "compression", "head gasket", "engine mechanical", "misfire"]
         },
         {
           "code": "valve_cover_gasket_replacement",
@@ -362,6 +326,30 @@
           "labor_hours_max": 4.0
         },
         {
+          "code": "engine_mount_replacement",
+          "name": "Engine Mount Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 6.0,
+          "summary": "Replace a failed engine or motor mount when vibration, clunking, or drivetrain movement is confirmed.",
+          "keywords": ["engine mount", "motor mount", "vibration", "clunk", "engine movement"]
+        },
+        {
+          "code": "belt_tensioner_replacement",
+          "name": "Belt Tensioner Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "summary": "Replace a weak, noisy, or seized drive belt tensioner after confirming accessory belt noise or charging/cooling belt-drive issues.",
+          "keywords": ["belt tensioner", "serpentine belt", "belt noise", "squeal", "accessory belt"]
+        },
+        {
+          "code": "idler_pulley_replacement",
+          "name": "Idler Pulley Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "summary": "Replace a noisy or failing idler pulley that affects serpentine belt tracking, noise, or accessory drive reliability.",
+          "keywords": ["idler pulley", "serpentine belt", "belt noise", "squeal", "bearing noise"]
+        },
+        {
           "code": "pcv_valve_replacement",
           "name": "PCV Valve Replacement",
           "labor_hours_min": 1.0,
@@ -377,7 +365,8 @@
           "code": "vacuum_leak_diagnosis_smoke_test",
           "name": "Vacuum Leak Diagnosis (Smoke Test)",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 2.5
+          "labor_hours_max": 2.5,
+          "keywords": ["diagnostics", "smoke test", "lean condition", "intake leak"]
         },
         {
           "code": "intake_leak_diagnosis",
@@ -430,18 +419,6 @@
         {
           "code": "throttle_position_sensor_replacement",
           "name": "Throttle Position Sensor Replacement",
-          "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
-        },
-        {
-          "code": "oxygen_sensor_replacement_upstream",
-          "name": "Oxygen Sensor Replacement (Upstream)",
-          "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
-        },
-        {
-          "code": "oxygen_sensor_replacement_downstream",
-          "name": "Oxygen Sensor Replacement (Downstream)",
           "labor_hours_min": 1.0,
           "labor_hours_max": 4.0
         },
@@ -581,7 +558,8 @@
           "code": "cooling_system_pressure_test",
           "name": "Cooling System Pressure Test",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 2.5
+          "labor_hours_max": 2.5,
+          "keywords": ["diagnostics", "coolant leak", "overheating", "pressure test"]
         },
         {
           "code": "combustion_gas_test_block_test",
@@ -707,7 +685,8 @@
           "code": "brake_fluid_flush",
           "name": "Brake Fluid Flush",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
+          "labor_hours_max": 3.0,
+          "keywords": ["maintenance", "fluid service", "brake maintenance"]
         },
         {
           "code": "parking_brake_adjustment",
@@ -726,6 +705,14 @@
           "name": "ABS Diagnosis",
           "labor_hours_min": 0.8,
           "labor_hours_max": 2.5
+        },
+        {
+          "code": "abs_module_diagnosis",
+          "name": "ABS Module Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "summary": "Diagnose ABS module communication, pump, relay, power, ground, and wheel-speed input faults before module replacement.",
+          "keywords": ["abs module", "abs light", "traction control", "brake warning", "module diagnosis"]
         },
         {
           "code": "abs_wheel_speed_sensor_replacement",
@@ -758,10 +745,19 @@
           "labor_hours_max": 4.0
         },
         {
+          "code": "wheel_cylinder_replacement",
+          "name": "Wheel Cylinder Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "summary": "Replace a leaking or seized drum brake wheel cylinder and bleed the hydraulic system after repair.",
+          "keywords": ["wheel cylinder", "drum brakes", "brake leak", "soft pedal", "rear brakes"]
+        },
+        {
           "code": "brake_noise_diagnosis",
           "name": "Brake Noise Diagnosis",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 2.5
+          "labor_hours_max": 2.5,
+          "keywords": ["diagnostics", "squeal", "grinding", "brake inspection"]
         },
         {
           "code": "brake_vibration_diagnosis",
@@ -863,7 +859,8 @@
           "code": "power_steering_fluid_service",
           "name": "Power Steering Fluid Service",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
+          "labor_hours_max": 3.0,
+          "keywords": ["maintenance", "fluid service", "steering maintenance"]
         },
         {
           "code": "wheel_bearing_replacement_front",
@@ -881,13 +878,15 @@
           "code": "wheel_alignment_2_wheel",
           "name": "Wheel Alignment (2-Wheel)",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
+          "labor_hours_max": 3.0,
+          "keywords": ["maintenance", "tires", "alignment"]
         },
         {
           "code": "wheel_alignment_4_wheel",
           "name": "Wheel Alignment (4-Wheel)",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
+          "labor_hours_max": 3.0,
+          "keywords": ["maintenance", "tires", "alignment"]
         },
         {
           "code": "suspension_noise_diagnosis",
@@ -971,7 +970,8 @@
           "code": "differential_fluid_service",
           "name": "Differential Fluid Service",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
+          "labor_hours_max": 3.0,
+          "keywords": ["maintenance", "fluid service", "drivetrain maintenance"]
         },
         {
           "code": "differential_seal_replacement",
@@ -995,7 +995,8 @@
           "code": "transfer_case_fluid_service",
           "name": "Transfer Case Fluid Service",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
+          "labor_hours_max": 3.0,
+          "keywords": ["maintenance", "fluid service", "4wd service", "drivetrain maintenance"]
         },
         {
           "code": "transfer_case_seal_replacement",
@@ -1097,13 +1098,15 @@
           "code": "transmission_fluid_flush_if_applicable",
           "name": "Transmission Fluid Flush (If Applicable)",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 3.0
+          "labor_hours_max": 3.0,
+          "keywords": ["maintenance", "fluid service", "transmission maintenance"]
         },
         {
           "code": "transmission_filter_replacement",
           "name": "Transmission Filter Replacement",
           "labor_hours_min": 0.2,
-          "labor_hours_max": 1.0
+          "labor_hours_max": 1.0,
+          "keywords": ["maintenance", "fluid service", "transmission maintenance"]
         },
         {
           "code": "transmission_pan_gasket_replacement",
@@ -1382,6 +1385,14 @@
           "labor_hours_max": 6.0
         },
         {
+          "code": "starter_diagnosis",
+          "name": "Starter Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "summary": "Test starter draw, relay command, battery voltage, cables, grounds, and no-crank symptoms before replacing the starter.",
+          "keywords": ["starter", "no crank", "clicking", "starting problem", "starter draw"]
+        },
+        {
           "code": "starter_relay_replacement",
           "name": "Starter Relay Replacement",
           "labor_hours_min": 1.2,
@@ -1394,16 +1405,42 @@
           "labor_hours_max": 6.0
         },
         {
+          "code": "alternator_diagnosis",
+          "name": "Alternator Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "summary": "Check charging voltage, belt drive, battery condition, grounds, voltage drop, and battery light complaints before replacing the alternator.",
+          "keywords": ["alternator", "battery light", "charging system", "dead battery", "low voltage"]
+        },
+        {
           "code": "battery_replacement",
           "name": "Battery Replacement",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "keywords": ["maintenance", "starting", "charging", "battery service"]
+        },
+        {
+          "code": "no_crank_diagnosis",
+          "name": "No-Crank Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 3.0,
+          "summary": "Diagnose no-crank conditions by checking battery state, starter circuit command, relays, fuses, cables, grounds, and immobilizer clues.",
+          "keywords": ["no crank", "won't crank", "clicking", "starter", "battery", "ignition switch"]
+        },
+        {
+          "code": "battery_registration_battery_monitoring_reset",
+          "name": "Battery Registration / Battery Monitoring Reset",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "summary": "Register or reset the battery monitoring system on vehicles that require scan-tool battery adaptation after replacement.",
+          "keywords": ["battery registration", "battery reset", "battery monitoring", "bms reset", "battery replacement"]
         },
         {
           "code": "battery_cable_replacement",
           "name": "Battery Cable Replacement",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "keywords": ["maintenance", "starting", "charging", "battery service"]
         },
         {
           "code": "ground_strap_repair",
@@ -1542,6 +1579,14 @@
           "name": "Fuel Pump Replacement (External)",
           "labor_hours_min": 1.2,
           "labor_hours_max": 6.0
+        },
+        {
+          "code": "fuel_pump_control_module_replacement",
+          "name": "Fuel Pump Control Module Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "summary": "Replace a failed fuel pump control module after confirming command, power, ground, fuel pressure, and no-start behavior.",
+          "keywords": ["fuel pump module", "fuel pump control", "no start", "weak fuel pressure", "starts then dies"]
         },
         {
           "code": "fuel_sending_unit_replacement_if_applicable",
@@ -1697,13 +1742,15 @@
           "code": "oxygen_sensor_replacement_upstream",
           "name": "Oxygen Sensor Replacement (Upstream)",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "keywords": ["engine", "emissions", "check engine light", "o2 sensor"]
         },
         {
           "code": "oxygen_sensor_replacement_downstream",
           "name": "Oxygen Sensor Replacement (Downstream)",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "keywords": ["engine", "emissions", "check engine light", "o2 sensor"]
         },
         {
           "code": "air_fuel_ratio_sensor_replacement",
@@ -1734,6 +1781,14 @@
           "name": "Exhaust Pipe Repair/Replacement",
           "labor_hours_min": 1.0,
           "labor_hours_max": 4.0
+        },
+        {
+          "code": "exhaust_flex_pipe_repair_replacement",
+          "name": "Exhaust Flex Pipe Repair/Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "summary": "Repair or replace a leaking exhaust flex pipe when noise, fumes, flex-joint damage, or emissions concerns are confirmed.",
+          "keywords": ["flex pipe", "exhaust leak", "exhaust noise", "fumes", "emissions"]
         },
         {
           "code": "exhaust_leak_repair",
@@ -1964,6 +2019,14 @@
           "labor_hours_max": 2.5
         },
         {
+          "code": "crank_no_start_diagnosis",
+          "name": "Crank-No-Start Diagnosis",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "summary": "Diagnose engines that crank but do not start by separating fuel, spark, compression, timing, immobilizer, and sensor inputs.",
+          "keywords": ["crank no start", "cranks but won't start", "no start", "fuel spark compression", "starts then dies"]
+        },
+        {
           "code": "noise_vibration_harshness_nvh_diagnosis",
           "name": "Noise/Vibration/Harshness (NVH) Diagnosis",
           "labor_hours_min": 0.8,
@@ -2006,22 +2069,20 @@
           "labor_hours_max": 2.5
         },
         {
-          "code": "brake_noise_diagnosis",
-          "name": "Brake Noise Diagnosis",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 2.5
+          "code": "pre_purchase_inspection",
+          "name": "Pre-Purchase Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "summary": "Inspect a vehicle before purchase for visible mechanical, safety, leak, warning-light, and road-test concerns.",
+          "keywords": ["pre purchase", "used car inspection", "buyer inspection", "vehicle inspection", "road test"]
         },
         {
-          "code": "cooling_system_pressure_test",
-          "name": "Cooling System Pressure Test",
+          "code": "fluid_leak_diagnosis",
+          "name": "Fluid Leak Diagnosis",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 2.5
-        },
-        {
-          "code": "vacuum_leak_diagnosis_smoke_test",
-          "name": "Vacuum Leak Diagnosis (Smoke Test)",
-          "labor_hours_min": 0.8,
-          "labor_hours_max": 2.5
+          "labor_hours_max": 2.5,
+          "summary": "Trace oil, coolant, transmission, brake, power steering, fuel, or A/C drain leaks before approving repair work.",
+          "keywords": ["fluid leak", "oil leak", "coolant leak", "transmission leak", "brake fluid leak", "power steering leak"]
         }
       ]
     }
