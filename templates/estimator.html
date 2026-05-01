@@ -252,8 +252,7 @@
 
       <!-- Saved Estimates (Local) --> 
       <div class="tm-card" id="draftsCard" data-saved-estimates-disabled="true">
-      <h2>Saved Estimates</h2>
-      <span class="tm-hint">Coming soon</span>
+      <h2>Saved estimates (coming soon)</h2>
       <p class="tm-hint">Estimates are not saved yet. Export as PDF to keep a copy.</p>
 
       <div class="tm-card" id="draftRecoveryBlock" style="margin:12px 0; padding:14px 16px;">
@@ -267,13 +266,17 @@
           Save This Estimate for Later
         </button>
 
-        <select id="draftsSelect" class="input" disabled>
-          <option value="">Saved estimates (coming soon)</option>
+        <div class="tm-card tm-hint" style="padding:12px 14px; margin:0;">
+          Saved estimate recovery is coming soon.
+        </div>
+
+        <select id="draftsSelect" hidden disabled aria-hidden="true">
+          <option value="">Saved estimate recovery is coming soon.</option>
         </select>
 
-        <div style="display:flex; gap:10px;">
-          <button id="loadDraftBtn" class="tm-btn tm-btn-secondary" disabled>Open</button>
-          <button id="deleteDraftBtn" class="tm-btn tm-btn-danger" disabled>Delete</button>
+        <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;">
+          <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary" disabled>Open</button>
+          <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger" disabled>Delete</button>
         </div>
 
       </div>

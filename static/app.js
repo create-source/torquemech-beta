@@ -744,13 +744,13 @@
   function refreshDraftsUI() {
     if (!draftsSelect) return;
     if (document.getElementById("draftsCard")?.dataset.savedEstimatesDisabled === "true") {
-      draftsSelect.innerHTML = `<option value="">Saved estimates coming soon</option>`;
+      draftsSelect.innerHTML = `<option value="">Saved estimate recovery is coming soon.</option>`;
       if (draftsMsg) draftsMsg.textContent = "Estimates are not saved yet. Export as PDF to keep a copy.";
       return;
     }
 
     const drafts = getDrafts();
-    draftsSelect.innerHTML = `<option value="">— Select a device-saved estimate —</option>` +
+    draftsSelect.innerHTML = `<option value="">Select a device-saved estimate</option>` +
       drafts.map(d => `<option value="${d.id}">${draftLabel(d)}</option>`).join("");
 
     if (draftsMsg) {
