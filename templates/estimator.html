@@ -252,7 +252,8 @@
 
       <!-- Saved Estimates (Local) --> 
       <div class="tm-card" id="draftsCard" data-saved-estimates-disabled="true">
-      <h2>Saved estimates (coming soon)</h2>
+      <h2>Saved Estimates</h2>
+      <span class="tm-hint">Coming soon</span>
       <p class="tm-hint">Estimates are not saved yet. Export as PDF to keep a copy.</p>
 
       <div class="tm-card" id="draftRecoveryBlock" style="margin:12px 0; padding:14px 16px;">
@@ -260,15 +261,21 @@
         <div class="tm-hint">Saved estimate recovery is coming soon. For now, download the PDF when you want to keep a copy.</div>
       </div>
 
-      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary" disabled aria-disabled="true">Save This Estimate for Later</button>
+      <div style="display:flex; flex-direction:column; gap:10px;">
 
-        <select id="draftsSelect" class="input" style="min-width:260px;" disabled aria-disabled="true">
-          <option value="">— Saved estimates coming soon —</option>
+        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary" disabled>
+          Save This Estimate for Later
+        </button>
+
+        <select id="draftsSelect" class="input" disabled>
+          <option value="">Saved estimates (coming soon)</option>
         </select>
 
-        <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary" disabled aria-disabled="true">Open</button>
-        <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger" disabled aria-disabled="true">Delete</button>
+        <div style="display:flex; gap:10px;">
+          <button id="loadDraftBtn" class="tm-btn tm-btn-secondary" disabled>Open</button>
+          <button id="deleteDraftBtn" class="tm-btn tm-btn-danger" disabled>Delete</button>
+        </div>
+
       </div>
       
 
