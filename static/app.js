@@ -744,7 +744,7 @@
   function refreshDraftsUI() {
     if (!draftsSelect) return;
     if (document.getElementById("draftsCard")?.dataset.savedEstimatesDisabled === "true") {
-      draftsSelect.innerHTML = `<option value="">â€” Saved estimates coming soon â€”</option>`;
+      draftsSelect.innerHTML = `<option value="">Saved estimates coming soon</option>`;
       if (draftsMsg) draftsMsg.textContent = "Estimates are not saved yet. Export as PDF to keep a copy.";
       return;
     }
