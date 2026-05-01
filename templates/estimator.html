@@ -252,7 +252,8 @@
 
       <!-- Saved Estimates (Local) --> 
       <div class="tm-card" id="draftsCard" data-saved-estimates-disabled="true">
-      <h2>Saved estimates (coming soon)</h2>
+      <h2>Saved Estimates</h2>
+      <div class="tm-hint" style="margin-top:-4px; margin-bottom:8px;">Coming soon</div>
       <p class="tm-hint">Estimates are not saved yet. Export as PDF to keep a copy.</p>
 
       <div class="tm-card" id="draftRecoveryBlock" style="margin:12px 0; padding:14px 16px;">
@@ -266,12 +267,8 @@
           Save This Estimate for Later
         </button>
 
-        <div class="tm-card tm-hint" style="padding:12px 14px; margin:0;">
-          Saved estimate recovery is coming soon.
-        </div>
-
         <select id="draftsSelect" hidden disabled aria-hidden="true">
-          <option value="">Saved estimate recovery is coming soon.</option>
+          <option value="">Unavailable</option>
         </select>
 
         <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;">
@@ -282,7 +279,7 @@
       </div>
       
 
-      <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;">Estimates are not saved yet. Export as PDF to keep a copy.</div>
+      <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;"></div>
 
       <div id="estimateSavedBlock" class="tm-card" style="margin-top:12px; padding:14px 16px;" hidden>
         <div style="font-weight:800; margin-bottom:6px;">Estimate Saved Successfully</div>

@@ -744,8 +744,8 @@
   function refreshDraftsUI() {
     if (!draftsSelect) return;
     if (document.getElementById("draftsCard")?.dataset.savedEstimatesDisabled === "true") {
-      draftsSelect.innerHTML = `<option value="">Saved estimate recovery is coming soon.</option>`;
-      if (draftsMsg) draftsMsg.textContent = "Estimates are not saved yet. Export as PDF to keep a copy.";
+      draftsSelect.innerHTML = `<option value="">Unavailable</option>`;
+      if (draftsMsg) draftsMsg.textContent = "";
       return;
     }
 
@@ -2651,6 +2651,13 @@ if (getEstimateHint) {
         lastEstimate = null;
 
         renderLineItems();
+        trackClarity("estimate_generated", {
+          source: "estimator",
+          action: "get_estimate",
+          service_code: it.serviceCode,
+          service_name: it.serviceText,
+          estimate_total: Number(it.estimate || 0)
+        });
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
 
         readyForNextService = false;
@@ -2697,14 +2704,15 @@ if (getEstimateHint) {
       
       editingLineItem = null;
       lastEstimate = { req, res };
+
+      renderLineItems();
       trackClarity("estimate_generated", {
-        source: "get_estimate",
+        source: "estimator",
+        action: "get_estimate",
         service_code: it.serviceCode,
         service_name: it.serviceText,
         estimate_total: Number(it.estimate || 0)
       });
-
-      renderLineItems();
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
 
       readyForNextService = false;
@@ -2802,13 +2810,14 @@ if (getEstimateHint) {
       try {
         if (it.pricingMode === "flat") {
           it.estimate = calcLineItemEstimate(it);
+          renderLineItems();
           trackClarity("estimate_generated", {
-            source: "line_item_recalculate",
+            source: "estimator",
+            action: "line_item_recalculate",
             service_code: it.serviceCode,
             service_name: it.serviceText,
             estimate_total: Number(it.estimate || 0)
           });
-          renderLineItems();
           setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
           return;
         }
@@ -2837,14 +2846,15 @@ if (getEstimateHint) {
         }
 
         it.estimate = calcLineItemEstimate(it);
+
+        renderLineItems();
         trackClarity("estimate_generated", {
-          source: "line_item_recalculate",
+          source: "estimator",
+          action: "line_item_recalculate",
           service_code: it.serviceCode,
           service_name: it.serviceText,
           estimate_total: Number(it.estimate || 0)
         });
-
-        renderLineItems();
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}`);
 
       } catch (e) {
@@ -2945,7 +2955,8 @@ if (getEstimateHint) {
 
       setStatus("ok", "PDF ready.");
       trackClarity("pdf_generated", {
-        source: "estimate_pdf_multi",
+        source: "estimator",
+        state: "pdf_success",
         service_count: lineItems.length,
         estimate_total: lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0)
       });
@@ -3535,7 +3546,8 @@ if (getEstimateHint) {
       renderLineItems();
       setStatus("ok", "All service estimates generated.");
       trackClarity("estimate_generated", {
-        source: "generate_all",
+        source: "estimator",
+        action: "generate_all",
         service_count: lineItems.length,
         estimate_total: lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0)
       });
