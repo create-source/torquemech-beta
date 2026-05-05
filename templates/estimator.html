@@ -6,18 +6,32 @@
 {% block content %}
 
     <header style="display:flex;align-items:center;justify-content:space-between;">
-      <h1 style="margin:0;">Professional Repair Estimate Workflow</h1>
+      <h1 style="margin:0;">Build a repair estimate in minutes</h1>
 
       <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
     </header>
 
     <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
-      <div style="font-weight:800; margin-bottom:8px;">Labor, parts, and service intelligence</div>
       <div class="tm-muted" style="line-height:1.6;">
-        1. Select the vehicle so labor guidance reflects real service access and layout<br>
-        2. Choose the diagnosed repair or compare multiple likely repair paths<br>
-        3. Review labor time, parts, and rate inputs before authorizing replacement<br>
-        4. Generate a decision-ready estimate for drivers, DIY owners, mobile mechanics, and small shops
+        Select a vehicle, choose a repair service, and TorqueMech will help calculate a clear labor, parts, and total estimate.
+      </div>
+    </div>
+
+    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
+      <div style="font-weight:800; margin-bottom:10px;">How it works</div>
+      <div class="tm-muted" style="display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; line-height:1.5;">
+        <div>1. Select vehicle</div>
+        <div>2. Choose service</div>
+        <div>3. Generate estimate + PDF</div>
+      </div>
+    </div>
+
+    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
+      <div style="font-weight:800; margin-bottom:8px;">When to use this</div>
+      <div class="tm-muted" style="line-height:1.6;">
+        - Build a quick repair quote for a customer<br>
+        - Price out a job before starting work<br>
+        - Create a clean estimate you can share or save
       </div>
     </div>
 
@@ -51,6 +65,10 @@
       </div>
     </div>
     {% endif %}
+
+    <div class="tm-muted" style="margin-top:14px; line-height:1.5;">
+      Build a clean, customer-ready repair estimate in minutes — no signup required.
+    </div>
 
     <!-- Vehicles -->
     <section class="tm-card" aria-label="Vehicles" style="margin-top:14px;">
