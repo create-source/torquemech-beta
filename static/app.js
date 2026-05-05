@@ -2945,7 +2945,10 @@ if (getEstimateHint) {
       const pdfBlob = await pdfResponse.blob();
       const pdfUrl = URL.createObjectURL(pdfBlob);
 
-      // Try download
+      // Show PDF immediately so user sees it
+      window.open(pdfUrl, "_blank");
+
+      // Also trigger download as backup
       const a = document.createElement("a");
       a.href = pdfUrl;
       a.download = "torquemech_estimate.pdf";
@@ -2963,7 +2966,8 @@ if (getEstimateHint) {
 
       if (confirmMsg) {
         confirmMsg.innerHTML = `
-          PDF ready.<br>
+          Your estimate is ready.<br>
+          You can download it, open it, or share it with your customer.<br>
           <a href="${pdfUrl}" download="torquemech_estimate.pdf">Download PDF</a>
           &nbsp;|&nbsp;
           <a href="${pdfUrl}" target="_blank" rel="noopener">Open PDF</a>
