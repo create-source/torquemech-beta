@@ -924,6 +924,7 @@ input[type="radio"]{
 #statusBox[data-kind="error"]{
   background: rgba(220,38,38,.06);
   border-color: rgba(220,38,38,.18);
+  color: #dc2626;
 }
 
 #confirmMsg:empty{
@@ -934,9 +935,13 @@ input[type="radio"]{
   margin-top: 12px;
 }
 
-#confirmMsg[data-kind="error"]{
-  color: #dc2626;
+#confirmMsg.status[data-kind="error"]{
+  color: #dc2626 !important;
   font-weight: 800;
+}
+
+#confirmMsg.status[data-kind="error"] *{
+  color: #dc2626 !important;
 }
 
 .status[data-kind="info"],
