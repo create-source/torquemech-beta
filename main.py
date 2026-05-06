@@ -5922,6 +5922,8 @@ class EstimateRequest(BaseModel):
     signatureDataUrl: Optional[str] = None
     showGeneratedDate: bool = True
     showHourlyRate: bool = False
+    showLaborColumn: bool = False
+    showPartsColumn: bool = False
     showDetailedLaborBreakdown: bool = False
 
 
@@ -6825,14 +6827,20 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         labor_cost = float(est.breakdown.get("labor") or 0)
         parts_cost = float(est.breakdown.get("parts") or 0)
         breakdown_rows = [
-            ("Labor Hours", f"{labor_hours:.1f} hr"),
-            ("Labor", f"${labor_cost:,.2f}"),
-            ("Parts", f"${parts_cost:,.2f}"),
             ("Total", f"${est.estimate:,.2f} {est.currency}"),
         ]
 
+        if req.showLaborColumn:
+            breakdown_rows.insert(0, ("Labor", f"${labor_cost:,.2f}"))
+            breakdown_rows.insert(0, ("Labor Hours", f"{labor_hours:.1f} hr"))
+
+        if req.showPartsColumn:
+            insert_at = 2 if req.showLaborColumn else 0
+            breakdown_rows.insert(insert_at, ("Parts", f"${parts_cost:,.2f}"))
+
         if req.showHourlyRate:
-            breakdown_rows.insert(1, ("Hourly Labor Rate", f"${float(est.breakdown.get('labor_rate') or 0):,.2f}/hr"))
+            insert_at = 1 if req.showLaborColumn else 0
+            breakdown_rows.insert(insert_at, ("Hourly Labor Rate", f"${float(est.breakdown.get('labor_rate') or 0):,.2f}/hr"))
 
         for label, value in breakdown_rows:
             c.drawString(72, y, label)
@@ -6946,6 +6954,8 @@ class MultiPDFRequest(BaseModel):
     signatureDataUrl: Optional[str] = None
     showGeneratedDate: bool = True
     showHourlyRate: bool = False
+    showLaborColumn: bool = False
+    showPartsColumn: bool = False
     showDetailedLaborBreakdown: bool = False
     lineItems: List[LineItemPDF]
 
@@ -6978,15 +6988,21 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         LEFT = 50
         RIGHT = 50
         X_SERVICE = LEFT
-        X_LABOR  = 360
-        X_PARTS  = 440
         X_TOTAL  = w - RIGHT
+        if req.showLaborColumn and req.showPartsColumn:
+            X_LABOR = 360
+            X_PARTS = 440
+        else:
+            X_LABOR = 440
+            X_PARTS = 440
 
         def draw_service_columns(ypos: float) -> float:
             c.setFont("Helvetica-Bold", 10)
             c.drawString(X_SERVICE, ypos, "Service")
-            c.drawRightString(X_LABOR, ypos, "Labor")
-            c.drawRightString(X_PARTS, ypos, "Parts")
+            if req.showLaborColumn:
+                c.drawRightString(X_LABOR, ypos, "Labor")
+            if req.showPartsColumn:
+                c.drawRightString(X_PARTS, ypos, "Parts")
             c.drawRightString(X_TOTAL, ypos, "Total")
             ypos -= 10
 
@@ -7008,7 +7024,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         for it in (req.lineItems or []):
             y = pdf_ensure_space(
                 c, w, h, y,
-                needed=182 if req.showDetailedLaborBreakdown else 94 if req.showHourlyRate else 82,
+                needed=182 if req.showDetailedLaborBreakdown else 94 if (req.showHourlyRate or req.showLaborColumn) else 58,
                 title="Repair Estimate",
                 vehicle_line=vehicle_line,
                 left=LEFT, right=RIGHT,
@@ -7028,16 +7044,19 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setFont("Helvetica", 10)
             is_flat_rate = str(it.pricingMode or "").strip().lower() == "flat"
             labor_total = float(it.flatRatePrice or 0) if is_flat_rate else float(it.laborHours or 0) * float(it.laborRate or 0)
-            c.drawRightString(X_LABOR, y, f"${labor_total:,.0f}")
-            c.drawRightString(X_PARTS, y, f"${it.partsPrice:,.0f}")
+            if req.showLaborColumn:
+                c.drawRightString(X_LABOR, y, f"${labor_total:,.0f}")
+            if req.showPartsColumn:
+                c.drawRightString(X_PARTS, y, f"${it.partsPrice:,.0f}")
             c.drawRightString(X_TOTAL, y, f"${est:,.0f}")
             y -= 18
 
-            c.setFillGray(0.45)
-            c.setFont("Helvetica", 9)
-            c.drawString(X_SERVICE, y, "Flat-rate service" if is_flat_rate else f"Labor Hours: {it.laborHours:.1f}h")
-            c.setFillGray(0)
-            y -= 12
+            if req.showLaborColumn:
+                c.setFillGray(0.45)
+                c.setFont("Helvetica", 9)
+                c.drawString(X_SERVICE, y, "Flat-rate service" if is_flat_rate else f"Labor Hours: {it.laborHours:.1f}h")
+                c.setFillGray(0)
+                y -= 12
 
             if req.showHourlyRate and not is_flat_rate:
                 c.setFillGray(0.45)

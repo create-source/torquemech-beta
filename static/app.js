@@ -975,6 +975,16 @@
     statusBox.textContent = msg || "";
   }
 
+  function setConfirmMessage(kind, msg) {
+    if (!confirmMsg) return;
+    confirmMsg.dataset.kind = kind || "info";
+    confirmMsg.textContent = msg || "";
+  }
+
+  function clearConfirmMessage() {
+    setConfirmMessage("info", "");
+  }
+
   function money(n) {
     const x = Number(n || 0);
     return `$${Math.round(x).toLocaleString()}`;
@@ -1138,7 +1148,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   function emailEstimate() {
     if (!lineItems.length) {
       setStatus("error", "Add at least one service before emailing an estimate.");
-      if (confirmMsg) confirmMsg.textContent = "Add at least one service before emailing an estimate.";
+      setConfirmMessage("error", "Add at least one service before emailing an estimate.");
       return;
     }
 
@@ -1148,7 +1158,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     const body = encodeURIComponent(buildEstimateEmailBody());
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
 
-    if (confirmMsg) confirmMsg.textContent = "Opening your email app with this estimate.";
+    setConfirmMessage("info", "Opening your email app with this estimate.");
     setStatus("ok", "Opening your email app with this estimate.");
   }
 
@@ -2237,7 +2247,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     el.addEventListener("change", () => {
       setSigVisible(getWantSig() === "yes");
       if (getWantSig() === "no" && confirmMsg) {
-        confirmMsg.textContent = "";
+        clearConfirmMessage();
       }
     });
   });
@@ -2245,7 +2255,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   function openConfirm() {
     if (!confirmModal) return;
 
-    if (confirmMsg) confirmMsg.textContent = "";
+    clearConfirmMessage();
     confirmModal.classList.remove("hidden");
     confirmModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
@@ -2289,7 +2299,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     confirmModal?.classList.add("hidden");
     confirmModal?.setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
-    if (confirmMsg) confirmMsg.textContent = "";
+    clearConfirmMessage();
 
     quickEstimateBtn?.focus();
   }
@@ -2317,15 +2327,15 @@ const confidenceEl = document.getElementById("laborConfidence");
       const text = buildQuoteMessage();
 
       if (!text.trim()) {
-        if (confirmMsg) confirmMsg.textContent = "Nothing to copy yet.";
+        setConfirmMessage("info", "Nothing to copy yet.");
         return;
       }
 
       await navigator.clipboard.writeText(text);
-      if (confirmMsg) confirmMsg.textContent = "Quote message copied.";
+      setConfirmMessage("ok", "Quote message copied.");
       setStatus("ok", "Quote message copied.");
     } catch (e) {
-      if (confirmMsg) confirmMsg.textContent = "Copy failed. Try selecting the text manually.";
+      setConfirmMessage("error", "Copy failed. Try selecting the text manually.");
       setStatus("error", `Copy failed: ${e.message}`);
     }
   });
@@ -2961,11 +2971,11 @@ if (getEstimateHint) {
 
   // Confirm Add = finalize signature and generate PDF
   confirmAddBtn?.addEventListener("click", async () => {
-    if (confirmMsg) confirmMsg.textContent = "";
+    clearConfirmMessage();
 
     try {
       if (!lineItems.length) {
-        if (confirmMsg) confirmMsg.textContent = "Add at least one service first.";
+        setConfirmMessage("error", "Add at least one service before generating PDF.");
         return;
       }
 
@@ -2975,7 +2985,7 @@ if (getEstimateHint) {
       if (wantSig === "yes") {
         try {
           if (!sigCanvas || canvasIsBlank()) {
-            if (confirmMsg) confirmMsg.textContent = "Customer signature required before generating PDF.";
+            setConfirmMessage("error", "Customer signature required before generating PDF.");
             return;
           }
 
@@ -2983,7 +2993,7 @@ if (getEstimateHint) {
           signatureDataUrl = sigCanvas.toDataURL("image/png");
         } catch (err) {
           console.warn("Signature validation failed", err);
-          if (confirmMsg) confirmMsg.textContent = "Customer signature required before generating PDF.";
+          setConfirmMessage("error", "Customer signature required before generating PDF.");
           return;
         }
       } 
@@ -2994,12 +3004,12 @@ if (getEstimateHint) {
 
       // Multi-line PDF uses lineItems; no need to call /estimate here.
       if (!lineItems.length) {
-        if (confirmMsg) confirmMsg.textContent = "Add at least one service first.";
+        setConfirmMessage("error", "Add at least one service before generating PDF.");
         return;
       }
       const missing = lineItems.some(it => it.estimate == null);
       if (missing) {
-        if (confirmMsg) confirmMsg.textContent = "Some services are missing prices. Click Generate All first.";
+        setConfirmMessage("error", "Some services are missing prices. Generate the estimate first.");
         return;
       }
       
@@ -3075,6 +3085,7 @@ if (getEstimateHint) {
       });
 
       if (confirmMsg) {
+        confirmMsg.dataset.kind = "ok";
         confirmMsg.innerHTML = `
           Your estimate is ready.<br>
           You can download it, open it, or share it with your customer.<br>
@@ -3100,7 +3111,7 @@ if (getEstimateHint) {
     } catch (e) {
       console.error("PDF generation failed", e);
       setStatus("error", "Unable to generate PDF. Please try again.");
-      if (confirmMsg) confirmMsg.textContent = "Unable to generate PDF. Please try again.";
+      setConfirmMessage("error", "Unable to generate PDF. Please try again.");
     }
   });
 
@@ -3169,7 +3180,7 @@ if (getEstimateHint) {
     if (customerAgreesChk) customerAgreesChk.checked = true;
     setSigVisible(false);
     clearSignatureCanvas();
-    if (confirmMsg) confirmMsg.textContent = "";
+    clearConfirmMessage();
     if (quotePreviewEl) quotePreviewEl.value = "";
     if (draftsSelect) draftsSelect.value = "";
     const confirmServicesList = document.getElementById("confirmServicesList");
@@ -3445,7 +3456,7 @@ if (getEstimateHint) {
     }
 
     openConfirm();
-    if (confirmMsg) confirmMsg.textContent = "Review the saved estimate, then click Generate PDF.";
+    setConfirmMessage("info", "Review the saved estimate, then click Generate PDF.");
   });
   sharedDownloadPdfBtn?.addEventListener("click", () => {
     if (!lineItems.length) {
@@ -3454,7 +3465,7 @@ if (getEstimateHint) {
     }
 
     openConfirm();
-    if (confirmMsg) confirmMsg.textContent = "Review the shared estimate, then click Generate PDF.";
+    setConfirmMessage("info", "Review the shared estimate, then click Generate PDF.");
   });
 
   addVehicleBtn?.addEventListener("click", () => {

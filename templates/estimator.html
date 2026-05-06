@@ -212,7 +212,7 @@
 
         <p class="recalc-note">
           Adjust labor hours, parts price, or labor rate when diagnosis, a cost guide, or OBD evidence points to a different repair path,
-          then click the corresponding <strong>“Recalculate”</strong> button on that service card.
+          and the estimate total will update automatically.
         </p>
             
       </div>
@@ -418,6 +418,14 @@
             <span>Show hourly labor rate</span>
           </label>
           <label style="display:flex; gap:8px; align-items:flex-start;">
+            <input type="checkbox" id="pdfShowLaborColumnChk" />
+            <span>Show labor total</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:flex-start;">
+            <input type="checkbox" id="pdfShowPartsColumnChk" />
+            <span>Show parts total</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:flex-start;">
             <input type="checkbox" id="pdfShowLaborBreakdownChk" />
             <span>Show detailed labor breakdown</span>
           </label>
@@ -445,7 +453,7 @@
         <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
       </div>
 
-      <div id="confirmMsg"></div>
+      <div id="confirmMsg" class="status" data-kind="info" role="status" aria-live="polite"></div>
     </div>
   </div>
 
