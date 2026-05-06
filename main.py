@@ -6909,8 +6909,9 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
             y -= (box_h + 14)
 
         # ---------------- Signature + Note + Footer (unified) ----------------
-        y -= 12
-        y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=72, right=72)
+        if req.signatureDataUrl:
+            y -= 12
+            y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=72, right=72)
         pdf_draw_footer(c, w)
 
         c.save()
@@ -7153,8 +7154,9 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             y -= 8
 
         # Signature + footer
-        y -= 20
-        y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=LEFT, right=RIGHT)
+        if req.signatureDataUrl:
+            y -= 20
+            y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=LEFT, right=RIGHT)
         pdf_draw_footer(c, w)
 
         c.save()
