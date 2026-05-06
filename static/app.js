@@ -543,6 +543,9 @@
   const confirmMsg = $("confirmMsg");
   const confirmServiceText = $("confirmServiceText");
   const confirmTotalText = $("confirmTotalText");
+  const pdfShowGeneratedDateChk = $("pdfShowGeneratedDateChk");
+  const pdfShowHourlyRateChk = $("pdfShowHourlyRateChk");
+  const pdfShowLaborBreakdownChk = $("pdfShowLaborBreakdownChk");
 
   // Customer
   const customerNameEl = $("customerName");
@@ -590,6 +593,14 @@
 
   // ---- State ----
   let lineItems = [];
+
+  function getCustomerOutputOptions() {
+    return {
+      showGeneratedDate: pdfShowGeneratedDateChk ? !!pdfShowGeneratedDateChk.checked : true,
+      showHourlyRate: pdfShowHourlyRateChk ? !!pdfShowHourlyRateChk.checked : false,
+      showDetailedLaborBreakdown: pdfShowLaborBreakdownChk ? !!pdfShowLaborBreakdownChk.checked : false,
+    };
+  }
 
   // Sync lineItems to Vehicle 1 (temporary bridge)
   function syncLineItemsToVehicle() {
@@ -822,7 +833,7 @@
       notes: (it?.notes || "").trim() || null,
       estimate: it?.estimate != null ? Number(it.estimate) : null,
       laborBreakdown: it?.laborBreakdown || null,
-      breakdownOpen: typeof it?.breakdownOpen === "boolean" ? it.breakdownOpen : !!it?.laborBreakdown,
+      breakdownOpen: false,
     };
   }
 
@@ -2226,6 +2237,17 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   customerNameEl?.addEventListener("input", refreshQuotePreview);
   notesEl?.addEventListener("input", refreshQuotePreview);
+  pdfShowGeneratedDateChk?.addEventListener("change", refreshQuotePreview);
+  pdfShowHourlyRateChk?.addEventListener("change", () => {
+    renderLineItems();
+    refreshQuotePreview();
+  });
+  pdfShowLaborBreakdownChk?.addEventListener("change", () => {
+    if (!pdfShowLaborBreakdownChk.checked) {
+      lineItems.forEach(it => { it.breakdownOpen = false; });
+    }
+    renderLineItems();
+  });
 
   copyQuoteBtn?.addEventListener("click", async () => {
     try {
@@ -2436,6 +2458,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!lineItemsWrap || !lineItemsList) return;
 
     lineItemsWrap.classList.toggle("hidden", lineItems.length === 0);
+    const outputOptions = getCustomerOutputOptions();
 
     lineItemsList.innerHTML = lineItems
       .map((it, idx) => {
@@ -2449,7 +2472,16 @@ const confidenceEl = document.getElementById("laborConfidence");
           ? `Travel: ${money(it.travelFee)}`
           : "";
 
+        const displayPricingLabel = it.pricingMode === "flat"
+          ? pricingLabel
+          : `Labor: ${Number(it.laborHours || 0).toFixed(1)}h`;
+
+        const laborRateLabel = outputOptions.showHourlyRate && it.pricingMode !== "flat"
+          ? `Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`
+          : "";
+
         const hasBreakdown =
+          outputOptions.showDetailedLaborBreakdown &&
           it.laborBreakdown &&
           Array.isArray(it.laborBreakdown.steps) &&
           it.laborBreakdown.steps.length > 0;
@@ -2461,7 +2493,8 @@ const confidenceEl = document.getElementById("laborConfidence");
                 <div class="tm-service-title">${it.serviceText || "Service"}</div>
                 <div class="tm-service-vehicle">${it.vehicleLabel || "Vehicle 1"}</div>
                 <div class="tm-service-meta">
-                  <span>${pricingLabel}</span>
+                  <span>${displayPricingLabel}</span>
+                  ${laborRateLabel ? `<span>${laborRateLabel}</span>` : ""}
                   <span>Parts: ${money(it.partsPrice || 0)}</span>
                   ${travelLabel ? `<span>${travelLabel}</span>` : ""}
                 </div>
@@ -2498,20 +2531,6 @@ const confidenceEl = document.getElementById("laborConfidence");
                 <div class="tm-labor-range">
                   Typical range: ${Number(it.laborBreakdown.labor_hours?.min || 0).toFixed(1)} - ${Number(it.laborBreakdown.labor_hours?.max || 0).toFixed(1)} hrs
                 </div>
-
-                ${it.laborBreakdown.repair_summary ? `
-                  <p class="tm-labor-note">
-                    <strong>Recommended Repair Summary</strong><br>
-                    ${it.laborBreakdown.repair_summary}
-                  </p>
-                ` : ""}
-
-                ${it.laborBreakdown.why ? `
-                  <p class="tm-labor-note">
-                    <strong>Why This Service Takes Time</strong><br>
-                    ${it.laborBreakdown.why}
-                  </p>
-                ` : ""}
 
                 <div class="tm-labor-rows">
                   ${it.laborBreakdown.steps.map(step => `
@@ -2681,7 +2700,7 @@ if (getEstimateHint) {
 
       it.estimate = calcLineItemEstimate(it);
       it.laborBreakdown = res.labor_breakdown || null;
-      it.breakdownOpen = true;
+      it.breakdownOpen = false;
 
       if (res.labor_breakdown?.labor_hours) {
         const lh = res.labor_breakdown.labor_hours;
@@ -2841,9 +2860,7 @@ if (getEstimateHint) {
 
         // ✅ CORRECT PLACE
         it.laborBreakdown = res.labor_breakdown || null;
-        if (typeof it.breakdownOpen !== "boolean") {
-          it.breakdownOpen = true;
-        }
+        it.breakdownOpen = false;
 
         it.estimate = calcLineItemEstimate(it);
 
@@ -2905,6 +2922,7 @@ if (getEstimateHint) {
       setStatus("info", "Generating PDF…");
 
       const activeVehicle = getActiveVehicle() || {};
+      const outputOptions = getCustomerOutputOptions();
 
       const pdfResponse = await fetch("/estimate/pdf_multi", {
         method: "POST",
@@ -2918,9 +2936,14 @@ if (getEstimateHint) {
           customerPhone: (customerPhoneEl?.value || "").trim() || null,
           customerAgrees: !!customerAgreesChk?.checked,
           signatureDataUrl,
+          showGeneratedDate: outputOptions.showGeneratedDate,
+          showHourlyRate: outputOptions.showHourlyRate,
+          showDetailedLaborBreakdown: outputOptions.showDetailedLaborBreakdown,
           lineItems: lineItems.map((it) => ({
             serviceCode: it.serviceCode,
             serviceText: it.serviceText,
+            pricingMode: it.pricingMode,
+            flatRatePrice: Number(it.flatRatePrice || 0),
             laborHours: Number(it.laborHours || 0),
             partsPrice: Number(it.partsPrice || 0),
             laborRate: Number(it.laborRate || 0),
@@ -3540,9 +3563,7 @@ if (getEstimateHint) {
         });
 
         it.laborBreakdown = res.labor_breakdown || null;
-        if (typeof it.breakdownOpen !== "boolean") {
-          it.breakdownOpen = true;
-        }
+        it.breakdownOpen = false;
 
         it.estimate = calcLineItemEstimate(it);
       }

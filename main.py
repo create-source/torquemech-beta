@@ -5920,6 +5920,9 @@ class EstimateRequest(BaseModel):
     customerAgrees: bool = False
     zip: Optional[str] = Field(default="00000", min_length=5, max_length=10)
     signatureDataUrl: Optional[str] = None
+    showGeneratedDate: bool = True
+    showHourlyRate: bool = False
+    showDetailedLaborBreakdown: bool = False
 
 
 class EstimateResponse(BaseModel):
@@ -6339,7 +6342,7 @@ def signature_to_dark_imagereader(data_url: str) -> ImageReader:
     bio.seek(0)
     return ImageReader(bio)
 
-def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=50):
+def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=50, show_generated_date=True):
     """
     Consistent header for BOTH pdf and pdf_multi:
     - left title
@@ -6366,18 +6369,18 @@ def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=
         # If logo missing, fail gracefully (don’t crash PDF)
         pass
 
-    # Generated time
     y -= 18
-    c.setFont("Helvetica", 10)
-    c.setFillGray(0.4)
-    c.drawString(left, y, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    c.setFillGray(0)
+    if show_generated_date:
+        c.setFont("Helvetica", 10)
+        c.setFillGray(0.4)
+        c.drawString(left, y, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        c.setFillGray(0)
 
     return y - 22
 
-def pdf_start_page(c, w, h, *, title="Repair Estimate", vehicle_line: Optional[str]=None, left=50, right=50, top=50):
+def pdf_start_page(c, w, h, *, title="Repair Estimate", vehicle_line: Optional[str]=None, left=50, right=50, top=50, show_generated_date=True):
     """Start a new PDF page with consistent header (+ optional vehicle line). Returns cursor y."""
-    y = pdf_draw_header(c, w, h, title=title, left=left, right=right, top=top)
+    y = pdf_draw_header(c, w, h, title=title, left=left, right=right, top=top, show_generated_date=show_generated_date)
     if vehicle_line:
         c.setFont("Helvetica", 12)
         c.setFillGray(0)
@@ -6391,11 +6394,12 @@ def pdf_ensure_space(
     left=50, right=50,
     continued_label=None,
     draw_columns_fn=None,
+    show_generated_date=True,
 ):
     bottom_margin = 90
     if y - needed < bottom_margin:
         c.showPage()
-        y = pdf_start_page(c, w, h, title=title, vehicle_line=vehicle_line, left=left, right=right)
+        y = pdf_start_page(c, w, h, title=title, vehicle_line=vehicle_line, left=left, right=right, show_generated_date=show_generated_date)
 
         if continued_label:
             c.setFont("Helvetica-Bold", 12)
@@ -6784,7 +6788,7 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
 
         c.setTitle("Repair Estimate")
 
-        y = pdf_draw_header(c, w, h)
+        y = pdf_draw_header(c, w, h, show_generated_date=req.showGeneratedDate)
 
          # ---------------- Vehicle ----------------
         c.setFont("Helvetica-Bold", 12)
@@ -6810,67 +6814,47 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         c.drawString(72, y, f"${est.estimate:,} {est.currency}")
         y -= 26
 
-        # ---------------- Breakdown ----------------
+        # ---------------- Customer-facing Breakdown ----------------
         c.setFont("Helvetica-Bold", 12)
         c.drawString(72, y, "Breakdown")
         y -= 16
 
         c.setFont("Helvetica", 10)
 
-        for k, v in est.breakdown.items():
-            try:
-                c.drawString(72, y, f"{k}: {v:.2f}")
-            except:
-                c.drawString(72, y, f"{k}: {v}")
+        labor_hours = float(est.breakdown.get("labor_hours") or 0)
+        labor_cost = float(est.breakdown.get("labor") or 0)
+        parts_cost = float(est.breakdown.get("parts") or 0)
+        breakdown_rows = [
+            ("Labor Hours", f"{labor_hours:.1f} hr"),
+            ("Labor", f"${labor_cost:,.2f}"),
+            ("Parts", f"${parts_cost:,.2f}"),
+            ("Total", f"${est.estimate:,.2f} {est.currency}"),
+        ]
+
+        if req.showHourlyRate:
+            breakdown_rows.insert(1, ("Hourly Labor Rate", f"${float(est.breakdown.get('labor_rate') or 0):,.2f}/hr"))
+
+        for label, value in breakdown_rows:
+            c.drawString(72, y, label)
+            c.drawRightString(540, y, value)
             y -= 14
 
         y -= 6
 
-        # ---------------- Labor Breakdown ----------------
-        lb = est.labor_breakdown
-
-        if lb and lb.get("steps"):
+        if req.showDetailedLaborBreakdown and est.labor_breakdown and est.labor_breakdown.get("steps"):
             c.setFont("Helvetica-Bold", 12)
-            c.drawString(72, y, "Labor Breakdown")
+            c.drawString(72, y, "Detailed Labor Breakdown")
             y -= 14
 
-            repair_summary = str(lb.get("repair_summary") or "").strip()
-            if repair_summary:
-                c.setFont("Helvetica-Bold", 10)
-                c.drawString(82, y, "Recommended Repair Summary")
-                y -= 12
-
-                c.setFont("Helvetica", 9)
-                for line in wrap_text(repair_summary, max_chars=92)[:3]:
-                    c.drawString(82, y, line)
-                    y -= 11
-
-                y -= 3
-
-            why = str(lb.get("why") or "").strip()
-            if why:
-                c.setFont("Helvetica-Bold", 10)
-                c.drawString(82, y, "Why this service takes time")
-                y -= 12
-
-                c.setFont("Helvetica", 9)
-                for line in wrap_text(why, max_chars=92)[:3]:
-                    c.drawString(82, y, line)
-                    y -= 11
-
-                y -= 3
-
-            c.setFont("Helvetica", 10)
-
-            for step in lb["steps"]:
+            c.setFont("Helvetica", 9)
+            for step in est.labor_breakdown["steps"]:
                 label = step.get("label", "")
-                hours = step.get("hours", 0)
-
+                hours = float(step.get("hours", 0))
                 c.drawString(82, y, f"- {label}")
                 c.drawRightString(540, y, f"{hours:.1f} hr")
                 y -= 12
 
-            y -= 10
+            y -= 6
 
         # ---------------- Customer ----------------
         c.setFont("Helvetica-Bold", 12)
@@ -6944,6 +6928,8 @@ from fastapi import Request
 class LineItemPDF(BaseModel):
     serviceCode: str
     serviceText: Optional[str] = None
+    pricingMode: Optional[str] = None
+    flatRatePrice: Optional[float] = None
     laborHours: float
     partsPrice: float
     laborRate: float
@@ -6958,6 +6944,9 @@ class MultiPDFRequest(BaseModel):
     customerPhone: Optional[str] = None
     customerAgrees: bool = True
     signatureDataUrl: Optional[str] = None
+    showGeneratedDate: bool = True
+    showHourlyRate: bool = False
+    showDetailedLaborBreakdown: bool = False
     lineItems: List[LineItemPDF]
 
 @app.post("/estimate/pdf_multi")
@@ -6974,7 +6963,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         w, h = letter
 
         vehicle_line = f"{req.year} {req.make} {req.model}"
-        y = pdf_start_page(c, w, h, title="Repair Estimate", vehicle_line=vehicle_line, left=50, right=50)
+        y = pdf_start_page(
+            c,
+            w,
+            h,
+            title="Repair Estimate",
+            vehicle_line=vehicle_line,
+            left=50,
+            right=50,
+            show_generated_date=req.showGeneratedDate,
+        )
 
         # ---- Column anchors ----
         LEFT = 50
@@ -7007,17 +7005,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         y = draw_service_columns(y)
 
         grand_total = 0.0
-        X_BREAKDOWN_HOURS = 500
-
         for it in (req.lineItems or []):
             y = pdf_ensure_space(
                 c, w, h, y,
-                needed=210,
+                needed=182 if req.showDetailedLaborBreakdown else 94 if req.showHourlyRate else 82,
                 title="Repair Estimate",
                 vehicle_line=vehicle_line,
                 left=LEFT, right=RIGHT,
                 continued_label="Services (continued)",
                 draw_columns_fn=draw_service_columns,
+                show_generated_date=req.showGeneratedDate,
             )
 
             est = float(it.estimate) if it.estimate is not None else 0.0
@@ -7029,91 +7026,48 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.drawString(X_SERVICE, y, service_name)
 
             c.setFont("Helvetica", 10)
-            c.drawRightString(X_LABOR, y, f"{it.laborHours:.1f}h")
+            is_flat_rate = str(it.pricingMode or "").strip().lower() == "flat"
+            labor_total = float(it.flatRatePrice or 0) if is_flat_rate else float(it.laborHours or 0) * float(it.laborRate or 0)
+            c.drawRightString(X_LABOR, y, f"${labor_total:,.0f}")
             c.drawRightString(X_PARTS, y, f"${it.partsPrice:,.0f}")
             c.drawRightString(X_TOTAL, y, f"${est:,.0f}")
             y -= 18
 
             c.setFillGray(0.45)
             c.setFont("Helvetica", 9)
-            c.drawString(X_SERVICE, y, f"Rate: ${it.laborRate:.0f}/hr")
+            c.drawString(X_SERVICE, y, "Flat-rate service" if is_flat_rate else f"Labor Hours: {it.laborHours:.1f}h")
             c.setFillGray(0)
             y -= 12
 
-            lb = build_labor_breakdown(
-                it.serviceCode,
-                it.laborHours,
-                display_name=it.serviceText,
-            )
-
-            if lb and lb.get("steps"):
-                if lb.get("labor_hours") and lb["labor_hours"].get("range"):
-                    rng = lb["labor_hours"]["range"]
-                    rmin = rng.get("min")
-                    rmax = rng.get("max")
-
-                    if rmin is not None and rmax is not None:
-                        c.setFont("Helvetica", 8)
-                        c.setFillGray(0.45)
-                        c.drawString(X_SERVICE + 20, y, f"Typical range: {rmin:.1f} - {rmax:.1f} hrs")
-                        c.setFillGray(0)
-                        y -= 10
-
-                c.setFont("Helvetica-Bold", 8)
-                if lb.get("labor_hours") and lb["labor_hours"].get("range"):
-                    rng = lb["labor_hours"]["range"]
-                    rmin = rng.get("min")
-                    rmax = rng.get("max")
-
-                    if rmin is not None and rmax is not None:
-                        c.setFont("Helvetica", 8)
-                        c.setFillGray(0.45)
-                        c.drawString(X_SERVICE + 20, y, f"Typical range: {rmin:.1f} - {rmax:.1f} hrs")
-                        c.setFillGray(0)
-                        y -= 10
-
-                repair_summary = str(lb.get("repair_summary") or "").strip()
-                if repair_summary:
-                    c.setFont("Helvetica-Bold", 8)
-                    c.drawString(X_SERVICE + 20, y, "Recommended Repair Summary")
-                    y -= 10
-
-                    c.setFont("Helvetica", 8)
-                    c.setFillGray(0.25)
-                    for line in wrap_text(repair_summary, max_chars=92)[:3]:
-                        c.drawString(X_SERVICE + 26, y, line)
-                        y -= 10
-                    c.setFillGray(0)
-                    y -= 2
-
-                why = str(lb.get("why") or "").strip()
-                if why:
-                    c.setFont("Helvetica-Bold", 8)
-                    c.drawString(X_SERVICE + 20, y, "Why this service takes time")
-                    y -= 10
-
-                    c.setFont("Helvetica", 8)
-                    c.setFillGray(0.25)
-                    for line in wrap_text(why, max_chars=92)[:3]:
-                        c.drawString(X_SERVICE + 26, y, line)
-                        y -= 10
-                    c.setFillGray(0)
-                    y -= 2
-
-                c.setFont("Helvetica-Bold", 8)
-                c.drawString(X_SERVICE + 20, y, "Labor Breakdown")
-                y -= 11
-
+            if req.showHourlyRate and not is_flat_rate:
+                c.setFillGray(0.45)
                 c.setFont("Helvetica", 9)
-                for step in lb["steps"]:
-                    label = step.get("label", "")
-                    hours = float(step.get("hours", 0))
+                c.drawString(X_SERVICE, y, f"Rate: ${it.laborRate:.0f}/hr")
+                c.setFillGray(0)
+                y -= 12
 
-                    c.drawString(X_SERVICE + 26, y, f"- {label}")
-                    c.drawRightString(X_BREAKDOWN_HOURS, y, f"{hours:.1f} hr")
+            if req.showDetailedLaborBreakdown:
+                lb = build_labor_breakdown(
+                    it.serviceCode,
+                    it.laborHours,
+                    display_name=it.serviceText,
+                )
+
+                if lb and lb.get("steps"):
+                    c.setFont("Helvetica-Bold", 8)
+                    c.drawString(X_SERVICE + 20, y, "Detailed Labor Breakdown")
                     y -= 11
 
-                y -= 4
+                    c.setFont("Helvetica", 9)
+                    for step in lb["steps"]:
+                        label = step.get("label", "")
+                        hours = float(step.get("hours", 0))
+
+                        c.drawString(X_SERVICE + 26, y, f"- {label}")
+                        c.drawRightString(X_TOTAL, y, f"{hours:.1f} hr")
+                        y -= 11
+
+                    y -= 4
 
             c.setStrokeGray(0.88)
             c.line(X_SERVICE, y, X_TOTAL, y)
@@ -7127,6 +7081,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             title="Repair Estimate",
             vehicle_line=vehicle_line,
             left=LEFT, right=RIGHT,
+            show_generated_date=req.showGeneratedDate,
         )
 
         # Divider line above Grand Total
