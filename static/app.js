@@ -545,6 +545,8 @@
   const confirmTotalText = $("confirmTotalText");
   const pdfShowGeneratedDateChk = $("pdfShowGeneratedDateChk");
   const pdfShowHourlyRateChk = $("pdfShowHourlyRateChk");
+  const pdfShowLaborColumnChk = $("pdfShowLaborColumnChk");
+  const pdfShowPartsColumnChk = $("pdfShowPartsColumnChk");
   const pdfShowLaborBreakdownChk = $("pdfShowLaborBreakdownChk");
 
   // Customer
@@ -598,6 +600,8 @@
     return {
       showGeneratedDate: pdfShowGeneratedDateChk ? !!pdfShowGeneratedDateChk.checked : true,
       showHourlyRate: pdfShowHourlyRateChk ? !!pdfShowHourlyRateChk.checked : false,
+      showLaborColumn: pdfShowLaborColumnChk ? !!pdfShowLaborColumnChk.checked : false,
+      showPartsColumn: pdfShowPartsColumnChk ? !!pdfShowPartsColumnChk.checked : false,
       showDetailedLaborBreakdown: pdfShowLaborBreakdownChk ? !!pdfShowLaborBreakdownChk.checked : false,
     };
   }
@@ -957,7 +961,12 @@
   // Track if user manually edited labor hours (so we don't overwrite it)
   laborHoursEl?.addEventListener("input", () => {
     laborHoursTouched = true;
+    syncLivePricingFromInputs();
   });
+  laborRateEl?.addEventListener("input", syncLivePricingFromInputs);
+  partsPriceEl?.addEventListener("input", syncLivePricingFromInputs);
+  flatRatePriceEl?.addEventListener("input", syncLivePricingFromInputs);
+  travelFeeEl?.addEventListener("input", syncLivePricingFromInputs);
 
   // ---- Utils ----
   function setStatus(kind, msg) {
@@ -1017,7 +1026,24 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (estimateTotalBar) {
       estimateTotalBar.dataset.empty = lineItems.length ? "false" : "true";
     }
+    renderEstimatePreview();
     renderSharedEstimateSnapshot();
+  }
+
+  function renderEstimatePreview() {
+    if (!estimatePreview || !previewTotalText || !previewSubText) return;
+
+    if (!lineItems.length) {
+      estimatePreview.classList.add("hidden");
+      previewTotalText.textContent = "—";
+      previewSubText.textContent = "";
+      return;
+    }
+
+    const total = quoteTotal();
+    estimatePreview.classList.remove("hidden");
+    previewTotalText.textContent = formatRunningTotal(total);
+    previewSubText.textContent = `${lineItems.length} service${lineItems.length === 1 ? "" : "s"} • updates live as pricing changes`;
   }
 
   function renderSharedEstimateSnapshot() {
@@ -1142,6 +1168,37 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     return Math.round(base + travel);
+  }
+
+  function getLivePricingTarget() {
+    if (activeLineItemIndex != null && lineItems[activeLineItemIndex]) {
+      return lineItems[activeLineItemIndex];
+    }
+    if (lineItems.length === 1) {
+      activeLineItemIndex = 0;
+      return lineItems[0];
+    }
+    return null;
+  }
+
+  function syncLivePricingFromInputs() {
+    const it = getLivePricingTarget();
+    if (!it) {
+      renderEstimateTotalBar();
+      refreshQuotePreview();
+      return;
+    }
+
+    it.pricingMode = getPricingMode();
+    it.flatRatePrice = Number(flatRatePriceEl?.value || 0);
+    it.travelFee = Number(travelFeeEl?.value || 0);
+    it.laborHours = Number(laborHoursEl?.value || 0);
+    it.partsPrice = Number(partsPriceEl?.value || 0);
+    it.laborRate = Number(laborRateEl?.value || 0);
+    it.estimate = calcLineItemEstimate(it);
+
+    renderLineItems();
+    refreshQuotePreview();
   }
 
   function refreshQuotePreview() {
@@ -1313,6 +1370,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     pricingModeEl?.addEventListener("change", () => {
       togglePricingModeUI();
+      syncLivePricingFromInputs();
       refreshQuotePreview?.();
     });
 
@@ -2178,6 +2236,9 @@ const confidenceEl = document.getElementById("laborConfidence");
   document.querySelectorAll('input[name="wantSig"]').forEach((el) => {
     el.addEventListener("change", () => {
       setSigVisible(getWantSig() === "yes");
+      if (getWantSig() === "no" && confirmMsg) {
+        confirmMsg.textContent = "";
+      }
     });
   });
 
@@ -2242,6 +2303,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     renderLineItems();
     refreshQuotePreview();
   });
+  pdfShowLaborColumnChk?.addEventListener("change", renderLineItems);
+  pdfShowPartsColumnChk?.addEventListener("change", renderLineItems);
   pdfShowLaborBreakdownChk?.addEventListener("change", () => {
     if (!pdfShowLaborBreakdownChk.checked) {
       lineItems.forEach(it => { it.breakdownOpen = false; });
@@ -2472,12 +2535,22 @@ const confidenceEl = document.getElementById("laborConfidence");
           ? `Travel: ${money(it.travelFee)}`
           : "";
 
-        const displayPricingLabel = it.pricingMode === "flat"
-          ? pricingLabel
-          : `Labor: ${Number(it.laborHours || 0).toFixed(1)}h`;
+        const displayPricingLabel = outputOptions.showLaborColumn
+          ? (it.pricingMode === "flat"
+            ? pricingLabel
+            : `Labor: ${Number(it.laborHours || 0).toFixed(1)}h`)
+          : "";
 
         const laborRateLabel = outputOptions.showHourlyRate && it.pricingMode !== "flat"
           ? `Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`
+          : "";
+
+        const laborTotalLabel = outputOptions.showLaborColumn && it.pricingMode !== "flat"
+          ? `Labor: ${money(Number(it.laborHours || 0) * Number(it.laborRate || 0))}`
+          : "";
+
+        const partsLabel = outputOptions.showPartsColumn
+          ? `Parts: ${money(it.partsPrice || 0)}`
           : "";
 
         const hasBreakdown =
@@ -2493,9 +2566,10 @@ const confidenceEl = document.getElementById("laborConfidence");
                 <div class="tm-service-title">${it.serviceText || "Service"}</div>
                 <div class="tm-service-vehicle">${it.vehicleLabel || "Vehicle 1"}</div>
                 <div class="tm-service-meta">
-                  <span>${displayPricingLabel}</span>
+                  ${displayPricingLabel ? `<span>${displayPricingLabel}</span>` : ""}
+                  ${laborTotalLabel ? `<span>${laborTotalLabel}</span>` : ""}
                   ${laborRateLabel ? `<span>${laborRateLabel}</span>` : ""}
-                  <span>Parts: ${money(it.partsPrice || 0)}</span>
+                  ${partsLabel ? `<span>${partsLabel}</span>` : ""}
                   ${travelLabel ? `<span>${travelLabel}</span>` : ""}
                 </div>
               </div>
@@ -2793,8 +2867,12 @@ if (getEstimateHint) {
     // REMOVE (FIRST)
     // =========================
     if (action === "remove") {
-      activeLineItemIndex = null;
       lineItems.splice(idx, 1);
+      if (activeLineItemIndex === idx) {
+        activeLineItemIndex = null;
+      } else if (activeLineItemIndex != null && activeLineItemIndex > idx) {
+        activeLineItemIndex -= 1;
+      }
       renderLineItems();
       return;
     }
@@ -2809,6 +2887,7 @@ if (getEstimateHint) {
     // ESTIMATE
     // =========================
     if (action === "estimate") {
+      activeLineItemIndex = idx;
       if (!(it.vehicleYear && it.vehicleMake && it.vehicleModel)) {
         setStatus("error", "Assigned vehicle is missing year, make, or model.");
         return;
@@ -2894,13 +2973,19 @@ if (getEstimateHint) {
 
       // Signature required?
       if (wantSig === "yes") {
-        if (!sigCanvas || canvasIsBlank()) {
-          if (confirmMsg) confirmMsg.textContent = "Signature is required. Please sign or choose 'No signature'.";
+        try {
+          if (!sigCanvas || canvasIsBlank()) {
+            if (confirmMsg) confirmMsg.textContent = "Customer signature required before generating PDF.";
+            return;
+          }
+
+          // Export signature directly from the live canvas with transparent background
+          signatureDataUrl = sigCanvas.toDataURL("image/png");
+        } catch (err) {
+          console.warn("Signature validation failed", err);
+          if (confirmMsg) confirmMsg.textContent = "Customer signature required before generating PDF.";
           return;
         }
-
-        // Export signature directly from the live canvas with transparent background
-        signatureDataUrl = sigCanvas.toDataURL("image/png");
       } 
       
       else {
@@ -2938,6 +3023,8 @@ if (getEstimateHint) {
           signatureDataUrl,
           showGeneratedDate: outputOptions.showGeneratedDate,
           showHourlyRate: outputOptions.showHourlyRate,
+          showLaborColumn: outputOptions.showLaborColumn,
+          showPartsColumn: outputOptions.showPartsColumn,
           showDetailedLaborBreakdown: outputOptions.showDetailedLaborBreakdown,
           lineItems: lineItems.map((it) => ({
             serviceCode: it.serviceCode,
@@ -3011,8 +3098,9 @@ if (getEstimateHint) {
       closeConfirm();
 
     } catch (e) {
-      setStatus("error", `PDF failed: ${e.message}`);
-      if (confirmMsg) confirmMsg.textContent = `PDF failed: ${e.message}`;
+      console.error("PDF generation failed", e);
+      setStatus("error", "Unable to generate PDF. Please try again.");
+      if (confirmMsg) confirmMsg.textContent = "Unable to generate PDF. Please try again.";
     }
   });
 
