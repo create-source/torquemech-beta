@@ -502,7 +502,7 @@
   const flatRatePriceEl = $("flatRatePrice");
   const travelFeeEl = $("travelFee");
   const flatRateWrap = $("flatRateWrap");
-  const hourlyPricingWrap = $("hourlyPricingWrap");
+  const hourlyPricingFields = Array.from(document.querySelectorAll(".hourly-pricing-field"));
   const notesEl = $("notes");
 
   // Buttons / UI
@@ -998,12 +998,14 @@ function togglePricingModeUI() {
   const isFlat = getPricingMode() === "flat";
 
   flatRateWrap?.classList.toggle("hidden", !isFlat);
-  hourlyPricingWrap?.classList.toggle("hidden", isFlat);
+  hourlyPricingFields.forEach((el) => {
+    el.classList.toggle("hidden", isFlat);
+  });
 
   if (statusBox) {
     statusBox.textContent = isFlat
-      ? "Flat Rate mode: enter one fixed price for the job, then click Recalculate."
-      : "Hourly mode: labor = hours × labor rate, then click Recalculate.";
+      ? "Flat Rate mode: job price, parts, and travel update the estimate automatically."
+      : "Hourly mode: labor, parts, and travel update the estimate automatically.";
     statusBox.dataset.kind = "info";
   }
 

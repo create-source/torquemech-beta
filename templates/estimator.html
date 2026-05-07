@@ -169,6 +169,13 @@
           <input id="travelFee" type="number" step="0.01" value="0" />
         </div>
 
+        <div>
+          <label for="partsPrice">Parts Price (optional)</label>
+          <input id="partsPrice" type="number" step="0.01" value="0" />
+        </div>
+      </div>
+
+      <div class="grid3">
         <div id="flatRateWrap" class="hidden">
           <label for="flatRatePrice">Flat Rate Price</label>
 
@@ -182,10 +189,10 @@
         </div>
       </div>
 
-        <div class="grid3" id="hourlyPricingWrap">
+        <div class="grid3">
 
           <!-- Labor -->
-          <div>
+          <div class="hourly-pricing-field">
             <label for="laborHours">
               <span id="laborLabelText">Labor Hours</span>
             </label>
@@ -196,14 +203,8 @@
             </div>
           </div>
 
-          <!-- Parts -->
-          <div>
-            <label for="partsPrice">Parts Price (optional)</label>
-            <input id="partsPrice" type="number" step="0.01" value="0" />
-          </div>
-
           <!-- Labor Rate -->
-          <div>
+          <div class="hourly-pricing-field">
             <label for="laborRate">Labor Rate ($/hr)</label>
             <input id="laborRate" type="number" step="1" value="90" />
           </div>
