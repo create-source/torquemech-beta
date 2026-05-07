@@ -512,6 +512,7 @@
   const addLineBtn = $("addLineBtn");
   const addServiceHint = $("addServiceHint");
   const getEstimateHint = $("getEstimateHint");
+  const workflowStepText = $("workflowStepText");
   const quickEstimateBtn = document.getElementById("quickEstimateBtn");
 
   // Line items
@@ -2644,10 +2645,12 @@ const confidenceEl = document.getElementById("laborConfidence");
     // --- Add Service button label (dynamic) ---
     if (addLineBtn) {
       // If user already added a service (locked state), guide them to add another
-      addLineBtn.textContent = "+ Add Service";
+      addLineBtn.textContent = "Add Another Service";
+      addLineBtn.hidden = lineItems.length === 0 && readyForNextService;
     }
 
     estimateBtn.disabled = !(hasBasics && hasSelection && readyForNextService);
+    estimateBtn.textContent = editingLineItem ? "Update Service Estimate" : "Add Service to Estimate";
 
 
 // Hint text: when locked, explain the flow
@@ -2661,21 +2664,31 @@ if (getEstimateHint) {
       ? "Select year, make, and model first."
       : !hasSelection
         ? "Select a category and service first."
-        : "To add another service, click “+ Add Service”, then choose the next service.";
+        : "Tap Add Another Service, then choose the next service.";
   }
 }
 
-    // + Add Service enabled ONLY after a service has been added
+    if (workflowStepText) {
+      workflowStepText.textContent = !hasBasics
+        ? "Select or enter the vehicle first."
+        : !hasSelection
+          ? "Choose the repair service for this vehicle."
+          : !readyForNextService
+            ? "Service added. Add another service or review the total below."
+            : "Review pricing, then tap Add Service to Estimate.";
+    }
+
+    // Add Another Service enabled ONLY after a service has been added
     if (addLineBtn) addLineBtn.disabled = readyForNextService;
 
     // keep status helpful, but don't spam over error messages
     if (!hasBasics) setStatus("info", "Select year, make, and model.");
-    else if (!hasSelection) setStatus("info", "Select a category and service.");
-    else if (!readyForNextService) setStatus("info", "Click + Add Service to add another service.");
-    else setStatus("info", "Click Get Estimate to add this service.");
+    else if (!hasSelection) setStatus("info", "Choose a category and service.");
+    else if (!readyForNextService) setStatus("info", "Service added. Add another service or review the estimate.");
+    else setStatus("info", "Review pricing, then tap Add Service to Estimate.");
   }
 
-  // ---- Get Estimate FIRST ----
+  // ---- Add Service to Estimate FIRST ----
   estimateBtn?.addEventListener("click", async () => {
 
     // Google Analytics event
@@ -2755,7 +2768,7 @@ if (getEstimateHint) {
           service_name: it.serviceText,
           estimate_total: Number(it.estimate || 0)
         });
-        setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
+        setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another service or review the estimate.`);
 
         readyForNextService = false;
         updateEstimateButtonState();
@@ -2810,7 +2823,7 @@ if (getEstimateHint) {
         service_name: it.serviceText,
         estimate_total: Number(it.estimate || 0)
       });
-      setStatus("ok", `${it.serviceText}: ${money(it.estimate)} — click + Add Service to enter another service.`);
+      setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another service or review the estimate.`);
 
       readyForNextService = false;
       updateEstimateButtonState();
@@ -2825,7 +2838,7 @@ if (getEstimateHint) {
     }
   });
 
-  // + Add Service
+  // Add Another Service
   addLineBtn?.addEventListener("click", () => {
     // Clear selections
     categoryEl.value = "";
@@ -2846,12 +2859,12 @@ if (getEstimateHint) {
     if (travelFeeEl) travelFeeEl.value = "0";
     togglePricingModeUI();
 
-    // 🔓 Unlock Get Estimate
+    // Unlock Add Service to Estimate
     activeLineItemIndex = null;
     readyForNextService = true;
     updateEstimateButtonState();
 
-    setStatus("info", "Ready for next service.");
+    setStatus("info", "Choose the next service, then add it to the estimate.");
   });
 
   // IMPORTANT: this must be async because we use await inside
@@ -3709,7 +3722,7 @@ if (getEstimateHint) {
       resetServiceSearch();
 
       updateEstimateButtonState();
-      setStatus("info", "Select a service and click Get Estimate. To add another one, click + Add Service.");
+      setStatus("info", "Choose a service, review pricing, then tap Add Service to Estimate.");
     } catch (e) {
       setStatus("error", `Init failed: ${e.message}`);
     }

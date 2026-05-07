@@ -11,27 +11,13 @@
       <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
     </header>
 
-    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
-      <div class="tm-muted" style="line-height:1.6;">
-        Select a vehicle, choose a repair service, and TorqueMech will help calculate a clear labor, parts, and total estimate.
-      </div>
-    </div>
-
-    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
-      <div style="font-weight:800; margin-bottom:10px;">How it works</div>
-      <div class="tm-muted" style="display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; line-height:1.5;">
-        <div>1. Select vehicle</div>
-        <div>2. Choose service</div>
-        <div>3. Generate estimate + PDF</div>
-      </div>
-    </div>
-
-    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
-      <div style="font-weight:800; margin-bottom:8px;">When to use this</div>
-      <div class="tm-muted" style="line-height:1.6;">
-        - Build a quick repair quote for a customer<br>
-        - Price out a job before starting work<br>
-        - Create a clean estimate you can share or save
+    <div class="tm-card tm-estimator-quickstart">
+      <div class="tm-estimator-quickstart__title">Fast estimate flow</div>
+      <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
+        <span>Select vehicle</span>
+        <span>Choose service</span>
+        <span>Add service to estimate</span>
+        <span>Review & send PDF</span>
       </div>
     </div>
 
@@ -66,8 +52,8 @@
     </div>
     {% endif %}
 
-    <div class="tm-muted" style="margin-top:14px; line-height:1.5;">
-      Build a clean, customer-ready repair estimate in minutes — no signup required.
+    <div class="tm-muted tm-estimator-lede">
+      Build a clean, customer-ready repair estimate in minutes. Pricing updates live as labor, parts, flat rate, or travel changes.
     </div>
 
     <!-- Vehicles -->
@@ -120,13 +106,13 @@
     </div>
 
     <div class="vehicle-header">
-      <h2>Service</h2>
+      <h2>Add a Service</h2>
       <div class="tm-addServiceRow">
   <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
-    To add another service, click “+ Add Service”.
+    Tap Add Another Service to keep building this estimate.
   </span>
   <button id="addLineBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
-    + Add Service
+    Add Another Service
   </button>
 </div>
     </div>
@@ -148,8 +134,8 @@
    
     <div id="lineItemsWrap" class="line-items hidden">
       <div class="line-items-head">
-        <div class="line-items-title">Services to estimate</div>
-        <div class="line-items-hint">Add diagnosed or likely repairs to compare labor, parts, and totals before committing to a fix.</div>
+        <div class="line-items-title">Estimate services</div>
+        <div class="line-items-hint">Added services stay here while you adjust pricing and prepare the customer PDF.</div>
       </div>
 
       <div id="lineItemsList" class="line-items-list"></div>
@@ -212,8 +198,7 @@
         </div>
 
         <p class="recalc-note">
-          Adjust labor hours, parts price, or labor rate when diagnosis, a cost guide, or OBD evidence points to a different repair path,
-          and the estimate total will update automatically.
+          Edit pricing as needed. The service total, estimate total, and PDF totals stay in sync automatically.
         </p>
             
       </div>
@@ -225,10 +210,16 @@
         
       </div>
 
-      <div class="inline-actions" style="margin-top:10px;">
-      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select the service that best matches the diagnosis, then click “Get Estimate” to review labor logic, parts, and total cost.</div>
-        <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary">
-          Get Estimate
+      <div class="tm-estimate-action-panel">
+      <div class="tm-estimate-action-panel__copy">
+        <div class="tm-estimate-action-panel__label">Next step</div>
+        <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
+          Select a vehicle and service, then add it to the estimate.
+        </div>
+      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select the service that best matches the diagnosis, then add it to the estimate.</div>
+      </div>
+        <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary tm-estimate-action-panel__button">
+          Add Service to Estimate
         </button>
       </div>
 

@@ -553,6 +553,75 @@ button:active{
   box-shadow: 0 14px 28px rgba(17,179,173,.26);
 }
 
+.tm-estimator-quickstart{
+  margin-top: 14px;
+  padding: 14px 16px;
+}
+
+.tm-estimator-quickstart__title{
+  margin-bottom: 10px;
+  color: var(--tm-text);
+  font-weight: 900;
+}
+
+.tm-estimator-quickstart__steps{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tm-estimator-quickstart__steps span{
+  min-height: 38px;
+  padding: 9px 10px;
+  border: 1px solid var(--tm-border);
+  border-radius: 10px;
+  background: var(--tm-surface-2);
+  color: var(--tm-text);
+  font-size: .86rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.tm-estimator-lede{
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.tm-estimate-action-panel{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(17,179,173,.24);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20,184,166,.08) 0%, rgba(20,184,166,.03) 100%);
+}
+
+.tm-estimate-action-panel__label{
+  color: var(--tm-text-muted);
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.tm-estimate-action-panel__text{
+  margin-top: 4px;
+  color: var(--tm-text);
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.tm-estimate-action-panel__button{
+  min-height: 52px;
+  padding-inline: 20px;
+  font-size: .95rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .tm-btn-ghost{
   background: transparent;
   color: var(--tm-blue);
@@ -1398,6 +1467,25 @@ canvas,
     max-height: calc(100vh - 12px);
     border-radius: 20px 20px 0 0;
     padding: 18px;
+  }
+
+  .tm-estimator-quickstart{
+    padding: 12px;
+  }
+
+  .tm-estimator-quickstart__steps{
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tm-estimate-action-panel{
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .tm-estimate-action-panel__button{
+    width: 100%;
+    min-height: 54px;
   }
 
   .tm-confirm-section{
