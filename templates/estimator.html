@@ -337,101 +337,104 @@
   <div id="confirmModal" class="modal hidden" aria-hidden="true">
     <div class="modal-backdrop" id="confirmBackdrop"></div>
 
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2>Confirm Estimate</h2>
+    <div class="modal-card tm-confirm-modal">
+      <div class="modal-header tm-confirm-header">
+        <h2>Review & Send Estimate</h2>
+        <p class="tm-confirm-intro">Check the customer copy, signature, and PDF details before sending.</p>
       </div>
 
-      <div class="confirm-grid">
-        <div>
-          <label>
-            <input type="checkbox" id="customerAgreesChk" checked />
-            Customer agrees
-          </label>
+      <section class="tm-confirm-section" aria-label="Customer information">
+        <div class="tm-confirm-section-title">Customer</div>
+        <div class="grid2 tm-confirm-grid-compact">
+          <div>
+            <label for="customerName">Customer Name (optional)</label>
+            <input id="customerName" type="text" placeholder="Customer name" />
+          </div>
+          <div>
+            <label for="customerPhone">Customer Phone (optional)</label>
+            <input id="customerPhone" type="tel" placeholder="(###) ###-####" />
+          </div>
         </div>
+        <label class="tm-confirm-check tm-confirm-agree">
+          <input type="checkbox" id="customerAgreesChk" checked />
+          <span>Customer agrees to this estimate</span>
+        </label>
+      </section>
 
-        <div>
+      <section class="tm-confirm-section" aria-label="Estimate summary">
+        <div class="tm-confirm-section-title">Estimate summary</div>
+        <div class="tm-confirm-services-wrap">
           <div>Services</div>
           <div id="confirmServicesList">—</div>
         </div>
-  </div>
+      </section>
 
-      <!-- Signature choice -->
-      <div class="sig-choice" style="margin-top:10px; display:flex; gap:16px; align-items:center;">
-        <label style="display:flex; gap:8px; align-items:center;">
-          <input type="radio" name="wantSig" value="yes" checked />
-          Signature required
-        </label>
-
-        <label style="display:flex; gap:8px; align-items:center;">
-          <input type="radio" name="wantSig" value="no" />
-          No signature
-        </label>
-      </div>
-
-      <!-- Customer info (optional) -->
-      <div class="grid2" style="margin-top:10px;">
-        <div>
-          <label for="customerName">Customer Name (optional)</label>
-          <input id="customerName" type="text" placeholder="Customer name" />
-        </div>
-        <div>
-          <label for="customerPhone">Customer Phone (optional)</label>
-          <input id="customerPhone" type="tel" placeholder="(###) ###-####" />
-        </div>
-      </div>
-
-      <!-- Signature section -->
-      <div id="sigSection" class="hidden" style="margin-top:12px;">
-        <label style="display:block; margin-bottom:8px;">Customer Signature</label>
-
-        <div class="sig-wrap" style="border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow:hidden;">
-          <canvas id="sigCanvas" style="width:100%; height:140px; display:block; touch-action:none;"></canvas>
-        </div>
-
-        <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-          <button id="sigClearBtn" type="button" class="tm-btn tm-btn-secondary">Clear Signature</button>
-        </div>
-      </div>
-
-      <div style="margin-top:14px;">
-        <label for="quotePreview" style="display:block; margin-bottom:8px; font-weight:600;">
-          Quote Message Preview
-        </label>
-        <textarea
-          id="quotePreview"
-          rows="9"
-          readonly
-          style="width:100%; resize:vertical;"
-          placeholder="Your quote message will appear here..."
-        ></textarea>
-      </div>
-
-      <div class="tm-card" style="margin-top:12px; padding:12px 14px;">
-        <div style="font-weight:800; margin-bottom:8px;">Customer PDF details</div>
-        <div style="display:grid; gap:8px;">
-          <label style="display:flex; gap:8px; align-items:flex-start;">
+      <section class="tm-confirm-section" aria-label="Customer PDF details">
+        <div class="tm-confirm-section-title">Customer copy details</div>
+        <div class="tm-confirm-options-grid">
+          <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowGeneratedDateChk" checked />
             <span>Show generated date and time</span>
           </label>
-          <label style="display:flex; gap:8px; align-items:flex-start;">
+          <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowHourlyRateChk" />
             <span>Show hourly labor rate</span>
           </label>
-          <label style="display:flex; gap:8px; align-items:flex-start;">
+          <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowLaborColumnChk" />
             <span>Show labor total</span>
           </label>
-          <label style="display:flex; gap:8px; align-items:flex-start;">
+          <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowPartsColumnChk" />
             <span>Show parts total</span>
           </label>
-          <label style="display:flex; gap:8px; align-items:flex-start;">
+          <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowLaborBreakdownChk" />
-            <span>Show detailed labor breakdown</span>
+            <span>Show labor steps</span>
           </label>
         </div>
+      </section>
+
+      <section class="tm-confirm-section" aria-label="Signature">
+        <div class="tm-confirm-section-title">Signature</div>
+        <div class="sig-choice tm-confirm-radio-row">
+        <label class="tm-confirm-check">
+          <input type="radio" name="wantSig" value="yes" checked />
+          <span>Signature required</span>
+        </label>
+
+        <label class="tm-confirm-check">
+          <input type="radio" name="wantSig" value="no" />
+          <span>No signature</span>
+        </label>
       </div>
+
+      <!-- Signature section -->
+      <div id="sigSection" class="hidden tm-signature-panel">
+        <label class="tm-confirm-signature-label">Customer Signature</label>
+
+        <div class="sig-wrap">
+          <canvas id="sigCanvas" style="width:100%; height:140px; display:block; touch-action:none;"></canvas>
+        </div>
+
+        <div class="tm-signature-actions">
+          <button id="sigClearBtn" type="button" class="tm-btn tm-btn-secondary">Clear Signature</button>
+        </div>
+      </div>
+      </section>
+
+      <section class="tm-confirm-section" aria-label="Customer message preview">
+        <label for="quotePreview" class="tm-confirm-section-title">
+          Customer message preview
+        </label>
+        <textarea
+          id="quotePreview"
+          class="tm-confirm-message-preview"
+          rows="9"
+          readonly
+          placeholder="Your quote message will appear here..."
+        ></textarea>
+      </section>
 
       <div class="tm-pro-upgrade-card" aria-label="TorqueMech Pro PDF preview">
         <span class="tm-pro-pill">Pro PDF Preview</span>
@@ -443,15 +446,17 @@
         </div>
       </div>
 
-      <div class="tm-muted" style="margin-top:12px; line-height:1.5;">
+      <div class="tm-muted tm-confirm-note">
         Review the estimate, then generate a PDF you can save, print, or share with a customer.
       </div>
 
-      <div class="modal-actions">
-        <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
-        <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email This Estimate</button>
-        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary">Generate PDF</button>
-        <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
+      <div class="modal-actions tm-confirm-actions">
+        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">Generate Customer PDF</button>
+        <div class="tm-confirm-secondary-actions">
+          <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Message</button>
+          <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Estimate</button>
+          <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
+        </div>
       </div>
 
       <div id="confirmMsg" class="status" data-kind="info" role="status" aria-live="polite"></div>

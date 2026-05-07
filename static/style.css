@@ -1039,6 +1039,151 @@ body.modal-open{
   font-weight: 900;
 }
 
+.tm-confirm-modal{
+  width: min(720px, 100%);
+}
+
+.tm-confirm-header{
+  margin-bottom: 12px;
+}
+
+.tm-confirm-header h2{
+  margin: 0;
+}
+
+.tm-confirm-intro{
+  margin: 6px 0 0;
+  color: var(--tm-text-muted);
+  line-height: 1.45;
+}
+
+.tm-confirm-section{
+  padding: 14px 0;
+  border-top: 1px solid var(--tm-border);
+}
+
+.tm-confirm-section:first-of-type{
+  padding-top: 0;
+  border-top: 0;
+}
+
+.tm-confirm-section-title{
+  display: block;
+  margin: 0 0 10px;
+  color: var(--tm-text-muted);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.tm-confirm-grid-compact{
+  gap: 10px;
+}
+
+.tm-confirm-check{
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-height: 36px;
+  color: var(--tm-text);
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.tm-confirm-check input{
+  margin-top: 2px;
+  flex: 0 0 auto;
+}
+
+.tm-confirm-agree{
+  margin-top: 10px;
+}
+
+.tm-confirm-services > div,
+.tm-confirm-services-wrap{
+  color: var(--tm-text);
+  line-height: 1.45;
+}
+
+.tm-confirm-services-wrap > div:first-child{
+  margin-bottom: 4px;
+  color: var(--tm-text-muted);
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.tm-confirm-options-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+
+.tm-confirm-options-grid .tm-confirm-check{
+  min-height: 42px;
+  padding: 6px 0;
+}
+
+.tm-confirm-radio-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.tm-signature-panel{
+  margin-top: 12px;
+}
+
+.tm-confirm-signature-label{
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.sig-wrap{
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tm-signature-actions{
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.tm-confirm-message-preview{
+  width: 100%;
+  resize: vertical;
+}
+
+.tm-confirm-note{
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.tm-confirm-actions{
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--tm-border);
+}
+
+.tm-confirm-primary{
+  min-height: 50px;
+  padding-inline: 22px;
+  font-size: 1rem;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(37,99,235,.2);
+}
+
+.tm-confirm-secondary-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .sig-canvas,
 canvas,
 #signatureCanvas{
@@ -1253,6 +1398,46 @@ canvas,
     max-height: calc(100vh - 12px);
     border-radius: 20px 20px 0 0;
     padding: 18px;
+  }
+
+  .tm-confirm-section{
+    padding: 12px 0;
+  }
+
+  .tm-confirm-options-grid{
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .tm-confirm-options-grid .tm-confirm-check,
+  .tm-confirm-radio-row .tm-confirm-check{
+    min-height: 46px;
+    align-items: center;
+  }
+
+  .tm-confirm-actions{
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .tm-confirm-primary{
+    width: 100%;
+    min-height: 52px;
+  }
+
+  .tm-confirm-secondary-actions{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .tm-confirm-secondary-actions .tm-btn{
+    min-height: 46px;
+  }
+
+  .tm-confirm-secondary-actions .tm-btn:last-child{
+    grid-column: 1 / -1;
   }
 
   .service-line-item-actions .tm-btn,
