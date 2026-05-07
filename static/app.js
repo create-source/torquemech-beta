@@ -475,7 +475,7 @@
       serviceSearch.autocomplete = "off";
       serviceEl.insertAdjacentElement("beforebegin", serviceSearch);
     }
-    serviceSearch.placeholder = "Select category first...";
+    serviceSearch.placeholder = "Choose a category first...";
     serviceSearch.disabled = true;
 
     serviceResults = serviceEl.parentElement?.querySelector(".service-results");
@@ -1094,7 +1094,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       lines.push("");
     }
 
-    lines.push("Here is your estimate from TorqueMech:");
+    lines.push("Here is the repair quote prepared for your vehicle:");
     lines.push("");
 
     if (vehicle) {
@@ -1111,7 +1111,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     });
 
     lines.push("");
-    lines.push(`Estimated Total: ${money(total)}`);
+    lines.push(`Quote Total: ${money(total)}`);
 
     const notes = (notesEl?.value || "").trim();
     if (notes) {
@@ -1120,7 +1120,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     lines.push("");
-    lines.push("This is an estimate. Final pricing may vary after inspection.");
+    lines.push("Final pricing may vary after inspection, parts confirmation, taxes, or added repair needs.");
 
     return lines.join("\n");
   }
@@ -1286,7 +1286,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           // ✅ IMPORTANT: trigger normal flow
           categoryEl.dispatchEvent(new Event("change"));
 
-          setStatus("info", "Diagnostic category auto-selected based on OBD codes.");
+          setStatus("info", "Diagnostic category selected from vehicle codes.");
         }
       }
     }
@@ -1307,7 +1307,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
           <div>
-            <div style="font-weight:800; font-size:16px;">OBD Codes Loaded</div>
+            <div style="font-weight:800; font-size:16px;">Vehicle Codes Added</div>
             <div id="obdBridgeTitle" style="margin-top:6px; font-size:14px; opacity:.95;"></div>
             <div id="obdBridgeDesc" style="margin-top:6px; font-size:13px; opacity:.75;"></div>
           </div>
@@ -1328,7 +1328,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     const descEl = document.getElementById("obdBridgeDesc");
 
     if (titleEl) titleEl.textContent = codes.join(", ");
-    if (descEl) descEl.textContent = "Added to Notes (you can edit/remove).";
+    if (descEl) descEl.textContent = "Added to quote notes. You can edit or remove them.";
 
     // Prefill Notes (append, don’t overwrite)
     if (notesEl) {
@@ -1368,16 +1368,16 @@ const confidenceEl = document.getElementById("laborConfidence");
             serviceEl.value = diagSvcValue;
             await loadServiceMeta(serviceEl.value);
             updateEstimateButtonState();
-            setStatus("ok", `OBD ${code} attached. Diagnostic service selected.`);
+            setStatus("ok", `Vehicle code ${code} attached. Diagnostic service selected.`);
             return;
           }
         }
 
         // Fallback if we can’t auto-map
         updateEstimateButtonState();
-        setStatus("info", `OBD ${code} attached to Notes. Select a diagnostic service to estimate.`);
+        setStatus("info", `Vehicle code ${code} added to notes. Select a diagnostic service to quote.`);
       } catch (e) {
-        setStatus("error", `OBD bridge failed: ${e.message}`);
+        setStatus("error", `Vehicle code handoff failed: ${e.message}`);
       }
     });
 
@@ -1396,7 +1396,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       // Hide card
       const c = document.getElementById("obdBridgeCard");
       if (c) c.style.display = "none";
-      setStatus("info", "OBD card dismissed.");
+      setStatus("info", "Vehicle code note dismissed.");
     });
 
   // Saved drafts (local)
@@ -2645,12 +2645,12 @@ const confidenceEl = document.getElementById("laborConfidence");
     // --- Add Service button label (dynamic) ---
     if (addLineBtn) {
       // If user already added a service (locked state), guide them to add another
-      addLineBtn.textContent = "Add Another Service";
+      addLineBtn.textContent = "Add Another Job";
       addLineBtn.hidden = lineItems.length === 0 && readyForNextService;
     }
 
     estimateBtn.disabled = !(hasBasics && hasSelection && readyForNextService);
-    estimateBtn.textContent = editingLineItem ? "Update Service Estimate" : "Add Service to Estimate";
+    estimateBtn.textContent = editingLineItem ? "Update Quote Line" : "Add Service to Quote";
 
 
 // Hint text: when locked, explain the flow
@@ -2661,31 +2661,31 @@ if (getEstimateHint) {
 
   if (!getEstimateHint.hidden) {
     getEstimateHint.textContent = !hasBasics
-      ? "Select year, make, and model first."
+      ? "Set the vehicle first."
       : !hasSelection
-        ? "Select a category and service first."
-        : "Tap Add Another Service, then choose the next service.";
+        ? "Choose the repair job first."
+        : "Tap Add Another Job, then choose the next repair.";
   }
 }
 
     if (workflowStepText) {
       workflowStepText.textContent = !hasBasics
-        ? "Select or enter the vehicle first."
+        ? "Set the vehicle before pricing the job."
         : !hasSelection
-          ? "Choose the repair service for this vehicle."
+          ? "Choose the repair job for this vehicle."
           : !readyForNextService
-            ? "Service added. Add another service or review the total below."
-            : "Review pricing, then tap Add Service to Estimate.";
+            ? "Job added. Add another job or review the quote total."
+            : "Review pricing, then add this job to the quote.";
     }
 
     // Add Another Service enabled ONLY after a service has been added
     if (addLineBtn) addLineBtn.disabled = readyForNextService;
 
     // keep status helpful, but don't spam over error messages
-    if (!hasBasics) setStatus("info", "Select year, make, and model.");
-    else if (!hasSelection) setStatus("info", "Choose a category and service.");
-    else if (!readyForNextService) setStatus("info", "Service added. Add another service or review the estimate.");
-    else setStatus("info", "Review pricing, then tap Add Service to Estimate.");
+    if (!hasBasics) setStatus("info", "Set the vehicle before pricing the job.");
+    else if (!hasSelection) setStatus("info", "Choose a category and repair job.");
+    else if (!readyForNextService) setStatus("info", "Job added. Add another job or review the quote.");
+    else setStatus("info", "Review pricing, then add this job to the quote.");
   }
 
   // ---- Add Service to Estimate FIRST ----
@@ -2768,7 +2768,7 @@ if (getEstimateHint) {
           service_name: it.serviceText,
           estimate_total: Number(it.estimate || 0)
         });
-        setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another service or review the estimate.`);
+        setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
 
         readyForNextService = false;
         updateEstimateButtonState();
@@ -2823,7 +2823,7 @@ if (getEstimateHint) {
         service_name: it.serviceText,
         estimate_total: Number(it.estimate || 0)
       });
-      setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another service or review the estimate.`);
+      setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
 
       readyForNextService = false;
       updateEstimateButtonState();
@@ -2864,7 +2864,7 @@ if (getEstimateHint) {
     readyForNextService = true;
     updateEstimateButtonState();
 
-    setStatus("info", "Choose the next service, then add it to the estimate.");
+    setStatus("info", "Choose the next repair job, then add it to the quote.");
   });
 
   // IMPORTANT: this must be async because we use await inside
@@ -2989,7 +2989,7 @@ if (getEstimateHint) {
 
     try {
       if (!lineItems.length) {
-        setConfirmMessage("error", "Add at least one service before generating PDF.");
+        setConfirmMessage("error", "Add at least one quoted service before generating the PDF.");
         return;
       }
 
@@ -3018,17 +3018,17 @@ if (getEstimateHint) {
 
       // Multi-line PDF uses lineItems; no need to call /estimate here.
       if (!lineItems.length) {
-        setConfirmMessage("error", "Add at least one service before generating PDF.");
+        setConfirmMessage("error", "Add at least one quoted service before generating the PDF.");
         return;
       }
       const missing = lineItems.some(it => it.estimate == null);
       if (missing) {
-        setConfirmMessage("error", "Some services are missing prices. Generate the estimate first.");
+        setConfirmMessage("error", "Some quoted services are missing prices. Review pricing before generating the PDF.");
         return;
       }
       
       // Generate PDF
-      setStatus("info", "Generating PDF…");
+      setStatus("info", "Preparing customer PDF...");
 
       const activeVehicle = getActiveVehicle() || {};
       const outputOptions = getCustomerOutputOptions();
@@ -3090,7 +3090,7 @@ if (getEstimateHint) {
       a.click();
       a.remove();
 
-      setStatus("ok", "PDF ready.");
+      setStatus("ok", "Customer PDF ready.");
       trackClarity("pdf_generated", {
         source: "estimator",
         state: "pdf_success",
@@ -3101,8 +3101,8 @@ if (getEstimateHint) {
       if (confirmMsg) {
         confirmMsg.dataset.kind = "ok";
         confirmMsg.innerHTML = `
-          Your estimate is ready.<br>
-          You can download it, open it, or share it with your customer.<br>
+          Your customer PDF is ready.<br>
+          Download, open, or share it with the customer.<br>
           <a href="${pdfUrl}" download="torquemech_estimate.pdf">Download PDF</a>
           &nbsp;|&nbsp;
           <a href="${pdfUrl}" target="_blank" rel="noopener">Open PDF</a>
@@ -3119,7 +3119,7 @@ if (getEstimateHint) {
       // Do NOT auto-close immediately
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
-      setStatus("ok", "PDF downloaded.");
+      setStatus("ok", "Customer PDF downloaded.");
       closeConfirm();
 
     } catch (e) {
@@ -3478,7 +3478,7 @@ if (getEstimateHint) {
     }
 
     openConfirm();
-    setConfirmMessage("info", "Review the saved estimate, then click Generate PDF.");
+    setConfirmMessage("info", "Review the saved quote, then generate the customer PDF.");
   });
   sharedDownloadPdfBtn?.addEventListener("click", () => {
     if (!lineItems.length) {
@@ -3487,7 +3487,7 @@ if (getEstimateHint) {
     }
 
     openConfirm();
-    setConfirmMessage("info", "Review the shared estimate, then click Generate PDF.");
+    setConfirmMessage("info", "Review the shared quote, then generate the customer PDF.");
   });
 
   addVehicleBtn?.addEventListener("click", () => {
@@ -3513,7 +3513,7 @@ if (getEstimateHint) {
       activeYearSelect.focus();
     }
 
-    setStatus("info", "Phase 1 supports one vehicle per estimate. Use the current vehicle selector below.");
+    setStatus("info", "This quote uses one vehicle. Update the vehicle details below.");
   }
 
   function removeVehicleCard(vehicleId) {
@@ -3690,7 +3690,7 @@ if (getEstimateHint) {
       }
 
       renderLineItems();
-      setStatus("ok", "All service estimates generated.");
+      setStatus("ok", "Quote lines updated.");
       trackClarity("estimate_generated", {
         source: "estimator",
         action: "generate_all",
@@ -3722,7 +3722,7 @@ if (getEstimateHint) {
       resetServiceSearch();
 
       updateEstimateButtonState();
-      setStatus("info", "Choose a service, review pricing, then tap Add Service to Estimate.");
+      setStatus("info", "Choose a repair job, review pricing, then add it to the quote.");
     } catch (e) {
       setStatus("error", `Init failed: ${e.message}`);
     }

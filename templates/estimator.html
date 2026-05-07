@@ -6,24 +6,24 @@
 {% block content %}
 
     <header style="display:flex;align-items:center;justify-content:space-between;">
-      <h1 style="margin:0;">Build a repair estimate in minutes</h1>
+      <h1 style="margin:0;">Build a customer-ready repair quote</h1>
 
       <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
     </header>
 
     <div class="tm-card tm-estimator-quickstart">
-      <div class="tm-estimator-quickstart__title">Fast estimate flow</div>
+      <div class="tm-estimator-quickstart__title">Mobile quote workflow</div>
       <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
         <span>Select vehicle</span>
         <span>Choose service</span>
-        <span>Add service to estimate</span>
-        <span>Review & send PDF</span>
+        <span>Price the job</span>
+        <span>Send customer PDF</span>
       </div>
     </div>
 
     {% if shared_id %}
     <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
-      <div style="font-weight:800; margin-bottom:8px;">Shared TorqueMech Estimate</div>
+      <div style="font-weight:800; margin-bottom:8px;">Shared TorqueMech Quote</div>
       <p class="tm-muted" style="margin:0 0 8px 0;">
         This estimate was created using TorqueMech’s repair estimator and can be reviewed, saved, or converted into a PDF.
       </p>
@@ -31,10 +31,10 @@
         Prices are estimates and may vary by vehicle condition, parts quality, labor rate, location, and diagnostic findings.
       </p>
       <div class="tm-muted" style="line-height:1.7; margin-bottom:12px;">
-        <strong>Estimate Snapshot</strong><br>
+        <strong>Quote Snapshot</strong><br>
         Vehicle: <span id="sharedSnapshotVehicle">—</span><br>
         Services: <span id="sharedSnapshotServices">—</span><br>
-        Estimated Total: <span id="sharedSnapshotTotal">$0.00</span>
+        Quote Total: <span id="sharedSnapshotTotal">$0.00</span>
       </div>
       <div class="tm-actions">
         <button id="sharedDownloadPdfBtn" type="button" class="tm-btn tm-btn-primary">Download PDF</button>
@@ -53,7 +53,7 @@
     {% endif %}
 
     <div class="tm-muted tm-estimator-lede">
-      Build a clean, customer-ready repair estimate in minutes. Pricing updates live as labor, parts, flat rate, or travel changes.
+      Build a clean repair quote from the phone. Labor, parts, flat rate, travel, and PDF totals stay aligned as you adjust the job.
     </div>
 
     <!-- Vehicles -->
@@ -62,9 +62,9 @@
         <h2>Vehicles</h2>
 
         <div style="display:flex; gap:10px; align-items:center;">
-          <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Fields</button>
+          <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Quote</button>
           <button id="addVehicleBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
-            Select Vehicle
+            Set Vehicle
           </button>
         </div>
       </div>
@@ -73,15 +73,15 @@
 
       <div class="vin-section">
         <button type="button" id="vinToggle" class="vin-toggle">
-          🔎 Have a VIN? Auto-fill active vehicle (Optional)
+          Use VIN to fill vehicle details
           <span id="vinArrow" class="vin-arrow">▸</span>
         </button>
 
         <div id="vinPanel" class="vin-panel hidden">
           <label for="vin">VIN</label>
-          <input id="vin" type="text" maxlength="17" placeholder="Enter 17-digit VIN" />
+          <input id="vin" type="text" maxlength="17" placeholder="Enter VIN" />
           <button id="vinLookupBtn" type="button" class="tm-btn tm-btn-secondary" style="margin-top:6px;">
-            Decode VIN
+            Fill Vehicle from VIN
           </button>
         </div>
         <div id="vinDecodedMeta" class="tm-hint" style="margin-top:8px;"></div>
@@ -89,19 +89,19 @@
     </section>
 
     <div id="estimateTotalBar" class="tm-estimate-total-bar" aria-live="polite">
-      <div class="tm-estimate-total-bar__label">Estimated Total</div>
+      <div class="tm-estimate-total-bar__label">Quote Total</div>
       <div id="estimateTotalValue" class="tm-estimate-total-bar__value">$0.00</div>
     </div>
     <div class="tm-card" style="margin-top:10px; padding:12px 14px;">
-      <div style="font-weight:800; margin-bottom:6px;">Why this estimate may vary:</div>
-      <div class="tm-hint">Labor rate, labor hours, parts quality, taxes, shop fees, and vehicle condition can all affect the final repair cost.</div>
+      <div style="font-weight:800; margin-bottom:6px;">Customer quote note</div>
+      <div class="tm-hint">Final price can change after inspection, parts confirmation, taxes, fees, or added repair needs.</div>
     </div>
 
     <!-- Service -->
     <section class="tm-card" aria-label="Service">
 
     <div id="activeVehicleBanner" class="tm-card" style="cursor:pointer;">
-      <div style="font-size:12px; opacity:.75; margin-bottom:4px;">Active Vehicle</div>
+      <div style="font-size:12px; opacity:.75; margin-bottom:4px;">Quoting vehicle</div>
       <div id="activeVehicleText" style="font-weight:800;">Vehicle</div>
     </div>
 
@@ -127,15 +127,15 @@
         <label for="service">Service</label>
         <select id="service"></select>
         <div class="tm-hint" style="margin-top:6px;">
-          Try searching by service, symptom, or system — for example: oil change, misfire, brakes, overheating, battery.
+          Search common jobs or symptoms, then price the repair for the selected vehicle.
         </div>
       </div>
     </div>
    
     <div id="lineItemsWrap" class="line-items hidden">
       <div class="line-items-head">
-        <div class="line-items-title">Estimate services</div>
-        <div class="line-items-hint">Added services stay here while you adjust pricing and prepare the customer PDF.</div>
+        <div class="line-items-title">Quoted services</div>
+        <div class="line-items-hint">Each job stays editable while you tune pricing and prepare the customer PDF.</div>
       </div>
 
       <div id="lineItemsList" class="line-items-list"></div>
@@ -143,7 +143,7 @@
 
       <div class="grid3">
         <div>
-          <label for="pricingMode">Pricing Mode</label>
+          <label for="pricingMode">Quote Type</label>
           <select id="pricingMode">
             <option value="hourly" selected>Hourly</option>
             <option value="flat">Flat Rate</option>
@@ -151,19 +151,19 @@
         </div>
 
         <div>
-          <label for="travelFee">Travel Fee (optional)</label>
+          <label for="travelFee">Mobile/Travel Fee (optional)</label>
           <input id="travelFee" type="number" step="0.01" value="0" />
         </div>
 
         <div>
-          <label for="partsPrice">Parts Price (optional)</label>
+          <label for="partsPrice">Parts Total (optional)</label>
           <input id="partsPrice" type="number" step="0.01" value="0" />
         </div>
       </div>
 
       <div class="grid3">
         <div id="flatRateWrap" class="hidden">
-          <label for="flatRatePrice">Flat Rate Price</label>
+          <label for="flatRatePrice">Flat Job Price</label>
 
           <input
             id="flatRatePrice"
@@ -180,7 +180,7 @@
           <!-- Labor -->
           <div class="hourly-pricing-field">
             <label for="laborHours">
-              <span id="laborLabelText">Labor Hours</span>
+              <span id="laborLabelText">Billable Labor Hours</span>
             </label>
 
             <div class="labor-inline">
@@ -191,21 +191,21 @@
 
           <!-- Labor Rate -->
           <div class="hourly-pricing-field">
-            <label for="laborRate">Labor Rate ($/hr)</label>
+            <label for="laborRate">Shop Labor Rate ($/hr)</label>
             <input id="laborRate" type="number" step="1" value="90" />
           </div>
 
         </div>
 
         <p class="recalc-note">
-          Edit pricing as needed. The service total, estimate total, and PDF totals stay in sync automatically.
+          Adjust labor, parts, flat rate, or travel. The quote total and customer PDF stay synced.
         </p>
             
       </div>
 
       <div class="labor-help">
         <span class="tm-hint">
-          Labor guidance reflects service access, removal steps, testing, and verification where available, then combines with your parts and rate inputs for a more useful repair decision.
+          Labor guidance helps set a professional starting point. You stay in control of hours, rate, parts, and final quote total.
         </span>
         
       </div>
@@ -214,12 +214,12 @@
       <div class="tm-estimate-action-panel__copy">
         <div class="tm-estimate-action-panel__label">Next step</div>
         <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
-          Select a vehicle and service, then add it to the estimate.
+          Select a vehicle and service, then add it to the quote.
         </div>
-      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select the service that best matches the diagnosis, then add it to the estimate.</div>
+      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select the repair job, confirm pricing, then add it to the quote.</div>
       </div>
         <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary tm-estimate-action-panel__button">
-          Add Service to Estimate
+          Add Service to Quote
         </button>
       </div>
 
@@ -227,7 +227,7 @@
 
       <!-- Estimate Preview -->
       <div id="estimatePreview" class="preview hidden" aria-live="polite">
-        <div class="preview-label">Estimate preview</div>
+        <div class="preview-label">Quote preview</div>
         <div class="preview-value" id="previewTotalText">—</div>
         <div class="preview-sub" id="previewSubText"></div>
       </div>
@@ -242,7 +242,7 @@
         >
           <span class="breakdown-toggle-left">
             <span class="breakdown-icon">🔧</span>
-            <span class="breakdown-title">Labor time breakdown</span>
+            <span class="breakdown-title">Labor guide</span>
           </span>
           <span id="laborBreakdownChevron" class="breakdown-chevron">▾</span>
         </button>
@@ -254,8 +254,8 @@
       </div>
 
       <div style="margin-top:12px;">
-        <label for="notes">Notes (optional)</label>
-        <textarea id="notes" rows="3" placeholder="Optional notes..."></textarea>
+        <label for="notes">Quote Notes (optional)</label>
+        <textarea id="notes" rows="3" placeholder="Add warranty, condition, or customer-facing notes..."></textarea>
       </div>
 
       <hr class="section-divider">
@@ -316,9 +316,9 @@
         {% if shared_id %}
         <div class="tm-hint">This shared estimate is ready for review and customer approval, with PDF, email, and share handoff support for professional repair decisions.</div>
         {% endif %}
-        <div class="tm-hint">Generate one estimate set when you want to compare multiple services, likely repairs, or diagnosis paths with labor, parts, and totals side by side.</div>
+        <div class="tm-hint">When the quote looks right, review the customer-ready PDF before sending.</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta">
-          Generate All Service Estimates
+          Review & Send Estimate
         </button>
       </div>
 
@@ -331,7 +331,7 @@
     <div class="modal-card tm-confirm-modal">
       <div class="modal-header tm-confirm-header">
         <h2>Review & Send Estimate</h2>
-        <p class="tm-confirm-intro">Check the customer copy, signature, and PDF details before sending.</p>
+        <p class="tm-confirm-intro">Review the customer-facing quote, signature choice, and PDF details before sending.</p>
       </div>
 
       <section class="tm-confirm-section" aria-label="Customer information">
@@ -348,12 +348,12 @@
         </div>
         <label class="tm-confirm-check tm-confirm-agree">
           <input type="checkbox" id="customerAgreesChk" checked />
-          <span>Customer agrees to this estimate</span>
+          <span>Customer reviewed this quote</span>
         </label>
       </section>
 
       <section class="tm-confirm-section" aria-label="Estimate summary">
-        <div class="tm-confirm-section-title">Estimate summary</div>
+        <div class="tm-confirm-section-title">Quote summary</div>
         <div class="tm-confirm-services-wrap">
           <div>Services</div>
           <div id="confirmServicesList">—</div>
@@ -361,15 +361,15 @@
       </section>
 
       <section class="tm-confirm-section" aria-label="Customer PDF details">
-        <div class="tm-confirm-section-title">Customer copy details</div>
+        <div class="tm-confirm-section-title">Customer PDF details</div>
         <div class="tm-confirm-options-grid">
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowGeneratedDateChk" checked />
-            <span>Show generated date and time</span>
+            <span>Show prepared date and time</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowHourlyRateChk" />
-            <span>Show hourly labor rate</span>
+            <span>Show shop labor rate</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowLaborColumnChk" />
@@ -381,7 +381,7 @@
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowLaborBreakdownChk" />
-            <span>Show labor steps</span>
+            <span>Show labor guide details</span>
           </label>
         </div>
       </section>
@@ -391,18 +391,18 @@
         <div class="sig-choice tm-confirm-radio-row">
         <label class="tm-confirm-check">
           <input type="radio" name="wantSig" value="yes" checked />
-          <span>Signature required</span>
+          <span>Require customer signature</span>
         </label>
 
         <label class="tm-confirm-check">
           <input type="radio" name="wantSig" value="no" />
-          <span>No signature</span>
+          <span>Send without signature</span>
         </label>
       </div>
 
       <!-- Signature section -->
       <div id="sigSection" class="hidden tm-signature-panel">
-        <label class="tm-confirm-signature-label">Customer Signature</label>
+        <label class="tm-confirm-signature-label">Customer signature</label>
 
         <div class="sig-wrap">
           <canvas id="sigCanvas" style="width:100%; height:140px; display:block; touch-action:none;"></canvas>
@@ -416,14 +416,14 @@
 
       <section class="tm-confirm-section" aria-label="Customer message preview">
         <label for="quotePreview" class="tm-confirm-section-title">
-          Customer message preview
+          Customer message
         </label>
         <textarea
           id="quotePreview"
           class="tm-confirm-message-preview"
           rows="9"
           readonly
-          placeholder="Your quote message will appear here..."
+          placeholder="Customer message will appear here..."
         ></textarea>
       </section>
 
@@ -438,14 +438,14 @@
       </div>
 
       <div class="tm-muted tm-confirm-note">
-        Review the estimate, then generate a PDF you can save, print, or share with a customer.
+        Generate a clean PDF for the customer. Your internal pricing details stay available.
       </div>
 
       <div class="modal-actions tm-confirm-actions">
         <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">Generate Customer PDF</button>
         <div class="tm-confirm-secondary-actions">
-          <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Message</button>
-          <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Estimate</button>
+          <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Customer Message</button>
+          <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Quote</button>
           <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
         </div>
       </div>
