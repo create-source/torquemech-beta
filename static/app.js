@@ -518,6 +518,8 @@
   // Line items
   const lineItemsWrap = $("lineItemsWrap");
   const lineItemsList = $("lineItemsList");
+  const pairedSuggestions = $("pairedSuggestions");
+  const pairedSuggestionsList = $("pairedSuggestionsList");
   const estimateTotalBar = $("estimateTotalBar");
   const estimateTotalValue = $("estimateTotalValue");
   const sharedSnapshotVehicle = $("sharedSnapshotVehicle");
@@ -596,6 +598,41 @@
 
   // ---- State ----
   let lineItems = [];
+
+  const COMMONLY_ADDED_TOGETHER = [
+    {
+      match: ["brake pad", "brake pads"],
+      suggestions: [
+        { label: "Brake Rotors", query: "brake rotor" },
+        { label: "Brake Fluid Flush", query: "brake fluid" },
+      ],
+    },
+    {
+      match: ["spark plug", "spark plugs"],
+      suggestions: [
+        { label: "Ignition Coils", query: "ignition coil" },
+      ],
+    },
+    {
+      match: ["thermostat"],
+      suggestions: [
+        { label: "Coolant Flush", query: "coolant flush" },
+      ],
+    },
+    {
+      match: ["battery"],
+      suggestions: [
+        { label: "Battery Terminal Service", query: "battery terminal" },
+      ],
+    },
+    {
+      match: ["serpentine belt", "drive belt"],
+      suggestions: [
+        { label: "Belt Tensioner", query: "belt tensioner" },
+        { label: "Idler Pulley", query: "idler pulley" },
+      ],
+    },
+  ];
 
   function getCustomerOutputOptions() {
     return {
@@ -891,6 +928,7 @@
 
       // Re-render service cards
       renderLineItems();
+      void refreshPairedSuggestions();
 
       // Reset signature (Beta-safe)
       signatureDataUrl = null;
@@ -2027,6 +2065,118 @@ const confidenceEl = document.getElementById("laborConfidence");
     });
   }
 
+  function hidePairedSuggestions() {
+    pairedSuggestions?.classList.add("hidden");
+    if (pairedSuggestionsList) pairedSuggestionsList.innerHTML = "";
+  }
+
+  function getPairedSuggestionConfig(lineItem) {
+    const source = normalizeServiceSearch(`${lineItem?.serviceText || ""} ${lineItem?.serviceCode || ""}`);
+    if (!source) return null;
+    return COMMONLY_ADDED_TOGETHER.find((group) =>
+      group.match.some((term) => source.includes(normalizeServiceSearch(term)))
+    ) || null;
+  }
+
+  function findPairedServiceOption(suggestion, options) {
+    const exactCode = String(suggestion.serviceCode || "").trim();
+    if (exactCode) {
+      const exact = options.find((service) => service.code === exactCode);
+      if (exact) return exact;
+    }
+
+    const query = suggestion.query || suggestion.label || "";
+    const normalizedQuery = normalizeServiceSearch(query);
+    if (!normalizedQuery) return null;
+
+    return options.find((service) => serviceMatchesSearch(service, query)) ||
+      options.find((service) => {
+        const text = normalizeServiceSearch(serviceSearchText(service));
+        return text.includes(normalizedQuery);
+      }) ||
+      null;
+  }
+
+  async function refreshPairedSuggestions() {
+    if (!pairedSuggestions || !pairedSuggestionsList) return;
+    if (!lineItems.length) {
+      hidePairedSuggestions();
+      return;
+    }
+
+    const latestLineItem = lineItems[lineItems.length - 1];
+    const config = getPairedSuggestionConfig(latestLineItem);
+    if (!config) {
+      hidePairedSuggestions();
+      return;
+    }
+
+    let options = [];
+    try {
+      options = await ensureAllServiceOptions();
+    } catch (err) {
+      console.warn("Commonly added service lookup failed", err);
+      hidePairedSuggestions();
+      return;
+    }
+
+    const existingCodes = new Set(lineItems.map((it) => it.serviceCode).filter(Boolean));
+    const seenCodes = new Set();
+    const suggestions = config.suggestions
+      .map((suggestion) => {
+        const option = findPairedServiceOption(suggestion, options);
+        return option ? { ...suggestion, option } : null;
+      })
+      .filter((suggestion) => {
+        const code = suggestion?.option?.code;
+        if (!code || existingCodes.has(code) || seenCodes.has(code)) return false;
+        seenCodes.add(code);
+        return true;
+      })
+      .slice(0, 3);
+
+    if (!suggestions.length) {
+      hidePairedSuggestions();
+      return;
+    }
+
+    pairedSuggestionsList.innerHTML = suggestions.map(({ label, option }) => `
+      <button
+        type="button"
+        class="tm-paired-suggestion"
+        data-service-code="${escapeServiceResultHtml(option.code)}"
+        data-service-category="${escapeServiceResultHtml(option.category || "")}"
+      >
+        <span>${escapeServiceResultHtml(label || option.name)}</span>
+        <small>Select for quote</small>
+      </button>
+    `).join("");
+
+    pairedSuggestions.classList.remove("hidden");
+  }
+
+  async function selectPairedSuggestion(serviceCode, categoryKey) {
+    if (!serviceCode || !categoryEl || !serviceEl) return;
+
+    if (!readyForNextService) {
+      addLineBtn?.click();
+    }
+
+    if (categoryKey && categoryEl.value !== categoryKey) {
+      categoryEl.value = categoryKey;
+      await loadServices(categoryKey);
+    }
+
+    applyServiceSelection(serviceCode);
+    await loadServiceMeta(serviceCode);
+    readyForNextService = true;
+    hidePairedSuggestions();
+    updateEstimateButtonState();
+
+    const serviceName = serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || "Suggested job";
+    setStatus("info", `${serviceName} selected. Review pricing, then add it to the quote.`);
+  }
+
   function renderServiceResults(query) {
     if (!serviceSearch || !serviceResults || serviceSearch.disabled) {
       hideServiceResults();
@@ -2772,6 +2922,7 @@ if (getEstimateHint) {
 
         readyForNextService = false;
         updateEstimateButtonState();
+        void refreshPairedSuggestions();
         return;
       }
 
@@ -2827,9 +2978,11 @@ if (getEstimateHint) {
 
       readyForNextService = false;
       updateEstimateButtonState();
+      void refreshPairedSuggestions();
     } catch (e) {
       lineItems.pop();
       renderLineItems();
+      void refreshPairedSuggestions();
 
       readyForNextService = true;
       updateEstimateButtonState();
@@ -2845,6 +2998,7 @@ if (getEstimateHint) {
     serviceEl.value = "";
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
     resetServiceSearch();
+    hidePairedSuggestions();
 
     serviceMeta = null;
     if (laborHoursRangeEl) laborHoursRangeEl.textContent = "";
@@ -2891,6 +3045,7 @@ if (getEstimateHint) {
         activeLineItemIndex -= 1;
       }
       renderLineItems();
+      void refreshPairedSuggestions();
       return;
     }
 
@@ -3137,6 +3292,21 @@ if (getEstimateHint) {
     handleGenerateCustomerPdf(e);
   });
 
+  pairedSuggestionsList?.addEventListener("click", async (e) => {
+    const btn = e.target?.closest?.(".tm-paired-suggestion[data-service-code]");
+    if (!btn) return;
+
+    btn.disabled = true;
+    try {
+      await selectPairedSuggestion(btn.dataset.serviceCode || "", btn.dataset.serviceCategory || "");
+    } catch (err) {
+      console.warn("Commonly added service selection failed", err);
+      setStatus("error", "Unable to select that related job. Choose it from the service list instead.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   // ---- Clear fields (Hard reset) ----
   clearBtn?.addEventListener("click", async () => {
     try {
@@ -3211,6 +3381,7 @@ if (getEstimateHint) {
     // UI blocks
     if (lineItemsList) lineItemsList.innerHTML = "";
     lineItemsWrap?.classList.add("hidden");
+    hidePairedSuggestions();
 
     estimatePreview?.classList.add("hidden");
     if (previewTotalText) previewTotalText.textContent = "—";
@@ -3529,6 +3700,7 @@ if (getEstimateHint) {
     window.estimateState = estimateState;
     void renderVehicles();
     renderLineItems();
+    void refreshPairedSuggestions();
     renderActiveVehicleBanner();
   }
 
