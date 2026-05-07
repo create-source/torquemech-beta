@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}TorqueMech | Automotive Diagnostics, OBD Repair Guides & Estimates{% endblock %}
+{% block title %}TorqueMech | Repair Estimates, Repair Guides & Workflow Intelligence{% endblock %}
 {% block page_css %}
 <link rel="stylesheet" href="/static/quick_find.css?v=1">
 <link rel="stylesheet" href="/static/home.css?v=4">
@@ -110,22 +110,22 @@
       <span class="tm-panelDot red"></span>
       <span class="tm-panelDot amber"></span>
       <span class="tm-panelDot green"></span>
-      <span class="tm-panelLabel">TorqueMech Diagnostic System</span>
+      <span class="tm-panelLabel">TorqueMech Repair Workflow</span>
     </div>
-    <div class="tm-homeHero__eyebrow">TorqueMech Diagnostic Platform</div>
+    <div class="tm-homeHero__eyebrow">Estimate Engine + Repair Intelligence</div>
 
     <h1 class="tm-homeHero__title">
-      Automotive diagnostics.<br>
-      Repair intelligence.
+      Repair estimates.<br>
+      Smarter repair workflow.
     </h1>
 
     <p class="tm-homeHero__lead">
-      TorqueMech helps drivers, DIY owners, mobile mechanics, and small shops turn vehicle problems into clearer repair decisions by connecting symptoms, OBD codes, repair guides, and cost context.
+      TorqueMech helps mobile mechanics and small shops build customer-ready quotes, follow repair guidance, and move from vehicle problem to repair path with cleaner workflow intelligence.
     </p>
 
     <div class="tm-homeHero__actions">
-      <a href="/estimator" class="tm-btn tm-btn-primary">Start an Estimate</a>
-      <a href="/obd/p0300" class="tm-btn tm-btn-secondary">Search OBD Codes</a>
+      <a href="/estimator" class="tm-btn tm-btn-primary">Build a Repair Quote</a>
+      <a href="/repair-guides" class="tm-btn tm-btn-secondary">Browse Repair Guides</a>
     </div>
 
     <p class="tm-homeHero__note">
@@ -139,39 +139,39 @@
 <section class="tm-homeSection">
   <div class="tm-homeSection__head">
     <h2>How TorqueMech Works</h2>
-    <p>A mechanic-grade workflow that connects symptoms, scan-code context, repair logic, cost guides, and estimates into one repair decision path.</p>
+    <p>A mechanic-grade workflow that connects repair quotes, procedures, tools, common mistakes, vehicle-code clues, and customer-ready output.</p>
   </div>
 
   <div class="tm-homeTools">
     <a href="/symptoms" class="tm-homeToolCard">
       <div class="tm-homeToolCard__icon">📄</div>
       <div>
-        <h3>Start With the Symptom</h3>
-        <p>Use rough idle, hesitation, flashing check-engine light, and other complaint pages to narrow the first diagnostic path before pricing parts.</p>
+        <h3>Start With the Job</h3>
+        <p>Use symptoms, customer complaints, or known repairs to orient the quote before parts and labor are finalized.</p>
       </div>
     </a>
 
     <a href="/obd/p0300" class="tm-homeToolCard">
       <div class="tm-homeToolCard__icon">🔧</div>
       <div>
-        <h3>Confirm the OBD Fault</h3>
-        <p>Open code pages for plain-English meaning, likely causes, quick checks, and repair paths that separate the code from the actual fix.</p>
+        <h3>Use Vehicle Codes as Clues</h3>
+        <p>Look up trouble codes when they help explain the repair path, then connect the code back to the actual repair workflow.</p>
       </div>
     </a>
 
     <a href="/repair-guides" class="tm-homeToolCard">
       <div class="tm-homeToolCard__icon">🗺️</div>
       <div>
-        <h3>Follow the Diagnostic Logic</h3>
-        <p>Use repair guides to understand how professionals test common misfire, lean, idle, and cooling complaints before replacing parts.</p>
+        <h3>Use Repair Intelligence</h3>
+        <p>Follow repair guides for procedures, tools, torque specs where available, pro tips, and common mistakes.</p>
       </div>
     </a>
 
     <a href="/estimator" class="tm-homeToolCard">
       <div class="tm-homeToolCard__icon">🧾</div>
       <div>
-        <h3>Build the Estimate</h3>
-        <p>Turn a confirmed repair path into a structured estimate with service-level labor, parts context, and customer-ready output.</p>
+        <h3>Build the Customer Quote</h3>
+        <p>Turn the repair path into a structured quote with service-level labor, parts context, and a customer-ready PDF.</p>
       </div>
     </a>
   </div>
@@ -219,8 +219,8 @@
 
 <section class="tm-homeSection">
   <div class="tm-homeSection__head">
-    <h2>Common OBD Trouble Codes</h2>
-    <p>Direct links into code pages that connect faults to likely causes, diagnostic checks, repair paths, and estimate-ready next steps.</p>
+    <h2>Vehicle Code Repair Paths</h2>
+    <p>Use trouble codes as repair-path clues, then move from the code to the procedure, likely repair, and quote.</p>
   </div>
 
   <div class="tm-homeRepairCosts">
@@ -228,50 +228,50 @@
       <div class="tm-homeObdCode">P0300</div>
       <div class="tm-homeRepairCosts__title">Random/Multiple Cylinder Misfire</div>
       <p class="tm-homeRepairCosts__desc">Start here for multi-cylinder misfire causes, repair flow, and next-step cost context.</p>
-      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+      <div class="tm-homeRepairCosts__footer">Open code repair path →</div>
     </a>
 
     <a class="tm-homeRepairCosts__card" href="/obd/p0303">
       <div class="tm-homeObdCode">P0303</div>
       <div class="tm-homeRepairCosts__title">Cylinder 3 Misfire</div>
       <p class="tm-homeRepairCosts__desc">Useful when the misfire is isolated to cylinder 3 and you need a tighter diagnostic path.</p>
-      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+      <div class="tm-homeRepairCosts__footer">Open code repair path →</div>
     </a>
 
     <a class="tm-homeRepairCosts__card" href="/obd/p0171">
       <div class="tm-homeObdCode">P0171</div>
       <div class="tm-homeRepairCosts__title">System Too Lean (Bank 1)</div>
       <p class="tm-homeRepairCosts__desc">A strong entry point for vacuum leaks, airflow faults, and lean-running diagnosis.</p>
-      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+      <div class="tm-homeRepairCosts__footer">Open code repair path →</div>
     </a>
 
     <a class="tm-homeRepairCosts__card" href="/obd/p0128">
       <div class="tm-homeObdCode">P0128</div>
       <div class="tm-homeRepairCosts__title">Coolant Thermostat Below Regulating Temp</div>
       <p class="tm-homeRepairCosts__desc">Helpful for slow warm-up complaints, weak cabin heat, and thermostat-related cooling faults.</p>
-      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+      <div class="tm-homeRepairCosts__footer">Open code repair path →</div>
     </a>
 
     <a class="tm-homeRepairCosts__card" href="/obd/p0446">
       <div class="tm-homeObdCode">P0446</div>
       <div class="tm-homeRepairCosts__title">EVAP Vent Control Circuit</div>
       <p class="tm-homeRepairCosts__desc">A strong EVAP entry point when vent control faults lead toward the vent valve repair path.</p>
-      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+      <div class="tm-homeRepairCosts__footer">Open code repair path →</div>
     </a>
 
     <a class="tm-homeRepairCosts__card" href="/obd/p0507">
       <div class="tm-homeObdCode">P0507</div>
       <div class="tm-homeRepairCosts__title">Idle Control System RPM Higher Than Expected</div>
       <p class="tm-homeRepairCosts__desc">Useful when high-idle diagnosis points toward throttle body service, repair, or replacement.</p>
-      <div class="tm-homeRepairCosts__footer">Open OBD guide →</div>
+      <div class="tm-homeRepairCosts__footer">Open code repair path →</div>
     </a>
   </div>
 </section>
 
 <section class="tm-homeSection">
   <div class="tm-homeSection__head">
-    <h2>Browse OBD Code Ranges</h2>
-    <p>Jump into the main code families to scan high-level OBD trouble-code categories faster.</p>
+    <h2>Browse Vehicle Code Families</h2>
+    <p>Use code families when a scan result is part of the repair workflow.</p>
   </div>
 
   <div class="tm-homeRangeGrid">
@@ -330,9 +330,9 @@
 
     <div class="tm-homeFeatureCard__header">
       <div>
-        <h2>Built for diagnosis-first repair decisions, not generic OBD lookup pages.</h2>
+        <h2>Built for estimate-to-repair decisions, not generic lookup pages.</h2>
         <p>
-          Most repair questions do not start with a confirmed part. They start with a symptom, a trouble code, or a quote that needs professional repair intelligence before labor, parts, or approval decisions are made.
+          Most repair jobs need more than a code or a price. They need a clear path from customer complaint to repair procedure, quote, and approval-ready handoff.
         </p>
       </div>
     </div>
@@ -340,22 +340,22 @@
     <div class="tm-homeKnowledgeList">
       <a class="tm-homeKnowledgeItem" href="/symptoms">
         <div>
-          <strong>Diagnosis before parts</strong>
-          <span>TorqueMech clarifies the fault path first so parts and estimates follow evidence instead of guesswork.</span>
+          <strong>Repair path before parts</strong>
+          <span>TorqueMech helps clarify the job path so parts, labor, and quotes follow evidence instead of guesswork.</span>
         </div>
       </a>
 
       <a class="tm-homeKnowledgeItem" href="/obd/p0171">
         <div>
           <strong>Repair intelligence over guesswork</strong>
-          <span>Code pages, symptom guides, repair guides, and repair-cost pages connect lean codes, misfires, cooling faults, and EVAP issues to practical next steps.</span>
+          <span>Repair guides, symptom context, vehicle-code clues, and repair-cost pages connect common failures to practical next steps.</span>
         </div>
       </a>
 
       <a class="tm-homeKnowledgeItem" href="/estimator">
         <div>
           <strong>Estimate-ready output</strong>
-          <span>Once the likely repair path is clear, the estimator gives DIY owners, mobile mechanics, and small shops a decision-ready labor-and-parts handoff.</span>
+          <span>Once the repair path is clear, the estimator gives mobile mechanics and small shops a decision-ready labor-and-parts handoff.</span>
         </div>
       </a>
     </div>
@@ -368,9 +368,9 @@
 
     <div class="tm-homeFeatureCard__header">
       <div>
-        <h2>Built for DIY owners, mobile mechanics, and small shops.</h2>
+        <h2>Built for mobile mechanics, small shops, and repair-minded owners.</h2>
         <p>
-          The platform is meant for people who need clearer diagnostic direction, stronger repair context, and faster estimate handoff without replacing parts on guesswork.
+          The platform is meant for people who need faster quote building, stronger repair guidance, and clearer repair handoff without replacing parts on guesswork.
         </p>
       </div>
     </div>
@@ -378,15 +378,15 @@
     <div class="tm-homeKnowledgeList">
       <a class="tm-homeKnowledgeItem" href="/knowledge">
         <div>
-          <strong>DIY owners</strong>
-          <span>Use symptom pages, OBD guidance, and repair-cost context to understand what likely needs testing before approving work.</span>
+          <strong>Repair-minded owners</strong>
+          <span>Use symptom pages, vehicle-code context, and repair-cost guides to understand what likely needs testing before approving work.</span>
         </div>
       </a>
 
       <a class="tm-homeKnowledgeItem" href="/repair-guides">
         <div>
           <strong>Mobile mechanics</strong>
-          <span>Jump from complaint to code to likely repair path faster when you need clean, field-ready diagnostic direction and quote support.</span>
+          <span>Jump from complaint to repair path faster when you need field-ready procedure context and quote support.</span>
         </div>
       </a>
 
@@ -402,8 +402,8 @@
 
 <section class="tm-homeSection">
   <div class="tm-homeSection__head">
-    <h2>Common Diagnostic Guides</h2>
-    <p>Open symptom-first diagnostic pages when you know what the vehicle is doing before you know which code or repair is involved.</p>
+    <h2>Common Repair Path Guides</h2>
+    <p>Open symptom-first repair paths when you know what the vehicle is doing before the job is fully confirmed.</p>
   </div>
 
   <div class="tm-homeSearch">
@@ -415,15 +415,15 @@
         placeholder="Search symptoms and workflows: rough idle, cold start misfire, poor fuel economy..."
         autocomplete="off"
       />
-      <button id="diagSearchCta" type="button" class="tm-btn tm-btn-primary tm-homeSearch__cta">Start Diagnosis</button>
+      <button id="diagSearchCta" type="button" class="tm-btn tm-btn-primary tm-homeSearch__cta">Find Repair Path</button>
     </div>
     <div id="diagSuggestions" class="tm-search-suggestions"></div>
   </div>
 </section>
 
 <section class="tm-homeQuote">
-  <p class="tm-homeQuote__text">TorqueMech is built to move from diagnosis to repair path to estimate, so cost decisions are grounded in symptoms, codes, labor context, and real repair workflow.</p>
-  <p class="tm-homeQuote__author">Diagnosis-first repair intelligence</p>
+  <p class="tm-homeQuote__text">TorqueMech is built to move from customer complaint to repair path to quote, so cost decisions are grounded in labor context, procedures, vehicle clues, and real repair workflow.</p>
+  <p class="tm-homeQuote__author">Estimate engine + repair intelligence</p>
 </section>
 
 <script>
