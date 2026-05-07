@@ -2539,31 +2539,27 @@ const confidenceEl = document.getElementById("laborConfidence");
       .map((it, idx) => {
         const est = it.estimate != null ? money(it.estimate) : "—";
 
-        const pricingLabel = it.pricingMode === "flat"
-          ? `Flat: ${money(it.flatRatePrice || 0)}`
-          : `Labor: ${Number(it.laborHours || 0).toFixed(1)}h • Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`;
-
         const travelLabel = Number(it.travelFee || 0) > 0
           ? `Travel: ${money(it.travelFee)}`
           : "";
 
-        const displayPricingLabel = outputOptions.showLaborColumn
-          ? (it.pricingMode === "flat"
-            ? pricingLabel
-            : `Labor: ${Number(it.laborHours || 0).toFixed(1)}h`)
-          : "";
+        const pricingMeta = it.pricingMode === "flat"
+          ? [
+              `Flat Rate: ${money(it.flatRatePrice || 0)}`,
+              `Parts: ${money(it.partsPrice || 0)}`,
+            ]
+          : [
+              `Labor Hours: ${Number(it.laborHours || 0).toFixed(1)}h`,
+              `Parts: ${money(it.partsPrice || 0)}`,
+            ];
 
-        const laborRateLabel = outputOptions.showHourlyRate && it.pricingMode !== "flat"
-          ? `Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`
-          : "";
+        if (outputOptions.showHourlyRate && it.pricingMode !== "flat") {
+          pricingMeta.push(`Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`);
+        }
 
-        const laborTotalLabel = outputOptions.showLaborColumn && it.pricingMode !== "flat"
-          ? `Labor: ${money(Number(it.laborHours || 0) * Number(it.laborRate || 0))}`
-          : "";
-
-        const partsLabel = outputOptions.showPartsColumn
-          ? `Parts: ${money(it.partsPrice || 0)}`
-          : "";
+        if (travelLabel) {
+          pricingMeta.push(travelLabel);
+        }
 
         const hasBreakdown =
           outputOptions.showDetailedLaborBreakdown &&
@@ -2578,11 +2574,7 @@ const confidenceEl = document.getElementById("laborConfidence");
                 <div class="tm-service-title">${it.serviceText || "Service"}</div>
                 <div class="tm-service-vehicle">${it.vehicleLabel || "Vehicle 1"}</div>
                 <div class="tm-service-meta">
-                  ${displayPricingLabel ? `<span>${displayPricingLabel}</span>` : ""}
-                  ${laborTotalLabel ? `<span>${laborTotalLabel}</span>` : ""}
-                  ${laborRateLabel ? `<span>${laborRateLabel}</span>` : ""}
-                  ${partsLabel ? `<span>${partsLabel}</span>` : ""}
-                  ${travelLabel ? `<span>${travelLabel}</span>` : ""}
+                  ${pricingMeta.map(label => `<span>${label}</span>`).join("")}
                 </div>
               </div>
 
