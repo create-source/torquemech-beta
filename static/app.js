@@ -2963,8 +2963,15 @@ if (getEstimateHint) {
     }
   });
 
+  let isGeneratingCustomerPdf = false;
+
   // Confirm Add = finalize signature and generate PDF
-  confirmAddBtn?.addEventListener("click", async () => {
+  async function handleGenerateCustomerPdf(e) {
+    e?.preventDefault();
+
+    if (isGeneratingCustomerPdf) return;
+    isGeneratingCustomerPdf = true;
+
     clearConfirmMessage();
 
     try {
@@ -3106,7 +3113,15 @@ if (getEstimateHint) {
       console.error("PDF generation failed", e);
       setStatus("error", "Unable to generate PDF. Please try again.");
       setConfirmMessage("error", "Unable to generate PDF. Please try again.");
+    } finally {
+      isGeneratingCustomerPdf = false;
     }
+  }
+
+  document.addEventListener("click", (e) => {
+    const trigger = e.target?.closest?.("#confirmAddBtn");
+    if (!trigger) return;
+    handleGenerateCustomerPdf(e);
   });
 
   // ---- Clear fields (Hard reset) ----
