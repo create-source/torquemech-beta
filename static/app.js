@@ -451,6 +451,54 @@
   let serviceSearch = null;
   let serviceResults = null;
 
+  const QUICK_QUOTE_SHORTCUTS = {
+    oil_change: {
+      label: "Oil Change",
+      category: "maintenance",
+      serviceCode: "oil_and_filter_change",
+    },
+    front_brakes: {
+      label: "Front Brake Job",
+      category: "brakes",
+      serviceCode: "front_brake_pads_and_rotors_replacement",
+    },
+    rear_brakes: {
+      label: "Rear Brake Job",
+      category: "brakes",
+      serviceCode: "rear_brake_pads_and_rotors_replacement",
+    },
+    battery: {
+      label: "Battery Replacement",
+      category: "electrical",
+      serviceCode: "battery_replacement",
+    },
+    alternator: {
+      label: "Alternator Replacement",
+      category: "electrical",
+      serviceCode: "alternator_replacement",
+    },
+    starter: {
+      label: "Starter Replacement",
+      category: "electrical",
+      serviceCode: "starter_replacement",
+    },
+    spark_plugs: {
+      label: "Spark Plug Replacement",
+      category: "engine",
+      serviceCode: "spark_plug_replacement_4_cyl",
+    },
+    thermostat: {
+      label: "Thermostat Replacement",
+      category: "cooling",
+      serviceCode: "thermostat_replacement",
+    },
+    suspension_inspection: {
+      label: "Suspension Inspection",
+      category: "suspension",
+      serviceCode: "suspension_noise_diagnosis",
+    },
+  };
+
   const TIMING_SERVICE_CODES = {
     timingBelt: "timing_belt_replacement",
     timingChainKit: "timing_chain_guide_replacement",
@@ -2177,6 +2225,47 @@ const confidenceEl = document.getElementById("laborConfidence");
     setStatus("info", `${serviceName} selected. Review pricing, then add it to the quote.`);
   }
 
+  async function selectQuickQuoteShortcut(shortcutKey) {
+    const shortcut = QUICK_QUOTE_SHORTCUTS[shortcutKey];
+    if (!shortcut || !categoryEl || !serviceEl) return;
+
+    if (!readyForNextService) {
+      addLineBtn?.click();
+    }
+
+    if (categoryEl.value !== shortcut.category) {
+      categoryEl.value = shortcut.category;
+      await loadServices(shortcut.category);
+    }
+
+    applyServiceSelection(shortcut.serviceCode);
+    await loadServiceMeta(shortcut.serviceCode);
+    readyForNextService = true;
+    hidePairedSuggestions();
+    updateEstimateButtonState();
+
+    document.querySelectorAll(".tm-quick-quote").forEach((btn) => {
+      btn.classList.toggle("is-selected", btn.dataset.quickQuote === shortcutKey);
+    });
+
+    const serviceName =
+      serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() ||
+      shortcut.label;
+
+    trackClarity("service_selected", {
+      source: "quick_quote",
+      service_code: shortcut.serviceCode,
+      category: shortcut.category,
+      service_name: serviceName,
+    });
+
+    setStatus("info", `${serviceName} selected. Review pricing, then add it to the quote.`);
+    document.querySelector(".tm-estimate-action-panel")?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }
+
   function renderServiceResults(query) {
     if (!serviceSearch || !serviceResults || serviceSearch.disabled) {
       hideServiceResults();
@@ -2261,6 +2350,10 @@ const confidenceEl = document.getElementById("laborConfidence");
     serviceEl.value = serviceCode;
     syncServiceSearchFromSelect();
     hideServiceResults();
+    document.querySelectorAll(".tm-quick-quote").forEach((btn) => {
+      const shortcut = QUICK_QUOTE_SHORTCUTS[btn.dataset.quickQuote || ""];
+      btn.classList.toggle("is-selected", shortcut?.serviceCode === serviceCode);
+    });
   }
 
   function getTimingSystemConfig(vehicle) {
@@ -2998,6 +3091,7 @@ if (getEstimateHint) {
     serviceEl.value = "";
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
     resetServiceSearch();
+    document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
     hidePairedSuggestions();
 
     serviceMeta = null;
@@ -3307,6 +3401,21 @@ if (getEstimateHint) {
     }
   });
 
+  document.querySelector(".tm-quick-quotes")?.addEventListener("click", async (e) => {
+    const btn = e.target?.closest?.(".tm-quick-quote[data-quick-quote]");
+    if (!btn) return;
+
+    btn.disabled = true;
+    try {
+      await selectQuickQuoteShortcut(btn.dataset.quickQuote || "");
+    } catch (err) {
+      console.warn("Quick Quote selection failed", err);
+      setStatus("error", "Unable to select that quick quote. Choose it from the service list instead.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   // ---- Clear fields (Hard reset) ----
   clearBtn?.addEventListener("click", async () => {
     try {
@@ -3353,6 +3462,7 @@ if (getEstimateHint) {
     if (categoryEl) categoryEl.value = "";
     if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
     resetServiceSearch();
+    document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
 
     // inputs
     if (laborHoursEl) laborHoursEl.value = "0";
