@@ -168,44 +168,22 @@
       </div>
     </div>
 
-      <div class="grid3">
-        <div>
-          <label for="pricingMode">Quote Type</label>
-          <select id="pricingMode">
-            <option value="hourly" selected>Hourly</option>
-            <option value="flat">Flat Rate</option>
-          </select>
+      <div class="pricing-controls" aria-label="Pricing Controls">
+        <div class="pricing-controls__head">
+          <div class="pricing-controls__title">Pricing Controls</div>
+          <div class="pricing-controls__hint">Adjust the job before adding it to the quote.</div>
         </div>
 
-        <div>
-          <label for="travelFee">Mobile/Travel Fee (optional)</label>
-          <input id="travelFee" type="number" step="0.01" value="0" />
-        </div>
+        <div class="pricing-controls__grid">
+          <div class="pricing-control pricing-control--mode">
+            <label for="pricingMode">Quote Type</label>
+            <select id="pricingMode">
+              <option value="hourly" selected>Hourly</option>
+              <option value="flat">Flat Rate</option>
+            </select>
+          </div>
 
-        <div>
-          <label for="partsPrice">Parts Total (optional)</label>
-          <input id="partsPrice" type="number" step="0.01" value="0" />
-        </div>
-      </div>
-
-      <div class="grid3">
-        <div id="flatRateWrap" class="hidden">
-          <label for="flatRatePrice">Flat Job Price</label>
-
-          <input
-            id="flatRatePrice"
-            type="number"
-            step="0.01"
-            value="0"
-            placeholder="Example: 220"
-          />
-        </div>
-      </div>
-
-        <div class="grid3">
-
-          <!-- Labor -->
-          <div class="hourly-pricing-field">
+          <div class="pricing-control hourly-pricing-field">
             <label for="laborHours">
               <span id="laborLabelText">Billable Labor Hours</span>
             </label>
@@ -216,18 +194,37 @@
             </div>
           </div>
 
-          <!-- Labor Rate -->
-          <div class="hourly-pricing-field">
+          <div class="pricing-control hourly-pricing-field">
             <label for="laborRate">Shop Labor Rate ($/hr)</label>
             <input id="laborRate" type="number" step="1" value="90" />
           </div>
 
+          <div class="pricing-control">
+            <label for="partsPrice">Parts Total (optional)</label>
+            <input id="partsPrice" type="number" step="0.01" value="0" />
+          </div>
+
+          <div class="pricing-control">
+            <label for="travelFee">Mobile/Travel Fee (optional)</label>
+            <input id="travelFee" type="number" step="0.01" value="0" />
+          </div>
+
+          <div id="flatRateWrap" class="pricing-control hidden">
+            <label for="flatRatePrice">Flat Job Price</label>
+
+            <input
+              id="flatRatePrice"
+              type="number"
+              step="0.01"
+              value="0"
+              placeholder="Example: 220"
+            />
+          </div>
         </div>
 
         <p class="recalc-note">
           Adjust labor, parts, flat rate, or travel. The quote total and customer PDF stay synced.
         </p>
-            
       </div>
 
       <div class="labor-help">
