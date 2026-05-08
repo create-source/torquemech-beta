@@ -540,13 +540,31 @@ button:active{
 }
 
 .estimator-final-actions{
-  margin-top: 26px;
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid rgba(20,184,166,.28);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(20,184,166,.08) 0%, rgba(20,184,166,.03) 100%);
+}
+
+.estimator-final-heading{
+  color: var(--tm-text);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.estimator-final-hint{
+  margin: -4px 0 2px;
+  line-height: 1.4;
 }
 
 .estimator-final-cta{
   width: 100%;
-  min-height: 58px;
-  padding: 16px 20px;
+  min-height: 54px;
+  padding: 14px 18px;
   font-size: 15px;
   font-weight: 900;
   border-radius: 10px;
@@ -1713,6 +1731,25 @@ canvas,
   .tm-estimate-action-panel__button{
     width: 100%;
     min-height: 54px;
+  }
+
+  .estimator-final-actions{
+    gap: 9px;
+    margin-top: 18px;
+    padding: 14px;
+  }
+
+  .estimator-final-heading{
+    font-size: .96rem;
+  }
+
+  .estimator-final-hint{
+    font-size: .78rem;
+  }
+
+  .estimator-final-cta{
+    min-height: 52px;
+    padding: 13px 16px;
   }
 
   .tm-quick-quotes{

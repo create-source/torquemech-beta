@@ -37,8 +37,8 @@
         Quote Total: <span id="sharedSnapshotTotal">$0.00</span>
       </div>
       <div class="tm-actions">
-        <button id="sharedDownloadPdfBtn" type="button" class="tm-btn tm-btn-primary">Download PDF</button>
-        <a href="/estimator" class="tm-btn tm-btn-secondary">Start a New Estimate</a>
+        <button id="sharedDownloadPdfBtn" type="button" class="tm-btn tm-btn-primary">Download Customer PDF</button>
+        <a href="/estimator" class="tm-btn tm-btn-secondary">Start New Quote</a>
       </div>
       <div class="tm-pro-upgrade-card" aria-label="TorqueMech Pro PDF preview">
         <span class="tm-pro-pill">Pro PDF Preview</span>
@@ -316,12 +316,12 @@
       <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;"></div>
 
       <div id="estimateSavedBlock" class="tm-card" style="margin-top:12px; padding:14px 16px;" hidden>
-        <div style="font-weight:800; margin-bottom:6px;">Estimate Saved Successfully</div>
-        <div class="tm-hint" style="margin-bottom:10px;">Your repair estimate is stored and can be reopened anytime using your unique share link.</div>
+        <div style="font-weight:800; margin-bottom:6px;">Customer Quote Saved</div>
+        <div class="tm-hint" style="margin-bottom:10px;">This quote is ready to reopen, share, or download as a customer PDF.</div>
         <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-          <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Link</button>
-          <button id="openSavedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">Open Saved Estimate</button>
-          <button id="downloadSavedEstimatePdfBtn" type="button" class="tm-btn tm-btn-primary">Download PDF</button>
+          <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
+          <button id="openSavedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">Open Customer Quote</button>
+          <button id="downloadSavedEstimatePdfBtn" type="button" class="tm-btn tm-btn-primary">Download Customer PDF</button>
         </div>
         <div class="tm-pro-upgrade-card" aria-label="TorqueMech Pro PDF preview">
           <span class="tm-pro-pill">Pro PDF Preview</span>
@@ -336,13 +336,14 @@
       </div>
     </div>
 
-      <div class="actions estimator-final-actions">
+      <div class="actions estimator-final-actions" aria-label="Finish customer quote">
         {% if shared_id %}
         <div class="tm-hint">This shared estimate is ready for review and customer approval, with PDF, email, and share handoff support for professional repair decisions.</div>
         {% endif %}
-        <div class="tm-hint">When the quote looks right, review the customer-ready PDF before sending.</div>
+        <div class="estimator-final-heading">Finish Customer Quote</div>
+        <div class="tm-hint estimator-final-hint">Review customer details, choose PDF visibility, then create the customer-ready quote.</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta">
-          Review & Send Estimate
+          Create Customer Quote
         </button>
       </div>
 
@@ -354,8 +355,8 @@
 
     <div class="modal-card tm-confirm-modal">
       <div class="modal-header tm-confirm-header">
-        <h2>Review & Send Estimate</h2>
-        <p class="tm-confirm-intro">Review the customer-facing quote, signature choice, and PDF details before sending.</p>
+        <h2>Create Customer Quote</h2>
+        <p class="tm-confirm-intro">Review customer details, signature choice, and PDF visibility before downloading the quote.</p>
       </div>
 
       <section class="tm-confirm-section" aria-label="Customer information">
@@ -462,14 +463,14 @@
       </div>
 
       <div class="tm-muted tm-confirm-note">
-        Generate a clean PDF for the customer. Your internal pricing details stay available.
+        Download a clean customer PDF. Your internal pricing details stay available.
       </div>
 
       <div class="modal-actions tm-confirm-actions">
-        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">Generate Customer PDF</button>
+        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">Download Customer PDF</button>
         <div class="tm-confirm-secondary-actions">
-          <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Customer Message</button>
-          <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Quote</button>
+          <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
+          <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Customer Quote</button>
           <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
         </div>
       </div>
