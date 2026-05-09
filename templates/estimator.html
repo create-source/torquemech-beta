@@ -206,24 +206,24 @@
             </label>
 
             <div class="labor-inline">
-              <input id="laborHours" type="number" step="0.1" value="0" />
+              <input id="laborHours" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="0" />
               <span id="laborHoursRange" class="labor-range"></span>
             </div>
           </div>
 
           <div class="pricing-control hourly-pricing-field">
             <label for="laborRate">Shop Labor Rate ($/hr)</label>
-            <input id="laborRate" type="number" step="1" value="90" />
+            <input id="laborRate" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="90" />
           </div>
 
           <div class="pricing-control">
             <label for="partsPrice">Parts Total (optional)</label>
-            <input id="partsPrice" type="number" step="0.01" value="0" />
+            <input id="partsPrice" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="0" />
           </div>
 
           <div class="pricing-control">
             <label for="travelFee">Mobile/Travel Fee (optional)</label>
-            <input id="travelFee" type="number" step="0.01" value="0" />
+            <input id="travelFee" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="0" />
           </div>
 
           <div id="flatRateWrap" class="pricing-control hidden">
@@ -231,8 +231,9 @@
 
             <input
               id="flatRatePrice"
-              type="number"
-              step="0.01"
+              type="text"
+              inputmode="decimal"
+              pattern="[0-9]*[.]?[0-9]*"
               value="0"
               placeholder="Example: 220"
             />

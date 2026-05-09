@@ -1061,6 +1061,23 @@
     let replaceOnNextEntry = false;
     let focusedValue = "";
     const isZeroValue = (value) => /^0(?:\.0+)?$/.test(String(value || "").trim());
+    const sanitizeDecimalValue = (value) => {
+      let sanitized = "";
+      let hasDecimal = false;
+
+      for (const char of String(value || "")) {
+        if (char >= "0" && char <= "9") {
+          sanitized += char;
+          continue;
+        }
+        if (char === "." && !hasDecimal) {
+          sanitized += char;
+          hasDecimal = true;
+        }
+      }
+
+      return sanitized;
+    };
     const selectCurrentValue = () => {
       if (!inputEl.value) return;
       try {
@@ -1098,7 +1115,9 @@
       if (!replaceOnNextEntry) return;
       if (!String(event.inputType || "").startsWith("insert")) return;
 
-      const insertedValue = event.data || "";
+      const insertedValue = sanitizeDecimalValue(
+        event.data || event.clipboardData?.getData("text") || ""
+      );
       if (insertedValue) {
         event.preventDefault();
         inputEl.value = insertedValue;
@@ -1114,7 +1133,9 @@
 
     inputEl.addEventListener("blur", () => {
       replaceOnNextEntry = false;
-      if (String(inputEl.value || "").trim() !== "") return;
+      const sanitizedValue = sanitizeDecimalValue(inputEl.value);
+      inputEl.value = sanitizedValue;
+      if (sanitizedValue !== "" && sanitizedValue !== ".") return;
       inputEl.value = fallbackValue;
       if (inputEl === laborHoursEl) {
         laborHoursTouched = false;
@@ -1125,10 +1146,14 @@
     inputEl.addEventListener("input", () => {
       if (replaceOnNextEntry && focusedValue) {
         const currentValue = String(inputEl.value || "");
-        const replacementValue = currentValue.replace(focusedValue, "");
+        const replacementValue = sanitizeDecimalValue(currentValue.replace(focusedValue, ""));
         if (replacementValue && replacementValue !== currentValue) {
           inputEl.value = replacementValue;
         }
+      }
+      const sanitizedValue = sanitizeDecimalValue(inputEl.value);
+      if (sanitizedValue !== inputEl.value) {
+        inputEl.value = sanitizedValue;
       }
       replaceOnNextEntry = false;
     }, true);
@@ -1160,6 +1185,11 @@
   function money(n) {
     const x = Number(n || 0);
     return `$${Math.round(x).toLocaleString()}`;
+  }
+
+  function pricingInputNumber(inputEl, fallbackValue = 0) {
+    const parsed = parseFloat(String(inputEl?.value ?? "").trim());
+    return Number.isFinite(parsed) ? parsed : fallbackValue;
   }
 
   function getPricingMode() {
@@ -1370,11 +1400,11 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     it.pricingMode = getPricingMode();
-    it.flatRatePrice = Number(flatRatePriceEl?.value || 0);
-    it.travelFee = Number(travelFeeEl?.value || 0);
-    it.laborHours = Number(laborHoursEl?.value || 0);
-    it.partsPrice = Number(partsPriceEl?.value || 0);
-    it.laborRate = Number(laborRateEl?.value || 0);
+    it.flatRatePrice = pricingInputNumber(flatRatePriceEl);
+    it.travelFee = pricingInputNumber(travelFeeEl);
+    it.laborHours = pricingInputNumber(laborHoursEl);
+    it.partsPrice = pricingInputNumber(partsPriceEl);
+    it.laborRate = pricingInputNumber(laborRateEl);
     it.estimate = calcLineItemEstimate(it);
 
     renderLineItems();
@@ -2835,11 +2865,11 @@ const confidenceEl = document.getElementById("laborConfidence");
       serviceCode: (serviceEl?.value || "").trim() || null,
 
       pricingMode: getPricingMode(),
-      flatRatePrice: Number(flatRatePriceEl?.value || 0),
-      travelFee: Number(travelFeeEl?.value || 0),
-      laborHours: Number(laborHoursEl?.value || 0),
-      partsPrice: Number(partsPriceEl?.value || 0),
-      laborRate: Number(laborRateEl?.value || 0),
+      flatRatePrice: pricingInputNumber(flatRatePriceEl),
+      travelFee: pricingInputNumber(travelFeeEl),
+      laborHours: pricingInputNumber(laborHoursEl),
+      partsPrice: pricingInputNumber(partsPriceEl),
+      laborRate: pricingInputNumber(laborRateEl),
       notes: (notesEl?.value || "").trim() || null,
       customerName: (customerNameEl?.value || "").trim() || null,
       customerPhone: (customerPhoneEl?.value || "").trim() || null,
@@ -3062,11 +3092,11 @@ if (getEstimateHint) {
       serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
       serviceText,
       pricingMode: getPricingMode(),
-      flatRatePrice: Number(flatRatePriceEl?.value || 0),
-      travelFee: Number(travelFeeEl?.value || 0),
-      laborHours: Number(laborHoursEl?.value || 0),
-      partsPrice: Number(partsPriceEl?.value || 0),
-      laborRate: Number(laborRateEl?.value || 0),
+      flatRatePrice: pricingInputNumber(flatRatePriceEl),
+      travelFee: pricingInputNumber(travelFeeEl),
+      laborHours: pricingInputNumber(laborHoursEl),
+      partsPrice: pricingInputNumber(partsPriceEl),
+      laborRate: pricingInputNumber(laborRateEl),
       notes: (notesEl?.value || "").trim() || null,
       estimate: null,
     };
@@ -3250,12 +3280,12 @@ if (getEstimateHint) {
       }
 
       // Apply editor values first
-      it.laborHours = Number(laborHoursEl?.value || 0);
-      it.partsPrice = Number(partsPriceEl?.value || 0);
-      it.laborRate = Number(laborRateEl?.value || 0);
+      it.laborHours = pricingInputNumber(laborHoursEl);
+      it.partsPrice = pricingInputNumber(partsPriceEl);
+      it.laborRate = pricingInputNumber(laborRateEl);
       it.pricingMode = getPricingMode();
-      it.flatRatePrice = Number(flatRatePriceEl?.value || 0);
-      it.travelFee = Number(travelFeeEl?.value || 0);
+      it.flatRatePrice = pricingInputNumber(flatRatePriceEl);
+      it.travelFee = pricingInputNumber(travelFeeEl);
       it.notes = (notesEl?.value || "").trim() || null;
 
       renderLineItems();
