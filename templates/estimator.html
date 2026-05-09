@@ -73,12 +73,15 @@
     <!-- Vehicles -->
     <section class="tm-card" aria-label="Vehicles" style="margin-top:14px;">
       <div class="section-header--vehicles">
-        <h2>Vehicles</h2>
+        <div>
+          <h2>Select Vehicle</h2>
+          <div class="tm-cta-helper">Start with the customer vehicle before pricing services.</div>
+        </div>
 
-        <div style="display:flex; gap:10px; align-items:center;">
+        <div class="tm-vehicle-cta-group" style="display:flex; gap:10px; align-items:center;">
           <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Quote</button>
           <button id="addVehicleBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
-            Set Vehicle
+            Select Vehicle
           </button>
         </div>
       </div>
@@ -123,10 +126,10 @@
       <h2>Add a Service</h2>
       <div class="tm-addServiceRow">
   <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
-    Tap Add Another Service to keep building this estimate.
+    Tap Add Service Line to keep building this quote.
   </span>
   <button id="addLineBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
-    Add Another Service
+    Add Service Line
   </button>
 </div>
     </div>
@@ -332,7 +335,7 @@
       <div id="estimateSavedBlock" class="tm-card" style="margin-top:12px; padding:14px 16px;" hidden>
         <div style="font-weight:800; margin-bottom:6px;">Customer Quote Saved</div>
         <div class="tm-hint" style="margin-bottom:10px;">This quote is ready to reopen, share, or download as a customer PDF.</div>
-        <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <div class="tm-saved-quote-actions" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
           {% if not shared_id %}
           <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
           {% endif %}
@@ -357,6 +360,7 @@
         {% if shared_id %}
         <div class="tm-hint">This shared estimate is ready for review and customer approval, with PDF, email, and share handoff support for professional repair decisions.</div>
         {% endif %}
+        <div class="estimator-final-step">Final step</div>
         <div class="estimator-final-heading">Finish Customer Quote</div>
         <div class="tm-hint estimator-final-hint">Review customer details, choose PDF visibility, then create the customer-ready quote.</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta">

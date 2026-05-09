@@ -574,10 +574,23 @@ button:active{
   display: grid;
   gap: 10px;
   margin-top: 24px;
-  padding: 16px;
-  border: 1px solid rgba(20,184,166,.28);
+  padding: 18px;
+  border: 1px solid rgba(20,184,166,.34);
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(20,184,166,.08) 0%, rgba(20,184,166,.03) 100%);
+}
+
+.estimator-final-step{
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid rgba(20,184,166,.24);
+  border-radius: 999px;
+  background: rgba(20,184,166,.10);
+  color: var(--tm-text-muted);
+  font-size: .72rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .estimator-final-heading{
@@ -645,6 +658,13 @@ button:active{
 .tm-estimator-lede{
   margin-top: 12px;
   line-height: 1.5;
+}
+
+.tm-cta-helper{
+  margin-top: 4px;
+  color: var(--tm-text-muted);
+  font-size: .84rem;
+  line-height: 1.35;
 }
 
 .tm-estimator-credibility{
@@ -982,6 +1002,13 @@ input[type="radio"]{
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.tm-vehicle-cta-group .clear-fields-btn,
+.tm-saved-quote-actions .tm-btn-secondary,
+.tm-shared-quote-actions .tm-btn-secondary,
+.tm-confirm-secondary-actions .tm-btn-secondary{
+  box-shadow: none;
 }
 
 .tm-estimate-total-bar{
@@ -1809,14 +1836,20 @@ canvas,
   .estimator-final-actions{
     gap: 9px;
     margin-top: 18px;
-    padding: 14px;
+    padding: 16px;
+  }
+
+  .estimator-final-step{
+    justify-self: center;
   }
 
   .estimator-final-heading{
+    text-align: center;
     font-size: .96rem;
   }
 
   .estimator-final-hint{
+    text-align: center;
     font-size: .78rem;
   }
 
@@ -2601,6 +2634,12 @@ h3{
     align-items: stretch;
   }
 
+  .tm-vehicle-cta-group{
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 8px !important;
+  }
+
   .tm-estimate-total-bar{
     flex-direction: column;
     align-items: flex-start;
@@ -2616,7 +2655,7 @@ h3{
   }
 
   .section-header--vehicles h2 {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .section-header--vehicles button {
