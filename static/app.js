@@ -766,17 +766,12 @@
   let serviceMeta = null;
   let signatureDataUrl = null;
   let editingLineItem = null; // { serviceCode, serviceText }
-  let activeLineItemId = null;
 
   function createLineItemId() {
     if (window.crypto?.randomUUID) {
       return `line_${window.crypto.randomUUID()}`;
     }
     return `line_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-  }
-
-  function getLineItemById(lineItemId) {
-    return lineItems.find((it) => it.id === lineItemId) || null;
   }
 
   // ---- Saved Drafts (localStorage) ----
@@ -996,7 +991,6 @@
       clearSignatureCanvas();
 
       // Reset editor state
-      activeLineItemId = null;
       editingLineItem = null;
       laborHoursTouched = false;
       readyForNextService = true;
@@ -1396,28 +1390,21 @@ const confidenceEl = document.getElementById("laborConfidence");
     return Math.round(base + travel);
   }
 
-  function getLivePricingTarget() {
-    return activeLineItemId ? getLineItemById(activeLineItemId) : null;
+  function syncLivePricingFromInputs() {
+    // Pricing Controls are draft inputs only. Never live-write them into saved quote cards.
+    // Saved cards are updated only when a new line item snapshot is added or an explicit card edit mode is introduced.
+    refreshQuotePreview();
   }
 
-  function syncLivePricingFromInputs() {
-    const it = getLivePricingTarget();
-    if (!it) {
-      renderEstimateTotalBar();
-      refreshQuotePreview();
-      return;
-    }
-
-    it.pricingMode = getPricingMode();
-    it.flatRatePrice = pricingInputNumber(flatRatePriceEl);
-    it.travelFee = pricingInputNumber(travelFeeEl);
-    it.laborHours = pricingInputNumber(laborHoursEl);
-    it.partsPrice = pricingInputNumber(partsPriceEl);
-    it.laborRate = pricingInputNumber(laborRateEl);
-    it.estimate = calcLineItemEstimate(it);
-
-    renderLineItems();
-    refreshQuotePreview();
+  function buildPricingSnapshotFromControls() {
+    return {
+      pricingMode: getPricingMode(),
+      flatRatePrice: pricingInputNumber(flatRatePriceEl),
+      travelFee: pricingInputNumber(travelFeeEl),
+      laborHours: pricingInputNumber(laborHoursEl),
+      partsPrice: pricingInputNumber(partsPriceEl),
+      laborRate: pricingInputNumber(laborRateEl),
+    };
   }
 
   function buildLineItemEstimateRequest(it) {
@@ -3112,6 +3099,7 @@ if (getEstimateHint) {
       return;
     }
 
+    const pricingSnapshot = buildPricingSnapshotFromControls();
     const it = {
       id: createLineItemId(),
       vehicleId: activeVehicle.id,
@@ -3121,20 +3109,13 @@ if (getEstimateHint) {
       vehicleModel: activeVehicle.model || "",
       serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
       serviceText,
-      pricingMode: getPricingMode(),
-      flatRatePrice: pricingInputNumber(flatRatePriceEl),
-      travelFee: pricingInputNumber(travelFeeEl),
-      laborHours: pricingInputNumber(laborHoursEl),
-      partsPrice: pricingInputNumber(partsPriceEl),
-      laborRate: pricingInputNumber(laborRateEl),
+      ...pricingSnapshot,
       notes: (notesEl?.value || "").trim() || null,
       estimate: null,
     };
 
     // add the card immediately
     lineItems.push(it);
-    const addedLineItemId = it.id;
-    activeLineItemId = addedLineItemId;
     renderLineItems();
 
     setStatus("info", `Pricing: ${serviceText}…`);
@@ -3156,19 +3137,12 @@ if (getEstimateHint) {
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
 
         readyForNextService = false;
-        activeLineItemId = null;
         updateEstimateButtonState();
         void refreshPairedSuggestions();
         return;
       }
 
-      const req = buildRequest({
-        serviceCode: it.serviceCode,
-        laborHours: it.laborHours,
-        partsPrice: it.partsPrice,
-        laborRate: it.laborRate,
-        notes: it.notes,
-      });
+      const req = buildLineItemEstimateRequest(it);
 
       const res = await apiJSON("/estimate", {
         method: "POST",
@@ -3213,16 +3187,12 @@ if (getEstimateHint) {
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
 
       readyForNextService = false;
-      activeLineItemId = null;
       updateEstimateButtonState();
       void refreshPairedSuggestions();
     } catch (e) {
       const currentIndex = lineItems.indexOf(it);
       if (currentIndex >= 0) {
         lineItems.splice(currentIndex, 1);
-      }
-      if (activeLineItemId === addedLineItemId) {
-        activeLineItemId = null;
       }
       renderLineItems();
       void refreshPairedSuggestions();
@@ -3258,7 +3228,6 @@ if (getEstimateHint) {
     togglePricingModeUI();
 
     // Unlock Add Service to Estimate
-    activeLineItemId = null;
     readyForNextService = true;
     updateEstimateButtonState();
 
@@ -3284,9 +3253,6 @@ if (getEstimateHint) {
     // =========================
     if (action === "remove") {
       lineItems.splice(idx, 1);
-      if (activeLineItemId === it.id) {
-        activeLineItemId = null;
-      }
       renderLineItems();
       void refreshPairedSuggestions();
       return;
@@ -3552,8 +3518,6 @@ if (getEstimateHint) {
     try {
       closeConfirm();
     } catch (_) {}
-
-    activeLineItemId = null;
 
     estimateState = {
       customer: {
