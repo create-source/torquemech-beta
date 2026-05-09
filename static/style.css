@@ -722,18 +722,19 @@ button:active{
 }
 
 .tm-addServiceRow .add-more-btn{
-  min-height: 38px;
-  padding: 8px 12px;
-  border: 1px solid var(--tm-border-strong);
-  background: var(--tm-surface);
+  min-height: 46px;
+  padding: 11px 16px;
+  border: 1px solid rgba(20,184,166,.42);
+  background: linear-gradient(180deg, rgba(20,184,166,.10) 0%, rgba(20,184,166,.04) 100%);
   color: var(--tm-text);
-  box-shadow: none;
-  font-size: .84rem;
-  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(17,179,173,.10);
+  font-size: .92rem;
+  font-weight: 900;
 }
 
 .tm-addServiceRow .add-more-btn:hover{
-  background: var(--tm-surface-2);
+  border-color: rgba(20,184,166,.58);
+  background: linear-gradient(180deg, rgba(20,184,166,.14) 0%, rgba(20,184,166,.06) 100%);
 }
 
 .tm-quick-quotes{
@@ -1820,6 +1821,21 @@ canvas,
     min-height: 0;
     padding: 10px 12px;
     font-size: .78rem;
+  }
+
+  .tm-addServiceRow{
+    width: 100%;
+  }
+
+  .tm-addServiceRow .tm-hint{
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .tm-addServiceRow .add-more-btn{
+    width: 100%;
+    min-height: 50px;
+    font-size: .95rem;
   }
 
   .tm-estimate-action-panel{
