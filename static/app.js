@@ -2961,16 +2961,17 @@ const confidenceEl = document.getElementById("laborConfidence");
                   type="button"
                   class="tm-btn tm-btn-secondary tm-service-toggle"
                   data-action="toggle-breakdown"
+                  data-line-item-id="${lineItemId}"
                 >
                   ${it.breakdownOpen ? "Hide labor breakdown" : "Show labor breakdown"}
                 </button>
               ` : ""}
 
-              <button type="button" class="tm-btn tm-btn-secondary" data-action="estimate">
+              <button type="button" class="tm-btn tm-btn-secondary" data-action="estimate" data-line-item-id="${lineItemId}">
                 Recalculate
               </button>
 
-              <button type="button" class="tm-btn tm-btn-danger" data-action="remove">
+              <button type="button" class="tm-btn tm-btn-danger" data-action="remove" data-line-item-id="${lineItemId}">
                 Remove
               </button>
             </div>
@@ -3238,15 +3239,28 @@ if (getEstimateHint) {
   lineItemsList?.addEventListener("click", async (e) => {
     const btn = e.target?.closest?.("button[data-action]");
     if (!btn) return;
+    e.preventDefault();
 
     const row = btn.closest(".tm-service-card");
-    const lineItemId = row?.dataset?.lineItemId || "";
+    const lineItemId = btn.dataset.lineItemId || row?.dataset?.lineItemId || "";
     const idx = lineItems.findIndex((candidate) => candidate.id === lineItemId);
-    if (idx < 0) return;
+    if (idx < 0) {
+      console.warn("Quoted service action ignored: line item id not found", {
+        action: btn.dataset.action || "",
+        lineItemId,
+      });
+      return;
+    }
 
     const action = btn.dataset.action;
     const it = lineItems[idx];
-    if (!it) return;
+    if (!it) {
+      console.warn("Quoted service action ignored: line item missing", {
+        action,
+        lineItemId,
+      });
+      return;
+    }
 
     // =========================
     // REMOVE (FIRST)
@@ -3319,7 +3333,13 @@ if (getEstimateHint) {
       } catch (e) {
         setStatus("error", `Estimate failed: ${e.message}`);
       }
+      return;
     }
+
+    console.warn("Quoted service action ignored: unknown action", {
+      action,
+      lineItemId,
+    });
   });
 
   let isGeneratingCustomerPdf = false;
