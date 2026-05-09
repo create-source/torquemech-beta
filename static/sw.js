@@ -1,6 +1,6 @@
 /* static/sw.js */
 
-const VERSION = "torquemech-v4"; // bump this anytime you change sw.js
+const VERSION = "torquemech-v5"; // bump this anytime you change sw.js
 const STATIC_CACHE = `static-${VERSION}`;
 const RUNTIME_CACHE = `runtime-${VERSION}`;
 
