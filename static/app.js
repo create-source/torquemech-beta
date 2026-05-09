@@ -1420,6 +1420,22 @@ const confidenceEl = document.getElementById("laborConfidence");
     refreshQuotePreview();
   }
 
+  function buildLineItemEstimateRequest(it) {
+    return {
+      year: Number(it.vehicleYear || 0),
+      make: String(it.vehicleMake || "").trim(),
+      model: String(it.vehicleModel || "").trim(),
+      serviceCode: it.serviceCode,
+      pricingMode: it.pricingMode,
+      flatRatePrice: Number(it.flatRatePrice || 0),
+      travelFee: Number(it.travelFee || 0),
+      laborHours: Number(it.laborHours || 0),
+      partsPrice: Number(it.partsPrice || 0),
+      laborRate: Number(it.laborRate || 0),
+      notes: it.notes,
+    };
+  }
+
   function refreshQuotePreview() {
     if (!quotePreviewEl) return;
     quotePreviewEl.value = buildQuoteMessage();
@@ -3140,6 +3156,7 @@ if (getEstimateHint) {
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
 
         readyForNextService = false;
+        activeLineItemId = null;
         updateEstimateButtonState();
         void refreshPairedSuggestions();
         return;
@@ -3196,6 +3213,7 @@ if (getEstimateHint) {
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
 
       readyForNextService = false;
+      activeLineItemId = null;
       updateEstimateButtonState();
       void refreshPairedSuggestions();
     } catch (e) {
@@ -3307,19 +3325,9 @@ if (getEstimateHint) {
           return;
         }
 
-        const req = {
-          year: Number(it.vehicleYear || 0),
-          make: String(it.vehicleMake || "").trim(),
-          model: String(it.vehicleModel || "").trim(),
-          serviceCode: it.serviceCode,
-          pricingMode: it.pricingMode,
-          flatRatePrice: Number(it.flatRatePrice || 0),
-          travelFee: Number(it.travelFee || 0),
-          laborHours: it.laborHours,
-          partsPrice: it.partsPrice,
-          laborRate: it.laborRate,
-          notes: it.notes,
-        };
+        // Card recalculation must use the clicked line item's saved pricing only.
+        // Do not read global Pricing Controls here; those are for the next draft service.
+        const req = buildLineItemEstimateRequest(it);
         const res = await apiJSON("/estimate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -4070,19 +4078,7 @@ if (getEstimateHint) {
           continue;
         }
 
-        const req = {
-          year: Number(it.vehicleYear || 0),
-          make: String(it.vehicleMake || "").trim(),
-          model: String(it.vehicleModel || "").trim(),
-          serviceCode: it.serviceCode,
-          pricingMode: it.pricingMode,
-          flatRatePrice: Number(it.flatRatePrice || 0),
-          travelFee: Number(it.travelFee || 0),
-          laborHours: it.laborHours,
-          partsPrice: it.partsPrice,
-          laborRate: it.laborRate,
-          notes: it.notes,
-        };
+        const req = buildLineItemEstimateRequest(it);
 
         const res = await apiJSON("/estimate", {
           method: "POST",
