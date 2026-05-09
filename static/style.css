@@ -571,6 +571,17 @@ button:active{
   box-shadow: 0 14px 28px rgba(17,179,173,.26);
 }
 
+.tm-quote-trust-microcopy{
+  color: var(--tm-text-muted);
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
+.tm-quote-trust-microcopy--saved,
+.tm-quote-trust-microcopy--shared{
+  margin-top: 8px;
+}
+
 .tm-estimator-quickstart{
   margin-top: 14px;
   padding: 14px 16px;
@@ -1750,6 +1761,16 @@ canvas,
   .estimator-final-cta{
     min-height: 52px;
     padding: 13px 16px;
+  }
+
+  .tm-quote-trust-microcopy{
+    font-size: .78rem;
+  }
+
+  .estimator-final-actions .tm-quote-trust-microcopy,
+  .tm-quote-trust-microcopy--shared,
+  .tm-quote-trust-microcopy--saved{
+    text-align: center;
   }
 
   .tm-quick-quotes{
