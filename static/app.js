@@ -766,12 +766,17 @@
   let serviceMeta = null;
   let signatureDataUrl = null;
   let editingLineItem = null; // { serviceCode, serviceText }
+  let activeEditingLineId = null;
 
   function createLineItemId() {
     if (window.crypto?.randomUUID) {
       return `line_${window.crypto.randomUUID()}`;
     }
     return `line_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function getLineItemById(lineItemId) {
+    return lineItems.find((it) => it.id === lineItemId) || null;
   }
 
   // ---- Saved Drafts (localStorage) ----
@@ -991,6 +996,7 @@
       clearSignatureCanvas();
 
       // Reset editor state
+      activeEditingLineId = null;
       editingLineItem = null;
       laborHoursTouched = false;
       readyForNextService = true;
@@ -1407,6 +1413,18 @@ const confidenceEl = document.getElementById("laborConfidence");
     };
   }
 
+  function loadPricingSnapshotIntoControls(it) {
+    if (!it) return;
+    if (pricingModeEl) pricingModeEl.value = it.pricingMode === "flat" ? "flat" : "hourly";
+    if (flatRatePriceEl) flatRatePriceEl.value = String(Number(it.flatRatePrice || 0));
+    if (travelFeeEl) travelFeeEl.value = String(Number(it.travelFee || 0));
+    if (laborHoursEl) laborHoursEl.value = String(Number(it.laborHours || 0));
+    if (partsPriceEl) partsPriceEl.value = String(Number(it.partsPrice || 0));
+    if (laborRateEl) laborRateEl.value = String(Number(it.laborRate || 0));
+    laborHoursTouched = true;
+    togglePricingModeUI();
+  }
+
   function buildLineItemEstimateRequest(it) {
     return {
       year: Number(it.vehicleYear || 0),
@@ -1421,6 +1439,35 @@ const confidenceEl = document.getElementById("laborConfidence");
       laborRate: Number(it.laborRate || 0),
       notes: it.notes,
     };
+  }
+
+  async function recalculateLineItemFromSnapshot(it, action = "line_item_recalculate") {
+    if (!it) return;
+
+    if (it.pricingMode === "flat") {
+      it.estimate = calcLineItemEstimate(it);
+      return;
+    }
+
+    const req = buildLineItemEstimateRequest(it);
+    const res = await apiJSON("/estimate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req),
+    });
+
+    it.laborBreakdown = res.labor_breakdown || null;
+    it.breakdownOpen = false;
+    it.estimate = calcLineItemEstimate(it);
+    lastEstimate = { req, res };
+
+    trackClarity("estimate_generated", {
+      source: "estimator",
+      action,
+      service_code: it.serviceCode,
+      service_name: it.serviceText,
+      estimate_total: Number(it.estimate || 0)
+    });
   }
 
   function refreshQuotePreview() {
@@ -2967,8 +3014,8 @@ const confidenceEl = document.getElementById("laborConfidence");
                 </button>
               ` : ""}
 
-              <button type="button" class="tm-btn tm-btn-secondary" data-action="estimate" data-line-item-id="${lineItemId}">
-                Recalculate
+              <button type="button" class="tm-btn tm-btn-secondary" data-action="edit-line" data-line-item-id="${lineItemId}">
+                Edit Line
               </button>
 
               <button type="button" class="tm-btn tm-btn-danger" data-action="remove" data-line-item-id="${lineItemId}">
@@ -3012,23 +3059,33 @@ const confidenceEl = document.getElementById("laborConfidence");
     const activeVehicle = getActiveVehicle() || {};
     const hasBasics = !!(activeVehicle.year && activeVehicle.make && activeVehicle.model);
     const hasSelection = !!(categoryEl?.value && serviceEl?.value);
+    const isEditingSavedLine = !!activeEditingLineId;
 
     // --- Add Service button label (dynamic) ---
     if (addLineBtn) {
       // If user already added a service (locked state), guide them to add another
       addLineBtn.textContent = "Add Another Job";
-      addLineBtn.hidden = lineItems.length === 0 && readyForNextService;
+      addLineBtn.hidden = isEditingSavedLine || (lineItems.length === 0 && readyForNextService);
     }
 
-    estimateBtn.disabled = !(hasBasics && hasSelection && readyForNextService);
-    estimateBtn.textContent = editingLineItem ? "Update Quote Line" : "Add Service to Quote";
+    estimateBtn.disabled = isEditingSavedLine ? false : !(hasBasics && hasSelection && readyForNextService);
+    estimateBtn.textContent = isEditingSavedLine
+      ? "Save Line Changes"
+      : editingLineItem ? "Update Quote Line" : "Add Service to Quote";
 
 
 // Hint text: when locked, explain the flow
-if (addServiceHint) addServiceHint.hidden = !!readyForNextService; // show only after a service is added
+if (addServiceHint) {
+  addServiceHint.hidden = isEditingSavedLine ? false : !!readyForNextService;
+  if (isEditingSavedLine) {
+    addServiceHint.textContent = "Editing saved line. Update pricing, then save changes.";
+  } else {
+    addServiceHint.textContent = "Tap Add Service Line to keep building this quote.";
+  }
+}
 if (getEstimateHint) {
   // Show hint only when button is disabled
-  getEstimateHint.hidden = !estimateBtn.disabled;
+  getEstimateHint.hidden = isEditingSavedLine || !estimateBtn.disabled;
 
   if (!getEstimateHint.hidden) {
     getEstimateHint.textContent = !hasBasics
@@ -3040,7 +3097,9 @@ if (getEstimateHint) {
 }
 
     if (workflowStepText) {
-      workflowStepText.textContent = !hasBasics
+      workflowStepText.textContent = isEditingSavedLine
+        ? "Editing saved line. Update pricing, then save changes."
+        : !hasBasics
         ? "Set the vehicle before pricing the job."
         : !hasSelection
           ? "Choose the repair job for this vehicle."
@@ -3050,10 +3109,11 @@ if (getEstimateHint) {
     }
 
     // Add Another Service enabled ONLY after a service has been added
-    if (addLineBtn) addLineBtn.disabled = readyForNextService;
+    if (addLineBtn) addLineBtn.disabled = isEditingSavedLine || readyForNextService;
 
     // keep status helpful, but don't spam over error messages
-    if (!hasBasics) setStatus("info", "Set the vehicle before pricing the job.");
+    if (isEditingSavedLine) setStatus("info", "Editing saved line. Update pricing, then save changes.");
+    else if (!hasBasics) setStatus("info", "Set the vehicle before pricing the job.");
     else if (!hasSelection) setStatus("info", "Choose a category and repair job.");
     else if (!readyForNextService) setStatus("info", "Job added. Add another job or review the quote.");
     else setStatus("info", "Review pricing, then add this job to the quote.");
@@ -3069,6 +3129,35 @@ if (getEstimateHint) {
         event_label: "Estimator Tool"
       });
     }
+
+    if (activeEditingLineId) {
+      const it = getLineItemById(activeEditingLineId);
+      if (!it) {
+        console.warn("Save Line Changes ignored: active line item not found", {
+          activeEditingLineId,
+        });
+        activeEditingLineId = null;
+        updateEstimateButtonState();
+        return;
+      }
+
+      Object.assign(it, buildPricingSnapshotFromControls());
+      setStatus("info", `Saving changes to ${it.serviceText}...`);
+
+      try {
+        await recalculateLineItemFromSnapshot(it, "line_item_save_changes");
+        activeEditingLineId = null;
+        readyForNextService = false;
+        renderLineItems();
+        void refreshPairedSuggestions();
+        updateEstimateButtonState();
+        setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Line updated.`);
+      } catch (e) {
+        setStatus("error", `Save line failed: ${e.message}`);
+      }
+      return;
+    }
+
     if (!readyForNextService) return;
 
     const activeVehicle = getActiveVehicle();
@@ -3208,6 +3297,7 @@ if (getEstimateHint) {
   // Add Another Service
   addLineBtn?.addEventListener("click", () => {
     // Clear selections
+    activeEditingLineId = null;
     categoryEl.value = "";
     serviceEl.value = "";
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
@@ -3266,6 +3356,9 @@ if (getEstimateHint) {
     // REMOVE (FIRST)
     // =========================
     if (action === "remove") {
+      if (activeEditingLineId === it.id) {
+        activeEditingLineId = null;
+      }
       lineItems.splice(idx, 1);
       renderLineItems();
       void refreshPairedSuggestions();
@@ -3275,6 +3368,18 @@ if (getEstimateHint) {
     if (action === "toggle-breakdown") {
       it.breakdownOpen = !it.breakdownOpen;
       renderLineItems();
+      return;
+    }
+
+    if (action === "edit-line") {
+      activeEditingLineId = it.id;
+      loadPricingSnapshotIntoControls(it);
+      updateEstimateButtonState();
+      document.querySelector(".pricing-controls")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      setStatus("info", "Editing saved line. Update pricing, then save changes.");
       return;
     }
 
@@ -3538,6 +3643,8 @@ if (getEstimateHint) {
     try {
       closeConfirm();
     } catch (_) {}
+
+    activeEditingLineId = null;
 
     estimateState = {
       customer: {
