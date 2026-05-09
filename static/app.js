@@ -698,7 +698,7 @@
       vehicle.services = lineItems
         .filter(it => it.vehicleId === vehicle.id)
         .map((it, index) => ({
-          id: `svc_${vehicle.id}_${index}`,
+          id: it.id || `svc_${vehicle.id}_${index}`,
           vehicleId: vehicle.id,
           vehicleLabel: it.vehicleLabel || getVehicleLabel(vehicle),
           serviceCode: it.serviceCode,
@@ -766,7 +766,18 @@
   let serviceMeta = null;
   let signatureDataUrl = null;
   let editingLineItem = null; // { serviceCode, serviceText }
-  let activeLineItemIndex = null;
+  let activeLineItemId = null;
+
+  function createLineItemId() {
+    if (window.crypto?.randomUUID) {
+      return `line_${window.crypto.randomUUID()}`;
+    }
+    return `line_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function getLineItemById(lineItemId) {
+    return lineItems.find((it) => it.id === lineItemId) || null;
+  }
 
   // ---- Saved Drafts (localStorage) ----
   const DRAFTS_KEY = "torquemech_drafts_v1";
@@ -907,6 +918,7 @@
 
     return {
       ...it,
+      id: it?.id || createLineItemId(),
       vehicleId,
       vehicleLabel,
       vehicleYear,
@@ -984,7 +996,7 @@
       clearSignatureCanvas();
 
       // Reset editor state
-      activeLineItemIndex = null;
+      activeLineItemId = null;
       editingLineItem = null;
       laborHoursTouched = false;
       readyForNextService = true;
@@ -1385,10 +1397,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   function getLivePricingTarget() {
-    if (activeLineItemIndex != null && lineItems[activeLineItemIndex]) {
-      return lineItems[activeLineItemIndex];
-    }
-    return null;
+    return activeLineItemId ? getLineItemById(activeLineItemId) : null;
   }
 
   function syncLivePricingFromInputs() {
@@ -2892,6 +2901,9 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     lineItemsList.innerHTML = lineItems
       .map((it, idx) => {
+        if (!it.id) {
+          it.id = createLineItemId();
+        }
         const est = it.estimate != null ? money(it.estimate) : "—";
 
         const travelLabel = Number(it.travelFee || 0) > 0
@@ -2921,9 +2933,10 @@ const confidenceEl = document.getElementById("laborConfidence");
           it.laborBreakdown &&
           Array.isArray(it.laborBreakdown.steps) &&
           it.laborBreakdown.steps.length > 0;
+        const lineItemId = it.id || "";
 
         return `
-          <div class="tm-service-card" data-idx="${idx}">
+          <div class="tm-service-card" data-idx="${idx}" data-line-item-id="${lineItemId}">
             <div class="tm-service-head">
               <div class="tm-service-head-main">
                 <div class="tm-service-title">${it.serviceText || "Service"}</div>
@@ -3084,6 +3097,7 @@ if (getEstimateHint) {
     }
 
     const it = {
+      id: createLineItemId(),
       vehicleId: activeVehicle.id,
       vehicleLabel: getVehicleLabel(activeVehicle),
       vehicleYear: activeVehicle.year || "",
@@ -3103,8 +3117,8 @@ if (getEstimateHint) {
 
     // add the card immediately
     lineItems.push(it);
-    const addedLineItemIndex = lineItems.length - 1;
-    activeLineItemIndex = addedLineItemIndex;
+    const addedLineItemId = it.id;
+    activeLineItemId = addedLineItemId;
     renderLineItems();
 
     setStatus("info", `Pricing: ${serviceText}…`);
@@ -3189,10 +3203,8 @@ if (getEstimateHint) {
       if (currentIndex >= 0) {
         lineItems.splice(currentIndex, 1);
       }
-      if (activeLineItemIndex === currentIndex || activeLineItemIndex === addedLineItemIndex) {
-        activeLineItemIndex = null;
-      } else if (activeLineItemIndex != null && currentIndex >= 0 && activeLineItemIndex > currentIndex) {
-        activeLineItemIndex -= 1;
+      if (activeLineItemId === addedLineItemId) {
+        activeLineItemId = null;
       }
       renderLineItems();
       void refreshPairedSuggestions();
@@ -3228,7 +3240,7 @@ if (getEstimateHint) {
     togglePricingModeUI();
 
     // Unlock Add Service to Estimate
-    activeLineItemIndex = null;
+    activeLineItemId = null;
     readyForNextService = true;
     updateEstimateButtonState();
 
@@ -3241,8 +3253,9 @@ if (getEstimateHint) {
     if (!btn) return;
 
     const row = btn.closest(".tm-service-card");
-    const idx = Number(row?.dataset?.idx);
-    if (!Number.isFinite(idx)) return;
+    const lineItemId = row?.dataset?.lineItemId || "";
+    const idx = lineItems.findIndex((candidate) => candidate.id === lineItemId);
+    if (idx < 0) return;
 
     const action = btn.dataset.action;
     const it = lineItems[idx];
@@ -3253,10 +3266,8 @@ if (getEstimateHint) {
     // =========================
     if (action === "remove") {
       lineItems.splice(idx, 1);
-      if (activeLineItemIndex === idx) {
-        activeLineItemIndex = null;
-      } else if (activeLineItemIndex != null && activeLineItemIndex > idx) {
-        activeLineItemIndex -= 1;
+      if (activeLineItemId === it.id) {
+        activeLineItemId = null;
       }
       renderLineItems();
       void refreshPairedSuggestions();
@@ -3273,20 +3284,10 @@ if (getEstimateHint) {
     // ESTIMATE
     // =========================
     if (action === "estimate") {
-      activeLineItemIndex = idx;
       if (!(it.vehicleYear && it.vehicleMake && it.vehicleModel)) {
         setStatus("error", "Assigned vehicle is missing year, make, or model.");
         return;
       }
-
-      // Apply editor values first
-      it.laborHours = pricingInputNumber(laborHoursEl);
-      it.partsPrice = pricingInputNumber(partsPriceEl);
-      it.laborRate = pricingInputNumber(laborRateEl);
-      it.pricingMode = getPricingMode();
-      it.flatRatePrice = pricingInputNumber(flatRatePriceEl);
-      it.travelFee = pricingInputNumber(travelFeeEl);
-      it.notes = (notesEl?.value || "").trim() || null;
 
       renderLineItems();
       setStatus("info", `Recalculating ${it.serviceText}…`);
@@ -3307,11 +3308,13 @@ if (getEstimateHint) {
         }
 
         const req = {
-          ...buildRequest(),
           year: Number(it.vehicleYear || 0),
           make: String(it.vehicleMake || "").trim(),
           model: String(it.vehicleModel || "").trim(),
           serviceCode: it.serviceCode,
+          pricingMode: it.pricingMode,
+          flatRatePrice: Number(it.flatRatePrice || 0),
+          travelFee: Number(it.travelFee || 0),
           laborHours: it.laborHours,
           partsPrice: it.partsPrice,
           laborRate: it.laborRate,
@@ -3542,7 +3545,7 @@ if (getEstimateHint) {
       closeConfirm();
     } catch (_) {}
 
-    activeLineItemIndex = null;
+    activeLineItemId = null;
 
     estimateState = {
       customer: {
@@ -4068,11 +4071,13 @@ if (getEstimateHint) {
         }
 
         const req = {
-          ...buildRequest(),
           year: Number(it.vehicleYear || 0),
           make: String(it.vehicleMake || "").trim(),
           model: String(it.vehicleModel || "").trim(),
           serviceCode: it.serviceCode,
+          pricingMode: it.pricingMode,
+          flatRatePrice: Number(it.flatRatePrice || 0),
+          travelFee: Number(it.travelFee || 0),
           laborHours: it.laborHours,
           partsPrice: it.partsPrice,
           laborRate: it.laborRate,
