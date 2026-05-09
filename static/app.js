@@ -1059,33 +1059,56 @@
     if (!inputEl) return;
 
     let replaceOnNextEntry = false;
+    let focusedValue = "";
     const isZeroValue = (value) => /^0(?:\.0+)?$/.test(String(value || "").trim());
     const selectCurrentValue = () => {
       if (!inputEl.value) return;
       try {
         inputEl.select();
       } catch (_) {}
+      try {
+        inputEl.setSelectionRange(0, String(inputEl.value || "").length);
+      } catch (_) {}
     };
 
-    inputEl.addEventListener("focus", () => {
+    const prepareForReplace = () => {
       const value = String(inputEl.value || "").trim();
+      focusedValue = value;
       replaceOnNextEntry = false;
 
       if (isZeroValue(value)) {
         inputEl.value = "";
+        focusedValue = "";
         return;
       }
 
       replaceOnNextEntry = true;
       selectCurrentValue();
       window.requestAnimationFrame?.(selectCurrentValue);
+      window.setTimeout(selectCurrentValue, 0);
+    };
+
+    inputEl.addEventListener("focus", prepareForReplace);
+    inputEl.addEventListener("click", prepareForReplace);
+    inputEl.addEventListener("touchend", () => {
+      window.setTimeout(prepareForReplace, 0);
     });
 
     inputEl.addEventListener("beforeinput", (event) => {
       if (!replaceOnNextEntry) return;
       if (!String(event.inputType || "").startsWith("insert")) return;
 
-      inputEl.value = "";
+      const insertedValue = event.data || "";
+      if (insertedValue) {
+        event.preventDefault();
+        inputEl.value = insertedValue;
+        if (inputEl === laborHoursEl) {
+          laborHoursTouched = true;
+        }
+        syncLivePricingFromInputs();
+      } else if (String(inputEl.value || "") === focusedValue) {
+        inputEl.value = "";
+      }
       replaceOnNextEntry = false;
     });
 
@@ -1100,8 +1123,15 @@
     });
 
     inputEl.addEventListener("input", () => {
+      if (replaceOnNextEntry && focusedValue) {
+        const currentValue = String(inputEl.value || "");
+        const replacementValue = currentValue.replace(focusedValue, "");
+        if (replacementValue && replacementValue !== currentValue) {
+          inputEl.value = replacementValue;
+        }
+      }
       replaceOnNextEntry = false;
-    });
+    }, true);
   }
 
   installPricingNumberFocusBehavior(laborHoursEl, "0");
