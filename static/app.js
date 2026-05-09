@@ -1055,6 +1055,61 @@
   flatRatePriceEl?.addEventListener("input", syncLivePricingFromInputs);
   travelFeeEl?.addEventListener("input", syncLivePricingFromInputs);
 
+  function installPricingNumberFocusBehavior(inputEl, fallbackValue = "0") {
+    if (!inputEl) return;
+
+    let replaceOnNextEntry = false;
+    const isZeroValue = (value) => /^0(?:\.0+)?$/.test(String(value || "").trim());
+    const selectCurrentValue = () => {
+      if (!inputEl.value) return;
+      try {
+        inputEl.select();
+      } catch (_) {}
+    };
+
+    inputEl.addEventListener("focus", () => {
+      const value = String(inputEl.value || "").trim();
+      replaceOnNextEntry = false;
+
+      if (isZeroValue(value)) {
+        inputEl.value = "";
+        return;
+      }
+
+      replaceOnNextEntry = true;
+      selectCurrentValue();
+      window.requestAnimationFrame?.(selectCurrentValue);
+    });
+
+    inputEl.addEventListener("beforeinput", (event) => {
+      if (!replaceOnNextEntry) return;
+      if (!String(event.inputType || "").startsWith("insert")) return;
+
+      inputEl.value = "";
+      replaceOnNextEntry = false;
+    });
+
+    inputEl.addEventListener("blur", () => {
+      replaceOnNextEntry = false;
+      if (String(inputEl.value || "").trim() !== "") return;
+      inputEl.value = fallbackValue;
+      if (inputEl === laborHoursEl) {
+        laborHoursTouched = false;
+      }
+      syncLivePricingFromInputs();
+    });
+
+    inputEl.addEventListener("input", () => {
+      replaceOnNextEntry = false;
+    });
+  }
+
+  installPricingNumberFocusBehavior(laborHoursEl, "0");
+  installPricingNumberFocusBehavior(partsPriceEl, "0");
+  installPricingNumberFocusBehavior(laborRateEl, "90");
+  installPricingNumberFocusBehavior(flatRatePriceEl, "0");
+  installPricingNumberFocusBehavior(travelFeeEl, "0");
+
   // ---- Utils ----
   function setStatus(kind, msg) {
     if (!statusBox) return;
@@ -1272,10 +1327,6 @@ const confidenceEl = document.getElementById("laborConfidence");
   function getLivePricingTarget() {
     if (activeLineItemIndex != null && lineItems[activeLineItemIndex]) {
       return lineItems[activeLineItemIndex];
-    }
-    if (lineItems.length === 1) {
-      activeLineItemIndex = 0;
-      return lineItems[0];
     }
     return null;
   }
@@ -2992,7 +3043,8 @@ if (getEstimateHint) {
 
     // add the card immediately
     lineItems.push(it);
-    activeLineItemIndex = lineItems.length - 1;
+    const addedLineItemIndex = lineItems.length - 1;
+    activeLineItemIndex = addedLineItemIndex;
     renderLineItems();
 
     setStatus("info", `Pricing: ${serviceText}…`);
@@ -3073,7 +3125,15 @@ if (getEstimateHint) {
       updateEstimateButtonState();
       void refreshPairedSuggestions();
     } catch (e) {
-      lineItems.pop();
+      const currentIndex = lineItems.indexOf(it);
+      if (currentIndex >= 0) {
+        lineItems.splice(currentIndex, 1);
+      }
+      if (activeLineItemIndex === currentIndex || activeLineItemIndex === addedLineItemIndex) {
+        activeLineItemIndex = null;
+      } else if (activeLineItemIndex != null && currentIndex >= 0 && activeLineItemIndex > currentIndex) {
+        activeLineItemIndex -= 1;
+      }
       renderLineItems();
       void refreshPairedSuggestions();
 
