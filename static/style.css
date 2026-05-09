@@ -319,6 +319,37 @@ body.dark .tm-hero,
   margin-top: 18px;
 }
 
+.tm-shared-quote-card{
+  margin-top: 14px;
+  padding: 16px;
+}
+
+.tm-shared-quote-kicker{
+  margin-bottom: 8px;
+  color: var(--tm-text-muted);
+  font-size: .78rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.tm-shared-quote-title{
+  margin-bottom: 6px;
+  color: var(--tm-text);
+  font-size: 1.08rem;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.tm-shared-quote-subtitle{
+  margin: 0 0 8px;
+  color: var(--tm-text-muted);
+  line-height: 1.5;
+}
+
+.tm-shared-quote-actions{
+  align-items: center;
+}
+
 /* Cards */
 .tm-card,
 .card,
@@ -1935,6 +1966,27 @@ canvas,
 
   #estimateSavedBlock .tm-btn{
     flex: 1 1 100%;
+  }
+
+  .tm-shared-quote-card{
+    padding: 14px;
+  }
+
+  .tm-shared-quote-kicker,
+  .tm-shared-quote-title,
+  .tm-shared-quote-subtitle{
+    text-align: center;
+  }
+
+  .tm-shared-quote-actions{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tm-shared-quote-actions .tm-btn{
+    width: 100%;
+    min-height: 48px;
   }
 
   #draftsMsg,

@@ -6,11 +6,12 @@
 {% block content %}
 
     <header style="display:flex;align-items:center;justify-content:space-between;">
-      <h1 style="margin:0;">Build a customer-ready repair quote</h1>
+      <h1 style="margin:0;">{% if shared_id %}Customer Repair Quote{% else %}Build a customer-ready repair quote{% endif %}</h1>
 
       <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
     </header>
 
+    {% if not shared_id %}
     <div class="tm-card tm-estimator-quickstart">
       <div class="tm-estimator-quickstart__title">Mobile quote workflow</div>
       <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
@@ -20,12 +21,14 @@
         <span>Send customer PDF</span>
       </div>
     </div>
+    {% endif %}
 
     {% if shared_id %}
-    <div class="tm-card" style="margin-top:14px; padding:14px 16px;">
-      <div style="font-weight:800; margin-bottom:8px;">Shared TorqueMech Quote</div>
-      <p class="tm-muted" style="margin:0 0 8px 0;">
-        This estimate was created using TorqueMech’s repair estimator and can be reviewed, saved, or converted into a PDF.
+    <div class="tm-card tm-shared-quote-card">
+      <div class="tm-shared-quote-kicker">Prepared with TorqueMech repair estimating tools.</div>
+      <div class="tm-shared-quote-title">Customer Repair Quote</div>
+      <p class="tm-shared-quote-subtitle">
+        Review the recommended services, parts, labor, and estimated total below.
       </p>
       <p class="tm-hint" style="margin:0 0 12px 0;">
         Prices are estimates and may vary by vehicle condition, parts quality, labor rate, location, and diagnostic findings.
@@ -36,8 +39,9 @@
         Services: <span id="sharedSnapshotServices">—</span><br>
         Quote Total: <span id="sharedSnapshotTotal">$0.00</span>
       </div>
-      <div class="tm-actions">
+      <div class="tm-actions tm-shared-quote-actions">
         <button id="sharedDownloadPdfBtn" type="button" class="tm-btn tm-btn-primary">Download Customer PDF</button>
+        <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
         <a href="/estimator" class="tm-btn tm-btn-secondary">Start New Quote</a>
       </div>
       <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--shared">Send this quote by text, email, or PDF.</div>
@@ -320,7 +324,9 @@
         <div style="font-weight:800; margin-bottom:6px;">Customer Quote Saved</div>
         <div class="tm-hint" style="margin-bottom:10px;">This quote is ready to reopen, share, or download as a customer PDF.</div>
         <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+          {% if not shared_id %}
           <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
+          {% endif %}
           <button id="openSavedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">Open Customer Quote</button>
           <button id="downloadSavedEstimatePdfBtn" type="button" class="tm-btn tm-btn-primary">Download Customer PDF</button>
         </div>
