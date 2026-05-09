@@ -722,14 +722,15 @@ button:active{
 }
 
 .tm-addServiceRow .add-more-btn{
-  min-height: 46px;
-  padding: 11px 16px;
-  border: 1px solid rgba(20,184,166,.42);
-  background: linear-gradient(180deg, rgba(20,184,166,.10) 0%, rgba(20,184,166,.04) 100%);
+  min-height: 50px;
+  padding: 13px 18px;
+  border: 2px solid rgba(20,184,166,.50);
+  background: linear-gradient(180deg, rgba(20,184,166,.14) 0%, rgba(20,184,166,.06) 100%);
   color: var(--tm-text);
-  box-shadow: 0 8px 18px rgba(17,179,173,.10);
-  font-size: .92rem;
-  font-weight: 900;
+  box-shadow: 0 10px 22px rgba(17,179,173,.13);
+  font-size: .98rem;
+  font-weight: 950;
+  border-radius: 12px;
 }
 
 .tm-addServiceRow .add-more-btn:hover{
@@ -1825,17 +1826,19 @@ canvas,
 
   .tm-addServiceRow{
     width: 100%;
+    margin: 8px 0 14px;
   }
 
   .tm-addServiceRow .tm-hint{
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    line-height: 1.4;
   }
 
   .tm-addServiceRow .add-more-btn{
     width: 100%;
-    min-height: 50px;
-    font-size: .95rem;
+    min-height: 54px;
+    font-size: 1rem;
   }
 
   .tm-estimate-action-panel{

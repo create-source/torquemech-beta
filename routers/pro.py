@@ -5,7 +5,22 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
+STATIC_DIR = BASE_DIR / "static"
+
+def static_version(asset_path: str) -> int:
+    rel_path = str(asset_path or "").split("?", 1)[0].lstrip("/")
+    if rel_path.startswith("static/"):
+        rel_path = rel_path[len("static/"):]
+
+    try:
+        asset_file = (STATIC_DIR / rel_path).resolve()
+        asset_file.relative_to(STATIC_DIR.resolve())
+        return int(asset_file.stat().st_mtime)
+    except Exception:
+        return 0
+
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.globals["static_version"] = static_version
 
 router = APIRouter(prefix="/pro", tags=["pro"])
 
