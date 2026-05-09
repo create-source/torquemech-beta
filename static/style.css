@@ -647,6 +647,25 @@ button:active{
   line-height: 1.5;
 }
 
+.tm-estimator-credibility{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tm-estimator-credibility__item{
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(11,22,40,.10);
+  border-radius: 10px;
+  background: rgba(248,250,252,.82);
+  color: var(--tm-text);
+  font-size: .82rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 .tm-estimate-action-panel{
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1762,6 +1781,18 @@ canvas,
 
   .tm-estimator-quickstart__steps{
     grid-template-columns: 1fr 1fr;
+  }
+
+  .tm-estimator-credibility{
+    grid-template-columns: 1fr;
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .tm-estimator-credibility__item{
+    min-height: 0;
+    padding: 10px 12px;
+    font-size: .78rem;
   }
 
   .tm-estimate-action-panel{

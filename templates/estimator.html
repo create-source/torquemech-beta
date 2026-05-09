@@ -61,6 +61,15 @@
       Build a clean repair quote from the phone. Labor, parts, flat rate, travel, and PDF totals stay aligned as you adjust the job.
     </div>
 
+    {% if not shared_id %}
+    <div class="tm-estimator-credibility" aria-label="TorqueMech estimator credibility">
+      <div class="tm-estimator-credibility__item">Built for mobile mechanics and independent shops</div>
+      <div class="tm-estimator-credibility__item">Customer-ready PDF quotes</div>
+      <div class="tm-estimator-credibility__item">Fast estimates from diagnostics and services</div>
+      <div class="tm-estimator-credibility__item">Designed for phone and tablet use</div>
+    </div>
+    {% endif %}
+
     <!-- Vehicles -->
     <section class="tm-card" aria-label="Vehicles" style="margin-top:14px;">
       <div class="section-header--vehicles">
