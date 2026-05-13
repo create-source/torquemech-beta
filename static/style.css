@@ -572,21 +572,23 @@ button:active{
 
 .estimator-final-actions{
   display: grid;
-  gap: 10px;
-  margin-top: 24px;
-  padding: 18px;
-  border: 1px solid rgba(20,184,166,.34);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(20,184,166,.08) 0%, rgba(20,184,166,.03) 100%);
+  gap: 12px;
+  margin-top: 26px;
+  padding: 22px;
+  border: 1px solid rgba(20,184,166,.36);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(241,250,249,.90) 100%);
+  box-shadow: 0 14px 34px rgba(15,23,42,.08);
 }
 
 .estimator-final-step{
   width: fit-content;
-  padding: 4px 8px;
-  border: 1px solid rgba(20,184,166,.24);
+  padding: 5px 9px;
+  border: 1px solid rgba(20,184,166,.30);
   border-radius: 999px;
-  background: rgba(20,184,166,.10);
-  color: var(--tm-text-muted);
+  background: rgba(20,184,166,.12);
+  color: #0f766e;
   font-size: .72rem;
   font-weight: 900;
   line-height: 1;
@@ -595,24 +597,25 @@ button:active{
 
 .estimator-final-heading{
   color: var(--tm-text);
-  font-size: 1rem;
+  font-size: 1.18rem;
   font-weight: 950;
-  line-height: 1.2;
+  line-height: 1.18;
 }
 
 .estimator-final-hint{
-  margin: -4px 0 2px;
-  line-height: 1.4;
+  max-width: 58ch;
+  margin: -2px 0 2px;
+  line-height: 1.5;
 }
 
 .estimator-final-cta{
   width: 100%;
-  min-height: 54px;
-  padding: 14px 18px;
-  font-size: 15px;
-  font-weight: 900;
-  border-radius: 10px;
-  box-shadow: 0 14px 28px rgba(17,179,173,.26);
+  min-height: 60px;
+  padding: 16px 20px;
+  font-size: 1.05rem;
+  font-weight: 950;
+  border-radius: 12px;
+  box-shadow: 0 18px 34px rgba(17,179,173,.30);
 }
 
 .tm-quote-trust-microcopy{
@@ -1456,13 +1459,13 @@ body.modal-open{
 }
 
 .tm-confirm-intro{
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   color: var(--tm-text-muted);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .tm-confirm-section{
-  padding: 14px 0;
+  padding: 16px 0;
   border-top: 1px solid var(--tm-border);
 }
 
@@ -1508,25 +1511,43 @@ body.modal-open{
 .tm-confirm-services > div,
 .tm-confirm-services-wrap{
   color: var(--tm-text);
-  line-height: 1.45;
+  line-height: 1.5;
+}
+
+.tm-confirm-services-wrap{
+  padding: 12px;
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  background: var(--tm-surface-2);
 }
 
 .tm-confirm-services-wrap > div:first-child{
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: var(--tm-text-muted);
-  font-size: .9rem;
-  font-weight: 800;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+#confirmServicesList{
+  color: var(--tm-text);
+  font-weight: 750;
+  overflow-wrap: anywhere;
 }
 
 .tm-confirm-options-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 16px;
+  gap: 10px;
 }
 
 .tm-confirm-options-grid .tm-confirm-check{
-  min-height: 42px;
-  padding: 6px 0;
+  min-height: 46px;
+  padding: 10px 11px;
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  background: rgba(248,250,252,.70);
 }
 
 .tm-confirm-radio-row{
@@ -1564,7 +1585,11 @@ body.modal-open{
 
 .tm-confirm-note{
   margin-top: 12px;
-  line-height: 1.5;
+  padding: 10px 12px;
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  background: var(--tm-surface-2);
+  line-height: 1.45;
 }
 
 .tm-confirm-actions{
@@ -1574,11 +1599,11 @@ body.modal-open{
 }
 
 .tm-confirm-primary{
-  min-height: 50px;
-  padding-inline: 22px;
+  min-height: 54px;
+  padding-inline: 24px;
   font-size: 1rem;
-  font-weight: 900;
-  box-shadow: 0 12px 24px rgba(37,99,235,.2);
+  font-weight: 950;
+  box-shadow: 0 14px 28px rgba(17,179,173,.26);
 }
 
 .tm-confirm-secondary-actions{
@@ -1853,9 +1878,10 @@ canvas,
   }
 
   .estimator-final-actions{
-    gap: 9px;
-    margin-top: 18px;
-    padding: 16px;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 18px 14px;
+    border-radius: 14px;
   }
 
   .estimator-final-step{
@@ -1864,17 +1890,18 @@ canvas,
 
   .estimator-final-heading{
     text-align: center;
-    font-size: .96rem;
+    font-size: 1.06rem;
   }
 
   .estimator-final-hint{
+    justify-self: center;
     text-align: center;
-    font-size: .78rem;
+    font-size: .86rem;
   }
 
   .estimator-final-cta{
-    min-height: 52px;
-    padding: 13px 16px;
+    min-height: 58px;
+    padding: 15px 16px;
   }
 
   .tm-quote-trust-microcopy{
@@ -1961,18 +1988,22 @@ canvas,
   }
 
   .tm-confirm-section{
-    padding: 12px 0;
+    padding: 14px 0;
   }
 
   .tm-confirm-options-grid{
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: 8px;
   }
 
   .tm-confirm-options-grid .tm-confirm-check,
   .tm-confirm-radio-row .tm-confirm-check{
     min-height: 46px;
     align-items: center;
+  }
+
+  .tm-confirm-services-wrap{
+    padding: 11px;
   }
 
   .tm-confirm-actions{
@@ -1982,7 +2013,7 @@ canvas,
 
   .tm-confirm-primary{
     width: 100%;
-    min-height: 52px;
+    min-height: 56px;
   }
 
   .tm-confirm-secondary-actions{
