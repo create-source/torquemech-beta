@@ -502,6 +502,7 @@
   const TIMING_SERVICE_CODES = {
     timingBelt: "timing_belt_replacement",
     timingChainKit: "timing_chain_guide_replacement",
+    timingChainTensioner: "timing_chain_tensioner_replacement",
     timingChainLegacy: "timing_chain_service",
   };
 
@@ -509,7 +510,7 @@
     TOYOTA: {
       SEQUOIA: {
         type: "chain",
-        show: [TIMING_SERVICE_CODES.timingChainKit],
+        show: [TIMING_SERVICE_CODES.timingChainKit, TIMING_SERVICE_CODES.timingChainTensioner],
       },
     },
   };
@@ -1760,6 +1761,10 @@ const confidenceEl = document.getElementById("laborConfidence");
       "engine diagnostic",
       "diagnostic",
     ],
+    chain: ["timing chain", "timing chain kit", "timing chain tensioner", "chain tensioner"],
+    timingchain: ["timing chain", "timing chain kit", "timing chain tensioner", "engine timing"],
+    chaintensioner: ["timing chain tensioner", "chain tensioner", "startup rattle"],
+    startuprattle: ["timing chain kit", "timing chain tensioner", "startup rattle"],
     brake: ["brake pad", "brake rotor", "brake caliper", "brake fluid", "brake fluid flush"],
     battery: ["battery", "alternator", "starter", "charging", "no start"],
     overheat: ["thermostat", "radiator", "water pump", "coolant flush", "cooling", "coolant"],
@@ -2115,6 +2120,51 @@ const confidenceEl = document.getElementById("laborConfidence");
       ],
       terms: ["fuel smell", "gas smell", "fuel leak", "evap", "gasoline"],
     },
+    timingchain: {
+      codes: [
+        "timing_chain_guide_replacement",
+        "timing_chain_tensioner_replacement",
+        "timing_chain_service",
+      ],
+      terms: ["timing chain", "chain", "rattling timing chain", "startup rattle", "chain tensioner", "engine timing"],
+    },
+    chain: {
+      codes: [
+        "timing_chain_guide_replacement",
+        "timing_chain_tensioner_replacement",
+        "timing_chain_service",
+      ],
+      terms: ["timing chain", "chain tensioner", "startup rattle", "engine timing"],
+    },
+    rattlingtimingchain: {
+      codes: [
+        "timing_chain_guide_replacement",
+        "timing_chain_tensioner_replacement",
+      ],
+      terms: ["rattling timing chain", "startup rattle", "chain tensioner"],
+    },
+    startuprattle: {
+      codes: [
+        "timing_chain_guide_replacement",
+        "timing_chain_tensioner_replacement",
+      ],
+      terms: ["startup rattle", "rattling timing chain", "chain tensioner"],
+    },
+    chaintensioner: {
+      codes: [
+        "timing_chain_tensioner_replacement",
+        "timing_chain_guide_replacement",
+      ],
+      terms: ["chain tensioner", "timing chain tensioner", "startup rattle"],
+    },
+    enginetiming: {
+      codes: [
+        "timing_chain_guide_replacement",
+        "timing_chain_tensioner_replacement",
+        "timing_belt_replacement",
+      ],
+      terms: ["engine timing", "timing chain", "timing belt"],
+    },
   };
 
   function normalizeServiceSearch(value) {
@@ -2202,9 +2252,24 @@ const confidenceEl = document.getElementById("laborConfidence");
     ].join("|");
   }
 
-  async function ensureAllServiceOptions() {
+  function isTimingChainSearchQuery(query) {
+    const normalizedQuery = normalizeServiceSearch(query);
+    const compactQuery = compactServiceSearch(query);
+    return [
+      "timing chain",
+      "chain",
+      "rattling timing chain",
+      "startup rattle",
+      "chain tensioner",
+      "timing chain tensioner",
+    ].some((term) => normalizedQuery.includes(normalizeServiceSearch(term)) || compactQuery.includes(compactServiceSearch(term)));
+  }
+
+  async function ensureAllServiceOptions(query = "") {
     const vehicleKey = getServiceSearchVehicleKey();
-    if (allServiceOptions.length && allServiceOptionsVehicleKey === vehicleKey) {
+    const queryKey = isTimingChainSearchQuery(query) ? "timing-chain" : "default";
+    const cacheKey = `${vehicleKey}|${queryKey}`;
+    if (allServiceOptions.length && allServiceOptionsVehicleKey === cacheKey) {
       return allServiceOptions;
     }
 
@@ -2218,7 +2283,8 @@ const confidenceEl = document.getElementById("laborConfidence");
           const categoryKey = category.key || "";
           const categoryName = category.name || categoryKey;
           const services = filterServicesForActiveVehicle(
-            await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`)
+            await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`),
+            { query }
           );
           return services.map((service) => mapServiceSearchOption(service, categoryKey, categoryName));
         } catch {
@@ -2236,7 +2302,7 @@ const confidenceEl = document.getElementById("laborConfidence");
         seenCodes.add(serviceKey);
         return true;
       });
-    allServiceOptionsVehicleKey = vehicleKey;
+    allServiceOptionsVehicleKey = cacheKey;
     return allServiceOptions;
   }
 
@@ -2534,13 +2600,19 @@ const confidenceEl = document.getElementById("laborConfidence");
     return TIMING_SYSTEM_SUPPORT[make]?.[model] || null;
   }
 
-  function filterServicesForActiveVehicle(svcs) {
+  function filterServicesForActiveVehicle(svcs, { query = "" } = {}) {
     const services = Array.isArray(svcs) ? [...svcs] : [];
     const timingConfig = getTimingSystemConfig(getActiveVehicle());
     const hiddenTimingCodes = new Set([TIMING_SERVICE_CODES.timingChainLegacy]);
+    const timingChainQuery = isTimingChainSearchQuery(query);
 
     if (!timingConfig) {
-      hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingChainKit);
+      if (timingChainQuery) {
+        hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingBelt);
+      } else {
+        hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingChainKit);
+        hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingChainTensioner);
+      }
       return services.filter((service) => !hiddenTimingCodes.has(service.code));
     }
 
@@ -2551,6 +2623,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     if (timingConfig.type === "belt") {
       hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingChainKit);
+      hiddenTimingCodes.add(TIMING_SERVICE_CODES.timingChainTensioner);
       return services.filter((service) => !hiddenTimingCodes.has(service.code));
     }
 
@@ -3855,7 +3928,7 @@ if (getEstimateHint) {
     serviceEl.value = "";
 
     if (getServiceSearchCluster(serviceSearch.value)) {
-      await ensureAllServiceOptions();
+      await ensureAllServiceOptions(serviceSearch.value);
     }
 
     renderServiceResults(serviceSearch.value);
@@ -3866,7 +3939,7 @@ if (getEstimateHint) {
   serviceSearch?.addEventListener("focus", async () => {
     if (serviceSearch.value.trim()) {
       if (getServiceSearchCluster(serviceSearch.value)) {
-        await ensureAllServiceOptions();
+        await ensureAllServiceOptions(serviceSearch.value);
       }
       renderServiceResults(serviceSearch.value);
     }

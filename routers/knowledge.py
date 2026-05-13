@@ -865,6 +865,20 @@ REPAIR_COST_GUIDES = [
         "labor_min": 0.5,
         "labor_max": 1.5,
     },
+    {
+        "slug": "timing-chain-kit-replacement",
+        "name": "Timing Chain Kit Replacement",
+        "category": "Engine Repair",
+        "labor_min": 10.0,
+        "labor_max": 14.0,
+    },
+    {
+        "slug": "timing-chain-tensioner-replacement",
+        "name": "Timing Chain Tensioner Replacement",
+        "category": "Engine Repair",
+        "labor_min": 4.0,
+        "labor_max": 7.0,
+    },
 ]
 
 def seed_services_from_python():
@@ -967,6 +981,7 @@ def repair_cost_page(request: Request, slug: str):
             "labor_max": labor_max,
             "labor_low": labor_low,
             "labor_high": labor_high,
+            "guide": {},
         },
     )
 

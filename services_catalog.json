@@ -437,8 +437,30 @@
         {
           "code": "timing_chain_guide_replacement",
           "name": "Timing Chain Kit Replacement",
-          "labor_hours_min": 6.0,
-          "labor_hours_max": 18.0
+          "labor_hours_min": 10.0,
+          "labor_hours_max": 14.0,
+          "difficulty": "Advanced",
+          "repair_category": "Engine Repair",
+          "summary": "Replace the timing chain kit when chain stretch, guide wear, engine timing faults, or startup rattle confirms an internal timing repair path.",
+          "keywords": ["timing chain", "chain", "rattling timing chain", "startup rattle", "engine timing"],
+          "aliases": ["timing chain kit", "timing chain replacement", "chain replacement", "engine timing chain", "startup rattle"],
+          "meta": "timing chain startup rattle rattling timing chain chain tensioner engine timing",
+          "cost_guide_href": "",
+          "cost_guide_status": "placeholder"
+        },
+        {
+          "code": "timing_chain_tensioner_replacement",
+          "name": "Timing Chain Tensioner Replacement",
+          "labor_hours_min": 4.0,
+          "labor_hours_max": 7.0,
+          "difficulty": "Advanced",
+          "repair_category": "Engine Repair",
+          "summary": "Replace the timing chain tensioner when startup rattle, chain noise, or confirmed tensioner failure points to a targeted timing-chain repair.",
+          "keywords": ["timing chain", "chain", "rattling timing chain", "startup rattle", "chain tensioner", "engine timing"],
+          "aliases": ["timing chain tensioner", "chain tensioner", "tensioner replacement", "startup rattle"],
+          "meta": "timing chain startup rattle rattling timing chain chain tensioner engine timing",
+          "cost_guide_href": "",
+          "cost_guide_status": "placeholder"
         }
       ]
     },

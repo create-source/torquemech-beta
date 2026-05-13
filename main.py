@@ -5170,6 +5170,18 @@ def build_repair_cost_guide_cards():
             "href": "/cost/catalytic-converter-replacement",
         },
         {
+            "title": "Timing Chain Kit Replacement Cost",
+            "description": "Placeholder support for timing-chain kit cost guidance when chain stretch, guide wear, startup rattle, or engine timing faults are confirmed.",
+            "href": "/repair-cost/timing-chain-kit-replacement",
+            "status": "placeholder",
+        },
+        {
+            "title": "Timing Chain Tensioner Replacement Cost",
+            "description": "Placeholder support for timing-chain tensioner cost guidance when chain tensioner failure, startup rattle, or timing-chain noise is confirmed.",
+            "href": "/repair-cost/timing-chain-tensioner-replacement",
+            "status": "placeholder",
+        },
+        {
             "title": "EGR Valve Replacement Cost",
             "description": "Useful when EGR flow, control, or feedback diagnosis confirms the valve is sticking, restricted, or failing mechanically.",
             "href": "/cost/egr-valve-replacement",
