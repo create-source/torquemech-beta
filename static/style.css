@@ -724,21 +724,42 @@ button:active{
   white-space: nowrap;
 }
 
+.tm-addServiceRow{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid rgba(20,184,166,.22);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(241,250,249,.78) 100%);
+}
+
+.tm-addServiceRow .tm-hint{
+  max-width: 240px;
+  margin: 0;
+  font-size: .78rem;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: right;
+}
+
 .tm-addServiceRow .add-more-btn{
   min-height: 50px;
   padding: 13px 18px;
   border: 2px solid rgba(20,184,166,.50);
-  background: linear-gradient(180deg, rgba(20,184,166,.14) 0%, rgba(20,184,166,.06) 100%);
-  color: var(--tm-text);
-  box-shadow: 0 10px 22px rgba(17,179,173,.13);
+  background: linear-gradient(180deg, #18c6b2 0%, #0f9f98 100%);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(17,179,173,.24);
   font-size: .98rem;
   font-weight: 950;
   border-radius: 12px;
+  white-space: nowrap;
 }
 
 .tm-addServiceRow .add-more-btn:hover{
   border-color: rgba(20,184,166,.58);
-  background: linear-gradient(180deg, rgba(20,184,166,.14) 0%, rgba(20,184,166,.06) 100%);
+  background: linear-gradient(180deg, #1bd1bc 0%, #11a7a0 100%);
 }
 
 .tm-quick-quotes{
@@ -1002,6 +1023,39 @@ input[type="radio"]{
   padding: 14px;
 }
 
+.line-items{
+  margin-top: 16px;
+  padding: 16px;
+  border-color: rgba(20,184,166,.20);
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%);
+}
+
+.line-items-head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(11,22,40,.08);
+}
+
+.line-items-title{
+  color: var(--tm-text);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.line-items-hint{
+  max-width: 460px;
+  color: var(--tm-text-muted);
+  font-size: .82rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: right;
+}
+
 .section-header--vehicles{
   display: flex;
   align-items: center;
@@ -1048,7 +1102,11 @@ input[type="radio"]{
 .line-items-list,
 .labor-breakdown-list{
   display: grid;
-  gap: 10px;
+  gap: 14px;
+}
+
+.line-items-list{
+  counter-reset: quote-job;
 }
 
 .tm-paired-suggestions{
@@ -1852,12 +1910,17 @@ canvas,
   .tm-addServiceRow{
     width: 100%;
     margin: 8px 0 14px;
+    padding: 10px;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .tm-addServiceRow .tm-hint{
     display: block;
-    margin-bottom: 8px;
+    max-width: none;
+    margin-bottom: 0;
     line-height: 1.4;
+    text-align: left;
   }
 
   .tm-addServiceRow .add-more-btn{
@@ -1875,6 +1938,33 @@ canvas,
   .tm-estimate-action-panel__button{
     width: 100%;
     min-height: 54px;
+  }
+
+  .line-items{
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .line-items-head{
+    display: block;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .line-items-title{
+    font-size: .98rem;
+  }
+
+  .line-items-hint{
+    max-width: none;
+    margin-top: 5px;
+    font-size: .78rem;
+    text-align: left;
+  }
+
+  .line-items-list{
+    gap: 12px;
   }
 
   .estimator-final-actions{
@@ -2378,12 +2468,36 @@ h3{
 }
 
 .tm-service-card{
-  background:#fff;
-  border:1px solid rgba(11,22,40,.10);
-  border-radius:14px;
-  padding:16px;
-  margin-top:12px;
-  box-shadow:0 6px 18px rgba(15,23,42,.045);
+  position: relative;
+  counter-increment: quote-job;
+  background: #fff;
+  border: 1px solid rgba(11,22,40,.11);
+  border-left: 4px solid rgba(20,184,166,.72);
+  border-radius: 14px;
+  padding: 16px 16px 16px 18px;
+  margin-top: 0;
+  box-shadow: 0 8px 20px rgba(15,23,42,.055);
+}
+
+.tm-service-card::before{
+  content: "Job " counter(quote-job);
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  border: 1px solid rgba(20,184,166,.22);
+  border-radius: 999px;
+  background: rgba(20,184,166,.09);
+  color: #0f766e;
+  font-size: .72rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tm-service-card + .tm-service-card{
+  margin-top: 2px;
 }
 
 .tm-service-head{
@@ -2399,10 +2513,11 @@ h3{
 }
 
 .tm-service-title{
-  font-size:1.16rem;
+  font-size:1.18rem;
   font-weight:900;
   line-height:1.18;
   color:var(--tm-text);
+  overflow-wrap:anywhere;
 }
 
 .tm-service-vehicle{
@@ -2416,18 +2531,18 @@ h3{
   margin-top:10px;
   display:flex;
   flex-wrap:wrap;
-  gap:6px;
+  gap:7px;
   font-size:.84rem;
   color:#334155;
 }
 
 .tm-service-meta span{
-  white-space:nowrap;
+  white-space:normal;
   border:1px solid rgba(15,23,42,.08);
   background:rgba(248,250,252,.9);
   border-radius:999px;
-  padding:4px 8px;
-  line-height:1.1;
+  padding:5px 9px;
+  line-height:1.15;
 }
 
 .tm-service-estimate{
@@ -2458,7 +2573,9 @@ h3{
   flex-wrap:wrap;
   gap:8px;
   justify-content:flex-end;
-  margin-top:14px;
+  margin-top:16px;
+  padding-top:12px;
+  border-top:1px solid rgba(15,23,42,.07);
 }
 
 .tm-service-actions .tm-btn{
@@ -2526,11 +2643,40 @@ h3{
 
   .tm-service-head{
     grid-template-columns:1fr;
-    gap:12px;
+    gap:10px;
+  }
+
+  .tm-service-card{
+    padding: 14px 12px;
+    border-left-width: 3px;
+    border-radius: 13px;
+  }
+
+  .tm-service-card::before{
+    min-height: 22px;
+    margin-bottom: 9px;
+    padding: 4px 8px;
+    font-size: .68rem;
   }
 
   .tm-service-title{
     font-size:1.08rem;
+    line-height:1.22;
+  }
+
+  .tm-service-vehicle{
+    font-size:.84rem;
+  }
+
+  .tm-service-meta{
+    gap:6px;
+  }
+
+  .tm-service-meta span{
+    max-width: 100%;
+    padding:5px 8px;
+    border-radius:10px;
+    font-size:.8rem;
   }
 
   .tm-service-estimate{
@@ -2540,21 +2686,34 @@ h3{
     align-items:flex-end;
     justify-content:space-between;
     text-align:left;
-    padding-top:10px;
+    padding-top:12px;
     border-top:1px solid rgba(15,23,42,.08);
   }
 
   .tm-service-estimate strong{
-    font-size:2rem;
+    font-size:1.8rem;
+    overflow-wrap:anywhere;
   }
 
   .tm-service-actions{
     gap:8px;
     justify-content:flex-start;
+    margin-top:12px;
+    padding-top:10px;
   }
 
   .tm-service-actions .tm-btn{
     flex:1 1 130px;
+    min-height:42px;
+  }
+
+  .tm-labor-panel{
+    margin-top:12px;
+    padding-top:12px;
+  }
+
+  .tm-labor-row{
+    gap:10px;
   }
 }
 
