@@ -827,11 +827,12 @@ button:active{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 8px;
-  border: 1px solid rgba(20,184,166,.22);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(241,250,249,.78) 100%);
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid rgba(20,184,166,.34);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(240,253,250,.96) 0%, rgba(220,252,247,.78) 100%);
+  box-shadow: 0 12px 28px rgba(15,118,110,.08);
 }
 
 .tm-addServiceRow .tm-hint{
@@ -844,21 +845,33 @@ button:active{
 }
 
 .tm-addServiceRow .add-more-btn{
-  min-height: 50px;
-  padding: 13px 18px;
-  border: 2px solid rgba(20,184,166,.50);
-  background: linear-gradient(180deg, #18c6b2 0%, #0f9f98 100%);
+  min-height: 56px;
+  padding: 15px 22px;
+  border: 2px solid rgba(15,118,110,.55);
+  background: linear-gradient(180deg, #16c8b5 0%, #0d9488 100%);
   color: #fff;
-  box-shadow: 0 12px 24px rgba(17,179,173,.24);
-  font-size: .98rem;
+  box-shadow: 0 14px 28px rgba(15,118,110,.28);
+  font-size: 1.02rem;
   font-weight: 950;
-  border-radius: 12px;
+  border-radius: 14px;
   white-space: nowrap;
 }
 
 .tm-addServiceRow .add-more-btn:hover{
-  border-color: rgba(20,184,166,.58);
-  background: linear-gradient(180deg, #1bd1bc 0%, #11a7a0 100%);
+  border-color: rgba(15,118,110,.68);
+  background: linear-gradient(180deg, #22d3c2 0%, #0f9f98 100%);
+  box-shadow: 0 16px 32px rgba(15,118,110,.32);
+}
+
+.tm-service-title-group h2{
+  margin-bottom: 4px;
+}
+
+.tm-service-workflow-copy{
+  color: var(--tm-text-muted);
+  font-size: .88rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .tm-quick-quotes{
@@ -1209,7 +1222,7 @@ input[type="radio"]{
 .line-items-list,
 .labor-breakdown-list{
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .line-items-list{
@@ -2016,8 +2029,8 @@ canvas,
 
   .tm-addServiceRow{
     width: 100%;
-    margin: 8px 0 14px;
-    padding: 10px;
+    margin: 10px 0 16px;
+    padding: 12px;
     align-items: stretch;
     flex-direction: column;
   }
@@ -2032,8 +2045,12 @@ canvas,
 
   .tm-addServiceRow .add-more-btn{
     width: 100%;
-    min-height: 54px;
-    font-size: 1rem;
+    min-height: 58px;
+    font-size: 1.02rem;
+  }
+
+  .tm-service-workflow-copy{
+    font-size: .84rem;
   }
 
   .tm-quick-quotes{
@@ -2070,8 +2087,8 @@ canvas,
   }
 
   .line-items{
-    margin-top: 14px;
-    padding: 12px;
+    margin-top: 16px;
+    padding: 14px;
     border-radius: 14px;
   }
 
@@ -2093,7 +2110,7 @@ canvas,
   }
 
   .line-items-list{
-    gap: 12px;
+    gap: 16px;
   }
 
   .estimator-final-actions{
@@ -2640,6 +2657,21 @@ h3{
   padding: 16px 16px 16px 18px;
   margin-top: 0;
   box-shadow: 0 8px 20px rgba(15,23,42,.055);
+}
+
+.tm-service-card.is-newly-added{
+  animation: tm-service-card-highlight 1.35s ease-out;
+}
+
+@keyframes tm-service-card-highlight{
+  0%{
+    border-color: rgba(20,184,166,.72);
+    box-shadow: 0 0 0 4px rgba(20,184,166,.18), 0 10px 26px rgba(15,23,42,.08);
+  }
+  100%{
+    border-color: rgba(11,22,40,.11);
+    box-shadow: 0 8px 20px rgba(15,23,42,.055);
+  }
 }
 
 .tm-service-card::before{

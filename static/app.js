@@ -3147,6 +3147,38 @@ const confidenceEl = document.getElementById("laborConfidence");
     updateEstimateButtonState();
   }
 
+  function getLineItemCardById(lineItemId) {
+    if (!lineItemsList || !lineItemId) return null;
+    return Array.from(lineItemsList.querySelectorAll(".tm-service-card"))
+      .find((card) => card.dataset.lineItemId === lineItemId) || null;
+  }
+
+  function scrollLineItemIntoView(lineItemId) {
+    const run = () => {
+      const card = getLineItemCardById(lineItemId);
+      if (!card) return;
+
+      card.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      });
+
+      card.classList.remove("is-newly-added");
+      void card.offsetWidth;
+      card.classList.add("is-newly-added");
+      window.setTimeout(() => {
+        card.classList.remove("is-newly-added");
+      }, 1400);
+    };
+
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(run);
+    } else {
+      window.setTimeout(run, 0);
+    }
+  }
+
   function updateEstimateButtonState() {
     if (!estimateBtn) return;
 
@@ -3158,7 +3190,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     // --- Add Service button label (dynamic) ---
     if (addLineBtn) {
       // If user already added a service (locked state), guide them to add another
-      addLineBtn.textContent = "Add Another Job";
+      addLineBtn.textContent = "+ Add Another Repair";
       addLineBtn.hidden = isEditingSavedLine || (lineItems.length === 0 && readyForNextService);
     }
 
@@ -3174,7 +3206,7 @@ if (addServiceHint) {
   if (isEditingSavedLine) {
     addServiceHint.textContent = "Editing saved line. Update pricing, then save changes.";
   } else {
-    addServiceHint.textContent = "Tap Add Service Line to keep building this quote.";
+    addServiceHint.textContent = "Tap + Add Another Repair to keep building this quote.";
   }
 }
 if (getEstimateHint) {
@@ -3186,7 +3218,7 @@ if (getEstimateHint) {
       ? "Set the vehicle first."
       : !hasSelection
         ? "Choose the repair job first."
-        : "Tap Add Another Job, then choose the next repair.";
+        : "Tap + Add Another Repair, then choose the next repair.";
   }
 }
 
@@ -3311,6 +3343,7 @@ if (getEstimateHint) {
         lastEstimate = null;
 
         renderLineItems();
+        scrollLineItemIntoView(it.id);
         trackClarity("estimate_generated", {
           source: "estimator",
           action: "get_estimate",
@@ -3361,6 +3394,7 @@ if (getEstimateHint) {
       lastEstimate = { req, res };
 
       renderLineItems();
+      scrollLineItemIntoView(it.id);
       trackClarity("estimate_generated", {
         source: "estimator",
         action: "get_estimate",
