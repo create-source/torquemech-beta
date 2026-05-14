@@ -1378,9 +1378,9 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     lineItems.forEach((it) => {
       if (it.pricingMode === "flat") {
-        lines.push(`• ${it.serviceText}: ${money(it.estimate)} (flat-rate${Number(it.travelFee || 0) > 0 ? `, includes ${money(it.travelFee)} travel` : ""})`);
+        lines.push(`- ${it.serviceText}: ${money(it.estimate)} (flat-rate${Number(it.travelFee || 0) > 0 ? `, includes ${money(it.travelFee)} travel` : ""})`);
       } else {
-        lines.push(`• ${it.serviceText}: ${money(it.estimate)}${Number(it.travelFee || 0) > 0 ? ` (includes ${money(it.travelFee)} travel)` : ""}`);
+        lines.push(`- ${it.serviceText}: ${money(it.estimate)}${Number(it.travelFee || 0) > 0 ? ` (includes ${money(it.travelFee)} travel)` : ""}`);
       }
     });
 
