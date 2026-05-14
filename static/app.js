@@ -609,6 +609,8 @@
   const pdfShowHourlyRateChk = $("pdfShowHourlyRateChk");
   const pdfShowLaborColumnChk = $("pdfShowLaborColumnChk");
   const pdfShowPartsColumnChk = $("pdfShowPartsColumnChk");
+  const pdfShowRiskNotesChk = $("pdfShowRiskNotesChk");
+  const pdfShowInspectionFindingsChk = $("pdfShowInspectionFindingsChk");
   const pdfShowLaborBreakdownChk = $("pdfShowLaborBreakdownChk");
 
   // Customer
@@ -699,6 +701,8 @@
       showHourlyRate: pdfShowHourlyRateChk ? !!pdfShowHourlyRateChk.checked : false,
       showLaborColumn: pdfShowLaborColumnChk ? !!pdfShowLaborColumnChk.checked : false,
       showPartsColumn: pdfShowPartsColumnChk ? !!pdfShowPartsColumnChk.checked : false,
+      showRiskNotes: pdfShowRiskNotesChk ? !!pdfShowRiskNotesChk.checked : true,
+      showInspectionFindings: pdfShowInspectionFindingsChk ? !!pdfShowInspectionFindingsChk.checked : true,
       showDetailedLaborBreakdown: pdfShowLaborBreakdownChk ? !!pdfShowLaborBreakdownChk.checked : false,
     };
   }
@@ -2854,6 +2858,8 @@ const confidenceEl = document.getElementById("laborConfidence");
   });
   pdfShowLaborColumnChk?.addEventListener("change", renderLineItems);
   pdfShowPartsColumnChk?.addEventListener("change", renderLineItems);
+  pdfShowRiskNotesChk?.addEventListener("change", refreshQuotePreview);
+  pdfShowInspectionFindingsChk?.addEventListener("change", refreshQuotePreview);
   pdfShowLaborBreakdownChk?.addEventListener("change", () => {
     if (!pdfShowLaborBreakdownChk.checked) {
       lineItems.forEach(it => { it.breakdownOpen = false; });
@@ -3709,6 +3715,8 @@ if (getEstimateHint) {
           showHourlyRate: outputOptions.showHourlyRate,
           showLaborColumn: outputOptions.showLaborColumn,
           showPartsColumn: outputOptions.showPartsColumn,
+          showRiskNotes: outputOptions.showRiskNotes,
+          showInspectionFindings: outputOptions.showInspectionFindings,
           showDetailedLaborBreakdown: outputOptions.showDetailedLaborBreakdown,
           lineItems: lineItems.map((it) => ({
             serviceCode: it.serviceCode,

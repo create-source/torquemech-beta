@@ -6983,6 +6983,8 @@ class MultiPDFRequest(BaseModel):
     showHourlyRate: bool = False
     showLaborColumn: bool = False
     showPartsColumn: bool = False
+    showRiskNotes: bool = True
+    showInspectionFindings: bool = True
     showDetailedLaborBreakdown: bool = False
     lineItems: List[LineItemPDF]
 
@@ -7086,11 +7088,19 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         grand_total = 0.0
         for it in (req.lineItems or []):
-            risk_note = estimate_risk_note_for_service(it.serviceCode, it.serviceText or "")
-            risk_note_lines = wrap_text(risk_note, max_chars=86)[:3]
-            findings_text = (it.inspectionFindings or "").strip()[:240]
-            findings_lines = wrap_text(findings_text, max_chars=86) if findings_text else []
+            risk_note_lines = []
+            if req.showRiskNotes:
+                risk_note = estimate_risk_note_for_service(it.serviceCode, it.serviceText or "")
+                risk_note_lines = wrap_text(risk_note, max_chars=86)[:3]
+
+            findings_lines = []
+            if req.showInspectionFindings:
+                findings_text = (it.inspectionFindings or "").strip()[:240]
+                findings_lines = wrap_text(findings_text, max_chars=86) if findings_text else []
+
             item_space = 206 if req.showDetailedLaborBreakdown else 118 if (req.showHourlyRate or req.showLaborColumn) else 82
+            if risk_note_lines:
+                item_space += len(risk_note_lines) * 10
             if findings_lines:
                 item_space += 16 + (len(findings_lines) * 10)
             y = pdf_ensure_space(
@@ -7136,13 +7146,14 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.setFillGray(0)
                 y -= 12
 
-            c.setFillGray(0.42)
-            c.setFont("Helvetica", 8)
-            for note_line in risk_note_lines:
-                c.drawString(X_SERVICE + 12, y, note_line)
-                y -= 10
-            c.setFillGray(0)
-            y -= 2
+            if risk_note_lines:
+                c.setFillGray(0.42)
+                c.setFont("Helvetica", 8)
+                for note_line in risk_note_lines:
+                    c.drawString(X_SERVICE + 12, y, note_line)
+                    y -= 10
+                c.setFillGray(0)
+                y -= 2
 
             if findings_lines:
                 c.setFillGray(0.35)
@@ -7207,13 +7218,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c.drawRightString(X_TOTAL - 14, y - 8, f"${grand_total:,.0f}")
         y -= 54
 
-        c.setFillGray(0.42)
-        c.setFont("Helvetica", 8.5)
-        for line in wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2]:
-            c.drawString(LEFT + 8, y, line)
-            y -= 10
-        c.setFillGray(0)
-        y -= 16
+        if req.showRiskNotes:
+            c.setFillGray(0.42)
+            c.setFont("Helvetica", 8.5)
+            for line in wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2]:
+                c.drawString(LEFT + 8, y, line)
+                y -= 10
+            c.setFillGray(0)
+            y -= 16
+        else:
+            y -= 6
 
         # Customer
         c.setFont("Helvetica-Bold", 12)
