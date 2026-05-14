@@ -6977,6 +6977,10 @@ class MultiPDFRequest(BaseModel):
     notes: Optional[str] = None
     customerName: Optional[str] = None
     customerPhone: Optional[str] = None
+    businessName: Optional[str] = None
+    mechanicName: Optional[str] = None
+    businessPhone: Optional[str] = None
+    businessNote: Optional[str] = None
     customerAgrees: bool = True
     signatureDataUrl: Optional[str] = None
     showGeneratedDate: bool = True
@@ -7044,6 +7048,56 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             right=50,
             show_generated_date=req.showGeneratedDate,
         )
+
+        business_name = (req.businessName or "").strip()[:80]
+        mechanic_name = (req.mechanicName or "").strip()[:80]
+        business_phone = (req.businessPhone or "").strip()[:32]
+        business_note = (req.businessNote or "").strip()[:180]
+        business_note_lines = wrap_text(business_note, max_chars=86)[:3] if business_note else []
+        has_business_identity = any([business_name, mechanic_name, business_phone, business_note_lines])
+        if has_business_identity:
+            identity_box_h = 54 + (len(business_note_lines) * 9)
+            y = pdf_ensure_space(
+                c, w, h, y,
+                needed=identity_box_h + 12,
+                title="Repair Estimate",
+                vehicle_line=vehicle_line,
+                left=50,
+                right=50,
+                show_generated_date=req.showGeneratedDate,
+            )
+            c.setFillColorRGB(0.97, 0.99, 0.99)
+            c.roundRect(50, y - identity_box_h + 10, w - 100, identity_box_h, 8, fill=1, stroke=0)
+            c.setFillGray(0)
+
+            if business_name:
+                c.setFont("Helvetica-Bold", 12)
+                c.drawString(64, y - 4, business_name)
+                y -= 16
+            else:
+                c.setFont("Helvetica-Bold", 10)
+                c.drawString(64, y - 4, "Prepared by")
+                y -= 14
+
+            c.setFont("Helvetica", 9.5)
+            c.setFillGray(0.32)
+            identity_details = []
+            if mechanic_name:
+                identity_details.append(f"Mechanic: {mechanic_name}")
+            if business_phone:
+                identity_details.append(f"Phone: {business_phone}")
+            if identity_details:
+                c.drawString(64, y - 2, "   |   ".join(identity_details))
+                y -= 13
+
+            if business_note_lines:
+                c.setFont("Helvetica-Oblique", 8.5)
+                for note_line in business_note_lines:
+                    c.drawString(64, y - 1, note_line)
+                    y -= 9
+
+            c.setFillGray(0)
+            y -= 14
 
         # ---- Column anchors ----
         LEFT = 50

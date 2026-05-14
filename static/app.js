@@ -616,6 +616,10 @@
   // Customer
   const customerNameEl = $("customerName");
   const customerPhoneEl = $("customerPhone");
+  const businessNameEl = $("businessName");
+  const mechanicNameEl = $("mechanicName");
+  const businessPhoneEl = $("businessPhone");
+  const businessNoteEl = $("businessNote");
 
   // VIN
   const vinEl = $("vin");
@@ -659,6 +663,39 @@
 
   // ---- State ----
   let lineItems = [];
+  const BUSINESS_IDENTITY_SESSION_KEY = "torquemech_business_identity_v1";
+
+  function getBusinessIdentity() {
+    return {
+      businessName: (businessNameEl?.value || "").trim(),
+      mechanicName: (mechanicNameEl?.value || "").trim(),
+      businessPhone: (businessPhoneEl?.value || "").trim(),
+      businessNote: (businessNoteEl?.value || "").trim(),
+    };
+  }
+
+  function applyBusinessIdentity(identity = {}) {
+    if (businessNameEl) businessNameEl.value = identity.businessName || "";
+    if (mechanicNameEl) mechanicNameEl.value = identity.mechanicName || "";
+    if (businessPhoneEl) businessPhoneEl.value = identity.businessPhone || "";
+    if (businessNoteEl) businessNoteEl.value = identity.businessNote || "";
+  }
+
+  function loadBusinessIdentityFromSession() {
+    try {
+      const raw = window.sessionStorage?.getItem(BUSINESS_IDENTITY_SESSION_KEY);
+      if (!raw) return;
+      applyBusinessIdentity(JSON.parse(raw) || {});
+    } catch (_) {}
+  }
+
+  function persistBusinessIdentityToSession() {
+    try {
+      window.sessionStorage?.setItem(BUSINESS_IDENTITY_SESSION_KEY, JSON.stringify(getBusinessIdentity()));
+    } catch (_) {}
+  }
+
+  loadBusinessIdentityFromSession();
 
   const COMMONLY_ADDED_TOGETHER = [
     {
@@ -919,6 +956,7 @@
         phone: customerPhoneEl?.value || "",
         notes: notesEl?.value || "",
       },
+      businessIdentity: getBusinessIdentity(),
 
       lineItems: Array.isArray(lineItems) ? lineItems : [],
     };
@@ -996,6 +1034,12 @@
       if (customerNameEl) customerNameEl.value = d.customer?.name || "";
       if (customerPhoneEl) customerPhoneEl.value = d.customer?.phone || "";
       if (notesEl) notesEl.value = d.customer?.notes || "";
+      if (d.businessIdentity) {
+        applyBusinessIdentity(d.businessIdentity);
+        persistBusinessIdentityToSession();
+      } else {
+        loadBusinessIdentityFromSession();
+      }
       const wantYes = document.querySelector('input[name="wantSig"][value="yes"]');
       if (wantYes) wantYes.checked = true;
 
@@ -3698,6 +3742,8 @@ if (getEstimateHint) {
 
       const activeVehicle = getActiveVehicle() || {};
       const outputOptions = getCustomerOutputOptions();
+      const businessIdentity = getBusinessIdentity();
+      persistBusinessIdentityToSession();
 
       const pdfResponse = await fetch("/estimate/pdf_multi", {
         method: "POST",
@@ -3709,6 +3755,10 @@ if (getEstimateHint) {
           notes: (notesEl?.value || "").trim() || null,
           customerName: (customerNameEl?.value || "").trim() || null,
           customerPhone: (customerPhoneEl?.value || "").trim() || null,
+          businessName: businessIdentity.businessName || null,
+          mechanicName: businessIdentity.mechanicName || null,
+          businessPhone: businessIdentity.businessPhone || null,
+          businessNote: businessIdentity.businessNote || null,
           customerAgrees: !!customerAgreesChk?.checked,
           signatureDataUrl,
           showGeneratedDate: outputOptions.showGeneratedDate,
@@ -4203,6 +4253,9 @@ if (getEstimateHint) {
 
   customerPhoneEl?.addEventListener("input", () => {
     syncEstimateMeta();
+  });
+  [businessNameEl, mechanicNameEl, businessPhoneEl, businessNoteEl].forEach((el) => {
+    el?.addEventListener("input", persistBusinessIdentityToSession);
   });
 
   function addVehicleCard() {

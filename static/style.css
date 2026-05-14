@@ -1667,6 +1667,11 @@ body.modal-open{
   gap: 10px;
 }
 
+.tm-confirm-grid-compact textarea{
+  min-height: 58px;
+  line-height: 1.35;
+}
+
 .tm-confirm-check{
   display: flex;
   align-items: flex-start;
