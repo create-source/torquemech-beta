@@ -6423,7 +6423,7 @@ def pdf_ensure_space(
     draw_columns_fn=None,
     show_generated_date=True,
 ):
-    bottom_margin = 90
+    bottom_margin = 66
     if y - needed < bottom_margin:
         c.showPage()
         y = pdf_start_page(c, w, h, title=title, vehicle_line=vehicle_line, left=left, right=right, show_generated_date=show_generated_date)
@@ -7127,15 +7127,15 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.line(LEFT, ypos, X_TOTAL, ypos)
             c.setStrokeGray(0)
 
-            return ypos - 14
+            return ypos - 10
 
         # Services header 
         c.setFillColorRGB(0.95, 0.98, 0.98)
-        c.roundRect(LEFT, y - 18, X_TOTAL - LEFT, 24, 6, fill=1, stroke=0)
+        c.roundRect(LEFT, y - 16, X_TOTAL - LEFT, 22, 6, fill=1, stroke=0)
         c.setFillGray(0)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(LEFT + 10, y - 10, "Repair Services")
-        y -= 28
+        c.drawString(LEFT + 10, y - 9, "Repair Services")
+        y -= 24
 
         # Column headers 
         y = draw_service_columns(y)
@@ -7152,11 +7152,28 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 findings_text = (it.inspectionFindings or "").strip()[:240]
                 findings_lines = wrap_text(findings_text, max_chars=86) if findings_text else []
 
-            item_space = 206 if req.showDetailedLaborBreakdown else 118 if (req.showHourlyRate or req.showLaborColumn) else 82
+            labor_breakdown_steps = []
+            if req.showDetailedLaborBreakdown:
+                lb = build_labor_breakdown(
+                    it.serviceCode,
+                    it.laborHours,
+                    display_name=it.serviceText,
+                )
+                if lb and lb.get("steps"):
+                    labor_breakdown_steps = lb["steps"]
+
+            item_space = 28
+            if req.showLaborColumn:
+                item_space += 11
+            if req.showHourlyRate and str(it.pricingMode or "").strip().lower() != "flat":
+                item_space += 11
             if risk_note_lines:
-                item_space += len(risk_note_lines) * 10
+                item_space += 2 + (len(risk_note_lines) * 9)
             if findings_lines:
-                item_space += 16 + (len(findings_lines) * 10)
+                item_space += 11 + (len(findings_lines) * 9)
+            if labor_breakdown_steps:
+                item_space += 10 + (len(labor_breakdown_steps) * 10) + 3
+            item_space += 10
             y = pdf_ensure_space(
                 c, w, h, y,
                 needed=item_space,
@@ -7184,77 +7201,89 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             if req.showPartsColumn:
                 c.drawRightString(X_PARTS, y, f"${it.partsPrice:,.0f}")
             c.drawRightString(X_TOTAL, y, f"${est:,.0f}")
-            y -= 18
+            y -= 16
 
             if req.showLaborColumn:
                 c.setFillGray(0.45)
                 c.setFont("Helvetica", 9)
                 c.drawString(X_SERVICE, y, "Flat-rate service" if is_flat_rate else f"Labor Hours: {it.laborHours:.1f}h")
                 c.setFillGray(0)
-                y -= 12
+                y -= 11
 
             if req.showHourlyRate and not is_flat_rate:
                 c.setFillGray(0.45)
                 c.setFont("Helvetica", 9)
                 c.drawString(X_SERVICE, y, f"Rate: ${it.laborRate:.0f}/hr")
                 c.setFillGray(0)
-                y -= 12
+                y -= 11
 
             if risk_note_lines:
                 c.setFillGray(0.42)
                 c.setFont("Helvetica", 8)
                 for note_line in risk_note_lines:
                     c.drawString(X_SERVICE + 12, y, note_line)
-                    y -= 10
+                    y -= 9
                 c.setFillGray(0)
-                y -= 2
+                y -= 1
 
             if findings_lines:
                 c.setFillGray(0.35)
                 c.setFont("Helvetica-Bold", 8)
                 c.drawString(X_SERVICE + 12, y, "Inspection Findings")
-                y -= 10
+                y -= 9
 
                 c.setFillGray(0.28)
                 c.setFont("Helvetica", 8.5)
                 for finding_line in findings_lines:
                     c.drawString(X_SERVICE + 18, y, finding_line)
-                    y -= 10
+                    y -= 9
                 c.setFillGray(0)
-                y -= 2
+                y -= 1
 
-            if req.showDetailedLaborBreakdown:
-                lb = build_labor_breakdown(
-                    it.serviceCode,
-                    it.laborHours,
-                    display_name=it.serviceText,
-                )
+            if labor_breakdown_steps:
+                c.setFont("Helvetica-Bold", 8)
+                c.drawString(X_SERVICE + 20, y, "Detailed Labor Breakdown")
+                y -= 10
 
-                if lb and lb.get("steps"):
-                    c.setFont("Helvetica-Bold", 8)
-                    c.drawString(X_SERVICE + 20, y, "Detailed Labor Breakdown")
-                    y -= 11
+                c.setFont("Helvetica", 9)
+                for step in labor_breakdown_steps:
+                    label = step.get("label", "")
+                    hours = float(step.get("hours", 0))
 
-                    c.setFont("Helvetica", 9)
-                    for step in lb["steps"]:
-                        label = step.get("label", "")
-                        hours = float(step.get("hours", 0))
+                    c.drawString(X_SERVICE + 26, y, f"- {label}")
+                    c.drawRightString(X_TOTAL, y, f"{hours:.1f} hr")
+                    y -= 10
 
-                        c.drawString(X_SERVICE + 26, y, f"- {label}")
-                        c.drawRightString(X_TOTAL, y, f"{hours:.1f} hr")
-                        y -= 11
-
-                    y -= 4
+                y -= 3
 
             c.setStrokeGray(0.88)
             c.line(X_SERVICE, y, X_TOTAL, y)
             c.setStrokeGray(0)
-            y -= 14
+            y -= 10
 
-        # Ensure space for totals + customer + signature
+        final_note_lines = wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2] if req.showRiskNotes else []
+        customer_note_lines = wrap_text(req.notes.strip(), max_chars=90) if req.notes else []
+        summary_needed = 54
+        if final_note_lines:
+            summary_needed += (len(final_note_lines) * 9) + 10
+        else:
+            summary_needed += 4
+
+        summary_needed += 14  # Customer heading
+        summary_needed += 12  # Agreement
+        if req.customerName:
+            summary_needed += 12
+        if req.customerPhone:
+            summary_needed += 12
+        if customer_note_lines:
+            summary_needed += 16 + (len(customer_note_lines) * 11) + 5
+        if req.signatureDataUrl:
+            summary_needed += 128
+
+        # Ensure space for totals + customer + optional signature
         y = pdf_ensure_space(
             c, w, h, y,
-            needed=238,
+            needed=summary_needed,
             title="Repair Estimate",
             vehicle_line=vehicle_line,
             left=LEFT, right=RIGHT,
@@ -7275,54 +7304,54 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         if req.showRiskNotes:
             c.setFillGray(0.42)
             c.setFont("Helvetica", 8.5)
-            for line in wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2]:
+            for line in final_note_lines:
                 c.drawString(LEFT + 8, y, line)
-                y -= 10
+                y -= 9
             c.setFillGray(0)
-            y -= 16
+            y -= 10
         else:
-            y -= 6
+            y -= 4
 
         # Customer
         c.setFont("Helvetica-Bold", 12)
         c.drawString(LEFT, y, "Customer")
-        y -= 16
+        y -= 14
 
         c.setFont("Helvetica", 11)
         c.drawString(LEFT, y, f"Customer agrees: {'Yes' if req.customerAgrees else 'No'}")
-        y -= 14
+        y -= 12
 
         if req.customerName:
             c.drawString(LEFT, y, f"Name: {req.customerName}")
-            y -= 14
+            y -= 12
 
         if req.customerPhone:
             c.drawString(LEFT, y, f"Phone: {req.customerPhone}")
-            y -= 14
+            y -= 12
 
-        if req.notes:
-            y -= 6
+        if customer_note_lines:
+            y -= 4
             c.setFont("Helvetica-Bold", 11)
             c.drawString(LEFT, y, "Notes:")
-            y -= 14
+            y -= 12
 
             c.setFont("Helvetica", 10)
-            for line in wrap_text(req.notes.strip(), max_chars=90):
+            for line in customer_note_lines:
                 y = pdf_ensure_space(
                     c, w, h, y,
-                    needed=14,
+                    needed=12,
                     title="Repair Estimate",
                     vehicle_line=vehicle_line,
                     left=LEFT, right=RIGHT,
                 )
                 c.drawString(LEFT, y, line)
-                y -= 12
+                y -= 11
 
-            y -= 8
+            y -= 5
 
         # Signature + footer
         if req.signatureDataUrl:
-            y -= 20
+            y -= 12
             y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=LEFT, right=RIGHT)
         pdf_draw_footer(c, w)
 
