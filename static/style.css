@@ -2749,6 +2749,34 @@ h3{
   line-height: 1.42;
 }
 
+.tm-inspection-findings{
+  display:block;
+  margin-top:12px;
+  max-width:680px;
+}
+
+.tm-inspection-findings span{
+  display:block;
+  margin-bottom:6px;
+  color:var(--tm-text-muted);
+  font-size:.76rem;
+  font-weight:800;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+
+.tm-inspection-findings textarea{
+  width:100%;
+  min-height:58px;
+  max-height:140px;
+  padding:9px 11px;
+  resize:vertical;
+  overflow:hidden;
+  border-radius:8px;
+  font-size:.92rem;
+  line-height:1.35;
+}
+
 .tm-service-estimate{
   min-width:112px;
   text-align:right;
@@ -2887,6 +2915,15 @@ h3{
     margin-top: 9px;
     font-size: .8rem;
     line-height: 1.45;
+  }
+
+  .tm-inspection-findings{
+    margin-top:10px;
+  }
+
+  .tm-inspection-findings textarea{
+    min-height:60px;
+    font-size:.94rem;
   }
 
   .tm-service-estimate{

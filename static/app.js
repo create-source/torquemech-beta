@@ -718,7 +718,8 @@
           laborRate: it.laborRate,
           partsTotal: it.partsPrice,
           lineTotal: it.estimate,
-          notes: it.notes || ""
+          notes: it.notes || "",
+          inspectionFindings: it.inspectionFindings || ""
         }));
     }
 
@@ -944,6 +945,7 @@
       partsPrice: Number(it?.partsPrice || 0),
       laborRate: Number(it?.laborRate || 0),
       notes: (it?.notes || "").trim() || null,
+      inspectionFindings: (it?.inspectionFindings || "").trim(),
       estimate: it?.estimate != null ? Number(it.estimate) : null,
       laborBreakdown: it?.laborBreakdown || null,
       breakdownOpen: false,
@@ -3106,6 +3108,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           it.laborBreakdown.steps.length > 0;
         const lineItemId = it.id || "";
         const riskNote = escapeServiceResultHtml(getEstimateRiskNote(it));
+        const inspectionFindings = escapeServiceResultHtml(it.inspectionFindings || "");
 
         return `
           <div class="tm-service-card" data-idx="${idx}" data-line-item-id="${lineItemId}">
@@ -3117,6 +3120,16 @@ const confidenceEl = document.getElementById("laborConfidence");
                   ${pricingMeta.map(label => `<span>${label}</span>`).join("")}
                 </div>
                 <div class="tm-service-risk-note">${riskNote}</div>
+                <label class="tm-inspection-findings">
+                  <span>Inspection Findings</span>
+                  <textarea
+                    data-action="inspection-findings"
+                    data-line-item-id="${lineItemId}"
+                    rows="2"
+                    maxlength="240"
+                    placeholder="Add a short inspection finding..."
+                  >${inspectionFindings}</textarea>
+                </label>
               </div>
 
               <div class="tm-service-estimate">
@@ -3173,6 +3186,10 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     syncEstimateMeta();
     syncLineItemsToVehicle();
+    lineItemsList.querySelectorAll('[data-action="inspection-findings"]').forEach((input) => {
+      input.style.height = "auto";
+      input.style.height = `${Math.min(input.scrollHeight, 140)}px`;
+    });
     updateEstimateButtonState();
   }
 
@@ -3356,6 +3373,7 @@ if (getEstimateHint) {
       serviceText,
       ...pricingSnapshot,
       notes: (notesEl?.value || "").trim() || null,
+      inspectionFindings: "",
       estimate: null,
     };
 
@@ -3604,6 +3622,20 @@ if (getEstimateHint) {
     });
   });
 
+  lineItemsList?.addEventListener("input", (e) => {
+    const input = e.target?.closest?.('[data-action="inspection-findings"]');
+    if (!input) return;
+
+    const lineItemId = input.dataset.lineItemId || input.closest(".tm-service-card")?.dataset?.lineItemId || "";
+    const it = getLineItemById(lineItemId);
+    if (!it) return;
+
+    it.inspectionFindings = String(input.value || "").trim();
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 140)}px`;
+    syncLineItemsToVehicle();
+  });
+
   let isGeneratingCustomerPdf = false;
 
   // Confirm Add = finalize signature and generate PDF
@@ -3688,6 +3720,7 @@ if (getEstimateHint) {
             laborRate: Number(it.laborRate || 0),
             estimate: it.estimate != null ? Number(it.estimate) : null,
             laborBreakdown: it.laborBreakdown || null,
+            inspectionFindings: String(it.inspectionFindings || "").trim(),
           })),
         }),
       });

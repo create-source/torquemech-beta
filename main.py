@@ -6968,6 +6968,7 @@ class LineItemPDF(BaseModel):
     partsPrice: float
     laborRate: float
     estimate: Optional[float] = None
+    inspectionFindings: Optional[str] = None
 
 class MultiPDFRequest(BaseModel):
     year: int
@@ -7087,9 +7088,14 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         for it in (req.lineItems or []):
             risk_note = estimate_risk_note_for_service(it.serviceCode, it.serviceText or "")
             risk_note_lines = wrap_text(risk_note, max_chars=86)[:3]
+            findings_text = (it.inspectionFindings or "").strip()[:240]
+            findings_lines = wrap_text(findings_text, max_chars=86) if findings_text else []
+            item_space = 206 if req.showDetailedLaborBreakdown else 118 if (req.showHourlyRate or req.showLaborColumn) else 82
+            if findings_lines:
+                item_space += 16 + (len(findings_lines) * 10)
             y = pdf_ensure_space(
                 c, w, h, y,
-                needed=(206 if req.showDetailedLaborBreakdown else 118 if (req.showHourlyRate or req.showLaborColumn) else 82),
+                needed=item_space,
                 title="Repair Estimate",
                 vehicle_line=vehicle_line,
                 left=LEFT, right=RIGHT,
@@ -7137,6 +7143,20 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 y -= 10
             c.setFillGray(0)
             y -= 2
+
+            if findings_lines:
+                c.setFillGray(0.35)
+                c.setFont("Helvetica-Bold", 8)
+                c.drawString(X_SERVICE + 12, y, "Inspection Findings")
+                y -= 10
+
+                c.setFillGray(0.28)
+                c.setFont("Helvetica", 8.5)
+                for finding_line in findings_lines:
+                    c.drawString(X_SERVICE + 18, y, finding_line)
+                    y -= 10
+                c.setFillGray(0)
+                y -= 2
 
             if req.showDetailedLaborBreakdown:
                 lb = build_labor_breakdown(
