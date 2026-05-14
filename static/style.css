@@ -707,6 +707,37 @@ button:active{
   line-height: 1.5;
 }
 
+.tm-final-help{
+  display: grid;
+  gap: 8px;
+  padding: 12px 13px;
+  border: 1px solid rgba(20,184,166,.22);
+  border-radius: 12px;
+  background: rgba(255,255,255,.58);
+}
+
+.tm-final-help__title{
+  color: var(--tm-text);
+  font-size: .88rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.tm-final-help__steps{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--tm-text-muted);
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+.tm-final-help__steps li{
+  padding-left: 2px;
+}
+
 .estimator-final-cta{
   width: 100%;
   min-height: 60px;
@@ -1663,6 +1694,17 @@ body.modal-open{
   text-transform: uppercase;
 }
 
+.tm-confirm-helper{
+  margin: -4px 0 12px;
+  color: var(--tm-text-muted);
+  font-size: .84rem;
+  line-height: 1.4;
+}
+
+.tm-confirm-helper--nudge{
+  margin: 10px 0 0;
+}
+
 .tm-confirm-grid-compact{
   gap: 10px;
 }
@@ -2140,6 +2182,23 @@ canvas,
     font-size: .86rem;
   }
 
+  .tm-final-help{
+    gap: 7px;
+    padding: 11px;
+  }
+
+  .tm-final-help__title{
+    text-align: center;
+    font-size: .84rem;
+  }
+
+  .tm-final-help__steps{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    font-size: .78rem;
+  }
+
   .estimator-final-cta{
     min-height: 58px;
     padding: 15px 16px;
@@ -2230,6 +2289,11 @@ canvas,
 
   .tm-confirm-section{
     padding: 14px 0;
+  }
+
+  .tm-confirm-helper{
+    margin-bottom: 10px;
+    font-size: .8rem;
   }
 
   .tm-confirm-options-grid{

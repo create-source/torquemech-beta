@@ -612,6 +612,7 @@
   const pdfShowRiskNotesChk = $("pdfShowRiskNotesChk");
   const pdfShowInspectionFindingsChk = $("pdfShowInspectionFindingsChk");
   const pdfShowLaborBreakdownChk = $("pdfShowLaborBreakdownChk");
+  const quoteIdentityNudge = $("quoteIdentityNudge");
 
   // Customer
   const customerNameEl = $("customerName");
@@ -693,6 +694,13 @@
     try {
       window.sessionStorage?.setItem(BUSINESS_IDENTITY_SESSION_KEY, JSON.stringify(getBusinessIdentity()));
     } catch (_) {}
+  }
+
+  function refreshQuoteIdentityNudge() {
+    if (!quoteIdentityNudge) return;
+    const missingCustomerName = !(customerNameEl?.value || "").trim();
+    const missingBusinessName = !(businessNameEl?.value || "").trim();
+    quoteIdentityNudge.classList.toggle("hidden", !(missingCustomerName || missingBusinessName));
   }
 
   loadBusinessIdentityFromSession();
@@ -2875,6 +2883,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     refreshQuotePreview();
+    refreshQuoteIdentityNudge();
     resizeSigCanvas();
   }
 
@@ -2893,7 +2902,10 @@ const confidenceEl = document.getElementById("laborConfidence");
   confirmBackdrop?.addEventListener("click", closeConfirm);
   confirmCloseBtn?.addEventListener("click", closeConfirm);
 
-  customerNameEl?.addEventListener("input", refreshQuotePreview);
+  customerNameEl?.addEventListener("input", () => {
+    refreshQuotePreview();
+    refreshQuoteIdentityNudge();
+  });
   notesEl?.addEventListener("input", refreshQuotePreview);
   pdfShowGeneratedDateChk?.addEventListener("change", refreshQuotePreview);
   pdfShowHourlyRateChk?.addEventListener("change", () => {
@@ -4255,7 +4267,10 @@ if (getEstimateHint) {
     syncEstimateMeta();
   });
   [businessNameEl, mechanicNameEl, businessPhoneEl, businessNoteEl].forEach((el) => {
-    el?.addEventListener("input", persistBusinessIdentityToSession);
+    el?.addEventListener("input", () => {
+      persistBusinessIdentityToSession();
+      refreshQuoteIdentityNudge();
+    });
   });
 
   function addVehicleCard() {

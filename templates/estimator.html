@@ -378,6 +378,15 @@
         <div class="estimator-final-step">Final action</div>
         <div class="estimator-final-heading">Ready to Send the Customer Quote</div>
         <div class="tm-hint estimator-final-hint">Check the customer info and PDF options, then create the final quote.</div>
+        <div class="tm-final-help" aria-label="How customer quotes work">
+          <div class="tm-final-help__title">Create a Customer Quote</div>
+          <ol class="tm-final-help__steps">
+            <li>Add repair services</li>
+            <li>Review pricing and notes</li>
+            <li>Add your business info</li>
+            <li>Generate the customer PDF</li>
+          </ol>
+        </div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta">
           Create Customer Quote
         </button>
@@ -398,6 +407,7 @@
 
       <section class="tm-confirm-section" aria-label="Business identity">
         <div class="tm-confirm-section-title">Business Identity</div>
+        <p class="tm-confirm-helper">Your business info appears on the customer PDF.</p>
         <div class="grid2 tm-confirm-grid-compact">
           <div>
             <label for="businessName">Business / Shop Name</label>
@@ -434,6 +444,9 @@
           <input type="checkbox" id="customerAgreesChk" checked />
           <span>Customer reviewed this quote</span>
         </label>
+        <p id="quoteIdentityNudge" class="tm-confirm-helper tm-confirm-helper--nudge hidden">
+          Adding customer and business details makes the estimate look more professional.
+        </p>
       </section>
 
       <section class="tm-confirm-section" aria-label="Estimate summary">
