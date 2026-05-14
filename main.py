@@ -6985,6 +6985,32 @@ class MultiPDFRequest(BaseModel):
     showDetailedLaborBreakdown: bool = False
     lineItems: List[LineItemPDF]
 
+GENERIC_ESTIMATE_RISK_NOTE = (
+    "Price may vary if rust, seized hardware, broken bolts, stuck fasteners, "
+    "or additional diagnosis is required."
+)
+
+BRAKE_ESTIMATE_RISK_NOTE = (
+    "Brake job price may vary if guide pins are seized, rotor screws are stuck, "
+    "hardware is rusted, calipers need service, or rotors require extra removal time."
+)
+
+
+def estimate_risk_note_for_service(service_code: str = "", service_text: str = "") -> str:
+    service_value = f"{service_code or ''} {service_text or ''}".lower().replace("_", " ")
+    brake_terms = [
+        "brake pad",
+        "brake pads",
+        "brake rotor",
+        "brake rotors",
+        "brake caliper",
+        "brake hardware",
+        "wheel cylinder",
+    ]
+    if "brake" in service_value or any(term in service_value for term in brake_terms):
+        return BRAKE_ESTIMATE_RISK_NOTE
+    return GENERIC_ESTIMATE_RISK_NOTE
+
 @app.post("/estimate/pdf_multi")
 async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
     try:
@@ -7048,9 +7074,11 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         grand_total = 0.0
         for it in (req.lineItems or []):
+            risk_note = estimate_risk_note_for_service(it.serviceCode, it.serviceText or "")
+            risk_note_lines = wrap_text(risk_note, max_chars=86)[:3]
             y = pdf_ensure_space(
                 c, w, h, y,
-                needed=182 if req.showDetailedLaborBreakdown else 94 if (req.showHourlyRate or req.showLaborColumn) else 58,
+                needed=(206 if req.showDetailedLaborBreakdown else 118 if (req.showHourlyRate or req.showLaborColumn) else 82),
                 title="Repair Estimate",
                 vehicle_line=vehicle_line,
                 left=LEFT, right=RIGHT,
@@ -7090,6 +7118,14 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.drawString(X_SERVICE, y, f"Rate: ${it.laborRate:.0f}/hr")
                 c.setFillGray(0)
                 y -= 12
+
+            c.setFillGray(0.42)
+            c.setFont("Helvetica", 8)
+            for note_line in risk_note_lines:
+                c.drawString(X_SERVICE + 12, y, note_line)
+                y -= 10
+            c.setFillGray(0)
+            y -= 2
 
             if req.showDetailedLaborBreakdown:
                 lb = build_labor_breakdown(

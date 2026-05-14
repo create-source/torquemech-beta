@@ -2211,6 +2211,33 @@ const confidenceEl = document.getElementById("laborConfidence");
       .replace(/'/g, "&#39;");
   }
 
+  function getEstimateRiskNote(service = {}) {
+    const serviceText = normalizeServiceSearch([
+      service.serviceCode,
+      service.serviceText,
+      service.code,
+      service.name,
+      service.category,
+      service.categoryName,
+    ].join(" "));
+    const isBrakeService = [
+      "brake pad",
+      "brake pads",
+      "brake rotor",
+      "brake rotors",
+      "brake caliper",
+      "brake hardware",
+      "wheel cylinder",
+    ].some((term) => serviceText.includes(normalizeServiceSearch(term))) ||
+      serviceText.includes("brake");
+
+    if (isBrakeService) {
+      return "Brake job price may vary if guide pins are seized, rotor screws are stuck, hardware is rusted, calipers need service, or rotors require extra removal time.";
+    }
+
+    return "Price may vary if rust, seized hardware, broken bolts, stuck fasteners, or additional diagnosis is required.";
+  }
+
   function getServiceHelperText(service) {
     const direct = String(service.summary || service.description || service.meta || "").trim();
     if (direct) return direct;
@@ -3078,6 +3105,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           Array.isArray(it.laborBreakdown.steps) &&
           it.laborBreakdown.steps.length > 0;
         const lineItemId = it.id || "";
+        const riskNote = escapeServiceResultHtml(getEstimateRiskNote(it));
 
         return `
           <div class="tm-service-card" data-idx="${idx}" data-line-item-id="${lineItemId}">
@@ -3088,6 +3116,7 @@ const confidenceEl = document.getElementById("laborConfidence");
                 <div class="tm-service-meta">
                   ${pricingMeta.map(label => `<span>${label}</span>`).join("")}
                 </div>
+                <div class="tm-service-risk-note">${riskNote}</div>
               </div>
 
               <div class="tm-service-estimate">

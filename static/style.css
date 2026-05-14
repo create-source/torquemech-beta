@@ -2740,6 +2740,15 @@ h3{
   line-height:1.15;
 }
 
+.tm-service-risk-note{
+  margin-top: 10px;
+  max-width: 680px;
+  color: var(--tm-text-muted);
+  font-size: .82rem;
+  font-weight: 650;
+  line-height: 1.42;
+}
+
 .tm-service-estimate{
   min-width:112px;
   text-align:right;
@@ -2872,6 +2881,12 @@ h3{
     padding:5px 8px;
     border-radius:10px;
     font-size:.8rem;
+  }
+
+  .tm-service-risk-note{
+    margin-top: 9px;
+    font-size: .8rem;
+    line-height: 1.45;
   }
 
   .tm-service-estimate{
