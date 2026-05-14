@@ -698,9 +698,9 @@
 
   function refreshQuoteIdentityNudge() {
     if (!quoteIdentityNudge) return;
-    const missingCustomerName = !(customerNameEl?.value || "").trim();
-    const missingBusinessName = !(businessNameEl?.value || "").trim();
-    quoteIdentityNudge.classList.toggle("hidden", !(missingCustomerName || missingBusinessName));
+    const hasCustomerName = !!(customerNameEl?.value || "").trim();
+    const hasBusinessName = !!(businessNameEl?.value || "").trim();
+    quoteIdentityNudge.classList.toggle("hidden", hasCustomerName || hasBusinessName);
   }
 
   loadBusinessIdentityFromSession();
