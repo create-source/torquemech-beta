@@ -462,6 +462,11 @@
       category: "brakes",
       serviceCode: "front_brake_pads_and_rotors_replacement",
     },
+    brake_pads: {
+      label: "Brake Pads",
+      category: "brakes",
+      serviceCode: "front_brake_pads_replacement",
+    },
     rear_brakes: {
       label: "Rear Brake Job",
       category: "brakes",
@@ -486,6 +491,11 @@
       label: "Spark Plug Replacement",
       category: "engine",
       serviceCode: "spark_plug_replacement_4_cyl",
+    },
+    diagnostic: {
+      label: "Check Engine Light Diagnosis",
+      category: "exhaust",
+      serviceCode: "check_engine_light_diagnosis",
     },
     thermostat: {
       label: "Thermostat Replacement",
@@ -2461,9 +2471,14 @@ const confidenceEl = document.getElementById("laborConfidence");
     setStatus("info", `${serviceName} selected. Review pricing, then add it to the quote.`);
   }
 
-  async function selectQuickQuoteShortcut(shortcutKey) {
+  async function selectQuickQuoteShortcut(shortcutKey, { addToQuote = false } = {}) {
     const shortcut = QUICK_QUOTE_SHORTCUTS[shortcutKey];
     if (!shortcut || !categoryEl || !serviceEl) return;
+
+    if (activeEditingLineId) {
+      setStatus("error", "Save or cancel the current line edit before using a quick repair shortcut.");
+      return;
+    }
 
     if (!readyForNextService) {
       addLineBtn?.click();
@@ -2500,6 +2515,12 @@ const confidenceEl = document.getElementById("laborConfidence");
       behavior: "smooth",
       block: "nearest",
     });
+
+    if (addToQuote && estimateBtn && !estimateBtn.disabled) {
+      estimateBtn.click();
+    } else if (addToQuote) {
+      estimateBtn?.focus();
+    }
   }
 
   function renderServiceResults(query) {
@@ -3702,7 +3723,9 @@ if (getEstimateHint) {
 
     btn.disabled = true;
     try {
-      await selectQuickQuoteShortcut(btn.dataset.quickQuote || "");
+      await selectQuickQuoteShortcut(btn.dataset.quickQuote || "", {
+        addToQuote: btn.dataset.quickAdd === "true",
+      });
     } catch (err) {
       console.warn("Quick Quote selection failed", err);
       setStatus("error", "Unable to select that quick quote. Choose it from the service list instead.");

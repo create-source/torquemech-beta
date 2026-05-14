@@ -863,10 +863,12 @@ button:active{
 
 .tm-quick-quotes{
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 10px 0 14px;
-  padding: 0;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 14px;
+  padding: 10px 0 2px;
+  border-top: 1px solid var(--tm-border);
+  border-bottom: 1px solid var(--tm-border);
   background: transparent;
   max-width: 100%;
   min-width: 0;
@@ -874,33 +876,34 @@ button:active{
 
 .tm-quick-quotes__head{
   flex: 0 0 auto;
+  padding-top: 9px;
 }
 
 .tm-quick-quotes__eyebrow{
   color: var(--tm-text-muted);
-  font-size: .74rem;
+  font-size: .72rem;
   font-weight: 850;
-  line-height: 1;
+  line-height: 1.15;
   text-transform: uppercase;
 }
 
 .tm-quick-quotes__list{
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 8px;
   max-width: 100%;
   min-width: 0;
 }
 
 .tm-quick-quote{
-  min-height: 30px;
-  padding: 6px 9px;
+  min-height: 38px;
+  padding: 9px 12px;
   border: 1px solid var(--tm-border);
-  border-radius: 999px;
-  background: transparent;
+  border-radius: 10px;
+  background: var(--tm-surface);
   color: var(--tm-text-muted);
-  font-size: .78rem;
-  font-weight: 800;
+  font-size: .82rem;
+  font-weight: 850;
   line-height: 1;
   cursor: pointer;
   box-shadow: none;
@@ -910,8 +913,13 @@ button:active{
 .tm-quick-quote:hover,
 .tm-quick-quote.is-selected{
   border-color: rgba(20,184,166,.38);
-  background: rgba(20,184,166,.07);
+  background: rgba(20,184,166,.08);
   color: var(--tm-text);
+}
+
+.tm-quick-quote:disabled{
+  cursor: wait;
+  opacity: .68;
 }
 
 .pricing-controls{
@@ -2026,6 +2034,28 @@ canvas,
     width: 100%;
     min-height: 54px;
     font-size: 1rem;
+  }
+
+  .tm-quick-quotes{
+    display: block;
+    margin: 10px 0 14px;
+    padding: 10px 0 4px;
+  }
+
+  .tm-quick-quotes__head{
+    padding-top: 0;
+    margin-bottom: 8px;
+  }
+
+  .tm-quick-quotes__list{
+    gap: 8px;
+  }
+
+  .tm-quick-quote{
+    flex: 1 1 calc(50% - 8px);
+    min-height: 44px;
+    padding: 10px 12px;
+    text-align: center;
   }
 
   .tm-estimate-action-panel{
