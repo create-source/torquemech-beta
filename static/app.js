@@ -807,6 +807,20 @@
     return details ? `${title} — ${details}` : title;
   }
 
+  function getCustomerVehicleLabel(vehicleOrLabel) {
+    if (typeof vehicleOrLabel === "string") {
+      const label = vehicleOrLabel.trim();
+      return label.replace(/^Vehicle\s+\d+\s+[—-]\s+/i, "").replace(/^Vehicle\s+\d+\s*$/i, "Vehicle").trim();
+    }
+
+    const details = [
+      vehicleOrLabel?.year,
+      vehicleOrLabel?.make,
+      vehicleOrLabel?.model,
+    ].filter(Boolean).join(" ");
+    return details || "Vehicle";
+  }
+
   function setActiveVehicle(vehicleId) {
     const exists = estimateState.vehicles.some(v => v.id === vehicleId);
     if (!exists) return;
@@ -2862,21 +2876,21 @@ const confidenceEl = document.getElementById("laborConfidence");
       const total = lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0);
 
       listEl.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="tm-confirm-services-list">
           ${lineItems.map(it => `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-              <div>
-                <div>${it.serviceText}</div>
-                <div style="font-size:12px; opacity:.72; margin-top:2px;">
-                  ${it.vehicleLabel || "No vehicle assigned"}
+            <div class="tm-confirm-service-row">
+              <div class="tm-confirm-service-main">
+                <div class="tm-confirm-service-name">${it.serviceText}</div>
+                <div class="tm-confirm-service-vehicle">
+                  ${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}
                 </div>
               </div>
-              <div style="font-weight:700; white-space:nowrap;">${money(it.estimate)}</div>
+              <div class="tm-confirm-service-total">${money(it.estimate)}</div>
             </div>
           `).join("")}
-          <div style="border-top:1px solid rgba(255,255,255,.15);padding-top:8px;display:flex;justify-content:space-between;">
-            <div style="font-weight:800;">Grand Total</div>
-            <div style="font-weight:900;">${money(total)}</div>
+          <div class="tm-confirm-grand-total">
+            <div>Grand Total</div>
+            <strong>${money(total)}</strong>
           </div>
         </div>
       `;
@@ -3177,7 +3191,7 @@ const confidenceEl = document.getElementById("laborConfidence");
             <div class="tm-service-head">
               <div class="tm-service-head-main">
                 <div class="tm-service-title">${it.serviceText || "Service"}</div>
-                <div class="tm-service-vehicle">${it.vehicleLabel || "Vehicle 1"}</div>
+                <div class="tm-service-vehicle">${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}</div>
                 <div class="tm-service-meta">
                   ${pricingMeta.map(label => `<span>${label}</span>`).join("")}
                 </div>
@@ -4367,7 +4381,7 @@ if (getEstimateHint) {
         "
       >
         <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
-          <h3 style="margin:0;">Vehicle ${idx + 1}</h3>
+          <h3 style="margin:0;">${estimateState.vehicles.length > 1 ? `Vehicle ${idx + 1}` : "Vehicle"}</h3>
           ${estimateState.vehicles.length > 1 && idx > 0 ? `
             <button type="button" class="ghost remove-vehicle-btn" data-vehicle-id="${vehicle.id}">
               Remove Vehicle

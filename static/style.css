@@ -1774,6 +1774,55 @@ body.modal-open{
   overflow-wrap: anywhere;
 }
 
+.tm-confirm-services-list{
+  display: grid;
+  gap: 10px;
+}
+
+.tm-confirm-service-row{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.tm-confirm-service-name{
+  color: var(--tm-text);
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.tm-confirm-service-vehicle{
+  margin-top: 3px;
+  color: var(--tm-text-muted);
+  font-size: .78rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.tm-confirm-service-total{
+  color: var(--tm-text);
+  font-weight: 900;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.tm-confirm-grand-total{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+  color: var(--tm-text);
+  font-weight: 900;
+}
+
+.tm-confirm-grand-total strong{
+  font-size: 1.08rem;
+}
+
 .tm-confirm-options-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2322,6 +2371,23 @@ canvas,
 
   .tm-confirm-services-wrap{
     padding: 11px;
+  }
+
+  .tm-confirm-services-list{
+    gap: 9px;
+  }
+
+  .tm-confirm-service-row{
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .tm-confirm-service-name{
+    font-size: .92rem;
+  }
+
+  .tm-confirm-service-total{
+    font-size: .92rem;
   }
 
   .tm-confirm-actions{

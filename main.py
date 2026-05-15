@@ -7229,6 +7229,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.drawRightString(X_LABOR, y, f"${labor_total:,.0f}")
             if req.showPartsColumn:
                 c.drawRightString(X_PARTS, y, f"${it.partsPrice:,.0f}")
+            c.setFont("Helvetica-Bold", 10)
             c.drawRightString(X_TOTAL, y, f"${est:,.0f}")
             y -= 13
 
@@ -7300,10 +7301,10 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.setFillGray(0)
                 y -= 3
 
-            c.setStrokeGray(0.84)
+            c.setStrokeGray(0.80)
             c.line(X_SERVICE, y, X_TOTAL, y)
             c.setStrokeGray(0)
-            y -= 12
+            y -= 13
 
         final_note_lines = wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2] if req.showRiskNotes else []
         customer_note_lines = wrap_text(req.notes.strip(), max_chars=90) if req.notes else []
