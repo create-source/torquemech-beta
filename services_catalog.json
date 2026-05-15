@@ -554,15 +554,18 @@
         },
         {
           "code": "cooling_fan_assembly_replacement",
-          "name": "Cooling Fan Assembly Replacement",
+          "name": "Radiator Fan Replacement",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "summary": "Replace the radiator cooling fan or fan assembly after confirming fan command, power, ground, relay/fuse condition, and overheating symptoms.",
+          "keywords": ["cooling fan", "radiator fan", "overheating fan", "fan motor", "cooling fan assembly"]
         },
         {
           "code": "cooling_fan_motor_replacement",
           "name": "Cooling Fan Motor Replacement",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "keywords": ["cooling fan", "radiator fan", "overheating fan", "fan motor"]
         },
         {
           "code": "fan_clutch_replacement",
@@ -581,7 +584,8 @@
           "name": "Cooling System Pressure Test",
           "labor_hours_min": 0.8,
           "labor_hours_max": 2.5,
-          "keywords": ["diagnostics", "coolant leak", "overheating", "pressure test"]
+          "summary": "Pressure-test the cooling system to locate external coolant leaks and verify whether hoses, radiator, water pump, cap, or fittings hold pressure.",
+          "keywords": ["diagnostics", "coolant leak", "pressure test", "cooling leak", "coolant pressure", "coolant pressure test", "overheating"]
         },
         {
           "code": "combustion_gas_test_block_test",
@@ -845,7 +849,9 @@
           "code": "sway_bar_link_replacement",
           "name": "Sway Bar Link Replacement",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "summary": "Replace worn stabilizer links after confirming clunking, loose link joints, or front-end noise from the sway bar link area.",
+          "keywords": ["sway bar", "stabilizer link", "clunk noise", "front end noise", "sway bar link"]
         },
         {
           "code": "sway_bar_bushing_replacement",
@@ -888,13 +894,15 @@
           "code": "wheel_bearing_replacement_front",
           "name": "Wheel Bearing Replacement (Front)",
           "labor_hours_min": 1.2,
-          "labor_hours_max": 6.0
+          "labor_hours_max": 6.0,
+          "keywords": ["wheel bearing", "hub assembly", "humming noise", "bearing noise", "wheel hub", "front wheel bearing"]
         },
         {
           "code": "wheel_bearing_replacement_rear",
           "name": "Wheel Bearing Replacement (Rear)",
           "labor_hours_min": 1.2,
-          "labor_hours_max": 6.0
+          "labor_hours_max": 6.0,
+          "keywords": ["wheel bearing", "hub assembly", "humming noise", "bearing noise", "wheel hub", "rear wheel bearing"]
         },
         {
           "code": "wheel_alignment_2_wheel",
@@ -1048,7 +1056,9 @@
           "code": "wheel_hub_assembly_replacement_each",
           "name": "Wheel Hub Assembly Replacement (each)",
           "labor_hours_min": 1.0,
-          "labor_hours_max": 4.0
+          "labor_hours_max": 4.0,
+          "summary": "Replace the wheel hub assembly after confirming bearing or hub noise, play, ABS-related hub faults, or wheel-end vibration.",
+          "keywords": ["wheel bearing", "hub assembly", "humming noise", "bearing noise", "wheel hub"]
         },
         {
           "code": "driveline_vibration_diagnosis",
@@ -1396,15 +1406,19 @@
         },
         {
           "code": "parasitic_draw_test",
-          "name": "Parasitic Draw Test",
+          "name": "Parasitic Draw Diagnosis",
           "labor_hours_min": 0.8,
-          "labor_hours_max": 2.5
+          "labor_hours_max": 2.5,
+          "summary": "Diagnose battery drain complaints by measuring key-off draw, isolating circuits, and checking modules or accessories that keep the vehicle awake.",
+          "keywords": ["battery drain", "draw test", "overnight drain", "electrical drain", "dead battery overnight", "parasitic draw"]
         },
         {
           "code": "starter_replacement",
           "name": "Starter Replacement",
           "labor_hours_min": 1.2,
-          "labor_hours_max": 6.0
+          "labor_hours_max": 6.0,
+          "summary": "Replace the starter motor after no-crank testing confirms battery state, cable voltage drop, relay command, and starter power/ground.",
+          "keywords": ["starter", "starter motor", "no crank", "click no start", "starting issue", "clicking no start"]
         },
         {
           "code": "starter_diagnosis",
@@ -1462,7 +1476,8 @@
           "name": "Battery Cable Replacement",
           "labor_hours_min": 1.0,
           "labor_hours_max": 4.0,
-          "keywords": ["maintenance", "starting", "charging", "battery service"]
+          "summary": "Replace damaged or corroded battery cables after voltage-drop testing confirms high resistance in the positive, negative, or ground cable path.",
+          "keywords": ["battery cable", "terminal", "corroded cable", "ground cable", "positive cable", "starting", "charging", "battery service"]
         },
         {
           "code": "ground_strap_repair",

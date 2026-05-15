@@ -1869,6 +1869,40 @@ const confidenceEl = document.getElementById("laborConfidence");
       ],
       terms: ["overheat", "overheating", "cooling fan", "coolant leak", "pressure test"],
     },
+    radiatorfan: {
+      codes: [
+        "cooling_fan_assembly_replacement",
+        "cooling_fan_motor_replacement",
+        "cooling_fan_diagnosis",
+      ],
+      terms: ["radiator fan", "cooling fan", "fan motor", "overheating fan"],
+    },
+    coolingfan: {
+      codes: [
+        "cooling_fan_assembly_replacement",
+        "cooling_fan_motor_replacement",
+        "cooling_fan_diagnosis",
+      ],
+      terms: ["cooling fan", "radiator fan", "fan motor", "overheating fan"],
+    },
+    coolantpressure: {
+      codes: [
+        "cooling_system_pressure_test",
+        "coolant_leak_diagnosis",
+        "radiator_replacement",
+        "radiator_hose_replacement",
+      ],
+      terms: ["coolant pressure", "pressure test", "cooling leak", "coolant leak"],
+    },
+    coolingleak: {
+      codes: [
+        "cooling_system_pressure_test",
+        "coolant_leak_diagnosis",
+        "radiator_replacement",
+        "radiator_hose_replacement",
+      ],
+      terms: ["cooling leak", "coolant leak", "pressure test", "coolant pressure"],
+    },
     overheat: {
       codes: [
         "thermostat_replacement",
@@ -1941,6 +1975,32 @@ const confidenceEl = document.getElementById("laborConfidence");
         "electrical_diagnostic",
       ],
       terms: ["no crank", "won't crank", "clicking", "starter", "battery cable", "ground"],
+    },
+    batterydrain: {
+      codes: [
+        "parasitic_draw_test",
+        "electrical_diagnostic",
+        "battery_replacement",
+        "alternator_diagnosis",
+      ],
+      terms: ["battery drain", "parasitic draw", "overnight drain", "electrical drain", "dead battery overnight"],
+    },
+    parasiticdraw: {
+      codes: [
+        "parasitic_draw_test",
+        "electrical_diagnostic",
+        "battery_replacement",
+      ],
+      terms: ["parasitic draw", "draw test", "battery drain", "dead battery overnight"],
+    },
+    deadbatteryovernight: {
+      codes: [
+        "parasitic_draw_test",
+        "electrical_diagnostic",
+        "battery_replacement",
+        "alternator_diagnosis",
+      ],
+      terms: ["dead battery overnight", "overnight drain", "battery drain", "parasitic draw"],
     },
     cranknostart: {
       codes: [
@@ -2065,6 +2125,22 @@ const confidenceEl = document.getElementById("laborConfidence");
       ],
       terms: ["grinding", "brake noise", "wheel bearing", "rotor"],
     },
+    wheelbearing: {
+      codes: [
+        "wheel_bearing_replacement_front",
+        "wheel_bearing_replacement_rear",
+        "wheel_hub_assembly_replacement_each",
+      ],
+      terms: ["wheel bearing", "hub assembly", "humming noise", "bearing noise", "wheel hub"],
+    },
+    hubassembly: {
+      codes: [
+        "wheel_hub_assembly_replacement_each",
+        "wheel_bearing_replacement_front",
+        "wheel_bearing_replacement_rear",
+      ],
+      terms: ["hub assembly", "wheel hub", "wheel bearing", "bearing noise"],
+    },
     clunk: {
       codes: [
         "suspension_noise_diagnosis",
@@ -2076,6 +2152,14 @@ const confidenceEl = document.getElementById("laborConfidence");
         "engine_mount_replacement",
       ],
       terms: ["clunk", "suspension noise", "control arm", "ball joint", "sway bar"],
+    },
+    swaybar: {
+      codes: [
+        "sway_bar_link_replacement",
+        "sway_bar_bushing_replacement",
+        "suspension_noise_diagnosis",
+      ],
+      terms: ["sway bar", "stabilizer link", "clunk noise", "front end noise"],
     },
     squeak: {
       codes: [
