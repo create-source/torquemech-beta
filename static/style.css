@@ -831,6 +831,19 @@ button:active{
   background: linear-gradient(180deg, rgba(20,184,166,.08) 0%, rgba(20,184,166,.03) 100%);
 }
 
+.tm-card.tm-service-add-focus{
+  animation: tm-service-add-focus 1.15s ease-out;
+}
+
+@keyframes tm-service-add-focus{
+  0%{
+    box-shadow: 0 0 0 4px rgba(20,184,166,.16), var(--tm-shadow-md);
+  }
+  100%{
+    box-shadow: var(--tm-shadow-sm);
+  }
+}
+
 .tm-estimate-action-panel__label{
   color: var(--tm-text-muted);
   font-size: .76rem;
@@ -1253,7 +1266,7 @@ input[type="radio"]{
 .line-items-list,
 .labor-breakdown-list{
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .line-items-list{
@@ -2720,12 +2733,12 @@ h3{
   position: relative;
   counter-increment: quote-job;
   background: #fff;
-  border: 1px solid rgba(11,22,40,.11);
+  border: 1px solid rgba(11,22,40,.13);
   border-left: 4px solid rgba(20,184,166,.72);
   border-radius: 14px;
-  padding: 16px 16px 16px 18px;
+  padding: 17px 17px 16px 19px;
   margin-top: 0;
-  box-shadow: 0 8px 20px rgba(15,23,42,.055);
+  box-shadow: 0 9px 22px rgba(15,23,42,.06);
 }
 
 .tm-service-card.is-newly-added{
@@ -2761,7 +2774,7 @@ h3{
 }
 
 .tm-service-card + .tm-service-card{
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .tm-service-head{
@@ -2795,7 +2808,7 @@ h3{
   margin-top:10px;
   display:flex;
   flex-wrap:wrap;
-  gap:7px;
+  gap:7px 8px;
   font-size:.84rem;
   color:#334155;
 }
@@ -2874,7 +2887,7 @@ h3{
   flex-wrap:wrap;
   gap:8px;
   justify-content:flex-end;
-  margin-top:16px;
+  margin-top:17px;
   padding-top:12px;
   border-top:1px solid rgba(15,23,42,.07);
 }
@@ -2948,7 +2961,7 @@ h3{
   }
 
   .tm-service-card{
-    padding: 14px 12px;
+    padding: 15px 13px;
     border-left-width: 3px;
     border-radius: 13px;
   }
@@ -2970,7 +2983,7 @@ h3{
   }
 
   .tm-service-meta{
-    gap:6px;
+    gap:6px 7px;
   }
 
   .tm-service-meta span{

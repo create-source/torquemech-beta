@@ -3287,6 +3287,49 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
   }
 
+  function getServiceAddSection() {
+    return document.querySelector('section[aria-label="Service"]');
+  }
+
+  function highlightServiceAddArea() {
+    const section = getServiceAddSection();
+    if (!section) return;
+
+    section.classList.remove("tm-service-add-focus");
+    void section.offsetWidth;
+    section.classList.add("tm-service-add-focus");
+    window.setTimeout(() => {
+      section.classList.remove("tm-service-add-focus");
+    }, 1200);
+  }
+
+  function focusServiceAddArea() {
+    const section = getServiceAddSection();
+    section?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest",
+    });
+    highlightServiceAddArea();
+
+    window.setTimeout(() => {
+      if (categoryEl && !categoryEl.value) {
+        categoryEl.focus({ preventScroll: true });
+        return;
+      }
+      if (serviceSearch && !serviceSearch.disabled) {
+        serviceSearch.focus({ preventScroll: true });
+        return;
+      }
+      serviceEl?.focus({ preventScroll: true });
+    }, 260);
+  }
+
+  function focusAddAnotherRepair() {
+    if (!addLineBtn || addLineBtn.hidden || addLineBtn.disabled) return;
+    addLineBtn.focus({ preventScroll: true });
+  }
+
   function updateEstimateButtonState() {
     if (!estimateBtn) return;
 
@@ -3314,7 +3357,7 @@ if (addServiceHint) {
   if (isEditingSavedLine) {
     addServiceHint.textContent = "Editing saved line. Update pricing, then save changes.";
   } else {
-    addServiceHint.textContent = "Tap + Add Another Repair to keep building this quote.";
+    addServiceHint.textContent = "Added. Tap + Add Another Repair to keep building this quote.";
   }
 }
 if (getEstimateHint) {
@@ -3338,7 +3381,7 @@ if (getEstimateHint) {
         : !hasSelection
           ? "Choose the repair job for this vehicle."
           : !readyForNextService
-            ? "Job added. Add another job or review the quote total."
+            ? "Job added. Add another repair or create the customer quote."
             : "Review pricing, then add this job to the quote.";
     }
 
@@ -3349,7 +3392,7 @@ if (getEstimateHint) {
     if (isEditingSavedLine) setStatus("info", "Editing saved line. Update pricing, then save changes.");
     else if (!hasBasics) setStatus("info", "Set the vehicle before pricing the job.");
     else if (!hasSelection) setStatus("info", "Choose a category and repair job.");
-    else if (!readyForNextService) setStatus("info", "Job added. Add another job or review the quote.");
+    else if (!readyForNextService) setStatus("info", "Job added. Add another repair or create the customer quote.");
     else setStatus("info", "Review pricing, then add this job to the quote.");
   }
 
@@ -3460,10 +3503,11 @@ if (getEstimateHint) {
           service_name: it.serviceText,
           estimate_total: Number(it.estimate || 0)
         });
-        setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
+        setStatus("ok", `${it.serviceText}: ${money(it.estimate)} added. Add another repair or create the customer quote.`);
 
         readyForNextService = false;
         updateEstimateButtonState();
+        focusAddAnotherRepair();
         void refreshPairedSuggestions();
         return;
       }
@@ -3511,10 +3555,11 @@ if (getEstimateHint) {
         service_name: it.serviceText,
         estimate_total: Number(it.estimate || 0)
       });
-      setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Add another job or review the quote.`);
+      setStatus("ok", `${it.serviceText}: ${money(it.estimate)} added. Add another repair or create the customer quote.`);
 
       readyForNextService = false;
       updateEstimateButtonState();
+      focusAddAnotherRepair();
       void refreshPairedSuggestions();
     } catch (e) {
       const currentIndex = lineItems.indexOf(it);
@@ -3558,6 +3603,7 @@ if (getEstimateHint) {
     // Unlock Add Service to Estimate
     readyForNextService = true;
     updateEstimateButtonState();
+    focusServiceAddArea();
 
     setStatus("info", "Choose the next repair job, then add it to the quote.");
   });
