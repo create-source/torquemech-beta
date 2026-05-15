@@ -6446,18 +6446,25 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
     Consistent signature box + note (same in both PDFs).
     Returns the new cursor y (below the signature note).
     """
-    # Signature label
     c.setFont("Helvetica-Bold", 11)
-    c.drawString(left, y, "Signature")
-    y -= 10
+    c.drawString(left, y, "Customer Approval")
+    y -= 13
 
-    sig_box_h = 80
+    c.setFont("Helvetica", 9)
+    c.setFillGray(0.42)
+    c.drawString(left, y, "Review estimate details before approval.")
+    c.setFillGray(0)
+    y -= 12
+
+    sig_box_h = 76
     sig_box_w = w - left - right
     sig_x = left
     sig_y = y - sig_box_h
 
-    c.setLineWidth(1)
-    c.rect(sig_x, sig_y, sig_box_w, sig_box_h)
+    c.setStrokeGray(0.72)
+    c.setLineWidth(0.9)
+    c.roundRect(sig_x, sig_y, sig_box_w, sig_box_h, 5, fill=0, stroke=1)
+    c.setStrokeGray(0)
 
     if signature_data_url:
         try:
@@ -6482,7 +6489,7 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
     # Note directly under signature
     c.setFont("Helvetica-Oblique", 9)
     c.setFillGray(0.4)
-    c.drawString(left, sig_y - 14, "Note: This is an estimate. Final pricing may vary after inspection.")
+    c.drawString(left, sig_y - 14, "Estimate note: Final pricing may vary after inspection.")
     c.setFillGray(0)
 
     return sig_y - 26
@@ -6492,10 +6499,10 @@ def pdf_draw_footer(c, w):
     """
     Consistent footer for BOTH PDFs.
     """
-    c.setFont("Helvetica-Oblique", 9)
-    c.setFillGray(0.5)
-    c.drawCentredString(w / 2, 40, "Repair estimate prepared for customer review")
-    c.drawCentredString(w / 2, 28, "Estimate prepared using TorqueMech Repair Intelligence")
+    c.setFont("Helvetica", 8.5)
+    c.setFillGray(0.48)
+    c.drawCentredString(w / 2, 40, "Prepared for customer review")
+    c.drawCentredString(w / 2, 28, "Generated with TorqueMech")
     c.setFillGray(0)
 
 
@@ -7339,7 +7346,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c.drawString(LEFT + 14, y - 2, "Estimated Total")
         c.setFont("Helvetica", 8.5)
         c.setFillGray(0.42)
-        c.drawString(LEFT + 14, y - 16, "Prepared for customer review")
+        c.drawString(LEFT + 14, y - 16, "Ready for customer review")
         c.setFillGray(0)
         c.setFont("Helvetica-Bold", 20)
         c.drawRightString(X_TOTAL - 14, y - 8, f"${grand_total:,.0f}")
@@ -7358,11 +7365,11 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         # Customer
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(LEFT, y, "Prepared for Customer Review")
+        c.drawString(LEFT, y, "Customer Review")
         y -= 14
 
         c.setFont("Helvetica", 11)
-        c.drawString(LEFT, y, f"Customer reviewed estimate: {'Yes' if req.customerAgrees else 'No'}")
+        c.drawString(LEFT, y, f"Estimate reviewed with customer: {'Yes' if req.customerAgrees else 'No'}")
         y -= 12
 
         if req.customerName:
