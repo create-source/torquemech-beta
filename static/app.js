@@ -3810,13 +3810,13 @@ if (getEstimateHint) {
       const pdfBlob = await pdfResponse.blob();
       const pdfUrl = URL.createObjectURL(pdfBlob);
 
-      // Show PDF immediately so user sees it
-      window.open(pdfUrl, "_blank");
-
-      // Also trigger download as backup
+      // Use one controlled launch action. Mobile Safari often treats blob
+      // downloads as opens, so avoid pairing this with window.open().
       const a = document.createElement("a");
       a.href = pdfUrl;
       a.download = "torquemech_estimate.pdf";
+      a.target = "_blank";
+      a.rel = "noopener";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -3850,7 +3850,7 @@ if (getEstimateHint) {
       // Do NOT auto-close immediately
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
-      setStatus("ok", "Customer PDF downloaded.");
+      setStatus("ok", "Customer PDF ready.");
       closeConfirm();
 
     } catch (e) {
