@@ -710,10 +710,45 @@
 
   const COMMONLY_ADDED_TOGETHER = [
     {
+      match: ["front_brake_pads_replacement", "front brake pads replacement"],
+      suggestions: [
+        { label: "Front Brake Rotors", serviceCode: "front_brake_rotors_replacement" },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+      ],
+    },
+    {
+      match: ["rear_brake_pads_replacement", "rear brake pads replacement"],
+      suggestions: [
+        { label: "Rear Brake Rotors", serviceCode: "rear_brake_rotors_replacement" },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+      ],
+    },
+    {
       match: ["brake pad", "brake pads"],
       suggestions: [
         { label: "Brake Rotors", query: "brake rotor" },
-        { label: "Brake Fluid Flush", query: "brake fluid" },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+      ],
+    },
+    {
+      match: ["starter_replacement", "starter replacement", "starter motor"],
+      suggestions: [
+        { label: "Battery Test", serviceCode: "battery_test" },
+        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement" },
+      ],
+    },
+    {
+      match: ["wheel_bearing_replacement", "wheel bearing", "hub assembly"],
+      suggestions: [
+        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel" },
+        { label: "Sway Bar Link Replacement", serviceCode: "sway_bar_link_replacement" },
+      ],
+    },
+    {
+      match: ["cooling_fan_assembly_replacement", "cooling fan", "radiator fan"],
+      suggestions: [
+        { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test" },
+        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement" },
       ],
     },
     {
@@ -2605,6 +2640,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     ) || null;
   }
 
+  function getActivePairedSuggestionSource() {
+    if (readyForNextService && serviceEl?.value) {
+      return {
+        serviceCode: serviceEl.value,
+        serviceText: getSelectedServiceName(),
+      };
+    }
+
+    return lineItems[lineItems.length - 1] || null;
+  }
+
   function findPairedServiceOption(suggestion, options) {
     const exactCode = String(suggestion.serviceCode || "").trim();
     if (exactCode) {
@@ -2626,13 +2672,13 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   async function refreshPairedSuggestions() {
     if (!pairedSuggestions || !pairedSuggestionsList) return;
-    if (!lineItems.length) {
+    const suggestionSource = getActivePairedSuggestionSource();
+    if (!suggestionSource) {
       hidePairedSuggestions();
       return;
     }
 
-    const latestLineItem = lineItems[lineItems.length - 1];
-    const config = getPairedSuggestionConfig(latestLineItem);
+    const config = getPairedSuggestionConfig(suggestionSource);
     if (!config) {
       hidePairedSuggestions();
       return;
@@ -2648,6 +2694,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     const existingCodes = new Set(lineItems.map((it) => it.serviceCode).filter(Boolean));
+    if (serviceEl?.value) existingCodes.add(serviceEl.value);
     const seenCodes = new Set();
     const suggestions = config.suggestions
       .map((suggestion) => {
@@ -2697,8 +2744,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     applyServiceSelection(serviceCode);
     await loadServiceMeta(serviceCode);
     readyForNextService = true;
-    hidePairedSuggestions();
     updateEstimateButtonState();
+    void refreshPairedSuggestions();
 
     const serviceName = serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || "Suggested job";
     setStatus("info", `${serviceName} selected. Review pricing, then add it to the quote.`);
@@ -2727,6 +2774,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     readyForNextService = true;
     hidePairedSuggestions();
     updateEstimateButtonState();
+    if (!addToQuote) void refreshPairedSuggestions();
 
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => {
       btn.classList.toggle("is-selected", btn.dataset.quickQuote === shortcutKey);
@@ -4307,6 +4355,7 @@ if (getEstimateHint) {
       syncServiceSearchFromSelect();
       await loadServiceMeta(serviceEl.value);
       updateEstimateButtonState();
+      void refreshPairedSuggestions();
     } catch (e) {
       setStatus("error", `Service detail failed: ${e.message}`);
     }
@@ -4326,6 +4375,7 @@ if (getEstimateHint) {
     }
 
     serviceEl.value = "";
+    hidePairedSuggestions();
 
     if (categoryEl?.value && categorySelectionSource !== "manual") {
       setCategoryValue("", "none");
@@ -4374,6 +4424,7 @@ if (getEstimateHint) {
     });
     await loadServiceMeta(serviceEl.value);
     updateEstimateButtonState();
+    void refreshPairedSuggestions();
   });
 
   serviceEl?.addEventListener("change", () => {
