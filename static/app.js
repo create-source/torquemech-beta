@@ -582,6 +582,8 @@
   const lineItemsList = $("lineItemsList");
   const pairedSuggestions = $("pairedSuggestions");
   const pairedSuggestionsList = $("pairedSuggestionsList");
+  const completionSuggestions = $("completionSuggestions");
+  const completionSuggestionsList = $("completionSuggestionsList");
   const estimateTotalBar = $("estimateTotalBar");
   const estimateTotalValue = $("estimateTotalValue");
   const sharedSnapshotVehicle = $("sharedSnapshotVehicle");
@@ -774,6 +776,36 @@
       suggestions: [
         { label: "Belt Tensioner", query: "belt tensioner" },
         { label: "Idler Pulley", query: "idler pulley" },
+      ],
+    },
+  ];
+
+  const QUOTE_COMPLETION_CHECKS = [
+    {
+      match: ["front_brake_pads_replacement", "rear_brake_pads_replacement", "brake pad", "brake pads"],
+      reminders: [
+        { label: "Brake Rotors", query: "brake rotor" },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+      ],
+    },
+    {
+      match: ["cooling_fan_assembly_replacement", "radiator fan", "water_pump_replacement", "thermostat_replacement"],
+      reminders: [
+        { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test" },
+        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement" },
+      ],
+    },
+    {
+      match: ["starter_replacement", "starter", "battery_replacement", "battery"],
+      reminders: [
+        { label: "Battery Test", serviceCode: "battery_test" },
+        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement" },
+      ],
+    },
+    {
+      match: ["wheel_bearing_replacement", "wheel bearing", "sway_bar_link_replacement", "suspension"],
+      reminders: [
+        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel" },
       ],
     },
   ];
@@ -2632,6 +2664,11 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (pairedSuggestionsList) pairedSuggestionsList.innerHTML = "";
   }
 
+  function hideQuoteCompletionSuggestions() {
+    completionSuggestions?.classList.add("hidden");
+    if (completionSuggestionsList) completionSuggestionsList.innerHTML = "";
+  }
+
   function getPairedSuggestionConfig(lineItem) {
     const source = normalizeServiceSearch(`${lineItem?.serviceText || ""} ${lineItem?.serviceCode || ""}`);
     if (!source) return null;
@@ -2727,6 +2764,64 @@ const confidenceEl = document.getElementById("laborConfidence");
     `).join("");
 
     pairedSuggestions.classList.remove("hidden");
+  }
+
+  async function refreshQuoteCompletionSuggestions() {
+    if (!completionSuggestions || !completionSuggestionsList) return;
+    if (!lineItems.length) {
+      hideQuoteCompletionSuggestions();
+      return;
+    }
+
+    let options = [];
+    try {
+      options = await ensureAllServiceOptions();
+    } catch (err) {
+      console.warn("Quote completion service lookup failed", err);
+      hideQuoteCompletionSuggestions();
+      return;
+    }
+
+    const quoteText = normalizeServiceSearch(
+      lineItems.map((it) => `${it.serviceText || ""} ${it.serviceCode || ""}`).join(" ")
+    );
+    const existingCodes = new Set(lineItems.map((it) => it.serviceCode).filter(Boolean));
+    if (serviceEl?.value) existingCodes.add(serviceEl.value);
+
+    const seenCodes = new Set();
+    const reminders = QUOTE_COMPLETION_CHECKS
+      .filter((group) => group.match.some((term) => quoteText.includes(normalizeServiceSearch(term))))
+      .flatMap((group) => group.reminders || [])
+      .map((reminder) => {
+        const option = findPairedServiceOption(reminder, options);
+        return option ? { ...reminder, option } : null;
+      })
+      .filter((reminder) => {
+        const code = reminder?.option?.code;
+        if (!code || existingCodes.has(code) || seenCodes.has(code)) return false;
+        seenCodes.add(code);
+        return true;
+      })
+      .slice(0, 4);
+
+    if (!reminders.length) {
+      hideQuoteCompletionSuggestions();
+      return;
+    }
+
+    completionSuggestionsList.innerHTML = reminders.map(({ label, option }) => `
+      <button
+        type="button"
+        class="tm-completion-suggestion"
+        data-service-code="${escapeServiceResultHtml(option.code)}"
+        data-service-category="${escapeServiceResultHtml(option.category || "")}"
+      >
+        <span>${escapeServiceResultHtml(label || option.name)}</span>
+        <small>Stage check</small>
+      </button>
+    `).join("");
+
+    completionSuggestions.classList.remove("hidden");
   }
 
   async function selectPairedSuggestion(serviceCode, categoryKey) {
@@ -3332,6 +3427,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!lineItemsWrap || !lineItemsList) return;
 
     lineItemsWrap.classList.toggle("hidden", lineItems.length === 0);
+    if (!lineItems.length) hideQuoteCompletionSuggestions();
     const outputOptions = getCustomerOutputOptions();
 
     lineItemsList.innerHTML = lineItems
@@ -3453,6 +3549,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       input.style.height = `${Math.min(input.scrollHeight, 140)}px`;
     });
     updateEstimateButtonState();
+    void refreshQuoteCompletionSuggestions();
   }
 
   function getLineItemCardById(lineItemId) {
@@ -4141,6 +4238,21 @@ if (getEstimateHint) {
     }
   });
 
+  completionSuggestionsList?.addEventListener("click", async (e) => {
+    const btn = e.target?.closest?.(".tm-completion-suggestion[data-service-code]");
+    if (!btn) return;
+
+    btn.disabled = true;
+    try {
+      await selectPairedSuggestion(btn.dataset.serviceCode || "", btn.dataset.serviceCategory || "");
+    } catch (err) {
+      console.warn("Quote completion suggestion failed", err);
+      setStatus("error", "Unable to stage that related job. Choose it from the service list instead.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   document.querySelector(".tm-quick-quotes")?.addEventListener("click", async (e) => {
     const btn = e.target?.closest?.(".tm-quick-quote[data-quick-quote]");
     if (!btn) return;
@@ -4234,6 +4346,7 @@ if (getEstimateHint) {
     if (lineItemsList) lineItemsList.innerHTML = "";
     lineItemsWrap?.classList.add("hidden");
     hidePairedSuggestions();
+    hideQuoteCompletionSuggestions();
 
     estimatePreview?.classList.add("hidden");
     if (previewTotalText) previewTotalText.textContent = "—";
