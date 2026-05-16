@@ -3453,7 +3453,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (addLineBtn) {
       // If user already added a service (locked state), guide them to add another
       addLineBtn.textContent = "+ Add Another Repair";
-      addLineBtn.hidden = isEditingSavedLine || (lineItems.length === 0 && readyForNextService);
+      addLineBtn.hidden = isEditingSavedLine || readyForNextService;
     }
 
     estimateBtn.disabled = isEditingSavedLine ? false : !(hasBasics && hasSelection && readyForNextService);
