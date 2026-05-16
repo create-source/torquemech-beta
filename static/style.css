@@ -1302,11 +1302,11 @@ input[type="radio"]{
 }
 
 .tm-paired-suggestions{
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid rgba(20,184,166,.22);
-  border-radius: 14px;
-  background: linear-gradient(180deg, #f8fffd 0%, #f4f7fa 100%);
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 10px;
+  background: #f8fafc;
 }
 
 .tm-paired-suggestions__head{
@@ -1314,7 +1314,7 @@ input[type="radio"]{
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .tm-paired-suggestions__eyebrow{
@@ -1328,7 +1328,7 @@ input[type="radio"]{
 .tm-paired-suggestions__title{
   margin-top: 3px;
   color: var(--tm-text);
-  font-size: .92rem;
+  font-size: .86rem;
   font-weight: 800;
   line-height: 1.35;
 }
@@ -1340,9 +1340,9 @@ input[type="radio"]{
 }
 
 .tm-paired-suggestion{
-  min-height: 44px;
+  min-height: 42px;
   border: 1px solid rgba(15,23,42,.12);
-  border-radius: 12px;
+  border-radius: 9px;
   background: #fff;
   color: var(--tm-text);
   cursor: pointer;
@@ -1350,7 +1350,7 @@ input[type="radio"]{
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 9px 11px;
+  padding: 8px 10px;
   text-align: left;
   box-shadow: 0 4px 12px rgba(15,23,42,.04);
 }
@@ -1366,7 +1366,7 @@ input[type="radio"]{
 }
 
 .tm-paired-suggestion span{
-  font-size: .92rem;
+  font-size: .88rem;
   font-weight: 850;
   line-height: 1.2;
 }

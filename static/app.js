@@ -2722,7 +2722,7 @@ const confidenceEl = document.getElementById("laborConfidence");
         data-service-category="${escapeServiceResultHtml(option.category || "")}"
       >
         <span>${escapeServiceResultHtml(label || option.name)}</span>
-        <small>Select for quote</small>
+        <small>Stage job</small>
       </button>
     `).join("");
 
