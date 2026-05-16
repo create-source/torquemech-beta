@@ -450,6 +450,7 @@
   let allServiceOptionsVehicleKey = "";
   let serviceSearch = null;
   let serviceResults = null;
+  const SERVICE_SEARCH_PLACEHOLDER = "Search services or symptoms...";
 
   const QUICK_QUOTE_SHORTCUTS = {
     oil_change: {
@@ -534,8 +535,8 @@
       serviceSearch.autocomplete = "off";
       serviceEl.insertAdjacentElement("beforebegin", serviceSearch);
     }
-    serviceSearch.placeholder = "Choose a category first...";
-    serviceSearch.disabled = true;
+    serviceSearch.placeholder = SERVICE_SEARCH_PLACEHOLDER;
+    serviceSearch.disabled = false;
 
     serviceResults = serviceEl.parentElement?.querySelector(".service-results");
     if (!serviceResults) {
@@ -2719,7 +2720,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     const cluster = getServiceSearchCluster(normalizedQuery);
-    const searchOptions = cluster && allServiceOptions.length ? allServiceOptions : serviceOptions;
+    const shouldSearchAllServices = !categoryEl?.value || !!cluster;
+    const searchOptions =
+      shouldSearchAllServices && allServiceOptions.length ? allServiceOptions : serviceOptions;
     const seenServiceCodes = new Set();
     const filtered = searchOptions
       .filter((service) => {
@@ -2770,7 +2773,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     serviceResults.style.display = "block";
   }
 
-  function resetServiceSearch({ placeholder = "Select category first...", disabled = true } = {}) {
+  function resetServiceSearch({ placeholder = SERVICE_SEARCH_PLACEHOLDER, disabled = false } = {}) {
     serviceOptions = [];
     if (!serviceSearch) return;
     serviceSearch.value = "";
@@ -2782,7 +2785,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   function enableServiceSearch() {
     if (!serviceSearch) return;
     serviceSearch.disabled = false;
-    serviceSearch.placeholder = "Search service...";
+    serviceSearch.placeholder = SERVICE_SEARCH_PLACEHOLDER;
   }
 
   function applyServiceSelection(serviceCode) {
@@ -3411,12 +3414,12 @@ const confidenceEl = document.getElementById("laborConfidence");
     highlightServiceAddArea();
 
     window.setTimeout(() => {
-      if (categoryEl && !categoryEl.value) {
-        categoryEl.focus({ preventScroll: true });
-        return;
-      }
       if (serviceSearch && !serviceSearch.disabled) {
         serviceSearch.focus({ preventScroll: true });
+        return;
+      }
+      if (categoryEl && !categoryEl.value) {
+        categoryEl.focus({ preventScroll: true });
         return;
       }
       serviceEl?.focus({ preventScroll: true });
@@ -3433,7 +3436,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     const activeVehicle = getActiveVehicle() || {};
     const hasBasics = !!(activeVehicle.year && activeVehicle.make && activeVehicle.model);
-    const hasSelection = !!(categoryEl?.value && serviceEl?.value);
+    const hasSelection = !!serviceEl?.value;
     const isEditingSavedLine = !!activeEditingLineId;
 
     // --- Add Service button label (dynamic) ---
@@ -3466,7 +3469,7 @@ if (getEstimateHint) {
     getEstimateHint.textContent = !hasBasics
       ? "Set the vehicle first."
       : !hasSelection
-        ? "Choose the repair job first."
+        ? "Search or choose the repair job first."
         : "Tap + Add Another Repair, then choose the next repair.";
   }
 }
@@ -3489,7 +3492,7 @@ if (getEstimateHint) {
     // keep status helpful, but don't spam over error messages
     if (isEditingSavedLine) setStatus("info", "Editing saved line. Update pricing, then save changes.");
     else if (!hasBasics) setStatus("info", "Set the vehicle before pricing the job.");
-    else if (!hasSelection) setStatus("info", "Choose a category and repair job.");
+    else if (!hasSelection) setStatus("info", "Search for a repair or symptom, then add it to the quote.");
     else if (!readyForNextService) setStatus("info", "Job added. Add another repair or create the customer quote.");
     else setStatus("info", "Review pricing, then add this job to the quote.");
   }
@@ -3541,10 +3544,6 @@ if (getEstimateHint) {
       return;
     }
     if (!editingLineItem) {
-      if (!categoryEl.value) {
-        setStatus("error", "Select a category.");
-        return;
-      }
       if (!serviceEl.value) {
         setStatus("error", "Select a service.");
         return;
@@ -3680,8 +3679,8 @@ if (getEstimateHint) {
     activeEditingLineId = null;
     categoryEl.value = "";
     serviceEl.value = "";
-    serviceEl.innerHTML = `<option value="">Select service…</option>`;
     resetServiceSearch();
+    serviceEl.innerHTML = `<option value="">Select service…</option>`;
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
     hidePairedSuggestions();
 
@@ -4260,7 +4259,7 @@ if (getEstimateHint) {
 
     serviceEl.value = "";
 
-    if (getServiceSearchCluster(serviceSearch.value)) {
+    if (!categoryEl?.value || getServiceSearchCluster(serviceSearch.value)) {
       await ensureAllServiceOptions(serviceSearch.value);
     }
 
@@ -4271,7 +4270,7 @@ if (getEstimateHint) {
 
   serviceSearch?.addEventListener("focus", async () => {
     if (serviceSearch.value.trim()) {
-      if (getServiceSearchCluster(serviceSearch.value)) {
+      if (!categoryEl?.value || getServiceSearchCluster(serviceSearch.value)) {
         await ensureAllServiceOptions(serviceSearch.value);
       }
       renderServiceResults(serviceSearch.value);
