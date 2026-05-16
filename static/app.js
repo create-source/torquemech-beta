@@ -3441,6 +3441,18 @@ const confidenceEl = document.getElementById("laborConfidence");
     addLineBtn.focus({ preventScroll: true });
   }
 
+  function setServiceAddFieldsLocked(isLocked) {
+    if (categoryEl) categoryEl.disabled = isLocked;
+    if (serviceEl) serviceEl.disabled = isLocked;
+    if (serviceSearch) {
+      serviceSearch.disabled = isLocked;
+      serviceSearch.placeholder = isLocked
+        ? "Tap + Add Another Repair to add the next job."
+        : SERVICE_SEARCH_PLACEHOLDER;
+    }
+    if (isLocked) hideServiceResults();
+  }
+
   function updateEstimateButtonState() {
     if (!estimateBtn) return;
 
@@ -3448,6 +3460,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     const hasBasics = !!(activeVehicle.year && activeVehicle.make && activeVehicle.model);
     const hasSelection = !!serviceEl?.value;
     const isEditingSavedLine = !!activeEditingLineId;
+    const isServiceAddLocked = !readyForNextService && !isEditingSavedLine;
+
+    setServiceAddFieldsLocked(isServiceAddLocked);
 
     // --- Add Service button label (dynamic) ---
     if (addLineBtn) {
