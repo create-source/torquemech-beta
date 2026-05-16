@@ -563,6 +563,7 @@
   const flatRatePriceEl = $("flatRatePrice");
   const travelFeeEl = $("travelFee");
   const flatRateWrap = $("flatRateWrap");
+  const selectedServiceContextEl = $("selectedServiceContext");
   const hourlyPricingFields = Array.from(document.querySelectorAll(".hourly-pricing-field"));
   const notesEl = $("notes");
 
@@ -1575,6 +1576,43 @@ const confidenceEl = document.getElementById("laborConfidence");
     } else {
       laborHoursRangeEl.textContent = "";
     }
+  }
+
+  function getSelectedServiceName() {
+    if (!serviceEl?.value) return "";
+    return serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl.value;
+  }
+
+  function getSelectedServiceCategoryName() {
+    const categoryKey = serviceMeta?.category || categoryEl?.value || "";
+    return getServiceCategoryName(categoryKey) || categoryKey || "Service";
+  }
+
+  function renderSelectedServiceContext() {
+    if (!selectedServiceContextEl) return;
+
+    const serviceName = getSelectedServiceName();
+    if (!readyForNextService || !serviceEl?.value || !serviceMeta || !serviceName) {
+      selectedServiceContextEl.classList.add("hidden");
+      selectedServiceContextEl.innerHTML = "";
+      return;
+    }
+
+    const categoryName = getSelectedServiceCategoryName();
+    const summary = String(serviceMeta.summary || "").trim();
+    const mn = Number(serviceMeta.labor_hours_min ?? 0);
+    const mx = Number(serviceMeta.labor_hours_max ?? 0);
+    const laborRange = mn > 0 && mx >= mn
+      ? `Typical labor range: ${fmt1(mn)}-${fmt1(mx)} hrs`
+      : "";
+
+    selectedServiceContextEl.innerHTML = `
+      <div class="selected-service-context__title">${escapeServiceResultHtml(serviceName)}${categoryName ? ` - ${escapeServiceResultHtml(categoryName)}` : ""}</div>
+      ${summary ? `<div class="selected-service-context__summary">${escapeServiceResultHtml(summary)}</div>` : ""}
+      ${laborRange ? `<div class="selected-service-context__meta">${escapeServiceResultHtml(laborRange)}</div>` : ""}
+      <div class="selected-service-context__note">Adjust labor, parts, or travel fee before adding to the quote.</div>
+    `;
+    selectedServiceContextEl.classList.remove("hidden");
   }
 
   async function apiJSON(url, opts) {
@@ -2869,6 +2907,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
     serviceMeta = null;
     laborHoursTouched = false;
+    renderSelectedServiceContext();
 
     if (!categoryKey) return;
 
@@ -2896,12 +2935,14 @@ const confidenceEl = document.getElementById("laborConfidence");
         confidenceEl.textContent = "";
         confidenceEl.className = "labor-confidence";
       }
+      renderSelectedServiceContext();
       return;
     }
 
     serviceMeta = await apiJSON(`/api/service/${encodeURIComponent(serviceCode)}`);
 
     updateLaborRangeUI();
+    renderSelectedServiceContext();
 
     const mn = Number(serviceMeta?.labor_hours_min ?? 0);
     const mx = Number(serviceMeta?.labor_hours_max ?? 0);
@@ -3463,6 +3504,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     const isServiceAddLocked = !readyForNextService && !isEditingSavedLine;
 
     setServiceAddFieldsLocked(isServiceAddLocked);
+    renderSelectedServiceContext();
 
     // --- Add Service button label (dynamic) ---
     if (addLineBtn) {

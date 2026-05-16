@@ -1010,6 +1010,34 @@ button:active{
   text-align: right;
 }
 
+.selected-service-context{
+  margin: 0 0 10px;
+  padding: 9px 10px;
+  border: 1px solid rgba(148,163,184,.22);
+  border-radius: 8px;
+  background: rgba(15,23,42,.28);
+  color: var(--tm-text-muted);
+  font-size: .76rem;
+  line-height: 1.35;
+}
+
+.selected-service-context__title{
+  color: var(--tm-text);
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.selected-service-context__summary,
+.selected-service-context__meta,
+.selected-service-context__note{
+  margin-top: 4px;
+}
+
+.selected-service-context__meta{
+  font-weight: 750;
+}
+
 .pricing-controls__grid{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2312,6 +2340,16 @@ canvas,
     margin-top: 3px;
     font-size: .72rem;
     text-align: left;
+  }
+
+  .selected-service-context{
+    margin-bottom: 8px;
+    padding: 8px 9px;
+    font-size: .72rem;
+  }
+
+  .selected-service-context__title{
+    font-size: .78rem;
   }
 
   .pricing-controls__grid{
