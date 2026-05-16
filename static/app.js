@@ -451,6 +451,7 @@
   let serviceSearch = null;
   let serviceResults = null;
   const SERVICE_SEARCH_PLACEHOLDER = "Search services or symptoms...";
+  let categorySelectionSource = "none";
 
   const QUICK_QUOTE_SHORTCUTS = {
     oil_change: {
@@ -1621,7 +1622,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           findOptionValueByText(categoryEl, "engine");
 
         if (diagValue) {
-          categoryEl.value = diagValue;
+          setCategoryValue(diagValue, "auto");
 
           // ✅ IMPORTANT: trigger normal flow
           categoryEl.dispatchEvent(new Event("change"));
@@ -1694,7 +1695,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           findOptionValueByText(categoryEl, "engine");
 
         if (diagCatValue) {
-          categoryEl.value = diagCatValue;
+          setCategoryValue(diagCatValue, "auto");
           await loadServices(categoryEl.value);
 
           // Find a diagnostic-ish service (best-effort)
@@ -1828,6 +1829,16 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!serviceSearch || !serviceEl) return;
     const selectedText = serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || "";
     serviceSearch.value = serviceEl.value ? selectedText : "";
+  }
+
+  function setCategoryValue(value, source = "auto") {
+    if (!categoryEl) return;
+    categoryEl.value = value || "";
+    categorySelectionSource = categoryEl.value ? source : "none";
+  }
+
+  function hasManualCategoryFilter() {
+    return !!(categoryEl?.value && categorySelectionSource === "manual");
   }
 
   const SERVICE_SEARCH_ALIASES = {
@@ -2641,7 +2652,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     if (categoryKey && categoryEl.value !== categoryKey) {
-      categoryEl.value = categoryKey;
+      setCategoryValue(categoryKey, "auto");
       await loadServices(categoryKey);
     }
 
@@ -2669,7 +2680,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     if (categoryEl.value !== shortcut.category) {
-      categoryEl.value = shortcut.category;
+      setCategoryValue(shortcut.category, "auto");
       await loadServices(shortcut.category);
     }
 
@@ -2719,8 +2730,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       return;
     }
 
-    const cluster = getServiceSearchCluster(normalizedQuery);
-    const shouldSearchAllServices = !categoryEl?.value || !!cluster;
+    const shouldSearchAllServices = !hasManualCategoryFilter();
     const searchOptions =
       shouldSearchAllServices && allServiceOptions.length ? allServiceOptions : serviceOptions;
     const seenServiceCodes = new Set();
@@ -3677,7 +3687,7 @@ if (getEstimateHint) {
   addLineBtn?.addEventListener("click", () => {
     // Clear selections
     activeEditingLineId = null;
-    categoryEl.value = "";
+    setCategoryValue("", "none");
     serviceEl.value = "";
     resetServiceSearch();
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
@@ -4086,7 +4096,7 @@ if (getEstimateHint) {
     if (vinDecodedMeta) vinDecodedMeta.textContent = "";
 
     // service
-    if (categoryEl) categoryEl.value = "";
+    if (categoryEl) setCategoryValue("", "none");
     if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
     resetServiceSearch();
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
@@ -4227,6 +4237,7 @@ if (getEstimateHint) {
 
   categoryEl?.addEventListener("change", async () => {
     try {
+      categorySelectionSource = categoryEl.value ? "manual" : "none";
       await loadServices(categoryEl.value);
       updateEstimateButtonState();
     } catch (e) {
@@ -4259,7 +4270,12 @@ if (getEstimateHint) {
 
     serviceEl.value = "";
 
-    if (!categoryEl?.value || getServiceSearchCluster(serviceSearch.value)) {
+    if (categoryEl?.value && categorySelectionSource !== "manual") {
+      setCategoryValue("", "none");
+      serviceOptions = [];
+    }
+
+    if (!hasManualCategoryFilter()) {
       await ensureAllServiceOptions(serviceSearch.value);
     }
 
@@ -4270,7 +4286,7 @@ if (getEstimateHint) {
 
   serviceSearch?.addEventListener("focus", async () => {
     if (serviceSearch.value.trim()) {
-      if (!categoryEl?.value || getServiceSearchCluster(serviceSearch.value)) {
+      if (!hasManualCategoryFilter()) {
         await ensureAllServiceOptions(serviceSearch.value);
       }
       renderServiceResults(serviceSearch.value);
@@ -4286,9 +4302,12 @@ if (getEstimateHint) {
     if (!resultButton) return;
     const serviceCode = resultButton.dataset.serviceCode || "";
     const serviceCategory = resultButton.dataset.serviceCategory || "";
+    const categorySource = hasManualCategoryFilter() ? "manual" : "auto";
     if (serviceCategory && categoryEl && categoryEl.value !== serviceCategory) {
-      categoryEl.value = serviceCategory;
+      setCategoryValue(serviceCategory, categorySource);
       await loadServices(serviceCategory);
+    } else if (serviceCategory && categoryEl) {
+      setCategoryValue(serviceCategory, categorySource);
     }
     applyServiceSelection(serviceCode);
     trackClarity("service_selected", {
@@ -4672,7 +4691,7 @@ if (getEstimateHint) {
           return false;
         }
 
-        categoryEl.value = categoryKey;
+        setCategoryValue(categoryKey, "auto");
         await loadServices(categoryKey);
 
         const serviceExists = Array.from(serviceEl.options).some(
