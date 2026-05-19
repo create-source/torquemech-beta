@@ -2210,6 +2210,11 @@ canvas,
     grid-template-columns: 1fr;
   }
 
+  .tm-btn,
+  button{
+    min-height: 44px;
+  }
+
   .tm-nav__inner{
     min-height: 62px;
   }
@@ -2313,8 +2318,8 @@ canvas,
 
   .line-items{
     margin-top: 16px;
-    padding: 14px;
-    border-radius: 14px;
+    padding: 16px 12px;
+    border-radius: 16px;
   }
 
   .line-items-head{
@@ -2335,29 +2340,33 @@ canvas,
   }
 
   .line-items-list{
-    gap: 16px;
+    gap: 14px;
   }
 
   .estimator-final-actions{
-    gap: 10px;
-    margin-top: 20px;
-    padding: 18px 14px;
-    border-radius: 14px;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 18px 14px 16px;
+    border-width: 2px;
+    border-radius: 16px;
+    background:
+      linear-gradient(180deg, rgba(240,253,250,.98) 0%, rgba(255,255,255,.96) 100%);
+    box-shadow: 0 16px 36px rgba(15,118,110,.12);
   }
 
   .estimator-final-step{
-    justify-self: center;
+    justify-self: start;
   }
 
   .estimator-final-heading{
-    text-align: center;
-    font-size: 1.06rem;
+    text-align: left;
+    font-size: 1.14rem;
   }
 
   .estimator-final-hint{
-    justify-self: center;
-    text-align: center;
-    font-size: .86rem;
+    justify-self: start;
+    text-align: left;
+    font-size: .9rem;
   }
 
   .tm-final-help{
@@ -2366,7 +2375,7 @@ canvas,
   }
 
   .tm-final-help__title{
-    text-align: center;
+    text-align: left;
     font-size: .84rem;
   }
 
@@ -2378,7 +2387,7 @@ canvas,
   }
 
   .estimator-final-cta{
-    min-height: 58px;
+    min-height: 60px;
     padding: 15px 16px;
   }
 
@@ -2389,7 +2398,7 @@ canvas,
   .estimator-final-actions .tm-quote-trust-microcopy,
   .tm-quote-trust-microcopy--shared,
   .tm-quote-trust-microcopy--saved{
-    text-align: center;
+    text-align: left;
   }
 
   .tm-quick-quotes{
@@ -2409,8 +2418,8 @@ canvas,
 
   .tm-quick-quote{
     flex: 0 1 auto;
-    min-height: 32px;
-    padding-inline: 9px;
+    min-height: 44px;
+    padding: 9px 12px;
   }
 
   .pricing-controls{
@@ -2539,6 +2548,23 @@ canvas,
 
   .tm-confirm-secondary-actions .tm-btn:last-child{
     grid-column: 1 / -1;
+  }
+
+  .tm-shared-quote-actions,
+  .tm-saved-quote-actions,
+  .tm-pro-actions{
+    display: grid !important;
+    grid-template-columns: 1fr;
+    align-items: stretch !important;
+    gap: 9px !important;
+    width: 100%;
+  }
+
+  .tm-shared-quote-actions .tm-btn,
+  .tm-saved-quote-actions .tm-btn,
+  .tm-pro-actions .tm-btn{
+    width: 100%;
+    min-height: 48px;
   }
 
   .service-line-item-actions .tm-btn,
@@ -3187,9 +3213,9 @@ h3{
   }
 
   .tm-service-card{
-    padding: 14px 12px;
-    border-left-width: 3px;
-    border-radius: 11px;
+    padding: 15px 12px 12px;
+    border-left-width: 4px;
+    border-radius: 14px;
   }
 
   .tm-service-card::before{
@@ -3200,8 +3226,8 @@ h3{
   }
 
   .tm-service-title{
-    font-size:1.08rem;
-    line-height:1.22;
+    font-size:1.1rem;
+    line-height:1.2;
   }
 
   .tm-service-vehicle{
@@ -3209,14 +3235,15 @@ h3{
   }
 
   .tm-service-meta{
-    gap:6px 7px;
+    gap:7px;
   }
 
   .tm-service-meta span{
     max-width: 100%;
-    padding:5px 8px;
+    padding:6px 9px;
     border-radius:10px;
-    font-size:.8rem;
+    font-size:.82rem;
+    line-height:1.2;
   }
 
   .tm-service-risk-note{
@@ -3241,7 +3268,8 @@ h3{
     align-items:flex-end;
     justify-content:space-between;
     text-align:left;
-    padding:10px;
+    gap:12px;
+    padding:11px 12px;
     border-top:0;
   }
 
@@ -3251,15 +3279,22 @@ h3{
   }
 
   .tm-service-actions{
-    gap:8px;
-    justify-content:flex-start;
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:9px;
     margin-top:12px;
     padding-top:10px;
   }
 
   .tm-service-actions .tm-btn{
-    flex:1 1 130px;
-    min-height:42px;
+    width:100%;
+    min-height:48px;
+    padding:0 12px;
+    white-space:normal;
+  }
+
+  .tm-service-actions .tm-service-toggle{
+    grid-column:1 / -1;
   }
 
   .tm-labor-panel{
@@ -3402,6 +3437,13 @@ h3{
     display: grid !important;
     grid-template-columns: 1fr;
     gap: 8px !important;
+  }
+
+  .tm-vehicle-cta-group .tm-btn,
+  .vin-section .tm-btn,
+  .vin-toggle{
+    width: 100%;
+    min-height: 48px;
   }
 
   .tm-estimate-total-bar{
