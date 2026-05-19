@@ -1301,6 +1301,18 @@ input[type="radio"]{
   counter-reset: quote-job;
 }
 
+.line-items-review-note{
+  margin: 8px 0 12px;
+  padding: 9px 10px;
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--tm-text-muted);
+  font-size: .82rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .tm-paired-suggestions{
   margin-top: 10px;
   padding: 10px;
@@ -2913,12 +2925,18 @@ h3{
   position: relative;
   counter-increment: quote-job;
   background: #fff;
-  border: 1px solid rgba(11,22,40,.13);
+  border: 1px solid rgba(11,22,40,.12);
   border-left: 4px solid rgba(20,184,166,.72);
-  border-radius: 14px;
-  padding: 17px 17px 16px 19px;
+  border-radius: 12px;
+  padding: 15px 16px 15px 18px;
   margin-top: 0;
-  box-shadow: 0 9px 22px rgba(15,23,42,.06);
+  box-shadow: 0 7px 18px rgba(15,23,42,.055);
+}
+
+.tm-service-card.is-editing{
+  border-color: rgba(20,184,166,.46);
+  border-left-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(20,184,166,.10), 0 9px 22px rgba(15,23,42,.07);
 }
 
 .tm-service-card.is-newly-added{
@@ -2969,12 +2987,33 @@ h3{
   min-width:0;
 }
 
+.tm-service-title-row{
+  display:flex;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
 .tm-service-title{
   font-size:1.18rem;
   font-weight:900;
   line-height:1.18;
   color:var(--tm-text);
   overflow-wrap:anywhere;
+}
+
+.tm-service-editing-pill{
+  display:inline-flex;
+  align-items:center;
+  min-height:22px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:rgba(20,184,166,.10);
+  color:#0f766e;
+  font-size:.72rem;
+  font-weight:900;
+  line-height:1;
+  text-transform:uppercase;
 }
 
 .tm-service-vehicle{
@@ -3040,9 +3079,13 @@ h3{
 }
 
 .tm-service-estimate{
-  min-width:112px;
+  min-width:120px;
   text-align:right;
   flex-shrink:0;
+  padding:8px 10px;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:10px;
+  background:#f8fafc;
 }
 
 .tm-service-estimate-label{
@@ -3056,7 +3099,7 @@ h3{
 }
 
 .tm-service-estimate strong{
-  font-size:2.25rem;
+  font-size:2.05rem;
   line-height:1;
   color:#0f172a;
   font-weight:950;
@@ -3067,8 +3110,8 @@ h3{
   flex-wrap:wrap;
   gap:8px;
   justify-content:flex-end;
-  margin-top:17px;
-  padding-top:12px;
+  margin-top:14px;
+  padding-top:10px;
   border-top:1px solid rgba(15,23,42,.07);
 }
 
@@ -3144,9 +3187,9 @@ h3{
   }
 
   .tm-service-card{
-    padding: 15px 13px;
+    padding: 14px 12px;
     border-left-width: 3px;
-    border-radius: 13px;
+    border-radius: 11px;
   }
 
   .tm-service-card::before{
@@ -3198,8 +3241,8 @@ h3{
     align-items:flex-end;
     justify-content:space-between;
     text-align:left;
-    padding-top:12px;
-    border-top:1px solid rgba(15,23,42,.08);
+    padding:10px;
+    border-top:0;
   }
 
   .tm-service-estimate strong{

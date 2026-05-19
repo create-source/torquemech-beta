@@ -3467,12 +3467,16 @@ const confidenceEl = document.getElementById("laborConfidence");
         const lineItemId = it.id || "";
         const riskNote = escapeServiceResultHtml(getEstimateRiskNote(it));
         const inspectionFindings = escapeServiceResultHtml(it.inspectionFindings || "");
+        const isActiveEdit = activeEditingLineId === lineItemId;
 
         return `
-          <div class="tm-service-card" data-idx="${idx}" data-line-item-id="${lineItemId}">
+          <div class="tm-service-card${isActiveEdit ? " is-editing" : ""}" data-idx="${idx}" data-line-item-id="${lineItemId}">
             <div class="tm-service-head">
               <div class="tm-service-head-main">
-                <div class="tm-service-title">${it.serviceText || "Service"}</div>
+                <div class="tm-service-title-row">
+                  <div class="tm-service-title">${it.serviceText || "Service"}</div>
+                  ${isActiveEdit ? `<span class="tm-service-editing-pill">Editing</span>` : ""}
+                </div>
                 <div class="tm-service-vehicle">${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}</div>
                 <div class="tm-service-meta">
                   ${pricingMeta.map(label => `<span>${label}</span>`).join("")}
@@ -3509,7 +3513,7 @@ const confidenceEl = document.getElementById("laborConfidence");
               ` : ""}
 
               <button type="button" class="tm-btn tm-btn-secondary" data-action="edit-line" data-line-item-id="${lineItemId}">
-                Edit Line
+                Edit
               </button>
 
               <button type="button" class="tm-btn tm-btn-danger" data-action="remove" data-line-item-id="${lineItemId}">
@@ -3966,6 +3970,7 @@ if (getEstimateHint) {
     if (action === "edit-line") {
       activeEditingLineId = it.id;
       loadPricingSnapshotIntoControls(it);
+      renderLineItems();
       updateEstimateButtonState();
       document.querySelector(".pricing-controls")?.scrollIntoView({
         behavior: "smooth",
