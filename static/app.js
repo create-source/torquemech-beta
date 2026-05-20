@@ -673,35 +673,143 @@
   // ---- State ----
   let lineItems = [];
   const BUSINESS_IDENTITY_SESSION_KEY = "torquemech_business_identity_v1";
+  const MECHANIC_PREFERENCES_KEY = "torquemech_mechanic_preferences_v1";
+  const DEFAULT_LABOR_RATE = 90;
+  const DEFAULT_TRAVEL_FEE = 0;
+
+  function safeReadStorage(storage, key) {
+    try {
+      return storage?.getItem(key) || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function safeWriteStorage(storage, key, value) {
+    try {
+      storage?.setItem(key, value);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function normalizePreferenceText(value, maxLength = 180) {
+    return String(value || "").trim().slice(0, maxLength);
+  }
+
+  function normalizePreferenceNumber(value, fallbackValue = 0) {
+    const parsed = Number(String(value ?? "").trim());
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallbackValue;
+  }
+
+  function normalizeBusinessIdentity(identity = {}) {
+    return {
+      businessName: normalizePreferenceText(identity.businessName, 80),
+      mechanicName: normalizePreferenceText(identity.mechanicName, 80),
+      businessPhone: normalizePreferenceText(identity.businessPhone, 32),
+      businessNote: normalizePreferenceText(identity.businessNote, 180),
+    };
+  }
+
+  function normalizeMechanicPreferences(rawPrefs = {}) {
+    const prefs = rawPrefs && typeof rawPrefs === "object" ? rawPrefs : {};
+    return {
+      schemaVersion: 1,
+      businessIdentity: normalizeBusinessIdentity(prefs.businessIdentity || prefs),
+      laborRate: normalizePreferenceNumber(prefs.laborRate, DEFAULT_LABOR_RATE),
+      travelFee: normalizePreferenceNumber(prefs.travelFee, DEFAULT_TRAVEL_FEE),
+      updatedAt: Number(prefs.updatedAt || Date.now()),
+    };
+  }
+
+  function readMechanicPreferences() {
+    const raw = safeReadStorage(window.localStorage, MECHANIC_PREFERENCES_KEY);
+    if (!raw) return normalizeMechanicPreferences();
+
+    try {
+      return normalizeMechanicPreferences(JSON.parse(raw));
+    } catch (_) {
+      return normalizeMechanicPreferences();
+    }
+  }
+
+  function writeMechanicPreferences(nextPrefs) {
+    const current = readMechanicPreferences();
+    const normalized = normalizeMechanicPreferences({
+      ...current,
+      ...(nextPrefs || {}),
+      businessIdentity: {
+        ...current.businessIdentity,
+        ...(nextPrefs?.businessIdentity || {}),
+      },
+      updatedAt: Date.now(),
+    });
+
+    safeWriteStorage(window.localStorage, MECHANIC_PREFERENCES_KEY, JSON.stringify(normalized));
+  }
+
+  function getPreferredLaborRate() {
+    return readMechanicPreferences().laborRate || DEFAULT_LABOR_RATE;
+  }
+
+  function getPreferredTravelFee() {
+    return readMechanicPreferences().travelFee || DEFAULT_TRAVEL_FEE;
+  }
 
   function getBusinessIdentity() {
-    return {
+    return normalizeBusinessIdentity({
       businessName: (businessNameEl?.value || "").trim(),
       mechanicName: (mechanicNameEl?.value || "").trim(),
       businessPhone: (businessPhoneEl?.value || "").trim(),
       businessNote: (businessNoteEl?.value || "").trim(),
-    };
+    });
   }
 
   function applyBusinessIdentity(identity = {}) {
-    if (businessNameEl) businessNameEl.value = identity.businessName || "";
-    if (mechanicNameEl) mechanicNameEl.value = identity.mechanicName || "";
-    if (businessPhoneEl) businessPhoneEl.value = identity.businessPhone || "";
-    if (businessNoteEl) businessNoteEl.value = identity.businessNote || "";
+    const normalized = normalizeBusinessIdentity(identity);
+    if (businessNameEl) businessNameEl.value = normalized.businessName;
+    if (mechanicNameEl) mechanicNameEl.value = normalized.mechanicName;
+    if (businessPhoneEl) businessPhoneEl.value = normalized.businessPhone;
+    if (businessNoteEl) businessNoteEl.value = normalized.businessNote;
   }
 
   function loadBusinessIdentityFromSession() {
     try {
-      const raw = window.sessionStorage?.getItem(BUSINESS_IDENTITY_SESSION_KEY);
+      const raw = safeReadStorage(window.sessionStorage, BUSINESS_IDENTITY_SESSION_KEY);
       if (!raw) return;
       applyBusinessIdentity(JSON.parse(raw) || {});
     } catch (_) {}
   }
 
   function persistBusinessIdentityToSession() {
-    try {
-      window.sessionStorage?.setItem(BUSINESS_IDENTITY_SESSION_KEY, JSON.stringify(getBusinessIdentity()));
-    } catch (_) {}
+    safeWriteStorage(window.sessionStorage, BUSINESS_IDENTITY_SESSION_KEY, JSON.stringify(getBusinessIdentity()));
+  }
+
+  function persistMechanicPreferencesFromControls() {
+    writeMechanicPreferences({
+      businessIdentity: getBusinessIdentity(),
+      laborRate: pricingInputNumber(laborRateEl, getPreferredLaborRate()),
+      travelFee: pricingInputNumber(travelFeeEl, getPreferredTravelFee()),
+    });
+    persistBusinessIdentityToSession();
+  }
+
+  function applyMechanicPreferencesToBlankControls({ identity = true, pricing = true } = {}) {
+    const prefs = readMechanicPreferences();
+    if (identity) {
+      const hasSavedIdentity = Object.values(prefs.businessIdentity || {}).some(Boolean);
+      if (hasSavedIdentity) {
+        applyBusinessIdentity(prefs.businessIdentity);
+        persistBusinessIdentityToSession();
+      } else {
+        loadBusinessIdentityFromSession();
+      }
+    }
+    if (pricing) {
+      if (laborRateEl) laborRateEl.value = String(prefs.laborRate || DEFAULT_LABOR_RATE);
+      if (travelFeeEl) travelFeeEl.value = String(prefs.travelFee || DEFAULT_TRAVEL_FEE);
+    }
   }
 
   function refreshQuoteIdentityNudge() {
@@ -711,7 +819,7 @@
     quoteIdentityNudge.classList.toggle("hidden", hasCustomerName || hasBusinessName);
   }
 
-  loadBusinessIdentityFromSession();
+  applyMechanicPreferencesToBlankControls();
 
   const COMMONLY_ADDED_TOGETHER = [
     {
@@ -1210,6 +1318,7 @@
   }
 
     async function applyDraft(d) {
+      const hasDraftBusinessIdentity = Object.prototype.hasOwnProperty.call(d || {}, "businessIdentity");
       d = normalizeDraft(d);
       if (!d) return;
 
@@ -1256,11 +1365,11 @@
       if (customerNameEl) customerNameEl.value = d.customer?.name || "";
       if (customerPhoneEl) customerPhoneEl.value = d.customer?.phone || "";
       if (notesEl) notesEl.value = d.customer?.notes || "";
-      if (d.businessIdentity) {
+      if (hasDraftBusinessIdentity) {
         applyBusinessIdentity(d.businessIdentity);
         persistBusinessIdentityToSession();
       } else {
-        loadBusinessIdentityFromSession();
+        applyMechanicPreferencesToBlankControls({ identity: true, pricing: false });
       }
       const wantYes = document.querySelector('input[name="wantSig"][value="yes"]');
       if (wantYes) wantYes.checked = true;
@@ -1494,7 +1603,7 @@
 
   installPricingNumberFocusBehavior(laborHoursEl, "0");
   installPricingNumberFocusBehavior(partsPriceEl, "0");
-  installPricingNumberFocusBehavior(laborRateEl, "90");
+  installPricingNumberFocusBehavior(laborRateEl, String(getPreferredLaborRate()));
   installPricingNumberFocusBehavior(flatRatePriceEl, "0");
   installPricingNumberFocusBehavior(travelFeeEl, "0");
 
@@ -4117,8 +4226,9 @@ if (getEstimateHint) {
     if (notesEl) notesEl.value = "";
 
     if (pricingModeEl) pricingModeEl.value = "hourly";
+    if (laborRateEl) laborRateEl.value = String(getPreferredLaborRate());
     if (flatRatePriceEl) flatRatePriceEl.value = "0";
-    if (travelFeeEl) travelFeeEl.value = "0";
+    if (travelFeeEl) travelFeeEl.value = String(getPreferredTravelFee());
     togglePricingModeUI();
 
     // Unlock Add Service to Estimate
@@ -4340,7 +4450,7 @@ if (getEstimateHint) {
       const activeVehicle = getActiveVehicle() || {};
       const outputOptions = getCustomerOutputOptions();
       const businessIdentity = getBusinessIdentity();
-      persistBusinessIdentityToSession();
+      persistMechanicPreferencesFromControls();
 
       const pdfResponse = await fetch("/estimate/pdf_multi", {
         method: "POST",
@@ -4541,10 +4651,10 @@ if (getEstimateHint) {
     // inputs
     if (laborHoursEl) laborHoursEl.value = "0";
     if (partsPriceEl) partsPriceEl.value = "0";
-    if (laborRateEl) laborRateEl.value = "90";
+    if (laborRateEl) laborRateEl.value = String(getPreferredLaborRate());
     if (pricingModeEl) pricingModeEl.value = "hourly";
     if (flatRatePriceEl) flatRatePriceEl.value = "0";
-    if (travelFeeEl) travelFeeEl.value = "0";
+    if (travelFeeEl) travelFeeEl.value = String(getPreferredTravelFee());
     togglePricingModeUI();
     if (notesEl) notesEl.value = "";
     if (customerNameEl) customerNameEl.value = "";
@@ -4880,9 +4990,14 @@ if (getEstimateHint) {
   });
   [businessNameEl, mechanicNameEl, businessPhoneEl, businessNoteEl].forEach((el) => {
     el?.addEventListener("input", () => {
-      persistBusinessIdentityToSession();
+      persistMechanicPreferencesFromControls();
       refreshQuoteIdentityNudge();
     });
+  });
+
+  [laborRateEl, travelFeeEl].forEach((el) => {
+    el?.addEventListener("input", persistMechanicPreferencesFromControls);
+    el?.addEventListener("blur", persistMechanicPreferencesFromControls);
   });
 
   function addVehicleCard() {
