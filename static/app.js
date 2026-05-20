@@ -3158,6 +3158,10 @@ const confidenceEl = document.getElementById("laborConfidence");
 
       listEl.innerHTML = `
         <div class="tm-confirm-services-list">
+          <div class="tm-confirm-total-band">
+            <span>Estimate total</span>
+            <strong>${money(total)}</strong>
+          </div>
           ${lineItems.map(it => `
             <div class="tm-confirm-service-row">
               <div class="tm-confirm-service-main">
@@ -3170,7 +3174,7 @@ const confidenceEl = document.getElementById("laborConfidence");
             </div>
           `).join("")}
           <div class="tm-confirm-grand-total">
-            <div>Grand Total</div>
+            <div>Customer quote total</div>
             <strong>${money(total)}</strong>
           </div>
         </div>
@@ -3481,7 +3485,10 @@ const confidenceEl = document.getElementById("laborConfidence");
                 <div class="tm-service-meta">
                   ${pricingMeta.map(label => `<span>${label}</span>`).join("")}
                 </div>
-                <div class="tm-service-risk-note">${riskNote}</div>
+                <div class="tm-service-risk-note">
+                  <span class="tm-service-risk-label">Estimate note</span>
+                  <span>${riskNote}</span>
+                </div>
                 <label class="tm-inspection-findings">
                   <span>Inspection Findings</span>
                   <textarea

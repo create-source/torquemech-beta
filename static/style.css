@@ -1869,10 +1869,11 @@ body.modal-open{
 }
 
 .tm-confirm-services-wrap{
-  padding: 12px;
-  border: 1px solid var(--tm-border);
-  border-radius: 12px;
-  background: var(--tm-surface-2);
+  padding: 14px;
+  border: 1px solid rgba(20,184,166,.24);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(248,250,252,.94) 0%, rgba(255,255,255,.98) 100%);
+  box-shadow: 0 10px 22px rgba(15,23,42,.045);
 }
 
 .tm-confirm-services-wrap > div:first-child{
@@ -1892,7 +1893,34 @@ body.modal-open{
 
 .tm-confirm-services-list{
   display: grid;
-  gap: 10px;
+  gap: 11px;
+}
+
+.tm-confirm-total-band{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 13px;
+  border: 1px solid rgba(20,184,166,.28);
+  border-radius: 12px;
+  background: rgba(240,253,250,.86);
+}
+
+.tm-confirm-total-band span{
+  color: #0f766e;
+  font-size: .76rem;
+  font-weight: 950;
+  letter-spacing: .05em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.tm-confirm-total-band strong{
+  color: #0f172a;
+  font-size: 1.35rem;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .tm-confirm-service-row{
@@ -1900,7 +1928,7 @@ body.modal-open{
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
-  padding-bottom: 10px;
+  padding: 2px 0 11px;
   border-bottom: 1px solid rgba(15,23,42,.08);
 }
 
@@ -1920,7 +1948,8 @@ body.modal-open{
 
 .tm-confirm-service-total{
   color: var(--tm-text);
-  font-weight: 900;
+  font-size: .98rem;
+  font-weight: 950;
   line-height: 1.35;
   white-space: nowrap;
 }
@@ -1930,13 +1959,13 @@ body.modal-open{
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 2px;
+  padding-top: 4px;
   color: var(--tm-text);
   font-weight: 900;
 }
 
 .tm-confirm-grand-total strong{
-  font-size: 1.08rem;
+  font-size: 1.14rem;
 }
 
 .tm-confirm-options-grid{
@@ -1961,18 +1990,31 @@ body.modal-open{
 
 .tm-signature-panel{
   margin-top: 12px;
+  padding: 13px;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 14px;
+  background: rgba(248,250,252,.76);
 }
 
 .tm-confirm-signature-label{
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-weight: 800;
+}
+
+.tm-confirm-signature-copy{
+  margin: 0 0 10px;
+  color: var(--tm-text-muted);
+  font-size: .82rem;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
 .sig-wrap{
   border: 1px solid var(--tm-border);
   border-radius: 12px;
   overflow: hidden;
+  background: #fff;
 }
 
 .tm-signature-actions{
@@ -2505,16 +2547,22 @@ canvas,
   }
 
   .tm-confirm-services-wrap{
-    padding: 11px;
+    padding: 12px;
   }
 
   .tm-confirm-services-list{
     gap: 9px;
   }
 
+  .tm-confirm-total-band{
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
   .tm-confirm-service-row{
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
+    grid-template-columns: 1fr;
+    gap: 5px;
   }
 
   .tm-confirm-service-name{
@@ -2522,7 +2570,8 @@ canvas,
   }
 
   .tm-confirm-service-total{
-    font-size: .92rem;
+    justify-self: start;
+    font-size: 1rem;
   }
 
   .tm-confirm-actions{
@@ -3074,6 +3123,21 @@ h3{
   font-size: .82rem;
   font-weight: 650;
   line-height: 1.42;
+  padding: 9px 10px;
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 10px;
+  background: rgba(248,250,252,.78);
+}
+
+.tm-service-risk-label{
+  display: block;
+  margin-bottom: 3px;
+  color: #475569;
+  font-size: .68rem;
+  font-weight: 950;
+  letter-spacing: .05em;
+  line-height: 1.1;
+  text-transform: uppercase;
 }
 
 .tm-inspection-findings{

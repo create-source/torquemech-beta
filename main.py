@@ -6446,25 +6446,33 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
     Consistent signature box + note (same in both PDFs).
     Returns the new cursor y (below the signature note).
     """
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(left, y, "Customer Approval")
-    y -= 13
-
-    c.setFont("Helvetica", 9)
-    c.setFillGray(0.42)
-    c.drawString(left, y, "Review estimate details before approval.")
+    c.setFillColorRGB(0.965, 0.985, 0.98)
+    c.roundRect(left, y - 113, w - left - right, 112, 7, fill=1, stroke=0)
+    c.setStrokeGray(0.82)
+    c.roundRect(left, y - 113, w - left - right, 112, 7, fill=0, stroke=1)
+    c.setStrokeGray(0)
     c.setFillGray(0)
-    y -= 12
 
-    sig_box_h = 76
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(left + 12, y - 16, "Customer Approval")
+
+    c.setFont("Helvetica", 8.7)
+    c.setFillGray(0.38)
+    c.drawString(left + 12, y - 29, "Signature confirms the customer reviewed the estimate details above.")
+    c.setFillGray(0)
+
+    sig_box_h = 64
     sig_box_w = w - left - right
-    sig_x = left
-    sig_y = y - sig_box_h
+    sig_x = left + 12
+    sig_y = y - 100
+    sig_inner_w = sig_box_w - 24
 
     c.setStrokeGray(0.72)
     c.setLineWidth(0.9)
-    c.roundRect(sig_x, sig_y, sig_box_w, sig_box_h, 5, fill=0, stroke=1)
+    c.setFillColorRGB(1, 1, 1)
+    c.roundRect(sig_x, sig_y, sig_inner_w, sig_box_h, 5, fill=1, stroke=1)
     c.setStrokeGray(0)
+    c.setFillGray(0)
 
     if signature_data_url:
         try:
@@ -6475,7 +6483,7 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
                     sig_reader,
                     sig_x + pad,
                     sig_y + pad,
-                    width=sig_box_w - pad * 2,
+                    width=sig_inner_w - pad * 2,
                     height=sig_box_h - pad * 2,
                     preserveAspectRatio=True,
                     mask="auto",
@@ -6486,13 +6494,12 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
             c.drawString(sig_x + 8, sig_y + sig_box_h - 14, "Signature could not be rendered")
             c.setFillGray(0)
 
-    # Note directly under signature
     c.setFont("Helvetica-Oblique", 9)
     c.setFillGray(0.4)
-    c.drawString(left, sig_y - 14, "Estimate note: Final pricing may vary after inspection.")
+    c.drawString(left + 12, sig_y - 15, "Estimate note: Final pricing may vary after inspection.")
     c.setFillGray(0)
 
-    return sig_y - 26
+    return sig_y - 28
 
 
 def pdf_draw_footer(c, w):
@@ -7063,7 +7070,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         business_note_lines = wrap_text(business_note, max_chars=86)[:3] if business_note else []
         has_business_identity = any([business_name, mechanic_name, business_phone, business_note_lines])
         if has_business_identity:
-            identity_box_h = 78 + (len(business_note_lines) * 9)
+            identity_box_h = 86 + (len(business_note_lines) * 9)
             y = pdf_ensure_space(
                 c, w, h, y,
                 needed=identity_box_h + 12,
@@ -7075,10 +7082,13 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             )
             c.setFillColorRGB(0.97, 0.99, 0.99)
             c.roundRect(50, y - identity_box_h + 10, w - 100, identity_box_h, 8, fill=1, stroke=0)
+            c.setStrokeGray(0.82)
+            c.roundRect(50, y - identity_box_h + 10, w - 100, identity_box_h, 8, fill=0, stroke=1)
+            c.setStrokeGray(0)
             c.setFillGray(0)
 
             c.setFont("Helvetica-Bold", 8)
-            c.setFillGray(0.38)
+            c.setFillColorRGB(0.06, 0.45, 0.42)
             c.drawString(64, y - 2, "PREPARED BY")
             c.setFillGray(0)
             y -= 14
@@ -7089,7 +7099,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 y -= 18
             else:
                 c.setFont("Helvetica-Bold", 13)
-                c.drawString(64, y - 4, "Mechanic Estimate")
+                c.drawString(64, y - 4, "Prepared Repair Estimate")
                 y -= 16
 
             c.setFont("Helvetica", 9.5)
@@ -7114,16 +7124,31 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.drawString(64, y - 1, f"Vehicle: {vehicle_line}")
             y -= 12
 
+            c.setFont("Helvetica", 8.5)
+            c.setFillGray(0.45)
+            c.drawString(64, y - 1, "Estimate prepared for customer review and approval.")
+            y -= 10
+
             c.setFillGray(0)
             y -= 14
         else:
+            identity_box_h = 58
+            c.setFillColorRGB(0.985, 0.99, 0.995)
+            c.roundRect(50, y - identity_box_h + 8, w - 100, identity_box_h, 7, fill=1, stroke=0)
+            c.setStrokeGray(0.86)
+            c.roundRect(50, y - identity_box_h + 8, w - 100, identity_box_h, 7, fill=0, stroke=1)
+            c.setStrokeGray(0)
             c.setFont("Helvetica-Bold", 8)
-            c.setFillGray(0.42)
-            c.drawString(50, y, "VEHICLE")
+            c.setFillColorRGB(0.06, 0.45, 0.42)
+            c.drawString(64, y - 2, "PREPARED BY")
             y -= 12
-            c.setFont("Helvetica", 11)
+            c.setFont("Helvetica-Bold", 11)
             c.setFillGray(0.18)
-            c.drawString(50, y, vehicle_line)
+            c.drawString(64, y, "Prepared Repair Estimate")
+            y -= 13
+            c.setFont("Helvetica", 9.5)
+            c.setFillGray(0.18)
+            c.drawString(64, y, f"Vehicle: {vehicle_line}")
             c.setFillGray(0)
             y -= 24
 
@@ -7141,13 +7166,13 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         def draw_service_columns(ypos: float) -> float:
             c.setFont("Helvetica-Bold", 9)
-            c.setFillGray(0.32)
+            c.setFillGray(0.28)
             c.drawString(X_SERVICE, ypos, "Service")
             if req.showLaborColumn:
                 c.drawRightString(X_LABOR, ypos, "Labor")
             if req.showPartsColumn:
                 c.drawRightString(X_PARTS, ypos, "Parts")
-            c.drawRightString(X_TOTAL, ypos, "Total")
+            c.drawRightString(X_TOTAL, ypos, "Line Total")
             c.setFillGray(0)
             ypos -= 10
 
@@ -7158,12 +7183,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             return ypos - 10
 
         # Services header 
-        c.setFillColorRGB(0.95, 0.98, 0.98)
-        c.roundRect(LEFT, y - 16, X_TOTAL - LEFT, 22, 6, fill=1, stroke=0)
+        c.setFillColorRGB(0.94, 0.985, 0.975)
+        c.roundRect(LEFT, y - 17, X_TOTAL - LEFT, 24, 6, fill=1, stroke=0)
         c.setFillGray(0)
         c.setFont("Helvetica-Bold", 12)
         c.drawString(LEFT + 10, y - 9, "Repair Services")
-        y -= 24
+        c.setFont("Helvetica", 8.5)
+        c.setFillGray(0.38)
+        c.drawRightString(X_TOTAL - 10, y - 9, f"{len(req.lineItems or [])} quoted service{'s' if len(req.lineItems or []) != 1 else ''}")
+        c.setFillGray(0)
+        y -= 26
 
         # Column headers 
         y = draw_service_columns(y)
@@ -7259,7 +7288,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             if risk_note_lines:
                 c.setFillGray(0.42)
                 c.setFont("Helvetica-Bold", 8)
-                c.drawString(X_SERVICE + 12, y, "Price note")
+                c.drawString(X_SERVICE + 12, y, "Estimate note")
                 y -= 9
                 c.setFont("Helvetica", 8.2)
                 for note_line in risk_note_lines:
@@ -7271,7 +7300,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             if findings_lines:
                 c.setFillGray(0.35)
                 c.setFont("Helvetica-Bold", 8)
-                c.drawString(X_SERVICE + 12, y, "Inspection findings")
+                c.drawString(X_SERVICE + 12, y, "Inspection notes")
                 y -= 9
 
                 c.setFillGray(0.28)
@@ -7308,7 +7337,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         final_note_lines = wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2] if req.showRiskNotes else []
         customer_note_lines = wrap_text(req.notes.strip(), max_chars=90) if req.notes else []
-        summary_needed = 62
+        summary_needed = 74
         if final_note_lines:
             summary_needed += (len(final_note_lines) * 9) + 10
         else:
@@ -7336,22 +7365,28 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         )
 
         # Grand total
-        totals_box_h = 62
-        c.setFillColorRGB(0.965, 0.985, 0.98)
+        totals_box_h = 74
+        c.setFillColorRGB(0.94, 0.985, 0.975)
         c.roundRect(LEFT, y - totals_box_h + 12, X_TOTAL - LEFT, totals_box_h, 8, fill=1, stroke=0)
-        c.setStrokeGray(0.82)
+        c.setStrokeGray(0.72)
         c.roundRect(LEFT, y - totals_box_h + 12, X_TOTAL - LEFT, totals_box_h, 8, fill=0, stroke=1)
         c.setStrokeGray(0)
         c.setFillGray(0)
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(LEFT + 14, y - 2, "Estimated Total")
+        c.setFont("Helvetica-Bold", 8.5)
+        c.setFillColorRGB(0.06, 0.45, 0.42)
+        c.drawString(LEFT + 14, y - 2, "CUSTOMER QUOTE TOTAL")
         c.setFont("Helvetica", 8.5)
         c.setFillGray(0.42)
-        c.drawString(LEFT + 14, y - 16, "Ready for customer review")
+        c.drawString(LEFT + 14, y - 16, "Services, labor, parts, and selected PDF details included")
+        c.drawString(LEFT + 14, y - 29, "Ready for customer review")
         c.setFillGray(0)
-        c.setFont("Helvetica-Bold", 20)
-        c.drawRightString(X_TOTAL - 14, y - 8, f"${grand_total:,.0f}")
-        y -= 62
+        c.setFont("Helvetica-Bold", 24)
+        c.drawRightString(X_TOTAL - 14, y - 10, f"${grand_total:,.0f}")
+        c.setFont("Helvetica", 8.5)
+        c.setFillGray(0.42)
+        c.drawRightString(X_TOTAL - 14, y - 28, "Estimated total")
+        c.setFillGray(0)
+        y -= 74
 
         if req.showRiskNotes:
             c.setFillGray(0.42)
@@ -7365,26 +7400,42 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             y -= 4
 
         # Customer
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(LEFT, y, "Customer Review")
-        y -= 14
+        review_box_h = 40
+        if req.customerName:
+            review_box_h += 12
+        if req.customerPhone:
+            review_box_h += 12
+        c.setFillColorRGB(0.985, 0.99, 0.995)
+        c.roundRect(LEFT, y - review_box_h + 8, X_TOTAL - LEFT, review_box_h, 7, fill=1, stroke=0)
+        c.setStrokeGray(0.86)
+        c.roundRect(LEFT, y - review_box_h + 8, X_TOTAL - LEFT, review_box_h, 7, fill=0, stroke=1)
+        c.setStrokeGray(0)
+        c.setFillGray(0)
 
-        c.setFont("Helvetica", 11)
-        c.drawString(LEFT, y, f"Estimate reviewed with customer: {'Yes' if req.customerAgrees else 'No'}")
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(LEFT + 12, y - 5, "Customer Review")
+        y -= 18
+
+        c.setFont("Helvetica", 9.5)
+        c.setFillGray(0.24)
+        c.drawString(LEFT + 12, y, f"Estimate reviewed with customer: {'Yes' if req.customerAgrees else 'No'}")
         y -= 12
 
         if req.customerName:
-            c.drawString(LEFT, y, f"Name: {req.customerName}")
+            c.drawString(LEFT + 12, y, f"Customer: {req.customerName}")
             y -= 12
 
         if req.customerPhone:
-            c.drawString(LEFT, y, f"Phone: {req.customerPhone}")
+            c.drawString(LEFT + 12, y, f"Phone: {req.customerPhone}")
             y -= 12
+
+        c.setFillGray(0)
+        y -= 12
 
         if customer_note_lines:
             y -= 4
             c.setFont("Helvetica-Bold", 11)
-            c.drawString(LEFT, y, "Notes:")
+            c.drawString(LEFT, y, "Customer-facing notes")
             y -= 12
 
             c.setFont("Helvetica", 10)
