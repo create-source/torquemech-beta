@@ -5,6 +5,9 @@
 */
 // static/app.js — CLEAN (Beta-stable)
 (() => {
+  if (window.__tmEstimatorAppBooted) return;
+  window.__tmEstimatorAppBooted = true;
+
   function trackClarity(eventName, data) {
     try {
       if (typeof window.tmTrackClarity === "function") {
@@ -912,6 +915,8 @@
   let signatureDataUrl = null;
   let editingLineItem = null; // { serviceCode, serviceText }
   let activeEditingLineId = null;
+  let isAddingLineItem = false;
+  let isGeneratingAllLines = false;
 
   function createLineItemId() {
     if (window.crypto?.randomUUID) {
@@ -922,6 +927,28 @@
 
   function getLineItemById(lineItemId) {
     return lineItems.find((it) => it.id === lineItemId) || null;
+  }
+
+  function ensureUniqueLineItemIds(items) {
+    const seen = new Set();
+    return (Array.isArray(items) ? items : []).map((item) => {
+      const next = item && typeof item === "object" ? item : {};
+      let id = String(next.id || "").trim();
+      if (!id || seen.has(id)) id = createLineItemId();
+      seen.add(id);
+      return { ...next, id };
+    });
+  }
+
+  function hasOpenLineEdit() {
+    return !!(activeEditingLineId && getLineItemById(activeEditingLineId));
+  }
+
+  function focusOpenLineEdit() {
+    document.querySelector(".pricing-controls")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   }
 
   // ---- Saved Drafts (localStorage) ----
@@ -1116,8 +1143,10 @@
 
       // Legacy draft support:
       // if old line items do not have vehicleId / vehicleLabel, assign them to Vehicle 1
-      lineItems = (Array.isArray(d.lineItems) ? d.lineItems : []).map((it) =>
-        normalizeDraftLineItem(it, estimateState.vehicles[0])
+      lineItems = ensureUniqueLineItemIds(
+        (Array.isArray(d.lineItems) ? d.lineItems : []).map((it) =>
+          normalizeDraftLineItem(it, estimateState.vehicles[0])
+        )
       );
       estimateState.activeVehicleId = "veh_1";
 
@@ -1385,8 +1414,13 @@ function togglePricingModeUI() {
 
 const confidenceEl = document.getElementById("laborConfidence");
 
+  function lineItemEstimateValue(it) {
+    const value = Number(it?.estimate);
+    return Number.isFinite(value) ? value : 0;
+  }
+
   function quoteTotal() {
-    return lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0);
+    return lineItems.reduce((sum, it) => sum + lineItemEstimateValue(it), 0);
   }
 
   function formatRunningTotal(n) {
@@ -3143,7 +3177,18 @@ const confidenceEl = document.getElementById("laborConfidence");
   });
 
   function openConfirm() {
-    if (!confirmModal) return;
+    if (!confirmModal) return false;
+
+    if (hasOpenLineEdit()) {
+      setStatus("error", "Save the current line edit before creating the customer quote.");
+      focusOpenLineEdit();
+      return false;
+    }
+
+    if (isAddingLineItem || isGeneratingAllLines) {
+      setStatus("info", "Finish the current quote update before opening the customer quote.");
+      return false;
+    }
 
     clearConfirmMessage();
     confirmModal.classList.remove("hidden");
@@ -3184,9 +3229,12 @@ const confidenceEl = document.getElementById("laborConfidence");
     refreshQuotePreview();
     refreshQuoteIdentityNudge();
     resizeSigCanvas();
+    return true;
   }
 
-  function closeConfirm() {
+  function closeConfirm(force = false) {
+    if (isGeneratingCustomerPdf && !force) return;
+
     if (document.activeElement && confirmModal?.contains(document.activeElement)) {
       document.activeElement.blur();
     }
@@ -3669,7 +3717,9 @@ const confidenceEl = document.getElementById("laborConfidence");
       addLineBtn.hidden = isEditingSavedLine || readyForNextService;
     }
 
-    estimateBtn.disabled = isEditingSavedLine ? false : !(hasBasics && hasSelection && readyForNextService);
+    estimateBtn.disabled = isAddingLineItem
+      ? true
+      : isEditingSavedLine ? false : !(hasBasics && hasSelection && readyForNextService);
     estimateBtn.textContent = isEditingSavedLine
       ? "Save Line Changes"
       : editingLineItem ? "Update Quote Line" : "Add Service to Quote";
@@ -3710,7 +3760,7 @@ if (getEstimateHint) {
     }
 
     // Add Another Service enabled ONLY after a service has been added
-    if (addLineBtn) addLineBtn.disabled = isEditingSavedLine || readyForNextService;
+    if (addLineBtn) addLineBtn.disabled = isAddingLineItem || isEditingSavedLine || readyForNextService;
 
     // keep status helpful, but don't spam over error messages
     if (isEditingSavedLine) setStatus("info", "Editing saved line. Update pricing, then save changes.");
@@ -3722,6 +3772,7 @@ if (getEstimateHint) {
 
   // ---- Add Service to Estimate FIRST ----
   estimateBtn?.addEventListener("click", async () => {
+    if (isAddingLineItem) return;
 
     // Google Analytics event
     if (typeof gtag === "function") {
@@ -3732,12 +3783,14 @@ if (getEstimateHint) {
     }
 
     if (activeEditingLineId) {
+      isAddingLineItem = true;
       const it = getLineItemById(activeEditingLineId);
       if (!it) {
         console.warn("Save Line Changes ignored: active line item not found", {
           activeEditingLineId,
         });
         activeEditingLineId = null;
+        isAddingLineItem = false;
         updateEstimateButtonState();
         return;
       }
@@ -3755,6 +3808,8 @@ if (getEstimateHint) {
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Line updated.`);
       } catch (e) {
         setStatus("error", `Save line failed: ${e.message}`);
+      } finally {
+        isAddingLineItem = false;
       }
       return;
     }
@@ -3774,6 +3829,7 @@ if (getEstimateHint) {
     }
 
     // lock immediately so user can’t spam add
+    isAddingLineItem = true;
     readyForNextService = false;
     updateEstimateButtonState();
 
@@ -3826,6 +3882,7 @@ if (getEstimateHint) {
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)} added. Add another repair or create the customer quote.`);
 
         readyForNextService = false;
+        isAddingLineItem = false;
         updateEstimateButtonState();
         focusAddAnotherRepair();
         void refreshPairedSuggestions();
@@ -3878,6 +3935,7 @@ if (getEstimateHint) {
       setStatus("ok", `${it.serviceText}: ${money(it.estimate)} added. Add another repair or create the customer quote.`);
 
       readyForNextService = false;
+      isAddingLineItem = false;
       updateEstimateButtonState();
       focusAddAnotherRepair();
       void refreshPairedSuggestions();
@@ -3890,6 +3948,7 @@ if (getEstimateHint) {
       void refreshPairedSuggestions();
 
       readyForNextService = true;
+      isAddingLineItem = false;
       updateEstimateButtonState();
 
       setStatus("error", `Estimate failed: ${e.message}`);
@@ -3898,6 +3957,8 @@ if (getEstimateHint) {
 
   // Add Another Service
   addLineBtn?.addEventListener("click", () => {
+    if (isAddingLineItem || isGeneratingAllLines) return;
+
     // Clear selections
     activeEditingLineId = null;
     setCategoryValue("", "none");
@@ -3963,6 +4024,10 @@ if (getEstimateHint) {
         activeEditingLineId = null;
       }
       lineItems.splice(idx, 1);
+      if (!lineItems.length) {
+        readyForNextService = true;
+        editingLineItem = null;
+      }
       renderLineItems();
       void refreshPairedSuggestions();
       return;
@@ -4073,6 +4138,7 @@ if (getEstimateHint) {
 
     if (isGeneratingCustomerPdf) return;
     isGeneratingCustomerPdf = true;
+    if (confirmAddBtn) confirmAddBtn.disabled = true;
 
     clearConfirmMessage();
 
@@ -4115,6 +4181,18 @@ if (getEstimateHint) {
         setConfirmMessage("error", "Some quoted services are missing prices. Review pricing before generating the PDF.");
         return;
       }
+      const pdfLineItems = lineItems.map((it) => ({
+        serviceCode: it.serviceCode,
+        serviceText: it.serviceText,
+        pricingMode: it.pricingMode,
+        flatRatePrice: Number(it.flatRatePrice || 0),
+        laborHours: Number(it.laborHours || 0),
+        partsPrice: Number(it.partsPrice || 0),
+        laborRate: Number(it.laborRate || 0),
+        estimate: it.estimate != null ? Number(it.estimate) : null,
+        laborBreakdown: it.laborBreakdown || null,
+        inspectionFindings: String(it.inspectionFindings || "").trim(),
+      }));
       
       // Generate PDF
       setStatus("info", "Preparing customer PDF...");
@@ -4147,18 +4225,7 @@ if (getEstimateHint) {
           showRiskNotes: outputOptions.showRiskNotes,
           showInspectionFindings: outputOptions.showInspectionFindings,
           showDetailedLaborBreakdown: outputOptions.showDetailedLaborBreakdown,
-          lineItems: lineItems.map((it) => ({
-            serviceCode: it.serviceCode,
-            serviceText: it.serviceText,
-            pricingMode: it.pricingMode,
-            flatRatePrice: Number(it.flatRatePrice || 0),
-            laborHours: Number(it.laborHours || 0),
-            partsPrice: Number(it.partsPrice || 0),
-            laborRate: Number(it.laborRate || 0),
-            estimate: it.estimate != null ? Number(it.estimate) : null,
-            laborBreakdown: it.laborBreakdown || null,
-            inspectionFindings: String(it.inspectionFindings || "").trim(),
-          })),
+          lineItems: pdfLineItems,
         }),
       });
 
@@ -4218,7 +4285,7 @@ if (getEstimateHint) {
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
       setStatus("ok", "Customer PDF ready.");
-      closeConfirm();
+      closeConfirm(true);
 
     } catch (e) {
       console.error("PDF generation failed", e);
@@ -4226,6 +4293,7 @@ if (getEstimateHint) {
       setConfirmMessage("error", "Unable to generate PDF. Please try again.");
     } finally {
       isGeneratingCustomerPdf = false;
+      if (confirmAddBtn) confirmAddBtn.disabled = false;
     }
   }
 
@@ -4637,8 +4705,9 @@ if (getEstimateHint) {
       return;
     }
 
-    openConfirm();
-    setConfirmMessage("info", "Review the saved quote, then generate the customer PDF.");
+    if (openConfirm()) {
+      setConfirmMessage("info", "Review the saved quote, then generate the customer PDF.");
+    }
   });
   sharedDownloadPdfBtn?.addEventListener("click", () => {
     if (!lineItems.length) {
@@ -4646,8 +4715,9 @@ if (getEstimateHint) {
       return;
     }
 
-    openConfirm();
-    setConfirmMessage("info", "Review the shared quote, then generate the customer PDF.");
+    if (openConfirm()) {
+      setConfirmMessage("info", "Review the shared quote, then generate the customer PDF.");
+    }
   });
 
   addVehicleBtn?.addEventListener("click", () => {
@@ -4687,6 +4757,11 @@ if (getEstimateHint) {
 
     estimateState.vehicles = estimateState.vehicles.filter(v => v.id !== vehicleId);
     lineItems = lineItems.filter(it => it.vehicleId !== vehicleId);
+    if (!lineItems.length) {
+      activeEditingLineId = null;
+      editingLineItem = null;
+      readyForNextService = true;
+    }
 
     if (estimateState.activeVehicleId === vehicleId) {
       estimateState.activeVehicleId = estimateState.vehicles[0]?.id || null;
@@ -4819,11 +4894,22 @@ if (getEstimateHint) {
 
   // ---- Generate All Service Estimates ----
   generateAllBtn?.addEventListener("click", async () => {
+    if (isGeneratingAllLines) return;
+
     try {
+      if (hasOpenLineEdit()) {
+        setStatus("error", "Save the current line edit before creating the customer quote.");
+        focusOpenLineEdit();
+        return;
+      }
+
       if (!lineItems.length) {
         setStatus("error", "Add at least one service first.");
         return;
       }
+
+      isGeneratingAllLines = true;
+      if (generateAllBtn) generateAllBtn.disabled = true;
 
       for (const it of lineItems) {
 
@@ -4854,10 +4940,15 @@ if (getEstimateHint) {
         service_count: lineItems.length,
         estimate_total: lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0)
       });
+      isGeneratingAllLines = false;
+      if (generateAllBtn) generateAllBtn.disabled = false;
       openConfirm();
 
     } catch (e) {
       setStatus("error", `Generate all failed: ${e.message}`);
+    } finally {
+      isGeneratingAllLines = false;
+      if (generateAllBtn) generateAllBtn.disabled = false;
     }
   });
 
