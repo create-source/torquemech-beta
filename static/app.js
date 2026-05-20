@@ -953,22 +953,40 @@
 
   // ---- Saved Drafts (localStorage) ----
   const DRAFTS_KEY = "torquemech_drafts_v1";
+  const LAST_DRAFT_ID_KEY = "torquemech_last_draft_id_v1";
+  const DRAFT_SCHEMA_VERSION = 2;
   const MAX_DRAFTS = 25;
+  let activeDraftId = "";
 
   function getDrafts() {
     try {
-      return JSON.parse(localStorage.getItem(DRAFTS_KEY) || "[]");
+      const raw = JSON.parse(localStorage.getItem(DRAFTS_KEY) || "[]");
+      const drafts = (Array.isArray(raw) ? raw : [])
+        .map(normalizeDraft)
+        .filter(Boolean);
+      if (drafts.length !== (Array.isArray(raw) ? raw.length : 0)) {
+        setDrafts(drafts);
+      }
+      return drafts;
     } catch {
+      try {
+        localStorage.removeItem(DRAFTS_KEY);
+        localStorage.removeItem(LAST_DRAFT_ID_KEY);
+      } catch (_) {}
       return [];
     }
   }
 
   function setDrafts(arr) {
-    localStorage.setItem(DRAFTS_KEY, JSON.stringify(arr));
+    const normalized = (Array.isArray(arr) ? arr : [])
+      .map(normalizeDraft)
+      .filter(Boolean)
+      .slice(0, MAX_DRAFTS);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(normalized));
   }
 
   function draftLabel(d) {
-    return `${d.title} • ${new Date(d.savedAt).toLocaleString()}`;
+    return `${d.title} - ${new Date(d.savedAt).toLocaleString()}`;
   }
 
   function createShareId() {
@@ -1036,6 +1054,18 @@
     const drafts = getDrafts();
     draftsSelect.innerHTML = `<option value="">Select a device-saved estimate</option>` +
       drafts.map(d => `<option value="${d.id}">${draftLabel(d)}</option>`).join("");
+    draftsSelect.disabled = drafts.length === 0;
+    if (loadDraftBtn) loadDraftBtn.disabled = drafts.length === 0;
+    if (deleteDraftBtn) deleteDraftBtn.disabled = drafts.length === 0;
+    if (drafts.length) {
+      let lastDraftId = activeDraftId;
+      try {
+        lastDraftId = lastDraftId || localStorage.getItem(LAST_DRAFT_ID_KEY) || "";
+      } catch (_) {}
+      if (lastDraftId && drafts.some((d) => d.id === lastDraftId)) {
+        draftsSelect.value = lastDraftId;
+      }
+    }
 
     if (draftsMsg) {
       draftsMsg.textContent = drafts.length
@@ -1051,12 +1081,16 @@
     return (vehicle || "Estimate") + (servicesCount ? ` (${servicesCount} service${servicesCount > 1 ? "s" : ""})` : "");
   }
 
-  function serializeDraft() {
+  function serializeDraft(existingDraft = null) {
     const currentVehicle = getCurrentVehicleSnapshot();
+    const now = Date.now();
     return {
-      id: String(Date.now()),
-      shareId: createShareId(),
-      savedAt: Date.now(),
+      schemaVersion: DRAFT_SCHEMA_VERSION,
+      id: existingDraft?.id || activeDraftId || String(now),
+      shareId: existingDraft?.shareId || createShareId(),
+      createdAt: Number(existingDraft?.createdAt || existingDraft?.savedAt || now),
+      savedAt: now,
+      updatedAt: now,
       title: buildDraftTitle(),
 
       vehicle: {
@@ -1077,19 +1111,77 @@
       },
       businessIdentity: getBusinessIdentity(),
 
-      lineItems: Array.isArray(lineItems) ? lineItems : [],
+      lineItems: ensureUniqueLineItemIds(lineItems).map((it) =>
+        normalizeDraftLineItem(it, currentVehicle)
+      ),
+    };
+  }
+
+  function normalizeDraft(d) {
+    if (!d || typeof d !== "object") return null;
+
+    const now = Date.now();
+    const vehicle = {
+      id: "veh_1",
+      year: String(d.vehicle?.year || d.year || "").trim(),
+      make: String(d.vehicle?.make || d.make || "").trim(),
+      model: String(d.vehicle?.model || d.model || "").trim(),
+    };
+    const customer = d.customer || {};
+    const businessIdentity = d.businessIdentity || {};
+    const savedAt = Number(d.savedAt || d.updatedAt || now);
+    const lineItemSource = Array.isArray(d.lineItems) ? d.lineItems : [];
+    const normalizedLineItems = ensureUniqueLineItemIds(
+      lineItemSource.map((it) => normalizeDraftLineItem(it, vehicle))
+    );
+    const fallbackTitle = [
+      [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ") || "Estimate",
+      normalizedLineItems.length
+        ? `(${normalizedLineItems.length} service${normalizedLineItems.length === 1 ? "" : "s"})`
+        : "",
+    ].filter(Boolean).join(" ");
+
+    return {
+      schemaVersion: DRAFT_SCHEMA_VERSION,
+      id: String(d.id || savedAt || now),
+      shareId: String(d.shareId || createShareId()),
+      createdAt: Number(d.createdAt || savedAt || now),
+      savedAt,
+      updatedAt: Number(d.updatedAt || savedAt || now),
+      title: String(d.title || fallbackTitle).trim() || "Saved estimate",
+      vehicle,
+      customer: {
+        agrees: customer.agrees !== false,
+        name: String(customer.name || "").trim(),
+        phone: String(customer.phone || "").trim(),
+        notes: String(customer.notes || "").trim(),
+      },
+      businessIdentity: {
+        businessName: String(businessIdentity.businessName || "").trim(),
+        mechanicName: String(businessIdentity.mechanicName || "").trim(),
+        businessPhone: String(businessIdentity.businessPhone || "").trim(),
+        businessNote: String(businessIdentity.businessNote || "").trim(),
+      },
+      signatureDataUrl: null,
+      lineItems: normalizedLineItems,
     };
   }
 
   function normalizeDraftLineItem(it, fallbackVehicle) {
     const pricingMode = (it?.pricingMode || "hourly").trim() === "flat" ? "flat" : "hourly";
-    const vehicleId = it?.vehicleId || fallbackVehicle.id;
-    const vehicleYear = it?.vehicleYear || fallbackVehicle.year || "";
-    const vehicleMake = it?.vehicleMake || fallbackVehicle.make || "";
-    const vehicleModel = it?.vehicleModel || fallbackVehicle.model || "";
+    const vehicleId = it?.vehicleId || fallbackVehicle?.id || "veh_1";
+    const vehicleYear = it?.vehicleYear || fallbackVehicle?.year || "";
+    const vehicleMake = it?.vehicleMake || fallbackVehicle?.make || "";
+    const vehicleModel = it?.vehicleModel || fallbackVehicle?.model || "";
     const vehicleLabel = it?.vehicleLabel || getVehicleLabel({ id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel }, 0);
+    const flatRatePrice = Number(it?.flatRatePrice || 0);
+    const travelFee = Number(it?.travelFee || 0);
+    const laborHours = Number(it?.laborHours || 0);
+    const partsPrice = Number(it?.partsPrice || 0);
+    const laborRate = Number(it?.laborRate || 0);
+    const normalizedEstimate = Number(it?.estimate);
 
-    return {
+    const normalized = {
       ...it,
       id: it?.id || createLineItemId(),
       vehicleId,
@@ -1100,24 +1192,33 @@
       serviceCode: String(it?.serviceCode || "").trim(),
       serviceText: String(it?.serviceText || it?.serviceCode || "Service").trim(),
       pricingMode,
-      flatRatePrice: Number(it?.flatRatePrice || 0),
-      travelFee: Number(it?.travelFee || 0),
-      laborHours: Number(it?.laborHours || 0),
-      partsPrice: Number(it?.partsPrice || 0),
-      laborRate: Number(it?.laborRate || 0),
+      flatRatePrice: Number.isFinite(flatRatePrice) ? flatRatePrice : 0,
+      travelFee: Number.isFinite(travelFee) ? travelFee : 0,
+      laborHours: Number.isFinite(laborHours) ? laborHours : 0,
+      partsPrice: Number.isFinite(partsPrice) ? partsPrice : 0,
+      laborRate: Number.isFinite(laborRate) ? laborRate : 0,
       notes: (it?.notes || "").trim() || null,
       inspectionFindings: (it?.inspectionFindings || "").trim(),
-      estimate: it?.estimate != null ? Number(it.estimate) : null,
+      estimate: Number.isFinite(normalizedEstimate) ? normalizedEstimate : null,
       laborBreakdown: it?.laborBreakdown || null,
       breakdownOpen: false,
     };
+    if (normalized.estimate == null) {
+      normalized.estimate = calcLineItemEstimate(normalized);
+    }
+    return normalized;
   }
 
     async function applyDraft(d) {
+      d = normalizeDraft(d);
       if (!d) return;
 
       try {
         closeConfirm();
+      } catch (_) {}
+      activeDraftId = d.id;
+      try {
+        localStorage.setItem(LAST_DRAFT_ID_KEY, activeDraftId);
       } catch (_) {}
 
       // Reset to a safe default state first
@@ -1185,18 +1286,49 @@
       togglePricingModeUI();
       refreshQuotePreview();
       updateEstimateButtonState();
+      showEstimateSavedBlock(d);
 
       if (draftsMsg) draftsMsg.textContent = `Loaded from this device: ${d.title}`;
     }
 
   function saveCurrentDraft() {
-    const d = serializeDraft();
+    if (hasOpenLineEdit()) {
+      if (draftsMsg) draftsMsg.textContent = "Save the current line edit before saving this estimate.";
+      setStatus("error", "Save the current line edit before saving this estimate.");
+      focusOpenLineEdit();
+      return;
+    }
+
+    if (!lineItems.length) {
+      if (draftsMsg) draftsMsg.textContent = "Add at least one quoted service before saving.";
+      setStatus("error", "Add at least one quoted service before saving.");
+      return;
+    }
+
     const drafts = getDrafts();
+    const existing = activeDraftId
+      ? drafts.find((x) => x.id === activeDraftId)
+      : null;
+    const d = normalizeDraft(serializeDraft(existing));
+    if (!d) return;
 
-    drafts.unshift(d);
-    if (drafts.length > MAX_DRAFTS) drafts.length = MAX_DRAFTS;
+    const nextDrafts = [
+      d,
+      ...drafts.filter((x) => x.id !== d.id && x.shareId !== d.shareId),
+    ];
+    if (nextDrafts.length > MAX_DRAFTS) nextDrafts.length = MAX_DRAFTS;
 
-    setDrafts(drafts);
+    try {
+      setDrafts(nextDrafts);
+    } catch (e) {
+      if (draftsMsg) draftsMsg.textContent = "Unable to save this estimate on this device. Download the PDF to keep a copy.";
+      setStatus("error", "Unable to save this estimate on this device.");
+      return;
+    }
+    activeDraftId = d.id;
+    try {
+      localStorage.setItem(LAST_DRAFT_ID_KEY, activeDraftId);
+    } catch (_) {}
     refreshDraftsUI();
     if (draftsSelect) draftsSelect.value = d.id;
     showEstimateSavedBlock(d);
@@ -1230,6 +1362,13 @@
 
     const drafts = getDrafts().filter(x => x.id !== id);
     setDrafts(drafts);
+    if (activeDraftId === id) {
+      activeDraftId = "";
+      lastSavedEstimateLink = "";
+      try {
+        localStorage.removeItem(LAST_DRAFT_ID_KEY);
+      } catch (_) {}
+    }
     refreshDraftsUI();
     if (draftsSelect) draftsSelect.value = "";
 
@@ -3761,6 +3900,7 @@ if (getEstimateHint) {
 
     // Add Another Service enabled ONLY after a service has been added
     if (addLineBtn) addLineBtn.disabled = isAddingLineItem || isEditingSavedLine || readyForNextService;
+    if (saveDraftBtn) saveDraftBtn.disabled = isAddingLineItem || isGeneratingAllLines || !lineItems.length;
 
     // keep status helpful, but don't spam over error messages
     if (isEditingSavedLine) setStatus("info", "Editing saved line. Update pricing, then save changes.");
@@ -4419,6 +4559,13 @@ if (getEstimateHint) {
     clearConfirmMessage();
     if (quotePreviewEl) quotePreviewEl.value = "";
     if (draftsSelect) draftsSelect.value = "";
+    activeDraftId = "";
+    lastSavedEstimateLink = "";
+    try {
+      localStorage.removeItem(LAST_DRAFT_ID_KEY);
+    } catch (_) {}
+    if (estimateSavedBlock) estimateSavedBlock.hidden = true;
+    if (estimateSavedLinkText) estimateSavedLinkText.textContent = "";
     const confirmServicesList = document.getElementById("confirmServicesList");
     if (confirmServicesList) confirmServicesList.textContent = "—";
 
@@ -4949,6 +5096,7 @@ if (getEstimateHint) {
     } finally {
       isGeneratingAllLines = false;
       if (generateAllBtn) generateAllBtn.disabled = false;
+      updateEstimateButtonState();
     }
   });
 

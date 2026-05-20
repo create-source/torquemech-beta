@@ -332,29 +332,29 @@
       <hr class="section-divider">
 
       <!-- Saved Estimates (Local) --> 
-      <div class="tm-card" id="draftsCard" data-saved-estimates-disabled="true">
+      <div class="tm-card" id="draftsCard" data-saved-estimates-disabled="false">
       <h2>Saved Estimates</h2>
-      <div class="tm-hint" style="margin-top:-4px; margin-bottom:8px;">Coming soon</div>
-      <p class="tm-hint">Estimates are not saved yet. Export as PDF to keep a copy.</p>
+      <div class="tm-hint" style="margin-top:-4px; margin-bottom:8px;">Saved on this device</div>
+      <p class="tm-hint">Keep a local copy for quick reload, sharing, or PDF handoff.</p>
 
       <div class="tm-card" id="draftRecoveryBlock" style="margin:12px 0; padding:14px 16px;">
         <div style="font-weight:800; margin-bottom:6px;">Worked on an estimate before?</div>
-        <div class="tm-hint">Saved estimate recovery is coming soon. For now, download the PDF when you want to keep a copy.</div>
+        <div class="tm-hint">Select a device-saved estimate below to reload the vehicle, services, customer details, and quote notes.</div>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:10px;">
 
-        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary" disabled>
+        <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary">
           Save This Estimate for Later
         </button>
 
-        <select id="draftsSelect" hidden disabled aria-hidden="true">
-          <option value="">Unavailable</option>
+        <select id="draftsSelect">
+          <option value="">Select a saved estimate</option>
         </select>
 
         <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;">
-          <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary" disabled>Open</button>
-          <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger" disabled>Delete</button>
+          <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary">Open</button>
+          <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger">Delete</button>
         </div>
 
       </div>
