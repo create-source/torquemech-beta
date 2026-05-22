@@ -827,24 +827,36 @@
       match: ["front_brake_pads_replacement", "front brake pads replacement"],
       context: "Brake axle workflow",
       suggestions: [
-        { label: "Front Brake Rotors", serviceCode: "front_brake_rotors_replacement", stage: "Same axle", reason: "Check rotor condition while the pads are already apart.", weight: 100 },
-        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush", stage: "System check", reason: "Useful when fluid age, color, or pedal feel is part of the visit.", weight: 62 },
+        { label: "Front Brake Rotors", serviceCode: "front_brake_rotors_replacement", stage: "Same axle", reason: "Inspect rotor thickness, scoring, and pulsation risk while the pads are apart.", weight: 100 },
+        { label: "Brake Fluid Service", serviceCode: "brake_fluid_flush", stage: "Fluid check", reason: "Check fluid age, color, and pedal feel before the brake quote is closed.", weight: 66 },
+        { label: "Caliper Inspection", serviceCode: "brake_diagnostic", stage: "Slide check", reason: "Confirm caliper slide, pin, and hose condition if pad wear is uneven.", weight: 58 },
       ],
     },
     {
       match: ["rear_brake_pads_replacement", "rear brake pads replacement"],
       context: "Brake axle workflow",
       suggestions: [
-        { label: "Rear Brake Rotors", serviceCode: "rear_brake_rotors_replacement", stage: "Same axle", reason: "Check rotor condition while the pads are already apart.", weight: 100 },
-        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush", stage: "System check", reason: "Useful when fluid age, color, or pedal feel is part of the visit.", weight: 62 },
+        { label: "Rear Brake Rotors", serviceCode: "rear_brake_rotors_replacement", stage: "Same axle", reason: "Inspect rotor thickness, scoring, and parking-brake overlap while the pads are apart.", weight: 100 },
+        { label: "Brake Fluid Service", serviceCode: "brake_fluid_flush", stage: "Fluid check", reason: "Check fluid age, color, and pedal feel before the brake quote is closed.", weight: 66 },
+        { label: "Caliper Inspection", serviceCode: "brake_diagnostic", stage: "Slide check", reason: "Confirm caliper slide, pin, and hose condition if pad wear is uneven.", weight: 58 },
       ],
     },
     {
       match: ["brake pad", "brake pads"],
       context: "Brake quote workflow",
       suggestions: [
-        { label: "Brake Rotors", query: "brake rotor", stage: "Same visit", reason: "Noise, pulsation, or low rotor thickness can change the quote.", weight: 74 },
-        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush", stage: "System check", reason: "Keeps the quote aware of fluid condition without adding diagnosis steps.", weight: 58 },
+        { label: "Brake Rotors", query: "brake rotor", stage: "Same visit", reason: "Noise, pulsation, or low rotor thickness can change the repair plan.", weight: 74 },
+        { label: "Brake Fluid Service", serviceCode: "brake_fluid_flush", stage: "Fluid check", reason: "Keeps fluid condition visible without turning the quote into a diagnostic tree.", weight: 60 },
+        { label: "Caliper Inspection", serviceCode: "brake_diagnostic", stage: "Slide check", reason: "Useful when uneven pad wear points to slides, pins, or hose restriction.", weight: 54 },
+      ],
+    },
+    {
+      match: ["alternator_replacement", "alternator replacement", "alternator"],
+      context: "Charging-system workflow",
+      suggestions: [
+        { label: "Battery Test", serviceCode: "battery_test", stage: "Confirm battery", reason: "Verify battery health before and after charging-system repair.", weight: 98 },
+        { label: "Battery Replacement", serviceCode: "battery_replacement", stage: "If failed test", reason: "Only quote when load testing shows the battery will not hold capacity.", weight: 70 },
+        { label: "Serpentine Belt Inspection", serviceCode: "serpentine_belt_replacement", stage: "Belt drive", reason: "Inspect belt condition, tension, and slip risk while the alternator path is open.", weight: 66 },
       ],
     },
     {
@@ -853,6 +865,25 @@
       suggestions: [
         { label: "Battery Test", serviceCode: "battery_test", stage: "Confirm power", reason: "Separates starter failure from weak battery or voltage drop.", weight: 96 },
         { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement", stage: "Voltage drop", reason: "Cables and terminals can mimic a starter problem.", weight: 70 },
+        { label: "Charging System Test", serviceCode: "charging_system_test", stage: "System check", reason: "Useful when a no-start complaint overlaps with repeated dead-battery symptoms.", weight: 56 },
+      ],
+    },
+    {
+      match: ["water_pump_replacement", "water pump replacement", "water pump"],
+      context: "Cooling-system workflow",
+      suggestions: [
+        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement", stage: "Flow control", reason: "Consider when overheating or warm-up behavior may not be pump-only.", weight: 84 },
+        { label: "Coolant Flush", serviceCode: "coolant_flush", stage: "Refill quality", reason: "Keeps coolant condition, contamination, and refill labor visible in the quote.", weight: 74 },
+        { label: "Serpentine Belt Inspection", serviceCode: "serpentine_belt_replacement", stage: "Belt drive", reason: "Check belt condition and tension when the pump is belt-driven or nearby.", weight: 58 },
+      ],
+    },
+    {
+      match: ["radiator_replacement", "radiator replacement", "radiator"],
+      context: "Cooling-system workflow",
+      suggestions: [
+        { label: "Coolant Flush", serviceCode: "coolant_flush", stage: "Refill quality", reason: "Consider when coolant age or contamination affects the finished repair.", weight: 84 },
+        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement", stage: "Flow control", reason: "Check when temperature control concerns overlap with the radiator repair.", weight: 72 },
+        { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test", stage: "Leak check", reason: "Verify the system holds pressure before the customer handoff.", weight: 70 },
       ],
     },
     {

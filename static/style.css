@@ -1503,10 +1503,10 @@ input[type="radio"]{
 
 .tm-paired-suggestions{
   margin-top: 10px;
-  padding: 10px;
-  border: 1px solid rgba(15,23,42,.10);
+  padding: 10px 11px;
+  border: 1px solid rgba(15,23,42,.08);
   border-radius: 10px;
-  background: #f8fafc;
+  background: rgba(248,250,252,.74);
 }
 
 .tm-completion-suggestions{
@@ -1522,7 +1522,7 @@ input[type="radio"]{
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
 .tm-completion-suggestions__head{
@@ -1538,7 +1538,7 @@ input[type="radio"]{
   font-weight: 900;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: #0f766e;
+  color: #475569;
 }
 
 .tm-completion-suggestions__eyebrow{
@@ -1551,8 +1551,8 @@ input[type="radio"]{
 
 .tm-paired-suggestions__title{
   margin-top: 3px;
-  color: var(--tm-text);
-  font-size: .86rem;
+  color: var(--tm-text-muted);
+  font-size: .82rem;
   font-weight: 800;
   line-height: 1.35;
 }
@@ -1578,19 +1578,19 @@ input[type="radio"]{
 }
 
 .tm-paired-suggestion{
-  min-height: 58px;
-  border: 1px solid rgba(15,23,42,.12);
+  min-height: 54px;
+  border: 1px solid rgba(15,23,42,.10);
   border-radius: 9px;
-  background: #fff;
+  background: rgba(255,255,255,.86);
   color: var(--tm-text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 10px;
+  padding: 8px 9px;
   text-align: left;
-  box-shadow: 0 4px 12px rgba(15,23,42,.04);
+  box-shadow: 0 3px 9px rgba(15,23,42,.035);
 }
 
 .tm-completion-suggestion{
@@ -1609,8 +1609,9 @@ input[type="radio"]{
 }
 
 .tm-paired-suggestion:hover{
-  border-color: rgba(20,184,166,.5);
-  box-shadow: 0 7px 18px rgba(20,184,166,.10);
+  border-color: rgba(20,184,166,.34);
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(20,184,166,.08);
 }
 
 .tm-completion-suggestion:hover{
@@ -1632,7 +1633,7 @@ input[type="radio"]{
   display: grid;
   gap: 3px;
   min-width: 0;
-  font-size: .88rem;
+  font-size: .86rem;
   font-weight: 850;
   line-height: 1.25;
 }
@@ -1666,7 +1667,7 @@ input[type="radio"]{
 .tm-paired-suggestion small{
   white-space: nowrap;
   color: var(--tm-text-muted);
-  font-size: .75rem;
+  font-size: .72rem;
   font-weight: 800;
 }
 
