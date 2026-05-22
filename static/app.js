@@ -825,69 +825,79 @@
   const COMMONLY_ADDED_TOGETHER = [
     {
       match: ["front_brake_pads_replacement", "front brake pads replacement"],
+      context: "Brake axle workflow",
       suggestions: [
-        { label: "Front Brake Rotors", serviceCode: "front_brake_rotors_replacement" },
-        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+        { label: "Front Brake Rotors", serviceCode: "front_brake_rotors_replacement", stage: "Same axle", reason: "Check rotor condition while the pads are already apart.", weight: 100 },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush", stage: "System check", reason: "Useful when fluid age, color, or pedal feel is part of the visit.", weight: 62 },
       ],
     },
     {
       match: ["rear_brake_pads_replacement", "rear brake pads replacement"],
+      context: "Brake axle workflow",
       suggestions: [
-        { label: "Rear Brake Rotors", serviceCode: "rear_brake_rotors_replacement" },
-        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+        { label: "Rear Brake Rotors", serviceCode: "rear_brake_rotors_replacement", stage: "Same axle", reason: "Check rotor condition while the pads are already apart.", weight: 100 },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush", stage: "System check", reason: "Useful when fluid age, color, or pedal feel is part of the visit.", weight: 62 },
       ],
     },
     {
       match: ["brake pad", "brake pads"],
+      context: "Brake quote workflow",
       suggestions: [
-        { label: "Brake Rotors", query: "brake rotor" },
-        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+        { label: "Brake Rotors", query: "brake rotor", stage: "Same visit", reason: "Noise, pulsation, or low rotor thickness can change the quote.", weight: 74 },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush", stage: "System check", reason: "Keeps the quote aware of fluid condition without adding diagnosis steps.", weight: 58 },
       ],
     },
     {
       match: ["starter_replacement", "starter replacement", "starter motor"],
+      context: "No-start workflow",
       suggestions: [
-        { label: "Battery Test", serviceCode: "battery_test" },
-        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement" },
+        { label: "Battery Test", serviceCode: "battery_test", stage: "Confirm power", reason: "Separates starter failure from weak battery or voltage drop.", weight: 96 },
+        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement", stage: "Voltage drop", reason: "Cables and terminals can mimic a starter problem.", weight: 70 },
       ],
     },
     {
       match: ["wheel_bearing_replacement", "wheel bearing", "hub assembly"],
+      context: "Chassis workflow",
       suggestions: [
-        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel" },
-        { label: "Sway Bar Link Replacement", serviceCode: "sway_bar_link_replacement" },
+        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel", stage: "After repair", reason: "Good handoff when suspension angle or tire wear is part of the visit.", weight: 80 },
+        { label: "Sway Bar Link Replacement", serviceCode: "sway_bar_link_replacement", stage: "Nearby check", reason: "Often inspected while the corner is raised and wheel is off.", weight: 52 },
       ],
     },
     {
       match: ["cooling_fan_assembly_replacement", "cooling fan", "radiator fan"],
+      context: "Cooling-system workflow",
       suggestions: [
-        { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test" },
-        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement" },
+        { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test", stage: "Verify system", reason: "Checks for leaks or pressure loss before the repair is closed out.", weight: 92 },
+        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement", stage: "Related cause", reason: "Useful when overheating behavior may not be fan-only.", weight: 56 },
       ],
     },
     {
       match: ["spark plug", "spark plugs"],
+      context: "Misfire workflow",
       suggestions: [
-        { label: "Ignition Coils", query: "ignition coil" },
+        { label: "Ignition Coils", query: "ignition coil", stage: "Related ignition", reason: "Coils are commonly checked when plugs are part of a misfire path.", weight: 84 },
       ],
     },
     {
       match: ["thermostat"],
+      context: "Cooling-system workflow",
       suggestions: [
-        { label: "Coolant Flush", query: "coolant flush" },
+        { label: "Coolant Flush", query: "coolant flush", stage: "Fluid service", reason: "Consider when coolant age, contamination, or refill labor affects the quote.", weight: 70 },
       ],
     },
     {
       match: ["battery"],
+      context: "Starting/charging workflow",
       suggestions: [
-        { label: "Battery Terminal Service", query: "battery terminal" },
+        { label: "Battery Terminal Service", query: "battery terminal", stage: "Connection check", reason: "Corroded or loose terminals can create repeat no-start complaints.", weight: 76 },
       ],
     },
     {
       match: ["serpentine belt", "drive belt"],
+      context: "Belt-drive workflow",
       suggestions: [
-        { label: "Belt Tensioner", query: "belt tensioner" },
-        { label: "Idler Pulley", query: "idler pulley" },
+        { label: "Belt Tensioner", query: "belt tensioner", stage: "Same access", reason: "Tensioner wear can shorten belt life or cause noise.", weight: 86 },
+        { label: "Idler Pulley", query: "idler pulley", stage: "Same access", reason: "Pulley noise or bearing play is often checked with the belt off.", weight: 78 },
       ],
     },
   ];
@@ -896,28 +906,28 @@
     {
       match: ["front_brake_pads_replacement", "rear_brake_pads_replacement", "brake pad", "brake pads"],
       reminders: [
-        { label: "Brake Rotors", query: "brake rotor" },
-        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush" },
+        { label: "Brake Rotors", query: "brake rotor", stage: "Same visit", reason: "Confirm rotor condition before final approval.", weight: 80 },
+        { label: "Brake Fluid Flush", serviceCode: "brake_fluid_flush", stage: "System check", reason: "Consider if fluid condition affects the customer handoff.", weight: 60 },
       ],
     },
     {
       match: ["cooling_fan_assembly_replacement", "radiator fan", "water_pump_replacement", "thermostat_replacement"],
       reminders: [
-        { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test" },
-        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement" },
+        { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test", stage: "Verify system", reason: "Helps catch leaks or pressure loss before the quote is finalized.", weight: 88 },
+        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement", stage: "Related cause", reason: "Consider only if temperature behavior points beyond the quoted repair.", weight: 52 },
       ],
     },
     {
       match: ["starter_replacement", "starter", "battery_replacement", "battery"],
       reminders: [
-        { label: "Battery Test", serviceCode: "battery_test" },
-        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement" },
+        { label: "Battery Test", serviceCode: "battery_test", stage: "Confirm power", reason: "Keeps no-start quotes from missing low-voltage causes.", weight: 90 },
+        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement", stage: "Voltage drop", reason: "Good check when cable corrosion or looseness is present.", weight: 64 },
       ],
     },
     {
       match: ["wheel_bearing_replacement", "wheel bearing", "sway_bar_link_replacement", "suspension"],
       reminders: [
-        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel" },
+        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel", stage: "After repair", reason: "Consider when tire wear, pull, or suspension work overlaps.", weight: 76 },
       ],
     },
   ];
@@ -2960,6 +2970,24 @@ const confidenceEl = document.getElementById("laborConfidence");
     ) || null;
   }
 
+  function getPairedSuggestionConfigs(lineItem) {
+    const source = normalizeServiceSearch(`${lineItem?.serviceText || ""} ${lineItem?.serviceCode || ""}`);
+    if (!source) return [];
+    return COMMONLY_ADDED_TOGETHER
+      .map((group, index) => {
+        const matchedTerms = group.match.filter((term) => source.includes(normalizeServiceSearch(term)));
+        if (!matchedTerms.length) return null;
+        const bestTermLength = Math.max(...matchedTerms.map((term) => normalizeServiceSearch(term).length));
+        return {
+          ...group,
+          index,
+          score: bestTermLength + Math.max(0, 20 - index),
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score);
+  }
+
   function getActivePairedSuggestionSource() {
     if (readyForNextService && serviceEl?.value) {
       return {
@@ -2990,6 +3018,45 @@ const confidenceEl = document.getElementById("laborConfidence");
       null;
   }
 
+  function getVisiblePairedSuggestionCodes() {
+    if (!pairedSuggestionsList) return new Set();
+    return new Set(
+      Array.from(pairedSuggestionsList.querySelectorAll("[data-service-code]"))
+        .map((el) => String(el.dataset.serviceCode || "").trim())
+        .filter(Boolean)
+    );
+  }
+
+  function buildRelatedRepairSuggestions(groups, options, existingCodes, limit = 3) {
+    const bestByCode = new Map();
+
+    groups.forEach((group, groupIndex) => {
+      (group.suggestions || group.reminders || []).forEach((rawSuggestion, suggestionIndex) => {
+        const option = findPairedServiceOption(rawSuggestion, options);
+        const code = option?.code;
+        if (!code || existingCodes.has(code)) return;
+
+        const score = Number(rawSuggestion.weight || 50) + Number(group.score || 0) - suggestionIndex - groupIndex;
+        const suggestion = {
+          ...rawSuggestion,
+          option,
+          score,
+          context: rawSuggestion.context || group.context || "",
+          stage: rawSuggestion.stage || "Related job",
+          reason: rawSuggestion.reason || getServiceHelperText(option),
+        };
+        const previous = bestByCode.get(code);
+        if (!previous || suggestion.score > previous.score) {
+          bestByCode.set(code, suggestion);
+        }
+      });
+    });
+
+    return Array.from(bestByCode.values())
+      .sort((a, b) => b.score - a.score || String(a.label || a.option.name).localeCompare(String(b.label || b.option.name)))
+      .slice(0, limit);
+  }
+
   async function refreshPairedSuggestions() {
     if (!pairedSuggestions || !pairedSuggestionsList) return;
     const suggestionSource = getActivePairedSuggestionSource();
@@ -2998,8 +3065,8 @@ const confidenceEl = document.getElementById("laborConfidence");
       return;
     }
 
-    const config = getPairedSuggestionConfig(suggestionSource);
-    if (!config) {
+    const configs = getPairedSuggestionConfigs(suggestionSource);
+    if (!configs.length) {
       hidePairedSuggestions();
       return;
     }
@@ -3015,34 +3082,26 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     const existingCodes = new Set(lineItems.map((it) => it.serviceCode).filter(Boolean));
     if (serviceEl?.value) existingCodes.add(serviceEl.value);
-    const seenCodes = new Set();
-    const suggestions = config.suggestions
-      .map((suggestion) => {
-        const option = findPairedServiceOption(suggestion, options);
-        return option ? { ...suggestion, option } : null;
-      })
-      .filter((suggestion) => {
-        const code = suggestion?.option?.code;
-        if (!code || existingCodes.has(code) || seenCodes.has(code)) return false;
-        seenCodes.add(code);
-        return true;
-      })
-      .slice(0, 3);
+    const suggestions = buildRelatedRepairSuggestions(configs, options, existingCodes, 3);
 
     if (!suggestions.length) {
       hidePairedSuggestions();
       return;
     }
 
-    pairedSuggestionsList.innerHTML = suggestions.map(({ label, option }) => `
+    pairedSuggestionsList.innerHTML = suggestions.map(({ label, option, stage, reason, context }) => `
       <button
         type="button"
         class="tm-paired-suggestion"
         data-service-code="${escapeServiceResultHtml(option.code)}"
         data-service-category="${escapeServiceResultHtml(option.category || "")}"
+        title="${escapeServiceResultHtml(reason || "")}"
       >
-        <span>${escapeServiceResultHtml(label || option.name)}</span>
-        <small>Stage job</small>
+        <span>
+          <strong>${escapeServiceResultHtml(label || option.name)}</strong>
+          <em>${escapeServiceResultHtml(reason || context || getServiceHelperText(option))}</em>
+        </span>
+        <small>${escapeServiceResultHtml(stage || "Related")}</small>
       </button>
     `).join("");
 
@@ -3071,36 +3130,33 @@ const confidenceEl = document.getElementById("laborConfidence");
     const existingCodes = new Set(lineItems.map((it) => it.serviceCode).filter(Boolean));
     if (serviceEl?.value) existingCodes.add(serviceEl.value);
 
-    const seenCodes = new Set();
-    const reminders = QUOTE_COMPLETION_CHECKS
-      .filter((group) => group.match.some((term) => quoteText.includes(normalizeServiceSearch(term))))
-      .flatMap((group) => group.reminders || [])
-      .map((reminder) => {
-        const option = findPairedServiceOption(reminder, options);
-        return option ? { ...reminder, option } : null;
+    getVisiblePairedSuggestionCodes().forEach((code) => existingCodes.add(code));
+    const matchingGroups = QUOTE_COMPLETION_CHECKS
+      .map((group, index) => {
+        const matched = group.match.some((term) => quoteText.includes(normalizeServiceSearch(term)));
+        return matched ? { ...group, index, score: Math.max(0, 16 - index) } : null;
       })
-      .filter((reminder) => {
-        const code = reminder?.option?.code;
-        if (!code || existingCodes.has(code) || seenCodes.has(code)) return false;
-        seenCodes.add(code);
-        return true;
-      })
-      .slice(0, 4);
+      .filter(Boolean);
+    const reminders = buildRelatedRepairSuggestions(matchingGroups, options, existingCodes, 4);
 
     if (!reminders.length) {
       hideQuoteCompletionSuggestions();
       return;
     }
 
-    completionSuggestionsList.innerHTML = reminders.map(({ label, option }) => `
+    completionSuggestionsList.innerHTML = reminders.map(({ label, option, stage, reason }) => `
       <button
         type="button"
         class="tm-completion-suggestion"
         data-service-code="${escapeServiceResultHtml(option.code)}"
         data-service-category="${escapeServiceResultHtml(option.category || "")}"
+        title="${escapeServiceResultHtml(reason || "")}"
       >
-        <span>${escapeServiceResultHtml(label || option.name)}</span>
-        <small>Stage check</small>
+        <span>
+          <strong>${escapeServiceResultHtml(label || option.name)}</strong>
+          <em>${escapeServiceResultHtml(reason || getServiceHelperText(option))}</em>
+        </span>
+        <small>${escapeServiceResultHtml(stage || "Review")}</small>
       </button>
     `).join("");
 
@@ -3109,6 +3165,12 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   async function selectPairedSuggestion(serviceCode, categoryKey) {
     if (!serviceCode || !categoryEl || !serviceEl) return;
+    if (lineItems.some((it) => it.serviceCode === serviceCode)) {
+      setStatus("info", "That related job is already on this quote.");
+      void refreshPairedSuggestions();
+      void refreshQuoteCompletionSuggestions();
+      return;
+    }
 
     if (!readyForNextService) {
       addLineBtn?.click();
