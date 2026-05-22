@@ -5,15 +5,18 @@
 
 {% block content %}
 
-    <header style="display:flex;align-items:center;justify-content:space-between;">
-      <h1 style="margin:0;">{% if shared_id %}Customer Repair Quote{% else %}Build a customer-ready repair quote{% endif %}</h1>
+    <header class="tm-estimator-header">
+      <div>
+        <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% else %}Mechanic estimator{% endif %}</div>
+        <h1>{% if shared_id %}Customer Repair Quote{% else %}Build a customer-ready repair quote{% endif %}</h1>
+      </div>
 
       <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
     </header>
 
     {% if not shared_id %}
     <div class="tm-card tm-estimator-quickstart">
-      <div class="tm-estimator-quickstart__title">Mobile quote workflow</div>
+      <div class="tm-estimator-quickstart__title">Fast quote workflow</div>
       <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
         <span>Select vehicle</span>
         <span>Choose service</span>
@@ -71,7 +74,7 @@
     </div>
     {% else %}
     <div class="tm-muted tm-estimator-lede">
-      Build a clean repair quote from the phone. Labor, parts, flat rate, travel, and PDF totals stay aligned as you adjust the job.
+      Build a clean repair quote with labor, parts, flat rate, travel, customer approval, and PDF totals kept in sync.
     </div>
     {% endif %}
 
@@ -79,20 +82,21 @@
     <div class="tm-estimator-credibility" aria-label="TorqueMech estimator credibility">
       <div class="tm-estimator-credibility__item">Built for mobile mechanics and independent shops</div>
       <div class="tm-estimator-credibility__item">Customer-ready PDF quotes</div>
-      <div class="tm-estimator-credibility__item">Fast estimates from diagnostics and services</div>
+      <div class="tm-estimator-credibility__item">Repair-aware service suggestions</div>
       <div class="tm-estimator-credibility__item">Designed for phone and tablet use</div>
     </div>
     {% endif %}
 
     <!-- Vehicles -->
-    <section class="tm-card" aria-label="Vehicles" style="margin-top:14px;">
+    <section class="tm-card tm-estimator-section" aria-label="Vehicles">
       <div class="section-header--vehicles">
         <div>
+          <div class="tm-section-kicker">Step 1</div>
           <h2>Select Vehicle</h2>
           <div class="tm-cta-helper">Start with the customer vehicle before pricing services.</div>
         </div>
 
-        <div class="tm-vehicle-cta-group" style="display:flex; gap:10px; align-items:center;">
+        <div class="tm-vehicle-cta-group">
           <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Quote</button>
           <button id="addVehicleBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
             Select Vehicle
@@ -111,11 +115,11 @@
         <div id="vinPanel" class="vin-panel hidden">
           <label for="vin">VIN</label>
           <input id="vin" type="text" maxlength="17" placeholder="Enter VIN" />
-          <button id="vinLookupBtn" type="button" class="tm-btn tm-btn-secondary" style="margin-top:6px;">
+          <button id="vinLookupBtn" type="button" class="tm-btn tm-btn-secondary tm-vin-lookup-btn">
             Fill Vehicle from VIN
           </button>
         </div>
-        <div id="vinDecodedMeta" class="tm-hint" style="margin-top:8px;"></div>
+        <div id="vinDecodedMeta" class="tm-hint tm-vin-decoded-meta"></div>
       </div>
     </section>
 
@@ -123,23 +127,24 @@
       <div class="tm-estimate-total-bar__label">Quote Total</div>
       <div id="estimateTotalValue" class="tm-estimate-total-bar__value">$0.00</div>
     </div>
-    <div class="tm-card" style="margin-top:10px; padding:12px 14px;">
-      <div style="font-weight:800; margin-bottom:6px;">Customer quote note</div>
+    <div class="tm-quote-note">
+      <div>Customer quote note</div>
       <div class="tm-hint">Final price can change after inspection, parts confirmation, taxes, fees, or added repair needs.</div>
     </div>
 
     <!-- Service -->
-    <section class="tm-card" aria-label="Service">
+    <section class="tm-card tm-estimator-section" aria-label="Service">
 
-    <div id="activeVehicleBanner" class="tm-card" style="cursor:pointer;">
-      <div style="font-size:12px; opacity:.75; margin-bottom:4px;">Quoting vehicle</div>
-      <div id="activeVehicleText" style="font-weight:800;">Vehicle</div>
+    <div id="activeVehicleBanner" class="tm-active-vehicle-banner">
+      <div>Quoting vehicle</div>
+      <strong id="activeVehicleText">Vehicle</strong>
     </div>
 
     <div class="vehicle-header">
       <div class="tm-service-title-group">
+        <div class="tm-section-kicker">Step 2</div>
         <h2>Add a Service</h2>
-        <div class="tm-service-workflow-copy">Build multi-repair quotes in seconds.</div>
+        <div class="tm-service-workflow-copy">Stage the repair, confirm pricing, and keep related work visible.</div>
       </div>
       <div class="tm-addServiceRow">
   <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
@@ -160,8 +165,8 @@
       <div>
         <label for="service">Service</label>
         <select id="service"></select>
-        <div class="tm-hint" style="margin-top:6px;">
-          Search common jobs or symptoms, then price the repair for the selected vehicle.
+        <div class="tm-hint tm-field-helper">
+          Search common jobs or symptoms, then price the repair for this vehicle.
         </div>
       </div>
     </div>
@@ -287,14 +292,14 @@
         <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
           Select a vehicle and service, then add it to the quote.
         </div>
-      <div id="getEstimateHint" class="tm-hint" style="margin-top:8px;" hidden>Select the repair job, confirm pricing, then add it to the quote.</div>
+      <div id="getEstimateHint" class="tm-hint tm-estimate-action-hint" hidden>Select the repair job, confirm pricing, then add it to the quote.</div>
       </div>
         <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary tm-estimate-action-panel__button">
           Add Service to Quote
         </button>
       </div>
 
-      <div id="statusBox" data-kind="info" style="margin-top:10px;"></div>
+      <div id="statusBox" class="tm-status-box" data-kind="info"></div>
 
       <!-- Estimate Preview -->
       <div id="estimatePreview" class="preview hidden" aria-live="polite">
@@ -324,7 +329,7 @@
         </div>
       </div>
 
-      <div style="margin-top:12px;">
+      <div class="tm-quote-notes-field">
         <label for="notes">Quote Notes (optional)</label>
         <textarea id="notes" rows="3" placeholder="Add warranty, condition, or customer-facing notes..."></textarea>
       </div>
@@ -333,16 +338,17 @@
 
       <!-- Saved Estimates (Local) --> 
       <div class="tm-card" id="draftsCard" data-saved-estimates-disabled="false">
+      <div class="tm-section-kicker">Local workspace</div>
       <h2>Saved Estimates</h2>
-      <div class="tm-hint" style="margin-top:-4px; margin-bottom:8px;">Saved on this device</div>
+      <div class="tm-hint tm-device-save-label">Saved on this device</div>
       <p class="tm-hint">Keep a local copy for quick reload, sharing, or PDF handoff.</p>
 
-      <div class="tm-card" id="draftRecoveryBlock" style="margin:12px 0; padding:14px 16px;">
-        <div style="font-weight:800; margin-bottom:6px;">Worked on an estimate before?</div>
+      <div class="tm-inline-panel" id="draftRecoveryBlock">
+        <div class="tm-inline-panel__title">Worked on an estimate before?</div>
         <div class="tm-hint">Select a device-saved estimate below to reload the vehicle, services, customer details, and quote notes.</div>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="tm-draft-controls">
 
         <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary">
           Save This Estimate for Later
@@ -352,7 +358,7 @@
           <option value="">Select a saved estimate</option>
         </select>
 
-        <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;">
+        <div class="tm-draft-actions">
           <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary">Open</button>
           <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger">Delete</button>
         </div>
@@ -360,12 +366,12 @@
       </div>
       
 
-      <div id="draftsMsg" style="margin-top:8px; font-size:13px; opacity:.8;"></div>
+      <div id="draftsMsg" class="tm-local-status"></div>
 
-      <div id="estimateSavedBlock" class="tm-card" style="margin-top:12px; padding:14px 16px;" hidden>
-        <div style="font-weight:800; margin-bottom:6px;">Customer Quote Saved</div>
-        <div class="tm-hint" style="margin-bottom:10px;">This quote is ready to reopen, share, or download as a customer PDF.</div>
-        <div class="tm-saved-quote-actions" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <div id="estimateSavedBlock" class="tm-inline-panel" hidden>
+        <div class="tm-inline-panel__title">Customer Quote Saved</div>
+        <div class="tm-hint tm-inline-panel__hint">This quote is ready to reopen, share, or download as a customer PDF.</div>
+        <div class="tm-saved-quote-actions">
           {% if not shared_id %}
           <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
           {% endif %}
@@ -375,14 +381,14 @@
         <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--saved">Send this quote by text, email, or PDF.</div>
         <div class="tm-pro-upgrade-card" aria-label="TorqueMech Pro PDF preview">
           <span class="tm-pro-pill">Pro PDF Preview</span>
-          <div style="font-weight:800; margin-top:8px;">Need customer-ready branded estimates?</div>
+          <div class="tm-pro-upgrade-title">Need customer-ready branded estimates?</div>
           <p class="tm-hint">TorqueMech Pro will support shop-branded PDFs, warranty notes, quote expiration terms, and approval-ready layouts.</p>
           <div class="tm-pro-actions">
             <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>
             <a class="tm-btn tm-btn-ghost" href="/shop-profile">Shop Profile</a>
           </div>
         </div>
-        <div id="estimateSavedLinkText" class="tm-hint" style="margin-top:10px;"></div>
+        <div id="estimateSavedLinkText" class="tm-hint tm-saved-link-text"></div>
       </div>
     </div>
 
@@ -392,7 +398,7 @@
         {% endif %}
         <div class="estimator-final-step">Final action</div>
         <div class="estimator-final-heading">Ready to Send the Customer Quote</div>
-        <div class="tm-hint estimator-final-hint">Check the customer info and PDF options, then create the final quote.</div>
+        <div class="tm-hint estimator-final-hint">Review the job list, customer info, approval state, and PDF options before creating the customer copy.</div>
         <div class="tm-final-help" aria-label="How customer quotes work">
           <div class="tm-final-help__title">Create a Customer Quote</div>
           <ol class="tm-final-help__steps">
@@ -531,7 +537,7 @@
         <p class="tm-confirm-signature-copy">Signature confirms the customer reviewed the estimate details shown above and approves the estimate. It does not record payment.</p>
 
         <div class="sig-wrap">
-          <canvas id="sigCanvas" style="width:100%; height:140px; display:block; touch-action:none;"></canvas>
+          <canvas id="sigCanvas" class="tm-signature-canvas"></canvas>
         </div>
 
         <div class="tm-signature-actions">
@@ -555,7 +561,7 @@
 
       <div class="tm-pro-upgrade-card" aria-label="TorqueMech Pro PDF preview">
         <span class="tm-pro-pill">Pro PDF Preview</span>
-        <div style="font-weight:800; margin-top:8px;">Need customer-ready branded estimates?</div>
+        <div class="tm-pro-upgrade-title">Need customer-ready branded estimates?</div>
         <p class="tm-hint">TorqueMech Pro will support shop-branded PDFs, warranty notes, quote expiration terms, and approval-ready layouts.</p>
         <div class="tm-pro-actions">
           <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>

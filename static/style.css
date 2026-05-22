@@ -764,6 +764,43 @@ button:active{
   padding: 14px 16px;
 }
 
+.tm-estimator-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.tm-estimator-header h1{
+  margin:0;
+  color:var(--tm-text);
+  font-size:clamp(1.8rem, 4vw, 2.45rem);
+  letter-spacing:0;
+  line-height:1.06;
+}
+
+.tm-estimator-kicker,
+.tm-section-kicker{
+  color:#0f766e;
+  font-size:.72rem;
+  font-weight:950;
+  letter-spacing:.07em;
+  line-height:1.2;
+  text-transform:uppercase;
+}
+
+.tm-estimator-kicker{
+  margin-bottom:7px;
+}
+
+.tm-section-kicker{
+  margin-bottom:5px;
+}
+
+.tm-estimator-section{
+  margin-top:16px;
+}
+
 .tm-estimator-quickstart__title{
   margin-bottom: 10px;
   color: var(--tm-text);
@@ -786,6 +823,77 @@ button:active{
   font-size: .86rem;
   font-weight: 800;
   line-height: 1.25;
+}
+
+.tm-quote-note,
+.tm-inline-panel,
+.tm-active-vehicle-banner{
+  border:1px solid rgba(15,23,42,.09);
+  border-radius:12px;
+  background:rgba(248,250,252,.76);
+}
+
+.tm-quote-note{
+  display:grid;
+  gap:5px;
+  margin-top:10px;
+  padding:12px 14px;
+}
+
+.tm-quote-note > div:first-child{
+  color:var(--tm-text);
+  font-weight:900;
+}
+
+.tm-inline-panel{
+  margin:12px 0;
+  padding:14px 16px;
+}
+
+.tm-inline-panel__title{
+  margin-bottom:6px;
+  color:var(--tm-text);
+  font-weight:900;
+  line-height:1.25;
+}
+
+.tm-inline-panel__hint{
+  margin-bottom:10px;
+}
+
+.tm-local-status{
+  margin-top:8px;
+  color:var(--tm-text-muted);
+  font-size:13px;
+  line-height:1.35;
+}
+
+.tm-saved-link-text{
+  margin-top:10px;
+}
+
+.tm-active-vehicle-banner{
+  display:grid;
+  gap:4px;
+  margin-bottom:14px;
+  padding:12px 14px;
+  cursor:pointer;
+}
+
+.tm-active-vehicle-banner div{
+  color:var(--tm-text-muted);
+  font-size:.74rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  line-height:1.1;
+  text-transform:uppercase;
+}
+
+.tm-active-vehicle-banner strong{
+  color:var(--tm-text);
+  font-size:.98rem;
+  font-weight:900;
+  line-height:1.2;
 }
 
 .tm-estimator-lede{
@@ -877,6 +985,62 @@ button:active{
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(240,253,250,.96) 0%, rgba(220,252,247,.78) 100%);
   box-shadow: 0 12px 28px rgba(15,118,110,.08);
+}
+
+.tm-vehicle-cta-group{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.tm-vin-lookup-btn{
+  margin-top:6px;
+}
+
+.tm-vin-decoded-meta,
+.tm-estimate-action-hint{
+  margin-top:8px;
+}
+
+.tm-field-helper{
+  margin-top:6px;
+}
+
+.tm-status-box{
+  margin-top:10px;
+}
+
+.tm-quote-notes-field{
+  margin-top:12px;
+}
+
+.tm-device-save-label{
+  margin-top:-4px;
+  margin-bottom:8px;
+}
+
+.tm-draft-controls{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.tm-draft-actions{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+}
+
+.tm-pro-upgrade-title{
+  margin-top:8px;
+  font-weight:900;
+}
+
+.tm-signature-canvas{
+  width:100%;
+  height:140px;
+  display:block;
+  touch-action:none;
 }
 
 .tm-addServiceRow .tm-hint{
@@ -2326,6 +2490,16 @@ canvas,
     padding: 24px 18px;
   }
 
+  .tm-estimator-header{
+    display:grid;
+    gap:12px;
+  }
+
+  .tm-estimator-header h1{
+    font-size:1.82rem;
+    line-height:1.08;
+  }
+
   .modal,
   .tm-modal{
     padding: 10px;
@@ -2346,6 +2520,13 @@ canvas,
 
   .tm-estimator-quickstart__steps{
     grid-template-columns: 1fr 1fr;
+    gap:7px;
+  }
+
+  .tm-estimator-quickstart__steps span{
+    min-height:40px;
+    padding:9px;
+    font-size:.78rem;
   }
 
   .tm-estimator-credibility{
@@ -2366,6 +2547,31 @@ canvas,
     padding: 12px;
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .tm-vehicle-cta-group{
+    width:100%;
+    align-items:stretch;
+    flex-direction:column-reverse;
+  }
+
+  .tm-vehicle-cta-group .tm-btn{
+    width:100%;
+  }
+
+  .section-header--vehicles{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .tm-quote-note,
+  .tm-inline-panel,
+  .tm-active-vehicle-banner{
+    border-radius:11px;
+  }
+
+  .tm-quote-note{
+    padding:11px 12px;
   }
 
   .tm-addServiceRow .tm-hint{
