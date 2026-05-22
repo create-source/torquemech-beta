@@ -6454,11 +6454,11 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
     c.setFillGray(0)
 
     c.setFont("Helvetica-Bold", 11)
-    c.drawString(left + 12, y - 16, "Customer Approval")
+    c.drawString(left + 12, y - 16, "Signed Customer Approval")
 
     c.setFont("Helvetica", 8.7)
     c.setFillGray(0.38)
-    c.drawString(left + 12, y - 29, "Signature confirms the customer reviewed the estimate details above.")
+    c.drawString(left + 12, y - 29, "Signature confirms the customer reviewed the estimate details above and approves the estimate.")
     c.setFillGray(0)
 
     sig_box_h = 64
@@ -6496,7 +6496,7 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
 
     c.setFont("Helvetica-Oblique", 9)
     c.setFillGray(0.4)
-    c.drawString(left + 12, sig_y - 15, "Estimate note: Final pricing may vary after inspection.")
+    c.drawString(left + 12, sig_y - 15, "Estimate approval only. No payment is collected or recorded on this PDF.")
     c.setFillGray(0)
 
     return sig_y - 28
@@ -7343,8 +7343,8 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         else:
             summary_needed += 4
 
-        summary_needed += 14  # Customer heading
-        summary_needed += 12  # Agreement
+        summary_needed += 14  # Customer review heading
+        summary_needed += 24  # Review/approval state and no-payment note
         if req.customerName:
             summary_needed += 12
         if req.customerPhone:
@@ -7399,8 +7399,22 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         else:
             y -= 4
 
-        # Customer
-        review_box_h = 40
+        # Customer review / approval state
+        has_signature = bool(req.signatureDataUrl)
+        if has_signature:
+            approval_title = "Signed Customer Approval"
+            approval_line = "Customer signed after reviewing the estimate details."
+            approval_note = "Estimate approval only. No payment is collected or recorded on this PDF."
+        elif req.customerAgrees:
+            approval_title = "Customer Reviewed Estimate"
+            approval_line = "Customer reviewed the estimate details. No signature was captured."
+            approval_note = "No payment is collected or recorded on this PDF."
+        else:
+            approval_title = "Prepared Estimate"
+            approval_line = "Prepared for customer review. Not marked reviewed or approved."
+            approval_note = "No payment is collected or recorded on this PDF."
+
+        review_box_h = 54
         if req.customerName:
             review_box_h += 12
         if req.customerPhone:
@@ -7413,19 +7427,28 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c.setFillGray(0)
 
         c.setFont("Helvetica-Bold", 11)
-        c.drawString(LEFT + 12, y - 5, "Customer Review")
+        c.drawString(LEFT + 12, y - 5, approval_title)
         y -= 18
 
         c.setFont("Helvetica", 9.5)
         c.setFillGray(0.24)
-        c.drawString(LEFT + 12, y, f"Estimate reviewed with customer: {'Yes' if req.customerAgrees else 'No'}")
+        c.drawString(LEFT + 12, y, approval_line)
+        y -= 12
+
+        c.setFont("Helvetica-Oblique", 8.5)
+        c.setFillGray(0.42)
+        c.drawString(LEFT + 12, y, approval_note)
         y -= 12
 
         if req.customerName:
+            c.setFont("Helvetica", 9.5)
+            c.setFillGray(0.24)
             c.drawString(LEFT + 12, y, f"Customer: {req.customerName}")
             y -= 12
 
         if req.customerPhone:
+            c.setFont("Helvetica", 9.5)
+            c.setFillGray(0.24)
             c.drawString(LEFT + 12, y, f"Phone: {req.customerPhone}")
             y -= 12
 

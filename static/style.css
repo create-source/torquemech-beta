@@ -1862,6 +1862,44 @@ body.modal-open{
   margin-top: 10px;
 }
 
+.tm-approval-status{
+  display: grid;
+  gap: 3px;
+  margin-top: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(20,184,166,.22);
+  border-radius: 12px;
+  background: rgba(240,253,250,.64);
+  color: var(--tm-text);
+  line-height: 1.35;
+}
+
+.tm-approval-status strong{
+  font-size: .9rem;
+  font-weight: 900;
+}
+
+.tm-approval-status span{
+  color: var(--tm-text-muted);
+  font-size: .82rem;
+  font-weight: 650;
+}
+
+.tm-approval-status[data-state="signature-needed"]{
+  border-color: rgba(245,158,11,.36);
+  background: rgba(255,251,235,.76);
+}
+
+.tm-approval-status[data-state="prepared"]{
+  border-color: rgba(100,116,139,.24);
+  background: rgba(248,250,252,.82);
+}
+
+.tm-approval-status[data-state="signed"]{
+  border-color: rgba(20,184,166,.38);
+  background: rgba(236,253,245,.9);
+}
+
 .tm-confirm-services > div,
 .tm-confirm-services-wrap{
   color: var(--tm-text);
@@ -2533,6 +2571,18 @@ canvas,
   .tm-confirm-helper{
     margin-bottom: 10px;
     font-size: .8rem;
+  }
+
+  .tm-approval-status{
+    padding: 10px;
+  }
+
+  .tm-approval-status strong{
+    font-size: .86rem;
+  }
+
+  .tm-approval-status span{
+    font-size: .78rem;
   }
 
   .tm-confirm-options-grid{

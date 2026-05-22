@@ -613,6 +613,7 @@
   const confirmMsg = $("confirmMsg");
   const confirmServiceText = $("confirmServiceText");
   const confirmTotalText = $("confirmTotalText");
+  const approvalStatusEl = $("approvalStatus");
   const pdfShowGeneratedDateChk = $("pdfShowGeneratedDateChk");
   const pdfShowHourlyRateChk = $("pdfShowHourlyRateChk");
   const pdfShowLaborColumnChk = $("pdfShowLaborColumnChk");
@@ -3413,6 +3414,56 @@ const confidenceEl = document.getElementById("laborConfidence");
       signatureDataUrl = null;
       clearSignatureCanvas();
     }
+    refreshApprovalStatus();
+  }
+
+  function getApprovalStatusCopy() {
+    const wantsSignature = getWantSig() === "yes";
+    const reviewed = !!customerAgreesChk?.checked;
+    let signed = false;
+
+    try {
+      signed = wantsSignature && !!sigCanvas && !canvasIsBlank();
+    } catch (_) {
+      signed = false;
+    }
+
+    if (wantsSignature && signed) {
+      return {
+        state: "signed",
+        title: "Signed approval",
+        detail: "The PDF will show customer signature approval for this reviewed estimate. No payment is collected or recorded.",
+      };
+    }
+
+    if (wantsSignature) {
+      return {
+        state: "signature-needed",
+        title: "Signature required before PDF",
+        detail: "The customer must sign in the box below, or choose the no-signature PDF option.",
+      };
+    }
+
+    if (reviewed) {
+      return {
+        state: "reviewed",
+        title: "Customer reviewed estimate",
+        detail: "The PDF will show that the estimate was reviewed. No payment is collected or recorded.",
+      };
+    }
+
+    return {
+      state: "prepared",
+      title: "Prepared estimate",
+      detail: "The PDF will be prepared for customer review, but it will not be marked reviewed or approved.",
+    };
+  }
+
+  function refreshApprovalStatus() {
+    if (!approvalStatusEl) return;
+    const status = getApprovalStatusCopy();
+    approvalStatusEl.dataset.state = status.state;
+    approvalStatusEl.innerHTML = `<strong>${status.title}</strong><span>${status.detail}</span>`;
   }
 
   document.querySelectorAll('input[name="wantSig"]').forEach((el) => {
@@ -3421,6 +3472,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       if (getWantSig() === "no" && confirmMsg) {
         clearConfirmMessage();
       }
+      refreshApprovalStatus();
     });
   });
 
@@ -3476,6 +3528,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     refreshQuotePreview();
     refreshQuoteIdentityNudge();
+    refreshApprovalStatus();
     resizeSigCanvas();
     return true;
   }
@@ -3501,6 +3554,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     refreshQuotePreview();
     refreshQuoteIdentityNudge();
   });
+  customerAgreesChk?.addEventListener("change", refreshApprovalStatus);
   notesEl?.addEventListener("input", refreshQuotePreview);
   pdfShowGeneratedDateChk?.addEventListener("change", refreshQuotePreview);
   pdfShowHourlyRateChk?.addEventListener("change", () => {
@@ -3668,7 +3722,12 @@ const confidenceEl = document.getElementById("laborConfidence");
     lastMidY = midY;
   }
 
-  function endDraw() { isDrawing = false; }
+  function endDraw() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    signatureDataUrl = null;
+    refreshApprovalStatus();
+  }
 
   if (sigCanvas) {
     // If modal opens, you already call resizeSigCanvas() — good.
@@ -3690,6 +3749,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     sigClearBtn?.addEventListener("click", () => {
       signatureDataUrl = null;
       clearSignatureCanvas();
+      refreshApprovalStatus();
     });
   }
   // ---- Build request ----
@@ -4404,15 +4464,17 @@ if (getEstimateHint) {
       if (wantSig === "yes") {
         try {
           if (!sigCanvas || canvasIsBlank()) {
-            setConfirmMessage("error", "Customer signature required before generating PDF.");
+            refreshApprovalStatus();
+            setConfirmMessage("error", "Signature is selected, but the signature box is empty. Ask the customer to sign, or choose the no-signature PDF option.");
             return;
           }
 
           // Export signature directly from the live canvas with transparent background
           signatureDataUrl = sigCanvas.toDataURL("image/png");
+          refreshApprovalStatus();
         } catch (err) {
           console.warn("Signature validation failed", err);
-          setConfirmMessage("error", "Customer signature required before generating PDF.");
+          setConfirmMessage("error", "Signature could not be read. Please clear the box and have the customer sign again.");
           return;
         }
       } 
@@ -4466,7 +4528,7 @@ if (getEstimateHint) {
           mechanicName: businessIdentity.mechanicName || null,
           businessPhone: businessIdentity.businessPhone || null,
           businessNote: businessIdentity.businessNote || null,
-          customerAgrees: !!customerAgreesChk?.checked,
+          customerAgrees: !!customerAgreesChk?.checked || !!signatureDataUrl,
           signatureDataUrl,
           showGeneratedDate: outputOptions.showGeneratedDate,
           showHourlyRate: outputOptions.showHourlyRate,
