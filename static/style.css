@@ -3181,12 +3181,122 @@ h3{
 }
 
 .tm-service-meta span{
+  display:inline-grid;
+  grid-template-columns:auto auto;
+  align-items:center;
+  gap:4px;
   white-space:normal;
   border:1px solid rgba(15,23,42,.08);
   background:rgba(248,250,252,.9);
   border-radius:999px;
   padding:5px 9px;
   line-height:1.15;
+}
+
+.tm-service-meta span[data-kind="labor"]{
+  border-color:rgba(20,184,166,.18);
+  background:rgba(240,253,250,.82);
+}
+
+.tm-service-meta span[data-kind="parts"]{
+  border-color:rgba(59,130,246,.16);
+  background:rgba(239,246,255,.78);
+}
+
+.tm-service-meta span[data-kind="travel"]{
+  border-color:rgba(168,85,247,.16);
+  background:rgba(250,245,255,.76);
+}
+
+.tm-service-meta span.is-empty{
+  color:var(--tm-text-muted);
+  background:rgba(248,250,252,.72);
+}
+
+.tm-service-meta strong,
+.tm-service-meta em{
+  font:inherit;
+}
+
+.tm-service-meta strong{
+  color:var(--tm-text-muted);
+  font-weight:900;
+}
+
+.tm-service-meta em{
+  color:var(--tm-text);
+  font-style:normal;
+  font-weight:850;
+}
+
+.tm-cost-breakdown{
+  display:grid;
+  gap:6px;
+  max-width:680px;
+  margin-top:10px;
+  padding:10px;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:10px;
+  background:rgba(255,255,255,.76);
+}
+
+.tm-cost-breakdown__row{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  align-items:center;
+  gap:12px;
+  min-height:34px;
+  padding:6px 8px;
+  border-radius:8px;
+  background:rgba(248,250,252,.74);
+}
+
+.tm-cost-breakdown__row span{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+
+.tm-cost-breakdown__row strong{
+  color:var(--tm-text);
+  font-size:.86rem;
+  font-weight:900;
+  line-height:1.15;
+}
+
+.tm-cost-breakdown__row em{
+  color:var(--tm-text-muted);
+  font-size:.74rem;
+  font-style:normal;
+  font-weight:650;
+  line-height:1.25;
+}
+
+.tm-cost-breakdown__row b{
+  color:var(--tm-text);
+  font-size:.9rem;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.tm-cost-breakdown__row--labor{
+  background:rgba(240,253,250,.72);
+}
+
+.tm-cost-breakdown__row--parts{
+  background:rgba(239,246,255,.70);
+}
+
+.tm-cost-breakdown__row--travel{
+  background:rgba(250,245,255,.62);
+}
+
+.tm-cost-breakdown__row.is-empty{
+  background:rgba(248,250,252,.62);
+}
+
+.tm-cost-breakdown__row.is-empty b{
+  color:var(--tm-text-muted);
 }
 
 .tm-service-risk-note{
@@ -3384,11 +3494,31 @@ h3{
   }
 
   .tm-service-meta span{
+    grid-template-columns:1fr;
+    gap:2px;
+    min-width:calc(50% - 4px);
     max-width: 100%;
     padding:6px 9px;
     border-radius:10px;
     font-size:.82rem;
     line-height:1.2;
+  }
+
+  .tm-cost-breakdown{
+    padding:8px;
+  }
+
+  .tm-cost-breakdown__row{
+    gap:8px;
+    padding:7px 8px;
+  }
+
+  .tm-cost-breakdown__row strong{
+    font-size:.82rem;
+  }
+
+  .tm-cost-breakdown__row em{
+    font-size:.7rem;
   }
 
   .tm-service-risk-note{

@@ -1293,11 +1293,11 @@
     const vehicleMake = it?.vehicleMake || fallbackVehicle?.make || "";
     const vehicleModel = it?.vehicleModel || fallbackVehicle?.model || "";
     const vehicleLabel = it?.vehicleLabel || getVehicleLabel({ id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel }, 0);
-    const flatRatePrice = Number(it?.flatRatePrice || 0);
-    const travelFee = Number(it?.travelFee || 0);
-    const laborHours = Number(it?.laborHours || 0);
-    const partsPrice = Number(it?.partsPrice || 0);
-    const laborRate = Number(it?.laborRate || 0);
+    const flatRatePrice = normalizeMoneyValue(it?.flatRatePrice);
+    const travelFee = normalizeMoneyValue(it?.travelFee);
+    const laborHours = normalizeMoneyValue(it?.laborHours);
+    const partsPrice = normalizeMoneyValue(it?.partsPrice);
+    const laborRate = normalizeMoneyValue(it?.laborRate);
     const normalizedEstimate = Number(it?.estimate);
 
     const normalized = {
@@ -1311,11 +1311,11 @@
       serviceCode: String(it?.serviceCode || "").trim(),
       serviceText: String(it?.serviceText || it?.serviceCode || "Service").trim(),
       pricingMode,
-      flatRatePrice: Number.isFinite(flatRatePrice) ? flatRatePrice : 0,
-      travelFee: Number.isFinite(travelFee) ? travelFee : 0,
-      laborHours: Number.isFinite(laborHours) ? laborHours : 0,
-      partsPrice: Number.isFinite(partsPrice) ? partsPrice : 0,
-      laborRate: Number.isFinite(laborRate) ? laborRate : 0,
+      flatRatePrice,
+      travelFee,
+      laborHours,
+      partsPrice,
+      laborRate,
       notes: (it?.notes || "").trim() || null,
       inspectionFindings: (it?.inspectionFindings || "").trim(),
       estimate: Number.isFinite(normalizedEstimate) ? normalizedEstimate : null,
@@ -1640,9 +1640,14 @@
     return `$${Math.round(x).toLocaleString()}`;
   }
 
+  function normalizeMoneyValue(value, fallbackValue = 0) {
+    const parsed = Number(String(value ?? "").trim());
+    if (!Number.isFinite(parsed) || parsed < 0) return fallbackValue;
+    return parsed;
+  }
+
   function pricingInputNumber(inputEl, fallbackValue = 0) {
-    const parsed = parseFloat(String(inputEl?.value ?? "").trim());
-    return Number.isFinite(parsed) ? parsed : fallbackValue;
+    return normalizeMoneyValue(inputEl?.value, fallbackValue);
   }
 
   function getPricingMode() {
@@ -1826,20 +1831,71 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function calcLineItemEstimate(it) {
     const pricingMode = (it.pricingMode || "hourly").trim();
-    const parts = Number(it.partsPrice || 0);
-    const travel = Number(it.travelFee || 0);
+    const parts = normalizeMoneyValue(it.partsPrice);
+    const travel = normalizeMoneyValue(it.travelFee);
 
     let base = 0;
 
     if (pricingMode === "flat") {
-      base = Number(it.flatRatePrice || 0) + parts;
+      base = normalizeMoneyValue(it.flatRatePrice) + parts;
     } else {
-      const laborHours = Number(it.laborHours || 0);
-      const laborRate = Number(it.laborRate || 0);
+      const laborHours = normalizeMoneyValue(it.laborHours);
+      const laborRate = normalizeMoneyValue(it.laborRate);
       base = (laborHours * laborRate) + parts;
     }
 
     return Math.round(base + travel);
+  }
+
+  function getLineItemCostBreakdown(it = {}) {
+    const pricingMode = (it.pricingMode || "hourly").trim() === "flat" ? "flat" : "hourly";
+    const laborHours = normalizeMoneyValue(it.laborHours);
+    const laborRate = normalizeMoneyValue(it.laborRate);
+    const flatRatePrice = normalizeMoneyValue(it.flatRatePrice);
+    const partsPrice = normalizeMoneyValue(it.partsPrice);
+    const travelFee = normalizeMoneyValue(it.travelFee);
+    const laborTotal = pricingMode === "flat" ? flatRatePrice : laborHours * laborRate;
+    const total = Math.round(laborTotal + partsPrice + travelFee);
+
+    return {
+      pricingMode,
+      laborHours,
+      laborRate,
+      flatRatePrice,
+      laborTotal,
+      partsPrice,
+      hasParts: partsPrice > 0,
+      travelFee,
+      hasTravel: travelFee > 0,
+      total,
+    };
+  }
+
+  function renderCostBreakdownHtml(it = {}) {
+    const cost = getLineItemCostBreakdown(it);
+    const laborLabel = cost.pricingMode === "flat" ? "Job labor" : "Labor";
+    const laborDetail = cost.pricingMode === "flat"
+      ? "Flat job price"
+      : `${cost.laborHours.toFixed(1)}h @ $${Math.round(cost.laborRate).toLocaleString()}/hr`;
+    const partsDetail = cost.hasParts ? "Parts subtotal" : "No parts added";
+    const travelDetail = cost.hasTravel ? "Mobile/travel fee" : "No travel fee";
+
+    return `
+      <div class="tm-cost-breakdown" aria-label="Line item cost breakdown">
+        <div class="tm-cost-breakdown__row tm-cost-breakdown__row--labor">
+          <span><strong>${laborLabel}</strong><em>${laborDetail}</em></span>
+          <b>${money(cost.laborTotal)}</b>
+        </div>
+        <div class="tm-cost-breakdown__row tm-cost-breakdown__row--parts${cost.hasParts ? "" : " is-empty"}">
+          <span><strong>Parts</strong><em>${partsDetail}</em></span>
+          <b>${money(cost.partsPrice)}</b>
+        </div>
+        <div class="tm-cost-breakdown__row tm-cost-breakdown__row--travel${cost.hasTravel ? "" : " is-empty"}">
+          <span><strong>Travel</strong><em>${travelDetail}</em></span>
+          <b>${money(cost.travelFee)}</b>
+        </div>
+      </div>
+    `;
   }
 
   function syncLivePricingFromInputs() {
@@ -3859,26 +3915,23 @@ const confidenceEl = document.getElementById("laborConfidence");
         }
         const est = it.estimate != null ? money(it.estimate) : "—";
 
-        const travelLabel = Number(it.travelFee || 0) > 0
-          ? `Travel: ${money(it.travelFee)}`
-          : "";
-
-        const pricingMeta = it.pricingMode === "flat"
+        const cost = getLineItemCostBreakdown(it);
+        const pricingMeta = cost.pricingMode === "flat"
           ? [
-              `Flat Rate: ${money(it.flatRatePrice || 0)}`,
-              `Parts: ${money(it.partsPrice || 0)}`,
+              { label: "Job", value: money(cost.laborTotal), kind: "labor" },
+              { label: "Parts", value: cost.hasParts ? money(cost.partsPrice) : "None", kind: "parts", empty: !cost.hasParts },
             ]
           : [
-              `Labor Hours: ${Number(it.laborHours || 0).toFixed(1)}h`,
-              `Parts: ${money(it.partsPrice || 0)}`,
+              { label: "Labor", value: `${cost.laborHours.toFixed(1)}h`, kind: "labor" },
+              { label: "Parts", value: cost.hasParts ? money(cost.partsPrice) : "None", kind: "parts", empty: !cost.hasParts },
             ];
 
         if (outputOptions.showHourlyRate && it.pricingMode !== "flat") {
-          pricingMeta.push(`Rate: $${Number(it.laborRate || 0).toFixed(0)}/hr`);
+          pricingMeta.push({ label: "Rate", value: `$${Math.round(cost.laborRate).toLocaleString()}/hr`, kind: "rate" });
         }
 
-        if (travelLabel) {
-          pricingMeta.push(travelLabel);
+        if (cost.hasTravel) {
+          pricingMeta.push({ label: "Travel", value: money(cost.travelFee), kind: "travel" });
         }
 
         const hasBreakdown =
@@ -3901,8 +3954,14 @@ const confidenceEl = document.getElementById("laborConfidence");
                 </div>
                 <div class="tm-service-vehicle">${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}</div>
                 <div class="tm-service-meta">
-                  ${pricingMeta.map(label => `<span>${label}</span>`).join("")}
+                  ${pricingMeta.map(item => `
+                    <span class="${item.empty ? "is-empty" : ""}" data-kind="${escapeServiceResultHtml(item.kind || "")}">
+                      <strong>${escapeServiceResultHtml(item.label)}</strong>
+                      <em>${escapeServiceResultHtml(item.value)}</em>
+                    </span>
+                  `).join("")}
                 </div>
+                ${renderCostBreakdownHtml(it)}
                 <div class="tm-service-risk-note">
                   <span class="tm-service-risk-label">Estimate note</span>
                   <span>${riskNote}</span>
@@ -4563,6 +4622,7 @@ if (getEstimateHint) {
         laborHours: Number(it.laborHours || 0),
         partsPrice: Number(it.partsPrice || 0),
         laborRate: Number(it.laborRate || 0),
+        travelFee: Number(it.travelFee || 0),
         estimate: it.estimate != null ? Number(it.estimate) : null,
         laborBreakdown: it.laborBreakdown || null,
         inspectionFindings: String(it.inspectionFindings || "").trim(),

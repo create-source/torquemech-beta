@@ -6981,6 +6981,7 @@ class LineItemPDF(BaseModel):
     laborHours: float
     partsPrice: float
     laborRate: float
+    travelFee: float = 0
     estimate: Optional[float] = None
     inspectionFindings: Optional[str] = None
 
@@ -7227,6 +7228,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 item_space += 11
             if req.showHourlyRate and str(it.pricingMode or "").strip().lower() != "flat":
                 item_space += 11
+            item_space += 10
             if risk_note_lines:
                 item_space += 14 + (len(risk_note_lines) * 9)
             if findings_lines:
@@ -7250,14 +7252,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
             c.setFont("Helvetica-Bold", 10)
             is_flat_rate = str(it.pricingMode or "").strip().lower() == "flat"
-            labor_total = float(it.flatRatePrice or 0) if is_flat_rate else float(it.laborHours or 0) * float(it.laborRate or 0)
+            labor_total = max(0.0, float(it.flatRatePrice or 0)) if is_flat_rate else max(0.0, float(it.laborHours or 0)) * max(0.0, float(it.laborRate or 0))
+            parts_total = max(0.0, float(it.partsPrice or 0))
+            travel_total = max(0.0, float(it.travelFee or 0))
             c.drawString(X_SERVICE, y, service_name_lines[0] if service_name_lines else service_name)
 
             c.setFont("Helvetica", 10)
             if req.showLaborColumn:
                 c.drawRightString(X_LABOR, y, f"${labor_total:,.0f}")
             if req.showPartsColumn:
-                c.drawRightString(X_PARTS, y, f"${it.partsPrice:,.0f}")
+                c.drawRightString(X_PARTS, y, f"${parts_total:,.0f}")
             c.setFont("Helvetica-Bold", 10)
             c.drawRightString(X_TOTAL, y, f"${est:,.0f}")
             y -= 13
@@ -7284,6 +7288,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.drawString(X_SERVICE, y, f"Rate: ${it.laborRate:.0f}/hr")
                 c.setFillGray(0)
                 y -= 11
+
+            cost_parts = [f"Labor ${labor_total:,.0f}"]
+            cost_parts.append(f"Parts ${parts_total:,.0f}" if parts_total > 0 else "Parts not added")
+            if travel_total > 0:
+                cost_parts.append(f"Travel ${travel_total:,.0f}")
+            c.setFillGray(0.45)
+            c.setFont("Helvetica", 8.5)
+            c.drawString(X_SERVICE, y, "  |  ".join(cost_parts))
+            c.setFillGray(0)
+            y -= 10
 
             if risk_note_lines:
                 c.setFillGray(0.42)
