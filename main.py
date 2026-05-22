@@ -7197,16 +7197,18 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             return ypos - 10
 
         # Services header 
+        service_count = len(req.lineItems or [])
+        service_count_label = f"{service_count} quoted service{'s' if service_count != 1 else ''}"
         c.setFillColorRGB(0.94, 0.985, 0.975)
-        c.roundRect(LEFT, y - 17, X_TOTAL - LEFT, 24, 6, fill=1, stroke=0)
+        c.roundRect(LEFT, y - 25, X_TOTAL - LEFT, 32, 6, fill=1, stroke=0)
         c.setFillGray(0)
         c.setFont("Helvetica-Bold", 12)
-        c.drawString(LEFT + 10, y - 9, "Repair Services")
-        c.setFont("Helvetica", 8.5)
+        c.drawString(LEFT + 10, y - 7, f"Repair Services • {service_count_label}")
         c.setFillGray(0.38)
-        c.drawRightString(X_TOTAL - 10, y - 9, f"{len(req.lineItems or [])} quoted service{'s' if len(req.lineItems or []) != 1 else ''}")
+        c.setFont("Helvetica", 8)
+        c.drawString(LEFT + 10, y - 20, "Labor, parts, travel, and repair status by line")
         c.setFillGray(0)
-        y -= 26
+        y -= 36
 
         # Column headers 
         y = draw_service_columns(y)
@@ -7415,14 +7417,18 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c.drawString(LEFT + 14, y - 2, "CUSTOMER QUOTE TOTAL")
         c.setFont("Helvetica", 8.5)
         c.setFillGray(0.42)
-        c.drawString(LEFT + 14, y - 16, "Services, labor, parts, and selected PDF details included")
-        c.drawString(LEFT + 14, y - 29, "Ready for customer review")
+        c.drawString(LEFT + 14, y - 16, "Services, labor, parts, travel, and selected PDF details included")
+        c.drawString(LEFT + 14, y - 29, f"{service_count_label.capitalize()} ready for customer review")
         c.setFillGray(0)
+        total_panel_x = X_TOTAL - 190
+        c.setStrokeColorRGB(0.73, 0.88, 0.86)
+        c.line(total_panel_x, y - 47, total_panel_x, y + 2)
+        c.setStrokeGray(0)
         c.setFont("Helvetica-Bold", 24)
-        c.drawRightString(X_TOTAL - 14, y - 10, f"${grand_total:,.0f}")
+        c.drawRightString(X_TOTAL - 22, y - 9, f"${grand_total:,.0f}")
         c.setFont("Helvetica", 8.5)
         c.setFillGray(0.42)
-        c.drawRightString(X_TOTAL - 14, y - 28, "Estimated total")
+        c.drawRightString(X_TOTAL - 22, y - 27, "Estimated total")
         c.setFillGray(0)
         y -= 74
 

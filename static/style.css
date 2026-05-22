@@ -861,6 +861,30 @@ button:active{
   margin-bottom:10px;
 }
 
+#estimateSavedBlock{
+  border-color:rgba(20,184,166,.22);
+  background:
+    linear-gradient(180deg, rgba(240,253,250,.95) 0%, rgba(255,255,255,.96) 100%);
+  box-shadow:0 12px 26px rgba(15,118,110,.08);
+}
+
+#estimateSavedBlock .tm-inline-panel__title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#0f766e;
+  font-size:1rem;
+}
+
+#estimateSavedBlock .tm-inline-panel__title::before{
+  content:"";
+  width:9px;
+  height:9px;
+  border-radius:999px;
+  background:#14b8a6;
+  box-shadow:0 0 0 4px rgba(20,184,166,.12);
+}
+
 .tm-local-status{
   margin-top:8px;
   color:var(--tm-text-muted);

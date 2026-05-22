@@ -369,8 +369,8 @@
       <div id="draftsMsg" class="tm-local-status"></div>
 
       <div id="estimateSavedBlock" class="tm-inline-panel" hidden>
-        <div class="tm-inline-panel__title">Customer Quote Saved</div>
-        <div class="tm-hint tm-inline-panel__hint">This quote is ready to reopen, share, or download as a customer PDF.</div>
+        <div class="tm-inline-panel__title">Customer Quote Ready</div>
+        <div class="tm-hint tm-inline-panel__hint">This customer copy is ready to reopen, share, or download as a PDF.</div>
         <div class="tm-saved-quote-actions">
           {% if not shared_id %}
           <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
@@ -392,7 +392,7 @@
       </div>
     </div>
 
-      <div class="actions estimator-final-actions" aria-label="Finish customer quote">
+      <div id="customerQuoteFinalActions" class="actions estimator-final-actions" aria-label="Finish customer quote">
         {% if shared_id %}
         <div class="tm-hint">This shared estimate is ready for review and customer approval, with PDF, email, and share handoff support for professional repair decisions.</div>
         {% endif %}

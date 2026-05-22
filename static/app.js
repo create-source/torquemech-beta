@@ -1138,9 +1138,19 @@
     if (!estimateSavedBlock || !lastSavedEstimateLink) return;
 
     estimateSavedBlock.hidden = false;
+    if (customerQuoteFinalActions) {
+      customerQuoteFinalActions.hidden = true;
+    }
     if (estimateSavedLinkText) {
       estimateSavedLinkText.textContent = lastSavedEstimateLink;
     }
+  }
+
+  function hideEstimateSavedBlock() {
+    lastSavedEstimateLink = "";
+    if (estimateSavedBlock) estimateSavedBlock.hidden = true;
+    if (estimateSavedLinkText) estimateSavedLinkText.textContent = "";
+    if (customerQuoteFinalActions) customerQuoteFinalActions.hidden = false;
   }
 
   function sharedEstimateIdFromPath() {
@@ -1413,18 +1423,19 @@
       if (draftsMsg) draftsMsg.textContent = `Loaded from this device: ${d.title}`;
     }
 
-  function saveCurrentDraft() {
+  function saveCurrentDraft(options = {}) {
+    const quiet = !!options.quiet;
     if (hasOpenLineEdit()) {
-      if (draftsMsg) draftsMsg.textContent = "Save the current line edit before saving this estimate.";
+      if (!quiet && draftsMsg) draftsMsg.textContent = "Save the current line edit before saving this estimate.";
       setStatus("error", "Save the current line edit before saving this estimate.");
       focusOpenLineEdit();
-      return;
+      return null;
     }
 
     if (!lineItems.length) {
-      if (draftsMsg) draftsMsg.textContent = "Add at least one quoted service before saving.";
+      if (!quiet && draftsMsg) draftsMsg.textContent = "Add at least one quoted service before saving.";
       setStatus("error", "Add at least one quoted service before saving.");
-      return;
+      return null;
     }
 
     const drafts = getDrafts();
@@ -1432,7 +1443,7 @@
       ? drafts.find((x) => x.id === activeDraftId)
       : null;
     const d = normalizeDraft(serializeDraft(existing));
-    if (!d) return;
+    if (!d) return null;
 
     const nextDrafts = [
       d,
@@ -1443,9 +1454,9 @@
     try {
       setDrafts(nextDrafts);
     } catch (e) {
-      if (draftsMsg) draftsMsg.textContent = "Unable to save this estimate on this device. Download the PDF to keep a copy.";
+      if (!quiet && draftsMsg) draftsMsg.textContent = "Unable to save this estimate on this device. Download the PDF to keep a copy.";
       setStatus("error", "Unable to save this estimate on this device.");
-      return;
+      return null;
     }
     activeDraftId = d.id;
     try {
@@ -1455,7 +1466,12 @@
     if (draftsSelect) draftsSelect.value = d.id;
     showEstimateSavedBlock(d);
 
-    if (draftsMsg) draftsMsg.textContent = `Saved on this device for later approval, parts pricing, or repair comparison: ${d.title}`;
+    if (draftsMsg) {
+      draftsMsg.textContent = quiet
+        ? `Customer quote ready on this device: ${d.title}`
+        : `Saved on this device for later approval, parts pricing, or repair comparison: ${d.title}`;
+    }
+    return d;
   }
 
   async function loadSelectedDraft() {
@@ -1486,7 +1502,7 @@
     setDrafts(drafts);
     if (activeDraftId === id) {
       activeDraftId = "";
-      lastSavedEstimateLink = "";
+      hideEstimateSavedBlock();
       try {
         localStorage.removeItem(LAST_DRAFT_ID_KEY);
       } catch (_) {}
@@ -2230,6 +2246,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   const deleteDraftBtn = $("deleteDraftBtn");
   const draftsMsg = $("draftsMsg");
   const estimateSavedBlock = $("estimateSavedBlock");
+  const customerQuoteFinalActions = $("customerQuoteFinalActions");
   const copySavedEstimateLinkBtn = $("copySavedEstimateLinkBtn");
   const openSavedEstimateBtn = $("openSavedEstimateBtn");
   const downloadSavedEstimatePdfBtn = $("downloadSavedEstimatePdfBtn");
@@ -4750,6 +4767,10 @@ if (getEstimateHint) {
       a.remove();
 
       setStatus("ok", "Customer PDF ready.");
+      const finalizedDraft = saveCurrentDraft({ quiet: true });
+      if (!finalizedDraft) {
+        hideEstimateSavedBlock();
+      }
       trackClarity("pdf_generated", {
         source: "estimator",
         state: "pdf_success",
@@ -4914,12 +4935,10 @@ if (getEstimateHint) {
     if (quotePreviewEl) quotePreviewEl.value = "";
     if (draftsSelect) draftsSelect.value = "";
     activeDraftId = "";
-    lastSavedEstimateLink = "";
+    hideEstimateSavedBlock();
     try {
       localStorage.removeItem(LAST_DRAFT_ID_KEY);
     } catch (_) {}
-    if (estimateSavedBlock) estimateSavedBlock.hidden = true;
-    if (estimateSavedLinkText) estimateSavedLinkText.textContent = "";
     const confirmServicesList = document.getElementById("confirmServicesList");
     if (confirmServicesList) confirmServicesList.textContent = "—";
 
