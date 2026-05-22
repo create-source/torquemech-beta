@@ -6977,6 +6977,7 @@ class LineItemPDF(BaseModel):
     serviceCode: str
     serviceText: Optional[str] = None
     pricingMode: Optional[str] = None
+    status: Optional[str] = "recommended"
     flatRatePrice: Optional[float] = None
     laborHours: float
     partsPrice: float
@@ -7038,6 +7039,18 @@ CUSTOMER_FINAL_PRICE_NOTE = (
     "Final price may vary based on vehicle condition, seized hardware, rust, "
     "additional diagnostics, or unseen issues discovered during repair."
 )
+
+REPAIR_STATUS_LABELS = {
+    "diagnosed": "Diagnosed",
+    "recommended": "Recommended",
+    "urgent": "Urgent",
+    "monitor": "Monitor",
+}
+
+
+def pdf_repair_status_label(value: Any) -> str:
+    status = str(value or "").strip().lower()
+    return REPAIR_STATUS_LABELS.get(status, "Recommended")
 
 @app.post("/estimate/pdf_multi")
 async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
@@ -7202,6 +7215,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         for it in (req.lineItems or []):
             service_name = (it.serviceText or it.serviceCode or "Repair service").strip()
             service_name_lines = wrap_text(service_name, max_chars=46)[:2]
+            status_label = pdf_repair_status_label(it.status)
 
             risk_note_lines = []
             if req.showRiskNotes:
@@ -7228,6 +7242,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 item_space += 11
             if req.showHourlyRate and str(it.pricingMode or "").strip().lower() != "flat":
                 item_space += 11
+            item_space += 11
             item_space += 10
             if risk_note_lines:
                 item_space += 14 + (len(risk_note_lines) * 9)
@@ -7274,6 +7289,15 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                     y -= 11
                 c.setFillGray(0)
                 y -= 2
+
+            c.setFont("Helvetica-Bold" if status_label == "Urgent" else "Helvetica", 8.8)
+            if status_label == "Urgent":
+                c.setFillColorRGB(0.70, 0.18, 0.12)
+            else:
+                c.setFillGray(0.42)
+            c.drawString(X_SERVICE, y, f"Status: {status_label}")
+            c.setFillGray(0)
+            y -= 11
 
             if req.showLaborColumn:
                 c.setFillGray(0.45)

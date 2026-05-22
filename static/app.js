@@ -959,6 +959,7 @@
           laborRate: it.laborRate,
           partsTotal: it.partsPrice,
           lineTotal: it.estimate,
+          status: normalizeRepairStatus(it.status),
           notes: it.notes || "",
           inspectionFindings: it.inspectionFindings || ""
         }));
@@ -1316,6 +1317,7 @@
       laborHours,
       partsPrice,
       laborRate,
+      status: normalizeRepairStatus(it?.status),
       notes: (it?.notes || "").trim() || null,
       inspectionFindings: (it?.inspectionFindings || "").trim(),
       estimate: Number.isFinite(normalizedEstimate) ? normalizedEstimate : null,
@@ -1640,6 +1642,32 @@
     return `$${Math.round(x).toLocaleString()}`;
   }
 
+  const REPAIR_STATUS_OPTIONS = [
+    { value: "recommended", label: "Recommended" },
+    { value: "diagnosed", label: "Diagnosed" },
+    { value: "urgent", label: "Urgent" },
+    { value: "monitor", label: "Monitor" },
+  ];
+
+  function normalizeRepairStatus(value) {
+    const status = String(value || "").trim().toLowerCase();
+    return REPAIR_STATUS_OPTIONS.some((option) => option.value === status)
+      ? status
+      : "recommended";
+  }
+
+  function getRepairStatusLabel(value) {
+    const status = normalizeRepairStatus(value);
+    return REPAIR_STATUS_OPTIONS.find((option) => option.value === status)?.label || "Recommended";
+  }
+
+  function renderRepairStatusOptions(selectedValue) {
+    const selected = normalizeRepairStatus(selectedValue);
+    return REPAIR_STATUS_OPTIONS
+      .map((option) => `<option value="${option.value}"${option.value === selected ? " selected" : ""}>${option.label}</option>`)
+      .join("");
+  }
+
   function normalizeMoneyValue(value, fallbackValue = 0) {
     const parsed = Number(String(value ?? "").trim());
     if (!Number.isFinite(parsed) || parsed < 0) return fallbackValue;
@@ -1767,10 +1795,11 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     lineItems.forEach((it) => {
+      const statusLabel = getRepairStatusLabel(it.status);
       if (it.pricingMode === "flat") {
-        lines.push(`- ${it.serviceText}: ${money(it.estimate)} (flat-rate${Number(it.travelFee || 0) > 0 ? `, includes ${money(it.travelFee)} travel` : ""})`);
+        lines.push(`- ${it.serviceText} - Status: ${statusLabel} - ${money(it.estimate)} (flat-rate${Number(it.travelFee || 0) > 0 ? `, includes ${money(it.travelFee)} travel` : ""})`);
       } else {
-        lines.push(`- ${it.serviceText}: ${money(it.estimate)}${Number(it.travelFee || 0) > 0 ? ` (includes ${money(it.travelFee)} travel)` : ""}`);
+        lines.push(`- ${it.serviceText} - Status: ${statusLabel} - ${money(it.estimate)}${Number(it.travelFee || 0) > 0 ? ` (includes ${money(it.travelFee)} travel)` : ""}`);
       }
     });
 
@@ -3629,6 +3658,9 @@ const confidenceEl = document.getElementById("laborConfidence");
             <div class="tm-confirm-service-row">
               <div class="tm-confirm-service-main">
                 <div class="tm-confirm-service-name">${it.serviceText}</div>
+                <div class="tm-confirm-service-status" data-status="${normalizeRepairStatus(it.status)}">
+                  Status: ${getRepairStatusLabel(it.status)}
+                </div>
                 <div class="tm-confirm-service-vehicle">
                   ${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}
                 </div>
@@ -3913,7 +3945,9 @@ const confidenceEl = document.getElementById("laborConfidence");
         if (!it.id) {
           it.id = createLineItemId();
         }
+        it.status = normalizeRepairStatus(it.status);
         const est = it.estimate != null ? money(it.estimate) : "—";
+        const statusLabel = getRepairStatusLabel(it.status);
 
         const cost = getLineItemCostBreakdown(it);
         const pricingMeta = cost.pricingMode === "flat"
@@ -3950,8 +3984,19 @@ const confidenceEl = document.getElementById("laborConfidence");
               <div class="tm-service-head-main">
                 <div class="tm-service-title-row">
                   <div class="tm-service-title">${it.serviceText || "Service"}</div>
+                  <label class="tm-repair-status-control" data-status="${it.status}">
+                    <span>Repair Status</span>
+                    <select
+                      data-action="repair-status"
+                      data-line-item-id="${lineItemId}"
+                      aria-label="Repair Status for ${escapeServiceResultHtml(it.serviceText || "service")}"
+                    >
+                      ${renderRepairStatusOptions(it.status)}
+                    </select>
+                  </label>
                   ${isActiveEdit ? `<span class="tm-service-editing-pill">Editing</span>` : ""}
                 </div>
+                <div class="tm-repair-status-summary" data-status="${it.status}">Status: ${escapeServiceResultHtml(statusLabel)}</div>
                 <div class="tm-service-vehicle">${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}</div>
                 <div class="tm-service-meta">
                   ${pricingMeta.map(item => `
@@ -4282,6 +4327,7 @@ if (getEstimateHint) {
       vehicleModel: activeVehicle.model || "",
       serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
       serviceText,
+      status: "recommended",
       ...pricingSnapshot,
       notes: (notesEl?.value || "").trim() || null,
       inspectionFindings: "",
@@ -4561,6 +4607,19 @@ if (getEstimateHint) {
     syncLineItemsToVehicle();
   });
 
+  lineItemsList?.addEventListener("change", (e) => {
+    const input = e.target?.closest?.('[data-action="repair-status"]');
+    if (!input) return;
+
+    const lineItemId = input.dataset.lineItemId || input.closest(".tm-service-card")?.dataset?.lineItemId || "";
+    const it = getLineItemById(lineItemId);
+    if (!it) return;
+
+    it.status = normalizeRepairStatus(input.value);
+    syncLineItemsToVehicle();
+    renderLineItems();
+  });
+
   let isGeneratingCustomerPdf = false;
 
   // Confirm Add = finalize signature and generate PDF
@@ -4624,6 +4683,7 @@ if (getEstimateHint) {
         laborRate: Number(it.laborRate || 0),
         travelFee: Number(it.travelFee || 0),
         estimate: it.estimate != null ? Number(it.estimate) : null,
+        status: normalizeRepairStatus(it.status),
         laborBreakdown: it.laborBreakdown || null,
         inspectionFindings: String(it.inspectionFindings || "").trim(),
       }));
