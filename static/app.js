@@ -75,6 +75,9 @@
     let makes = [];
     let models = [];
     const currentYear = new Date().getFullYear();
+    const yearClearButton = yearSelect.parentElement?.querySelector(".vehicle-year-clear");
+    const makeClearButton = makeSearch.parentElement?.querySelector(".vehicle-make-clear");
+    const modelClearButton = modelSelect.parentElement?.querySelector(".vehicle-model-clear");
 
     let modelSearch = modelSelect.parentElement?.querySelector(".vehicle-model-search");
     if (!modelSearch) {
@@ -100,6 +103,18 @@
     modelResults.style.overflowY = "auto";
 
     modelSelect.style.display = "none";
+
+    const setInlineClearButton = (button, visible) => {
+      if (!button) return;
+      button.hidden = !visible;
+      button.disabled = false;
+    };
+
+    const updateVehicleClearButtons = () => {
+      setInlineClearButton(yearClearButton, Boolean(yearSelect.value));
+      setInlineClearButton(makeClearButton, Boolean((makeSearch.value || "").trim() || makeSelect.value));
+      setInlineClearButton(modelClearButton, Boolean((modelSearch.value || "").trim() || modelSelect.value));
+    };
 
     yearSelect.innerHTML = `<option value="">Select Year</option>`;
     for (let year = currentYear; year >= startYear; year--) {
@@ -136,6 +151,29 @@
       },
     };
 
+    const LEXUS_MODEL_DISPLAY_VARIANTS = {
+      ES: ["ES300", "ES330", "ES350"],
+      GS: ["GS300", "GS350", "GS400", "GS430", "GS450h", "GS460"],
+      GX: ["GX460", "GX470"],
+      LX: ["LX450", "LX470", "LX570", "LX600"],
+      RX: ["RX300", "RX330", "RX350", "RX400h", "RX450h", "RX500h"],
+    };
+
+    const getMakeKey = () =>
+      String(vehicle.make || makeSelect.value || "").trim().toUpperCase();
+
+    const getCanonicalModelForDisplay = (displayModel) => {
+      const makeKey = getMakeKey();
+      if (makeKey !== "LEXUS") return displayModel;
+
+      const normalizedDisplay = normalizeModelSearch(displayModel);
+      const canonicalModel = Object.entries(LEXUS_MODEL_DISPLAY_VARIANTS).find(([, variants]) =>
+        variants.some((variant) => normalizeModelSearch(variant) === normalizedDisplay)
+      )?.[0];
+
+      return canonicalModel && models.includes(canonicalModel) ? canonicalModel : displayModel;
+    };
+
     const modelMatchesSearch = (model, query) => {
       const normalizedQuery = normalizeModelSearch(query);
       if (!normalizedQuery) return false;
@@ -143,9 +181,38 @@
       const normalizedModel = normalizeModelSearch(model);
       if (normalizedModel.includes(normalizedQuery)) return true;
 
-      const makeKey = String(vehicle.make || makeSelect.value || "").trim().toUpperCase();
+      const makeKey = getMakeKey();
       const aliases = MODEL_SEARCH_ALIASES[makeKey]?.[String(model || "").trim().toUpperCase()] || [];
       return aliases.some((alias) => normalizeModelSearch(alias).includes(normalizedQuery));
+    };
+
+    const getModelDisplayOptions = (query) => {
+      const makeKey = getMakeKey();
+      const seen = new Set();
+      const options = [];
+
+      models.forEach((model) => {
+        const canonicalModel = String(model || "").trim();
+        const variants = makeKey === "LEXUS"
+          ? LEXUS_MODEL_DISPLAY_VARIANTS[canonicalModel.toUpperCase()] || []
+          : [];
+        const displayModels = variants.length ? variants : [canonicalModel];
+
+        displayModels.forEach((displayModel) => {
+          const displayKey = normalizeModelSearch(displayModel);
+          if (!displayKey || seen.has(displayKey)) return;
+
+          if (normalizeModelSearch(displayModel).includes(normalizeModelSearch(query)) || modelMatchesSearch(canonicalModel, query)) {
+            seen.add(displayKey);
+            options.push({
+              value: getCanonicalModelForDisplay(displayModel),
+              display: displayModel,
+            });
+          }
+        });
+      });
+
+      return options;
     };
 
     const renderMakeResults = (query) => {
@@ -202,6 +269,7 @@
       });
       makeSelect.value = vehicle.make;
       makeSearch.value = vehicle.make;
+      updateVehicleClearButtons();
     };
 
     const renderModelResults = (query) => {
@@ -215,8 +283,7 @@
         return;
       }
 
-      const filtered = models
-        .filter((model) => modelMatchesSearch(model, query))
+      const filtered = getModelDisplayOptions(query)
         .slice(0, 8);
 
       if (!filtered.length) {
@@ -226,11 +293,12 @@
 
       modelResults.innerHTML = filtered
         .map(
-          (model) => `
+          ({ value, display }) => `
             <button
               type="button"
               class="model-result-item"
-              data-model="${model}"
+              data-model="${value}"
+              data-model-display="${display}"
               style="
                 display:block;
                 width:100%;
@@ -243,7 +311,7 @@
                 cursor:pointer;
                 font-size:16px;
               "
-            >${model}</button>
+            >${display}</button>
           `
         )
         .join("");
@@ -255,6 +323,7 @@
       models = [];
       modelSearch.value = "";
       modelSearch.disabled = true;
+      updateVehicleClearButtons();
       hideModelResults();
       modelSelect.innerHTML = `<option value="">Loading models...</option>`;
       modelSelect.disabled = true;
@@ -263,6 +332,7 @@
       if (!selectedMake) {
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
         modelSearch.placeholder = "Select make first...";
+        updateVehicleClearButtons();
         setModelLoading(false);
         return;
       }
@@ -283,19 +353,22 @@
         modelSearch.disabled = false;
         modelSearch.placeholder = "Search model...";
         modelSearch.value = selectedModel;
+        updateVehicleClearButtons();
       } catch (_) {
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
         modelSearch.placeholder = "Search model...";
+        updateVehicleClearButtons();
       } finally {
         setModelLoading(false);
       }
     };
 
-    const applyModelSelection = (selectedModel) => {
+    const applyModelSelection = (selectedModel, displayModel = selectedModel) => {
       vehicle.model = selectedModel;
       modelSelect.value = selectedModel;
-      modelSearch.value = selectedModel;
+      modelSearch.value = displayModel;
       hideModelResults();
+      updateVehicleClearButtons();
       notifyChange();
     };
 
@@ -308,6 +381,7 @@
       modelSearch.value = "";
       hideMakeResults();
       hideModelResults();
+      updateVehicleClearButtons();
 
       notifyChange();
       await populateModels(selectedMake);
@@ -322,14 +396,17 @@
     makes = await vehicleUiApiJSON("/api/makes");
     populateMakeOptions();
     await populateModels(vehicle.make, vehicle.model);
+    updateVehicleClearButtons();
     notifyChange();
 
     yearSelect.addEventListener("change", () => {
       vehicle.year = yearSelect.value;
+      updateVehicleClearButtons();
       notifyChange();
     });
 
     makeSearch.addEventListener("input", () => {
+      updateVehicleClearButtons();
       renderMakeResults(makeSearch.value);
     });
 
@@ -354,6 +431,7 @@
     });
 
     modelSearch.addEventListener("input", () => {
+      updateVehicleClearButtons();
       renderModelResults(modelSearch.value);
     });
 
@@ -370,11 +448,46 @@
     modelResults.addEventListener("click", (event) => {
       const resultButton = event.target.closest(".model-result-item");
       if (!resultButton) return;
-      applyModelSelection(resultButton.dataset.model || "");
+      applyModelSelection(resultButton.dataset.model || "", resultButton.dataset.modelDisplay || resultButton.dataset.model || "");
     });
 
     modelSelect.addEventListener("change", () => {
       applyModelSelection(modelSelect.value);
+    });
+
+    yearClearButton?.addEventListener("click", () => {
+      vehicle.year = "";
+      yearSelect.value = "";
+      updateVehicleClearButtons();
+      notifyChange();
+      yearSelect.focus({ preventScroll: true });
+    });
+
+    makeClearButton?.addEventListener("click", async () => {
+      vehicle.make = "";
+      vehicle.model = "";
+      makeSelect.value = "";
+      makeSearch.value = "";
+      modelSelect.value = "";
+      modelSearch.value = "";
+      hideMakeResults();
+      hideModelResults();
+      updateVehicleClearButtons();
+      notifyChange();
+      await populateModels("");
+      updateVehicleClearButtons();
+      notifyChange();
+      makeSearch.focus({ preventScroll: true });
+    });
+
+    modelClearButton?.addEventListener("click", () => {
+      vehicle.model = "";
+      modelSelect.value = "";
+      modelSearch.value = "";
+      hideModelResults();
+      updateVehicleClearButtons();
+      notifyChange();
+      modelSearch.focus({ preventScroll: true });
     });
 
     clearButton?.addEventListener("click", async () => {
@@ -388,7 +501,9 @@
       modelSearch.value = "";
       hideMakeResults();
       hideModelResults();
+      updateVehicleClearButtons();
       await populateModels("");
+      updateVehicleClearButtons();
       notifyChange();
     });
 
@@ -586,6 +701,7 @@
     serviceClearBtn.hidden = !hasValue;
     serviceClearBtn.disabled = false;
   }
+  updateServiceClearButton();
 
   // Inputs
   const laborHoursEl = $("laborHours");
@@ -5418,12 +5534,15 @@ if (getEstimateHint) {
         </div>
 
         <div class="grid3">
-          <div>
+          <div class="tm-inline-clear-field">
             <label>Year</label>
             <select class="vehicle-year" data-vehicle-id="${vehicle.id}"></select>
+            <button type="button" class="tm-input-clear-btn vehicle-year-clear" data-vehicle-id="${vehicle.id}" aria-label="Clear year" hidden>
+              &times;
+            </button>
           </div>
 
-          <div>
+          <div class="tm-inline-clear-field">
             <label>Make</label>
 
             <input
@@ -5433,6 +5552,9 @@ if (getEstimateHint) {
               placeholder="Search make..."
               autocomplete="off"
             />
+            <button type="button" class="tm-input-clear-btn vehicle-make-clear" data-vehicle-id="${vehicle.id}" aria-label="Clear make" hidden>
+              &times;
+            </button>
 
             <div
               class="vehicle-make-results"
@@ -5445,11 +5567,14 @@ if (getEstimateHint) {
             </select>
           </div>
 
-          <div>
+          <div class="tm-inline-clear-field">
             <label>Model</label>
             <select class="vehicle-model" data-vehicle-id="${vehicle.id}">
               <option value="">Select model...</option>
             </select>
+            <button type="button" class="tm-input-clear-btn vehicle-model-clear" data-vehicle-id="${vehicle.id}" aria-label="Clear model" hidden>
+              &times;
+            </button>
           </div>
         </div>
       </div>

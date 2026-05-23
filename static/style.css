@@ -1034,12 +1034,18 @@ button:active{
   position:relative;
 }
 
+.tm-inline-clear-field{
+  position:relative;
+}
+
+.tm-inline-clear-field select,
+.tm-inline-clear-field input,
 .tm-service-field-shell .service-search{
   width:100%;
   padding-right:44px;
 }
 
-.tm-service-clear-btn{
+.tm-input-clear-btn{
   position:absolute;
   top:8px;
   right:8px;
@@ -1057,12 +1063,26 @@ button:active{
   box-shadow:0 4px 10px rgba(15,23,42,.06);
 }
 
-.tm-service-clear-btn:hover{
+.tm-inline-clear-field > .tm-input-clear-btn{
+  top:33px;
+}
+
+.tm-input-clear-btn[hidden]{
+  display:none !important;
+}
+
+.tm-input-clear-btn:not([hidden]){
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.tm-input-clear-btn:hover{
   border-color:rgba(20,184,166,.34);
   color:#0f766e;
 }
 
-.tm-service-clear-btn:disabled{
+.tm-input-clear-btn:disabled{
   cursor:not-allowed;
   opacity:.55;
 }
@@ -3000,13 +3020,19 @@ canvas,
     min-height: 52px;
   }
 
-  .tm-service-clear-btn{
+  .tm-input-clear-btn{
     width:40px;
     height:40px;
     top:6px;
     right:6px;
   }
 
+  .tm-inline-clear-field > .tm-input-clear-btn{
+    top:31px;
+  }
+
+  .tm-inline-clear-field select,
+  .tm-inline-clear-field input,
   .tm-service-field-shell .service-search{
     padding-right:50px;
   }
