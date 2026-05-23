@@ -164,7 +164,12 @@
 
       <div>
         <label for="service">Service</label>
-        <select id="service"></select>
+        <div class="tm-service-field-shell">
+          <select id="service"></select>
+          <button id="serviceClearBtn" type="button" class="tm-service-clear-btn" aria-label="Clear selected service" hidden>
+            &times;
+          </button>
+        </div>
         <div class="tm-hint tm-field-helper">
           Search common jobs or symptoms, then price the repair for this vehicle.
         </div>

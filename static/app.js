@@ -447,6 +447,7 @@
   // Service selection
   const categoryEl = $("category");
   const serviceEl = $("service");
+  const serviceClearBtn = $("serviceClearBtn");
   let serviceOptions = [];
   let serviceCategories = [];
   let allServiceOptions = [];
@@ -555,6 +556,13 @@
     serviceResults.style.overflowY = "auto";
 
     serviceEl.style.display = "none";
+  }
+
+  function updateServiceClearButton() {
+    if (!serviceClearBtn) return;
+    const hasValue = Boolean((serviceEl?.value || "").trim() || (serviceSearch?.value || "").trim());
+    serviceClearBtn.hidden = !hasValue;
+    serviceClearBtn.disabled = !!serviceSearch?.disabled;
   }
 
   // Inputs
@@ -2360,6 +2368,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!serviceSearch || !serviceEl) return;
     const selectedText = serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || "";
     serviceSearch.value = serviceEl.value ? selectedText : "";
+    updateServiceClearButton();
   }
 
   function setCategoryValue(value, source = "auto") {
@@ -3449,12 +3458,14 @@ const confidenceEl = document.getElementById("laborConfidence");
     serviceSearch.placeholder = placeholder;
     serviceSearch.disabled = disabled;
     hideServiceResults();
+    updateServiceClearButton();
   }
 
   function enableServiceSearch() {
     if (!serviceSearch) return;
     serviceSearch.disabled = false;
     serviceSearch.placeholder = SERVICE_SEARCH_PLACEHOLDER;
+    updateServiceClearButton();
   }
 
   function applyServiceSelection(serviceCode) {
@@ -3466,6 +3477,25 @@ const confidenceEl = document.getElementById("laborConfidence");
       const shortcut = QUICK_QUOTE_SHORTCUTS[btn.dataset.quickQuote || ""];
       btn.classList.toggle("is-selected", shortcut?.serviceCode === serviceCode);
     });
+  }
+
+  async function clearServiceSelection({ focus = true } = {}) {
+    if (!serviceEl) return;
+    serviceEl.value = "";
+    if (serviceSearch) {
+      serviceSearch.value = "";
+      serviceSearch.placeholder = SERVICE_SEARCH_PLACEHOLDER;
+    }
+    hideServiceResults();
+    hidePairedSuggestions();
+    serviceMeta = null;
+    document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
+    await loadServiceMeta("");
+    updateServiceClearButton();
+    updateEstimateButtonState();
+    if (focus && serviceSearch && !serviceSearch.disabled) {
+      serviceSearch.focus({ preventScroll: true });
+    }
   }
 
   function getTimingSystemConfig(vehicle) {
@@ -4218,6 +4248,7 @@ const confidenceEl = document.getElementById("laborConfidence");
         : SERVICE_SEARCH_PLACEHOLDER;
     }
     if (isLocked) hideServiceResults();
+    updateServiceClearButton();
   }
 
   function updateEstimateButtonState() {
@@ -5109,6 +5140,7 @@ if (getEstimateHint) {
     if (!serviceEl) return;
 
     const searchValue = serviceSearch.value.trim();
+    updateServiceClearButton();
 
     clearTimeout(searchDebounceTimer);
 
@@ -5132,6 +5164,7 @@ if (getEstimateHint) {
 
     renderServiceResults(serviceSearch.value);
     await loadServiceMeta("");
+    updateServiceClearButton();
     updateEstimateButtonState();
   });
 
@@ -5146,6 +5179,10 @@ if (getEstimateHint) {
 
   serviceSearch?.addEventListener("blur", () => {
     setTimeout(hideServiceResults, 150);
+  });
+
+  serviceClearBtn?.addEventListener("click", async () => {
+    await clearServiceSelection({ focus: true });
   });
 
   serviceResults?.addEventListener("click", async (event) => {

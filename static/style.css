@@ -1030,6 +1030,49 @@ button:active{
   margin-top:6px;
 }
 
+.tm-service-field-shell{
+  position:relative;
+}
+
+.tm-service-field-shell .service-search{
+  width:100%;
+  padding-right:44px;
+}
+
+.tm-service-clear-btn{
+  position:absolute;
+  top:8px;
+  right:8px;
+  z-index:2;
+  width:34px;
+  height:34px;
+  border:1px solid rgba(15,23,42,.12);
+  border-radius:999px;
+  background:#fff;
+  color:#475569;
+  font-size:1.25rem;
+  font-weight:800;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 4px 10px rgba(15,23,42,.06);
+}
+
+.tm-service-clear-btn:hover{
+  border-color:rgba(20,184,166,.34);
+  color:#0f766e;
+}
+
+.tm-service-clear-btn:disabled{
+  cursor:not-allowed;
+  opacity:.55;
+}
+
+.tm-service-field-shell .service-results{
+  position:relative;
+  z-index:4;
+  background:#fff;
+}
+
 .tm-status-box{
   margin-top:10px;
 }
@@ -2955,6 +2998,17 @@ canvas,
   .tm-card[aria-label="Service"] textarea,
   #draftsCard select{
     min-height: 52px;
+  }
+
+  .tm-service-clear-btn{
+    width:40px;
+    height:40px;
+    top:6px;
+    right:6px;
+  }
+
+  .tm-service-field-shell .service-search{
+    padding-right:50px;
   }
 
   .tm-card[aria-label="Service"] .tm-btn,

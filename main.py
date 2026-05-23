@@ -6380,8 +6380,8 @@ def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=
     y = h - top
 
     # Title (left)
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillGray(0)
+    c.setFont("Helvetica-Bold", 20)
+    c.setFillColorRGB(0.06, 0.09, 0.16)
     c.drawString(left, y, title)
 
     # Logo (top-right)
@@ -6396,12 +6396,19 @@ def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=
         # If logo missing, fail gracefully (don’t crash PDF)
         pass
 
-    y -= 18
+    y -= 17
     if show_generated_date:
-        c.setFont("Helvetica", 10)
-        c.setFillGray(0.4)
-        c.drawString(left, y, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        c.setFillGray(0)
+        c.setFont("Helvetica", 8.8)
+        c.setFillGray(0.42)
+        c.drawString(left, y, f"Prepared {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        y -= 8
+
+    c.setStrokeColorRGB(0.06, 0.62, 0.58)
+    c.setLineWidth(1.2)
+    c.line(left, y, w - right, y)
+    c.setLineWidth(1)
+    c.setStrokeGray(0)
+    c.setFillGray(0)
 
     return y - 22
 
@@ -7084,7 +7091,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         business_note_lines = wrap_text(business_note, max_chars=86)[:3] if business_note else []
         has_business_identity = any([business_name, mechanic_name, business_phone, business_note_lines])
         if has_business_identity:
-            identity_box_h = 76 + (len(business_note_lines) * 8)
+            identity_box_h = 80 + (len(business_note_lines) * 8)
             y = pdf_ensure_space(
                 c, w, h, y,
                 needed=identity_box_h + 10,
@@ -7094,7 +7101,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 right=50,
                 show_generated_date=req.showGeneratedDate,
             )
-            c.setFillColorRGB(0.97, 0.99, 0.99)
+            c.setFillColorRGB(0.965, 0.99, 0.985)
             c.roundRect(50, y - identity_box_h + 10, w - 100, identity_box_h, 8, fill=1, stroke=0)
             c.setStrokeGray(0.82)
             c.roundRect(50, y - identity_box_h + 10, w - 100, identity_box_h, 8, fill=0, stroke=1)
@@ -7104,11 +7111,14 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setFont("Helvetica-Bold", 8)
             c.setFillColorRGB(0.06, 0.45, 0.42)
             c.drawString(64, y - 2, "PREPARED BY")
+            c.setFont("Helvetica", 8)
+            c.setFillGray(0.42)
+            c.drawRightString(w - 64, y - 2, "CUSTOMER REPAIR ESTIMATE")
             c.setFillGray(0)
             y -= 11
 
             if business_name:
-                c.setFont("Helvetica-Bold", 14)
+                c.setFont("Helvetica-Bold", 14.5)
                 c.drawString(64, y - 3, business_name)
                 y -= 15
             else:
@@ -7134,7 +7144,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                     y -= 8
 
             c.setFont("Helvetica", 9.5)
-            c.setFillGray(0.38)
+            c.setFillGray(0.30)
             c.drawString(64, y - 1, f"Vehicle: {vehicle_line}")
             y -= 10
 
@@ -7146,8 +7156,8 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setFillGray(0)
             y -= 10
         else:
-            identity_box_h = 50
-            c.setFillColorRGB(0.985, 0.99, 0.995)
+            identity_box_h = 54
+            c.setFillColorRGB(0.965, 0.99, 0.985)
             c.roundRect(50, y - identity_box_h + 8, w - 100, identity_box_h, 7, fill=1, stroke=0)
             c.setStrokeGray(0.86)
             c.roundRect(50, y - identity_box_h + 8, w - 100, identity_box_h, 7, fill=0, stroke=1)
@@ -7155,6 +7165,9 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setFont("Helvetica-Bold", 8)
             c.setFillColorRGB(0.06, 0.45, 0.42)
             c.drawString(64, y - 2, "PREPARED BY")
+            c.setFont("Helvetica", 8)
+            c.setFillGray(0.42)
+            c.drawRightString(w - 64, y - 2, "CUSTOMER REPAIR ESTIMATE")
             y -= 10
             c.setFont("Helvetica-Bold", 11)
             c.setFillGray(0.18)
@@ -7239,7 +7252,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 if lb and lb.get("steps"):
                     labor_breakdown_steps = lb["steps"]
 
-            item_space = 27 + max(0, len(service_name_lines) - 1) * 10
+            item_space = 31 + max(0, len(service_name_lines) - 1) * 10
             if req.showLaborColumn:
                 item_space += 9
             if req.showHourlyRate and str(it.pricingMode or "").strip().lower() != "flat":
@@ -7263,6 +7276,11 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 draw_columns_fn=draw_service_columns,
                 show_generated_date=req.showGeneratedDate,
             )
+            row_bottom = y - item_space + 8
+            row_height = max(34, item_space - 4)
+            c.setFillColorRGB(0.992, 0.996, 0.996)
+            c.roundRect(LEFT, row_bottom, X_TOTAL - LEFT, row_height, 5, fill=1, stroke=0)
+            c.setFillGray(0)
 
             est = float(it.estimate) if it.estimate is not None else 0.0
             grand_total += est
@@ -7272,7 +7290,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             labor_total = max(0.0, float(it.flatRatePrice or 0)) if is_flat_rate else max(0.0, float(it.laborHours or 0)) * max(0.0, float(it.laborRate or 0))
             parts_total = max(0.0, float(it.partsPrice or 0))
             travel_total = max(0.0, float(it.travelFee or 0))
-            c.drawString(X_SERVICE, y, service_name_lines[0] if service_name_lines else service_name)
+            c.drawString(X_SERVICE + 8, y, service_name_lines[0] if service_name_lines else service_name)
 
             c.setFont("Helvetica", 10)
             if req.showLaborColumn:
@@ -7287,7 +7305,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.setFillGray(0.18)
                 c.setFont("Helvetica-Bold", 10)
                 for service_line in service_name_lines[1:]:
-                    c.drawString(X_SERVICE, y, service_line)
+                    c.drawString(X_SERVICE + 8, y, service_line)
                     y -= 10
                 c.setFillGray(0)
                 y -= 1
@@ -7297,21 +7315,21 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.setFillColorRGB(0.70, 0.18, 0.12)
             else:
                 c.setFillGray(0.42)
-            c.drawString(X_SERVICE, y, f"Status: {status_label}")
+            c.drawString(X_SERVICE + 8, y, f"Status: {status_label}")
             c.setFillGray(0)
             y -= 9
 
             if req.showLaborColumn:
                 c.setFillGray(0.45)
                 c.setFont("Helvetica", 9)
-                c.drawString(X_SERVICE, y, "Flat-rate service" if is_flat_rate else f"Labor Hours: {it.laborHours:.1f}h")
+                c.drawString(X_SERVICE + 8, y, "Flat-rate service" if is_flat_rate else f"Labor Hours: {it.laborHours:.1f}h")
                 c.setFillGray(0)
                 y -= 9
 
             if req.showHourlyRate and not is_flat_rate:
                 c.setFillGray(0.45)
                 c.setFont("Helvetica", 9)
-                c.drawString(X_SERVICE, y, f"Rate: ${it.laborRate:.0f}/hr")
+                c.drawString(X_SERVICE + 8, y, f"Rate: ${it.laborRate:.0f}/hr")
                 c.setFillGray(0)
                 y -= 9
 
@@ -7321,18 +7339,18 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 cost_parts.append(f"Travel ${travel_total:,.0f}")
             c.setFillGray(0.45)
             c.setFont("Helvetica", 8.5)
-            c.drawString(X_SERVICE, y, "  |  ".join(cost_parts))
+            c.drawString(X_SERVICE + 8, y, "  |  ".join(cost_parts))
             c.setFillGray(0)
             y -= 9
 
             if risk_note_lines:
                 c.setFillGray(0.42)
                 c.setFont("Helvetica-Bold", 8)
-                c.drawString(X_SERVICE + 12, y, "Estimate note")
+                c.drawString(X_SERVICE + 18, y, "Estimate note")
                 y -= 8
                 c.setFont("Helvetica", 8.2)
                 for note_line in risk_note_lines:
-                    c.drawString(X_SERVICE + 18, y, note_line)
+                    c.drawString(X_SERVICE + 24, y, note_line)
                     y -= 8
                 c.setFillGray(0)
                 y -= 1
@@ -7340,13 +7358,13 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             if findings_lines:
                 c.setFillGray(0.35)
                 c.setFont("Helvetica-Bold", 8)
-                c.drawString(X_SERVICE + 12, y, "Inspection notes")
+                c.drawString(X_SERVICE + 18, y, "Inspection notes")
                 y -= 8
 
                 c.setFillGray(0.28)
                 c.setFont("Helvetica", 8.5)
                 for finding_line in findings_lines:
-                    c.drawString(X_SERVICE + 18, y, finding_line)
+                    c.drawString(X_SERVICE + 24, y, finding_line)
                     y -= 8
                 c.setFillGray(0)
                 y -= 1
@@ -7354,7 +7372,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             if labor_breakdown_steps:
                 c.setFillGray(0.35)
                 c.setFont("Helvetica-Bold", 8)
-                c.drawString(X_SERVICE + 12, y, "Labor breakdown")
+                c.drawString(X_SERVICE + 18, y, "Labor breakdown")
                 y -= 10
 
                 c.setFillGray(0.25)
@@ -7363,15 +7381,15 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                     label = step.get("label", "")
                     hours = float(step.get("hours", 0))
 
-                    c.drawString(X_SERVICE + 18, y, f"- {label}")
+                    c.drawString(X_SERVICE + 24, y, f"- {label}")
                     c.drawRightString(X_TOTAL, y, f"{hours:.1f} hr")
                     y -= 10
 
                 c.setFillGray(0)
                 y -= 3
 
-            c.setStrokeGray(0.80)
-            c.line(X_SERVICE, y, X_TOTAL, y)
+            c.setStrokeGray(0.88)
+            c.line(X_SERVICE + 8, y, X_TOTAL - 8, y)
             c.setStrokeGray(0)
             y -= 10
 
@@ -7420,12 +7438,19 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c.drawString(LEFT + 14, y - 16, "Services, labor, parts, travel, and selected PDF details included")
         c.drawString(LEFT + 14, y - 29, f"{service_count_label.capitalize()} ready for customer review")
         c.setFillGray(0)
-        total_amount_x = LEFT + 350
+        total_card_w = 156
+        total_card_x = X_TOTAL - total_card_w - 14
+        c.setFillColorRGB(1, 1, 1)
+        c.roundRect(total_card_x, y - 47, total_card_w, 44, 7, fill=1, stroke=0)
+        c.setStrokeColorRGB(0.80, 0.90, 0.88)
+        c.roundRect(total_card_x, y - 47, total_card_w, 44, 7, fill=0, stroke=1)
+        c.setStrokeGray(0)
+        c.setFillGray(0)
         c.setFont("Helvetica-Bold", 24)
-        c.drawString(total_amount_x, y - 8, f"${grand_total:,.0f}")
+        c.drawRightString(total_card_x + total_card_w - 12, y - 15, f"${grand_total:,.0f}")
         c.setFont("Helvetica", 8.5)
         c.setFillGray(0.42)
-        c.drawString(total_amount_x + 2, y - 26, "Estimated total")
+        c.drawRightString(total_card_x + total_card_w - 12, y - 33, "Estimated total")
         c.setFillGray(0)
         y -= 74
 
