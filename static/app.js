@@ -126,6 +126,28 @@
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "");
 
+    const MODEL_SEARCH_ALIASES = {
+      LEXUS: {
+        ES: ["es300", "es330", "es350"],
+        GS: ["gs300", "gs350", "gs400", "gs430", "gs450h", "gs460"],
+        GX: ["gx460", "gx470"],
+        LX: ["lx450", "lx470", "lx570", "lx600"],
+        RX: ["rx300", "rx330", "rx350", "rx400h", "rx450h", "rx500h"],
+      },
+    };
+
+    const modelMatchesSearch = (model, query) => {
+      const normalizedQuery = normalizeModelSearch(query);
+      if (!normalizedQuery) return false;
+
+      const normalizedModel = normalizeModelSearch(model);
+      if (normalizedModel.includes(normalizedQuery)) return true;
+
+      const makeKey = String(vehicle.make || makeSelect.value || "").trim().toUpperCase();
+      const aliases = MODEL_SEARCH_ALIASES[makeKey]?.[String(model || "").trim().toUpperCase()] || [];
+      return aliases.some((alias) => normalizeModelSearch(alias).includes(normalizedQuery));
+    };
+
     const renderMakeResults = (query) => {
       const normalizedQuery = query.trim().toLowerCase();
 
@@ -188,15 +210,13 @@
         return;
       }
 
-      const normalizedQuery = normalizeModelSearch(query);
-
-      if (!normalizedQuery) {
+      if (!normalizeModelSearch(query)) {
         hideModelResults();
         return;
       }
 
       const filtered = models
-        .filter((model) => normalizeModelSearch(model).includes(normalizedQuery))
+        .filter((model) => modelMatchesSearch(model, query))
         .slice(0, 8);
 
       if (!filtered.length) {
@@ -3492,6 +3512,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     hidePairedSuggestions();
     serviceMeta = null;
     editingLineItem = null;
+    activeEditingLineId = null;
+    readyForNextService = true;
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
     await loadServiceMeta("");
     updateServiceClearButton();

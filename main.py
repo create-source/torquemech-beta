@@ -7237,20 +7237,20 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 if lb and lb.get("steps"):
                     labor_breakdown_steps = lb["steps"]
 
-            item_space = 31 + max(0, len(service_name_lines) - 1) * 10
+            item_space = 39 + max(0, len(service_name_lines) - 1) * 11
             if req.showLaborColumn:
-                item_space += 9
+                item_space += 10
             if req.showHourlyRate and str(it.pricingMode or "").strip().lower() != "flat":
-                item_space += 9
-            item_space += 9
-            item_space += 9
+                item_space += 10
+            item_space += 11
+            item_space += 10
             if risk_note_lines:
-                item_space += 12 + (len(risk_note_lines) * 8)
+                item_space += 15 + (len(risk_note_lines) * 9)
             if findings_lines:
-                item_space += 13 + (len(findings_lines) * 8)
+                item_space += 16 + (len(findings_lines) * 9)
             if labor_breakdown_steps:
                 item_space += 13 + (len(labor_breakdown_steps) * 10) + 3
-            item_space += 10
+            item_space += 14
             y = pdf_ensure_space(
                 c, w, h, y,
                 needed=item_space,
@@ -7273,7 +7273,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             est = float(it.estimate) if it.estimate is not None else 0.0
             grand_total += est
 
-            c.setFont("Helvetica-Bold", 10)
+            c.setFont("Helvetica-Bold", 10.5)
             is_flat_rate = str(it.pricingMode or "").strip().lower() == "flat"
             labor_total = max(0.0, float(it.flatRatePrice or 0)) if is_flat_rate else max(0.0, float(it.laborHours or 0)) * max(0.0, float(it.laborRate or 0))
             parts_total = max(0.0, float(it.partsPrice or 0))
@@ -7288,18 +7288,18 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setFillColorRGB(1, 1, 1)
             c.roundRect(X_TOTAL - 76, y - 8, 76, 18, 5, fill=1, stroke=0)
             c.setFillGray(0)
-            c.setFont("Helvetica-Bold", 10)
+            c.setFont("Helvetica-Bold", 10.5)
             c.drawRightString(X_TOTAL - 8, y, f"${est:,.0f}")
-            y -= 11
+            y -= 13
 
             if len(service_name_lines) > 1:
                 c.setFillGray(0.18)
-                c.setFont("Helvetica-Bold", 10)
+                c.setFont("Helvetica-Bold", 10.5)
                 for service_line in service_name_lines[1:]:
                     c.drawString(X_SERVICE + 12, y, service_line)
-                    y -= 10
+                    y -= 11
                 c.setFillGray(0)
-                y -= 1
+                y -= 2
 
             status_text = f"Status: {status_label}"
             status_w = c.stringWidth(status_text, "Helvetica-Bold", 8.2) + 14
@@ -7322,65 +7322,65 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setFont("Helvetica-Bold", 8.2)
             c.drawString(X_SERVICE + 19, y, status_text)
             c.setFillGray(0)
-            y -= 13
+            y -= 15
 
             if req.showLaborColumn:
                 c.setFillGray(0.45)
                 c.setFont("Helvetica", 9)
                 c.drawString(X_SERVICE + 12, y, "Flat-rate service" if is_flat_rate else f"Labor Hours: {it.laborHours:.1f}h")
                 c.setFillGray(0)
-                y -= 9
+                y -= 10
 
             if req.showHourlyRate and not is_flat_rate:
                 c.setFillGray(0.45)
                 c.setFont("Helvetica", 9)
                 c.drawString(X_SERVICE + 12, y, f"Rate: ${it.laborRate:.0f}/hr")
                 c.setFillGray(0)
-                y -= 9
+                y -= 10
 
             cost_parts = [f"Labor ${labor_total:,.0f}"]
             cost_parts.append(f"Parts ${parts_total:,.0f}" if parts_total > 0 else "Parts not added")
             if travel_total > 0:
                 cost_parts.append(f"Travel ${travel_total:,.0f}")
             c.setFillGray(0.45)
-            c.setFont("Helvetica", 8.5)
+            c.setFont("Helvetica", 8.8)
             c.drawString(X_SERVICE + 12, y, "  |  ".join(cost_parts))
             c.setFillGray(0)
-            y -= 9
+            y -= 11
 
             if risk_note_lines:
                 c.setStrokeColorRGB(0.80, 0.90, 0.88)
                 c.setLineWidth(1)
-                c.line(X_SERVICE + 14, y + 2, X_SERVICE + 14, y - 8 - (len(risk_note_lines) * 8))
+                c.line(X_SERVICE + 14, y + 2, X_SERVICE + 14, y - 9 - (len(risk_note_lines) * 9))
                 c.setStrokeGray(0)
                 c.setFillGray(0.42)
                 c.setFont("Helvetica-Bold", 8)
                 c.drawString(X_SERVICE + 18, y, "Estimate note")
-                y -= 8
-                c.setFont("Helvetica", 8.2)
+                y -= 9
+                c.setFont("Helvetica", 8.4)
                 for note_line in risk_note_lines:
                     c.drawString(X_SERVICE + 24, y, note_line)
-                    y -= 8
+                    y -= 9
                 c.setFillGray(0)
-                y -= 1
+                y -= 2
 
             if findings_lines:
                 c.setStrokeColorRGB(0.80, 0.86, 0.92)
                 c.setLineWidth(1)
-                c.line(X_SERVICE + 14, y + 2, X_SERVICE + 14, y - 8 - (len(findings_lines) * 8))
+                c.line(X_SERVICE + 14, y + 2, X_SERVICE + 14, y - 9 - (len(findings_lines) * 9))
                 c.setStrokeGray(0)
                 c.setFillGray(0.35)
                 c.setFont("Helvetica-Bold", 8)
                 c.drawString(X_SERVICE + 18, y, "Inspection notes")
-                y -= 8
+                y -= 9
 
                 c.setFillGray(0.28)
-                c.setFont("Helvetica", 8.5)
+                c.setFont("Helvetica", 8.6)
                 for finding_line in findings_lines:
                     c.drawString(X_SERVICE + 24, y, finding_line)
-                    y -= 8
+                    y -= 9
                 c.setFillGray(0)
-                y -= 1
+                y -= 2
 
             if labor_breakdown_steps:
                 c.setFillGray(0.35)
@@ -7401,10 +7401,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.setFillGray(0)
                 y -= 3
 
-            c.setStrokeGray(0.88)
-            c.line(X_SERVICE + 8, y, X_TOTAL - 8, y)
-            c.setStrokeGray(0)
-            y -= 10
+            y -= 14
 
         final_note_lines = wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2] if req.showRiskNotes else []
         customer_note_lines = wrap_text(req.notes.strip(), max_chars=90) if req.notes else []
@@ -7437,26 +7434,26 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         # Grand total
         totals_box_h = 74
-        c.setFillColorRGB(0.05, 0.10, 0.14)
+        c.setFillColorRGB(0.94, 0.975, 0.972)
         c.roundRect(LEFT, y - totals_box_h + 12, X_TOTAL - LEFT, totals_box_h, 8, fill=1, stroke=0)
-        c.setStrokeColorRGB(0.08, 0.57, 0.54)
+        c.setStrokeColorRGB(0.75, 0.87, 0.85)
         c.roundRect(LEFT, y - totals_box_h + 12, X_TOTAL - LEFT, totals_box_h, 8, fill=0, stroke=1)
         c.setStrokeGray(0)
         c.setFont("Helvetica-Bold", 8.5)
-        c.setFillColorRGB(0.63, 0.91, 0.86)
+        c.setFillColorRGB(0.06, 0.45, 0.42)
         c.drawString(LEFT + 16, y - 3, "ESTIMATE SUMMARY")
-        c.setFillColorRGB(1, 1, 1)
+        c.setFillColorRGB(0.05, 0.08, 0.13)
         c.setFont("Helvetica-Bold", 13)
         c.drawString(LEFT + 16, y - 22, "Estimated Total")
         c.setFont("Helvetica", 8.6)
-        c.setFillColorRGB(0.80, 0.88, 0.88)
+        c.setFillGray(0.34)
         c.drawString(LEFT + 16, y - 38, "Includes quoted services, labor, parts, travel, and selected PDF details.")
         c.drawString(LEFT + 16, y - 51, f"{service_count_label.capitalize()} ready for customer review.")
-        c.setFillColorRGB(1, 1, 1)
+        c.setFillColorRGB(0.05, 0.08, 0.13)
         c.setFont("Helvetica-Bold", 26)
         c.drawRightString(X_TOTAL - 18, y - 19, f"${grand_total:,.0f}")
         c.setFont("Helvetica", 8.5)
-        c.setFillColorRGB(0.80, 0.88, 0.88)
+        c.setFillGray(0.38)
         c.drawRightString(X_TOTAL - 18, y - 36, "Customer estimate total")
         c.setFillGray(0)
         y -= 74
