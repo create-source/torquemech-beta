@@ -6458,10 +6458,12 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
     Consistent signature box + note (same in both PDFs).
     Returns the new cursor y (below the signature note).
     """
+    card_h = 136
+    disclaimer_gap = 16
     c.setFillColorRGB(0.965, 0.985, 0.98)
-    c.roundRect(left, y - 113, w - left - right, 112, 7, fill=1, stroke=0)
+    c.roundRect(left, y - card_h, w - left - right, card_h - 1, 7, fill=1, stroke=0)
     c.setStrokeGray(0.82)
-    c.roundRect(left, y - 113, w - left - right, 112, 7, fill=0, stroke=1)
+    c.roundRect(left, y - card_h, w - left - right, card_h - 1, 7, fill=0, stroke=1)
     c.setStrokeGray(0)
     c.setFillGray(0)
 
@@ -6476,7 +6478,7 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
     sig_box_h = 64
     sig_box_w = w - left - right
     sig_x = left + 12
-    sig_y = y - 100
+    sig_y = y - 102
     sig_inner_w = sig_box_w - 24
 
     c.setStrokeGray(0.72)
@@ -6508,10 +6510,10 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
 
     c.setFont("Helvetica-Oblique", 9)
     c.setFillGray(0.4)
-    c.drawString(left + 12, sig_y - 15, "Estimate approval only. No payment is collected or recorded on this PDF.")
+    c.drawString(left + 12, y - card_h - disclaimer_gap, "Estimate approval only. No payment is collected or recorded on this PDF.")
     c.setFillGray(0)
 
-    return sig_y - 28
+    return y - card_h - disclaimer_gap - 18
 
 
 def pdf_draw_footer(c, w):
@@ -6962,6 +6964,14 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         # ---------------- Signature + Note + Footer (unified) ----------------
         if req.signatureDataUrl:
             y -= 12
+            y = pdf_ensure_space(
+                c, w, h, y,
+                needed=178,
+                title="Repair Estimate",
+                vehicle_line=f"{req.year} {req.make} {req.model}",
+                left=72, right=72,
+                show_generated_date=req.showGeneratedDate,
+            )
             y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=72, right=72)
         pdf_draw_footer(c, w)
 
@@ -7169,7 +7179,11 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         row_pad_x = 12
         row_detail_x = LEFT + row_pad_x
         row_total_x = X_TOTAL - row_pad_x
-        detail_max_chars = 56
+        detail_max_chars = 72
+        title_max_chars = 45
+        row_pad_top = 18
+        row_pad_bottom = 18
+        row_gap = 14
 
         # Services header 
         service_count = len(req.lineItems or [])
@@ -7191,7 +7205,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         grand_total = 0.0
         for it in (req.lineItems or []):
             service_name = (it.serviceText or it.serviceCode or "Repair service").strip()
-            service_name_lines = wrap_text(service_name, max_chars=detail_max_chars)[:3]
+            service_name_lines = wrap_text(service_name, max_chars=title_max_chars)[:3]
             status_label = pdf_repair_status_label(it.status)
 
             risk_note_lines = []
@@ -7228,20 +7242,23 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 cost_parts.append(f"${it.laborRate:.0f}/hr")
             cost_summary_lines = wrap_text("  |  ".join(cost_parts), max_chars=72)[:2]
 
-            item_space = 48 + max(0, len(service_name_lines) - 1) * 12
-            item_space += (len(cost_summary_lines) * 10) + 3
+            content_space = len(service_name_lines) * 12
+            content_space += 17  # Status line and gap.
+            content_space += len(cost_summary_lines) * 10
+            content_space += 7
             if risk_note_lines:
-                item_space += 15 + (len(risk_note_lines) * 9)
+                content_space += 15 + (len(risk_note_lines) * 9)
             if findings_lines:
-                item_space += 16 + (len(findings_lines) * 9)
+                content_space += 16 + (len(findings_lines) * 9)
             if labor_breakdown_steps:
                 breakdown_line_count = 0
                 for step in labor_breakdown_steps:
                     label = step.get("label", "")
                     hours = float(step.get("hours", 0))
                     breakdown_line_count += len(wrap_text(f"- {label} ({hours:.1f} hr)", max_chars=64)[:2]) or 1
-                item_space += 15 + (breakdown_line_count * 10) + 2
-            item_space += 18
+                content_space += 15 + (breakdown_line_count * 10) + 5
+            row_height = max(54, row_pad_top + content_space + row_pad_bottom)
+            item_space = row_height + row_gap
             y = pdf_ensure_space(
                 c, w, h, y,
                 needed=item_space,
@@ -7251,8 +7268,8 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 continued_label="Services (continued)",
                 show_generated_date=req.showGeneratedDate,
             )
-            row_bottom = y - item_space + 8
-            row_height = max(34, item_space - 4)
+            row_top = y
+            row_bottom = row_top - row_height
             c.setFillColorRGB(0.996, 0.998, 0.998)
             c.roundRect(LEFT, row_bottom, X_TOTAL - LEFT, row_height, 7, fill=1, stroke=0)
             c.setStrokeColorRGB(0.84, 0.89, 0.89)
@@ -7263,46 +7280,21 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             est = float(it.estimate) if it.estimate is not None else 0.0
             grand_total += est
 
-            c.setFillColorRGB(1, 1, 1)
-            c.roundRect(row_total_x - 86, y - 10, 86, 22, 5, fill=1, stroke=0)
-            c.setStrokeColorRGB(0.86, 0.91, 0.91)
-            c.roundRect(row_total_x - 86, y - 10, 86, 22, 5, fill=0, stroke=1)
-            c.setStrokeGray(0)
-            c.setFillGray(0)
-            c.setFont("Helvetica-Bold", 11)
-            c.drawRightString(row_total_x - 8, y, f"${est:,.0f}")
-            c.setFont("Helvetica", 7.5)
-            c.setFillGray(0.42)
-            c.drawRightString(row_total_x - 8, y - 8, "Line total")
-            c.setFillGray(0)
-
             c.setFont("Helvetica-Bold", 10.6)
-            title_y = y
-            for service_line in service_name_lines:
-                c.drawString(row_detail_x, title_y, service_line)
+            title_y = row_top - row_pad_top
+            for index, service_line in enumerate(service_name_lines):
+                if index == 0:
+                    c.drawString(row_detail_x, title_y, service_line)
+                    c.drawRightString(row_total_x, title_y, f"${est:,.0f}")
+                else:
+                    c.drawString(row_detail_x, title_y, service_line)
                 title_y -= 12
             y = title_y - 2
 
             status_text = f"Status: {status_label}"
-            status_w = c.stringWidth(status_text, "Helvetica-Bold", 8.2) + 14
-            if status_label == "Urgent":
-                c.setFillColorRGB(0.995, 0.925, 0.90)
-                c.roundRect(row_detail_x, y - 4, status_w, 13, 5, fill=1, stroke=0)
-                c.setFillColorRGB(0.62, 0.15, 0.10)
-            elif status_label == "Diagnosed":
-                c.setFillColorRGB(0.925, 0.965, 1)
-                c.roundRect(row_detail_x, y - 4, status_w, 13, 5, fill=1, stroke=0)
-                c.setFillColorRGB(0.10, 0.30, 0.55)
-            elif status_label == "Monitor":
-                c.setFillColorRGB(0.96, 0.955, 0.90)
-                c.roundRect(row_detail_x, y - 4, status_w, 13, 5, fill=1, stroke=0)
-                c.setFillColorRGB(0.42, 0.34, 0.10)
-            else:
-                c.setFillColorRGB(0.93, 0.96, 0.95)
-                c.roundRect(row_detail_x, y - 4, status_w, 13, 5, fill=1, stroke=0)
-                c.setFillGray(0.34)
             c.setFont("Helvetica-Bold", 8.2)
-            c.drawString(row_detail_x + 7, y, status_text)
+            c.setFillGray(0.34)
+            c.drawString(row_detail_x, y, status_text)
             c.setFillGray(0)
             y -= 15
 
@@ -7366,7 +7358,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 c.setFillGray(0)
                 y -= 3
 
-            y -= 14
+            y = row_bottom - row_gap
 
         final_note_lines = wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2] if req.showRiskNotes else []
         customer_note_lines = wrap_text(req.notes.strip(), max_chars=90) if req.notes else []
@@ -7385,7 +7377,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         if customer_note_lines:
             summary_needed += 16 + (len(customer_note_lines) * 11) + 5
         if req.signatureDataUrl:
-            summary_needed += 128
+            summary_needed += 178
 
         # Ensure space for totals + customer + optional signature
         y = pdf_ensure_space(
@@ -7513,6 +7505,14 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         # Signature + footer
         if req.signatureDataUrl:
             y -= 12
+            y = pdf_ensure_space(
+                c, w, h, y,
+                needed=178,
+                title="Repair Estimate",
+                vehicle_line=vehicle_line,
+                left=LEFT, right=RIGHT,
+                show_generated_date=req.showGeneratedDate,
+            )
             y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=LEFT, right=RIGHT)
         pdf_draw_footer(c, w)
 
