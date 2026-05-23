@@ -6472,7 +6472,7 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
 
     c.setFont("Helvetica", 8.7)
     c.setFillGray(0.38)
-    c.drawString(left + 12, y - 29, "Signature confirms the customer reviewed the estimate details above and approves the estimate.")
+    c.drawString(left + 12, y - 29, "Signature confirms the customer reviewed and approved the estimate details above.")
     c.setFillGray(0)
 
     sig_box_h = 64
@@ -7058,8 +7058,8 @@ def estimate_risk_note_for_service(service_code: str = "", service_text: str = "
 
 
 CUSTOMER_FINAL_PRICE_NOTE = (
-    "Final price may vary based on vehicle condition, seized hardware, rust, "
-    "additional diagnostics, or unseen issues discovered during repair."
+    "Final pricing may vary after inspection, taxes, parts confirmation, "
+    "vehicle condition, or additional repair needs."
 )
 
 REPAIR_STATUS_LABELS = {
@@ -7166,7 +7166,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             vehicle_y -= 13
         c.setFont("Helvetica", 9)
         c.setFillGray(0.38)
-        c.drawString(divider_x + 18, vehicle_y - 2, "Estimate prepared for customer review and approval.")
+        c.drawString(divider_x + 18, vehicle_y - 2, "Prepared for customer review.")
 
         c.setFillGray(0)
         y = card_bottom - 18
@@ -7405,7 +7405,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c.setFont("Helvetica", 8.6)
         c.setFillGray(0.34)
         c.drawString(LEFT + 16, y - 38, "Includes quoted services, labor, parts, travel, and selected PDF details.")
-        c.drawString(LEFT + 16, y - 51, f"{service_count_label.capitalize()} ready for customer review.")
+        c.drawString(LEFT + 16, y - 51, f"{service_count_label.capitalize()} prepared for customer review.")
         c.setFillColorRGB(0.05, 0.08, 0.13)
         c.setFont("Helvetica-Bold", 26)
         c.drawRightString(X_TOTAL - 18, y - 19, f"${grand_total:,.0f}")
@@ -7430,7 +7430,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         has_signature = bool(req.signatureDataUrl)
         if has_signature:
             approval_title = "Signed Customer Approval"
-            approval_line = "Customer signed after reviewing the estimate details."
+            approval_line = "Customer reviewed and approved the estimate details with a signature."
             approval_note = "Estimate approval only. No payment is collected or recorded on this PDF."
         elif req.customerAgrees:
             approval_title = "Customer Reviewed Estimate"

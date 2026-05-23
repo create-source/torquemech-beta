@@ -1979,7 +1979,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       lines.push("");
     }
 
-    lines.push("Here is the repair quote prepared for your vehicle:");
+    lines.push("Here is the repair quote prepared for customer review:");
     lines.push("");
 
     if (vehicle) {
@@ -1989,14 +1989,15 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     lineItems.forEach((it) => {
       const statusLabel = getRepairStatusLabel(it.status);
-      if (it.pricingMode === "flat") {
-        lines.push(`- ${it.serviceText} - Status: ${statusLabel} - ${money(it.estimate)} (flat-rate${Number(it.travelFee || 0) > 0 ? `, includes ${money(it.travelFee)} travel` : ""})`);
-      } else {
-        lines.push(`- ${it.serviceText} - Status: ${statusLabel} - ${money(it.estimate)}${Number(it.travelFee || 0) > 0 ? ` (includes ${money(it.travelFee)} travel)` : ""}`);
-      }
+      const travelNote = Number(it.travelFee || 0) > 0 ? `Includes ${money(it.travelFee)} travel` : "";
+      lines.push(`- ${it.serviceText || "Repair service"}`);
+      lines.push(`  Status: ${statusLabel}`);
+      lines.push(`  Estimate: ${money(it.estimate)}`);
+      if (it.pricingMode === "flat") lines.push("  Pricing: Flat-rate");
+      if (travelNote) lines.push(`  ${travelNote}`);
+      lines.push("");
     });
 
-    lines.push("");
     lines.push(`Quote Total: ${money(total)}`);
 
     const notes = (notesEl?.value || "").trim();
@@ -2006,7 +2007,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     lines.push("");
-    lines.push("Final pricing may vary after inspection, parts confirmation, taxes, or added repair needs.");
+    lines.push("Final pricing may vary after inspection, taxes, parts confirmation, or additional repair needs.");
 
     return lines.join("\n");
   }
@@ -3797,8 +3798,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (wantsSignature && signed) {
       return {
         state: "signed",
-        title: "Signed approval",
-        detail: "The PDF will show customer signature approval for this reviewed estimate. No payment is collected or recorded.",
+        title: "Signed customer approval",
+        detail: "The PDF will show that the customer reviewed and approved the estimate. No payment is collected or recorded.",
       };
     }
 
@@ -3814,7 +3815,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       return {
         state: "reviewed",
         title: "Customer reviewed estimate",
-        detail: "The PDF will show that the estimate was reviewed. No payment is collected or recorded.",
+        detail: "The PDF will show that the customer reviewed the estimate. No payment is collected or recorded.",
       };
     }
 
@@ -3923,6 +3924,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     refreshQuotePreview();
     refreshQuoteIdentityNudge();
   });
+  customerPhoneEl?.addEventListener("input", refreshQuotePreview);
   customerAgreesChk?.addEventListener("change", refreshApprovalStatus);
   notesEl?.addEventListener("input", refreshQuotePreview);
   pdfShowGeneratedDateChk?.addEventListener("change", refreshQuotePreview);

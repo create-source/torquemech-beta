@@ -31,9 +31,9 @@
       <div class="tm-shared-quote-hero">
         <div class="tm-shared-quote-main">
           <div class="tm-shared-quote-kicker">Customer repair quote</div>
-          <div class="tm-shared-quote-title">Review Your Estimate</div>
+          <div class="tm-shared-quote-title">Estimate Summary</div>
           <p class="tm-shared-quote-subtitle">
-            Services, vehicle, and estimate total are shown below for quick review.
+            Prepared for customer review with services, vehicle, and estimate total shown below.
           </p>
         </div>
         <div class="tm-shared-total-card" aria-label="Total estimate">
@@ -63,18 +63,18 @@
         <a href="/estimator" class="tm-btn tm-btn-secondary">Start New Quote</a>
       </div>
       <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--shared">
-        Estimate may change after inspection, parts confirmation, taxes, fees, or added repair needs.
+        Final pricing may vary after inspection, taxes, parts confirmation, or additional repair needs.
       </div>
     </div>
     {% endif %}
 
     {% if shared_id %}
     <div class="tm-muted tm-estimator-lede tm-shared-review-lede">
-      Scroll down to review the job breakdown. Use the PDF button when you want a customer copy.
+      Review the job breakdown below, then download the customer PDF when ready.
     </div>
     {% else %}
     <div class="tm-muted tm-estimator-lede">
-      Build a clean repair quote with labor, parts, flat rate, travel, customer approval, and PDF totals kept in sync.
+      Build a clean repair quote with labor, parts, travel, customer review status, and PDF totals kept in sync.
     </div>
     {% endif %}
 
@@ -129,7 +129,7 @@
     </div>
     <div class="tm-quote-note">
       <div>Customer quote note</div>
-      <div class="tm-hint">Final price can change after inspection, parts confirmation, taxes, fees, or added repair needs.</div>
+      <div class="tm-hint">Final pricing may vary after inspection, taxes, parts confirmation, or additional repair needs.</div>
     </div>
 
     <!-- Service -->
@@ -399,11 +399,11 @@
 
       <div id="customerQuoteFinalActions" class="actions estimator-final-actions" aria-label="Finish customer quote">
         {% if shared_id %}
-        <div class="tm-hint">This shared estimate is ready for review and customer approval, with PDF, email, and share handoff support for professional repair decisions.</div>
+        <div class="tm-hint">This shared estimate is ready for customer review with PDF, email, and share handoff support.</div>
         {% endif %}
         <div class="estimator-final-step">Final action</div>
         <div class="estimator-final-heading">Ready to Send the Customer Quote</div>
-        <div class="tm-hint estimator-final-hint">Review the job list, customer info, approval state, and PDF options before creating the customer copy.</div>
+        <div class="tm-hint estimator-final-hint">Review the job list, customer info, review status, and PDF options before creating the customer copy.</div>
         <div class="tm-final-help" aria-label="How customer quotes work">
           <div class="tm-final-help__title">Create a Customer Quote</div>
           <ol class="tm-final-help__steps">
@@ -428,7 +428,7 @@
     <div class="modal-card tm-confirm-modal">
       <div class="modal-header tm-confirm-header">
         <h2>Create Customer Quote</h2>
-        <p class="tm-confirm-intro">Review the shop identity, customer approval, and PDF details before creating the customer copy.</p>
+        <p class="tm-confirm-intro">Review the shop identity, customer review status, and PDF details before creating the customer copy.</p>
       </div>
 
       <section class="tm-confirm-section" aria-label="Business identity">
@@ -472,7 +472,7 @@
         </label>
         <div id="approvalStatus" class="tm-approval-status" data-state="reviewed" aria-live="polite">
           <strong>Customer reviewed estimate</strong>
-          <span>The PDF will show that the estimate was reviewed. No payment is collected or recorded.</span>
+          <span>The PDF will show that the customer reviewed the estimate. No payment is collected or recorded.</span>
         </div>
         <p id="quoteIdentityNudge" class="tm-confirm-helper tm-confirm-helper--nudge hidden">
           Adding customer and business details makes the quote easier to match to the repair visit.
@@ -527,7 +527,7 @@
         <div class="sig-choice tm-confirm-radio-row">
         <label class="tm-confirm-check">
           <input type="radio" name="wantSig" value="yes" checked />
-          <span>Customer will sign approval</span>
+          <span>Customer will sign reviewed estimate</span>
         </label>
 
         <label class="tm-confirm-check">
@@ -539,7 +539,7 @@
       <!-- Signature section -->
       <div id="sigSection" class="hidden tm-signature-panel">
         <label class="tm-confirm-signature-label">Customer approval signature</label>
-        <p class="tm-confirm-signature-copy">Signature confirms the customer reviewed the estimate details shown above and approves the estimate. It does not record payment.</p>
+        <p class="tm-confirm-signature-copy">Signature confirms the customer reviewed the estimate details shown above and approves the estimate. No payment is recorded.</p>
 
         <div class="sig-wrap">
           <canvas id="sigCanvas" class="tm-signature-canvas"></canvas>
