@@ -560,9 +560,11 @@
 
   function updateServiceClearButton() {
     if (!serviceClearBtn) return;
-    const hasValue = Boolean((serviceEl?.value || "").trim() || (serviceSearch?.value || "").trim());
+    const hasTypedText = Boolean((serviceSearch?.value || "").trim());
+    const hasSelectedService = Boolean((serviceEl?.value || "").trim());
+    const hasValue = hasTypedText || hasSelectedService;
     serviceClearBtn.hidden = !hasValue;
-    serviceClearBtn.disabled = !!serviceSearch?.disabled;
+    serviceClearBtn.disabled = false;
   }
 
   // Inputs
@@ -3489,6 +3491,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     hideServiceResults();
     hidePairedSuggestions();
     serviceMeta = null;
+    editingLineItem = null;
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
     await loadServiceMeta("");
     updateServiceClearButton();
