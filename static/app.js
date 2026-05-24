@@ -1211,6 +1211,17 @@
     return engineLabel ? `Spark Plug Replacement (${engineLabel})` : "Spark Plug Replacement";
   }
 
+  function cleanGenericFitmentLabel(serviceText) {
+    return String(serviceText || "Service")
+      .replace(/\s*\((?:diesel|diesel,\s*if applicable|4x4,\s*if applicable|gdi\/port|manual|if applicable|if supported)\)\s*/gi, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  }
+
+  function cleanCustomerFacingServiceLabel(serviceCode, serviceText, vehicle) {
+    return cleanGenericFitmentLabel(cleanCustomerServiceLabel(serviceCode, serviceText, vehicle));
+  }
+
   function getCurrentVehicleSnapshot() {
     const vehicle = getActiveVehicle() || estimateState.vehicles[0] || null;
     return {
@@ -1555,7 +1566,7 @@
       vehicleModel,
       vehicleDisplayModel,
       serviceCode: String(it?.serviceCode || "").trim(),
-      serviceText: cleanCustomerServiceLabel(
+      serviceText: cleanCustomerFacingServiceLabel(
         it?.serviceCode,
         it?.serviceText || it?.serviceCode || "Service",
         { id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel, displayModel: vehicleDisplayModel }
@@ -4604,7 +4615,7 @@ if (getEstimateHint) {
     }
 
     const serviceCode = editingLineItem ? editingLineItem.serviceCode : serviceEl.value;
-    const serviceText = cleanCustomerServiceLabel(serviceCode, rawServiceText, activeVehicle);
+    const serviceText = cleanCustomerFacingServiceLabel(serviceCode, rawServiceText, activeVehicle);
 
     const pricingSnapshot = buildPricingSnapshotFromControls();
     const it = {
