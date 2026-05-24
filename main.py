@@ -5929,6 +5929,7 @@ class EstimateRequest(BaseModel):
     year: int = Field(..., ge=1970, le=2035)
     make: str = Field(..., min_length=1)
     model: str = Field(..., min_length=1)
+    displayModel: Optional[str] = None
 
     category: Optional[str] = None
     serviceCode: Optional[str] = None
@@ -5958,6 +5959,15 @@ class EstimateResponse(BaseModel):
     service_name: str
     breakdown: Dict[str, Any]
     labor_breakdown: Optional[Dict[str, Any]] = None
+
+
+def customer_vehicle_model(model: str, display_model: Optional[str] = None) -> str:
+    visible_model = (display_model or "").strip()
+    return visible_model or (model or "").strip()
+
+
+def customer_vehicle_line(year: Any, make: str, model: str, display_model: Optional[str] = None) -> str:
+    return f"{year} {make} {customer_vehicle_model(model, display_model)}".strip()
 
 app.add_middleware(
     CORSMiddleware,
@@ -6850,7 +6860,7 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         c.drawString(72, y, "Vehicle")
         y -= 16
         c.setFont("Helvetica", 11)
-        c.drawString(72, y, f"{req.year} {req.make} {req.model}")
+        c.drawString(72, y, customer_vehicle_line(req.year, req.make, req.model, req.displayModel))
         y -= 22
 
         # ---------------- Service ----------------
@@ -6968,7 +6978,7 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
                 c, w, h, y,
                 needed=178,
                 title="Repair Estimate",
-                vehicle_line=f"{req.year} {req.make} {req.model}",
+                vehicle_line=customer_vehicle_line(req.year, req.make, req.model, req.displayModel),
                 left=72, right=72,
                 show_generated_date=req.showGeneratedDate,
             )
@@ -7012,6 +7022,7 @@ class MultiPDFRequest(BaseModel):
     year: int
     make: str
     model: str
+    displayModel: Optional[str] = None
     notes: Optional[str] = None
     customerName: Optional[str] = None
     customerPhone: Optional[str] = None
@@ -7087,7 +7098,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c = canvas.Canvas(buf, pagesize=letter)
         w, h = letter
 
-        vehicle_line = f"{req.year} {req.make} {req.model}"
+        vehicle_line = customer_vehicle_line(req.year, req.make, req.model, req.displayModel)
         y = pdf_start_page(
             c,
             w,

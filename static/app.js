@@ -52,6 +52,7 @@
       year: String(initialVehicle.year || ""),
       make: String(initialVehicle.make || ""),
       model: String(initialVehicle.model || ""),
+      displayModel: String(initialVehicle.displayModel || initialVehicle.model || ""),
     };
 
     const notifyChange = () => {
@@ -60,6 +61,7 @@
           year: vehicle.year,
           make: vehicle.make,
           model: vehicle.model,
+          displayModel: vehicle.displayModel || vehicle.model,
           hasSelection: Boolean(vehicle.year || vehicle.make || vehicle.model),
           isComplete: Boolean(vehicle.year && vehicle.make && vehicle.model),
         });
@@ -319,7 +321,7 @@
       modelResults.style.display = "block";
     };
 
-    const populateModels = async (selectedMake, selectedModel = "") => {
+    const populateModels = async (selectedMake, selectedModel = "", selectedDisplayModel = selectedModel) => {
       models = [];
       modelSearch.value = "";
       modelSearch.disabled = true;
@@ -352,7 +354,7 @@
         modelSelect.value = selectedModel;
         modelSearch.disabled = false;
         modelSearch.placeholder = "Search model...";
-        modelSearch.value = selectedModel;
+        modelSearch.value = selectedDisplayModel || selectedModel;
         updateVehicleClearButtons();
       } catch (_) {
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
@@ -365,8 +367,9 @@
 
     const applyModelSelection = (selectedModel, displayModel = selectedModel) => {
       vehicle.model = selectedModel;
+      vehicle.displayModel = displayModel || selectedModel;
       modelSelect.value = selectedModel;
-      modelSearch.value = displayModel;
+      modelSearch.value = vehicle.displayModel;
       hideModelResults();
       updateVehicleClearButtons();
       notifyChange();
@@ -375,6 +378,7 @@
     const applyMakeSelection = async (selectedMake, { focusModel = false } = {}) => {
       vehicle.make = selectedMake;
       vehicle.model = "";
+      vehicle.displayModel = "";
 
       makeSelect.value = selectedMake;
       makeSearch.value = selectedMake;
@@ -395,7 +399,7 @@
 
     makes = await vehicleUiApiJSON("/api/makes");
     populateMakeOptions();
-    await populateModels(vehicle.make, vehicle.model);
+    await populateModels(vehicle.make, vehicle.model, vehicle.displayModel);
     updateVehicleClearButtons();
     notifyChange();
 
@@ -466,6 +470,7 @@
     makeClearButton?.addEventListener("click", async () => {
       vehicle.make = "";
       vehicle.model = "";
+      vehicle.displayModel = "";
       makeSelect.value = "";
       makeSearch.value = "";
       modelSelect.value = "";
@@ -482,6 +487,7 @@
 
     modelClearButton?.addEventListener("click", () => {
       vehicle.model = "";
+      vehicle.displayModel = "";
       modelSelect.value = "";
       modelSearch.value = "";
       hideModelResults();
@@ -494,6 +500,7 @@
       vehicle.year = "";
       vehicle.make = "";
       vehicle.model = "";
+      vehicle.displayModel = "";
 
       yearSelect.value = "";
       makeSelect.value = "";
@@ -810,6 +817,7 @@
         year: "",
         make: "",
         model: "",
+        displayModel: "",
         services: []
       }
     ]
@@ -1130,6 +1138,7 @@
           id: it.id || `svc_${vehicle.id}_${index}`,
           vehicleId: vehicle.id,
           vehicleLabel: it.vehicleLabel || getVehicleLabel(vehicle),
+          vehicleDisplayModel: it.vehicleDisplayModel || getVehicleDisplayModel(vehicle),
           serviceCode: it.serviceCode,
           title: it.serviceText,
           laborHours: it.laborHours,
@@ -1158,12 +1167,22 @@
     return estimateState.vehicles.find(v => v.id === estimateState.activeVehicleId) || estimateState.vehicles[0] || null;
   }
 
+  function getVehicleDisplayModel(vehicle) {
+    return String(vehicle?.displayModel || vehicle?.model || "").trim();
+  }
+
+  function getVehicleDetails(vehicle) {
+    if (!vehicle) return "";
+    return [vehicle.year, vehicle.make, getVehicleDisplayModel(vehicle)].filter(Boolean).join(" ");
+  }
+
   function getCurrentVehicleSnapshot() {
     const vehicle = getActiveVehicle() || estimateState.vehicles[0] || null;
     return {
       year: vehicle?.year || "",
       make: vehicle?.make || "",
       model: vehicle?.model || "",
+      displayModel: getVehicleDisplayModel(vehicle),
     };
   }
 
@@ -1172,7 +1191,7 @@
 
     const idx = idxOverride ?? estimateState.vehicles.findIndex(v => v.id === vehicle.id);
     const title = `Vehicle ${idx + 1}`;
-    const details = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ");
+    const details = getVehicleDetails(vehicle);
 
     return details ? `${title} — ${details}` : title;
   }
@@ -1186,7 +1205,7 @@
     const details = [
       vehicleOrLabel?.year,
       vehicleOrLabel?.make,
-      vehicleOrLabel?.model,
+      getVehicleDisplayModel(vehicleOrLabel),
     ].filter(Boolean).join(" ");
     return details || "Vehicle";
   }
@@ -1383,7 +1402,7 @@
 
   function buildDraftTitle() {
     const currentVehicle = getCurrentVehicleSnapshot();
-    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.displayModel || currentVehicle.model].filter(Boolean).join(" ");
     const servicesCount = lineItems.length;
     return (vehicle || "Estimate") + (servicesCount ? ` (${servicesCount} service${servicesCount > 1 ? "s" : ""})` : "");
   }
@@ -1404,6 +1423,7 @@
         year: currentVehicle.year,
         make: currentVehicle.make,
         model: currentVehicle.model,
+        displayModel: currentVehicle.displayModel || currentVehicle.model,
       },
 
       // IMPORTANT: storing signature in localStorage can blow quota.
@@ -1433,6 +1453,7 @@
       year: String(d.vehicle?.year || d.year || "").trim(),
       make: String(d.vehicle?.make || d.make || "").trim(),
       model: String(d.vehicle?.model || d.model || "").trim(),
+      displayModel: String(d.vehicle?.displayModel || d.displayModel || d.vehicle?.model || d.model || "").trim(),
     };
     const customer = d.customer || {};
     const businessIdentity = d.businessIdentity || {};
@@ -1442,7 +1463,7 @@
       lineItemSource.map((it) => normalizeDraftLineItem(it, vehicle))
     );
     const fallbackTitle = [
-      [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ") || "Estimate",
+      getVehicleDetails(vehicle) || "Estimate",
       normalizedLineItems.length
         ? `(${normalizedLineItems.length} service${normalizedLineItems.length === 1 ? "" : "s"})`
         : "",
@@ -1480,7 +1501,8 @@
     const vehicleYear = it?.vehicleYear || fallbackVehicle?.year || "";
     const vehicleMake = it?.vehicleMake || fallbackVehicle?.make || "";
     const vehicleModel = it?.vehicleModel || fallbackVehicle?.model || "";
-    const vehicleLabel = it?.vehicleLabel || getVehicleLabel({ id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel }, 0);
+    const vehicleDisplayModel = it?.vehicleDisplayModel || fallbackVehicle?.displayModel || vehicleModel;
+    const vehicleLabel = it?.vehicleLabel || getVehicleLabel({ id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel, displayModel: vehicleDisplayModel }, 0);
     const flatRatePrice = normalizeMoneyValue(it?.flatRatePrice);
     const travelFee = normalizeMoneyValue(it?.travelFee);
     const laborHours = normalizeMoneyValue(it?.laborHours);
@@ -1496,6 +1518,7 @@
       vehicleYear,
       vehicleMake,
       vehicleModel,
+      vehicleDisplayModel,
       serviceCode: String(it?.serviceCode || "").trim(),
       serviceText: String(it?.serviceText || it?.serviceCode || "Service").trim(),
       pricingMode,
@@ -1544,6 +1567,7 @@
             year: d.vehicle?.year || "",
             make: d.vehicle?.make || "",
             model: d.vehicle?.model || "",
+            displayModel: d.vehicle?.displayModel || d.vehicle?.model || "",
             services: []
           }
         ]
@@ -1948,7 +1972,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!sharedSnapshotVehicle && !sharedSnapshotServices && !sharedSnapshotTotal) return;
 
     const currentVehicle = getCurrentVehicleSnapshot();
-    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.displayModel || currentVehicle.model].filter(Boolean).join(" ");
 
     if (sharedSnapshotVehicle) {
       sharedSnapshotVehicle.textContent = vehicle || "Not selected";
@@ -1966,7 +1990,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   function buildQuoteMessage() {
     const customerName = (customerNameEl?.value || "").trim();
     const currentVehicle = getCurrentVehicleSnapshot();
-    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.displayModel || currentVehicle.model].filter(Boolean).join(" ");
     const total = quoteTotal();
 
     const lines = [];
@@ -2014,7 +2038,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function buildEstimateEmailSubject() {
     const currentVehicle = getCurrentVehicleSnapshot();
-    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.model].filter(Boolean).join(" ");
+    const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.displayModel || currentVehicle.model].filter(Boolean).join(" ");
     const serviceCount = lineItems.length;
     const serviceText = serviceCount === 1
       ? lineItems[0]?.serviceText
@@ -4131,6 +4155,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       year: Number(activeVehicle.year || 0),
       make: (activeVehicle.make || "").trim(),
       model: (activeVehicle.model || "").trim(),
+      displayModel: getVehicleDisplayModel(activeVehicle),
       category: (categoryEl?.value || "").trim() || null,
       serviceCode: (serviceEl?.value || "").trim() || null,
 
@@ -4547,6 +4572,7 @@ if (getEstimateHint) {
       vehicleYear: activeVehicle.year || "",
       vehicleMake: activeVehicle.make || "",
       vehicleModel: activeVehicle.model || "",
+      vehicleDisplayModel: getVehicleDisplayModel(activeVehicle),
       serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
       serviceText,
       status: "recommended",
@@ -4925,6 +4951,7 @@ if (getEstimateHint) {
           year: Number(activeVehicle.year || 0),
           make: String(activeVehicle.make || "").trim(),
           model: String(activeVehicle.model || "").trim(),
+          displayModel: getVehicleDisplayModel(activeVehicle),
           notes: (notesEl?.value || "").trim() || null,
           customerName: (customerNameEl?.value || "").trim() || null,
           customerPhone: (customerPhoneEl?.value || "").trim() || null,
@@ -5091,6 +5118,7 @@ if (getEstimateHint) {
           year: "",
           make: "",
           model: "",
+          displayModel: "",
           services: []
         }
       ]
@@ -5366,6 +5394,7 @@ if (getEstimateHint) {
     v.year = yearEl?.value || "";
     v.make = makeEl?.value || "";
     v.model = modelEl?.value || "";
+    v.displayModel = modelEl?.options?.[modelEl.selectedIndex]?.textContent?.trim() || v.model;
 
     window.estimateState = estimateState;
   }
@@ -5605,11 +5634,13 @@ if (getEstimateHint) {
           year: vehicle.year || "",
           make: vehicle.make || "",
           model: vehicle.model || "",
+          displayModel: vehicle.displayModel || vehicle.model || "",
         },
-        onChange: ({ year, make, model }) => {
+        onChange: ({ year, make, model, displayModel }) => {
           vehicle.year = year;
           vehicle.make = make;
           vehicle.model = model;
+          vehicle.displayModel = displayModel || model;
           syncEstimateMeta();
           window.estimateState = estimateState;
           void loadServices(categoryEl?.value || "");
@@ -5741,7 +5772,10 @@ if (getEstimateHint) {
 
       if (year) activeVehicle.year = year;
       if (make) activeVehicle.make = make;
-      if (model) activeVehicle.model = model;
+      if (model) {
+        activeVehicle.model = model;
+        activeVehicle.displayModel = model;
+      }
 
       window.estimateState = estimateState;
       await renderVehicles();
