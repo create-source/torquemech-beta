@@ -1003,12 +1003,31 @@ button:active{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 10px;
+  gap: 10px;
+  padding: 8px;
   border: 1px solid rgba(20,184,166,.34);
-  border-radius: 16px;
+  border-radius: 12px;
   background: linear-gradient(180deg, rgba(240,253,250,.96) 0%, rgba(220,252,247,.78) 100%);
-  box-shadow: 0 12px 28px rgba(15,118,110,.08);
+  box-shadow: 0 8px 18px rgba(15,118,110,.07);
+}
+
+.tm-addServiceRow .tm-hint{
+  max-width: 260px;
+  margin: 0;
+  font-size: .8rem;
+  line-height: 1.25;
+}
+
+.add-more-btn{
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.add-more-btn:focus-visible,
+.tm-service-actions .tm-btn:focus-visible,
+.tm-estimate-action-panel__button:focus-visible{
+  outline: 3px solid rgba(37,99,235,.30);
+  outline-offset: 2px;
 }
 
 .tm-vehicle-cta-group{
@@ -1518,6 +1537,7 @@ input[type="radio"]{
   padding: 14px 18px;
   border-radius: 14px;
   border: 1px solid rgba(11,22,40,.12);
+  border-left: 4px solid rgba(20,184,166,.72);
   background: linear-gradient(180deg, #ffffff 0%, #f5f8fb 100%);
   box-shadow: 0 8px 20px rgba(15,23,42,.06);
   display: flex;
@@ -2735,6 +2755,22 @@ canvas,
     min-height: 54px;
   }
 
+  .tm-addServiceRow{
+    width:100%;
+    align-items:stretch;
+    gap:8px;
+    padding:8px;
+  }
+
+  .tm-addServiceRow .tm-hint{
+    display:none;
+  }
+
+  .add-more-btn{
+    width:100%;
+    min-height:48px;
+  }
+
   .line-items{
     margin-top: 14px;
     padding: 14px 11px;
@@ -3817,6 +3853,29 @@ h3{
   font-size:.88rem;
 }
 
+.tm-service-action-recalc{
+  border-color: rgba(37,99,235,.18);
+  background: rgba(239,246,255,.82);
+  color: #1d4ed8;
+}
+
+.tm-service-action-edit{
+  border-color: rgba(15,23,42,.12);
+}
+
+.tm-service-action-remove{
+  margin-left: auto;
+}
+
+.tm-service-card.is-unpriced .tm-service-estimate{
+  border-style: dashed;
+  background: rgba(248,250,252,.72);
+}
+
+.tm-service-card.is-unpriced .tm-service-estimate strong{
+  color: var(--tm-text-muted);
+}
+
 .tm-labor-panel{
   margin-top:12px;
   padding:12px;
@@ -4015,6 +4074,11 @@ h3{
     min-height:48px;
     padding:0 12px;
     white-space:normal;
+  }
+
+  .tm-service-action-remove{
+    grid-column:1 / -1;
+    margin-left:0;
   }
 
   .tm-service-actions .tm-service-toggle{

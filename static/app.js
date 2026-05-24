@@ -4273,9 +4273,10 @@ const confidenceEl = document.getElementById("laborConfidence");
         const riskNote = escapeServiceResultHtml(getEstimateRiskNote(it));
         const inspectionFindings = escapeServiceResultHtml(it.inspectionFindings || "");
         const isActiveEdit = activeEditingLineId === lineItemId;
+        const isPriced = it.estimate != null;
 
         return `
-          <div class="tm-service-card${isActiveEdit ? " is-editing" : ""}" data-idx="${idx}" data-line-item-id="${lineItemId}">
+          <div class="tm-service-card${isActiveEdit ? " is-editing" : ""}${isPriced ? "" : " is-unpriced"}" data-idx="${idx}" data-line-item-id="${lineItemId}">
             <div class="tm-service-head">
               <div class="tm-service-head-main">
                 <div class="tm-service-title-row">
@@ -4337,11 +4338,15 @@ const confidenceEl = document.getElementById("laborConfidence");
                 </button>
               ` : ""}
 
-              <button type="button" class="tm-btn tm-btn-secondary" data-action="edit-line" data-line-item-id="${lineItemId}">
+              <button type="button" class="tm-btn tm-btn-secondary tm-service-action-recalc" data-action="estimate" data-line-item-id="${lineItemId}">
+                Recalculate
+              </button>
+
+              <button type="button" class="tm-btn tm-btn-secondary tm-service-action-edit" data-action="edit-line" data-line-item-id="${lineItemId}">
                 Edit
               </button>
 
-              <button type="button" class="tm-btn tm-btn-danger" data-action="remove" data-line-item-id="${lineItemId}">
+              <button type="button" class="tm-btn tm-btn-danger tm-service-action-remove" data-action="remove" data-line-item-id="${lineItemId}">
                 Remove
               </button>
             </div>
@@ -4431,9 +4436,10 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function focusServiceAddArea() {
     const section = getServiceAddSection();
-    section?.scrollIntoView({
+    const target = serviceSearch && !serviceSearch.disabled ? serviceSearch : section;
+    target?.scrollIntoView({
       behavior: "smooth",
-      block: "start",
+      block: window.innerWidth < 700 ? "center" : "start",
       inline: "nearest",
     });
     highlightServiceAddArea();
@@ -4575,8 +4581,10 @@ if (getEstimateHint) {
         activeEditingLineId = null;
         readyForNextService = false;
         renderLineItems();
+        scrollLineItemIntoView(it.id);
         void refreshPairedSuggestions();
         updateEstimateButtonState();
+        focusAddAnotherRepair();
         setStatus("ok", `${it.serviceText}: ${money(it.estimate)}. Line updated.`);
       } catch (e) {
         setStatus("error", `Save line failed: ${e.message}`);
@@ -4846,6 +4854,7 @@ if (getEstimateHint) {
         if (it.pricingMode === "flat") {
           it.estimate = calcLineItemEstimate(it);
           renderLineItems();
+          scrollLineItemIntoView(it.id);
           trackClarity("estimate_generated", {
             source: "estimator",
             action: "line_item_recalculate",
@@ -4873,6 +4882,7 @@ if (getEstimateHint) {
         it.estimate = calcLineItemEstimate(it);
 
         renderLineItems();
+        scrollLineItemIntoView(it.id);
         trackClarity("estimate_generated", {
           source: "estimator",
           action: "line_item_recalculate",
