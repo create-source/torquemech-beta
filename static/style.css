@@ -1515,11 +1515,11 @@ input[type="radio"]{
 
 .tm-estimate-total-bar{
   margin-top: 14px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  border: 1px solid rgba(11,22,40,.10);
-  background: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
-  box-shadow: var(--tm-shadow-sm);
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(11,22,40,.12);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8fb 100%);
+  box-shadow: 0 8px 20px rgba(15,23,42,.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1527,25 +1527,25 @@ input[type="radio"]{
 }
 
 .tm-estimate-total-bar__label{
-  font-size: .92rem;
-  font-weight: 800;
+  font-size: .78rem;
+  font-weight: 950;
   letter-spacing: .02em;
   text-transform: uppercase;
   color: var(--tm-text-muted);
 }
 
 .tm-estimate-total-bar__value{
-  font-size: 2.1rem;
+  font-size: 2rem;
   font-weight: 950;
   line-height: 1;
-  letter-spacing: -.05em;
+  letter-spacing: 0;
   color: #0f172a;
 }
 
 .line-items-list,
 .labor-breakdown-list{
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .line-items-list{
@@ -3408,17 +3408,18 @@ h3{
   counter-increment: quote-job;
   background: #fff;
   border: 1px solid rgba(11,22,40,.12);
-  border-left: 4px solid rgba(20,184,166,.72);
-  border-radius: 12px;
-  padding: 16px 17px 16px 18px;
+  border-left: 5px solid rgba(20,184,166,.72);
+  border-radius: 10px;
+  padding: 14px 16px 14px 17px;
   margin-top: 0;
-  box-shadow: 0 6px 16px rgba(15,23,42,.052);
+  box-shadow: 0 5px 14px rgba(15,23,42,.05);
 }
 
 .tm-service-card.is-editing{
-  border-color: rgba(20,184,166,.46);
-  border-left-color: #0f766e;
-  box-shadow: 0 0 0 3px rgba(20,184,166,.10), 0 9px 22px rgba(15,23,42,.07);
+  border-color: rgba(37,99,235,.34);
+  border-left-color: #2563eb;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.10), 0 10px 24px rgba(15,23,42,.08);
 }
 
 .tm-service-card.is-newly-added{
@@ -3440,17 +3441,24 @@ h3{
   content: "Job " counter(quote-job);
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  margin-bottom: 10px;
-  padding: 4px 9px;
-  border: 1px solid rgba(20,184,166,.22);
-  border-radius: 999px;
-  background: rgba(20,184,166,.09);
+  min-height: 22px;
+  margin-bottom: 9px;
+  padding: 3px 8px;
+  border: 1px solid rgba(20,184,166,.20);
+  border-radius: 7px;
+  background: rgba(20,184,166,.08);
   color: #0f766e;
-  font-size: .72rem;
+  font-size: .68rem;
   font-weight: 950;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.tm-service-card.is-editing::before{
+  content: "Editing job " counter(quote-job);
+  border-color: rgba(37,99,235,.24);
+  background: rgba(239,246,255,.96);
+  color: #1d4ed8;
 }
 
 .tm-service-card + .tm-service-card{
@@ -3459,9 +3467,9 @@ h3{
 
 .tm-service-head{
   display:grid;
-  grid-template-columns:minmax(0, 1fr) auto;
+  grid-template-columns:minmax(0, 1fr) minmax(128px, auto);
   align-items:start;
-  gap:18px;
+  gap:16px;
 }
 
 .tm-service-head-main{
@@ -3473,13 +3481,14 @@ h3{
   display:flex;
   align-items:flex-start;
   flex-wrap:wrap;
-  gap:9px;
+  gap:8px;
 }
 
 .tm-service-title{
-  font-size:1.18rem;
+  flex:1 1 260px;
+  font-size:1.12rem;
   font-weight:900;
-  line-height:1.18;
+  line-height:1.22;
   color:var(--tm-text);
   overflow-wrap:anywhere;
 }
@@ -3487,12 +3496,13 @@ h3{
 .tm-service-editing-pill{
   display:inline-flex;
   align-items:center;
-  min-height:22px;
-  padding:3px 8px;
-  border-radius:999px;
-  background:rgba(20,184,166,.10);
-  color:#0f766e;
-  font-size:.72rem;
+  min-height:24px;
+  padding:4px 8px;
+  border:1px solid rgba(37,99,235,.18);
+  border-radius:7px;
+  background:rgba(239,246,255,.96);
+  color:#1d4ed8;
+  font-size:.7rem;
   font-weight:900;
   line-height:1;
   text-transform:uppercase;
@@ -3501,30 +3511,31 @@ h3{
 .tm-repair-status-control{
   display:inline-flex;
   align-items:center;
-  gap:6px;
-  min-height:28px;
-  padding:3px 6px 3px 9px;
+  gap:5px;
+  min-height:30px;
+  margin-left:auto;
+  padding:4px 6px 4px 8px;
   border:1px solid rgba(15,23,42,.10);
-  border-radius:999px;
+  border-radius:9px;
   background:rgba(248,250,252,.92);
   color:#475569;
   line-height:1;
 }
 
 .tm-repair-status-control span{
-  font-size:.68rem;
+  font-size:.64rem;
   font-weight:950;
-  letter-spacing:.05em;
+  letter-spacing:.02em;
   text-transform:uppercase;
   white-space:nowrap;
 }
 
 .tm-repair-status-control select{
-  min-height:24px;
-  max-width:130px;
-  padding:1px 24px 1px 8px;
+  min-height:25px;
+  max-width:122px;
+  padding:1px 22px 1px 7px;
   border:0;
-  border-radius:999px;
+  border-radius:7px;
   background:#fff;
   color:#0f172a;
   font-size:.78rem;
@@ -3534,8 +3545,8 @@ h3{
 }
 
 .tm-repair-status-control[data-status="urgent"]{
-  border-color:rgba(220,38,38,.24);
-  background:rgba(254,242,242,.95);
+  border-color:rgba(220,38,38,.30);
+  background:rgba(254,242,242,.97);
   color:#991b1b;
 }
 
@@ -3545,14 +3556,14 @@ h3{
 }
 
 .tm-repair-status-control[data-status="diagnosed"]{
-  border-color:rgba(37,99,235,.18);
-  background:rgba(239,246,255,.9);
+  border-color:rgba(37,99,235,.24);
+  background:rgba(239,246,255,.94);
   color:#1d4ed8;
 }
 
 .tm-repair-status-control[data-status="monitor"]{
-  border-color:rgba(245,158,11,.22);
-  background:rgba(255,251,235,.92);
+  border-color:rgba(245,158,11,.28);
+  background:rgba(255,251,235,.96);
   color:#92400e;
 }
 
@@ -3569,31 +3580,32 @@ h3{
 }
 
 .tm-service-vehicle{
-  margin-top:5px;
-  font-size:.88rem;
+  margin-top:6px;
+  font-size:.84rem;
   font-weight:700;
   color:var(--tm-text-muted);
 }
 
 .tm-service-meta{
-  margin-top:10px;
+  margin-top:12px;
   display:flex;
   flex-wrap:wrap;
-  gap:7px 8px;
-  font-size:.84rem;
+  gap:8px;
+  font-size:.82rem;
   color:#334155;
 }
 
 .tm-service-meta span{
   display:inline-grid;
-  grid-template-columns:auto auto;
+  grid-template-columns:1fr;
   align-items:center;
-  gap:4px;
+  gap:2px;
+  min-width:88px;
   white-space:normal;
   border:1px solid rgba(15,23,42,.08);
   background:rgba(248,250,252,.9);
-  border-radius:999px;
-  padding:5px 9px;
+  border-radius:9px;
+  padding:7px 9px;
   line-height:1.15;
 }
 
@@ -3614,7 +3626,8 @@ h3{
 
 .tm-service-meta span.is-empty{
   color:var(--tm-text-muted);
-  background:rgba(248,250,252,.72);
+  background:rgba(248,250,252,.62);
+  border-style:dashed;
 }
 
 .tm-service-meta strong,
@@ -3625,23 +3638,27 @@ h3{
 .tm-service-meta strong{
   color:var(--tm-text-muted);
   font-weight:900;
+  font-size:.68rem;
+  letter-spacing:.02em;
+  text-transform:uppercase;
 }
 
 .tm-service-meta em{
   color:var(--tm-text);
   font-style:normal;
-  font-weight:850;
+  font-size:.92rem;
+  font-weight:900;
 }
 
 .tm-cost-breakdown{
   display:grid;
-  gap:7px;
+  gap:6px;
   max-width:680px;
-  margin-top:11px;
-  padding:10px;
+  margin-top:10px;
+  padding:8px;
   border:1px solid rgba(15,23,42,.08);
-  border-radius:10px;
-  background:rgba(255,255,255,.76);
+  border-radius:9px;
+  background:rgba(248,250,252,.55);
 }
 
 .tm-cost-breakdown__row{
@@ -3649,10 +3666,10 @@ h3{
   grid-template-columns:minmax(0, 1fr) auto;
   align-items:center;
   gap:12px;
-  min-height:34px;
-  padding:6px 8px;
-  border-radius:8px;
-  background:rgba(248,250,252,.74);
+  min-height:32px;
+  padding:7px 8px;
+  border-radius:7px;
+  background:#fff;
 }
 
 .tm-cost-breakdown__row span{
@@ -3663,7 +3680,7 @@ h3{
 
 .tm-cost-breakdown__row strong{
   color:var(--tm-text);
-  font-size:.86rem;
+  font-size:.84rem;
   font-weight:900;
   line-height:1.15;
 }
@@ -3678,7 +3695,7 @@ h3{
 
 .tm-cost-breakdown__row b{
   color:var(--tm-text);
-  font-size:.9rem;
+  font-size:.92rem;
   font-weight:950;
   white-space:nowrap;
 }
@@ -3704,16 +3721,16 @@ h3{
 }
 
 .tm-service-risk-note{
-  margin-top: 10px;
+  margin-top: 12px;
   max-width: 680px;
   color: var(--tm-text-muted);
   font-size: .82rem;
   font-weight: 650;
-  line-height: 1.42;
-  padding: 9px 10px;
-  border: 1px solid rgba(15,23,42,.08);
-  border-radius: 10px;
-  background: rgba(248,250,252,.78);
+  line-height: 1.5;
+  padding: 9px 10px 9px 12px;
+  border-left: 3px solid rgba(100,116,139,.26);
+  border-radius: 8px;
+  background: rgba(248,250,252,.70);
 }
 
 .tm-service-risk-label{
@@ -3745,68 +3762,73 @@ h3{
 
 .tm-inspection-findings textarea{
   width:100%;
-  min-height:58px;
+  min-height:62px;
   max-height:140px;
-  padding:9px 11px;
+  padding:10px 11px;
   resize:vertical;
   overflow:hidden;
-  border-radius:8px;
-  font-size:.92rem;
-  line-height:1.35;
+  border-radius:9px;
+  font-size:.94rem;
+  line-height:1.42;
+  background:#fff;
 }
 
 .tm-service-estimate{
-  min-width:120px;
+  min-width:128px;
   text-align:right;
   flex-shrink:0;
-  padding:8px 10px;
-  border:1px solid rgba(15,23,42,.08);
-  border-radius:10px;
-  background:#f8fafc;
+  padding:10px 11px;
+  border:1px solid rgba(15,23,42,.10);
+  border-radius:9px;
+  background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .tm-service-estimate-label{
   display:block;
-  font-size:.8rem;
-  font-weight:700;
+  font-size:.68rem;
+  font-weight:950;
   color:var(--tm-text-muted);
-  margin-bottom:4px;
+  margin-bottom:5px;
   text-transform:uppercase;
-  letter-spacing:.04em;
+  letter-spacing:.02em;
 }
 
 .tm-service-estimate strong{
-  font-size:2.05rem;
+  font-size:1.9rem;
   line-height:1;
   color:#0f172a;
   font-weight:950;
+  letter-spacing:0;
 }
 
 .tm-service-actions{
   display:flex;
   flex-wrap:wrap;
-  gap:9px;
+  gap:8px;
   justify-content:flex-end;
-  margin-top:15px;
-  padding-top:12px;
+  margin-top:13px;
+  padding-top:11px;
   border-top:1px solid rgba(15,23,42,.07);
 }
 
 .tm-service-actions .tm-btn{
-  min-height:36px;
-  padding:0 12px;
-  font-size:.9rem;
+  min-height:38px;
+  padding:0 13px;
+  font-size:.88rem;
 }
 
 .tm-labor-panel{
-  margin-top:14px;
-  padding-top:14px;
+  margin-top:12px;
+  padding:12px;
   border-top:1px solid rgba(11,22,40,.08);
+  border-radius:9px;
+  background:rgba(248,250,252,.68);
 }
 
 .tm-labor-range{
-  margin-bottom:10px;
-  font-size:.96rem;
+  margin-bottom:9px;
+  font-size:.88rem;
+  font-weight:850;
   color:var(--tm-text);
 }
 
@@ -3820,7 +3842,8 @@ h3{
   justify-content:space-between;
   align-items:flex-start;
   gap:14px;
-  padding:6px 0;
+  padding:7px 0;
+  border-top:1px solid rgba(15,23,42,.06);
 }
 
 .tm-labor-row span{
@@ -3868,37 +3891,39 @@ h3{
 
   .tm-service-head{
     grid-template-columns:1fr;
-    gap:10px;
+    gap:11px;
   }
 
   .tm-service-card{
-    padding: 14px 12px 12px;
+    padding: 13px 11px 12px;
     border-left-width: 4px;
-    border-radius: 14px;
+    border-radius: 10px;
   }
 
   .tm-service-card::before{
     min-height: 22px;
-    margin-bottom: 9px;
-    padding: 4px 8px;
+    margin-bottom: 8px;
+    padding: 4px 7px;
     font-size: .68rem;
   }
 
   .tm-service-title{
-    font-size:1.1rem;
-    line-height:1.2;
+    flex-basis:100%;
+    font-size:1.04rem;
+    line-height:1.25;
   }
 
   .tm-repair-status-control{
     width:100%;
     justify-content:space-between;
-    border-radius:10px;
-    padding:7px 8px;
+    margin-left:0;
+    border-radius:9px;
+    padding:8px;
   }
 
   .tm-repair-status-control select{
-    max-width:150px;
-    min-height:30px;
+    max-width:154px;
+    min-height:32px;
   }
 
   .tm-service-vehicle{
@@ -3906,18 +3931,24 @@ h3{
   }
 
   .tm-service-meta{
-    gap:6px;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:7px;
   }
 
   .tm-service-meta span{
     grid-template-columns:1fr;
     gap:2px;
-    min-width:calc(50% - 4px);
+    min-width:0;
     max-width: 100%;
-    padding:6px 9px;
-    border-radius:10px;
+    padding:7px 8px;
+    border-radius:9px;
     font-size:.82rem;
     line-height:1.2;
+  }
+
+  .tm-service-meta em{
+    font-size:.95rem;
   }
 
   .tm-cost-breakdown{
@@ -3939,9 +3970,10 @@ h3{
   }
 
   .tm-service-risk-note{
-    margin-top: 9px;
+    margin-top: 10px;
     font-size: .8rem;
-    line-height: 1.45;
+    line-height: 1.5;
+    padding: 9px 10px;
   }
 
   .tm-inspection-findings{
@@ -3949,7 +3981,7 @@ h3{
   }
 
   .tm-inspection-findings textarea{
-    min-height:60px;
+    min-height:64px;
     font-size:.94rem;
   }
 
@@ -3961,19 +3993,19 @@ h3{
     justify-content:space-between;
     text-align:left;
     gap:12px;
-    padding:11px 12px;
+    padding:10px 11px;
     border-top:0;
   }
 
   .tm-service-estimate strong{
-    font-size:1.8rem;
+    font-size:1.72rem;
     overflow-wrap:anywhere;
   }
 
   .tm-service-actions{
     display:grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap:9px;
+    gap:8px;
     margin-top:12px;
     padding-top:10px;
   }
@@ -3991,7 +4023,7 @@ h3{
 
   .tm-labor-panel{
     margin-top:12px;
-    padding-top:12px;
+    padding:10px;
   }
 
   .tm-labor-row{
