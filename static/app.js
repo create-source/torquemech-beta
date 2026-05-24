@@ -1195,15 +1195,6 @@
     return "";
   }
 
-  function shouldCleanSparkPlugCylinderLabel(vehicle) {
-    const make = normalizeVehicleLabelKey(vehicle?.make);
-    const canonicalModel = normalizeVehicleLabelKey(vehicle?.model);
-    const displayModel = normalizeVehicleLabelKey(getVehicleDisplayModel(vehicle));
-
-    if (make !== "LEXUS") return false;
-    return canonicalModel === "GX" || canonicalModel === "LX" || displayModel.startsWith("GX") || displayModel.startsWith("LX");
-  }
-
   function cleanCustomerServiceLabel(serviceCode, serviceText, vehicle) {
     const code = String(serviceCode || "").trim();
     const label = String(serviceText || code || "Service").trim();
@@ -1212,7 +1203,7 @@
       code === "spark_plug_replacement_v6_v8" ||
       /^spark\s+plug\s+replacement\b/i.test(label);
 
-    if (!isSparkPlugService || !shouldCleanSparkPlugCylinderLabel(vehicle)) {
+    if (!isSparkPlugService) {
       return label;
     }
 
