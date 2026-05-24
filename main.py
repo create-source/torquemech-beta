@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import parse_qs, quote
+from urllib.parse import parse_qs, quote, urlencode
 
 import httpx
 import qrcode
@@ -1608,6 +1608,44 @@ def build_estimator_service_href(service_code: str, estimator_link: str = "/esti
 
     separator = "&" if "?" in base else "?"
     return f"{base}{separator}service={quote(code)}"
+
+
+def build_vehicle_context_from_request(request: Request) -> Dict[str, str]:
+    params = request.query_params
+    year = str(params.get("year") or "").strip()[:4]
+    make = str(params.get("make") or "").strip()[:40]
+    model = str(params.get("model") or "").strip()[:60]
+    display_model = str(params.get("displayModel") or params.get("display_model") or "").strip()[:60]
+
+    context = {
+        "year": year,
+        "make": make,
+        "model": model,
+        "displayModel": display_model or model,
+    }
+    context["has_context"] = bool(year or make or model or display_model)
+    context["label"] = " ".join(
+        item for item in [year, make, context["displayModel"] or model] if item
+    )
+    return context
+
+
+def append_vehicle_context_to_href(href: str, vehicle_context: Dict[str, str]) -> str:
+    base = str(href or "").strip()
+    if not base or not vehicle_context or not vehicle_context.get("has_context"):
+        return base
+
+    params = []
+    for key in ("year", "make", "model", "displayModel"):
+        value = str(vehicle_context.get(key) or "").strip()
+        if value:
+            params.append((key, value))
+
+    if not params:
+        return base
+
+    separator = "&" if "?" in base else "?"
+    return f"{base}{separator}{urlencode(params)}"
 
 
 def extract_repair_guide_slug(value: Any) -> str:
@@ -7711,12 +7749,34 @@ def open_shared_estimate(request: Request, estimate_id: str):
 async def repair_guide_page(request: Request, slug: str):
     raw_guide = load_json_file("repair_guides", f"{slug.replace('-', '_')}.json")
     guide = normalize_repair_guide(raw_guide, slug=slug)
+    vehicle_context = build_vehicle_context_from_request(request)
+
+    if guide.get("estimate"):
+        estimate = dict(guide["estimate"])
+        estimate_href = build_estimator_service_href(
+            estimate.get("service_code") or "",
+            estimate.get("estimator_link") or "/estimator",
+        )
+        estimate["href"] = append_vehicle_context_to_href(estimate_href, vehicle_context)
+        guide["estimate"] = estimate
+
+    contextual_repairs = []
+    for item in guide.get("recommended_repairs") or []:
+        linked_item = dict(item)
+        if linked_item.get("estimator_href"):
+            linked_item["estimator_href"] = append_vehicle_context_to_href(
+                linked_item["estimator_href"],
+                vehicle_context,
+            )
+        contextual_repairs.append(linked_item)
+    guide["recommended_repairs"] = contextual_repairs
 
     return templates.TemplateResponse(
         "repair_guide.html",
         {
             "request": request,
             "guide": guide,
+            "vehicle_context": vehicle_context,
             "page_title": f"{guide.get('title', 'Repair Guide')} | TorqueMech",
             "meta_description": guide.get("summary", "TorqueMech repair guide"),
         },

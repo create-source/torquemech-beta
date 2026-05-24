@@ -6,6 +6,13 @@
     <div class="tm-eyebrow">TorqueMech Repair Guide</div>
     <h1 class="tm-page-title">{{ guide.title }}</h1>
     <p class="tm-muted">{{ guide.summary }}</p>
+    {% if vehicle_context and vehicle_context.has_context %}
+    <div class="tm-vehicle-context-note">
+      <strong>Viewing repair guidance for:</strong>
+      <span>{{ vehicle_context.label }}</span>
+      <p>General repair guidance shown with your selected vehicle context.</p>
+    </div>
+    {% endif %}
     {% if guide.difficulty or guide.estimate %}
     <div class="tm-blueprint-meta">
       {% if guide.difficulty %}
@@ -14,7 +21,7 @@
       {% if guide.estimate %}
       <a
         class="tm-btn tm-btn-primary"
-        href="{% if guide.estimate.service_code %}{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}{% else %}{{ guide.estimate.estimator_link }}{% endif %}"
+        href="{{ guide.estimate.href if guide.estimate.href else guide.estimate.estimator_link }}"
       >
         {{ guide.estimate.cta_label }} ->
       </a>
@@ -22,12 +29,14 @@
     </div>
     {% endif %}
     <p class="tm-muted">Use this guide to confirm the failure path before replacement, then move into pricing once symptoms, tests, and root-cause evidence point to the same repair.</p>
+    <p class="tm-muted">Exact labor time and procedure may vary by engine, trim, drivetrain, and vehicle condition.</p>
   </div>
 </section>
 
 <section class="tm-section">
   <div class="tm-card">
     <h2>Load Vehicle (Optional)</h2>
+    <p class="tm-muted">Load or adjust vehicle context for guide references and estimator handoff. This does not make the guide a full vehicle-specific procedure.</p>
     <div class="vehicle-card">
       <div class="grid3">
         <div>
@@ -454,15 +463,21 @@
       id="estimateRepairBtn"
       data-estimator-link="{{ guide.estimate.estimator_link }}"
       data-service-code="{{ guide.estimate.service_code }}"
-      href="{% if guide.estimate.service_code %}{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}{% else %}{{ guide.estimate.estimator_link }}{% endif %}"
+      href="{{ guide.estimate.href if guide.estimate.href else guide.estimate.estimator_link }}"
     >
+      {% if vehicle_context and vehicle_context.has_context %}
+      Estimate this repair for {{ vehicle_context.label }} ->
+      {% else %}
       {{ guide.estimate.cta_label }} ->
+      {% endif %}
     </a>
+    <p class="tm-muted" style="margin-top:10px;">Exact labor time and procedure may vary by engine, trim, drivetrain, and vehicle condition.</p>
   </div>
 </section>
 <script>
 (function () {
   const guideSlug = {{ guide.get("slug", "") | tojson }};
+  const initialVehicleContext = {{ vehicle_context | tojson }};
   const yearSelect = document.getElementById("guideYear");
   const makeSelect = document.getElementById("guideMake");
   const makeSearch = document.getElementById("guideMakeSearch");
@@ -486,7 +501,7 @@
   );
   const defaultTorqueNote = torqueSpecsNote ? torqueSpecsNote.textContent.trim() : "";
 
-  function updateEstimateLink(year = "", make = "", model = "") {
+  function updateEstimateLink(year = "", make = "", model = "", displayModel = "") {
     if (!estimateRepairBtn) return;
 
     const estimatorLink = estimateRepairBtn.dataset.estimatorLink || "/estimator";
@@ -496,6 +511,7 @@
     if (year) params.set("year", year);
     if (make) params.set("make", make);
     if (model) params.set("model", model);
+    if (displayModel) params.set("displayModel", displayModel);
 
     const query = params.toString();
     estimateRepairBtn.href = query ? `${estimatorLink}?${query}` : estimatorLink;
@@ -559,7 +575,12 @@
     }
   }
 
-  updateEstimateLink();
+  updateEstimateLink(
+    initialVehicleContext.year || "",
+    initialVehicleContext.make || "",
+    initialVehicleContext.model || "",
+    initialVehicleContext.displayModel || "",
+  );
   let vehicleSelectorInitStarted = false;
 
   function initGuideVehicleSelector() {
@@ -576,8 +597,10 @@
       makeResults,
       modelSelect,
       clearButton: clearVehicleBtn,
-      onChange: ({ year, make, model, hasSelection, isComplete }) => {
-        updateEstimateLink(year, make, model);
+      initialVehicle: initialVehicleContext,
+      onChange: ({ year, make, model, displayModel, hasSelection, isComplete }) => {
+        const visibleModel = displayModel || model;
+        updateEstimateLink(year, make, model, visibleModel);
         if (isComplete) {
           refreshTorqueSpecs(year, make, model);
         } else {
@@ -593,7 +616,7 @@
 
         loadedVehicleNote.style.display = "block";
         loadedVehicleNote.textContent = isComplete
-          ? `Selected vehicle: ${year} ${make} ${model}`
+          ? `Selected vehicle: ${year} ${make} ${visibleModel}. General repair guidance shown with your selected vehicle context.`
           : "Continue selecting year, make, and model to carry vehicle context into the estimator.";
       },
     }).catch(() => {

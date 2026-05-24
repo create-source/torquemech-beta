@@ -1304,6 +1304,16 @@ button:active{
   margin-top: 4px;
 }
 
+.selected-service-context__link{
+  display:inline-flex;
+  width:max-content;
+  max-width:100%;
+  margin-top:6px;
+  color:#0f766e;
+  font-weight:850;
+  text-decoration:none;
+}
+
 .selected-service-context__meta{
   font-weight: 750;
 }
@@ -4336,6 +4346,27 @@ h3{
 .tm-blueprint-difficulty{
   display:grid;
   gap:10px;
+}
+
+.tm-vehicle-context-note{
+  display:grid;
+  gap:4px;
+  margin:14px 0 0;
+  padding:12px 14px;
+  border:1px solid rgba(17, 179, 173, .18);
+  border-radius:10px;
+  background:#f0fdfa;
+  color:var(--tm-text);
+}
+
+.tm-vehicle-context-note span{
+  font-weight:900;
+}
+
+.tm-vehicle-context-note p{
+  margin:0;
+  color:var(--tm-text-muted);
+  font-size:.9rem;
 }
 
 .tm-blueprint-chip-list{

@@ -1228,6 +1228,29 @@
     return cleanGenericFitmentLabel(cleanCustomerServiceLabel(serviceCode, serviceText, vehicle));
   }
 
+  const REPAIR_BLUEPRINT_BY_SERVICE = [
+    { match: ["alternator_replacement"], slug: "alternator-replacement" },
+    { match: ["front_brake_pads_replacement", "rear_brake_pads_replacement", "brake pad"], slug: "brake-pad-replacement" },
+    { match: ["water_pump_replacement"], slug: "water-pump-replacement" },
+    { match: ["spark_plug_replacement_4_cyl", "spark_plug_replacement_v6_v8", "spark plug"], slug: "spark-plug-replacement" },
+    { match: ["radiator_replacement"], slug: "radiator-replacement" },
+    { match: ["starter_replacement"], slug: "starter-replacement" },
+    { match: ["wheel_bearing_replacement_front", "wheel_bearing_replacement_rear", "wheel bearing"], slug: "wheel-bearing-replacement" },
+    { match: ["thermostat_replacement"], slug: "thermostat-replacement" },
+  ];
+
+  function getRepairBlueprintSlug(serviceCode, serviceText = "") {
+    const source = `${serviceCode || ""} ${serviceText || ""}`.toLowerCase().replace(/[_-]+/g, " ");
+    const code = String(serviceCode || "").toLowerCase();
+    const matched = REPAIR_BLUEPRINT_BY_SERVICE.find((entry) =>
+      entry.match.some((term) => {
+        const normalized = String(term || "").toLowerCase();
+        return code.includes(normalized) || source.includes(normalized.replace(/[_-]+/g, " "));
+      })
+    );
+    return matched?.slug || "";
+  }
+
   function getCurrentVehicleSnapshot() {
     const vehicle = getActiveVehicle() || estimateState.vehicles[0] || null;
     return {
@@ -1236,6 +1259,21 @@
       model: vehicle?.model || "",
       displayModel: getVehicleDisplayModel(vehicle),
     };
+  }
+
+  function buildRepairBlueprintHref(serviceCode, serviceText = "") {
+    const slug = getRepairBlueprintSlug(serviceCode, serviceText);
+    if (!slug) return "";
+
+    const vehicle = getCurrentVehicleSnapshot();
+    const params = new URLSearchParams();
+    if (vehicle.year) params.set("year", vehicle.year);
+    if (vehicle.make) params.set("make", vehicle.make);
+    if (vehicle.model) params.set("model", vehicle.model);
+    if (vehicle.displayModel) params.set("displayModel", vehicle.displayModel);
+
+    const query = params.toString();
+    return `/repair-guides/${slug}${query ? `?${query}` : ""}`;
   }
 
   function getVehicleLabel(vehicle, idxOverride = null) {
@@ -2330,11 +2368,13 @@ const confidenceEl = document.getElementById("laborConfidence");
     const laborRange = mn > 0 && mx >= mn
       ? `Typical labor range: ${fmt1(mn)}-${fmt1(mx)} hrs`
       : "";
+    const blueprintHref = buildRepairBlueprintHref(serviceEl.value, serviceName);
 
     selectedServiceContextEl.innerHTML = `
       <div class="selected-service-context__title">${escapeServiceResultHtml(serviceName)}${categoryName ? ` - ${escapeServiceResultHtml(categoryName)}` : ""}</div>
       ${summary ? `<div class="selected-service-context__summary">${escapeServiceResultHtml(summary)}</div>` : ""}
       ${laborRange ? `<div class="selected-service-context__meta">${escapeServiceResultHtml(laborRange)}</div>` : ""}
+      ${blueprintHref ? `<a class="selected-service-context__link" href="${escapeServiceResultHtml(blueprintHref)}">View repair blueprint with vehicle context</a>` : ""}
       <div class="selected-service-context__note">Adjust labor, parts, or travel fee before adding to the quote.</div>
     `;
     selectedServiceContextEl.classList.remove("hidden");
@@ -5837,9 +5877,10 @@ if (getEstimateHint) {
     const year = params.get("year");
     const make = params.get("make");
     const model = params.get("model");
+    const displayModel = params.get("displayModel") || params.get("display_model");
     const service = params.get("service");
 
-    if (!year && !make && !model && !service) return;
+    if (!year && !make && !model && !displayModel && !service) return;
 
     async function preloadVehicle() {
       const activeVehicle = getActiveVehicle();
@@ -5849,7 +5890,10 @@ if (getEstimateHint) {
       if (make) activeVehicle.make = make;
       if (model) {
         activeVehicle.model = model;
-        activeVehicle.displayModel = model;
+        activeVehicle.displayModel = displayModel || model;
+      } else if (displayModel) {
+        activeVehicle.model = displayModel;
+        activeVehicle.displayModel = displayModel;
       }
 
       window.estimateState = estimateState;
