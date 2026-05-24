@@ -45,6 +45,7 @@
   "estimate_guidance": [
     "Use pad-only pricing only when rotors, calipers, and hardware pass inspection.",
     "Quote pads and rotors when scoring, pulsation, rust lip, or thickness concerns are present.",
+    "Inspect seized caliper hardware, slide pins, rotor condition, and brake fluid condition before final approval.",
     "Add caliper or brake-fluid service only when inspection supports it."
   ],
   "labor_range": { "min_hours": 1.0, "max_hours": 2.5 },

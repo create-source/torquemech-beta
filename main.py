@@ -7157,18 +7157,34 @@ class MultiPDFRequest(BaseModel):
     lineItems: List[LineItemPDF]
 
 GENERIC_ESTIMATE_RISK_NOTE = (
-    "Price may vary if rust, seized hardware, broken bolts, stuck fasteners, "
-    "or additional diagnosis is required."
+    "Additional diagnostics or related system inspection may be required if access, "
+    "corrosion, or vehicle condition changes the repair path. Labor time may vary "
+    "based on vehicle condition."
 )
 
 BRAKE_ESTIMATE_RISK_NOTE = (
-    "Brake job price may vary if guide pins are seized, rotor screws are stuck, "
-    "hardware is rusted, calipers need service, or rotors require extra removal time."
+    "Inspect rotor condition, caliper hardware, slide pins, and brake fluid condition "
+    "before final approval. Labor time may vary based on vehicle condition."
 )
 
 
 def estimate_risk_note_for_service(service_code: str = "", service_text: str = "") -> str:
     service_value = f"{service_code or ''} {service_text or ''}".lower().replace("_", " ")
+    if "water pump" in service_value:
+        return (
+            "Inspect coolant condition, thermostat behavior, belt drive, and seized "
+            "hardware risk before final approval. Labor time may vary based on vehicle condition."
+        )
+    if "alternator" in service_value:
+        return (
+            "Verify charging output, battery condition, belt tensioner, cables, and "
+            "grounds before final approval. Labor time may vary based on vehicle condition."
+        )
+    if "starter" in service_value:
+        return (
+            "Verify battery condition, cable voltage drop, and starter circuit command "
+            "before final approval. Labor time may vary based on vehicle condition."
+        )
     brake_terms = [
         "brake pad",
         "brake pads",

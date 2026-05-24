@@ -45,7 +45,8 @@
   "estimate_guidance": [
     "Add diagnostic time when the vehicle has intermittent low voltage or parasitic draw complaints.",
     "Quote extra access time when the alternator is buried under intake, cooling, or splash-shield components.",
-    "Recommend belt inspection with every alternator estimate."
+    "Verify charging output, battery condition, cables, grounds, and main fuses before final approval.",
+    "Recommend belt and tensioner inspection with every alternator estimate."
   ],
   "labor_range": { "min_hours": 1.0, "max_hours": 3.0 },
   "related_obd_codes": [

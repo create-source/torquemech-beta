@@ -2113,6 +2113,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       lines.push(`  Estimate: ${money(it.estimate)}`);
       if (it.pricingMode === "flat") lines.push("  Pricing: Flat-rate");
       if (travelNote) lines.push(`  ${travelNote}`);
+      lines.push(`  Estimate note: ${getEstimateRiskNote(it)}`);
       lines.push("");
     });
 
@@ -3193,6 +3194,23 @@ const confidenceEl = document.getElementById("laborConfidence");
       service.category,
       service.categoryName,
     ].join(" "));
+    const vehicle = String(service.vehicleLabel || service.vehicleDisplayModel || service.vehicleModel || "").trim();
+    const contextSuffix = vehicle
+      ? " Procedure complexity may vary by engine, trim, drivetrain, and vehicle condition."
+      : " Labor time may vary based on vehicle condition.";
+
+    if (serviceText.includes("water pump")) {
+      return `Inspect coolant condition, thermostat behavior, belt drive, and seized hardware risk before final approval.${contextSuffix}`;
+    }
+
+    if (serviceText.includes("alternator")) {
+      return `Verify charging output, battery condition, belt tensioner, cables, and grounds before final approval.${contextSuffix}`;
+    }
+
+    if (serviceText.includes("starter")) {
+      return `Verify battery condition, cable voltage drop, and starter circuit command before final approval.${contextSuffix}`;
+    }
+
     const isBrakeService = [
       "brake pad",
       "brake pads",
@@ -3205,10 +3223,10 @@ const confidenceEl = document.getElementById("laborConfidence");
       serviceText.includes("brake");
 
     if (isBrakeService) {
-      return "Brake job price may vary if guide pins are seized, rotor screws are stuck, hardware is rusted, calipers need service, or rotors require extra removal time.";
+      return `Inspect rotor condition, caliper hardware, slide pins, and brake fluid condition before final approval.${contextSuffix}`;
     }
 
-    return "Price may vary if rust, seized hardware, broken bolts, stuck fasteners, or additional diagnosis is required.";
+    return `Additional diagnostics or related system inspection may be required if access, corrosion, or vehicle condition changes the repair path.${contextSuffix}`;
   }
 
   function getServiceHelperText(service) {
@@ -4009,6 +4027,9 @@ const confidenceEl = document.getElementById("laborConfidence");
                 </div>
                 <div class="tm-confirm-service-vehicle">
                   ${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}
+                </div>
+                <div class="tm-confirm-service-note">
+                  ${escapeServiceResultHtml(getEstimateRiskNote(it))}
                 </div>
               </div>
               <div class="tm-confirm-service-total">${money(it.estimate)}</div>

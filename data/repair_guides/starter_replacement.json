@@ -45,7 +45,8 @@
   "estimate_guidance": [
     "Add diagnostic time for intermittent no-crank complaints.",
     "Quote extra labor for shield, exhaust, driveshaft, or intake access issues.",
-    "Recommend battery and cable testing before final approval."
+    "Verify battery condition, cable voltage drop, starter relay, fuse, ground path, and command signal before final approval.",
+    "Procedure complexity may vary by engine, drivetrain, and access around exhaust or intake components."
   ],
   "labor_range": { "min_hours": 1.0, "max_hours": 3.5 },
   "recommended_repairs": [

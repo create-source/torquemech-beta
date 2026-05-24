@@ -43,8 +43,9 @@
     "Not bleeding trapped air after refill"
   ],
   "estimate_guidance": [
-    "Quote higher labor when the pump is timing-belt or timing-chain driven.",
-    "Add coolant, bleeding time, and related hose or thermostat recommendations when inspection supports them.",
+    "Quote higher labor when the pump is timing-belt, timing-chain, or intake-access dependent.",
+    "Inspect seized bolts, pulley hardware, coolant contamination, and gasket surfaces before final approval.",
+    "Add coolant, bleeding time, thermostat inspection, belt inspection, and hose recommendations only when inspection supports them.",
     "Treat overheated vehicles cautiously because secondary damage may change the repair path."
   ],
   "labor_range": { "min_hours": 2.0, "max_hours": 6.0 },
