@@ -1763,6 +1763,71 @@ def normalize_symptom_recommended_repairs(raw_items: Any) -> List[Dict[str, str]
     return repairs
 
 
+def normalize_diagnostic_path_sections(raw_items: Any) -> List[Dict[str, Any]]:
+    if not isinstance(raw_items, list):
+        return []
+
+    sections: List[Dict[str, Any]] = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+
+        title = str(item.get("title") or item.get("name") or "").strip()
+        if not title:
+            continue
+
+        sections.append(
+            {
+                "title": title,
+                "summary": str(item.get("summary") or item.get("description") or "").strip(),
+                "checks": normalize_repair_guide_list(item.get("checks") or item.get("quick_checks")),
+                "repairs": normalize_symptom_recommended_repairs(item.get("repairs") or item.get("related_repairs")),
+            }
+        )
+
+    return sections
+
+
+def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
+    normalized = str(code or "").upper().strip()
+    paths = {
+        "P0300": {
+            "title": "Misfire Diagnostic Path",
+            "summary": "Start by separating ignition, fuel, airflow, and mechanical causes before estimating parts.",
+            "systems": [
+                "Spark plug condition",
+                "Ignition coil output",
+                "Vacuum leak or intake leak",
+                "Fuel delivery and injector behavior",
+            ],
+            "blueprints": [
+                {"title": "Spark Plug Blueprint", "href": "/repair-guides/spark-plug-replacement"},
+                {"title": "Ignition Coil Checks", "href": "/repair-guides/how-to-test-an-ignition-coil"},
+                {"title": "Vacuum Leak Inspection", "href": "/repair-guides/how-to-diagnose-a-vacuum-leak"},
+                {"title": "Fuel Trim Diagnostics", "href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174"},
+            ],
+            "estimator_href": "/estimator?obd=P0300",
+        },
+        "P0128": {
+            "title": "Cooling Temperature Diagnostic Path",
+            "summary": "Prove whether the engine is actually running too cool or the temperature signal is misleading.",
+            "systems": [
+                "Thermostat operation",
+                "Coolant level and trapped air",
+                "Coolant temperature sensor plausibility",
+                "Radiator, water pump, and fan behavior",
+            ],
+            "blueprints": [
+                {"title": "Thermostat Blueprint", "href": "/repair-guides/thermostat-replacement"},
+                {"title": "Water Pump Blueprint", "href": "/repair-guides/water-pump-replacement"},
+                {"title": "Radiator Blueprint", "href": "/repair-guides/radiator-replacement"},
+            ],
+            "estimator_href": "/estimator?obd=P0128",
+        },
+    }
+    return paths.get(normalized, {})
+
+
 def normalize_diagnostic_entry(raw_entry: Any, *, file_slug: str, repair_guides: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
     raw = dict(raw_entry) if isinstance(raw_entry, dict) else {}
 
@@ -1819,6 +1884,7 @@ def normalize_symptom_entry(raw_entry: Any, *, file_slug: str, repair_guides: Di
         "quick_checks": normalize_repair_guide_list(raw.get("quick_checks")),
         "possible_causes": possible_causes,
         "diagnostic_paths": normalize_repair_guide_list(raw.get("diagnostic_paths")),
+        "diagnostic_path_sections": normalize_diagnostic_path_sections(raw.get("diagnostic_path_sections")),
         "related_obd_codes": normalize_symptom_obd_codes(raw.get("related_obd_codes")),
         "recommended_repairs": normalize_symptom_recommended_repairs(raw.get("recommended_repairs")),
         "related_repair_guides": related_repair_guides,
@@ -4422,6 +4488,7 @@ async def obd_code_page(request: Request, code: str):
     related_codes = build_related_codes(row["code"], knowledge_sections["related_codes"])
     common_repairs = build_common_repairs(row["code"])
     cost_guide_links = build_cost_guide_links(row["code"])
+    diagnostic_path = build_obd_diagnostic_path(row["code"])
     diagnostic_summary = build_diagnostic_summary(row["code"])
     page_metadata = build_obd_page_metadata(row["code"])
     content_refinement = build_obd_content_refinement(row["code"])
@@ -4504,6 +4571,7 @@ async def obd_code_page(request: Request, code: str):
             "related_codes": related_codes,
             "common_repairs": common_repairs,
             "cost_guide_links": cost_guide_links,
+            "diagnostic_path": diagnostic_path,
             "diagnostic_summary": diagnostic_summary,
             "page_title": page_title,
             "meta_description": page_description,

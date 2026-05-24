@@ -1,0 +1,71 @@
+{
+  "slug": "charging-system-warning-light",
+  "title": "Charging System Warning Light",
+  "category": "Starting / Charging",
+  "summary": "Practical diagnostic path for battery light, low voltage, and charging-system complaints.",
+  "intro": "Charging warnings should be checked as a system: battery health, alternator output, belt drive, fuses, and grounds can all create the same customer complaint.",
+  "common_sounds": [
+    "Battery light on while driving",
+    "Dimming lights or weak blower speed",
+    "Repeated dead battery after driving",
+    "Belt squeal or alternator-area whine"
+  ],
+  "quick_checks": [
+    "Load test the battery before judging alternator output",
+    "Check charging voltage with electrical loads on",
+    "Inspect belt condition, tension, and pulley alignment",
+    "Check alternator output cable, main fuse, and engine grounds"
+  ],
+  "common_causes": [
+    "Alternator or regulator failure",
+    "Weak battery confusing charging tests",
+    "Loose or slipping belt",
+    "High resistance in charge cable, fuse, or ground path"
+  ],
+  "diagnostic_paths": [
+    "If battery fails load testing, correct battery condition before final alternator judgment.",
+    "If charging voltage is low with a known-good battery, inspect alternator output and belt drive.",
+    "If voltage is intermittent, inspect connector fit, charge cable, main fuse, and grounds."
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Battery and Alternator Path",
+      "summary": "Separate battery capacity from alternator output before quoting either part.",
+      "checks": [
+        "Load test the battery",
+        "Measure charging voltage with loads on",
+        "Check battery light behavior after start-up"
+      ],
+      "repairs": [
+        { "title": "Alternator Blueprint", "cost_guide_href": "/repair-guides/alternator-replacement" },
+        { "title": "Battery Replacement", "cost_guide_href": "/cost/battery-replacement" }
+      ]
+    },
+    {
+      "title": "Belt and Cable Path",
+      "summary": "Charging output can fail from belt slip, poor grounds, or high resistance in the output cable.",
+      "checks": [
+        "Inspect serpentine belt and tensioner condition",
+        "Voltage-drop charge cable and ground paths",
+        "Check main charging fuse or fusible link"
+      ],
+      "repairs": [
+        { "title": "Serpentine Belt Inspection", "cost_guide_href": "/cost/serpentine-belt-replacement" },
+        { "title": "Alternator Diagnosis", "estimator_href": "/estimator?service=alternator_diagnosis" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Alternator Replacement Cost",
+      "description": "Use when charging output, belt drive, and wiring checks prove alternator failure.",
+      "cost_guide_href": "/cost/alternator-replacement",
+      "estimator_href": "/estimator?service=alternator_replacement"
+    }
+  ],
+  "estimator_link": "/estimator?service=alternator_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

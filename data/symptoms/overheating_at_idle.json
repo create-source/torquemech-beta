@@ -29,6 +29,34 @@
     "If heater output goes weak and coolant circulation looks poor, water pump and thermostat diagnosis move higher on the list.",
     "If scan data is clearly wrong, verify the coolant temperature signal before making a thermostat-only decision."
   ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Cooling Flow Path",
+      "summary": "Separate coolant level, thermostat behavior, water pump circulation, and radiator restriction before pricing parts.",
+      "checks": [
+        "Pressure test for leaks before teardown",
+        "Compare heater output with coolant temperature",
+        "Inspect thermostat and water pump evidence together"
+      ],
+      "repairs": [
+        { "title": "Thermostat Blueprint", "cost_guide_href": "/repair-guides/thermostat-replacement" },
+        { "title": "Water Pump Blueprint", "cost_guide_href": "/repair-guides/water-pump-replacement" }
+      ]
+    },
+    {
+      "title": "Heat Rejection Path",
+      "summary": "When overheating is strongest at idle, check airflow and radiator heat transfer before assuming engine damage.",
+      "checks": [
+        "Confirm fan operation and airflow through the radiator stack",
+        "Check radiator hoses, cap, and coolant condition",
+        "Use pressure testing when coolant smell or loss is present"
+      ],
+      "repairs": [
+        { "title": "Radiator Blueprint", "cost_guide_href": "/repair-guides/radiator-replacement" },
+        { "title": "Coolant Pressure Test", "estimator_href": "/estimator?service=cooling_system_pressure_test" }
+      ]
+    }
+  ],
   "related_obd_codes": [
     { "code": "P0117", "title": "Coolant temperature circuit low input", "href": "/obd/p0117" },
     { "code": "P0118", "title": "Coolant temperature circuit high input", "href": "/obd/p0118" },

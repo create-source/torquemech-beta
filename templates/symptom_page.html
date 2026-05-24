@@ -63,6 +63,45 @@
 </section>
 {% endif %}
 
+{% if symptom.diagnostic_path_sections %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Diagnostic Path</h2>
+    <p class="tm-muted">Use these paths to decide what to inspect first, what failures overlap, and when the repair is ready to estimate.</p>
+    <div class="tm-diagnostic-path-grid">
+      {% for path in symptom.diagnostic_path_sections %}
+      <div class="tm-linked-card">
+        <h3>{{ path.title }}</h3>
+        {% if path.summary %}
+        <p class="tm-muted">{{ path.summary }}</p>
+        {% endif %}
+        {% if path.checks %}
+        <ul class="tm-list">
+          {% for check in path.checks %}
+          <li>{{ check }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if path.repairs %}
+        <div class="tm-diagnostic-path-links">
+          {% for repair in path.repairs %}
+          {% if repair.cost_guide_href %}
+          <a href="{{ repair.cost_guide_href }}">{{ repair.title }}</a>
+          {% elif repair.estimator_href %}
+          <a href="{{ repair.estimator_href }}">{{ repair.title }}</a>
+          {% else %}
+          <span>{{ repair.title }}</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if symptom.related_obd_codes %}
 <section class="tm-section">
   <div class="tm-card">

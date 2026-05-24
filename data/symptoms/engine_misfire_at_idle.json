@@ -29,6 +29,34 @@
     "If multiple cylinders misfire at idle, shared ignition, airflow, or fuel-delivery problems move higher on the list.",
     "If the check engine light flashes, repair the active misfire quickly to reduce catalyst damage risk."
   ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Ignition Proof Path",
+      "summary": "Start with plug condition and coil behavior when the misfire is cylinder-specific or load-sensitive.",
+      "checks": [
+        "Review P0300-family codes and misfire counters",
+        "Inspect plugs, boots, oil intrusion, and carbon tracking",
+        "Swap coils only when access and cylinder pattern support it"
+      ],
+      "repairs": [
+        { "title": "Spark Plug Blueprint", "cost_guide_href": "/repair-guides/spark-plug-replacement" },
+        { "title": "Ignition Coil Checks", "cost_guide_href": "/repair-guides/how-to-test-an-ignition-coil" }
+      ]
+    },
+    {
+      "title": "Fuel and Air Path",
+      "summary": "If ignition does not prove the fault, move to injector, vacuum leak, fuel trim, and compression checks.",
+      "checks": [
+        "Listen for injector operation and inspect connector fit",
+        "Smoke test when trims point lean at idle",
+        "Run compression testing when one cylinder stays weak"
+      ],
+      "repairs": [
+        { "title": "Vacuum Leak Inspection", "cost_guide_href": "/repair-guides/how-to-diagnose-a-vacuum-leak" },
+        { "title": "Lean Condition Path", "cost_guide_href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174" }
+      ]
+    }
+  ],
   "related_obd_codes": [
     { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
     { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },

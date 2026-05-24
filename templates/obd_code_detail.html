@@ -257,6 +257,37 @@
 </section>
 {% endif %}
 
+{% if diagnostic_path %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>{{ diagnostic_path.title }}</h2>
+    <p class="tm-muted">{{ diagnostic_path.summary }}</p>
+
+    {% if diagnostic_path.systems %}
+    <div class="tm-blueprint-chip-list">
+      {% for item in diagnostic_path.systems %}
+      <span class="tm-blueprint-chip">{{ item }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if diagnostic_path.blueprints %}
+    <div class="tm-diagnostic-path-links" style="margin-top:14px;">
+      {% for item in diagnostic_path.blueprints %}
+      <a href="{{ item.href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if diagnostic_path.estimator_href %}
+    <div style="margin-top:16px;">
+      <a class="tm-btn tm-btn-primary" href="{{ diagnostic_path.estimator_href }}">Open Estimator</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 <section class="tm-section">
   <div class="tm-card">
     <h2>Code Overview</h2>

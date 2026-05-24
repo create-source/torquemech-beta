@@ -4366,6 +4366,36 @@ h3{
   margin-top:14px;
 }
 
+.tm-diagnostic-path-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));
+  gap:12px;
+  margin-top:14px;
+}
+
+.tm-diagnostic-path-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.tm-diagnostic-path-links a,
+.tm-diagnostic-path-links span{
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(17, 179, 173, .22);
+  background:#f0fdfa;
+  color:#0f766e;
+  font-size:.84rem;
+  font-weight:800;
+  text-decoration:none;
+  line-height:1.2;
+}
+
 .tm-difficulty-badge{
   display:inline-flex;
   align-items:center;
@@ -4414,6 +4444,10 @@ h3{
   }
 
   .tm-related-repair-grid{
+    grid-template-columns:1fr;
+  }
+
+  .tm-diagnostic-path-grid{
     grid-template-columns:1fr;
   }
 }

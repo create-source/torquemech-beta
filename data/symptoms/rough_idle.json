@@ -29,6 +29,34 @@
     "If the engine feels like one cylinder is dropping out, start with misfire codes and ignition or injector checks.",
     "If airflow and fuel-trim data look implausible together, verify the MAF signal before replacing parts."
   ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Air Leak and Idle Control Path",
+      "summary": "Use fuel trims, smoke testing, and throttle behavior to separate vacuum leaks from throttle or MAF problems.",
+      "checks": [
+        "Inspect intake ducting, PCV hoses, and vacuum lines",
+        "Compare fuel trims at idle and light throttle",
+        "Check throttle body condition before quoting replacement"
+      ],
+      "repairs": [
+        { "title": "Vacuum Leak Inspection", "cost_guide_href": "/repair-guides/how-to-diagnose-a-vacuum-leak" },
+        { "title": "Lean Condition Path", "cost_guide_href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174" }
+      ]
+    },
+    {
+      "title": "Misfire Path",
+      "summary": "When rough idle feels like a cylinder drop, prove spark, injector, or compression before estimating parts.",
+      "checks": [
+        "Check P0300-family codes and misfire counters",
+        "Inspect spark plugs, coils, and injector connector fit",
+        "Use compression testing when the same cylinder stays weak"
+      ],
+      "repairs": [
+        { "title": "Spark Plug Blueprint", "cost_guide_href": "/repair-guides/spark-plug-replacement" },
+        { "title": "Ignition Coil Checks", "cost_guide_href": "/repair-guides/how-to-test-an-ignition-coil" }
+      ]
+    }
+  ],
   "related_obd_codes": [
     { "code": "P0507", "title": "Idle speed higher than expected", "href": "/obd/p0507" },
     { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },

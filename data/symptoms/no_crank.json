@@ -1,0 +1,77 @@
+{
+  "slug": "no-crank",
+  "title": "No Crank",
+  "category": "Starting / Charging",
+  "summary": "Mechanic-first diagnostic path for no-crank complaints before replacing the starter or battery.",
+  "intro": "A no-crank complaint should be split into battery capacity, cable voltage drop, starter command, and starter motor behavior before parts are priced.",
+  "common_sounds": [
+    "Single click when the key or start button is pressed",
+    "Rapid clicking from low voltage",
+    "No sound from the starter relay or starter",
+    "Intermittent crank after sitting, heat soak, or cable movement"
+  ],
+  "quick_checks": [
+    "Load test the battery before condemning the starter",
+    "Check voltage drop on positive and ground cable paths",
+    "Verify starter relay, fuse, and crank command signal",
+    "Inspect battery terminals, grounds, and starter connections"
+  ],
+  "common_causes": [
+    "Weak battery",
+    "High-resistance battery cable or ground",
+    "Starter motor or solenoid failure",
+    "Starter relay, fuse, neutral safety, clutch switch, or command issue"
+  ],
+  "diagnostic_paths": [
+    "If voltage falls low during crank request, battery and cable checks come before starter replacement.",
+    "If battery voltage stays strong but the starter does not respond, inspect command signal, relay, fuse, and starter connections.",
+    "If the starter clicks or works intermittently with heat, starter and cable voltage-drop checks move higher."
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Battery and Cable Path",
+      "summary": "Prove the vehicle has enough power and ground before pricing a starter.",
+      "checks": [
+        "Load test battery state of health",
+        "Voltage-drop positive and ground cables",
+        "Inspect terminals and ground straps"
+      ],
+      "repairs": [
+        { "title": "Battery Replacement", "cost_guide_href": "/cost/battery-replacement" },
+        { "title": "Battery Cable Inspection", "estimator_href": "/estimator?service=battery_cable_replacement" }
+      ]
+    },
+    {
+      "title": "Starter Circuit Path",
+      "summary": "When power is available, confirm the starter receives the correct command before replacing it.",
+      "checks": [
+        "Check starter relay and fuse operation",
+        "Verify crank signal at the starter solenoid when accessible",
+        "Check immobilizer or neutral safety clues when command is missing"
+      ],
+      "repairs": [
+        { "title": "Starter Blueprint", "cost_guide_href": "/repair-guides/starter-replacement" },
+        { "title": "No-Crank Diagnosis", "estimator_href": "/estimator?service=no_crank_diagnosis" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Starter Replacement Cost",
+      "description": "Use when power, ground, and command checks prove the starter is the fault.",
+      "cost_guide_href": "/cost/starter-replacement",
+      "estimator_href": "/estimator?service=starter_replacement"
+    },
+    {
+      "title": "Battery Replacement Cost",
+      "description": "Use when load testing proves the battery cannot support cranking.",
+      "cost_guide_href": "/cost/battery-replacement",
+      "estimator_href": "/estimator?service=battery_replacement"
+    }
+  ],
+  "estimator_link": "/estimator?service=no_crank_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

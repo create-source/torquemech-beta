@@ -17,6 +17,46 @@
     "Check caliper movement and slide pins",
     "Look for uneven pad wear"
   ],
+  "common_causes": [
+    "Worn brake pads",
+    "Scored, rusty, or heat-spotted rotors",
+    "Loose hardware clips or anti-rattle parts",
+    "Sticking caliper slide pins",
+    "Uneven pad wear from hose or caliper restriction"
+  ],
+  "diagnostic_paths": [
+    "If the noise is grinding, inspect pad thickness and rotor condition before moving the vehicle.",
+    "If the noise is squeal or chirp, inspect hardware clips, pad fit, and rotor surface condition.",
+    "If pad wear is uneven, inspect caliper slides, hoses, and brake fluid condition before quoting pad-only service."
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Pad and Rotor Path",
+      "summary": "Confirm whether this is pad wear, rotor damage, or hardware noise before estimating brakes.",
+      "checks": [
+        "Measure inner and outer pad thickness",
+        "Inspect rotor scoring, rust lip, and heat spots",
+        "Check hardware clips and pad movement"
+      ],
+      "repairs": [
+        { "title": "Brake Pad Blueprint", "cost_guide_href": "/repair-guides/brake-pad-replacement" },
+        { "title": "Brake Rotor Guide", "cost_guide_href": "/repair-guides/brake-rotor-replacement" }
+      ]
+    },
+    {
+      "title": "Hydraulic and Caliper Path",
+      "summary": "Uneven wear or drag should move inspection toward caliper slides, hoses, and fluid condition.",
+      "checks": [
+        "Check slide pin movement and boot condition",
+        "Look for wheel drag after brake release",
+        "Check brake fluid age and level"
+      ],
+      "repairs": [
+        { "title": "Caliper Inspection", "cost_guide_href": "/repair-guides/brake-caliper-replacement" },
+        { "title": "Brake Fluid Service", "estimator_href": "/estimator?service=brake_fluid_flush" }
+      ]
+    }
+  ],
   "likely_causes": [
     {
       "name": "Worn front brake pads",

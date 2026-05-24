@@ -29,6 +29,34 @@
     "If the engine goes lean under load, fuel pump output and shared fuel-delivery issues move higher on the list.",
     "If power falls off without a strong misfire but airflow data looks implausible, verify the MAF path before replacing ignition parts."
   ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Misfire Under Load Path",
+      "summary": "Use misfire counters and ignition checks first when vibration appears with throttle demand.",
+      "checks": [
+        "Check P0300-family codes and freeze-frame load",
+        "Inspect plugs, coils, and coil boots",
+        "Confirm whether the shake follows a cylinder or affects multiple cylinders"
+      ],
+      "repairs": [
+        { "title": "Spark Plug Blueprint", "cost_guide_href": "/repair-guides/spark-plug-replacement" },
+        { "title": "Ignition Coil Checks", "cost_guide_href": "/repair-guides/how-to-test-an-ignition-coil" }
+      ]
+    },
+    {
+      "title": "Fuel and Airflow Path",
+      "summary": "If the shake is tied to hills, highway speed, or lean trims, fuel delivery and airflow move up.",
+      "checks": [
+        "Review fuel trims under load",
+        "Check fuel pressure or volume when power falls off",
+        "Inspect intake ducting and MAF signal plausibility"
+      ],
+      "repairs": [
+        { "title": "Lean Condition Path", "cost_guide_href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174" },
+        { "title": "Fuel System Inspection", "estimator_href": "/estimator?service=fuel_pressure_test" }
+      ]
+    }
+  ],
   "related_obd_codes": [
     { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
     { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
