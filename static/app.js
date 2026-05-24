@@ -1176,6 +1176,50 @@
     return [vehicle.year, vehicle.make, getVehicleDisplayModel(vehicle)].filter(Boolean).join(" ");
   }
 
+  function normalizeVehicleLabelKey(value) {
+    return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  }
+
+  function getKnownSparkPlugEngineLabel(vehicle) {
+    const make = normalizeVehicleLabelKey(vehicle?.make);
+    const canonicalModel = normalizeVehicleLabelKey(vehicle?.model);
+    const displayModel = normalizeVehicleLabelKey(getVehicleDisplayModel(vehicle));
+
+    if (make !== "LEXUS") return "";
+
+    const knownV8Models = new Set(["GX460", "GX470", "LX450", "LX470", "LX570"]);
+    if (knownV8Models.has(displayModel) || knownV8Models.has(canonicalModel)) {
+      return "V8";
+    }
+
+    return "";
+  }
+
+  function shouldCleanSparkPlugCylinderLabel(vehicle) {
+    const make = normalizeVehicleLabelKey(vehicle?.make);
+    const canonicalModel = normalizeVehicleLabelKey(vehicle?.model);
+    const displayModel = normalizeVehicleLabelKey(getVehicleDisplayModel(vehicle));
+
+    if (make !== "LEXUS") return false;
+    return canonicalModel === "GX" || canonicalModel === "LX" || displayModel.startsWith("GX") || displayModel.startsWith("LX");
+  }
+
+  function cleanCustomerServiceLabel(serviceCode, serviceText, vehicle) {
+    const code = String(serviceCode || "").trim();
+    const label = String(serviceText || code || "Service").trim();
+    const isSparkPlugService =
+      code === "spark_plug_replacement_4_cyl" ||
+      code === "spark_plug_replacement_v6_v8" ||
+      /^spark\s+plug\s+replacement\b/i.test(label);
+
+    if (!isSparkPlugService || !shouldCleanSparkPlugCylinderLabel(vehicle)) {
+      return label;
+    }
+
+    const engineLabel = getKnownSparkPlugEngineLabel(vehicle);
+    return engineLabel ? `Spark Plug Replacement (${engineLabel})` : "Spark Plug Replacement";
+  }
+
   function getCurrentVehicleSnapshot() {
     const vehicle = getActiveVehicle() || estimateState.vehicles[0] || null;
     return {
@@ -1520,7 +1564,11 @@
       vehicleModel,
       vehicleDisplayModel,
       serviceCode: String(it?.serviceCode || "").trim(),
-      serviceText: String(it?.serviceText || it?.serviceCode || "Service").trim(),
+      serviceText: cleanCustomerServiceLabel(
+        it?.serviceCode,
+        it?.serviceText || it?.serviceCode || "Service",
+        { id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel, displayModel: vehicleDisplayModel }
+      ),
       pricingMode,
       flatRatePrice,
       travelFee,
@@ -4555,7 +4603,7 @@ if (getEstimateHint) {
     readyForNextService = false;
     updateEstimateButtonState();
 
-    const serviceText = editingLineItem
+    const rawServiceText = editingLineItem
       ? (editingLineItem.serviceText || editingLineItem.serviceCode)
       : (serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl.value);
 
@@ -4563,6 +4611,9 @@ if (getEstimateHint) {
       setStatus("error", "Select a vehicle first.");
       return;
     }
+
+    const serviceCode = editingLineItem ? editingLineItem.serviceCode : serviceEl.value;
+    const serviceText = cleanCustomerServiceLabel(serviceCode, rawServiceText, activeVehicle);
 
     const pricingSnapshot = buildPricingSnapshotFromControls();
     const it = {
@@ -4573,7 +4624,7 @@ if (getEstimateHint) {
       vehicleMake: activeVehicle.make || "",
       vehicleModel: activeVehicle.model || "",
       vehicleDisplayModel: getVehicleDisplayModel(activeVehicle),
-      serviceCode: editingLineItem ? editingLineItem.serviceCode : serviceEl.value,
+      serviceCode,
       serviceText,
       status: "recommended",
       ...pricingSnapshot,
