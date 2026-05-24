@@ -2296,6 +2296,12 @@ const confidenceEl = document.getElementById("laborConfidence");
     return serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl.value;
   }
 
+  function getSelectedServiceDisplayName() {
+    const serviceName = getSelectedServiceName();
+    if (!serviceName) return "";
+    return cleanCustomerFacingServiceLabel(serviceEl?.value, serviceName, getActiveVehicle());
+  }
+
   function getSelectedServiceCategoryName() {
     const categoryKey = serviceMeta?.category || categoryEl?.value || "";
     return getServiceCategoryName(categoryKey) || categoryKey || "Service";
@@ -2304,7 +2310,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   function renderSelectedServiceContext() {
     if (!selectedServiceContextEl) return;
 
-    const serviceName = getSelectedServiceName();
+    const serviceName = getSelectedServiceDisplayName();
     if (!readyForNextService || !serviceEl?.value || !serviceMeta || !serviceName) {
       selectedServiceContextEl.classList.add("hidden");
       selectedServiceContextEl.innerHTML = "";
@@ -2579,7 +2585,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function syncServiceSearchFromSelect() {
     if (!serviceSearch || !serviceEl) return;
-    const selectedText = serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || "";
+    const selectedText = getSelectedServiceDisplayName();
     serviceSearch.value = serviceEl.value ? selectedText : "";
     updateServiceClearButton();
   }
