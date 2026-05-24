@@ -8,6 +8,13 @@
     <p class="tm-muted">{{ symptom.summary }}</p>
     <p class="tm-muted">Use the symptom as the starting point, then confirm likely causes with checks, OBD context, and repair guides before estimating or replacing parts.</p>
     <p>{{ symptom.intro }}</p>
+    {% if workflow_context and workflow_context.has_context %}
+    <div class="tm-workflow-context-note">
+      <strong>Continue the repair flow</strong>
+      <span>Use these checks to narrow the concern, then return to the estimate with vehicle and service context intact.</span>
+      <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">Continue Estimate</a>
+    </div>
+    {% endif %}
   </div>
 </section>
 
@@ -127,10 +134,10 @@
         <h3>{{ cause.name }}</h3>
         {% if cause.estimator_link %}
         <div style="margin-top:8px;">
-          <a href="{{ cause.estimator_link }}">Open Estimator &rarr;</a>
+          <a href="{{ cause.estimator_link }}">Continue Estimate &rarr;</a>
         </div>
         {% endif %}
-        <a href="{{ cause.repair_guide_link }}">Open Repair Guide &rarr;</a>
+        <a href="{{ cause.repair_guide_link }}">View Related Repair &rarr;</a>
       </div>
       {% endfor %}
     </div>
@@ -152,12 +159,18 @@
         {% endif %}
         {% if item.cost_guide_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.cost_guide_href }}">Open Cost Guide &rarr;</a>
+          <a href="{{ item.cost_guide_href }}">
+            {% if item.cost_guide_href.startswith('/repair-guides/') %}
+            View Related Repair &rarr;
+            {% else %}
+            Open Cost Guide &rarr;
+            {% endif %}
+          </a>
         </div>
         {% endif %}
         {% if item.estimator_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Open Estimator &rarr;</a>
+          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
         </div>
         {% endif %}
       </div>
@@ -180,7 +193,7 @@
   <div class="tm-card">
     <h2>Need a Quick Estimate?</h2>
     <p class="tm-muted">Open the estimator when the likely repair path is known and you are ready to compare labor, parts, and customer-ready quote context.</p>
-    <a href="{{ symptom.estimator_link }}">Open Estimator &rarr;</a>
+    <a href="{{ symptom.estimator_link }}">Continue Estimate &rarr;</a>
   </div>
   {% endif %}
 </section>

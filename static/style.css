@@ -4377,6 +4377,38 @@ h3{
   font-size:.9rem;
 }
 
+.tm-workflow-context-note{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px 12px;
+  margin:14px 0 0;
+  padding:12px 14px;
+  border:1px solid rgba(15, 23, 42, .10);
+  border-radius:10px;
+  background:#ffffff;
+  color:var(--tm-text);
+}
+
+.tm-workflow-context-note strong{
+  font-weight:900;
+}
+
+.tm-workflow-context-note span{
+  flex:1 1 260px;
+  color:var(--tm-text-muted);
+  font-size:.92rem;
+  line-height:1.4;
+}
+
+.tm-workflow-return-link{
+  margin-left:8px;
+}
+
+.tm-workflow-next-step{
+  margin:12px 0 0;
+}
+
 .tm-blueprint-chip-list{
   display:flex;
   flex-wrap:wrap;
@@ -4488,6 +4520,17 @@ h3{
 
   .tm-diagnostic-path-grid{
     grid-template-columns:1fr;
+  }
+
+  .tm-workflow-context-note{
+    align-items:flex-start;
+  }
+
+  .tm-workflow-context-note .tm-btn,
+  .tm-workflow-return-link{
+    width:100%;
+    justify-content:center;
+    margin-left:0;
   }
 }
 

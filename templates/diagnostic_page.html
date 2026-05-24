@@ -6,6 +6,13 @@
     <div class="tm-eyebrow">TorqueMech Diagnostic Guide</div>
     <h1 class="tm-page-title">{{ diagnostic.code }} — {{ diagnostic.title }}</h1>
     <p class="tm-muted">{{ diagnostic.summary }}</p>
+    {% if workflow_context and workflow_context.has_context %}
+    <div class="tm-workflow-context-note">
+      <strong>Continue the repair flow</strong>
+      <span>Diagnostic links will keep the selected vehicle and estimate context available for the next step.</span>
+      <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">Continue Estimate</a>
+    </div>
+    {% endif %}
   </div>
 </section>
 
@@ -54,10 +61,10 @@
         <h3>{{ repair.name }}</h3>
         {% if repair.estimator_link %}
         <div style="margin-top:8px;">
-          <a href="{{ repair.estimator_link }}">Open Estimator &rarr;</a>
+          <a href="{{ repair.estimator_link }}">Continue Estimate &rarr;</a>
         </div>
         {% endif %}
-        <a href="{{ repair.repair_guide_link }}">Open Repair Guide →</a>
+        <a href="{{ repair.repair_guide_link }}">View Related Repair →</a>
       </div>
       {% endfor %}
     </div>
@@ -78,7 +85,7 @@
   <div class="tm-card">
     <h2>Estimate a Likely Repair</h2>
     <p class="tm-muted">Move into the estimator once the repair is confirmed.</p>
-    <a href="{{ diagnostic.estimator_link }}">Open Estimator →</a>
+    <a href="{{ diagnostic.estimator_link }}">Continue Estimate →</a>
   </div>
   {% endif %}
 </section>

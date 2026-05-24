@@ -226,7 +226,7 @@
       {{ display_description or description or "Review the code meaning, common causes, quick checks, and likely repair paths before estimating the next step." }}
     </p>
     <div class="tm-actions" style="margin-top:16px;">
-      <a href="/estimator?obd={{ code }}" class="tm-btn tm-btn-primary">Open Estimator</a>
+      <a href="{{ workflow_context.return_href if workflow_context else '/estimator?obd=' ~ code }}" class="tm-btn tm-btn-primary">Continue Estimate</a>
       <a href="/diagnostics" class="tm-btn tm-btn-secondary">Browse Diagnostics</a>
       <a href="/repair-guides" class="tm-btn tm-btn-secondary">Browse Repair Guides</a>
     </div>
@@ -281,8 +281,14 @@
 
     {% if diagnostic_path.estimator_href %}
     <div style="margin-top:16px;">
-      <a class="tm-btn tm-btn-primary" href="{{ diagnostic_path.estimator_href }}">Open Estimator</a>
+      <a class="tm-btn tm-btn-primary" href="{{ diagnostic_path.estimator_href }}">Continue Estimate</a>
+      {% if workflow_context and workflow_context.return_href %}
+      <a class="tm-btn tm-btn-secondary tm-workflow-return-link" href="{{ workflow_context.return_href }}">Back to Estimate</a>
+      {% endif %}
     </div>
+    {% endif %}
+    {% if workflow_context and workflow_context.has_context %}
+    <p class="tm-muted tm-workflow-next-step">Use the blueprint links to verify the likely system, then continue the estimate with the same vehicle and code context.</p>
     {% endif %}
   </div>
 </section>
@@ -473,7 +479,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">Open Estimator</a>
+    <a class="tm-btn tm-btn-primary" href="{{ workflow_context.return_href if workflow_context else '/estimator?obd=' ~ code }}">Continue Estimate</a>
     {% endif %}
 
   </div>

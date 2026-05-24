@@ -1271,6 +1271,8 @@
     if (vehicle.make) params.set("make", vehicle.make);
     if (vehicle.model) params.set("model", vehicle.model);
     if (vehicle.displayModel) params.set("displayModel", vehicle.displayModel);
+    if (serviceCode) params.set("service", serviceCode);
+    params.set("source", "estimator");
 
     const query = params.toString();
     return `/repair-guides/${slug}${query ? `?${query}` : ""}`;

@@ -1648,6 +1648,123 @@ def append_vehicle_context_to_href(href: str, vehicle_context: Dict[str, str]) -
     return f"{base}{separator}{urlencode(params)}"
 
 
+def build_workflow_context(
+    request: Request,
+    *,
+    vehicle_context: Optional[Dict[str, str]] = None,
+    obd_code: str = "",
+    service_code: str = "",
+    source: str = "",
+) -> Dict[str, str]:
+    params = request.query_params
+    vehicle = vehicle_context or build_vehicle_context_from_request(request)
+    service = str(params.get("service") or service_code or "").strip()[:80]
+    obd = str(params.get("obd") or obd_code or "").strip().upper()[:7]
+    workflow_source = str(params.get("source") or source or "").strip()[:40]
+
+    return_params: List[Tuple[str, str]] = []
+    for key in ("year", "make", "model", "displayModel"):
+        value = str(vehicle.get(key) or "").strip()
+        if value:
+            return_params.append((key, value))
+    if service:
+        return_params.append(("service", service))
+    if obd:
+        return_params.append(("obd", obd))
+
+    return_href = f"/estimator?{urlencode(return_params)}" if return_params else "/estimator"
+    return_label = vehicle.get("label") or "current estimate"
+
+    return {
+        "return_href": return_href,
+        "has_context": bool(return_params or workflow_source),
+        "label": return_label,
+        "service": service,
+        "obd": obd,
+        "source": workflow_source,
+    }
+
+
+def append_workflow_context_to_href(
+    href: str,
+    workflow_context: Dict[str, str],
+    *,
+    related_service: str = "",
+) -> str:
+    base = str(href or "").strip()
+    if not base:
+        return base
+
+    params: List[Tuple[str, str]] = []
+    return_href = str(workflow_context.get("return_href") or "").strip()
+    if return_href and return_href != "/estimator":
+        context_query = return_href.split("?", 1)[1] if "?" in return_href else ""
+        params.extend((key, values[-1]) for key, values in parse_qs(context_query).items() if values)
+
+    service = str(related_service or workflow_context.get("service") or "").strip()
+    if service and "service=" not in base:
+        params.append(("service", service))
+    if workflow_context.get("obd") and "obd=" not in base:
+        params.append(("obd", str(workflow_context.get("obd"))))
+    if workflow_context.get("source") and "source=" not in base:
+        params.append(("source", str(workflow_context.get("source"))))
+
+    seen = set()
+    deduped: List[Tuple[str, str]] = []
+    for key, value in params:
+        if not value or key in seen or f"{key}=" in base:
+            continue
+        seen.add(key)
+        deduped.append((key, value))
+
+    if not deduped:
+        return base
+
+    separator = "&" if "?" in base else "?"
+    return f"{base}{separator}{urlencode(deduped)}"
+
+
+def apply_workflow_context_to_repair_items(
+    items: Any,
+    workflow_context: Dict[str, str],
+) -> List[Dict[str, Any]]:
+    contextual_items: List[Dict[str, Any]] = []
+    if not isinstance(items, list):
+        return contextual_items
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        linked_item = dict(item)
+        service_hint = ""
+        estimator_href = str(linked_item.get("estimator_href") or linked_item.get("estimator_link") or "").strip()
+        if "service=" in estimator_href:
+            parsed = parse_qs(estimator_href.split("?", 1)[1] if "?" in estimator_href else "")
+            service_hint = (parsed.get("service") or [""])[-1]
+
+        for key in ("href", "cost_guide_href", "repair_guide_link"):
+            linked_href = str(linked_item.get(key) or "").strip()
+            if linked_href.startswith("/repair-guides/") or linked_href.startswith("/obd/"):
+                linked_item[key] = append_workflow_context_to_href(
+                    linked_href,
+                    workflow_context,
+                    related_service=service_hint,
+                )
+
+        for key in ("estimator_href", "estimator_link"):
+            linked_href = str(linked_item.get(key) or "").strip()
+            if linked_href.startswith("/estimator"):
+                linked_item[key] = append_workflow_context_to_href(
+                    linked_href,
+                    workflow_context,
+                    related_service=service_hint,
+                )
+
+        contextual_items.append(linked_item)
+
+    return contextual_items
+
+
 def extract_repair_guide_slug(value: Any) -> str:
     text = str(value or "").strip()
     if not text:
@@ -4527,6 +4644,23 @@ async def obd_code_page(request: Request, code: str):
     common_repairs = build_common_repairs(row["code"])
     cost_guide_links = build_cost_guide_links(row["code"])
     diagnostic_path = build_obd_diagnostic_path(row["code"])
+    vehicle_context = build_vehicle_context_from_request(request)
+    workflow_context = build_workflow_context(
+        request,
+        vehicle_context=vehicle_context,
+        obd_code=row["code"],
+        source="obd",
+    )
+    if diagnostic_path:
+        diagnostic_path = dict(diagnostic_path)
+        diagnostic_path["blueprints"] = apply_workflow_context_to_repair_items(
+            diagnostic_path.get("blueprints") or [],
+            workflow_context,
+        )
+        diagnostic_path["estimator_href"] = append_workflow_context_to_href(
+            diagnostic_path.get("estimator_href") or f"/estimator?obd={row['code']}",
+            workflow_context,
+        )
     diagnostic_summary = build_diagnostic_summary(row["code"])
     page_metadata = build_obd_page_metadata(row["code"])
     content_refinement = build_obd_content_refinement(row["code"])
@@ -4611,6 +4745,7 @@ async def obd_code_page(request: Request, code: str):
             "cost_guide_links": cost_guide_links,
             "diagnostic_path": diagnostic_path,
             "diagnostic_summary": diagnostic_summary,
+            "workflow_context": workflow_context,
             "page_title": page_title,
             "meta_description": page_description,
             "structured_data": structured_data,
@@ -7766,6 +7901,12 @@ async def repair_guide_page(request: Request, slug: str):
     raw_guide = load_json_file("repair_guides", f"{slug.replace('-', '_')}.json")
     guide = normalize_repair_guide(raw_guide, slug=slug)
     vehicle_context = build_vehicle_context_from_request(request)
+    workflow_context = build_workflow_context(
+        request,
+        vehicle_context=vehicle_context,
+        service_code=str((guide.get("estimate") or {}).get("service_code") or ""),
+        source="repair-guide",
+    )
 
     if guide.get("estimate"):
         estimate = dict(guide["estimate"])
@@ -7773,19 +7914,17 @@ async def repair_guide_page(request: Request, slug: str):
             estimate.get("service_code") or "",
             estimate.get("estimator_link") or "/estimator",
         )
-        estimate["href"] = append_vehicle_context_to_href(estimate_href, vehicle_context)
+        estimate["href"] = append_workflow_context_to_href(estimate_href, workflow_context)
         guide["estimate"] = estimate
 
-    contextual_repairs = []
-    for item in guide.get("recommended_repairs") or []:
-        linked_item = dict(item)
-        if linked_item.get("estimator_href"):
-            linked_item["estimator_href"] = append_vehicle_context_to_href(
-                linked_item["estimator_href"],
-                vehicle_context,
-            )
-        contextual_repairs.append(linked_item)
-    guide["recommended_repairs"] = contextual_repairs
+    guide["recommended_repairs"] = apply_workflow_context_to_repair_items(
+        guide.get("recommended_repairs") or [],
+        workflow_context,
+    )
+    guide["related_repair_guides"] = apply_workflow_context_to_repair_items(
+        guide.get("related_repair_guides") or [],
+        workflow_context,
+    )
 
     return templates.TemplateResponse(
         "repair_guide.html",
@@ -7793,6 +7932,7 @@ async def repair_guide_page(request: Request, slug: str):
             "request": request,
             "guide": guide,
             "vehicle_context": vehicle_context,
+            "workflow_context": workflow_context,
             "page_title": f"{guide.get('title', 'Repair Guide')} | TorqueMech",
             "meta_description": guide.get("summary", "TorqueMech repair guide"),
         },
@@ -7804,6 +7944,37 @@ async def symptom_page(request: Request, slug: str):
     raw_symptom = load_json_file("symptoms", f"{slug.replace('-', '_')}.json")
     repair_guides = load_normalized_repair_guides_map()
     symptom = normalize_symptom_entry(raw_symptom, file_slug=slug.replace("-", "_"), repair_guides=repair_guides)
+    vehicle_context = build_vehicle_context_from_request(request)
+    workflow_context = build_workflow_context(
+        request,
+        vehicle_context=vehicle_context,
+        source="symptom",
+    )
+    symptom["related_repair_guides"] = apply_workflow_context_to_repair_items(
+        symptom.get("related_repair_guides") or [],
+        workflow_context,
+    )
+    symptom["recommended_repairs"] = apply_workflow_context_to_repair_items(
+        symptom.get("recommended_repairs") or [],
+        workflow_context,
+    )
+    contextual_path_sections = []
+    for section in symptom.get("diagnostic_path_sections") or []:
+        contextual_section = dict(section)
+        contextual_section["repairs"] = apply_workflow_context_to_repair_items(
+            section.get("repairs") or [],
+            workflow_context,
+        )
+        contextual_path_sections.append(contextual_section)
+    symptom["diagnostic_path_sections"] = contextual_path_sections
+    symptom["related_obd_codes"] = apply_workflow_context_to_repair_items(
+        symptom.get("related_obd_codes") or [],
+        workflow_context,
+    )
+    symptom["estimator_links"] = apply_workflow_context_to_repair_items(
+        symptom.get("estimator_links") or [],
+        workflow_context,
+    )
     symptom["likely_causes"] = [
         {
             "name": item.get("title"),
@@ -7815,11 +7986,17 @@ async def symptom_page(request: Request, slug: str):
     symptom["estimator_link"] = (
         (symptom.get("estimator_links") or [{}])[0].get("href") or "/estimator"
     )
+    symptom["estimator_link"] = append_workflow_context_to_href(
+        symptom["estimator_link"],
+        workflow_context,
+    )
     return templates.TemplateResponse(
         "symptom_page.html",
         {
             "request": request,
             "symptom": symptom,
+            "vehicle_context": vehicle_context,
+            "workflow_context": workflow_context,
             "page_title": f"{symptom.get('title', 'Symptom Guide')} | TorqueMech",
             "meta_description": symptom.get("summary", "TorqueMech symptom guide"),
         },
@@ -7831,6 +8008,20 @@ async def diagnostic_page(request: Request, slug: str):
     raw_diagnostic, source_slug = load_diagnostic_source(slug)
     repair_guides = load_normalized_repair_guides_map()
     diagnostic = normalize_diagnostic_entry(raw_diagnostic, file_slug=source_slug, repair_guides=repair_guides)
+    vehicle_context = build_vehicle_context_from_request(request)
+    workflow_context = build_workflow_context(
+        request,
+        vehicle_context=vehicle_context,
+        source="diagnostic",
+    )
+    diagnostic["related_repair_guides"] = apply_workflow_context_to_repair_items(
+        diagnostic.get("related_repair_guides") or [],
+        workflow_context,
+    )
+    diagnostic["estimator_links"] = apply_workflow_context_to_repair_items(
+        diagnostic.get("estimator_links") or [],
+        workflow_context,
+    )
     diagnostic["common_causes"] = diagnostic.get("possible_causes") or []
     diagnostic["likely_repairs"] = [
         {
@@ -7843,11 +8034,17 @@ async def diagnostic_page(request: Request, slug: str):
     diagnostic["estimator_link"] = (
         (diagnostic.get("estimator_links") or [{}])[0].get("href") or "/estimator"
     )
+    diagnostic["estimator_link"] = append_workflow_context_to_href(
+        diagnostic["estimator_link"],
+        workflow_context,
+    )
     return templates.TemplateResponse(
         "diagnostic_page.html",
         {
             "request": request,
             "diagnostic": diagnostic,
+            "vehicle_context": vehicle_context,
+            "workflow_context": workflow_context,
             "page_title": f"{diagnostic.get('title', 'Diagnostic Guide')} | TorqueMech",
             "meta_description": diagnostic.get("summary", "TorqueMech diagnostic guide"),
         },

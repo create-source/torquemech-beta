@@ -26,6 +26,11 @@
         {{ guide.estimate.cta_label }} ->
       </a>
       {% endif %}
+      {% if workflow_context and workflow_context.return_href %}
+      <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">
+        Back to Estimate
+      </a>
+      {% endif %}
     </div>
     {% endif %}
     <p class="tm-muted">Use this guide to confirm the failure path before replacement, then move into pricing once symptoms, tests, and root-cause evidence point to the same repair.</p>
@@ -425,12 +430,18 @@
         {% endif %}
         {% if item.cost_guide_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.cost_guide_href }}">Open Cost Guide &rarr;</a>
+          <a href="{{ item.cost_guide_href }}">
+            {% if item.cost_guide_href.startswith('/repair-guides/') %}
+            View Related Repair &rarr;
+            {% else %}
+            Open Cost Guide &rarr;
+            {% endif %}
+          </a>
         </div>
         {% endif %}
         {% if item.estimator_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Open Estimator &rarr;</a>
+          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
         </div>
         {% endif %}
       </div>
@@ -471,6 +482,11 @@
       {{ guide.estimate.cta_label }} ->
       {% endif %}
     </a>
+    {% if workflow_context and workflow_context.return_href %}
+    <a class="tm-btn tm-btn-secondary tm-workflow-return-link" href="{{ workflow_context.return_href }}">
+      Back to Estimate
+    </a>
+    {% endif %}
     <p class="tm-muted" style="margin-top:10px;">Exact labor time and procedure may vary by engine, trim, drivetrain, and vehicle condition.</p>
   </div>
 </section>
