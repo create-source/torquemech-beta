@@ -18,6 +18,12 @@
     "Thermostat housing and hose temperature behavior",
     "Radiator fan behavior and water pump circulation clues"
   ],
+  "related_systems": [
+    "Coolant condition",
+    "Radiator hoses and housing",
+    "Temperature sensor data",
+    "Water pump circulation"
+  ],
   "likely_causes": [
     "Thermostat stuck open",
     "Thermostat stuck closed",
@@ -47,14 +53,18 @@
   ],
   "recommended_repairs": [
     {
-      "title": "Radiator Replacement",
-      "description": "Compare when overheating is caused by flow or heat exchange issues instead.",
-      "cost_guide_href": "/cost/radiator-replacement",
-      "estimator_href": "/estimator?service=radiator_replacement"
+      "title": "Coolant Service",
+      "description": "Commonly checked when coolant age, contamination, or refill labor affects the thermostat repair.",
+      "estimator_href": "/estimator?service=coolant_flush"
     },
     {
-      "title": "Water Pump Replacement",
-      "description": "Inspect when circulation problems continue after thermostat checks.",
+      "title": "Radiator Hose Inspection",
+      "description": "Related system check while the thermostat housing or hoses are already accessible.",
+      "estimator_href": "/estimator?service=coolant_hose_replacement_each"
+    },
+    {
+      "title": "Water Pump Inspection",
+      "description": "Mechanics often inspect circulation when temperature problems continue after thermostat checks.",
       "cost_guide_href": "/cost/water-pump-replacement",
       "estimator_href": "/estimator?service=water_pump_replacement"
     }

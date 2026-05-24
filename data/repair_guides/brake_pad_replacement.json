@@ -18,6 +18,12 @@
     "Caliper slide pin movement and boot condition",
     "Brake fluid level and visible hose or caliper leaks"
   ],
+  "related_systems": [
+    "Rotor condition",
+    "Brake hydraulic fluid",
+    "Caliper slides and hoses",
+    "Tire and wheel access"
+  ],
   "likely_causes": [
     "Normal pad wear",
     "Sticking slide pins or seized hardware",
@@ -44,8 +50,8 @@
   "labor_range": { "min_hours": 1.0, "max_hours": 2.5 },
   "recommended_repairs": [
     {
-      "title": "Brake Rotor Replacement",
-      "description": "Common companion repair when rotors are scored, warped, thin, or heat damaged.",
+      "title": "Rotor Inspection",
+      "description": "Commonly checked with pad work when rotors are scored, warped, thin, or heat damaged.",
       "cost_guide_href": "/cost/brake-rotor-replacement",
       "estimator_href": "/estimator?service=front_brake_pads_and_rotors_replacement"
     },
@@ -56,9 +62,9 @@
     },
     {
       "title": "Caliper Inspection",
-      "description": "Use when pad wear is uneven or the wheel shows drag after braking.",
+      "description": "Mechanics often inspect calipers when pad wear is uneven or the wheel shows drag after braking.",
       "cost_guide_href": "/cost/brake-caliper-replacement",
-      "estimator_href": "/estimator?service=brake_caliper_replacement"
+      "estimator_href": "/estimator?service=brake_caliper_replacement_each"
     }
   ],
   "diagnostic_context": {

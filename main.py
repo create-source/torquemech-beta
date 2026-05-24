@@ -1468,6 +1468,7 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
         guide.get("inspect_first") or guide.get("what_mechanics_inspect_first")
     )
     normalized["estimate_guidance"] = normalize_repair_guide_list(guide.get("estimate_guidance"))
+    normalized["related_systems"] = normalize_repair_guide_list(guide.get("related_systems"))
     normalized["bolt_sizes"] = normalize_repair_guide_list(guide.get("bolt_sizes"))
     normalized["coming_next"] = normalize_repair_guide_list(guide.get("coming_next"))
     normalized["related_obd_codes"] = normalize_symptom_obd_codes(guide.get("related_obd_codes"))

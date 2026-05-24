@@ -4338,6 +4338,34 @@ h3{
   gap:10px;
 }
 
+.tm-blueprint-chip-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.tm-blueprint-chip{
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(15, 23, 42, .10);
+  background:#ffffff;
+  color:var(--tm-text);
+  font-size:.86rem;
+  font-weight:750;
+  line-height:1.2;
+}
+
+.tm-related-repair-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  gap:12px;
+  margin-top:14px;
+}
+
 .tm-difficulty-badge{
   display:inline-flex;
   align-items:center;
@@ -4373,6 +4401,21 @@ h3{
 
 .tm-guide-card .tm-difficulty-badge{
   margin-bottom:10px;
+}
+
+@media (max-width: 520px){
+  .tm-blueprint-meta{
+    align-items:stretch;
+  }
+
+  .tm-blueprint-meta .tm-btn{
+    width:100%;
+    justify-content:center;
+  }
+
+  .tm-related-repair-grid{
+    grid-template-columns:1fr;
+  }
 }
 
 /* Repair Cost Hub Grid */

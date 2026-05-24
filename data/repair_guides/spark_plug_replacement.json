@@ -18,6 +18,12 @@
     "Coil boots, plug wells, oil intrusion, and carbon tracking",
     "Access restrictions from intake manifolds or rear banks"
   ],
+  "related_systems": [
+    "Ignition coils and boots",
+    "Misfire scan data",
+    "Fuel and compression checks",
+    "Plug-well oil intrusion"
+  ],
   "likely_causes": [
     "Normal plug wear",
     "Incorrect plug gap or wrong plug type",
@@ -50,7 +56,7 @@
   "recommended_repairs": [
     {
       "title": "Ignition Coil Testing",
-      "description": "Use when the misfire is cylinder-specific or load-related.",
+      "description": "Commonly checked with spark plugs when the misfire is cylinder-specific or load-related.",
       "cost_guide_href": "/cost/ignition-coil-replacement",
       "estimator_href": "/estimator?service=ignition_coil_replacement_each"
     },

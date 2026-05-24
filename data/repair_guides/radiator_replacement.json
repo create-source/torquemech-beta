@@ -18,6 +18,12 @@
     "Cooling fan operation and airflow through the condenser/radiator stack",
     "Thermostat behavior and coolant contamination"
   ],
+  "related_systems": [
+    "Coolant condition",
+    "Radiator hoses",
+    "Thermostat operation",
+    "Cooling fan airflow"
+  ],
   "likely_causes": [
     "Cracked plastic tank or radiator seam leak",
     "Impact damage or corroded core",
@@ -44,16 +50,20 @@
   "labor_range": { "min_hours": 1.5, "max_hours": 4.0 },
   "recommended_repairs": [
     {
-      "title": "Thermostat Replacement",
-      "description": "Compare when temperature control, not the radiator, is the main fault.",
+      "title": "Thermostat Inspection",
+      "description": "Commonly checked when temperature control, not the radiator, may be the main fault.",
       "cost_guide_href": "/cost/thermostat-replacement",
       "estimator_href": "/estimator?service=thermostat_replacement"
     },
     {
-      "title": "Water Pump Replacement",
-      "description": "Inspect when circulation or pump leakage overlaps with radiator symptoms.",
-      "cost_guide_href": "/cost/water-pump-replacement",
-      "estimator_href": "/estimator?service=water_pump_replacement"
+      "title": "Radiator Hose Inspection",
+      "description": "Mechanics often inspect hoses and clamps while the radiator is already drained.",
+      "estimator_href": "/estimator?service=coolant_hose_replacement_each"
+    },
+    {
+      "title": "Coolant Service",
+      "description": "Related fluid check when coolant age, contamination, or refill quality affects the repair.",
+      "estimator_href": "/estimator?service=coolant_flush"
     }
   ],
   "diagnostic_context": {

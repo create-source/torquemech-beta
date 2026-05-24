@@ -18,6 +18,12 @@
     "Thermostat behavior and cooling fan operation",
     "Coolant condition, contamination, and recent overheating history"
   ],
+  "related_systems": [
+    "Thermostat operation",
+    "Coolant condition",
+    "Radiator and hoses",
+    "Belt drive"
+  ],
   "likely_causes": [
     "Water pump seal leak",
     "Bearing failure or pulley wobble",
@@ -44,16 +50,26 @@
   "labor_range": { "min_hours": 2.0, "max_hours": 6.0 },
   "recommended_repairs": [
     {
-      "title": "Thermostat Replacement",
-      "description": "Common companion when overheating or poor warm-up overlaps with pump failure.",
+      "title": "Thermostat Inspection",
+      "description": "Commonly checked with water pump work when overheating or poor warm-up overlaps with pump failure.",
       "cost_guide_href": "/cost/thermostat-replacement",
       "estimator_href": "/estimator?service=thermostat_replacement"
     },
     {
-      "title": "Radiator Replacement",
-      "description": "Compare when pressure testing points to radiator leakage or restriction instead.",
-      "cost_guide_href": "/cost/radiator-replacement",
-      "estimator_href": "/estimator?service=radiator_replacement"
+      "title": "Coolant Service",
+      "description": "Mechanics often check coolant age, contamination, and refill needs while the system is open.",
+      "estimator_href": "/estimator?service=coolant_flush"
+    },
+    {
+      "title": "Radiator Hose Inspection",
+      "description": "Related system check for swollen, soft, cracked, or leaking hoses.",
+      "estimator_href": "/estimator?service=coolant_hose_replacement_each"
+    },
+    {
+      "title": "Belt Inspection",
+      "description": "Commonly checked when the water pump is belt-driven or near belt-drive components.",
+      "cost_guide_href": "/cost/serpentine-belt-replacement",
+      "estimator_href": "/estimator?service=serpentine_belt_replacement"
     }
   ],
   "diagnostic_context": {

@@ -91,12 +91,25 @@
 {% if guide.inspect_first %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>What Mechanics Inspect First</h2>
+    <h2>Mechanics Often Inspect</h2>
     <ul class="tm-list">
       {% for item in guide.inspect_first %}
       <li>{{ item }}</li>
       {% endfor %}
     </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.related_systems %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related System Checks</h2>
+    <div class="tm-blueprint-chip-list">
+      {% for item in guide.related_systems %}
+      <span class="tm-blueprint-chip">{{ item }}</span>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
@@ -392,9 +405,9 @@
 {% if guide.recommended_repairs %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Recommended Repair Paths</h2>
-    <p class="tm-muted">Compare these paths before replacing parts. Cost guides and estimator links are most useful after testing separates overlapping causes such as spark versus injector, vacuum leak versus MAF, EVAP purge versus vent, thermostat versus sensor, or battery versus alternator.</p>
-    <div class="tm-stack">
+    <h2>Commonly Checked With</h2>
+    <p class="tm-muted">Mechanics often inspect these nearby parts, fluids, or systems before closing the repair path. Add them to the estimate only when inspection supports it.</p>
+    <div class="tm-related-repair-grid">
       {% for item in guide.recommended_repairs %}
       <div class="tm-linked-card">
         <h3>{{ item.title }}</h3>

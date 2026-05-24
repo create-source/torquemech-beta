@@ -18,6 +18,12 @@
     "Hub temperature and roughness while rotating by hand",
     "ABS wiring and sensor condition near the hub"
   ],
+  "related_systems": [
+    "Suspension joints",
+    "Tire wear pattern",
+    "ABS wheel speed wiring",
+    "Brake and hub access"
+  ],
   "likely_causes": [
     "Worn hub bearing assembly",
     "Pressed bearing failure",
@@ -44,15 +50,19 @@
   "labor_range": { "min_hours": 1.5, "max_hours": 4.0 },
   "recommended_repairs": [
     {
-      "title": "Brake Rotor Removal / Inspection",
-      "description": "Brake hardware often has to come off before hub access.",
-      "cost_guide_href": "/cost/brake-rotor-replacement",
-      "estimator_href": "/estimator?service=front_brake_pads_and_rotors_replacement"
+      "title": "Suspension Inspection",
+      "description": "Commonly checked while the corner is raised and wheel-bearing noise is being isolated.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
     },
     {
-      "title": "Suspension Noise Inspection",
-      "description": "Use when tire, joint, or bearing noise is not isolated yet.",
-      "estimator_href": "/estimator"
+      "title": "Tire Wear Inspection",
+      "description": "Related road-noise check because tire chop or cupping can imitate bearing growl.",
+      "estimator_href": "/estimator?service=tire_rotation"
+    },
+    {
+      "title": "Wheel Alignment",
+      "description": "Consider when tire wear, pull, or suspension angle concerns overlap.",
+      "estimator_href": "/estimator?service=wheel_alignment_4_wheel"
     }
   ],
   "diagnostic_context": {

@@ -981,7 +981,7 @@
       match: ["front_brake_pads_replacement", "front brake pads replacement"],
       context: "Brake axle workflow",
       suggestions: [
-        { label: "Front Brake Rotors", serviceCode: "front_brake_rotors_replacement", stage: "Same axle", reason: "Inspect rotor thickness, scoring, and pulsation risk while the pads are apart.", weight: 100 },
+        { label: "Front Rotor Inspection", serviceCode: "front_brake_rotors_replacement", stage: "Same axle", reason: "Inspect rotor thickness, scoring, and pulsation risk while the pads are apart.", weight: 100 },
         { label: "Brake Fluid Service", serviceCode: "brake_fluid_flush", stage: "Fluid check", reason: "Check fluid age, color, and pedal feel before the brake quote is closed.", weight: 66 },
         { label: "Caliper Inspection", serviceCode: "brake_diagnostic", stage: "Slide check", reason: "Confirm caliper slide, pin, and hose condition if pad wear is uneven.", weight: 58 },
       ],
@@ -990,7 +990,7 @@
       match: ["rear_brake_pads_replacement", "rear brake pads replacement"],
       context: "Brake axle workflow",
       suggestions: [
-        { label: "Rear Brake Rotors", serviceCode: "rear_brake_rotors_replacement", stage: "Same axle", reason: "Inspect rotor thickness, scoring, and parking-brake overlap while the pads are apart.", weight: 100 },
+        { label: "Rear Rotor Inspection", serviceCode: "rear_brake_rotors_replacement", stage: "Same axle", reason: "Inspect rotor thickness, scoring, and parking-brake overlap while the pads are apart.", weight: 100 },
         { label: "Brake Fluid Service", serviceCode: "brake_fluid_flush", stage: "Fluid check", reason: "Check fluid age, color, and pedal feel before the brake quote is closed.", weight: 66 },
         { label: "Caliper Inspection", serviceCode: "brake_diagnostic", stage: "Slide check", reason: "Confirm caliper slide, pin, and hose condition if pad wear is uneven.", weight: 58 },
       ],
@@ -999,8 +999,8 @@
       match: ["brake pad", "brake pads"],
       context: "Brake quote workflow",
       suggestions: [
-        { label: "Brake Rotors", query: "brake rotor", stage: "Same visit", reason: "Noise, pulsation, or low rotor thickness can change the repair plan.", weight: 74 },
-        { label: "Brake Fluid Service", serviceCode: "brake_fluid_flush", stage: "Fluid check", reason: "Keeps fluid condition visible without turning the quote into a diagnostic tree.", weight: 60 },
+        { label: "Rotor Inspection", query: "brake rotor", stage: "Commonly checked", reason: "Mechanics often inspect rotor thickness, scoring, and pulsation risk with pad wear.", weight: 74 },
+        { label: "Brake Fluid Service", serviceCode: "brake_fluid_flush", stage: "Fluid check", reason: "Check fluid age, color, and pedal feel before closing the brake quote.", weight: 60 },
         { label: "Caliper Inspection", serviceCode: "brake_diagnostic", stage: "Slide check", reason: "Useful when uneven pad wear points to slides, pins, or hose restriction.", weight: 54 },
       ],
     },
@@ -1018,17 +1018,18 @@
       context: "No-start workflow",
       suggestions: [
         { label: "Battery Test", serviceCode: "battery_test", stage: "Confirm power", reason: "Separates starter failure from weak battery or voltage drop.", weight: 96 },
-        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement", stage: "Voltage drop", reason: "Cables and terminals can mimic a starter problem.", weight: 70 },
-        { label: "Charging System Test", serviceCode: "charging_system_test", stage: "System check", reason: "Useful when a no-start complaint overlaps with repeated dead-battery symptoms.", weight: 56 },
+        { label: "Starter Circuit Inspection", serviceCode: "no_crank_diagnosis", stage: "Circuit check", reason: "Check command signal, relays, fuses, cables, and grounds before blaming the starter alone.", weight: 82 },
+        { label: "Battery Cable Inspection", serviceCode: "battery_cable_replacement", stage: "Voltage drop", reason: "Cables and terminals can mimic a starter problem.", weight: 70 },
       ],
     },
     {
       match: ["water_pump_replacement", "water pump replacement", "water pump"],
       context: "Cooling-system workflow",
       suggestions: [
-        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement", stage: "Flow control", reason: "Consider when overheating or warm-up behavior may not be pump-only.", weight: 84 },
-        { label: "Coolant Flush", serviceCode: "coolant_flush", stage: "Refill quality", reason: "Keeps coolant condition, contamination, and refill labor visible in the quote.", weight: 74 },
-        { label: "Serpentine Belt Inspection", serviceCode: "serpentine_belt_replacement", stage: "Belt drive", reason: "Check belt condition and tension when the pump is belt-driven or nearby.", weight: 58 },
+        { label: "Thermostat Inspection", serviceCode: "thermostat_replacement", stage: "Flow control", reason: "Commonly checked when overheating or warm-up behavior may not be pump-only.", weight: 84 },
+        { label: "Coolant Service", serviceCode: "coolant_flush", stage: "Fluid condition", reason: "Check coolant age, contamination, and refill needs while the system is open.", weight: 74 },
+        { label: "Radiator Hose Inspection", serviceCode: "coolant_hose_replacement_each", stage: "Leak check", reason: "Inspect swollen, soft, cracked, or leaking hoses before closing the cooling repair.", weight: 68 },
+        { label: "Belt Inspection", serviceCode: "serpentine_belt_replacement", stage: "Belt drive", reason: "Check belt condition and tension when the pump is belt-driven or nearby.", weight: 58 },
       ],
     },
     {
@@ -1044,8 +1045,9 @@
       match: ["wheel_bearing_replacement", "wheel bearing", "hub assembly"],
       context: "Chassis workflow",
       suggestions: [
-        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel", stage: "After repair", reason: "Good handoff when suspension angle or tire wear is part of the visit.", weight: 80 },
-        { label: "Sway Bar Link Replacement", serviceCode: "sway_bar_link_replacement", stage: "Nearby check", reason: "Often inspected while the corner is raised and wheel is off.", weight: 52 },
+        { label: "Suspension Inspection", serviceCode: "suspension_noise_diagnosis", stage: "Nearby check", reason: "Control arms, ball joints, and links are commonly checked while the corner is raised.", weight: 82 },
+        { label: "Tire Wear Inspection", serviceCode: "tire_rotation", stage: "Road-noise check", reason: "Tire wear can imitate bearing growl and helps explain repeat noise complaints.", weight: 76 },
+        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel", stage: "After repair", reason: "Consider when tire wear, pull, or suspension angle concerns overlap.", weight: 64 },
       ],
     },
     {
@@ -1067,7 +1069,8 @@
       match: ["thermostat"],
       context: "Cooling-system workflow",
       suggestions: [
-        { label: "Coolant Flush", query: "coolant flush", stage: "Fluid service", reason: "Consider when coolant age, contamination, or refill labor affects the quote.", weight: 70 },
+        { label: "Coolant Service", query: "coolant flush", stage: "Fluid condition", reason: "Consider when coolant age, contamination, or refill labor affects the quote.", weight: 70 },
+        { label: "Radiator Hose Inspection", serviceCode: "coolant_hose_replacement_each", stage: "Leak check", reason: "Hoses and housing seals are commonly inspected when the cooling system is open.", weight: 60 },
       ],
     },
     {
@@ -1099,20 +1102,23 @@
       match: ["cooling_fan_assembly_replacement", "radiator fan", "water_pump_replacement", "thermostat_replacement"],
       reminders: [
         { label: "Cooling System Pressure Test", serviceCode: "cooling_system_pressure_test", stage: "Verify system", reason: "Helps catch leaks or pressure loss before the quote is finalized.", weight: 88 },
-        { label: "Thermostat Replacement", serviceCode: "thermostat_replacement", stage: "Related cause", reason: "Consider only if temperature behavior points beyond the quoted repair.", weight: 52 },
+        { label: "Radiator Hose Inspection", serviceCode: "coolant_hose_replacement_each", stage: "Leak check", reason: "Quickly surfaces hose condition while the cooling path is already in view.", weight: 66 },
+        { label: "Thermostat Inspection", serviceCode: "thermostat_replacement", stage: "Related cause", reason: "Consider only if temperature behavior points beyond the quoted repair.", weight: 52 },
       ],
     },
     {
       match: ["starter_replacement", "starter", "battery_replacement", "battery"],
       reminders: [
         { label: "Battery Test", serviceCode: "battery_test", stage: "Confirm power", reason: "Keeps no-start quotes from missing low-voltage causes.", weight: 90 },
-        { label: "Battery Cable Replacement", serviceCode: "battery_cable_replacement", stage: "Voltage drop", reason: "Good check when cable corrosion or looseness is present.", weight: 64 },
+        { label: "Starter Circuit Inspection", serviceCode: "no_crank_diagnosis", stage: "Circuit check", reason: "Good check when command signal, relay, fuse, or ground questions remain.", weight: 72 },
+        { label: "Battery Cable Inspection", serviceCode: "battery_cable_replacement", stage: "Voltage drop", reason: "Good check when cable corrosion or looseness is present.", weight: 64 },
       ],
     },
     {
       match: ["wheel_bearing_replacement", "wheel bearing", "sway_bar_link_replacement", "suspension"],
       reminders: [
-        { label: "Wheel Alignment", serviceCode: "wheel_alignment_4_wheel", stage: "After repair", reason: "Consider when tire wear, pull, or suspension work overlaps.", weight: 76 },
+        { label: "Suspension Inspection", serviceCode: "suspension_noise_diagnosis", stage: "Nearby check", reason: "Useful when the corner is already raised and noise source is still being confirmed.", weight: 78 },
+        { label: "Tire Wear Inspection", serviceCode: "tire_rotation", stage: "Road-noise check", reason: "Consider when tire chop or cupping may be part of the noise complaint.", weight: 70 },
       ],
     },
   ];

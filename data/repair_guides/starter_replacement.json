@@ -18,6 +18,12 @@
     "Starter relay, fuse, and crank signal where accessible",
     "Mounting condition and signs of oil contamination"
   ],
+  "related_systems": [
+    "Battery health",
+    "Starter command circuit",
+    "Cables and grounds",
+    "No-crank diagnosis"
+  ],
   "likely_causes": [
     "Internal starter motor or solenoid failure",
     "Weak battery or high-resistance cable",
@@ -45,14 +51,18 @@
   "recommended_repairs": [
     {
       "title": "Battery Test",
-      "description": "Confirm battery capacity before replacing starter parts.",
+      "description": "Mechanics often confirm battery capacity before replacing starter parts.",
       "estimator_href": "/estimator?service=battery_test"
     },
     {
-      "title": "Battery Replacement",
-      "description": "Use when no-crank is caused by a failing battery instead of the starter.",
-      "cost_guide_href": "/cost/battery-replacement",
-      "estimator_href": "/estimator?service=battery_replacement"
+      "title": "Starter Circuit Inspection",
+      "description": "Commonly checked when command signal, relay, fuse, cable, or ground questions remain.",
+      "estimator_href": "/estimator?service=no_crank_diagnosis"
+    },
+    {
+      "title": "Battery Cable Inspection",
+      "description": "Related voltage-drop check when corrosion or loose terminals could mimic starter failure.",
+      "estimator_href": "/estimator?service=battery_cable_replacement"
     }
   ],
   "diagnostic_context": {

@@ -18,6 +18,12 @@
     "Alternator belt condition, tension, and pulley alignment",
     "Main alternator output cable, grounds, fuses, and connector fit"
   ],
+  "related_systems": [
+    "Battery health",
+    "Belt drive",
+    "Charging cables and grounds",
+    "Low-voltage OBD context"
+  ],
   "likely_causes": [
     "Internal alternator or regulator failure",
     "Loose, glazed, or slipping serpentine belt",
@@ -48,7 +54,7 @@
   "recommended_repairs": [
     {
       "title": "Battery Test",
-      "description": "Confirm battery health before condemning the alternator.",
+      "description": "Mechanics often verify battery capacity before condemning the alternator.",
       "estimator_href": "/estimator?service=battery_test"
     },
     {
@@ -59,7 +65,7 @@
     },
     {
       "title": "Serpentine Belt Inspection",
-      "description": "Check belt slip or tensioner problems that can imitate charging failure.",
+      "description": "Commonly checked with alternator work because belt slip or tensioner problems can imitate charging failure.",
       "cost_guide_href": "/cost/serpentine-belt-replacement",
       "estimator_href": "/estimator?service=serpentine_belt_replacement"
     }
