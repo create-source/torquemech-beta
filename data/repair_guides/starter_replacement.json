@@ -1,0 +1,69 @@
+{
+  "slug": "starter-replacement",
+  "title": "Starter Replacement",
+  "category": "Electrical",
+  "subcategory": "Starting System",
+  "sort_order": 12,
+  "summary": "Starting-system blueprint for separating starter failure from battery, cable, relay, and no-crank control faults.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Single click or rapid clicking during crank request",
+    "No crank with good battery voltage",
+    "Intermittent crank after tapping or heat soak",
+    "Grinding noise from starter engagement"
+  ],
+  "inspect_first": [
+    "Battery voltage and load-test result",
+    "Voltage drop on positive and ground starter cables",
+    "Starter relay, fuse, and crank signal where accessible",
+    "Mounting condition and signs of oil contamination"
+  ],
+  "likely_causes": [
+    "Internal starter motor or solenoid failure",
+    "Weak battery or high-resistance cable",
+    "Starter relay, neutral safety, clutch switch, or ignition switch issue",
+    "Poor ground path under load"
+  ],
+  "repair_overview": [
+    "Confirm starter power, ground, and command signal before replacement.",
+    "Disconnect the battery and create safe access under the vehicle or near the engine.",
+    "Remove wiring and mounting bolts, then compare replacement unit clocking and teeth.",
+    "Install, torque, reconnect, and verify clean crank operation."
+  ],
+  "common_mistakes": [
+    "Replacing the starter with a weak battery still installed",
+    "Skipping voltage-drop testing on corroded cables",
+    "Misrouting starter wiring near exhaust heat",
+    "Ignoring oil leaks that may damage the replacement starter"
+  ],
+  "estimate_guidance": [
+    "Add diagnostic time for intermittent no-crank complaints.",
+    "Quote extra labor for shield, exhaust, driveshaft, or intake access issues.",
+    "Recommend battery and cable testing before final approval."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 3.5 },
+  "recommended_repairs": [
+    {
+      "title": "Battery Test",
+      "description": "Confirm battery capacity before replacing starter parts.",
+      "estimator_href": "/estimator?service=battery_test"
+    },
+    {
+      "title": "Battery Replacement",
+      "description": "Use when no-crank is caused by a failing battery instead of the starter.",
+      "cost_guide_href": "/cost/battery-replacement",
+      "estimator_href": "/estimator?service=battery_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Starter quotes are strongest after battery condition and voltage drop are checked under crank load.",
+    "common_symptoms_link": "/symptoms/hard-start-after-sitting-overnight",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Starter Replacement",
+    "service_code": "starter_replacement",
+    "service_name": "Starter Replacement",
+    "estimator_link": "/estimator"
+  }
+}

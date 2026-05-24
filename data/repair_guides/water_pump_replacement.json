@@ -1,0 +1,70 @@
+{
+  "slug": "water-pump-replacement",
+  "title": "Water Pump Replacement",
+  "category": "Cooling",
+  "subcategory": "Coolant Circulation",
+  "sort_order": 10,
+  "summary": "Cooling-system blueprint for confirming water pump leaks, bearing noise, or circulation failure before estimating replacement.",
+  "difficulty": "Advanced",
+  "symptoms": [
+    "Coolant leak from the water pump area or weep hole",
+    "Overheating at idle or under load",
+    "Growling bearing noise near the pump",
+    "Coolant smell with visible residue around front engine covers"
+  ],
+  "inspect_first": [
+    "Pressure-test evidence of the leak source",
+    "Belt, pulley, and pump bearing play",
+    "Thermostat behavior and cooling fan operation",
+    "Coolant condition, contamination, and recent overheating history"
+  ],
+  "likely_causes": [
+    "Water pump seal leak",
+    "Bearing failure or pulley wobble",
+    "Impeller damage or poor circulation",
+    "Cooling-system neglect or contaminated coolant"
+  ],
+  "repair_overview": [
+    "Confirm the pump is the leak or circulation fault before teardown.",
+    "Drain coolant, remove belt or timing components as required, and clean mating surfaces.",
+    "Install the pump with the correct gasket or sealant method.",
+    "Refill, bleed air, pressure test, and verify operating temperature."
+  ],
+  "common_mistakes": [
+    "Missing a thermostat, hose, radiator, or fan issue that caused the overheat",
+    "Reusing contaminated coolant",
+    "Using too much sealant on gasket surfaces",
+    "Not bleeding trapped air after refill"
+  ],
+  "estimate_guidance": [
+    "Quote higher labor when the pump is timing-belt or timing-chain driven.",
+    "Add coolant, bleeding time, and related hose or thermostat recommendations when inspection supports them.",
+    "Treat overheated vehicles cautiously because secondary damage may change the repair path."
+  ],
+  "labor_range": { "min_hours": 2.0, "max_hours": 6.0 },
+  "recommended_repairs": [
+    {
+      "title": "Thermostat Replacement",
+      "description": "Common companion when overheating or poor warm-up overlaps with pump failure.",
+      "cost_guide_href": "/cost/thermostat-replacement",
+      "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Radiator Replacement",
+      "description": "Compare when pressure testing points to radiator leakage or restriction instead.",
+      "cost_guide_href": "/cost/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Cooling repairs are strongest after pressure testing, temperature behavior, and leak evidence agree.",
+    "common_symptoms_link": "/symptoms/overheating-at-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Water Pump Replacement",
+    "service_code": "water_pump_replacement",
+    "service_name": "Water Pump Replacement",
+    "estimator_link": "/estimator"
+  }
+}

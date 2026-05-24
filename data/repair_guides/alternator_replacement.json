@@ -1,0 +1,77 @@
+{
+  "slug": "alternator-replacement",
+  "title": "Alternator Replacement",
+  "category": "Electrical",
+  "subcategory": "Charging System",
+  "sort_order": 10,
+  "summary": "Mechanic-first blueprint for confirming charging-system failure, avoiding battery misdiagnosis, and estimating alternator replacement cleanly.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Battery warning light or low charging voltage",
+    "Repeated dead battery after the battery tests good",
+    "Dimming lights, weak blower speed, or electrical dropouts",
+    "Whine or bearing noise from the alternator area"
+  ],
+  "inspect_first": [
+    "Battery state of charge and battery load-test result",
+    "Charging voltage at the battery with major loads on",
+    "Alternator belt condition, tension, and pulley alignment",
+    "Main alternator output cable, grounds, fuses, and connector fit"
+  ],
+  "likely_causes": [
+    "Internal alternator or regulator failure",
+    "Loose, glazed, or slipping serpentine belt",
+    "High resistance in the charge cable or engine ground",
+    "Weak battery masking the charging-system test"
+  ],
+  "repair_overview": [
+    "Confirm the charging fault before replacing the alternator.",
+    "Disconnect the battery, remove belt tension, and create access.",
+    "Transfer any pulley, shield, or bracket parts as required.",
+    "Install the alternator, route the belt correctly, and verify charging output."
+  ],
+  "common_mistakes": [
+    "Replacing the alternator before testing the battery",
+    "Missing a poor ground or fusible link issue",
+    "Leaving a worn belt or weak tensioner in place",
+    "Not clearing low-voltage codes after repair"
+  ],
+  "estimate_guidance": [
+    "Add diagnostic time when the vehicle has intermittent low voltage or parasitic draw complaints.",
+    "Quote extra access time when the alternator is buried under intake, cooling, or splash-shield components.",
+    "Recommend belt inspection with every alternator estimate."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 3.0 },
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Battery Test",
+      "description": "Confirm battery health before condemning the alternator.",
+      "estimator_href": "/estimator?service=battery_test"
+    },
+    {
+      "title": "Battery Replacement",
+      "description": "Use when the battery fails load testing or cannot recover after charging.",
+      "cost_guide_href": "/cost/battery-replacement",
+      "estimator_href": "/estimator?service=battery_replacement"
+    },
+    {
+      "title": "Serpentine Belt Inspection",
+      "description": "Check belt slip or tensioner problems that can imitate charging failure.",
+      "cost_guide_href": "/cost/serpentine-belt-replacement",
+      "estimator_href": "/estimator?service=serpentine_belt_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Charging faults often overlap with weak battery and parasitic drain complaints, so voltage testing matters before pricing parts.",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Alternator Replacement",
+    "service_code": "alternator_replacement",
+    "service_name": "Alternator Replacement",
+    "estimator_link": "/estimator"
+  }
+}

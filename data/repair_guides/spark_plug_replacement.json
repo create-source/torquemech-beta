@@ -1,0 +1,75 @@
+{
+  "slug": "spark-plug-replacement",
+  "title": "Spark Plug Replacement",
+  "category": "Engine",
+  "subcategory": "Ignition",
+  "sort_order": 12,
+  "summary": "Ignition blueprint for quoting spark plugs without overstating engine fitment when cylinder count or access is not yet confirmed.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Rough idle, misfire, hesitation, or hard start",
+    "Mileage-based maintenance interval",
+    "Worn plug gap or fouling found during diagnosis",
+    "Flashing check engine light during active misfire"
+  ],
+  "inspect_first": [
+    "Mileage, maintenance history, and correct plug type",
+    "Misfire codes and whether the miss follows a cylinder",
+    "Coil boots, plug wells, oil intrusion, and carbon tracking",
+    "Access restrictions from intake manifolds or rear banks"
+  ],
+  "likely_causes": [
+    "Normal plug wear",
+    "Incorrect plug gap or wrong plug type",
+    "Oil or coolant fouling",
+    "Ignition coil, injector, vacuum leak, or compression issue misdiagnosed as plugs"
+  ],
+  "repair_overview": [
+    "Confirm plugs are due or contributing to the fault.",
+    "Remove coils or wires carefully and inspect boots and wells.",
+    "Install correct plugs to specification and avoid cross-threading.",
+    "Verify idle quality, misfire counters, and road behavior after repair."
+  ],
+  "common_mistakes": [
+    "Calling plugs bad before checking coils, injectors, or compression on a repeated misfire",
+    "Using the wrong heat range or plug design",
+    "Overtightening plugs in aluminum heads",
+    "Ignoring oil in plug wells that can damage new boots"
+  ],
+  "estimate_guidance": [
+    "Use generic spark plug labeling when engine configuration is unknown.",
+    "Add access labor when intake removal or rear-bank access is required.",
+    "Recommend coil boot or ignition coil inspection when misfire history is present."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 4.0 },
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Ignition Coil Testing",
+      "description": "Use when the misfire is cylinder-specific or load-related.",
+      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Misfire Diagnostic Path",
+      "description": "Use when plugs are only one possible cause.",
+      "cost_guide_href": "/repair-guides/how-to-diagnose-a-cylinder-misfire",
+      "estimator_href": "/estimator"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Spark plug replacement connects tightly to misfire diagnosis, but plugs should not hide coil, injector, vacuum leak, or compression evidence.",
+    "common_symptoms_link": "/symptoms/engine-misfire-at-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Spark Plug Replacement",
+    "service_code": "spark_plug_replacement_4_cyl",
+    "service_name": "Spark Plug Replacement",
+    "estimator_link": "/estimator"
+  }
+}

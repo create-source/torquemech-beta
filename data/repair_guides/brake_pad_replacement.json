@@ -1,0 +1,75 @@
+{
+  "slug": "brake-pad-replacement",
+  "title": "Brake Pad Replacement",
+  "category": "Brakes",
+  "subcategory": "Pads and Friction",
+  "sort_order": 8,
+  "summary": "Blueprint for inspecting brake pads, rotors, calipers, and hardware before quoting a pad-only or pads-and-rotors repair.",
+  "difficulty": "Easy",
+  "symptoms": [
+    "Squeal, grind, or scraping while braking",
+    "Brake warning light or low pad sensor message",
+    "Longer stopping distance or brake pulsation",
+    "Uneven pad wear side to side"
+  ],
+  "inspect_first": [
+    "Inner and outer pad thickness on both sides",
+    "Rotor surface, thickness, scoring, and runout clues",
+    "Caliper slide pin movement and boot condition",
+    "Brake fluid level and visible hose or caliper leaks"
+  ],
+  "likely_causes": [
+    "Normal pad wear",
+    "Sticking slide pins or seized hardware",
+    "Rotor damage or excessive heat spots",
+    "Caliper piston not retracting evenly"
+  ],
+  "repair_overview": [
+    "Measure pads and inspect rotors before quoting the final path.",
+    "Remove caliper hardware, support the caliper, and replace pads and clips.",
+    "Service slide pins and contact points with proper brake lubricant.",
+    "Pump the pedal, verify pedal feel, and road test carefully."
+  ],
+  "common_mistakes": [
+    "Replacing pads without inspecting rotor condition",
+    "Letting the caliper hang from the brake hose",
+    "Skipping slide pin service",
+    "Driving before restoring brake pedal feel"
+  ],
+  "estimate_guidance": [
+    "Use pad-only pricing only when rotors, calipers, and hardware pass inspection.",
+    "Quote pads and rotors when scoring, pulsation, rust lip, or thickness concerns are present.",
+    "Add caliper or brake-fluid service only when inspection supports it."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 2.5 },
+  "recommended_repairs": [
+    {
+      "title": "Brake Rotor Replacement",
+      "description": "Common companion repair when rotors are scored, warped, thin, or heat damaged.",
+      "cost_guide_href": "/cost/brake-rotor-replacement",
+      "estimator_href": "/estimator?service=front_brake_pads_and_rotors_replacement"
+    },
+    {
+      "title": "Brake Fluid Service",
+      "description": "Consider when fluid is dark, contaminated, or service history is unknown.",
+      "estimator_href": "/estimator?service=brake_fluid_service"
+    },
+    {
+      "title": "Caliper Inspection",
+      "description": "Use when pad wear is uneven or the wheel shows drag after braking.",
+      "cost_guide_href": "/cost/brake-caliper-replacement",
+      "estimator_href": "/estimator?service=brake_caliper_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Brake noise and uneven wear should be inspected before choosing pad-only versus pads-and-rotors pricing.",
+    "common_symptoms_link": "/symptoms/brake-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Brake Pad Replacement",
+    "service_code": "front_brake_pads_replacement",
+    "service_name": "Brake Pad Replacement",
+    "estimator_link": "/estimator"
+  }
+}

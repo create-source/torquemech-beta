@@ -1464,10 +1464,17 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     normalized["warnings"] = normalize_repair_guide_list(
         guide.get("warnings") or guide.get("watchouts")
     )
+    normalized["inspect_first"] = normalize_repair_guide_list(
+        guide.get("inspect_first") or guide.get("what_mechanics_inspect_first")
+    )
+    normalized["estimate_guidance"] = normalize_repair_guide_list(guide.get("estimate_guidance"))
     normalized["bolt_sizes"] = normalize_repair_guide_list(guide.get("bolt_sizes"))
     normalized["coming_next"] = normalize_repair_guide_list(guide.get("coming_next"))
     normalized["related_obd_codes"] = normalize_symptom_obd_codes(guide.get("related_obd_codes"))
     normalized["recommended_repairs"] = normalize_symptom_recommended_repairs(guide.get("recommended_repairs"))
+
+    difficulty = str(guide.get("difficulty") or "").strip().title()
+    normalized["difficulty"] = difficulty if difficulty in {"Easy", "Moderate", "Advanced"} else ""
 
     normalized["labor_range"] = normalize_repair_guide_range(
         guide.get("labor_range"), "min_hours", "max_hours"
@@ -5283,6 +5290,7 @@ async def repair_guides_index(request: Request):
             "slug": slug,
             "title": title,
             "summary": summary,
+            "difficulty": guide.get("difficulty", ""),
             "sort_order": guide.get("sort_order", 999),
         }
 

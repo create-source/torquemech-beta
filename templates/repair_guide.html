@@ -6,6 +6,21 @@
     <div class="tm-eyebrow">TorqueMech Repair Guide</div>
     <h1 class="tm-page-title">{{ guide.title }}</h1>
     <p class="tm-muted">{{ guide.summary }}</p>
+    {% if guide.difficulty or guide.estimate %}
+    <div class="tm-blueprint-meta">
+      {% if guide.difficulty %}
+      <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
+      {% endif %}
+      {% if guide.estimate %}
+      <a
+        class="tm-btn tm-btn-primary"
+        href="{% if guide.estimate.service_code %}{{ guide.estimate.estimator_link }}?service={{ guide.estimate.service_code | urlencode }}{% else %}{{ guide.estimate.estimator_link }}{% endif %}"
+      >
+        {{ guide.estimate.cta_label }} ->
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
     <p class="tm-muted">Use this guide to confirm the failure path before replacement, then move into pricing once symptoms, tests, and root-cause evidence point to the same repair.</p>
   </div>
 </section>
@@ -73,6 +88,19 @@
 </section>
 {% endif %}
 
+{% if guide.inspect_first %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>What Mechanics Inspect First</h2>
+    <ul class="tm-list">
+      {% for item in guide.inspect_first %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
 {% if guide.diagnostic_logic %}
 <section class="tm-section">
   <div class="tm-card">
@@ -89,7 +117,7 @@
 {% if guide.likely_causes %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Likely Causes</h2>
+    <h2>Common Causes</h2>
     <ul class="tm-list">
       {% for item in guide.likely_causes %}
       <li>{{ item }}</li>
@@ -149,6 +177,24 @@
     <p class="tm-muted">Combined labor and parts estimate range.</p>
   </div>
   {% endif %}
+</section>
+{% endif %}
+
+{% if guide.difficulty %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Repair Difficulty</h2>
+    <div class="tm-blueprint-difficulty">
+      <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
+      {% if guide.difficulty == "Easy" %}
+      <p class="tm-muted">Usually straightforward when access is clear, parts are correct, and basic checks confirm the repair path.</p>
+      {% elif guide.difficulty == "Moderate" %}
+      <p class="tm-muted">Requires solid inspection habits, normal shop tooling, and attention to access, fasteners, and verification after the repair.</p>
+      {% else %}
+      <p class="tm-muted">Best handled with stronger diagnostic confidence, extra access planning, and enough time for seized hardware or system bleeding/calibration steps.</p>
+      {% endif %}
+    </div>
+  </div>
 </section>
 {% endif %}
 
@@ -368,6 +414,19 @@
       </div>
       {% endfor %}
     </div>
+  </div>
+</section>
+{% endif %}
+
+{% if guide.estimate_guidance %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Estimate Guidance</h2>
+    <ul class="tm-list">
+      {% for item in guide.estimate_guidance %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
   </div>
 </section>
 {% endif %}

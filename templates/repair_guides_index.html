@@ -37,6 +37,9 @@
     <div class="tm-guide-grid">
       {% for guide in group.guides %}
       <a class="tm-guide-card" href="/repair-guides/{{ guide.slug }}">
+        {% if guide.difficulty %}
+        <div class="tm-difficulty-badge">{{ guide.difficulty }}</div>
+        {% endif %}
         <h3>{{ guide.title }}</h3>
         {% if guide.summary %}
         <p class="tm-muted">{{ guide.summary }}</p>

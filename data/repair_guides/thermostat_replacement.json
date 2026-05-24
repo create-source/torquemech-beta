@@ -1,0 +1,73 @@
+{
+  "slug": "thermostat-replacement",
+  "title": "Thermostat Replacement",
+  "category": "Cooling",
+  "subcategory": "Temperature Control",
+  "sort_order": 8,
+  "summary": "Cooling-system blueprint for confirming stuck-open or stuck-closed thermostat behavior before quoting replacement.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "P0128, slow warm-up, or weak heater output",
+    "Temperature gauge stays low or swings unexpectedly",
+    "Overheating when thermostat sticks closed",
+    "Coolant leak near thermostat housing"
+  ],
+  "inspect_first": [
+    "Scan-tool coolant temperature warm-up pattern",
+    "Coolant level, air pockets, and leak evidence",
+    "Thermostat housing and hose temperature behavior",
+    "Radiator fan behavior and water pump circulation clues"
+  ],
+  "likely_causes": [
+    "Thermostat stuck open",
+    "Thermostat stuck closed",
+    "Housing leak or gasket failure",
+    "Coolant temperature sensor or wiring fault imitating thermostat behavior"
+  ],
+  "repair_overview": [
+    "Confirm warm-up or overheating pattern before opening the system.",
+    "Drain coolant as needed and remove housing or access parts.",
+    "Install thermostat in the correct orientation with a proper gasket seal.",
+    "Refill, bleed air, warm the engine, and verify stable operating temperature."
+  ],
+  "common_mistakes": [
+    "Replacing the thermostat before checking coolant level",
+    "Installing the thermostat backward",
+    "Skipping air bleeding after repair",
+    "Ignoring sensor data when P0128 is present"
+  ],
+  "estimate_guidance": [
+    "Add coolant and bleed time to the estimate.",
+    "Quote housing replacement separately when the housing is cracked or integrated.",
+    "Use diagnostic time when sensor data and temperature behavior do not agree."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 3.0 },
+  "related_obd_codes": [
+    { "code": "P0128", "title": "Coolant temperature below thermostat regulating temperature", "href": "/obd/p0128" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Radiator Replacement",
+      "description": "Compare when overheating is caused by flow or heat exchange issues instead.",
+      "cost_guide_href": "/cost/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    },
+    {
+      "title": "Water Pump Replacement",
+      "description": "Inspect when circulation problems continue after thermostat checks.",
+      "cost_guide_href": "/cost/water-pump-replacement",
+      "estimator_href": "/estimator?service=water_pump_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Thermostat replacement is strongest when coolant temperature data and hose behavior point to regulation failure.",
+    "common_symptoms_link": "/symptoms/overheating-at-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Thermostat Replacement",
+    "service_code": "thermostat_replacement",
+    "service_name": "Thermostat Replacement",
+    "estimator_link": "/estimator"
+  }
+}

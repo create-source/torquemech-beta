@@ -1,0 +1,68 @@
+{
+  "slug": "wheel-bearing-replacement",
+  "title": "Wheel Bearing Replacement",
+  "category": "Suspension",
+  "subcategory": "Hub and Bearing",
+  "sort_order": 10,
+  "summary": "Chassis blueprint for confirming wheel bearing noise, play, and hub failure before pricing replacement.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Growling or humming that changes with road speed",
+    "Noise changes when loading one side during a gentle lane change",
+    "Wheel play, ABS light, or damaged wheel speed sensor wiring",
+    "Vibration or roughness from one corner"
+  ],
+  "inspect_first": [
+    "Noise location during road test",
+    "Wheel play at 12 and 6 plus tire and suspension condition",
+    "Hub temperature and roughness while rotating by hand",
+    "ABS wiring and sensor condition near the hub"
+  ],
+  "likely_causes": [
+    "Worn hub bearing assembly",
+    "Pressed bearing failure",
+    "Tire noise imitating bearing growl",
+    "Loose axle nut or damaged hub flange"
+  ],
+  "repair_overview": [
+    "Confirm the noisy corner before teardown.",
+    "Remove wheel, brake components, axle nut, and hub fasteners as required.",
+    "Replace hub assembly or press bearing using proper support.",
+    "Torque axle and wheel fasteners, then road test for noise and ABS behavior."
+  ],
+  "common_mistakes": [
+    "Misdiagnosing tire noise as a wheel bearing",
+    "Reusing a one-time-use axle nut",
+    "Hammering through the bearing and damaging the hub or sensor",
+    "Not torquing axle nuts to specification"
+  ],
+  "estimate_guidance": [
+    "Quote extra time for rusted hub assemblies or press-in bearings.",
+    "Add ABS sensor or hardware only when inspection shows damage.",
+    "Mention that tires and bearings can create similar road-noise complaints."
+  ],
+  "labor_range": { "min_hours": 1.5, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Brake Rotor Removal / Inspection",
+      "description": "Brake hardware often has to come off before hub access.",
+      "cost_guide_href": "/cost/brake-rotor-replacement",
+      "estimator_href": "/estimator?service=front_brake_pads_and_rotors_replacement"
+    },
+    {
+      "title": "Suspension Noise Inspection",
+      "description": "Use when tire, joint, or bearing noise is not isolated yet.",
+      "estimator_href": "/estimator"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Bearing replacement should follow road-test evidence and corner isolation, not noise description alone.",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Wheel Bearing Replacement",
+    "service_code": "wheel_bearing_replacement_front",
+    "service_name": "Wheel Bearing Replacement",
+    "estimator_link": "/estimator"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "slug": "radiator-replacement",
+  "title": "Radiator Replacement",
+  "category": "Cooling",
+  "subcategory": "Heat Exchange",
+  "sort_order": 12,
+  "summary": "Blueprint for confirming radiator leaks, restriction, or cooling-system damage before quoting replacement.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Coolant leak from radiator tanks, seams, or core",
+    "Overheating at idle, in traffic, or under load",
+    "Coolant smell near the front of the vehicle",
+    "Visible corrosion, damaged fins, or pressure-test failure"
+  ],
+  "inspect_first": [
+    "Pressure-test leak location",
+    "Upper and lower hose condition",
+    "Cooling fan operation and airflow through the condenser/radiator stack",
+    "Thermostat behavior and coolant contamination"
+  ],
+  "likely_causes": [
+    "Cracked plastic tank or radiator seam leak",
+    "Impact damage or corroded core",
+    "Restricted radiator flow",
+    "Cooling fan or thermostat issue blamed on the radiator"
+  ],
+  "repair_overview": [
+    "Confirm radiator failure before draining the system.",
+    "Remove shrouds, hoses, cooler lines, and mounts as needed.",
+    "Transfer brackets or sensors, install the radiator, and secure hoses.",
+    "Refill coolant, bleed air, pressure test, and verify fan operation."
+  ],
+  "common_mistakes": [
+    "Replacing the radiator without finding why the vehicle overheated",
+    "Forgetting transmission cooler line sealing checks where equipped",
+    "Skipping system bleeding after refill",
+    "Missing a weak cap, hose, thermostat, or fan fault"
+  ],
+  "estimate_guidance": [
+    "Include coolant, bleed time, and any required hose or cap recommendations.",
+    "Add labor for tight front-end packaging, seized lower mounts, or cooler lines.",
+    "Warn customers that prior overheating can reveal additional issues after repair."
+  ],
+  "labor_range": { "min_hours": 1.5, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Thermostat Replacement",
+      "description": "Compare when temperature control, not the radiator, is the main fault.",
+      "cost_guide_href": "/cost/thermostat-replacement",
+      "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Water Pump Replacement",
+      "description": "Inspect when circulation or pump leakage overlaps with radiator symptoms.",
+      "cost_guide_href": "/cost/water-pump-replacement",
+      "estimator_href": "/estimator?service=water_pump_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Radiator replacement should follow pressure-test evidence or clear restriction/heat-exchange failure.",
+    "common_symptoms_link": "/symptoms/overheating-at-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Radiator Replacement",
+    "service_code": "radiator_replacement",
+    "service_name": "Radiator Replacement",
+    "estimator_link": "/estimator"
+  }
+}
