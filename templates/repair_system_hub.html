@@ -1,0 +1,245 @@
+{% extends "layout.html" %}
+
+{% block page_css %}
+<style>
+  .tm-system-hub-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .tm-system-hub-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .tm-system-hub-actions,
+    .tm-system-hub-cta .tm-btn,
+    .tm-system-hub-actions .tm-btn {
+      width: 100%;
+    }
+
+    .tm-system-hub-cta .tm-btn,
+    .tm-system-hub-actions .tm-btn {
+      justify-content: center;
+      text-align: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-section">
+  <div class="tm-card">
+    <div class="tm-eyebrow">TorqueMech Repair System Hub</div>
+    <h1 class="tm-page-title">{{ hub.title }}</h1>
+    <p class="tm-muted">{{ hub.summary }}</p>
+    {% if hub.intro %}
+    <p>{{ hub.intro }}</p>
+    {% endif %}
+    {% if vehicle_context and vehicle_context.has_context %}
+    <div class="tm-workflow-context-note">
+      <strong>Viewing system guidance for:</strong>
+      <span>{{ vehicle_context.label }}</span>
+      <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">Continue Estimate</a>
+    </div>
+    {% endif %}
+    <div class="tm-system-hub-actions">
+      {% if hub.estimate and hub.estimate.href %}
+      <a class="tm-btn tm-btn-primary" href="{{ hub.estimate.href }}">{{ hub.estimate.cta_label }}</a>
+      {% endif %}
+      <a class="tm-btn tm-btn-secondary" href="/diagnostics">Browse Diagnostics</a>
+    </div>
+  </div>
+</section>
+
+{% if hub.related_repairs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related Repairs</h2>
+    <p class="tm-muted">Open the repair blueprint after symptoms, measurements, and related system checks point to that path.</p>
+    <div class="tm-related-repair-grid">
+      {% for item in hub.related_repairs %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted">{{ item.description }}</p>
+        {% endif %}
+        {% if item.cost_guide_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.cost_guide_href }}">Related Repair &rarr;</a>
+        </div>
+        {% endif %}
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if hub.common_symptoms %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related Symptoms</h2>
+    <p class="tm-muted">Use symptom paths when the complaint needs one more confirmation step before the estimate.</p>
+    <div class="tm-stack">
+      {% for item in hub.common_symptoms %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted">{{ item.description }}</p>
+        {% endif %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.href }}">Related Symptom &rarr;</a>
+        </div>
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if hub.related_obd_codes %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related Codes</h2>
+    <p class="tm-muted">Use code context to confirm the system direction before pricing a repair.</p>
+    <ul class="tm-list">
+      {% for item in hub.related_obd_codes %}
+      <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if hub.diagnostic_path_sections %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Diagnostic Paths</h2>
+    <p class="tm-muted">Use these checks to decide whether to keep inspecting, open a repair blueprint, or continue the estimate.</p>
+    <div class="tm-diagnostic-path-grid">
+      {% for path in hub.diagnostic_path_sections %}
+      <div class="tm-linked-card">
+        <h3>{{ path.title }}</h3>
+        {% if path.summary %}
+        <p class="tm-muted">{{ path.summary }}</p>
+        {% endif %}
+        {% if path.checks %}
+        <ul class="tm-list">
+          {% for check in path.checks %}
+          <li>{{ check }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if path.confidence_cues %}
+        <div class="tm-confidence-cues tm-confidence-cues--compact">
+          {% for cue in path.confidence_cues %}
+          <span>{{ cue }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if path.repairs %}
+        <div class="tm-diagnostic-path-links">
+          {% for repair in path.repairs %}
+          {% if repair.cost_guide_href %}
+          <a href="{{ repair.cost_guide_href }}">{{ repair.title }}</a>
+          {% elif repair.estimator_href %}
+          <a href="{{ repair.estimator_href }}">{{ repair.title }}</a>
+          {% else %}
+          <span>{{ repair.title }}</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if hub.inspection_priority or hub.confidence_cues %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Mechanic Workflow Guidance</h2>
+    {% if hub.inspection_priority %}
+    <ul class="tm-priority-list">
+      {% for item in hub.inspection_priority %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if hub.confidence_cues %}
+    <div class="tm-confidence-cues">
+      {% for item in hub.confidence_cues %}
+      <span>{{ item }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if hub.estimate_guidance %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Estimate Guidance</h2>
+    <ul class="tm-list">
+      {% for item in hub.estimate_guidance %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if hub.related_systems %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Inspect Related System</h2>
+    <div class="tm-blueprint-chip-list">
+      {% for item in hub.related_systems %}
+      <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if hub.estimate %}
+<section class="tm-section">
+  <div class="tm-card tm-estimate-repair-card tm-system-hub-cta">
+    <h2>Continue Estimate</h2>
+    <p class="tm-muted">Move into pricing once the symptom, code, and inspection path point to a likely repair. Vehicle and service context stay attached through the estimator handoff.</p>
+    <a class="tm-btn tm-btn-primary tm-estimate-repair-cta" href="{{ hub.estimate.href }}">
+      {% if vehicle_context and vehicle_context.has_context %}
+      Continue estimate for {{ vehicle_context.label }} &rarr;
+      {% else %}
+      {{ hub.estimate.cta_label }} &rarr;
+      {% endif %}
+    </a>
+    {% if workflow_context and workflow_context.return_href %}
+    <a class="tm-btn tm-btn-secondary tm-workflow-return-link" href="{{ workflow_context.return_href }}">
+      Continue Estimate
+    </a>
+    {% endif %}
+    <p class="tm-muted" style="margin-top:0;">System guidance is inspection-first and may vary by engine, trim, drivetrain, and vehicle condition.</p>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

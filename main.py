@@ -1829,6 +1829,7 @@ def apply_workflow_context_to_repair_items(
                 linked_href.startswith("/repair-guides/")
                 or linked_href.startswith("/obd/")
                 or linked_href.startswith("/symptoms/")
+                or linked_href.startswith("/repair-systems/")
             ):
                 linked_item[key] = append_workflow_context_to_href(
                     linked_href,
@@ -2676,6 +2677,86 @@ def build_vehicle_system_entries(
         )
 
     return entries
+
+
+def normalize_system_hub_entry(raw_hub: Any, *, file_slug: str = "") -> Dict[str, Any]:
+    hub = dict(raw_hub) if isinstance(raw_hub, dict) else {}
+    slug = str(hub.get("slug") or file_slug or "").strip().replace("_", "-")
+    title = str(hub.get("title") or slug.replace("-", " ").title() or "Repair System Hub").strip()
+    estimate = hub.get("estimate") if isinstance(hub.get("estimate"), dict) else {}
+    service_code = str(
+        estimate.get("service_code")
+        or hub.get("service_code")
+        or ""
+    ).strip()
+    estimator_link = str(
+        estimate.get("estimator_link")
+        or hub.get("estimator_link")
+        or "/estimator"
+    ).strip() or "/estimator"
+
+    return {
+        "slug": slug,
+        "title": title,
+        "summary": str(hub.get("summary") or "").strip(),
+        "intro": str(hub.get("intro") or "").strip(),
+        "common_symptoms": normalize_related_link_items(hub.get("common_symptoms") or hub.get("related_symptoms")),
+        "related_symptoms": normalize_related_link_items(hub.get("related_symptoms") or hub.get("common_symptoms")),
+        "related_obd_codes": normalize_symptom_obd_codes(hub.get("related_obd_codes")),
+        "related_repairs": normalize_symptom_recommended_repairs(hub.get("related_repairs") or hub.get("related_repair_guides")),
+        "diagnostic_path_sections": normalize_diagnostic_path_sections(hub.get("diagnostic_path_sections")),
+        "inspection_priority": normalize_repair_guide_list(hub.get("inspection_priority")),
+        "confidence_cues": normalize_repair_guide_list(hub.get("confidence_cues") or hub.get("workflow_cues")),
+        "estimate_guidance": normalize_repair_guide_list(hub.get("estimate_guidance")),
+        "related_systems": normalize_related_link_items(hub.get("related_systems")),
+        "estimate": {
+            "cta_label": str(estimate.get("cta_label") or hub.get("cta_label") or "Continue Estimate").strip(),
+            "service_code": service_code,
+            "service_name": str(estimate.get("service_name") or title).strip(),
+            "estimator_link": estimator_link,
+            "href": build_estimator_service_href(service_code, estimator_link),
+        },
+        "entry_type": "system_hub",
+        "entry_label": "Repair System",
+        "detail_href": f"/repair-systems/{slug}",
+    }
+
+
+def load_system_hub_entries() -> List[Dict[str, Any]]:
+    hubs_dir = DATA_DIR / "system_hubs"
+    if not hubs_dir.exists():
+        return []
+
+    entries: List[Dict[str, Any]] = []
+    for file in sorted(hubs_dir.glob("*.json")):
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8-sig"))
+        except Exception:
+            continue
+        entries.append(normalize_system_hub_entry(raw, file_slug=file.stem))
+
+    return sorted(entries, key=lambda item: item.get("title", "").lower())
+
+
+def load_system_hub_source(slug: str) -> Tuple[Dict[str, Any], str]:
+    hubs_dir = DATA_DIR / "system_hubs"
+    file_slug = str(slug or "").strip().lower().replace("-", "_")
+    direct_path = hubs_dir / f"{file_slug}.json"
+    if direct_path.exists():
+        return load_json_file("system_hubs", f"{file_slug}.json"), direct_path.stem
+
+    requested = str(slug or "").strip().lower().replace("_", "-")
+    for file in hubs_dir.glob("*.json"):
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8-sig"))
+        except Exception:
+            continue
+
+        raw_slug = str(raw.get("slug") or "").strip().lower().replace("_", "-")
+        if requested in {file.stem.replace("_", "-").lower(), raw_slug}:
+            return raw, file.stem
+
+    raise HTTPException(status_code=404, detail="Content not found")
 
 
 def load_diagnostic_entries(repair_guides: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -5577,6 +5658,7 @@ async def diagnostics_hub(request: Request):
     obd_entries = load_diagnostic_entries(repair_guides)
     symptom_entries = load_symptom_entries(repair_guides)
     system_entries = build_vehicle_system_entries(symptom_entries, repair_guides)
+    system_hub_entries = load_system_hub_entries()
 
     return templates.TemplateResponse(
         "diagnostics.html",
@@ -5584,6 +5666,7 @@ async def diagnostics_hub(request: Request):
             "request": request,
             "obd_entries": obd_entries,
             "symptom_entries": symptom_entries,
+            "system_hub_entries": system_hub_entries,
             "system_entries": system_entries,
             "featured_obd_codes": build_featured_obd_codes(),
             "platform_sections": build_platform_sections("/diagnostics"),
@@ -6235,6 +6318,17 @@ def build_sitemap_repair_guide_paths() -> List[str]:
         for file in sorted(repair_guides_dir.glob("*.json"))
     ]
 
+
+def build_sitemap_system_hub_paths() -> List[str]:
+    system_hubs_dir = DATA_DIR / "system_hubs"
+    if not system_hubs_dir.exists():
+        return []
+
+    return [
+        f"/repair-systems/{file.stem.replace('_', '-')}"
+        for file in sorted(system_hubs_dir.glob("*.json"))
+    ]
+
 def latest_lastmod_for_files(files: List[Path]) -> Optional[str]:
     timestamps: List[float] = []
 
@@ -6263,6 +6357,8 @@ def build_sitemap_lastmods() -> Dict[str, str]:
     symptom_files = sorted((BASE_DIR / "data" / "symptoms").glob("*.json"))
     shared_repair_guide_sources = [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_guide.html"]
     repair_guide_files = sorted((BASE_DIR / "data" / "repair_guides").glob("*.json"))
+    shared_system_hub_sources = [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_system_hub.html"]
+    system_hub_files = sorted((BASE_DIR / "data" / "system_hubs").glob("*.json"))
 
     lastmod_sources: Dict[str, List[Path]] = {
         "/": [BASE_DIR / "main.py", TEMPLATES_DIR / "home.html"],
@@ -6271,6 +6367,7 @@ def build_sitemap_lastmods() -> Dict[str, str]:
         "/obd-codes": [BASE_DIR / "main.py", TEMPLATES_DIR / "obd_codes_index.html", BASE_DIR / "data" / "obd_codes.json"],
         "/symptoms": [BASE_DIR / "main.py", TEMPLATES_DIR / "symptoms_index.html", *symptom_files],
         "/repair-guides": [BASE_DIR / "main.py", TEMPLATES_DIR / "repair_guides_index.html", *repair_guide_files],
+        "/diagnostics": [BASE_DIR / "main.py", TEMPLATES_DIR / "diagnostics.html", *system_hub_files],
     }
 
     shared_obd_index_sources = [
@@ -6297,6 +6394,10 @@ def build_sitemap_lastmods() -> Dict[str, str]:
     for file in repair_guide_files:
         path = f"/repair-guides/{file.stem.replace('_', '-')}"
         lastmod_sources[path] = [*shared_repair_guide_sources, file]
+
+    for file in system_hub_files:
+        path = f"/repair-systems/{file.stem.replace('_', '-')}"
+        lastmod_sources[path] = [*shared_system_hub_sources, file]
 
     for path in SITEMAP_OBD_RANGE_PATHS:
         lastmod_sources[path] = list(shared_obd_index_sources)
@@ -6332,6 +6433,9 @@ def sitemap_priority_for_path(path: str) -> float:
     if normalized.startswith("/repair-guides/"):
         return 0.6
 
+    if normalized.startswith("/repair-systems/"):
+        return 0.6
+
     return 0.5
 
 @app.get("/sitemap.xml", response_class=Response)
@@ -6344,6 +6448,7 @@ def sitemap():
         *build_sitemap_obd_detail_paths(),
         *build_sitemap_symptom_paths(),
         *build_sitemap_repair_guide_paths(),
+        *build_sitemap_system_hub_paths(),
     ]
     seen_paths: set[str] = set()
     unique_paths: List[str] = []
@@ -8498,6 +8603,68 @@ async def repair_guide_page(request: Request, slug: str):
             "workflow_context": workflow_context,
             "page_title": f"{guide.get('title', 'Repair Guide')} | TorqueMech",
             "meta_description": guide.get("summary", "TorqueMech repair guide"),
+        },
+    )
+
+
+@app.get("/repair-systems/{slug}", response_class=HTMLResponse)
+async def repair_system_hub_page(request: Request, slug: str):
+    raw_hub, source_slug = load_system_hub_source(slug)
+    hub = normalize_system_hub_entry(raw_hub, file_slug=source_slug)
+    vehicle_context = build_vehicle_context_from_request(request)
+    workflow_context = build_workflow_context(
+        request,
+        vehicle_context=vehicle_context,
+        service_code=str((hub.get("estimate") or {}).get("service_code") or ""),
+        source="system-hub",
+    )
+
+    hub["common_symptoms"] = apply_workflow_context_to_repair_items(
+        hub.get("common_symptoms") or [],
+        workflow_context,
+    )
+    hub["related_symptoms"] = apply_workflow_context_to_repair_items(
+        hub.get("related_symptoms") or [],
+        workflow_context,
+    )
+    hub["related_obd_codes"] = apply_workflow_context_to_repair_items(
+        hub.get("related_obd_codes") or [],
+        workflow_context,
+    )
+    hub["related_repairs"] = apply_workflow_context_to_repair_items(
+        hub.get("related_repairs") or [],
+        workflow_context,
+    )
+    contextual_path_sections = []
+    for section in hub.get("diagnostic_path_sections") or []:
+        contextual_section = dict(section)
+        contextual_section["repairs"] = apply_workflow_context_to_repair_items(
+            section.get("repairs") or [],
+            workflow_context,
+        )
+        contextual_path_sections.append(contextual_section)
+    hub["diagnostic_path_sections"] = contextual_path_sections
+    hub["related_systems"] = apply_workflow_context_to_repair_items(
+        hub.get("related_systems") or [],
+        workflow_context,
+    )
+
+    estimate = dict(hub.get("estimate") or {})
+    estimate["href"] = append_workflow_context_to_href(
+        estimate.get("href") or estimate.get("estimator_link") or "/estimator",
+        workflow_context,
+    )
+    hub["estimate"] = estimate
+
+    return templates.TemplateResponse(
+        "repair_system_hub.html",
+        {
+            "request": request,
+            "hub": hub,
+            "vehicle_context": vehicle_context,
+            "workflow_context": workflow_context,
+            "page_title": f"{hub.get('title', 'Repair System Hub')} | TorqueMech",
+            "meta_description": hub.get("summary", "TorqueMech repair system hub"),
         },
     )
 

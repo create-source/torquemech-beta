@@ -200,6 +200,19 @@
   <div class="tm-card">
     <h2>Start From a Vehicle System</h2>
     <p class="tm-muted">Browse structured system-level entry points when the issue is already narrowed to a general area.</p>
+    {% if system_hub_entries %}
+    <div class="tm-stack" style="margin-bottom:16px;">
+      {% for entry in system_hub_entries %}
+      <div class="tm-linked-card">
+        <h3>{{ entry.title }}</h3>
+        <p class="tm-muted">{{ entry.summary }}</p>
+        <div class="tm-link-block">
+          <a href="{{ entry.detail_href }}">Open System Hub &rarr;</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
     <div class="tm-stack">
       {% for entry in system_entries %}
       <div class="tm-linked-card">

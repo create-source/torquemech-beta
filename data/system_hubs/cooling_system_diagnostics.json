@@ -1,0 +1,140 @@
+{
+  "slug": "cooling-system-diagnostics",
+  "title": "Cooling System Diagnostics",
+  "summary": "Compact cooling-system hub for overheating, coolant loss, thermostat, water pump, radiator fan, and pressure-test workflows.",
+  "intro": "Use this hub when temperature behavior, coolant loss, fan operation, heater output, or steam/smell complaints need to be sorted before pricing cooling parts.",
+  "common_symptoms": [
+    {
+      "title": "Overheating At Idle",
+      "description": "Use when temperature climbs sitting still or in traffic and airflow/fan checks matter.",
+      "href": "/symptoms/overheating-at-idle",
+      "estimator_href": "/estimator?service=overheating_diagnosis"
+    },
+    {
+      "title": "Coolant Leaks",
+      "description": "Use when pressure testing, hose inspection, or coolant residue needs to guide the estimate.",
+      "href": "/symptoms/coolant-leaks",
+      "estimator_href": "/estimator?service=coolant_leak_diagnosis"
+    },
+    {
+      "title": "Vehicle Overheats With AC On",
+      "description": "Use when added condenser heat exposes weak fan, airflow, or cooling capacity.",
+      "href": "/symptoms/vehicle-overheats-with-ac-on",
+      "estimator_href": "/estimator?service=overheating_diagnosis"
+    },
+    {
+      "title": "White Smoke From Exhaust",
+      "description": "Use when coolant intrusion must be separated from external leaks before repair pricing.",
+      "href": "/symptoms/white-smoke-from-exhaust",
+      "estimator_href": "/estimator?service=cooling_system_diagnosis"
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0128", "title": "Coolant temperature below thermostat regulating temperature", "href": "/obd/p0128" },
+    { "code": "P0117", "title": "Engine coolant temperature circuit low", "href": "/obd/p0117" },
+    { "code": "P0118", "title": "Engine coolant temperature circuit high", "href": "/obd/p0118" }
+  ],
+  "related_repairs": [
+    {
+      "title": "Thermostat Blueprint",
+      "description": "Use when warm-up behavior, P0128, or circulation evidence points to thermostat control.",
+      "cost_guide_href": "/repair-guides/thermostat-replacement",
+      "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Water Pump Blueprint",
+      "description": "Use when leaks, bearing noise, or circulation concerns support water pump inspection.",
+      "cost_guide_href": "/repair-guides/water-pump-replacement",
+      "estimator_href": "/estimator?service=water_pump_replacement"
+    },
+    {
+      "title": "Radiator Fan Blueprint",
+      "description": "Use when overheating happens mostly at idle, in traffic, or with AC load.",
+      "cost_guide_href": "/repair-guides/radiator-fan-replacement",
+      "estimator_href": "/estimator?service=radiator_fan_replacement"
+    },
+    {
+      "title": "Radiator Blueprint",
+      "description": "Use when leaks, clogging, external damage, or poor heat rejection is confirmed.",
+      "cost_guide_href": "/repair-guides/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    }
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Leak and Pressure Path",
+      "summary": "Start here when coolant level drops, smell is present, or residue is visible.",
+      "checks": [
+        "Pressure test the system cold and inspect cap, hoses, radiator, pump, and heater connections",
+        "Confirm coolant type and contamination before topping off",
+        "Check for internal leak signs when external leaks are not found"
+      ],
+      "repairs": [
+        { "title": "Water Pump Blueprint", "cost_guide_href": "/repair-guides/water-pump-replacement" },
+        { "title": "Radiator Blueprint", "cost_guide_href": "/repair-guides/radiator-replacement" }
+      ],
+      "confidence_cues": [
+        "Pressure test before parts",
+        "External and internal leaks can overlap"
+      ]
+    },
+    {
+      "title": "Airflow and Fan Path",
+      "summary": "Use when temperature rises at idle, in traffic, or with AC load.",
+      "checks": [
+        "Command or observe fan operation with AC on and coolant temperature rising",
+        "Inspect fan fuses, relays, connectors, shroud, and condenser/radiator airflow",
+        "Compare overheating at idle versus highway speed"
+      ],
+      "repairs": [
+        { "title": "Radiator Fan Blueprint", "cost_guide_href": "/repair-guides/radiator-fan-replacement" },
+        { "title": "Overheating Diagnosis", "estimator_href": "/estimator?service=overheating_diagnosis" }
+      ],
+      "confidence_cues": [
+        "AC load is a useful fan test clue",
+        "Airflow checks come before coolant parts"
+      ]
+    },
+    {
+      "title": "Thermostat and Circulation Path",
+      "summary": "Use when warm-up, heater output, P0128, or hose temperature patterns are the main clue.",
+      "checks": [
+        "Compare scan-tool coolant temperature to hose temperature behavior",
+        "Inspect for trapped air after prior cooling work",
+        "Check heater output and circulation evidence before replacing the thermostat"
+      ],
+      "repairs": [
+        { "title": "Thermostat Blueprint", "cost_guide_href": "/repair-guides/thermostat-replacement" },
+        { "title": "Cooling System Diagnosis", "estimator_href": "/estimator?service=cooling_system_diagnosis" }
+      ],
+      "confidence_cues": [
+        "Bleeding matters after cooling work",
+        "P0128 does not prove only one part"
+      ]
+    }
+  ],
+  "inspection_priority": [
+    "Verify coolant level, leak evidence, and pressure-test results first.",
+    "Compare overheating at idle, with AC on, and at road speed.",
+    "Confirm fan operation, thermostat behavior, and air bleeding before replacing parts."
+  ],
+  "confidence_cues": [
+    "Pressure test before replacement",
+    "Fan and airflow checks matter at idle",
+    "Bleeding and coolant condition affect final approval"
+  ],
+  "estimate_guidance": [
+    "Include coolant bleeding/refill considerations with thermostat, pump, radiator, or fan-related estimates.",
+    "Separate external leak repair from internal coolant-intrusion concerns.",
+    "Add diagnostic time when overheating behavior changes with AC load or vehicle speed."
+  ],
+  "related_systems": [
+    { "title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system" }
+  ],
+  "estimate": {
+    "cta_label": "Estimate Cooling Diagnosis",
+    "service_code": "overheating_diagnosis",
+    "service_name": "Cooling System Diagnostic",
+    "estimator_link": "/estimator"
+  }
+}

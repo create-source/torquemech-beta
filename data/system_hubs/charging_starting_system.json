@@ -1,0 +1,140 @@
+{
+  "slug": "charging-starting-system",
+  "title": "Charging & Starting System",
+  "summary": "Compact charging and starting hub for battery, alternator, starter, belt, voltage, no-start, and parasitic-draw workflows.",
+  "intro": "Use this hub when the complaint is battery light, intermittent no-start, no-crank, repeated dead battery, dim lights, or charging-voltage evidence.",
+  "common_symptoms": [
+    {
+      "title": "Battery Light On",
+      "description": "Use when the warning light, low charging voltage, belt slip, or alternator output needs sorting.",
+      "href": "/symptoms/battery-light-on",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
+    },
+    {
+      "title": "Intermittent No Start",
+      "description": "Use when battery state, starter command, relay, cable, or ground faults may be intermittent.",
+      "href": "/symptoms/intermittent-no-start",
+      "estimator_href": "/estimator?service=no_start_diagnosis"
+    },
+    {
+      "title": "Battery Drain",
+      "description": "Use when the battery goes dead after sitting and parasitic draw needs verification.",
+      "href": "/symptoms/battery-drain",
+      "estimator_href": "/estimator?service=electrical_diagnostic"
+    },
+    {
+      "title": "No Crank",
+      "description": "Use when the starter does not engage and circuit testing should come before parts.",
+      "href": "/symptoms/no-crank",
+      "estimator_href": "/estimator?service=no_start_diagnosis"
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" },
+    { "code": "P0563", "title": "System voltage high", "href": "/obd/p0563" },
+    { "code": "P0620", "title": "Generator control circuit", "href": "/obd/p0620" }
+  ],
+  "related_repairs": [
+    {
+      "title": "Alternator Blueprint",
+      "description": "Use after battery condition, belt drive, cable voltage drop, and charging output support alternator failure.",
+      "cost_guide_href": "/repair-guides/alternator-replacement",
+      "estimator_href": "/estimator?service=alternator_replacement"
+    },
+    {
+      "title": "Battery Blueprint",
+      "description": "Use when load testing, state of charge, age, or reserve capacity supports replacement.",
+      "cost_guide_href": "/repair-guides/battery-replacement",
+      "estimator_href": "/estimator?service=battery_replacement"
+    },
+    {
+      "title": "Starter Blueprint",
+      "description": "Use when starter command, voltage drop, and battery condition point to the starter.",
+      "cost_guide_href": "/repair-guides/starter-replacement",
+      "estimator_href": "/estimator?service=starter_replacement"
+    },
+    {
+      "title": "Serpentine Belt Blueprint",
+      "description": "Use when belt condition, tensioner travel, or squeal explains low charging output.",
+      "cost_guide_href": "/repair-guides/serpentine-belt-replacement",
+      "estimator_href": "/estimator?service=serpentine_belt_replacement"
+    }
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Battery and Cable Path",
+      "summary": "Start here for weak start, repeated dead battery, or voltage complaints.",
+      "checks": [
+        "Charge and load test the battery before judging the starter or alternator",
+        "Inspect terminal fit, corrosion, grounds, and main power cable voltage drop",
+        "Confirm battery age and reserve capacity when the failure is intermittent"
+      ],
+      "repairs": [
+        { "title": "Battery Blueprint", "cost_guide_href": "/repair-guides/battery-replacement" },
+        { "title": "Electrical Diagnostic", "estimator_href": "/estimator?service=electrical_diagnostic" }
+      ],
+      "confidence_cues": [
+        "Load test first",
+        "Cable voltage drop can mimic failed parts"
+      ]
+    },
+    {
+      "title": "Charging Output Path",
+      "summary": "Use when the battery light, low voltage, or module reset pattern suggests charging trouble.",
+      "checks": [
+        "Measure charging voltage at the battery and alternator output",
+        "Inspect serpentine belt, tensioner, pulley alignment, and charge fuse",
+        "Voltage-drop the alternator output and ground path before replacement"
+      ],
+      "repairs": [
+        { "title": "Alternator Blueprint", "cost_guide_href": "/repair-guides/alternator-replacement" },
+        { "title": "Serpentine Belt Blueprint", "cost_guide_href": "/repair-guides/serpentine-belt-replacement" }
+      ],
+      "confidence_cues": [
+        "Charging verification required",
+        "Belt slip can mimic alternator failure"
+      ]
+    },
+    {
+      "title": "Starter Command Path",
+      "summary": "Use when the vehicle has a no-crank or click/no-crank complaint.",
+      "checks": [
+        "Verify starter command signal and battery voltage at the starter",
+        "Check relay, neutral safety/clutch switch inputs, immobilizer clues, and grounds",
+        "Confirm the engine is not mechanically locked before starter approval"
+      ],
+      "repairs": [
+        { "title": "Starter Blueprint", "cost_guide_href": "/repair-guides/starter-replacement" },
+        { "title": "No-Start Diagnosis", "estimator_href": "/estimator?service=no_start_diagnosis" }
+      ],
+      "confidence_cues": [
+        "Command signal before starter replacement",
+        "Intermittent faults need voltage evidence"
+      ]
+    }
+  ],
+  "inspection_priority": [
+    "Charge and load test the battery first.",
+    "Check cables, grounds, fuses, and voltage drop before replacing major parts.",
+    "Verify charging output or starter command under the actual failure condition."
+  ],
+  "confidence_cues": [
+    "Voltage evidence before parts",
+    "Intermittent faults may need repeat testing",
+    "Low voltage can create secondary codes"
+  ],
+  "estimate_guidance": [
+    "Recommend charging-system verification before alternator replacement.",
+    "Separate battery replacement from parasitic-draw diagnosis when the battery dies after sitting.",
+    "Include belt/tensioner inspection when charging voltage is low or belt noise is present."
+  ],
+  "related_systems": [
+    { "title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics" }
+  ],
+  "estimate": {
+    "cta_label": "Estimate Starting or Charging Diagnosis",
+    "service_code": "alternator_diagnosis",
+    "service_name": "Charging and Starting System Diagnostic",
+    "estimator_link": "/estimator"
+  }
+}

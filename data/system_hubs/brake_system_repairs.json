@@ -1,0 +1,110 @@
+{
+  "slug": "brake-system-repairs",
+  "title": "Brake System Repairs",
+  "summary": "Compact brake-system hub for pad, rotor, caliper, vibration, noise, hub, and ABS-related repair workflows.",
+  "intro": "Use this hub when the complaint is braking noise, vibration, uneven wear, dragging, or brake-related wheel-end evidence. Start with measurements and heat/wear patterns before pricing parts.",
+  "common_symptoms": [
+    {
+      "title": "Vibration While Braking",
+      "description": "Use when pedal or steering-wheel shake points toward rotor runout, hub condition, or pad deposits.",
+      "href": "/symptoms/vibration-while-braking",
+      "estimator_href": "/estimator?service=brake_vibration_diagnosis"
+    },
+    {
+      "title": "Brake Noise",
+      "description": "Use when scraping, grinding, squeal, or uneven pad wear needs confirmation.",
+      "href": "/symptoms/brake-noise",
+      "estimator_href": "/estimator?service=brake_noise_diagnosis"
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "C0035", "title": "Left front wheel speed sensor circuit", "href": "/obd/c0035" },
+    { "code": "C0040", "title": "Right front wheel speed sensor circuit", "href": "/obd/c0040" }
+  ],
+  "related_repairs": [
+    {
+      "title": "Brake Pad Blueprint",
+      "description": "Use when pad thickness, taper, or friction material condition supports replacement.",
+      "cost_guide_href": "/repair-guides/brake-pad-replacement",
+      "estimator_href": "/estimator?service=front_brake_pads_replacement"
+    },
+    {
+      "title": "Brake Rotor Blueprint",
+      "description": "Use when scoring, heat spots, thickness, or runout confirms rotor work.",
+      "cost_guide_href": "/repair-guides/brake-rotor-replacement",
+      "estimator_href": "/estimator?service=brake_rotor_replacement"
+    },
+    {
+      "title": "Brake Caliper Blueprint",
+      "description": "Use when slides, piston movement, hose restriction, or dragging points beyond pads and rotors.",
+      "cost_guide_href": "/repair-guides/brake-caliper-replacement",
+      "estimator_href": "/estimator?service=brake_caliper_replacement_each"
+    },
+    {
+      "title": "Wheel Hub Inspection",
+      "description": "Use when rotor runout, bearing play, or ABS wheel-speed evidence overlaps brake complaints.",
+      "cost_guide_href": "/repair-guides/wheel-hub-assembly-replacement",
+      "estimator_href": "/estimator?service=wheel_hub_assembly_replacement_each"
+    }
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Noise and Wear Path",
+      "summary": "Start here for scraping, grinding, squeal, or uneven pad wear.",
+      "checks": [
+        "Measure inner and outer pad thickness",
+        "Inspect rotor scoring, lip, heat spots, and backing plate clearance",
+        "Check slide pins, abutment hardware, and bracket corrosion"
+      ],
+      "repairs": [
+        { "title": "Brake Pad Blueprint", "cost_guide_href": "/repair-guides/brake-pad-replacement" },
+        { "title": "Brake Caliper Blueprint", "cost_guide_href": "/repair-guides/brake-caliper-replacement" }
+      ],
+      "confidence_cues": [
+        "Measurement before replacement",
+        "Uneven wear means inspect caliper hardware"
+      ]
+    },
+    {
+      "title": "Vibration and Runout Path",
+      "summary": "Use when brake pulsation or steering-wheel shake is the main complaint.",
+      "checks": [
+        "Inspect rotor condition and hub face rust",
+        "Check wheel bearing play and rotor seating",
+        "Confirm vibration happens under braking, not only at speed"
+      ],
+      "repairs": [
+        { "title": "Brake Rotor Blueprint", "cost_guide_href": "/repair-guides/brake-rotor-replacement" },
+        { "title": "Wheel Hub Assembly Blueprint", "cost_guide_href": "/repair-guides/wheel-hub-assembly-replacement" }
+      ],
+      "confidence_cues": [
+        "Hub condition can mimic rotor problems",
+        "Brake vibration is not always pad-only"
+      ]
+    }
+  ],
+  "inspection_priority": [
+    "Measure pad thickness and compare inner versus outer wear.",
+    "Inspect rotor condition, runout clues, and hub face condition.",
+    "Check caliper slide movement and hose concerns before quoting pads only."
+  ],
+  "confidence_cues": [
+    "Inspect before parts replacement",
+    "Heat and wear patterns matter",
+    "Wheel hub issues can overlap brake vibration"
+  ],
+  "estimate_guidance": [
+    "Quote axle position clearly so the estimate matches front, rear, or four-wheel work.",
+    "Add rotors, calipers, hoses, or hub inspection only when evidence supports it.",
+    "Recommend brake fluid inspection when hydraulic or caliper work is likely."
+  ],
+  "related_systems": [
+    { "title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system" }
+  ],
+  "estimate": {
+    "cta_label": "Estimate Brake Work",
+    "service_code": "brake_diagnostic",
+    "service_name": "Brake System Diagnostic",
+    "estimator_link": "/estimator"
+  }
+}
