@@ -1,0 +1,70 @@
+{
+  "slug": "serpentine-belt-replacement",
+  "title": "Serpentine Belt Replacement",
+  "category": "Engine",
+  "subcategory": "Belt Drive",
+  "sort_order": 18,
+  "summary": "Belt-drive blueprint for confirming belt wear, noise, or accessory drive risk before replacement.",
+  "difficulty": "Easy",
+  "symptoms": [
+    "Belt squeal on startup or with electrical or A/C load",
+    "Cracked, glazed, frayed, or oil-soaked belt",
+    "Battery light or overheating caused by belt slip",
+    "Accessory pulley noise near the front of the engine"
+  ],
+  "inspect_first": [
+    "Belt rib condition, glazing, contamination, and missing chunks",
+    "Tensioner movement, spring force, and pulley bearing noise",
+    "Idler pulleys and accessory pulley alignment",
+    "Coolant or oil leaks contaminating the belt"
+  ],
+  "related_systems": [
+    "Alternator charging",
+    "Water pump drive where applicable",
+    "A/C compressor load",
+    "Tensioner and idler pulleys"
+  ],
+  "repair_overview": [
+    "Record belt routing or use the underhood diagram.",
+    "Unload the tensioner, remove the belt, and inspect pulley rotation.",
+    "Install the correct belt on every rib and verify tracking.",
+    "Run the engine and recheck alignment, noise, and charging or cooling behavior."
+  ],
+  "common_mistakes": [
+    "Replacing the belt while ignoring a weak tensioner",
+    "Missing an oil or coolant leak that will damage the new belt",
+    "Installing one rib off on a pulley",
+    "Blaming the belt for a failing pulley bearing"
+  ],
+  "estimate_guidance": [
+    "Add tensioner or idler replacement only when inspection shows noise, wobble, or weak tension.",
+    "Mention leak repair if oil or coolant contamination caused belt failure.",
+    "Pair with alternator, water pump, or A/C diagnosis only when the accessory symptom points there."
+  ],
+  "labor_range": { "min_hours": 0.3, "max_hours": 1.2 },
+  "recommended_repairs": [
+    {
+      "title": "Alternator Blueprint",
+      "description": "Related when belt slip causes low charging output.",
+      "cost_guide_href": "/repair-guides/alternator-replacement",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
+    },
+    {
+      "title": "Water Pump Blueprint",
+      "description": "Related when the belt drives the pump or coolant contamination is present.",
+      "cost_guide_href": "/repair-guides/water-pump-replacement",
+      "estimator_href": "/estimator?service=water_pump_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "A belt estimate is strongest when the belt, tensioner, pulleys, and contamination source are checked together.",
+    "common_symptoms_link": "/symptoms/charging-system-warning-light",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Serpentine Belt Replacement",
+    "service_code": "serpentine_belt_replacement",
+    "service_name": "Serpentine Belt Replacement",
+    "estimator_link": "/estimator"
+  }
+}

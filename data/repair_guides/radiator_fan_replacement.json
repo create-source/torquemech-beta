@@ -1,0 +1,69 @@
+{
+  "slug": "radiator-fan-replacement",
+  "title": "Radiator Fan Replacement",
+  "category": "Cooling",
+  "subcategory": "Cooling Fan",
+  "sort_order": 22,
+  "summary": "Cooling fan blueprint for confirming failed fan motors, fan assemblies, relays, and control inputs before replacement.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Overheating at idle or in traffic but cooler at road speed",
+    "A/C performance weak at idle",
+    "Cooling fan does not turn on when commanded",
+    "Fan noise, wobble, or intermittent operation"
+  ],
+  "inspect_first": [
+    "Coolant level and actual engine temperature",
+    "Fan command from scan tool or control module",
+    "Fan motor power, ground, relay, fuse, and connector condition",
+    "Radiator, condenser airflow, and debris blocking the stack"
+  ],
+  "related_systems": [
+    "Coolant temperature sensor",
+    "Fan relay and wiring",
+    "Radiator airflow",
+    "A/C pressure input"
+  ],
+  "repair_overview": [
+    "Confirm the fan is commanded on but does not move air correctly.",
+    "Disconnect battery power where required and remove shrouds or top mounts.",
+    "Replace the fan motor or assembly and secure wiring away from blades.",
+    "Verify fan operation with temperature, A/C request, and road-test conditions."
+  ],
+  "common_mistakes": [
+    "Replacing the fan before checking command, relay, fuse, and ground",
+    "Ignoring low coolant or thermostat problems",
+    "Leaving debris between condenser and radiator",
+    "Not verifying both fan speeds when the system uses multiple speeds"
+  ],
+  "estimate_guidance": [
+    "Quote diagnosis first when command signal or fan relay behavior is not proven.",
+    "Add fan assembly instead of motor only when the shroud, resistor, module, or blade condition requires it.",
+    "Mention A/C idle performance if fan airflow is part of the complaint."
+  ],
+  "labor_range": { "min_hours": 0.8, "max_hours": 3.0 },
+  "recommended_repairs": [
+    {
+      "title": "Cooling Fan Diagnosis",
+      "description": "Use when command, relay, fuse, or wiring status is still uncertain.",
+      "estimator_href": "/estimator?service=cooling_fan_diagnosis"
+    },
+    {
+      "title": "Radiator Blueprint",
+      "description": "Related when airflow and heat rejection issues overlap.",
+      "cost_guide_href": "/repair-guides/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Radiator fan replacement should follow proof that the fan circuit or assembly fails under commanded operation.",
+    "common_symptoms_link": "/symptoms/overheating-at-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Radiator Fan Replacement",
+    "service_code": "cooling_fan_assembly_replacement",
+    "service_name": "Radiator Fan Replacement",
+    "estimator_link": "/estimator"
+  }
+}

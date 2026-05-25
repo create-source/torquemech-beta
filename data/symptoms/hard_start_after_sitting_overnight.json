@@ -29,6 +29,34 @@
     "If the engine starts rough only when cold, check ignition strength, intake leaks, and temperature input before replacing parts.",
     "If trims go lean right after start-up, inspect intake leaks and weak fuel delivery rather than blaming ignition first."
   ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Fuel Pressure Bleed-Down Path",
+      "summary": "Long crank after sitting needs fuel pressure and leak-down evidence before pump or injector replacement.",
+      "checks": [
+        "Measure pressure during prime, crank, and post-shutdown hold",
+        "Check pump command, relay, and power supply",
+        "Inspect one-cylinder rich start clues for injector leak-down"
+      ],
+      "repairs": [
+        { "title": "Fuel Pump Blueprint", "cost_guide_href": "/repair-guides/fuel-pump-replacement" },
+        { "title": "Fuel System Diagnostic", "estimator_href": "/estimator?service=fuel_system_diagnostic" }
+      ]
+    },
+    {
+      "title": "Cold Spark and Air Path",
+      "summary": "If the engine starts rough rather than just cranking long, compare ignition strength, intake leaks, and temperature data.",
+      "checks": [
+        "Inspect plugs and coil behavior during cold misfire",
+        "Compare coolant temperature to ambient before first start",
+        "Watch trims for vacuum leak or weak fuel delivery clues"
+      ],
+      "repairs": [
+        { "title": "Ignition Coil Blueprint", "cost_guide_href": "/repair-guides/ignition-coil-replacement" },
+        { "title": "Vacuum Leak Blueprint", "cost_guide_href": "/repair-guides/how-to-diagnose-a-vacuum-leak" }
+      ]
+    }
+  ],
   "related_obd_codes": [
     { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
     { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
@@ -38,9 +66,9 @@
   ],
   "recommended_repairs": [
     {
-      "title": "Fuel Pump Replacement Cost",
+      "title": "Fuel Pump Blueprint",
       "description": "A useful next path when overnight pressure bleed-down or weak morning fuel delivery is the core issue.",
-      "cost_guide_href": "/cost/fuel-pump-replacement",
+      "cost_guide_href": "/repair-guides/fuel-pump-replacement",
       "estimator_href": "/estimator?service=fuel_pump_replacement_in_tank"
     },
     {
@@ -56,9 +84,9 @@
       "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
     },
     {
-      "title": "Ignition Coil Replacement Cost",
+      "title": "Ignition Coil Blueprint",
       "description": "Useful when a cold-start misfire follows a weak coil before the engine warms up.",
-      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "cost_guide_href": "/repair-guides/ignition-coil-replacement",
       "estimator_href": "/estimator?service=ignition_coil_replacement_each"
     },
     {

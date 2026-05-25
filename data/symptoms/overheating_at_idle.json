@@ -71,6 +71,7 @@
       ],
       "repairs": [
         { "title": "Radiator Blueprint", "cost_guide_href": "/repair-guides/radiator-replacement" },
+        { "title": "Radiator Fan Blueprint", "cost_guide_href": "/repair-guides/radiator-fan-replacement" },
         { "title": "Coolant Pressure Test", "estimator_href": "/estimator?service=cooling_system_pressure_test" }
       ]
     }
@@ -98,6 +99,12 @@
       "description": "A strong next path when coolant flow control looks erratic or warm-up behavior and overheating overlap.",
       "cost_guide_href": "/cost/thermostat-replacement",
       "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Radiator Fan Replacement",
+      "description": "A strong path when overheating improves at road speed and fan command, power, or motor testing points to fan failure.",
+      "cost_guide_href": "/repair-guides/radiator-fan-replacement",
+      "estimator_href": "/estimator?service=cooling_fan_assembly_replacement"
     },
     {
       "title": "Engine Coolant Temperature Sensor Replacement Cost",

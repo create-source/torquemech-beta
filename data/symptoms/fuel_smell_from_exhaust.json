@@ -29,6 +29,34 @@
     "If fuel trims are rich without a strong misfire, compare upstream and downstream O2 data and verify airflow inputs.",
     "If one cylinder plug is wet or heavily fuel-fouled, injector leak-down becomes more important."
   ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Misfire and Raw Fuel Path",
+      "summary": "When fuel smell comes with a rough run, keep spark and injector checks ahead of catalyst replacement.",
+      "checks": [
+        "Scan misfire counters and inspect the wet or fouled cylinder",
+        "Check spark plug, coil output, and injector pulse",
+        "Verify compression if the misfire does not follow ignition or fuel parts"
+      ],
+      "repairs": [
+        { "title": "Ignition Coil Blueprint", "cost_guide_href": "/repair-guides/ignition-coil-replacement" },
+        { "title": "Spark Plug Blueprint", "cost_guide_href": "/repair-guides/spark-plug-replacement" }
+      ]
+    },
+    {
+      "title": "O2 and Catalyst Path",
+      "summary": "When trims or catalyst codes overlap, compare O2 data and exhaust leaks before condemning the converter.",
+      "checks": [
+        "Review upstream and downstream O2 behavior",
+        "Inspect exhaust leaks before the catalyst",
+        "Check for rich-running causes that can damage the converter"
+      ],
+      "repairs": [
+        { "title": "Oxygen Sensor Blueprint", "cost_guide_href": "/repair-guides/oxygen-sensor-replacement" },
+        { "title": "Catalyst Efficiency Diagnosis", "estimator_href": "/estimator?service=catalyst_efficiency_diagnosis" }
+      ]
+    }
+  ],
   "related_obd_codes": [
     { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
     { "code": "P0138", "title": "Bank 1 sensor 2 O2 signal high", "href": "/obd/p0138" },
@@ -38,9 +66,9 @@
   ],
   "recommended_repairs": [
     {
-      "title": "Oxygen Sensor Replacement Cost",
+      "title": "Oxygen Sensor Blueprint",
       "description": "Relevant when scan data shows biased sensor behavior or heater issues behind a rich-reading path.",
-      "cost_guide_href": "/cost/oxygen-sensor-replacement",
+      "cost_guide_href": "/repair-guides/oxygen-sensor-replacement",
       "estimator_href": "/estimator?service=oxygen_sensor_replacement_upstream"
     },
     {
@@ -56,9 +84,9 @@
       "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
     },
     {
-      "title": "Ignition Coil Replacement Cost",
+      "title": "Ignition Coil Blueprint",
       "description": "Relevant when weak spark is leaving unburned fuel in the exhaust stream.",
-      "cost_guide_href": "/cost/ignition-coil-replacement",
+      "cost_guide_href": "/repair-guides/ignition-coil-replacement",
       "estimator_href": "/estimator?service=ignition_coil_replacement_each"
     },
     {

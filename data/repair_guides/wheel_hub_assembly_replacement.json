@@ -1,0 +1,69 @@
+{
+  "slug": "wheel-hub-assembly-replacement",
+  "title": "Wheel Hub Assembly Replacement",
+  "category": "Steering and Suspension",
+  "subcategory": "Hub and Bearing",
+  "sort_order": 38,
+  "summary": "Hub assembly blueprint for road-noise, wheel-play, and ABS-related hub replacement decisions.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Humming or growling that changes with road speed",
+    "Wheel play or roughness from one corner",
+    "ABS or traction light from integrated sensor damage",
+    "Vibration or brake pulsation caused by hub runout"
+  ],
+  "inspect_first": [
+    "Road-test noise direction and tire noise comparison",
+    "Wheel play, hub roughness, and axle nut condition",
+    "ABS wheel speed sensor wiring and tone ring condition",
+    "Brake rotor runout and hub face corrosion"
+  ],
+  "related_systems": [
+    "ABS wheel speed sensor",
+    "Brake rotor mounting",
+    "Tire wear",
+    "Axle nut and CV axle"
+  ],
+  "repair_overview": [
+    "Confirm the noisy or loose hub before teardown.",
+    "Remove wheel, caliper, rotor, axle nut, and hub bolts as required.",
+    "Clean the knuckle face and install the hub assembly without stressing ABS wiring.",
+    "Torque axle and wheel fasteners, clear ABS codes if needed, and road test."
+  ],
+  "common_mistakes": [
+    "Confusing cupped tire noise with hub bearing noise",
+    "Reusing one-time-use axle nuts",
+    "Damaging ABS wiring during removal",
+    "Not cleaning the hub mounting surface before reassembly"
+  ],
+  "estimate_guidance": [
+    "Quote extra time for rusted hub assemblies or seized axle nuts.",
+    "Include ABS sensor context when the sensor is integrated into the hub.",
+    "Do not add tires, brakes, or alignment unless inspection supports the related work."
+  ],
+  "labor_range": { "min_hours": 1.2, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Wheel Bearing Blueprint",
+      "description": "Use for pressed bearing or broader bearing-noise guidance.",
+      "cost_guide_href": "/repair-guides/wheel-bearing-replacement",
+      "estimator_href": "/estimator?service=wheel_bearing_replacement_front"
+    },
+    {
+      "title": "ABS Diagnosis",
+      "description": "Use when wheel speed data, wiring, or module codes are still unresolved.",
+      "estimator_href": "/estimator?service=abs_diagnosis"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Hub replacement should follow corner isolation, tire-noise comparison, and ABS wiring inspection.",
+    "common_symptoms_link": "/symptoms/steering-suspension-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Wheel Hub Assembly Replacement",
+    "service_code": "wheel_hub_assembly_replacement_each",
+    "service_name": "Wheel Hub Assembly Replacement",
+    "estimator_link": "/estimator"
+  }
+}

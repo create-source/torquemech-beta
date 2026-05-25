@@ -1,0 +1,67 @@
+{
+  "slug": "steering-suspension-noise",
+  "title": "Steering or Suspension Noise",
+  "category": "Steering and Suspension",
+  "summary": "Practical chassis noise path for clunks, hums, pulls, and suspension estimate continuity.",
+  "intro": "Chassis noise diagnosis starts with when the noise happens: bumps, braking, turning, road speed, or steering input each point to a different inspection path.",
+  "common_sounds": [
+    "Clunk over bumps",
+    "Growl or hum that changes with road speed",
+    "Pop during turns or braking",
+    "Wandering, pull, or uneven tire wear"
+  ],
+  "quick_checks": [
+    "Road test to separate bump noise from road-speed noise",
+    "Inspect control arm bushings and ball joints with suspension loaded where needed",
+    "Check wheel bearing play and tire cupping",
+    "Inspect tie rods, sway links, struts, and loose hardware"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Clunk and Loose-Joint Path",
+      "summary": "Use loaded and unloaded checks to separate control arms, links, struts, and steering parts.",
+      "checks": [
+        "Inspect bushing movement and ball joint play",
+        "Check sway links, tie rods, and strut mounts",
+        "Look for shiny witness marks around loose hardware"
+      ],
+      "repairs": [
+        { "title": "Control Arm Blueprint", "cost_guide_href": "/repair-guides/control-arm-replacement" }
+      ]
+    },
+    {
+      "title": "Road-Speed Hum Path",
+      "summary": "Road-speed noise needs tire comparison and corner isolation before hub replacement.",
+      "checks": [
+        "Compare tire wear and rotation pattern",
+        "Load each side gently during road test",
+        "Check hub roughness, play, and ABS wiring"
+      ],
+      "repairs": [
+        { "title": "Wheel Hub Blueprint", "cost_guide_href": "/repair-guides/wheel-hub-assembly-replacement" },
+        { "title": "Wheel Bearing Blueprint", "cost_guide_href": "/repair-guides/wheel-bearing-replacement" }
+      ]
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Suspension Noise Diagnosis",
+      "description": "Use when the noise source is not confirmed.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
+    },
+    {
+      "title": "Control Arm Replacement",
+      "description": "Use after bushing or ball-joint movement confirms the arm path.",
+      "cost_guide_href": "/repair-guides/control-arm-replacement",
+      "estimator_href": "/estimator?service=control_arm_replacement_each"
+    },
+    {
+      "title": "Wheel Hub Assembly Replacement",
+      "description": "Use after road-speed noise and corner isolation confirm hub failure.",
+      "cost_guide_href": "/repair-guides/wheel-hub-assembly-replacement",
+      "estimator_href": "/estimator?service=wheel_hub_assembly_replacement_each"
+    }
+  ],
+  "estimator_link": "/estimator?service=suspension_noise_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

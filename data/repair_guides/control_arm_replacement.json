@@ -1,0 +1,75 @@
+{
+  "slug": "control-arm-replacement",
+  "title": "Control Arm Replacement",
+  "category": "Steering and Suspension",
+  "subcategory": "Control Arms",
+  "sort_order": 35,
+  "summary": "Chassis blueprint for confirming worn control arm bushings, ball joints, and alignment impact before quoting replacement.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Clunk over bumps or during braking",
+    "Loose steering feel, wandering, or pull",
+    "Uneven tire wear or alignment that will not hold",
+    "Visible bushing separation or ball joint play"
+  ],
+  "inspect_first": [
+    "Bushing cracks, separation, fluid leakage, or metal-to-metal contact",
+    "Ball joint play and boot condition",
+    "Sway bar links, struts, tie rods, and wheel bearing play",
+    "Subframe, mounting bolts, and corrosion around the arm"
+  ],
+  "related_systems": [
+    "Wheel alignment",
+    "Tires",
+    "Ball joints and bushings",
+    "Steering linkage"
+  ],
+  "likely_causes": [
+    "Worn control arm bushing",
+    "Loose or failed ball joint integrated into the arm",
+    "Bent control arm after impact",
+    "Seized hardware or subframe corrosion complicating access"
+  ],
+  "repair_overview": [
+    "Confirm the noisy or loose corner with the suspension unloaded and loaded where appropriate.",
+    "Support the vehicle, remove wheel and related fasteners, then remove the control arm.",
+    "Install the new arm without final bushing torque until the suspension is at ride height when required.",
+    "Recommend alignment and road test for pull, clunk, and steering centering."
+  ],
+  "common_mistakes": [
+    "Skipping alignment after changing suspension geometry",
+    "Tightening rubber bushings at full droop when ride-height torque is required",
+    "Missing seized cam bolts or damaged mounting pockets",
+    "Blaming the arm before checking links, struts, tie rods, and hub play"
+  ],
+  "estimate_guidance": [
+    "Include alignment recommendation when the arm affects suspension geometry.",
+    "Mention seized hardware possibility on rust-belt or high-mileage vehicles.",
+    "Add ball joint, sway link, or tie rod only when inspection supports it.",
+    "Quote both sides only when wear pattern or alignment evidence supports a paired repair."
+  ],
+  "labor_range": { "min_hours": 1.2, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Suspension Noise Diagnosis",
+      "description": "Use when the clunk source is not proven or multiple parts have play.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
+    },
+    {
+      "title": "Wheel Alignment",
+      "description": "Commonly recommended after control arm replacement.",
+      "estimator_href": "/estimator?service=wheel_alignment_4_wheel"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Control arm estimates should follow a loaded suspension inspection and a plan for alignment after geometry changes.",
+    "common_symptoms_link": "/symptoms/steering-suspension-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Control Arm Replacement",
+    "service_code": "control_arm_replacement_each",
+    "service_name": "Control Arm Replacement",
+    "estimator_link": "/estimator"
+  }
+}

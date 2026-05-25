@@ -1,0 +1,67 @@
+{
+  "slug": "weak-no-ac",
+  "title": "Weak or No A/C",
+  "category": "HVAC",
+  "summary": "Mechanic-first diagnostic path for weak cooling, warm vents, compressor concerns, and refrigerant checks.",
+  "intro": "Weak A/C should be separated into charge level, airflow, compressor operation, and control-command problems before compressor replacement is priced.",
+  "common_sounds": [
+    "Warm air from vents with A/C on",
+    "Compressor clicks but does not stay engaged",
+    "A/C works while driving but fades at idle",
+    "Hissing, oily residue, or obvious leak evidence"
+  ],
+  "quick_checks": [
+    "Confirm blower airflow and cabin filter condition",
+    "Recover or measure refrigerant charge when required",
+    "Compare high and low side pressures to compressor command",
+    "Inspect condenser airflow and cooling fan operation",
+    "Check clutch, relay, pressure sensor, and control command before replacing the compressor"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Charge and Leak Path",
+      "summary": "Low charge can imitate compressor failure, so prove charge and leak status first.",
+      "checks": [
+        "Inspect oily residue at hoses, condenser, compressor, and service ports",
+        "Recover and recharge by weight when diagnosis requires it",
+        "Leak test before major parts are quoted"
+      ],
+      "confidence_cues": [
+        "Refrigerant evidence first",
+        "Leak repair before recharge-only fixes"
+      ],
+      "repairs": [
+        { "title": "A/C System Diagnosis", "estimator_href": "/estimator?service=a_c_system_diagnosis" }
+      ]
+    },
+    {
+      "title": "Compressor and Airflow Path",
+      "summary": "When command and pressures prove compressor failure, include contamination and airflow checks in the estimate.",
+      "checks": [
+        "Verify compressor command and clutch behavior",
+        "Check pressure response with A/C requested",
+        "Inspect condenser fan airflow at idle"
+      ],
+      "repairs": [
+        { "title": "A/C Compressor Blueprint", "cost_guide_href": "/repair-guides/a-c-compressor-replacement" },
+        { "title": "Radiator Fan Blueprint", "cost_guide_href": "/repair-guides/radiator-fan-replacement" }
+      ]
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "A/C Compressor Replacement",
+      "description": "Use after charge, command, and pressure evidence confirms the compressor path.",
+      "cost_guide_href": "/repair-guides/a-c-compressor-replacement",
+      "estimator_href": "/estimator?service=a_c_compressor_replacement"
+    },
+    {
+      "title": "Cooling Fan Diagnosis",
+      "description": "Relevant when A/C cools poorly at idle because condenser airflow is weak.",
+      "cost_guide_href": "/repair-guides/radiator-fan-replacement",
+      "estimator_href": "/estimator?service=cooling_fan_diagnosis"
+    }
+  ],
+  "estimator_link": "/estimator?service=a_c_system_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

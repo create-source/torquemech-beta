@@ -1,0 +1,69 @@
+{
+  "slug": "a-c-compressor-replacement",
+  "title": "A/C Compressor Replacement",
+  "category": "HVAC",
+  "subcategory": "Air Conditioning",
+  "sort_order": 40,
+  "summary": "A/C blueprint for confirming compressor failure while protecting the estimate from refrigerant, contamination, and control-system surprises.",
+  "difficulty": "Hard",
+  "symptoms": [
+    "Weak or no cold air with compressor not pumping correctly",
+    "Compressor clutch noise, seizure, or metal contamination",
+    "High and low side pressures do not match expected compressor operation",
+    "A/C blows warm after leak or low-charge diagnosis is handled"
+  ],
+  "inspect_first": [
+    "Recover and measure refrigerant charge where required",
+    "Check compressor command, clutch, relay, pressure sensor, and control inputs",
+    "Inspect for leaks before replacing the compressor",
+    "Look for metal debris or oil contamination that changes the repair scope"
+  ],
+  "related_systems": [
+    "Refrigerant charge",
+    "Condenser and receiver/drier",
+    "Expansion valve or orifice tube",
+    "A/C electrical controls"
+  ],
+  "repair_overview": [
+    "Confirm compressor failure with pressure, command, and leak evidence.",
+    "Recover refrigerant, remove belt and lines, then replace the compressor.",
+    "Replace required drier, seals, and contaminated components as needed.",
+    "Evacuate, recharge by weight, leak test, and verify vent temperature."
+  ],
+  "common_mistakes": [
+    "Replacing the compressor before checking charge level and command signal",
+    "Skipping flush or condenser replacement after internal failure",
+    "Not replacing required seals or drier components",
+    "Charging by pressure alone instead of correct refrigerant weight"
+  ],
+  "estimate_guidance": [
+    "Include refrigerant recovery, evacuation, recharge, oil balance, and leak test context.",
+    "Flag system flushing or condenser replacement when compressor debris is found.",
+    "Add drier, expansion valve, or seals when the system design or failure mode requires it.",
+    "Quote diagnosis first if low charge, electrical command, or pressure readings are not proven."
+  ],
+  "labor_range": { "min_hours": 2.0, "max_hours": 6.0 },
+  "recommended_repairs": [
+    {
+      "title": "A/C System Diagnosis",
+      "description": "Use when charge, command, or pressure evidence is incomplete.",
+      "estimator_href": "/estimator?service=a_c_system_diagnosis"
+    },
+    {
+      "title": "A/C Compressor Clutch Service",
+      "description": "Consider when the compressor itself pumps correctly but clutch operation is the fault.",
+      "estimator_href": "/estimator?service=a_c_compressor_clutch_service_if_applicable"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Compressor replacement estimates should account for refrigerant handling, leak status, and contamination risk.",
+    "common_symptoms_link": "/symptoms/weak-no-ac",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate A/C Compressor Replacement",
+    "service_code": "a_c_compressor_replacement",
+    "service_name": "A/C Compressor Replacement",
+    "estimator_link": "/estimator"
+  }
+}

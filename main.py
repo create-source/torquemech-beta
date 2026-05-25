@@ -2060,6 +2060,283 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
             ],
             "estimator_href": "/estimator?obd=P0128",
         },
+        "P0171": {
+            "title": "Lean Condition Diagnostic Path",
+            "summary": "Separate vacuum leaks, airflow data, fuel delivery, and exhaust leaks before replacing sensors.",
+            "systems": [
+                "Vacuum and intake leaks",
+                "MAF and airflow data",
+                "Fuel pressure and volume",
+                "Upstream oxygen sensor feedback",
+            ],
+            "blueprints": [
+                {"title": "Lean Condition Blueprint", "href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174"},
+                {"title": "Vacuum Leak Inspection", "href": "/repair-guides/how-to-diagnose-a-vacuum-leak"},
+                {"title": "Fuel Pump Blueprint", "href": "/repair-guides/fuel-pump-replacement"},
+                {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+            ],
+            "estimator_href": "/estimator?obd=P0171",
+        },
+        "P0174": {
+            "title": "Lean Condition Diagnostic Path",
+            "summary": "Separate vacuum leaks, airflow data, fuel delivery, and exhaust leaks before replacing sensors.",
+            "systems": [
+                "Vacuum and intake leaks",
+                "MAF and airflow data",
+                "Fuel pressure and volume",
+                "Upstream oxygen sensor feedback",
+            ],
+            "blueprints": [
+                {"title": "Lean Condition Blueprint", "href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174"},
+                {"title": "Vacuum Leak Inspection", "href": "/repair-guides/how-to-diagnose-a-vacuum-leak"},
+                {"title": "Fuel Pump Blueprint", "href": "/repair-guides/fuel-pump-replacement"},
+                {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+            ],
+            "estimator_href": "/estimator?obd=P0174",
+        },
+        "P0420": {
+            "title": "Catalyst Efficiency Diagnostic Path",
+            "summary": "Confirm converter efficiency only after checking O2 data, exhaust leaks, misfires, and rich-running causes.",
+            "systems": [
+                "Catalytic converter efficiency",
+                "Upstream and downstream oxygen sensor behavior",
+                "Exhaust leak inspection",
+                "Misfire or rich-running root cause",
+            ],
+            "blueprints": [
+                {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+                {"title": "Ignition Coil Blueprint", "href": "/repair-guides/ignition-coil-replacement"},
+                {"title": "Fuel Pump and Fuel Control Checks", "href": "/repair-guides/fuel-pump-replacement"},
+            ],
+            "inspection_priority": [
+                "Inspect exhaust leaks before and near the converter",
+                "Compare upstream and downstream O2 sensor patterns",
+                "Check misfire, fuel trim, and rich-running evidence before replacing the converter",
+            ],
+            "confidence_cues": [
+                "Converter is downstream of root-cause faults",
+                "O2 sensor data must support the repair",
+                "Exhaust leaks can imitate efficiency faults",
+            ],
+            "estimator_href": "/estimator?obd=P0420",
+        },
+        "P0430": {
+            "title": "Catalyst Efficiency Diagnostic Path",
+            "summary": "Confirm converter efficiency only after checking O2 data, exhaust leaks, misfires, and rich-running causes.",
+            "systems": [
+                "Catalytic converter efficiency",
+                "Upstream and downstream oxygen sensor behavior",
+                "Exhaust leak inspection",
+                "Misfire or rich-running root cause",
+            ],
+            "blueprints": [
+                {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+                {"title": "Ignition Coil Blueprint", "href": "/repair-guides/ignition-coil-replacement"},
+                {"title": "Fuel Pump and Fuel Control Checks", "href": "/repair-guides/fuel-pump-replacement"},
+            ],
+            "inspection_priority": [
+                "Inspect exhaust leaks before and near the converter",
+                "Compare upstream and downstream O2 sensor patterns",
+                "Check misfire, fuel trim, and rich-running evidence before replacing the converter",
+            ],
+            "confidence_cues": [
+                "Converter is downstream of root-cause faults",
+                "O2 sensor data must support the repair",
+                "Exhaust leaks can imitate efficiency faults",
+            ],
+            "estimator_href": "/estimator?obd=P0430",
+        },
+        "P0440": {
+            "title": "EVAP Diagnostic Path",
+            "summary": "Treat EVAP faults as leak, purge, vent, wiring, and smoke-test questions before replacing valves.",
+            "systems": [
+                "Purge valve sealing",
+                "Vent valve operation",
+                "Smoke testing and leak location",
+                "Fuel cap, filler neck, hoses, and canister",
+            ],
+            "blueprints": [
+                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+            ],
+            "inspection_priority": [
+                "Smoke test before replacing leak-related parts",
+                "Check purge sealing and vent command response",
+                "Inspect cap, filler neck, hoses, and canister for physical leaks",
+            ],
+            "confidence_cues": [
+                "Usually no drivability symptoms",
+                "Smoke-test evidence matters",
+                "Valve command does not prove valve sealing",
+            ],
+            "estimator_href": "/estimator?obd=P0440",
+        },
+        "P0442": {
+            "title": "EVAP Small Leak Diagnostic Path",
+            "summary": "Use smoke testing and vent/purge checks to locate small leaks before pricing EVAP parts.",
+            "systems": [
+                "Small EVAP leaks",
+                "Fuel cap and filler neck",
+                "Purge and vent sealing",
+                "Canister and hose routing",
+            ],
+            "blueprints": [
+                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+            ],
+            "inspection_priority": [
+                "Smoke test the EVAP system",
+                "Inspect cap, filler neck, and hose connections",
+                "Command purge and vent valves only after leak location is understood",
+            ],
+            "confidence_cues": [
+                "Tiny leaks can be visual-invisible",
+                "Smoke testing prevents parts guessing",
+                "No drivability symptom is common",
+            ],
+            "estimator_href": "/estimator?obd=P0442",
+        },
+        "P0446": {
+            "title": "EVAP Vent Diagnostic Path",
+            "summary": "Check vent command, blockage, contamination, wiring, and smoke-test results before replacing the vent valve.",
+            "systems": [
+                "Vent valve command",
+                "Canister restriction",
+                "Fuel tank pressure behavior",
+                "Vent wiring and plumbing",
+            ],
+            "blueprints": [
+                {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+            ],
+            "inspection_priority": [
+                "Command the vent valve and verify response",
+                "Inspect vent filter, canister, and wiring",
+                "Smoke test when leak or restriction evidence is unclear",
+            ],
+            "confidence_cues": [
+                "Vent restriction can mimic valve failure",
+                "Wiring and contamination are common",
+                "Smoke testing protects the estimate",
+            ],
+            "estimator_href": "/estimator?obd=P0446",
+        },
+        "P0455": {
+            "title": "EVAP Large Leak Diagnostic Path",
+            "summary": "Locate the leak with cap, filler neck, hose, purge, vent, and smoke-test checks before parts replacement.",
+            "systems": [
+                "Large EVAP leak",
+                "Fuel cap and filler neck",
+                "Purge and vent sealing",
+                "Canister and hose damage",
+            ],
+            "blueprints": [
+                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+            ],
+            "inspection_priority": [
+                "Inspect cap, filler neck, and obvious hose disconnections",
+                "Smoke test the system before replacing valves",
+                "Verify purge and vent sealing if smoke does not reveal a physical leak",
+            ],
+            "confidence_cues": [
+                "Large leaks may still be hidden above the tank",
+                "Valve sealing and plumbing both matter",
+                "No drivability symptom is common",
+            ],
+            "estimator_href": "/estimator?obd=P0455",
+        },
+        "P0456": {
+            "title": "EVAP Very Small Leak Diagnostic Path",
+            "summary": "Use careful smoke testing and cap/filler/valve checks before approving small-leak EVAP parts.",
+            "systems": [
+                "Very small EVAP leaks",
+                "Fuel cap seal",
+                "Purge and vent valve sealing",
+                "Canister, tank, and hose fittings",
+            ],
+            "blueprints": [
+                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+            ],
+            "inspection_priority": [
+                "Smoke test slowly and inspect small fittings",
+                "Check cap seal and filler neck rust",
+                "Verify purge and vent valves seal when commanded closed",
+            ],
+            "confidence_cues": [
+                "Very small leaks are easy to misdiagnose",
+                "Smoke-test evidence matters most",
+                "Parts should follow leak location",
+            ],
+            "estimator_href": "/estimator?obd=P0456",
+        },
+        "P0138": {
+            "title": "Oxygen Sensor High-Voltage Diagnostic Path",
+            "summary": "Confirm whether the downstream O2 sensor is biased, the circuit is shorted, or the exhaust stream is truly rich.",
+            "systems": [
+                "Downstream oxygen sensor signal",
+                "Sensor heater and wiring",
+                "Rich-running fuel control",
+                "Catalyst monitor context",
+            ],
+            "blueprints": [
+                {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+                {"title": "Ignition Coil Blueprint", "href": "/repair-guides/ignition-coil-replacement"},
+            ],
+            "inspection_priority": [
+                "Verify bank and sensor location before replacing parts",
+                "Inspect wiring for short-to-voltage or melted exhaust contact",
+                "Check fuel trims and misfire data when the exhaust may actually be rich",
+            ],
+            "confidence_cues": [
+                "Sensor code is not automatically sensor failure",
+                "Fuel control can bias O2 readings",
+                "Bank and sensor location matter",
+            ],
+            "estimator_href": "/estimator?obd=P0138",
+        },
+        "P0158": {
+            "title": "Oxygen Sensor High-Voltage Diagnostic Path",
+            "summary": "Confirm whether the downstream O2 sensor is biased, the circuit is shorted, or the exhaust stream is truly rich.",
+            "systems": [
+                "Downstream oxygen sensor signal",
+                "Sensor heater and wiring",
+                "Rich-running fuel control",
+                "Catalyst monitor context",
+            ],
+            "blueprints": [
+                {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+                {"title": "Ignition Coil Blueprint", "href": "/repair-guides/ignition-coil-replacement"},
+            ],
+            "inspection_priority": [
+                "Verify bank and sensor location before replacing parts",
+                "Inspect wiring for short-to-voltage or melted exhaust contact",
+                "Check fuel trims and misfire data when the exhaust may actually be rich",
+            ],
+            "confidence_cues": [
+                "Sensor code is not automatically sensor failure",
+                "Fuel control can bias O2 readings",
+                "Bank and sensor location matter",
+            ],
+            "estimator_href": "/estimator?obd=P0158",
+        },
+        "P0562": {
+            "title": "Low Voltage Diagnostic Path",
+            "summary": "Separate battery capacity, alternator output, belt drive, and cable voltage drop before replacing parts.",
+            "systems": [
+                "Battery health",
+                "Alternator output",
+                "Serpentine belt and tensioner",
+                "Charging cables, fuses, and grounds",
+            ],
+            "blueprints": [
+                {"title": "Battery Blueprint", "href": "/repair-guides/battery-replacement"},
+                {"title": "Alternator Blueprint", "href": "/repair-guides/alternator-replacement"},
+                {"title": "Serpentine Belt Blueprint", "href": "/repair-guides/serpentine-belt-replacement"},
+            ],
+            "estimator_href": "/estimator?obd=P0562",
+        },
     }
     path = paths.get(normalized, {})
     if not path:

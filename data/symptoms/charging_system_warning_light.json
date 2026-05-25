@@ -60,10 +60,22 @@
   ],
   "recommended_repairs": [
     {
-      "title": "Alternator Replacement Cost",
+      "title": "Alternator Blueprint",
       "description": "Use when charging output, belt drive, and wiring checks prove alternator failure.",
-      "cost_guide_href": "/cost/alternator-replacement",
+      "cost_guide_href": "/repair-guides/alternator-replacement",
       "estimator_href": "/estimator?service=alternator_replacement"
+    },
+    {
+      "title": "Battery Blueprint",
+      "description": "Use when load testing proves the battery cannot hold capacity.",
+      "cost_guide_href": "/repair-guides/battery-replacement",
+      "estimator_href": "/estimator?service=battery_replacement"
+    },
+    {
+      "title": "Serpentine Belt Blueprint",
+      "description": "Use when belt slip, cracking, or weak tensioner behavior is part of the charging concern.",
+      "cost_guide_href": "/repair-guides/serpentine-belt-replacement",
+      "estimator_href": "/estimator?service=serpentine_belt_replacement"
     }
   ],
   "estimator_link": "/estimator?service=alternator_diagnosis",

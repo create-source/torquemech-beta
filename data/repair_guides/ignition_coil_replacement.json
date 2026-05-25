@@ -1,0 +1,83 @@
+{
+  "slug": "ignition-coil-replacement",
+  "title": "Ignition Coil Replacement",
+  "category": "Engine Performance",
+  "subcategory": "Ignition",
+  "sort_order": 20,
+  "summary": "Blueprint for confirming ignition coil failure before replacing coils, plugs, injectors, or other misfire parts.",
+  "difficulty": "Easy",
+  "symptoms": [
+    "Check engine light with P0300 or a cylinder-specific misfire code",
+    "Rough idle, hesitation, or flashing check engine light under load",
+    "Misfire follows the coil when swapped to another cylinder",
+    "Fuel smell from exhaust when spark is weak"
+  ],
+  "inspect_first": [
+    "Spark plug condition, gap, oil fouling, and coolant contamination",
+    "Coil boot tracking, carbon marks, corrosion, or moisture intrusion",
+    "Injector pulse and compression if the misfire does not follow the coil",
+    "Coil connector fit, power, ground, and control signal"
+  ],
+  "related_systems": [
+    "Spark plugs",
+    "Fuel injectors",
+    "Compression and leak-down",
+    "Misfire OBD data"
+  ],
+  "likely_causes": [
+    "Failed coil winding or boot insulation",
+    "Worn spark plug overloading the coil",
+    "Connector or harness issue at the coil",
+    "Fuel or compression fault imitating ignition failure"
+  ],
+  "repair_overview": [
+    "Confirm the misfiring cylinder and compare coil, plug, injector, and compression evidence.",
+    "Remove covers or intake pieces only as needed for access.",
+    "Replace the failed coil or coil boot, then verify the misfire counter stays clear.",
+    "Clear codes and road test under the same load where the misfire appeared."
+  ],
+  "common_mistakes": [
+    "Replacing all coils when one confirmed coil failed",
+    "Skipping spark plug inspection",
+    "Ignoring injector or compression faults when the misfire does not move",
+    "Not checking connector tension or oil in the plug well"
+  ],
+  "estimate_guidance": [
+    "Quote diagnostic time when the misfire is intermittent or does not clearly follow the coil.",
+    "Recommend spark plug inspection with coil replacement because worn plugs can shorten coil life.",
+    "Add access time for coils under intake plenums, covers, or tight firewall packaging.",
+    "Document cylinder, code, and test evidence so the estimate is tied to the confirmed failure."
+  ],
+  "labor_range": { "min_hours": 0.4, "max_hours": 2.5 },
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
+    { "code": "P0303", "title": "Cylinder 3 misfire", "href": "/obd/p0303" },
+    { "code": "P0304", "title": "Cylinder 4 misfire", "href": "/obd/p0304" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Spark Plug Blueprint",
+      "description": "Check plug condition whenever a coil has failed or the misfire happens under load.",
+      "cost_guide_href": "/repair-guides/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Misfire Diagnosis",
+      "description": "Use when the fault does not follow the coil or more than one cylinder is involved.",
+      "estimator_href": "/estimator?service=misfire_diagnosis"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Ignition coil replacement is strongest when scan data, swap testing, plug inspection, or output testing points to the coil path.",
+    "common_symptoms_link": "/symptoms/engine-misfire-at-idle",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Ignition Coil Replacement",
+    "service_code": "ignition_coil_replacement_each",
+    "service_name": "Ignition Coil Replacement",
+    "estimator_link": "/estimator"
+  }
+}

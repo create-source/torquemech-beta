@@ -1,0 +1,72 @@
+{
+  "slug": "battery-replacement",
+  "title": "Battery Replacement",
+  "category": "Electrical",
+  "subcategory": "Starting and Charging",
+  "sort_order": 8,
+  "summary": "Battery blueprint for separating weak battery, charging failure, and parasitic drain before replacement.",
+  "difficulty": "Easy",
+  "symptoms": [
+    "Slow crank, no crank, or repeated jump starts",
+    "Battery tests low state of health or will not hold charge",
+    "Low-voltage warning after sitting",
+    "Electrical resets or memory loss during start"
+  ],
+  "inspect_first": [
+    "Battery age, state of charge, and load-test result",
+    "Terminal corrosion, cable fit, and voltage drop during crank",
+    "Charging voltage after the engine starts",
+    "Parasitic draw if the battery dies after sitting"
+  ],
+  "related_systems": [
+    "Starter current draw",
+    "Alternator output",
+    "Parasitic drain",
+    "Battery cables and grounds"
+  ],
+  "repair_overview": [
+    "Charge and test the battery when possible before condemning it.",
+    "Preserve memory if required, disconnect safely, and remove the hold-down.",
+    "Install the correct battery group and reset battery monitoring if applicable.",
+    "Verify charging output and crank behavior after replacement."
+  ],
+  "common_mistakes": [
+    "Replacing the battery without checking alternator output",
+    "Missing loose or corroded terminals",
+    "Ignoring parasitic drain after an overnight dead battery",
+    "Skipping battery registration or reset on vehicles that require it"
+  ],
+  "estimate_guidance": [
+    "Include battery test result and terminal condition in the estimate note.",
+    "Recommend charging-system or parasitic-draw diagnosis when the failed-battery story is unclear.",
+    "Add registration/reset labor only when the vehicle requires it."
+  ],
+  "labor_range": { "min_hours": 0.2, "max_hours": 1.0 },
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Alternator Blueprint",
+      "description": "Use when battery failure may be caused by low charging output.",
+      "cost_guide_href": "/repair-guides/alternator-replacement",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
+    },
+    {
+      "title": "Battery Drain Diagnosis",
+      "description": "Use when the battery repeatedly dies after sitting.",
+      "estimator_href": "/estimator?service=electrical_diagnostic"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Battery replacement is clearest after capacity, cable, charging, and drain checks separate the root cause.",
+    "common_symptoms_link": "/symptoms/battery-drain",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Battery Replacement",
+    "service_code": "battery_replacement",
+    "service_name": "Battery Replacement",
+    "estimator_link": "/estimator"
+  }
+}

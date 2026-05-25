@@ -6,12 +6,25 @@
   "sort_order": 30,
   "summary": "Repair guide, labor context, and estimate workflow for brake rotor replacement.",
   "vehicle_optional": true,
+  "difficulty": "Moderate",
   "symptoms": [
     "Brake pulsation",
     "Rotor scoring or heat spots",
     "Vibration during braking",
     "Uneven pad wear",
     "Excessive rotor thickness variation"
+  ],
+  "inspect_first": [
+    "Rotor thickness, runout, scoring, cracking, and heat spotting",
+    "Pad thickness and taper wear",
+    "Caliper slide, bracket hardware, and hose condition",
+    "Hub face rust or wheel bearing play that can create runout"
+  ],
+  "related_systems": [
+    "Brake pads",
+    "Caliper slides and brackets",
+    "Wheel hub runout",
+    "Brake vibration diagnosis"
   ],
   "labor_range": {
     "min_hours": 1.0,
@@ -68,6 +81,37 @@
     "Clean rust from the hub face to reduce rotor runout.",
     "Replace hardware when needed."
   ],
+  "common_mistakes": [
+    "Replacing rotors without correcting seized caliper slides or uneven pad wear",
+    "Installing rotors on a rusty hub face",
+    "Ignoring wheel bearing or hub runout when pulsation returns",
+    "Skipping pad bedding or final pedal check"
+  ],
+  "estimate_guidance": [
+    "Recommend pad inspection and hardware review with every rotor estimate.",
+    "Add caliper or hose work only when uneven wear, dragging, or slide seizure supports it.",
+    "Mention hub cleaning and runout checks when the complaint is pulsation.",
+    "Quote axle position clearly so the estimate matches front, rear, or four-wheel service."
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Brake Pad Blueprint",
+      "description": "Commonly paired because worn or tapered pads often drive rotor replacement.",
+      "cost_guide_href": "/repair-guides/brake-pad-replacement",
+      "estimator_href": "/estimator?service=front_brake_pads_replacement"
+    },
+    {
+      "title": "Brake Caliper Blueprint",
+      "description": "Use when uneven pad wear, dragging, or stuck slides caused rotor damage.",
+      "cost_guide_href": "/repair-guides/brake-caliper-replacement",
+      "estimator_href": "/estimator?service=brake_caliper_replacement_each"
+    },
+    {
+      "title": "Brake Vibration Diagnosis",
+      "description": "Use when pulsation source is not proven or returns after prior brake work.",
+      "estimator_href": "/estimator?service=brake_vibration_diagnosis"
+    }
+  ],
   "warnings": [
     "Do not let the caliper hang by the brake hose.",
     "Use proper rotor thickness specifications for the vehicle.",
@@ -75,8 +119,8 @@
   ],
   "diagnostic_context": {
     "intro": "Rotor replacement often follows brake pulsation, heavy scoring, or thickness issues discovered during inspection.",
-    "common_symptoms_link": "/symptoms/brake-pulsation",
-    "diagnostic_tools_link": "/diagnostic-repair"
+    "common_symptoms_link": "/symptoms/brake-noise",
+    "diagnostic_tools_link": "/diagnostics"
   },
   "estimate": {
     "cta_label": "Estimate Brake Rotor Replacement",

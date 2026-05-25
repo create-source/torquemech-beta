@@ -1,0 +1,60 @@
+{
+  "slug": "rough-shifting",
+  "title": "Rough Shifting",
+  "category": "Transmission",
+  "summary": "Lightweight diagnostic path for harsh shifts, delayed engagement, fluid concerns, and estimate continuity.",
+  "intro": "Rough shifting should be treated as a fluid, control, sensor, and mechanical question before a major transmission repair is assumed.",
+  "common_sounds": [
+    "Harsh upshift or downshift",
+    "Delayed engagement into drive or reverse",
+    "Flare between gears",
+    "Shudder under light throttle"
+  ],
+  "quick_checks": [
+    "Check fluid level, condition, smell, and leak evidence where serviceable",
+    "Scan transmission codes and freeze-frame data",
+    "Check battery and charging voltage if electronic shifting acts erratically",
+    "Road test to capture gear, temperature, and throttle conditions"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Fluid and Leak Path",
+      "summary": "Fluid level and condition can change shift quality and should be documented before bigger estimates.",
+      "checks": [
+        "Inspect fluid condition and leak points",
+        "Confirm correct fluid level procedure",
+        "Check service history before recommending fluid service"
+      ],
+      "repairs": [
+        { "title": "Transmission Leak Diagnosis", "estimator_href": "/estimator?service=transmission_leak_diagnosis" }
+      ]
+    },
+    {
+      "title": "Control and Code Path",
+      "summary": "Electronic shift concerns need code, voltage, and sensor context before parts are priced.",
+      "checks": [
+        "Scan TCM and PCM codes",
+        "Check charging voltage and grounds",
+        "Record gear, speed, and temperature during the harsh shift"
+      ],
+      "repairs": [
+        { "title": "Shift Concern Diagnosis", "estimator_href": "/estimator?service=shift_concern_diagnosis" },
+        { "title": "TCM Diagnosis", "estimator_href": "/estimator?service=tcm_diagnosis_if_applicable" }
+      ]
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Transmission Diagnostic",
+      "description": "Use before quoting repairs when fluid, codes, or controls have not been verified.",
+      "estimator_href": "/estimator?service=transmission_diagnostic"
+    },
+    {
+      "title": "Shift Concern Diagnosis",
+      "description": "Use when the complaint is repeatable during road test.",
+      "estimator_href": "/estimator?service=shift_concern_diagnosis"
+    }
+  ],
+  "estimator_link": "/estimator?service=shift_concern_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

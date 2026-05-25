@@ -1,0 +1,73 @@
+{
+  "slug": "fuel-pump-replacement",
+  "title": "Fuel Pump Replacement",
+  "category": "Fuel System",
+  "subcategory": "Fuel Delivery",
+  "sort_order": 25,
+  "summary": "Fuel-delivery blueprint for proving weak pump output, pressure bleed-down, or no-start fuel failure before replacement.",
+  "difficulty": "Moderate",
+  "symptoms": [
+    "Crank no-start with no or low fuel pressure",
+    "Long crank after sitting, especially overnight",
+    "Loss of power under load with lean trims",
+    "Pump does not prime or is noisy from the tank"
+  ],
+  "inspect_first": [
+    "Fuel pressure and volume against specification",
+    "Power, ground, relay, fuse, and control command at the pump",
+    "Fuel contamination, restricted filter, or tank debris",
+    "Injector pulse and ignition spark so no-start diagnosis stays separated"
+  ],
+  "related_systems": [
+    "Fuel pressure regulation",
+    "Pump relay and wiring",
+    "Injectors",
+    "Lean-condition and hard-start OBD context"
+  ],
+  "repair_overview": [
+    "Confirm low pressure, weak volume, bleed-down, or missing pump operation.",
+    "Depressurize the system and access the pump through the service cover or tank removal.",
+    "Inspect tank condition, sealing ring, lock ring, and connector condition.",
+    "Install the pump module, verify pressure, check leaks, and road test under load."
+  ],
+  "common_mistakes": [
+    "Replacing the pump without verifying power and ground",
+    "Ignoring contaminated fuel or a restricted filter",
+    "Missing a failed relay, fuse, control module, or inertia switch where equipped",
+    "Not checking leaks around the tank seal after installation"
+  ],
+  "estimate_guidance": [
+    "Include fuel pressure verification before and after replacement.",
+    "Check fuel contamination and tank debris before installing a new pump.",
+    "Quote extra labor when tank removal, rusted straps, or full fuel level complicates access.",
+    "Add relay, filter, or control module only when testing supports it."
+  ],
+  "labor_range": { "min_hours": 1.5, "max_hours": 5.0 },
+  "related_obd_codes": [
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Fuel System Diagnostic",
+      "description": "Use when pressure, power, or control evidence is not complete.",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    },
+    {
+      "title": "Fuel Pump Relay",
+      "description": "Consider only when command or relay testing proves relay failure.",
+      "estimator_href": "/estimator?service=fuel_pump_relay_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Fuel pump replacement should follow pressure, volume, power, ground, and contamination checks.",
+    "common_symptoms_link": "/symptoms/hard-start-after-sitting-overnight",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Fuel Pump Replacement",
+    "service_code": "fuel_pump_replacement_in_tank",
+    "service_name": "Fuel Pump Replacement",
+    "estimator_link": "/estimator"
+  }
+}

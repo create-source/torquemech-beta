@@ -1,0 +1,65 @@
+{
+  "slug": "coolant-leaks",
+  "title": "Coolant Leaks",
+  "category": "Cooling System",
+  "summary": "Concise coolant leak path for pressure testing, hose/radiator/water pump separation, and estimate handoff.",
+  "intro": "Coolant leaks should be pressure-tested and located before parts are priced, because radiator, hose, pump, cap, and thermostat-housing leaks can look similar from above or below.",
+  "common_sounds": [
+    "Sweet coolant smell after parking",
+    "Low coolant warning or repeated top-offs",
+    "Drips under the front of the vehicle",
+    "Steam or residue near hose ends, radiator tanks, or water pump"
+  ],
+  "quick_checks": [
+    "Pressure test the system cold and inspect with good lighting",
+    "Check radiator tanks, hose ends, clamps, cap, and reservoir",
+    "Inspect water pump weep hole and pulley area",
+    "Look for overheating history before approving a simple leak repair"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "External Leak Path",
+      "summary": "Find the first wet point before replacing parts downstream from the leak trail.",
+      "checks": [
+        "Pressure test and trace the highest wet area",
+        "Inspect hoses and clamps while the system is pressurized",
+        "Check radiator tank seams and cap behavior"
+      ],
+      "repairs": [
+        { "title": "Radiator Blueprint", "cost_guide_href": "/repair-guides/radiator-replacement" },
+        { "title": "Water Pump Blueprint", "cost_guide_href": "/repair-guides/water-pump-replacement" }
+      ]
+    },
+    {
+      "title": "Overheat Risk Path",
+      "summary": "If coolant loss caused overheating, verify fan, thermostat, and circulation before closing the quote.",
+      "checks": [
+        "Confirm fan operation at idle",
+        "Check thermostat behavior and heater output",
+        "Bleed air and recheck pressure after repair"
+      ],
+      "repairs": [
+        { "title": "Radiator Fan Blueprint", "cost_guide_href": "/repair-guides/radiator-fan-replacement" },
+        { "title": "Thermostat Blueprint", "cost_guide_href": "/repair-guides/thermostat-replacement" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0128", "title": "Coolant thermostat below regulating temperature", "href": "/obd/p0128" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Coolant Leak Diagnosis",
+      "description": "Use when the leak source is not visually confirmed.",
+      "estimator_href": "/estimator?service=coolant_leak_diagnosis"
+    },
+    {
+      "title": "Radiator Replacement",
+      "description": "Use when pressure testing confirms tank, seam, or core leakage.",
+      "cost_guide_href": "/repair-guides/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    }
+  ],
+  "estimator_link": "/estimator?service=coolant_leak_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

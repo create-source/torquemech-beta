@@ -1,0 +1,65 @@
+{
+  "slug": "battery-drain",
+  "title": "Battery Drain",
+  "category": "Starting / Charging",
+  "summary": "Workflow for repeated dead battery after sitting, separating weak battery, charging issue, and parasitic draw.",
+  "intro": "A battery drain complaint is not automatically a bad battery. The useful split is whether the battery fails capacity testing, the alternator does not recharge it, or a draw remains after shutdown.",
+  "common_sounds": [
+    "Battery dead after sitting overnight or several days",
+    "Jump start works, then problem returns",
+    "Interior light, module, or accessory stays awake",
+    "Slow crank with no obvious charging warning"
+  ],
+  "quick_checks": [
+    "Charge and load test the battery first",
+    "Verify alternator output after the engine starts",
+    "Inspect terminals, grounds, and aftermarket accessories",
+    "Measure key-off draw after modules time out"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Battery and Charging Path",
+      "summary": "Confirm battery capacity and charging output before spending time on draw isolation.",
+      "checks": [
+        "Load test battery after full charge",
+        "Check charging voltage with loads on",
+        "Voltage-drop terminals and grounds"
+      ],
+      "repairs": [
+        { "title": "Battery Blueprint", "cost_guide_href": "/repair-guides/battery-replacement" },
+        { "title": "Alternator Blueprint", "cost_guide_href": "/repair-guides/alternator-replacement" }
+      ]
+    },
+    {
+      "title": "Parasitic Draw Path",
+      "summary": "If battery and charging pass, isolate excessive key-off draw without waking modules repeatedly.",
+      "checks": [
+        "Let modules sleep before draw measurement",
+        "Check glove box, trunk, vanity, and aftermarket loads",
+        "Pull fuse paths only after baseline draw is confirmed"
+      ],
+      "repairs": [
+        { "title": "Electrical Diagnostic", "estimator_href": "/estimator?service=electrical_diagnostic" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Battery Replacement",
+      "description": "Use after capacity testing confirms the battery will not hold charge.",
+      "cost_guide_href": "/repair-guides/battery-replacement",
+      "estimator_href": "/estimator?service=battery_replacement"
+    },
+    {
+      "title": "Alternator Replacement",
+      "description": "Use when low charging output is confirmed with a known-good battery.",
+      "cost_guide_href": "/repair-guides/alternator-replacement",
+      "estimator_href": "/estimator?service=alternator_replacement"
+    }
+  ],
+  "estimator_link": "/estimator?service=electrical_diagnostic",
+  "diagnostic_tools_link": "/diagnostics"
+}
