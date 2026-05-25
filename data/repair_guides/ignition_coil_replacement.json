@@ -69,6 +69,20 @@
       "estimator_href": "/estimator?service=misfire_diagnosis"
     }
   ],
+  "related_symptoms": [
+    {
+      "title": "Engine Misfire At Idle",
+      "description": "Use when the coil path starts from rough idle or misfire counter evidence.",
+      "href": "/symptoms/engine-misfire-at-idle",
+      "estimator_href": "/estimator?service=misfire_diagnosis"
+    },
+    {
+      "title": "Check Engine Light Flashing",
+      "description": "Use when active misfire creates catalyst risk and the repair should not wait.",
+      "href": "/symptoms/check-engine-light-flashing",
+      "estimator_href": "/estimator?service=misfire_diagnosis"
+    }
+  ],
   "diagnostic_context": {
     "intro": "Ignition coil replacement is strongest when scan data, swap testing, plug inspection, or output testing points to the coil path.",
     "common_symptoms_link": "/symptoms/engine-misfire-at-idle",

@@ -50,13 +50,37 @@
   "recommended_repairs": [
     {
       "title": "Fuel System Diagnostic",
-      "description": "Use when pressure, power, or control evidence is not complete.",
+      "description": "Use when fuel pressure, volume, power, or control evidence is not complete.",
       "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    },
+    {
+      "title": "Fuel Pressure Testing",
+      "description": "Confirm weak pump output or pressure bleed-down before replacing the pump.",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    },
+    {
+      "title": "Injector Inspection",
+      "description": "Check injector pulse or leak-down when hard start, rich start-up, or one-cylinder clues overlap.",
+      "estimator_href": "/estimator?service=fuel_injector_replacement_each"
     },
     {
       "title": "Fuel Pump Relay",
       "description": "Consider only when command or relay testing proves relay failure.",
       "estimator_href": "/estimator?service=fuel_pump_relay_replacement"
+    }
+  ],
+  "related_symptoms": [
+    {
+      "title": "Hard Start After Sitting Overnight",
+      "description": "Use when pressure bleed-down or injector leak-down is part of the complaint.",
+      "href": "/symptoms/hard-start-after-sitting-overnight",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    },
+    {
+      "title": "Loss Of Power While Driving",
+      "description": "Use when lean trims or power loss under load suggest weak fuel delivery.",
+      "href": "/symptoms/loss-of-power-while-driving",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
     }
   ],
   "diagnostic_context": {

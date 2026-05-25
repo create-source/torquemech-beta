@@ -113,6 +113,26 @@
       "estimator_href": "/estimator?service=coolant_temperature_sensor_replacement"
     }
   ],
+  "related_symptoms": [
+    {
+      "title": "Coolant Leaks",
+      "description": "Use when low coolant, pressure loss, or visible residue may be causing the overheat.",
+      "href": "/symptoms/coolant-leaks",
+      "estimator_href": "/estimator?service=coolant_leak_diagnosis"
+    },
+    {
+      "title": "Vehicle Overheats With A/C On",
+      "description": "Use when the concern shows up mainly with A/C load or idle airflow demand.",
+      "href": "/symptoms/vehicle-overheats-with-ac-on",
+      "estimator_href": "/estimator?service=overheating_diagnosis"
+    },
+    {
+      "title": "White Smoke From Exhaust",
+      "description": "Use when overheating is paired with coolant loss or persistent sweet white exhaust.",
+      "href": "/symptoms/white-smoke-from-exhaust",
+      "estimator_href": "/estimator?service=cooling_system_pressure_test"
+    }
+  ],
   "estimator_link": "/estimator",
   "diagnostic_tools_link": "/diagnostics"
 }

@@ -83,6 +83,26 @@
       "estimator_href": "/estimator?service=fuel_system_diagnostic"
     }
   ],
+  "related_symptoms": [
+    {
+      "title": "Battery Light On",
+      "description": "Use when charging voltage or alternator output may be creating the start complaint.",
+      "href": "/symptoms/battery-light-on",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
+    },
+    {
+      "title": "Battery Drain",
+      "description": "Use when the vehicle starts after a jump but goes dead again after sitting.",
+      "href": "/symptoms/battery-drain",
+      "estimator_href": "/estimator?service=electrical_diagnostic"
+    },
+    {
+      "title": "Hard Start After Sitting Overnight",
+      "description": "Use when the engine cranks normally but takes too long to fire.",
+      "href": "/symptoms/hard-start-after-sitting-overnight",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    }
+  ],
   "estimator_link": "/estimator?service=no_start_diagnosis",
   "diagnostic_tools_link": "/diagnostics"
 }

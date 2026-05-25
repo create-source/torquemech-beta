@@ -106,6 +106,26 @@
       "estimator_href": "/estimator?service=catalytic_converter_replacement"
     }
   ],
+  "related_symptoms": [
+    {
+      "title": "Rough Idle",
+      "description": "Use when poor mileage is paired with idle shake, lean trims, or vacuum leak clues.",
+      "href": "/symptoms/rough-idle",
+      "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    },
+    {
+      "title": "Hard Start After Sitting Overnight",
+      "description": "Use when fuel pressure bleed-down or injector leak-down may explain both start-up and mileage symptoms.",
+      "href": "/symptoms/hard-start-after-sitting-overnight",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    },
+    {
+      "title": "Engine Hesitation On Acceleration",
+      "description": "Use when airflow, fuel delivery, or ignition checks overlap with the mileage complaint.",
+      "href": "/symptoms/engine-hesitation-on-acceleration",
+      "estimator_href": "/estimator?service=driveability_diagnosis"
+    }
+  ],
   "estimator_link": "/estimator",
   "diagnostic_tools_link": "/diagnostics"
 }

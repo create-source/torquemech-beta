@@ -60,6 +60,20 @@
       "estimator_href": "/estimator?service=radiator_replacement"
     }
   ],
+  "related_symptoms": [
+    {
+      "title": "Overheating At Idle",
+      "description": "Use when coolant loss is paired with temperature rise in traffic or at stops.",
+      "href": "/symptoms/overheating-at-idle",
+      "estimator_href": "/estimator?service=overheating_diagnosis"
+    },
+    {
+      "title": "White Smoke From Exhaust",
+      "description": "Use when coolant loss may be internal instead of an external leak.",
+      "href": "/symptoms/white-smoke-from-exhaust",
+      "estimator_href": "/estimator?service=cooling_system_pressure_test"
+    }
+  ],
   "estimator_link": "/estimator?service=coolant_leak_diagnosis",
   "diagnostic_tools_link": "/diagnostics"
 }

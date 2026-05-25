@@ -58,6 +58,26 @@
       "estimator_href": "/estimator?service=electrical_diagnostic"
     }
   ],
+  "related_symptoms": [
+    {
+      "title": "Battery Drain",
+      "description": "Use when the battery fails after sitting and parasitic draw remains possible.",
+      "href": "/symptoms/battery-drain",
+      "estimator_href": "/estimator?service=electrical_diagnostic"
+    },
+    {
+      "title": "Battery Light On",
+      "description": "Use when low battery state may be caused by charging-system failure.",
+      "href": "/symptoms/battery-light-on",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
+    },
+    {
+      "title": "Intermittent No Start",
+      "description": "Use when weak battery, cables, or starter command need separation.",
+      "href": "/symptoms/intermittent-no-start",
+      "estimator_href": "/estimator?service=no_start_diagnosis"
+    }
+  ],
   "diagnostic_context": {
     "intro": "Battery replacement is clearest after capacity, cable, charging, and drain checks separate the root cause.",
     "common_symptoms_link": "/symptoms/battery-drain",

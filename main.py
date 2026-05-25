@@ -1553,6 +1553,7 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     normalized["coming_next"] = normalize_repair_guide_list(guide.get("coming_next"))
     normalized["related_obd_codes"] = normalize_symptom_obd_codes(guide.get("related_obd_codes"))
     normalized["recommended_repairs"] = normalize_symptom_recommended_repairs(guide.get("recommended_repairs"))
+    normalized["related_symptoms"] = normalize_related_link_items(guide.get("related_symptoms"))
 
     difficulty = str(guide.get("difficulty") or "").strip().title()
     normalized["difficulty"] = difficulty if difficulty in {"Easy", "Moderate", "Advanced"} else ""
@@ -2002,6 +2003,42 @@ def normalize_symptom_recommended_repairs(raw_items: Any) -> List[Dict[str, str]
     return repairs
 
 
+def normalize_related_link_items(raw_items: Any) -> List[Dict[str, str]]:
+    if not isinstance(raw_items, list):
+        return []
+
+    links: List[Dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+
+        title = str(item.get("title") or item.get("name") or "").strip()
+        description = str(item.get("description") or "").strip()
+        href = str(item.get("href") or item.get("link") or item.get("symptom_href") or "").strip()
+        estimator_href = str(item.get("estimator_href") or item.get("estimator_link") or "").strip()
+
+        if not title or not href:
+            continue
+
+        dedupe_key = (href, title.lower())
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+
+        links.append(
+            {
+                "title": title,
+                "description": description,
+                "href": href,
+                "estimator_href": estimator_href,
+            }
+        )
+
+    return links
+
+
 def normalize_diagnostic_path_sections(raw_items: Any) -> List[Dict[str, Any]]:
     if not isinstance(raw_items, list):
         return []
@@ -2237,8 +2274,9 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Canister and hose routing",
             ],
             "blueprints": [
-                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Purge Valve Blueprint", "href": "/repair-guides/evap-purge-valve-replacement"},
                 {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+                {"title": "EVAP Smoke Test", "href": "/estimator?service=evap_system_diagnosis"},
             ],
             "inspection_priority": [
                 "Smoke test the EVAP system",
@@ -2331,8 +2369,9 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Canister, tank, and hose fittings",
             ],
             "blueprints": [
-                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Purge Valve Blueprint", "href": "/repair-guides/evap-purge-valve-replacement"},
                 {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+                {"title": "EVAP Smoke Test", "href": "/estimator?service=evap_system_diagnosis"},
             ],
             "inspection_priority": [
                 "Smoke test slowly and inspect small fittings",
@@ -2543,6 +2582,7 @@ def normalize_symptom_entry(raw_entry: Any, *, file_slug: str, repair_guides: Di
         "diagnostic_paths": normalize_repair_guide_list(raw.get("diagnostic_paths")),
         "diagnostic_path_sections": normalize_diagnostic_path_sections(raw.get("diagnostic_path_sections")),
         "related_obd_codes": normalize_symptom_obd_codes(raw.get("related_obd_codes")),
+        "related_symptoms": normalize_related_link_items(raw.get("related_symptoms")),
         "recommended_repairs": normalize_symptom_recommended_repairs(raw.get("recommended_repairs")),
         "related_repair_guides": related_repair_guides,
         "estimator_links": estimator_links,
@@ -3118,6 +3158,7 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         related.append(
             {
                 "code": candidate_code,
+                "href": f"/obd/{candidate_code.lower()}",
                 "label": (
                     fallback_label
                     if prefer_fallback and fallback_label
@@ -3146,6 +3187,7 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
         "P0113": ["P0101", "P0171", "P0174", "P0300", "P0110"],
         "P0128": ["P0117", "P0118", "P0217"],
         "P0446": ["P0442", "P0455", "P0456"],
+        "P0442": ["P0455", "P0456", "P0446", "P0441", "P0449"],
         "P0455": ["P0456", "P0442", "P0446", "P0441", "P0449"],
         "P0456": ["P0442", "P0455", "P0446", "P0441", "P0449"],
         "P0507": ["P0505"],
@@ -3216,6 +3258,13 @@ def build_related_codes(code: str, preferred_codes: Optional[List[str]] = None):
             "P0442": "Small EVAP leak workflow when smoke testing finds a smaller seep",
             "P0446": "Vent valve and vent-path diagnosis for sealing or refueling issues",
             "P0441": "Purge valve flow diagnosis when the purge side may be sticking open",
+            "P0449": "Vent valve control check when the vent circuit affects sealing",
+        },
+        "P0442": {
+            "P0455": "Large-leak comparison when the EVAP system cannot seal during smoke testing",
+            "P0456": "Very small leak comparison for cap, hose, canister, or valve seepage",
+            "P0446": "Vent valve and vent-path diagnosis for sealing or refueling issues",
+            "P0441": "Purge flow diagnosis when purge valve sealing may overlap the leak",
             "P0449": "Vent valve control check when the vent circuit affects sealing",
         },
         "P0456": {
@@ -5152,6 +5201,10 @@ async def obd_code_page(request: Request, code: str):
         vehicle_context=vehicle_context,
         obd_code=row["code"],
         source="obd",
+    )
+    related_codes = apply_workflow_context_to_repair_items(
+        related_codes,
+        workflow_context,
     )
     if diagnostic_path:
         diagnostic_path = dict(diagnostic_path)
@@ -8431,6 +8484,10 @@ async def repair_guide_page(request: Request, slug: str):
         guide.get("related_repair_guides") or [],
         workflow_context,
     )
+    guide["related_symptoms"] = apply_workflow_context_to_repair_items(
+        guide.get("related_symptoms") or [],
+        workflow_context,
+    )
 
     return templates.TemplateResponse(
         "repair_guide.html",
@@ -8475,6 +8532,10 @@ async def symptom_page(request: Request, slug: str):
     symptom["diagnostic_path_sections"] = contextual_path_sections
     symptom["related_obd_codes"] = apply_workflow_context_to_repair_items(
         symptom.get("related_obd_codes") or [],
+        workflow_context,
+    )
+    symptom["related_symptoms"] = apply_workflow_context_to_repair_items(
+        symptom.get("related_symptoms") or [],
         workflow_context,
     )
     symptom["estimator_links"] = apply_workflow_context_to_repair_items(

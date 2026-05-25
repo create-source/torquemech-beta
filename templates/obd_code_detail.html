@@ -528,7 +528,7 @@
     </p>
     <div class="obd-related-codes-grid">
       {% for item in related_codes %}
-      <a href="/obd/{{ item.code | lower }}" class="obd-related-code-chip">
+      <a href="{{ item.href if item.href else '/obd/' ~ (item.code | lower) }}" class="obd-related-code-chip">
         <div>
           <div class="obd-related-code-chip__code">{{ item.code }}</div>
           <div class="obd-related-code-chip__label">{{ item.label }}</div>

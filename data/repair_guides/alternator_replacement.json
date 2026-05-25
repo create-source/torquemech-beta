@@ -61,14 +61,28 @@
     {
       "title": "Battery Replacement",
       "description": "Use when the battery fails load testing or cannot recover after charging.",
-      "cost_guide_href": "/cost/battery-replacement",
+      "cost_guide_href": "/repair-guides/battery-replacement",
       "estimator_href": "/estimator?service=battery_replacement"
     },
     {
       "title": "Serpentine Belt Inspection",
       "description": "Commonly checked with alternator work because belt slip or tensioner problems can imitate charging failure.",
-      "cost_guide_href": "/cost/serpentine-belt-replacement",
+      "cost_guide_href": "/repair-guides/serpentine-belt-replacement",
       "estimator_href": "/estimator?service=serpentine_belt_replacement"
+    }
+  ],
+  "related_symptoms": [
+    {
+      "title": "Battery Light On",
+      "description": "Use when the warning light is the main entry point into charging diagnosis.",
+      "href": "/symptoms/battery-light-on",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
+    },
+    {
+      "title": "Intermittent No Start",
+      "description": "Use when low voltage or charging faults overlap with starting complaints.",
+      "href": "/symptoms/intermittent-no-start",
+      "estimator_href": "/estimator?service=no_start_diagnosis"
     }
   ],
   "diagnostic_context": {

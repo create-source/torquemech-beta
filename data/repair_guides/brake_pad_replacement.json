@@ -53,7 +53,7 @@
     {
       "title": "Rotor Inspection",
       "description": "Commonly checked with pad work when rotors are scored, warped, thin, or heat damaged.",
-      "cost_guide_href": "/cost/brake-rotor-replacement",
+      "cost_guide_href": "/repair-guides/brake-rotor-replacement",
       "estimator_href": "/estimator?service=front_brake_pads_and_rotors_replacement"
     },
     {
@@ -64,8 +64,22 @@
     {
       "title": "Caliper Inspection",
       "description": "Mechanics often inspect calipers when pad wear is uneven or the wheel shows drag after braking.",
-      "cost_guide_href": "/cost/brake-caliper-replacement",
+      "cost_guide_href": "/repair-guides/brake-caliper-replacement",
       "estimator_href": "/estimator?service=brake_caliper_replacement_each"
+    }
+  ],
+  "related_symptoms": [
+    {
+      "title": "Brake Noise",
+      "description": "Use when squeal, grinding, or scraping is driving pad inspection.",
+      "href": "/symptoms/brake-noise",
+      "estimator_href": "/estimator?service=brake_noise_diagnosis"
+    },
+    {
+      "title": "Vibration While Braking",
+      "description": "Use when rotor condition or hub runout may change a pad-only estimate.",
+      "href": "/symptoms/vibration-while-braking",
+      "estimator_href": "/estimator?service=brake_vibration_diagnosis"
     }
   ],
   "diagnostic_context": {

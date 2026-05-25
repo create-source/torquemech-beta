@@ -57,7 +57,7 @@
     {
       "title": "Oxygen Sensor Inspection",
       "description": "Compare upstream and downstream sensor behavior before condemning the converter.",
-      "cost_guide_href": "/cost/oxygen-sensor-replacement",
+      "cost_guide_href": "/repair-guides/oxygen-sensor-replacement",
       "estimator_href": "/estimator?service=o2_sensor_diagnosis"
     },
     {
@@ -69,6 +69,20 @@
       "title": "Fuel Trim Diagnosis",
       "description": "Use when rich or lean operation may have caused catalyst damage.",
       "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    }
+  ],
+  "related_symptoms": [
+    {
+      "title": "Poor Fuel Economy",
+      "description": "Use when fuel trims, O2 behavior, or rich-running concerns may be upstream of catalyst failure.",
+      "href": "/symptoms/poor-fuel-economy",
+      "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    },
+    {
+      "title": "Fuel Smell From Exhaust",
+      "description": "Use when raw fuel, sulfur smell, or rich-running behavior may be damaging the converter.",
+      "href": "/symptoms/fuel-smell-from-exhaust",
+      "estimator_href": "/estimator?service=catalyst_efficiency_diagnosis"
     }
   ],
   "diagnostic_context": {

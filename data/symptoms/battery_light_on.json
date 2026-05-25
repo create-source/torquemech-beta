@@ -82,6 +82,26 @@
       "estimator_href": "/estimator?service=battery_test"
     }
   ],
+  "related_symptoms": [
+    {
+      "title": "Intermittent No Start",
+      "description": "Use when low voltage or weak charging creates an intermittent starting complaint.",
+      "href": "/symptoms/intermittent-no-start",
+      "estimator_href": "/estimator?service=no_start_diagnosis"
+    },
+    {
+      "title": "Battery Drain",
+      "description": "Use when the battery light is paired with repeated dead-battery-after-sitting symptoms.",
+      "href": "/symptoms/battery-drain",
+      "estimator_href": "/estimator?service=electrical_diagnostic"
+    },
+    {
+      "title": "Charging System Warning Light",
+      "description": "Use for the broader charging-system workflow when the complaint is not limited to the dash light.",
+      "href": "/symptoms/charging-system-warning-light",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
+    }
+  ],
   "estimator_link": "/estimator?service=alternator_diagnosis",
   "diagnostic_tools_link": "/diagnostics"
 }

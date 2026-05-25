@@ -155,6 +155,33 @@
 </section>
 {% endif %}
 
+{% if symptom.related_symptoms %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related Symptoms</h2>
+    <p class="tm-muted">Compare nearby symptom paths when the complaint overlaps another system or driving condition.</p>
+    <div class="tm-stack">
+      {% for item in symptom.related_symptoms %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
+        {% endif %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.href }}">Related Symptom &rarr;</a>
+        </div>
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if symptom.likely_causes %}
 <section class="tm-section">
   <div class="tm-card">

@@ -110,6 +110,26 @@
       "title": "Brake Vibration Diagnosis",
       "description": "Use when pulsation source is not proven or returns after prior brake work.",
       "estimator_href": "/estimator?service=brake_vibration_diagnosis"
+    },
+    {
+      "title": "Wheel Hub Inspection",
+      "description": "Inspect hub face and bearing play when rotor runout or repeat pulsation is part of the concern.",
+      "cost_guide_href": "/repair-guides/wheel-hub-assembly-replacement",
+      "estimator_href": "/estimator?service=wheel_hub_assembly_replacement_each"
+    }
+  ],
+  "related_symptoms": [
+    {
+      "title": "Vibration While Braking",
+      "description": "Use when rotor runout, hub condition, or pad deposits need confirmation before pricing brake parts.",
+      "href": "/symptoms/vibration-while-braking",
+      "estimator_href": "/estimator?service=brake_vibration_diagnosis"
+    },
+    {
+      "title": "Brake Noise",
+      "description": "Use when scraping, grinding, or uneven pad wear overlaps the rotor inspection.",
+      "href": "/symptoms/brake-noise",
+      "estimator_href": "/estimator?service=brake_noise_diagnosis"
     }
   ],
   "warnings": [

@@ -426,6 +426,33 @@
 </section>
 {% endif %}
 
+{% if guide.related_symptoms %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Related Symptoms</h2>
+    <p class="tm-muted">Use symptom paths when the complaint needs one more inspection step before the repair is estimated.</p>
+    <div class="tm-related-repair-grid">
+      {% for item in guide.related_symptoms %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
+        {% endif %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.href }}">Related Symptom &rarr;</a>
+        </div>
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;">
+          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if guide.recommended_repairs %}
 <section class="tm-section">
   <div class="tm-card">
