@@ -1,0 +1,79 @@
+{
+  "slug": "vibration-while-braking",
+  "title": "Vibration While Braking",
+  "category": "Brakes",
+  "summary": "Brake vibration workflow for rotor runout, pad deposits, hub condition, and suspension checks before pricing brake work.",
+  "intro": "Vibration while braking usually starts with rotor and hub inspection, but tire, bearing, and suspension looseness can make the brake pedal or steering wheel shake too.",
+  "common_sounds": [
+    "Steering wheel shake during braking",
+    "Brake pedal pulsation",
+    "Vibration worse from highway speeds",
+    "Grinding, scraping, or heat smell if brake drag is present"
+  ],
+  "quick_checks": [
+    "Inspect rotor thickness, scoring, heat spots, and runout",
+    "Check pad wear pattern and caliper slide movement",
+    "Clean hub face and inspect wheel bearing play",
+    "Check suspension looseness if vibration is not purely brake-related"
+  ],
+  "inspection_priority": [
+    "Inspect rotors and pads before replacing parts",
+    "Check caliper slides and hub face rust",
+    "Verify wheel bearing or suspension play if vibration persists"
+  ],
+  "confidence_cues": [
+    "Rotor evidence first",
+    "Hub runout can cause repeat pulsation",
+    "Brake fluid and caliper condition matter"
+  ],
+  "common_causes": [
+    "Rotor thickness variation or runout",
+    "Pad deposits or uneven pad wear",
+    "Seized caliper slide or dragging caliper",
+    "Hub rust, wheel bearing play, or suspension looseness"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Rotor and Pad Path",
+      "summary": "Use when pulsation is brake-speed related and rotor/pad inspection supports it.",
+      "checks": [
+        "Measure rotor condition and runout where needed",
+        "Inspect pad taper and hardware",
+        "Check hub face rust before new rotor installation"
+      ],
+      "repairs": [
+        { "title": "Brake Rotor Blueprint", "cost_guide_href": "/repair-guides/brake-rotor-replacement" },
+        { "title": "Brake Vibration Diagnosis", "estimator_href": "/estimator?service=brake_vibration_diagnosis" }
+      ]
+    },
+    {
+      "title": "Caliper and Chassis Path",
+      "summary": "Use when dragging, uneven wear, or looseness may be causing repeat vibration.",
+      "checks": [
+        "Inspect caliper slides and hose condition",
+        "Check hub and bearing play",
+        "Inspect control arms and steering links if shake remains"
+      ],
+      "repairs": [
+        { "title": "Brake Caliper Blueprint", "cost_guide_href": "/repair-guides/brake-caliper-replacement" },
+        { "title": "Suspension Inspection", "estimator_href": "/estimator?service=suspension_noise_diagnosis" }
+      ]
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Brake Rotor Blueprint",
+      "description": "Primary path when rotor scoring, runout, or heat marks are confirmed.",
+      "cost_guide_href": "/repair-guides/brake-rotor-replacement",
+      "estimator_href": "/estimator?service=front_brake_rotors_replacement"
+    },
+    {
+      "title": "Brake Caliper Blueprint",
+      "description": "Use when drag, taper wear, or fluid leak supports caliper work.",
+      "cost_guide_href": "/repair-guides/brake-caliper-replacement",
+      "estimator_href": "/estimator?service=brake_caliper_replacement_each"
+    }
+  ],
+  "estimator_link": "/estimator?service=brake_vibration_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

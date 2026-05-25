@@ -1,0 +1,82 @@
+{
+  "slug": "clicking-noise-when-turning",
+  "title": "Clicking Noise When Turning",
+  "category": "Steering and Suspension",
+  "summary": "Compact workflow for clicking, popping, or snapping noises during turns, with CV axle, hub, and suspension checks before estimating parts.",
+  "intro": "A clicking noise while turning is usually confirmed by when it happens: tight low-speed turns point toward outer CV joints, while road-speed hum, loose steering, or bump noise can move the diagnosis toward hub or suspension parts.",
+  "common_sounds": [
+    "Clicking or snapping during tight turns",
+    "Noise worse under acceleration while turning",
+    "Pop or clunk when changing direction",
+    "Humming or grinding that changes with road speed"
+  ],
+  "quick_checks": [
+    "Inspect CV axle boots for grease loss, tears, or sling marks",
+    "Road test in a tight circle both directions",
+    "Check wheel bearing play and tire noise before condemning the axle",
+    "Inspect ball joints, control arm bushings, sway links, and loose hardware"
+  ],
+  "inspection_priority": [
+    "Confirm the noise during a controlled turn",
+    "Inspect CV boots and axle play first",
+    "Check hub and suspension parts when the noise is not turn-load specific"
+  ],
+  "confidence_cues": [
+    "Turn-load clue matters",
+    "Inspect before axle replacement",
+    "Alignment may be needed if suspension parts are replaced"
+  ],
+  "common_causes": [
+    "Outer CV joint wear",
+    "Torn CV boot with lost grease",
+    "Wheel bearing or hub play",
+    "Loose suspension joint or control arm bushing"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "CV Axle Path",
+      "summary": "Use when clicking is strongest in tight turns and the axle boot or joint shows wear.",
+      "checks": [
+        "Inspect inner and outer boots",
+        "Listen during left and right tight turns",
+        "Check axle nut and joint play"
+      ],
+      "repairs": [
+        { "title": "CV Axle Replacement", "estimator_href": "/estimator?service=cv_axle_replacement_each" }
+      ]
+    },
+    {
+      "title": "Hub and Suspension Path",
+      "summary": "Use when the sound is more like hum, clunk, pop, or looseness than a repeating CV click.",
+      "checks": [
+        "Check wheel bearing play and road-speed noise",
+        "Inspect control arms, ball joints, and sway links",
+        "Look for tire rub or loose shields"
+      ],
+      "repairs": [
+        { "title": "Wheel Bearing Blueprint", "cost_guide_href": "/repair-guides/wheel-bearing-replacement" },
+        { "title": "Suspension Inspection", "estimator_href": "/estimator?service=suspension_noise_diagnosis" }
+      ]
+    }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "CV Axle Replacement",
+      "description": "Use when turn-load clicking and boot or joint inspection support the axle path.",
+      "estimator_href": "/estimator?service=cv_axle_replacement_each"
+    },
+    {
+      "title": "Wheel Bearing Blueprint",
+      "description": "Related when road-speed hum or hub play overlaps with the turning complaint.",
+      "cost_guide_href": "/repair-guides/wheel-bearing-replacement",
+      "estimator_href": "/estimator?service=wheel_bearing_replacement_front"
+    },
+    {
+      "title": "Suspension Noise Diagnosis",
+      "description": "Use when control arm, ball joint, or sway link movement is still unconfirmed.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
+    }
+  ],
+  "estimator_link": "/estimator?service=suspension_noise_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

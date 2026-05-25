@@ -1,0 +1,87 @@
+{
+  "slug": "battery-light-on",
+  "title": "Battery Light On",
+  "category": "Starting / Charging",
+  "summary": "Charging-system workflow for battery warning lights, low voltage, belt slip, and alternator estimate continuity.",
+  "intro": "A battery light usually means the vehicle is not charging correctly, but the estimate should still separate battery condition, alternator output, belt drive, fuses, cables, and grounds.",
+  "common_sounds": [
+    "Battery warning light while driving",
+    "Dimming lights or weak blower speed",
+    "Belt squeal near startup or with load",
+    "Vehicle may stall after battery reserve is depleted"
+  ],
+  "quick_checks": [
+    "Load test the battery before judging alternator output",
+    "Measure charging voltage with electrical loads on",
+    "Inspect serpentine belt, tensioner, and pulley alignment",
+    "Check alternator output cable, main fuse, and engine grounds",
+    "Scan for low-voltage codes and module resets"
+  ],
+  "inspection_priority": [
+    "Battery state of charge first",
+    "Charging voltage with loads on",
+    "Belt and cable voltage-drop checks before alternator replacement"
+  ],
+  "confidence_cues": [
+    "Charging verification required",
+    "Belt slip can mimic alternator failure",
+    "Low voltage can create many secondary codes"
+  ],
+  "common_causes": [
+    "Alternator or regulator failure",
+    "Loose or slipping serpentine belt",
+    "Weak battery confusing charging tests",
+    "High resistance in charge cable, fuse, or ground"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Alternator Output Path",
+      "summary": "Use when a known-good battery still shows low charging voltage.",
+      "checks": [
+        "Measure voltage at battery and alternator output",
+        "Voltage-drop charge cable and ground",
+        "Check main charging fuse or fusible link"
+      ],
+      "repairs": [
+        { "title": "Alternator Blueprint", "cost_guide_href": "/repair-guides/alternator-replacement" },
+        { "title": "Alternator Diagnosis", "estimator_href": "/estimator?service=alternator_diagnosis" }
+      ]
+    },
+    {
+      "title": "Belt and Battery Path",
+      "summary": "Use when belt slip or weak battery condition may be creating the warning.",
+      "checks": [
+        "Inspect belt cracking, glazing, and tensioner travel",
+        "Load test battery after charge",
+        "Check for parasitic drain if battery repeatedly dies"
+      ],
+      "repairs": [
+        { "title": "Serpentine Belt Replacement", "estimator_href": "/estimator?service=serpentine_belt_replacement" },
+        { "title": "Battery Test", "estimator_href": "/estimator?service=battery_test" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Alternator Blueprint",
+      "description": "Use after charging voltage, belt, and cable checks support alternator failure.",
+      "cost_guide_href": "/repair-guides/alternator-replacement",
+      "estimator_href": "/estimator?service=alternator_replacement"
+    },
+    {
+      "title": "Serpentine Belt Inspection",
+      "description": "Use when squeal, glazing, or tensioner movement suggests belt slip.",
+      "estimator_href": "/estimator?service=serpentine_belt_replacement"
+    },
+    {
+      "title": "Battery Test",
+      "description": "Use before final charging-system approval when battery state is unknown.",
+      "estimator_href": "/estimator?service=battery_test"
+    }
+  ],
+  "estimator_link": "/estimator?service=alternator_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

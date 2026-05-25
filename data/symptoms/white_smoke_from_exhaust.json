@@ -17,6 +17,16 @@
     "Inspect spark plugs if one cylinder is rough or likely coolant-fouled",
     "Treat persistent sweet-smelling white smoke with overheating as a serious fault path"
   ],
+  "inspection_priority": [
+    "Separate normal cold condensation from persistent hot smoke",
+    "Check coolant level, pressure, and contamination evidence",
+    "Inspect one-cylinder misfire clues before pricing simple bolt-on parts"
+  ],
+  "confidence_cues": [
+    "Coolant loss changes severity",
+    "Pressure testing recommended",
+    "Head gasket possibility if smoke persists hot"
+  ],
   "common_causes": [
     "Normal condensation on a cold start",
     "Coolant entering combustion or the exhaust stream",
@@ -28,6 +38,34 @@
     "If the smoke disappears after warm-up and coolant level stays steady, condensation is more likely than a repair-grade fault.",
     "If the smoke stays thick, sweet-smelling, and paired with coolant loss or overheating, an internal engine leak becomes more likely than a simple external bolt-on repair.",
     "If the smoke is paired with a misfire on one cylinder, inspect plugs and cooling clues before assuming the fault is only ignition-related."
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Condensation vs Coolant Path",
+      "summary": "Use when smoke behavior changes after warm-up or coolant loss is uncertain.",
+      "checks": [
+        "Confirm smoke clears fully after warm-up",
+        "Pressure test if coolant level drops",
+        "Inspect coolant and oil for cross-contamination"
+      ],
+      "repairs": [
+        { "title": "Coolant Pressure Test", "estimator_href": "/estimator?service=cooling_system_pressure_test" },
+        { "title": "Radiator Blueprint", "cost_guide_href": "/repair-guides/radiator-replacement" }
+      ]
+    },
+    {
+      "title": "Internal Leak and Misfire Path",
+      "summary": "Use when smoke persists hot, smells sweet, or one cylinder misfires after sitting.",
+      "checks": [
+        "Inspect spark plugs for coolant cleaning or fouling",
+        "Check compression or leak-down if internal leakage is suspected",
+        "Treat overheating history as part of the estimate risk"
+      ],
+      "repairs": [
+        { "title": "Head Gasket Inspection", "estimator_href": "/estimator?service=head_gasket_replacement" },
+        { "title": "Misfire Diagnosis", "estimator_href": "/estimator?service=misfire_diagnosis" }
+      ]
+    }
   ],
   "related_obd_codes": [
     { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
@@ -44,10 +82,10 @@
       "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
     },
     {
-      "title": "Radiator Replacement Cost",
+      "title": "Cooling System Inspection",
       "description": "A reasonable next path when white smoke is paired with coolant loss and an external cooling failure is still part of the diagnosis.",
-      "cost_guide_href": "/cost/radiator-replacement",
-      "estimator_href": "/estimator?service=radiator_replacement"
+      "cost_guide_href": "/repair-guides/radiator-replacement",
+      "estimator_href": "/estimator?service=cooling_system_pressure_test"
     },
     {
       "title": "Water Pump Replacement Cost",
@@ -56,10 +94,15 @@
       "estimator_href": "/estimator?service=water_pump_replacement"
     },
     {
-      "title": "Thermostat Replacement Cost",
+      "title": "Thermostat Blueprint",
       "description": "Worth pricing when temperature-control problems overlap with the exhaust-smoke complaint, but only after the more serious internal leak path is considered.",
-      "cost_guide_href": "/cost/thermostat-replacement",
+      "cost_guide_href": "/repair-guides/thermostat-replacement",
       "estimator_href": "/estimator?service=thermostat_replacement"
+    },
+    {
+      "title": "Head Gasket Possibility",
+      "description": "Use careful diagnosis when persistent sweet white smoke, coolant loss, and misfire evidence point internal.",
+      "estimator_href": "/estimator?service=head_gasket_replacement"
     },
     {
       "title": "Engine Coolant Temperature Sensor Replacement Cost",

@@ -1,0 +1,89 @@
+{
+  "slug": "engine-stalls-at-idle",
+  "title": "Engine Stalls At Idle",
+  "category": "Engine Performance",
+  "summary": "Mechanic-first idle stall workflow for airflow, throttle body, vacuum leak, and fuel trim checks before parts replacement.",
+  "intro": "An engine that stalls at idle needs the idle air, fuel trim, and load-control story separated before a throttle body, sensor, or fuel part is quoted.",
+  "common_sounds": [
+    "Idle drops and engine dies at stops",
+    "Stall when shifting into drive or turning on A/C",
+    "Rough idle, surge, or low idle speed",
+    "Restart may be immediate or require throttle input"
+  ],
+  "quick_checks": [
+    "Scan for lean, throttle, MAF, idle, and misfire codes",
+    "Inspect intake boots, vacuum hoses, and PCV leaks",
+    "Check throttle body deposits and idle relearn needs",
+    "Review fuel trims at idle versus raised RPM",
+    "Check charging voltage if idle stalls with electrical load"
+  ],
+  "inspection_priority": [
+    "Check for vacuum leaks and unmetered air first",
+    "Compare fuel trims at idle and cruise",
+    "Inspect throttle body condition before replacing it"
+  ],
+  "confidence_cues": [
+    "Airflow and trim data first",
+    "Further diagnosis before parts",
+    "Idle relearn may be required"
+  ],
+  "common_causes": [
+    "Dirty throttle body or idle airflow issue",
+    "Vacuum leak or PCV fault",
+    "MAF signal skewing fuel control",
+    "Weak fuel delivery or misfire at idle"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Air and Throttle Path",
+      "summary": "Use when trims, idle speed, or throttle deposits point to airflow control.",
+      "checks": [
+        "Inspect throttle plate and bore",
+        "Smoke test intake and vacuum hoses",
+        "Check idle relearn requirements after cleaning"
+      ],
+      "repairs": [
+        { "title": "Throttle Body Service", "estimator_href": "/estimator?service=throttle_body_service" },
+        { "title": "Vacuum Leak Blueprint", "cost_guide_href": "/repair-guides/how-to-diagnose-a-vacuum-leak" }
+      ]
+    },
+    {
+      "title": "Fuel Trim and Misfire Path",
+      "summary": "Use when the stall comes with lean data, rough running, or load sensitivity.",
+      "checks": [
+        "Compare short and long fuel trims",
+        "Inspect MAF data and intake sealing",
+        "Check misfire counters and fuel pressure if needed"
+      ],
+      "repairs": [
+        { "title": "Fuel Trim Diagnosis", "estimator_href": "/estimator?service=fuel_trim_diagnosis" },
+        { "title": "Misfire Diagnosis", "estimator_href": "/estimator?service=misfire_diagnosis" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0101", "title": "MAF range/performance", "href": "/obd/p0101" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Throttle Body Service",
+      "description": "Use when deposits, idle relearn, or throttle airflow evidence supports it.",
+      "estimator_href": "/estimator?service=throttle_body_service"
+    },
+    {
+      "title": "Vacuum Leak Diagnosis",
+      "description": "Strong path when idle trims are lean or smoke testing finds unmetered air.",
+      "cost_guide_href": "/repair-guides/how-to-diagnose-a-vacuum-leak",
+      "estimator_href": "/estimator?service=vacuum_leak_diagnosis_smoke_test"
+    },
+    {
+      "title": "Fuel Trim Diagnosis",
+      "description": "Use before replacing sensors when scan data is the main clue.",
+      "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    }
+  ],
+  "estimator_link": "/estimator?service=driveability_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

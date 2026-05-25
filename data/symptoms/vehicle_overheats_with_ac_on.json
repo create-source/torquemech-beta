@@ -1,0 +1,87 @@
+{
+  "slug": "vehicle-overheats-with-ac-on",
+  "title": "Vehicle Overheats With A/C On",
+  "category": "Cooling System",
+  "summary": "Cooling and A/C load workflow for overheating that appears when condenser heat and fan demand increase.",
+  "intro": "Overheating with A/C on usually means the cooling system is struggling with added condenser heat, fan demand, airflow restriction, or low coolant reserve.",
+  "common_sounds": [
+    "Temperature climbs with A/C on at idle",
+    "A/C gets warmer at stops",
+    "Cooling fan runs loudly, intermittently, or not at all",
+    "Coolant smell or overflow after idling with A/C"
+  ],
+  "quick_checks": [
+    "Verify coolant level and pressure-test if loss is suspected",
+    "Confirm cooling fan command and airflow with A/C requested",
+    "Inspect condenser and radiator fins for debris or blockage",
+    "Compare temperature at idle with A/C on versus off",
+    "Check thermostat and circulation if overheating continues while driving"
+  ],
+  "inspection_priority": [
+    "Check coolant level and leak evidence first",
+    "Verify fan operation with A/C request",
+    "Inspect condenser/radiator airflow before replacing cooling parts"
+  ],
+  "confidence_cues": [
+    "A/C load exposes weak cooling",
+    "Fan command matters",
+    "Pressure test if coolant loss exists"
+  ],
+  "common_causes": [
+    "Cooling fan not moving enough air",
+    "Radiator or condenser airflow restriction",
+    "Low coolant or pressure leak",
+    "Thermostat, radiator, or water pump weakness under load"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Fan and Airflow Path",
+      "summary": "Use when overheating is strongest at idle with A/C requested.",
+      "checks": [
+        "Command fans and verify speed",
+        "Inspect relays, fuses, wiring, and fan motor response",
+        "Clean debris between condenser and radiator"
+      ],
+      "repairs": [
+        { "title": "Radiator Fan Replacement", "estimator_href": "/estimator?service=cooling_fan_assembly_replacement" },
+        { "title": "Cooling Fan Diagnosis", "estimator_href": "/estimator?service=cooling_fan_diagnosis" }
+      ]
+    },
+    {
+      "title": "Coolant Reserve Path",
+      "summary": "Use when the system overheats with load or shows coolant smell, loss, or poor circulation.",
+      "checks": [
+        "Pressure test the cooling system",
+        "Inspect radiator, hoses, cap, thermostat, and water pump clues",
+        "Bleed air after any coolant service"
+      ],
+      "repairs": [
+        { "title": "Radiator Blueprint", "cost_guide_href": "/repair-guides/radiator-replacement" },
+        { "title": "Thermostat Blueprint", "cost_guide_href": "/repair-guides/thermostat-replacement" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0128", "title": "Coolant thermostat below regulating temperature", "href": "/obd/p0128" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Cooling Fan Diagnosis",
+      "description": "Use when overheating changes with A/C request or idle airflow.",
+      "estimator_href": "/estimator?service=cooling_fan_diagnosis"
+    },
+    {
+      "title": "Coolant Pressure Test",
+      "description": "Use when coolant smell, loss, or overflow is present.",
+      "estimator_href": "/estimator?service=cooling_system_pressure_test"
+    },
+    {
+      "title": "Radiator Blueprint",
+      "description": "Related when airflow through the radiator stack or heat rejection is weak.",
+      "cost_guide_href": "/repair-guides/radiator-replacement",
+      "estimator_href": "/estimator?service=radiator_replacement"
+    }
+  ],
+  "estimator_link": "/estimator?service=overheating_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

@@ -1,0 +1,88 @@
+{
+  "slug": "intermittent-no-start",
+  "title": "Intermittent No Start",
+  "category": "Starting / Charging",
+  "summary": "Practical workflow for no-start complaints that come and go, separating battery, starter circuit, fuel, and immobilizer clues.",
+  "intro": "Intermittent no-start diagnosis depends on whether the engine does not crank, cranks but will not start, or starts after sitting. Capturing voltage, command, and fuel/spark state during the failure matters most.",
+  "common_sounds": [
+    "No crank, single click, or rapid clicking",
+    "Cranks normally but does not fire",
+    "Starts later after sitting or cooling down",
+    "Security light, low battery, or fuel pump prime may be inconsistent"
+  ],
+  "quick_checks": [
+    "Separate no-crank from crank-no-start first",
+    "Load test battery and voltage-drop cables during failure",
+    "Check starter command, relay, fuse, and ground path",
+    "Verify spark, injector pulse, and fuel pressure during crank-no-start",
+    "Note security light or key recognition issues"
+  ],
+  "inspection_priority": [
+    "Capture the failure state before replacing parts",
+    "Battery and cable checks first for no-crank",
+    "Fuel pressure and spark checks first for crank-no-start"
+  ],
+  "confidence_cues": [
+    "Intermittent faults need evidence",
+    "No-crank and crank-no-start are different paths",
+    "Voltage drop prevents starter guessing"
+  ],
+  "common_causes": [
+    "Weak battery or cable connection",
+    "Starter solenoid, relay, or command circuit fault",
+    "Fuel pump or pressure loss",
+    "Crank sensor, immobilizer, or wiring issue"
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "No-Crank Path",
+      "summary": "Use when the engine does not turn over during the failure.",
+      "checks": [
+        "Load test battery and check terminal fit",
+        "Voltage-drop starter power and ground",
+        "Check relay, fuse, neutral safety, and crank command"
+      ],
+      "repairs": [
+        { "title": "Starter Blueprint", "cost_guide_href": "/repair-guides/starter-replacement" },
+        { "title": "Battery Test", "estimator_href": "/estimator?service=battery_test" }
+      ]
+    },
+    {
+      "title": "Crank-No-Start Path",
+      "summary": "Use when crank speed is normal but the engine does not fire.",
+      "checks": [
+        "Check fuel pressure during crank",
+        "Verify spark and injector pulse",
+        "Scan for crank/cam, immobilizer, and fuel control codes"
+      ],
+      "repairs": [
+        { "title": "Fuel Pump Diagnosis", "estimator_href": "/estimator?service=no_start_fuel_diagnosis" },
+        { "title": "Crank No-Start Diagnosis", "estimator_href": "/estimator?service=crank_no_start_diagnosis" }
+      ]
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" },
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Starter Blueprint",
+      "description": "Use only after battery, cable, and command checks support starter failure.",
+      "cost_guide_href": "/repair-guides/starter-replacement",
+      "estimator_href": "/estimator?service=starter_replacement"
+    },
+    {
+      "title": "No-Crank Diagnosis",
+      "description": "Use when the failure is intermittent and circuit evidence is incomplete.",
+      "estimator_href": "/estimator?service=no_crank_diagnosis"
+    },
+    {
+      "title": "Fuel System Diagnostic",
+      "description": "Use when crank speed is normal but fuel pressure or command is questionable.",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    }
+  ],
+  "estimator_link": "/estimator?service=no_start_diagnosis",
+  "diagnostic_tools_link": "/diagnostics"
+}

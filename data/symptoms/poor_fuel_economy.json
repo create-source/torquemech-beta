@@ -17,6 +17,16 @@
     "Inspect spark plugs and ignition parts if poor mileage is paired with rough running",
     "Inspect the MAF path if airflow readings and fuel trims do not make sense together"
   ],
+  "inspection_priority": [
+    "Scan fuel trims, O2 behavior, and misfire counters before replacing parts",
+    "Confirm normal warm-up and thermostat behavior",
+    "Inspect MAF/intake sealing and ignition condition when trims or rough running point there"
+  ],
+  "confidence_cues": [
+    "Fuel trim evidence first",
+    "Ignition and airflow checks overlap",
+    "Temperature control can affect mileage"
+  ],
   "common_causes": [
     "Worn spark plugs or weak ignition causing incomplete combustion",
     "Contaminated or inaccurate MAF signal",
@@ -29,6 +39,34 @@
     "If the engine warms up slowly and cabin heat is weak, temperature control and thermostat faults move higher on the list.",
     "If O2 data, trims, and exhaust smell point rich, verify sensor behavior and upstream causes before replacing the converter."
   ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Fuel Trim and O2 Path",
+      "summary": "Use when mileage drop comes with rich or lean trim data, O2 codes, or exhaust smell.",
+      "checks": [
+        "Compare short and long fuel trims",
+        "Review upstream and downstream O2 behavior",
+        "Inspect exhaust leaks or fuel control issues before converter work"
+      ],
+      "repairs": [
+        { "title": "Oxygen Sensor Replacement", "estimator_href": "/estimator?service=oxygen_sensor_replacement_upstream" },
+        { "title": "Fuel Trim Diagnosis", "estimator_href": "/estimator?service=fuel_trim_diagnosis" }
+      ]
+    },
+    {
+      "title": "Airflow, Ignition, and Warm-Up Path",
+      "summary": "Use when the vehicle has rough running, hesitation, MAF clues, or slow warm-up.",
+      "checks": [
+        "Inspect MAF data, air filter, and intake sealing",
+        "Inspect spark plugs and ignition if rough running is present",
+        "Verify coolant temperature reaches normal range"
+      ],
+      "repairs": [
+        { "title": "Spark Plug Blueprint", "cost_guide_href": "/repair-guides/spark-plug-replacement" },
+        { "title": "Thermostat Blueprint", "cost_guide_href": "/repair-guides/thermostat-replacement" }
+      ]
+    }
+  ],
   "related_obd_codes": [
     { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
     { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
@@ -38,9 +76,9 @@
   ],
   "recommended_repairs": [
     {
-      "title": "Spark Plug Replacement Cost",
+      "title": "Spark Plug Blueprint",
       "description": "A strong next path when poor mileage is tied to worn plugs, misfire, or incomplete combustion.",
-      "cost_guide_href": "/cost/spark-plug-replacement",
+      "cost_guide_href": "/repair-guides/spark-plug-replacement",
       "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
     },
     {
@@ -50,15 +88,15 @@
       "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
     },
     {
-      "title": "Oxygen Sensor Replacement Cost",
+      "title": "Oxygen Sensor Inspection",
       "description": "Useful when scan data points to biased O2 readings or heater faults affecting mixture control.",
       "cost_guide_href": "/cost/oxygen-sensor-replacement",
       "estimator_href": "/estimator?service=oxygen_sensor_replacement_upstream"
     },
     {
-      "title": "Thermostat Replacement Cost",
+      "title": "Thermostat Blueprint",
       "description": "Worth pricing when slow warm-up and weak heat line up with the mileage drop.",
-      "cost_guide_href": "/cost/thermostat-replacement",
+      "cost_guide_href": "/repair-guides/thermostat-replacement",
       "estimator_href": "/estimator?service=thermostat_replacement"
     },
     {
