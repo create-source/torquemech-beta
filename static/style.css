@@ -4425,6 +4425,22 @@ h3{
   margin-left:8px;
 }
 
+.tm-estimate-repair-card{
+  display:grid;
+  justify-items:start;
+  gap:10px;
+}
+
+.tm-estimate-repair-cta{
+  max-width:100%;
+  text-align:center;
+  white-space:normal;
+}
+
+.tm-estimate-repair-card .tm-workflow-return-link{
+  margin-left:0;
+}
+
 .tm-workflow-next-step{
   margin:12px 0 0;
 }
@@ -4590,11 +4606,6 @@ h3{
     align-items:stretch;
   }
 
-  .tm-blueprint-meta .tm-btn{
-    width:100%;
-    justify-content:center;
-  }
-
   .tm-related-repair-grid{
     grid-template-columns:1fr;
   }
@@ -4612,6 +4623,17 @@ h3{
     width:100%;
     justify-content:center;
     margin-left:0;
+  }
+
+  .tm-estimate-repair-card{
+    justify-items:stretch;
+    padding-left:16px;
+    padding-right:16px;
+  }
+
+  .tm-estimate-repair-card .tm-btn{
+    width:100%;
+    min-width:0;
   }
 }
 

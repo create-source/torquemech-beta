@@ -13,24 +13,9 @@
       <p>General repair guidance shown with your selected vehicle context.</p>
     </div>
     {% endif %}
-    {% if guide.difficulty or guide.estimate %}
+    {% if guide.difficulty %}
     <div class="tm-blueprint-meta">
-      {% if guide.difficulty %}
       <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
-      {% endif %}
-      {% if guide.estimate %}
-      <a
-        class="tm-btn tm-btn-primary"
-        href="{{ guide.estimate.href if guide.estimate.href else guide.estimate.estimator_link }}"
-      >
-        {{ guide.estimate.cta_label }} ->
-      </a>
-      {% endif %}
-      {% if workflow_context and workflow_context.return_href %}
-      <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">
-        Back to Estimate
-      </a>
-      {% endif %}
     </div>
     {% endif %}
     <p class="tm-muted">Use this guide to confirm the failure path before replacement, then move into pricing once symptoms, tests, and root-cause evidence point to the same repair.</p>
@@ -491,11 +476,11 @@
 
 {% if guide.estimate %}
 <section class="tm-section">
-  <div class="tm-card">
+  <div class="tm-card tm-estimate-repair-card">
     <h2>Estimate This Repair</h2>
     <p class="tm-muted">Once the likely fault is confirmed, move from testing to pricing. The estimator helps compare labor, parts, and service context for customer approval or a professional quote.</p>
     <a
-      class="tm-btn tm-btn-primary"
+      class="tm-btn tm-btn-primary tm-estimate-repair-cta"
       id="estimateRepairBtn"
       data-estimator-link="{{ guide.estimate.estimator_link }}"
       data-service-code="{{ guide.estimate.service_code }}"
@@ -509,7 +494,7 @@
     </a>
     {% if workflow_context and workflow_context.return_href %}
     <a class="tm-btn tm-btn-secondary tm-workflow-return-link" href="{{ workflow_context.return_href }}">
-      Back to Estimate
+      Continue Estimate
     </a>
     {% endif %}
     <p class="tm-muted" style="margin-top:10px;">Exact labor time and procedure may vary by engine, trim, drivetrain, and vehicle condition.</p>
