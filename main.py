@@ -1824,7 +1824,11 @@ def apply_workflow_context_to_repair_items(
 
         for key in ("href", "cost_guide_href", "repair_guide_link"):
             linked_href = str(linked_item.get(key) or "").strip()
-            if linked_href.startswith("/repair-guides/") or linked_href.startswith("/obd/"):
+            if (
+                linked_href.startswith("/repair-guides/")
+                or linked_href.startswith("/obd/")
+                or linked_href.startswith("/symptoms/")
+            ):
                 linked_item[key] = append_workflow_context_to_href(
                     linked_href,
                     workflow_context,
@@ -2069,11 +2073,31 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Fuel pressure and volume",
                 "Upstream oxygen sensor feedback",
             ],
+            "inspection_priority": [
+                "Compare fuel trims at idle, cruise, and under load",
+                "Smoke test for vacuum, PCV, and intake leaks after the MAF",
+                "Check MAF data and fuel pressure before pricing sensors",
+            ],
+            "confidence_cues": [
+                "Positive trims guide the path",
+                "Smoke testing before parts",
+                "Fuel pressure matters under load",
+            ],
+            "estimate_guidance": [
+                "Quote smoke testing when trims are strongest at idle.",
+                "Use fuel pressure or volume testing before fuel pump replacement.",
+                "Price MAF or O2 sensors only when scan data supports the sensor path.",
+            ],
             "blueprints": [
                 {"title": "Lean Condition Blueprint", "href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174"},
                 {"title": "Vacuum Leak Inspection", "href": "/repair-guides/how-to-diagnose-a-vacuum-leak"},
                 {"title": "Fuel Pump Blueprint", "href": "/repair-guides/fuel-pump-replacement"},
                 {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+            ],
+            "symptom_links": [
+                {"title": "Rough Idle", "href": "/symptoms/rough-idle"},
+                {"title": "Engine Hesitation", "href": "/symptoms/engine-hesitation-on-acceleration"},
+                {"title": "Poor Fuel Economy", "href": "/symptoms/poor-fuel-economy"},
             ],
             "estimator_href": "/estimator?obd=P0171",
         },
@@ -2086,11 +2110,31 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Fuel pressure and volume",
                 "Upstream oxygen sensor feedback",
             ],
+            "inspection_priority": [
+                "Compare Bank 1 and Bank 2 trims before assuming a bank-only fault",
+                "Smoke test intake, vacuum, and PCV leak paths after the MAF",
+                "Check MAF data and fuel pressure when both banks trend lean",
+            ],
+            "confidence_cues": [
+                "Bank comparison matters",
+                "Smoke testing before parts",
+                "Shared air or fuel faults are common",
+            ],
+            "estimate_guidance": [
+                "Quote smoke testing when trims point to unmetered air.",
+                "Use fuel pressure or volume testing before fuel pump replacement.",
+                "Price MAF or O2 sensors only when scan data supports the sensor path.",
+            ],
             "blueprints": [
                 {"title": "Lean Condition Blueprint", "href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174"},
                 {"title": "Vacuum Leak Inspection", "href": "/repair-guides/how-to-diagnose-a-vacuum-leak"},
                 {"title": "Fuel Pump Blueprint", "href": "/repair-guides/fuel-pump-replacement"},
                 {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+            ],
+            "symptom_links": [
+                {"title": "Rough Idle", "href": "/symptoms/rough-idle"},
+                {"title": "Engine Hesitation", "href": "/symptoms/engine-hesitation-on-acceleration"},
+                {"title": "Poor Fuel Economy", "href": "/symptoms/poor-fuel-economy"},
             ],
             "estimator_href": "/estimator?obd=P0174",
         },
@@ -2104,9 +2148,10 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Misfire or rich-running root cause",
             ],
             "blueprints": [
+                {"title": "Catalytic Converter Blueprint", "href": "/repair-guides/catalytic-converter-replacement"},
                 {"title": "Oxygen Sensor Blueprint", "href": "/repair-guides/oxygen-sensor-replacement"},
+                {"title": "Exhaust Leak Inspection", "href": "/estimator?service=exhaust_leak_repair"},
                 {"title": "Ignition Coil Blueprint", "href": "/repair-guides/ignition-coil-replacement"},
-                {"title": "Fuel Pump and Fuel Control Checks", "href": "/repair-guides/fuel-pump-replacement"},
             ],
             "inspection_priority": [
                 "Inspect exhaust leaks before and near the converter",
@@ -2117,6 +2162,16 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Converter is downstream of root-cause faults",
                 "O2 sensor data must support the repair",
                 "Exhaust leaks can imitate efficiency faults",
+            ],
+            "estimate_guidance": [
+                "Inspect exhaust leaks before converter replacement.",
+                "Compare upstream and downstream O2 behavior before pricing sensors or converter.",
+                "Correct fuel trim, misfire, rich-running, oil, or coolant causes before approving the converter.",
+            ],
+            "symptom_links": [
+                {"title": "Fuel Smell From Exhaust", "href": "/symptoms/fuel-smell-from-exhaust"},
+                {"title": "Poor Fuel Economy", "href": "/symptoms/poor-fuel-economy"},
+                {"title": "Loss of Power", "href": "/symptoms/loss-of-power-while-driving"},
             ],
             "estimator_href": "/estimator?obd=P0420",
         },
@@ -2156,8 +2211,9 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Fuel cap, filler neck, hoses, and canister",
             ],
             "blueprints": [
-                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Purge Valve Blueprint", "href": "/repair-guides/evap-purge-valve-replacement"},
                 {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+                {"title": "EVAP Smoke Test", "href": "/estimator?service=evap_system_diagnosis"},
             ],
             "inspection_priority": [
                 "Smoke test before replacing leak-related parts",
@@ -2193,6 +2249,15 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Tiny leaks can be visual-invisible",
                 "Smoke testing prevents parts guessing",
                 "No drivability symptom is common",
+            ],
+            "estimate_guidance": [
+                "Quote smoke testing before purge or vent valve replacement.",
+                "Inspect gas cap seal, filler neck, and small hose connections first.",
+                "Price valves only when sealing or command tests support them.",
+            ],
+            "symptom_links": [
+                {"title": "Fuel Smell From Exhaust", "href": "/symptoms/fuel-smell-from-exhaust"},
+                {"title": "Hard Start After Sitting", "href": "/symptoms/hard-start-after-sitting-overnight"},
             ],
             "estimator_href": "/estimator?obd=P0442",
         },
@@ -2231,8 +2296,9 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Canister and hose damage",
             ],
             "blueprints": [
-                {"title": "EVAP Purge Valve Estimate Path", "href": "/cost/evap-purge-valve-replacement"},
+                {"title": "EVAP Purge Valve Blueprint", "href": "/repair-guides/evap-purge-valve-replacement"},
                 {"title": "EVAP Vent Valve Estimate Path", "href": "/cost/evap-vent-valve-replacement"},
+                {"title": "EVAP Smoke Test", "href": "/estimator?service=evap_system_diagnosis"},
             ],
             "inspection_priority": [
                 "Inspect cap, filler neck, and obvious hose disconnections",
@@ -2243,6 +2309,15 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
                 "Large leaks may still be hidden above the tank",
                 "Valve sealing and plumbing both matter",
                 "No drivability symptom is common",
+            ],
+            "estimate_guidance": [
+                "Inspect gas cap fit, filler neck, and disconnected hoses before parts replacement.",
+                "Quote smoke testing if the leak is not obvious.",
+                "Verify purge and vent valve sealing before estimating either valve.",
+            ],
+            "symptom_links": [
+                {"title": "Fuel Smell From Exhaust", "href": "/symptoms/fuel-smell-from-exhaust"},
+                {"title": "Hard Start After Sitting", "href": "/symptoms/hard-start-after-sitting-overnight"},
             ],
             "estimator_href": "/estimator?obd=P0455",
         },
@@ -2338,6 +2413,45 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
             "estimator_href": "/estimator?obd=P0562",
         },
     }
+    if normalized in {"P0301", "P0302", "P0303", "P0304"}:
+        cylinder = normalized[-1]
+        paths[normalized] = {
+            "title": f"Cylinder {cylinder} Misfire Diagnostic Path",
+            "summary": f"Treat {normalized} as a focused cylinder {cylinder} fault until spark, fuel, air, and compression evidence points to the repair.",
+            "systems": [
+                f"Cylinder {cylinder} spark plug condition",
+                f"Cylinder {cylinder} ignition coil output",
+                "Injector pulse and fuel delivery",
+                "Compression, leak-down, and intake sealing",
+            ],
+            "inspection_priority": [
+                "Inspect the spark plug before replacing the coil",
+                "Swap coil or plug only when the test can prove whether the misfire moves",
+                "Check injector command, fuel delivery, and compression if the fault stays on the same cylinder",
+            ],
+            "confidence_cues": [
+                "Ignition verification before coil replacement",
+                "Injector and compression checks if the misfire stays",
+                "Flashing check engine light means catalyst risk",
+            ],
+            "estimate_guidance": [
+                "Quote ignition parts after plug or coil testing supports the fault.",
+                "Use injector or compression diagnosis when swap testing does not move the misfire.",
+                "Check catalyst-risk history before pricing downstream converter work.",
+            ],
+            "blueprints": [
+                {"title": "Ignition Coil Blueprint", "href": "/repair-guides/ignition-coil-replacement"},
+                {"title": "Spark Plug Blueprint", "href": "/repair-guides/spark-plug-replacement"},
+                {"title": "Ignition Coil Test", "href": "/repair-guides/how-to-test-an-ignition-coil"},
+                {"title": "Cylinder Misfire Diagnosis", "href": "/repair-guides/how-to-diagnose-a-cylinder-misfire"},
+            ],
+            "symptom_links": [
+                {"title": "Engine Misfire At Idle", "href": "/symptoms/engine-misfire-at-idle"},
+                {"title": "Check Engine Light Flashing", "href": "/symptoms/check-engine-light-flashing"},
+                {"title": "Cold Start Misfire", "href": "/symptoms/cold-start-misfire"},
+            ],
+            "estimator_href": f"/estimator?obd={normalized}",
+        }
     path = paths.get(normalized, {})
     if not path:
         return {}
@@ -5043,6 +5157,10 @@ async def obd_code_page(request: Request, code: str):
         diagnostic_path = dict(diagnostic_path)
         diagnostic_path["blueprints"] = apply_workflow_context_to_repair_items(
             diagnostic_path.get("blueprints") or [],
+            workflow_context,
+        )
+        diagnostic_path["symptom_links"] = apply_workflow_context_to_repair_items(
+            diagnostic_path.get("symptom_links") or [],
             workflow_context,
         )
         diagnostic_path["estimator_href"] = append_workflow_context_to_href(

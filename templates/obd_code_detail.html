@@ -288,9 +288,26 @@
     </div>
     {% endif %}
 
+    {% if diagnostic_path.estimate_guidance %}
+    <h3 class="tm-subsection-title">Estimate Guidance</h3>
+    <ul class="tm-priority-list">
+      {% for item in diagnostic_path.estimate_guidance %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
     {% if diagnostic_path.blueprints %}
     <div class="tm-diagnostic-path-links" style="margin-top:14px;">
       {% for item in diagnostic_path.blueprints %}
+      <a href="{{ item.href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if diagnostic_path.symptom_links %}
+    <div class="tm-diagnostic-path-links" style="margin-top:10px;">
+      {% for item in diagnostic_path.symptom_links %}
       <a href="{{ item.href }}">{{ item.title }}</a>
       {% endfor %}
     </div>
