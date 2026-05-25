@@ -1382,6 +1382,77 @@ def normalize_repair_guide_list(raw: Any) -> List[str]:
     return normalized
 
 
+def infer_mechanic_confidence_guidance(*parts: Any) -> Dict[str, List[str]]:
+    text = " ".join(str(part or "") for part in parts).lower()
+
+    if any(term in text for term in ("p0300", "misfire", "spark plug", "ignition coil", "rough idle")):
+        return {
+            "inspection_priority": [
+                "Inspect ignition components first when misfire evidence is present.",
+                "Verify fuel trim behavior before replacing parts.",
+                "Check for vacuum leaks when misfires are random or lean-related.",
+            ],
+            "confidence_cues": [
+                "Common repair when plug wear or coil failure is confirmed.",
+                "Multiple causes possible when misfire counters move between cylinders.",
+                "Further diagnostics may be required if fuel trim or compression clues do not match ignition faults.",
+            ],
+        }
+
+    if any(term in text for term in ("overheat", "cooling", "water pump", "radiator", "thermostat", "coolant")):
+        return {
+            "inspection_priority": [
+                "Verify coolant level and condition first.",
+                "Inspect thermostat behavior and circulation evidence together.",
+                "Pressure test the cooling system when coolant loss or smell is present.",
+            ],
+            "confidence_cues": [
+                "Inspection recommended before replacement.",
+                "Multiple causes possible when temperature behavior changes with vehicle speed.",
+                "Access difficulty may vary by engine and drivetrain.",
+            ],
+        }
+
+    if any(term in text for term in ("no crank", "starter", "battery", "charging", "alternator")):
+        return {
+            "inspection_priority": [
+                "Verify battery voltage and load-test results first.",
+                "Inspect cable voltage drop and grounds before replacement.",
+                "Confirm starter command or charging output before pricing parts.",
+            ],
+            "confidence_cues": [
+                "Common repair when electrical checks confirm the failed component.",
+                "Inspection recommended before replacement.",
+                "Further diagnostics may be required for intermittent command or ground faults.",
+            ],
+        }
+
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper")):
+        return {
+            "inspection_priority": [
+                "Inspect rotor condition and pad thickness first.",
+                "Verify inner and outer pad wear pattern.",
+                "Check caliper hardware movement before quoting pad-only service.",
+            ],
+            "confidence_cues": [
+                "Common repair when wear measurements support it.",
+                "Inspection recommended before replacement.",
+                "Multiple causes possible when noise changes with temperature or braking load.",
+            ],
+        }
+
+    return {
+        "inspection_priority": [
+            "Confirm the symptom, code, or inspection evidence before replacement.",
+            "Check related systems when the failure pattern is not isolated.",
+        ],
+        "confidence_cues": [
+            "Inspection recommended before replacement.",
+            "Further diagnostics may be required when evidence is mixed.",
+        ],
+    }
+
+
 def normalize_repair_guide_range(raw: Any, min_key: str, max_key: str) -> Optional[Dict[str, Any]]:
     if not isinstance(raw, dict):
         return None
@@ -1466,6 +1537,15 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     )
     normalized["inspect_first"] = normalize_repair_guide_list(
         guide.get("inspect_first") or guide.get("what_mechanics_inspect_first")
+    )
+    confidence_defaults = infer_mechanic_confidence_guidance(guide_slug, guide_title, normalized["category"])
+    normalized["inspection_priority"] = (
+        normalize_repair_guide_list(guide.get("inspection_priority"))
+        or confidence_defaults["inspection_priority"]
+    )
+    normalized["confidence_cues"] = (
+        normalize_repair_guide_list(guide.get("confidence_cues") or guide.get("workflow_cues"))
+        or confidence_defaults["confidence_cues"]
     )
     normalized["estimate_guidance"] = normalize_repair_guide_list(guide.get("estimate_guidance"))
     normalized["related_systems"] = normalize_repair_guide_list(guide.get("related_systems"))
@@ -1937,6 +2017,7 @@ def normalize_diagnostic_path_sections(raw_items: Any) -> List[Dict[str, Any]]:
                 "summary": str(item.get("summary") or item.get("description") or "").strip(),
                 "checks": normalize_repair_guide_list(item.get("checks") or item.get("quick_checks")),
                 "repairs": normalize_symptom_recommended_repairs(item.get("repairs") or item.get("related_repairs")),
+                "confidence_cues": normalize_repair_guide_list(item.get("confidence_cues")),
             }
         )
 
@@ -1980,7 +2061,16 @@ def build_obd_diagnostic_path(code: str) -> Dict[str, Any]:
             "estimator_href": "/estimator?obd=P0128",
         },
     }
-    return paths.get(normalized, {})
+    path = paths.get(normalized, {})
+    if not path:
+        return {}
+
+    confidence_defaults = infer_mechanic_confidence_guidance(normalized, path.get("title"), path.get("summary"))
+    return {
+        **path,
+        "inspection_priority": path.get("inspection_priority") or confidence_defaults["inspection_priority"],
+        "confidence_cues": path.get("confidence_cues") or confidence_defaults["confidence_cues"],
+    }
 
 
 def normalize_diagnostic_entry(raw_entry: Any, *, file_slug: str, repair_guides: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -2000,6 +2090,8 @@ def normalize_diagnostic_entry(raw_entry: Any, *, file_slug: str, repair_guides:
 
     canonical_slug = str(raw.get("slug") or code or file_slug).strip().lower().replace("_", "-")
 
+    confidence_defaults = infer_mechanic_confidence_guidance(code, title, raw.get("summary"))
+
     return {
         "slug": canonical_slug,
         "code": code,
@@ -2007,6 +2099,14 @@ def normalize_diagnostic_entry(raw_entry: Any, *, file_slug: str, repair_guides:
         "summary": str(raw.get("summary") or "").strip(),
         "meaning": str(raw.get("meaning") or "").strip(),
         "quick_checks": normalize_repair_guide_list(raw.get("quick_checks")),
+        "inspection_priority": (
+            normalize_repair_guide_list(raw.get("inspection_priority"))
+            or confidence_defaults["inspection_priority"]
+        ),
+        "confidence_cues": (
+            normalize_repair_guide_list(raw.get("confidence_cues") or raw.get("workflow_cues"))
+            or confidence_defaults["confidence_cues"]
+        ),
         "possible_causes": possible_causes,
         "related_repair_guides": related_repair_guides,
         "estimator_links": estimator_links,
@@ -2029,14 +2129,25 @@ def normalize_symptom_entry(raw_entry: Any, *, file_slug: str, repair_guides: Di
     related_repair_guides = build_related_repair_guides(raw.get("likely_causes"), repair_guides)
     estimator_links = build_estimator_links(raw.get("estimator_link"), related_repair_guides)
 
+    title = str(raw.get("title") or file_slug.replace("-", " ").replace("_", " ").title()).strip()
+    confidence_defaults = infer_mechanic_confidence_guidance(file_slug, title, raw.get("summary"), raw.get("category"))
+
     return {
         "slug": file_slug.replace("_", "-"),
-        "title": str(raw.get("title") or file_slug.replace("-", " ").replace("_", " ").title()).strip(),
+        "title": title,
         "summary": str(raw.get("summary") or "").strip(),
         "intro": str(raw.get("intro") or "").strip(),
         "system": str(raw.get("system") or raw.get("category") or "").strip(),
         "common_sounds": normalize_repair_guide_list(raw.get("common_sounds")),
         "quick_checks": normalize_repair_guide_list(raw.get("quick_checks")),
+        "inspection_priority": (
+            normalize_repair_guide_list(raw.get("inspection_priority"))
+            or confidence_defaults["inspection_priority"]
+        ),
+        "confidence_cues": (
+            normalize_repair_guide_list(raw.get("confidence_cues") or raw.get("workflow_cues"))
+            or confidence_defaults["confidence_cues"]
+        ),
         "possible_causes": possible_causes,
         "diagnostic_paths": normalize_repair_guide_list(raw.get("diagnostic_paths")),
         "diagnostic_path_sections": normalize_diagnostic_path_sections(raw.get("diagnostic_path_sections")),

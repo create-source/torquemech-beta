@@ -17,6 +17,16 @@
     "Check for trapped air, poor circulation, or weak heater performance",
     "Inspect whether temperature data looks believable before blaming the sensor or thermostat alone"
   ],
+  "inspection_priority": [
+    "Verify coolant level and condition first",
+    "Inspect thermostat operation and coolant circulation together",
+    "Pressure test the cooling system if coolant loss, smell, or overflow is present"
+  ],
+  "confidence_cues": [
+    "Multiple causes possible",
+    "Inspection recommended before replacement",
+    "Further diagnostics may be required if temperature data conflicts with gauge behavior"
+  ],
   "common_causes": [
     "Low coolant level or external coolant loss",
     "Weak water pump circulation",
@@ -38,6 +48,10 @@
         "Compare heater output with coolant temperature",
         "Inspect thermostat and water pump evidence together"
       ],
+      "confidence_cues": [
+        "Coolant evidence first",
+        "Access varies by engine"
+      ],
       "repairs": [
         { "title": "Thermostat Blueprint", "cost_guide_href": "/repair-guides/thermostat-replacement" },
         { "title": "Water Pump Blueprint", "cost_guide_href": "/repair-guides/water-pump-replacement" }
@@ -50,6 +64,10 @@
         "Confirm fan operation and airflow through the radiator stack",
         "Check radiator hoses, cap, and coolant condition",
         "Use pressure testing when coolant smell or loss is present"
+      ],
+      "confidence_cues": [
+        "Multiple causes possible",
+        "Pressure test when loss is suspected"
       ],
       "repairs": [
         { "title": "Radiator Blueprint", "cost_guide_href": "/repair-guides/radiator-replacement" },

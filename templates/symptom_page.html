@@ -44,6 +44,31 @@
 </section>
 {% endif %}
 
+{% if symptom.inspection_priority or symptom.confidence_cues %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Inspection Priority</h2>
+    {% if symptom.inspection_priority %}
+    <ul class="tm-priority-list">
+      {% for item in symptom.inspection_priority %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if symptom.confidence_cues %}
+    <div class="tm-confidence-cues">
+      {% for item in symptom.confidence_cues %}
+      <span>{{ item }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if vehicle_context and vehicle_context.has_context %}
+    <p class="tm-muted tm-workflow-next-step">Access difficulty may vary by engine, drivetrain, trim, and vehicle condition.</p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 {% if symptom.possible_causes %}
 <section class="tm-section">
   <div class="tm-card">
@@ -88,6 +113,13 @@
           <li>{{ check }}</li>
           {% endfor %}
         </ul>
+        {% endif %}
+        {% if path.confidence_cues %}
+        <div class="tm-confidence-cues tm-confidence-cues--compact">
+          {% for cue in path.confidence_cues %}
+          <span>{{ cue }}</span>
+          {% endfor %}
+        </div>
         {% endif %}
         {% if path.repairs %}
         <div class="tm-diagnostic-path-links">

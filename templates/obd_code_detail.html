@@ -271,6 +271,23 @@
     </div>
     {% endif %}
 
+    {% if diagnostic_path.inspection_priority %}
+    <h3 class="tm-subsection-title">Inspection Priority</h3>
+    <ul class="tm-priority-list">
+      {% for item in diagnostic_path.inspection_priority %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if diagnostic_path.confidence_cues %}
+    <div class="tm-confidence-cues">
+      {% for item in diagnostic_path.confidence_cues %}
+      <span>{{ item }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     {% if diagnostic_path.blueprints %}
     <div class="tm-diagnostic-path-links" style="margin-top:14px;">
       {% for item in diagnostic_path.blueprints %}

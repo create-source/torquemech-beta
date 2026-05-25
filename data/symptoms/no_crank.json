@@ -16,6 +16,16 @@
     "Verify starter relay, fuse, and crank command signal",
     "Inspect battery terminals, grounds, and starter connections"
   ],
+  "inspection_priority": [
+    "Verify battery voltage and load-test results first",
+    "Inspect starter circuit command before replacement",
+    "Confirm charging system health when the battery repeatedly tests low"
+  ],
+  "confidence_cues": [
+    "Inspection recommended before replacement",
+    "Further diagnostics may be required for intermittent faults",
+    "Common repair when power, ground, and command checks agree"
+  ],
   "common_causes": [
     "Weak battery",
     "High-resistance battery cable or ground",
@@ -36,6 +46,10 @@
         "Voltage-drop positive and ground cables",
         "Inspect terminals and ground straps"
       ],
+      "confidence_cues": [
+        "Battery evidence first",
+        "Cable drop can mimic starter failure"
+      ],
       "repairs": [
         { "title": "Battery Replacement", "cost_guide_href": "/cost/battery-replacement" },
         { "title": "Battery Cable Inspection", "estimator_href": "/estimator?service=battery_cable_replacement" }
@@ -48,6 +62,10 @@
         "Check starter relay and fuse operation",
         "Verify crank signal at the starter solenoid when accessible",
         "Check immobilizer or neutral safety clues when command is missing"
+      ],
+      "confidence_cues": [
+        "Confirm command before replacement",
+        "Access varies by engine"
       ],
       "repairs": [
         { "title": "Starter Blueprint", "cost_guide_href": "/repair-guides/starter-replacement" },

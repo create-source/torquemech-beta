@@ -17,6 +17,16 @@
     "Check caliper movement and slide pins",
     "Look for uneven pad wear"
   ],
+  "inspection_priority": [
+    "Inspect rotor condition and pad thickness first",
+    "Verify inner and outer pad wear pattern",
+    "Check caliper hardware movement before quoting pad-only service"
+  ],
+  "confidence_cues": [
+    "Common repair when wear measurements support it",
+    "Inspection recommended before replacement",
+    "Multiple causes possible when noise changes with braking load"
+  ],
   "common_causes": [
     "Worn brake pads",
     "Scored, rusty, or heat-spotted rotors",
@@ -38,6 +48,10 @@
         "Inspect rotor scoring, rust lip, and heat spots",
         "Check hardware clips and pad movement"
       ],
+      "confidence_cues": [
+        "Measurements support confidence",
+        "Rotor condition affects scope"
+      ],
       "repairs": [
         { "title": "Brake Pad Blueprint", "cost_guide_href": "/repair-guides/brake-pad-replacement" },
         { "title": "Brake Rotor Guide", "cost_guide_href": "/repair-guides/brake-rotor-replacement" }
@@ -50,6 +64,10 @@
         "Check slide pin movement and boot condition",
         "Look for wheel drag after brake release",
         "Check brake fluid age and level"
+      ],
+      "confidence_cues": [
+        "Uneven wear needs caliper checks",
+        "Further diagnostics may be required"
       ],
       "repairs": [
         { "title": "Caliper Inspection", "cost_guide_href": "/repair-guides/brake-caliper-replacement" },

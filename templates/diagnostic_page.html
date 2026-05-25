@@ -25,6 +25,31 @@
 </section>
 {% endif %}
 
+{% if diagnostic.inspection_priority or diagnostic.confidence_cues %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Inspection Priority</h2>
+    {% if diagnostic.inspection_priority %}
+    <ul class="tm-priority-list">
+      {% for item in diagnostic.inspection_priority %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if diagnostic.confidence_cues %}
+    <div class="tm-confidence-cues">
+      {% for item in diagnostic.confidence_cues %}
+      <span>{{ item }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if vehicle_context and vehicle_context.has_context %}
+    <p class="tm-muted tm-workflow-next-step">Access difficulty may vary by engine, drivetrain, trim, and vehicle condition.</p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 {% if diagnostic.common_causes %}
 <section class="tm-section">
   <div class="tm-card">

@@ -225,6 +225,31 @@
 </section>
 {% endif %}
 
+{% if guide.inspection_priority or guide.confidence_cues %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Inspection Priority</h2>
+    {% if guide.inspection_priority %}
+    <ul class="tm-priority-list">
+      {% for item in guide.inspection_priority %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if guide.confidence_cues %}
+    <div class="tm-confidence-cues">
+      {% for item in guide.confidence_cues %}
+      <span>{{ item }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if vehicle_context and vehicle_context.has_context %}
+    <p class="tm-muted tm-workflow-next-step">Access difficulty may vary by engine, drivetrain, trim, and vehicle condition.</p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 {% if guide.repair_overview %}
 <section class="tm-section">
   <div class="tm-card">

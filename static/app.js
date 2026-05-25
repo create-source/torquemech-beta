@@ -2372,11 +2372,21 @@ const confidenceEl = document.getElementById("laborConfidence");
       ? `Typical labor range: ${fmt1(mn)}-${fmt1(mx)} hrs`
       : "";
     const blueprintHref = buildRepairBlueprintHref(serviceEl.value, serviceName);
+    const confidenceGuidance = getMechanicConfidenceGuidance({
+      ...serviceMeta,
+      serviceCode: serviceEl.value,
+      serviceText: serviceName,
+      categoryName,
+    });
 
     selectedServiceContextEl.innerHTML = `
       <div class="selected-service-context__title">${escapeServiceResultHtml(serviceName)}${categoryName ? ` - ${escapeServiceResultHtml(categoryName)}` : ""}</div>
       ${summary ? `<div class="selected-service-context__summary">${escapeServiceResultHtml(summary)}</div>` : ""}
       ${laborRange ? `<div class="selected-service-context__meta">${escapeServiceResultHtml(laborRange)}</div>` : ""}
+      <div class="selected-service-context__confidence">
+        <span>${escapeServiceResultHtml(confidenceGuidance.cue)}</span>
+        ${escapeServiceResultHtml(confidenceGuidance.priority)}
+      </div>
       ${blueprintHref ? `<a class="selected-service-context__link" href="${escapeServiceResultHtml(blueprintHref)}">View repair blueprint with vehicle context</a>` : ""}
       <div class="selected-service-context__note">Adjust labor, parts, or travel fee before adding to the quote.</div>
     `;
@@ -3229,6 +3239,53 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     return `Additional diagnostics or related system inspection may be required if access, corrosion, or vehicle condition changes the repair path.${contextSuffix}`;
+  }
+
+  function getMechanicConfidenceGuidance(service = {}) {
+    const serviceText = normalizeServiceSearch([
+      service.serviceCode,
+      service.code,
+      service.name,
+      service.serviceText,
+      service.category,
+      service.categoryName,
+    ].join(" "));
+
+    const hasVehicle = Boolean(getVehicleDetails(getActiveVehicle()));
+    const contextSuffix = hasVehicle ? " Access may vary by engine and drivetrain." : "";
+
+    if (serviceText.includes("spark plug") || serviceText.includes("ignition coil") || serviceText.includes("misfire")) {
+      return {
+        priority: "Inspect ignition components first; verify fuel trims and vacuum leaks when evidence is mixed.",
+        cue: "Multiple causes possible",
+      };
+    }
+
+    if (serviceText.includes("water pump") || serviceText.includes("radiator") || serviceText.includes("thermostat") || serviceText.includes("coolant")) {
+      return {
+        priority: `Verify coolant level/condition first; pressure test if coolant loss or smell is present.${contextSuffix}`,
+        cue: "Inspection recommended before replacement",
+      };
+    }
+
+    if (serviceText.includes("starter") || serviceText.includes("battery") || serviceText.includes("alternator") || serviceText.includes("no crank")) {
+      return {
+        priority: "Verify battery voltage, cable drop, grounds, and command signal before pricing parts.",
+        cue: "Further diagnostics may be required",
+      };
+    }
+
+    if (serviceText.includes("brake")) {
+      return {
+        priority: "Inspect rotor condition, pad wear pattern, and caliper hardware movement before pad-only service.",
+        cue: "Common repair when measurements support it",
+      };
+    }
+
+    return {
+      priority: `Confirm inspection evidence before replacement.${contextSuffix}`,
+      cue: "Inspection recommended before replacement",
+    };
   }
 
   function getServiceHelperText(service) {
