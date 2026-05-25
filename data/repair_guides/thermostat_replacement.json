@@ -45,7 +45,8 @@
   "estimate_guidance": [
     "Add coolant and bleed time to the estimate.",
     "Quote housing replacement separately when the housing is cracked or integrated.",
-    "Use diagnostic time when sensor data and temperature behavior do not agree."
+    "Use diagnostic time when sensor data and temperature behavior do not agree.",
+    "Mention coolant bleeding considerations so comeback overheating or weak heat is avoided."
   ],
   "labor_range": { "min_hours": 1.0, "max_hours": 3.0 },
   "related_obd_codes": [

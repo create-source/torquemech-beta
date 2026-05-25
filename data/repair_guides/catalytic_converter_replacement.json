@@ -1,0 +1,84 @@
+{
+  "slug": "catalytic-converter-replacement",
+  "title": "Catalytic Converter Replacement",
+  "category": "Emissions",
+  "subcategory": "Catalyst",
+  "sort_order": 55,
+  "summary": "Emissions blueprint for confirming converter failure while checking oxygen sensors, exhaust leaks, fuel trims, and upstream root causes first.",
+  "difficulty": "Hard",
+  "symptoms": [
+    "P0420 or P0430 catalyst-efficiency code",
+    "Sulfur smell, restricted exhaust, or reduced power under load",
+    "Failed emissions inspection or incomplete catalyst monitor",
+    "Rattling substrate noise from the converter area"
+  ],
+  "inspect_first": [
+    "Upstream and downstream oxygen sensor activity after full warm-up",
+    "Exhaust leaks before or near the converter",
+    "Fuel trims, misfire history, oil consumption, or rich-running evidence",
+    "Converter location, emissions requirement, and seized exhaust hardware risk"
+  ],
+  "related_systems": [
+    "Oxygen sensor feedback",
+    "Fuel trim control",
+    "Exhaust leak inspection",
+    "Misfire and rich-running root causes"
+  ],
+  "likely_causes": [
+    "Converter substrate no longer storing oxygen effectively",
+    "Internal substrate damage or restriction",
+    "Exhaust leak or oxygen sensor issue imitating catalyst failure",
+    "Unresolved misfire, rich condition, oil burning, or coolant contamination damaging the converter"
+  ],
+  "repair_overview": [
+    "Confirm converter efficiency or restriction before replacement.",
+    "Inspect upstream causes so the new converter is not damaged by the same fault.",
+    "Remove exhaust fasteners, shields, sensors, or flange hardware as required.",
+    "Install the correct emissions-compliant converter, verify sealing, clear codes, and run monitor checks."
+  ],
+  "common_mistakes": [
+    "Replacing the converter without checking exhaust leaks",
+    "Ignoring fuel trim, misfire, or oil-consumption problems that damaged the converter",
+    "Replacing oxygen sensors only because a catalyst code is present",
+    "Underestimating seized exhaust hardware or emissions-compliance requirements"
+  ],
+  "estimate_guidance": [
+    "Add diagnostic time when oxygen sensor data, fuel trims, or exhaust leaks are not yet confirmed.",
+    "Flag seized exhaust hardware, flange repair, sensor removal risk, and shield access in the estimate.",
+    "Verify emissions legality and converter location before quoting parts.",
+    "Recommend correcting misfire, rich-running, or oil/coolant contamination causes before final converter approval."
+  ],
+  "labor_range": { "min_hours": 1.5, "max_hours": 5.0 },
+  "related_obd_codes": [
+    { "code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420" },
+    { "code": "P0430", "title": "Catalyst efficiency below threshold bank 2", "href": "/obd/p0430" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Oxygen Sensor Inspection",
+      "description": "Compare upstream and downstream sensor behavior before condemning the converter.",
+      "cost_guide_href": "/cost/oxygen-sensor-replacement",
+      "estimator_href": "/estimator?service=o2_sensor_diagnosis"
+    },
+    {
+      "title": "Exhaust Leak Inspection",
+      "description": "Leaks ahead of the converter can distort oxygen content and imitate efficiency failure.",
+      "estimator_href": "/estimator?service=exhaust_leak_repair"
+    },
+    {
+      "title": "Fuel Trim Diagnosis",
+      "description": "Use when rich or lean operation may have caused catalyst damage.",
+      "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Catalytic converter estimates are strongest after sensor data, leak checks, and upstream fuel or misfire causes support the converter path.",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Catalytic Converter Replacement",
+    "service_code": "catalytic_converter_replacement",
+    "service_name": "Catalytic Converter Replacement",
+    "estimator_link": "/estimator"
+  }
+}

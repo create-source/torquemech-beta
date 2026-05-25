@@ -6,12 +6,25 @@
   "sort_order": 40,
   "summary": "Repair guide, labor context, and estimate workflow for brake caliper replacement.",
   "vehicle_optional": true,
+  "difficulty": "Moderate",
   "symptoms": [
     "Brake drag",
     "Uneven pad wear",
     "Brake fluid leak near wheel",
     "Pulling while braking",
     "Sticking caliper piston"
+  ],
+  "inspect_first": [
+    "Pad taper, uneven wear, and rotor heat marks",
+    "Caliper slide pin movement and boot condition",
+    "Brake hose restriction, fluid leak, and banjo fitting condition",
+    "Wheel bearing play or parking brake drag when rear brakes are involved"
+  ],
+  "related_systems": [
+    "Brake pads and rotors",
+    "Brake hoses",
+    "Brake fluid condition",
+    "ABS hydraulic behavior"
   ],
   "labor_range": {
     "min_hours": 1.0,
@@ -74,14 +87,44 @@
     "Do not reuse damaged sealing washers.",
     "Do not drive until pedal feel is firm and leaks are ruled out."
   ],
+  "common_mistakes": [
+    "Replacing the caliper without checking the brake hose for restriction",
+    "Reusing damaged sealing washers",
+    "Skipping brake fluid inspection and bleed quality",
+    "Missing slide pin seizure when the piston is not the root cause"
+  ],
+  "estimate_guidance": [
+    "Include brake fluid inspection and bleeding time when hydraulic lines are opened.",
+    "Recommend pads or rotors only when heat damage, taper wear, or contamination supports it.",
+    "Add brake hose replacement only when restriction, cracking, or fitting damage is found.",
+    "Quote axle position clearly so the estimate matches the affected corner or axle."
+  ],
+  "recommended_repairs": [
+    {
+      "title": "Brake Hose Inspection",
+      "description": "A restricted hose can imitate a sticking caliper.",
+      "estimator_href": "/estimator?service=brake_diagnostic"
+    },
+    {
+      "title": "Brake Rotor Blueprint",
+      "description": "Use when heat damage, scoring, or pulsation overlaps with caliper failure.",
+      "cost_guide_href": "/repair-guides/brake-rotor-replacement",
+      "estimator_href": "/estimator?service=brake_rotor_replacement"
+    },
+    {
+      "title": "Brake Fluid Service",
+      "description": "Consider when fluid condition or hydraulic opening affects the repair quality.",
+      "estimator_href": "/estimator?service=brake_fluid_exchange"
+    }
+  ],
   "diagnostic_context": {
     "intro": "Caliper replacement often follows brake drag, fluid leaks, or uneven wear discovered during brake inspection.",
-    "common_symptoms_link": "/symptoms/brake-drag",
-    "diagnostic_tools_link": "/diagnostic-repair"
+    "common_symptoms_link": "/symptoms/brake-noise",
+    "diagnostic_tools_link": "/diagnostics"
   },
   "estimate": {
     "cta_label": "Estimate Brake Caliper Replacement",
-    "service_code": "brake_caliper_replacement",
+    "service_code": "brake_caliper_replacement_each",
     "service_name": "Brake Caliper Replacement",
     "estimator_link": "/estimator"
   },

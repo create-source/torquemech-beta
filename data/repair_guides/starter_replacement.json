@@ -64,6 +64,11 @@
       "title": "Battery Cable Inspection",
       "description": "Related voltage-drop check when corrosion or loose terminals could mimic starter failure.",
       "estimator_href": "/estimator?service=battery_cable_replacement"
+    },
+    {
+      "title": "Charging System Inspection",
+      "description": "Useful when repeated low battery state may be creating the no-crank complaint.",
+      "estimator_href": "/estimator?service=alternator_diagnosis"
     }
   ],
   "diagnostic_context": {

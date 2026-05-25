@@ -1,0 +1,87 @@
+{
+  "slug": "evap-purge-valve-replacement",
+  "title": "EVAP Purge Valve Replacement",
+  "category": "Emissions",
+  "subcategory": "EVAP",
+  "sort_order": 60,
+  "summary": "EVAP blueprint for confirming purge valve sealing, command response, and leak-test evidence before replacement.",
+  "difficulty": "Easy",
+  "symptoms": [
+    "EVAP code with little or no drivability symptom",
+    "Hard start after refueling",
+    "Fuel odor near the vehicle",
+    "Rough idle after the purge valve sticks open"
+  ],
+  "inspect_first": [
+    "Purge valve command response and sealing when commanded closed",
+    "Smoke-test evidence for leaks before replacing valves",
+    "EVAP hoses, canister, vent valve, fuel cap, and filler neck condition",
+    "Connector fit, wiring, and vacuum routing around the purge valve"
+  ],
+  "related_systems": [
+    "EVAP smoke testing",
+    "Vent valve operation",
+    "Fuel cap and filler neck",
+    "Fuel odor and refueling complaints"
+  ],
+  "likely_causes": [
+    "Purge valve stuck open or leaking when closed",
+    "Purge valve solenoid not responding to command",
+    "EVAP hose leak or canister issue blamed on the purge valve",
+    "Vent valve or fuel cap problem creating similar EVAP codes"
+  ],
+  "repair_overview": [
+    "Confirm purge valve sealing or command failure before replacement.",
+    "Inspect routing, connector, and hose condition around the valve.",
+    "Replace the purge valve and reconnect hoses without creating new leaks.",
+    "Clear codes and verify EVAP command response or monitor readiness when possible."
+  ],
+  "common_mistakes": [
+    "Replacing the purge valve without smoke testing leak codes",
+    "Ignoring vent valve, fuel cap, filler neck, or canister faults",
+    "Missing a stuck-open purge valve after hard-start-after-fueling complaints",
+    "Breaking brittle EVAP hoses during quick replacement"
+  ],
+  "estimate_guidance": [
+    "Quote smoke testing or EVAP diagnosis when leak location is not proven.",
+    "Add hose or connector repair only when inspection supports it.",
+    "Note hard-start-after-refueling or fuel odor context when it supports purge valve failure.",
+    "Verify purge command and sealing before presenting the repair as confirmed."
+  ],
+  "labor_range": { "min_hours": 0.4, "max_hours": 1.5 },
+  "related_obd_codes": [
+    { "code": "P0440", "title": "EVAP system fault", "href": "/obd/p0440" },
+    { "code": "P0441", "title": "Incorrect purge flow", "href": "/obd/p0441" },
+    { "code": "P0442", "title": "EVAP small leak", "href": "/obd/p0442" },
+    { "code": "P0455", "title": "EVAP large leak", "href": "/obd/p0455" },
+    { "code": "P0456", "title": "EVAP very small leak", "href": "/obd/p0456" }
+  ],
+  "recommended_repairs": [
+    {
+      "title": "EVAP Smoke Test",
+      "description": "Use before replacing valves when the code points to a leak rather than proven purge failure.",
+      "estimator_href": "/estimator?service=evap_system_diagnosis"
+    },
+    {
+      "title": "EVAP Vent Valve Check",
+      "description": "Vent-side faults can overlap with purge and leak codes.",
+      "cost_guide_href": "/cost/evap-vent-valve-replacement",
+      "estimator_href": "/estimator?service=evap_vent_valve_replacement"
+    },
+    {
+      "title": "Fuel Odor Inspection",
+      "description": "Use when fuel smell, refueling complaints, or tank-area leak clues are part of the story.",
+      "estimator_href": "/estimator?service=evap_system_diagnosis"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "EVAP purge valve estimates should follow command, sealing, and smoke-test evidence so leak codes do not turn into parts guessing.",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate EVAP Purge Valve Replacement",
+    "service_code": "evap_purge_valve_replacement",
+    "service_name": "EVAP Purge Valve Replacement",
+    "estimator_link": "/estimator"
+  }
+}
