@@ -239,6 +239,20 @@
 </section>
 {% endif %}
 
+{% if symptom.related_system_hubs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Explore Related Systems</h2>
+    <p class="tm-muted">Use system hubs when this symptom can come from more than one repair family.</p>
+    <div class="tm-blueprint-chip-list">
+      {% for item in symptom.related_system_hubs %}
+      <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <section class="tm-section tm-two-col">
   {% if symptom.diagnostic_tools_link %}
   <div class="tm-card">

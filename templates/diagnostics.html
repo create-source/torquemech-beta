@@ -44,8 +44,62 @@
     font-weight: 600;
   }
 
+  .diag-system-chip-grid,
+  .diag-workflow-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .diag-system-chip,
+  .diag-workflow-card {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 14px;
+    background: rgba(255,255,255,.07);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .diag-system-chip strong,
+  .diag-workflow-card h3 {
+    margin: 0;
+    color: var(--tm-text);
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .diag-workflow-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .diag-workflow-links a {
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 999px;
+    padding: 7px 10px;
+    color: inherit;
+    text-decoration: none;
+    font-size: .9rem;
+    font-weight: 700;
+  }
+
   @media (min-width: 720px) {
     .diag-obd-tile-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .diag-system-chip-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .diag-workflow-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
@@ -75,6 +129,45 @@
           <div class="tm-muted">{{ item.summary }}</div>
         </div>
       </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if curated_system_hubs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Explore System Hubs</h2>
+    <p class="tm-muted">Jump into compact system-level workflows when the complaint already points toward a repair family.</p>
+    <div class="diag-system-chip-grid">
+      {% for item in curated_system_hubs %}
+      <a class="diag-system-chip" href="{{ item.href }}">
+        <strong>{{ item.title }}</strong>
+        <span class="tm-muted">{{ item.description }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if workflow_clusters %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Workflow Clusters</h2>
+    <p class="tm-muted">Use these clusters to move between hubs, symptoms, codes, and repair paths without turning diagnosis into a parts list.</p>
+    <div class="diag-workflow-grid">
+      {% for cluster in workflow_clusters %}
+      <div class="diag-workflow-card">
+        <h3>{{ cluster.title }}</h3>
+        <p class="tm-muted">{{ cluster.summary }}</p>
+        <div class="diag-workflow-links">
+          {% for item in cluster.links %}
+          <a href="{{ item.href }}">{{ item.title }}</a>
+          {% endfor %}
+        </div>
+      </div>
       {% endfor %}
     </div>
   </div>

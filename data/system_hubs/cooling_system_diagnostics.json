@@ -129,6 +129,7 @@
     "Add diagnostic time when overheating behavior changes with AC load or vehicle speed."
   ],
   "related_systems": [
+    { "title": "Engine Performance & Misfire Diagnostics", "href": "/repair-systems/engine-performance-misfire-diagnostics" },
     { "title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system" }
   ],
   "estimate": {

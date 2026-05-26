@@ -328,6 +328,20 @@
 </section>
 {% endif %}
 
+{% if related_system_hubs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Explore Related Systems</h2>
+    <p class="tm-muted" style="margin:0 0 12px 0;">Use system hubs to compare the code against nearby repair families before estimating parts.</p>
+    <div class="tm-blueprint-chip-list">
+      {% for item in related_system_hubs %}
+      <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <section class="tm-section">
   <div class="tm-card">
     <h2>Code Overview</h2>

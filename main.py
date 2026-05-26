@@ -2759,6 +2759,106 @@ def load_system_hub_source(slug: str) -> Tuple[Dict[str, Any], str]:
     raise HTTPException(status_code=404, detail="Content not found")
 
 
+SYSTEM_HUB_NAV_ITEMS = {
+    "brake-system-repairs": {
+        "title": "Brake System Repairs",
+        "href": "/repair-systems/brake-system-repairs",
+        "description": "Pads, rotors, calipers, vibration, noise, and wheel-end checks.",
+    },
+    "charging-starting-system": {
+        "title": "Charging & Starting System",
+        "href": "/repair-systems/charging-starting-system",
+        "description": "Battery, alternator, starter, no-crank, no-start, and voltage workflows.",
+    },
+    "cooling-system-diagnostics": {
+        "title": "Cooling System Diagnostics",
+        "href": "/repair-systems/cooling-system-diagnostics",
+        "description": "Overheating, coolant loss, fan, thermostat, radiator, and pump paths.",
+    },
+    "emissions-evap-diagnostics": {
+        "title": "Emissions & EVAP Diagnostics",
+        "href": "/repair-systems/emissions-evap-diagnostics",
+        "description": "EVAP leaks, purge, vent, fuel smell, emissions, and smoke-test direction.",
+    },
+    "engine-performance-misfire-diagnostics": {
+        "title": "Engine Performance & Misfire Diagnostics",
+        "href": "/repair-systems/engine-performance-misfire-diagnostics",
+        "description": "Misfire, lean trims, rough idle, hard start, MAF, oxygen-sensor, and drivability checks.",
+    },
+}
+
+
+def infer_related_system_hubs(*values: Any, limit: int = 3) -> List[Dict[str, str]]:
+    text = " ".join(str(value or "") for value in values).lower()
+    picks: List[str] = []
+
+    def add(slug: str) -> None:
+        if slug in SYSTEM_HUB_NAV_ITEMS and slug not in picks:
+            picks.append(slug)
+
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper", "pulsation", "vibration while braking")):
+        add("brake-system-repairs")
+        add("cooling-system-diagnostics") if "overheat" in text else None
+    if any(term in text for term in ("wheel hub", "wheel bearing", "suspension", "steering", "abs", "wheel speed")):
+        add("brake-system-repairs")
+    if any(term in text for term in ("coolant", "cooling", "overheat", "thermostat", "radiator", "water pump", "fan", "p0128", "p0117", "p0118")):
+        add("cooling-system-diagnostics")
+        add("engine-performance-misfire-diagnostics")
+        add("charging-starting-system")
+    if any(term in text for term in ("misfire", "p030", "rough idle", "lean", "p0171", "p0174", "spark plug", "ignition", "coil", "maf", "mass air", "oxygen sensor", "hard start", "fuel trim", "drivability")):
+        add("engine-performance-misfire-diagnostics")
+        add("emissions-evap-diagnostics")
+    if any(term in text for term in ("evap", "emission", "p044", "p045", "purge", "vent valve", "fuel smell", "smoke test", "catalyst", "catalytic", "p0420", "p0430")):
+        add("emissions-evap-diagnostics")
+        add("engine-performance-misfire-diagnostics")
+    if any(term in text for term in ("battery", "alternator", "starter", "charging", "starting", "no start", "no-crank", "no crank", "p056", "p0620")):
+        add("charging-starting-system")
+        add("cooling-system-diagnostics") if "overheat" in text else None
+
+    return [dict(SYSTEM_HUB_NAV_ITEMS[slug]) for slug in picks[:limit]]
+
+
+def build_diagnostics_workflow_clusters() -> List[Dict[str, Any]]:
+    return [
+        {
+            "title": "Misfire, Lean, and Drivability",
+            "summary": "Start when rough idle, P0300, P0171/P0174, MAF, or oxygen-sensor evidence overlaps.",
+            "links": [
+                SYSTEM_HUB_NAV_ITEMS["engine-performance-misfire-diagnostics"],
+                SYSTEM_HUB_NAV_ITEMS["emissions-evap-diagnostics"],
+                {"title": "Rough Idle", "href": "/symptoms/rough-idle", "description": "Symptom path for idle shake and trim clues."},
+            ],
+        },
+        {
+            "title": "EVAP, Fuel Smell, and Emissions",
+            "summary": "Use when leak codes, purge/vent behavior, smoke testing, or fuel smell drive the next step.",
+            "links": [
+                SYSTEM_HUB_NAV_ITEMS["emissions-evap-diagnostics"],
+                {"title": "P0442", "href": "/obd/p0442", "description": "Small EVAP leak code path."},
+                {"title": "EVAP Purge Valve", "href": "/repair-guides/evap-purge-valve-replacement", "description": "Repair path after purge-side testing."},
+            ],
+        },
+        {
+            "title": "Brakes, Vibration, and Wheel-End",
+            "summary": "Move between brake noise, vibration, rotor, caliper, and wheel hub checks without over-quoting.",
+            "links": [
+                SYSTEM_HUB_NAV_ITEMS["brake-system-repairs"],
+                {"title": "Vibration While Braking", "href": "/symptoms/vibration-while-braking", "description": "Symptom path for runout and hub overlap."},
+                {"title": "Wheel Hub Workflow", "href": "/repair-guides/wheel-hub-assembly-replacement", "description": "Wheel-end checks when brakes and hubs overlap."},
+            ],
+        },
+        {
+            "title": "Cooling, Starting, and System Load",
+            "summary": "Use when overheating, fan load, weak charging, or no-start context changes the inspection order.",
+            "links": [
+                SYSTEM_HUB_NAV_ITEMS["cooling-system-diagnostics"],
+                SYSTEM_HUB_NAV_ITEMS["charging-starting-system"],
+                {"title": "Overheating At Idle", "href": "/symptoms/overheating-at-idle", "description": "Symptom path for fan, airflow, and heat load."},
+            ],
+        },
+    ]
+
+
 def load_diagnostic_entries(repair_guides: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
     diagnostics_dir = DATA_DIR / "diagnostics"
     entries: List[Dict[str, Any]] = []
@@ -5365,6 +5465,17 @@ async def obd_code_page(request: Request, code: str):
         schema_page_description,
         str(request.url),
     )
+    related_system_hubs = apply_workflow_context_to_repair_items(
+        infer_related_system_hubs(
+            row["code"],
+            row["title"],
+            display_description,
+            " ".join(display_causes or []),
+            " ".join(display_symptoms or []),
+            " ".join(display_diagnostic_steps or []),
+        ),
+        workflow_context,
+    )
 
     return templates.TemplateResponse(
         "obd_code_detail.html",
@@ -5386,6 +5497,7 @@ async def obd_code_page(request: Request, code: str):
             "diagnostic_path": diagnostic_path,
             "diagnostic_summary": diagnostic_summary,
             "workflow_context": workflow_context,
+            "related_system_hubs": related_system_hubs,
             "page_title": page_title,
             "meta_description": page_description,
             "structured_data": structured_data,
@@ -5669,6 +5781,14 @@ async def diagnostics_hub(request: Request):
             "system_hub_entries": system_hub_entries,
             "system_entries": system_entries,
             "featured_obd_codes": build_featured_obd_codes(),
+            "workflow_clusters": build_diagnostics_workflow_clusters(),
+            "curated_system_hubs": [
+                SYSTEM_HUB_NAV_ITEMS["engine-performance-misfire-diagnostics"],
+                SYSTEM_HUB_NAV_ITEMS["emissions-evap-diagnostics"],
+                SYSTEM_HUB_NAV_ITEMS["brake-system-repairs"],
+                SYSTEM_HUB_NAV_ITEMS["cooling-system-diagnostics"],
+                SYSTEM_HUB_NAV_ITEMS["charging-starting-system"],
+            ],
             "platform_sections": build_platform_sections("/diagnostics"),
             "page_title": "Diagnostics | TorqueMech",
             "meta_description": "Structured diagnostic entry points for OBD codes, symptoms, and vehicle systems.",
@@ -8593,6 +8713,29 @@ async def repair_guide_page(request: Request, slug: str):
         guide.get("related_symptoms") or [],
         workflow_context,
     )
+    if guide.get("diagnostic_context"):
+        diagnostic_context = dict(guide["diagnostic_context"])
+        for key in ("common_symptoms_link", "diagnostic_tools_link"):
+            linked_href = str(diagnostic_context.get(key) or "").strip()
+            if linked_href.startswith(("/symptoms/", "/diagnostics", "/repair-systems/", "/obd/")):
+                diagnostic_context[key] = append_workflow_context_to_href(
+                    linked_href,
+                    workflow_context,
+                )
+        guide["diagnostic_context"] = diagnostic_context
+    guide["related_system_hubs"] = apply_workflow_context_to_repair_items(
+        infer_related_system_hubs(
+            guide.get("title"),
+            guide.get("summary"),
+            guide.get("category"),
+            guide.get("subcategory"),
+            " ".join(guide.get("related_systems") or []),
+            " ".join(guide.get("symptoms") or []),
+            " ".join(guide.get("inspect_first") or []),
+            " ".join(item.get("code") or "" for item in guide.get("related_obd_codes") or []),
+        ),
+        workflow_context,
+    )
 
     return templates.TemplateResponse(
         "repair_guide.html",
@@ -8722,6 +8865,18 @@ async def symptom_page(request: Request, slug: str):
     )
     symptom["estimator_link"] = append_workflow_context_to_href(
         symptom["estimator_link"],
+        workflow_context,
+    )
+    symptom["related_system_hubs"] = apply_workflow_context_to_repair_items(
+        infer_related_system_hubs(
+            symptom.get("title"),
+            symptom.get("summary"),
+            symptom.get("system"),
+            " ".join(symptom.get("possible_causes") or []),
+            " ".join(symptom.get("quick_checks") or []),
+            " ".join(item.get("code") or "" for item in symptom.get("related_obd_codes") or []),
+            " ".join(item.get("title") or "" for item in symptom.get("recommended_repairs") or []),
+        ),
         workflow_context,
     )
     return templates.TemplateResponse(

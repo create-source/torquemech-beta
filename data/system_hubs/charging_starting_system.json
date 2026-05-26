@@ -129,7 +129,8 @@
     "Include belt/tensioner inspection when charging voltage is low or belt noise is present."
   ],
   "related_systems": [
-    { "title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics" }
+    { "title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics" },
+    { "title": "Engine Performance & Misfire Diagnostics", "href": "/repair-systems/engine-performance-misfire-diagnostics" }
   ],
   "estimate": {
     "cta_label": "Estimate Starting or Charging Diagnosis",

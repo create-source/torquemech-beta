@@ -113,6 +113,20 @@
 </section>
 {% endif %}
 
+{% if guide.related_system_hubs %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Explore Related Systems</h2>
+    <p class="tm-muted">Use these compact hubs when the repair path overlaps another system, symptom, or code family.</p>
+    <div class="tm-blueprint-chip-list">
+      {% for item in guide.related_system_hubs %}
+      <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if guide.diagnostic_logic %}
 <section class="tm-section">
   <div class="tm-card">

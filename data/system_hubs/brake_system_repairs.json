@@ -99,7 +99,8 @@
     "Recommend brake fluid inspection when hydraulic or caliper work is likely."
   ],
   "related_systems": [
-    { "title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system" }
+    { "title": "Wheel Hub Workflow", "href": "/repair-guides/wheel-hub-assembly-replacement" },
+    { "title": "Suspension Noise Path", "href": "/symptoms/steering-suspension-noise" }
   ],
   "estimate": {
     "cta_label": "Estimate Brake Work",
