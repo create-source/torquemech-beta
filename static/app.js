@@ -740,6 +740,8 @@
   const pairedSuggestionsList = $("pairedSuggestionsList");
   const completionSuggestions = $("completionSuggestions");
   const completionSuggestionsList = $("completionSuggestionsList");
+  const estimatorWorkflowShortcuts = $("estimatorWorkflowShortcuts");
+  const estimatorWorkflowShortcutList = $("estimatorWorkflowShortcutList");
   const estimateTotalBar = $("estimateTotalBar");
   const estimateTotalValue = $("estimateTotalValue");
   const sharedSnapshotVehicle = $("sharedSnapshotVehicle");
@@ -1077,7 +1079,18 @@
       match: ["battery"],
       context: "Starting/charging workflow",
       suggestions: [
+        { label: "Charging System Inspection", query: "charging system", stage: "Confirm output", reason: "Verify alternator output and voltage stability before closing a battery quote.", weight: 88 },
+        { label: "Alternator Inspection", serviceCode: "alternator_replacement", stage: "Related check", reason: "Only add when charging output or bearing/noise checks point beyond the battery.", weight: 72 },
         { label: "Battery Terminal Service", query: "battery terminal", stage: "Connection check", reason: "Corroded or loose terminals can create repeat no-start complaints.", weight: 76 },
+      ],
+    },
+    {
+      match: ["overheating", "overheating_diagnosis", "cooling system diagnosis"],
+      context: "Overheating workflow",
+      suggestions: [
+        { label: "Cooling Pressure Test", serviceCode: "cooling_system_pressure_test", stage: "Add inspection", reason: "Pressure testing helps confirm leaks before parts are quoted.", weight: 94 },
+        { label: "Thermostat Check", serviceCode: "thermostat_replacement", stage: "Related cause", reason: "Useful when temperature control or slow warm-up overlaps the complaint.", weight: 76 },
+        { label: "Radiator Fan Inspection", query: "radiator fan", stage: "Airflow check", reason: "Fan command and airflow checks are common on idle or A/C overheating complaints.", weight: 72 },
       ],
     },
     {
@@ -1276,6 +1289,34 @@
 
     const query = params.toString();
     return `/repair-guides/${slug}${query ? `?${query}` : ""}`;
+  }
+
+  const SYSTEM_HUB_BY_SERVICE = [
+    { match: ["brake", "rotor", "caliper"], slug: "brake-system-repairs" },
+    { match: ["thermostat", "radiator", "cooling", "coolant", "water pump", "fan"], slug: "cooling-system-diagnostics" },
+    { match: ["battery", "alternator", "starter", "charging", "no crank", "serpentine"], slug: "charging-starting-system" },
+    { match: ["spark plug", "ignition", "misfire", "maf", "oxygen sensor", "fuel trim"], slug: "engine-performance-misfire-diagnostics" },
+    { match: ["evap", "purge", "vent valve", "catalytic", "emission", "smoke test"], slug: "emissions-evap-diagnostics" },
+  ];
+
+  function buildSystemHubHref(serviceCode = "", serviceText = "") {
+    const source = normalizeServiceSearch(`${serviceCode || ""} ${serviceText || ""}`);
+    const matched = SYSTEM_HUB_BY_SERVICE.find((entry) =>
+      entry.match.some((term) => source.includes(normalizeServiceSearch(term)))
+    );
+    if (!matched) return "";
+
+    const vehicle = getCurrentVehicleSnapshot();
+    const params = new URLSearchParams();
+    if (vehicle.year) params.set("year", vehicle.year);
+    if (vehicle.make) params.set("make", vehicle.make);
+    if (vehicle.model) params.set("model", vehicle.model);
+    if (vehicle.displayModel) params.set("displayModel", vehicle.displayModel);
+    if (serviceCode) params.set("service", serviceCode);
+    params.set("source", "estimator");
+
+    const query = params.toString();
+    return `/repair-systems/${matched.slug}${query ? `?${query}` : ""}`;
   }
 
   function getVehicleLabel(vehicle, idxOverride = null) {
@@ -3446,6 +3487,11 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (completionSuggestionsList) completionSuggestionsList.innerHTML = "";
   }
 
+  function hideEstimatorWorkflowShortcuts() {
+    estimatorWorkflowShortcuts?.classList.add("hidden");
+    if (estimatorWorkflowShortcutList) estimatorWorkflowShortcutList.innerHTML = "";
+  }
+
   function getPairedSuggestionConfig(lineItem) {
     const source = normalizeServiceSearch(`${lineItem?.serviceText || ""} ${lineItem?.serviceCode || ""}`);
     if (!source) return null;
@@ -3507,8 +3553,113 @@ const confidenceEl = document.getElementById("laborConfidence");
     return new Set(
       Array.from(pairedSuggestionsList.querySelectorAll("[data-service-code]"))
         .map((el) => String(el.dataset.serviceCode || "").trim())
-        .filter(Boolean)
+      .filter(Boolean)
     );
+  }
+
+  function getWorkflowShortcutSource() {
+    if (serviceEl?.value) {
+      return {
+        serviceCode: serviceEl.value,
+        serviceText: getSelectedServiceName(),
+      };
+    }
+
+    return lineItems[lineItems.length - 1] || null;
+  }
+
+  function getShortcutKind(stage = "", label = "") {
+    const source = normalizeServiceSearch(`${stage} ${label}`);
+    if (source.includes("inspect") || source.includes("test") || source.includes("check") || source.includes("diagnos")) {
+      return "inspection";
+    }
+    return "repair";
+  }
+
+  function shortcutActionLabel(kind) {
+    return kind === "inspection" ? "Add Inspection" : "Add Related Repair";
+  }
+
+  function buildWorkflowShortcuts(suggestions, source) {
+    const shortcuts = [];
+    suggestions.slice(0, 2).forEach(({ label, option, stage, reason }) => {
+      const kind = getShortcutKind(stage, label || option?.name);
+      shortcuts.push({
+        type: "service",
+        kind,
+        label: label || option?.name || "Related job",
+        meta: reason || getServiceHelperText(option),
+        action: shortcutActionLabel(kind),
+        serviceCode: option?.code || "",
+        category: option?.category || "",
+      });
+    });
+
+    const blueprintHref = buildRepairBlueprintHref(source?.serviceCode, source?.serviceText);
+    if (blueprintHref) {
+      shortcuts.push({
+        type: "link",
+        kind: "blueprint",
+        label: "Related Repair Blueprint",
+        meta: "Open the repair guide with this vehicle and service context.",
+        action: "View Blueprint",
+        href: blueprintHref,
+      });
+    }
+
+    const systemHref = buildSystemHubHref(source?.serviceCode, source?.serviceText);
+    if (systemHref) {
+      shortcuts.push({
+        type: "link",
+        kind: "system",
+        label: "Related System Hub",
+        meta: "Inspect symptoms, codes, and workflows for the same system.",
+        action: "Inspect System",
+        href: systemHref,
+      });
+    }
+
+    return shortcuts.slice(0, 4);
+  }
+
+  function renderWorkflowShortcuts(shortcuts) {
+    if (!estimatorWorkflowShortcuts || !estimatorWorkflowShortcutList) return;
+    if (!shortcuts.length) {
+      hideEstimatorWorkflowShortcuts();
+      return;
+    }
+
+    estimatorWorkflowShortcutList.innerHTML = shortcuts.map((item) => {
+      const content = `
+        <span>
+          <small>${escapeServiceResultHtml(item.action || "Open")}</small>
+          <strong>${escapeServiceResultHtml(item.label || "Workflow shortcut")}</strong>
+          <em>${escapeServiceResultHtml(item.meta || "")}</em>
+        </span>
+      `;
+
+      if (item.type === "link") {
+        return `
+          <a class="tm-estimator-workflow-shortcut" data-kind="${escapeServiceResultHtml(item.kind || "link")}" href="${escapeServiceResultHtml(item.href || "#")}">
+            ${content}
+          </a>
+        `;
+      }
+
+      return `
+        <button
+          type="button"
+          class="tm-estimator-workflow-shortcut"
+          data-kind="${escapeServiceResultHtml(item.kind || "service")}"
+          data-service-code="${escapeServiceResultHtml(item.serviceCode || "")}"
+          data-service-category="${escapeServiceResultHtml(item.category || "")}"
+        >
+          ${content}
+        </button>
+      `;
+    }).join("");
+
+    estimatorWorkflowShortcuts.classList.remove("hidden");
   }
 
   function buildRelatedRepairSuggestions(groups, options, existingCodes, limit = 3) {
@@ -3546,12 +3697,14 @@ const confidenceEl = document.getElementById("laborConfidence");
     const suggestionSource = getActivePairedSuggestionSource();
     if (!suggestionSource) {
       hidePairedSuggestions();
+      void refreshEstimatorWorkflowShortcuts();
       return;
     }
 
     const configs = getPairedSuggestionConfigs(suggestionSource);
     if (!configs.length) {
       hidePairedSuggestions();
+      void refreshEstimatorWorkflowShortcuts();
       return;
     }
 
@@ -3561,6 +3714,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     } catch (err) {
       console.warn("Commonly added service lookup failed", err);
       hidePairedSuggestions();
+      void refreshEstimatorWorkflowShortcuts();
       return;
     }
 
@@ -3570,6 +3724,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     if (!suggestions.length) {
       hidePairedSuggestions();
+      void refreshEstimatorWorkflowShortcuts();
       return;
     }
 
@@ -3589,7 +3744,33 @@ const confidenceEl = document.getElementById("laborConfidence");
       </button>
     `).join("");
 
-    pairedSuggestions.classList.remove("hidden");
+    renderWorkflowShortcuts(buildWorkflowShortcuts(suggestions, suggestionSource));
+    pairedSuggestions.classList.add("hidden");
+  }
+
+  async function refreshEstimatorWorkflowShortcuts() {
+    if (!estimatorWorkflowShortcuts || !estimatorWorkflowShortcutList) return;
+    const source = getWorkflowShortcutSource();
+    if (!source) {
+      hideEstimatorWorkflowShortcuts();
+      return;
+    }
+
+    const configs = getPairedSuggestionConfigs(source);
+    let suggestions = [];
+    if (configs.length) {
+      try {
+        const options = await ensureAllServiceOptions();
+        const existingCodes = new Set(lineItems.map((it) => it.serviceCode).filter(Boolean));
+        if (serviceEl?.value) existingCodes.add(serviceEl.value);
+        suggestions = buildRelatedRepairSuggestions(configs, options, existingCodes, 2);
+      } catch (err) {
+        console.warn("Workflow shortcut lookup failed", err);
+      }
+    }
+
+    const shortcuts = buildWorkflowShortcuts(suggestions, source);
+    renderWorkflowShortcuts(shortcuts);
   }
 
   async function refreshQuoteCompletionSuggestions() {
@@ -4884,6 +5065,7 @@ if (getEstimateHint) {
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
     hidePairedSuggestions();
+    hideEstimatorWorkflowShortcuts();
 
     serviceMeta = null;
     if (laborHoursRangeEl) laborHoursRangeEl.textContent = "";
@@ -5270,6 +5452,21 @@ if (getEstimateHint) {
     } catch (err) {
       console.warn("Quote completion suggestion failed", err);
       setStatus("error", "Unable to stage that related job. Choose it from the service list instead.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  estimatorWorkflowShortcutList?.addEventListener("click", async (e) => {
+    const btn = e.target?.closest?.(".tm-estimator-workflow-shortcut[data-service-code]");
+    if (!btn) return;
+
+    btn.disabled = true;
+    try {
+      await selectPairedSuggestion(btn.dataset.serviceCode || "", btn.dataset.serviceCategory || "");
+    } catch (err) {
+      console.warn("Workflow shortcut selection failed", err);
+      setStatus("error", "Unable to stage that workflow item. Choose it from the service list instead.");
     } finally {
       btn.disabled = false;
     }

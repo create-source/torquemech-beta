@@ -1630,6 +1630,15 @@ input[type="radio"]{
   background: #ffffff;
 }
 
+.tm-estimator-workflow-shortcuts{
+  margin-top: 10px;
+  padding: 11px;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.96) 100%);
+  box-shadow: 0 6px 16px rgba(15,23,42,.045);
+}
+
 .tm-paired-suggestions__head{
   display: flex;
   align-items: flex-start;
@@ -1639,6 +1648,14 @@ input[type="radio"]{
 }
 
 .tm-completion-suggestions__head{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.tm-estimator-workflow-shortcuts__head{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1662,6 +1679,14 @@ input[type="radio"]{
   color: #475569;
 }
 
+.tm-estimator-workflow-shortcuts__eyebrow{
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
 .tm-paired-suggestions__title{
   margin-top: 3px;
   color: var(--tm-text-muted);
@@ -1678,6 +1703,14 @@ input[type="radio"]{
   line-height: 1.35;
 }
 
+.tm-estimator-workflow-shortcuts__title{
+  margin-top: 3px;
+  color: var(--tm-text);
+  font-size: .86rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
 .tm-paired-suggestions__list{
   display: flex;
   flex-wrap: wrap;
@@ -1687,6 +1720,12 @@ input[type="radio"]{
 .tm-completion-suggestions__list{
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tm-estimator-workflow-shortcuts__list{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1721,6 +1760,41 @@ input[type="radio"]{
   text-align: left;
 }
 
+.tm-estimator-workflow-shortcut{
+  min-height: 68px;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--tm-text);
+  cursor: pointer;
+  display: flex;
+  align-items: stretch;
+  padding: 9px 10px;
+  text-align: left;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(15,23,42,.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.tm-estimator-workflow-shortcut::before{
+  content: "";
+  width: 4px;
+  border-radius: 999px;
+  background: #14b8a6;
+  margin: 1px 9px 1px 0;
+  flex: 0 0 auto;
+}
+
+.tm-estimator-workflow-shortcut[data-kind="repair"]::before,
+.tm-estimator-workflow-shortcut[data-kind="blueprint"]::before{
+  background: #2563eb;
+}
+
+.tm-estimator-workflow-shortcut[data-kind="system"]::before{
+  background: #64748b;
+}
+
 .tm-paired-suggestion:hover{
   border-color: rgba(20,184,166,.34);
   background: #fff;
@@ -1732,12 +1806,24 @@ input[type="radio"]{
   background: #f8fafc;
 }
 
+.tm-estimator-workflow-shortcut:hover,
+.tm-estimator-workflow-shortcut:focus-visible{
+  border-color: rgba(37,99,235,.24);
+  background: #f8fafc;
+  box-shadow: 0 8px 18px rgba(15,23,42,.07);
+}
+
 .tm-paired-suggestion:disabled{
   cursor: progress;
   opacity: .65;
 }
 
 .tm-completion-suggestion:disabled{
+  cursor: progress;
+  opacity: .65;
+}
+
+.tm-estimator-workflow-shortcut:disabled{
   cursor: progress;
   opacity: .65;
 }
@@ -1760,15 +1846,26 @@ input[type="radio"]{
   line-height: 1.25;
 }
 
+.tm-estimator-workflow-shortcut span{
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  font-size: .86rem;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
 .tm-paired-suggestion strong,
-.tm-completion-suggestion strong{
+.tm-completion-suggestion strong,
+.tm-estimator-workflow-shortcut strong{
   font: inherit;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
 .tm-paired-suggestion em,
-.tm-completion-suggestion em{
+.tm-completion-suggestion em,
+.tm-estimator-workflow-shortcut em{
   color: var(--tm-text-muted);
   font-size: .73rem;
   font-style: normal;
@@ -1789,6 +1886,14 @@ input[type="radio"]{
   color: var(--tm-text-muted);
   font-size: .74rem;
   font-weight: 800;
+}
+
+.tm-estimator-workflow-shortcut small{
+  color: #2563eb;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 
 .line-item{
@@ -3963,25 +4068,29 @@ h3{
 
 @media (max-width: 700px){
   .tm-paired-suggestions,
-  .tm-completion-suggestions{
+  .tm-completion-suggestions,
+  .tm-estimator-workflow-shortcuts{
     padding: 11px;
   }
 
   .tm-paired-suggestions__list,
-  .tm-completion-suggestions__list{
+  .tm-completion-suggestions__list,
+  .tm-estimator-workflow-shortcuts__list{
     display: grid;
     grid-template-columns: 1fr;
   }
 
   .tm-paired-suggestion,
-  .tm-completion-suggestion{
+  .tm-completion-suggestion,
+  .tm-estimator-workflow-shortcut{
     align-items: flex-start;
     gap: 8px;
     width: 100%;
   }
 
   .tm-paired-suggestion small,
-  .tm-completion-suggestion small{
+  .tm-completion-suggestion small,
+  .tm-estimator-workflow-shortcut small{
     white-space: normal;
     text-align: right;
   }
