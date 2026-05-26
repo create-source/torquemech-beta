@@ -1,0 +1,136 @@
+{
+  "slug": "emissions-evap-diagnostics",
+  "title": "Emissions & EVAP Diagnostics",
+  "summary": "Compact emissions and EVAP hub for check engine light, fuel smell, small and large EVAP leaks, purge faults, vent faults, and smoke-test workflows.",
+  "intro": "Use this hub when an emissions fault needs to be separated into cap, hose, purge, vent, canister, wiring, or smoke-test evidence before pricing parts.",
+  "common_symptoms": [
+    {
+      "title": "Fuel Smell From Exhaust",
+      "description": "Use when fuel odor, rich running, or raw-fuel clues overlap with emissions or catalyst risk.",
+      "href": "/symptoms/fuel-smell-from-exhaust",
+      "estimator_href": "/estimator?service=check_engine_light_diagnosis"
+    },
+    {
+      "title": "Poor Fuel Economy",
+      "description": "Use when emissions faults come with fuel-trim, oxygen sensor, or rich-running evidence.",
+      "href": "/symptoms/poor-fuel-economy",
+      "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    },
+    {
+      "title": "Rough Idle",
+      "description": "Use when purge flow, vacuum leaks, or fuel-trim issues are affecting idle quality.",
+      "href": "/symptoms/rough-idle",
+      "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0442", "title": "EVAP system small leak detected", "href": "/obd/p0442" },
+    { "code": "P0455", "title": "EVAP system large leak detected", "href": "/obd/p0455" },
+    { "code": "P0456", "title": "EVAP system very small leak detected", "href": "/obd/p0456" },
+    { "code": "P0446", "title": "EVAP vent control circuit", "href": "/obd/p0446" },
+    { "code": "P0441", "title": "Incorrect EVAP purge flow", "href": "/obd/p0441" }
+  ],
+  "related_repairs": [
+    {
+      "title": "EVAP Purge Valve Blueprint",
+      "description": "Use when purge command, flow behavior, idle effect, or purge circuit evidence supports the purge side.",
+      "cost_guide_href": "/repair-guides/evap-purge-valve-replacement",
+      "estimator_href": "/estimator?service=evap_purge_valve_replacement"
+    },
+    {
+      "title": "EVAP Vent Valve Replacement Cost",
+      "description": "Use when vent command, canister-side blockage, contamination, or vent sealing tests point to the vent valve.",
+      "cost_guide_href": "/cost/evap-vent-valve-replacement",
+      "estimator_href": "/estimator?service=evap_vent_valve_replacement"
+    },
+    {
+      "title": "EVAP Leak Test",
+      "description": "Use when P0442, P0455, fuel smell, or monitor failure needs smoke-test confirmation before parts.",
+      "estimator_href": "/estimator?service=evap_leak_test_smoke_test"
+    },
+    {
+      "title": "Catalytic Converter Replacement Cost",
+      "description": "Only use after upstream misfire, fuel-trim, oxygen-sensor, and rich-running causes are checked.",
+      "cost_guide_href": "/cost/catalytic-converter-replacement",
+      "estimator_href": "/estimator?service=catalytic_converter_replacement"
+    }
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "EVAP Leak and Smoke-Test Path",
+      "summary": "Start here for P0442, P0455, fuel smell near the vehicle, or failed EVAP monitor complaints.",
+      "checks": [
+        "Inspect fuel cap seal, filler neck, visible EVAP hoses, and canister connections",
+        "Smoke test the EVAP system when the leak is not obvious",
+        "Confirm the leak location before pricing purge, vent, hose, cap, or canister work"
+      ],
+      "repairs": [
+        { "title": "EVAP Smoke Test", "estimator_href": "/estimator?service=evap_leak_test_smoke_test" },
+        { "title": "EVAP Vent Valve Replacement Cost", "cost_guide_href": "/cost/evap-vent-valve-replacement" }
+      ],
+      "confidence_cues": [
+        "Smoke evidence before parts",
+        "Small leaks need careful sealing checks"
+      ]
+    },
+    {
+      "title": "Purge and Idle Path",
+      "summary": "Use when purge flow faults, rough idle, fuel smell, or vacuum-style symptoms overlap.",
+      "checks": [
+        "Command or isolate the purge valve and check whether it seals when closed",
+        "Compare fuel trims at idle and cruise before blaming the oxygen sensor",
+        "Inspect purge hoses and wiring when circuit or flow codes are present"
+      ],
+      "repairs": [
+        { "title": "EVAP Purge Valve Blueprint", "cost_guide_href": "/repair-guides/evap-purge-valve-replacement" },
+        { "title": "Rough Idle", "cost_guide_href": "/symptoms/rough-idle" }
+      ],
+      "confidence_cues": [
+        "Purge faults can affect idle",
+        "Fuel trims help separate leak type"
+      ]
+    },
+    {
+      "title": "Vent and Canister Path",
+      "summary": "Use when the tank will not vent, filling is difficult, or vent-control codes return after leak checks.",
+      "checks": [
+        "Command the vent valve and confirm it opens, closes, and seals",
+        "Inspect vent filter, canister contamination, dirt intrusion, and underbody corrosion",
+        "Check circuit power, ground, and connector condition before replacing the valve"
+      ],
+      "repairs": [
+        { "title": "EVAP Vent Valve Replacement Cost", "cost_guide_href": "/cost/evap-vent-valve-replacement" },
+        { "title": "EVAP System Diagnosis", "estimator_href": "/estimator?service=evap_system_diagnosis" }
+      ],
+      "confidence_cues": [
+        "Vent command matters",
+        "Canister contamination can change the estimate"
+      ]
+    }
+  ],
+  "inspection_priority": [
+    "Confirm the exact EVAP code family and freeze-frame context first.",
+    "Inspect cap, filler neck, hoses, purge, vent, and canister connections before replacing valves.",
+    "Use smoke testing when the leak source is not visible or when the code returns after simple checks."
+  ],
+  "confidence_cues": [
+    "Leak size changes the test plan",
+    "Purge and vent faults need different checks",
+    "Fuel smell should not be treated as one automatic part"
+  ],
+  "estimate_guidance": [
+    "Use EVAP diagnosis or smoke testing when the leak source has not been proven.",
+    "Move to purge or vent valve replacement only when command, sealing, flow, or circuit checks support that side.",
+    "Keep catalyst or oxygen-sensor pricing separate from EVAP leak repair unless scan data connects the systems."
+  ],
+  "related_systems": [
+    { "title": "Engine Performance & Misfire Diagnostics", "href": "/repair-systems/engine-performance-misfire-diagnostics" },
+    { "title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system" }
+  ],
+  "estimate": {
+    "cta_label": "Estimate EVAP Diagnosis",
+    "service_code": "evap_system_diagnosis",
+    "service_name": "Emissions and EVAP Diagnostic",
+    "estimator_link": "/estimator"
+  }
+}

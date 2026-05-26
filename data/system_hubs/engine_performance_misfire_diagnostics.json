@@ -1,0 +1,145 @@
+{
+  "slug": "engine-performance-misfire-diagnostics",
+  "title": "Engine Performance & Misfire Diagnostics",
+  "summary": "Compact engine-performance hub for P0300, cylinder misfires, lean codes, rough idle, hard start, poor fuel economy, ignition, airflow, oxygen-sensor, and fuel-trim workflows.",
+  "intro": "Use this hub when drivability evidence needs to be separated into spark, fuel, airflow, oxygen-sensor, vacuum leak, or mechanical checks before pricing repairs.",
+  "common_symptoms": [
+    {
+      "title": "Rough Idle",
+      "description": "Use when idle shake, lean trims, or cylinder-drop clues need a first diagnostic split.",
+      "href": "/symptoms/rough-idle",
+      "estimator_href": "/estimator?service=misfire_diagnosis"
+    },
+    {
+      "title": "Engine Misfire At Idle",
+      "description": "Use when P0300 or cylinder-specific misfire data lines up with idle-only rough running.",
+      "href": "/symptoms/engine-misfire-at-idle",
+      "estimator_href": "/estimator?service=misfire_diagnosis"
+    },
+    {
+      "title": "Poor Fuel Economy",
+      "description": "Use when mileage loss overlaps with fuel trims, oxygen sensors, MAF data, or incomplete combustion.",
+      "href": "/symptoms/poor-fuel-economy",
+      "estimator_href": "/estimator?service=fuel_trim_diagnosis"
+    },
+    {
+      "title": "Hard Start After Sitting Overnight",
+      "description": "Use when cold-start misfire, injector leak-down, fuel pressure, or cold enrichment is in play.",
+      "href": "/symptoms/hard-start-after-sitting-overnight",
+      "estimator_href": "/estimator?service=fuel_system_diagnostic"
+    }
+  ],
+  "related_obd_codes": [
+    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
+    { "code": "P0301", "title": "Cylinder 1 misfire detected", "href": "/obd/p0301" },
+    { "code": "P0302", "title": "Cylinder 2 misfire detected", "href": "/obd/p0302" },
+    { "code": "P0303", "title": "Cylinder 3 misfire detected", "href": "/obd/p0303" },
+    { "code": "P0304", "title": "Cylinder 4 misfire detected", "href": "/obd/p0304" },
+    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
+    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" }
+  ],
+  "related_repairs": [
+    {
+      "title": "Spark Plug Blueprint",
+      "description": "Use when plug wear, gap, fouling, or service history supports an ignition maintenance path.",
+      "cost_guide_href": "/repair-guides/spark-plug-replacement",
+      "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"
+    },
+    {
+      "title": "Ignition Coil Blueprint",
+      "description": "Use when misfire counters, coil swap testing, or load-related breakdown points to a coil.",
+      "cost_guide_href": "/repair-guides/ignition-coil-replacement",
+      "estimator_href": "/estimator?service=ignition_coil_replacement_each"
+    },
+    {
+      "title": "Mass Air Flow Sensor Replacement Cost",
+      "description": "Use when airflow data, intake inspection, and fuel trims support a biased MAF path.",
+      "cost_guide_href": "/cost/mass-air-flow-sensor-replacement",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    },
+    {
+      "title": "Oxygen Sensor Inspection",
+      "description": "Use when scan data shows biased oxygen-sensor behavior after exhaust leaks and fuel-control causes are checked.",
+      "cost_guide_href": "/cost/oxygen-sensor-replacement",
+      "estimator_href": "/estimator?service=oxygen_sensor_replacement_upstream"
+    }
+  ],
+  "diagnostic_path_sections": [
+    {
+      "title": "Misfire Pattern Path",
+      "summary": "Start here for P0300 or P0301-P0304 before pricing spark plugs, coils, injectors, or compression testing.",
+      "checks": [
+        "Review freeze frame and misfire counters to see whether the fault is random, single-cylinder, cold, idle-only, or load-related",
+        "Inspect plugs, coil boots, carbon tracking, and connector fit before replacing ignition parts",
+        "Use coil or plug swaps only when they can prove whether the misfire moves"
+      ],
+      "repairs": [
+        { "title": "Spark Plug Blueprint", "cost_guide_href": "/repair-guides/spark-plug-replacement" },
+        { "title": "Ignition Coil Blueprint", "cost_guide_href": "/repair-guides/ignition-coil-replacement" }
+      ],
+      "confidence_cues": [
+        "Pattern before parts",
+        "Swap tests need a clear before and after"
+      ]
+    },
+    {
+      "title": "Lean Fuel-Trim Path",
+      "summary": "Use when P0171, P0174, rough idle, or poor fuel economy suggests unmetered air or weak fuel delivery.",
+      "checks": [
+        "Compare fuel trims at idle, 2500 RPM, and cruise",
+        "Inspect intake ducting, PCV plumbing, vacuum lines, and MAF housing for post-MAF leaks",
+        "Check fuel pressure and volume if trims worsen under load or both banks trend lean"
+      ],
+      "repairs": [
+        { "title": "Lean Condition Blueprint", "cost_guide_href": "/repair-guides/how-to-diagnose-lean-condition-p0171-p0174" },
+        { "title": "Vacuum Leak Inspection", "cost_guide_href": "/repair-guides/how-to-diagnose-a-vacuum-leak" }
+      ],
+      "confidence_cues": [
+        "Fuel trims decide direction",
+        "Smoke test before airflow parts"
+      ]
+    },
+    {
+      "title": "Airflow and Sensor Path",
+      "summary": "Use when MAF data, oxygen-sensor behavior, hesitation, or poor fuel economy points beyond ignition.",
+      "checks": [
+        "Inspect the air filter, intake boot, MAF contamination, and throttle body condition",
+        "Compare upstream and downstream oxygen-sensor behavior with fuel trims",
+        "Check for exhaust leaks, rich-running causes, or unresolved misfire before sensor or catalyst pricing"
+      ],
+      "repairs": [
+        { "title": "Mass Air Flow Sensor Replacement Cost", "cost_guide_href": "/cost/mass-air-flow-sensor-replacement" },
+        { "title": "Oxygen Sensor Replacement Cost", "cost_guide_href": "/cost/oxygen-sensor-replacement" }
+      ],
+      "confidence_cues": [
+        "MAF inspection before replacement",
+        "O2 data needs fuel-trim context"
+      ]
+    }
+  ],
+  "inspection_priority": [
+    "Scan codes, freeze frame, fuel trims, and misfire counters before recommending parts.",
+    "Separate single-cylinder misfires from random or lean misfires before pricing ignition work.",
+    "Inspect MAF, intake sealing, oxygen-sensor behavior, and fuel delivery when symptoms cross systems."
+  ],
+  "confidence_cues": [
+    "Misfire pattern matters",
+    "Lean codes are not automatic oxygen sensors",
+    "Airflow and ignition faults can look alike"
+  ],
+  "estimate_guidance": [
+    "Use misfire diagnosis when the failed cylinder or root cause has not been proven.",
+    "Move to spark plugs, coils, MAF, or oxygen sensors only after scan data and inspection support the repair.",
+    "Add fuel-trim, compression, injector, or smoke-test diagnosis when misfires stay after basic ignition checks."
+  ],
+  "related_systems": [
+    { "title": "Emissions & EVAP Diagnostics", "href": "/repair-systems/emissions-evap-diagnostics" },
+    { "title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics" }
+  ],
+  "estimate": {
+    "cta_label": "Estimate Misfire Diagnosis",
+    "service_code": "misfire_diagnosis",
+    "service_name": "Engine Performance and Misfire Diagnostic",
+    "estimator_link": "/estimator"
+  }
+}
