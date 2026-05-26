@@ -1160,3 +1160,163 @@ body.dark .tm-homeSystemCard__chips em,
     min-height: 0;
   }
 }
+
+/* ===============================
+   Foundation 10.5a Discovery Polish
+================================ */
+
+.tm-homeSection__head--split{
+  margin-bottom: 14px;
+}
+
+.tm-homeSection__link{
+  box-shadow: 0 6px 14px rgba(15,23,42,.05);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+}
+
+.tm-homeSection__link:hover{
+  transform: translateY(-1px);
+  border-color: rgba(37,99,235,.22);
+  box-shadow: 0 10px 20px rgba(15,23,42,.08);
+}
+
+.tm-homeSystemGrid{
+  gap: 14px;
+}
+
+.tm-homeSystemCard{
+  position: relative;
+  gap: 8px;
+  min-height: 164px;
+  padding: 15px 15px 14px 17px;
+  overflow: hidden;
+  border-color: rgba(15,23,42,.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(242,246,251,.98) 100%);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 9px 20px rgba(15,23,42,.07);
+}
+
+.tm-homeSystemCard::before{
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #11b3ad 0%, #2563eb 100%);
+}
+
+.tm-homeSystemCard::after{
+  content: "Open hub";
+  position: static;
+  align-self: flex-start;
+  margin-top: 1px;
+  color: rgba(15,23,42,.48);
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.tm-homeSystemCard:hover,
+.tm-homeSystemCard:focus-visible{
+  transform: translateY(-2px);
+  border-color: rgba(37,99,235,.28);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 16px 30px rgba(15,23,42,.11);
+}
+
+.tm-homeSystemCard small{
+  display: inline-flex;
+  width: fit-content;
+  min-height: 22px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid rgba(37,99,235,.14);
+  border-radius: 999px;
+  background: rgba(37,99,235,.07);
+  color: var(--tm-blue);
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tm-homeSystemCard span{
+  max-width: 15ch;
+  font-size: 1.02rem;
+}
+
+.tm-homeSystemCard p{
+  max-width: 28ch;
+  font-size: .92rem;
+}
+
+.tm-homeSystemCard__chips{
+  gap: 7px;
+  padding-right: 0;
+}
+
+.tm-homeSystemCard__chips em{
+  min-height: 27px;
+  padding: 0 9px;
+  border-color: rgba(15,23,42,.14);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(247,250,253,.96));
+  color: #26364c;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 2px 5px rgba(15,23,42,.06);
+}
+
+.tm-homeToolCard{
+  border-color: rgba(15,23,42,.13);
+}
+
+.tm-homeToolCard__icon{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 4px 10px rgba(15,23,42,.18);
+}
+
+html.dark .tm-homeSystemCard,
+body.dark .tm-homeSystemCard,
+[data-theme="dark"] .tm-homeSystemCard{
+  background: linear-gradient(180deg, #122338 0%, #0d1b2d 100%);
+}
+
+html.dark .tm-homeSystemCard small,
+body.dark .tm-homeSystemCard small,
+[data-theme="dark"] .tm-homeSystemCard small{
+  background: rgba(37,99,235,.14);
+  border-color: rgba(255,255,255,.12);
+}
+
+html.dark .tm-homeSystemCard::after,
+body.dark .tm-homeSystemCard::after,
+[data-theme="dark"] .tm-homeSystemCard::after{
+  color: rgba(255,255,255,.42);
+}
+
+@media (max-width: 980px){
+  .tm-homeSystemCard span,
+  .tm-homeSystemCard p{
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px){
+  .tm-homeSection__head--split{
+    margin-bottom: 12px;
+  }
+
+  .tm-homeSystemGrid{
+    gap: 11px;
+  }
+
+  .tm-homeSystemCard{
+    padding: 14px 14px 13px 16px;
+  }
+
+  .tm-homeSystemCard__chips em{
+    min-height: 26px;
+  }
+}
