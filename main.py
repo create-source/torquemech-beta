@@ -2818,6 +2818,92 @@ def infer_related_system_hubs(*values: Any, limit: int = 3) -> List[Dict[str, st
     return [dict(SYSTEM_HUB_NAV_ITEMS[slug]) for slug in picks[:limit]]
 
 
+def infer_workflow_next_steps(*values: Any, limit: int = 4) -> List[Dict[str, str]]:
+    text = " ".join(str(value or "") for value in values).lower()
+    steps: List[Dict[str, str]] = []
+
+    def add(title: str, description: str, *, href: str = "", estimator_href: str = "") -> None:
+        if any(item["title"] == title for item in steps):
+            return
+        steps.append(
+            {
+                "title": title,
+                "description": description,
+                "href": href,
+                "estimator_href": estimator_href,
+            }
+        )
+
+    if any(term in text for term in ("p030", "misfire", "spark plug", "ignition coil")):
+        add("Inspect ignition coils", "Check coil boots, carbon tracking, and whether the miss follows a swap.", href="/repair-guides/ignition-coil-replacement")
+        add("Check spark plugs", "Inspect gap, fouling, wear, oil, coolant, and plug-well condition.", href="/repair-guides/spark-plug-replacement")
+        add("Verify injector operation", "Move to injector balance, pulse, or leak-down checks if the misfire stays.", estimator_href="/estimator?service=fuel_system_diagnostic")
+        add("Check compression if needed", "Use compression or leak-down testing when spark and fuel checks do not move the fault.", estimator_href="/estimator?service=compression_test")
+    if any(term in text for term in ("evap", "p044", "p045", "purge", "vent", "smoke test")):
+        add("Smoke test EVAP system", "Use smoke testing when the leak source is not obvious.", estimator_href="/estimator?service=evap_leak_test_smoke_test")
+        add("Verify purge sealing", "Check purge command and sealing before replacing the valve.", href="/repair-guides/evap-purge-valve-replacement")
+        add("Check vent operation", "Command the vent valve and inspect canister-side blockage or contamination.", estimator_href="/estimator?service=evap_vent_valve_replacement")
+    if any(term in text for term in ("p0171", "p0174", "lean", "fuel trim", "rough idle", "vacuum leak")):
+        add("Review fuel trims", "Compare trims at idle, 2500 RPM, and cruise before pricing sensors.", estimator_href="/estimator?service=fuel_trim_diagnosis")
+        add("Inspect vacuum leaks", "Check intake boots, PCV hoses, and post-MAF leak paths.", href="/repair-guides/how-to-diagnose-a-vacuum-leak")
+        add("Check MAF sensor", "Inspect MAF contamination and airflow data after intake leaks are considered.", estimator_href="/estimator?service=mass_air_flow_sensor_replacement")
+        add("Inspect intake tubing", "Look for cracked ducts, loose clamps, and unmetered air after the MAF.", estimator_href="/estimator?service=vacuum_leak_diagnosis_smoke_test")
+    if any(term in text for term in ("p030", "misfire", "spark plug", "ignition coil", "rough idle", "hard start")):
+        add("Inspect ignition coils", "Check coil boots, carbon tracking, and whether the miss follows a swap.", href="/repair-guides/ignition-coil-replacement")
+        add("Check spark plugs", "Inspect gap, fouling, wear, oil, coolant, and plug-well condition.", href="/repair-guides/spark-plug-replacement")
+        add("Verify injector operation", "Move to injector balance, pulse, or leak-down checks if the misfire stays.", estimator_href="/estimator?service=fuel_system_diagnostic")
+        add("Check compression if needed", "Use compression or leak-down testing when spark and fuel checks do not move the fault.", estimator_href="/estimator?service=compression_test")
+    if any(term in text for term in ("battery light", "charging", "alternator", "p056", "p0620", "no crank", "no start")):
+        add("Test charging voltage", "Measure alternator output and battery voltage under load.", estimator_href="/estimator?service=alternator_diagnosis")
+        add("Inspect serpentine belt", "Check belt condition, tensioner travel, and pulley alignment.", href="/repair-guides/serpentine-belt-replacement")
+        add("Verify battery condition", "Charge and load test before blaming the alternator or starter.", href="/repair-guides/battery-replacement")
+    if any(term in text for term in ("overheat", "coolant", "cooling", "thermostat", "radiator", "water pump", "p0128")):
+        add("Pressure test cooling system", "Confirm external leaks, cap behavior, and pressure loss before parts.", estimator_href="/estimator?service=coolant_leak_diagnosis")
+        add("Inspect thermostat", "Compare warm-up, scan temperature, and hose temperature behavior.", href="/repair-guides/thermostat-replacement")
+        add("Verify radiator fan operation", "Check fan command, AC-load response, fuses, relays, and airflow.", href="/repair-guides/radiator-fan-replacement")
+    if any(term in text for term in ("evap", "p044", "p045", "purge", "vent", "fuel smell", "smoke test")):
+        add("Smoke test EVAP system", "Use smoke testing when the leak source is not obvious.", estimator_href="/estimator?service=evap_leak_test_smoke_test")
+        add("Verify purge sealing", "Check purge command and sealing before replacing the valve.", href="/repair-guides/evap-purge-valve-replacement")
+        add("Check vent operation", "Command the vent valve and inspect canister-side blockage or contamination.", estimator_href="/estimator?service=evap_vent_valve_replacement")
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper", "vibration while braking", "wheel hub")):
+        add("Measure pads and rotors", "Confirm thickness, scoring, heat spots, and inner/outer wear.", estimator_href="/estimator?service=brake_noise_diagnosis")
+        add("Inspect caliper movement", "Check slide pins, piston movement, hose restriction, and drag.", href="/repair-guides/brake-caliper-replacement")
+        add("Check hub runout/play", "Use when vibration or ABS evidence overlaps brake complaints.", href="/repair-guides/wheel-hub-assembly-replacement")
+
+    return steps[:limit]
+
+
+def infer_related_inspections(*values: Any, limit: int = 4) -> List[Dict[str, str]]:
+    text = " ".join(str(value or "") for value in values).lower()
+    inspections: List[Dict[str, str]] = []
+
+    def add(title: str, description: str, estimator_href: str) -> None:
+        if any(item["title"] == title for item in inspections):
+            return
+        inspections.append(
+            {
+                "title": title,
+                "description": description,
+                "estimator_href": estimator_href,
+            }
+        )
+
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper")):
+        add("Brake fluid inspection", "Check fluid condition when hydraulic or caliper work is likely.", "/estimator?service=brake_fluid_flush")
+    if any(term in text for term in ("wheel hub", "wheel bearing", "steering", "suspension", "alignment")):
+        add("Alignment inspection", "Use after steering or suspension work when tire wear or pull is present.", "/estimator?service=wheel_alignment_4_wheel")
+    if any(term in text for term in ("battery", "alternator", "charging", "starter", "no start", "no crank")):
+        add("Charging voltage verification", "Confirm battery, cable, belt, and alternator evidence before replacement.", "/estimator?service=alternator_diagnosis")
+    if any(term in text for term in ("coolant", "cooling", "overheat", "radiator", "water pump", "thermostat")):
+        add("Coolant contamination check", "Inspect coolant condition, oil/coolant mixing, and overheating history.", "/estimator?service=cooling_system_pressure_test")
+    if any(term in text for term in ("evap", "p044", "p045", "vacuum leak", "lean", "p0171", "p0174")):
+        add("Smoke testing", "Use smoke testing when leak evidence needs confirmation before parts.", "/estimator?service=evap_leak_test_smoke_test")
+    if any(term in text for term in ("oxygen sensor", "catalyst", "catalytic", "p0420", "p0430", "exhaust")):
+        add("Exhaust leak inspection", "Check leaks before oxygen-sensor or catalyst decisions.", "/estimator?service=exhaust_leak_repair")
+
+    return inspections[:limit]
+
+
 def build_diagnostics_workflow_clusters() -> List[Dict[str, Any]]:
     return [
         {
@@ -5476,6 +5562,22 @@ async def obd_code_page(request: Request, code: str):
         ),
         workflow_context,
     )
+    obd_workflow_signal = [
+        row["code"],
+        row["title"],
+        display_description,
+        " ".join(display_causes or []),
+        " ".join(display_symptoms or []),
+        " ".join(display_diagnostic_steps or []),
+    ]
+    workflow_next_steps = apply_workflow_context_to_repair_items(
+        infer_workflow_next_steps(*obd_workflow_signal),
+        workflow_context,
+    )
+    related_inspections = apply_workflow_context_to_repair_items(
+        infer_related_inspections(*obd_workflow_signal),
+        workflow_context,
+    )
 
     return templates.TemplateResponse(
         "obd_code_detail.html",
@@ -5498,6 +5600,8 @@ async def obd_code_page(request: Request, code: str):
             "diagnostic_summary": diagnostic_summary,
             "workflow_context": workflow_context,
             "related_system_hubs": related_system_hubs,
+            "workflow_next_steps": workflow_next_steps,
+            "related_inspections": related_inspections,
             "page_title": page_title,
             "meta_description": page_description,
             "structured_data": structured_data,
@@ -8736,6 +8840,24 @@ async def repair_guide_page(request: Request, slug: str):
         ),
         workflow_context,
     )
+    workflow_signal = [
+        guide.get("title"),
+        guide.get("summary"),
+        guide.get("category"),
+        guide.get("subcategory"),
+        " ".join(guide.get("related_systems") or []),
+        " ".join(guide.get("symptoms") or []),
+        " ".join(guide.get("inspect_first") or []),
+        " ".join(item.get("code") or "" for item in guide.get("related_obd_codes") or []),
+    ]
+    guide["workflow_next_steps"] = apply_workflow_context_to_repair_items(
+        infer_workflow_next_steps(*workflow_signal),
+        workflow_context,
+    )
+    guide["related_inspections"] = apply_workflow_context_to_repair_items(
+        infer_related_inspections(*workflow_signal),
+        workflow_context,
+    )
 
     return templates.TemplateResponse(
         "repair_guide.html",
@@ -8789,6 +8911,22 @@ async def repair_system_hub_page(request: Request, slug: str):
     hub["diagnostic_path_sections"] = contextual_path_sections
     hub["related_systems"] = apply_workflow_context_to_repair_items(
         hub.get("related_systems") or [],
+        workflow_context,
+    )
+    hub_signal = [
+        hub.get("title"),
+        hub.get("summary"),
+        hub.get("intro"),
+        " ".join(item.get("code") or "" for item in hub.get("related_obd_codes") or []),
+        " ".join(item.get("title") or "" for item in hub.get("related_repairs") or []),
+        " ".join(item.get("title") or "" for item in hub.get("common_symptoms") or []),
+    ]
+    hub["workflow_next_steps"] = apply_workflow_context_to_repair_items(
+        infer_workflow_next_steps(*hub_signal),
+        workflow_context,
+    )
+    hub["related_inspections"] = apply_workflow_context_to_repair_items(
+        infer_related_inspections(*hub_signal),
         workflow_context,
     )
 
@@ -8877,6 +9015,23 @@ async def symptom_page(request: Request, slug: str):
             " ".join(item.get("code") or "" for item in symptom.get("related_obd_codes") or []),
             " ".join(item.get("title") or "" for item in symptom.get("recommended_repairs") or []),
         ),
+        workflow_context,
+    )
+    symptom_signal = [
+        symptom.get("title"),
+        symptom.get("summary"),
+        symptom.get("system"),
+        " ".join(symptom.get("possible_causes") or []),
+        " ".join(symptom.get("quick_checks") or []),
+        " ".join(item.get("code") or "" for item in symptom.get("related_obd_codes") or []),
+        " ".join(item.get("title") or "" for item in symptom.get("recommended_repairs") or []),
+    ]
+    symptom["workflow_next_steps"] = apply_workflow_context_to_repair_items(
+        infer_workflow_next_steps(*symptom_signal),
+        workflow_context,
+    )
+    symptom["related_inspections"] = apply_workflow_context_to_repair_items(
+        infer_related_inspections(*symptom_signal),
         workflow_context,
     )
     return templates.TemplateResponse(

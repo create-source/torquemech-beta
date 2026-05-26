@@ -342,6 +342,42 @@
 </section>
 {% endif %}
 
+{% if workflow_next_steps or related_inspections %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Next Steps</h2>
+    <p class="tm-muted" style="margin:0 0 14px 0;">Use these checks to turn the code into a practical workflow before estimating parts.</p>
+    {% if workflow_next_steps %}
+    <div class="obd-cost-guides-grid">
+      {% for item in workflow_next_steps %}
+      <div class="obd-cost-guide-mini">
+        <div>
+          <div class="obd-cost-guide-mini__title">{{ item.title }}</div>
+          {% if item.description %}
+          <p class="obd-cost-guide-mini__desc">{{ item.description }}</p>
+          {% endif %}
+        </div>
+        {% if item.href %}
+        <a class="tm-btn tm-btn-secondary obd-cost-guide-mini__cta" href="{{ item.href }}">Open Workflow</a>
+        {% elif item.estimator_href %}
+        <a class="tm-btn tm-btn-secondary obd-cost-guide-mini__cta" href="{{ item.estimator_href }}">Add Inspection</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if related_inspections %}
+    <h3 class="tm-subsection-title">Related Inspection</h3>
+    <div class="tm-blueprint-chip-list">
+      {% for item in related_inspections %}
+      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 <section class="tm-section">
   <div class="tm-card">
     <h2>Code Overview</h2>

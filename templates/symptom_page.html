@@ -155,6 +155,41 @@
 </section>
 {% endif %}
 
+{% if symptom.workflow_next_steps or symptom.related_inspections %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Next Steps</h2>
+    <p class="tm-muted">Use these practical checks before opening or expanding the estimate.</p>
+    {% if symptom.workflow_next_steps %}
+    <div class="tm-stack">
+      {% for item in symptom.workflow_next_steps %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
+        {% endif %}
+        {% if item.href %}
+        <div style="margin-top:8px;"><a href="{{ item.href }}">Open Workflow &rarr;</a></div>
+        {% endif %}
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;"><a href="{{ item.estimator_href }}">Continue Diagnostic Estimate &rarr;</a></div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if symptom.related_inspections %}
+    <h3 class="tm-subsection-title">Related Inspection</h3>
+    <div class="tm-blueprint-chip-list">
+      {% for item in symptom.related_inspections %}
+      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 {% if symptom.related_symptoms %}
 <section class="tm-section">
   <div class="tm-card">

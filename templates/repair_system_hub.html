@@ -173,6 +173,41 @@
 </section>
 {% endif %}
 
+{% if hub.workflow_next_steps or hub.related_inspections %}
+<section class="tm-section">
+  <div class="tm-card">
+    <h2>Common Next Steps</h2>
+    <p class="tm-muted">Use these shortcuts when the system path is clear enough to keep inspection moving.</p>
+    {% if hub.workflow_next_steps %}
+    <div class="tm-related-repair-grid">
+      {% for item in hub.workflow_next_steps %}
+      <div class="tm-linked-card">
+        <h3>{{ item.title }}</h3>
+        {% if item.description %}
+        <p class="tm-muted">{{ item.description }}</p>
+        {% endif %}
+        {% if item.href %}
+        <div style="margin-top:8px;"><a href="{{ item.href }}">Open Workflow &rarr;</a></div>
+        {% endif %}
+        {% if item.estimator_href %}
+        <div style="margin-top:8px;"><a href="{{ item.estimator_href }}">Add Related Inspection &rarr;</a></div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if hub.related_inspections %}
+    <h3 class="tm-subsection-title">Related Inspection</h3>
+    <div class="tm-blueprint-chip-list">
+      {% for item in hub.related_inspections %}
+      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">{{ item.title }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
 {% if hub.inspection_priority or hub.confidence_cues %}
 <section class="tm-section">
   <div class="tm-card">
