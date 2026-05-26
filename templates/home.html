@@ -115,21 +115,21 @@
     <div class="tm-homeHero__eyebrow">Estimate Engine + Repair Intelligence</div>
 
     <h1 class="tm-homeHero__title">
-      Repair estimates.<br>
-      Smarter repair workflow.
+      Estimate engine.<br>
+      Repair intelligence.
     </h1>
 
     <p class="tm-homeHero__lead">
-      TorqueMech helps mobile mechanics and small shops build customer-ready quotes, follow repair guidance, and move from vehicle problem to repair path with cleaner workflow intelligence.
+      TorqueMech connects symptoms, OBD clues, diagnostic paths, repair blueprints, and estimate handoff so mechanics can move from problem to quote with less friction.
     </p>
 
     <div class="tm-homeHero__actions">
-      <a href="/estimator" class="tm-btn tm-btn-primary">Build a Repair Quote</a>
-      <a href="/repair-guides" class="tm-btn tm-btn-secondary">Browse Repair Guides</a>
+      <a href="/estimator" class="tm-btn tm-btn-primary">Start Estimate</a>
+      <a href="/diagnostics" class="tm-btn tm-btn-secondary">Explore Repair Intelligence</a>
     </div>
 
     <p class="tm-homeHero__note">
-      No account required. Free beta tool. Built for practical repair decisions.
+      No account required. Built for practical diagnostic-to-estimate decisions.
     </p>
   </div>
 </section>
@@ -138,40 +138,88 @@
 
 <section class="tm-homeSection">
   <div class="tm-homeSection__head">
-    <h2>How TorqueMech Works</h2>
-    <p>A mechanic-grade workflow that connects repair quotes, procedures, tools, common mistakes, vehicle-code clues, and customer-ready output.</p>
+    <h2>From Complaint to Quote</h2>
+    <p>A compact repair workflow for narrowing the problem, choosing the right repair path, and keeping estimate handoff close.</p>
   </div>
 
   <div class="tm-homeTools">
     <a href="/symptoms" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">📄</div>
+      <div class="tm-homeToolCard__icon">01</div>
       <div>
-        <h3>Start With the Job</h3>
-        <p>Use symptoms, customer complaints, or known repairs to orient the quote before parts and labor are finalized.</p>
+        <h3>Symptom</h3>
+        <p>Start with the complaint: rough idle, brake noise, overheating, no-start, or fuel smell.</p>
       </div>
     </a>
 
-    <a href="/obd/p0300" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">🔧</div>
+    <a href="/diagnostics" class="tm-homeToolCard">
+      <div class="tm-homeToolCard__icon">02</div>
       <div>
-        <h3>Use Vehicle Codes as Clues</h3>
-        <p>Look up trouble codes when they help explain the repair path, then connect the code back to the actual repair workflow.</p>
+        <h3>Diagnostic Path</h3>
+        <p>Use code families, checks, and system context to avoid jumping straight to parts.</p>
       </div>
     </a>
 
     <a href="/repair-guides" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">🗺️</div>
+      <div class="tm-homeToolCard__icon">03</div>
       <div>
-        <h3>Use Repair Intelligence</h3>
-        <p>Follow repair guides for procedures, tools, torque specs where available, pro tips, and common mistakes.</p>
+        <h3>Repair Blueprint</h3>
+        <p>Open the repair guide once the likely system and repair direction are clear.</p>
       </div>
     </a>
 
     <a href="/estimator" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">🧾</div>
+      <div class="tm-homeToolCard__icon">04</div>
       <div>
-        <h3>Build the Customer Quote</h3>
-        <p>Turn the repair path into a structured quote with service-level labor, parts context, and a customer-ready PDF.</p>
+        <h3>Estimate</h3>
+        <p>Carry the service into a structured quote with labor, parts context, and customer-ready output.</p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section class="tm-homeSection">
+  <div class="tm-homeSection__head tm-homeSection__head--split">
+    <div>
+      <h2>Explore Repair Intelligence</h2>
+      <p>Jump into system hubs and workflow clusters when the job needs broader context than a single part.</p>
+    </div>
+    <a class="tm-homeSection__link" href="/diagnostics">Open diagnostics</a>
+  </div>
+
+  <div class="tm-homeSystemGrid">
+    <a class="tm-homeSystemCard" href="/repair-systems/brake-system-repairs">
+      <span>Brake System Repairs</span>
+      <p>Noise, vibration, pad, rotor, caliper, and hub workflow paths.</p>
+      <div class="tm-homeSystemCard__chips">
+        <em>Brake noise</em>
+        <em>Vibration</em>
+      </div>
+    </a>
+
+    <a class="tm-homeSystemCard" href="/repair-systems/cooling-system-diagnostics">
+      <span>Cooling System Diagnostics</span>
+      <p>Overheating, leaks, thermostat, fan, radiator, and pressure-test paths.</p>
+      <div class="tm-homeSystemCard__chips">
+        <em>P0128</em>
+        <em>Overheating</em>
+      </div>
+    </a>
+
+    <a class="tm-homeSystemCard" href="/repair-systems/engine-performance-misfire-diagnostics">
+      <span>Engine Performance & Misfire</span>
+      <p>Misfires, lean codes, rough idle, MAF checks, plugs, coils, and fuel trims.</p>
+      <div class="tm-homeSystemCard__chips">
+        <em>P0300</em>
+        <em>P0171</em>
+      </div>
+    </a>
+
+    <a class="tm-homeSystemCard" href="/repair-systems/emissions-evap-diagnostics">
+      <span>Emissions & EVAP</span>
+      <p>EVAP leaks, purge and vent valves, smoke testing, fuel smell, and CEL paths.</p>
+      <div class="tm-homeSystemCard__chips">
+        <em>P0442</em>
+        <em>P0455</em>
       </div>
     </a>
   </div>
