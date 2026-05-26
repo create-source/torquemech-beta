@@ -33,6 +33,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="tm-intel-page">
 <section class="tm-section">
   <div class="tm-card">
     <div class="tm-eyebrow">TorqueMech Repair System Hub</div>
@@ -41,6 +42,11 @@
     {% if hub.intro %}
     <p>{{ hub.intro }}</p>
     {% endif %}
+    <div class="tm-intel-flow-strip" aria-label="System workflow notes">
+      <span>Start by system</span>
+      <span>Check symptoms and codes</span>
+      <span>Estimate when narrowed</span>
+    </div>
     {% if vehicle_context and vehicle_context.has_context %}
     <div class="tm-workflow-context-note">
       <strong>Viewing system guidance for:</strong>
@@ -61,7 +67,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Repairs</h2>
-    <p class="tm-muted">Open the repair blueprint after symptoms, measurements, and related system checks point to that path.</p>
+    <p class="tm-muted tm-section-note">Open once checks point to a repair.</p>
     <div class="tm-related-repair-grid">
       {% for item in hub.related_repairs %}
       <div class="tm-linked-card">
@@ -90,7 +96,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Symptoms</h2>
-    <p class="tm-muted">Use symptom paths when the complaint needs one more confirmation step before the estimate.</p>
+    <p class="tm-muted tm-section-note">Use symptoms for one more confirmation step.</p>
     <div class="tm-stack">
       {% for item in hub.common_symptoms %}
       <div class="tm-linked-card">
@@ -117,7 +123,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Codes</h2>
-    <p class="tm-muted">Use code context to confirm the system direction before pricing a repair.</p>
+    <p class="tm-muted tm-section-note">Use codes to confirm direction.</p>
     <ul class="tm-list">
       {% for item in hub.related_obd_codes %}
       <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
@@ -131,7 +137,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Common Diagnostic Paths</h2>
-    <p class="tm-muted">Use these checks to decide whether to keep inspecting, open a repair blueprint, or continue the estimate.</p>
+    <p class="tm-muted tm-section-note">Pick the path that matches the evidence.</p>
     <div class="tm-diagnostic-path-grid">
       {% for path in hub.diagnostic_path_sections %}
       <div class="tm-linked-card">
@@ -177,7 +183,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Common Next Steps</h2>
-    <p class="tm-muted">Use these shortcuts when the system path is clear enough to keep inspection moving.</p>
+    <p class="tm-muted tm-section-note">Shortcuts for the next inspection move.</p>
     {% if hub.workflow_next_steps %}
     <div class="tm-related-repair-grid">
       {% for item in hub.workflow_next_steps %}
@@ -260,7 +266,7 @@
 <section class="tm-section">
   <div class="tm-card tm-estimate-repair-card tm-system-hub-cta">
     <h2>Continue Estimate</h2>
-    <p class="tm-muted">Move into pricing once the symptom, code, and inspection path point to a likely repair. Vehicle and service context stay attached through the estimator handoff.</p>
+    <p class="tm-muted tm-section-note">Price it when symptom, code, and checks agree.</p>
     <a class="tm-btn tm-btn-primary tm-estimate-repair-cta" href="{{ hub.estimate.href }}">
       {% if vehicle_context and vehicle_context.has_context %}
       Continue estimate for {{ vehicle_context.label }} &rarr;
@@ -273,8 +279,9 @@
       Continue Estimate
     </a>
     {% endif %}
-    <p class="tm-muted" style="margin-top:0;">System guidance is inspection-first and may vary by engine, trim, drivetrain, and vehicle condition.</p>
+    <p class="tm-muted" style="margin-top:0;">Inspection-first; vehicle access can vary.</p>
   </div>
 </section>
 {% endif %}
+</div>
 {% endblock %}

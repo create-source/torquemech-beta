@@ -4802,3 +4802,153 @@ h3{
 .tm-section .tm-card + .tm-card {
     margin-top: 1rem;
 }
+
+/* Foundation 10.4: compact repair intelligence scan layer */
+.tm-intel-page .tm-section{
+  padding: 14px 0;
+}
+
+.tm-intel-page .tm-card,
+.tm-intel-page .tm-linked-card{
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.tm-intel-page .tm-page-title{
+  margin-bottom: 8px;
+}
+
+.tm-intel-page h2{
+  margin-bottom: 8px;
+  font-size: clamp(1.28rem, 2vw, 1.65rem);
+  letter-spacing: -.015em;
+}
+
+.tm-intel-page h3{
+  margin-bottom: 6px;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.tm-intel-page p{
+  margin-top: 0;
+  line-height: 1.5;
+}
+
+.tm-intel-page .tm-card > p.tm-muted:last-child,
+.tm-intel-page .tm-linked-card > p.tm-muted:last-child{
+  margin-bottom: 0;
+}
+
+.tm-intel-page .tm-list{
+  margin-top: 8px;
+  line-height: 1.55;
+}
+
+.tm-intel-page .tm-list li + li{
+  margin-top: 4px;
+}
+
+.tm-intel-page .tm-related-repair-grid,
+.tm-intel-page .tm-diagnostic-path-grid{
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.tm-intel-page .tm-stack{
+  display: grid;
+  gap: 10px;
+}
+
+.tm-intel-page .tm-blueprint-chip-list,
+.tm-intel-page .tm-confidence-cues,
+.tm-intel-page .tm-diagnostic-path-links{
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.tm-intel-page .tm-blueprint-chip,
+.tm-intel-page .tm-confidence-cues span,
+.tm-intel-page .tm-diagnostic-path-links a,
+.tm-intel-page .tm-diagnostic-path-links span{
+  min-height: 28px;
+  padding: 6px 9px;
+  font-size: .8rem;
+}
+
+.tm-intel-page .tm-priority-list{
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tm-intel-page .tm-priority-list li{
+  line-height: 1.38;
+}
+
+.tm-intel-page .tm-subsection-title{
+  margin-top: 12px;
+  font-size: .95rem;
+}
+
+.tm-intel-page .tm-workflow-context-note,
+.tm-intel-page .tm-vehicle-context-note{
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.tm-intel-page .tm-estimate-repair-card{
+  gap: 8px;
+}
+
+.tm-intel-flow-strip{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.tm-intel-flow-strip span{
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 6px 9px;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 999px;
+  background: rgba(248,250,252,.78);
+  color: var(--tm-text-muted);
+  font-size: .8rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.tm-intel-page .tm-section-note{
+  margin: 0 0 10px 0;
+  max-width: 72ch;
+}
+
+@media (max-width: 640px){
+  .tm-intel-page .tm-section{
+    padding: 10px 0;
+  }
+
+  .tm-intel-page .tm-card,
+  .tm-intel-page .tm-linked-card{
+    padding: 13px;
+    border-radius: 12px;
+  }
+
+  .tm-intel-page .tm-page-title{
+    font-size: clamp(1.75rem, 8vw, 2.3rem);
+    line-height: 1.05;
+  }
+
+  .tm-intel-page .tm-related-repair-grid,
+  .tm-intel-page .tm-diagnostic-path-grid{
+    gap: 8px;
+  }
+
+  .tm-intel-page .tm-btn{
+    min-height: 42px;
+  }
+}

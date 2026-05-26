@@ -1,17 +1,22 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<div class="tm-intel-page">
 <section class="tm-section">
   <div class="tm-card">
     <div class="tm-eyebrow">TorqueMech Symptom Guide</div>
     <h1 class="tm-page-title">{{ symptom.title }}</h1>
     <p class="tm-muted">{{ symptom.summary }}</p>
-    <p class="tm-muted">Use the symptom as the starting point, then confirm likely causes with checks, OBD context, and repair guides before estimating or replacing parts.</p>
+    <div class="tm-intel-flow-strip" aria-label="Symptom workflow notes">
+      <span>Start with the complaint</span>
+      <span>Confirm with checks</span>
+      <span>Estimate when narrowed</span>
+    </div>
     <p>{{ symptom.intro }}</p>
     {% if workflow_context and workflow_context.has_context %}
     <div class="tm-workflow-context-note">
       <strong>Continue the repair flow</strong>
-      <span>Use these checks to narrow the concern, then return to the estimate with vehicle and service context intact.</span>
+      <span>Checks, vehicle, and service context stay together.</span>
       <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">Continue Estimate</a>
     </div>
     {% endif %}
@@ -99,7 +104,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Diagnostic Path</h2>
-    <p class="tm-muted">Use these paths to decide what to inspect first, what failures overlap, and when the repair is ready to estimate.</p>
+    <p class="tm-muted tm-section-note">Pick the first inspection path.</p>
     <div class="tm-diagnostic-path-grid">
       {% for path in symptom.diagnostic_path_sections %}
       <div class="tm-linked-card">
@@ -145,7 +150,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related OBD Codes</h2>
-    <p class="tm-muted">Move into code lookup when a scan tool confirms one of these faults, then use the code page to separate misfire, lean, EVAP, cooling, or charging causes before pricing the repair.</p>
+    <p class="tm-muted tm-section-note">Use scan data to narrow the system.</p>
     <ul class="tm-list">
       {% for item in symptom.related_obd_codes %}
       <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
@@ -159,7 +164,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Common Next Steps</h2>
-    <p class="tm-muted">Use these practical checks before opening or expanding the estimate.</p>
+    <p class="tm-muted tm-section-note">Quick checks before expanding the estimate.</p>
     {% if symptom.workflow_next_steps %}
     <div class="tm-stack">
       {% for item in symptom.workflow_next_steps %}
@@ -194,7 +199,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Symptoms</h2>
-    <p class="tm-muted">Compare nearby symptom paths when the complaint overlaps another system or driving condition.</p>
+    <p class="tm-muted tm-section-note">Compare nearby complaint patterns.</p>
     <div class="tm-stack">
       {% for item in symptom.related_symptoms %}
       <div class="tm-linked-card">
@@ -221,7 +226,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Repair Guides</h2>
-    <p class="tm-muted">Use these guides to confirm the failure path before opening an estimate, especially when spark, fuel, airflow, cooling, EVAP, or charging faults can create the same symptom.</p>
+    <p class="tm-muted tm-section-note">Use guides to confirm the fault path.</p>
     <div class="tm-stack">
       {% for cause in symptom.likely_causes %}
       <div class="tm-linked-card">
@@ -243,7 +248,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Recommended Next Repair Paths</h2>
-    <p class="tm-muted">Compare likely repair paths before replacing parts. Cost guides and estimates are strongest after symptoms, checks, code evidence, and repair-guide logic point in the same direction.</p>
+    <p class="tm-muted tm-section-note">Compare repair paths before replacing parts.</p>
     <div class="tm-stack">
       {% for item in symptom.recommended_repairs %}
       <div class="tm-linked-card">
@@ -278,7 +283,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Explore Related Systems</h2>
-    <p class="tm-muted">Use system hubs when this symptom can come from more than one repair family.</p>
+    <p class="tm-muted tm-section-note">Use when multiple systems overlap.</p>
     <div class="tm-blueprint-chip-list">
       {% for item in symptom.related_system_hubs %}
       <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
@@ -292,7 +297,7 @@
   {% if symptom.diagnostic_tools_link %}
   <div class="tm-card">
     <h2>Diagnostic Tools</h2>
-    <p class="tm-muted">Use TorqueMech diagnostic flow to move from symptom checking into code context, likely causes, and repair guide confirmation.</p>
+    <p class="tm-muted">Move from symptom to code or repair context.</p>
     <a href="{{ symptom.diagnostic_tools_link }}">Open Diagnostic Tools &rarr;</a>
   </div>
   {% endif %}
@@ -300,9 +305,10 @@
   {% if symptom.estimator_link %}
   <div class="tm-card">
     <h2>Need a Quick Estimate?</h2>
-    <p class="tm-muted">Open the estimator when the likely repair path is known and you are ready to compare labor, parts, and customer-ready quote context.</p>
+    <p class="tm-muted">Open when the likely repair is known.</p>
     <a href="{{ symptom.estimator_link }}">Continue Estimate &rarr;</a>
   </div>
   {% endif %}
 </section>
+</div>
 {% endblock %}

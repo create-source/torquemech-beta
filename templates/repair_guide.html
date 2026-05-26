@@ -1,6 +1,7 @@
 ﻿{% extends "layout.html" %}
 
 {% block content %}
+<div class="tm-intel-page">
 <section class="tm-section">
   <div class="tm-card">
     <div class="tm-eyebrow">TorqueMech Repair Guide</div>
@@ -18,15 +19,18 @@
       <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
     </div>
     {% endif %}
-    <p class="tm-muted">Use this guide to confirm the failure path before replacement, then move into pricing once symptoms, tests, and root-cause evidence point to the same repair.</p>
-    <p class="tm-muted">Exact labor time and procedure may vary by engine, trim, drivetrain, and vehicle condition.</p>
+    <div class="tm-intel-flow-strip" aria-label="Repair workflow notes">
+      <span>Confirm fault path</span>
+      <span>Estimate after checks agree</span>
+      <span>Access can vary</span>
+    </div>
   </div>
 </section>
 
 <section class="tm-section">
   <div class="tm-card">
     <h2>Load Vehicle (Optional)</h2>
-    <p class="tm-muted">Load or adjust vehicle context for guide references and estimator handoff. This does not make the guide a full vehicle-specific procedure.</p>
+    <p class="tm-muted tm-section-note">Optional context for estimator handoff.</p>
     <div class="vehicle-card">
       <div class="grid3">
         <div>
@@ -90,7 +94,7 @@
 {% if guide.inspect_first %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Mechanics Often Inspect</h2>
+    <h2>Inspect First</h2>
     <ul class="tm-list">
       {% for item in guide.inspect_first %}
       <li>{{ item }}</li>
@@ -117,7 +121,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Explore Related Systems</h2>
-    <p class="tm-muted">Use these compact hubs when the repair path overlaps another system, symptom, or code family.</p>
+    <p class="tm-muted tm-section-note">When this repair overlaps another system.</p>
     <div class="tm-blueprint-chip-list">
       {% for item in guide.related_system_hubs %}
       <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
@@ -131,7 +135,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Mechanics Often Check</h2>
-    <p class="tm-muted">Use these shortcuts to keep the repair path moving without jumping straight to parts.</p>
+    <p class="tm-muted tm-section-note">Quick checks before pricing parts.</p>
     {% if guide.workflow_next_steps %}
     <div class="tm-related-repair-grid">
       {% for item in guide.workflow_next_steps %}
@@ -248,11 +252,11 @@
     <div class="tm-blueprint-difficulty">
       <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
       {% if guide.difficulty == "Easy" %}
-      <p class="tm-muted">Usually straightforward when access is clear, parts are correct, and basic checks confirm the repair path.</p>
+      <p class="tm-muted">Straightforward when access and checks are clean.</p>
       {% elif guide.difficulty == "Moderate" %}
-      <p class="tm-muted">Requires solid inspection habits, normal shop tooling, and attention to access, fasteners, and verification after the repair.</p>
+      <p class="tm-muted">Normal shop tooling plus access and verification checks.</p>
       {% else %}
-      <p class="tm-muted">Best handled with stronger diagnostic confidence, extra access planning, and enough time for seized hardware or system bleeding/calibration steps.</p>
+      <p class="tm-muted">Plan for access, seized hardware, and verification time.</p>
       {% endif %}
     </div>
   </div>
@@ -465,7 +469,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related OBD Codes</h2>
-    <p class="tm-muted">Use related codes to connect this guide back to the scan-data pattern, then compare the matching cost guide or estimator path only after the root cause is narrowed.</p>
+    <p class="tm-muted tm-section-note">Use scan data to confirm the repair path.</p>
     <ul class="tm-list">
       {% for item in guide.related_obd_codes %}
       <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
@@ -479,7 +483,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Related Symptoms</h2>
-    <p class="tm-muted">Use symptom paths when the complaint needs one more inspection step before the repair is estimated.</p>
+    <p class="tm-muted tm-section-note">Compare nearby complaints before estimating.</p>
     <div class="tm-related-repair-grid">
       {% for item in guide.related_symptoms %}
       <div class="tm-linked-card">
@@ -506,7 +510,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Commonly Checked With</h2>
-    <p class="tm-muted">Mechanics often inspect these nearby parts, fluids, or systems before closing the repair path. Add them to the estimate only when inspection supports it.</p>
+    <p class="tm-muted tm-section-note">Add only when inspection supports it.</p>
     <div class="tm-related-repair-grid">
       {% for item in guide.recommended_repairs %}
       <div class="tm-linked-card">
@@ -554,7 +558,7 @@
 <section class="tm-section">
   <div class="tm-card tm-estimate-repair-card">
     <h2>Estimate This Repair</h2>
-    <p class="tm-muted">Once the likely fault is confirmed, move from testing to pricing. The estimator helps compare labor, parts, and service context for customer approval or a professional quote.</p>
+    <p class="tm-muted tm-section-note">Price it once the repair path is confirmed.</p>
     <a
       class="tm-btn tm-btn-primary tm-estimate-repair-cta"
       id="estimateRepairBtn"
@@ -573,7 +577,7 @@
       Continue Estimate
     </a>
     {% endif %}
-    <p class="tm-muted" style="margin-top:10px;">Exact labor time and procedure may vary by engine, trim, drivetrain, and vehicle condition.</p>
+    <p class="tm-muted" style="margin-top:10px;">Final access varies by vehicle and condition.</p>
   </div>
 </section>
 <script>
@@ -744,4 +748,5 @@
 })();
 </script>
 {% endif %}
+</div>
 {% endblock %}

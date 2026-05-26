@@ -216,6 +216,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="tm-intel-page">
 <section class="tm-section">
   <div class="tm-card">
     <div class="eyebrow">TorqueMech OBD Code Guide</div>
@@ -231,8 +232,13 @@
       <a href="/repair-guides" class="tm-btn tm-btn-secondary">Browse Repair Guides</a>
     </div>
     <p class="tm-muted" style="margin:12px 0 0 0; max-width:68ch;">
-      Treat the code as the starting point: compare symptoms, likely causes, and repair paths before pricing parts or moving into an estimate.
+      Code first. Confirm symptoms and checks before pricing parts.
     </p>
+    <div class="tm-intel-flow-strip" aria-label="OBD workflow notes">
+      <span>Read code pattern</span>
+      <span>Check likely system</span>
+      <span>Estimate after confirmation</span>
+    </div>
   </div>
 </section>
 
@@ -315,7 +321,7 @@
 
     {% if diagnostic_path.estimator_href %}
     <div style="margin-top:16px;">
-      <a class="tm-btn tm-btn-primary" href="{{ diagnostic_path.estimator_href }}">Continue Estimate</a>
+      <a class="tm-btn tm-btn-secondary" href="{{ diagnostic_path.estimator_href }}">Add Diagnostic Estimate</a>
       {% if workflow_context and workflow_context.return_href %}
       <a class="tm-btn tm-btn-secondary tm-workflow-return-link" href="{{ workflow_context.return_href }}">Back to Estimate</a>
       {% endif %}
@@ -332,7 +338,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Explore Related Systems</h2>
-    <p class="tm-muted" style="margin:0 0 12px 0;">Use system hubs to compare the code against nearby repair families before estimating parts.</p>
+    <p class="tm-muted tm-section-note">Compare nearby repair families.</p>
     <div class="tm-blueprint-chip-list">
       {% for item in related_system_hubs %}
       <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
@@ -346,7 +352,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Common Next Steps</h2>
-    <p class="tm-muted" style="margin:0 0 14px 0;">Use these checks to turn the code into a practical workflow before estimating parts.</p>
+    <p class="tm-muted tm-section-note">Turn the code into the next check.</p>
     {% if workflow_next_steps %}
     <div class="obd-cost-guides-grid">
       {% for item in workflow_next_steps %}
@@ -489,7 +495,7 @@
   <div class="tm-card">
     <h2>Likely Repairs & Cost Guides</h2>
     <p class="tm-muted" style="margin:0 0 14px 0;">
-      Use symptoms, scan data, and quick checks to confirm the likely repair path before pricing parts. The estimator helps compare repair paths before replacing anything unnecessarily.
+      Confirm the repair path before pricing parts.
     </p>
 
     {% if common_repairs %}
@@ -574,7 +580,7 @@
   <div class="tm-card">
     <h2>Related OBD Codes</h2>
     <p class="tm-muted" style="margin:0 0 14px 0;">
-      Browse nearby code-family pages when the same fault pattern overlaps across systems, such as misfire, lean fuel trim, EVAP sealing, cooling, or charging faults.
+      Browse nearby codes when systems overlap.
     </p>
     <div class="obd-related-codes-grid">
       {% for item in related_codes %}
@@ -595,7 +601,7 @@
   <div class="tm-card">
     <h2>Next Steps</h2>
     <p class="tm-muted" style="margin:0 0 14px 0;">
-      Move from code lookup to diagnosis, then estimate the likely repair only after symptoms, causes, and checks point to the same path.
+      Move from code to checks, then estimate.
     </p>
     <div class="tm-actions">
       <a class="tm-btn tm-btn-primary" href="/estimator?obd={{ code }}">Estimate This Repair</a>
@@ -604,4 +610,5 @@
     </div>
   </div>
 </section>
+</div>
 {% endblock %}
