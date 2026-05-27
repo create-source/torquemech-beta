@@ -36,7 +36,6 @@
   gap: 10px;
 }
 
-.tm-quick-find__input-wrap,
 .quick-find-input-wrap {
   position: relative;
   display: block;
@@ -45,7 +44,6 @@
   line-height: 0;
 }
 
-.tm-quick-find__input,
 .quick-find-input-wrap input {
   display: block;
   width: 100%;
@@ -59,8 +57,11 @@
   font: inherit;
 }
 
-.tm-quick-find__input::-webkit-search-cancel-button,
-.tm-quick-find__input::-webkit-search-decoration,
+.quick-find-input-wrap > input.tm-quick-find__input {
+  width: 100%;
+  padding-right: 46px !important;
+}
+
 .quick-find-input-wrap input::-webkit-search-cancel-button,
 .quick-find-input-wrap input::-webkit-search-decoration {
   appearance: none;
@@ -71,7 +72,6 @@
   color: var(--tm-text-muted);
 }
 
-.tm-quick-find__clear,
 .quick-find-clear {
   position: absolute;
   top: 50%;
@@ -88,17 +88,14 @@
   clear: none;
 }
 
-.tm-quick-find__clear:not([hidden]),
 .quick-find-clear:not([hidden]) {
   display: inline-flex;
 }
 
-.tm-quick-find__clear[hidden],
 .quick-find-clear[hidden] {
   display: none !important;
 }
 
-.tm-quick-find__clear,
 .quick-find-clear {
   align-items: center;
   justify-content: center;
@@ -113,8 +110,6 @@
   touch-action: manipulation;
 }
 
-.tm-quick-find__clear:hover,
-.tm-quick-find__clear:focus-visible,
 .quick-find-clear:hover,
 .quick-find-clear:focus-visible {
   background: rgba(15, 23, 42, .08);

@@ -59,13 +59,14 @@
 
   function initQuickFind(root) {
     const dataNode = root.querySelector("[data-quick-find-index]");
-    const input = root.querySelector(".tm-quick-find__input");
-    const clearButton = root.querySelector("[data-quick-find-clear]");
+    const inputWrap = root.querySelector(".quick-find-input-wrap");
+    const input = inputWrap ? inputWrap.querySelector("input") : null;
+    const clearButton = inputWrap ? inputWrap.querySelector(":scope > .quick-find-clear") : null;
     const form = root.querySelector(".tm-quick-find__form");
     const resultsNode = root.querySelector("[data-quick-find-results]");
     const emptyNode = root.querySelector("[data-quick-find-empty]");
 
-    if (!dataNode || !input || !form || !resultsNode || !emptyNode) return;
+    if (!dataNode || !inputWrap || !input || !clearButton || !form || !resultsNode || !emptyNode) return;
 
     let items = [];
     try {

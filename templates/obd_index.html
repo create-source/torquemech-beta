@@ -3,7 +3,7 @@
 {% block title %}{{ page_title or "OBD Code Index | TorqueMech" }}{% endblock %}
 
 {% block page_css %}
-  <link rel="stylesheet" href="/static/quick_find.css?v=1" />
+  <link rel="stylesheet" href="/static/quick_find.css?v=5" />
   <meta name="description" content="{{ meta_description or 'Browse TorqueMech OBD trouble codes by code range and open full code pages with causes, quick checks, repair direction, and estimate-ready next steps.' }}" />
   <link rel="canonical" href="{{ request.url }}" />
   <style>
@@ -396,4 +396,4 @@ document.querySelectorAll(".tm-collapse-toggle").forEach(btn=>{
 </script>
 {% endblock %}
 
-{% block page_js %}<script src="/static/quick_find.js?v=1"></script>{% endblock %}
+{% block page_js %}<script src="/static/quick_find.js?v=5"></script>{% endblock %}
