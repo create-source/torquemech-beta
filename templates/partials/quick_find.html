@@ -9,14 +9,25 @@
     <form class="tm-quick-find__form" action="#" method="get" novalidate>
       <label class="tm-quick-find__label" for="tmQuickFindInput">Quick Find</label>
       <div class="tm-quick-find__controls">
-        <input
-          id="tmQuickFindInput"
-          class="tm-quick-find__input"
-          type="search"
-          placeholder="Search P0420, alternator, oxygen sensor, rough idle..."
-          autocomplete="off"
-          spellcheck="false"
-        />
+        <div class="tm-quick-find__input-wrap">
+          <input
+            id="tmQuickFindInput"
+            class="tm-quick-find__input"
+            type="search"
+            placeholder="Search P0420, alternator, oxygen sensor, rough idle..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button
+            class="tm-quick-find__clear"
+            type="button"
+            aria-label="Clear Quick Find search"
+            data-quick-find-clear
+            hidden
+          >
+            &times;
+          </button>
+        </div>
         <button class="tm-btn tm-btn-primary tm-quick-find__button" type="submit">Find Repair Path</button>
       </div>
     </form>

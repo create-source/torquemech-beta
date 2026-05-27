@@ -52,8 +52,7 @@
     margin-top: 14px;
   }
 
-  .diag-system-chip,
-  .diag-workflow-card {
+  .diag-system-chip {
     display: flex;
     flex-direction: column;
     gap: 7px;
@@ -65,6 +64,21 @@
     text-decoration: none;
   }
 
+  .diag-workflow-grid {
+    gap: 10px;
+  }
+
+  .diag-workflow-card {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid rgba(15, 23, 42, .10);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(248,250,252,.92) 100%);
+    box-shadow: 0 8px 18px rgba(15,23,42,.05);
+  }
+
   .diag-system-chip strong,
   .diag-workflow-card h3 {
     margin: 0;
@@ -73,21 +87,33 @@
     line-height: 1.3;
   }
 
+  .diag-workflow-card p {
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.42;
+  }
+
   .diag-workflow-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 4px;
+    gap: 7px;
   }
 
   .diag-workflow-links a {
-    border: 1px solid rgba(255,255,255,.16);
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    max-width: 100%;
+    border: 1px solid rgba(17, 179, 173, .22);
     border-radius: 999px;
-    padding: 7px 10px;
-    color: inherit;
+    padding: 6px 10px;
+    background: #f0fdfa;
+    color: #0f766e;
     text-decoration: none;
-    font-size: .9rem;
-    font-weight: 700;
+    font-size: .82rem;
+    font-weight: 850;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
   }
 
   @media (min-width: 720px) {
@@ -101,6 +127,20 @@
 
     .diag-workflow-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .diag-workflow-grid {
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .diag-workflow-card {
+      padding: 12px;
+      border-radius: 12px;
     }
   }
 </style>

@@ -60,6 +60,7 @@
   function initQuickFind(root) {
     const dataNode = root.querySelector("[data-quick-find-index]");
     const input = root.querySelector(".tm-quick-find__input");
+    const clearButton = root.querySelector("[data-quick-find-clear]");
     const form = root.querySelector(".tm-quick-find__form");
     const resultsNode = root.querySelector("[data-quick-find-results]");
     const emptyNode = root.querySelector("[data-quick-find-empty]");
@@ -75,6 +76,10 @@
 
     function search(term) {
       const normalizedTerm = normalize(term);
+      if (clearButton) {
+        clearButton.hidden = !input.value.trim();
+      }
+
       if (normalizedTerm.length < 2) {
         resultsNode.hidden = true;
         resultsNode.innerHTML = "";
@@ -114,6 +119,14 @@
     input.addEventListener("input", function () {
       search(input.value);
     });
+
+    if (clearButton) {
+      clearButton.addEventListener("click", function () {
+        input.value = "";
+        search("");
+        input.focus();
+      });
+    }
 
     form.addEventListener("submit", function (event) {
       event.preventDefault();

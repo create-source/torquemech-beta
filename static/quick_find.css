@@ -36,10 +36,15 @@
   gap: 10px;
 }
 
+.tm-quick-find__input-wrap {
+  position: relative;
+  min-width: 0;
+}
+
 .tm-quick-find__input {
   width: 100%;
   min-height: 46px;
-  padding: 12px 14px;
+  padding: 12px 46px 12px 14px;
   border: 1px solid var(--tm-border);
   border-radius: 14px;
   background: var(--tm-surface);
@@ -50,6 +55,33 @@
 
 .tm-quick-find__input::placeholder {
   color: var(--tm-text-muted);
+}
+
+.tm-quick-find__clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tm-text-muted);
+  font-size: 1.35rem;
+  font-weight: 850;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.tm-quick-find__clear:hover,
+.tm-quick-find__clear:focus-visible {
+  background: rgba(15, 23, 42, .08);
+  color: var(--tm-text);
 }
 
 .tm-quick-find__button {
