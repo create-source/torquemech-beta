@@ -4622,7 +4622,8 @@ h3{
 #blueprint-workflow,
 #mechanics-often-check,
 #related-symptoms,
-#companion-repairs{
+#companion-repairs,
+#repair-intelligence{
   scroll-margin-top:76px;
 }
 
@@ -4678,6 +4679,77 @@ h3{
   border-color:rgba(17, 179, 173, .20);
   background:#f0fdfa;
   color:#0f766e;
+}
+
+.tm-repair-intel-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:12px;
+  margin-top:12px;
+}
+
+.tm-repair-intel-panel{
+  min-width:0;
+  padding:12px;
+  border:1px solid rgba(15, 23, 42, .09);
+  border-radius:12px;
+  background:rgba(255, 255, 255, .72);
+}
+
+.tm-repair-intel-panel h3{
+  margin-bottom:8px;
+}
+
+.tm-tool-group-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.tm-tool-group-grid strong{
+  display:block;
+  color:var(--tm-text);
+  font-size:.78rem;
+  font-weight:950;
+  line-height:1.2;
+}
+
+.tm-torque-spec-list{
+  display:grid;
+  gap:8px;
+}
+
+.tm-torque-spec-row{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:10px;
+  align-items:center;
+  min-height:36px;
+  padding:8px 10px;
+  border:1px solid rgba(15, 23, 42, .09);
+  border-radius:10px;
+  background:#ffffff;
+}
+
+.tm-torque-spec-row strong{
+  color:var(--tm-text);
+  font-size:.84rem;
+  font-weight:900;
+  line-height:1.25;
+}
+
+.tm-torque-value{
+  color:#0f766e;
+  font-size:.82rem;
+  font-weight:950;
+  line-height:1.2;
+  text-align:right;
+}
+
+.tm-torque-note{
+  margin:10px 0 0;
+  font-size:.84rem;
+  line-height:1.4;
 }
 
 .tm-workflow-next-step{
@@ -4858,6 +4930,24 @@ h3{
 
   .tm-workflow-chip-grid{
     grid-template-columns:1fr;
+  }
+
+  .tm-repair-intel-grid,
+  .tm-tool-group-grid{
+    grid-template-columns:1fr;
+  }
+
+  .tm-repair-intel-panel{
+    padding:11px;
+  }
+
+  .tm-torque-spec-row{
+    grid-template-columns:1fr;
+    gap:4px;
+  }
+
+  .tm-torque-value{
+    text-align:left;
   }
 
   .tm-blueprint-meta{

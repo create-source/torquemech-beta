@@ -338,18 +338,90 @@
 </section>
 {% endif %}
 
-{% if guide.tools_required %}
-<section class="tm-section">
+<section class="tm-section" id="repair-intelligence">
   <div class="tm-card">
-    <h2>Tools Required</h2>
-    <ul class="tm-list">
-      {% for tool in guide.tools_required %}
-      <li>{{ tool }}</li>
-      {% endfor %}
-    </ul>
+    <div class="tm-blueprint-action-kicker">Repair Intelligence</div>
+    <h2>Technician Notes</h2>
+    <div class="tm-repair-intel-grid">
+      <div class="tm-repair-intel-panel">
+        <h3>Tools Needed</h3>
+        <div class="tm-tool-group-grid">
+          <div>
+            <strong>Basic tools</strong>
+            <div class="tm-blueprint-chip-list">
+              {% for tool in guide.tool_groups.basic %}
+              <span class="tm-blueprint-chip">{{ tool }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <strong>Specialty tools</strong>
+            <div class="tm-blueprint-chip-list">
+              {% for tool in guide.tool_groups.specialty %}
+              <span class="tm-blueprint-chip">{{ tool }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <strong>Supplies / fluids</strong>
+            <div class="tm-blueprint-chip-list">
+              {% for tool in guide.tool_groups.supplies %}
+              <span class="tm-blueprint-chip">{{ tool }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tm-repair-intel-panel">
+        <h3>Torque Specs</h3>
+        <div
+          class="tm-torque-spec-list"
+          id="torqueSpecList"
+          data-empty-note="Torque specs vary by vehicle, engine, and fastener. Verify exact specs before final assembly."
+        >
+          {% if guide.verified_torque_specs %}
+          {% for spec in guide.verified_torque_specs %}
+          <div class="tm-torque-spec-row">
+            <strong>{{ spec.label }}</strong>
+            <span class="tm-torque-value" data-spec-label="{{ spec.label | lower }}">{{ spec.value }}</span>
+          </div>
+          {% endfor %}
+          {% endif %}
+        </div>
+        <p class="tm-muted tm-torque-note" id="torqueSpecsNote">
+          {% if guide.verified_torque_specs %}
+          Showing verified specs for the selected vehicle when available.
+          {% else %}
+          Torque specs vary by vehicle, engine, and fastener. Verify exact specs before final assembly.
+          {% endif %}
+        </p>
+      </div>
+
+      {% if guide.recommended_while_replacing %}
+      <div class="tm-repair-intel-panel">
+        <h3>Recommended While Replacing</h3>
+        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+          {% for item in guide.recommended_while_replacing %}
+          <span class="tm-blueprint-chip">{{ item }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if guide.post_repair_verification %}
+      <div class="tm-repair-intel-panel">
+        <h3>Post-Repair Verification</h3>
+        <ul class="tm-priority-list">
+          {% for item in guide.post_repair_verification %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
   </div>
 </section>
-{% endif %}
 
 {% if guide.diagram %}
 <section class="tm-section">
@@ -361,27 +433,6 @@
       <figcaption class="tm-repair-caption">{{ guide.diagram.caption }}</figcaption>
       {% endif %}
     </figure>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.torque_specs %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Torque Specs</h2>
-    <ul class="tm-list">
-      {% for spec in guide.torque_specs %}
-      <li>
-        <strong>{{ spec.label }}</strong> -
-        <span class="tm-torque-value" data-spec-label="{{ spec.label | lower }}">
-          {{ spec.value }}
-        </span>
-      </li>
-      {% endfor %}
-    </ul>
-    <p class="tm-muted" id="torqueSpecsNote" style="margin-top: 12px;">
-      Load a vehicle to apply stored torque specs where available. Unsupported labels stay on the current guide placeholders.
-    </p>
   </div>
 </section>
 {% endif %}
@@ -585,6 +636,7 @@
   const guideSlug = {{ guide.get("slug", "") | tojson }};
   const initialVehicleContext = {{ vehicle_context | tojson }};
   const initialWorkflowContext = {{ workflow_context | tojson }};
+  const torqueSpecLabels = {{ guide.get("torque_spec_labels", []) | tojson }};
   const yearSelect = document.getElementById("guideYear");
   const makeSelect = document.getElementById("guideMake");
   const makeSearch = document.getElementById("guideMakeSearch");
@@ -593,20 +645,15 @@
   const clearVehicleBtn = document.getElementById("clearVehicleBtn");
   const loadedVehicleNote = document.getElementById("loadedVehicleNote");
   const estimateRepairBtn = document.getElementById("estimateRepairBtn");
+  const torqueSpecList = document.getElementById("torqueSpecList");
   const torqueSpecsNote = document.getElementById("torqueSpecsNote");
-  const torqueValueEls = Array.from(document.querySelectorAll(".tm-torque-value"));
 
   if (!yearSelect || !makeSelect || !makeSearch || !makeResults || !modelSelect) {
     return;
   }
 
-  const defaultTorqueValues = new Map(
-    torqueValueEls.map((el) => [
-      String(el.dataset.specLabel || "").trim().toLowerCase(),
-      (el.textContent || "").trim(),
-    ])
-  );
   const defaultTorqueNote = torqueSpecsNote ? torqueSpecsNote.textContent.trim() : "";
+  const emptyTorqueNote = torqueSpecList?.dataset.emptyNote || "Torque specs vary by vehicle, engine, and fastener. Verify exact specs before final assembly.";
 
   function updateEstimateLink(year = "", make = "", model = "", displayModel = "") {
     if (!estimateRepairBtn) return;
@@ -627,39 +674,38 @@
   }
 
   function applyTorqueSpecs(specs) {
-    const normalizedSpecs = new Map(
-      Object.entries(specs || {}).map(([label, value]) => [
-        String(label || "").trim().toLowerCase(),
-        String(value || "").trim(),
-      ])
-    );
+    if (!torqueSpecList) return 0;
+    const entries = Object.entries(specs || {}).filter(([, value]) => String(value || "").trim());
+    torqueSpecList.innerHTML = "";
+    entries.forEach(([label, value]) => {
+      const row = document.createElement("div");
+      row.className = "tm-torque-spec-row";
 
-    let appliedCount = 0;
-    torqueValueEls.forEach((el) => {
-      const labelKey = String(el.dataset.specLabel || "").trim().toLowerCase();
-      const fallbackValue = defaultTorqueValues.get(labelKey) || "";
-      const matchedValue = normalizedSpecs.get(labelKey);
+      const labelEl = document.createElement("strong");
+      labelEl.textContent = label;
+      row.appendChild(labelEl);
 
-      if (matchedValue) {
-        el.textContent = matchedValue;
-        appliedCount += 1;
-      } else {
-        el.textContent = fallbackValue;
-      }
+      const valueEl = document.createElement("span");
+      valueEl.className = "tm-torque-value";
+      valueEl.dataset.specLabel = String(label || "").trim().toLowerCase();
+      valueEl.textContent = String(value || "").trim();
+      row.appendChild(valueEl);
+
+      torqueSpecList.appendChild(row);
     });
 
-    return appliedCount;
+    return entries.length;
   }
 
   function resetTorqueSpecs() {
     applyTorqueSpecs({});
     if (torqueSpecsNote) {
-      torqueSpecsNote.textContent = defaultTorqueNote;
+      torqueSpecsNote.textContent = emptyTorqueNote;
     }
   }
 
   async function refreshTorqueSpecs(year, make, model) {
-    if (!guideSlug || !year || !make || !model || !torqueValueEls.length) {
+    if (!guideSlug || !year || !make || !model || !torqueSpecLabels.length) {
       resetTorqueSpecs();
       return;
     }
@@ -676,8 +722,8 @@
 
       if (torqueSpecsNote) {
         torqueSpecsNote.textContent = appliedCount
-          ? `Showing stored torque specs for ${year} ${make} ${model} where available.`
-          : `No stored torque specs found for ${year} ${make} ${model} yet. Placeholder values remain.`;
+          ? `Showing verified torque specs for ${year} ${make} ${model} where available.`
+          : emptyTorqueNote;
       }
     } catch (_) {
       resetTorqueSpecs();

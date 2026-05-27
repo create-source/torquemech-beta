@@ -391,7 +391,7 @@ def normalize_repair_guide_torque_specs_map(raw_specs: Any) -> Dict[str, str]:
     normalized_specs: Dict[str, str] = {}
     for label, value in raw_specs.items():
         label_text = str(label or "").strip()
-        value_text = str(value or "").strip()
+        value_text = normalize_torque_spec_value(value)
         if label_text and value_text:
             normalized_specs[label_text] = value_text
     return normalized_specs
@@ -1500,6 +1500,157 @@ def normalize_repair_guide_media_item(media: Any, fallback_alt: str) -> Optional
     return None
 
 
+def is_placeholder_torque_value(value: Any) -> bool:
+    text = str(value or "").strip().lower()
+    return not text or any(
+        marker in text
+        for marker in (
+            "vehicle specific",
+            "load vehicle",
+            "varies",
+            "verify exact",
+            "placeholder",
+            "tbd",
+        )
+    )
+
+
+def normalize_torque_spec_value(value: Any) -> str:
+    text = str(value or "").strip()
+    return (
+        text.replace("NÂ·m", "Nm")
+        .replace("N·m", "Nm")
+        .replace("lb-ft", "ft-lb")
+    )
+
+
+def normalize_repair_guide_tool_groups(raw_tools: Any) -> Dict[str, List[str]]:
+    if isinstance(raw_tools, dict):
+        return {
+            "basic": normalize_repair_guide_list(
+                raw_tools.get("basic") or raw_tools.get("basic_tools")
+            ),
+            "specialty": normalize_repair_guide_list(
+                raw_tools.get("specialty") or raw_tools.get("specialty_tools")
+            ),
+            "supplies": normalize_repair_guide_list(
+                raw_tools.get("supplies")
+                or raw_tools.get("shop_supplies")
+                or raw_tools.get("fluids")
+            ),
+        }
+
+    basic_terms = (
+        "jack",
+        "stand",
+        "wrench",
+        "socket",
+        "ratchet",
+        "pliers",
+        "screwdriver",
+        "impact",
+    )
+    supply_terms = (
+        "cleaner",
+        "coolant",
+        "fluid",
+        "grease",
+        "lubricant",
+        "sealant",
+        "gasket",
+        "washer",
+        "supplies",
+    )
+    specialty_terms = (
+        "torque wrench",
+        "scanner",
+        "scan tool",
+        "pressure",
+        "bleeder",
+        "compressor",
+        "puller",
+        "tester",
+        "multimeter",
+        "voltmeter",
+        "clamp",
+        "funnel",
+    )
+
+    groups = {"basic": [], "specialty": [], "supplies": []}
+    for item in normalize_repair_guide_list(raw_tools):
+        text = item.lower()
+        if any(term in text for term in supply_terms):
+            groups["supplies"].append(item)
+        elif any(term in text for term in specialty_terms):
+            groups["specialty"].append(item)
+        elif any(term in text for term in basic_terms):
+            groups["basic"].append(item)
+        else:
+            groups["basic"].append(item)
+
+    return groups
+
+
+def infer_repair_precision_defaults(guide: Dict[str, Any]) -> Dict[str, List[str]]:
+    text = " ".join(
+        str(value or "")
+        for value in (
+            guide.get("slug"),
+            guide.get("title"),
+            guide.get("category"),
+            guide.get("subcategory"),
+            " ".join(guide.get("related_systems") or []),
+            " ".join(guide.get("repair_overview") or []),
+        )
+    ).lower()
+
+    tools = {"basic": [], "specialty": [], "supplies": []}
+    recommended: List[str] = []
+    verification: List[str] = []
+
+    def add_many(target: List[str], values: List[str]) -> None:
+        for value in values:
+            if value and value not in target:
+                target.append(value)
+
+    if any(term in text for term in ("water pump", "cooling", "coolant", "thermostat", "radiator")):
+        add_many(tools["basic"], ["Socket set", "Wrenches", "Drain pan"])
+        add_many(tools["specialty"], ["Cooling system pressure tester", "Spill-free funnel or vacuum fill tool", "Torque wrench"])
+        add_many(tools["supplies"], ["Correct coolant", "Gasket or sealant as specified", "Shop towels"])
+        recommended = ["Coolant service", "Belt inspection / replacement", "Thermostat inspection", "Radiator hose inspection"]
+        verification = ["Refill and bleed cooling system", "Pressure-test for leaks", "Confirm operating temperature", "Verify radiator fan operation", "Road test and recheck coolant level"]
+    elif any(term in text for term in ("brake", "pad", "rotor", "caliper")):
+        add_many(tools["basic"], ["Floor jack", "Jack stands", "Lug wrench", "Socket set"])
+        add_many(tools["specialty"], ["Torque wrench", "Brake piston compressor", "Brake bleeder when hydraulics are opened"])
+        add_many(tools["supplies"], ["Brake cleaner", "Brake lubricant", "Brake fluid if bleeding"])
+        recommended = ["Rotor inspection", "Caliper slide inspection", "Brake fluid inspection", "Hardware inspection"]
+        verification = ["Torque wheel fasteners", "Pump brake pedal before moving", "Confirm pedal feel", "Check for drag or leaks", "Road test and recheck noise/vibration"]
+    elif any(term in text for term in ("alternator", "charging", "battery")):
+        add_many(tools["basic"], ["Socket set", "Wrenches", "Belt tool when required"])
+        add_many(tools["specialty"], ["Digital multimeter", "Battery tester", "Torque wrench"])
+        add_many(tools["supplies"], ["Battery terminal cleaner", "Dielectric grease as appropriate"])
+        recommended = ["Battery test", "Belt / tensioner inspection", "Charging cable inspection", "Ground inspection"]
+        verification = ["Confirm charging voltage", "Load-test battery if needed", "Check belt tracking", "Clear low-voltage codes", "Road test and recheck charging output"]
+    elif any(term in text for term in ("spark plug", "ignition", "misfire")):
+        add_many(tools["basic"], ["Socket set", "Extensions", "Ignition coil puller when required"])
+        add_many(tools["specialty"], ["Spark plug socket", "Gap gauge when applicable", "Torque wrench"])
+        add_many(tools["supplies"], ["Dielectric grease as appropriate", "Compressed air for plug wells"])
+        recommended = ["Ignition coil boot inspection", "Plug well inspection", "Misfire code review", "Intake gasket inspection when removed"]
+        verification = ["Verify plug type and gap", "Torque plugs to spec when available", "Confirm coil connectors are seated", "Check misfire counters", "Road test and recheck idle quality"]
+    else:
+        add_many(tools["basic"], ["Basic hand tools", "Socket set", "Wrenches"])
+        add_many(tools["specialty"], ["Torque wrench", "Scan tool when diagnosis is involved"])
+        add_many(tools["supplies"], ["Shop towels", "Cleaner or fluid required by the repair"])
+        recommended = ["Inspect nearby wear items", "Check fasteners and mounting surfaces", "Review related symptoms"]
+        verification = ["Confirm repair concern is resolved", "Check for leaks, noise, or warning lights", "Road test when appropriate", "Recheck fluid level or fastener security if applicable"]
+
+    return {
+        "tool_groups": tools,
+        "recommended_while_replacing": recommended,
+        "post_repair_verification": verification,
+    }
+
+
 def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     guide = dict(raw_guide) if isinstance(raw_guide, dict) else {}
     normalized: Dict[str, Any] = dict(guide)
@@ -1525,8 +1676,17 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     normalized["testing_approach"] = normalize_repair_guide_list(guide.get("testing_approach"))
     normalized["common_mistakes"] = normalize_repair_guide_list(guide.get("common_mistakes"))
     normalized["repair_overview"] = normalize_repair_guide_list(guide.get("repair_overview"))
-    normalized["tools_required"] = normalize_repair_guide_list(
-        guide.get("tools_required") or guide.get("tools")
+    precision_defaults = infer_repair_precision_defaults(normalized)
+    normalized["tool_groups"] = normalize_repair_guide_tool_groups(
+        guide.get("tool_groups") or guide.get("tools_required") or guide.get("tools")
+    )
+    for group_key, fallback_items in precision_defaults["tool_groups"].items():
+        if not normalized["tool_groups"].get(group_key):
+            normalized["tool_groups"][group_key] = fallback_items
+    normalized["tools_required"] = (
+        normalized["tool_groups"]["basic"]
+        + normalized["tool_groups"]["specialty"]
+        + normalized["tool_groups"]["supplies"]
     )
     normalized["repair_steps"] = normalize_repair_guide_list(
         guide.get("repair_steps") or guide.get("steps")
@@ -1553,6 +1713,14 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     normalized["coming_next"] = normalize_repair_guide_list(guide.get("coming_next"))
     normalized["related_obd_codes"] = normalize_symptom_obd_codes(guide.get("related_obd_codes"))
     normalized["recommended_repairs"] = normalize_symptom_recommended_repairs(guide.get("recommended_repairs"))
+    normalized["recommended_while_replacing"] = (
+        normalize_repair_guide_list(guide.get("recommended_while_replacing"))
+        or precision_defaults["recommended_while_replacing"]
+    )
+    normalized["post_repair_verification"] = (
+        normalize_repair_guide_list(guide.get("post_repair_verification") or guide.get("verification_checks"))
+        or precision_defaults["post_repair_verification"]
+    )
     normalized["related_symptoms"] = normalize_related_link_items(guide.get("related_symptoms"))
 
     difficulty = str(guide.get("difficulty") or "").strip().title()
@@ -1615,15 +1783,20 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     normalized["step_images"] = sorted(normalized_step_images, key=lambda item: item["step"])
 
     normalized_specs: List[Dict[str, str]] = []
+    torque_spec_labels: List[str] = []
     for spec in guide.get("torque_specs", []):
         if not isinstance(spec, dict):
             continue
 
         label = str(spec.get("label") or spec.get("part") or "").strip()
-        value = str(spec.get("value") or spec.get("spec") or "").strip()
-        if label and value:
+        value = normalize_torque_spec_value(spec.get("value") or spec.get("spec") or "")
+        if label and label not in torque_spec_labels:
+            torque_spec_labels.append(label)
+        if label and value and not is_placeholder_torque_value(value):
             normalized_specs.append({"label": label, "value": value})
     normalized["torque_specs"] = normalized_specs
+    normalized["verified_torque_specs"] = normalized_specs
+    normalized["torque_spec_labels"] = torque_spec_labels
 
     diagnostic_context = guide.get("diagnostic_context")
     if isinstance(diagnostic_context, dict):
@@ -8806,6 +8979,18 @@ async def repair_guide_page(request: Request, slug: str):
         )
         estimate["href"] = append_workflow_context_to_href(estimate_href, workflow_context)
         guide["estimate"] = estimate
+
+    vehicle_torque_specs = get_repair_guide_vehicle_torque_specs(
+        slug,
+        vehicle_context.get("year") or "",
+        vehicle_context.get("make") or "",
+        vehicle_context.get("model") or "",
+    )
+    if vehicle_torque_specs:
+        guide["verified_torque_specs"] = [
+            {"label": label, "value": value}
+            for label, value in vehicle_torque_specs.items()
+        ]
 
     guide["recommended_repairs"] = apply_workflow_context_to_repair_items(
         guide.get("recommended_repairs") or [],
