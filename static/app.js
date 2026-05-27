@@ -2506,8 +2506,13 @@ const confidenceEl = document.getElementById("laborConfidence");
         <span>${escapeServiceResultHtml(confidenceGuidance.cue)}</span>
         ${escapeServiceResultHtml(confidenceGuidance.priority)}
       </div>
+      <div class="selected-service-context__momentum" aria-label="Pricing workflow">
+        <span>Review labor range</span>
+        <span>Adjust parts/travel</span>
+        <span>Add to quote</span>
+      </div>
       ${blueprintHref ? `<a class="selected-service-context__link" href="${escapeServiceResultHtml(blueprintHref)}">View repair blueprint with vehicle context</a>` : ""}
-      <div class="selected-service-context__note">Adjust labor, parts, or travel fee before adding to the quote.</div>
+      <div class="selected-service-context__note">Pricing is staged. Confirm the numbers before adding the job.</div>
     `;
     selectedServiceContextEl.classList.remove("hidden");
   }
@@ -6257,10 +6262,16 @@ if (getEstimateHint) {
       const details = vehicleLoaded && serviceLoaded
         ? "Vehicle and repair path carried into this quote."
         : serviceLoaded
-          ? "Repair path carried into the estimator."
+          ? "Repair path staged for this quote."
           : "Guide context carried into the estimator.";
 
-      handoffTrustEl.innerHTML = `<strong>Repair guide context loaded</strong><span>${details}</span>`;
+      handoffTrustEl.innerHTML = `
+        <div>
+          <strong>Repair guide context loaded</strong>
+          <span>${details}</span>
+        </div>
+        <em>Next: review pricing, then add to quote.</em>
+      `;
       handoffTrustEl.classList.remove("hidden");
     }
 

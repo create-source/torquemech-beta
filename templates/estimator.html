@@ -80,8 +80,11 @@
 
     {% if not shared_id %}
     <div id="repairGuideHandoffTrust" class="tm-repair-handoff-trust hidden" aria-live="polite">
-      <strong>Repair guide context loaded</strong>
-      <span>Vehicle and repair path carried into this quote.</span>
+      <div>
+        <strong>Repair guide context loaded</strong>
+        <span>Vehicle and repair path carried into this quote.</span>
+      </div>
+      <em>Next: review pricing, then add to quote.</em>
     </div>
 
     <div class="tm-estimator-credibility" aria-label="TorqueMech estimator credibility">
@@ -298,7 +301,7 @@
         </div>
 
         <p class="recalc-note">
-          Adjust labor, parts, flat rate, or travel. The quote total and customer PDF stay synced.
+          Review labor range, adjust parts or travel if needed, then add the job.
         </p>
       </div>
 

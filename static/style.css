@@ -88,6 +88,10 @@ textarea{
   display: none !important;
 }
 
+[hidden]{
+  display: none !important;
+}
+
 .sr-only{
   position:absolute;
   width:1px;
@@ -952,19 +956,27 @@ button:active{
 }
 
 .tm-repair-handoff-trust{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  width:max-content;
+  display:grid;
+  gap:5px;
+  width:min(680px, 100%);
   max-width:100%;
   margin-top:12px;
-  padding:9px 11px;
-  border:1px solid rgba(15,118,110,.20);
-  border-radius:12px;
-  background:#f0fdfa;
+  padding:10px 12px;
+  border:1px solid rgba(15,118,110,.24);
+  border-left:4px solid #14b8a6;
+  border-radius:13px;
+  background:linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
   color:#334155;
   font-size:.84rem;
   line-height:1.25;
+  box-shadow:0 8px 18px rgba(15,118,110,.06);
+}
+
+.tm-repair-handoff-trust > div{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px 8px;
+  align-items:baseline;
 }
 
 .tm-repair-handoff-trust strong{
@@ -974,6 +986,12 @@ button:active{
 
 .tm-repair-handoff-trust span{
   font-weight:800;
+}
+
+.tm-repair-handoff-trust em{
+  color:#0f172a;
+  font-style:normal;
+  font-weight:900;
 }
 
 .tm-estimator-credibility__item{
@@ -1374,7 +1392,8 @@ button:active{
 .selected-service-context__summary,
 .selected-service-context__meta,
 .selected-service-context__note,
-.selected-service-context__confidence{
+.selected-service-context__confidence,
+.selected-service-context__momentum{
   margin-top: 4px;
 }
 
@@ -1396,6 +1415,27 @@ button:active{
   font-weight:900;
   line-height:1.1;
   text-transform:uppercase;
+}
+
+.selected-service-context__momentum{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  padding-top:2px;
+}
+
+.selected-service-context__momentum span{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:4px 7px;
+  border:1px solid rgba(15,118,110,.14);
+  border-radius:999px;
+  background:#ffffff;
+  color:#0f172a;
+  font-size:.7rem;
+  font-weight:900;
+  line-height:1.15;
 }
 
 .selected-service-context__link{
@@ -4783,6 +4823,28 @@ h3{
   letter-spacing:0;
 }
 
+.tm-next-action-strip{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:6px;
+}
+
+.tm-next-action-strip span{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:6px 7px;
+  border:1px solid rgba(15,118,110,.16);
+  border-radius:9px;
+  background:#ffffff;
+  color:#0f172a;
+  font-size:.72rem;
+  font-weight:900;
+  line-height:1.15;
+  text-align:center;
+}
+
 .tm-blueprint-action-kicker{
   display:block;
   margin-bottom:7px;
@@ -4800,6 +4862,13 @@ h3{
   min-width:0;
 }
 
+.tm-blueprint-action-panel .tm-estimate-repair-cta{
+  min-height:52px;
+  font-size:.96rem;
+  font-weight:950;
+  box-shadow:0 16px 30px rgba(15,118,110,.22);
+}
+
 .tm-blueprint-mini-actions{
   display:flex;
   flex-wrap:wrap;
@@ -4811,12 +4880,12 @@ h3{
   align-items:center;
   min-height:28px;
   padding:6px 10px;
-  border:1px solid rgba(17, 179, 173, .20);
+  border:1px solid rgba(15, 23, 42, .10);
   border-radius:999px;
-  background:#f8fffe;
-  color:#0f766e;
+  background:#ffffff;
+  color:#334155;
   font-size:.78rem;
-  font-weight:900;
+  font-weight:850;
   line-height:1.15;
 }
 
