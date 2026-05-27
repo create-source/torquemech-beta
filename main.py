@@ -1752,6 +1752,8 @@ def build_workflow_context(
         return_params.append(("service", service))
     if obd:
         return_params.append(("obd", obd))
+    if workflow_source:
+        return_params.append(("source", workflow_source))
 
     return_href = f"/estimator?{urlencode(return_params)}" if return_params else "/estimator"
     return_label = vehicle.get("label") or "current estimate"

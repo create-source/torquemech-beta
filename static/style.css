@@ -4550,6 +4550,136 @@ h3{
   margin-left:0;
 }
 
+.tm-blueprint-workflow .tm-blueprint-hero-card{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(280px, 360px);
+  gap:16px;
+  align-items:start;
+  border-color:rgba(17, 179, 173, .18);
+}
+
+.tm-blueprint-hero-main{
+  min-width:0;
+}
+
+.tm-blueprint-action-panel{
+  display:grid;
+  gap:10px;
+  padding:14px;
+  border:1px solid rgba(17, 179, 173, .24);
+  border-radius:12px;
+  background:linear-gradient(180deg, rgba(240,253,250,.92) 0%, rgba(248,250,252,.96) 100%);
+}
+
+.tm-blueprint-action-panel h2{
+  margin-bottom:4px;
+  font-size:1.18rem;
+  letter-spacing:0;
+}
+
+.tm-blueprint-action-kicker{
+  color:#0f766e;
+  font-size:.72rem;
+  font-weight:950;
+  letter-spacing:.07em;
+  line-height:1.1;
+  text-transform:uppercase;
+}
+
+.tm-blueprint-action-panel .tm-btn{
+  width:100%;
+  justify-content:center;
+  min-width:0;
+}
+
+.tm-blueprint-mini-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.tm-blueprint-mini-actions a{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:6px 9px;
+  border:1px solid rgba(15, 23, 42, .10);
+  border-radius:999px;
+  background:#ffffff;
+  color:var(--tm-text);
+  font-size:.78rem;
+  font-weight:850;
+  line-height:1.15;
+}
+
+.tm-blueprint-priority-grid{
+  display:grid;
+  grid-template-columns:minmax(240px, .95fr) minmax(280px, 1.25fr) minmax(220px, .8fr);
+  gap:12px;
+  align-items:stretch;
+}
+
+#blueprint-workflow,
+#mechanics-often-check,
+#related-symptoms,
+#companion-repairs{
+  scroll-margin-top:76px;
+}
+
+.tm-blueprint-priority-grid > .tm-card{
+  min-width:0;
+}
+
+.tm-blueprint-priority-card{
+  border-color:rgba(17, 179, 173, .20);
+}
+
+.tm-workflow-chip-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+  gap:8px;
+  margin-top:10px;
+}
+
+.tm-workflow-check-chip{
+  display:grid;
+  gap:5px;
+  padding:10px;
+  border:1px solid rgba(15, 23, 42, .09);
+  border-radius:10px;
+  background:#ffffff;
+  min-width:0;
+}
+
+.tm-workflow-check-chip strong{
+  color:var(--tm-text);
+  font-size:.88rem;
+  font-weight:900;
+  line-height:1.2;
+}
+
+.tm-workflow-check-chip span{
+  color:var(--tm-text-muted);
+  font-size:.78rem;
+  font-weight:650;
+  line-height:1.35;
+}
+
+.tm-workflow-check-chip a{
+  width:max-content;
+  max-width:100%;
+  color:#0f766e;
+  font-size:.78rem;
+  font-weight:900;
+  line-height:1.2;
+}
+
+.tm-blueprint-chip-list--actions .tm-blueprint-chip{
+  border-color:rgba(17, 179, 173, .20);
+  background:#f0fdfa;
+  color:#0f766e;
+}
+
 .tm-workflow-next-step{
   margin:12px 0 0;
 }
@@ -4711,6 +4841,25 @@ h3{
 }
 
 @media (max-width: 520px){
+  .tm-blueprint-workflow .tm-blueprint-hero-card,
+  .tm-blueprint-priority-grid{
+    grid-template-columns:1fr;
+  }
+
+  .tm-blueprint-action-panel{
+    padding:12px;
+  }
+
+  .tm-blueprint-mini-actions a,
+  .tm-blueprint-chip{
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+
+  .tm-workflow-chip-grid{
+    grid-template-columns:1fr;
+  }
+
   .tm-blueprint-meta{
     align-items:stretch;
   }

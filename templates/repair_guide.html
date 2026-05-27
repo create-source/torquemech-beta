@@ -2,35 +2,147 @@
 
 {% block content %}
 <div class="tm-intel-page">
-<section class="tm-section">
-  <div class="tm-card">
-    <div class="tm-eyebrow">TorqueMech Repair Guide</div>
-    <h1 class="tm-page-title">{{ guide.title }}</h1>
-    <p class="tm-muted">{{ guide.summary }}</p>
+<section class="tm-section tm-blueprint-workflow" id="blueprint-workflow">
+  <div class="tm-card tm-blueprint-hero-card">
+    <div class="tm-blueprint-hero-main">
+      <div class="tm-eyebrow">Repair Blueprint</div>
+      <h1 class="tm-page-title">{{ guide.title }}</h1>
+      <p class="tm-muted">{{ guide.summary }}</p>
+      {% if guide.difficulty %}
+      <div class="tm-blueprint-meta">
+        <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
+      </div>
+      {% endif %}
+      <div class="tm-intel-flow-strip" aria-label="Repair workflow notes">
+        <span>Inspect first</span>
+        <span>Add supported checks</span>
+        <span>Estimate confirmed path</span>
+      </div>
+    </div>
+    {% if guide.estimate %}
+    <aside class="tm-blueprint-action-panel" aria-label="Repair estimate actions">
+      <div>
+        <div class="tm-blueprint-action-kicker">Next Action</div>
+        <h2>Estimate This Repair</h2>
+        <p class="tm-muted tm-section-note">Carry vehicle, service, and source context into the estimator.</p>
+      </div>
+      <a
+        class="tm-btn tm-btn-primary tm-estimate-repair-cta"
+        id="estimateRepairBtn"
+        data-estimator-link="{{ guide.estimate.estimator_link }}"
+        data-service-code="{{ guide.estimate.service_code }}"
+        data-source="{{ workflow_context.source if workflow_context else 'repair-guide' }}"
+        data-obd="{{ workflow_context.obd if workflow_context else '' }}"
+        href="{{ guide.estimate.href if guide.estimate.href else guide.estimate.estimator_link }}"
+      >
+        {% if vehicle_context and vehicle_context.has_context %}
+        Estimate for {{ vehicle_context.label }}
+        {% else %}
+        {{ guide.estimate.cta_label }}
+        {% endif %}
+      </a>
+      {% if workflow_context and workflow_context.return_href %}
+      <a class="tm-btn tm-btn-secondary tm-workflow-return-link" href="{{ workflow_context.return_href }}">
+        Continue Estimate
+      </a>
+      {% endif %}
+      <div class="tm-blueprint-mini-actions">
+        {% if guide.related_inspections %}
+        <a href="{{ guide.related_inspections[0].estimator_href }}">Add Related Inspection</a>
+        {% endif %}
+        {% if guide.recommended_repairs %}
+        <a href="{{ guide.recommended_repairs[0].estimator_href }}">Add Companion Repair</a>
+        {% endif %}
+        {% if guide.related_system_hubs %}
+        <a href="{{ guide.related_system_hubs[0].href }}">View Related System</a>
+        {% endif %}
+      </div>
+    </aside>
+    {% endif %}
     {% if vehicle_context and vehicle_context.has_context %}
     <div class="tm-vehicle-context-note">
       <strong>Viewing repair guidance for:</strong>
       <span>{{ vehicle_context.label }}</span>
-      <p>General repair guidance shown with your selected vehicle context.</p>
+      <p>Vehicle context will continue into related checks and estimates.</p>
     </div>
     {% endif %}
-    {% if guide.difficulty %}
-    <div class="tm-blueprint-meta">
-      <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
-    </div>
-    {% endif %}
-    <div class="tm-intel-flow-strip" aria-label="Repair workflow notes">
-      <span>Confirm fault path</span>
-      <span>Estimate after checks agree</span>
-      <span>Access can vary</span>
-    </div>
   </div>
 </section>
+
+{% if guide.inspect_first or guide.workflow_next_steps or guide.related_inspections or guide.related_systems or guide.related_system_hubs %}
+<section class="tm-section" id="mechanics-often-check">
+  <div class="tm-blueprint-priority-grid">
+    {% if guide.inspect_first %}
+    <div class="tm-card tm-blueprint-priority-card">
+      <div class="tm-blueprint-action-kicker">Step 1</div>
+      <h2>Inspect First</h2>
+      <ul class="tm-priority-list">
+        {% for item in guide.inspect_first[:4] %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if guide.workflow_next_steps or guide.related_inspections %}
+    <div class="tm-card">
+      <div class="tm-blueprint-action-kicker">Before Pricing</div>
+      <h2>Mechanics Often Check</h2>
+      {% if guide.workflow_next_steps %}
+      <div class="tm-workflow-chip-grid">
+        {% for item in guide.workflow_next_steps %}
+        <div class="tm-workflow-check-chip">
+          <strong>{{ item.title }}</strong>
+          {% if item.description %}
+          <span>{{ item.description }}</span>
+          {% endif %}
+          {% if item.estimator_href %}
+          <a href="{{ item.estimator_href }}">Add Related Inspection</a>
+          {% elif item.href %}
+          <a href="{{ item.href }}">Open Workflow</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if guide.related_inspections %}
+      <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions" aria-label="Related inspections">
+        {% for item in guide.related_inspections %}
+        <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">+ {{ item.title }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if guide.related_systems or guide.related_system_hubs %}
+    <div class="tm-card">
+      <div class="tm-blueprint-action-kicker">Context</div>
+      <h2>Related Systems</h2>
+      {% if guide.related_systems %}
+      <div class="tm-blueprint-chip-list">
+        {% for item in guide.related_systems %}
+        <span class="tm-blueprint-chip">{{ item }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if guide.related_system_hubs %}
+      <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+        {% for item in guide.related_system_hubs %}
+        <a class="tm-blueprint-chip" href="{{ item.href }}">View {{ item.title }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
 
 <section class="tm-section">
   <div class="tm-card">
     <h2>Load Vehicle (Optional)</h2>
-    <p class="tm-muted tm-section-note">Optional context for estimator handoff.</p>
+    <p class="tm-muted tm-section-note">Use when the estimate should carry vehicle context.</p>
     <div class="vehicle-card">
       <div class="grid3">
         <div>
@@ -73,7 +185,7 @@
         </button>
       </div>
 
-      <p id="loadedVehicleNote" class="tm-muted" style="margin-top: 12px; display: none;"></p>
+      <p id="loadedVehicleNote" class="tm-muted" style="margin-top: 10px; display: none;"></p>
     </div>
   </div>
 </section>
@@ -87,81 +199,6 @@
       <li>{{ item }}</li>
       {% endfor %}
     </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.inspect_first %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Inspect First</h2>
-    <ul class="tm-list">
-      {% for item in guide.inspect_first %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.related_systems %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Related System Checks</h2>
-    <div class="tm-blueprint-chip-list">
-      {% for item in guide.related_systems %}
-      <span class="tm-blueprint-chip">{{ item }}</span>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.related_system_hubs %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Explore Related Systems</h2>
-    <p class="tm-muted tm-section-note">When this repair overlaps another system.</p>
-    <div class="tm-blueprint-chip-list">
-      {% for item in guide.related_system_hubs %}
-      <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.workflow_next_steps or guide.related_inspections %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Mechanics Often Check</h2>
-    <p class="tm-muted tm-section-note">Quick checks before pricing parts.</p>
-    {% if guide.workflow_next_steps %}
-    <div class="tm-related-repair-grid">
-      {% for item in guide.workflow_next_steps %}
-      <div class="tm-linked-card">
-        <h3>{{ item.title }}</h3>
-        {% if item.description %}
-        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
-        {% endif %}
-        {% if item.href %}
-        <div style="margin-top:8px;"><a href="{{ item.href }}">Open Workflow &rarr;</a></div>
-        {% endif %}
-        {% if item.estimator_href %}
-        <div style="margin-top:8px;"><a href="{{ item.estimator_href }}">Add Related Inspection &rarr;</a></div>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% if guide.related_inspections %}
-    <h3 class="tm-subsection-title">Related Inspection</h3>
-    <div class="tm-blueprint-chip-list">
-      {% for item in guide.related_inspections %}
-      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">{{ item.title }}</a>
-      {% endfor %}
-    </div>
-    {% endif %}
   </div>
 </section>
 {% endif %}
@@ -480,26 +517,15 @@
 {% endif %}
 
 {% if guide.related_symptoms %}
-<section class="tm-section">
+<section class="tm-section" id="related-symptoms">
   <div class="tm-card">
     <h2>Related Symptoms</h2>
-    <p class="tm-muted tm-section-note">Compare nearby complaints before estimating.</p>
-    <div class="tm-related-repair-grid">
+    <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
       {% for item in guide.related_symptoms %}
-      <div class="tm-linked-card">
-        <h3>{{ item.title }}</h3>
-        {% if item.description %}
-        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
-        {% endif %}
-        <div style="margin-top:8px;">
-          <a href="{{ item.href }}">Related Symptom &rarr;</a>
-        </div>
-        {% if item.estimator_href %}
-        <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
-        </div>
-        {% endif %}
-      </div>
+      <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
+      {% if item.estimator_href %}
+      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">Continue Estimate</a>
+      {% endif %}
       {% endfor %}
     </div>
   </div>
@@ -507,10 +533,9 @@
 {% endif %}
 
 {% if guide.recommended_repairs %}
-<section class="tm-section">
+<section class="tm-section" id="companion-repairs">
   <div class="tm-card">
     <h2>Commonly Checked With</h2>
-    <p class="tm-muted tm-section-note">Add only when inspection supports it.</p>
     <div class="tm-related-repair-grid">
       {% for item in guide.recommended_repairs %}
       <div class="tm-linked-card">
@@ -531,7 +556,7 @@
         {% endif %}
         {% if item.estimator_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
+          <a href="{{ item.estimator_href }}">Add Companion Repair &rarr;</a>
         </div>
         {% endif %}
       </div>
@@ -555,35 +580,11 @@
 {% endif %}
 
 {% if guide.estimate %}
-<section class="tm-section">
-  <div class="tm-card tm-estimate-repair-card">
-    <h2>Estimate This Repair</h2>
-    <p class="tm-muted tm-section-note">Price it once the repair path is confirmed.</p>
-    <a
-      class="tm-btn tm-btn-primary tm-estimate-repair-cta"
-      id="estimateRepairBtn"
-      data-estimator-link="{{ guide.estimate.estimator_link }}"
-      data-service-code="{{ guide.estimate.service_code }}"
-      href="{{ guide.estimate.href if guide.estimate.href else guide.estimate.estimator_link }}"
-    >
-      {% if vehicle_context and vehicle_context.has_context %}
-      Estimate this repair for {{ vehicle_context.label }} ->
-      {% else %}
-      {{ guide.estimate.cta_label }} ->
-      {% endif %}
-    </a>
-    {% if workflow_context and workflow_context.return_href %}
-    <a class="tm-btn tm-btn-secondary tm-workflow-return-link" href="{{ workflow_context.return_href }}">
-      Continue Estimate
-    </a>
-    {% endif %}
-    <p class="tm-muted" style="margin-top:10px;">Final access varies by vehicle and condition.</p>
-  </div>
-</section>
 <script>
 (function () {
   const guideSlug = {{ guide.get("slug", "") | tojson }};
   const initialVehicleContext = {{ vehicle_context | tojson }};
+  const initialWorkflowContext = {{ workflow_context | tojson }};
   const yearSelect = document.getElementById("guideYear");
   const makeSelect = document.getElementById("guideMake");
   const makeSearch = document.getElementById("guideMakeSearch");
@@ -618,6 +619,8 @@
     if (make) params.set("make", make);
     if (model) params.set("model", model);
     if (displayModel) params.set("displayModel", displayModel);
+    if (initialWorkflowContext?.obd) params.set("obd", initialWorkflowContext.obd);
+    if (initialWorkflowContext?.source) params.set("source", initialWorkflowContext.source);
 
     const query = params.toString();
     estimateRepairBtn.href = query ? `${estimatorLink}?${query}` : estimatorLink;
