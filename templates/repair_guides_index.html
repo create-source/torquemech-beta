@@ -23,11 +23,12 @@
       </button>
     </div>
     <p id="repairGuideSearchEmpty" class="tm-repair-guide-empty" hidden>No repair guides found.</p>
+    <p id="repairGuideSearchCount" class="tm-repair-guide-count" aria-live="polite" hidden></p>
   </div>
 </section>
 
 {% if platform_sections %}
-<section class="tm-section">
+<section class="tm-section" data-guide-browse-section>
   <div class="tm-card">
     <h2>Continue Through TorqueMech</h2>
     <div class="tm-repair-guide-list">
@@ -55,7 +56,7 @@
         class="tm-guide-card"
         href="/repair-guides/{{ guide.slug }}"
         data-guide-card
-        data-search="{{ guide.title|default('', true)|lower }} {{ guide.summary|default('', true)|lower }} {{ guide.slug|default('', true)|replace('-', ' ')|lower }} {{ group.name|default('', true)|lower }} {{ guide.category|default('', true)|lower }} {% if guide.keywords %}{{ guide.keywords|join(' ')|lower }}{% endif %}"
+        data-search="{{ guide.title|default('', true)|lower }} {{ guide.summary|default('', true)|lower }} {{ guide.slug|default('', true)|replace('-', ' ')|lower }} {{ group.name|default('', true)|lower }} {{ guide.category|default('', true)|lower }} {{ guide.system|default('', true)|lower }} {% if guide.keywords %}{{ guide.keywords|join(' ')|lower }}{% endif %} {% if guide.search_terms %}{{ guide.search_terms|join(' ')|lower }}{% endif %} {% if guide.tags %}{{ guide.tags|join(' ')|lower }}{% endif %}"
       >
         {% if guide.difficulty %}
         <div class="tm-difficulty-badge">{{ guide.difficulty }}</div>
@@ -78,6 +79,8 @@
   const input = document.getElementById("repairGuideSearch");
   const clearBtn = document.getElementById("repairGuideSearchClear");
   const emptyState = document.getElementById("repairGuideSearchEmpty");
+  const countState = document.getElementById("repairGuideSearchCount");
+  const browseSection = document.querySelector("[data-guide-browse-section]");
   const cards = Array.from(document.querySelectorAll("[data-guide-card]"));
   const groups = Array.from(document.querySelectorAll("[data-guide-group]"));
 
@@ -87,13 +90,14 @@
 
   function updateFilter() {
     const query = normalize(input.value);
+    const isSearching = Boolean(query);
     let visibleCount = 0;
 
     cards.forEach((card) => {
       const searchText = normalize(card.dataset.search);
       const isVisible = !query || searchText.includes(query);
       card.hidden = !isVisible;
-      card.classList.toggle("is-filtered-out", !isVisible);
+      card.classList.toggle("is-search-match", isSearching && isVisible);
       if (isVisible) visibleCount += 1;
     });
 
@@ -102,8 +106,18 @@
       group.hidden = !visibleInGroup;
     });
 
+    if (browseSection) {
+      browseSection.hidden = isSearching;
+    }
+
     clearBtn.hidden = !query;
     if (emptyState) emptyState.hidden = visibleCount > 0;
+    if (countState) {
+      countState.hidden = !isSearching || visibleCount === 0;
+      countState.textContent = visibleCount === 1
+        ? "1 repair guide found."
+        : `${visibleCount} repair guides found.`;
+    }
   }
 
   input.addEventListener("input", updateFilter);

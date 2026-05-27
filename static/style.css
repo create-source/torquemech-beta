@@ -1082,8 +1082,8 @@ button:active{
 }
 
 .tm-clearable-field--textarea .tm-input-clear-btn{
-  top:18px;
-  transform:none;
+  top:24px;
+  transform:translateY(-50%);
 }
 
 .tm-inline-clear-field select,
@@ -1124,7 +1124,7 @@ button:active{
 }
 
 .tm-inline-clear-field > .tm-input-clear-btn{
-  top:45px;
+  top:52px;
 }
 
 .tm-service-field-shell > .tm-input-clear-btn{
@@ -2178,11 +2178,25 @@ input[type="radio"]{
 .tm-repair-guide-empty{
   margin:14px 0 0;
   padding:13px 14px;
-  border:1px solid rgba(15,23,42,.08);
+  border:1px solid rgba(15,118,110,.18);
   border-radius:12px;
-  background:#f8fafc;
-  color:#334155;
-  font-weight:850;
+  background:#f8fffe;
+  color:#0f172a;
+  font-weight:900;
+  line-height:1.35;
+}
+
+.tm-repair-guide-count{
+  width:max-content;
+  max-width:100%;
+  margin:12px 0 0;
+  padding:7px 10px;
+  border:1px solid rgba(15,118,110,.18);
+  border-radius:999px;
+  background:#ccfbf1;
+  color:#0f766e;
+  font-size:.82rem;
+  font-weight:950;
   line-height:1.35;
 }
 
@@ -3331,7 +3345,7 @@ canvas,
   }
 
   .tm-inline-clear-field > .tm-input-clear-btn{
-    top:45px;
+    top:52px;
   }
 
   .tm-service-field-shell > .tm-input-clear-btn{
@@ -4597,6 +4611,16 @@ h3{
   border-radius: 18px;
   padding: 18px;
   transition: opacity .16s ease, transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.tm-guide-card.is-search-match{
+  border-color:rgba(15,118,110,.28);
+  background:linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+  box-shadow:0 12px 26px rgba(15,118,110,.08);
+}
+
+.tm-guide-card.is-search-match h3{
+  color:#0f172a;
 }
 
 .tm-blueprint-meta{
