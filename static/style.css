@@ -4491,7 +4491,7 @@ h3{
   flex-wrap:wrap;
   align-items:center;
   gap:12px;
-  margin:16px 0 4px;
+  margin:12px 0 4px;
 }
 
 .tm-blueprint-difficulty{
@@ -4567,22 +4567,45 @@ h3{
 .tm-blueprint-workflow .tm-blueprint-hero-card{
   display:grid;
   grid-template-columns:minmax(0, 1fr) minmax(280px, 360px);
-  gap:16px;
+  gap:18px;
   align-items:start;
-  border-color:rgba(17, 179, 173, .18);
+  padding:20px;
+  border-color:rgba(17, 179, 173, .26);
+  background:
+    linear-gradient(135deg, rgba(240,253,250,.96) 0%, rgba(255,255,255,.98) 42%, rgba(239,246,255,.88) 100%);
+  box-shadow:0 18px 42px rgba(15, 23, 42, .09);
 }
 
 .tm-blueprint-hero-main{
   min-width:0;
 }
 
+.tm-blueprint-hero-main .tm-eyebrow{
+  color:#0f766e;
+}
+
+.tm-blueprint-summary{
+  max-width:68ch;
+  margin:0;
+  padding:12px 14px;
+  border:1px solid rgba(15, 23, 42, .08);
+  border-left:4px solid #14b8a6;
+  border-radius:12px;
+  background:rgba(255, 255, 255, .72);
+  color:#1e293b;
+  font-size:.98rem;
+  font-weight:650;
+  line-height:1.5;
+}
+
 .tm-blueprint-action-panel{
   display:grid;
   gap:10px;
-  padding:14px;
-  border:1px solid rgba(17, 179, 173, .24);
-  border-radius:12px;
-  background:linear-gradient(180deg, rgba(240,253,250,.92) 0%, rgba(248,250,252,.96) 100%);
+  padding:16px;
+  border:1px solid rgba(17, 179, 173, .30);
+  border-radius:14px;
+  background:linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(236,253,245,.92) 100%);
+  box-shadow:0 12px 28px rgba(15, 118, 110, .10);
 }
 
 .tm-blueprint-action-panel h2{
@@ -4616,13 +4639,13 @@ h3{
   display:inline-flex;
   align-items:center;
   min-height:28px;
-  padding:6px 9px;
-  border:1px solid rgba(15, 23, 42, .10);
+  padding:6px 10px;
+  border:1px solid rgba(17, 179, 173, .20);
   border-radius:999px;
-  background:#ffffff;
-  color:var(--tm-text);
+  background:#f8fffe;
+  color:#0f766e;
   font-size:.78rem;
-  font-weight:850;
+  font-weight:900;
   line-height:1.15;
 }
 
@@ -4643,6 +4666,7 @@ h3{
 
 .tm-blueprint-priority-grid > .tm-card{
   min-width:0;
+  border-color:rgba(17, 179, 173, .14);
 }
 
 .tm-blueprint-priority-card{
@@ -4659,10 +4683,11 @@ h3{
 .tm-workflow-check-chip{
   display:grid;
   gap:5px;
-  padding:10px;
+  padding:11px;
   border:1px solid rgba(15, 23, 42, .09);
-  border-radius:10px;
-  background:#ffffff;
+  border-radius:12px;
+  background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow:0 6px 16px rgba(15, 23, 42, .045);
   min-width:0;
 }
 
@@ -4704,10 +4729,11 @@ h3{
 
 .tm-repair-intel-panel{
   min-width:0;
-  padding:12px;
-  border:1px solid rgba(15, 23, 42, .09);
-  border-radius:12px;
-  background:rgba(255, 255, 255, .72);
+  padding:13px;
+  border:1px solid rgba(15, 23, 42, .08);
+  border-radius:13px;
+  background:linear-gradient(180deg, rgba(255,255,255,.90) 0%, rgba(248,250,252,.90) 100%);
+  box-shadow:0 8px 18px rgba(15, 23, 42, .045);
 }
 
 .tm-repair-intel-panel h3{
@@ -4741,8 +4767,9 @@ h3{
   min-height:36px;
   padding:8px 10px;
   border:1px solid rgba(15, 23, 42, .09);
-  border-radius:10px;
+  border-radius:11px;
   background:#ffffff;
+  box-shadow:0 4px 12px rgba(15, 23, 42, .035);
 }
 
 .tm-torque-spec-row strong{
@@ -4785,8 +4812,9 @@ h3{
   min-width:0;
   padding:9px 10px;
   border:1px solid rgba(15, 23, 42, .09);
-  border-radius:10px;
+  border-radius:11px;
   background:#ffffff;
+  box-shadow:0 4px 12px rgba(15, 23, 42, .035);
 }
 
 .tm-access-action-card strong,
@@ -5261,28 +5289,52 @@ h3{
 
 /* Foundation 10.4: compact repair intelligence scan layer */
 .tm-intel-page .tm-section{
-  padding: 14px 0;
+  padding: 12px 0;
 }
 
 .tm-intel-page .tm-card,
 .tm-intel-page .tm-linked-card{
-  padding: 16px;
-  border-radius: 14px;
+  padding: 17px;
+  border-radius: 15px;
+  border-color: rgba(15, 23, 42, .09);
+  background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(248,250,252,.92) 100%);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, .055);
 }
 
 .tm-intel-page .tm-page-title{
-  margin-bottom: 8px;
+  max-width: 780px;
+  margin-bottom: 10px;
+  font-size: clamp(2.35rem, 4.2vw, 3.75rem);
+  font-weight: 950;
+  letter-spacing: -.045em;
 }
 
 .tm-intel-page h2{
   margin-bottom: 8px;
-  font-size: clamp(1.28rem, 2vw, 1.65rem);
+  font-size: clamp(1.18rem, 1.8vw, 1.48rem);
+  font-weight: 950;
   letter-spacing: -.015em;
+}
+
+.tm-intel-page .tm-card > h2{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.tm-intel-page .tm-card > h2::before{
+  content:"";
+  width:8px;
+  height:24px;
+  flex:0 0 auto;
+  border-radius:999px;
+  background:linear-gradient(180deg, #14b8a6 0%, #2563eb 100%);
 }
 
 .tm-intel-page h3{
   margin-bottom: 6px;
   font-size: 1rem;
+  font-weight: 950;
   letter-spacing: 0;
 }
 
@@ -5297,12 +5349,77 @@ h3{
 }
 
 .tm-intel-page .tm-list{
-  margin-top: 8px;
-  line-height: 1.55;
+  display:grid;
+  gap:8px;
+  margin: 8px 0 0;
+  padding:0;
+  line-height: 1.48;
+  list-style:none;
 }
 
 .tm-intel-page .tm-list li + li{
-  margin-top: 4px;
+  margin-top: 0;
+}
+
+.tm-intel-page .tm-list:not(.tm-list-numbered) li{
+  position:relative;
+  padding:9px 10px 9px 28px;
+  border:1px solid rgba(15, 23, 42, .08);
+  border-radius:11px;
+  background:rgba(255, 255, 255, .70);
+  color:var(--tm-text);
+  font-weight:700;
+}
+
+.tm-intel-page .tm-list:not(.tm-list-numbered) li::before{
+  content:"";
+  position:absolute;
+  left:12px;
+  top:1.05em;
+  width:7px;
+  height:7px;
+  border-radius:999px;
+  background:#14b8a6;
+}
+
+.tm-intel-page .tm-list-numbered{
+  counter-reset:repair-step;
+}
+
+.tm-intel-page .tm-list-numbered > li{
+  counter-increment:repair-step;
+  display:grid;
+  grid-template-columns:auto minmax(0, 1fr);
+  gap:10px;
+  padding:12px;
+  border:1px solid rgba(15, 23, 42, .08);
+  border-radius:13px;
+  background:rgba(255, 255, 255, .74);
+  color:var(--tm-text);
+  box-shadow:0 6px 16px rgba(15, 23, 42, .04);
+}
+
+.tm-intel-page .tm-list-numbered > li::before{
+  content:counter(repair-step);
+  display:inline-grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  background:#0f766e;
+  color:#ffffff;
+  font-size:.78rem;
+  font-weight:950;
+  line-height:1;
+}
+
+.tm-intel-page .tm-list-numbered .tm-repair-stepText{
+  min-width:0;
+}
+
+.tm-intel-page .tm-list-numbered .tm-repair-stepVisual{
+  grid-column:1 / -1;
+  margin-top:4px;
 }
 
 .tm-intel-page .tm-related-repair-grid,
@@ -5330,6 +5447,7 @@ h3{
   min-height: 28px;
   padding: 6px 9px;
   font-size: .8rem;
+  box-shadow:0 3px 10px rgba(15, 23, 42, .035);
 }
 
 .tm-intel-page .tm-priority-list{
@@ -5383,25 +5501,81 @@ h3{
   max-width: 72ch;
 }
 
+.tm-intel-page .tm-stat{
+  color:#0f766e;
+  font-weight:950;
+  letter-spacing:-.03em;
+}
+
+.tm-intel-page .vehicle-card{
+  border-color:rgba(37, 99, 235, .14);
+  background:linear-gradient(180deg, rgba(255,255,255,.82) 0%, rgba(239,246,255,.56) 100%);
+}
+
+.tm-intel-page .tm-linked-card{
+  display:grid;
+  gap:8px;
+}
+
+.tm-intel-page .tm-linked-card h3{
+  margin-bottom:0;
+}
+
+.tm-intel-page .tm-linked-card a{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  min-height:30px;
+  padding:7px 10px;
+  border:1px solid rgba(17, 179, 173, .20);
+  border-radius:999px;
+  background:#f0fdfa;
+  color:#0f766e;
+  font-size:.82rem;
+  font-weight:900;
+  line-height:1.15;
+}
+
 @media (max-width: 640px){
   .tm-intel-page .tm-section{
-    padding: 10px 0;
+    padding: 9px 0;
   }
 
   .tm-intel-page .tm-card,
   .tm-intel-page .tm-linked-card{
     padding: 13px;
-    border-radius: 12px;
+    border-radius: 13px;
   }
 
   .tm-intel-page .tm-page-title{
-    font-size: clamp(1.75rem, 8vw, 2.3rem);
+    font-size: clamp(1.95rem, 8vw, 2.45rem);
     line-height: 1.05;
+  }
+
+  .tm-blueprint-workflow .tm-blueprint-hero-card{
+    padding:14px;
+  }
+
+  .tm-blueprint-summary{
+    padding:10px 11px;
+    font-size:.92rem;
   }
 
   .tm-intel-page .tm-related-repair-grid,
   .tm-intel-page .tm-diagnostic-path-grid{
     gap: 8px;
+  }
+
+  .tm-intel-page .tm-list:not(.tm-list-numbered) li{
+    padding:8px 9px 8px 25px;
+    font-size:.94rem;
+  }
+
+  .tm-intel-page .tm-list-numbered > li{
+    grid-template-columns:1fr;
+    gap:8px;
+    padding:10px;
   }
 
   .tm-intel-page .tm-btn{
