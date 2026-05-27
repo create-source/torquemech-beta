@@ -8,16 +8,17 @@
     <h1 class="tm-page-title">{{ symptom.title }}</h1>
     <p class="tm-muted">{{ symptom.summary }}</p>
     <div class="tm-intel-flow-strip" aria-label="Symptom workflow notes">
-      <span>Start with the complaint</span>
-      <span>Confirm with checks</span>
-      <span>Estimate when narrowed</span>
+      <span>Complaint</span>
+      <span>Checks</span>
+      <span>Repair path</span>
+      <span>Estimate</span>
     </div>
     <p>{{ symptom.intro }}</p>
     {% if workflow_context and workflow_context.has_context %}
     <div class="tm-workflow-context-note">
-      <strong>Continue the repair flow</strong>
-      <span>Checks, vehicle, and service context stay together.</span>
-      <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">Continue Estimate</a>
+      <strong>Continue workflow</strong>
+      <span>Vehicle and service context stay together.</span>
+      <a class="tm-btn tm-btn-secondary" href="{{ workflow_context.return_href }}">Return to estimate</a>
     </div>
     {% endif %}
   </div>
@@ -130,9 +131,9 @@
         <div class="tm-diagnostic-path-links">
           {% for repair in path.repairs %}
           {% if repair.cost_guide_href %}
-          <a href="{{ repair.cost_guide_href }}">{{ repair.title }}</a>
+          <a href="{{ repair.cost_guide_href }}">Review pricing: {{ repair.title }}</a>
           {% elif repair.estimator_href %}
-          <a href="{{ repair.estimator_href }}">{{ repair.title }}</a>
+          <a href="{{ repair.estimator_href }}">Open estimate: {{ repair.title }}</a>
           {% else %}
           <span>{{ repair.title }}</span>
           {% endif %}
@@ -163,21 +164,21 @@
 {% if symptom.workflow_next_steps or symptom.related_inspections %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Common Next Steps</h2>
-    <p class="tm-muted tm-section-note">Quick checks before expanding the estimate.</p>
+    <h2>Next Best Step</h2>
+    <p class="tm-muted tm-section-note">Inspect before expanding the quote.</p>
     {% if symptom.workflow_next_steps %}
     <div class="tm-stack">
       {% for item in symptom.workflow_next_steps %}
-      <div class="tm-linked-card">
+      <div class="tm-linked-card tm-workflow-primary-card">
         <h3>{{ item.title }}</h3>
         {% if item.description %}
         <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
         {% endif %}
         {% if item.href %}
-        <div style="margin-top:8px;"><a href="{{ item.href }}">Open Workflow &rarr;</a></div>
+        <div class="tm-workflow-card-actions"><a href="{{ item.href }}">Continue diagnosis path &rarr;</a></div>
         {% endif %}
         {% if item.estimator_href %}
-        <div style="margin-top:8px;"><a href="{{ item.estimator_href }}">Continue Diagnostic Estimate &rarr;</a></div>
+        <div class="tm-workflow-card-actions"><a href="{{ item.estimator_href }}">Open estimate workflow &rarr;</a></div>
         {% endif %}
       </div>
       {% endfor %}
@@ -187,7 +188,7 @@
     <h3 class="tm-subsection-title">Related Inspection</h3>
     <div class="tm-blueprint-chip-list">
       {% for item in symptom.related_inspections %}
-      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">{{ item.title }}</a>
+      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">Inspect: {{ item.title }}</a>
       {% endfor %}
     </div>
     {% endif %}
@@ -212,7 +213,7 @@
         </div>
         {% if item.estimator_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
+          <a href="{{ item.estimator_href }}">Open estimate workflow &rarr;</a>
         </div>
         {% endif %}
       </div>
@@ -233,10 +234,10 @@
         <h3>{{ cause.name }}</h3>
         {% if cause.estimator_link %}
         <div style="margin-top:8px;">
-          <a href="{{ cause.estimator_link }}">Continue Estimate &rarr;</a>
+          <a href="{{ cause.estimator_link }}">Open estimate workflow &rarr;</a>
         </div>
         {% endif %}
-        <a href="{{ cause.repair_guide_link }}">View Related Repair &rarr;</a>
+        <a href="{{ cause.repair_guide_link }}">View related repair &rarr;</a>
       </div>
       {% endfor %}
     </div>
@@ -260,16 +261,16 @@
         <div style="margin-top:8px;">
           <a href="{{ item.cost_guide_href }}">
             {% if item.cost_guide_href.startswith('/repair-guides/') %}
-            View Related Repair &rarr;
+            View related repair &rarr;
             {% else %}
-            Open Cost Guide &rarr;
+            Review related pricing &rarr;
             {% endif %}
           </a>
         </div>
         {% endif %}
         {% if item.estimator_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Continue Estimate &rarr;</a>
+          <a href="{{ item.estimator_href }}">Open estimate workflow &rarr;</a>
         </div>
         {% endif %}
       </div>
@@ -298,7 +299,7 @@
   <div class="tm-card">
     <h2>Diagnostic Tools</h2>
     <p class="tm-muted">Move from symptom to code or repair context.</p>
-    <a href="{{ symptom.diagnostic_tools_link }}">Open Diagnostic Tools &rarr;</a>
+    <a href="{{ symptom.diagnostic_tools_link }}">Continue diagnosis path &rarr;</a>
   </div>
   {% endif %}
 
@@ -306,7 +307,7 @@
   <div class="tm-card">
     <h2>Need a Quick Estimate?</h2>
     <p class="tm-muted">Open when the likely repair is known.</p>
-    <a href="{{ symptom.estimator_link }}">Continue Estimate &rarr;</a>
+    <a href="{{ symptom.estimator_link }}">Open estimate workflow &rarr;</a>
   </div>
   {% endif %}
 </section>

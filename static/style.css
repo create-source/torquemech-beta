@@ -2187,6 +2187,53 @@ input[type="radio"]{
   font-size:.95rem;
 }
 
+.tm-workflow-entry-card{
+  min-width:0;
+  transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.tm-workflow-entry-card:first-child{
+  border-color:rgba(17, 179, 173, .22);
+  background:linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+  box-shadow:0 10px 24px rgba(15, 118, 110, .075);
+}
+
+.tm-workflow-entry-card:hover,
+.tm-workflow-entry-card:focus-visible{
+  transform:translateY(-1px);
+  border-color:rgba(17, 179, 173, .30);
+}
+
+.tm-workflow-entry-card__action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:28px;
+  max-width:100%;
+  padding:6px 9px;
+  border:1px solid rgba(15, 118, 110, .18);
+  border-radius:999px;
+  background:#f0fdfa;
+  color:#0f766e;
+  font-size:.76rem;
+  font-weight:900;
+  line-height:1.1;
+  white-space:nowrap;
+}
+
+.tm-workflow-primary-card{
+  border-color:rgba(17, 179, 173, .22) !important;
+  background:linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%) !important;
+  box-shadow:0 10px 24px rgba(15, 118, 110, .075) !important;
+}
+
+.tm-workflow-card-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:2px;
+}
+
 .rel-code{
   color: var(--tm-blue);
   font-weight: 850;
@@ -4701,7 +4748,8 @@ h3{
 }
 
 .tm-guide-card {
-  display: block;
+  display: grid;
+  gap: 8px;
   text-decoration: none;
   color: inherit;
   background: rgba(255, 255, 255, 0.55);
@@ -4709,6 +4757,14 @@ h3{
   border-radius: 18px;
   padding: 18px;
   transition: opacity .16s ease, transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.tm-guide-card__footer{
+  margin-top: 2px;
+  color: #0f766e;
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1.2;
 }
 
 .tm-guide-card.is-search-match{
@@ -5294,7 +5350,7 @@ h3{
 }
 
 .tm-guide-card h3 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 1.05rem;
 }
 
@@ -5820,6 +5876,17 @@ h3{
     min-height:52px;
     padding:12px 46px !important;
     font-size:.95rem;
+  }
+
+  .tm-workflow-entry-card{
+    align-items:flex-start;
+    gap:10px;
+    padding:13px;
+  }
+
+  .tm-workflow-entry-card__action{
+    white-space:normal;
+    text-align:center;
   }
 
   .tm-repair-guide-empty{

@@ -23,13 +23,13 @@
     <aside class="tm-blueprint-action-panel" aria-label="Repair estimate actions">
       <div>
         <div class="tm-blueprint-action-kicker">Next Action</div>
-        <h2>Estimate This Repair</h2>
-        <p class="tm-muted tm-section-note">Use this inspected repair path to start the quote.</p>
+        <h2>Open Estimate Workflow</h2>
+        <p class="tm-muted tm-section-note">Carry this repair path into pricing.</p>
       </div>
       <div class="tm-next-action-strip" aria-label="Estimate workflow">
-        <span>Repair selected</span>
-        <span>Review pricing</span>
-        <span>Add to quote</span>
+        <span>Repair path</span>
+        <span>Pricing</span>
+        <span>Quote</span>
       </div>
       <a
         class="tm-btn tm-btn-primary tm-estimate-repair-cta"
@@ -53,13 +53,13 @@
       {% endif %}
       <div class="tm-blueprint-mini-actions">
         {% if guide.related_inspections %}
-        <a href="{{ guide.related_inspections[0].estimator_href }}">Add Related Inspection</a>
+        <a href="{{ guide.related_inspections[0].estimator_href }}">Inspect related systems</a>
         {% endif %}
         {% if guide.recommended_repairs %}
-        <a href="{{ guide.recommended_repairs[0].estimator_href }}">Add Companion Repair</a>
+        <a href="{{ guide.recommended_repairs[0].estimator_href }}">Review related repair pricing</a>
         {% endif %}
         {% if guide.related_system_hubs %}
-        <a href="{{ guide.related_system_hubs[0].href }}">View Related System</a>
+        <a href="{{ guide.related_system_hubs[0].href }}">Continue diagnosis path</a>
         {% endif %}
       </div>
     </aside>
@@ -94,7 +94,7 @@
     <div class="tm-card">
       <div class="tm-blueprint-action-kicker">Before Pricing</div>
       <h2>Mechanics Often Check</h2>
-      <p class="tm-muted tm-trust-helper">These checks reduce missed related work and avoid thin quotes.</p>
+      <p class="tm-muted tm-trust-helper">Inspect nearby causes before pricing.</p>
       {% if guide.workflow_next_steps %}
       <div class="tm-workflow-chip-grid">
         {% for item in guide.workflow_next_steps %}
@@ -104,9 +104,9 @@
           <span>{{ item.description }}</span>
           {% endif %}
           {% if item.estimator_href %}
-          <a href="{{ item.estimator_href }}">Add Related Inspection</a>
+          <a href="{{ item.estimator_href }}">Inspect related systems</a>
           {% elif item.href %}
-          <a href="{{ item.href }}">Open Workflow</a>
+          <a href="{{ item.href }}">Continue diagnosis path</a>
           {% endif %}
         </div>
         {% endfor %}
@@ -590,15 +590,15 @@
 
     {% if guide.diagnostic_context.common_symptoms_link %}
     <div class="tm-link-block">
-      <a href="{{ guide.diagnostic_context.common_symptoms_link }}">View Common Symptoms</a>
-      <p class="tm-muted">See what problems often lead to this repair</p>
+      <a href="{{ guide.diagnostic_context.common_symptoms_link }}">Compare related symptoms</a>
+      <p class="tm-muted">Check complaint patterns.</p>
     </div>
     {% endif %}
 
     {% if guide.diagnostic_context.diagnostic_tools_link %}
     <div class="tm-link-block">
-      <a href="{{ guide.diagnostic_context.diagnostic_tools_link }}">Diagnostic Tools</a>
-      <p class="tm-muted">Use code and diagnostic lookup when needed</p>
+      <a href="{{ guide.diagnostic_context.diagnostic_tools_link }}">Continue diagnosis path</a>
+      <p class="tm-muted">Use codes or system lookup.</p>
     </div>
     {% endif %}
   </div>
@@ -664,16 +664,16 @@
         <div style="margin-top:8px;">
           <a href="{{ item.cost_guide_href }}">
             {% if item.cost_guide_href.startswith('/repair-guides/') %}
-            View Related Repair &rarr;
+            View related repair &rarr;
             {% else %}
-            Open Cost Guide &rarr;
+            Review related pricing &rarr;
             {% endif %}
           </a>
         </div>
         {% endif %}
         {% if item.estimator_href %}
         <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Add Companion Repair &rarr;</a>
+          <a href="{{ item.estimator_href }}">Add to estimate &rarr;</a>
         </div>
         {% endif %}
       </div>

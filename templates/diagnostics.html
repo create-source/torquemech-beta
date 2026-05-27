@@ -16,7 +16,7 @@
     min-height: 104px;
     padding: 14px;
     border: 1px solid rgba(255,255,255,.16);
-    border-radius: 18px;
+    border-radius: 14px;
     background: rgba(255,255,255,.08);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.12);
     text-decoration: none;
@@ -48,7 +48,7 @@
   .diag-workflow-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
     margin-top: 14px;
   }
 
@@ -58,7 +58,7 @@
     gap: 7px;
     padding: 14px;
     border: 1px solid rgba(255,255,255,.14);
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(255,255,255,.07);
     color: inherit;
     text-decoration: none;
@@ -74,9 +74,15 @@
     min-width: 0;
     padding: 14px;
     border: 1px solid rgba(15, 23, 42, .10);
-    border-radius: 14px;
+    border-radius: 12px;
     background: linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(248,250,252,.92) 100%);
     box-shadow: 0 8px 18px rgba(15,23,42,.05);
+  }
+
+  .diag-workflow-card:first-child {
+    border-color: rgba(17, 179, 173, .24);
+    background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+    box-shadow: 0 10px 24px rgba(15, 118, 110, .08);
   }
 
   .diag-system-chip strong,
@@ -154,20 +160,27 @@
     <p class="tm-muted">
       Start from an OBD code, a symptom, or a vehicle system. Each entry connects into likely repair guides and the estimator without trying to replace full diagnosis.
     </p>
+    <div class="tm-intel-flow-strip" aria-label="Diagnostic workflow notes">
+      <span>Code or symptom</span>
+      <span>System checks</span>
+      <span>Repair guide</span>
+      <span>Estimate</span>
+    </div>
   </div>
 </section>
 
 {% if platform_sections %}
 <section class="tm-section">
   <div class="tm-card">
-    <h2>Continue Through TorqueMech</h2>
+    <h2>Continue Workflow</h2>
     <div class="tm-repair-guide-list">
       {% for item in platform_sections %}
-      <a class="tm-repair-guide-item" href="{{ item.href }}">
+      <a class="tm-repair-guide-item tm-workflow-entry-card" href="{{ item.href }}">
         <div>
           <strong>{{ item.title }}</strong>
           <div class="tm-muted">{{ item.summary }}</div>
         </div>
+        <span class="tm-workflow-entry-card__action">Open</span>
       </a>
       {% endfor %}
     </div>
@@ -179,7 +192,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Explore System Hubs</h2>
-    <p class="tm-muted">Jump into compact system-level workflows when the complaint already points toward a repair family.</p>
+    <p class="tm-muted">Use when the complaint points to a repair family.</p>
     <div class="diag-system-chip-grid">
       {% for item in curated_system_hubs %}
       <a class="diag-system-chip" href="{{ item.href }}">
@@ -196,7 +209,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Workflow Clusters</h2>
-    <p class="tm-muted">Use these clusters to move between hubs, symptoms, codes, and repair paths without turning diagnosis into a parts list.</p>
+    <p class="tm-muted">Move between hubs, symptoms, codes, and repair paths.</p>
     <div class="diag-workflow-grid">
       {% for cluster in workflow_clusters %}
       <div class="diag-workflow-card">
@@ -225,7 +238,7 @@
       <a href="/obd/{{ item.code | lower }}" class="diag-obd-tile">
         <div class="diag-obd-tile__code">{{ item.code }}</div>
         <div class="diag-obd-tile__desc">{{ item.title }}</div>
-        <div class="diag-obd-tile__footer">Open code guide →</div>
+        <div class="diag-obd-tile__footer">Continue diagnosis path &rarr;</div>
       </a>
       {% endfor %}
     </div>
@@ -234,8 +247,8 @@
     <div class="tm-stack">
       <div class="tm-linked-card">
         <h3>Search OBD Codes</h3>
-        <p class="tm-muted">Open the existing OBD lookup for direct code search.</p>
-        <a href="/obd">Open OBD Lookup →</a>
+        <p class="tm-muted">Search a stored code directly.</p>
+        <a href="/obd">Open OBD lookup &rarr;</a>
       </div>
 
       {% for entry in obd_entries %}
@@ -265,7 +278,7 @@
 
         {% if entry.estimator_links %}
         <div class="tm-link-block">
-          <strong>Estimator links</strong>
+          <strong>Pricing follow-ups</strong>
           {% for link in entry.estimator_links %}
           <div><a href="{{ link.href }}">{{ link.label }}</a></div>
           {% endfor %}
@@ -273,7 +286,7 @@
         {% endif %}
 
         <div class="tm-link-block">
-          <a href="{{ entry.detail_href }}">Open Diagnostic Result →</a>
+          <a href="{{ entry.detail_href }}">Continue diagnosis path &rarr;</a>
         </div>
       </div>
       {% endfor %}
@@ -284,7 +297,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Start From a Symptom</h2>
-    <p class="tm-muted">Use symptom-led entry points to move from what the driver notices into likely repair guides.</p>
+    <p class="tm-muted">Move from driver complaint into likely repair guides.</p>
     <div class="tm-stack">
       {% for entry in symptom_entries %}
       <div class="tm-linked-card">
@@ -313,7 +326,7 @@
 
         {% if entry.estimator_links %}
         <div class="tm-link-block">
-          <strong>Estimator links</strong>
+          <strong>Pricing follow-ups</strong>
           {% for link in entry.estimator_links %}
           <div><a href="{{ link.href }}">{{ link.label }}</a></div>
           {% endfor %}
@@ -321,7 +334,7 @@
         {% endif %}
 
         <div class="tm-link-block">
-          <a href="{{ entry.detail_href }}">Open Symptom Result →</a>
+          <a href="{{ entry.detail_href }}">Open symptom guide &rarr;</a>
         </div>
       </div>
       {% endfor %}
@@ -332,7 +345,7 @@
 <section class="tm-section">
   <div class="tm-card">
     <h2>Start From a Vehicle System</h2>
-    <p class="tm-muted">Browse structured system-level entry points when the issue is already narrowed to a general area.</p>
+    <p class="tm-muted">Use when the issue is narrowed to a general area.</p>
     {% if system_hub_entries %}
     <div class="tm-stack" style="margin-bottom:16px;">
       {% for entry in system_hub_entries %}
@@ -340,7 +353,7 @@
         <h3>{{ entry.title }}</h3>
         <p class="tm-muted">{{ entry.summary }}</p>
         <div class="tm-link-block">
-          <a href="{{ entry.detail_href }}">Open System Hub &rarr;</a>
+          <a href="{{ entry.detail_href }}">Inspect related system &rarr;</a>
         </div>
       </div>
       {% endfor %}
@@ -374,7 +387,7 @@
 
         {% if entry.estimator_links %}
         <div class="tm-link-block">
-          <strong>Estimator links</strong>
+          <strong>Pricing follow-ups</strong>
           {% for link in entry.estimator_links %}
           <div><a href="{{ link.href }}">{{ link.label }}</a></div>
           {% endfor %}

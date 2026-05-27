@@ -10,13 +10,13 @@
     .repair-costs-groups {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 12px;
     }
 
     .repair-costs-group {
-      padding: 18px;
+      padding: 16px;
       border: 1px solid var(--tm-border);
-      border-radius: 18px;
+      border-radius: 14px;
       background: var(--tm-surface);
       box-shadow: var(--tm-shadow-sm);
     }
@@ -43,7 +43,7 @@
       display: block;
       padding: 14px 16px;
       border: 1px solid var(--tm-border);
-      border-radius: 16px;
+      border-radius: 12px;
       background: var(--tm-surface);
       box-shadow: var(--tm-shadow-sm);
       text-decoration: none;
@@ -64,9 +64,9 @@
     }
 
     .repair-costs-card__footer {
-      color: var(--tm-text);
+      color: #0f766e;
       font-size: .95rem;
-      font-weight: 700;
+      font-weight: 900;
     }
 
     @media (min-width: 860px) {
@@ -83,11 +83,16 @@
     <div class="tm-eyebrow">TorqueMech Cost Guides</div>
     <h1 class="tm-page-title">Browse Repair Cost Guides</h1>
     <p class="tm-muted">
-      Browse common repair cost guides to get a practical feel for labor time, parts pricing, and the symptoms that usually lead to each job. Once the repair path is confirmed, move into the estimator for a cleaner quote.
+      Browse repair cost guides for labor time, parts pricing, and the symptoms that usually lead to each job. Once the repair path is confirmed, move into the estimator.
     </p>
+    <div class="tm-intel-flow-strip" aria-label="Repair cost workflow notes">
+      <span>Repair path</span>
+      <span>Pricing context</span>
+      <span>Estimate workflow</span>
+    </div>
     <div class="tm-actions" style="margin-top:14px;">
-      <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
-      <a class="tm-btn tm-btn-secondary" href="/diagnostics">Browse Diagnostics</a>
+      <a class="tm-btn tm-btn-primary" href="/estimator">Open estimate workflow</a>
+      <a class="tm-btn tm-btn-secondary" href="/diagnostics">Continue diagnosis path</a>
     </div>
   </div>
 </section>
@@ -151,7 +156,7 @@
         <a class="repair-costs-card" href="{{ guide.href }}">
           <div class="repair-costs-card__title">{{ guide.title }}</div>
           <p class="repair-costs-card__desc">{{ guide.description }}</p>
-          <div class="repair-costs-card__footer">Open guide →</div>
+          <div class="repair-costs-card__footer">Review related pricing &rarr;</div>
         </a>
         {% endfor %}
       </div>
@@ -165,44 +170,44 @@
   <div class="tm-card">
     <h2 style="margin-top:0;">Popular OBD Codes</h2>
     <p class="tm-muted" style="margin:0 0 14px 0;">
-      Jump from common repair-cost categories into a few high-intent OBD code pages.
+      Jump from repair-cost categories into high-intent OBD code pages.
     </p>
 
     <div class="repair-costs-list">
       <a class="repair-costs-card" href="/obd/p0300">
         <div class="repair-costs-card__title">P0300</div>
         <p class="repair-costs-card__desc">Random/Multiple Cylinder Misfire</p>
-        <div class="repair-costs-card__footer">Open OBD guide →</div>
+        <div class="repair-costs-card__footer">Continue diagnosis path &rarr;</div>
       </a>
 
       <a class="repair-costs-card" href="/obd/p0303">
         <div class="repair-costs-card__title">P0303</div>
         <p class="repair-costs-card__desc">Cylinder 3 Misfire</p>
-        <div class="repair-costs-card__footer">Open OBD guide →</div>
+        <div class="repair-costs-card__footer">Continue diagnosis path &rarr;</div>
       </a>
 
       <a class="repair-costs-card" href="/obd/p0171">
         <div class="repair-costs-card__title">P0171</div>
         <p class="repair-costs-card__desc">System Too Lean (Bank 1)</p>
-        <div class="repair-costs-card__footer">Open OBD guide →</div>
+        <div class="repair-costs-card__footer">Continue diagnosis path &rarr;</div>
       </a>
 
       <a class="repair-costs-card" href="/obd/p0128">
         <div class="repair-costs-card__title">P0128</div>
         <p class="repair-costs-card__desc">Coolant Thermostat Below Regulating Temp</p>
-        <div class="repair-costs-card__footer">Open OBD guide →</div>
+        <div class="repair-costs-card__footer">Continue diagnosis path &rarr;</div>
       </a>
 
       <a class="repair-costs-card" href="/obd/p0420">
         <div class="repair-costs-card__title">P0420</div>
         <p class="repair-costs-card__desc">Catalyst Efficiency Below Threshold (Bank 1)</p>
-        <div class="repair-costs-card__footer">Open OBD guide →</div>
+        <div class="repair-costs-card__footer">Continue diagnosis path &rarr;</div>
       </a>
 
       <a class="repair-costs-card" href="/obd/p0562">
         <div class="repair-costs-card__title">P0562</div>
         <p class="repair-costs-card__desc">System Voltage Low</p>
-        <div class="repair-costs-card__footer">Open OBD guide →</div>
+        <div class="repair-costs-card__footer">Continue diagnosis path &rarr;</div>
       </a>
     </div>
   </div>
@@ -212,9 +217,9 @@
   <div class="tm-card">
     <h2 style="margin-top:0;">Need a Real Estimate?</h2>
     <p class="tm-muted" style="margin:0 0 14px 0;">
-      Use the guide pages for cost context, then open the estimator when you are ready to narrow the job by vehicle and service.
+      Use cost context, then price the job by vehicle and service.
     </p>
-    <a class="tm-btn tm-btn-primary" href="/estimator">Open Estimator</a>
+    <a class="tm-btn tm-btn-primary" href="/estimator">Open estimate workflow</a>
   </div>
 </section>
 {% endblock %}

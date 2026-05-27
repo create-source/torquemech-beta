@@ -2511,13 +2511,13 @@ const confidenceEl = document.getElementById("laborConfidence");
         ${escapeServiceResultHtml(confidenceGuidance.priority)}
       </div>
       <div class="selected-service-context__momentum" aria-label="Pricing workflow">
-        <span>Review labor range</span>
-        <span>Check related inspections</span>
-        <span>Adjust parts/travel</span>
-        <span>Add to quote</span>
+        <span>Labor range</span>
+        <span>Related checks</span>
+        <span>Parts/travel</span>
+        <span>Quote</span>
       </div>
-      ${blueprintHref ? `<a class="selected-service-context__link" href="${escapeServiceResultHtml(blueprintHref)}">View repair blueprint with vehicle context</a>` : ""}
-      <div class="selected-service-context__note">Pricing is staged. Review labor, parts, and travel before adding the job.</div>
+      ${blueprintHref ? `<a class="selected-service-context__link" href="${escapeServiceResultHtml(blueprintHref)}">Open repair guide with vehicle context</a>` : ""}
+      <div class="selected-service-context__note">Review pricing before adding the job.</div>
     `;
     selectedServiceContextEl.classList.remove("hidden");
   }
@@ -3666,7 +3666,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   function shortcutActionLabel(kind) {
-    return kind === "inspection" ? "Add Inspection" : "Add Related Repair";
+    return kind === "inspection" ? "Inspect Related" : "Add Repair";
   }
 
   function buildWorkflowShortcuts(suggestions, source) {
@@ -3689,9 +3689,9 @@ const confidenceEl = document.getElementById("laborConfidence");
       shortcuts.push({
         type: "link",
         kind: "blueprint",
-        label: "Related Repair Blueprint",
-        meta: "Open the repair guide with this vehicle and service context.",
-        action: "View Blueprint",
+        label: "Related Repair Guide",
+        meta: "Open with this vehicle and service context.",
+        action: "Repair Path",
         href: blueprintHref,
       });
     }
@@ -3702,8 +3702,8 @@ const confidenceEl = document.getElementById("laborConfidence");
         type: "link",
         kind: "system",
         label: "Related System Hub",
-        meta: "Inspect symptoms, codes, and workflows for the same system.",
-        action: "Inspect System",
+        meta: "Inspect symptoms, codes, and workflows for this system.",
+        action: "System Check",
         href: systemHref,
       });
     }
@@ -6267,15 +6267,15 @@ if (getEstimateHint) {
       const details = vehicleLoaded && serviceLoaded
         ? "Vehicle and repair path carried into this quote."
         : serviceLoaded
-          ? "Repair path staged for this quote."
+          ? "Repair path carried into pricing."
           : "Guide context carried into the estimator.";
 
       handoffTrustEl.innerHTML = `
         <div>
-          <strong>Repair guide context loaded</strong>
+          <strong>Workflow context loaded</strong>
           <span>${details}</span>
         </div>
-        <em>Next: review pricing, then add to quote.</em>
+        <em>Next: review pricing.</em>
       `;
       handoffTrustEl.classList.remove("hidden");
     }

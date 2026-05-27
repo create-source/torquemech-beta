@@ -8,6 +8,12 @@
     <p class="tm-muted">
       Browse mechanic-focused repair procedures, labor context, and estimate workflows by system.
     </p>
+    <div class="tm-intel-flow-strip" aria-label="Repair guide workflow notes">
+      <span>System</span>
+      <span>Repair guide</span>
+      <span>Related checks</span>
+      <span>Estimate</span>
+    </div>
 
     <div class="tm-repair-guide-search" role="search">
       <label class="sr-only" for="repairGuideSearch">Search repair guides</label>
@@ -30,14 +36,15 @@
 {% if platform_sections %}
 <section class="tm-section" data-guide-browse-section>
   <div class="tm-card">
-    <h2>Continue Through TorqueMech</h2>
+    <h2>Continue Workflow</h2>
     <div class="tm-repair-guide-list">
       {% for item in platform_sections %}
-      <a class="tm-repair-guide-item" href="{{ item.href }}">
+      <a class="tm-repair-guide-item tm-workflow-entry-card" href="{{ item.href }}">
         <div>
           <strong>{{ item.title }}</strong>
           <div class="tm-muted">{{ item.summary }}</div>
         </div>
+        <span class="tm-workflow-entry-card__action">Open</span>
       </a>
       {% endfor %}
     </div>
@@ -67,6 +74,7 @@
         {% else %}
         <p class="tm-muted">Open repair guide</p>
         {% endif %}
+        <div class="tm-guide-card__footer">Open repair path &rarr;</div>
       </a>
       {% endfor %}
     </div>

@@ -14,20 +14,27 @@
     <p class="tm-muted">
       Search common vehicle symptoms, then move into the matching symptom guide, repair path, or estimate flow.
     </p>
+    <div class="tm-intel-flow-strip" aria-label="Symptom workflow notes">
+      <span>Complaint</span>
+      <span>Symptom guide</span>
+      <span>Repair path</span>
+      <span>Estimate</span>
+    </div>
   </div>
 
   {% include "partials/quick_find.html" %}
 
   {% if platform_sections %}
   <div class="card" style="margin-top:16px;">
-    <h2>Continue Through TorqueMech</h2>
+    <h2>Continue Workflow</h2>
     <div class="tm-repair-guide-list">
       {% for item in platform_sections %}
-      <a class="tm-repair-guide-item" href="{{ item.href }}">
+      <a class="tm-repair-guide-item tm-workflow-entry-card" href="{{ item.href }}">
         <div>
           <strong>{{ item.title }}</strong>
           <div class="tm-muted">{{ item.summary }}</div>
         </div>
+        <span class="tm-workflow-entry-card__action">Open</span>
       </a>
       {% endfor %}
     </div>
@@ -48,7 +55,7 @@
 
     <div id="diagnosticGuideList" class="tm-repair-guide-list" style="margin-top:16px;">
       {% for item in symptom_pages %}
-      <a class="tm-repair-guide-item"
+      <a class="tm-repair-guide-item tm-workflow-entry-card"
         href="/symptoms/{{ item.slug }}"
         data-slug="{{ item.slug|lower }}"
         data-title="{{ item.title|lower }}"
@@ -58,6 +65,7 @@
           <strong>{{ item.title }}</strong>
           <div class="tm-muted">{{ item.summary }}</div>
         </div>
+        <span class="tm-workflow-entry-card__action">Open guide</span>
       </a>
       {% endfor %}
     </div>

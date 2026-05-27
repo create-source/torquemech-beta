@@ -20,8 +20,8 @@
       <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
         <span>Select vehicle</span>
         <span>Choose service</span>
-        <span>Price the job</span>
-        <span>Send customer PDF</span>
+        <span>Review pricing</span>
+        <span>Create PDF</span>
       </div>
     </div>
     {% endif %}
@@ -81,10 +81,10 @@
     {% if not shared_id %}
     <div id="repairGuideHandoffTrust" class="tm-repair-handoff-trust hidden" aria-live="polite">
       <div>
-        <strong>Repair guide context loaded</strong>
+        <strong>Workflow context loaded</strong>
         <span>Vehicle and repair path carried into this quote.</span>
       </div>
-      <em>Next: review pricing, then add to quote.</em>
+      <em>Next: review pricing.</em>
     </div>
 
     <div class="tm-estimator-credibility" aria-label="TorqueMech estimator credibility">
@@ -204,8 +204,8 @@
     <div id="estimatorWorkflowShortcuts" class="tm-estimator-workflow-shortcuts hidden" aria-live="polite">
       <div class="tm-estimator-workflow-shortcuts__head">
         <div>
-          <div class="tm-estimator-workflow-shortcuts__eyebrow">Workflow Shortcuts</div>
-          <div class="tm-estimator-workflow-shortcuts__title">Fast next steps for this quote.</div>
+          <div class="tm-estimator-workflow-shortcuts__eyebrow">Next Best Step</div>
+          <div class="tm-estimator-workflow-shortcuts__title">Related checks and repair paths.</div>
         </div>
       </div>
       <div id="estimatorWorkflowShortcutList" class="tm-estimator-workflow-shortcuts__list"></div>
