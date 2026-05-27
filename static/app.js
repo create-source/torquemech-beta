@@ -2357,6 +2357,10 @@ const confidenceEl = document.getElementById("laborConfidence");
           <span><strong>Travel</strong><em>${travelDetail}</em></span>
           <b>${money(cost.travelFee)}</b>
         </div>
+        <div class="tm-cost-breakdown__row tm-cost-breakdown__row--total">
+          <span><strong>Line total</strong><em>Prepared estimate subtotal</em></span>
+          <b>${money(cost.total)}</b>
+        </div>
       </div>
     `;
   }
@@ -2508,11 +2512,12 @@ const confidenceEl = document.getElementById("laborConfidence");
       </div>
       <div class="selected-service-context__momentum" aria-label="Pricing workflow">
         <span>Review labor range</span>
+        <span>Check related inspections</span>
         <span>Adjust parts/travel</span>
         <span>Add to quote</span>
       </div>
       ${blueprintHref ? `<a class="selected-service-context__link" href="${escapeServiceResultHtml(blueprintHref)}">View repair blueprint with vehicle context</a>` : ""}
-      <div class="selected-service-context__note">Pricing is staged. Confirm the numbers before adding the job.</div>
+      <div class="selected-service-context__note">Pricing is staged. Review labor, parts, and travel before adding the job.</div>
     `;
     selectedServiceContextEl.classList.remove("hidden");
   }
@@ -4340,7 +4345,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       listEl.innerHTML = `
         <div class="tm-confirm-services-list">
           <div class="tm-confirm-total-band">
-            <span>Estimate total</span>
+            <span>Prepared estimate summary</span>
             <strong>${money(total)}</strong>
           </div>
           ${lineItems.map(it => `
@@ -4361,7 +4366,7 @@ const confidenceEl = document.getElementById("laborConfidence");
             </div>
           `).join("")}
           <div class="tm-confirm-grand-total">
-            <div>Customer quote total</div>
+            <div>Ready for customer review</div>
             <strong>${money(total)}</strong>
           </div>
         </div>
