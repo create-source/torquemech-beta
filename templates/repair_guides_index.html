@@ -8,6 +8,21 @@
     <p class="tm-muted">
       Browse mechanic-focused repair procedures, labor context, and estimate workflows by system.
     </p>
+
+    <div class="tm-repair-guide-search" role="search">
+      <label class="sr-only" for="repairGuideSearch">Search repair guides</label>
+      <span class="tm-repair-guide-search__icon" aria-hidden="true"></span>
+      <input
+        id="repairGuideSearch"
+        type="search"
+        placeholder="Search repair guides, systems, or keywords..."
+        autocomplete="off"
+      />
+      <button id="repairGuideSearchClear" type="button" class="tm-input-clear-btn" aria-label="Clear repair guide search" hidden>
+        &times;
+      </button>
+    </div>
+    <p id="repairGuideSearchEmpty" class="tm-repair-guide-empty" hidden>No repair guides found.</p>
   </div>
 </section>
 
@@ -30,13 +45,18 @@
 {% endif %}
 
 {% for group in guide_groups %}
-<section class="tm-section">
+<section class="tm-section tm-repair-guide-group" data-guide-group>
   <div class="tm-card">
     <h2>{{ group.name }}</h2>
 
     <div class="tm-guide-grid">
       {% for guide in group.guides %}
-      <a class="tm-guide-card" href="/repair-guides/{{ guide.slug }}">
+      <a
+        class="tm-guide-card"
+        href="/repair-guides/{{ guide.slug }}"
+        data-guide-card
+        data-search="{{ guide.title|default('', true)|lower }} {{ guide.summary|default('', true)|lower }} {{ guide.slug|default('', true)|replace('-', ' ')|lower }} {{ group.name|default('', true)|lower }} {{ guide.category|default('', true)|lower }} {% if guide.keywords %}{{ guide.keywords|join(' ')|lower }}{% endif %}"
+      >
         {% if guide.difficulty %}
         <div class="tm-difficulty-badge">{{ guide.difficulty }}</div>
         {% endif %}
@@ -52,4 +72,48 @@
   </div>
 </section>
 {% endfor %}
+
+<script>
+(function () {
+  const input = document.getElementById("repairGuideSearch");
+  const clearBtn = document.getElementById("repairGuideSearchClear");
+  const emptyState = document.getElementById("repairGuideSearchEmpty");
+  const cards = Array.from(document.querySelectorAll("[data-guide-card]"));
+  const groups = Array.from(document.querySelectorAll("[data-guide-group]"));
+
+  if (!input || !clearBtn || !cards.length) return;
+
+  const normalize = (value) => String(value || "").trim().toLowerCase();
+
+  function updateFilter() {
+    const query = normalize(input.value);
+    let visibleCount = 0;
+
+    cards.forEach((card) => {
+      const searchText = normalize(card.dataset.search);
+      const isVisible = !query || searchText.includes(query);
+      card.hidden = !isVisible;
+      card.classList.toggle("is-filtered-out", !isVisible);
+      if (isVisible) visibleCount += 1;
+    });
+
+    groups.forEach((group) => {
+      const visibleInGroup = group.querySelector("[data-guide-card]:not([hidden])");
+      group.hidden = !visibleInGroup;
+    });
+
+    clearBtn.hidden = !query;
+    if (emptyState) emptyState.hidden = visibleCount > 0;
+  }
+
+  input.addEventListener("input", updateFilter);
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    updateFilter();
+    input.focus({ preventScroll: true });
+  });
+
+  updateFilter();
+})();
+</script>
 {% endblock %}

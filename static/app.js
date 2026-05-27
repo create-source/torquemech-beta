@@ -20,6 +20,76 @@
 
   let searchDebounceTimer = null;
 
+  function initClearableTextFields(root = document) {
+    const selector = [
+      'input[type="text"]',
+      'input[type="search"]',
+      'input[type="tel"]',
+      'input[type="email"]',
+      'input[type="url"]',
+      "textarea",
+    ].join(",");
+
+    const fields = Array.from(root.querySelectorAll(selector));
+
+    fields.forEach((field) => {
+      if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+      if (field.readOnly || field.disabled || field.type === "hidden") return;
+      if (field.closest(".tm-inline-clear-field, .tm-service-field-shell, .tm-clearable-field, .tm-repair-guide-search")) return;
+      if (field.classList.contains("vehicle-model-search")) return;
+
+      const wrapper = document.createElement("span");
+      wrapper.className = "tm-clearable-field";
+      if (field instanceof HTMLTextAreaElement) {
+        wrapper.classList.add("tm-clearable-field--textarea");
+      }
+
+      field.parentNode?.insertBefore(wrapper, field);
+      wrapper.appendChild(field);
+
+      const clearButton = document.createElement("button");
+      clearButton.type = "button";
+      clearButton.className = "tm-input-clear-btn";
+      clearButton.setAttribute("aria-label", `Clear ${field.getAttribute("aria-label") || field.placeholder || field.id || "field"}`);
+      clearButton.hidden = true;
+      clearButton.innerHTML = "&times;";
+      wrapper.appendChild(clearButton);
+
+      const update = () => {
+        clearButton.hidden = !String(field.value || "").trim();
+      };
+
+      field.addEventListener("input", update);
+      field.addEventListener("change", update);
+      field.addEventListener("focus", update);
+      clearButton.addEventListener("click", () => {
+        field.value = "";
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+        field.dispatchEvent(new Event("change", { bubbles: true }));
+        update();
+        field.focus({ preventScroll: true });
+      });
+
+      update();
+    });
+  }
+
+  window.TorqueMechClearFields = Object.assign({}, window.TorqueMechClearFields, {
+    init: initClearableTextFields,
+    refresh(root = document) {
+      initClearableTextFields(root);
+      root.querySelectorAll(".tm-clearable-field input, .tm-clearable-field textarea").forEach((field) => {
+        field.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+    },
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => initClearableTextFields(), { once: true });
+  } else {
+    initClearableTextFields();
+  }
+
   async function vehicleUiApiJSON(url, opts) {
     const response = await fetch(url, opts);
     if (!response.ok) {
@@ -4254,6 +4324,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     confirmModal.classList.remove("hidden");
     confirmModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
+    window.TorqueMechClearFields?.refresh(confirmModal);
 
     setSigVisible(getWantSig() === "yes");
 
