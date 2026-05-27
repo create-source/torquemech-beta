@@ -1061,29 +1061,41 @@ button:active{
 .tm-inline-clear-field input,
 .tm-service-field-shell .service-search{
   width:100%;
-  padding-right:44px;
+  padding-right:46px;
+}
+
+.tm-inline-clear-field > select,
+.tm-inline-clear-field > input,
+.tm-service-field-shell > .service-search{
+  padding-right:46px !important;
 }
 
 .tm-input-clear-btn{
   position:absolute;
-  top:8px;
-  right:8px;
+  top:50%;
+  right:10px;
   z-index:2;
-  width:34px;
-  height:34px;
-  border:1px solid rgba(15,23,42,.12);
+  width:36px;
+  min-width:36px;
+  height:36px;
+  min-height:36px;
+  margin:0;
+  padding:0;
+  border:0;
   border-radius:999px;
-  background:#fff;
+  background:transparent;
   color:#475569;
   font-size:1.25rem;
   font-weight:800;
   line-height:1;
   cursor:pointer;
-  box-shadow:0 4px 10px rgba(15,23,42,.06);
+  box-shadow:none;
+  transform:translateY(-50%);
+  touch-action:manipulation;
 }
 
 .tm-inline-clear-field > .tm-input-clear-btn{
-  top:33px;
+  top:calc(100% - 23px);
 }
 
 .tm-input-clear-btn[hidden]{
@@ -1097,7 +1109,7 @@ button:active{
 }
 
 .tm-input-clear-btn:hover{
-  border-color:rgba(20,184,166,.34);
+  background:rgba(15, 23, 42, .08);
   color:#0f766e;
 }
 
@@ -3201,20 +3213,22 @@ canvas,
   }
 
   .tm-input-clear-btn{
-    width:40px;
-    height:40px;
-    top:6px;
-    right:6px;
+    width:36px;
+    min-width:36px;
+    height:36px;
+    min-height:36px;
+    top:50%;
+    right:10px;
   }
 
   .tm-inline-clear-field > .tm-input-clear-btn{
-    top:31px;
+    top:calc(100% - 26px);
   }
 
   .tm-inline-clear-field select,
   .tm-inline-clear-field input,
   .tm-service-field-shell .service-search{
-    padding-right:50px;
+    padding-right:46px;
   }
 
   .tm-card[aria-label="Service"] .tm-btn,

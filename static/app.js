@@ -589,6 +589,7 @@
   // Service selection
   const categoryEl = $("category");
   const serviceEl = $("service");
+  const categoryClearBtn = $("categoryClearBtn");
   const serviceClearBtn = $("serviceClearBtn");
   let serviceOptions = [];
   let serviceCategories = [];
@@ -709,6 +710,13 @@
     serviceClearBtn.disabled = false;
   }
   updateServiceClearButton();
+
+  function updateCategoryClearButton() {
+    if (!categoryClearBtn) return;
+    categoryClearBtn.hidden = !Boolean((categoryEl?.value || "").trim());
+    categoryClearBtn.disabled = false;
+  }
+  updateCategoryClearButton();
 
   // Inputs
   const laborHoursEl = $("laborHours");
@@ -2694,6 +2702,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!categoryEl) return;
     categoryEl.value = value || "";
     categorySelectionSource = categoryEl.value ? source : "none";
+    updateCategoryClearButton();
   }
 
   function hasManualCategoryFilter() {
@@ -5681,11 +5690,19 @@ if (getEstimateHint) {
   categoryEl?.addEventListener("change", async () => {
     try {
       categorySelectionSource = categoryEl.value ? "manual" : "none";
+      updateCategoryClearButton();
       await loadServices(categoryEl.value);
       updateEstimateButtonState();
     } catch (e) {
       setStatus("error", `Services failed: ${e.message}`);
     }
+  });
+
+  categoryClearBtn?.addEventListener("click", async () => {
+    setCategoryValue("", "none");
+    await loadServices("");
+    updateEstimateButtonState();
+    categoryEl?.focus();
   });
 
   serviceEl?.addEventListener("change", async () => {
