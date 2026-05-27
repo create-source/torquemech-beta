@@ -951,6 +951,31 @@ button:active{
   margin-top: 12px;
 }
 
+.tm-repair-handoff-trust{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:max-content;
+  max-width:100%;
+  margin-top:12px;
+  padding:9px 11px;
+  border:1px solid rgba(15,118,110,.20);
+  border-radius:12px;
+  background:#f0fdfa;
+  color:#334155;
+  font-size:.84rem;
+  line-height:1.25;
+}
+
+.tm-repair-handoff-trust strong{
+  color:#0f766e;
+  font-weight:950;
+}
+
+.tm-repair-handoff-trust span{
+  font-weight:800;
+}
+
 .tm-estimator-credibility__item{
   min-height: 44px;
   padding: 10px 12px;
@@ -2947,6 +2972,13 @@ canvas,
     min-height: 0;
     padding: 10px 12px;
     font-size: .78rem;
+  }
+
+  .tm-repair-handoff-trust{
+    display:grid;
+    gap:3px;
+    width:100%;
+    font-size:.8rem;
   }
 
   .tm-addServiceRow{
@@ -5626,18 +5658,26 @@ h3{
   align-items: center;
   min-height: 28px;
   padding: 6px 9px;
-  border: 1px solid rgba(15,23,42,.10);
+  border: 1px solid rgba(15,118,110,.16);
   border-radius: 999px;
-  background: rgba(248,250,252,.78);
-  color: var(--tm-text-muted);
+  background: rgba(240,253,250,.82);
+  color: #0f766e;
   font-size: .8rem;
-  font-weight: 850;
+  font-weight: 900;
   line-height: 1.2;
 }
 
 .tm-intel-page .tm-section-note{
   margin: 0 0 10px 0;
   max-width: 72ch;
+}
+
+.tm-trust-helper{
+  margin:0 0 9px;
+  color:#334155;
+  font-size:.84rem;
+  font-weight:750;
+  line-height:1.4;
 }
 
 .tm-intel-page .tm-stat{
@@ -5713,6 +5753,11 @@ h3{
   .tm-blueprint-summary{
     padding:10px 11px;
     font-size:.92rem;
+  }
+
+  .tm-trust-helper{
+    margin-bottom:8px;
+    font-size:.8rem;
   }
 
   .tm-intel-page .tm-related-repair-grid,

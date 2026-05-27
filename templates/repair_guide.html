@@ -14,9 +14,9 @@
       </div>
       {% endif %}
       <div class="tm-intel-flow-strip" aria-label="Repair workflow notes">
-        <span>Inspect first</span>
-        <span>Add supported checks</span>
-        <span>Estimate confirmed path</span>
+        <span>Mechanic workflow</span>
+        <span>Inspection-first guidance</span>
+        <span>Estimate-ready repair path</span>
       </div>
     </div>
     {% if guide.estimate %}
@@ -24,7 +24,7 @@
       <div>
         <div class="tm-blueprint-action-kicker">Next Action</div>
         <h2>Estimate This Repair</h2>
-        <p class="tm-muted tm-section-note">Carry vehicle, service, and source context into the estimator.</p>
+        <p class="tm-muted tm-section-note">Open the estimator with this repair path already staged.</p>
       </div>
       <a
         class="tm-btn tm-btn-primary tm-estimate-repair-cta"
@@ -76,6 +76,7 @@
     <div class="tm-card tm-blueprint-priority-card">
       <div class="tm-blueprint-action-kicker">Step 1</div>
       <h2>Inspect First</h2>
+      <p class="tm-muted tm-trust-helper">Confirm the failure pattern before parts or labor are quoted.</p>
       <ul class="tm-priority-list">
         {% for item in guide.inspect_first[:4] %}
         <li>{{ item }}</li>
@@ -88,6 +89,7 @@
     <div class="tm-card">
       <div class="tm-blueprint-action-kicker">Before Pricing</div>
       <h2>Mechanics Often Check</h2>
+      <p class="tm-muted tm-trust-helper">These checks reduce missed related work and avoid thin quotes.</p>
       {% if guide.workflow_next_steps %}
       <div class="tm-workflow-chip-grid">
         {% for item in guide.workflow_next_steps %}

@@ -79,6 +79,11 @@
     {% endif %}
 
     {% if not shared_id %}
+    <div id="repairGuideHandoffTrust" class="tm-repair-handoff-trust hidden" aria-live="polite">
+      <strong>Repair guide context loaded</strong>
+      <span>Vehicle and repair path carried into this quote.</span>
+    </div>
+
     <div class="tm-estimator-credibility" aria-label="TorqueMech estimator credibility">
       <div class="tm-estimator-credibility__item">Built for mobile mechanics and independent shops</div>
       <div class="tm-estimator-credibility__item">Customer-ready PDF quotes</div>

@@ -6244,12 +6244,29 @@ if (getEstimateHint) {
     const model = params.get("model");
     const displayModel = params.get("displayModel") || params.get("display_model");
     const service = params.get("service");
+    const source = params.get("source") || "";
+    const handoffTrustEl = $("repairGuideHandoffTrust");
 
     if (!year && !make && !model && !displayModel && !service) return;
 
+    function updateRepairGuideHandoffTrust({ vehicleLoaded = false, serviceLoaded = false } = {}) {
+      if (!handoffTrustEl) return;
+      const cameFromGuide = source === "repair-guide" || Boolean(service);
+      if (!cameFromGuide) return;
+
+      const details = vehicleLoaded && serviceLoaded
+        ? "Vehicle and repair path carried into this quote."
+        : serviceLoaded
+          ? "Repair path carried into the estimator."
+          : "Guide context carried into the estimator.";
+
+      handoffTrustEl.innerHTML = `<strong>Repair guide context loaded</strong><span>${details}</span>`;
+      handoffTrustEl.classList.remove("hidden");
+    }
+
     async function preloadVehicle() {
       const activeVehicle = getActiveVehicle();
-      if (!activeVehicle) return;
+      if (!activeVehicle) return false;
 
       if (year) activeVehicle.year = year;
       if (make) activeVehicle.make = make;
@@ -6265,6 +6282,7 @@ if (getEstimateHint) {
       await renderVehicles();
       renderActiveVehicleBanner();
       updateEstimateButtonState();
+      return Boolean(year || make || model || displayModel);
     }
 
     async function preloadServiceByCode(serviceCode) {
@@ -6305,14 +6323,18 @@ if (getEstimateHint) {
 
     initReady.then(async () => {
       try {
-        await preloadVehicle();
+        const vehicleLoaded = await preloadVehicle();
+        let serviceLoaded = false;
 
         if (service) {
           const found = await preloadServiceByCode(service);
+          serviceLoaded = found;
           if (!found) {
             console.warn("Could not auto-find service:", service);
           }
         }
+
+        updateRepairGuideHandoffTrust({ vehicleLoaded, serviceLoaded });
       } catch (e) {
         console.warn("Repair guide preload failed:", e);
       }
