@@ -400,10 +400,58 @@
 
       {% if guide.recommended_while_replacing %}
       <div class="tm-repair-intel-panel">
-        <h3>Recommended While Replacing</h3>
-        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+        <h3>Recommended While Access Is Available</h3>
+        <div class="tm-access-action-list">
           {% for item in guide.recommended_while_replacing %}
+          <div class="tm-access-action-card">
+            <strong>{{ item.title }}</strong>
+            {% if item.reason %}
+            <span>{{ item.reason }}</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if guide.priority_context %}
+      <div class="tm-repair-intel-panel">
+        <h3>Priority Context</h3>
+        <div class="tm-priority-chip-list">
+          {% for item in guide.priority_context %}
+          <div class="tm-priority-chip tm-priority-chip--{{ item.priority | lower | replace(' ', '-') }}">
+            <strong>{{ item.priority }}</strong>
+            <span>{{ item.label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if guide.failure_signs %}
+      <div class="tm-repair-intel-panel">
+        <h3>Common Failure Signs</h3>
+        <div class="tm-blueprint-chip-list">
+          {% for item in guide.failure_signs %}
           <span class="tm-blueprint-chip">{{ item }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if guide.inspection_triggers %}
+      <div class="tm-repair-intel-panel tm-repair-intel-panel--wide">
+        <h3>Inspection Triggers</h3>
+        <div class="tm-trigger-list">
+          {% for item in guide.inspection_triggers %}
+          <div class="tm-trigger-card">
+            {% if item["if"] %}
+            <strong>If {{ item["if"] }}</strong>
+            {% endif %}
+            {% if item.check %}
+            <span>{{ item.check }}</span>
+            {% endif %}
+          </div>
           {% endfor %}
         </div>
       </div>

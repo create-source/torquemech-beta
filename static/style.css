@@ -4752,6 +4752,92 @@ h3{
   line-height:1.4;
 }
 
+.tm-repair-intel-panel--wide{
+  grid-column:1 / -1;
+}
+
+.tm-access-action-list,
+.tm-trigger-list,
+.tm-priority-chip-list{
+  display:grid;
+  gap:8px;
+}
+
+.tm-access-action-card,
+.tm-trigger-card,
+.tm-priority-chip{
+  display:grid;
+  gap:4px;
+  min-width:0;
+  padding:9px 10px;
+  border:1px solid rgba(15, 23, 42, .09);
+  border-radius:10px;
+  background:#ffffff;
+}
+
+.tm-access-action-card strong,
+.tm-trigger-card strong,
+.tm-priority-chip strong{
+  color:var(--tm-text);
+  font-size:.84rem;
+  font-weight:950;
+  line-height:1.2;
+}
+
+.tm-access-action-card span,
+.tm-trigger-card span,
+.tm-priority-chip span{
+  color:var(--tm-text-muted);
+  font-size:.78rem;
+  font-weight:700;
+  line-height:1.35;
+}
+
+.tm-priority-chip{
+  grid-template-columns:auto minmax(0, 1fr);
+  align-items:center;
+  gap:8px;
+}
+
+.tm-priority-chip strong{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  min-height:26px;
+  padding:5px 8px;
+  border-radius:999px;
+  border:1px solid rgba(15, 23, 42, .10);
+  background:#f8fafc;
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.tm-priority-chip--high-risk strong{
+  border-color:rgba(220, 38, 38, .20);
+  background:#fef2f2;
+  color:#991b1b;
+}
+
+.tm-priority-chip--repair-soon strong{
+  border-color:rgba(217, 119, 6, .22);
+  background:#fffbeb;
+  color:#92400e;
+}
+
+.tm-priority-chip--monitor strong{
+  border-color:rgba(37, 99, 235, .18);
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+
+.tm-priority-chip--verify-first strong{
+  border-color:rgba(17, 179, 173, .22);
+  background:#f0fdfa;
+  color:#0f766e;
+}
+
 .tm-workflow-next-step{
   margin:12px 0 0;
 }
@@ -4948,6 +5034,14 @@ h3{
 
   .tm-torque-value{
     text-align:left;
+  }
+
+  .tm-repair-intel-panel--wide{
+    grid-column:auto;
+  }
+
+  .tm-priority-chip{
+    grid-template-columns:1fr;
   }
 
   .tm-blueprint-meta{

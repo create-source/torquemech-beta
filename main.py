@@ -1591,7 +1591,79 @@ def normalize_repair_guide_tool_groups(raw_tools: Any) -> Dict[str, List[str]]:
     return groups
 
 
-def infer_repair_precision_defaults(guide: Dict[str, Any]) -> Dict[str, List[str]]:
+def normalize_repair_action_items(raw_items: Any) -> List[Dict[str, str]]:
+    normalized_items: List[Dict[str, str]] = []
+    if not isinstance(raw_items, list):
+        return normalized_items
+
+    for item in raw_items:
+        if isinstance(item, str):
+            title = item.strip()
+            if title:
+                normalized_items.append({"title": title, "reason": ""})
+            continue
+
+        if not isinstance(item, dict):
+            continue
+
+        title = str(item.get("title") or item.get("label") or item.get("name") or "").strip()
+        reason = str(item.get("reason") or item.get("description") or item.get("why") or "").strip()
+        if title:
+            normalized_items.append({"title": title, "reason": reason})
+
+    return normalized_items
+
+
+def normalize_priority_context_items(raw_items: Any) -> List[Dict[str, str]]:
+    normalized_items: List[Dict[str, str]] = []
+    if not isinstance(raw_items, list):
+        return normalized_items
+
+    allowed_priorities = {"Monitor", "Repair Soon", "High Risk", "Verify First"}
+    for item in raw_items:
+        if isinstance(item, str):
+            title = item.strip()
+            if title:
+                normalized_items.append({"priority": "Verify First", "label": title})
+            continue
+
+        if not isinstance(item, dict):
+            continue
+
+        priority = str(item.get("priority") or item.get("severity") or item.get("status") or "").strip().title()
+        label = str(item.get("label") or item.get("title") or item.get("condition") or "").strip()
+        if priority not in allowed_priorities:
+            priority = "Verify First"
+        if label:
+            normalized_items.append({"priority": priority, "label": label})
+
+    return normalized_items
+
+
+def normalize_inspection_trigger_items(raw_items: Any) -> List[Dict[str, str]]:
+    normalized_items: List[Dict[str, str]] = []
+    if not isinstance(raw_items, list):
+        return normalized_items
+
+    for item in raw_items:
+        if isinstance(item, str):
+            text = item.strip()
+            if text:
+                normalized_items.append({"if": text, "check": ""})
+            continue
+
+        if not isinstance(item, dict):
+            continue
+
+        condition = str(item.get("if") or item.get("condition") or item.get("trigger") or "").strip()
+        check = str(item.get("check") or item.get("then") or item.get("action") or "").strip()
+        if condition or check:
+            normalized_items.append({"if": condition, "check": check})
+
+    return normalized_items
+
+
+def infer_repair_precision_defaults(guide: Dict[str, Any]) -> Dict[str, Any]:
     text = " ".join(
         str(value or "")
         for value in (
@@ -1605,8 +1677,11 @@ def infer_repair_precision_defaults(guide: Dict[str, Any]) -> Dict[str, List[str
     ).lower()
 
     tools = {"basic": [], "specialty": [], "supplies": []}
-    recommended: List[str] = []
+    recommended: List[Dict[str, str]] = []
     verification: List[str] = []
+    priority_context: List[Dict[str, str]] = []
+    failure_signs: List[str] = []
+    inspection_triggers: List[Dict[str, str]] = []
 
     def add_many(target: List[str], values: List[str]) -> None:
         for value in values:
@@ -1617,37 +1692,150 @@ def infer_repair_precision_defaults(guide: Dict[str, Any]) -> Dict[str, List[str
         add_many(tools["basic"], ["Socket set", "Wrenches", "Drain pan"])
         add_many(tools["specialty"], ["Cooling system pressure tester", "Spill-free funnel or vacuum fill tool", "Torque wrench"])
         add_many(tools["supplies"], ["Correct coolant", "Gasket or sealant as specified", "Shop towels"])
-        recommended = ["Coolant service", "Belt inspection / replacement", "Thermostat inspection", "Radiator hose inspection"]
+        recommended = [
+            {"title": "Coolant service", "reason": "Cooling system is already drained/open."},
+            {"title": "Belt inspection / replacement", "reason": "Belt is often removed or exposed during pump access."},
+            {"title": "Thermostat inspection", "reason": "Overheating concerns often overlap with thermostat behavior."},
+            {"title": "Radiator hose inspection", "reason": "Hoses should be checked while the cooling system is open."},
+        ]
         verification = ["Refill and bleed cooling system", "Pressure-test for leaks", "Confirm operating temperature", "Verify radiator fan operation", "Road test and recheck coolant level"]
+        priority_context = [
+            {"priority": "High Risk", "label": "Active leak, pulley wobble, or bearing noise"},
+            {"priority": "Repair Soon", "label": "Coolant age, contamination, or hose deterioration"},
+            {"priority": "Monitor", "label": "Minor seep with no overheating after verification"},
+            {"priority": "Verify First", "label": "Mixed leak evidence or repeat overheating"},
+        ]
+        failure_signs = [
+            "Coolant crust near weep hole",
+            "Pulley wobble or bearing noise",
+            "Overheating at idle or low speed",
+            "Coolant smell after shutdown",
+            "Visible drip after pressure test",
+        ]
+        inspection_triggers = [
+            {"if": "Belt is coolant-soaked", "check": "Inspect/replace belt."},
+            {"if": "Overheating continues after repair", "check": "Verify thermostat and radiator fan operation."},
+            {"if": "Coolant is rusty or contaminated", "check": "Recommend coolant service or flush inspection."},
+            {"if": "Pressure test still fails", "check": "Inspect hoses, radiator, cap, and gasket surfaces."},
+        ]
     elif any(term in text for term in ("brake", "pad", "rotor", "caliper")):
         add_many(tools["basic"], ["Floor jack", "Jack stands", "Lug wrench", "Socket set"])
         add_many(tools["specialty"], ["Torque wrench", "Brake piston compressor", "Brake bleeder when hydraulics are opened"])
         add_many(tools["supplies"], ["Brake cleaner", "Brake lubricant", "Brake fluid if bleeding"])
-        recommended = ["Rotor inspection", "Caliper slide inspection", "Brake fluid inspection", "Hardware inspection"]
+        recommended = [
+            {"title": "Rotor inspection", "reason": "Rotor face and thickness are exposed during pad access."},
+            {"title": "Caliper slide inspection", "reason": "Slide condition affects pad wear and repeat comebacks."},
+            {"title": "Brake fluid inspection", "reason": "Hydraulic condition can explain poor pedal feel or caliper issues."},
+            {"title": "Hardware inspection", "reason": "Clips and abutments are already accessible."},
+        ]
         verification = ["Torque wheel fasteners", "Pump brake pedal before moving", "Confirm pedal feel", "Check for drag or leaks", "Road test and recheck noise/vibration"]
+        priority_context = [
+            {"priority": "High Risk", "label": "Grinding, metal contact, fluid leak, or severe pull"},
+            {"priority": "Repair Soon", "label": "Low pad thickness or uneven wear"},
+            {"priority": "Monitor", "label": "Light noise with pads/rotors still in spec"},
+            {"priority": "Verify First", "label": "Vibration, ABS, or hub symptoms overlap"},
+        ]
+        failure_signs = [
+            "Inner pad worn faster than outer pad",
+            "Rotor scoring, heat spots, or heavy rust lip",
+            "Slide pins dry, seized, or torn boots",
+            "Caliper drag after pedal release",
+            "Brake fluid leak or low reservoir",
+        ]
+        inspection_triggers = [
+            {"if": "Pad wear is uneven", "check": "Inspect slide pins, caliper piston, and hose restriction."},
+            {"if": "Pulsation is present", "check": "Measure rotor condition and check wheel-end runout."},
+            {"if": "Fluid is dark or low", "check": "Inspect hydraulic leaks and fluid condition."},
+            {"if": "Wheel drags after braking", "check": "Verify caliper, hose, and hardware movement."},
+        ]
     elif any(term in text for term in ("alternator", "charging", "battery")):
         add_many(tools["basic"], ["Socket set", "Wrenches", "Belt tool when required"])
         add_many(tools["specialty"], ["Digital multimeter", "Battery tester", "Torque wrench"])
         add_many(tools["supplies"], ["Battery terminal cleaner", "Dielectric grease as appropriate"])
-        recommended = ["Battery test", "Belt / tensioner inspection", "Charging cable inspection", "Ground inspection"]
+        recommended = [
+            {"title": "Battery test", "reason": "Battery condition can mimic or mask charging failure."},
+            {"title": "Belt / tensioner inspection", "reason": "Belt drive is already exposed during alternator access."},
+            {"title": "Charging cable inspection", "reason": "High resistance can cause repeat low-voltage complaints."},
+            {"title": "Ground inspection", "reason": "Ground faults can imitate alternator output problems."},
+        ]
         verification = ["Confirm charging voltage", "Load-test battery if needed", "Check belt tracking", "Clear low-voltage codes", "Road test and recheck charging output"]
+        priority_context = [
+            {"priority": "High Risk", "label": "No charge, warning light, or repeated stall/low voltage"},
+            {"priority": "Repair Soon", "label": "Weak output under load or noisy bearing"},
+            {"priority": "Monitor", "label": "Intermittent complaint with normal verified output"},
+            {"priority": "Verify First", "label": "Weak battery or parasitic draw suspected"},
+        ]
+        failure_signs = [
+            "Low charging voltage under load",
+            "Battery light stays on",
+            "Bearing whine or pulley noise",
+            "Belt slip, glaze, or tensioner flutter",
+            "Hot or corroded charge cable connection",
+        ]
+        inspection_triggers = [
+            {"if": "Battery fails load test", "check": "Address battery before condemning alternator."},
+            {"if": "Belt is glazed or loose", "check": "Inspect belt, tensioner, and pulley alignment."},
+            {"if": "Voltage drop is high", "check": "Inspect charge cable, grounds, and main fuse links."},
+            {"if": "Low-voltage codes return", "check": "Recheck charging output and power/ground paths."},
+        ]
     elif any(term in text for term in ("spark plug", "ignition", "misfire")):
         add_many(tools["basic"], ["Socket set", "Extensions", "Ignition coil puller when required"])
         add_many(tools["specialty"], ["Spark plug socket", "Gap gauge when applicable", "Torque wrench"])
         add_many(tools["supplies"], ["Dielectric grease as appropriate", "Compressed air for plug wells"])
-        recommended = ["Ignition coil boot inspection", "Plug well inspection", "Misfire code review", "Intake gasket inspection when removed"]
+        recommended = [
+            {"title": "Ignition coil boot inspection", "reason": "Boots are removed during plug access."},
+            {"title": "Plug well inspection", "reason": "Oil or coolant intrusion can damage new plugs/boots."},
+            {"title": "Misfire code review", "reason": "Prevents replacing plugs when the fault is fuel or compression."},
+            {"title": "Intake gasket inspection", "reason": "Access overlap applies when intake removal is required."},
+        ]
         verification = ["Verify plug type and gap", "Torque plugs to spec when available", "Confirm coil connectors are seated", "Check misfire counters", "Road test and recheck idle quality"]
+        priority_context = [
+            {"priority": "High Risk", "label": "Flashing MIL or active misfire under load"},
+            {"priority": "Repair Soon", "label": "Worn plugs, hard start, or recurring misfire counts"},
+            {"priority": "Monitor", "label": "Mileage-based service with no drivability concern"},
+            {"priority": "Verify First", "label": "Misfire stays after coil/plug swap"},
+        ]
+        failure_signs = [
+            "Wide gap or worn electrode",
+            "Oil or coolant fouling",
+            "Carbon tracking on boot or plug",
+            "Plug well oil intrusion",
+            "Misfire counter follows cylinder evidence",
+        ]
+        inspection_triggers = [
+            {"if": "Oil is in plug wells", "check": "Inspect valve cover gasket and coil boots."},
+            {"if": "Misfire stays on same cylinder", "check": "Check injector, compression, and vacuum leak paths."},
+            {"if": "Plug is fuel-soaked", "check": "Verify spark and injector control."},
+            {"if": "Intake must be removed", "check": "Inspect intake gasket and access-related hoses."},
+        ]
     else:
         add_many(tools["basic"], ["Basic hand tools", "Socket set", "Wrenches"])
         add_many(tools["specialty"], ["Torque wrench", "Scan tool when diagnosis is involved"])
         add_many(tools["supplies"], ["Shop towels", "Cleaner or fluid required by the repair"])
-        recommended = ["Inspect nearby wear items", "Check fasteners and mounting surfaces", "Review related symptoms"]
+        recommended = [
+            {"title": "Inspect nearby wear items", "reason": "Access is already available."},
+            {"title": "Check fasteners and mounting surfaces", "reason": "Reduces repeat teardown risk."},
+            {"title": "Review related symptoms", "reason": "Confirms the repair path before adding work."},
+        ]
         verification = ["Confirm repair concern is resolved", "Check for leaks, noise, or warning lights", "Road test when appropriate", "Recheck fluid level or fastener security if applicable"]
+        priority_context = [
+            {"priority": "Verify First", "label": "Evidence is mixed or incomplete"},
+            {"priority": "Repair Soon", "label": "Confirmed wear or leakage"},
+            {"priority": "Monitor", "label": "Minor concern with no confirmed failure"},
+        ]
+        failure_signs = ["Confirmed leak, noise, play, or fault data", "Repeat symptom after basic checks"]
+        inspection_triggers = [
+            {"if": "Evidence is mixed", "check": "Verify the system before adding parts."},
+            {"if": "Access exposes related wear", "check": "Inspect related fasteners, mounts, and seals."},
+        ]
 
     return {
         "tool_groups": tools,
         "recommended_while_replacing": recommended,
         "post_repair_verification": verification,
+        "priority_context": priority_context,
+        "failure_signs": failure_signs,
+        "inspection_triggers": inspection_triggers,
     }
 
 
@@ -1714,12 +1902,24 @@ def normalize_repair_guide(raw_guide: Any, *, slug: str = "") -> Dict[str, Any]:
     normalized["related_obd_codes"] = normalize_symptom_obd_codes(guide.get("related_obd_codes"))
     normalized["recommended_repairs"] = normalize_symptom_recommended_repairs(guide.get("recommended_repairs"))
     normalized["recommended_while_replacing"] = (
-        normalize_repair_guide_list(guide.get("recommended_while_replacing"))
+        normalize_repair_action_items(guide.get("recommended_while_replacing"))
         or precision_defaults["recommended_while_replacing"]
     )
     normalized["post_repair_verification"] = (
         normalize_repair_guide_list(guide.get("post_repair_verification") or guide.get("verification_checks"))
         or precision_defaults["post_repair_verification"]
+    )
+    normalized["priority_context"] = (
+        normalize_priority_context_items(guide.get("priority_context") or guide.get("severity_context"))
+        or precision_defaults["priority_context"]
+    )
+    normalized["failure_signs"] = (
+        normalize_repair_guide_list(guide.get("failure_signs") or guide.get("common_failure_signs"))
+        or precision_defaults["failure_signs"]
+    )
+    normalized["inspection_triggers"] = (
+        normalize_inspection_trigger_items(guide.get("inspection_triggers") or guide.get("if_present_check"))
+        or precision_defaults["inspection_triggers"]
     )
     normalized["related_symptoms"] = normalize_related_link_items(guide.get("related_symptoms"))
 
