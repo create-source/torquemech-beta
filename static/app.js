@@ -4338,23 +4338,41 @@ const confidenceEl = document.getElementById("laborConfidence");
             <span>Prepared estimate summary</span>
             <strong>${money(total)}</strong>
           </div>
-          ${lineItems.map(it => `
+          ${lineItems.map((it) => {
+            const cost = getLineItemCostBreakdown(it);
+            const vehicleLabel = getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle());
+            const serviceTotal = it.estimate != null ? money(it.estimate) : "Pending";
+            const serviceName = escapeServiceResultHtml(it.serviceText || "Service");
+            const laborValue = cost.pricingMode === "flat"
+              ? money(cost.laborTotal)
+              : `${cost.laborHours.toFixed(1)}h`;
+            const partsValue = cost.hasParts ? money(cost.partsPrice) : "None";
+            const travelValue = cost.hasTravel ? money(cost.travelFee) : "None";
+            return `
             <div class="tm-confirm-service-row">
               <div class="tm-confirm-service-main">
-                <div class="tm-confirm-service-name">${it.serviceText}</div>
+                <div class="tm-confirm-service-name">${serviceName}</div>
                 <div class="tm-confirm-service-status" data-status="${normalizeRepairStatus(it.status)}">
                   Status: ${getRepairStatusLabel(it.status)}
                 </div>
                 <div class="tm-confirm-service-vehicle">
-                  ${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}
+                  ${escapeServiceResultHtml(vehicleLabel)}
+                </div>
+                <div class="tm-confirm-service-breakdown" aria-label="Line item pricing">
+                  <span data-kind="labor"><strong>Labor</strong><em>${escapeServiceResultHtml(laborValue)}</em></span>
+                  <span data-kind="parts" class="${cost.hasParts ? "" : "is-empty"}"><strong>Parts</strong><em>${escapeServiceResultHtml(partsValue)}</em></span>
+                  <span data-kind="travel" class="${cost.hasTravel ? "" : "is-empty"}"><strong>Travel</strong><em>${escapeServiceResultHtml(travelValue)}</em></span>
                 </div>
                 <div class="tm-confirm-service-note">
                   ${escapeServiceResultHtml(getEstimateRiskNote(it))}
                 </div>
               </div>
-              <div class="tm-confirm-service-total">${money(it.estimate)}</div>
+              <div class="tm-confirm-service-total">
+                <span>Estimate</span>
+                <strong>${serviceTotal}</strong>
+              </div>
             </div>
-          `).join("")}
+          `}).join("")}
           <div class="tm-confirm-grand-total">
             <div>Ready for customer review</div>
             <strong>${money(total)}</strong>

@@ -729,7 +729,7 @@ button:active{
 .tm-final-help{
   display: grid;
   gap: 8px;
-  padding: 12px 13px;
+  padding: 10px 12px;
   border: 1px solid rgba(20,184,166,.22);
   border-radius: 12px;
   background: rgba(255,255,255,.58);
@@ -745,7 +745,7 @@ button:active{
 .tm-final-help__steps{
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
+  gap: 6px 14px;
   margin: 0;
   padding-left: 18px;
   color: var(--tm-text-muted);
@@ -759,7 +759,7 @@ button:active{
 
 .estimator-final-cta{
   width: 100%;
-  min-height: 60px;
+  min-height: 62px;
   padding: 16px 20px;
   font-size: 1.05rem;
   font-weight: 950;
@@ -2637,7 +2637,7 @@ body.modal-open{
 }
 
 .tm-confirm-services-wrap{
-  padding: 14px;
+  padding: 12px;
   border: 1px solid rgba(20,184,166,.24);
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(248,250,252,.94) 0%, rgba(255,255,255,.98) 100%);
@@ -2661,7 +2661,7 @@ body.modal-open{
 
 .tm-confirm-services-list{
   display: grid;
-  gap: 11px;
+  gap: 10px;
 }
 
 .tm-confirm-total-band{
@@ -2696,7 +2696,7 @@ body.modal-open{
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
-  padding: 2px 0 11px;
+  padding: 3px 0 12px;
   border-bottom: 1px solid rgba(15,23,42,.08);
 }
 
@@ -2714,8 +2714,72 @@ body.modal-open{
   line-height: 1.3;
 }
 
+.tm-confirm-service-breakdown{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:6px;
+  margin-top:8px;
+}
+
+.tm-confirm-service-breakdown span{
+  display:grid;
+  gap:2px;
+  min-width:0;
+  padding:7px 8px;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:9px;
+  background:#fff;
+  line-height:1.15;
+}
+
+.tm-confirm-service-breakdown span[data-kind="labor"]{
+  background:rgba(240,253,250,.70);
+  border-color:rgba(20,184,166,.18);
+}
+
+.tm-confirm-service-breakdown span[data-kind="parts"]{
+  background:rgba(239,246,255,.66);
+  border-color:rgba(59,130,246,.14);
+}
+
+.tm-confirm-service-breakdown span[data-kind="travel"]{
+  background:rgba(250,245,255,.62);
+  border-color:rgba(168,85,247,.14);
+}
+
+.tm-confirm-service-breakdown span.is-empty{
+  background:rgba(248,250,252,.62);
+  border-style:dashed;
+}
+
+.tm-confirm-service-breakdown strong,
+.tm-confirm-service-breakdown em{
+  min-width:0;
+  font:inherit;
+}
+
+.tm-confirm-service-breakdown strong{
+  color:var(--tm-text-muted);
+  font-size:.66rem;
+  font-weight:950;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+
+.tm-confirm-service-breakdown em{
+  color:var(--tm-text);
+  font-size:.82rem;
+  font-style:normal;
+  font-weight:900;
+  overflow-wrap:anywhere;
+}
+
+.tm-confirm-service-breakdown span.is-empty em{
+  color:var(--tm-text-muted);
+}
+
 .tm-confirm-service-note{
-  margin-top:6px;
+  margin-top:7px;
   color:var(--tm-text-muted);
   font-size:.76rem;
   font-weight:650;
@@ -2744,11 +2808,26 @@ body.modal-open{
 }
 
 .tm-confirm-service-total{
+  display:grid;
+  gap:3px;
   color: var(--tm-text);
-  font-size: .98rem;
-  font-weight: 950;
   line-height: 1.35;
+  text-align:right;
   white-space: nowrap;
+}
+
+.tm-confirm-service-total span{
+  color:var(--tm-text-muted);
+  font-size:.66rem;
+  font-weight:950;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+
+.tm-confirm-service-total strong{
+  color:var(--tm-text);
+  font-size:1rem;
+  font-weight:950;
 }
 
 .tm-confirm-grand-total{
@@ -2841,9 +2920,9 @@ body.modal-open{
 }
 
 .tm-confirm-primary{
-  min-height: 54px;
-  padding-inline: 24px;
-  font-size: 1rem;
+  min-height: 58px;
+  padding-inline: 28px;
+  font-size: 1.04rem;
   font-weight: 950;
   box-shadow: 0 14px 28px rgba(17,179,173,.26);
 }
@@ -2851,8 +2930,13 @@ body.modal-open{
 .tm-confirm-secondary-actions{
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-end;
+}
+
+.tm-confirm-secondary-actions .tm-btn{
+  min-height:42px;
+  box-shadow:none;
 }
 
 .sig-canvas,
@@ -3437,7 +3521,7 @@ canvas,
 
   .tm-confirm-service-row{
     grid-template-columns: 1fr;
-    gap: 5px;
+    gap: 8px;
   }
 
   .tm-confirm-service-name{
@@ -3445,8 +3529,32 @@ canvas,
   }
 
   .tm-confirm-service-total{
-    justify-self: start;
-    font-size: 1rem;
+    width:100%;
+    grid-template-columns:1fr auto;
+    align-items:center;
+    justify-self: stretch;
+    padding:8px 9px;
+    border:1px solid rgba(15,118,110,.16);
+    border-radius:9px;
+    background:rgba(240,253,250,.70);
+    text-align:left;
+  }
+
+  .tm-confirm-service-breakdown{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:5px;
+  }
+
+  .tm-confirm-service-breakdown span{
+    padding:6px 7px;
+  }
+
+  .tm-confirm-service-breakdown strong{
+    font-size:.62rem;
+  }
+
+  .tm-confirm-service-breakdown em{
+    font-size:.78rem;
   }
 
   .tm-confirm-actions{
@@ -4922,7 +5030,7 @@ h3{
 .tm-blueprint-summary{
   max-width:68ch;
   margin:0;
-  padding:12px 14px;
+  padding:10px 12px;
   border:1px solid rgba(15, 23, 42, .08);
   border-left:4px solid #14b8a6;
   border-radius:12px;
@@ -4931,6 +5039,62 @@ h3{
   font-size:.98rem;
   font-weight:650;
   line-height:1.5;
+}
+
+.tm-blueprint-vehicle-pill{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  min-height:28px;
+  margin:0 0 10px;
+  padding:6px 10px;
+  border:1px solid rgba(37,99,235,.16);
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:.78rem;
+  font-weight:900;
+  line-height:1.15;
+}
+
+.tm-blueprint-hero-metrics,
+.tm-blueprint-stat-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px;
+  margin-top:12px;
+}
+
+.tm-blueprint-hero-metrics div,
+.tm-blueprint-stat-grid div{
+  display:grid;
+  gap:3px;
+  min-width:0;
+  padding:10px 11px;
+  border:1px solid rgba(15, 23, 42, .08);
+  border-radius:12px;
+  background:rgba(255,255,255,.82);
+  box-shadow:0 6px 16px rgba(15,23,42,.04);
+}
+
+.tm-blueprint-hero-metrics span,
+.tm-blueprint-stat-grid span{
+  color:var(--tm-text-muted);
+  font-size:.68rem;
+  font-weight:950;
+  letter-spacing:.04em;
+  line-height:1.1;
+  text-transform:uppercase;
+}
+
+.tm-blueprint-hero-metrics strong,
+.tm-blueprint-stat-grid strong{
+  color:var(--tm-text);
+  font-size:.94rem;
+  font-weight:950;
+  line-height:1.2;
+  overflow-wrap:anywhere;
 }
 
 .tm-blueprint-action-panel{
@@ -5024,11 +5188,243 @@ h3{
   align-items:stretch;
 }
 
+.tm-blueprint-vehicle-section{
+  padding-top:0;
+}
+
+.tm-blueprint-vehicle-details,
+.tm-blueprint-context-details{
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 10px 24px rgba(15,23,42,.055);
+}
+
+.tm-blueprint-vehicle-details summary,
+.tm-blueprint-context-details summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:52px;
+  padding:13px 15px;
+  cursor:pointer;
+  color:var(--tm-text);
+  font-weight:950;
+  line-height:1.2;
+  list-style:none;
+}
+
+.tm-blueprint-vehicle-details summary::-webkit-details-marker,
+.tm-blueprint-context-details summary::-webkit-details-marker{
+  display:none;
+}
+
+.tm-blueprint-vehicle-details summary::after,
+.tm-blueprint-context-details summary::after{
+  content:"+";
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  border:1px solid rgba(15,118,110,.16);
+  background:#f0fdfa;
+  color:#0f766e;
+  font-weight:950;
+}
+
+.tm-blueprint-vehicle-details[open] summary::after,
+.tm-blueprint-context-details[open] summary::after{
+  content:"-";
+}
+
+.tm-blueprint-vehicle-details summary span,
+.tm-blueprint-context-details summary span{
+  min-width:0;
+}
+
+.tm-blueprint-vehicle-details summary strong,
+.tm-blueprint-context-details summary strong{
+  margin-left:auto;
+  color:var(--tm-text-muted);
+  font-size:.82rem;
+  font-weight:850;
+  text-align:right;
+}
+
+.tm-blueprint-vehicle-details .vehicle-card{
+  margin:0 13px 13px;
+  box-shadow:none !important;
+}
+
+.tm-blueprint-vehicle-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:12px;
+}
+
+.tm-blueprint-section-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:10px;
+}
+
+.tm-blueprint-section-head h2{
+  margin:0;
+  color:var(--tm-text);
+  font-size:1.28rem;
+  font-weight:950;
+  line-height:1.15;
+}
+
+.tm-blueprint-section-head p{
+  max-width:44ch;
+  margin:0;
+  color:var(--tm-text-muted);
+  font-size:.9rem;
+  font-weight:700;
+  line-height:1.35;
+  text-align:right;
+}
+
+.tm-blueprint-workflow-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.tm-blueprint-step-card,
+.tm-blueprint-intel-card,
+.tm-blueprint-context-grid article{
+  min-width:0;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  background:linear-gradient(180deg, rgba(255,255,255,.94) 0%, rgba(248,250,252,.92) 100%);
+  box-shadow:0 10px 22px rgba(15,23,42,.055);
+}
+
+.tm-blueprint-step-card{
+  display:grid;
+  grid-template-columns:auto minmax(0, 1fr);
+  gap:10px;
+  align-items:start;
+  padding:13px;
+}
+
+.tm-blueprint-step-card span{
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  background:#0f766e;
+  color:#fff;
+  font-size:.8rem;
+  font-weight:950;
+  line-height:1;
+}
+
+.tm-blueprint-step-card strong{
+  color:var(--tm-text);
+  font-size:.94rem;
+  font-weight:850;
+  line-height:1.35;
+}
+
+.tm-blueprint-intel-strip{
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:10px;
+}
+
+.tm-blueprint-intel-card{
+  padding:12px;
+}
+
+.tm-blueprint-intel-card h3,
+.tm-blueprint-context-grid h3{
+  margin:0 0 8px;
+  color:var(--tm-text);
+  font-size:.92rem;
+  font-weight:950;
+  line-height:1.2;
+}
+
+.tm-blueprint-intel-card .tm-blueprint-chip-list,
+.tm-tool-group-grid--compact .tm-blueprint-chip-list{
+  margin-top:6px;
+  gap:5px;
+}
+
+.tm-tool-group-grid--compact{
+  grid-template-columns:1fr;
+  gap:8px;
+}
+
+.tm-tool-group-grid--compact strong{
+  font-size:.72rem;
+  color:var(--tm-text-muted);
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+
+.tm-blueprint-intel-card .tm-blueprint-chip{
+  min-height:25px;
+  padding:5px 7px;
+  border-radius:8px;
+  font-size:.74rem;
+  font-weight:850;
+}
+
+.tm-blueprint-intel-card .tm-priority-list{
+  margin-top:0;
+}
+
+.tm-blueprint-intel-card .tm-priority-list li{
+  padding-left:14px;
+  font-size:.82rem;
+  line-height:1.32;
+}
+
+.tm-blueprint-context-details{
+  padding:0;
+}
+
+.tm-blueprint-context-details summary{
+  border-bottom:1px solid transparent;
+}
+
+.tm-blueprint-context-details[open] summary{
+  border-bottom-color:rgba(15,23,42,.08);
+}
+
+.tm-blueprint-context-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+  padding:12px;
+}
+
+.tm-blueprint-context-grid article{
+  padding:12px;
+}
+
+.tm-blueprint-context-grid .tm-related-repair-grid{
+  grid-template-columns:1fr;
+}
+
 #blueprint-workflow,
 #mechanics-often-check,
 #related-symptoms,
 #companion-repairs,
-#repair-intelligence{
+#repair-intelligence,
+#repair-workflow,
+#quick-intelligence,
+#technician-context{
   scroll-margin-top:76px;
 }
 
@@ -5412,6 +5808,54 @@ h3{
   .tm-blueprint-workflow .tm-blueprint-hero-card,
   .tm-blueprint-priority-grid{
     grid-template-columns:1fr;
+  }
+
+  .tm-blueprint-hero-metrics,
+  .tm-blueprint-stat-grid{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  .tm-blueprint-section-head{
+    display:grid;
+    gap:4px;
+  }
+
+  .tm-blueprint-section-head h2{
+    font-size:1.08rem;
+  }
+
+  .tm-blueprint-section-head p{
+    max-width:none;
+    font-size:.8rem;
+    text-align:left;
+  }
+
+  .tm-blueprint-workflow-grid,
+  .tm-blueprint-intel-strip,
+  .tm-blueprint-context-grid{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .tm-blueprint-step-card{
+    padding:10px;
+  }
+
+  .tm-blueprint-intel-card,
+  .tm-blueprint-context-grid article{
+    padding:10px;
+  }
+
+  .tm-blueprint-vehicle-details summary,
+  .tm-blueprint-context-details summary{
+    align-items:flex-start;
+    padding:12px;
+  }
+
+  .tm-blueprint-vehicle-details summary strong,
+  .tm-blueprint-context-details summary strong{
+    display:none;
   }
 
   .tm-blueprint-action-panel{

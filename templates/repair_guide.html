@@ -1,24 +1,35 @@
-﻿{% extends "layout.html" %}
+{% extends "layout.html" %}
 
 {% block content %}
 <div class="tm-intel-page">
+{% set labor_time = guide.labor_range.min_hours ~ " - " ~ guide.labor_range.max_hours ~ " hours" if guide.labor_range else "Varies" %}
+{% set repair_range = "$" ~ guide.total_cost.min ~ " - $" ~ guide.total_cost.max if guide.total_cost else ("$" ~ guide.labor_cost.min ~ " - $" ~ guide.labor_cost.max if guide.labor_cost else "Estimate ready") %}
+
 <section class="tm-section tm-blueprint-workflow" id="blueprint-workflow">
   <div class="tm-card tm-blueprint-hero-card">
     <div class="tm-blueprint-hero-main">
       <div class="tm-eyebrow">Repair Blueprint</div>
       <h1 class="tm-page-title">{{ guide.title }}</h1>
-      <p class="tm-muted tm-blueprint-summary">{{ guide.summary }}</p>
-      {% if guide.difficulty %}
-      <div class="tm-blueprint-meta">
-        <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
-      </div>
+      {% if vehicle_context and vehicle_context.has_context %}
+      <div class="tm-blueprint-vehicle-pill">{{ vehicle_context.label }}</div>
       {% endif %}
-      <div class="tm-intel-flow-strip" aria-label="Repair workflow notes">
-        <span>Mechanic workflow</span>
-        <span>Inspection-first guidance</span>
-        <span>Estimate-ready repair path</span>
+      <p class="tm-blueprint-summary">{{ guide.summary }}</p>
+      <div class="tm-blueprint-hero-metrics" aria-label="Repair blueprint metrics">
+        <div>
+          <span>Difficulty</span>
+          <strong>{{ guide.difficulty or "Standard" }}</strong>
+        </div>
+        <div>
+          <span>Labor Time</span>
+          <strong>{{ labor_time }}</strong>
+        </div>
+        <div>
+          <span>Repair Range</span>
+          <strong>{{ repair_range }}</strong>
+        </div>
       </div>
     </div>
+
     {% if guide.estimate %}
     <aside class="tm-blueprint-action-panel" aria-label="Repair estimate actions">
       <div>
@@ -46,105 +57,22 @@
         Continue Estimate
       </a>
       {% endif %}
-      <div class="tm-blueprint-mini-actions">
-        {% if guide.related_inspections %}
-        <a href="{{ guide.related_inspections[0].estimator_href }}">Inspect related systems</a>
-        {% endif %}
-        {% if guide.recommended_repairs %}
-        <a href="{{ guide.recommended_repairs[0].estimator_href }}">Review related repair pricing</a>
-        {% endif %}
-        {% if guide.related_system_hubs %}
-        <a href="{{ guide.related_system_hubs[0].href }}">Continue diagnosis path</a>
-        {% endif %}
+      <div class="tm-next-action-strip" aria-label="Repair guide flow">
+        <span>Inspect</span>
+        <span>Price</span>
+        <span>Verify</span>
       </div>
     </aside>
     {% endif %}
-    {% if vehicle_context and vehicle_context.has_context %}
-    <div class="tm-vehicle-context-note">
-      <strong>Viewing repair guidance for:</strong>
-      <span>{{ vehicle_context.label }}</span>
-      <p>Vehicle context will continue into related checks and estimates.</p>
-    </div>
-    {% endif %}
   </div>
 </section>
 
-{% if guide.inspect_first or guide.workflow_next_steps or guide.related_inspections or guide.related_systems or guide.related_system_hubs %}
-<section class="tm-section" id="mechanics-often-check">
-  <div class="tm-blueprint-priority-grid">
-    {% if guide.inspect_first %}
-    <div class="tm-card tm-blueprint-priority-card">
-      <div class="tm-blueprint-action-kicker">Step 1</div>
-      <h2>Inspect First</h2>
-      <p class="tm-muted tm-trust-helper">Confirm the failure pattern before parts or labor are quoted.</p>
-      <ul class="tm-priority-list">
-        {% for item in guide.inspect_first[:4] %}
-        <li>{{ item }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-
-    {% if guide.workflow_next_steps or guide.related_inspections %}
-    <div class="tm-card">
-      <div class="tm-blueprint-action-kicker">Before Pricing</div>
-      <h2>Mechanics Often Check</h2>
-      <p class="tm-muted tm-trust-helper">Inspect nearby causes before pricing.</p>
-      {% if guide.workflow_next_steps %}
-      <div class="tm-workflow-chip-grid">
-        {% for item in guide.workflow_next_steps %}
-        <div class="tm-workflow-check-chip">
-          <strong>{{ item.title }}</strong>
-          {% if item.description %}
-          <span>{{ item.description }}</span>
-          {% endif %}
-          {% if item.estimator_href %}
-          <a href="{{ item.estimator_href }}">Inspect related systems</a>
-          {% elif item.href %}
-          <a href="{{ item.href }}">Continue diagnosis path</a>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% if guide.related_inspections %}
-      <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions" aria-label="Related inspections">
-        {% for item in guide.related_inspections %}
-        <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">+ {{ item.title }}</a>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div>
-    {% endif %}
-
-    {% if guide.related_systems or guide.related_system_hubs %}
-    <div class="tm-card">
-      <div class="tm-blueprint-action-kicker">Context</div>
-      <h2>Related Systems</h2>
-      {% if guide.related_systems %}
-      <div class="tm-blueprint-chip-list">
-        {% for item in guide.related_systems %}
-        <span class="tm-blueprint-chip">{{ item }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% if guide.related_system_hubs %}
-      <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
-        {% for item in guide.related_system_hubs %}
-        <a class="tm-blueprint-chip" href="{{ item.href }}">View {{ item.title }}</a>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div>
-    {% endif %}
-  </div>
-</section>
-{% endif %}
-
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Load Vehicle (Optional)</h2>
-    <p class="tm-muted tm-section-note">Use when the estimate should carry vehicle context.</p>
+<section class="tm-section tm-blueprint-vehicle-section">
+  <details class="tm-blueprint-vehicle-details">
+    <summary>
+      <span>Load Vehicle Context</span>
+      <strong>{% if vehicle_context and vehicle_context.has_context %}{{ vehicle_context.label }}{% else %}Optional{% endif %}</strong>
+    </summary>
     <div class="vehicle-card">
       <div class="grid3">
         <div>
@@ -189,7 +117,7 @@
         </div>
       </div>
 
-      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+      <div class="tm-blueprint-vehicle-actions">
         <button class="tm-btn tm-btn-secondary clear-fields-btn" id="clearVehicleBtn" type="button">
           Clear Fields
         </button>
@@ -197,263 +125,204 @@
 
       <p id="loadedVehicleNote" class="tm-muted" style="margin-top: 10px; display: none;"></p>
     </div>
-  </div>
+  </details>
 </section>
 
-{% if guide.symptoms %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Common Symptoms</h2>
-    <ul class="tm-list">
-      {% for item in guide.symptoms %}
-      <li>{{ item }}</li>
+{% if guide.repair_steps or guide.repair_overview or guide.inspect_first %}
+<section class="tm-section" id="repair-workflow">
+  <div class="tm-blueprint-section-head">
+    <div>
+      <div class="tm-blueprint-action-kicker">Repair Workflow</div>
+      <h2>Mechanic Sequence</h2>
+    </div>
+    <p>Scan the job path, then open the estimate when pricing is ready.</p>
+  </div>
+  <div class="tm-blueprint-workflow-grid">
+    {% if guide.repair_steps %}
+      {% for step in guide.repair_steps[:6] %}
+      <article class="tm-blueprint-step-card">
+        <span>{{ loop.index }}</span>
+        <strong>{{ step }}</strong>
+      </article>
       {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.diagnostic_logic %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Diagnostic Logic</h2>
-    <ul class="tm-list">
-      {% for item in guide.diagnostic_logic %}
-      <li>{{ item }}</li>
+    {% elif guide.repair_overview %}
+      {% for step in guide.repair_overview[:6] %}
+      <article class="tm-blueprint-step-card">
+        <span>{{ loop.index }}</span>
+        <strong>{{ step }}</strong>
+      </article>
       {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.likely_causes %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Common Causes</h2>
-    <ul class="tm-list">
-      {% for item in guide.likely_causes %}
-      <li>{{ item }}</li>
+    {% else %}
+      {% for step in guide.inspect_first[:6] %}
+      <article class="tm-blueprint-step-card">
+        <span>{{ loop.index }}</span>
+        <strong>{{ step }}</strong>
+      </article>
       {% endfor %}
-    </ul>
+    {% endif %}
   </div>
 </section>
 {% endif %}
 
-{% if guide.testing_approach %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Testing Approach</h2>
-    <ul class="tm-list">
-      {% for item in guide.testing_approach %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.labor_range or guide.labor_cost %}
-<section class="tm-section tm-two-col">
-  {% if guide.labor_range %}
-  <div class="tm-card">
-    <h2>Labor Time</h2>
-    <div class="tm-stat">{{ guide.labor_range.min_hours }} - {{ guide.labor_range.max_hours }} hours</div>
-    <p class="tm-muted">Typical labor range based on TorqueMech service data.</p>
-  </div>
-  {% endif %}
-
-  {% if guide.labor_cost %}
-  <div class="tm-card">
-    <h2>Estimated Labor Cost</h2>
-    <div class="tm-stat">${{ guide.labor_cost.min }} - ${{ guide.labor_cost.max }}</div>
-    <p class="tm-muted">Estimated labor only. Final total depends on parts, condition, and access.</p>
-  </div>
-  {% endif %}
-</section>
-{% endif %}
-
-{% if guide.parts_cost or guide.total_cost %}
-<section class="tm-section tm-two-col">
-  {% if guide.parts_cost %}
-  <div class="tm-card">
-    <h2>Typical Parts Cost</h2>
-    <div class="tm-stat">${{ guide.parts_cost.min }} - ${{ guide.parts_cost.max }}</div>
-    <p class="tm-muted">Parts estimate range for common replacement scenarios.</p>
-  </div>
-  {% endif %}
-
-  {% if guide.total_cost %}
-  <div class="tm-card">
-    <h2>Typical Total Repair Range</h2>
-    <div class="tm-stat">${{ guide.total_cost.min }} - ${{ guide.total_cost.max }}</div>
-    <p class="tm-muted">Combined labor and parts estimate range.</p>
-  </div>
-  {% endif %}
-</section>
-{% endif %}
-
-{% if guide.difficulty %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Repair Difficulty</h2>
-    <div class="tm-blueprint-difficulty">
-      <span class="tm-difficulty-badge">{{ guide.difficulty }}</span>
-      {% if guide.difficulty == "Easy" %}
-      <p class="tm-muted">Straightforward when access and checks are clean.</p>
-      {% elif guide.difficulty == "Moderate" %}
-      <p class="tm-muted">Normal shop tooling plus access and verification checks.</p>
-      {% else %}
-      <p class="tm-muted">Plan for access, seized hardware, and verification time.</p>
-      {% endif %}
+<section class="tm-section" id="quick-intelligence">
+  <div class="tm-blueprint-section-head">
+    <div>
+      <div class="tm-blueprint-action-kicker">Quick Intelligence</div>
+      <h2>Technician Scan</h2>
     </div>
   </div>
-</section>
-{% endif %}
+  <div class="tm-blueprint-intel-strip">
+    {% if guide.symptoms %}
+    <article class="tm-blueprint-intel-card">
+      <h3>Symptoms</h3>
+      <div class="tm-blueprint-chip-list">
+        {% for item in guide.symptoms[:4] %}
+        <span class="tm-blueprint-chip">{{ item }}</span>
+        {% endfor %}
+      </div>
+    </article>
+    {% endif %}
 
-{% if guide.inspection_priority or guide.confidence_cues %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Inspection Priority</h2>
-    {% if guide.inspection_priority %}
-    <ul class="tm-priority-list">
-      {% for item in guide.inspection_priority %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if guide.confidence_cues %}
-    <div class="tm-confidence-cues">
-      {% for item in guide.confidence_cues %}
-      <span>{{ item }}</span>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% if vehicle_context and vehicle_context.has_context %}
-    <p class="tm-muted tm-workflow-next-step">Access difficulty may vary by engine, drivetrain, trim, and vehicle condition.</p>
+    <article class="tm-blueprint-intel-card">
+      <h3>Tools Needed</h3>
+      <div class="tm-tool-group-grid tm-tool-group-grid--compact">
+        <div>
+          <strong>Basic</strong>
+          <div class="tm-blueprint-chip-list">
+            {% for tool in guide.tool_groups.basic[:4] %}
+            <span class="tm-blueprint-chip">{{ tool }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <strong>Specialty</strong>
+          <div class="tm-blueprint-chip-list">
+            {% for tool in guide.tool_groups.specialty[:3] %}
+            <span class="tm-blueprint-chip">{{ tool }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <strong>Supplies</strong>
+          <div class="tm-blueprint-chip-list">
+            {% for tool in guide.tool_groups.supplies[:3] %}
+            <span class="tm-blueprint-chip">{{ tool }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="tm-blueprint-intel-card">
+      <h3>Torque Specs</h3>
+      <div
+        class="tm-torque-spec-list"
+        id="torqueSpecList"
+        data-empty-note="Torque specs vary by vehicle, engine, and fastener. Verify exact specs before final assembly."
+      >
+        {% if guide.verified_torque_specs %}
+        {% for spec in guide.verified_torque_specs %}
+        <div class="tm-torque-spec-row">
+          <strong>{{ spec.label }}</strong>
+          <span class="tm-torque-value" data-spec-label="{{ spec.label | lower }}">{{ spec.value }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+      <p class="tm-muted tm-torque-note" id="torqueSpecsNote">
+        {% if guide.verified_torque_specs %}
+        Showing verified specs for the selected vehicle when available.
+        {% else %}
+        Verify exact specs before final assembly.
+        {% endif %}
+      </p>
+    </article>
+
+    <article class="tm-blueprint-intel-card">
+      <h3>Labor / Cost</h3>
+      <div class="tm-blueprint-stat-grid">
+        <div><span>Labor</span><strong>{{ labor_time }}</strong></div>
+        <div><span>Total Range</span><strong>{{ repair_range }}</strong></div>
+      </div>
+    </article>
+
+    {% if guide.warnings %}
+    <article class="tm-blueprint-intel-card">
+      <h3>Warnings</h3>
+      <ul class="tm-priority-list">
+        {% for warning in guide.warnings[:3] %}
+        <li>{{ warning }}</li>
+        {% endfor %}
+      </ul>
+    </article>
     {% endif %}
   </div>
 </section>
-{% endif %}
 
-{% if guide.repair_overview %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>What This Repair Usually Involves</h2>
-    <ul class="tm-list">
-      {% for item in guide.repair_overview %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-<section class="tm-section" id="repair-intelligence">
-  <div class="tm-card">
-    <div class="tm-blueprint-action-kicker">Repair Intelligence</div>
-    <h2>Technician Notes</h2>
-    <div class="tm-repair-intel-grid">
-      <div class="tm-repair-intel-panel">
-        <h3>Tools Needed</h3>
-        <div class="tm-tool-group-grid">
-          <div>
-            <strong>Basic tools</strong>
-            <div class="tm-blueprint-chip-list">
-              {% for tool in guide.tool_groups.basic %}
-              <span class="tm-blueprint-chip">{{ tool }}</span>
-              {% endfor %}
-            </div>
-          </div>
-          <div>
-            <strong>Specialty tools</strong>
-            <div class="tm-blueprint-chip-list">
-              {% for tool in guide.tool_groups.specialty %}
-              <span class="tm-blueprint-chip">{{ tool }}</span>
-              {% endfor %}
-            </div>
-          </div>
-          <div>
-            <strong>Supplies / fluids</strong>
-            <div class="tm-blueprint-chip-list">
-              {% for tool in guide.tool_groups.supplies %}
-              <span class="tm-blueprint-chip">{{ tool }}</span>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tm-repair-intel-panel">
-        <h3>Torque Specs</h3>
-        <div
-          class="tm-torque-spec-list"
-          id="torqueSpecList"
-          data-empty-note="Torque specs vary by vehicle, engine, and fastener. Verify exact specs before final assembly."
-        >
-          {% if guide.verified_torque_specs %}
-          {% for spec in guide.verified_torque_specs %}
-          <div class="tm-torque-spec-row">
-            <strong>{{ spec.label }}</strong>
-            <span class="tm-torque-value" data-spec-label="{{ spec.label | lower }}">{{ spec.value }}</span>
-          </div>
+<section class="tm-section" id="technician-context">
+  <details class="tm-card tm-blueprint-context-details">
+    <summary>
+      <span>More Technician Context</span>
+      <strong>Diagnostics, overlap, verification</strong>
+    </summary>
+    <div class="tm-blueprint-context-grid">
+      {% if guide.inspect_first or guide.inspection_priority or guide.confidence_cues %}
+      <article>
+        <h3>Inspection Priority</h3>
+        {% if guide.inspect_first %}
+        <ul class="tm-priority-list">
+          {% for item in guide.inspect_first[:5] %}
+          <li>{{ item }}</li>
           {% endfor %}
-          {% endif %}
-        </div>
-        <p class="tm-muted tm-torque-note" id="torqueSpecsNote">
-          {% if guide.verified_torque_specs %}
-          Showing verified specs for the selected vehicle when available.
-          {% else %}
-          Torque specs vary by vehicle, engine, and fastener. Verify exact specs before final assembly.
-          {% endif %}
-        </p>
-      </div>
-
-      {% if guide.recommended_while_replacing %}
-      <div class="tm-repair-intel-panel">
-        <h3>Recommended While Access Is Available</h3>
-        <div class="tm-access-action-list">
-          {% for item in guide.recommended_while_replacing %}
-          <div class="tm-access-action-card">
-            <strong>{{ item.title }}</strong>
-            {% if item.reason %}
-            <span>{{ item.reason }}</span>
-            {% endif %}
-          </div>
+        </ul>
+        {% endif %}
+        {% if guide.inspection_priority %}
+        <ul class="tm-priority-list">
+          {% for item in guide.inspection_priority[:5] %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if guide.confidence_cues %}
+        <div class="tm-confidence-cues">
+          {% for item in guide.confidence_cues %}
+          <span>{{ item }}</span>
           {% endfor %}
         </div>
-      </div>
+        {% endif %}
+      </article>
       {% endif %}
 
-      {% if guide.priority_context %}
-      <div class="tm-repair-intel-panel">
-        <h3>Priority Context</h3>
-        <div class="tm-priority-chip-list">
-          {% for item in guide.priority_context %}
-          <div class="tm-priority-chip tm-priority-chip--{{ item.priority | lower | replace(' ', '-') }}">
-            <strong>{{ item.priority }}</strong>
-            <span>{{ item.label }}</span>
-          </div>
+      {% if guide.diagnostic_logic or guide.likely_causes or guide.testing_approach %}
+      <article>
+        <h3>Diagnostic Overlap</h3>
+        <ul class="tm-priority-list">
+          {% for item in guide.diagnostic_logic[:4] %}
+          <li>{{ item }}</li>
           {% endfor %}
-        </div>
-      </div>
+          {% for item in guide.likely_causes[:3] %}
+          <li>{{ item }}</li>
+          {% endfor %}
+          {% for item in guide.testing_approach[:3] %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </article>
       {% endif %}
 
-      {% if guide.failure_signs %}
-      <div class="tm-repair-intel-panel">
-        <h3>Common Failure Signs</h3>
+      {% if guide.failure_signs or guide.inspection_triggers %}
+      <article>
+        <h3>Failure Signs & Triggers</h3>
+        {% if guide.failure_signs %}
         <div class="tm-blueprint-chip-list">
-          {% for item in guide.failure_signs %}
+          {% for item in guide.failure_signs[:6] %}
           <span class="tm-blueprint-chip">{{ item }}</span>
           {% endfor %}
         </div>
-      </div>
-      {% endif %}
-
-      {% if guide.inspection_triggers %}
-      <div class="tm-repair-intel-panel tm-repair-intel-panel--wide">
-        <h3>Inspection Triggers</h3>
+        {% endif %}
+        {% if guide.inspection_triggers %}
         <div class="tm-trigger-list">
-          {% for item in guide.inspection_triggers %}
+          {% for item in guide.inspection_triggers[:4] %}
           <div class="tm-trigger-card">
             {% if item["if"] %}
             <strong>If {{ item["if"] }}</strong>
@@ -464,229 +333,181 @@
           </div>
           {% endfor %}
         </div>
-      </div>
+        {% endif %}
+      </article>
       {% endif %}
 
-      {% if guide.post_repair_verification %}
-      <div class="tm-repair-intel-panel">
-        <h3>Post-Repair Verification</h3>
+      {% if guide.recommended_while_replacing or guide.workflow_next_steps or guide.related_inspections %}
+      <article>
+        <h3>Related Checks</h3>
+        <div class="tm-access-action-list">
+          {% for item in guide.recommended_while_replacing[:4] %}
+          <div class="tm-access-action-card">
+            <strong>{{ item.title }}</strong>
+            {% if item.reason %}
+            <span>{{ item.reason }}</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% for item in guide.workflow_next_steps[:4] %}
+          <div class="tm-access-action-card">
+            <strong>{{ item.title }}</strong>
+            {% if item.description %}
+            <span>{{ item.description }}</span>
+            {% endif %}
+            {% if item.estimator_href %}
+            <a href="{{ item.estimator_href }}">Inspect related systems</a>
+            {% elif item.href %}
+            <a href="{{ item.href }}">Continue diagnosis path</a>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% if guide.related_inspections %}
+        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+          {% for item in guide.related_inspections %}
+          <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">+ {{ item.title }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </article>
+      {% endif %}
+
+      {% if guide.post_repair_verification or guide.pro_tips or guide.common_mistakes %}
+      <article>
+        <h3>Verification & Tips</h3>
         <ul class="tm-priority-list">
-          {% for item in guide.post_repair_verification %}
+          {% for item in guide.post_repair_verification[:4] %}
+          <li>{{ item }}</li>
+          {% endfor %}
+          {% for item in guide.pro_tips[:4] %}
+          <li>{{ item }}</li>
+          {% endfor %}
+          {% for item in guide.common_mistakes[:3] %}
           <li>{{ item }}</li>
           {% endfor %}
         </ul>
-      </div>
+      </article>
       {% endif %}
-    </div>
-  </div>
-</section>
 
-{% if guide.diagram %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Reference Diagram</h2>
-    <figure class="tm-repair-visual">
-      <img src="{{ guide.diagram.src }}" alt="{{ guide.diagram.alt }}" class="repair-diagram">
-      {% if guide.diagram.caption %}
-      <figcaption class="tm-repair-caption">{{ guide.diagram.caption }}</figcaption>
+      {% if guide.priority_context or guide.related_systems or guide.related_system_hubs %}
+      <article>
+        <h3>System Context</h3>
+        {% if guide.priority_context %}
+        <div class="tm-priority-chip-list">
+          {% for item in guide.priority_context %}
+          <div class="tm-priority-chip tm-priority-chip--{{ item.priority | lower | replace(' ', '-') }}">
+            <strong>{{ item.priority }}</strong>
+            <span>{{ item.label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.related_systems %}
+        <div class="tm-blueprint-chip-list">
+          {% for item in guide.related_systems %}
+          <span class="tm-blueprint-chip">{{ item }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.related_system_hubs %}
+        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+          {% for item in guide.related_system_hubs %}
+          <a class="tm-blueprint-chip" href="{{ item.href }}">View {{ item.title }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </article>
       {% endif %}
-    </figure>
-  </div>
-</section>
-{% endif %}
 
-{% if guide.bolt_sizes %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Bolt Sizes</h2>
-    <ul class="tm-list">
-      {% for bolt in guide.bolt_sizes %}
-      <li>{{ bolt }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
+      {% if guide.bolt_sizes or guide.parts_cost %}
+      <article>
+        <h3>Parts / Hardware</h3>
+        {% if guide.parts_cost %}
+        <div class="tm-blueprint-stat-grid">
+          <div><span>Parts</span><strong>${{ guide.parts_cost.min }} - ${{ guide.parts_cost.max }}</strong></div>
+        </div>
+        {% endif %}
+        {% if guide.bolt_sizes %}
+        <ul class="tm-priority-list">
+          {% for bolt in guide.bolt_sizes %}
+          <li>{{ bolt }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </article>
+      {% endif %}
 
-{% if guide.repair_steps %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Repair Steps</h2>
-    <ol class="tm-list tm-list-numbered">
-      {% for step in guide.repair_steps %}
-      {% set step_number = loop.index %}
-      <li class="tm-repair-step">
-        <div class="tm-repair-stepText">{{ step }}</div>
-        {% if guide.step_images %}
-        {% for image in guide.step_images %}
-        {% if image.step == step_number %}
-        <figure class="tm-repair-visual tm-repair-stepVisual">
-          <img src="{{ image.src }}" alt="{{ image.alt }}" class="repair-step-image">
-          {% if image.caption %}
-          <figcaption class="tm-repair-caption">{{ image.caption }}</figcaption>
+      {% if guide.diagnostic_context or guide.related_obd_codes or guide.related_symptoms or guide.recommended_repairs or guide.estimate_guidance %}
+      <article>
+        <h3>Next Paths</h3>
+        {% if guide.diagnostic_context %}
+        <p class="tm-muted">{{ guide.diagnostic_context.intro }}</p>
+        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+          {% if guide.diagnostic_context.common_symptoms_link %}
+          <a class="tm-blueprint-chip" href="{{ guide.diagnostic_context.common_symptoms_link }}">Compare symptoms</a>
+          {% endif %}
+          {% if guide.diagnostic_context.diagnostic_tools_link %}
+          <a class="tm-blueprint-chip" href="{{ guide.diagnostic_context.diagnostic_tools_link }}">Continue diagnosis</a>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if guide.related_obd_codes %}
+        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+          {% for item in guide.related_obd_codes %}
+          <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.code }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.related_symptoms %}
+        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+          {% for item in guide.related_symptoms %}
+          <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.recommended_repairs %}
+        <div class="tm-related-repair-grid">
+          {% for item in guide.recommended_repairs[:4] %}
+          <div class="tm-linked-card">
+            <h3>{{ item.title }}</h3>
+            {% if item.description %}
+            <p class="tm-muted">{{ item.description }}</p>
+            {% endif %}
+            {% if item.cost_guide_href %}
+            <a href="{{ item.cost_guide_href }}">View related repair</a>
+            {% endif %}
+            {% if item.estimator_href %}
+            <a href="{{ item.estimator_href }}">Add to estimate</a>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.estimate_guidance %}
+        <ul class="tm-priority-list">
+          {% for item in guide.estimate_guidance[:4] %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </article>
+      {% endif %}
+
+      {% if guide.diagram %}
+      <article>
+        <h3>Reference Diagram</h3>
+        <figure class="tm-repair-visual">
+          <img src="{{ guide.diagram.src }}" alt="{{ guide.diagram.alt }}" class="repair-diagram">
+          {% if guide.diagram.caption %}
+          <figcaption class="tm-repair-caption">{{ guide.diagram.caption }}</figcaption>
           {% endif %}
         </figure>
-        {% endif %}
-        {% endfor %}
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ol>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.pro_tips %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Pro Tips</h2>
-    <ul class="tm-list">
-      {% for tip in guide.pro_tips %}
-      <li>{{ tip }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.warnings %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Warnings</h2>
-    <ul class="tm-list">
-      {% for warning in guide.warnings %}
-      <li>{{ warning }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.coming_next or guide.diagnostic_context %}
-<section class="tm-section tm-two-col">
-  {% if guide.coming_next %}
-  <div class="tm-card">
-    <h2>What We'll Add Next</h2>
-    <ul class="tm-list">
-      {% for item in guide.coming_next %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
-
-  {% if guide.diagnostic_context %}
-  <div class="tm-card">
-    <h2>Diagnostic Context</h2>
-    <p class="tm-muted">{{ guide.diagnostic_context.intro }}</p>
-
-    {% if guide.diagnostic_context.common_symptoms_link %}
-    <div class="tm-link-block">
-      <a href="{{ guide.diagnostic_context.common_symptoms_link }}">Compare related symptoms</a>
-      <p class="tm-muted">Check complaint patterns.</p>
-    </div>
-    {% endif %}
-
-    {% if guide.diagnostic_context.diagnostic_tools_link %}
-    <div class="tm-link-block">
-      <a href="{{ guide.diagnostic_context.diagnostic_tools_link }}">Continue diagnosis path</a>
-      <p class="tm-muted">Use codes or system lookup.</p>
-    </div>
-    {% endif %}
-  </div>
-  {% endif %}
-</section>
-{% endif %}
-
-{% if guide.common_mistakes %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Common Mistakes</h2>
-    <ul class="tm-list">
-      {% for item in guide.common_mistakes %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.related_obd_codes %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Related OBD Codes</h2>
-    <p class="tm-muted tm-section-note">Use scan data to confirm the repair path.</p>
-    <ul class="tm-list">
-      {% for item in guide.related_obd_codes %}
-      <li><a href="{{ item.href }}">{{ item.code }}</a>{% if item.title %} - {{ item.title }}{% endif %}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.related_symptoms %}
-<section class="tm-section" id="related-symptoms">
-  <div class="tm-card">
-    <h2>Related Symptoms</h2>
-    <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
-      {% for item in guide.related_symptoms %}
-      <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
-      {% if item.estimator_href %}
-      <a class="tm-blueprint-chip" href="{{ item.estimator_href }}">Continue Estimate</a>
+      </article>
       {% endif %}
-      {% endfor %}
     </div>
-  </div>
+  </details>
 </section>
-{% endif %}
-
-{% if guide.recommended_repairs %}
-<section class="tm-section" id="companion-repairs">
-  <div class="tm-card">
-    <h2>Commonly Checked With</h2>
-    <div class="tm-related-repair-grid">
-      {% for item in guide.recommended_repairs %}
-      <div class="tm-linked-card">
-        <h3>{{ item.title }}</h3>
-        {% if item.description %}
-        <p class="tm-muted" style="margin-top:8px;">{{ item.description }}</p>
-        {% endif %}
-        {% if item.cost_guide_href %}
-        <div style="margin-top:8px;">
-          <a href="{{ item.cost_guide_href }}">
-            {% if item.cost_guide_href.startswith('/repair-guides/') %}
-            View related repair &rarr;
-            {% else %}
-            Review related pricing &rarr;
-            {% endif %}
-          </a>
-        </div>
-        {% endif %}
-        {% if item.estimator_href %}
-        <div style="margin-top:8px;">
-          <a href="{{ item.estimator_href }}">Add to estimate &rarr;</a>
-        </div>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-{% if guide.estimate_guidance %}
-<section class="tm-section">
-  <div class="tm-card">
-    <h2>Estimate Guidance</h2>
-    <ul class="tm-list">
-      {% for item in guide.estimate_guidance %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
-{% endif %}
 
 {% if guide.estimate %}
 <script>
@@ -710,7 +531,6 @@
     return;
   }
 
-  const defaultTorqueNote = torqueSpecsNote ? torqueSpecsNote.textContent.trim() : "";
   const emptyTorqueNote = torqueSpecList?.dataset.emptyNote || "Torque specs vary by vehicle, engine, and fastener. Verify exact specs before final assembly.";
 
   function updateEstimateLink(year = "", make = "", model = "", displayModel = "") {

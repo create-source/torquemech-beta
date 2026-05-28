@@ -393,7 +393,7 @@
 
       <div id="estimateSavedBlock" class="tm-inline-panel" hidden>
         <div class="tm-inline-panel__title">Ready for Customer Review</div>
-        <div class="tm-hint tm-inline-panel__hint">Prepared estimate summary is ready to reopen, share, or download as a PDF.</div>
+        <div class="tm-hint tm-inline-panel__hint">Prepared estimate summary is ready to share or download.</div>
         <div class="tm-saved-quote-actions">
           {% if not shared_id %}
           <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
@@ -421,7 +421,7 @@
         {% endif %}
         <div class="estimator-final-step">Final action</div>
         <div class="estimator-final-heading">Ready for Customer Review</div>
-        <div class="tm-hint estimator-final-hint">Review estimate details, customer info, and PDF options before sharing.</div>
+        <div class="tm-hint estimator-final-hint">Review estimate details before sharing.</div>
         <div class="tm-final-help" aria-label="How customer quotes work">
           <div class="tm-final-help__title">Create a Customer Quote</div>
           <ol class="tm-final-help__steps">
@@ -446,7 +446,7 @@
     <div class="modal-card tm-confirm-modal">
       <div class="modal-header tm-confirm-header">
         <h2>Create Customer Quote</h2>
-        <p class="tm-confirm-intro">Review the shop identity, customer review status, and PDF details before creating the customer copy.</p>
+        <p class="tm-confirm-intro">Review estimate details before sharing.</p>
       </div>
 
       <section class="tm-confirm-section" aria-label="Business identity">
@@ -498,9 +498,9 @@
       </section>
 
       <section class="tm-confirm-section" aria-label="Estimate summary">
-        <div class="tm-confirm-section-title">Quote summary</div>
+        <div class="tm-confirm-section-title">Ready for Customer Review</div>
         <div class="tm-confirm-services-wrap">
-          <div>Services and totals</div>
+          <div>Prepared estimate summary</div>
           <div id="confirmServicesList">—</div>
         </div>
       </section>
@@ -593,7 +593,7 @@
       </div>
 
       <div class="tm-muted tm-confirm-note">
-        Customer PDF uses the options above. Your working estimate stays available after the PDF is created.
+        Customer PDF uses the options above. Your working estimate stays available.
       </div>
 
       <div class="modal-actions tm-confirm-actions">
