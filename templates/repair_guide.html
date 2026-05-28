@@ -23,13 +23,8 @@
     <aside class="tm-blueprint-action-panel" aria-label="Repair estimate actions">
       <div>
         <div class="tm-blueprint-action-kicker">Next Action</div>
-        <h2>Open Estimate Workflow</h2>
-        <p class="tm-muted tm-section-note">Carry this repair path into pricing.</p>
-      </div>
-      <div class="tm-next-action-strip" aria-label="Estimate workflow">
-        <span>Repair path</span>
-        <span>Pricing</span>
-        <span>Quote</span>
+        <h2>Price This Repair</h2>
+        <p class="tm-muted tm-section-note">Open with repair context loaded.</p>
       </div>
       <a
         class="tm-btn tm-btn-primary tm-estimate-repair-cta"
@@ -43,7 +38,7 @@
         {% if vehicle_context and vehicle_context.has_context %}
         Estimate for {{ vehicle_context.label }}
         {% else %}
-        {{ guide.estimate.cta_label }}
+        Open Estimate
         {% endif %}
       </a>
       {% if workflow_context and workflow_context.return_href %}

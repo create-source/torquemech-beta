@@ -16,7 +16,7 @@
 
     {% if not shared_id %}
     <div class="tm-card tm-estimator-quickstart">
-      <div class="tm-estimator-quickstart__title">Fast quote workflow</div>
+      <div class="tm-estimator-quickstart__title">Fast quote path</div>
       <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
         <span>Select vehicle</span>
         <span>Choose service</span>
@@ -74,7 +74,7 @@
     </div>
     {% else %}
     <div class="tm-muted tm-estimator-lede">
-      Build a clean repair quote with labor, parts, travel, customer review status, and PDF totals kept in sync.
+      Build the quote, adjust pricing, create the customer PDF.
     </div>
     {% endif %}
 
@@ -152,11 +152,11 @@
       <div class="tm-service-title-group">
         <div class="tm-section-kicker">Step 2</div>
         <h2>Add a Service</h2>
-        <div class="tm-service-workflow-copy">Stage the repair, confirm pricing, and keep related work visible.</div>
+        <div class="tm-service-workflow-copy">Pick the job, price it, keep moving.</div>
       </div>
       <div class="tm-addServiceRow">
   <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
-    Add the next job to this customer quote.
+    Ready for the next job.
   </span>
   <button id="addLineBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
     + Add Another Repair
@@ -214,10 +214,7 @@
     <div id="lineItemsWrap" class="line-items hidden">
       <div class="line-items-head">
         <div class="line-items-title">Jobs on this quote</div>
-        <div class="line-items-hint">Review each job, edit pricing, or add the next repair before creating the PDF.</div>
-      </div>
-      <div class="line-items-review-note">
-        Check labor, parts, inspection notes, and related jobs before finishing the customer quote.
+        <div class="line-items-hint">Edit pricing or add the next repair.</div>
       </div>
 
       <div id="lineItemsList" class="line-items-list"></div>
@@ -245,8 +242,8 @@
 
       <div class="pricing-controls" aria-label="Pricing Controls">
         <div class="pricing-controls__head">
-          <div class="pricing-controls__title">Pricing Controls</div>
-          <div class="pricing-controls__hint">Labor rate and travel fee defaults are saved on this device only.</div>
+          <div class="pricing-controls__title">Price Job</div>
+          <div class="pricing-controls__hint">Saved defaults stay on this device.</div>
         </div>
 
         <div id="selectedServiceContext" class="selected-service-context hidden" aria-live="polite"></div>
@@ -301,20 +298,20 @@
         </div>
 
         <p class="recalc-note">
-          Review labor range, adjust parts or travel if needed, then add the job.
+          Adjust only what changed.
         </p>
       </div>
 
       <div class="labor-help">
         <span class="tm-hint">
-          Labor guidance helps set a professional starting point. You stay in control of hours, rate, parts, and final quote total.
+          You control hours, rate, parts, and total.
         </span>
         
       </div>
 
       <div class="tm-estimate-action-panel">
       <div class="tm-estimate-action-panel__copy">
-        <div class="tm-estimate-action-panel__label">Next step</div>
+        <div class="tm-estimate-action-panel__label">Current task</div>
         <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
           Select a vehicle and service, then add it to the quote.
         </div>

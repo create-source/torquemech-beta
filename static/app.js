@@ -4855,6 +4855,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     addLineBtn.focus({ preventScroll: true });
   }
 
+  function syncWorkflowAccelerationState({ hasBasics = false, hasSelection = false, readyForNext = false } = {}) {
+    const serviceSection = getServiceAddSection();
+    const hasLines = lineItems.length > 0;
+    document.body?.classList.toggle("tm-quote-has-lines", hasLines);
+    serviceSection?.classList.toggle("is-ready-for-service", Boolean(readyForNext && hasBasics));
+    serviceSection?.classList.toggle("is-locked-after-add", Boolean(hasLines && !readyForNext));
+    document.querySelector(".tm-addServiceRow")?.classList.toggle("is-ready-next-repair", Boolean(hasLines && !readyForNext));
+    document.querySelector(".tm-estimate-action-panel")?.classList.toggle("is-ready-to-add", Boolean(readyForNext && hasBasics && hasSelection));
+    document.querySelector(".tm-estimate-action-panel")?.classList.toggle("is-quote-next", Boolean(hasLines && !readyForNext));
+  }
+
   function setServiceAddFieldsLocked(isLocked) {
     if (categoryEl) categoryEl.disabled = isLocked;
     if (serviceEl) serviceEl.disabled = isLocked;
@@ -4878,6 +4889,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     const isServiceAddLocked = !readyForNextService && !isEditingSavedLine;
 
     setServiceAddFieldsLocked(isServiceAddLocked);
+    syncWorkflowAccelerationState({ hasBasics, hasSelection, readyForNext: readyForNextService });
     renderSelectedServiceContext();
 
     // --- Add Service button label (dynamic) ---
@@ -4899,9 +4911,9 @@ const confidenceEl = document.getElementById("laborConfidence");
 if (addServiceHint) {
   addServiceHint.hidden = isEditingSavedLine ? false : !!readyForNextService;
   if (isEditingSavedLine) {
-    addServiceHint.textContent = "Editing saved line. Update pricing, then save changes.";
+    addServiceHint.textContent = "Editing line. Save changes.";
   } else {
-    addServiceHint.textContent = "Added. Tap + Add Another Repair to keep building this quote.";
+    addServiceHint.textContent = "Add the next repair.";
   }
 }
 if (getEstimateHint) {
@@ -4912,21 +4924,21 @@ if (getEstimateHint) {
     getEstimateHint.textContent = !hasBasics
       ? "Set the vehicle first."
       : !hasSelection
-        ? "Search or choose the repair job first."
-        : "Tap + Add Another Repair, then choose the next repair.";
+        ? "Choose a repair job."
+        : "Tap + Add Another Repair.";
   }
 }
 
     if (workflowStepText) {
       workflowStepText.textContent = isEditingSavedLine
-        ? "Editing saved line. Update pricing, then save changes."
+        ? "Editing line. Save changes."
         : !hasBasics
-        ? "Set the vehicle before pricing the job."
+        ? "Set vehicle."
         : !hasSelection
-          ? "Choose the repair job for this vehicle."
+          ? "Choose repair."
           : !readyForNextService
-            ? "Job added. Add another repair or create the customer quote."
-            : "Review pricing, then add this job to the quote.";
+            ? "Add another repair or create quote."
+            : "Review pricing, add job.";
     }
 
     // Add Another Service enabled ONLY after a service has been added
@@ -4934,11 +4946,11 @@ if (getEstimateHint) {
     if (saveDraftBtn) saveDraftBtn.disabled = isAddingLineItem || isGeneratingAllLines || !lineItems.length;
 
     // keep status helpful, but don't spam over error messages
-    if (isEditingSavedLine) setStatus("info", "Editing saved line. Update pricing, then save changes.");
-    else if (!hasBasics) setStatus("info", "Set the vehicle before pricing the job.");
-    else if (!hasSelection) setStatus("info", "Search for a repair or symptom, then add it to the quote.");
-    else if (!readyForNextService) setStatus("info", "Job added. Add another repair or create the customer quote.");
-    else setStatus("info", "Review pricing, then add this job to the quote.");
+    if (isEditingSavedLine) setStatus("info", "Editing line. Save changes.");
+    else if (!hasBasics) setStatus("info", "Set vehicle.");
+    else if (!hasSelection) setStatus("info", "Choose repair.");
+    else if (!readyForNextService) setStatus("info", "Add another repair or create quote.");
+    else setStatus("info", "Review pricing, add job.");
   }
 
   // ---- Add Service to Estimate FIRST ----
