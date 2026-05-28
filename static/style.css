@@ -1116,6 +1116,10 @@ button:active{
   position:relative;
 }
 
+.tm-year-field{
+  min-width:0;
+}
+
 .tm-clearable-field{
   position:relative;
   display:block;
