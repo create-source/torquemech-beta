@@ -8434,6 +8434,10 @@ def pdf_draw_signature_block(c, w, y, *, signature_data_url=None, left=50, right
     return y - card_h - disclaimer_gap - 18
 
 
+def pdf_signature_block_height() -> int:
+    return 136 + 16 + 18
+
+
 def pdf_draw_footer(c, w):
     """
     Consistent footer for BOTH PDFs.
@@ -9009,6 +9013,34 @@ def pdf_repair_status_label(value: Any) -> str:
     status = str(value or "").strip().lower()
     return REPAIR_STATUS_LABELS.get(status, "Recommended")
 
+
+def pdf_multi_summary_approval_needed(
+    *,
+    final_note_lines: List[str],
+    customer_note_lines: List[str],
+    customer_name: Optional[str],
+    customer_phone: Optional[str],
+    has_signature: bool,
+) -> int:
+    needed = 74
+    needed += (len(final_note_lines) * 9) + 10 if final_note_lines else 4
+
+    review_box_h = 54
+    if customer_name:
+        review_box_h += 12
+    if customer_phone:
+        review_box_h += 12
+    needed += review_box_h + 12
+
+    if customer_note_lines:
+        needed += 4 + 12 + (len(customer_note_lines) * 11) + 5
+
+    if has_signature:
+        needed += 12 + pdf_signature_block_height()
+
+    return needed
+
+
 @app.post("/estimate/pdf_multi")
 async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
     try:
@@ -9297,24 +9329,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         final_note_lines = wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2] if req.showRiskNotes else []
         customer_note_lines = wrap_text(req.notes.strip(), max_chars=90) if req.notes else []
-        summary_needed = 74
-        if final_note_lines:
-            summary_needed += (len(final_note_lines) * 9) + 10
-        else:
-            summary_needed += 4
+        has_signature = bool(req.signatureDataUrl)
+        summary_needed = pdf_multi_summary_approval_needed(
+            final_note_lines=final_note_lines,
+            customer_note_lines=customer_note_lines,
+            customer_name=req.customerName,
+            customer_phone=req.customerPhone,
+            has_signature=has_signature,
+        )
 
-        summary_needed += 14  # Customer review heading
-        summary_needed += 24  # Review/approval state and no-payment note
-        if req.customerName:
-            summary_needed += 12
-        if req.customerPhone:
-            summary_needed += 12
-        if customer_note_lines:
-            summary_needed += 16 + (len(customer_note_lines) * 11) + 5
-        if req.signatureDataUrl:
-            summary_needed += 178
-
-        # Ensure space for totals + customer + optional signature
+        # Keep Estimate Summary + Customer Approval/signature together when possible.
         y = pdf_ensure_space(
             c, w, h, y,
             needed=summary_needed,
@@ -9362,7 +9386,6 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             y -= 4
 
         # Customer review / approval state
-        has_signature = bool(req.signatureDataUrl)
         if has_signature:
             approval_title = "Signed Customer Approval"
             approval_line = "Customer reviewed and approved the estimate details with a signature."
