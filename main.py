@@ -1663,6 +1663,241 @@ def normalize_inspection_trigger_items(raw_items: Any) -> List[Dict[str, str]]:
     return normalized_items
 
 
+def normalize_repair_text_groups(raw_groups: Any) -> List[Dict[str, Any]]:
+    if not isinstance(raw_groups, list):
+        return []
+
+    groups: List[Dict[str, Any]] = []
+    for group in raw_groups:
+        if not isinstance(group, dict):
+            continue
+
+        title = str(group.get("title") or group.get("label") or group.get("name") or "").strip()
+        items = normalize_repair_guide_list(
+            group.get("items")
+            or group.get("symptoms")
+            or group.get("checks")
+            or group.get("notes")
+        )
+        if title and items:
+            groups.append({"title": title, "items": items})
+
+    return groups
+
+
+def normalize_repair_relation_groups(raw_groups: Any) -> List[Dict[str, Any]]:
+    if not isinstance(raw_groups, list):
+        return []
+
+    groups: List[Dict[str, Any]] = []
+    for group in raw_groups:
+        if not isinstance(group, dict):
+            continue
+
+        title = str(group.get("title") or group.get("label") or group.get("name") or "").strip()
+        items = normalize_symptom_recommended_repairs(
+            group.get("items")
+            or group.get("repairs")
+            or group.get("related_repairs")
+        )
+        if title and items:
+            groups.append({"title": title, "items": items})
+
+    return groups
+
+
+def infer_repair_symptom_clusters(guide: Dict[str, Any]) -> List[Dict[str, Any]]:
+    symptoms = [item for item in normalize_repair_guide_list(guide.get("symptoms")) if item]
+    if not symptoms:
+        return []
+
+    text = " ".join(
+        str(value or "")
+        for value in (
+            guide.get("slug"),
+            guide.get("title"),
+            guide.get("category"),
+            guide.get("subcategory"),
+            " ".join(symptoms),
+        )
+    ).lower()
+
+    clusters: List[Dict[str, Any]] = []
+
+    def add(title: str, matches: List[str]) -> None:
+        items = [symptom for symptom in symptoms if any(match in symptom.lower() for match in matches)]
+        if items:
+            clusters.append({"title": title, "items": items[:3]})
+
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper")):
+        add("Noise / Wear", ["squeal", "grind", "scrap", "noise", "wear"])
+        add("Feel / Control", ["pulsation", "vibration", "pull", "stopping", "pedal"])
+    elif any(term in text for term in ("battery", "alternator", "charging", "starter", "no start", "no crank")):
+        add("Voltage Clues", ["battery", "voltage", "warning", "light", "dimming", "dropout"])
+        add("Starting Clues", ["start", "crank", "dead", "intermittent"])
+    elif any(term in text for term in ("coolant", "cooling", "overheat", "thermostat", "radiator", "water pump")):
+        add("Temperature Behavior", ["overheat", "temperature", "warm", "heat", "p0128", "gauge"])
+        add("Coolant Loss", ["coolant", "leak", "smell", "drip"])
+    elif any(term in text for term in ("misfire", "spark plug", "ignition", "coil", "rough idle", "p030")):
+        add("Misfire Data", ["misfire", "p030", "check engine", "flashing"])
+        add("Driveability", ["rough", "idle", "hesitation", "load", "fuel smell"])
+
+    if not clusters:
+        clusters.append({"title": "Primary Clues", "items": symptoms[:3]})
+        if len(symptoms) > 3:
+            clusters.append({"title": "Secondary Clues", "items": symptoms[3:6]})
+
+    return clusters[:3]
+
+
+def infer_repair_verify_first_context(guide: Dict[str, Any]) -> List[str]:
+    text = " ".join(
+        str(value or "")
+        for value in (
+            guide.get("slug"),
+            guide.get("title"),
+            guide.get("category"),
+            guide.get("subcategory"),
+            " ".join(guide.get("symptoms") or []),
+            " ".join(guide.get("likely_causes") or []),
+        )
+    ).lower()
+
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper")):
+        return [
+            "Measure pads, rotor thickness, and rotor surface before quoting pad-only.",
+            "Check caliper slide movement when wear is uneven.",
+            "Separate brake pulsation from hub runout or wheel-end play.",
+        ]
+    if any(term in text for term in ("battery", "alternator", "charging", "starter", "no start", "no crank")):
+        return [
+            "Load-test the battery before condemning alternator or starter parts.",
+            "Voltage-drop main cables and grounds when symptoms are intermittent.",
+            "Confirm belt drive condition before quoting charging-system parts.",
+        ]
+    if any(term in text for term in ("coolant", "cooling", "overheat", "thermostat", "radiator", "water pump")):
+        return [
+            "Verify coolant level and pressure-test leak evidence first.",
+            "Compare scan-tool temperature with hose and fan behavior.",
+            "Bleed-air risk should be included before final pricing.",
+        ]
+    if any(term in text for term in ("misfire", "spark plug", "ignition", "coil", "rough idle", "p030")):
+        return [
+            "Confirm the cylinder and whether the fault follows the swapped part.",
+            "Inspect plug condition before quoting coils or injectors.",
+            "Check compression or injector clues when the misfire does not move.",
+        ]
+
+    return [
+        "Confirm the symptom, code, or inspection evidence before quoting parts.",
+        "Check adjacent systems when the evidence is mixed.",
+    ]
+
+
+def infer_repair_diagnostic_overlap_context(guide: Dict[str, Any]) -> List[str]:
+    text = " ".join(
+        str(value or "")
+        for value in (
+            guide.get("slug"),
+            guide.get("title"),
+            guide.get("category"),
+            guide.get("subcategory"),
+            " ".join(guide.get("symptoms") or []),
+            " ".join(guide.get("likely_causes") or []),
+        )
+    ).lower()
+
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper")):
+        return [
+            "Pad noise, rotor scoring, seized hardware, and caliper drag can sound similar.",
+            "Brake vibration can overlap with rotor runout, hub runout, or wheel bearing play.",
+        ]
+    if any(term in text for term in ("battery", "alternator", "charging", "starter", "no start", "no crank")):
+        return [
+            "Weak batteries, poor grounds, belt slip, and alternator faults can all create low-voltage complaints.",
+            "No-start complaints may need starting-system and parasitic-draw checks before parts.",
+        ]
+    if any(term in text for term in ("coolant", "cooling", "overheat", "thermostat", "radiator", "water pump")):
+        return [
+            "Thermostat, fan, air pocket, radiator, and water pump issues can all show overheating symptoms.",
+            "Coolant leaks may appear only after pressure testing or full warm-up.",
+        ]
+    if any(term in text for term in ("misfire", "spark plug", "ignition", "coil", "rough idle", "p030")):
+        return [
+            "Ignition, injector, vacuum leak, and compression faults can present as the same misfire code.",
+            "Random misfires need fuel-trim and mechanical clues before quoting a single part.",
+        ]
+
+    return [
+        "Multiple failures may share the same customer symptom.",
+        "Inspection protects the estimate when the repair path is not isolated.",
+    ]
+
+
+def build_repair_relation_group(title: str, raw_items: List[Dict[str, Any]], limit: int = 4) -> Dict[str, Any]:
+    items: List[Dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        item_title = str(item.get("title") or item.get("label") or item.get("name") or "").strip()
+        description = str(item.get("description") or item.get("reason") or "").strip()
+        href = str(item.get("cost_guide_href") or item.get("href") or "").strip()
+        estimator_href = str(item.get("estimator_href") or item.get("estimator_link") or "").strip()
+        if not item_title:
+            continue
+        key = ((href or estimator_href or item_title).lower(), item_title.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append(
+            {
+                "title": item_title,
+                "description": description,
+                "cost_guide_href": href,
+                "estimator_href": estimator_href,
+            }
+        )
+        if len(items) >= limit:
+            break
+
+    return {"title": title, "items": items}
+
+
+def build_repair_guide_intelligence_expansion(guide: Dict[str, Any]) -> Dict[str, Any]:
+    explicit_groups = normalize_repair_relation_groups(guide.get("related_repair_groups"))
+    inspected = build_repair_relation_group(
+        "Frequently inspected together",
+        list(guide.get("recommended_while_replacing") or [])
+        + list(guide.get("related_inspections") or []),
+    )
+    replaced = build_repair_relation_group(
+        "Frequently replaced together",
+        list(guide.get("recommended_repairs") or []),
+    )
+    follow_up = build_repair_relation_group(
+        "Common follow-up repairs",
+        list(guide.get("workflow_next_steps") or [])
+        + list(guide.get("recommended_repairs") or []),
+    )
+    inferred_groups = [group for group in (inspected, replaced, follow_up) if group["items"]]
+
+    bundled = build_repair_relation_group(
+        "Commonly bundled repair suggestions",
+        list(guide.get("recommended_repairs") or [])
+        + list(guide.get("related_inspections") or []),
+        limit=5,
+    )
+
+    return {
+        "related_repair_groups": explicit_groups or inferred_groups,
+        "symptom_clusters": normalize_repair_text_groups(guide.get("symptom_clusters")) or infer_repair_symptom_clusters(guide),
+        "verify_first_context": normalize_repair_guide_list(guide.get("verify_first_context") or guide.get("verify_first")) or infer_repair_verify_first_context(guide),
+        "diagnostic_overlap_context": normalize_repair_guide_list(guide.get("diagnostic_overlap_context") or guide.get("diagnostic_overlap")) or infer_repair_diagnostic_overlap_context(guide),
+        "bundled_repair_suggestions": normalize_symptom_recommended_repairs(guide.get("bundled_repair_suggestions")) or bundled["items"],
+    }
+
+
 def infer_repair_precision_defaults(guide: Dict[str, Any]) -> Dict[str, Any]:
     text = " ".join(
         str(value or "")
@@ -9245,6 +9480,7 @@ async def repair_guide_page(request: Request, slug: str):
         infer_related_inspections(*workflow_signal),
         workflow_context,
     )
+    guide.update(build_repair_guide_intelligence_expansion(guide))
 
     return templates.TemplateResponse(
         "repair_guide.html",

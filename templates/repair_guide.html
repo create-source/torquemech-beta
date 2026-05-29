@@ -62,6 +62,20 @@
         <span>Price</span>
         <span>Verify</span>
       </div>
+      {% if guide.bundled_repair_suggestions %}
+      <div class="tm-estimate-bundle-list" aria-label="Commonly bundled repair suggestions">
+        <strong>Bundle check</strong>
+        {% for item in guide.bundled_repair_suggestions[:3] %}
+          {% if item.estimator_href %}
+          <a href="{{ item.estimator_href }}">+ {{ item.title }}</a>
+          {% elif item.cost_guide_href %}
+          <a href="{{ item.cost_guide_href }}">{{ item.title }}</a>
+          {% else %}
+          <span>{{ item.title }}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
     </aside>
     {% endif %}
   </div>
@@ -180,6 +194,16 @@
         <span class="tm-blueprint-chip">{{ item }}</span>
         {% endfor %}
       </div>
+      {% if guide.symptom_clusters %}
+      <div class="tm-symptom-cluster-stack">
+        {% for cluster in guide.symptom_clusters[:2] %}
+        <div class="tm-symptom-cluster">
+          <strong>{{ cluster.title }}</strong>
+          <span>{{ cluster["items"][:3] | join(" / ") }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
     </article>
     {% endif %}
 
@@ -293,9 +317,26 @@
       </article>
       {% endif %}
 
-      {% if guide.diagnostic_logic or guide.likely_causes or guide.testing_approach %}
+      {% if guide.verify_first_context or guide.diagnostic_overlap_context or guide.diagnostic_logic or guide.likely_causes or guide.testing_approach %}
       <article>
-        <h3>Diagnostic Overlap</h3>
+        <h3>Verify First</h3>
+        {% if guide.verify_first_context %}
+        <div class="tm-verify-first-list">
+          {% for item in guide.verify_first_context[:3] %}
+          <div>{{ item }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.diagnostic_overlap_context %}
+        <h4 class="tm-context-mini-title">Diagnostic Overlap</h4>
+        <ul class="tm-priority-list">
+          {% for item in guide.diagnostic_overlap_context[:3] %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if guide.diagnostic_logic or guide.likely_causes or guide.testing_approach %}
+        <h4 class="tm-context-mini-title">Repair Evidence</h4>
         <ul class="tm-priority-list">
           {% for item in guide.diagnostic_logic[:4] %}
           <li>{{ item }}</li>
@@ -307,6 +348,7 @@
           <li>{{ item }}</li>
           {% endfor %}
         </ul>
+        {% endif %}
       </article>
       {% endif %}
 
@@ -438,7 +480,7 @@
       </article>
       {% endif %}
 
-      {% if guide.diagnostic_context or guide.related_obd_codes or guide.related_symptoms or guide.recommended_repairs or guide.estimate_guidance %}
+      {% if guide.diagnostic_context or guide.related_obd_codes or guide.related_symptoms or guide.recommended_repairs or guide.related_repair_groups or guide.estimate_guidance %}
       <article>
         <h3>Next Paths</h3>
         {% if guide.diagnostic_context %}
@@ -481,6 +523,28 @@
             <a href="{{ item.estimator_href }}">Add to estimate</a>
             {% endif %}
           </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.related_repair_groups %}
+        <div class="tm-repair-relation-groups">
+          {% for group in guide.related_repair_groups[:3] %}
+          <section class="tm-repair-relation-group">
+            <h4>{{ group.title }}</h4>
+            {% for item in group["items"][:4] %}
+            <div class="tm-relation-row">
+              <span>
+                <strong>{{ item.title }}</strong>
+                {% if item.description %}<em>{{ item.description }}</em>{% endif %}
+              </span>
+              {% if item.estimator_href %}
+              <a href="{{ item.estimator_href }}">Estimate</a>
+              {% elif item.cost_guide_href %}
+              <a href="{{ item.cost_guide_href }}">Guide</a>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </section>
           {% endfor %}
         </div>
         {% endif %}
