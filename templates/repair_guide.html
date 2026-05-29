@@ -497,7 +497,7 @@
       </article>
       {% endif %}
 
-      {% if guide.diagnostic_context or guide.related_obd_codes or guide.related_symptoms or guide.recommended_repairs or guide.related_repair_groups or guide.recommendation_priority_groups or guide.estimate_guidance %}
+      {% if guide.diagnostic_context or guide.related_diagnostic_links or guide.related_obd_codes or guide.related_symptoms or guide.recommended_repairs or guide.related_repair_groups or guide.recommendation_priority_groups or guide.estimate_guidance %}
       <article>
         <h3>Next Paths</h3>
         {% if guide.diagnostic_context %}
@@ -521,6 +521,13 @@
         {% if guide.related_symptoms %}
         <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
           {% for item in guide.related_symptoms %}
+          <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.related_diagnostic_links %}
+        <div class="tm-blueprint-chip-list tm-blueprint-chip-list--actions">
+          {% for item in guide.related_diagnostic_links %}
           <a class="tm-blueprint-chip" href="{{ item.href }}">{{ item.title }}</a>
           {% endfor %}
         </div>

@@ -1912,6 +1912,328 @@ def ranked_repair_recommendations(raw_items: List[Dict[str, Any]], guide: Dict[s
     )[:limit]
 
 
+REPAIR_INTELLIGENCE_NETWORK: Dict[str, Dict[str, Any]] = {
+    "brake-pad-replacement": {
+        "repairs": [
+            {"title": "Brake Rotor Replacement", "description": "Check rotor thickness, scoring, and pulsation before pad-only pricing.", "cost_guide_href": "/cost/brake-rotor-replacement", "estimator_href": "/estimator?service=front_brake_pads_and_rotors_replacement"},
+            {"title": "Brake Caliper Inspection", "description": "Use when pad wear is uneven, the wheel drags, or slide movement is poor.", "cost_guide_href": "/cost/brake-caliper-replacement", "estimator_href": "/estimator?service=brake_caliper_replacement_each"},
+            {"title": "Brake Fluid Inspection", "description": "Check fluid condition when hydraulic age or caliper service affects the quote.", "estimator_href": "/estimator?service=brake_fluid_flush"},
+            {"title": "Wheel Bearing Check", "description": "Use when brake vibration overlaps with wheel-end play or hub runout.", "cost_guide_href": "/cost/wheel-bearing-replacement", "estimator_href": "/estimator?service=wheel_bearing_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Brake Noise", "href": "/symptoms/brake-noise"},
+            {"title": "Vibration While Braking", "href": "/symptoms/vibration-while-braking"},
+        ],
+        "diagnostics": [
+            {"title": "Brake System Repairs", "href": "/repair-systems/brake-system-repairs"},
+        ],
+    },
+    "front-brake-pads": {},
+    "rear-brake-pads": {},
+    "brake-rotor-replacement": {
+        "repairs": [
+            {"title": "Brake Pad Replacement", "description": "Pads are usually inspected or replaced when rotors are scored, thin, or heat-spotted.", "cost_guide_href": "/cost/brake-pad-replacement", "estimator_href": "/estimator?service=front_brake_pads_replacement"},
+            {"title": "Brake Caliper Inspection", "description": "Check slide pins and piston drag when rotors show heat damage or uneven wear.", "cost_guide_href": "/cost/brake-caliper-replacement", "estimator_href": "/estimator?service=brake_caliper_replacement_each"},
+            {"title": "Wheel Bearing Check", "description": "Use when rotor runout and hub play can create the same pedal pulsation.", "cost_guide_href": "/cost/wheel-bearing-replacement", "estimator_href": "/estimator?service=wheel_bearing_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Vibration While Braking", "href": "/symptoms/vibration-while-braking"},
+            {"title": "Brake Noise", "href": "/symptoms/brake-noise"},
+        ],
+        "diagnostics": [
+            {"title": "Brake System Repairs", "href": "/repair-systems/brake-system-repairs"},
+        ],
+    },
+    "brake-caliper-replacement": {
+        "repairs": [
+            {"title": "Brake Pad Replacement", "description": "Pads and hardware should be checked when caliper drag caused uneven wear.", "cost_guide_href": "/cost/brake-pad-replacement", "estimator_href": "/estimator?service=front_brake_pads_replacement"},
+            {"title": "Brake Rotor Replacement", "description": "Rotor heat damage or scoring may follow a sticking caliper.", "cost_guide_href": "/cost/brake-rotor-replacement", "estimator_href": "/estimator?service=front_brake_pads_and_rotors_replacement"},
+            {"title": "Brake Fluid Service", "description": "Use when hydraulic work opens the system or fluid condition is poor.", "estimator_href": "/estimator?service=brake_fluid_flush"},
+        ],
+        "symptoms": [
+            {"title": "Brake Noise", "href": "/symptoms/brake-noise"},
+            {"title": "Vibration While Braking", "href": "/symptoms/vibration-while-braking"},
+        ],
+        "diagnostics": [
+            {"title": "Brake System Repairs", "href": "/repair-systems/brake-system-repairs"},
+        ],
+    },
+    "alternator-replacement": {
+        "repairs": [
+            {"title": "Battery Test", "description": "Confirm battery capacity before condemning charging parts.", "estimator_href": "/estimator?service=battery_test"},
+            {"title": "Battery Replacement", "description": "Use when the battery fails load testing or will not recover.", "cost_guide_href": "/cost/battery-replacement", "estimator_href": "/estimator?service=battery_replacement"},
+            {"title": "Battery Cable Inspection", "description": "Voltage-drop cables and grounds when charging symptoms are intermittent.", "estimator_href": "/estimator?service=battery_cable_replacement"},
+            {"title": "Serpentine Belt Replacement", "description": "Check belt slip, cracking, and tensioner travel with alternator work.", "cost_guide_href": "/cost/serpentine-belt-replacement", "estimator_href": "/estimator?service=serpentine_belt_replacement"},
+            {"title": "Charging System Diagnosis", "description": "Use when battery, belt, cable, and alternator evidence is mixed.", "cost_guide_href": "/cost/alternator-replacement", "estimator_href": "/estimator?service=alternator_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Battery Light On", "href": "/symptoms/battery-light-on"},
+            {"title": "Charging System Warning Light", "href": "/symptoms/charging-system-warning-light"},
+            {"title": "Battery Drain", "href": "/symptoms/battery-drain"},
+            {"title": "Intermittent No Start", "href": "/symptoms/intermittent-no-start"},
+        ],
+        "obd": [
+            {"code": "P0562", "title": "System voltage low", "href": "/obd/p0562"},
+        ],
+        "diagnostics": [
+            {"title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system"},
+        ],
+    },
+    "battery-replacement": {
+        "repairs": [
+            {"title": "Alternator Output Test", "description": "Check charging voltage when a new battery may be masking a charge fault.", "cost_guide_href": "/cost/alternator-replacement", "estimator_href": "/estimator?service=alternator_diagnosis"},
+            {"title": "Starter Draw Check", "description": "Use when slow crank continues after battery condition is confirmed.", "cost_guide_href": "/cost/starter-replacement", "estimator_href": "/estimator?service=no_crank_diagnosis"},
+            {"title": "Battery Cable Inspection", "description": "Corroded terminals and high resistance can mimic a weak battery.", "estimator_href": "/estimator?service=battery_cable_replacement"},
+        ],
+        "symptoms": [
+            {"title": "Battery Drain", "href": "/symptoms/battery-drain"},
+            {"title": "Intermittent No Start", "href": "/symptoms/intermittent-no-start"},
+            {"title": "No Crank", "href": "/symptoms/no-crank"},
+        ],
+        "diagnostics": [
+            {"title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system"},
+        ],
+    },
+    "starter-replacement": {
+        "repairs": [
+            {"title": "Battery Test", "description": "Confirm battery state before replacing starter parts.", "cost_guide_href": "/cost/battery-replacement", "estimator_href": "/estimator?service=battery_test"},
+            {"title": "Battery Terminal / Cable Inspection", "description": "Voltage-drop cables and terminals when no-crank evidence is mixed.", "estimator_href": "/estimator?service=battery_cable_replacement"},
+            {"title": "Starter Relay / Circuit Diagnosis", "description": "Check relay, fuse, neutral safety, and crank command before quoting parts.", "estimator_href": "/estimator?service=no_crank_diagnosis"},
+            {"title": "Charging System Check", "description": "Use when repeated low battery state creates starter complaints.", "cost_guide_href": "/cost/alternator-replacement", "estimator_href": "/estimator?service=alternator_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "No Crank", "href": "/symptoms/no-crank"},
+            {"title": "Intermittent No Start", "href": "/symptoms/intermittent-no-start"},
+            {"title": "Hard Start After Sitting", "href": "/symptoms/hard-start-after-sitting-overnight"},
+        ],
+        "diagnostics": [
+            {"title": "Charging & Starting System", "href": "/repair-systems/charging-starting-system"},
+        ],
+    },
+    "water-pump-replacement": {
+        "repairs": [
+            {"title": "Thermostat Replacement", "description": "Compare thermostat behavior when overheating or warm-up patterns overlap.", "cost_guide_href": "/cost/thermostat-replacement", "estimator_href": "/estimator?service=thermostat_replacement"},
+            {"title": "Radiator Replacement", "description": "Pressure-test radiator tanks and seams when coolant loss continues.", "cost_guide_href": "/cost/radiator-replacement", "estimator_href": "/estimator?service=radiator_replacement"},
+            {"title": "Cooling Fan Diagnosis", "description": "Use when overheating appears at idle or with A/C load.", "estimator_href": "/estimator?service=radiator_fan_diagnosis"},
+            {"title": "Coolant Leak Diagnosis", "description": "Pressure-test the system before adding pump or hose repairs.", "estimator_href": "/estimator?service=coolant_leak_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Coolant Leaks", "href": "/symptoms/coolant-leaks"},
+            {"title": "Overheating At Idle", "href": "/symptoms/overheating-at-idle"},
+            {"title": "Vehicle Overheats With AC On", "href": "/symptoms/vehicle-overheats-with-ac-on"},
+        ],
+        "diagnostics": [
+            {"title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics"},
+        ],
+    },
+    "thermostat-replacement": {
+        "repairs": [
+            {"title": "Coolant Temperature Sensor Check", "description": "Verify scan data when P0128 or gauge behavior is uncertain.", "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement", "estimator_href": "/estimator?service=engine_coolant_temperature_sensor_replacement"},
+            {"title": "Water Pump Inspection", "description": "Check circulation when temperature problems continue after thermostat checks.", "cost_guide_href": "/cost/water-pump-replacement", "estimator_href": "/estimator?service=water_pump_replacement"},
+            {"title": "Radiator Fan Diagnosis", "description": "Use when overheating happens at idle, low speed, or with A/C load.", "estimator_href": "/estimator?service=radiator_fan_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Overheating At Idle", "href": "/symptoms/overheating-at-idle"},
+            {"title": "Coolant Leaks", "href": "/symptoms/coolant-leaks"},
+        ],
+        "obd": [
+            {"code": "P0128", "title": "Coolant temperature below thermostat regulating temperature", "href": "/obd/p0128"},
+        ],
+        "diagnostics": [
+            {"title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics"},
+        ],
+    },
+    "radiator-replacement": {
+        "repairs": [
+            {"title": "Thermostat Replacement", "description": "Verify thermostat behavior when overheating evidence overlaps.", "cost_guide_href": "/cost/thermostat-replacement", "estimator_href": "/estimator?service=thermostat_replacement"},
+            {"title": "Water Pump Inspection", "description": "Check circulation before blaming the radiator for repeat overheating.", "cost_guide_href": "/cost/water-pump-replacement", "estimator_href": "/estimator?service=water_pump_replacement"},
+            {"title": "Cooling Fan Diagnosis", "description": "Use when overheating shows up mostly at idle or A/C load.", "estimator_href": "/estimator?service=radiator_fan_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Coolant Leaks", "href": "/symptoms/coolant-leaks"},
+            {"title": "Overheating At Idle", "href": "/symptoms/overheating-at-idle"},
+        ],
+        "diagnostics": [
+            {"title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics"},
+        ],
+    },
+    "radiator-fan-replacement": {
+        "repairs": [
+            {"title": "Thermostat Inspection", "description": "Compare fan command with thermostat and temperature behavior.", "cost_guide_href": "/cost/thermostat-replacement", "estimator_href": "/estimator?service=thermostat_replacement"},
+            {"title": "Coolant Temperature Sensor Check", "description": "Verify sensor data before replacing fan parts.", "cost_guide_href": "/cost/engine-coolant-temperature-sensor-replacement", "estimator_href": "/estimator?service=engine_coolant_temperature_sensor_replacement"},
+        ],
+        "symptoms": [
+            {"title": "Vehicle Overheats With AC On", "href": "/symptoms/vehicle-overheats-with-ac-on"},
+            {"title": "Overheating At Idle", "href": "/symptoms/overheating-at-idle"},
+        ],
+        "diagnostics": [
+            {"title": "Cooling System Diagnostics", "href": "/repair-systems/cooling-system-diagnostics"},
+        ],
+    },
+    "ignition-coil-replacement": {
+        "repairs": [
+            {"title": "Spark Plug Replacement", "description": "Inspect plug gap, wear, and fouling before replacing coils.", "cost_guide_href": "/cost/spark-plug-replacement", "estimator_href": "/estimator?service=spark_plug_replacement_4_cyl"},
+            {"title": "Fuel Injector Diagnosis", "description": "Use when the misfire does not follow coil or plug evidence.", "cost_guide_href": "/cost/fuel-injector-replacement", "estimator_href": "/estimator?service=fuel_system_diagnostic"},
+            {"title": "Misfire Diagnosis", "description": "Compare ignition, fuel, air, and compression before quoting parts.", "estimator_href": "/estimator?service=misfire_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Engine Misfire At Idle", "href": "/symptoms/engine-misfire-at-idle"},
+            {"title": "Check Engine Light Flashing", "href": "/symptoms/check-engine-light-flashing"},
+            {"title": "Cold Start Misfire", "href": "/symptoms/cold-start-misfire"},
+        ],
+        "obd": [
+            {"code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300"},
+            {"code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301"},
+        ],
+        "diagnostics": [
+            {"title": "Engine Performance & Misfire Diagnostics", "href": "/repair-systems/engine-performance-misfire-diagnostics"},
+            {"title": "Cylinder Misfire Blueprint", "href": "/repair-guides/how-to-diagnose-a-cylinder-misfire"},
+        ],
+    },
+    "spark-plug-replacement": {},
+    "oxygen-sensor-replacement": {
+        "repairs": [
+            {"title": "Catalytic Converter Check", "description": "Compare upstream/downstream data before replacing downstream sensors.", "cost_guide_href": "/cost/catalytic-converter-replacement", "estimator_href": "/estimator?service=catalyst_efficiency_diagnosis"},
+            {"title": "Exhaust Leak Inspection", "description": "Leaks can distort O2 readings and catalyst monitor results.", "estimator_href": "/estimator?service=exhaust_leak_repair"},
+            {"title": "Fuel Trim Diagnosis", "description": "Use when rich or lean data is biasing O2 sensor behavior.", "estimator_href": "/estimator?service=fuel_trim_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Poor Fuel Economy", "href": "/symptoms/poor-fuel-economy"},
+            {"title": "Fuel Smell From Exhaust", "href": "/symptoms/fuel-smell-from-exhaust"},
+        ],
+        "obd": [
+            {"code": "P0130", "title": "O2 sensor circuit bank 1 sensor 1", "href": "/obd/p0130"},
+            {"code": "P0135", "title": "O2 sensor heater circuit bank 1 sensor 1", "href": "/obd/p0135"},
+            {"code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420"},
+            {"code": "P0430", "title": "Catalyst efficiency below threshold bank 2", "href": "/obd/p0430"},
+        ],
+        "diagnostics": [
+            {"title": "Emissions & EVAP Diagnostics", "href": "/repair-systems/emissions-evap-diagnostics"},
+        ],
+    },
+    "catalytic-converter-replacement": {
+        "repairs": [
+            {"title": "Oxygen Sensor Inspection", "description": "Compare sensor switching before condemning the converter.", "cost_guide_href": "/cost/oxygen-sensor-replacement", "estimator_href": "/estimator?service=o2_sensor_diagnosis"},
+            {"title": "Exhaust Leak Inspection", "description": "Leaks ahead of the catalyst can create false efficiency faults.", "estimator_href": "/estimator?service=exhaust_leak_repair"},
+            {"title": "Misfire / Fuel Trim Diagnosis", "description": "Correct upstream faults before installing a converter.", "estimator_href": "/estimator?service=fuel_trim_diagnosis"},
+        ],
+        "symptoms": [
+            {"title": "Loss Of Power While Driving", "href": "/symptoms/loss-of-power-while-driving"},
+            {"title": "Fuel Smell From Exhaust", "href": "/symptoms/fuel-smell-from-exhaust"},
+            {"title": "Poor Fuel Economy", "href": "/symptoms/poor-fuel-economy"},
+        ],
+        "obd": [
+            {"code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420"},
+            {"code": "P0430", "title": "Catalyst efficiency below threshold bank 2", "href": "/obd/p0430"},
+        ],
+        "diagnostics": [
+            {"title": "Emissions & EVAP Diagnostics", "href": "/repair-systems/emissions-evap-diagnostics"},
+        ],
+    },
+    "evap-purge-valve-replacement": {
+        "repairs": [
+            {"title": "EVAP Smoke Test", "description": "Smoke test before replacing purge parts when leak evidence is not isolated.", "estimator_href": "/estimator?service=evap_leak_test_smoke_test"},
+            {"title": "EVAP Vent Valve Check", "description": "Vent-side faults can overlap with purge and leak codes.", "cost_guide_href": "/cost/evap-vent-valve-replacement", "estimator_href": "/estimator?service=evap_vent_valve_replacement"},
+        ],
+        "symptoms": [
+            {"title": "Fuel Smell From Exhaust", "href": "/symptoms/fuel-smell-from-exhaust"},
+            {"title": "Hard Start After Sitting", "href": "/symptoms/hard-start-after-sitting-overnight"},
+        ],
+        "obd": [
+            {"code": "P0440", "title": "EVAP system fault", "href": "/obd/p0440"},
+            {"code": "P0442", "title": "Small EVAP leak", "href": "/obd/p0442"},
+            {"code": "P0455", "title": "Large EVAP leak", "href": "/obd/p0455"},
+            {"code": "P0456", "title": "Very small EVAP leak", "href": "/obd/p0456"},
+        ],
+        "diagnostics": [
+            {"title": "Emissions & EVAP Diagnostics", "href": "/repair-systems/emissions-evap-diagnostics"},
+        ],
+    },
+    "fuel-pump-replacement": {
+        "repairs": [
+            {"title": "Fuel Pressure Test", "description": "Confirm pressure and volume before replacing the pump.", "estimator_href": "/estimator?service=fuel_pressure_test"},
+            {"title": "Fuel Injector Diagnosis", "description": "Use when low power or misfire evidence remains after pressure checks.", "cost_guide_href": "/cost/fuel-injector-replacement", "estimator_href": "/estimator?service=fuel_system_diagnostic"},
+        ],
+        "symptoms": [
+            {"title": "Hard Start After Sitting", "href": "/symptoms/hard-start-after-sitting-overnight"},
+            {"title": "Engine Stalls At Idle", "href": "/symptoms/engine-stalls-at-idle"},
+            {"title": "Loss Of Power While Driving", "href": "/symptoms/loss-of-power-while-driving"},
+        ],
+        "diagnostics": [
+            {"title": "Engine Performance & Misfire Diagnostics", "href": "/repair-systems/engine-performance-misfire-diagnostics"},
+        ],
+    },
+}
+
+REPAIR_INTELLIGENCE_NETWORK["front-brake-pads"] = REPAIR_INTELLIGENCE_NETWORK["brake-pad-replacement"]
+REPAIR_INTELLIGENCE_NETWORK["rear-brake-pads"] = REPAIR_INTELLIGENCE_NETWORK["brake-pad-replacement"]
+REPAIR_INTELLIGENCE_NETWORK["spark-plug-replacement"] = REPAIR_INTELLIGENCE_NETWORK["ignition-coil-replacement"]
+
+
+def merge_network_repair_items(*groups: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    merged: List[Dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for group in groups:
+        for item in group or []:
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title") or "").strip()
+            href = str(item.get("cost_guide_href") or item.get("href") or item.get("estimator_href") or "").strip()
+            key = (title.lower(), href)
+            if not title or key in seen:
+                continue
+            seen.add(key)
+            merged.append(dict(item))
+    return merged
+
+
+def merge_network_link_items(*groups: List[Dict[str, str]], key_name: str = "href") -> List[Dict[str, str]]:
+    merged: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    for group in groups:
+        for item in group or []:
+            if not isinstance(item, dict):
+                continue
+            href = str(item.get(key_name) or "").strip()
+            title = str(item.get("title") or item.get("code") or "").strip()
+            if not href or not title or href in seen:
+                continue
+            seen.add(href)
+            merged.append(dict(item))
+    return merged
+
+
+def apply_repair_intelligence_network(guide: Dict[str, Any]) -> Dict[str, Any]:
+    slug = str(guide.get("slug") or "").strip().replace("_", "-")
+    network = REPAIR_INTELLIGENCE_NETWORK.get(slug)
+    if not network:
+        return guide
+
+    guide = dict(guide)
+    network_repairs = normalize_symptom_recommended_repairs(network.get("repairs"))
+    guide["recommended_repairs"] = merge_network_repair_items(
+        network_repairs,
+        guide.get("recommended_repairs") or [],
+    )
+    guide["bundled_repair_suggestions"] = merge_network_repair_items(
+        network_repairs,
+        normalize_symptom_recommended_repairs(guide.get("bundled_repair_suggestions")),
+    )
+    guide["related_symptoms"] = merge_network_link_items(
+        normalize_related_link_items(network.get("symptoms")),
+        guide.get("related_symptoms") or [],
+    )
+    guide["related_obd_codes"] = merge_network_link_items(
+        normalize_symptom_obd_codes(network.get("obd")),
+        guide.get("related_obd_codes") or [],
+    )
+    guide["related_diagnostic_links"] = merge_network_link_items(
+        normalize_related_link_items(network.get("diagnostics")),
+        normalize_related_link_items(guide.get("related_diagnostic_links")),
+    )
+    return guide
+
+
 def infer_symptom_confidence_groups(guide: Dict[str, Any]) -> List[Dict[str, Any]]:
     symptoms = normalize_repair_guide_list(guide.get("symptoms"))
     if not symptoms:
@@ -6669,6 +6991,10 @@ async def diagnostics_hub(request: Request):
         },
     )
 
+@app.get("/diagnostic-repair", include_in_schema=False)
+async def diagnostic_repair_redirect():
+    return RedirectResponse("/diagnostics", status_code=301)
+
 
 @app.get("/symptoms", response_class=HTMLResponse)
 async def symptoms_index(request: Request):
@@ -6944,6 +7270,20 @@ def catalytic_converter_cost(request: Request):
 def egr_valve_cost(request: Request):
     return templates.TemplateResponse(
         "cost_egr_valve_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/pcv-valve-replacement", response_class=HTMLResponse)
+def pcv_valve_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_pcv_valve_replacement.html",
+        {"request": request},
+    )
+
+@app.get("/cost/intake-manifold-gasket-replacement", response_class=HTMLResponse)
+def intake_manifold_gasket_cost(request: Request):
+    return templates.TemplateResponse(
+        "cost_intake_manifold_gasket_replacement.html",
         {"request": request},
     )
 
@@ -9610,6 +9950,7 @@ async def repair_guide_page(request: Request, slug: str):
             for label, value in vehicle_torque_specs.items()
         ]
 
+    guide = apply_repair_intelligence_network(guide)
     guide["recommended_repairs"] = apply_workflow_context_to_repair_items(
         guide.get("recommended_repairs") or [],
         workflow_context,
@@ -9620,6 +9961,14 @@ async def repair_guide_page(request: Request, slug: str):
     )
     guide["related_symptoms"] = apply_workflow_context_to_repair_items(
         guide.get("related_symptoms") or [],
+        workflow_context,
+    )
+    guide["related_diagnostic_links"] = apply_workflow_context_to_repair_items(
+        guide.get("related_diagnostic_links") or [],
+        workflow_context,
+    )
+    guide["bundled_repair_suggestions"] = apply_workflow_context_to_repair_items(
+        guide.get("bundled_repair_suggestions") or [],
         workflow_context,
     )
     if guide.get("diagnostic_context"):
