@@ -64,7 +64,7 @@
       </div>
       {% if guide.bundled_repair_suggestions %}
       <div class="tm-estimate-bundle-list" aria-label="Commonly bundled repair suggestions">
-        <strong>Bundle check</strong>
+        <strong>Recommended add-ons</strong>
         {% for item in guide.bundled_repair_suggestions[:3] %}
           {% if item.estimator_href %}
           <a href="{{ item.estimator_href }}">+ {{ item.title }}</a>
@@ -73,6 +73,13 @@
           {% else %}
           <span>{{ item.title }}</span>
           {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if guide.mechanic_reasoning_notes %}
+      <div class="tm-estimate-reasoning-list" aria-label="Mechanic reasoning notes">
+        {% for note in guide.mechanic_reasoning_notes[:2] %}
+        <span>{{ note }}</span>
         {% endfor %}
       </div>
       {% endif %}
@@ -194,6 +201,16 @@
         <span class="tm-blueprint-chip">{{ item }}</span>
         {% endfor %}
       </div>
+      {% if guide.symptom_confidence_groups %}
+      <div class="tm-symptom-confidence">
+        {% for group in guide.symptom_confidence_groups[:2] %}
+        <div class="tm-symptom-confidence-row tm-symptom-confidence-row--{{ group.label | lower | replace(' ', '-') }}">
+          <strong>{{ group.label }}</strong>
+          <span>{{ group["items"][:2] | join(" / ") }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
       {% if guide.symptom_clusters %}
       <div class="tm-symptom-cluster-stack">
         {% for cluster in guide.symptom_clusters[:2] %}
@@ -480,7 +497,7 @@
       </article>
       {% endif %}
 
-      {% if guide.diagnostic_context or guide.related_obd_codes or guide.related_symptoms or guide.recommended_repairs or guide.related_repair_groups or guide.estimate_guidance %}
+      {% if guide.diagnostic_context or guide.related_obd_codes or guide.related_symptoms or guide.recommended_repairs or guide.related_repair_groups or guide.recommendation_priority_groups or guide.estimate_guidance %}
       <article>
         <h3>Next Paths</h3>
         {% if guide.diagnostic_context %}
@@ -526,7 +543,29 @@
           {% endfor %}
         </div>
         {% endif %}
-        {% if guide.related_repair_groups %}
+        {% if guide.recommendation_priority_groups %}
+        <div class="tm-recommendation-priority-groups">
+          {% for group in guide.recommendation_priority_groups[:3] %}
+          <section class="tm-recommendation-priority-group tm-recommendation-priority-group--{{ group.tone }}">
+            <h4>{{ group.title }}</h4>
+            {% for item in group["items"][:4] %}
+            <div class="tm-recommendation-row">
+              <span>
+                <strong>{{ item.title }}</strong>
+                {% if item.description %}<em>{{ item.description }}</em>{% endif %}
+              </span>
+              {% if item.estimator_href %}
+              <a href="{{ item.estimator_href }}">Estimate</a>
+              {% elif item.cost_guide_href %}
+              <a href="{{ item.cost_guide_href }}">Guide</a>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </section>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if guide.related_repair_groups and not guide.recommendation_priority_groups %}
         <div class="tm-repair-relation-groups">
           {% for group in guide.related_repair_groups[:3] %}
           <section class="tm-repair-relation-group">

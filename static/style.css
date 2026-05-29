@@ -5171,6 +5171,24 @@ h3{
   overflow-wrap:anywhere;
 }
 
+.tm-estimate-reasoning-list{
+  display:grid;
+  gap:6px;
+}
+
+.tm-estimate-reasoning-list span{
+  display:block;
+  padding:8px 9px;
+  border:1px solid rgba(15, 23, 42, .08);
+  border-left:3px solid #0f766e;
+  border-radius:10px;
+  background:#ffffff;
+  color:#334155;
+  font-size:.78rem;
+  font-weight:800;
+  line-height:1.32;
+}
+
 .tm-blueprint-action-kicker{
   display:block;
   margin-bottom:6px;
@@ -5432,6 +5450,55 @@ h3{
   margin-top:10px;
 }
 
+.tm-symptom-confidence{
+  display:grid;
+  gap:6px;
+  margin-top:9px;
+}
+
+.tm-symptom-confidence-row{
+  display:grid;
+  gap:3px;
+  padding:8px 9px;
+  border:1px solid rgba(15, 23, 42, .08);
+  border-radius:10px;
+  background:#ffffff;
+}
+
+.tm-symptom-confidence-row strong{
+  width:max-content;
+  max-width:100%;
+  min-height:22px;
+  padding:4px 7px;
+  border-radius:999px;
+  border:1px solid rgba(15, 23, 42, .10);
+  color:var(--tm-text-muted);
+  font-size:.66rem;
+  font-weight:950;
+  letter-spacing:.04em;
+  line-height:1;
+  text-transform:uppercase;
+}
+
+.tm-symptom-confidence-row--strong-match strong{
+  border-color:rgba(15, 118, 110, .22);
+  background:#f0fdfa;
+  color:#0f766e;
+}
+
+.tm-symptom-confidence-row--possible-match strong{
+  border-color:rgba(37, 99, 235, .18);
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+
+.tm-symptom-confidence-row span{
+  color:var(--tm-text);
+  font-size:.78rem;
+  font-weight:750;
+  line-height:1.32;
+}
+
 .tm-symptom-cluster{
   display:grid;
   gap:3px;
@@ -5495,7 +5562,8 @@ h3{
 }
 
 .tm-verify-first-list,
-.tm-repair-relation-groups{
+.tm-repair-relation-groups,
+.tm-recommendation-priority-groups{
   display:grid;
   gap:8px;
   margin-top:8px;
@@ -5572,6 +5640,100 @@ h3{
 .tm-relation-row a{
   display:inline-flex;
   align-items:center;
+  min-height:28px;
+  padding:6px 8px;
+  border:1px solid rgba(17, 179, 173, .20);
+  border-radius:999px;
+  background:#f0fdfa;
+  color:#0f766e;
+  font-size:.76rem;
+  font-weight:900;
+  line-height:1.1;
+}
+
+.tm-recommendation-priority-group{
+  display:grid;
+  gap:7px;
+  min-width:0;
+  padding:10px;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:11px;
+  background:#ffffff;
+}
+
+.tm-recommendation-priority-group h4{
+  margin:0;
+  width:max-content;
+  max-width:100%;
+  min-height:24px;
+  padding:5px 8px;
+  border-radius:999px;
+  border:1px solid rgba(15, 23, 42, .10);
+  color:var(--tm-text-muted);
+  font-size:.72rem;
+  font-weight:950;
+  letter-spacing:.04em;
+  line-height:1;
+  text-transform:uppercase;
+}
+
+.tm-recommendation-priority-group--verify h4{
+  border-color:rgba(15, 118, 110, .22);
+  background:#f0fdfa;
+  color:#0f766e;
+}
+
+.tm-recommendation-priority-group--bundle h4{
+  border-color:rgba(217, 119, 6, .22);
+  background:#fffbeb;
+  color:#92400e;
+}
+
+.tm-recommendation-priority-group--situational h4{
+  border-color:rgba(37, 99, 235, .18);
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+
+.tm-recommendation-row{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:8px;
+  align-items:center;
+  padding-top:7px;
+  border-top:1px solid rgba(15,23,42,.07);
+}
+
+.tm-recommendation-row:first-of-type{
+  border-top:0;
+  padding-top:0;
+}
+
+.tm-recommendation-row span{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+
+.tm-recommendation-row strong{
+  color:var(--tm-text);
+  font-size:.84rem;
+  font-weight:950;
+  line-height:1.2;
+}
+
+.tm-recommendation-row em{
+  color:var(--tm-text-muted);
+  font-size:.76rem;
+  font-style:normal;
+  font-weight:700;
+  line-height:1.3;
+}
+
+.tm-recommendation-row a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   min-height:28px;
   padding:6px 8px;
   border:1px solid rgba(17, 179, 173, .20);
@@ -6064,11 +6226,13 @@ h3{
     grid-template-columns:1fr;
   }
 
-  .tm-relation-row{
+  .tm-relation-row,
+  .tm-recommendation-row{
     grid-template-columns:1fr;
   }
 
   .tm-relation-row a,
+  .tm-recommendation-row a,
   .tm-estimate-bundle-list a,
   .tm-estimate-bundle-list span{
     width:100%;

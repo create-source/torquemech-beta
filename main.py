@@ -1864,6 +1864,156 @@ def build_repair_relation_group(title: str, raw_items: List[Dict[str, Any]], lim
     return {"title": title, "items": items}
 
 
+def score_repair_recommendation(item: Dict[str, Any], guide: Dict[str, Any]) -> int:
+    text = " ".join(
+        str(value or "")
+        for value in (
+            item.get("title"),
+            item.get("description"),
+            item.get("reason"),
+            item.get("cost_guide_href"),
+            item.get("estimator_href"),
+        )
+    ).lower()
+    guide_text = " ".join(
+        str(value or "")
+        for value in (
+            guide.get("slug"),
+            guide.get("title"),
+            guide.get("category"),
+            guide.get("subcategory"),
+            " ".join(guide.get("related_systems") or []),
+            " ".join(guide.get("symptoms") or []),
+        )
+    ).lower()
+
+    score = 0
+    if item.get("estimator_href") or item.get("estimator_link"):
+        score += 3
+    if item.get("cost_guide_href") or item.get("href"):
+        score += 2
+    if any(term in text for term in ("diagnos", "test", "inspect", "verify", "check", "measure")):
+        score += 2
+    if any(term in text for term in ("replacement", "service", "belt", "rotor", "battery", "spark plug", "coolant", "caliper")):
+        score += 1
+
+    for token in ("brake", "battery", "alternator", "starter", "coolant", "thermostat", "radiator", "water pump", "misfire", "coil", "spark", "evap", "oxygen", "sensor"):
+        if token in guide_text and token in text:
+            score += 2
+
+    return score
+
+
+def ranked_repair_recommendations(raw_items: List[Dict[str, Any]], guide: Dict[str, Any], limit: int = 5) -> List[Dict[str, str]]:
+    deduped = build_repair_relation_group("Ranked", raw_items, limit=24)["items"]
+    return sorted(
+        deduped,
+        key=lambda item: (-score_repair_recommendation(item, guide), item.get("title", "")),
+    )[:limit]
+
+
+def infer_symptom_confidence_groups(guide: Dict[str, Any]) -> List[Dict[str, Any]]:
+    symptoms = normalize_repair_guide_list(guide.get("symptoms"))
+    if not symptoms:
+        return []
+
+    text = " ".join(
+        str(value or "")
+        for value in (
+            guide.get("slug"),
+            guide.get("title"),
+            guide.get("category"),
+            guide.get("subcategory"),
+        )
+    ).lower()
+
+    strong_terms: List[str] = []
+    if any(term in text for term in ("brake", "pad", "rotor", "caliper")):
+        strong_terms = ["grind", "squeal", "scrap", "pad", "brake warning", "uneven pad"]
+    elif any(term in text for term in ("battery", "alternator", "charging", "starter", "no start", "no crank")):
+        strong_terms = ["battery", "voltage", "warning light", "charging", "no start", "no crank"]
+    elif any(term in text for term in ("coolant", "cooling", "overheat", "thermostat", "radiator", "water pump")):
+        strong_terms = ["p0128", "overheat", "coolant", "temperature", "warm-up", "leak"]
+    elif any(term in text for term in ("misfire", "spark plug", "ignition", "coil", "rough idle", "p030")):
+        strong_terms = ["p030", "misfire", "flashing", "rough idle", "hesitation"]
+
+    strong = [symptom for symptom in symptoms if any(term in symptom.lower() for term in strong_terms)]
+    possible = [symptom for symptom in symptoms if symptom not in strong]
+    if not strong:
+        strong = symptoms[:2]
+        possible = symptoms[2:]
+
+    groups: List[Dict[str, Any]] = []
+    if strong:
+        groups.append({"label": "Strong Match", "items": strong[:3]})
+    if possible:
+        groups.append({"label": "Possible Match", "items": possible[:3]})
+    return groups
+
+
+def build_recommendation_priority_groups(guide: Dict[str, Any]) -> List[Dict[str, Any]]:
+    verify_items: List[Dict[str, str]] = []
+    for item in guide.get("verify_first_context") or []:
+        verify_items.append({"title": str(item or "").strip(), "description": "Confirm before quoting.", "cost_guide_href": "", "estimator_href": ""})
+    for item in guide.get("related_inspections") or []:
+        if isinstance(item, dict):
+            verify_items.append(item)
+
+    bundled_items = ranked_repair_recommendations(
+        list(guide.get("bundled_repair_suggestions") or [])
+        + list(guide.get("recommended_repairs") or []),
+        guide,
+        limit=5,
+    )
+    situational_items = ranked_repair_recommendations(
+        list(guide.get("workflow_next_steps") or [])
+        + list(guide.get("recommended_while_replacing") or []),
+        guide,
+        limit=5,
+    )
+
+    seen_titles: set[str] = set()
+
+    def unique_items(items: List[Dict[str, str]], limit: int = 4) -> List[Dict[str, str]]:
+        unique: List[Dict[str, str]] = []
+        for item in items:
+            title = str(item.get("title") or "").strip()
+            key = title.lower()
+            if not title or key in seen_titles:
+                continue
+            seen_titles.add(key)
+            unique.append(item)
+            if len(unique) >= limit:
+                break
+        return unique
+
+    groups = [
+        {"title": "Verify First", "tone": "verify", "items": unique_items(build_repair_relation_group("Verify First", verify_items, limit=6)["items"])},
+        {"title": "Commonly Bundled", "tone": "bundle", "items": unique_items(bundled_items)},
+        {"title": "Situational", "tone": "situational", "items": unique_items(situational_items)},
+    ]
+    return [group for group in groups if group["items"]]
+
+
+def infer_mechanic_reasoning_notes(guide: Dict[str, Any]) -> List[str]:
+    verify_first = normalize_repair_guide_list(guide.get("verify_first_context"))
+    overlap = normalize_repair_guide_list(guide.get("diagnostic_overlap_context"))
+    notes: List[str] = []
+    if verify_first:
+        notes.append(verify_first[0])
+    if overlap:
+        notes.append(overlap[0])
+    if guide.get("bundled_repair_suggestions"):
+        notes.append("Add bundled work only when inspection supports it.")
+    notes.append("Keep the quote tied to confirmed evidence.")
+
+    deduped: List[str] = []
+    for note in notes:
+        if note and note not in deduped:
+            deduped.append(note)
+    return deduped[:3]
+
+
 def build_repair_guide_intelligence_expansion(guide: Dict[str, Any]) -> Dict[str, Any]:
     explicit_groups = normalize_repair_relation_groups(guide.get("related_repair_groups"))
     inspected = build_repair_relation_group(
@@ -1889,13 +2039,20 @@ def build_repair_guide_intelligence_expansion(guide: Dict[str, Any]) -> Dict[str
         limit=5,
     )
 
-    return {
+    bundled_suggestions = normalize_symptom_recommended_repairs(guide.get("bundled_repair_suggestions")) or ranked_repair_recommendations(bundled["items"], guide, limit=5)
+    expanded = {
         "related_repair_groups": explicit_groups or inferred_groups,
         "symptom_clusters": normalize_repair_text_groups(guide.get("symptom_clusters")) or infer_repair_symptom_clusters(guide),
         "verify_first_context": normalize_repair_guide_list(guide.get("verify_first_context") or guide.get("verify_first")) or infer_repair_verify_first_context(guide),
         "diagnostic_overlap_context": normalize_repair_guide_list(guide.get("diagnostic_overlap_context") or guide.get("diagnostic_overlap")) or infer_repair_diagnostic_overlap_context(guide),
-        "bundled_repair_suggestions": normalize_symptom_recommended_repairs(guide.get("bundled_repair_suggestions")) or bundled["items"],
+        "bundled_repair_suggestions": bundled_suggestions,
     }
+    guide_for_priority = dict(guide)
+    guide_for_priority.update(expanded)
+    expanded["symptom_confidence_groups"] = infer_symptom_confidence_groups(guide_for_priority)
+    expanded["recommendation_priority_groups"] = build_recommendation_priority_groups(guide_for_priority)
+    expanded["mechanic_reasoning_notes"] = infer_mechanic_reasoning_notes(guide_for_priority)
+    return expanded
 
 
 def infer_repair_precision_defaults(guide: Dict[str, Any]) -> Dict[str, Any]:
@@ -3400,6 +3557,7 @@ SYSTEM_HUB_NAV_ITEMS = {
 
 def infer_related_system_hubs(*values: Any, limit: int = 3) -> List[Dict[str, str]]:
     text = " ".join(str(value or "") for value in values).lower()
+    lean_signal = any(term in text for term in ("p0171", "p0174", "fuel trim", "lean condition", "lean-code", "lean code", "running lean"))
     picks: List[str] = []
 
     def add(slug: str) -> None:
@@ -3415,7 +3573,7 @@ def infer_related_system_hubs(*values: Any, limit: int = 3) -> List[Dict[str, st
         add("cooling-system-diagnostics")
         add("engine-performance-misfire-diagnostics")
         add("charging-starting-system")
-    if any(term in text for term in ("misfire", "p030", "rough idle", "lean", "p0171", "p0174", "spark plug", "ignition", "coil", "maf", "mass air", "oxygen sensor", "hard start", "fuel trim", "drivability")):
+    if any(term in text for term in ("misfire", "p030", "rough idle", "spark plug", "ignition", "coil", "maf", "mass air", "oxygen sensor", "hard start", "fuel trim", "drivability")) or lean_signal:
         add("engine-performance-misfire-diagnostics")
         add("emissions-evap-diagnostics")
     if any(term in text for term in ("evap", "emission", "p044", "p045", "purge", "vent valve", "fuel smell", "smoke test", "catalyst", "catalytic", "p0420", "p0430")):
@@ -3430,6 +3588,7 @@ def infer_related_system_hubs(*values: Any, limit: int = 3) -> List[Dict[str, st
 
 def infer_workflow_next_steps(*values: Any, limit: int = 4) -> List[Dict[str, str]]:
     text = " ".join(str(value or "") for value in values).lower()
+    lean_signal = any(term in text for term in ("p0171", "p0174", "fuel trim", "lean condition", "lean-code", "lean code", "running lean"))
     steps: List[Dict[str, str]] = []
 
     def add(title: str, description: str, *, href: str = "", estimator_href: str = "") -> None:
@@ -3453,7 +3612,7 @@ def infer_workflow_next_steps(*values: Any, limit: int = 4) -> List[Dict[str, st
         add("Smoke test EVAP system", "Use smoke testing when the leak source is not obvious.", estimator_href="/estimator?service=evap_leak_test_smoke_test")
         add("Verify purge sealing", "Check purge command and sealing before replacing the valve.", href="/repair-guides/evap-purge-valve-replacement")
         add("Check vent operation", "Command the vent valve and inspect canister-side blockage or contamination.", estimator_href="/estimator?service=evap_vent_valve_replacement")
-    if any(term in text for term in ("p0171", "p0174", "lean", "fuel trim", "rough idle", "vacuum leak")):
+    if lean_signal or any(term in text for term in ("fuel trim", "rough idle", "vacuum leak")):
         add("Review fuel trims", "Compare trims at idle, 2500 RPM, and cruise before pricing sensors.", estimator_href="/estimator?service=fuel_trim_diagnosis")
         add("Inspect vacuum leaks", "Check intake boots, PCV hoses, and post-MAF leak paths.", href="/repair-guides/how-to-diagnose-a-vacuum-leak")
         add("Check MAF sensor", "Inspect MAF contamination and airflow data after intake leaks are considered.", estimator_href="/estimator?service=mass_air_flow_sensor_replacement")
@@ -3485,6 +3644,7 @@ def infer_workflow_next_steps(*values: Any, limit: int = 4) -> List[Dict[str, st
 
 def infer_related_inspections(*values: Any, limit: int = 4) -> List[Dict[str, str]]:
     text = " ".join(str(value or "") for value in values).lower()
+    lean_signal = any(term in text for term in ("p0171", "p0174", "fuel trim", "lean condition", "lean-code", "lean code", "running lean"))
     inspections: List[Dict[str, str]] = []
 
     def add(title: str, description: str, estimator_href: str) -> None:
@@ -3500,13 +3660,13 @@ def infer_related_inspections(*values: Any, limit: int = 4) -> List[Dict[str, st
 
     if any(term in text for term in ("brake", "pad", "rotor", "caliper")):
         add("Brake fluid inspection", "Check fluid condition when hydraulic or caliper work is likely.", "/estimator?service=brake_fluid_flush")
-    if any(term in text for term in ("wheel hub", "wheel bearing", "steering", "suspension", "alignment")):
+    if any(term in text for term in ("wheel hub", "wheel bearing", "steering", "suspension")) or ("alignment" in text and any(term in text for term in ("tire wear", "vehicle pull", "pulling", "steering", "suspension"))):
         add("Alignment inspection", "Use after steering or suspension work when tire wear or pull is present.", "/estimator?service=wheel_alignment_4_wheel")
     if any(term in text for term in ("battery", "alternator", "charging", "starter", "no start", "no crank")):
         add("Charging voltage verification", "Confirm battery, cable, belt, and alternator evidence before replacement.", "/estimator?service=alternator_diagnosis")
     if any(term in text for term in ("coolant", "cooling", "overheat", "radiator", "water pump", "thermostat")):
         add("Coolant contamination check", "Inspect coolant condition, oil/coolant mixing, and overheating history.", "/estimator?service=cooling_system_pressure_test")
-    if any(term in text for term in ("evap", "p044", "p045", "vacuum leak", "lean", "p0171", "p0174")):
+    if lean_signal or any(term in text for term in ("evap", "p044", "p045", "vacuum leak")):
         add("Smoke testing", "Use smoke testing when leak evidence needs confirmation before parts.", "/estimator?service=evap_leak_test_smoke_test")
     if any(term in text for term in ("oxygen sensor", "catalyst", "catalytic", "p0420", "p0430", "exhaust")):
         add("Exhaust leak inspection", "Check leaks before oxygen-sensor or catalyst decisions.", "/estimator?service=exhaust_leak_repair")
