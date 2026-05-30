@@ -488,6 +488,28 @@
       }
     });
 
+    makeSearch.addEventListener("keydown", async (event) => {
+      if (event.key !== "Enter") return;
+
+      event.preventDefault();
+
+      const typedMake = makeSearch.value.trim().toLowerCase();
+
+      const exactMake = makes.find(
+        (make) => make.toLowerCase() === typedMake
+      );
+
+      const firstVisibleMake =
+        makeResults.querySelector(".make-result-item")?.dataset.make;
+
+      const selectedMake = exactMake || firstVisibleMake;
+
+      if (!selectedMake) return;
+
+      await applyMakeSelection(selectedMake, { focusModel: true });
+    });
+
+
     makeSearch.addEventListener("blur", () => {
       setTimeout(hideMakeResults, 150);
     });
