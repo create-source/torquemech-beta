@@ -7327,3 +7327,345 @@ h3{
     min-height: 42px;
   }
 }
+
+/* Foundation 13.1: estimator workflow clarity */
+body:not(.tm-shared-quote) .tm-card.tm-estimator-section{
+  border-color: rgba(15, 23, 42, .11);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .055);
+}
+
+.tm-card.tm-estimator-section .tm-btn-primary,
+.tm-estimate-action-panel__button,
+.estimator-final-cta{
+  min-height: 48px;
+  border: 1px solid rgba(15, 118, 110, .20);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #16c8b8 0%, #0f9f98 100%);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(15, 118, 110, .22);
+}
+
+.tm-card.tm-estimator-section .tm-btn-primary:hover,
+.tm-estimate-action-panel__button:hover,
+.estimator-final-cta:hover{
+  background: linear-gradient(180deg, #19d2c1 0%, #0d958f 100%);
+  box-shadow: 0 14px 28px rgba(15, 118, 110, .26);
+}
+
+.tm-card.tm-estimator-section .tm-btn-secondary,
+.tm-card.tm-estimator-section .tm-btn-ghost,
+.tm-vin-lookup-btn,
+#draftsCard .tm-btn-secondary,
+.tm-saved-quote-actions .tm-btn-secondary,
+.tm-confirm-secondary-actions .tm-btn-secondary{
+  border-color: rgba(15, 23, 42, .15);
+  background: #fff;
+  color: #334155;
+  box-shadow: none;
+}
+
+.tm-card.tm-estimator-section .tm-btn-secondary:hover,
+.tm-card.tm-estimator-section .tm-btn-ghost:hover,
+.tm-vin-lookup-btn:hover,
+#draftsCard .tm-btn-secondary:hover,
+.tm-saved-quote-actions .tm-btn-secondary:hover,
+.tm-confirm-secondary-actions .tm-btn-secondary:hover{
+  border-color: rgba(15, 118, 110, .24);
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.tm-card.tm-estimator-section .tm-btn-danger,
+#draftsCard .tm-btn-danger{
+  border-color: rgba(185, 28, 28, .22);
+  background: #fff;
+  color: #b91c1c;
+  box-shadow: none;
+}
+
+.tm-card.tm-estimator-section .tm-btn-danger:hover,
+#draftsCard .tm-btn-danger:hover{
+  background: #fef2f2;
+}
+
+.tm-card.tm-estimator-section .tm-btn:focus-visible,
+.vin-toggle:focus-visible,
+.tm-quick-quotes__summary:focus-visible,
+.tm-quick-quote:focus-visible,
+.tm-input-clear-btn:focus-visible{
+  outline: 3px solid rgba(37, 99, 235, .28);
+  outline-offset: 2px;
+}
+
+.tm-card.tm-estimator-section .tm-btn:disabled,
+.tm-card.tm-estimator-section button:disabled,
+.tm-estimate-action-panel__button:disabled,
+#draftsCard .tm-btn:disabled{
+  border-color: rgba(148, 163, 184, .28);
+  background: #e5e7eb;
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+  transform: none;
+}
+
+.vehicle-card{
+  background: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+.vehicle-card h3{
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.tm-inline-clear-field,
+.pricing-control,
+.tm-quote-notes-field{
+  min-width: 0;
+}
+
+.vehicle-card input:not([type="checkbox"]):not([type="radio"]),
+.vehicle-card select,
+.tm-card[aria-label="Service"] input:not([type="checkbox"]):not([type="radio"]),
+.tm-card[aria-label="Service"] select,
+.tm-card[aria-label="Service"] textarea,
+#draftsCard select{
+  min-height: 46px;
+  border: 1px solid rgba(15, 23, 42, .18);
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.vehicle-card input:hover,
+.vehicle-card select:hover,
+.tm-card[aria-label="Service"] input:not([type="checkbox"]):not([type="radio"]):hover,
+.tm-card[aria-label="Service"] select:hover,
+.tm-card[aria-label="Service"] textarea:hover,
+#draftsCard select:hover{
+  border-color: rgba(15, 118, 110, .30);
+}
+
+.vehicle-card input:focus,
+.vehicle-card select:focus,
+.tm-card[aria-label="Service"] input:not([type="checkbox"]):not([type="radio"]):focus,
+.tm-card[aria-label="Service"] select:focus,
+.tm-card[aria-label="Service"] textarea:focus,
+#draftsCard select:focus{
+  border-color: rgba(15, 118, 110, .55);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, .14), inset 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.tm-estimate-total-bar,
+.tm-quote-note,
+.preview{
+  border: 1px solid rgba(15, 23, 42, .10);
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.tm-estimate-total-bar__label,
+.tm-quote-note > div:first-child,
+.preview-label{
+  color: #64748b;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.tm-estimate-total-bar__value{
+  color: #0f172a;
+}
+
+.vin-section{
+  border: 1px solid rgba(15, 23, 42, .10);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.vin-toggle{
+  width: 100%;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  color: #334155;
+  box-shadow: none;
+}
+
+.vin-toggle:hover{
+  background: rgba(15, 23, 42, .035);
+}
+
+.tm-quick-quotes{
+  border: 1px solid rgba(37, 99, 235, .18);
+  border-radius: 13px;
+  background: #f8fbff;
+  box-shadow: none;
+}
+
+.tm-quick-quotes__summary{
+  min-height: 44px;
+  border-radius: 12px;
+  color: #0f172a;
+}
+
+.tm-quick-quotes__summary:hover{
+  background: rgba(37, 99, 235, .055);
+}
+
+.tm-quick-quotes__eyebrow{
+  color: #1e3a8a;
+  font-size: .86rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tm-quick-quotes__chevron{
+  color: #1e40af;
+  font-size: .9rem;
+}
+
+.tm-quick-quotes__list{
+  border-top: 1px solid rgba(37, 99, 235, .12);
+  padding-top: 9px;
+}
+
+.tm-quick-quote{
+  border-color: rgba(37, 99, 235, .18);
+  background: #fff;
+  color: #1e3a8a;
+}
+
+.tm-quick-quote:hover,
+.tm-quick-quote.is-selected{
+  border-color: rgba(15, 118, 110, .38);
+  background: #ecfdf5;
+  color: #0f766e;
+}
+
+.pricing-controls{
+  border: 1px solid rgba(15, 23, 42, .12);
+  border-left: 4px solid rgba(15, 118, 110, .56);
+  background: #fff;
+  box-shadow: none;
+}
+
+.pricing-controls__title{
+  font-size: .96rem;
+  letter-spacing: 0;
+}
+
+.pricing-controls__hint,
+.labor-help .tm-hint,
+.tm-field-helper,
+.tm-device-save-label,
+.tm-quote-trust-microcopy{
+  color: #64748b;
+  font-weight: 650;
+}
+
+.tm-estimate-action-panel{
+  border: 1px solid rgba(37, 99, 235, .16);
+  border-left: 4px solid #2563eb;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.tm-estimate-action-panel.is-ready-to-add{
+  border-color: rgba(15, 118, 110, .34);
+  border-left-color: #0f9f98;
+  background: #f0fdfa;
+  box-shadow: 0 10px 22px rgba(15, 118, 110, .08);
+}
+
+.tm-estimate-action-panel.is-quote-next{
+  border-color: rgba(15, 23, 42, .12);
+  border-left-color: #64748b;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.tm-estimate-action-panel__label{
+  color: #2563eb;
+}
+
+.tm-estimate-action-panel__text{
+  color: #0f172a;
+  font-weight: 800;
+}
+
+#statusBox{
+  border: 1px solid rgba(15, 23, 42, .10);
+  background: #f8fafc;
+  color: #475569;
+  box-shadow: none;
+}
+
+#draftsCard{
+  border-color: rgba(15, 23, 42, .10);
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, .04);
+}
+
+#draftsCard .tm-section-kicker,
+.estimator-final-step{
+  color: #64748b;
+  border-color: rgba(15, 23, 42, .12);
+  background: #f8fafc;
+}
+
+#draftRecoveryBlock,
+#estimateSavedBlock{
+  border: 1px solid rgba(15, 23, 42, .10);
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.tm-draft-actions{
+  display: flex;
+  gap: 8px;
+}
+
+.estimator-final-actions{
+  border: 1px solid rgba(15, 118, 110, .22);
+  border-left: 4px solid #0f9f98;
+  background: #f0fdfa;
+}
+
+@media (max-width: 700px){
+  .tm-card.tm-estimator-section .tm-btn-primary,
+  .tm-estimate-action-panel__button,
+  .estimator-final-cta{
+    min-height: 50px;
+  }
+
+  .tm-estimate-action-panel{
+    grid-template-columns: 1fr;
+  }
+
+  .tm-estimate-action-panel__button{
+    width: 100%;
+  }
+
+  .tm-vehicle-cta-group{
+    width: 100%;
+  }
+
+  .tm-vehicle-cta-group .tm-btn{
+    flex: 1 1 0;
+  }
+
+  .tm-draft-actions{
+    width: 100%;
+  }
+
+  .tm-draft-actions .tm-btn{
+    flex: 1 1 0;
+  }
+}

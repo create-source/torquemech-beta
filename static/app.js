@@ -4942,9 +4942,9 @@ if (getEstimateHint) {
       workflowStepText.textContent = isEditingSavedLine
         ? "Editing line. Save changes."
         : !hasBasics
-        ? "Select vehicle."
+        ? "Next: select vehicle."
         : !hasSelection
-          ? "Choose repair."
+          ? "Next: choose repair."
           : !readyForNextService
             ? "Add another repair or create quote."
             : "Review pricing, add job.";
@@ -4956,8 +4956,8 @@ if (getEstimateHint) {
 
     // keep status helpful, but don't spam over error messages
     if (isEditingSavedLine) setStatus("info", "Editing line. Save changes.");
-    else if (!hasBasics) setStatus("info", "Select vehicle.");
-    else if (!hasSelection) setStatus("info", "Choose repair.");
+    else if (!hasBasics) setStatus("info", "Next: select vehicle.");
+    else if (!hasSelection) setStatus("info", "Next: choose repair.");
     else if (!readyForNextService) setStatus("info", "Add another repair or create quote.");
     else setStatus("info", "Review pricing, add job.");
   }
@@ -6053,7 +6053,7 @@ if (getEstimateHint) {
           border-radius:14px;
           padding:14px;
           margin-top:12px;
-          cursor:pointer;
+          cursor:default;
         "
       >
         <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
