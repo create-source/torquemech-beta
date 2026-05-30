@@ -529,6 +529,33 @@
       renderModelResults(modelSearch.value);
     });
 
+    modelSearch.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+
+      event.preventDefault();
+
+      const typedModel = modelSearch.value.trim().toLowerCase();
+      const modelOptions = getModelDisplayOptions(modelSearch.value);
+
+      const exactModel = modelOptions.find(
+        (option) => option.display.toLowerCase() === typedModel
+      );
+
+      const firstVisibleModel = modelResults.querySelector(".model-result-item");
+
+      if (exactModel) {
+        applyModelSelection(exactModel.value, exactModel.display);
+        return;
+      }
+
+      if (firstVisibleModel) {
+        applyModelSelection(
+          firstVisibleModel.dataset.model || "",
+          firstVisibleModel.dataset.modelDisplay || firstVisibleModel.dataset.model || ""
+        );
+      }
+    });
+
     modelSearch.addEventListener("focus", () => {
       if (modelSearch.value.trim()) {
         renderModelResults(modelSearch.value);
