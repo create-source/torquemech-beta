@@ -8,7 +8,7 @@
     <header class="tm-estimator-header">
       <div>
         <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% else %}Mechanic estimator{% endif %}</div>
-        <h1>{% if shared_id %}Customer Repair Quote{% else %}Build a customer-ready repair quote{% endif %}</h1>
+        <h1>{% if shared_id %}Customer Repair Quote{% else %}Build a customer-ready quote{% endif %}</h1>
       </div>
 
       <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
@@ -18,10 +18,10 @@
     <div class="tm-card tm-estimator-quickstart">
       <div class="tm-estimator-quickstart__title">Fast quote path</div>
       <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
-        <span>Select vehicle</span>
-        <span>Choose service</span>
-        <span>Review pricing</span>
-        <span>Create PDF</span>
+        <span>Vehicle</span>
+        <span>Service</span>
+        <span>Price</span>
+        <span>Quote</span>
       </div>
     </div>
     {% endif %}
@@ -74,7 +74,7 @@
     </div>
     {% else %}
     <div class="tm-muted tm-estimator-lede">
-      Build the quote, adjust pricing, create the customer PDF.
+      Select the vehicle first, then add services and pricing.
     </div>
     {% endif %}
 
@@ -86,13 +86,6 @@
       </div>
       <em>Next: review pricing.</em>
     </div>
-
-    <div class="tm-estimator-credibility" aria-label="TorqueMech estimator credibility">
-      <div class="tm-estimator-credibility__item">Built for mobile mechanics and independent shops</div>
-      <div class="tm-estimator-credibility__item">Customer-ready PDF quotes</div>
-      <div class="tm-estimator-credibility__item">Repair-aware service suggestions</div>
-      <div class="tm-estimator-credibility__item">Designed for phone and tablet use</div>
-    </div>
     {% endif %}
 
     <!-- Vehicles -->
@@ -101,7 +94,7 @@
         <div>
           <div class="tm-section-kicker">Step 1</div>
           <h2>Select Vehicle</h2>
-          <div class="tm-cta-helper">Start with the customer vehicle before pricing services.</div>
+          <div class="tm-cta-helper">Choose the customer vehicle first.</div>
         </div>
 
         <div class="tm-vehicle-cta-group">
@@ -187,10 +180,11 @@
       </div>
     </div>
 
-    <div class="tm-quick-quotes" aria-label="Common Repairs shortcuts">
-      <div class="tm-quick-quotes__head">
+    <details class="tm-quick-quotes" aria-label="Common Repairs shortcuts">
+      <summary class="tm-quick-quotes__summary">
         <span class="tm-quick-quotes__eyebrow">Common Repairs</span>
-      </div>
+        <span class="tm-quick-quotes__chevron" aria-hidden="true">▾</span>
+      </summary>
       <div class="tm-quick-quotes__list">
         <button type="button" class="tm-quick-quote" data-quick-quote="oil_change" data-quick-add="true">Oil Change</button>
         <button type="button" class="tm-quick-quote" data-quick-quote="brake_pads" data-quick-add="true">Brake Pads</button>
@@ -199,7 +193,7 @@
         <button type="button" class="tm-quick-quote" data-quick-quote="spark_plugs" data-quick-add="true">Spark Plugs</button>
         <button type="button" class="tm-quick-quote" data-quick-quote="diagnostic" data-quick-add="true">Diagnostic</button>
       </div>
-    </div>
+    </details>
 
     <div id="estimatorWorkflowShortcuts" class="tm-estimator-workflow-shortcuts hidden" aria-live="polite">
       <div class="tm-estimator-workflow-shortcuts__head">
@@ -313,9 +307,9 @@
       <div class="tm-estimate-action-panel__copy">
         <div class="tm-estimate-action-panel__label">Current task</div>
         <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
-          Select a vehicle and service, then add it to the quote.
+          Select vehicle, service, and pricing.
         </div>
-      <div id="getEstimateHint" class="tm-hint tm-estimate-action-hint" hidden>Select the repair job, confirm pricing, then add it to the quote.</div>
+      <div id="getEstimateHint" class="tm-hint tm-estimate-action-hint" hidden>Choose service and pricing.</div>
       </div>
         <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary tm-estimate-action-panel__button">
           Add Service to Quote
@@ -364,11 +358,9 @@
       <div class="tm-section-kicker">Local workspace</div>
       <h2>Saved Estimates</h2>
       <div class="tm-hint tm-device-save-label">Saved on this device</div>
-      <p class="tm-hint">Keep a local copy for quick reload, sharing, or PDF handoff.</p>
 
       <div class="tm-inline-panel" id="draftRecoveryBlock">
-        <div class="tm-inline-panel__title">Worked on an estimate before?</div>
-        <div class="tm-hint">Select a device-saved estimate below to reload the vehicle, services, customer details, and quote notes.</div>
+        <div class="tm-inline-panel__title">Reload a local estimate.</div>
       </div>
 
       <div class="tm-draft-controls">
@@ -422,19 +414,10 @@
         <div class="estimator-final-step">Final action</div>
         <div class="estimator-final-heading">Ready for Customer Review</div>
         <div class="tm-hint estimator-final-hint">Review estimate details before sharing.</div>
-        <div class="tm-final-help" aria-label="How customer quotes work">
-          <div class="tm-final-help__title">Create a Customer Quote</div>
-          <ol class="tm-final-help__steps">
-            <li>Add repair services</li>
-            <li>Review pricing and notes</li>
-            <li>Add your business info</li>
-            <li>Generate the customer PDF</li>
-          </ol>
-        </div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta">
           Create Customer Quote
         </button>
-        <div class="tm-quote-trust-microcopy">Prepared estimate summary with services, labor, parts, notes, and total.</div>
+        <div class="tm-quote-trust-microcopy">Includes services, pricing, notes, and total.</div>
       </div>
 
     </section>

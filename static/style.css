@@ -6274,6 +6274,491 @@ h3{
   }
 }
 
+/* ===============================
+   Foundation 12.5 Estimator Compression
+================================ */
+
+.tm-estimator-header{
+  align-items:center;
+  margin-top: 10px;
+}
+
+.tm-estimator-header h1{
+  max-width: 760px;
+  font-size: clamp(1.65rem, 3vw, 2.18rem);
+  line-height: 1.03;
+}
+
+.tm-estimator-kicker{
+  margin-bottom: 5px;
+}
+
+.tm-estimator-quickstart{
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(15,23,42,.05);
+}
+
+.tm-estimator-quickstart__title{
+  margin-bottom: 6px;
+  font-size: .82rem;
+}
+
+.tm-estimator-quickstart__steps{
+  gap: 6px;
+}
+
+.tm-estimator-quickstart__steps span{
+  min-height: 28px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(248,250,252,.86);
+  box-shadow: none;
+  font-size: .76rem;
+}
+
+.tm-estimator-lede{
+  margin-top: 8px;
+  font-size: .86rem;
+}
+
+.tm-repair-handoff-trust{
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 11px;
+}
+
+.tm-estimator-section{
+  margin-top: 12px;
+}
+
+.tm-card.tm-estimator-section,
+#draftsCard,
+.pricing-controls,
+.estimator-final-actions{
+  border-radius: 14px;
+}
+
+.tm-card.tm-estimator-section{
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(15,23,42,.055);
+}
+
+.section-header--vehicles{
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.tm-card[aria-label="Vehicles"]{
+  border-color: rgba(20,184,166,.24);
+  box-shadow: 0 10px 24px rgba(15,118,110,.08);
+}
+
+.tm-card[aria-label="Vehicles"] .tm-section-kicker{
+  color: #0f766e;
+}
+
+.tm-card[aria-label="Vehicles"] h2{
+  margin-bottom: 4px;
+}
+
+.tm-cta-helper,
+.tm-service-workflow-copy,
+.tm-field-helper{
+  line-height: 1.32;
+}
+
+.vehicle-card{
+  padding: 12px !important;
+  margin-top: 10px !important;
+  border-radius: 12px !important;
+}
+
+.vehicle-card h3{
+  font-size: 1rem;
+}
+
+.vehicle-card .grid3{
+  gap: 10px;
+}
+
+.vin-section{
+  margin-top: 10px;
+}
+
+.vin-toggle{
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.vin-panel{
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.tm-estimate-total-bar{
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.tm-quote-note{
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-radius: 10px;
+}
+
+.tm-active-vehicle-banner{
+  margin-bottom: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+}
+
+.vehicle-header{
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tm-addServiceRow{
+  padding: 8px 10px;
+  border-radius: 11px;
+}
+
+.tm-addServiceRow .add-more-btn{
+  min-height: 40px;
+}
+
+.tm-card[aria-label="Service"] .grid2{
+  gap: 12px;
+}
+
+.tm-card[aria-label="Service"] label,
+.pricing-controls label{
+  margin-bottom: 4px;
+  font-size: .78rem;
+}
+
+.tm-quick-quotes{
+  margin: 10px 0 12px;
+  padding: 0;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 12px;
+  background: rgba(248,250,252,.72);
+}
+
+.tm-quick-quotes__summary{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--tm-text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.tm-quick-quotes__summary::-webkit-details-marker{
+  display: none;
+}
+
+.tm-quick-quotes__chevron{
+  color: var(--tm-text-muted);
+  font-size: .92rem;
+  transition: transform .16s ease;
+}
+
+.tm-quick-quotes[open] .tm-quick-quotes__chevron{
+  transform: rotate(180deg);
+}
+
+.tm-quick-quotes__list{
+  padding: 0 10px 10px;
+  gap: 6px;
+}
+
+.tm-quick-quote{
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.tm-estimator-workflow-shortcuts,
+.tm-paired-suggestions,
+.tm-completion-suggestions{
+  margin-top: 10px;
+  padding: 11px;
+  border-radius: 12px;
+}
+
+.line-items{
+  margin-top: 10px;
+}
+
+.pricing-controls{
+  margin-top: 10px;
+  padding: 12px;
+  box-shadow: 0 7px 18px rgba(15,23,42,.045);
+}
+
+.pricing-controls__head{
+  margin-bottom: 10px;
+}
+
+.pricing-controls__grid{
+  gap: 10px;
+}
+
+.pricing-controls input:not([type="checkbox"]):not([type="radio"]),
+.pricing-controls select{
+  min-height: 42px;
+  border-radius: 9px;
+}
+
+.pricing-controls .recalc-note,
+.labor-help{
+  margin-top: 7px;
+}
+
+.tm-estimate-action-panel{
+  gap: 10px;
+  margin-top: 10px;
+  padding: 11px 12px;
+  border-radius: 12px;
+}
+
+.tm-estimate-action-panel__label{
+  margin-bottom: 2px;
+  font-size: .7rem;
+}
+
+.tm-estimate-action-panel__text{
+  font-size: .96rem;
+}
+
+.tm-estimate-action-panel__button{
+  min-height: 46px;
+  padding-inline: 16px;
+}
+
+#statusBox{
+  min-height: 38px;
+  padding: 9px 11px;
+  border-radius: 11px;
+}
+
+#statusBox[data-kind="info"]{
+  display: none;
+}
+
+.preview{
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.breakdown-panel{
+  margin-top: 10px !important;
+  padding: 10px !important;
+  border-radius: 12px !important;
+}
+
+.tm-quote-notes-field{
+  margin-top: 10px;
+}
+
+.tm-quote-notes-field textarea{
+  min-height: 82px;
+}
+
+.section-divider{
+  margin: 14px 0;
+}
+
+#draftsCard{
+  padding: 13px;
+  box-shadow: 0 6px 16px rgba(15,23,42,.045);
+}
+
+#draftsCard h2{
+  margin-bottom: 4px;
+  font-size: 1.2rem;
+}
+
+#draftsCard .tm-device-save-label{
+  margin-bottom: 8px;
+}
+
+#draftRecoveryBlock{
+  margin: 8px 0;
+  padding: 9px 10px;
+}
+
+.tm-draft-controls{
+  gap: 8px;
+}
+
+.tm-draft-actions{
+  gap: 7px;
+}
+
+#draftsCard .tm-btn,
+#draftsCard select{
+  min-height: 40px;
+}
+
+#estimateSavedBlock{
+  margin-top: 9px;
+  padding: 10px;
+}
+
+.estimator-final-actions{
+  gap: 7px;
+  margin-top: 12px;
+  padding: 13px;
+  box-shadow: 0 10px 24px rgba(15,118,110,.09);
+}
+
+.estimator-final-step{
+  padding: 4px 8px;
+}
+
+.estimator-final-heading{
+  font-size: 1.14rem;
+}
+
+.estimator-final-hint{
+  margin: -1px 0 1px;
+}
+
+.estimator-final-cta{
+  min-height: 54px;
+  padding: 13px 16px;
+}
+
+@media (max-width: 700px){
+  .tm-estimator-header{
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .tm-estimator-header h1{
+    font-size: 1.62rem;
+  }
+
+  .tm-estimator-quickstart{
+    margin-top: 7px;
+    padding: 8px;
+  }
+
+  .tm-estimator-quickstart__steps{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .tm-estimator-quickstart__steps span{
+    min-height: 28px;
+    padding: 5px 4px;
+    font-size: .7rem;
+    text-align: center;
+  }
+
+  .tm-estimator-lede{
+    margin-top: 7px;
+  }
+
+  .tm-card.tm-estimator-section{
+    padding: 13px;
+  }
+
+  .section-header--vehicles,
+  .vehicle-header{
+    gap: 8px;
+  }
+
+  .tm-vehicle-cta-group,
+  .tm-addServiceRow{
+    gap: 7px;
+  }
+
+  .tm-addServiceRow{
+    margin: 8px 0 10px;
+    padding: 8px;
+  }
+
+  .tm-addServiceRow .add-more-btn{
+    min-height: 46px;
+  }
+
+  .vehicle-card .grid3{
+    gap: 8px;
+  }
+
+  .tm-quote-note{
+    padding: 8px 10px;
+  }
+
+  .tm-quick-quotes{
+    margin: 8px 0 10px;
+  }
+
+  .tm-quick-quotes__summary{
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .tm-quick-quotes__list{
+    gap: 6px;
+    padding: 0 8px 8px;
+  }
+
+  .tm-quick-quote{
+    flex: 1 1 calc(50% - 6px);
+    min-height: 38px;
+    padding: 8px 9px;
+  }
+
+  .pricing-controls{
+    padding: 10px;
+  }
+
+  .pricing-controls__grid{
+    gap: 8px;
+  }
+
+  .tm-estimate-action-panel{
+    padding: 10px;
+  }
+
+  .tm-estimate-action-panel__button{
+    min-height: 50px;
+  }
+
+  #draftsCard{
+    padding: 12px;
+  }
+
+  .tm-draft-controls{
+    gap: 7px;
+  }
+
+  #draftsCard .tm-btn,
+  #draftsCard select{
+    min-height: 44px;
+  }
+
+  .estimator-final-actions{
+    padding: 12px;
+  }
+
+  .estimator-final-cta{
+    min-height: 54px;
+  }
+}
+
 /* Repair Cost Hub Grid */
 
 .card-grid {

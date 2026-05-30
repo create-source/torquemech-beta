@@ -1596,8 +1596,8 @@
 
     if (draftsMsg) {
       draftsMsg.textContent = drafts.length
-        ? `Saved on this device: ${drafts.length}. Load one to continue an estimate, compare repair paths, or prepare customer approval.`
-        : "No saved estimates on this device yet. Build an estimate, then save it here to return later.";
+        ? `${drafts.length} saved on this device.`
+        : "No saved estimates yet.";
     }
   }
 
@@ -1874,8 +1874,8 @@
 
     if (draftsMsg) {
       draftsMsg.textContent = quiet
-        ? `Customer quote ready on this device: ${d.title}`
-        : `Saved on this device for later approval, parts pricing, or repair comparison: ${d.title}`;
+        ? `Quote ready: ${d.title}`
+        : `Saved: ${d.title}`;
     }
     return d;
   }
@@ -4935,23 +4935,14 @@ if (addServiceHint) {
   }
 }
 if (getEstimateHint) {
-  // Show hint only when button is disabled
-  getEstimateHint.hidden = isEditingSavedLine || !estimateBtn.disabled;
-
-  if (!getEstimateHint.hidden) {
-    getEstimateHint.textContent = !hasBasics
-      ? "Set the vehicle first."
-      : !hasSelection
-        ? "Choose a repair job."
-        : "Tap + Add Another Repair.";
-  }
+  getEstimateHint.hidden = true;
 }
 
     if (workflowStepText) {
       workflowStepText.textContent = isEditingSavedLine
         ? "Editing line. Save changes."
         : !hasBasics
-        ? "Set vehicle."
+        ? "Select vehicle."
         : !hasSelection
           ? "Choose repair."
           : !readyForNextService
@@ -4965,7 +4956,7 @@ if (getEstimateHint) {
 
     // keep status helpful, but don't spam over error messages
     if (isEditingSavedLine) setStatus("info", "Editing line. Save changes.");
-    else if (!hasBasics) setStatus("info", "Set vehicle.");
+    else if (!hasBasics) setStatus("info", "Select vehicle.");
     else if (!hasSelection) setStatus("info", "Choose repair.");
     else if (!readyForNextService) setStatus("info", "Add another repair or create quote.");
     else setStatus("info", "Review pricing, add job.");
@@ -6254,7 +6245,7 @@ if (getEstimateHint) {
       resetServiceSearch();
 
       updateEstimateButtonState();
-      setStatus("info", "Choose a repair job, review pricing, then add it to the quote.");
+      setStatus("info", "Estimator ready.");
     } catch (e) {
       setStatus("error", `Init failed: ${e.message}`);
     }
