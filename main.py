@@ -1272,6 +1272,12 @@ def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
 
 
+@app.get("/parts-center", response_class=HTMLResponse)
+def parts_center(request: Request):
+    metric_incr("page_parts_center")
+    return templates.TemplateResponse("parts_center.html", {"request": request})
+
+
 @app.get("/privacy", response_class=HTMLResponse, include_in_schema=False)
 def privacy(request: Request):
     return templates.TemplateResponse("privacy.html", {"request": request})
@@ -7592,6 +7598,7 @@ SITEMAP_STATIC_PATHS = [
     "/obd-codes",
     "/repair-guides",
     "/repair-costs",
+    "/parts-center",
     "/cost",
     "/about",
     "/privacy",

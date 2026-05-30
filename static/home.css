@@ -1713,3 +1713,57 @@ body.dark .tm-homeTrustCues span,
     padding: 11px 12px;
   }
 }
+
+/* Foundation 13.0: core-experience homepage focus */
+.tm-homeSection--compactStart{
+  padding-top: 12px;
+}
+
+.tm-homeSection--compactStart .tm-homeSection__head{
+  margin-bottom: 8px;
+}
+
+.tm-homeShortcutRow{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tm-homeShortcut{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid rgba(15, 118, 110, .18);
+  border-radius: 999px;
+  background: rgba(240, 253, 250, .78);
+  color: #0f766e;
+  font-size: .9rem;
+  font-weight: 900;
+  line-height: 1.1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .045);
+}
+
+.tm-homeShortcut:hover,
+.tm-homeShortcut:focus-visible{
+  border-color: rgba(15, 118, 110, .36);
+  background: #f0fdfa;
+  color: #0b5f59;
+}
+
+@media (max-width: 640px){
+  .tm-homeSection--compactStart{
+    padding-top: 10px;
+  }
+
+  .tm-homeShortcutRow{
+    gap: 7px;
+  }
+
+  .tm-homeShortcut{
+    min-height: 36px;
+    padding: 7px 11px;
+    font-size: .84rem;
+  }
+}

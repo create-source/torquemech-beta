@@ -32,9 +32,9 @@
     </div>
 
     <div class="tm-homeTrustCues" aria-label="TorqueMech trust cues">
-      <span>⚡ Quick repair estimates</span>
-      <span>📄 Customer-ready quotes</span>
-      <span>🔧 Repair paths before parts</span>
+      <span>&#9889; Quick repair estimates</span>
+      <span>&#128196; Customer-ready quotes</span>
+      <span>&#128295; Repair paths before parts</span>
     </div>
   </div>
 </section>
@@ -43,119 +43,16 @@
   {% include "partials/quick_find.html" %}
 </div>
 
-<section class="tm-homeSection">
-  <div class="tm-homeSection__head">
-    <h2>From Complaint to Quote</h2>
-    <p>A faster path from the first clue to an estimate the customer can understand.</p>
-  </div>
-
-  <div class="tm-homeTools tm-homeTools--compact">
-    <a href="/symptoms" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">01</div>
-      <div>
-        <h3>Identify complaint or code</h3>
-        <p>Start with the symptom, OBD code, or service the vehicle needs.</p>
-      </div>
-    </a>
-
-    <a href="/diagnostics" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">02</div>
-      <div>
-        <h3>Confirm repair path</h3>
-        <p>Use practical context before jumping straight to parts.</p>
-      </div>
-    </a>
-
-    <a href="/estimator" class="tm-homeToolCard">
-      <div class="tm-homeToolCard__icon">03</div>
-      <div>
-        <h3>Build quote</h3>
-        <p>Create a structured estimate for review and handoff.</p>
-      </div>
-    </a>
-  </div>
-</section>
-
-<section class="tm-homeSection">
+<section class="tm-homeSection tm-homeSection--compactStart">
   <div class="tm-homeSection__head">
     <h2>Popular Starting Points</h2>
-    <p>Common mechanic entry points when you need to move from clue to repair direction quickly.</p>
   </div>
 
-  <div class="tm-homeSystemGrid tm-homeSystemGrid--compact">
-    <a class="tm-homeSystemCard" href="/obd/p0300">
-      <small>OBD code</small>
-      <span>P0300</span>
-      <p>Random or multiple cylinder misfire repair path.</p>
-      <div class="tm-homeSystemCard__chips">
-        <em>Misfire</em>
-      </div>
-    </a>
-
-    <a class="tm-homeSystemCard" href="/symptoms/rough-idle">
-      <small>Symptom</small>
-      <span>Rough Idle</span>
-      <p>Trace idle problems through air, fuel, ignition, and vacuum clues.</p>
-      <div class="tm-homeSystemCard__chips">
-        <em>Drivability</em>
-      </div>
-    </a>
-
-    <a class="tm-homeSystemCard" href="/symptoms/brake-noise">
-      <small>Symptom</small>
-      <span>Brake Noise</span>
-      <p>Start a brake complaint with pad, rotor, caliper, and hub context.</p>
-      <div class="tm-homeSystemCard__chips">
-        <em>Brakes</em>
-      </div>
-    </a>
-
-    <a class="tm-homeSystemCard" href="/cost/spark-plug-replacement">
-      <small>Repair</small>
-      <span>Spark Plugs</span>
-      <p>Estimate plug replacement once the service or misfire path is clear.</p>
-      <div class="tm-homeSystemCard__chips">
-        <em>Estimate</em>
-      </div>
-    </a>
-  </div>
-</section>
-
-<section class="tm-homeSection">
-  <div class="tm-homeFeatureCard">
-    <div class="tm-homeFeatureCard__eyebrow">Why Mechanics Use TorqueMech</div>
-
-    <div class="tm-homeFeatureCard__header">
-      <div>
-        <h2>Faster estimates, clearer repair paths, less guesswork.</h2>
-        <p>
-          TorqueMech keeps the job moving from first clue to repair direction to customer-ready quote.
-        </p>
-      </div>
-    </div>
-
-    <div class="tm-homeKnowledgeList">
-      <a class="tm-homeKnowledgeItem" href="/estimator">
-        <div>
-          <strong>Faster estimates</strong>
-          <span>Build structured quotes without rebuilding the same workflow from scratch.</span>
-        </div>
-      </a>
-
-      <a class="tm-homeKnowledgeItem" href="/symptoms">
-        <div>
-          <strong>Clearer repair paths</strong>
-          <span>Start from symptoms, codes, or repairs and keep the next step close.</span>
-        </div>
-      </a>
-
-      <a class="tm-homeKnowledgeItem" href="/repair-guides">
-        <div>
-          <strong>Less guesswork</strong>
-          <span>Use repair context before parts, labor, and quote decisions pile up.</span>
-        </div>
-      </a>
-    </div>
+  <div class="tm-homeShortcutRow" aria-label="Popular starting points">
+    <a class="tm-homeShortcut" href="/obd/p0300">P0300</a>
+    <a class="tm-homeShortcut" href="/symptoms/rough-idle">Rough Idle</a>
+    <a class="tm-homeShortcut" href="/symptoms/brake-noise">Brake Noise</a>
+    <a class="tm-homeShortcut" href="/cost/spark-plug-replacement">Spark Plugs</a>
   </div>
 </section>
 {% endblock %}

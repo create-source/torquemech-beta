@@ -266,7 +266,7 @@ body.dark .tm-nav,
 }
 
 .tm-menu__panel{
-  width: 220px;
+  width: 248px;
   border-radius: 16px;
   padding: 10px;
   background: var(--tm-surface);
@@ -275,7 +275,10 @@ body.dark .tm-nav,
 }
 
 .tm-menu__item{
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
   color: var(--tm-text);
@@ -284,6 +287,33 @@ body.dark .tm-nav,
 
 .tm-menu__item:hover{
   background: var(--tm-surface-2);
+}
+
+.tm-menu__divider{
+  height: 1px;
+  margin: 8px 4px;
+  background: var(--tm-border);
+}
+
+.tm-menu__sectionLabel{
+  padding: 2px 12px 6px;
+  color: var(--tm-text-muted);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.tm-menu__badge{
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid rgba(17, 179, 173, .22);
+  border-radius: 999px;
+  background: rgba(17, 179, 173, .09);
+  color: var(--tm-teal-700);
+  font-size: .68rem;
+  font-weight: 900;
+  line-height: 1.1;
 }
 
 .tm-menuBackdrop{
