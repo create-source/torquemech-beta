@@ -4888,7 +4888,7 @@ h3{
   }
 
   .vin-toggle-text {
-      color: #1d4ed8;
+      color: #1d4ed8 !important;
   }
 
   .tm-estimate-total-bar{
