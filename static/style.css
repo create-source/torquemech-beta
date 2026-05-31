@@ -7676,3 +7676,7 @@ body:not(.tm-shared-quote) .tm-card.tm-estimator-section{
 #estimatorWorkflowShortcuts {
   display: none !important;
 }
+
+.selected-service-context {
+  display: none !important;
+}
