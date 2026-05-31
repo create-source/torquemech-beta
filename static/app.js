@@ -2732,6 +2732,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   const draftsMsg = $("draftsMsg");
   const estimateSavedBlock = $("estimateSavedBlock");
   const customerQuoteFinalActions = $("customerQuoteFinalActions");
+  const customerQuoteFinalHint = $("customerQuoteFinalHint");
   const copySavedEstimateLinkBtn = $("copySavedEstimateLinkBtn");
   const openSavedEstimateBtn = $("openSavedEstimateBtn");
   const downloadSavedEstimatePdfBtn = $("downloadSavedEstimatePdfBtn");
@@ -4933,6 +4934,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     document.querySelector(".tm-estimate-action-panel")?.classList.toggle("is-quote-next", Boolean(hasLines && !readyForNext));
   }
 
+  function syncCustomerQuoteActionState() {
+    const hasLines = lineItems.length > 0;
+    if (generateAllBtn) generateAllBtn.disabled = isGeneratingAllLines || !hasLines;
+    customerQuoteFinalActions?.classList.toggle("is-disabled", !hasLines);
+    if (customerQuoteFinalHint) {
+      customerQuoteFinalHint.textContent = hasLines
+        ? "Includes services, pricing, notes, and total."
+        : "Add at least one service to enable customer quote creation.";
+    }
+  }
+
   function setServiceAddFieldsLocked(isLocked) {
     if (categoryEl) categoryEl.disabled = isLocked;
     if (serviceEl) serviceEl.disabled = isLocked;
@@ -5002,6 +5014,7 @@ if (getEstimateHint) {
     // Add Another Service enabled ONLY after a service has been added
     if (addLineBtn) addLineBtn.disabled = isAddingLineItem || isEditingSavedLine || readyForNextService;
     if (saveDraftBtn) saveDraftBtn.disabled = isAddingLineItem || isGeneratingAllLines || !lineItems.length;
+    syncCustomerQuoteActionState();
 
     // keep status helpful, but don't spam over error messages
     if (isEditingSavedLine) setStatus("info", "Editing line. Save changes.");
