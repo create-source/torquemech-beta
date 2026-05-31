@@ -7672,3 +7672,7 @@ body:not(.tm-shared-quote) .tm-card.tm-estimator-section{
     flex: 1 1 0;
   }
 }
+
+#estimatorWorkflowShortcuts {
+  display: none !important;
+}
