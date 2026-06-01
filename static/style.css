@@ -5097,9 +5097,9 @@ h3{
 .tm-blueprint-workflow .tm-blueprint-hero-card{
   display:grid;
   grid-template-columns:minmax(0, 1fr) minmax(280px, 360px);
-  gap:18px;
+  gap:22px;
   align-items:start;
-  padding:20px;
+  padding:22px;
   border-color:rgba(17, 179, 173, .26);
   background:
     linear-gradient(135deg, rgba(240,253,250,.96) 0%, rgba(255,255,255,.98) 42%, rgba(239,246,255,.88) 100%);
@@ -5149,20 +5149,20 @@ h3{
 .tm-blueprint-stat-grid{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:8px;
-  margin-top:12px;
+  gap:10px;
+  margin-top:14px;
 }
 
 .tm-blueprint-hero-metrics div,
 .tm-blueprint-stat-grid div{
   display:grid;
-  gap:3px;
+  gap:5px;
   min-width:0;
-  padding:10px 11px;
-  border:1px solid rgba(15, 23, 42, .08);
-  border-radius:12px;
-  background:rgba(255,255,255,.82);
-  box-shadow:0 6px 16px rgba(15,23,42,.04);
+  padding:11px 12px;
+  border:1px solid rgba(15, 23, 42, .10);
+  border-radius:13px;
+  background:rgba(255,255,255,.9);
+  box-shadow:0 8px 18px rgba(15,23,42,.055);
 }
 
 .tm-blueprint-hero-metrics span,
@@ -5182,6 +5182,38 @@ h3{
   font-weight:950;
   line-height:1.2;
   overflow-wrap:anywhere;
+}
+
+.tm-blueprint-difficulty-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:max-content;
+  max-width:100%;
+  min-height:30px;
+  padding:7px 11px;
+  border:1px solid rgba(15, 118, 110, .24);
+  border-radius:999px;
+  background:#f0fdfa;
+  color:#0f766e;
+  font-size:.84rem;
+  font-weight:950;
+  line-height:1.05;
+  box-shadow:0 6px 14px rgba(15,118,110,.10);
+}
+
+.tm-blueprint-difficulty-badge--moderate{
+  border-color:rgba(37,99,235,.22);
+  background:#eff6ff;
+  color:#1d4ed8;
+  box-shadow:0 6px 14px rgba(37,99,235,.09);
+}
+
+.tm-blueprint-difficulty-badge--advanced{
+  border-color:rgba(180,83,9,.24);
+  background:#fffbeb;
+  color:#92400e;
+  box-shadow:0 6px 14px rgba(180,83,9,.09);
 }
 
 .tm-blueprint-action-panel{
@@ -5411,13 +5443,15 @@ h3{
   align-items:end;
   justify-content:space-between;
   gap:16px;
-  margin-bottom:10px;
+  margin-bottom:14px;
+  padding-bottom:10px;
+  border-bottom:1px solid rgba(15,23,42,.08);
 }
 
 .tm-blueprint-section-head h2{
   margin:0;
   color:var(--tm-text);
-  font-size:1.28rem;
+  font-size:1.32rem;
   font-weight:950;
   line-height:1.15;
 }
@@ -5435,75 +5469,98 @@ h3{
 .tm-blueprint-workflow-grid{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:10px;
+  gap:12px;
 }
 
 .tm-blueprint-step-card,
 .tm-blueprint-intel-card,
 .tm-blueprint-context-grid article{
   min-width:0;
-  border:1px solid rgba(15,23,42,.08);
+  border:1px solid rgba(15,23,42,.10);
   border-radius:14px;
-  background:linear-gradient(180deg, rgba(255,255,255,.94) 0%, rgba(248,250,252,.92) 100%);
-  box-shadow:0 10px 22px rgba(15,23,42,.055);
+  background:linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(248,250,252,.95) 100%);
+  box-shadow:0 10px 24px rgba(15,23,42,.065);
 }
 
 .tm-blueprint-step-card{
   display:grid;
   grid-template-columns:auto minmax(0, 1fr);
-  gap:10px;
+  gap:12px;
   align-items:start;
-  padding:13px;
+  padding:14px;
+  border-left:4px solid rgba(20,184,166,.52);
 }
 
 .tm-blueprint-step-card span{
   display:grid;
   place-items:center;
-  width:30px;
-  height:30px;
+  width:34px;
+  height:34px;
   border-radius:999px;
   background:#0f766e;
   color:#fff;
-  font-size:.8rem;
+  font-size:.86rem;
   font-weight:950;
   line-height:1;
+  box-shadow:0 8px 16px rgba(15,118,110,.20);
 }
 
 .tm-blueprint-step-card strong{
   color:var(--tm-text);
-  font-size:.94rem;
+  font-size:.95rem;
   font-weight:850;
-  line-height:1.35;
+  line-height:1.42;
 }
 
 .tm-blueprint-intel-strip{
   display:grid;
-  grid-template-columns:repeat(5, minmax(0, 1fr));
-  gap:10px;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:12px;
 }
 
 .tm-blueprint-intel-card{
-  padding:12px;
+  padding:14px;
 }
 
 .tm-blueprint-intel-card h3,
 .tm-blueprint-context-grid h3{
-  margin:0 0 8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 10px;
   color:var(--tm-text);
-  font-size:.92rem;
+  font-size:.96rem;
   font-weight:950;
   line-height:1.2;
 }
 
+.tm-blueprint-intel-card h3::before,
+.tm-blueprint-context-grid h3::before{
+  content:"";
+  flex:0 0 auto;
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:#14b8a6;
+  box-shadow:0 0 0 4px rgba(20,184,166,.12);
+}
+
 .tm-blueprint-intel-card .tm-blueprint-chip-list,
 .tm-tool-group-grid--compact .tm-blueprint-chip-list{
-  margin-top:6px;
-  gap:5px;
+  margin-top:8px;
+  gap:6px;
 }
 
 .tm-tool-group-grid--compact{
   grid-template-columns:1fr;
-  gap:8px;
+  gap:10px;
+}
+
+.tm-tool-group-grid--compact > div{
+  padding:8px;
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:10px;
+  background:rgba(255,255,255,.72);
 }
 
 .tm-tool-group-grid--compact strong{
@@ -5514,11 +5571,12 @@ h3{
 }
 
 .tm-blueprint-intel-card .tm-blueprint-chip{
-  min-height:25px;
-  padding:5px 7px;
-  border-radius:8px;
-  font-size:.74rem;
+  min-height:28px;
+  padding:6px 8px;
+  border-radius:9px;
+  font-size:.76rem;
   font-weight:850;
+  line-height:1.22;
 }
 
 .tm-blueprint-intel-card .tm-priority-list{
@@ -5526,9 +5584,9 @@ h3{
 }
 
 .tm-blueprint-intel-card .tm-priority-list li{
-  padding-left:14px;
-  font-size:.82rem;
-  line-height:1.32;
+  padding-left:15px;
+  font-size:.84rem;
+  line-height:1.38;
 }
 
 .tm-symptom-cluster-stack{
@@ -5626,12 +5684,12 @@ h3{
 .tm-blueprint-context-grid{
   display:grid;
   grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:10px;
-  padding:12px;
+  gap:12px;
+  padding:14px;
 }
 
 .tm-blueprint-context-grid article{
-  padding:12px;
+  padding:14px;
 }
 
 .tm-blueprint-context-grid .tm-related-repair-grid{
@@ -6225,15 +6283,27 @@ h3{
     grid-template-columns:1fr;
   }
 
+  .tm-blueprint-workflow .tm-blueprint-hero-card{
+    gap:14px;
+    padding:16px;
+  }
+
+  .tm-blueprint-summary{
+    padding:9px 10px;
+    font-size:.92rem;
+  }
+
   .tm-blueprint-hero-metrics,
   .tm-blueprint-stat-grid{
     grid-template-columns:1fr;
-    gap:7px;
+    gap:8px;
   }
 
   .tm-blueprint-section-head{
     display:grid;
-    gap:4px;
+    gap:6px;
+    margin-bottom:10px;
+    padding-bottom:8px;
   }
 
   .tm-blueprint-section-head h2{
@@ -6250,16 +6320,17 @@ h3{
   .tm-blueprint-intel-strip,
   .tm-blueprint-context-grid{
     grid-template-columns:1fr;
-    gap:8px;
+    gap:10px;
   }
 
   .tm-blueprint-step-card{
-    padding:10px;
+    grid-template-columns:34px minmax(0, 1fr);
+    padding:12px;
   }
 
   .tm-blueprint-intel-card,
   .tm-blueprint-context-grid article{
-    padding:10px;
+    padding:12px;
   }
 
   .tm-blueprint-vehicle-details summary,
@@ -6277,8 +6348,13 @@ h3{
     padding:12px;
   }
 
+  .tm-blueprint-action-panel .tm-estimate-repair-cta{
+    min-height:52px;
+  }
+
   .tm-blueprint-mini-actions a,
   .tm-blueprint-chip{
+    min-height:32px;
     max-width:100%;
     overflow-wrap:anywhere;
   }

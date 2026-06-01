@@ -17,7 +17,7 @@
       <div class="tm-blueprint-hero-metrics" aria-label="Repair blueprint metrics">
         <div>
           <span>Difficulty</span>
-          <strong>{{ guide.difficulty or "Standard" }}</strong>
+          <strong class="tm-blueprint-difficulty-badge tm-blueprint-difficulty-badge--{{ (guide.difficulty or 'standard') | lower }}">{{ guide.difficulty or "Standard" }}</strong>
         </div>
         <div>
           <span>Labor Time</span>
