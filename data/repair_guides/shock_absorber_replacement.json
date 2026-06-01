@@ -1,0 +1,83 @@
+{
+  "slug": "shock-absorber-replacement",
+  "title": "Shock Absorber Replacement",
+  "category": "Steering and Suspension",
+  "subcategory": "Struts and Dampers",
+  "sort_order": 33,
+  "summary": "Shock absorber blueprint for confirming poor damping, leakage, mounting noise, and paired replacement context before quoting rear shock service.",
+  "difficulty": "Easy",
+  "keywords": ["shock absorber", "rear shocks", "bouncy ride", "ride control", "shock mount"],
+  "symptoms": [
+    "Bouncy ride, rear float, or poor control after bumps",
+    "Rear clunk from worn shock bushings or mounts",
+    "Fluid leakage from the shock body",
+    "Cupped tires or unstable braking and lane-change behavior"
+  ],
+  "inspect_first": [
+    "Shock body leakage, denting, shaft condition, and bushing/mount wear",
+    "Upper and lower mounting hardware condition and corrosion",
+    "Rear springs, control arms, sway links, and tire wear pattern",
+    "Ride height and load-related symptoms before quoting shocks alone"
+  ],
+  "related_systems": [
+    "Rear suspension bushings",
+    "Tires",
+    "Coil springs",
+    "Sway bar links"
+  ],
+  "likely_causes": [
+    "Worn shock absorber damping",
+    "Leaking shock seal",
+    "Failed shock mount or bushing",
+    "Loose rear suspension link or spring issue imitating shock noise"
+  ],
+  "repair_overview": [
+    "Confirm damping failure or mounting noise with visual inspection and road-test behavior.",
+    "Support the vehicle and suspension safely before removing shock hardware.",
+    "Remove upper and lower fasteners, accounting for trunk, wheel well, or underbody access.",
+    "Install shocks in pairs when appropriate, transfer hardware if required, and torque at ride height when specified.",
+    "Road test for noise and ride control, then recheck fastener and mount seating."
+  ],
+  "common_mistakes": [
+    "Quoting shocks for a clunk caused by sway links, bushings, or loose hardware",
+    "Replacing only one side when paired damping balance matters",
+    "Ignoring rusted or broken upper mounts during the estimate",
+    "Tightening bushings at full droop when ride-height torque is required"
+  ],
+  "estimate_guidance": [
+    "Quote rear shocks as a pair when matching damping and customer expectations matter.",
+    "Flag upper mount access, rusted bolts, and broken hardware as labor variables.",
+    "Add mounts or bushings only when inspection shows wear or noise.",
+    "Mention that tires, springs, and bushings can mimic poor shock performance."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Suspension Noise Diagnosis",
+      "description": "Use when rear clunk or bounce source is not isolated to the shock assembly.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
+    },
+    {
+      "title": "Sway Bar Link Replacement",
+      "description": "Common rear or front clunk source to inspect before blaming shocks.",
+      "cost_guide_href": "/repair-guides/sway-bar-link-replacement",
+      "estimator_href": "/estimator?service=sway_bar_link_replacement"
+    },
+    {
+      "title": "Tire Rotation / Wear Inspection",
+      "description": "Useful when cupping or chop is part of the ride complaint.",
+      "estimator_href": "/estimator?service=tire_rotation"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Shock absorber estimates should separate damping failure from mount, bushing, spring, and tire issues.",
+    "common_symptoms_link": "/symptoms/steering-suspension-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Shock Absorber Replacement",
+    "service_code": "rear_shocks_replacement_pair",
+    "service_name": "Shock Absorber Replacement",
+    "estimator_link": "/estimator"
+  }
+}

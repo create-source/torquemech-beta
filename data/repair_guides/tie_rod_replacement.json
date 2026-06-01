@@ -1,0 +1,82 @@
+{
+  "slug": "tie-rod-replacement",
+  "title": "Tie Rod Replacement",
+  "category": "Steering and Suspension",
+  "subcategory": "Steering Linkage",
+  "sort_order": 31,
+  "summary": "Steering blueprint for confirming inner or outer tie rod wear, steering looseness, and alignment needs before quoting replacement.",
+  "difficulty": "Moderate",
+  "keywords": ["tie rod", "outer tie rod", "inner tie rod", "loose steering", "toe alignment"],
+  "symptoms": [
+    "Loose steering, wander, or delayed steering response",
+    "Clunk or knock from the steering linkage",
+    "Uneven front tire wear, feathering, or toe-related wear",
+    "Steering wheel off-center after impact or suspension work"
+  ],
+  "inspect_first": [
+    "Outer tie rod end play at the wheel and at the joint",
+    "Inner tie rod play under the rack boot and steering rack condition",
+    "Rack boot tears, grease loss, corrosion, and jam nut condition",
+    "Ball joints, control arms, wheel bearings, and tire condition before blaming steering linkage"
+  ],
+  "related_systems": [
+    "Wheel alignment",
+    "Steering rack",
+    "Front tires",
+    "Ball joints and control arms"
+  ],
+  "likely_causes": [
+    "Worn outer tie rod end",
+    "Worn inner tie rod joint",
+    "Torn rack boot allowing contamination",
+    "Impact damage or seized adjustment hardware"
+  ],
+  "repair_overview": [
+    "Identify whether the failed part is the inner tie rod, outer tie rod end, or both.",
+    "Mark or measure the tie rod position to keep the vehicle close enough for alignment travel.",
+    "Remove the cotter pin, nut, jam nut, boot, or inner joint hardware as required.",
+    "Install the replacement part, torque fasteners, and secure boots or cotter pins.",
+    "Set toe close enough for a safe alignment trip, then perform or recommend alignment."
+  ],
+  "common_mistakes": [
+    "Replacing an outer tie rod when the inner joint has the actual play",
+    "Skipping inspection of rack boots and steering rack leakage",
+    "Failing to recommend alignment after changing toe hardware",
+    "Overlooking seized jam nuts that change labor time"
+  ],
+  "estimate_guidance": [
+    "Specify inner, outer, left, right, or paired service so the estimate matches the repair.",
+    "Include wheel alignment as a normal follow-up after tie rod replacement.",
+    "Flag seized jam nuts, torn rack boots, and steering rack leakage before final approval.",
+    "Do not bundle ball joints or control arms unless the inspection proves additional play."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Wheel Alignment",
+      "description": "Tie rod replacement changes toe, so alignment should be planned with the repair.",
+      "estimator_href": "/estimator?service=wheel_alignment_4_wheel"
+    },
+    {
+      "title": "Steering Pull Diagnosis",
+      "description": "Use when the complaint includes pull, off-center steering, or tire wear without confirmed tie rod play.",
+      "estimator_href": "/estimator?service=steering_pull_diagnosis"
+    },
+    {
+      "title": "Suspension Noise Diagnosis",
+      "description": "Use when looseness may involve ball joints, control arms, links, or wheel bearings.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Tie rod estimates are strongest when the inspection separates inner joint wear from outer end play and includes alignment planning.",
+    "common_symptoms_link": "/symptoms/steering-suspension-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Tie Rod Replacement",
+    "service_code": "tie_rod_end_replacement_each",
+    "service_name": "Tie Rod Replacement",
+    "estimator_link": "/estimator"
+  }
+}

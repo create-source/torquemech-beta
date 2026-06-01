@@ -1,0 +1,83 @@
+{
+  "slug": "strut-replacement",
+  "title": "Strut Replacement",
+  "category": "Steering and Suspension",
+  "subcategory": "Struts and Dampers",
+  "sort_order": 32,
+  "summary": "Strut blueprint for confirming ride-control failure, mount noise, tire wear, and alignment context before quoting replacement.",
+  "difficulty": "Moderate",
+  "keywords": ["strut", "front struts", "strut mount", "ride control", "suspension bounce", "alignment"],
+  "symptoms": [
+    "Bouncy ride, nose dive, or poor body control",
+    "Clunk, creak, or pop from the strut or upper mount area",
+    "Cupped tire wear or uneven tire contact",
+    "Fluid leakage, damaged strut body, or broken spring seat"
+  ],
+  "inspect_first": [
+    "Strut leakage, shaft condition, spring seat, and dust boot condition",
+    "Upper mount, bearing plate, and isolator noise while steering and over bumps",
+    "Coil spring cracks, tire wear pattern, and ride height side-to-side",
+    "Sway links, control arms, ball joints, and tie rods before assigning the noise to the strut"
+  ],
+  "related_systems": [
+    "Wheel alignment",
+    "Tires",
+    "Strut mounts",
+    "Sway bar links"
+  ],
+  "likely_causes": [
+    "Worn or leaking strut cartridge/assembly",
+    "Failed upper strut mount or bearing",
+    "Broken spring or damaged spring seat",
+    "Loose sway link or control arm noise imitating strut noise"
+  ],
+  "repair_overview": [
+    "Confirm strut failure and inspect related mount, spring, and link components before pricing.",
+    "Support the vehicle, remove the wheel, and disconnect brake hose brackets, ABS wiring clips, and sway link as required.",
+    "Remove strut-to-knuckle and upper mount fasteners while supporting the knuckle.",
+    "Install complete strut assembly or safely transfer spring/mount components with proper compression equipment.",
+    "Torque fasteners, verify hose and wiring routing, then recommend alignment and road test."
+  ],
+  "common_mistakes": [
+    "Replacing struts for a clunk caused by sway links or control arm bushings",
+    "Ignoring upper mounts, bearings, or broken springs during the estimate",
+    "Letting the knuckle hang and stressing brake hoses or axle joints",
+    "Skipping alignment after strut-to-knuckle geometry is disturbed"
+  ],
+  "estimate_guidance": [
+    "Quote pair replacement when ride-control balance or customer expectation supports it.",
+    "Separate complete strut assembly pricing from cartridge or mount-only service.",
+    "Add alignment recommendation for most front strut replacements.",
+    "Flag seized lower bolts, damaged mounts, and spring transfer requirements as labor variables."
+  ],
+  "labor_range": { "min_hours": 1.2, "max_hours": 6.0 },
+  "recommended_repairs": [
+    {
+      "title": "Strut Mount Replacement",
+      "description": "Commonly bundled when the upper mount or bearing is noisy or worn.",
+      "estimator_href": "/estimator?service=strut_mount_replacement"
+    },
+    {
+      "title": "Sway Bar Link Replacement",
+      "description": "Often disconnected during strut work and commonly mistaken for strut clunk.",
+      "cost_guide_href": "/repair-guides/sway-bar-link-replacement",
+      "estimator_href": "/estimator?service=sway_bar_link_replacement"
+    },
+    {
+      "title": "Wheel Alignment",
+      "description": "Recommended after strut replacement when camber or toe can change.",
+      "estimator_href": "/estimator?service=wheel_alignment_4_wheel"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Strut replacement estimates should include ride-control evidence, mount inspection, and alignment planning.",
+    "common_symptoms_link": "/symptoms/steering-suspension-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Strut Replacement",
+    "service_code": "front_struts_replacement_pair",
+    "service_name": "Strut Replacement",
+    "estimator_link": "/estimator"
+  }
+}

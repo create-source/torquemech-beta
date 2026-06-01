@@ -1,0 +1,83 @@
+{
+  "slug": "sway-bar-link-replacement",
+  "title": "Sway Bar Link Replacement",
+  "category": "Steering and Suspension",
+  "subcategory": "Stabilizer Bar",
+  "sort_order": 34,
+  "summary": "Stabilizer link blueprint for confirming sway bar link clunk, loose joints, and corrosion risk before quoting replacement.",
+  "difficulty": "Easy",
+  "keywords": ["sway bar link", "stabilizer link", "front end clunk", "suspension noise", "sway bar"],
+  "symptoms": [
+    "Sharp clunk or rattle over small bumps",
+    "Noise from one corner during low-speed suspension movement",
+    "Loose or separated sway link joint",
+    "Visible torn boots, missing bushings, or broken link hardware"
+  ],
+  "inspect_first": [
+    "Sway link joint play, boot condition, and link-to-strut/control-arm mounting points",
+    "Sway bar bushings and bar movement in the brackets",
+    "Struts, control arms, ball joints, tie rods, and wheel bearing play",
+    "Corrosion on link nuts, studs, and hex flats before quoting removal time"
+  ],
+  "related_systems": [
+    "Sway bar bushings",
+    "Struts",
+    "Control arms",
+    "Suspension noise diagnosis"
+  ],
+  "likely_causes": [
+    "Worn sway bar link ball sockets",
+    "Broken or missing link bushings",
+    "Loose or seized link hardware",
+    "Sway bar bushing movement imitating link noise"
+  ],
+  "repair_overview": [
+    "Confirm link play or noise before replacing parts.",
+    "Support the vehicle safely and unload the link enough to remove tension.",
+    "Remove link hardware, cutting seized nuts only when normal removal is not practical.",
+    "Install the new link in the correct orientation and torque hardware to specification.",
+    "Road test over small bumps and recheck for remaining sway bar or strut noise."
+  ],
+  "common_mistakes": [
+    "Replacing links without checking sway bar bushings",
+    "Missing a strut, control arm, or tie rod clunk that sounds similar",
+    "Not accounting for seized link hardware in rust-prone areas",
+    "Installing the link backwards or with incorrect spacer/bushing order"
+  ],
+  "estimate_guidance": [
+    "Quote extra time when link hardware is rusted, rounded, or likely to require cutting.",
+    "Mention that sway bar bushings and links can create similar clunk complaints.",
+    "Consider paired replacement when both links have matching wear or the customer wants balanced hardware.",
+    "Do not add alignment unless other suspension geometry parts are disturbed."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Sway Bar Bushing Replacement",
+      "description": "Related stabilizer bar repair when the bar shifts in the bracket or bushings are split.",
+      "estimator_href": "/estimator?service=sway_bar_bushing_replacement"
+    },
+    {
+      "title": "Suspension Noise Diagnosis",
+      "description": "Use when the noise source is not isolated or multiple front-end parts may be loose.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
+    },
+    {
+      "title": "Strut Replacement",
+      "description": "Inspect when link mounting points, strut clunk, or ride-control symptoms overlap.",
+      "cost_guide_href": "/repair-guides/strut-replacement",
+      "estimator_href": "/estimator?service=front_struts_replacement_pair"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Sway bar link estimates should follow a quick isolation check because links, bushings, struts, and control arms can create similar clunks.",
+    "common_symptoms_link": "/symptoms/steering-suspension-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Sway Bar Link Replacement",
+    "service_code": "sway_bar_link_replacement",
+    "service_name": "Sway Bar Link Replacement",
+    "estimator_link": "/estimator"
+  }
+}

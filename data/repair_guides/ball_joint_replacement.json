@@ -1,0 +1,83 @@
+{
+  "slug": "ball-joint-replacement",
+  "title": "Ball Joint Replacement",
+  "category": "Steering and Suspension",
+  "subcategory": "Suspension Joints",
+  "sort_order": 30,
+  "summary": "Suspension blueprint for confirming ball joint play, boot failure, and alignment impact before quoting replacement.",
+  "difficulty": "Moderate",
+  "keywords": ["ball joint", "front end clunk", "control arm", "suspension play", "alignment"],
+  "symptoms": [
+    "Clunking or popping over bumps or while turning",
+    "Loose steering feel, wander, or pull",
+    "Uneven tire wear from changing suspension geometry",
+    "Visible torn boot, dry joint, or wheel play during inspection"
+  ],
+  "inspect_first": [
+    "Loaded and unloaded ball joint play using the correct method for the suspension design",
+    "Dust boot condition, grease loss, corrosion, and joint binding",
+    "Control arm bushings, tie rods, sway links, struts, and wheel bearing play",
+    "Tire wear and alignment angle concerns before pricing the repair"
+  ],
+  "related_systems": [
+    "Control arms",
+    "Wheel alignment",
+    "Tires",
+    "Steering linkage"
+  ],
+  "likely_causes": [
+    "Worn press-in or bolt-in ball joint",
+    "Failed integrated ball joint in a control arm",
+    "Torn boot allowing contamination and grease loss",
+    "Impact damage or corrosion around the joint and mounting area"
+  ],
+  "repair_overview": [
+    "Confirm the failed joint and whether it is serviced separately or as part of the control arm.",
+    "Support the vehicle safely, unload the suspension as required, and remove the wheel.",
+    "Separate the joint from the knuckle without damaging the boot, sensor wiring, or tapered seat.",
+    "Press, bolt, or replace the joint/control arm, then torque fasteners to specification.",
+    "Recommend alignment when geometry is disturbed and road test for noise, pull, and steering feel."
+  ],
+  "common_mistakes": [
+    "Checking ball joint play with the wrong suspension loading method",
+    "Quoting a separate joint when the vehicle uses an integrated control arm design",
+    "Damaging the knuckle taper or ABS wiring during separation",
+    "Skipping alignment after disturbing suspension geometry"
+  ],
+  "estimate_guidance": [
+    "Confirm whether the ball joint is serviced individually or bundled with a control arm.",
+    "Add alignment context when the repair affects camber, caster, toe, or steering centering.",
+    "Flag rust, seized pinch bolts, and press-in joint access as labor variables.",
+    "Quote paired repairs only when inspection shows both sides have play or matching wear."
+  ],
+  "labor_range": { "min_hours": 1.0, "max_hours": 4.0 },
+  "recommended_repairs": [
+    {
+      "title": "Suspension Noise Diagnosis",
+      "description": "Use when multiple front-end parts have possible play or the clunk source is not isolated.",
+      "estimator_href": "/estimator?service=suspension_noise_diagnosis"
+    },
+    {
+      "title": "Control Arm Replacement",
+      "description": "Common alternate path when the ball joint is integrated into the arm or the bushings are also worn.",
+      "cost_guide_href": "/repair-guides/control-arm-replacement",
+      "estimator_href": "/estimator?service=control_arm_replacement_each"
+    },
+    {
+      "title": "Wheel Alignment",
+      "description": "Recommended when suspension geometry or steering centering can change after the repair.",
+      "estimator_href": "/estimator?service=wheel_alignment_4_wheel"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Ball joint replacement should follow a loaded suspension inspection and a service-design check so the estimate matches the actual repair path.",
+    "common_symptoms_link": "/symptoms/steering-suspension-noise",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Ball Joint Replacement",
+    "service_code": "ball_joint_replacement_each",
+    "service_name": "Ball Joint Replacement",
+    "estimator_link": "/estimator"
+  }
+}
