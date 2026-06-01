@@ -9364,28 +9364,125 @@ def pdf_repair_status_label(value: Any) -> str:
 def pdf_multi_summary_approval_needed(
     *,
     final_note_lines: List[str],
-    customer_note_lines: List[str],
     customer_name: Optional[str],
     customer_phone: Optional[str],
     has_signature: bool,
 ) -> int:
     needed = 74
     needed += (len(final_note_lines) * 9) + 10 if final_note_lines else 4
+    needed += pdf_multi_approval_block_height(
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        has_signature=has_signature,
+    )
+    return needed
 
-    review_box_h = 54
+
+def pdf_multi_approval_block_height(
+    *,
+    customer_name: Optional[str],
+    customer_phone: Optional[str],
+    has_signature: bool,
+) -> int:
+    block_h = 62
     if customer_name:
-        review_box_h += 12
+        block_h += 12
     if customer_phone:
-        review_box_h += 12
-    needed += review_box_h + 12
+        block_h += 12
+    if has_signature:
+        block_h += 78
+    return block_h + 14
 
-    if customer_note_lines:
-        needed += 4 + 12 + (len(customer_note_lines) * 11) + 5
+
+def pdf_draw_multi_approval_block(
+    c,
+    w: float,
+    y: float,
+    *,
+    left: float,
+    right: float,
+    approval_title: str,
+    approval_line: str,
+    approval_note: str,
+    customer_name: Optional[str],
+    customer_phone: Optional[str],
+    signature_data_url: Optional[str],
+) -> float:
+    has_signature = bool(signature_data_url)
+    box_h = pdf_multi_approval_block_height(
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        has_signature=has_signature,
+    ) - 14
+    box_w = w - left - right
+    box_bottom = y - box_h + 8
+
+    c.setFillColorRGB(0.985, 0.99, 0.995)
+    c.roundRect(left, box_bottom, box_w, box_h, 7, fill=1, stroke=0)
+    c.setStrokeGray(0.86)
+    c.roundRect(left, box_bottom, box_w, box_h, 7, fill=0, stroke=1)
+    c.setStrokeGray(0)
+    c.setFillGray(0)
+
+    text_y = y - 5
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(left + 12, text_y, approval_title)
+    text_y -= 18
+
+    c.setFont("Helvetica", 9.5)
+    c.setFillGray(0.24)
+    c.drawString(left + 12, text_y, approval_line)
+    text_y -= 12
+
+    c.setFont("Helvetica-Oblique", 8.5)
+    c.setFillGray(0.42)
+    c.drawString(left + 12, text_y, approval_note)
+    text_y -= 12
+
+    if customer_name:
+        c.setFont("Helvetica", 9.5)
+        c.setFillGray(0.24)
+        c.drawString(left + 12, text_y, f"Customer: {customer_name}")
+        text_y -= 12
+
+    if customer_phone:
+        c.setFont("Helvetica", 9.5)
+        c.setFillGray(0.24)
+        c.drawString(left + 12, text_y, f"Phone: {customer_phone}")
+        text_y -= 12
 
     if has_signature:
-        needed += 12 + pdf_signature_block_height()
+        sig_x = left + 12
+        sig_y = box_bottom + 14
+        sig_w = box_w - 24
+        sig_h = 58
 
-    return needed
+        c.setStrokeGray(0.72)
+        c.setFillColorRGB(1, 1, 1)
+        c.roundRect(sig_x, sig_y, sig_w, sig_h, 5, fill=1, stroke=1)
+        c.setStrokeGray(0)
+        c.setFillGray(0)
+
+        try:
+            sig_reader = signature_to_dark_imagereader(signature_data_url)
+            if sig_reader:
+                pad = 6
+                c.drawImage(
+                    sig_reader,
+                    sig_x + pad,
+                    sig_y + pad,
+                    width=sig_w - pad * 2,
+                    height=sig_h - pad * 2,
+                    preserveAspectRatio=True,
+                    mask="auto",
+                )
+        except Exception:
+            c.setFont("Helvetica-Oblique", 9)
+            c.setFillGray(0.5)
+            c.drawString(sig_x + 8, sig_y + sig_h - 14, "Signature could not be rendered")
+
+    c.setFillGray(0)
+    return box_bottom - 14
 
 
 @app.post("/estimate/pdf_multi")
@@ -9496,12 +9593,13 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         detail_max_chars = 72
         title_max_chars = 45
         row_pad_top = 18
-        row_pad_bottom = 18
+        row_pad_bottom = 20
         row_gap = 14
 
         # Services header 
         service_count = len(req.lineItems or [])
         service_count_label = f"{service_count} quoted service{'s' if service_count != 1 else ''}"
+        min_service_row_height = 92 if service_count == 1 else 68
         c.setFillColorRGB(0.94, 0.975, 0.972)
         c.roundRect(LEFT, y - 28, X_TOTAL - LEFT, 35, 7, fill=1, stroke=0)
         c.setStrokeColorRGB(0.80, 0.90, 0.88)
@@ -9571,7 +9669,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                     hours = float(step.get("hours", 0))
                     breakdown_line_count += len(wrap_text(f"- {label} ({hours:.1f} hr)", max_chars=64)[:2]) or 1
                 content_space += 15 + (breakdown_line_count * 10) + 5
-            row_height = max(54, row_pad_top + content_space + row_pad_bottom)
+            row_height = max(min_service_row_height, row_pad_top + content_space + row_pad_bottom)
             item_space = row_height + row_gap
             y = pdf_ensure_space(
                 c, w, h, y,
@@ -9679,7 +9777,6 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         has_signature = bool(req.signatureDataUrl)
         summary_needed = pdf_multi_summary_approval_needed(
             final_note_lines=final_note_lines,
-            customer_note_lines=customer_note_lines,
             customer_name=req.customerName,
             customer_phone=req.customerPhone,
             has_signature=has_signature,
@@ -9746,46 +9843,19 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             approval_line = "Prepared for customer review. Not marked reviewed or approved."
             approval_note = "No payment is collected or recorded on this PDF."
 
-        review_box_h = 54
-        if req.customerName:
-            review_box_h += 12
-        if req.customerPhone:
-            review_box_h += 12
-        c.setFillColorRGB(0.985, 0.99, 0.995)
-        c.roundRect(LEFT, y - review_box_h + 8, X_TOTAL - LEFT, review_box_h, 7, fill=1, stroke=0)
-        c.setStrokeGray(0.86)
-        c.roundRect(LEFT, y - review_box_h + 8, X_TOTAL - LEFT, review_box_h, 7, fill=0, stroke=1)
-        c.setStrokeGray(0)
-        c.setFillGray(0)
-
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(LEFT + 12, y - 5, approval_title)
-        y -= 18
-
-        c.setFont("Helvetica", 9.5)
-        c.setFillGray(0.24)
-        c.drawString(LEFT + 12, y, approval_line)
-        y -= 12
-
-        c.setFont("Helvetica-Oblique", 8.5)
-        c.setFillGray(0.42)
-        c.drawString(LEFT + 12, y, approval_note)
-        y -= 12
-
-        if req.customerName:
-            c.setFont("Helvetica", 9.5)
-            c.setFillGray(0.24)
-            c.drawString(LEFT + 12, y, f"Customer: {req.customerName}")
-            y -= 12
-
-        if req.customerPhone:
-            c.setFont("Helvetica", 9.5)
-            c.setFillGray(0.24)
-            c.drawString(LEFT + 12, y, f"Phone: {req.customerPhone}")
-            y -= 12
-
-        c.setFillGray(0)
-        y -= 12
+        y = pdf_draw_multi_approval_block(
+            c,
+            w,
+            y,
+            left=LEFT,
+            right=RIGHT,
+            approval_title=approval_title,
+            approval_line=approval_line,
+            approval_note=approval_note,
+            customer_name=req.customerName,
+            customer_phone=req.customerPhone,
+            signature_data_url=req.signatureDataUrl,
+        )
 
         if customer_note_lines:
             y -= 4
@@ -9801,24 +9871,13 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                     title="Repair Estimate",
                     vehicle_line=vehicle_line,
                     left=LEFT, right=RIGHT,
+                    show_generated_date=req.showGeneratedDate,
                 )
                 c.drawString(LEFT, y, line)
                 y -= 11
 
             y -= 5
 
-        # Signature + footer
-        if req.signatureDataUrl:
-            y -= 12
-            y = pdf_ensure_space(
-                c, w, h, y,
-                needed=178,
-                title="Repair Estimate",
-                vehicle_line=vehicle_line,
-                left=LEFT, right=RIGHT,
-                show_generated_date=req.showGeneratedDate,
-            )
-            y = pdf_draw_signature_block(c, w, y, signature_data_url=req.signatureDataUrl, left=LEFT, right=RIGHT)
         pdf_draw_footer(c, w)
 
         c.save()

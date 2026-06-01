@@ -4293,6 +4293,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!visible) {
       signatureDataUrl = null;
       clearSignatureCanvas();
+    } else {
+      reinitializeSignatureCanvas();
     }
     refreshApprovalStatus();
   }
@@ -4534,6 +4536,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!sigCanvas) return;
 
     const ctx = sigCanvas.getContext("2d");
+    sigCtx = ctx;
 
     ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
 
@@ -4543,15 +4546,20 @@ const confidenceEl = document.getElementById("laborConfidence");
     ctx.strokeStyle = signatureInkColor();
   }
 
-  function resizeSigCanvas() {
-    if (!sigCanvas) return;
+  function resizeSigCanvas({ preserve = true } = {}) {
+    if (!sigCanvas) return false;
 
     const rect = sigCanvas.getBoundingClientRect();
+    const width = Math.round(rect.width);
+    const height = Math.round(rect.height);
+    if (width <= 0 || height <= 0) return false;
 
-    const prevData = sigCanvas.toDataURL(); // preserve drawing
+    const prevData = preserve && sigCanvas.width > 0 && sigCanvas.height > 0
+      ? sigCanvas.toDataURL()
+      : ""; // preserve drawing
 
-    sigCanvas.width = Math.round(rect.width);
-    sigCanvas.height = Math.round(rect.height);
+    sigCanvas.width = width;
+    sigCanvas.height = height;
 
     sigCtx = sigCanvas.getContext("2d");
 
@@ -4561,9 +4569,23 @@ const confidenceEl = document.getElementById("laborConfidence");
     sigCtx.strokeStyle = signatureInkColor();
 
     // restore previous drawing
-    const img = new Image();
-    img.onload = () => sigCtx.drawImage(img, 0, 0);
-    img.src = prevData;
+    if (prevData) {
+      const img = new Image();
+      img.onload = () => sigCtx.drawImage(img, 0, 0, width, height);
+      img.src = prevData;
+    }
+    return true;
+  }
+
+  function reinitializeSignatureCanvas() {
+    if (!sigCanvas) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resizeSigCanvas({ preserve: false });
+        clearSignatureCanvas();
+        refreshApprovalStatus();
+      });
+    });
   }
 
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
@@ -4573,6 +4595,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function canvasIsBlank() {
     if (!sigCanvas) return true;
+    if (sigCanvas.width <= 0 || sigCanvas.height <= 0) return true;
     const ctx = sigCanvas.getContext("2d");
     const pixels = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height).data;
     for (let i = 3; i < pixels.length; i += 4) {
