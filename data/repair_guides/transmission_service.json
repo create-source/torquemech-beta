@@ -1,0 +1,76 @@
+{
+  "slug": "transmission-service",
+  "title": "Transmission Service",
+  "category": "Maintenance",
+  "subcategory": "Transmission Fluid",
+  "sort_order": 11,
+  "summary": "Maintenance blueprint for checking transmission fluid condition, interval history, leak evidence, and pan/filter needs before quoting service.",
+  "difficulty": "Moderate",
+  "keywords": ["transmission service", "transmission fluid", "drain and fill", "transmission filter", "rough shifting"],
+  "symptoms": [
+    "Mileage or time interval due for transmission fluid service",
+    "Fluid dark, burnt-smelling, low, contaminated, or unknown history",
+    "Light shift quality complaints without confirmed internal failure",
+    "Transmission pan, cooler line, or axle seal seepage noticed during inspection"
+  ],
+  "inspect_first": [
+    "Service interval, fluid specification, fill procedure, and temperature-check method",
+    "Fluid level and condition where a dipstick or service plug allows inspection",
+    "Pan gasket, cooler lines, axle seals, case seams, and vent condition",
+    "Whether the vehicle uses drain-and-fill, pan/filter service, or sealed-service procedure"
+  ],
+  "related_systems": [
+    "Transmission leak diagnosis",
+    "Transmission filter or pan gasket",
+    "Cooling lines",
+    "Shift quality diagnosis"
+  ],
+  "repair_overview": [
+    "Confirm fluid specification, service method, and any scan-tool temperature requirement.",
+    "Inspect fluid condition and leak evidence before draining.",
+    "Drain and refill, or remove pan and replace filter/gasket where applicable.",
+    "Set fluid level using the correct temperature and fill procedure.",
+    "Road test, recheck for leaks, and document any shift or contamination concerns."
+  ],
+  "common_mistakes": [
+    "Using universal fluid when the transmission requires a specific fluid type",
+    "Overfilling or underfilling because temperature procedure was skipped",
+    "Promising service will fix a mechanical shift fault",
+    "Missing pan, cooler line, or axle seal leaks before service"
+  ],
+  "estimate_guidance": [
+    "Identify drain-and-fill versus pan/filter service so labor and parts match the vehicle.",
+    "Flag sealed transmissions that require level-setting by temperature.",
+    "Recommend diagnosis before service when slipping, harsh engagement, codes, or debris are present.",
+    "Include fluid quantity and pan/filter parts only when the service method requires them."
+  ],
+  "tool_groups": {
+    "basic": ["Socket set", "Drain pan", "Fluid pump", "Funnel"],
+    "specialty": ["Scan tool for fluid temperature when required", "Level plug adapter where applicable"],
+    "supplies": ["Correct transmission fluid", "Pan gasket or filter where applicable", "Brake cleaner", "Shop towels"]
+  },
+  "labor_range": { "min_hours": 0.8, "max_hours": 3.0 },
+  "recommended_repairs": [
+    {
+      "title": "Transmission Leak Diagnosis",
+      "description": "Use when fluid level is low or active seepage is found before service.",
+      "estimator_href": "/estimator?service=transmission_leak_diagnosis"
+    },
+    {
+      "title": "Transmission Diagnostic",
+      "description": "Use before maintenance when slipping, codes, delayed engagement, or harsh shifting are present.",
+      "estimator_href": "/estimator?service=transmission_diagnostic"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Transmission service is maintenance when interval and fluid condition support it; shift faults still need diagnosis before promising results.",
+    "common_symptoms_link": "/symptoms/rough-shifting",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Transmission Service",
+    "service_code": "transmission_fluid_service_drain_and_fill",
+    "service_name": "Transmission Service",
+    "estimator_link": "/estimator"
+  }
+}

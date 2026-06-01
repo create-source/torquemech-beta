@@ -1,0 +1,77 @@
+{
+  "slug": "engine-air-filter-replacement",
+  "title": "Engine Air Filter Replacement",
+  "category": "Maintenance",
+  "subcategory": "Engine Intake",
+  "sort_order": 16,
+  "summary": "Maintenance blueprint for checking intake filter restriction, airbox sealing, debris, and airflow-related context before replacement.",
+  "difficulty": "Easy",
+  "keywords": ["engine air filter", "air filter", "intake restriction", "fuel economy", "airflow"],
+  "symptoms": [
+    "Engine air filter interval due or unknown history",
+    "Dirty, restricted, wet, damaged, or poorly sealed filter",
+    "Poor fuel economy or reduced airflow concern",
+    "Debris in airbox or intake duct after dusty driving conditions"
+  ],
+  "inspect_first": [
+    "Filter loading, tears, oil saturation, water intrusion, and sealing edge condition",
+    "Airbox clips, duct clamps, resonator boots, and MAF sensor area",
+    "Debris downstream of the filter that may indicate poor sealing",
+    "Related codes or symptoms before blaming filter restriction alone"
+  ],
+  "related_systems": [
+    "Intake ducting",
+    "Mass airflow sensor",
+    "Fuel economy concerns",
+    "Engine maintenance interval"
+  ],
+  "repair_overview": [
+    "Confirm filter type, service interval, and airbox access.",
+    "Open the airbox without damaging clips, ducts, or sensor wiring.",
+    "Inspect filter condition, airbox debris, and downstream sealing evidence.",
+    "Install the new filter fully seated in the correct orientation.",
+    "Verify ducts and clamps are sealed, then note any intake leaks or MAF concerns."
+  ],
+  "common_mistakes": [
+    "Leaving the filter edge pinched or the airbox unclipped",
+    "Damaging brittle intake ducts or MAF wiring",
+    "Ignoring debris downstream of the filter",
+    "Blaming a filter for drivability issues without checking codes or intake leaks"
+  ],
+  "estimate_guidance": [
+    "Quote as maintenance when interval, restriction, or visible contamination supports replacement.",
+    "Mention airbox sealing or intake duct issues if found during inspection.",
+    "Do not add MAF cleaning or diagnosis unless symptoms, codes, or contamination support it.",
+    "Pair with oil service only when the customer wants routine maintenance bundled."
+  ],
+  "tool_groups": {
+    "basic": ["Screwdriver set", "Small socket set", "Flashlight"],
+    "specialty": ["MAF-safe cleaner only when separately approved"],
+    "supplies": ["Engine air filter", "Shop towels", "Gloves"]
+  },
+  "labor_range": { "min_hours": 0.2, "max_hours": 1.0 },
+  "recommended_repairs": [
+    {
+      "title": "Oil Change",
+      "description": "Common maintenance bundle when interval service is being reviewed.",
+      "cost_guide_href": "/repair-guides/oil-change",
+      "estimator_href": "/estimator?service=oil_and_filter_change"
+    },
+    {
+      "title": "MAF Sensor Diagnosis",
+      "description": "Use when airflow codes, contamination, or drivability symptoms are present.",
+      "estimator_href": "/estimator?service=mass_air_flow_sensor_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Engine air filter replacement should include airbox sealing and intake duct checks so airflow complaints are not reduced to filter-only guessing.",
+    "common_symptoms_link": "/symptoms/poor-fuel-economy",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Engine Air Filter Replacement",
+    "service_code": "engine_air_filter_replacement",
+    "service_name": "Engine Air Filter Replacement",
+    "estimator_link": "/estimator"
+  }
+}

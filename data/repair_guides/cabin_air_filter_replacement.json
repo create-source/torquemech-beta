@@ -1,0 +1,76 @@
+{
+  "slug": "cabin-air-filter-replacement",
+  "title": "Cabin Air Filter Replacement",
+  "category": "Maintenance",
+  "subcategory": "HVAC Filters",
+  "sort_order": 15,
+  "summary": "Maintenance blueprint for checking cabin filter restriction, HVAC airflow, odors, and access considerations before replacement.",
+  "difficulty": "Easy",
+  "keywords": ["cabin air filter", "hvac filter", "restricted airflow", "musty odor", "maintenance"],
+  "symptoms": [
+    "Reduced HVAC airflow from vents",
+    "Musty odor, dusty cabin air, or allergy complaint",
+    "Cabin filter interval due or unknown history",
+    "Noise from debris near the blower or filter door"
+  ],
+  "inspect_first": [
+    "Filter access location, door clips, and glove box or cowl access requirements",
+    "Filter loading with leaves, dust, rodent debris, moisture, or mold evidence",
+    "Blower noise, water intrusion, and evaporator odor concerns",
+    "Airflow before and after replacement when restriction is the complaint"
+  ],
+  "related_systems": [
+    "HVAC blower airflow",
+    "A/C odor concerns",
+    "Cowl drains",
+    "Interior maintenance"
+  ],
+  "repair_overview": [
+    "Confirm cabin filter location and replacement interval.",
+    "Access the filter door without damaging glove box stops, tabs, or cowl panels.",
+    "Remove the old filter, inspect debris and moisture evidence, and clean loose leaves if accessible.",
+    "Install the new filter in the correct airflow direction.",
+    "Verify airflow and note any blower, odor, or water intrusion concerns."
+  ],
+  "common_mistakes": [
+    "Installing the filter backwards",
+    "Breaking glove box or filter door tabs",
+    "Ignoring water intrusion or rodent debris found at the filter",
+    "Promising a filter will fix blower motor or evaporator odor problems"
+  ],
+  "estimate_guidance": [
+    "Mention restricted airflow or interval basis when quoting the filter.",
+    "Add odor, blower, or water leak diagnosis only when inspection supports it.",
+    "Flag difficult glove box, cowl, or trim access when labor is above a quick service.",
+    "Use before/after airflow language when the customer complaint is weak HVAC airflow."
+  ],
+  "tool_groups": {
+    "basic": ["Small trim tool", "Screwdriver set", "Flashlight"],
+    "specialty": ["Blower access tools where required"],
+    "supplies": ["Cabin air filter", "Shop vacuum where debris is present", "Gloves"]
+  },
+  "labor_range": { "min_hours": 0.2, "max_hours": 1.0 },
+  "recommended_repairs": [
+    {
+      "title": "A/C Performance Diagnosis",
+      "description": "Use when airflow is normal but cooling performance is weak.",
+      "estimator_href": "/estimator?service=a_c_system_diagnosis"
+    },
+    {
+      "title": "Blower Motor Inspection",
+      "description": "Use when noise or weak airflow remains after filter replacement.",
+      "estimator_href": "/estimator?service=blower_motor_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Cabin filter replacement should separate simple airflow restriction from blower, water intrusion, and evaporator odor concerns.",
+    "common_symptoms_link": "/symptoms/weak-no-ac",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Cabin Air Filter Replacement",
+    "service_code": "cabin_air_filter_replacement",
+    "service_name": "Cabin Air Filter Replacement",
+    "estimator_link": "/estimator"
+  }
+}

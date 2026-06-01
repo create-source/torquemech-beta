@@ -1,0 +1,82 @@
+{
+  "slug": "coolant-flush",
+  "title": "Coolant Flush",
+  "category": "Maintenance",
+  "subcategory": "Cooling System Service",
+  "sort_order": 12,
+  "summary": "Maintenance blueprint for checking coolant age, contamination, freeze protection, and cooling-system condition before flushing or refilling.",
+  "difficulty": "Easy",
+  "keywords": ["coolant flush", "coolant service", "antifreeze", "cooling system", "contamination"],
+  "symptoms": [
+    "Coolant service interval due or unknown coolant history",
+    "Rusty, dirty, weak, mixed, or contaminated coolant",
+    "Weak heat after prior cooling work or trapped air suspicion",
+    "Cooling repair completed and refill quality needs to be controlled"
+  ],
+  "inspect_first": [
+    "Coolant level, color, odor, freeze protection, and contamination signs",
+    "Radiator cap, reservoir, hoses, clamps, thermostat housing, and water pump seepage",
+    "Oil/coolant mixing, combustion gas suspicion, or heavy rust before simple service",
+    "Bleed points, coolant specification, capacity, and air-bleed procedure"
+  ],
+  "related_systems": [
+    "Cooling system pressure test",
+    "Radiator hoses",
+    "Thermostat operation",
+    "Water pump and radiator"
+  ],
+  "repair_overview": [
+    "Confirm coolant type, service interval, and whether contamination requires diagnosis first.",
+    "Inspect for leaks and pressure-test when coolant loss or residue is present.",
+    "Drain or exchange coolant using the appropriate service method.",
+    "Refill with correct coolant mix and bleed air from the system.",
+    "Verify heat output, operating temperature, fan behavior, and final coolant level."
+  ],
+  "common_mistakes": [
+    "Flushing coolant before checking for head gasket, oil cooler, or transmission cooler contamination",
+    "Mixing incompatible coolant types",
+    "Leaving air trapped after service",
+    "Ignoring leaks that will lower coolant level after the customer leaves"
+  ],
+  "estimate_guidance": [
+    "Use coolant service as maintenance only when contamination does not point to a larger fault.",
+    "Add pressure testing when coolant loss, smell, residue, or overheating is present.",
+    "Include bleed time and correct coolant type in the estimate note.",
+    "Recommend hose, cap, thermostat, or water pump repairs only when inspection supports them."
+  ],
+  "tool_groups": {
+    "basic": ["Drain pan", "Coolant funnel", "Hose clamp pliers", "Basic hand tools"],
+    "specialty": ["Cooling system pressure tester", "Vacuum fill tool when available", "Coolant hydrometer or refractometer"],
+    "supplies": ["Correct coolant", "Distilled water when required", "Shop towels", "Spill cleanup supplies"]
+  },
+  "labor_range": { "min_hours": 0.8, "max_hours": 3.0 },
+  "recommended_repairs": [
+    {
+      "title": "Coolant Leak Diagnosis",
+      "description": "Use when coolant level is low, residue is visible, or pressure loss is suspected.",
+      "estimator_href": "/estimator?service=coolant_leak_diagnosis"
+    },
+    {
+      "title": "Radiator Hose Inspection",
+      "description": "Commonly checked when coolant age, swelling, softness, or leaks are concerns.",
+      "estimator_href": "/estimator?service=coolant_hose_replacement_each"
+    },
+    {
+      "title": "Thermostat Replacement",
+      "description": "Related when warm-up behavior or temperature control evidence points beyond fluid condition.",
+      "cost_guide_href": "/repair-guides/thermostat-replacement",
+      "estimator_href": "/estimator?service=thermostat_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Coolant service should start with condition, contamination, and leak checks so maintenance does not cover up a cooling-system fault.",
+    "common_symptoms_link": "/symptoms/coolant-leaks",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Coolant Flush",
+    "service_code": "coolant_flush",
+    "service_name": "Coolant Flush",
+    "estimator_link": "/estimator"
+  }
+}

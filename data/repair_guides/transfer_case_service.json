@@ -1,0 +1,81 @@
+{
+  "slug": "transfer-case-service",
+  "title": "Transfer Case Service",
+  "category": "Maintenance",
+  "subcategory": "Drivetrain Fluid",
+  "sort_order": 14,
+  "summary": "Maintenance blueprint for checking transfer case fluid condition, AWD/4WD interval needs, leaks, and engagement concerns before fluid service.",
+  "difficulty": "Moderate",
+  "keywords": ["transfer case service", "transfer case fluid", "4wd service", "awd service", "drivetrain maintenance"],
+  "symptoms": [
+    "AWD/4WD transfer case service interval due",
+    "Fluid dark, low, burnt, contaminated, or unknown history",
+    "Case seepage at output seals, drain/fill plugs, or case seams",
+    "4WD engagement noise, binding, or actuator concern requiring diagnosis first"
+  ],
+  "inspect_first": [
+    "Transfer case fluid specification and service interval",
+    "Fluid level, color, smell, debris, and water contamination",
+    "Input/output seals, case vent, drain/fill plugs, and mounting condition",
+    "4WD/AWD engagement behavior, actuator codes, and tire size matching concerns"
+  ],
+  "related_systems": [
+    "Transfer case seals",
+    "4WD actuator",
+    "Driveshafts",
+    "Differential service"
+  ],
+  "repair_overview": [
+    "Confirm transfer case type, fluid specification, and fill procedure.",
+    "Remove fill plug first where applicable, then inspect fluid level and condition.",
+    "Drain fluid, inspect plug magnet and debris, then refill to the correct level.",
+    "Check for leaks, verify vent condition, and road test or cycle AWD/4WD modes when applicable.",
+    "Document any actuator, binding, tire mismatch, or noise concern that needs diagnosis."
+  ],
+  "common_mistakes": [
+    "Using ATF or gear oil when the transfer case requires a specific fluid",
+    "Skipping fill-plug access check before draining",
+    "Treating actuator or binding complaints as fluid maintenance only",
+    "Missing tire size mismatch or driveline windup on AWD/4WD systems"
+  ],
+  "estimate_guidance": [
+    "Quote the correct transfer case fluid and fill procedure for the vehicle.",
+    "Flag seized fill plugs, skid plate access, and seal leaks as labor variables.",
+    "Recommend diagnosis before service when engagement faults, binding, or codes are present.",
+    "Suggest differential service only when interval, fluid condition, or drivetrain context supports it."
+  ],
+  "tool_groups": {
+    "basic": ["Socket set", "Drain pan", "Fluid pump", "Basic hand tools"],
+    "specialty": ["Transfer case fill adapter where required", "Scan tool for 4WD/AWD actuator checks when needed"],
+    "supplies": ["Correct transfer case fluid", "Drain/fill plug washers where required", "Shop towels"]
+  },
+  "labor_range": { "min_hours": 0.8, "max_hours": 3.0 },
+  "recommended_repairs": [
+    {
+      "title": "Differential Service",
+      "description": "Related drivetrain maintenance when AWD/4WD service interval applies to multiple units.",
+      "cost_guide_href": "/repair-guides/differential-service",
+      "estimator_href": "/estimator?service=differential_fluid_service"
+    },
+    {
+      "title": "Transfer Case Seal Replacement",
+      "description": "Use when input/output seal leaks are confirmed before fluid service.",
+      "estimator_href": "/estimator?service=transfer_case_seal_replacement"
+    },
+    {
+      "title": "Transfer Case Actuator Diagnosis",
+      "description": "Use when 4WD engagement, lights, or actuator codes are present.",
+      "estimator_href": "/estimator?service=transfer_case_actuator_diagnosis"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Transfer case service is maintenance when fluid condition and interval support it; AWD/4WD engagement faults still need diagnosis.",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Transfer Case Service",
+    "service_code": "transfer_case_fluid_service",
+    "service_name": "Transfer Case Service",
+    "estimator_link": "/estimator"
+  }
+}

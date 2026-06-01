@@ -1,0 +1,80 @@
+{
+  "slug": "differential-service",
+  "title": "Differential Service",
+  "category": "Maintenance",
+  "subcategory": "Drivetrain Fluid",
+  "sort_order": 13,
+  "summary": "Maintenance blueprint for checking differential fluid condition, leak evidence, noise indicators, and service interval before replacing gear oil.",
+  "difficulty": "Moderate",
+  "keywords": ["differential service", "differential fluid", "gear oil", "drivetrain maintenance", "axle service"],
+  "symptoms": [
+    "Differential fluid interval due or unknown service history",
+    "Gear oil dark, low, contaminated, or metallic",
+    "Whine, chatter, or binding that requires inspection before service",
+    "Pinion seal, axle seal, cover gasket, or vent seepage"
+  ],
+  "inspect_first": [
+    "Front or rear differential service location and fluid specification",
+    "Fluid level, smell, metal debris, water contamination, and magnet condition",
+    "Pinion seal, axle seals, cover gasket, fill/drain plugs, and breather condition",
+    "Noise, vibration, or binding complaints before treating service as maintenance"
+  ],
+  "related_systems": [
+    "Axle seals",
+    "Pinion seal",
+    "Differential breather",
+    "Driveline vibration"
+  ],
+  "repair_overview": [
+    "Confirm differential location, fluid specification, limited-slip additive needs, and interval.",
+    "Remove fill plug first where applicable to confirm it can be serviced.",
+    "Drain fluid or remove cover, inspect fluid and magnet, then clean sealing surfaces.",
+    "Refill to the correct level with specified gear oil and additive when required.",
+    "Road test for noise, chatter, and leaks after service."
+  ],
+  "common_mistakes": [
+    "Removing the drain before confirming the fill plug can be opened",
+    "Skipping limited-slip additive or using the wrong gear oil",
+    "Ignoring metal debris, water contamination, or bearing noise",
+    "Missing a clogged breather that can push seals out"
+  ],
+  "estimate_guidance": [
+    "Specify front, rear, or both differentials so the estimate matches the vehicle.",
+    "Add cover gasket, sealant, or additive only when the service method requires it.",
+    "Recommend diagnosis before service when noise, chatter, or heavy metal debris is present.",
+    "Flag seized plugs, rusty covers, and leak repairs as labor variables."
+  ],
+  "tool_groups": {
+    "basic": ["Socket set", "Drain pan", "Fluid pump", "Scraper where cover is removed"],
+    "specialty": ["Torque wrench", "Hex or square-drive fill plug sockets", "Limited-slip additive where required"],
+    "supplies": ["Correct gear oil", "Cover gasket or RTV where applicable", "Brake cleaner", "Shop towels"]
+  },
+  "labor_range": { "min_hours": 0.8, "max_hours": 3.0 },
+  "recommended_repairs": [
+    {
+      "title": "Differential Breather Service",
+      "description": "Related when seal leaks or pressure buildup are part of the inspection.",
+      "estimator_href": "/estimator?service=differential_breather_service"
+    },
+    {
+      "title": "Differential Seal Replacement",
+      "description": "Use when pinion, axle, or cover leaks are confirmed before fluid service.",
+      "estimator_href": "/estimator?service=differential_seal_replacement"
+    },
+    {
+      "title": "Vibration Diagnosis",
+      "description": "Use when noise or vibration suggests driveline wear beyond fluid condition.",
+      "estimator_href": "/estimator?service=vibration_diagnosis"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Differential service should include fluid evidence and leak checks, especially when noise or water contamination is present.",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Differential Service",
+    "service_code": "differential_fluid_service",
+    "service_name": "Differential Service",
+    "estimator_link": "/estimator"
+  }
+}

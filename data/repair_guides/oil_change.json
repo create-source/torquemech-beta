@@ -1,0 +1,76 @@
+{
+  "slug": "oil-change",
+  "title": "Oil Change",
+  "category": "Maintenance",
+  "subcategory": "Engine Oil",
+  "sort_order": 10,
+  "summary": "Maintenance blueprint for checking oil condition, interval history, filter access, and leak evidence before completing an oil and filter service.",
+  "difficulty": "Easy",
+  "keywords": ["oil change", "oil filter", "engine oil", "maintenance interval", "leak inspection"],
+  "symptoms": [
+    "Service interval or maintenance reminder due",
+    "Dark, diluted, low, or contaminated engine oil",
+    "Oil seepage around drain plug, filter, housing, or pan",
+    "Engine noise, low oil level, or history of oil consumption"
+  ],
+  "inspect_first": [
+    "Mileage and time since last oil service",
+    "Oil level, color, fuel smell, sludge, coolant contamination, and metal debris",
+    "Drain plug, pan threads, filter housing, cooler seals, and visible leak paths",
+    "Correct oil viscosity, capacity, filter type, and reset procedure"
+  ],
+  "related_systems": [
+    "Oil leak inspection",
+    "Filter housing seals",
+    "Engine maintenance interval",
+    "Underbody splash shields"
+  ],
+  "repair_overview": [
+    "Confirm service interval, oil specification, capacity, and filter style.",
+    "Inspect oil level and condition before draining so problems are not hidden by fresh oil.",
+    "Drain oil, replace drain plug washer when required, and replace the oil filter.",
+    "Refill with correct oil, run the engine, check for leaks, and verify oil level.",
+    "Reset maintenance reminder when applicable and document any leak or contamination concerns."
+  ],
+  "common_mistakes": [
+    "Using the wrong oil viscosity or filter application",
+    "Missing a damaged drain plug, overtightened plug, or old filter gasket",
+    "Resetting the reminder without confirming level and leak status",
+    "Ignoring sludge, coolant, fuel dilution, or metal debris found during service"
+  ],
+  "estimate_guidance": [
+    "Use the correct oil type, capacity, and filter style for the vehicle.",
+    "Note leaks, damaged drain plug threads, or filter housing seepage before final approval.",
+    "Do not turn oil service into leak repair unless inspection supports the added work.",
+    "Mention maintenance interval context so the quote reads as preventive service, not diagnosis."
+  ],
+  "tool_groups": {
+    "basic": ["Socket set", "Oil filter wrench", "Drain pan", "Funnel"],
+    "specialty": ["Torque wrench for drain plug where required", "Scan/menu access for maintenance reset"],
+    "supplies": ["Correct engine oil", "Oil filter", "Drain plug washer", "Shop towels"]
+  },
+  "labor_range": { "min_hours": 0.5, "max_hours": 2.0 },
+  "recommended_repairs": [
+    {
+      "title": "Oil Leak Inspection",
+      "description": "Use when oil residue, low level, or customer complaint suggests an active leak.",
+      "estimator_href": "/estimator?service=oil_leak_inspection"
+    },
+    {
+      "title": "Engine Air Filter Replacement",
+      "description": "Common maintenance check while reviewing engine bay condition.",
+      "cost_guide_href": "/repair-guides/engine-air-filter-replacement",
+      "estimator_href": "/estimator?service=engine_air_filter_replacement"
+    }
+  ],
+  "diagnostic_context": {
+    "intro": "Oil service should include interval awareness and a quick leak/condition scan before fresh oil hides evidence.",
+    "diagnostic_tools_link": "/diagnostics"
+  },
+  "estimate": {
+    "cta_label": "Estimate Oil Change",
+    "service_code": "oil_and_filter_change",
+    "service_name": "Oil Change",
+    "estimator_link": "/estimator"
+  }
+}
