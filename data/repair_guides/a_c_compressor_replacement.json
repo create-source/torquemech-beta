@@ -42,7 +42,10 @@
     "Add drier, expansion valve, or seals when the system design or failure mode requires it.",
     "Quote diagnosis first if low charge, electrical command, or pressure readings are not proven."
   ],
-  "labor_range": { "min_hours": 2.0, "max_hours": 6.0 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "recommended_repairs": [
     {
       "title": "A/C System Diagnosis",

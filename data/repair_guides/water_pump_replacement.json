@@ -48,7 +48,10 @@
     "Add coolant, bleeding time, thermostat inspection, belt inspection, and hose recommendations only when inspection supports them.",
     "Treat overheated vehicles cautiously because secondary damage may change the repair path."
   ],
-  "labor_range": { "min_hours": 2.0, "max_hours": 6.0 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "recommended_repairs": [
     {
       "title": "Thermostat Inspection",

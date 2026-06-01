@@ -48,10 +48,21 @@
     "Verify emissions legality and converter location before quoting parts.",
     "Recommend correcting misfire, rich-running, or oil/coolant contamination causes before final converter approval."
   ],
-  "labor_range": { "min_hours": 1.5, "max_hours": 5.0 },
+  "labor_range": {
+    "min_hours": 6.0,
+    "max_hours": 18.0
+  },
   "related_obd_codes": [
-    { "code": "P0420", "title": "Catalyst efficiency below threshold bank 1", "href": "/obd/p0420" },
-    { "code": "P0430", "title": "Catalyst efficiency below threshold bank 2", "href": "/obd/p0430" }
+    {
+      "code": "P0420",
+      "title": "Catalyst efficiency below threshold bank 1",
+      "href": "/obd/p0420"
+    },
+    {
+      "code": "P0430",
+      "title": "Catalyst efficiency below threshold bank 2",
+      "href": "/obd/p0430"
+    }
   ],
   "recommended_repairs": [
     {

@@ -48,7 +48,10 @@
     "Verify battery condition, cable voltage drop, starter relay, fuse, ground path, and command signal before final approval.",
     "Procedure complexity may vary by engine, drivetrain, and access around exhaust or intake components."
   ],
-  "labor_range": { "min_hours": 1.0, "max_hours": 3.5 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "recommended_repairs": [
     {
       "title": "Battery Test",

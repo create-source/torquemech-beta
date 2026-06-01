@@ -47,7 +47,10 @@
     "Add labor for tight front-end packaging, seized lower mounts, or cooler lines.",
     "Warn customers that prior overheating can reveal additional issues after repair."
   ],
-  "labor_range": { "min_hours": 1.5, "max_hours": 4.0 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "recommended_repairs": [
     {
       "title": "Thermostat Inspection",

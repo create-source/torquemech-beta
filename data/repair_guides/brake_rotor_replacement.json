@@ -1,4 +1,4 @@
-﻿{
+{
   "slug": "brake-rotor-replacement",
   "title": "Brake Rotor Replacement",
   "category": "Brakes",
@@ -27,8 +27,8 @@
     "Brake vibration diagnosis"
   ],
   "labor_range": {
-    "min_hours": 1.0,
-    "max_hours": 3.5
+    "min_hours": 1.2,
+    "max_hours": 6.0
   },
   "labor_cost": {
     "min": 90,
@@ -59,9 +59,18 @@
     "Rubber mallet"
   ],
   "torque_specs": [
-    { "label": "Wheel lug nuts", "value": "Vehicle specific - load vehicle for exact spec" },
-    { "label": "Caliper bracket bolts", "value": "Vehicle specific - load vehicle for exact spec" },
-    { "label": "Rotor retaining screws", "value": "Vehicle specific - load vehicle for exact spec" }
+    {
+      "label": "Wheel lug nuts",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    },
+    {
+      "label": "Caliper bracket bolts",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    },
+    {
+      "label": "Rotor retaining screws",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    }
   ],
   "repair_steps": [
     "Raise and support the vehicle safely.",
@@ -144,8 +153,8 @@
   },
   "estimate": {
     "cta_label": "Estimate Brake Rotor Replacement",
-    "service_code": "brake_rotor_replacement",
-    "service_name": "Brake Rotor Replacement",
+    "service_code": "front_brake_rotors_replacement",
+    "service_name": "Front Brake Rotors Replacement",
     "estimator_link": "/estimator"
   },
   "coming_next": [

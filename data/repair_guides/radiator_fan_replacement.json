@@ -41,7 +41,10 @@
     "Add fan assembly instead of motor only when the shroud, resistor, module, or blade condition requires it.",
     "Mention A/C idle performance if fan airflow is part of the complaint."
   ],
-  "labor_range": { "min_hours": 0.8, "max_hours": 3.0 },
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 4.0
+  },
   "recommended_repairs": [
     {
       "title": "Cooling Fan Diagnosis",

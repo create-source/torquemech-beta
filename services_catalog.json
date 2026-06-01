@@ -630,6 +630,12 @@
           "labor_hours_max": 2.5
         },
         {
+          "code": "brake_pad_replacement",
+          "name": "Brake Pad Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0
+        },
+        {
           "code": "front_brake_pads_replacement",
           "name": "Front Brake Pads Replacement",
           "labor_hours_min": 1.0,

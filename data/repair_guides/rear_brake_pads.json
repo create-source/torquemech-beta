@@ -1,4 +1,4 @@
-﻿{
+{
   "slug": "rear-brake-pads",
   "title": "Rear Brake Pads Replacement",
   "category": "Brakes",
@@ -15,7 +15,7 @@
   ],
   "labor_range": {
     "min_hours": 1.0,
-    "max_hours": 3.5
+    "max_hours": 4.0
   },
   "labor_cost": {
     "min": 90,
@@ -46,9 +46,18 @@
     "Brake cleaner"
   ],
   "torque_specs": [
-    { "label": "Wheel lug nuts", "value": "Vehicle specific - load vehicle for exact spec" },
-    { "label": "Caliper bracket bolts", "value": "Vehicle specific - load vehicle for exact spec" },
-    { "label": "Slide pin bolts", "value": "Vehicle specific - load vehicle for exact spec" }
+    {
+      "label": "Wheel lug nuts",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    },
+    {
+      "label": "Caliper bracket bolts",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    },
+    {
+      "label": "Slide pin bolts",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    }
   ],
   "repair_steps": [
     "Raise and support the vehicle safely.",

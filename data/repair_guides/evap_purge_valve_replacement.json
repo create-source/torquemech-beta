@@ -48,13 +48,36 @@
     "Note hard-start-after-refueling or fuel odor context when it supports purge valve failure.",
     "Verify purge command and sealing before presenting the repair as confirmed."
   ],
-  "labor_range": { "min_hours": 0.4, "max_hours": 1.5 },
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 4.0
+  },
   "related_obd_codes": [
-    { "code": "P0440", "title": "EVAP system fault", "href": "/obd/p0440" },
-    { "code": "P0441", "title": "Incorrect purge flow", "href": "/obd/p0441" },
-    { "code": "P0442", "title": "EVAP small leak", "href": "/obd/p0442" },
-    { "code": "P0455", "title": "EVAP large leak", "href": "/obd/p0455" },
-    { "code": "P0456", "title": "EVAP very small leak", "href": "/obd/p0456" }
+    {
+      "code": "P0440",
+      "title": "EVAP system fault",
+      "href": "/obd/p0440"
+    },
+    {
+      "code": "P0441",
+      "title": "Incorrect purge flow",
+      "href": "/obd/p0441"
+    },
+    {
+      "code": "P0442",
+      "title": "EVAP small leak",
+      "href": "/obd/p0442"
+    },
+    {
+      "code": "P0455",
+      "title": "EVAP large leak",
+      "href": "/obd/p0455"
+    },
+    {
+      "code": "P0456",
+      "title": "EVAP very small leak",
+      "href": "/obd/p0456"
+    }
   ],
   "recommended_repairs": [
     {

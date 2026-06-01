@@ -51,11 +51,31 @@
     "Skipping compression testing when the same cylinder keeps misfiring after swap tests"
   ],
   "related_obd_codes": [
-    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" },
-    { "code": "P0301", "title": "Cylinder 1 misfire", "href": "/obd/p0301" },
-    { "code": "P0302", "title": "Cylinder 2 misfire", "href": "/obd/p0302" },
-    { "code": "P0303", "title": "Cylinder 3 misfire", "href": "/obd/p0303" },
-    { "code": "P0304", "title": "Cylinder 4 misfire", "href": "/obd/p0304" }
+    {
+      "code": "P0300",
+      "title": "Random or multiple cylinder misfire",
+      "href": "/obd/p0300"
+    },
+    {
+      "code": "P0301",
+      "title": "Cylinder 1 misfire",
+      "href": "/obd/p0301"
+    },
+    {
+      "code": "P0302",
+      "title": "Cylinder 2 misfire",
+      "href": "/obd/p0302"
+    },
+    {
+      "code": "P0303",
+      "title": "Cylinder 3 misfire",
+      "href": "/obd/p0303"
+    },
+    {
+      "code": "P0304",
+      "title": "Cylinder 4 misfire",
+      "href": "/obd/p0304"
+    }
   ],
   "recommended_repairs": [
     {
@@ -90,6 +110,12 @@
   },
   "estimate": {
     "cta_label": "Open Estimator",
-    "estimator_link": "/estimator"
+    "estimator_link": "/estimator",
+    "service_code": "misfire_diagnosis",
+    "service_name": "Misfire Diagnosis"
+  },
+  "labor_range": {
+    "min_hours": 0.8,
+    "max_hours": 2.5
   }
 }

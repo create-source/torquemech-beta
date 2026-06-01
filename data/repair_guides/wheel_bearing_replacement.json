@@ -47,7 +47,10 @@
     "Add ABS sensor or hardware only when inspection shows damage.",
     "Mention that tires and bearings can create similar road-noise complaints."
   ],
-  "labor_range": { "min_hours": 1.5, "max_hours": 4.0 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "recommended_repairs": [
     {
       "title": "Suspension Inspection",

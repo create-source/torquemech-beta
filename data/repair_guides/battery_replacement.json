@@ -41,9 +41,16 @@
     "Recommend charging-system or parasitic-draw diagnosis when the failed-battery story is unclear.",
     "Add registration/reset labor only when the vehicle requires it."
   ],
-  "labor_range": { "min_hours": 0.2, "max_hours": 1.0 },
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 4.0
+  },
   "related_obd_codes": [
-    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+    {
+      "code": "P0562",
+      "title": "System voltage low",
+      "href": "/obd/p0562"
+    }
   ],
   "recommended_repairs": [
     {

@@ -48,9 +48,16 @@
     "Verify charging output, battery condition, cables, grounds, and main fuses before final approval.",
     "Recommend belt and tensioner inspection with every alternator estimate."
   ],
-  "labor_range": { "min_hours": 1.0, "max_hours": 3.0 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "related_obd_codes": [
-    { "code": "P0562", "title": "System voltage low", "href": "/obd/p0562" }
+    {
+      "code": "P0562",
+      "title": "System voltage low",
+      "href": "/obd/p0562"
+    }
   ],
   "recommended_repairs": [
     {

@@ -48,7 +48,10 @@
     "Inspect seized caliper hardware, slide pins, rotor condition, and brake fluid condition before final approval.",
     "Add caliper or brake-fluid service only when inspection supports it."
   ],
-  "labor_range": { "min_hours": 1.0, "max_hours": 2.5 },
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 4.0
+  },
   "recommended_repairs": [
     {
       "title": "Rotor Inspection",
@@ -89,7 +92,7 @@
   },
   "estimate": {
     "cta_label": "Estimate Brake Pad Replacement",
-    "service_code": "front_brake_pads_replacement",
+    "service_code": "brake_pad_replacement",
     "service_name": "Brake Pad Replacement",
     "estimator_link": "/estimator"
   }

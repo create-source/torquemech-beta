@@ -42,10 +42,21 @@
     "Quote extra labor when tank removal, rusted straps, or full fuel level complicates access.",
     "Add relay, filter, or control module only when testing supports it."
   ],
-  "labor_range": { "min_hours": 1.5, "max_hours": 5.0 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "related_obd_codes": [
-    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
-    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" }
+    {
+      "code": "P0171",
+      "title": "System too lean bank 1",
+      "href": "/obd/p0171"
+    },
+    {
+      "code": "P0174",
+      "title": "System too lean bank 2",
+      "href": "/obd/p0174"
+    }
   ],
   "recommended_repairs": [
     {

@@ -41,7 +41,10 @@
     "Mention leak repair if oil or coolant contamination caused belt failure.",
     "Pair with alternator, water pump, or A/C diagnosis only when the accessory symptom points there."
   ],
-  "labor_range": { "min_hours": 0.3, "max_hours": 1.2 },
+  "labor_range": {
+    "min_hours": 0.5,
+    "max_hours": 1.5
+  },
   "recommended_repairs": [
     {
       "title": "Alternator Blueprint",

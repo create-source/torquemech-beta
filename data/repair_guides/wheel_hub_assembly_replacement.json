@@ -41,7 +41,10 @@
     "Include ABS sensor context when the sensor is integrated into the hub.",
     "Do not add tires, brakes, or alignment unless inspection supports the related work."
   ],
-  "labor_range": { "min_hours": 1.2, "max_hours": 4.0 },
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 4.0
+  },
   "recommended_repairs": [
     {
       "title": "Wheel Bearing Blueprint",

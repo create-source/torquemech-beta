@@ -1,4 +1,4 @@
-﻿{
+{
   "slug": "brake-caliper-replacement",
   "title": "Brake Caliper Replacement",
   "category": "Brakes",
@@ -27,8 +27,8 @@
     "ABS hydraulic behavior"
   ],
   "labor_range": {
-    "min_hours": 1.0,
-    "max_hours": 3.0
+    "min_hours": 1.2,
+    "max_hours": 6.0
   },
   "labor_cost": {
     "min": 90,
@@ -60,9 +60,18 @@
     "Brake cleaner"
   ],
   "torque_specs": [
-    { "label": "Wheel lug nuts", "value": "Vehicle specific - load vehicle for exact spec" },
-    { "label": "Caliper bracket bolts", "value": "Vehicle specific - load vehicle for exact spec" },
-    { "label": "Brake hose banjo bolt", "value": "Vehicle specific - load vehicle for exact spec" }
+    {
+      "label": "Wheel lug nuts",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    },
+    {
+      "label": "Caliper bracket bolts",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    },
+    {
+      "label": "Brake hose banjo bolt",
+      "value": "Vehicle specific - load vehicle for exact spec"
+    }
   ],
   "repair_steps": [
     "Raise and support the vehicle safely.",

@@ -50,11 +50,31 @@
     "Skipping fuel-delivery testing when the lean condition is worse under load"
   ],
   "related_obd_codes": [
-    { "code": "P0171", "title": "System too lean bank 1", "href": "/obd/p0171" },
-    { "code": "P0174", "title": "System too lean bank 2", "href": "/obd/p0174" },
-    { "code": "P0101", "title": "Mass air flow circuit range/performance", "href": "/obd/p0101" },
-    { "code": "P0507", "title": "Idle speed higher than expected", "href": "/obd/p0507" },
-    { "code": "P0300", "title": "Random or multiple cylinder misfire", "href": "/obd/p0300" }
+    {
+      "code": "P0171",
+      "title": "System too lean bank 1",
+      "href": "/obd/p0171"
+    },
+    {
+      "code": "P0174",
+      "title": "System too lean bank 2",
+      "href": "/obd/p0174"
+    },
+    {
+      "code": "P0101",
+      "title": "Mass air flow circuit range/performance",
+      "href": "/obd/p0101"
+    },
+    {
+      "code": "P0507",
+      "title": "Idle speed higher than expected",
+      "href": "/obd/p0507"
+    },
+    {
+      "code": "P0300",
+      "title": "Random or multiple cylinder misfire",
+      "href": "/obd/p0300"
+    }
   ],
   "recommended_repairs": [
     {
@@ -89,6 +109,12 @@
   },
   "estimate": {
     "cta_label": "Open Estimator",
-    "estimator_link": "/estimator"
+    "estimator_link": "/estimator",
+    "service_code": "fuel_trim_diagnosis",
+    "service_name": "Fuel Trim Diagnosis"
+  },
+  "labor_range": {
+    "min_hours": 0.8,
+    "max_hours": 2.5
   }
 }

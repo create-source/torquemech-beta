@@ -48,7 +48,10 @@
     "Add ball joint, sway link, or tie rod only when inspection supports it.",
     "Quote both sides only when wear pattern or alignment evidence supports a paired repair."
   ],
-  "labor_range": { "min_hours": 1.2, "max_hours": 4.0 },
+  "labor_range": {
+    "min_hours": 1.2,
+    "max_hours": 6.0
+  },
   "recommended_repairs": [
     {
       "title": "Suspension Noise Diagnosis",

@@ -48,9 +48,16 @@
     "Use diagnostic time when sensor data and temperature behavior do not agree.",
     "Mention coolant bleeding considerations so comeback overheating or weak heat is avoided."
   ],
-  "labor_range": { "min_hours": 1.0, "max_hours": 3.0 },
+  "labor_range": {
+    "min_hours": 1.0,
+    "max_hours": 4.0
+  },
   "related_obd_codes": [
-    { "code": "P0128", "title": "Coolant temperature below thermostat regulating temperature", "href": "/obd/p0128" }
+    {
+      "code": "P0128",
+      "title": "Coolant temperature below thermostat regulating temperature",
+      "href": "/obd/p0128"
+    }
   ],
   "recommended_repairs": [
     {
