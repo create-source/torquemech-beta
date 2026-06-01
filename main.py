@@ -7507,6 +7507,8 @@ async def repair_guides_index(request: Request):
 
     for slug, guide in guides.items():
         category = str(guide.get("category") or "Other").title()
+        if category == "Steering And Suspension":
+            category = "Suspension"
         title = guide.get("title", slug.replace("-", " ").title())
         summary = guide.get("summary", "")
 
