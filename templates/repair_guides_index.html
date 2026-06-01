@@ -28,7 +28,10 @@
         &times;
       </button>
     </div>
-    <p id="repairGuideSearchEmpty" class="tm-repair-guide-empty" hidden>No repair guides found.</p>
+    <p id="repairGuideSearchEmpty" class="tm-repair-guide-empty" hidden>
+      No matching repair paths found.<br>
+      Try a system name, symptom, repair type, or service.
+    </p>
     <p id="repairGuideSearchCount" class="tm-repair-guide-count" aria-live="polite" hidden></p>
   </div>
 </section>
@@ -52,6 +55,13 @@
 </section>
 {% endif %}
 
+<section class="tm-section tm-repair-guide-group" data-guide-search-results hidden>
+  <div class="tm-card">
+    <h2>Search Results</h2>
+    <div class="tm-guide-grid" data-guide-search-grid></div>
+  </div>
+</section>
+
 {% for group in guide_groups %}
 <section class="tm-section tm-repair-guide-group" data-guide-group>
   <div class="tm-card">
@@ -63,7 +73,11 @@
         class="tm-guide-card"
         href="/repair-guides/{{ guide.slug }}"
         data-guide-card
-        data-search="{{ guide.title|default('', true)|lower }} {{ guide.summary|default('', true)|lower }} {{ guide.slug|default('', true)|replace('-', ' ')|lower }} {{ group.name|default('', true)|lower }} {{ guide.category|default('', true)|lower }} {{ guide.system|default('', true)|lower }} {% if guide.keywords %}{{ guide.keywords|join(' ')|lower }}{% endif %} {% if guide.search_terms %}{{ guide.search_terms|join(' ')|lower }}{% endif %} {% if guide.tags %}{{ guide.tags|join(' ')|lower }}{% endif %}"
+        data-title="{{ guide.title|default('', true)|e }}"
+        data-keywords="{{ ([guide.slug|default('', true)|replace('-', ' '), group.name|default('', true), guide.subcategory|default('', true), guide.service_name|default('', true), guide.service_code|default('', true)|replace('_', ' ')] + guide.keywords + guide.search_terms + guide.tags + guide.related_systems + guide.related_obd_codes)|join(' ')|e }}"
+        data-symptoms="{{ (guide.symptoms + guide.related_symptoms)|join(' ')|e }}"
+        data-related="{{ guide.recommended_repairs|join(' ')|e }}"
+        data-summary="{{ guide.summary|default('', true)|e }}"
       >
         {% if guide.difficulty %}
         <div class="tm-difficulty-badge">{{ guide.difficulty }}</div>
@@ -89,33 +103,150 @@
   const emptyState = document.getElementById("repairGuideSearchEmpty");
   const countState = document.getElementById("repairGuideSearchCount");
   const browseSection = document.querySelector("[data-guide-browse-section]");
+  const searchResultsSection = document.querySelector("[data-guide-search-results]");
+  const searchResultsGrid = document.querySelector("[data-guide-search-grid]");
   const cards = Array.from(document.querySelectorAll("[data-guide-card]"));
   const groups = Array.from(document.querySelectorAll("[data-guide-group]"));
 
   if (!input || !clearBtn || !cards.length) return;
 
-  const normalize = (value) => String(value || "").trim().toLowerCase();
+  const normalize = (value) => String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const tokenize = (value) => normalize(value).split(" ").filter((token) => token.length > 1);
+  const tokenAliases = {
+    dead: ["dead", "dies", "dying", "weak", "low", "jump"],
+    leak: ["leak", "leaks", "leaking", "loss"],
+    squeal: ["squeal", "squealing", "squeak", "squeaking"],
+  };
+
+  function tokenMatchesField(token, fieldValue) {
+    const aliases = tokenAliases[token] || [token];
+    const words = fieldValue.split(" ").filter(Boolean);
+    return aliases.some((alias) => words.some((word) => {
+      if (alias.length <= 3) return word === alias || word.startsWith(alias);
+      return word.includes(alias) || word.startsWith(alias);
+    }));
+  }
+
+  function tokenMatchCount(fieldValue, tokens) {
+    return tokens.filter((token) => tokenMatchesField(token, fieldValue)).length;
+  }
+
+  function phraseMatchesField(fieldValue, query, tokens) {
+    if (!query) return false;
+    if (tokens.length > 1) return fieldValue.includes(query);
+    return tokenMatchesField(query, fieldValue);
+  }
+
+  const preparedCards = cards.map((card, index) => {
+    const fields = {
+      title: normalize(card.dataset.title),
+      keywords: normalize(card.dataset.keywords),
+      symptoms: normalize(card.dataset.symptoms),
+      related: normalize(card.dataset.related),
+      summary: normalize(card.dataset.summary),
+    };
+    return {
+      card,
+      index,
+      originalParent: card.parentElement,
+      fields,
+      combined: Object.values(fields).join(" "),
+    };
+  });
+  const preparedGroups = groups.map((group, index) => ({
+    group,
+    index,
+    originalParent: group.parentElement,
+  }));
+
+  function fieldScore(fieldValue, query, tokens, baseScore) {
+    if (!fieldValue) return 0;
+    let score = 0;
+
+    const hasPhrase = phraseMatchesField(fieldValue, query, tokens);
+
+    if (fieldValue === query) {
+      score += baseScore + 900;
+    } else if (fieldValue.startsWith(query)) {
+      score += baseScore + 600;
+    } else if (hasPhrase) {
+      score += baseScore + 350;
+    }
+
+    const matchedTokens = tokenMatchCount(fieldValue, tokens);
+    if (matchedTokens) {
+      score += baseScore + (matchedTokens * 40);
+      if (matchedTokens === tokens.length) score += 120;
+    }
+
+    return score;
+  }
+
+  function scoreCard(prepared, query, tokens) {
+    if (!query) return 1;
+    const hasPhrase = phraseMatchesField(prepared.combined, query, tokens);
+    const matchedTokenCount = tokenMatchCount(prepared.combined, tokens);
+    const hasTokenMatch = tokens.length > 1
+      ? matchedTokenCount === tokens.length
+      : matchedTokenCount > 0;
+
+    if (!hasPhrase && !hasTokenMatch) {
+      return 0;
+    }
+
+    return Math.max(
+      fieldScore(prepared.fields.title, query, tokens, 8000),
+      fieldScore(prepared.fields.keywords, query, tokens, 7000),
+      fieldScore(prepared.fields.symptoms, query, tokens, 6000),
+      fieldScore(prepared.fields.related, query, tokens, 5000),
+      fieldScore(prepared.fields.summary, query, tokens, 2000)
+    );
+  }
 
   function updateFilter() {
     const query = normalize(input.value);
+    const tokens = tokenize(query);
     const isSearching = Boolean(query);
     let visibleCount = 0;
+    const rankedMatches = [];
 
-    cards.forEach((card) => {
-      const searchText = normalize(card.dataset.search);
-      const isVisible = !query || searchText.includes(query);
+    preparedCards.forEach((prepared) => {
+      const score = scoreCard(prepared, query, tokens);
+      const { card } = prepared;
+      const isVisible = !query || score > 0;
       card.hidden = !isVisible;
       card.classList.toggle("is-search-match", isSearching && isVisible);
       if (isVisible) visibleCount += 1;
+      if (isSearching && isVisible) {
+        rankedMatches.push({ ...prepared, score });
+      }
     });
 
-    groups.forEach((group) => {
-      const visibleInGroup = group.querySelector("[data-guide-card]:not([hidden])");
-      group.hidden = !visibleInGroup;
-    });
+    if (isSearching) {
+      rankedMatches
+        .sort((a, b) => b.score - a.score || a.index - b.index)
+        .forEach(({ card }) => searchResultsGrid.appendChild(card));
+      groups.forEach((group) => {
+        group.hidden = true;
+      });
+    } else {
+      preparedCards.forEach(({ card, originalParent }) => originalParent.appendChild(card));
+      preparedGroups.forEach(({ group, originalParent }) => originalParent.appendChild(group));
+      groups.forEach((group) => {
+        const visibleInGroup = group.querySelector("[data-guide-card]:not([hidden])");
+        group.hidden = !visibleInGroup;
+      });
+    }
 
     if (browseSection) {
       browseSection.hidden = isSearching;
+    }
+    if (searchResultsSection) {
+      searchResultsSection.hidden = !isSearching || visibleCount === 0;
     }
 
     clearBtn.hidden = !query;

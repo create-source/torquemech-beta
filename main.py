@@ -7511,6 +7511,50 @@ async def repair_guides_index(request: Request):
             category = "Suspension"
         title = guide.get("title", slug.replace("-", " ").title())
         summary = guide.get("summary", "")
+        estimate = guide.get("estimate") or {}
+        related_obd_codes = [
+            " ".join(
+                filter(
+                    None,
+                    [
+                        str(code.get("code") or "").strip(),
+                        str(code.get("title") or "").strip(),
+                    ],
+                )
+            )
+            for code in guide.get("related_obd_codes") or []
+            if isinstance(code, dict)
+        ]
+        related_symptoms = [
+            " ".join(
+                filter(
+                    None,
+                    [
+                        str(item.get("title") or "").strip(),
+                        str(item.get("description") or "").strip(),
+                    ],
+                )
+            )
+            for item in guide.get("related_symptoms") or []
+            if isinstance(item, dict)
+        ]
+        recommended_repairs = [
+            " ".join(
+                filter(
+                    None,
+                    [
+                        str(item.get("title") or "").strip(),
+                        str(item.get("description") or "").strip(),
+                    ],
+                )
+            )
+            for item in (
+                list(guide.get("recommended_repairs") or [])
+                + list(guide.get("recommended_while_replacing") or [])
+                + list(guide.get("bundled_repair_suggestions") or [])
+            )
+            if isinstance(item, dict)
+        ]
 
         item = {
             "slug": slug,
@@ -7518,6 +7562,17 @@ async def repair_guides_index(request: Request):
             "summary": summary,
             "difficulty": guide.get("difficulty", ""),
             "sort_order": guide.get("sort_order", 999),
+            "subcategory": guide.get("subcategory", ""),
+            "keywords": guide.get("keywords") or [],
+            "search_terms": guide.get("search_terms") or [],
+            "tags": guide.get("tags") or [],
+            "symptoms": guide.get("symptoms") or [],
+            "related_systems": guide.get("related_systems") or [],
+            "related_symptoms": related_symptoms,
+            "related_obd_codes": related_obd_codes,
+            "recommended_repairs": recommended_repairs,
+            "service_name": estimate.get("service_name") if isinstance(estimate, dict) else "",
+            "service_code": estimate.get("service_code") if isinstance(estimate, dict) else "",
         }
 
         if category in grouped_guides:
