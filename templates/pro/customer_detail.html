@@ -4,18 +4,101 @@
 
 {% block page_css %}
 <style>
-  .tm-crm-grid {
+  .tm-crm-workspace {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.7fr);
-    gap: 18px;
-    align-items: start;
+    gap: 16px;
   }
 
+  .tm-crm-customer-card,
   .tm-crm-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.94);
     padding: 18px;
+  }
+
+  .tm-crm-customer-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: start;
+    border-left: 5px solid #0e7490;
+  }
+
+  .tm-crm-contact {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .tm-crm-chip {
+    border: 1px solid rgba(14, 116, 144, 0.22);
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-weight: 800;
+    padding: 6px 10px;
+  }
+
+  .tm-crm-notes {
+    color: #475569;
+    margin-top: 12px;
+  }
+
+  .tm-crm-section-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .tm-crm-section-head h2 {
+    margin: 0;
+  }
+
+  .tm-crm-vehicle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+  }
+
+  .tm-crm-vehicle {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #334155;
+    border-radius: 8px;
+    padding: 16px;
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+    min-height: 136px;
+  }
+
+  .tm-crm-vehicle:hover {
+    border-color: rgba(14, 116, 144, 0.48);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .tm-crm-vehicle-title {
+    font-weight: 900;
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .tm-crm-meta {
+    color: #64748b;
+    font-size: 0.92rem;
+  }
+
+  .tm-crm-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
   }
 
   .tm-crm-row {
@@ -24,39 +107,25 @@
     gap: 12px;
   }
 
-  .tm-crm-list {
-    display: grid;
-    gap: 10px;
-    margin-top: 14px;
+  .tm-crm-disclosure summary {
+    cursor: pointer;
+    font-weight: 900;
+    color: #0f172a;
   }
 
-  .tm-crm-vehicle {
-    display: block;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    border-radius: 8px;
-    padding: 14px;
-    background: #fff;
-    color: inherit;
-    text-decoration: none;
+  .tm-crm-disclosure[open] summary {
+    margin-bottom: 14px;
   }
 
-  .tm-crm-vehicle:hover {
-    border-color: rgba(14, 116, 144, 0.45);
-  }
-
-  .tm-crm-name {
-    font-weight: 800;
-  }
-
-  .tm-crm-meta {
-    color: #64748b;
-    font-size: 0.92rem;
-  }
-
-  @media (max-width: 840px) {
-    .tm-crm-grid,
+  @media (max-width: 760px) {
+    .tm-crm-customer-card,
     .tm-crm-row {
       grid-template-columns: 1fr;
+    }
+
+    .tm-crm-section-head {
+      align-items: flex-start;
+      flex-direction: column;
     }
   }
 </style>
@@ -68,112 +137,135 @@
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}</h1>
-      <p class="tm-pro-subtitle">Customer record and saved vehicles.</p>
+      <p class="tm-pro-subtitle">Customer workspace.</p>
     </div>
     <a class="tm-btn tm-btn-secondary" href="/pro/customers">Back to Customers</a>
   </div>
 
-  <div class="tm-crm-grid">
-    <div class="tm-crm-panel">
-      <form method="post" action="/pro/customers/{{ customer.id }}">
-        <h2 style="margin-top:0;">Edit Customer</h2>
-        <div class="tm-crm-row">
-          <div>
-            <label class="tm-label" for="first_name">First name</label>
-            <input class="tm-input" id="first_name" name="first_name" type="text" value="{{ customer.first_name or '' }}" maxlength="120" autocomplete="given-name">
-          </div>
-          <div>
-            <label class="tm-label" for="last_name">Last name</label>
-            <input class="tm-input" id="last_name" name="last_name" type="text" value="{{ customer.last_name or '' }}" maxlength="120" autocomplete="family-name">
-          </div>
+  <div class="tm-crm-workspace">
+    <section class="tm-crm-customer-card" aria-label="Customer information">
+      <div>
+        <div class="tm-crm-kicker">Customer</div>
+        <div class="tm-crm-contact">
+          <span class="tm-crm-chip">{{ customer.phone or "No phone" }}</span>
+          {% if customer.email %}
+          <span class="tm-crm-chip">{{ customer.email }}</span>
+          {% endif %}
+          <span class="tm-crm-chip">{{ vehicles|length }} vehicle{% if vehicles|length != 1 %}s{% endif %}</span>
         </div>
-
-        <div class="tm-crm-row" style="margin-top:12px;">
-          <div>
-            <label class="tm-label" for="phone">Phone</label>
-            <input class="tm-input" id="phone" name="phone" type="tel" value="{{ customer.phone or '' }}" maxlength="80" autocomplete="tel">
+        {% if customer.notes %}
+        <div class="tm-crm-notes">{{ customer.notes }}</div>
+        {% endif %}
+      </div>
+      <details class="tm-crm-disclosure">
+        <summary>Edit Customer</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}">
+          <div class="tm-crm-row">
+            <div>
+              <label class="tm-label" for="first_name">First name</label>
+              <input class="tm-input" id="first_name" name="first_name" type="text" value="{{ customer.first_name or '' }}" maxlength="120" autocomplete="given-name">
+            </div>
+            <div>
+              <label class="tm-label" for="last_name">Last name</label>
+              <input class="tm-input" id="last_name" name="last_name" type="text" value="{{ customer.last_name or '' }}" maxlength="120" autocomplete="family-name">
+            </div>
           </div>
-          <div>
-            <label class="tm-label" for="email">Email</label>
-            <input class="tm-input" id="email" name="email" type="email" value="{{ customer.email or '' }}" maxlength="160" autocomplete="email">
+
+          <div class="tm-crm-row" style="margin-top:12px;">
+            <div>
+              <label class="tm-label" for="phone">Phone</label>
+              <input class="tm-input" id="phone" name="phone" type="tel" value="{{ customer.phone or '' }}" maxlength="80" autocomplete="tel">
+            </div>
+            <div>
+              <label class="tm-label" for="email">Email</label>
+              <input class="tm-input" id="email" name="email" type="email" value="{{ customer.email or '' }}" maxlength="160" autocomplete="email">
+            </div>
           </div>
+
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="customer_notes">Notes</label>
+            <textarea class="tm-input" id="customer_notes" name="notes" rows="3" maxlength="1200">{{ customer.notes or "" }}</textarea>
+          </div>
+
+          <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Customer</button>
+        </form>
+      </details>
+    </section>
+
+    <section class="tm-crm-panel" aria-label="Customer vehicles">
+      <div class="tm-crm-section-head">
+        <div>
+          <div class="tm-crm-kicker">Vehicles</div>
+          <h2>Vehicle Workspace</h2>
         </div>
+        <details class="tm-crm-disclosure">
+          <summary>Add Vehicle</summary>
+          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles">
+            <div class="tm-crm-row">
+              <div>
+                <label class="tm-label" for="year">Year</label>
+                <input class="tm-input" id="year" name="year" type="number" min="1900" max="2100" step="1">
+              </div>
+              <div>
+                <label class="tm-label" for="make">Make</label>
+                <input class="tm-input" id="make" name="make" type="text" maxlength="120">
+              </div>
+            </div>
 
-        <div style="margin-top:12px;">
-          <label class="tm-label" for="customer_notes">Notes</label>
-          <textarea class="tm-input" id="customer_notes" name="notes" rows="4" maxlength="1200">{{ customer.notes or "" }}</textarea>
-        </div>
+            <div class="tm-crm-row" style="margin-top:12px;">
+              <div>
+                <label class="tm-label" for="model">Model</label>
+                <input class="tm-input" id="model" name="model" type="text" maxlength="120">
+              </div>
+              <div>
+                <label class="tm-label" for="engine">Engine</label>
+                <input class="tm-input" id="engine" name="engine" type="text" maxlength="160">
+              </div>
+            </div>
 
-        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Customer</button>
-      </form>
+            <div class="tm-crm-row" style="margin-top:12px;">
+              <div>
+                <label class="tm-label" for="vin">VIN</label>
+                <input class="tm-input" id="vin" name="vin" type="text" maxlength="32">
+              </div>
+              <div>
+                <label class="tm-label" for="mileage">Mileage</label>
+                <input class="tm-input" id="mileage" name="mileage" type="number" min="0" step="1">
+              </div>
+            </div>
 
-      <h2>Vehicles</h2>
-      <div class="tm-crm-list">
-        {% if vehicles %}
-          {% for vehicle in vehicles %}
-          <a class="tm-crm-vehicle" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
-            <div class="tm-crm-name">
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="notes">Notes</label>
+              <textarea class="tm-input" id="notes" name="notes" rows="3" maxlength="1200"></textarea>
+            </div>
+
+            <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Vehicle</button>
+          </form>
+        </details>
+      </div>
+
+      {% if vehicles %}
+      <div class="tm-crm-vehicle-grid">
+        {% for vehicle in vehicles %}
+        <a class="tm-crm-vehicle" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
+          <div>
+            <div class="tm-crm-vehicle-title">
               {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
             </div>
             <div class="tm-crm-meta">
-              {% if vehicle.engine %}Engine: {{ vehicle.engine }}{% else %}Engine not recorded{% endif %}
+              {% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}
             </div>
-            <div class="tm-crm-meta">
-              {% if vehicle.vin %}VIN: {{ vehicle.vin }}{% endif %}
-              {% if vehicle.mileage %}{% if vehicle.vin %} &middot; {% endif %}Mileage: {{ vehicle.mileage }}{% endif %}
-            </div>
-            {% if vehicle.notes %}
-            <div class="tm-crm-meta">{{ vehicle.notes }}</div>
-            {% endif %}
-          </a>
-          {% endfor %}
-        {% else %}
-          <div class="tm-crm-meta">No vehicles saved for this customer yet.</div>
-        {% endif %}
+          </div>
+          <div class="tm-crm-meta">
+            {% if vehicle.mileage %}{{ vehicle.mileage }} miles{% else %}Mileage not recorded{% endif %}
+          </div>
+        </a>
+        {% endfor %}
       </div>
-    </div>
-
-    <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles">
-      <h2 style="margin-top:0;">Add Vehicle</h2>
-      <div class="tm-crm-row">
-        <div>
-          <label class="tm-label" for="year">Year</label>
-          <input class="tm-input" id="year" name="year" type="number" min="1900" max="2100" step="1">
-        </div>
-        <div>
-          <label class="tm-label" for="make">Make</label>
-          <input class="tm-input" id="make" name="make" type="text" maxlength="120">
-        </div>
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="model">Model</label>
-          <input class="tm-input" id="model" name="model" type="text" maxlength="120">
-        </div>
-        <div>
-          <label class="tm-label" for="engine">Engine</label>
-          <input class="tm-input" id="engine" name="engine" type="text" maxlength="160">
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="vin">VIN</label>
-        <input class="tm-input" id="vin" name="vin" type="text" maxlength="32">
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="mileage">Mileage</label>
-        <input class="tm-input" id="mileage" name="mileage" type="number" min="0" step="1">
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="notes">Notes</label>
-        <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200"></textarea>
-      </div>
-
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Vehicle</button>
-    </form>
+      {% else %}
+      <div class="tm-crm-meta">No vehicles saved for this customer yet.</div>
+      {% endif %}
+    </section>
   </div>
 </section>
 {% endblock %}

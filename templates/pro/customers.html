@@ -4,55 +4,85 @@
 
 {% block page_css %}
 <style>
-  .tm-crm-grid {
+  .tm-crm-shell {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-    gap: 18px;
-    align-items: start;
+    gap: 16px;
   }
 
-  .tm-crm-panel {
+  .tm-crm-toolbar,
+  .tm-crm-add {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.92);
-    padding: 18px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 14px;
   }
 
-  .tm-crm-row {
+  .tm-crm-toolbar {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
+    align-items: center;
   }
 
-  .tm-crm-actions {
+  .tm-crm-search {
     display: flex;
     gap: 10px;
     align-items: center;
-    flex-wrap: wrap;
+    min-width: 0;
   }
 
-  .tm-crm-list {
-    display: grid;
-    gap: 10px;
-    margin-top: 14px;
+  .tm-crm-search .tm-input {
+    min-width: 220px;
   }
 
-  .tm-crm-customer {
+  .tm-crm-count {
+    color: #64748b;
+    font-size: 0.92rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .tm-crm-cards {
     display: grid;
-    gap: 4px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .tm-crm-card {
+    display: grid;
+    gap: 12px;
+    min-height: 132px;
     border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #0e7490;
     border-radius: 8px;
-    padding: 14px;
+    padding: 16px;
     text-decoration: none;
     color: inherit;
     background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
   }
 
-  .tm-crm-customer:hover {
-    border-color: rgba(14, 116, 144, 0.45);
+  .tm-crm-card:hover {
+    border-color: rgba(14, 116, 144, 0.5);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.09);
+    transform: translateY(-1px);
+  }
+
+  .tm-crm-card__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
   }
 
   .tm-crm-name {
+    font-size: 1.05rem;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .tm-crm-phone {
+    color: #334155;
     font-weight: 800;
   }
 
@@ -61,10 +91,59 @@
     font-size: 0.92rem;
   }
 
-  @media (max-width: 840px) {
-    .tm-crm-grid,
+  .tm-crm-badge {
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
+    white-space: nowrap;
+  }
+
+  .tm-crm-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    padding: 20px;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.78);
+  }
+
+  .tm-crm-add summary {
+    cursor: pointer;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .tm-crm-add[open] summary {
+    margin-bottom: 14px;
+  }
+
+  .tm-crm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 760px) {
+    .tm-crm-toolbar,
+    .tm-crm-search,
     .tm-crm-row {
       grid-template-columns: 1fr;
+      display: grid;
+    }
+
+    .tm-crm-search .tm-input {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .tm-crm-toolbar .tm-btn {
+      width: 100%;
+    }
+
+    .tm-crm-card {
+      min-height: 0;
     }
   }
 </style>
@@ -76,73 +155,80 @@
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">Customers</h1>
-      <p class="tm-pro-subtitle">Search, create, and open saved customer records.</p>
+      <p class="tm-pro-subtitle">Find the customer, open the vehicle, keep moving.</p>
     </div>
     <a class="tm-btn tm-btn-secondary" href="/pro">Back to CRM</a>
   </div>
 
-  <div class="tm-crm-grid">
-    <div class="tm-crm-panel">
-      <form method="get" action="/pro/customers" class="tm-crm-actions" role="search">
+  <div class="tm-crm-shell">
+    <div class="tm-crm-toolbar">
+      <form method="get" action="/pro/customers" class="tm-crm-search" role="search">
         <input class="tm-input" type="search" name="q" value="{{ q }}" placeholder="Search name, phone, or email" aria-label="Search customers">
         <button class="tm-btn tm-btn-primary" type="submit">Search</button>
         {% if q %}
         <a class="tm-btn tm-btn-secondary" href="/pro/customers">Clear</a>
         {% endif %}
       </form>
-
-      <div class="tm-crm-list">
-        {% if customers %}
-          {% for customer in customers %}
-          <a class="tm-crm-customer" href="/pro/customers/{{ customer.id }}">
-            <div class="tm-crm-name">
-              {{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}
-            </div>
-            <div class="tm-crm-meta">
-              {{ customer.phone or "No phone" }}{% if customer.email %} &middot; {{ customer.email }}{% endif %}
-            </div>
-            <div class="tm-crm-meta">
-              {{ customer.vehicle_count }} vehicle{% if customer.vehicle_count != 1 %}s{% endif %}
-            </div>
-          </a>
-          {% endfor %}
-        {% else %}
-          <div class="tm-crm-meta">No customers found.</div>
-        {% endif %}
-      </div>
+      <div class="tm-crm-count">{{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}</div>
     </div>
 
-    <form class="tm-crm-panel" method="post" action="/pro/customers">
-      <h2 style="margin-top:0;">Add Customer</h2>
-      <div class="tm-crm-row">
-        <div>
-          <label class="tm-label" for="first_name">First name</label>
-          <input class="tm-input" id="first_name" name="first_name" type="text" maxlength="120" autocomplete="given-name">
-        </div>
-        <div>
-          <label class="tm-label" for="last_name">Last name</label>
-          <input class="tm-input" id="last_name" name="last_name" type="text" maxlength="120" autocomplete="family-name">
-        </div>
-      </div>
+    <div class="tm-crm-cards">
+      {% if customers %}
+        {% for customer in customers %}
+        <a class="tm-crm-card" href="/pro/customers/{{ customer.id }}">
+          <div class="tm-crm-card__top">
+            <div>
+              <div class="tm-crm-name">{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}</div>
+              <div class="tm-crm-phone">{{ customer.phone or "No phone recorded" }}</div>
+            </div>
+            <span class="tm-crm-badge">{{ customer.vehicle_count }} vehicle{% if customer.vehicle_count != 1 %}s{% endif %}</span>
+          </div>
+          {% if customer.email %}
+          <div class="tm-crm-meta">{{ customer.email }}</div>
+          {% endif %}
+          {% if customer.notes %}
+          <div class="tm-crm-meta">{{ customer.notes }}</div>
+          {% endif %}
+        </a>
+        {% endfor %}
+      {% else %}
+        <div class="tm-crm-empty">No customers found.</div>
+      {% endif %}
+    </div>
 
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="phone">Phone</label>
-          <input class="tm-input" id="phone" name="phone" type="tel" maxlength="80" autocomplete="tel">
+    <details class="tm-crm-add">
+      <summary>Add Customer</summary>
+      <form method="post" action="/pro/customers">
+        <div class="tm-crm-row">
+          <div>
+            <label class="tm-label" for="first_name">First name</label>
+            <input class="tm-input" id="first_name" name="first_name" type="text" maxlength="120" autocomplete="given-name">
+          </div>
+          <div>
+            <label class="tm-label" for="last_name">Last name</label>
+            <input class="tm-input" id="last_name" name="last_name" type="text" maxlength="120" autocomplete="family-name">
+          </div>
         </div>
-        <div>
-          <label class="tm-label" for="email">Email</label>
-          <input class="tm-input" id="email" name="email" type="email" maxlength="160" autocomplete="email">
+
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="phone">Phone</label>
+            <input class="tm-input" id="phone" name="phone" type="tel" maxlength="80" autocomplete="tel">
+          </div>
+          <div>
+            <label class="tm-label" for="email">Email</label>
+            <input class="tm-input" id="email" name="email" type="email" maxlength="160" autocomplete="email">
+          </div>
         </div>
-      </div>
 
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="notes">Notes</label>
-        <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200"></textarea>
-      </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="notes">Notes</label>
+          <textarea class="tm-input" id="notes" name="notes" rows="3" maxlength="1200"></textarea>
+        </div>
 
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Create Customer</button>
-    </form>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Create Customer</button>
+      </form>
+    </details>
   </div>
 </section>
 {% endblock %}

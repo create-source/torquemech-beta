@@ -4,18 +4,48 @@
 
 {% block page_css %}
 <style>
+  .tm-crm-vehicle-summary,
   .tm-crm-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.94);
     padding: 18px;
-    max-width: 860px;
+    max-width: 920px;
+  }
+
+  .tm-crm-vehicle-summary {
+    display: grid;
+    gap: 12px;
+    border-left: 5px solid #334155;
+    margin-bottom: 16px;
+  }
+
+  .tm-crm-chip-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tm-crm-chip {
+    border: 1px solid rgba(14, 116, 144, 0.22);
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-weight: 800;
+    padding: 6px 10px;
   }
 
   .tm-crm-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+  }
+
+  .tm-crm-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
   }
 
   @media (max-width: 760px) {
@@ -33,11 +63,25 @@
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</h1>
       <p class="tm-pro-subtitle">
-        Vehicle for {{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}.
+        {{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}
       </p>
     </div>
     <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}">Back to Customer</a>
   </div>
+
+  <section class="tm-crm-vehicle-summary" aria-label="Vehicle summary">
+    <div class="tm-crm-kicker">Vehicle</div>
+    <div class="tm-crm-chip-row">
+      <span class="tm-crm-chip">{% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}</span>
+      <span class="tm-crm-chip">{% if vehicle.mileage %}{{ vehicle.mileage }} miles{% else %}Mileage not recorded{% endif %}</span>
+      {% if vehicle.vin %}
+      <span class="tm-crm-chip">VIN {{ vehicle.vin }}</span>
+      {% endif %}
+    </div>
+    {% if vehicle.notes %}
+    <div style="color:#475569;">{{ vehicle.notes }}</div>
+    {% endif %}
+  </section>
 
   <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
     <h2 style="margin-top:0;">Edit Vehicle</h2>
@@ -64,19 +108,20 @@
       </div>
     </div>
 
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="vin">VIN</label>
-      <input class="tm-input" id="vin" name="vin" type="text" maxlength="32" value="{{ vehicle.vin or '' }}">
-    </div>
-
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="mileage">Mileage</label>
-      <input class="tm-input" id="mileage" name="mileage" type="number" min="0" step="1" value="{{ vehicle.mileage or '' }}">
+    <div class="tm-crm-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="vin">VIN</label>
+        <input class="tm-input" id="vin" name="vin" type="text" maxlength="32" value="{{ vehicle.vin or '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="mileage">Mileage</label>
+        <input class="tm-input" id="mileage" name="mileage" type="number" min="0" step="1" value="{{ vehicle.mileage or '' }}">
+      </div>
     </div>
 
     <div style="margin-top:12px;">
       <label class="tm-label" for="notes">Notes</label>
-      <textarea class="tm-input" id="notes" name="notes" rows="5" maxlength="1200">{{ vehicle.notes or "" }}</textarea>
+      <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200">{{ vehicle.notes or "" }}</textarea>
     </div>
 
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
