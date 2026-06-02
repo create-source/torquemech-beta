@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+
+{% block title %}Service History | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-crm-summary,
+  .tm-crm-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 18px;
+    max-width: 920px;
+  }
+
+  .tm-crm-summary {
+    border-left: 5px solid #0e7490;
+    margin-bottom: 16px;
+  }
+
+  .tm-crm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .tm-crm-chip-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .tm-crm-chip {
+    border: 1px solid rgba(14, 116, 144, 0.22);
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-weight: 800;
+    padding: 6px 10px;
+  }
+
+  .tm-crm-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 760px) {
+    .tm-crm-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">{{ history.service_title or "Service entry" }}</h1>
+      <p class="tm-pro-subtitle">
+        {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
+      </p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">Back to Vehicle</a>
+  </div>
+
+  <section class="tm-crm-summary" aria-label="Service history summary">
+    <div class="tm-crm-kicker">Service Record</div>
+    <div class="tm-crm-chip-row">
+      <span class="tm-crm-chip">{{ history.service_date or "No date" }}</span>
+      {% if history.mileage_at_service %}
+      <span class="tm-crm-chip">{{ history.mileage_at_service }} miles</span>
+      {% endif %}
+      {% if history.estimate_total is not none %}
+      <span class="tm-crm-chip">Est. ${{ "%.2f"|format(history.estimate_total) }}</span>
+      {% endif %}
+      {% if history.actual_total is not none %}
+      <span class="tm-crm-chip">Actual ${{ "%.2f"|format(history.actual_total) }}</span>
+      {% endif %}
+    </div>
+    {% if history.service_notes %}
+    <div style="color:#475569; margin-top:12px;">{{ history.service_notes }}</div>
+    {% endif %}
+  </section>
+
+  <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ history.id }}">
+    <h2 style="margin-top:0;">Edit Service History</h2>
+
+    <div class="tm-crm-row">
+      <div>
+        <label class="tm-label" for="service_date">Service date</label>
+        <input class="tm-input" id="service_date" name="service_date" type="date" value="{{ history.service_date or '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="mileage_at_service">Mileage</label>
+        <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="number" min="0" step="1" value="{{ history.mileage_at_service or '' }}">
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="service_title">Service/repair title</label>
+      <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180" value="{{ history.service_title or '' }}">
+    </div>
+
+    <div class="tm-crm-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="estimate_total">Estimated cost</label>
+        <input class="tm-input" id="estimate_total" name="estimate_total" type="number" min="0" step="0.01" value="{{ history.estimate_total if history.estimate_total is not none else '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="actual_total">Actual cost</label>
+        <input class="tm-input" id="actual_total" name="actual_total" type="number" min="0" step="0.01" value="{{ history.actual_total if history.actual_total is not none else '' }}">
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="service_notes">Notes</label>
+      <textarea class="tm-input" id="service_notes" name="service_notes" rows="5" maxlength="1600">{{ history.service_notes or "" }}</textarea>
+    </div>
+
+    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save History Entry</button>
+  </form>
+</section>
+{% endblock %}

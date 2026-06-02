@@ -354,6 +354,7 @@ def init_pro_crm_schema_db() -> None:
               mileage_at_service INTEGER,
               service_date TEXT NOT NULL,
               estimate_total REAL,
+              actual_total REAL,
               status TEXT NOT NULL CHECK (status IN ('estimate', 'approved', 'completed', 'declined')),
               customer_authorized_at TEXT,
               customer_authorized_by TEXT,
@@ -371,6 +372,7 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("service_history", "customer_authorized_by", "customer_authorized_by TEXT")
         add_column_if_missing("service_history", "authorization_notes", "authorization_notes TEXT")
         add_column_if_missing("service_history", "discrepancy_notes", "discrepancy_notes TEXT")
+        add_column_if_missing("service_history", "actual_total", "actual_total REAL")
         add_column_if_missing("service_history", "created_at", "created_at TEXT")
         add_column_if_missing("service_history", "updated_at", "updated_at TEXT")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_customer_id ON service_history (customer_id)")

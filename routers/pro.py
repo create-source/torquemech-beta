@@ -62,6 +62,39 @@ def optional_int(form: dict[str, str], name: str) -> int | None:
         return None
 
 
+def optional_float(form: dict[str, str], name: str) -> float | None:
+    raw = form.get(name, "")
+    if not raw:
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
+def load_customer_vehicle(
+    conn: sqlite3.Connection, customer_id: int, vehicle_id: int
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    customer = row_to_dict(
+        conn.execute("SELECT * FROM customers WHERE id = ?", (customer_id,)).fetchone()
+    )
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    vehicle = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM customer_vehicles
+            WHERE id = ? AND customer_id = ?
+            """,
+            (vehicle_id, customer_id),
+        ).fetchone()
+    )
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    return customer, vehicle
+
+
 @router.get("", response_class=HTMLResponse)
 def pro_dashboard(request: Request):
     return templates.TemplateResponse(
@@ -260,23 +293,19 @@ async def pro_customer_vehicle_create(request: Request, customer_id: int):
 def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: int):
     conn = crm_db_conn()
     try:
-        customer = row_to_dict(
-            conn.execute("SELECT * FROM customers WHERE id = ?", (customer_id,)).fetchone()
-        )
-        if not customer:
-            raise HTTPException(status_code=404, detail="Customer not found")
-        vehicle = row_to_dict(
-            conn.execute(
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        service_history = [
+            dict(row)
+            for row in conn.execute(
                 """
                 SELECT *
-                FROM customer_vehicles
-                WHERE id = ? AND customer_id = ?
+                FROM service_history
+                WHERE customer_id = ? AND vehicle_id = ?
+                ORDER BY service_date DESC, id DESC
                 """,
-                (vehicle_id, customer_id),
-            ).fetchone()
-        )
-        if not vehicle:
-            raise HTTPException(status_code=404, detail="Vehicle not found")
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
     finally:
         conn.close()
 
@@ -286,6 +315,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "request": request,
             "customer": customer,
             "vehicle": vehicle,
+            "service_history": service_history,
         },
     )
 
@@ -331,3 +361,117 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
     finally:
         conn.close()
     return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/history")
+async def pro_service_history_create(request: Request, customer_id: int, vehicle_id: int):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        conn.execute(
+            """
+            INSERT INTO service_history (
+              customer_id, vehicle_id, service_title, service_notes,
+              mileage_at_service, service_date, estimate_total, actual_total,
+              status, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)
+            """,
+            (
+                customer_id,
+                vehicle_id,
+                form.get("service_title", ""),
+                form.get("service_notes", ""),
+                optional_int(form, "mileage_at_service"),
+                form.get("service_date", ""),
+                optional_float(form, "estimate_total"),
+                optional_float(form, "actual_total"),
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+
+
+@router.get("/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}", response_class=HTMLResponse)
+def pro_service_history_detail(
+    request: Request, customer_id: int, vehicle_id: int, history_id: int
+):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        history = row_to_dict(
+            conn.execute(
+                """
+                SELECT *
+                FROM service_history
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (history_id, customer_id, vehicle_id),
+            ).fetchone()
+        )
+        if not history:
+            raise HTTPException(status_code=404, detail="Service history not found")
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/service_history_detail.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "history": history,
+        },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}")
+async def pro_service_history_update(
+    request: Request, customer_id: int, vehicle_id: int, history_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        cur = conn.execute(
+            """
+            UPDATE service_history
+            SET
+              service_title = ?,
+              service_notes = ?,
+              mileage_at_service = ?,
+              service_date = ?,
+              estimate_total = ?,
+              actual_total = ?,
+              updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("service_title", ""),
+                form.get("service_notes", ""),
+                optional_int(form, "mileage_at_service"),
+                form.get("service_date", ""),
+                optional_float(form, "estimate_total"),
+                optional_float(form, "actual_total"),
+                now,
+                history_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Service history not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}",
+        status_code=303,
+    )

@@ -48,6 +48,64 @@
     text-transform: uppercase;
   }
 
+  .tm-history-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-history-item {
+    display: grid;
+    gap: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #0e7490;
+    border-radius: 8px;
+    background: #fff;
+    color: inherit;
+    padding: 14px;
+    text-decoration: none;
+  }
+
+  .tm-history-item:hover {
+    border-color: rgba(14, 116, 144, 0.48);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  }
+
+  .tm-history-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .tm-history-title {
+    font-weight: 900;
+  }
+
+  .tm-history-date {
+    color: #0f766e;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .tm-history-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    padding: 16px;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.78);
+  }
+
+  .tm-crm-disclosure summary {
+    cursor: pointer;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .tm-crm-disclosure[open] summary {
+    margin-bottom: 14px;
+  }
+
   @media (max-width: 760px) {
     .tm-crm-row {
       grid-template-columns: 1fr;
@@ -126,5 +184,78 @@
 
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
   </form>
+
+  <section class="tm-crm-panel" aria-label="Service history" style="margin-top:16px;">
+    <div class="tm-crm-kicker">History</div>
+    <h2 style="margin:4px 0 0;">Service History</h2>
+
+    {% if service_history %}
+    <div class="tm-history-list">
+      {% for item in service_history %}
+      <a class="tm-history-item" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ item.id }}">
+        <div class="tm-history-head">
+          <div class="tm-history-title">{{ item.service_title or "Service entry" }}</div>
+          <div class="tm-history-date">{{ item.service_date or "No date" }}</div>
+        </div>
+        <div style="color:#475569;">{{ item.service_notes or "No notes recorded." }}</div>
+        <div class="tm-crm-chip-row">
+          {% if item.mileage_at_service %}
+          <span class="tm-crm-chip">{{ item.mileage_at_service }} miles</span>
+          {% endif %}
+          {% if item.estimate_total is not none %}
+          <span class="tm-crm-chip">Est. ${{ "%.2f"|format(item.estimate_total) }}</span>
+          {% endif %}
+          {% if item.actual_total is not none %}
+          <span class="tm-crm-chip">Actual ${{ "%.2f"|format(item.actual_total) }}</span>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No service history recorded for this vehicle yet.
+    </div>
+    {% endif %}
+  </section>
+
+  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
+    <summary>Add Service History</summary>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history">
+      <div class="tm-crm-row">
+        <div>
+          <label class="tm-label" for="service_date">Service date</label>
+          <input class="tm-input" id="service_date" name="service_date" type="date">
+        </div>
+        <div>
+          <label class="tm-label" for="mileage_at_service">Mileage</label>
+          <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="number" min="0" step="1">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="service_title">Service/repair title</label>
+        <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180">
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="estimate_total">Estimated cost</label>
+          <input class="tm-input" id="estimate_total" name="estimate_total" type="number" min="0" step="0.01">
+        </div>
+        <div>
+          <label class="tm-label" for="actual_total">Actual cost</label>
+          <input class="tm-input" id="actual_total" name="actual_total" type="number" min="0" step="0.01">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="service_notes">Notes</label>
+        <textarea class="tm-input" id="service_notes" name="service_notes" rows="4" maxlength="1600"></textarea>
+      </div>
+
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add History Entry</button>
+    </form>
+  </details>
 </section>
 {% endblock %}
