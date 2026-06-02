@@ -22,7 +22,6 @@ from fastapi import (
 )
 
 from routers.knowledge import router as knowledge_router
-from routers.pro import router as pro_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
@@ -279,6 +278,110 @@ def init_shop_profile_db() -> None:
             )
             """
         )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def init_pro_crm_schema_db() -> None:
+    """Create dormant Pro CRM tables without exposing CRM behavior in Beta."""
+    conn = app_db_conn()
+    try:
+        # Pro groundwork: shared-schema CRM tables for future shop/tenant isolation.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS customers (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              shop_id INTEGER,
+              first_name TEXT,
+              last_name TEXT,
+              phone TEXT,
+              email TEXT,
+              notes TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_shop_id ON customers (shop_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers (phone)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_email ON customers (email)")
+
+        # Pro groundwork: customer vehicle records remain tenant-ready via shop_id.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS customer_vehicles (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              customer_id INTEGER NOT NULL,
+              shop_id INTEGER,
+              year INTEGER,
+              make TEXT,
+              model TEXT,
+              engine TEXT,
+              vin TEXT,
+              license_plate TEXT,
+              mileage INTEGER,
+              notes TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY (customer_id) REFERENCES customers(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_vehicles_customer_id ON customer_vehicles (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_vehicles_shop_id ON customer_vehicles (shop_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_vehicles_vin ON customer_vehicles (vin)")
+
+        # Pro groundwork: historical service records for future CRM modules only.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS service_history (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              shop_id INTEGER,
+              service_title TEXT,
+              service_notes TEXT,
+              mileage_at_service INTEGER,
+              service_date TEXT NOT NULL,
+              estimate_total REAL,
+              status TEXT NOT NULL CHECK (status IN ('estimate', 'approved', 'completed', 'declined')),
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_customer_id ON service_history (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_vehicle_id ON service_history (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_shop_id ON service_history (shop_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_service_date ON service_history (service_date)")
+
+        # Pro groundwork: maintenance reminders for future CRM modules only.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS maintenance_reminders (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              shop_id INTEGER,
+              service_type TEXT,
+              due_date TEXT,
+              due_mileage INTEGER,
+              reminder_status TEXT NOT NULL CHECK (reminder_status IN ('pending', 'notified', 'completed', 'dismissed')),
+              last_notified_at TEXT,
+              notes TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_customer_id ON maintenance_reminders (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_vehicle_id ON maintenance_reminders (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_shop_id ON maintenance_reminders (shop_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_due_date ON maintenance_reminders (due_date)")
+
         conn.commit()
     finally:
         conn.close()
@@ -541,7 +644,6 @@ app.state.templates = templates
 
 # routers
 app.include_router(knowledge_router)
-app.include_router(pro_router)
 
 # --- Static Mount ---
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -1295,6 +1397,8 @@ def disclaimer(request: Request):
 
 @app.get("/shop-profile", response_class=HTMLResponse, include_in_schema=False)
 def shop_profile_form(request: Request, saved: str = ""):
+    # Beta gate: keep Pro profile UI inaccessible until Pro modules launch.
+    raise HTTPException(status_code=404, detail="Not found")
     return templates.TemplateResponse(
         "shop_profile.html",
         {
@@ -1307,6 +1411,8 @@ def shop_profile_form(request: Request, saved: str = ""):
 
 @app.post("/shop-profile", include_in_schema=False)
 async def shop_profile_save(request: Request):
+    # Beta gate: keep Pro profile UI inaccessible until Pro modules launch.
+    raise HTTPException(status_code=404, detail="Not found")
     raw_body = (await request.body()).decode("utf-8", errors="replace")
     form = parse_qs(raw_body, keep_blank_values=True)
 
@@ -1358,6 +1464,7 @@ def startup_checks() -> None:
     init_db()
     init_metrics_db()
     init_shop_profile_db()
+    init_pro_crm_schema_db()
     init_obd_db()
     obd_seed_from_json_if_empty() 
     _ = load_services_catalog()
@@ -9127,6 +9234,8 @@ def build_pro_pdf_bytes(profile: Optional[Dict[str, Any]] = None, estimate_data:
 
 @app.get("/shop-profile/pdf-preview", include_in_schema=False)
 def shop_profile_pdf_preview() -> Response:
+    # Beta gate: keep Pro PDF preview inaccessible until Pro modules launch.
+    raise HTTPException(status_code=404, detail="Not found")
     profile = load_shop_profile()
     content = build_pro_pdf_bytes(
         profile,

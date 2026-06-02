@@ -5581,13 +5581,6 @@ if (getEstimateHint) {
           <a href="${pdfUrl}" download="torquemech_estimate.pdf">Download PDF</a>
           &nbsp;|&nbsp;
           <a href="${pdfUrl}" target="_blank" rel="noopener">Open PDF</a>
-          <div class="tm-card" style="margin-top:12px; padding:12px 14px;" aria-label="TorqueMech Pro PDF preview">
-            <div style="font-weight:800;">Make this estimate customer-ready with your shop branding.</div>
-            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
-              <a class="tm-btn tm-btn-secondary" href="/shop-profile/pdf-preview" target="_blank" rel="noopener">Preview Pro PDF</a>
-              <a class="tm-btn tm-btn-ghost" href="/shop-profile">Shop Profile</a>
-            </div>
-          </div>
         `;
       }
 

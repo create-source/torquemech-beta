@@ -49,14 +49,6 @@
               }
           } catch (_) {}
       };
-      document.addEventListener("click", function(event){
-          var target = event.target && event.target.closest
-              ? event.target.closest('a[href="/shop-profile/pdf-preview"], button[name="next"][value="preview"]')
-              : null;
-          if (target) {
-              window.tmTrackClarity("pro_preview_clicked", { source: window.location.pathname });
-          }
-      }, true);
   </script>
   {% block page_css %}{% endblock %}
 </head>
