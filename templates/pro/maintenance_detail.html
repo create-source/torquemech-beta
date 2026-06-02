@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+
+{% block title %}Maintenance Record | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-crm-summary,
+  .tm-crm-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 18px;
+    max-width: 920px;
+  }
+
+  .tm-crm-summary {
+    border-left: 5px solid #0e7490;
+    margin-bottom: 16px;
+  }
+
+  .tm-crm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .tm-crm-chip-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .tm-crm-chip {
+    border: 1px solid rgba(14, 116, 144, 0.22);
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-weight: 800;
+    padding: 6px 10px;
+  }
+
+  .tm-crm-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 760px) {
+    .tm-crm-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">{{ maintenance.service_type or "Maintenance record" }}</h1>
+      <p class="tm-pro-subtitle">
+        {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
+      </p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">Back to Vehicle</a>
+  </div>
+
+  <section class="tm-crm-summary" aria-label="Maintenance summary">
+    <div class="tm-crm-kicker">Maintenance</div>
+    <div class="tm-crm-chip-row">
+      <span class="tm-crm-chip">{{ maintenance.date_performed or "No date" }}</span>
+      {% if maintenance.mileage_performed %}
+      <span class="tm-crm-chip">{{ maintenance.mileage_performed }} miles</span>
+      {% endif %}
+      {% if maintenance.interval_miles %}
+      <span class="tm-crm-chip">{{ maintenance.interval_miles }} mile interval</span>
+      {% endif %}
+      {% if maintenance.interval_months %}
+      <span class="tm-crm-chip">{{ maintenance.interval_months }} month interval</span>
+      {% endif %}
+    </div>
+    {% if maintenance.notes %}
+    <div style="color:#475569; margin-top:12px;">{{ maintenance.notes }}</div>
+    {% endif %}
+  </section>
+
+  <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ maintenance.id }}">
+    <h2 style="margin-top:0;">Edit Maintenance Record</h2>
+
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="service_type">Service type</label>
+      <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="180" value="{{ maintenance.service_type or '' }}">
+    </div>
+
+    <div class="tm-crm-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="date_performed">Date performed</label>
+        <input class="tm-input" id="date_performed" name="date_performed" type="date" value="{{ maintenance.date_performed or '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="mileage_performed">Mileage performed</label>
+        <input class="tm-input" id="mileage_performed" name="mileage_performed" type="number" min="0" step="1" value="{{ maintenance.mileage_performed or '' }}">
+      </div>
+    </div>
+
+    <div class="tm-crm-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="interval_miles">Interval miles</label>
+        <input class="tm-input" id="interval_miles" name="interval_miles" type="number" min="0" step="1" value="{{ maintenance.interval_miles or '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="interval_months">Interval months</label>
+        <input class="tm-input" id="interval_months" name="interval_months" type="number" min="0" step="1" value="{{ maintenance.interval_months or '' }}">
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="notes">Notes</label>
+      <textarea class="tm-input" id="notes" name="notes" rows="5" maxlength="1600">{{ maintenance.notes or "" }}</textarea>
+    </div>
+
+    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Maintenance Record</button>
+  </form>
+</section>
+{% endblock %}

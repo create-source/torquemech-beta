@@ -96,6 +96,37 @@
     background: rgba(255, 255, 255, 0.78);
   }
 
+  .tm-maintenance-table-wrap {
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+
+  .tm-maintenance-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+  }
+
+  .tm-maintenance-table th,
+  .tm-maintenance-table td {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    padding: 10px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .tm-maintenance-table th {
+    color: #334155;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+
+  .tm-maintenance-table a {
+    color: #0f766e;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
   .tm-crm-disclosure summary {
     cursor: pointer;
     font-weight: 900;
@@ -131,7 +162,7 @@
     <div class="tm-crm-kicker">Vehicle</div>
     <div class="tm-crm-chip-row">
       <span class="tm-crm-chip">{% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}</span>
-      <span class="tm-crm-chip">{% if vehicle.mileage %}{{ vehicle.mileage }} miles{% else %}Mileage not recorded{% endif %}</span>
+      <span class="tm-crm-chip">{% if vehicle.mileage %}Current {{ vehicle.mileage }} miles{% else %}Current mileage not recorded{% endif %}</span>
       {% if vehicle.vin %}
       <span class="tm-crm-chip">VIN {{ vehicle.vin }}</span>
       {% endif %}
@@ -172,7 +203,7 @@
         <input class="tm-input" id="vin" name="vin" type="text" maxlength="32" value="{{ vehicle.vin or '' }}">
       </div>
       <div>
-        <label class="tm-label" for="mileage">Mileage</label>
+        <label class="tm-label" for="mileage">Current mileage</label>
         <input class="tm-input" id="mileage" name="mileage" type="number" min="0" step="1" value="{{ vehicle.mileage or '' }}">
       </div>
     </div>
@@ -255,6 +286,86 @@
       </div>
 
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add History Entry</button>
+    </form>
+  </details>
+
+  <section class="tm-crm-panel" aria-label="Maintenance records" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Maintenance</div>
+    <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
+
+    {% if maintenance_records %}
+    <div class="tm-maintenance-table-wrap">
+      <table class="tm-maintenance-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Date</th>
+            <th>Mileage</th>
+            <th>Interval</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in maintenance_records %}
+          <tr>
+            <td><a href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">{{ item.service_type or "Maintenance" }}</a></td>
+            <td>{{ item.date_performed or "No date" }}</td>
+            <td>{% if item.mileage_performed %}{{ item.mileage_performed }}{% else %}-{% endif %}</td>
+            <td>
+              {% if item.interval_miles %}{{ item.interval_miles }} miles{% endif %}
+              {% if item.interval_miles and item.interval_months %}<br>{% endif %}
+              {% if item.interval_months %}{{ item.interval_months }} months{% endif %}
+              {% if not item.interval_miles and not item.interval_months %}-{% endif %}
+            </td>
+            <td>{{ item.notes or "-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No maintenance records saved for this vehicle yet.
+    </div>
+    {% endif %}
+  </section>
+
+  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
+    <summary>Add Maintenance Record</summary>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance">
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="service_type">Service type</label>
+        <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="180">
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="date_performed">Date performed</label>
+          <input class="tm-input" id="date_performed" name="date_performed" type="date">
+        </div>
+        <div>
+          <label class="tm-label" for="mileage_performed">Mileage performed</label>
+          <input class="tm-input" id="mileage_performed" name="mileage_performed" type="number" min="0" step="1">
+        </div>
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="interval_miles">Interval miles</label>
+          <input class="tm-input" id="interval_miles" name="interval_miles" type="number" min="0" step="1">
+        </div>
+        <div>
+          <label class="tm-label" for="interval_months">Interval months</label>
+          <input class="tm-input" id="interval_months" name="interval_months" type="number" min="0" step="1">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="maintenance_notes">Notes</label>
+        <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600"></textarea>
+      </div>
+
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Maintenance Record</button>
     </form>
   </details>
 </section>

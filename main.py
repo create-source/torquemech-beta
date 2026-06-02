@@ -406,6 +406,32 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_shop_id ON maintenance_reminders (shop_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_due_date ON maintenance_reminders (due_date)")
 
+        # Pro groundwork: performed maintenance records for future follow-up workflows.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS maintenance_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              shop_id INTEGER,
+              service_type TEXT,
+              date_performed TEXT,
+              mileage_performed INTEGER,
+              interval_miles INTEGER,
+              interval_months INTEGER,
+              notes TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_customer_id ON maintenance_records (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_vehicle_id ON maintenance_records (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_shop_id ON maintenance_records (shop_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_date_performed ON maintenance_records (date_performed)")
+
         conn.commit()
     finally:
         conn.close()

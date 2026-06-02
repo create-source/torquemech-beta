@@ -306,6 +306,18 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        maintenance_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM maintenance_records
+                WHERE customer_id = ? AND vehicle_id = ?
+                ORDER BY date_performed DESC, id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
     finally:
         conn.close()
 
@@ -316,6 +328,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "customer": customer,
             "vehicle": vehicle,
             "service_history": service_history,
+            "maintenance_records": maintenance_records,
         },
     )
 
@@ -473,5 +486,119 @@ async def pro_service_history_update(
         conn.close()
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/maintenance")
+async def pro_maintenance_record_create(request: Request, customer_id: int, vehicle_id: int):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        conn.execute(
+            """
+            INSERT INTO maintenance_records (
+              customer_id, vehicle_id, service_type, date_performed,
+              mileage_performed, interval_miles, interval_months,
+              notes, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                customer_id,
+                vehicle_id,
+                form.get("service_type", ""),
+                form.get("date_performed", ""),
+                optional_int(form, "mileage_performed"),
+                optional_int(form, "interval_miles"),
+                optional_int(form, "interval_months"),
+                form.get("notes", ""),
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+
+
+@router.get("/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_id}", response_class=HTMLResponse)
+def pro_maintenance_record_detail(
+    request: Request, customer_id: int, vehicle_id: int, maintenance_id: int
+):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        maintenance = row_to_dict(
+            conn.execute(
+                """
+                SELECT *
+                FROM maintenance_records
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (maintenance_id, customer_id, vehicle_id),
+            ).fetchone()
+        )
+        if not maintenance:
+            raise HTTPException(status_code=404, detail="Maintenance record not found")
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/maintenance_detail.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "maintenance": maintenance,
+        },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_id}")
+async def pro_maintenance_record_update(
+    request: Request, customer_id: int, vehicle_id: int, maintenance_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        cur = conn.execute(
+            """
+            UPDATE maintenance_records
+            SET
+              service_type = ?,
+              date_performed = ?,
+              mileage_performed = ?,
+              interval_miles = ?,
+              interval_months = ?,
+              notes = ?,
+              updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("service_type", ""),
+                form.get("date_performed", ""),
+                optional_int(form, "mileage_performed"),
+                optional_int(form, "interval_miles"),
+                optional_int(form, "interval_months"),
+                form.get("notes", ""),
+                now,
+                maintenance_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Maintenance record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_id}",
         status_code=303,
     )
