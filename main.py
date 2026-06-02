@@ -285,6 +285,14 @@ def init_shop_profile_db() -> None:
 
 def init_pro_crm_schema_db() -> None:
     """Create dormant Pro CRM tables without exposing CRM behavior in Beta."""
+    def add_column_if_missing(table_name: str, column_name: str, column_sql: str) -> None:
+        columns = {
+            row[1]
+            for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+        }
+        if column_name not in columns:
+            conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}")
+
     conn = app_db_conn()
     try:
         # Pro groundwork: shared-schema CRM tables for future shop/tenant isolation.
@@ -346,11 +354,24 @@ def init_pro_crm_schema_db() -> None:
               service_date TEXT NOT NULL,
               estimate_total REAL,
               status TEXT NOT NULL CHECK (status IN ('estimate', 'approved', 'completed', 'declined')),
+              customer_authorized_at TEXT,
+              customer_authorized_by TEXT,
+              authorization_notes TEXT,
+              discrepancy_notes TEXT,
+              created_at TEXT,
+              updated_at TEXT,
               FOREIGN KEY (customer_id) REFERENCES customers(id),
               FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id)
             )
             """
         )
+        # Pro groundwork: safe additive migration for 14.0A databases already initialized.
+        add_column_if_missing("service_history", "customer_authorized_at", "customer_authorized_at TEXT")
+        add_column_if_missing("service_history", "customer_authorized_by", "customer_authorized_by TEXT")
+        add_column_if_missing("service_history", "authorization_notes", "authorization_notes TEXT")
+        add_column_if_missing("service_history", "discrepancy_notes", "discrepancy_notes TEXT")
+        add_column_if_missing("service_history", "created_at", "created_at TEXT")
+        add_column_if_missing("service_history", "updated_at", "updated_at TEXT")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_customer_id ON service_history (customer_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_vehicle_id ON service_history (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_shop_id ON service_history (shop_id)")
