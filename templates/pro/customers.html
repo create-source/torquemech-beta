@@ -1,26 +1,148 @@
 {% extends "layout.html" %}
 
-{% block title %}TorqueMech Pro — Customers{% endblock %}
+{% block title %}Internal CRM Customers | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-crm-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .tm-crm-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 18px;
+  }
+
+  .tm-crm-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .tm-crm-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .tm-crm-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .tm-crm-customer {
+    display: grid;
+    gap: 4px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    padding: 14px;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+  }
+
+  .tm-crm-customer:hover {
+    border-color: rgba(14, 116, 144, 0.45);
+  }
+
+  .tm-crm-name {
+    font-weight: 800;
+  }
+
+  .tm-crm-meta {
+    color: #64748b;
+    font-size: 0.92rem;
+  }
+
+  @media (max-width: 840px) {
+    .tm-crm-grid,
+    .tm-crm-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <section class="tm-pro-shell">
   <div class="tm-pro-pagehead">
     <div>
-      <div class="tm-pro-eyebrow">TorqueMech Pro</div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">Customers</h1>
-      <p class="tm-pro-subtitle">Future customer management area.</p>
+      <p class="tm-pro-subtitle">Search, create, and open saved customer records.</p>
     </div>
-    <a class="btn btn-secondary" href="/pro">Back to Dashboard</a>
+    <a class="tm-btn tm-btn-secondary" href="/pro">Back to CRM</a>
   </div>
 
-  <div class="tm-pro-panel">
-    <h3>Planned Features</h3>
-    <ul class="tm-pro-list">
-      <li>Customer profiles</li>
-      <li>Phone and email records</li>
-      <li>Estimate history by customer</li>
-      <li>Repeat service tracking</li>
-    </ul>
+  <div class="tm-crm-grid">
+    <div class="tm-crm-panel">
+      <form method="get" action="/pro/customers" class="tm-crm-actions" role="search">
+        <input class="tm-input" type="search" name="q" value="{{ q }}" placeholder="Search name, phone, or email" aria-label="Search customers">
+        <button class="tm-btn tm-btn-primary" type="submit">Search</button>
+        {% if q %}
+        <a class="tm-btn tm-btn-secondary" href="/pro/customers">Clear</a>
+        {% endif %}
+      </form>
+
+      <div class="tm-crm-list">
+        {% if customers %}
+          {% for customer in customers %}
+          <a class="tm-crm-customer" href="/pro/customers/{{ customer.id }}">
+            <div class="tm-crm-name">
+              {{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}
+            </div>
+            <div class="tm-crm-meta">
+              {{ customer.phone or "No phone" }}{% if customer.email %} &middot; {{ customer.email }}{% endif %}
+            </div>
+            <div class="tm-crm-meta">
+              {{ customer.vehicle_count }} vehicle{% if customer.vehicle_count != 1 %}s{% endif %}
+            </div>
+          </a>
+          {% endfor %}
+        {% else %}
+          <div class="tm-crm-meta">No customers found.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <form class="tm-crm-panel" method="post" action="/pro/customers">
+      <h2 style="margin-top:0;">Add Customer</h2>
+      <div class="tm-crm-row">
+        <div>
+          <label class="tm-label" for="first_name">First name</label>
+          <input class="tm-input" id="first_name" name="first_name" type="text" maxlength="120" autocomplete="given-name">
+        </div>
+        <div>
+          <label class="tm-label" for="last_name">Last name</label>
+          <input class="tm-input" id="last_name" name="last_name" type="text" maxlength="120" autocomplete="family-name">
+        </div>
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="phone">Phone</label>
+          <input class="tm-input" id="phone" name="phone" type="tel" maxlength="80" autocomplete="tel">
+        </div>
+        <div>
+          <label class="tm-label" for="email">Email</label>
+          <input class="tm-input" id="email" name="email" type="email" maxlength="160" autocomplete="email">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="notes">Notes</label>
+        <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200"></textarea>
+      </div>
+
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Create Customer</button>
+    </form>
   </div>
 </section>
 {% endblock %}

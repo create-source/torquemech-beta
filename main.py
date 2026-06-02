@@ -22,6 +22,7 @@ from fastapi import (
 )
 
 from routers.knowledge import router as knowledge_router
+from routers.pro import router as pro_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
@@ -665,6 +666,7 @@ app.state.templates = templates
 
 # routers
 app.include_router(knowledge_router)
+app.include_router(pro_router)
 
 # --- Static Mount ---
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
