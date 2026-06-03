@@ -1,0 +1,343 @@
+{% extends "layout.html" %}
+
+{% block title %}Follow-Up Dashboard | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-follow-shell {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tm-follow-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-follow-summary-card,
+  .tm-follow-helper,
+  .tm-follow-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 16px;
+  }
+
+  .tm-follow-summary-card {
+    display: grid;
+    gap: 4px;
+    min-height: 98px;
+    border-left: 5px solid #334155;
+  }
+
+  .tm-follow-summary-card--overdue,
+  .tm-follow-record--overdue {
+    border-left-color: #b91c1c;
+  }
+
+  .tm-follow-summary-card--due-soon,
+  .tm-follow-record--due-soon {
+    border-left-color: #d97706;
+  }
+
+  .tm-follow-summary-card--candidate,
+  .tm-follow-record--candidate {
+    border-left-color: #0e7490;
+  }
+
+  .tm-follow-summary-card--unknown,
+  .tm-follow-record--unknown {
+    border-left-color: #64748b;
+  }
+
+  .tm-follow-count {
+    color: #0f172a;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .tm-follow-label {
+    color: #475569;
+    font-weight: 900;
+  }
+
+  .tm-follow-panel h2 {
+    margin: 4px 0 0;
+  }
+
+  .tm-follow-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-follow-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-follow-record {
+    display: grid;
+    gap: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left-width: 5px;
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .tm-follow-record-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .tm-follow-name {
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .tm-follow-meta {
+    color: #64748b;
+    font-size: 0.92rem;
+  }
+
+  .tm-follow-status {
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
+    white-space: nowrap;
+  }
+
+  .tm-follow-status--overdue {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .tm-follow-status--due-soon {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .tm-follow-status--candidate {
+    background: #ecfeff;
+    color: #155e75;
+  }
+
+  .tm-follow-status--unknown {
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  .tm-follow-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .tm-follow-field {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .tm-follow-field span {
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-follow-field strong {
+    color: #0f172a;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-follow-message {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+
+  .tm-follow-message-label {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .tm-follow-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    padding: 16px;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.78);
+    margin-top: 12px;
+  }
+
+  .tm-follow-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  @media (max-width: 920px) {
+    .tm-follow-summary,
+    .tm-follow-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .tm-follow-summary,
+    .tm-follow-grid,
+    .tm-follow-record-head {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-follow-actions .tm-btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% macro follow_record(item) %}
+<article class="tm-follow-record tm-follow-record--{{ item.status_key|replace('_', '-') }}">
+  <div class="tm-follow-record-head">
+    <div>
+      <div class="tm-follow-name">{{ item.customer_name }}</div>
+      <div class="tm-follow-meta">
+        {{ item.phone or "No phone recorded" }}{% if item.email %} | {{ item.email }}{% endif %}
+      </div>
+      <div class="tm-follow-meta">{{ item.vehicle_label }}</div>
+    </div>
+    <span class="tm-follow-status tm-follow-status--{{ item.status_key|replace('_', '-') }}">{{ item.status }}</span>
+  </div>
+
+  <div class="tm-follow-grid">
+    <div class="tm-follow-field">
+      <span>Current Mileage</span>
+      <strong>{% if item.current_mileage is not none %}{{ "{:,}".format(item.current_mileage) }}{% else %}Needs update{% endif %}</strong>
+    </div>
+    <div class="tm-follow-field">
+      <span>Service Type</span>
+      <strong>{{ item.service_type or "Maintenance" }}</strong>
+    </div>
+    <div class="tm-follow-field">
+      <span>Last Performed</span>
+      <strong>{{ item.date_performed or "No date" }}</strong>
+    </div>
+    <div class="tm-follow-field">
+      <span>Last Mileage</span>
+      <strong>{% if item.mileage_performed is not none %}{{ "{:,}".format(item.mileage_performed) }}{% else %}-{% endif %}</strong>
+    </div>
+    <div class="tm-follow-field">
+      <span>Interval</span>
+      <strong>{{ item.interval_label }}</strong>
+    </div>
+    <div class="tm-follow-field">
+      <span>Due Mileage</span>
+      <strong>{% if item.due_mileage is not none %}{{ "{:,}".format(item.due_mileage) }}{% else %}-{% endif %}</strong>
+    </div>
+    <div class="tm-follow-field">
+      <span>Due Date</span>
+      <strong>{{ item.due_date or "-" }}</strong>
+    </div>
+    <div class="tm-follow-field">
+      <span>Reason</span>
+      <strong>{{ item.reason }}</strong>
+    </div>
+  </div>
+
+  <div class="tm-follow-message">
+    <div class="tm-follow-message-label">Suggested Message</div>
+    <div>{{ item.suggested_message }}</div>
+  </div>
+
+  <div class="tm-follow-actions">
+    <a class="tm-btn tm-btn-secondary" href="{{ item.vehicle_url }}">Open Vehicle</a>
+  </div>
+</article>
+{% endmacro %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Follow-Up Dashboard</h1>
+      <p class="tm-pro-subtitle">Maintenance reminders for the mechanic to review and handle manually.</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro">Back to CRM</a>
+  </div>
+
+  <div class="tm-follow-shell">
+    <section class="tm-follow-summary" aria-label="Follow-up summary">
+      <div class="tm-follow-summary-card tm-follow-summary-card--overdue">
+        <div class="tm-follow-count">{{ summary.overdue }}</div>
+        <div class="tm-follow-label">Overdue</div>
+      </div>
+      <div class="tm-follow-summary-card tm-follow-summary-card--due-soon">
+        <div class="tm-follow-count">{{ summary.due_soon }}</div>
+        <div class="tm-follow-label">Due Soon</div>
+      </div>
+      <div class="tm-follow-summary-card tm-follow-summary-card--candidate">
+        <div class="tm-follow-count">{{ summary.candidate }}</div>
+        <div class="tm-follow-label">Candidates</div>
+      </div>
+      <div class="tm-follow-summary-card tm-follow-summary-card--unknown">
+        <div class="tm-follow-count">{{ summary.unknown }}</div>
+        <div class="tm-follow-label">Needs Mileage Update</div>
+      </div>
+    </section>
+
+    <section class="tm-follow-helper" aria-label="Manual outreach helper">
+      <div class="tm-follow-kicker">Manual Outreach Helper</div>
+      <h2 style="margin:4px 0 8px;">Copy-Only Reminder Text</h2>
+      <div class="tm-follow-message">
+        <div class="tm-follow-message-label">Suggested Message</div>
+        <div>Hi [Customer Name], this is [Shop Name]. According to our records, your [Vehicle] may be due for [Service Type]. Let me know if you'd like to schedule service.</div>
+      </div>
+    </section>
+
+    {% set sections = [
+      ("overdue", "Overdue", "Maintenance that is past the calculated mileage or date."),
+      ("due_soon", "Due Soon", "Maintenance within 500 miles or 30 days of the calculated follow-up point."),
+      ("candidate", "Maintenance Follow-Up Candidates", "Records with interval data that are not due soon or overdue yet."),
+      ("unknown", "Unknown / Needs Mileage Update", "Records missing current mileage or interval data.")
+    ] %}
+
+    {% for key, title, description in sections %}
+    <section class="tm-follow-panel" aria-label="{{ title }}">
+      <div class="tm-follow-kicker">{{ groups[key]|length }} record{% if groups[key]|length != 1 %}s{% endif %}</div>
+      <h2>{{ title }}</h2>
+      <div class="tm-follow-meta">{{ description }}</div>
+
+      {% if groups[key] %}
+      <div class="tm-follow-list">
+        {% for item in groups[key] %}
+          {{ follow_record(item) }}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-follow-empty">No records in this group.</div>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qs
 
@@ -72,6 +72,158 @@ def optional_float(form: dict[str, str], name: str) -> float | None:
         return None
 
 
+def parse_date_value(raw: Any) -> date | None:
+    if not raw:
+        return None
+    try:
+        return date.fromisoformat(str(raw)[:10])
+    except ValueError:
+        return None
+
+
+def add_months(start: date, months: int) -> date:
+    month_index = start.month - 1 + months
+    year = start.year + month_index // 12
+    month = month_index % 12 + 1
+    month_lengths = [
+        31,
+        29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ]
+    return date(year, month, min(start.day, month_lengths[month - 1]))
+
+
+def format_miles(value: Any) -> str:
+    return f"{int(value):,}" if value is not None else "-"
+
+
+def vehicle_label(record: dict[str, Any]) -> str:
+    label = " ".join(
+        str(record.get(key) or "").strip()
+        for key in ("vehicle_year", "vehicle_make", "vehicle_model")
+    ).strip()
+    return label or "Vehicle"
+
+
+def customer_name(record: dict[str, Any]) -> str:
+    name = f"{record.get('first_name') or ''} {record.get('last_name') or ''}".strip()
+    return name or "Customer"
+
+
+def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
+    record = dict(row)
+    current_mileage = record.get("current_mileage")
+    mileage_performed = record.get("mileage_performed")
+    interval_miles = record.get("interval_miles")
+    interval_months = record.get("interval_months")
+    performed_date = parse_date_value(record.get("date_performed"))
+
+    due_mileage = None
+    if mileage_performed is not None and interval_miles:
+        due_mileage = int(mileage_performed) + int(interval_miles)
+
+    due_date = None
+    if performed_date and interval_months:
+        due_date = add_months(performed_date, int(interval_months))
+
+    needs_mileage = current_mileage is None
+    missing_interval = not interval_miles and not interval_months
+
+    status = "Candidate"
+    status_key = "candidate"
+    reason = "Interval data recorded for future follow-up."
+
+    if needs_mileage or missing_interval:
+        status = "Unknown"
+        status_key = "unknown"
+        if needs_mileage and missing_interval:
+            reason = "Current mileage and interval data are missing."
+        elif needs_mileage:
+            reason = "Current mileage is missing."
+        else:
+            reason = "Interval data is missing."
+    else:
+        overdue_by_mileage = due_mileage is not None and int(current_mileage) > due_mileage
+        overdue_by_date = due_date is not None and today > due_date
+        due_soon_by_mileage = (
+            due_mileage is not None
+            and int(current_mileage) <= due_mileage
+            and due_mileage - int(current_mileage) <= 500
+        )
+        due_soon_by_date = (
+            due_date is not None
+            and today <= due_date
+            and due_date - today <= timedelta(days=30)
+        )
+
+        if overdue_by_mileage or overdue_by_date:
+            status = "Overdue"
+            status_key = "overdue"
+            if overdue_by_mileage and overdue_by_date:
+                reason = "Past due by mileage and date."
+            elif overdue_by_mileage:
+                reason = "Current mileage is past the due mileage."
+            else:
+                reason = "Today is past the due date."
+        elif due_soon_by_mileage or due_soon_by_date:
+            status = "Due Soon"
+            status_key = "due_soon"
+            if due_soon_by_mileage and due_soon_by_date:
+                reason = "Within 500 miles and 30 days of the follow-up point."
+            elif due_soon_by_mileage:
+                reason = "Within 500 miles of the due mileage."
+            else:
+                reason = "Within 30 days of the due date."
+
+    customer = customer_name(record)
+    vehicle = vehicle_label(record)
+    shop_name = (record.get("shop_name") or "").strip() or "our shop"
+    service_type = (record.get("service_type") or "maintenance").strip()
+
+    interval_parts = []
+    if interval_miles:
+        interval_parts.append(f"{format_miles(interval_miles)} miles")
+    if interval_months:
+        interval_parts.append(f"{int(interval_months)} months")
+
+    record.update(
+        {
+            "customer_name": customer,
+            "vehicle_label": vehicle,
+            "vehicle_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}",
+            "due_mileage": due_mileage,
+            "due_date": due_date.isoformat() if due_date else "",
+            "status": status,
+            "status_key": status_key,
+            "reason": reason,
+            "interval_label": " / ".join(interval_parts) if interval_parts else "-",
+            "suggested_message": (
+                f"Hi {customer}, this is {shop_name}. According to our records, "
+                f"your {vehicle} may be due for {service_type}. Let me know if "
+                "you'd like to schedule service."
+            ),
+        }
+    )
+    return record
+
+
+def load_shop_name(conn: sqlite3.Connection) -> str:
+    try:
+        row = conn.execute("SELECT shop_name FROM shop_profile WHERE id = 1").fetchone()
+    except sqlite3.OperationalError:
+        return ""
+    return str(row["shop_name"] or "").strip() if row else ""
+
+
 def load_customer_vehicle(
     conn: sqlite3.Connection, customer_id: int, vehicle_id: int
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -101,6 +253,59 @@ def pro_dashboard(request: Request):
         "pro/dashboard.html",
         {"request": request},
     )
+
+
+@router.get("/follow-ups", response_class=HTMLResponse)
+def pro_follow_ups(request: Request):
+    today = date.today()
+    conn = crm_db_conn()
+    try:
+        shop_name = load_shop_name(conn)
+        rows = conn.execute(
+            """
+            SELECT
+              m.*,
+              c.first_name,
+              c.last_name,
+              c.phone,
+              c.email,
+              v.year AS vehicle_year,
+              v.make AS vehicle_make,
+              v.model AS vehicle_model,
+              v.mileage AS current_mileage,
+              ? AS shop_name
+            FROM maintenance_records m
+            JOIN customers c ON c.id = m.customer_id
+            JOIN customer_vehicles v ON v.id = m.vehicle_id
+            ORDER BY c.last_name, c.first_name, v.year DESC, v.make, v.model, m.service_type
+            """,
+            (shop_name,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    grouped = {
+        "overdue": [],
+        "due_soon": [],
+        "candidate": [],
+        "unknown": [],
+    }
+    for row in rows:
+        follow_up = build_follow_up_record(row, today)
+        grouped[follow_up["status_key"]].append(follow_up)
+
+    summary = {key: len(items) for key, items in grouped.items()}
+
+    return templates.TemplateResponse(
+        "pro/follow_ups.html",
+        {
+            "request": request,
+            "today": today.isoformat(),
+            "groups": grouped,
+            "summary": summary,
+        },
+    )
+
 
 @router.get("/customers", response_class=HTMLResponse)
 def pro_customers(request: Request, q: str = ""):
