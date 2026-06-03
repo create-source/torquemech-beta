@@ -35,6 +35,12 @@
     padding: 6px 10px;
   }
 
+  .tm-crm-chip--inactive {
+    background: #f1f5f9;
+    border-color: rgba(100, 116, 139, 0.24);
+    color: #475569;
+  }
+
   .tm-crm-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -280,6 +286,9 @@
     <div class="tm-crm-chip-row">
       <span class="tm-crm-chip">{% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}</span>
       <span class="tm-crm-chip">{% if vehicle.mileage %}Current {{ vehicle.mileage|pro_miles }} miles{% else %}Current mileage not recorded{% endif %}</span>
+      {% if customer.customer_status == "inactive" %}
+      <span class="tm-crm-chip tm-crm-chip--inactive">Customer Inactive</span>
+      {% endif %}
       {% if vehicle.vin %}
       <span class="tm-crm-chip">VIN {{ vehicle.vin }}</span>
       {% endif %}

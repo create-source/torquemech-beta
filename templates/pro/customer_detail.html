@@ -41,6 +41,18 @@
     padding: 6px 10px;
   }
 
+  .tm-crm-chip--inactive {
+    background: #f1f5f9;
+    border-color: rgba(100, 116, 139, 0.24);
+    color: #475569;
+  }
+
+  .tm-crm-customer-actions {
+    display: grid;
+    gap: 12px;
+    justify-items: end;
+  }
+
   .tm-crm-notes {
     color: #475569;
     margin-top: 12px;
@@ -127,6 +139,10 @@
       align-items: flex-start;
       flex-direction: column;
     }
+
+    .tm-crm-customer-actions {
+      justify-items: start;
+    }
   }
 </style>
 {% endblock %}
@@ -152,44 +168,58 @@
           <span class="tm-crm-chip">{{ customer.email }}</span>
           {% endif %}
           <span class="tm-crm-chip">{{ vehicles|length }} vehicle{% if vehicles|length != 1 %}s{% endif %}</span>
+          <span class="tm-crm-chip {% if customer.customer_status == 'inactive' %}tm-crm-chip--inactive{% endif %}">
+            {{ "Inactive" if customer.customer_status == "inactive" else "Active" }}
+          </span>
         </div>
         {% if customer.notes %}
         <div class="tm-crm-notes">{{ customer.notes }}</div>
         {% endif %}
       </div>
-      <details class="tm-crm-disclosure">
-        <summary>Edit Customer</summary>
-        <form method="post" action="/pro/customers/{{ customer.id }}">
-          <div class="tm-crm-row">
-            <div>
-              <label class="tm-label" for="first_name">First name</label>
-              <input class="tm-input" id="first_name" name="first_name" type="text" value="{{ customer.first_name or '' }}" maxlength="120" autocomplete="given-name">
-            </div>
-            <div>
-              <label class="tm-label" for="last_name">Last name</label>
-              <input class="tm-input" id="last_name" name="last_name" type="text" value="{{ customer.last_name or '' }}" maxlength="120" autocomplete="family-name">
-            </div>
-          </div>
-
-          <div class="tm-crm-row" style="margin-top:12px;">
-            <div>
-              <label class="tm-label" for="phone">Phone</label>
-              <input class="tm-input" id="phone" name="phone" type="tel" inputmode="tel" value="{{ customer.phone|pro_phone if customer.phone else '' }}" maxlength="80" autocomplete="tel">
-            </div>
-            <div>
-              <label class="tm-label" for="email">Email</label>
-              <input class="tm-input" id="email" name="email" type="email" value="{{ customer.email or '' }}" maxlength="160" autocomplete="email">
-            </div>
-          </div>
-
-          <div style="margin-top:12px;">
-            <label class="tm-label" for="customer_notes">Notes</label>
-            <textarea class="tm-input" id="customer_notes" name="notes" rows="3" maxlength="1200" placeholder="Preferences, contact timing, fleet account details, or reminders for future visits.">{{ customer.notes or "" }}</textarea>
-          </div>
-
-          <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Customer</button>
+      <div class="tm-crm-customer-actions">
+        {% if customer.customer_status == "inactive" %}
+        <form method="post" action="/pro/customers/{{ customer.id }}/reactivate">
+          <button class="tm-btn tm-btn-primary" type="submit">Reactivate Customer</button>
         </form>
-      </details>
+        {% else %}
+        <form method="post" action="/pro/customers/{{ customer.id }}/deactivate">
+          <button class="tm-btn tm-btn-secondary" type="submit">Deactivate Customer</button>
+        </form>
+        {% endif %}
+        <details class="tm-crm-disclosure">
+          <summary>Edit Customer</summary>
+          <form method="post" action="/pro/customers/{{ customer.id }}">
+            <div class="tm-crm-row">
+              <div>
+                <label class="tm-label" for="first_name">First name</label>
+                <input class="tm-input" id="first_name" name="first_name" type="text" value="{{ customer.first_name or '' }}" maxlength="120" autocomplete="given-name">
+              </div>
+              <div>
+                <label class="tm-label" for="last_name">Last name</label>
+                <input class="tm-input" id="last_name" name="last_name" type="text" value="{{ customer.last_name or '' }}" maxlength="120" autocomplete="family-name">
+              </div>
+            </div>
+
+            <div class="tm-crm-row" style="margin-top:12px;">
+              <div>
+                <label class="tm-label" for="phone">Phone</label>
+                <input class="tm-input" id="phone" name="phone" type="tel" inputmode="tel" value="{{ customer.phone|pro_phone if customer.phone else '' }}" maxlength="80" autocomplete="tel">
+              </div>
+              <div>
+                <label class="tm-label" for="email">Email</label>
+                <input class="tm-input" id="email" name="email" type="email" value="{{ customer.email or '' }}" maxlength="160" autocomplete="email">
+              </div>
+            </div>
+
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="customer_notes">Notes</label>
+              <textarea class="tm-input" id="customer_notes" name="notes" rows="3" maxlength="1200" placeholder="Preferences, contact timing, fleet account details, or reminders for future visits.">{{ customer.notes or "" }}</textarea>
+            </div>
+
+            <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Customer</button>
+          </form>
+        </details>
+      </div>
     </section>
 
     <section class="tm-crm-panel" aria-label="Customer vehicles">

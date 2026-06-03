@@ -122,6 +122,11 @@
     color: #991b1b;
   }
 
+  .tm-approval-badge--inactive {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
   .tm-approval-empty {
     border: 1px dashed rgba(15, 23, 42, 0.18);
     border-radius: 8px;
@@ -149,7 +154,12 @@
         {{ item.customer_name }}{% if item.phone %} | {{ item.phone|pro_phone }}{% endif %} | {{ item.vehicle_label }}
       </div>
     </div>
-    <span class="tm-approval-badge tm-approval-badge--{{ item.customer_decision }}">{{ item.customer_decision }}</span>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+      {% if item.customer_status == "inactive" %}
+      <span class="tm-approval-badge tm-approval-badge--inactive">Customer Inactive</span>
+      {% endif %}
+      <span class="tm-approval-badge tm-approval-badge--{{ item.customer_decision }}">{{ item.customer_decision }}</span>
+    </div>
   </div>
   <div class="tm-approval-meta">
     Recommended: {{ item.recommended_repair or "No recommendation recorded" }}

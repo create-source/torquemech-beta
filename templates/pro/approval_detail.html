@@ -42,6 +42,12 @@
     text-transform: capitalize;
   }
 
+  .tm-approval-chip--inactive {
+    background: #f1f5f9;
+    border-color: rgba(100, 116, 139, 0.24);
+    color: #475569;
+  }
+
   .tm-approval-kicker {
     color: #0f766e;
     font-size: 0.78rem;
@@ -98,6 +104,9 @@
     <div class="tm-approval-kicker">Finding</div>
     <div class="tm-approval-chip-row">
       <span class="tm-approval-chip">{{ approval.customer_decision or "pending" }}</span>
+      {% if customer.customer_status == "inactive" %}
+      <span class="tm-approval-chip tm-approval-chip--inactive">Customer Inactive</span>
+      {% endif %}
       {% if approval.estimated_cost is not none %}
       <span class="tm-approval-chip">Est. {{ approval.estimated_cost|pro_currency }}</span>
       {% endif %}

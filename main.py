@@ -306,15 +306,25 @@ def init_pro_crm_schema_db() -> None:
               last_name TEXT,
               phone TEXT,
               email TEXT,
+              customer_status TEXT NOT NULL DEFAULT 'active',
               notes TEXT,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL
             )
             """
         )
+        add_column_if_missing("customers", "customer_status", "customer_status TEXT NOT NULL DEFAULT 'active'")
+        conn.execute(
+            """
+            UPDATE customers
+            SET customer_status = 'active'
+            WHERE customer_status IS NULL OR TRIM(customer_status) = ''
+            """
+        )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_shop_id ON customers (shop_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers (phone)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_email ON customers (email)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (customer_status)")
 
         # Pro groundwork: customer vehicle records remain tenant-ready via shop_id.
         conn.execute(

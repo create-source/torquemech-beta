@@ -330,6 +330,26 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_created_at ON discrepancy_approvals (created_at)")
 
 
+def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(customers)").fetchall()}
+    if "customer_status" not in columns:
+        conn.execute("ALTER TABLE customers ADD COLUMN customer_status TEXT NOT NULL DEFAULT 'active'")
+    conn.execute(
+        """
+        UPDATE customers
+        SET customer_status = 'active'
+        WHERE customer_status IS NULL OR TRIM(customer_status) = ''
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (customer_status)")
+    conn.commit()
+
+
+def normalize_customer_status(value: str) -> str:
+    status = str(value or "active").strip().lower()
+    return status if status in {"active", "inactive", "all"} else "active"
+
+
 def load_approval_record(
     conn: sqlite3.Connection,
     customer_id: int,
@@ -363,6 +383,7 @@ def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict
 def load_customer_vehicle(
     conn: sqlite3.Connection, customer_id: int, vehicle_id: int
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    ensure_customer_status_schema(conn)
     customer = row_to_dict(
         conn.execute("SELECT * FROM customers WHERE id = ?", (customer_id,)).fetchone()
     )
@@ -387,6 +408,7 @@ def load_customer_vehicle(
 def pro_dashboard(request: Request):
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
         ensure_discrepancy_approvals_schema(conn)
         pending_approvals_count = conn.execute(
             """
@@ -411,6 +433,7 @@ def pro_dashboard(request: Request):
 def pro_approvals(request: Request):
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
         ensure_discrepancy_approvals_schema(conn)
         records = [
             dict(row)
@@ -422,6 +445,7 @@ def pro_approvals(request: Request):
                   c.last_name,
                   c.phone,
                   c.email,
+                  c.customer_status,
                   v.year AS vehicle_year,
                   v.make AS vehicle_make,
                   v.model AS vehicle_model
@@ -468,6 +492,7 @@ def pro_follow_ups(request: Request):
     today = date.today()
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
         shop_name = load_shop_name(conn)
         rows = conn.execute(
             """
@@ -477,6 +502,7 @@ def pro_follow_ups(request: Request):
               c.last_name,
               c.phone,
               c.email,
+              c.customer_status,
               v.year AS vehicle_year,
               v.make AS vehicle_make,
               v.model AS vehicle_model,
@@ -485,6 +511,7 @@ def pro_follow_ups(request: Request):
             FROM maintenance_records m
             JOIN customers c ON c.id = m.customer_id
             JOIN customer_vehicles v ON v.id = m.vehicle_id
+            WHERE COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'
             ORDER BY c.last_name, c.first_name, v.year DESC, v.make, v.model, m.service_type
             """,
             (shop_name,),
@@ -516,40 +543,61 @@ def pro_follow_ups(request: Request):
 
 
 @router.get("/customers", response_class=HTMLResponse)
-def pro_customers(request: Request, q: str = ""):
+def pro_customers(request: Request, q: str = "", status: str = "active"):
     search = q.strip()
+    status_filter = normalize_customer_status(status)
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
+        status_clause = ""
+        params: list[Any] = []
+        if status_filter != "all":
+            status_clause = "COALESCE(NULLIF(c.customer_status, ''), 'active') = ?"
+            params.append(status_filter)
+
         if search:
             like = f"%{search}%"
+            search_clause = """
+              (
+                c.first_name LIKE ?
+                OR c.last_name LIKE ?
+                OR c.phone LIKE ?
+                OR c.email LIKE ?
+              )
+            """
+            params.extend([like, like, like, like])
+            where_clause = (
+                f"WHERE {status_clause} AND {search_clause}"
+                if status_clause
+                else f"WHERE {search_clause}"
+            )
             rows = conn.execute(
-                """
+                f"""
                 SELECT
                   c.*,
                   COUNT(v.id) AS vehicle_count
                 FROM customers c
                 LEFT JOIN customer_vehicles v ON v.customer_id = c.id
-                WHERE
-                  c.first_name LIKE ?
-                  OR c.last_name LIKE ?
-                  OR c.phone LIKE ?
-                  OR c.email LIKE ?
+                {where_clause}
                 GROUP BY c.id
                 ORDER BY c.updated_at DESC, c.created_at DESC, c.id DESC
                 """,
-                (like, like, like, like),
+                params,
             ).fetchall()
         else:
+            where_clause = f"WHERE {status_clause}" if status_clause else ""
             rows = conn.execute(
-                """
+                f"""
                 SELECT
                   c.*,
                   COUNT(v.id) AS vehicle_count
                 FROM customers c
                 LEFT JOIN customer_vehicles v ON v.customer_id = c.id
+                {where_clause}
                 GROUP BY c.id
                 ORDER BY c.updated_at DESC, c.created_at DESC, c.id DESC
-                """
+                """,
+                params,
             ).fetchall()
     finally:
         conn.close()
@@ -560,6 +608,7 @@ def pro_customers(request: Request, q: str = ""):
             "request": request,
             "customers": [dict(row) for row in rows],
             "q": search,
+            "status_filter": status_filter,
         },
     )
 
@@ -570,12 +619,13 @@ async def pro_customer_create(request: Request):
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
         cur = conn.execute(
             """
             INSERT INTO customers (
-              first_name, last_name, phone, email, notes, created_at, updated_at
+              first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
             """,
             (
                 form.get("first_name", ""),
@@ -600,6 +650,7 @@ async def pro_customer_update(request: Request, customer_id: int):
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
         cur = conn.execute(
             """
             UPDATE customers
@@ -630,10 +681,57 @@ async def pro_customer_update(request: Request, customer_id: int):
     return RedirectResponse(f"/pro/customers/{customer_id}", status_code=303)
 
 
+@router.post("/customers/{customer_id}/deactivate")
+async def pro_customer_deactivate(customer_id: int):
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        ensure_customer_status_schema(conn)
+        cur = conn.execute(
+            """
+            UPDATE customers
+            SET customer_status = 'inactive',
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (now, customer_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/customers/{customer_id}", status_code=303)
+
+
+@router.post("/customers/{customer_id}/reactivate")
+async def pro_customer_reactivate(customer_id: int):
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        ensure_customer_status_schema(conn)
+        cur = conn.execute(
+            """
+            UPDATE customers
+            SET customer_status = 'active',
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (now, customer_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/customers/{customer_id}", status_code=303)
+
+
 @router.get("/customers/{customer_id}", response_class=HTMLResponse)
 def pro_customer_detail(request: Request, customer_id: int):
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
         customer = row_to_dict(
             conn.execute("SELECT * FROM customers WHERE id = ?", (customer_id,)).fetchone()
         )
@@ -669,6 +767,7 @@ async def pro_customer_vehicle_create(request: Request, customer_id: int):
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
+        ensure_customer_status_schema(conn)
         customer = conn.execute("SELECT id FROM customers WHERE id = ?", (customer_id,)).fetchone()
         if not customer:
             raise HTTPException(status_code=404, detail="Customer not found")

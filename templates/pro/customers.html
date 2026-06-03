@@ -42,6 +42,28 @@
     white-space: nowrap;
   }
 
+  .tm-crm-filter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tm-crm-filter-link {
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 999px;
+    background: #fff;
+    color: #334155;
+    font-weight: 900;
+    padding: 7px 11px;
+    text-decoration: none;
+  }
+
+  .tm-crm-filter-link--active {
+    background: #0f766e;
+    border-color: #0f766e;
+    color: #fff;
+  }
+
   .tm-crm-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -101,6 +123,11 @@
     white-space: nowrap;
   }
 
+  .tm-crm-badge--inactive {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
   .tm-crm-empty {
     border: 1px dashed rgba(15, 23, 42, 0.18);
     border-radius: 8px;
@@ -142,6 +169,11 @@
       width: 100%;
     }
 
+    .tm-crm-filter-link {
+      flex: 1 1 0;
+      text-align: center;
+    }
+
     .tm-crm-card {
       min-height: 0;
     }
@@ -163,13 +195,23 @@
   <div class="tm-crm-shell">
     <div class="tm-crm-toolbar">
       <form method="get" action="/pro/customers" class="tm-crm-search" role="search">
+        {% if status_filter != "active" %}
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
         <input class="tm-input" type="search" name="q" value="{{ q }}" placeholder="Search name, phone, or email" aria-label="Search customers">
         <button class="tm-btn tm-btn-primary" type="submit">Search</button>
         {% if q %}
-        <a class="tm-btn tm-btn-secondary" href="/pro/customers">Clear</a>
+        <a class="tm-btn tm-btn-secondary" href="/pro/customers{% if status_filter != 'active' %}?status={{ status_filter }}{% endif %}">Clear</a>
         {% endif %}
       </form>
-      <div class="tm-crm-count">{{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}</div>
+      <div>
+        <div class="tm-crm-filter" aria-label="Customer status filter">
+          <a class="tm-crm-filter-link {% if status_filter == 'active' %}tm-crm-filter-link--active{% endif %}" href="/pro/customers{% if q %}?q={{ q|urlencode }}{% endif %}">Active</a>
+          <a class="tm-crm-filter-link {% if status_filter == 'inactive' %}tm-crm-filter-link--active{% endif %}" href="/pro/customers?status=inactive{% if q %}&q={{ q|urlencode }}{% endif %}">Inactive</a>
+          <a class="tm-crm-filter-link {% if status_filter == 'all' %}tm-crm-filter-link--active{% endif %}" href="/pro/customers?status=all{% if q %}&q={{ q|urlencode }}{% endif %}">All</a>
+        </div>
+        <div class="tm-crm-count" style="margin-top:8px;">{{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}</div>
+      </div>
     </div>
 
     <div class="tm-crm-cards">
@@ -181,7 +223,12 @@
               <div class="tm-crm-name">{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Unnamed Customer" }}</div>
               <div class="tm-crm-phone">{{ customer.phone|pro_phone if customer.phone else "No phone recorded" }}</div>
             </div>
-            <span class="tm-crm-badge">{{ customer.vehicle_count }} vehicle{% if customer.vehicle_count != 1 %}s{% endif %}</span>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+              {% if customer.customer_status == "inactive" %}
+              <span class="tm-crm-badge tm-crm-badge--inactive">Inactive</span>
+              {% endif %}
+              <span class="tm-crm-badge">{{ customer.vehicle_count }} vehicle{% if customer.vehicle_count != 1 %}s{% endif %}</span>
+            </div>
           </div>
           {% if customer.email %}
           <div class="tm-crm-meta">{{ customer.email }}</div>
