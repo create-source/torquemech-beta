@@ -219,7 +219,7 @@
 
   .tm-maintenance-fields {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
   }
 
@@ -528,6 +528,14 @@
               {% if not item.interval_miles and not item.interval_months %}-{% endif %}
             </strong>
           </div>
+          <div class="tm-maintenance-field">
+            <span>Next Mileage</span>
+            <strong>{% if item.due_mileage %}{{ item.due_mileage|pro_miles }}{% else %}-{% endif %}</strong>
+          </div>
+          <div class="tm-maintenance-field">
+            <span>Next Date</span>
+            <strong>{{ item.due_date|pro_date if item.due_date else "-" }}</strong>
+          </div>
         </div>
         {% if item.notes %}
         <div style="color:#475569;">{{ item.notes }}</div>
@@ -544,10 +552,15 @@
 
   <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
     <summary>Add Maintenance Record</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance">
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance" data-maintenance-defaults="add">
       <div style="margin-top:12px;">
         <label class="tm-label" for="service_type">Service type</label>
-        <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="180">
+        <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="180" list="maintenance-service-options">
+        <datalist id="maintenance-service-options">
+          {% for option in maintenance_service_options %}
+          <option value="{{ option.name }}"></option>
+          {% endfor %}
+        </datalist>
       </div>
 
       <div class="tm-crm-row" style="margin-top:12px;">
@@ -572,6 +585,17 @@
         </div>
       </div>
 
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="due_mileage">Next due mileage</label>
+          <input class="tm-input" id="due_mileage" name="due_mileage" type="text" inputmode="numeric" placeholder="Auto-calculated unless entered">
+        </div>
+        <div>
+          <label class="tm-label" for="due_date">Next due date</label>
+          <input class="tm-input" id="due_date" name="due_date" type="date">
+        </div>
+      </div>
+
       <div style="margin-top:12px;">
         <label class="tm-label" for="maintenance_notes">Notes</label>
         <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600" placeholder="Maintenance condition, parts/fluids used, customer notes, or interval context."></textarea>
@@ -581,4 +605,114 @@
     </form>
   </details>
 </section>
+
+<script>
+(() => {
+  const form = document.querySelector('form[data-maintenance-defaults="add"]');
+  if (!form) return;
+
+  const defaults = {
+    {% for option in maintenance_service_options %}
+    "{{ option.name|lower }}": {
+      intervalMiles: {{ option.interval_miles if option.interval_miles is not none else "null" }},
+      intervalMonths: {{ option.interval_months if option.interval_months is not none else "null" }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  const fields = {
+    serviceType: form.querySelector('[name="service_type"]'),
+    datePerformed: form.querySelector('[name="date_performed"]'),
+    mileagePerformed: form.querySelector('[name="mileage_performed"]'),
+    intervalMiles: form.querySelector('[name="interval_miles"]'),
+    intervalMonths: form.querySelector('[name="interval_months"]'),
+    dueMileage: form.querySelector('[name="due_mileage"]'),
+    dueDate: form.querySelector('[name="due_date"]')
+  };
+
+  const dirty = {
+    intervalMiles: false,
+    intervalMonths: false,
+    dueMileage: false,
+    dueDate: false
+  };
+
+  const cleanNumber = (value) => {
+    const cleaned = String(value || "").replace(/[^0-9]/g, "");
+    return cleaned ? Number(cleaned) : null;
+  };
+
+  const formatMiles = (value) => {
+    if (value === null || Number.isNaN(value)) return "";
+    return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  const addMonths = (dateValue, months) => {
+    if (!dateValue || months === null || Number.isNaN(months)) return "";
+    const parts = dateValue.split("-").map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return "";
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    const originalDay = date.getDate();
+    date.setMonth(date.getMonth() + months);
+    if (date.getDate() !== originalDay) date.setDate(0);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const selectedDefaults = () => {
+    const key = String(fields.serviceType.value || "").trim().toLowerCase();
+    return defaults[key] || null;
+  };
+
+  const recalculateDue = () => {
+    const mileage = cleanNumber(fields.mileagePerformed.value);
+    const intervalMiles = cleanNumber(fields.intervalMiles.value);
+    if (!dirty.dueMileage && mileage !== null && intervalMiles !== null) {
+      fields.dueMileage.value = formatMiles(mileage + intervalMiles);
+    }
+
+    const intervalMonths = cleanNumber(fields.intervalMonths.value);
+    if (!dirty.dueDate && fields.datePerformed.value && intervalMonths !== null) {
+      fields.dueDate.value = addMonths(fields.datePerformed.value, intervalMonths);
+    }
+  };
+
+  const applyServiceDefaults = () => {
+    const option = selectedDefaults();
+    dirty.intervalMiles = false;
+    dirty.intervalMonths = false;
+    dirty.dueMileage = false;
+    dirty.dueDate = false;
+
+    fields.intervalMiles.value = option && option.intervalMiles !== null ? formatMiles(option.intervalMiles) : "";
+    fields.intervalMonths.value = option && option.intervalMonths !== null ? option.intervalMonths : "";
+    fields.dueMileage.value = "";
+    fields.dueDate.value = "";
+    recalculateDue();
+  };
+
+  fields.serviceType.addEventListener("input", applyServiceDefaults);
+  fields.serviceType.addEventListener("change", applyServiceDefaults);
+
+  fields.mileagePerformed.addEventListener("input", recalculateDue);
+  fields.datePerformed.addEventListener("change", recalculateDue);
+
+  fields.intervalMiles.addEventListener("input", () => {
+    dirty.intervalMiles = true;
+    recalculateDue();
+  });
+  fields.intervalMonths.addEventListener("input", () => {
+    dirty.intervalMonths = true;
+    recalculateDue();
+  });
+  fields.dueMileage.addEventListener("input", () => {
+    dirty.dueMileage = true;
+  });
+  fields.dueDate.addEventListener("change", () => {
+    dirty.dueDate = true;
+  });
+})();
+</script>
 {% endblock %}

@@ -32,6 +32,27 @@ templates.env.globals["static_version"] = static_version
 
 router = APIRouter(prefix="/pro", tags=["pro"])
 
+MAINTENANCE_SERVICE_DEFAULTS = {
+    "oil change": {"interval_miles": 5000, "interval_months": 6},
+    "tire rotation": {"interval_miles": 6000, "interval_months": 6},
+    "engine air filter": {"interval_miles": 15000, "interval_months": 12},
+    "cabin air filter": {"interval_miles": 15000, "interval_months": 12},
+    "transmission service": {"interval_miles": 60000, "interval_months": None},
+    "brake fluid service": {"interval_miles": None, "interval_months": 24},
+    "coolant service": {"interval_miles": None, "interval_months": 60},
+    "spark plugs": {"interval_miles": 100000, "interval_months": None},
+    "serpentine belt": {"interval_miles": 90000, "interval_months": None},
+}
+
+MAINTENANCE_SERVICE_OPTIONS = [
+    {
+        "name": name.title(),
+        "interval_miles": defaults["interval_miles"],
+        "interval_months": defaults["interval_months"],
+    }
+    for name, defaults in MAINTENANCE_SERVICE_DEFAULTS.items()
+]
+
 
 def crm_db_conn() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
@@ -139,6 +160,74 @@ def service_total_from_form(form: dict[str, str]) -> float | None:
     return optional_float(form, "estimate_total")
 
 
+def normalize_maintenance_service_type(service_type: str) -> str:
+    normalized = str(service_type or "").strip().lower()
+    normalized = " ".join(
+        "".join(ch if ch.isalnum() else " " for ch in normalized).split()
+    )
+    return normalized
+
+
+def maintenance_defaults_for(service_type: str) -> dict[str, int | None]:
+    normalized = normalize_maintenance_service_type(service_type)
+    if normalized in MAINTENANCE_SERVICE_DEFAULTS:
+        return MAINTENANCE_SERVICE_DEFAULTS[normalized]
+    for default_name, defaults in MAINTENANCE_SERVICE_DEFAULTS.items():
+        if default_name in normalized:
+            return defaults
+    return {}
+
+
+def maintenance_interval_value(
+    form: dict[str, str],
+    service_type: str,
+    field_name: str,
+) -> int | None:
+    submitted = optional_int(form, field_name)
+    if submitted is not None:
+        return submitted
+    defaults = maintenance_defaults_for(service_type)
+    value = defaults.get(field_name)
+    return int(value) if value is not None else None
+
+
+def calculated_due_mileage(
+    mileage_performed: int | None,
+    interval_miles: int | None,
+) -> int | None:
+    if mileage_performed is None or interval_miles is None:
+        return None
+    return mileage_performed + interval_miles
+
+
+def calculated_due_date(
+    date_performed: str,
+    interval_months: int | None,
+) -> str:
+    performed_date = parse_date_value(date_performed)
+    if not performed_date or interval_months is None:
+        return ""
+    return add_months(performed_date, interval_months).isoformat()
+
+
+def maintenance_due_values(
+    form: dict[str, str],
+    mileage_performed: int | None,
+    date_performed: str,
+    interval_miles: int | None,
+    interval_months: int | None,
+) -> tuple[int | None, str]:
+    due_mileage = optional_int(form, "due_mileage")
+    if due_mileage is None and not form.get("due_mileage", "").strip():
+        due_mileage = calculated_due_mileage(mileage_performed, interval_miles)
+
+    due_date = form.get("due_date", "").strip()
+    if not due_date:
+        due_date = calculated_due_date(date_performed, interval_months)
+
+    return due_mileage, due_date
+
+
 templates.env.filters["pro_phone"] = format_phone
 templates.env.filters["pro_miles"] = format_mileage
 templates.env.filters["pro_currency"] = format_currency
@@ -202,12 +291,12 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
     interval_months = record.get("interval_months")
     performed_date = parse_date_value(record.get("date_performed"))
 
-    due_mileage = None
-    if mileage_performed is not None and interval_miles:
+    due_mileage = record.get("due_mileage")
+    if due_mileage is None and mileage_performed is not None and interval_miles:
         due_mileage = int(mileage_performed) + int(interval_miles)
 
-    due_date = None
-    if performed_date and interval_months:
+    due_date = parse_date_value(record.get("due_date"))
+    if due_date is None and performed_date and interval_months:
         due_date = add_months(performed_date, int(interval_months))
 
     needs_mileage = current_mileage is None
@@ -342,6 +431,17 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         """
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (customer_status)")
+    conn.commit()
+
+
+def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(maintenance_records)").fetchall()}
+    if "due_mileage" not in columns:
+        conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_mileage INTEGER")
+    if "due_date" not in columns:
+        conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_date TEXT")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_mileage ON maintenance_records (due_mileage)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_date ON maintenance_records (due_date)")
     conn.commit()
 
 
@@ -806,6 +906,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     conn = crm_db_conn()
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_maintenance_records_schema(conn)
         service_history = [
             dict(row)
             for row in conn.execute(
@@ -865,6 +966,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "maintenance_records": maintenance_records,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
+            "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
         },
     )
 
@@ -1232,26 +1334,41 @@ async def pro_service_history_update(
 async def pro_maintenance_record_create(request: Request, customer_id: int, vehicle_id: int):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
+    service_type = form.get("service_type", "")
+    date_performed = form.get("date_performed", "")
+    mileage_performed = optional_int(form, "mileage_performed")
+    interval_miles = maintenance_interval_value(form, service_type, "interval_miles")
+    interval_months = maintenance_interval_value(form, service_type, "interval_months")
+    due_mileage, due_date = maintenance_due_values(
+        form,
+        mileage_performed,
+        date_performed,
+        interval_miles,
+        interval_months,
+    )
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_maintenance_records_schema(conn)
         conn.execute(
             """
             INSERT INTO maintenance_records (
               customer_id, vehicle_id, service_type, date_performed,
               mileage_performed, interval_miles, interval_months,
-              notes, created_at, updated_at
+              due_mileage, due_date, notes, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 customer_id,
                 vehicle_id,
-                form.get("service_type", ""),
-                form.get("date_performed", ""),
-                optional_int(form, "mileage_performed"),
-                optional_int(form, "interval_miles"),
-                optional_int(form, "interval_months"),
+                service_type,
+                date_performed,
+                mileage_performed,
+                interval_miles,
+                interval_months,
+                due_mileage,
+                due_date,
                 form.get("notes", ""),
                 now,
                 now,
@@ -1270,6 +1387,7 @@ def pro_maintenance_record_detail(
     conn = crm_db_conn()
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_maintenance_records_schema(conn)
         maintenance = row_to_dict(
             conn.execute(
                 """
@@ -1292,6 +1410,7 @@ def pro_maintenance_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "maintenance": maintenance,
+            "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
         },
     )
 
@@ -1302,9 +1421,22 @@ async def pro_maintenance_record_update(
 ):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
+    service_type = form.get("service_type", "")
+    date_performed = form.get("date_performed", "")
+    mileage_performed = optional_int(form, "mileage_performed")
+    interval_miles = maintenance_interval_value(form, service_type, "interval_miles")
+    interval_months = maintenance_interval_value(form, service_type, "interval_months")
+    due_mileage, due_date = maintenance_due_values(
+        form,
+        mileage_performed,
+        date_performed,
+        interval_miles,
+        interval_months,
+    )
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_maintenance_records_schema(conn)
         cur = conn.execute(
             """
             UPDATE maintenance_records
@@ -1314,16 +1446,20 @@ async def pro_maintenance_record_update(
               mileage_performed = ?,
               interval_miles = ?,
               interval_months = ?,
+              due_mileage = ?,
+              due_date = ?,
               notes = ?,
               updated_at = ?
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
             (
-                form.get("service_type", ""),
-                form.get("date_performed", ""),
-                optional_int(form, "mileage_performed"),
-                optional_int(form, "interval_miles"),
-                optional_int(form, "interval_months"),
+                service_type,
+                date_performed,
+                mileage_performed,
+                interval_miles,
+                interval_months,
+                due_mileage,
+                due_date,
                 form.get("notes", ""),
                 now,
                 maintenance_id,
@@ -1338,5 +1474,31 @@ async def pro_maintenance_record_update(
         conn.close()
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_id}/delete")
+async def pro_maintenance_record_delete(
+    customer_id: int, vehicle_id: int, maintenance_id: int
+):
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_maintenance_records_schema(conn)
+        cur = conn.execute(
+            """
+            DELETE FROM maintenance_records
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (maintenance_id, customer_id, vehicle_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Maintenance record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}",
         status_code=303,
     )

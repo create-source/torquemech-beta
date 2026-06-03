@@ -429,6 +429,8 @@ def init_pro_crm_schema_db() -> None:
               mileage_performed INTEGER,
               interval_miles INTEGER,
               interval_months INTEGER,
+              due_mileage INTEGER,
+              due_date TEXT,
               notes TEXT,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL,
@@ -441,6 +443,10 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_vehicle_id ON maintenance_records (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_shop_id ON maintenance_records (shop_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_date_performed ON maintenance_records (date_performed)")
+        add_column_if_missing("maintenance_records", "due_mileage", "due_mileage INTEGER")
+        add_column_if_missing("maintenance_records", "due_date", "due_date TEXT")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_mileage ON maintenance_records (due_mileage)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_date ON maintenance_records (due_date)")
 
         # Pro groundwork: additional findings and customer decision records.
         conn.execute(
