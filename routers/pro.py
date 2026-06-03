@@ -36,12 +36,111 @@ MAINTENANCE_SERVICE_DEFAULTS = {
     "oil change": {"interval_miles": 5000, "interval_months": 6},
     "tire rotation": {"interval_miles": 6000, "interval_months": 6},
     "engine air filter": {"interval_miles": 15000, "interval_months": 12},
+    "engine air filter replacement": {"interval_miles": 15000, "interval_months": 12},
     "cabin air filter": {"interval_miles": 15000, "interval_months": 12},
+    "cabin air filter replacement": {"interval_miles": 15000, "interval_months": 12},
     "transmission service": {"interval_miles": 60000, "interval_months": None},
     "brake fluid service": {"interval_miles": None, "interval_months": 24},
     "coolant service": {"interval_miles": None, "interval_months": 60},
     "spark plugs": {"interval_miles": 100000, "interval_months": None},
+    "spark plug replacement": {"interval_miles": 100000, "interval_months": None},
     "serpentine belt": {"interval_miles": 90000, "interval_months": None},
+    "battery replacement": {"interval_miles": None, "interval_months": 48},
+    "timing belt service": {"interval_miles": 100000, "interval_months": 84},
+    "drive belt replacement": {"interval_miles": 90000, "interval_months": None},
+    "power steering fluid service": {"interval_miles": 50000, "interval_months": None},
+    "differential service": {"interval_miles": 30000, "interval_months": None},
+    "transfer case service": {"interval_miles": 30000, "interval_months": None},
+    "brake pad replacement": {"interval_miles": None, "interval_months": None},
+    "brake rotor replacement": {"interval_miles": None, "interval_months": None},
+    "brake inspection": {"interval_miles": 12000, "interval_months": 12},
+    "tire balance": {"interval_miles": 12000, "interval_months": None},
+    "wheel alignment": {"interval_miles": 12000, "interval_months": 12},
+    "battery test": {"interval_miles": None, "interval_months": 12},
+    "alternator replacement": {"interval_miles": None, "interval_months": None},
+    "starter replacement": {"interval_miles": None, "interval_months": None},
+    "ac service": {"interval_miles": None, "interval_months": 24},
+    "shock replacement": {"interval_miles": None, "interval_months": None},
+    "strut replacement": {"interval_miles": None, "interval_months": None},
+    "control arm replacement": {"interval_miles": None, "interval_months": None},
+    "ball joint replacement": {"interval_miles": None, "interval_months": None},
+    "tie rod replacement": {"interval_miles": None, "interval_months": None},
+    "wiper blade replacement": {"interval_miles": None, "interval_months": 12},
+    "headlight bulb replacement": {"interval_miles": None, "interval_months": None},
+    "brake light bulb replacement": {"interval_miles": None, "interval_months": None},
+    "turn signal bulb replacement": {"interval_miles": None, "interval_months": None},
+    "multi point inspection": {"interval_miles": None, "interval_months": 12},
+    "safety inspection": {"interval_miles": None, "interval_months": 12},
+    "emissions inspection": {"interval_miles": None, "interval_months": 12},
+}
+
+MAINTENANCE_SERVICE_OPTION_NAMES = [
+    "oil change",
+    "tire rotation",
+    "engine air filter",
+    "cabin air filter",
+    "transmission service",
+    "brake fluid service",
+    "coolant service",
+    "spark plugs",
+    "serpentine belt",
+    "battery replacement",
+]
+
+MAINTENANCE_SERVICE_ALIAS_GROUPS = {
+    "oil change": ["oil", "engine oil", "motor oil", "oil service"],
+    "engine air filter": ["air filter", "engine filter", "intake filter", "engine air filter replacement"],
+    "spark plugs": ["spark plugs", "plugs", "tune up", "tune-up", "spark plug replacement"],
+    "timing belt service": ["timing belt", "timing belt replacement"],
+    "drive belt replacement": ["serpentine belt", "drive belt", "accessory belt"],
+    "coolant service": ["coolant", "antifreeze", "radiator fluid", "coolant flush"],
+    "brake fluid service": ["brake fluid", "brake flush"],
+    "power steering fluid service": ["power steering fluid", "power steering flush", "ps fluid"],
+    "transmission service": [
+        "transmission fluid",
+        "trans fluid",
+        "atf",
+        "automatic transmission fluid",
+        "transmission flush",
+    ],
+    "differential service": ["differential fluid", "diff fluid", "rear diff", "front diff"],
+    "transfer case service": ["transfer case fluid", "transfer case service"],
+    "brake pad replacement": ["brake pads", "pads", "front brakes", "rear brakes"],
+    "brake rotor replacement": ["rotors", "brake rotors"],
+    "brake inspection": ["brake check", "brake inspection"],
+    "tire rotation": ["rotate tires", "tire rotate", "rotation"],
+    "tire balance": ["wheel balance", "tire balancing"],
+    "wheel alignment": ["alignment", "four wheel alignment"],
+    "battery replacement": ["battery", "car battery"],
+    "battery test": ["battery check", "battery inspection"],
+    "alternator replacement": ["alternator"],
+    "starter replacement": ["starter"],
+    "cabin air filter": ["cabin filter", "ac filter", "hvac filter", "cabin air filter replacement"],
+    "ac service": ["ac service", "a c service", "air conditioning service", "refrigerant service"],
+    "shock replacement": ["shocks"],
+    "strut replacement": ["struts"],
+    "control arm replacement": ["control arm"],
+    "ball joint replacement": ["ball joint"],
+    "tie rod replacement": ["tie rod"],
+    "wiper blade replacement": ["wipers", "wiper blades"],
+    "headlight bulb replacement": ["headlight", "headlight bulb"],
+    "brake light bulb replacement": ["brake light", "stop light"],
+    "turn signal bulb replacement": ["turn signal", "blinker"],
+    "multi point inspection": [
+        "inspection",
+        "vehicle inspection",
+        "bumper to bumper inspection",
+        "multi-point inspection",
+        "multipoint inspection",
+    ],
+    "safety inspection": ["safety check", "safety inspection"],
+    "emissions inspection": ["smog", "emissions", "emissions test"],
+}
+
+MAINTENANCE_SERVICE_ALIASES = {
+    alias: preset
+    for preset, aliases in MAINTENANCE_SERVICE_ALIAS_GROUPS.items()
+    for alias in aliases
 }
 
 MAINTENANCE_SERVICE_OPTIONS = [
@@ -50,7 +149,8 @@ MAINTENANCE_SERVICE_OPTIONS = [
         "interval_miles": defaults["interval_miles"],
         "interval_months": defaults["interval_months"],
     }
-    for name, defaults in MAINTENANCE_SERVICE_DEFAULTS.items()
+    for name in MAINTENANCE_SERVICE_OPTION_NAMES
+    for defaults in [MAINTENANCE_SERVICE_DEFAULTS[name]]
 ]
 
 
@@ -172,6 +272,9 @@ def maintenance_defaults_for(service_type: str) -> dict[str, int | None]:
     normalized = normalize_maintenance_service_type(service_type)
     if normalized in MAINTENANCE_SERVICE_DEFAULTS:
         return MAINTENANCE_SERVICE_DEFAULTS[normalized]
+    alias = MAINTENANCE_SERVICE_ALIASES.get(normalized)
+    if alias:
+        return MAINTENANCE_SERVICE_DEFAULTS.get(alias, {})
     for default_name, defaults in MAINTENANCE_SERVICE_DEFAULTS.items():
         if default_name in normalized:
             return defaults
@@ -460,6 +563,16 @@ def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_date TEXT")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_mileage ON maintenance_records (due_mileage)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_date ON maintenance_records (due_date)")
+    conn.commit()
+
+
+def ensure_service_history_schema(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(service_history)").fetchall()}
+    if "labor_amount" not in columns:
+        conn.execute("ALTER TABLE service_history ADD COLUMN labor_amount REAL")
+    if "parts_amount" not in columns:
+        conn.execute("ALTER TABLE service_history ADD COLUMN parts_amount REAL")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_vehicle_date ON service_history (vehicle_id, service_date)")
     conn.commit()
 
 
@@ -926,6 +1039,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_maintenance_records_schema(conn)
+        ensure_service_history_schema(conn)
         service_history = [
             dict(row)
             for row in conn.execute(
@@ -986,6 +1100,8 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
             "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
+            "maintenance_interval_presets": MAINTENANCE_SERVICE_DEFAULTS,
+            "maintenance_service_aliases": MAINTENANCE_SERVICE_ALIASES,
         },
     )
 
@@ -1237,18 +1353,19 @@ async def pro_approval_record_decline(
 async def pro_service_history_create(request: Request, customer_id: int, vehicle_id: int):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
-    service_total = service_total_from_form(form)
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_service_history_schema(conn)
         conn.execute(
             """
             INSERT INTO service_history (
               customer_id, vehicle_id, service_title, service_notes,
-              mileage_at_service, service_date, estimate_total, actual_total,
+              mileage_at_service, service_date, labor_amount, parts_amount,
+              estimate_total, actual_total,
               status, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)
             """,
             (
                 customer_id,
@@ -1257,8 +1374,10 @@ async def pro_service_history_create(request: Request, customer_id: int, vehicle
                 form.get("service_notes", ""),
                 optional_int(form, "mileage_at_service"),
                 form.get("service_date", ""),
+                optional_float(form, "labor_amount"),
+                optional_float(form, "parts_amount"),
                 None,
-                service_total,
+                None,
                 now,
                 now,
             ),
@@ -1276,6 +1395,7 @@ def pro_service_history_detail(
     conn = crm_db_conn()
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_service_history_schema(conn)
         history = row_to_dict(
             conn.execute(
                 """
@@ -1308,10 +1428,10 @@ async def pro_service_history_update(
 ):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
-    service_total = service_total_from_form(form)
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_service_history_schema(conn)
         cur = conn.execute(
             """
             UPDATE service_history
@@ -1320,8 +1440,8 @@ async def pro_service_history_update(
               service_notes = ?,
               mileage_at_service = ?,
               service_date = ?,
-              estimate_total = ?,
-              actual_total = ?,
+              labor_amount = ?,
+              parts_amount = ?,
               updated_at = ?
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
@@ -1330,8 +1450,8 @@ async def pro_service_history_update(
                 form.get("service_notes", ""),
                 optional_int(form, "mileage_at_service"),
                 form.get("service_date", ""),
-                None,
-                service_total,
+                optional_float(form, "labor_amount"),
+                optional_float(form, "parts_amount"),
                 now,
                 history_id,
                 customer_id,
@@ -1345,6 +1465,32 @@ async def pro_service_history_update(
         conn.close()
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}/delete")
+async def pro_service_history_delete(
+    customer_id: int, vehicle_id: int, history_id: int
+):
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_service_history_schema(conn)
+        cur = conn.execute(
+            """
+            DELETE FROM service_history
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (history_id, customer_id, vehicle_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Service history not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}",
         status_code=303,
     )
 

@@ -51,6 +51,29 @@
     min-height: 48px;
   }
 
+  .tm-money-field {
+    position: relative;
+  }
+
+  .tm-money-field-symbol {
+    display: none;
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #475569;
+    font-weight: 800;
+    pointer-events: none;
+  }
+
+  .tm-money-field.has-value .tm-money-field-symbol {
+    display: block;
+  }
+
+  .tm-money-field.has-value .tm-input {
+    padding-left: 28px;
+  }
+
   @media (max-width: 760px) {
     .tm-crm-row {
       grid-template-columns: 1fr;
@@ -79,9 +102,11 @@
       {% if history.mileage_at_service %}
       <span class="tm-crm-chip">{{ history.mileage_at_service|pro_miles }} miles</span>
       {% endif %}
-      {% set total = history|service_total %}
-      {% if total is not none %}
-      <span class="tm-crm-chip">Service Total {{ total|pro_currency }}</span>
+      {% if history.labor_amount is not none %}
+      <span class="tm-crm-chip">Labor {{ history.labor_amount|pro_currency }}</span>
+      {% endif %}
+      {% if history.parts_amount is not none %}
+      <span class="tm-crm-chip">Parts {{ history.parts_amount|pro_currency }}</span>
       {% endif %}
     </div>
     {% if history.service_notes %}
@@ -92,25 +117,37 @@
   <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ history.id }}">
     <h2 style="margin-top:0;">Edit Service History</h2>
 
-    <div class="tm-crm-row">
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="service_title">Service name</label>
+      <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180" value="{{ history.service_title or '' }}" autocomplete="off">
+    </div>
+
+    <div class="tm-crm-row" style="margin-top:12px;">
       <div>
         <label class="tm-label" for="service_date">Service date</label>
         <input class="tm-input" id="service_date" name="service_date" type="date" value="{{ history.service_date or '' }}">
       </div>
       <div>
-        <label class="tm-label" for="mileage_at_service">Mileage</label>
+        <label class="tm-label" for="mileage_at_service">Vehicle mileage</label>
         <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="text" inputmode="numeric" value="{{ history.mileage_at_service|pro_miles if history.mileage_at_service else '' }}">
       </div>
     </div>
 
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="service_title">Service/repair title</label>
-      <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180" value="{{ history.service_title or '' }}">
-    </div>
-
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="service_total">Service total</label>
-      <input class="tm-input" id="service_total" name="service_total" type="text" inputmode="decimal" value="{{ total|pro_currency if total is not none else '' }}" placeholder="Final or expected total for this service visit">
+    <div class="tm-crm-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="labor_amount">Labor amount</label>
+        <div class="tm-money-field" data-money-field>
+          <span class="tm-money-field-symbol" aria-hidden="true">$</span>
+          <input class="tm-input" id="labor_amount" name="labor_amount" type="text" inputmode="decimal" value="{{ '%.2f'|format(history.labor_amount) if history.labor_amount is not none else '' }}" placeholder="Optional" data-money-input>
+        </div>
+      </div>
+      <div>
+        <label class="tm-label" for="parts_amount">Parts amount</label>
+        <div class="tm-money-field" data-money-field>
+          <span class="tm-money-field-symbol" aria-hidden="true">$</span>
+          <input class="tm-input" id="parts_amount" name="parts_amount" type="text" inputmode="decimal" value="{{ '%.2f'|format(history.parts_amount) if history.parts_amount is not none else '' }}" placeholder="Optional" data-money-input>
+        </div>
+      </div>
     </div>
 
     <div style="margin-top:12px;">
@@ -120,5 +157,28 @@
 
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save History Entry</button>
   </form>
+
+  <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ history.id }}/delete" style="margin-top:16px;">
+    <h2 style="margin-top:0;">Delete Service History</h2>
+    <div style="color:#64748b;">Remove this completed service record from the vehicle. This does not affect maintenance tracking, approvals, or customer details.</div>
+    <button class="tm-btn tm-btn-secondary" type="submit" style="margin-top:14px;">Delete Record</button>
+  </form>
 </section>
+
+<script>
+(() => {
+  document.querySelectorAll("[data-money-field]").forEach((field) => {
+    const input = field.querySelector("[data-money-input]");
+    if (!input) return;
+
+    const sync = () => {
+      field.classList.toggle("has-value", input.value.trim() !== "");
+    };
+
+    input.addEventListener("input", sync);
+    input.addEventListener("change", sync);
+    sync();
+  });
+})();
+</script>
 {% endblock %}

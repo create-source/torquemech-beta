@@ -254,6 +254,29 @@
     min-height: 48px;
   }
 
+  .tm-money-field {
+    position: relative;
+  }
+
+  .tm-money-field-symbol {
+    display: none;
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #475569;
+    font-weight: 800;
+    pointer-events: none;
+  }
+
+  .tm-money-field.has-value .tm-money-field-symbol {
+    display: block;
+  }
+
+  .tm-money-field.has-value .tm-input {
+    padding-left: 28px;
+  }
+
   @media (max-width: 760px) {
     .tm-crm-row,
     .tm-maintenance-fields {
@@ -341,73 +364,6 @@
 
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
   </form>
-
-  <section class="tm-crm-panel" aria-label="Service history" style="margin-top:16px;">
-    <div class="tm-crm-kicker">History</div>
-    <h2 style="margin:4px 0 0;">Service History</h2>
-
-    {% if service_history %}
-    <div class="tm-history-list">
-      {% for item in service_history %}
-      <a class="tm-history-item" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ item.id }}">
-        <div class="tm-history-head">
-          <div class="tm-history-title">{{ item.service_title or "Service entry" }}</div>
-          <div class="tm-history-date">{{ item.service_date|pro_date if item.service_date else "No date" }}</div>
-        </div>
-        <div style="color:#475569;">{{ item.service_notes or "No notes recorded." }}</div>
-        <div class="tm-crm-chip-row">
-          {% if item.mileage_at_service %}
-          <span class="tm-crm-chip">{{ item.mileage_at_service|pro_miles }} miles</span>
-          {% endif %}
-          {% set total = item|service_total %}
-          {% if total is not none %}
-          <span class="tm-crm-chip">Service Total {{ total|pro_currency }}</span>
-          {% endif %}
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No service history recorded for this vehicle yet.
-    </div>
-    {% endif %}
-  </section>
-
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
-    <summary>Add Service History</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history">
-      <div class="tm-crm-row">
-        <div>
-          <label class="tm-label" for="service_date">Service date</label>
-          <input class="tm-input" id="service_date" name="service_date" type="date">
-        </div>
-        <div>
-          <label class="tm-label" for="mileage_at_service">Mileage</label>
-          <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="text" inputmode="numeric">
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="service_title">Service/repair title</label>
-        <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180">
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="service_total">Service total</label>
-          <input class="tm-input" id="service_total" name="service_total" type="text" inputmode="decimal" placeholder="Final or expected total for this service visit">
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="service_notes">Notes</label>
-        <textarea class="tm-input" id="service_notes" name="service_notes" rows="4" maxlength="1600" placeholder="What was performed, inspection results, customer concern, parts used, or follow-up context."></textarea>
-      </div>
-
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add History Entry</button>
-    </form>
-  </details>
 
   <section class="tm-crm-panel" aria-label="Approvals and additional findings" style="margin-top:16px;">
     <div class="tm-crm-kicker">Approvals</div>
@@ -604,6 +560,87 @@
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Maintenance Record</button>
     </form>
   </details>
+
+  <section class="tm-crm-panel" aria-label="Service history" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Vehicle History</div>
+    <h2 style="margin:4px 0 0;">Service History</h2>
+
+    {% if service_history %}
+    <div class="tm-history-list">
+      {% for item in service_history %}
+      <a class="tm-history-item" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ item.id }}">
+        <div class="tm-history-head">
+          <div class="tm-history-title">{{ item.service_title or "Service entry" }}</div>
+          <div class="tm-history-date">{{ item.service_date|pro_date if item.service_date else "No date" }}</div>
+        </div>
+        <div class="tm-crm-chip-row">
+          {% if item.mileage_at_service %}
+          <span class="tm-crm-chip">{{ item.mileage_at_service|pro_miles }} miles</span>
+          {% endif %}
+          {% if item.labor_amount is not none %}
+          <span class="tm-crm-chip">Labor {{ item.labor_amount|pro_currency }}</span>
+          {% endif %}
+          {% if item.parts_amount is not none %}
+          <span class="tm-crm-chip">Parts {{ item.parts_amount|pro_currency }}</span>
+          {% endif %}
+        </div>
+        {% if item.service_notes %}
+        <div style="color:#475569;">{{ item.service_notes }}</div>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No service history recorded for this vehicle yet.
+    </div>
+    {% endif %}
+  </section>
+
+  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
+    <summary>Add Service History Record</summary>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history">
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="service_title">Service name</label>
+        <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180" autocomplete="off">
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="service_date">Service date</label>
+          <input class="tm-input" id="service_date" name="service_date" type="date">
+        </div>
+        <div>
+          <label class="tm-label" for="mileage_at_service">Vehicle mileage</label>
+          <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="text" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="labor_amount">Labor amount</label>
+          <div class="tm-money-field" data-money-field>
+            <span class="tm-money-field-symbol" aria-hidden="true">$</span>
+            <input class="tm-input" id="labor_amount" name="labor_amount" type="text" inputmode="decimal" placeholder="Optional" data-money-input>
+          </div>
+        </div>
+        <div>
+          <label class="tm-label" for="parts_amount">Parts amount</label>
+          <div class="tm-money-field" data-money-field>
+            <span class="tm-money-field-symbol" aria-hidden="true">$</span>
+            <input class="tm-input" id="parts_amount" name="parts_amount" type="text" inputmode="decimal" placeholder="Optional" data-money-input>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="service_notes">Notes</label>
+        <textarea class="tm-input" id="service_notes" name="service_notes" rows="4" maxlength="1600" placeholder="Completed work, inspection notes, parts used, or technician context."></textarea>
+      </div>
+
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Service Record</button>
+    </form>
+  </details>
 </section>
 
 <script>
@@ -612,11 +649,17 @@
   if (!form) return;
 
   const defaults = {
-    {% for option in maintenance_service_options %}
-    "{{ option.name|lower }}": {
-      intervalMiles: {{ option.interval_miles if option.interval_miles is not none else "null" }},
-      intervalMonths: {{ option.interval_months if option.interval_months is not none else "null" }}
+    {% for name, preset in maintenance_interval_presets.items() %}
+    "{{ name }}": {
+      intervalMiles: {{ preset.interval_miles if preset.interval_miles is not none else "null" }},
+      intervalMonths: {{ preset.interval_months if preset.interval_months is not none else "null" }}
     }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  const aliases = {
+    {% for alias, preset in maintenance_service_aliases.items() %}
+    "{{ alias }}": "{{ preset }}"{% if not loop.last %},{% endif %}
     {% endfor %}
   };
 
@@ -642,6 +685,15 @@
     return cleaned ? Number(cleaned) : null;
   };
 
+  const normalizeServiceType = (value) => {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .replace(/\s+/g, " ");
+  };
+
   const formatMiles = (value) => {
     if (value === null || Number.isNaN(value)) return "";
     return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -662,8 +714,10 @@
   };
 
   const selectedDefaults = () => {
-    const key = String(fields.serviceType.value || "").trim().toLowerCase();
-    return defaults[key] || null;
+    const key = normalizeServiceType(fields.serviceType.value);
+    if (defaults[key]) return defaults[key];
+    const presetKey = aliases[key];
+    return presetKey && defaults[presetKey] ? defaults[presetKey] : null;
   };
 
   const recalculateDue = () => {
@@ -712,6 +766,23 @@
   });
   fields.dueDate.addEventListener("change", () => {
     dirty.dueDate = true;
+  });
+})();
+</script>
+
+<script>
+(() => {
+  document.querySelectorAll("[data-money-field]").forEach((field) => {
+    const input = field.querySelector("[data-money-input]");
+    if (!input) return;
+
+    const sync = () => {
+      field.classList.toggle("has-value", input.value.trim() !== "");
+    };
+
+    input.addEventListener("input", sync);
+    input.addEventListener("change", sync);
+    sync();
   });
 })();
 </script>

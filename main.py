@@ -363,6 +363,8 @@ def init_pro_crm_schema_db() -> None:
               service_notes TEXT,
               mileage_at_service INTEGER,
               service_date TEXT NOT NULL,
+              labor_amount REAL,
+              parts_amount REAL,
               estimate_total REAL,
               actual_total REAL,
               status TEXT NOT NULL CHECK (status IN ('estimate', 'approved', 'completed', 'declined')),
@@ -382,6 +384,8 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("service_history", "customer_authorized_by", "customer_authorized_by TEXT")
         add_column_if_missing("service_history", "authorization_notes", "authorization_notes TEXT")
         add_column_if_missing("service_history", "discrepancy_notes", "discrepancy_notes TEXT")
+        add_column_if_missing("service_history", "labor_amount", "labor_amount REAL")
+        add_column_if_missing("service_history", "parts_amount", "parts_amount REAL")
         add_column_if_missing("service_history", "actual_total", "actual_total REAL")
         add_column_if_missing("service_history", "created_at", "created_at TEXT")
         add_column_if_missing("service_history", "updated_at", "updated_at TEXT")
