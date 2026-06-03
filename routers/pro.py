@@ -53,7 +53,7 @@ def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
 
 
 def optional_int(form: dict[str, str], name: str) -> int | None:
-    raw = form.get(name, "")
+    raw = form.get(name, "").replace(",", "").strip()
     if not raw:
         return None
     try:
@@ -63,7 +63,7 @@ def optional_int(form: dict[str, str], name: str) -> int | None:
 
 
 def optional_float(form: dict[str, str], name: str) -> float | None:
-    raw = form.get(name, "")
+    raw = form.get(name, "").replace("$", "").replace(",", "").strip()
     if not raw:
         return None
     try:
@@ -79,6 +79,13 @@ def format_phone(value: Any) -> str:
     if len(raw) == 10:
         return f"{raw[:3]}-{raw[3:6]}-{raw[6:]}"
     return str(value or "").strip()
+
+
+def clean_phone(value: Any) -> str:
+    raw = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(raw) == 11 and raw.startswith("1"):
+        raw = raw[1:]
+    return raw if len(raw) == 10 else str(value or "").strip()
 
 
 def format_mileage(value: Any) -> str:
@@ -573,7 +580,7 @@ async def pro_customer_create(request: Request):
             (
                 form.get("first_name", ""),
                 form.get("last_name", ""),
-                form.get("phone", ""),
+                clean_phone(form.get("phone", "")),
                 form.get("email", ""),
                 form.get("notes", ""),
                 now,
@@ -608,7 +615,7 @@ async def pro_customer_update(request: Request, customer_id: int):
             (
                 form.get("first_name", ""),
                 form.get("last_name", ""),
-                form.get("phone", ""),
+                clean_phone(form.get("phone", "")),
                 form.get("email", ""),
                 form.get("notes", ""),
                 now,
