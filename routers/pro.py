@@ -224,6 +224,67 @@ def load_shop_name(conn: sqlite3.Connection) -> str:
     return str(row["shop_name"] or "").strip() if row else ""
 
 
+def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discrepancy_approvals (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          service_history_id INTEGER,
+          shop_id INTEGER,
+          finding_title TEXT,
+          finding_description TEXT,
+          recommended_repair TEXT,
+          estimated_cost REAL,
+          customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined')),
+          decision_notes TEXT,
+          decision_recorded_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (customer_id) REFERENCES customers(id),
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+          FOREIGN KEY (service_history_id) REFERENCES service_history(id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_vehicle_id ON discrepancy_approvals (vehicle_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_service_history_id ON discrepancy_approvals (service_history_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_decision ON discrepancy_approvals (customer_decision)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_created_at ON discrepancy_approvals (created_at)")
+
+
+def load_approval_record(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+    approval_id: int,
+) -> dict[str, Any]:
+    ensure_discrepancy_approvals_schema(conn)
+    approval = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM discrepancy_approvals
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (approval_id, customer_id, vehicle_id),
+        ).fetchone()
+    )
+    if not approval:
+        raise HTTPException(status_code=404, detail="Approval record not found")
+    return approval
+
+
+def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped = {"pending": [], "approved": [], "declined": []}
+    for record in records:
+        key = str(record.get("customer_decision") or "pending").lower()
+        grouped.setdefault(key, []).append(record)
+    return grouped
+
+
 def load_customer_vehicle(
     conn: sqlite3.Connection, customer_id: int, vehicle_id: int
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -249,9 +310,81 @@ def load_customer_vehicle(
 
 @router.get("", response_class=HTMLResponse)
 def pro_dashboard(request: Request):
+    conn = crm_db_conn()
+    try:
+        ensure_discrepancy_approvals_schema(conn)
+        pending_approvals_count = conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM discrepancy_approvals
+            WHERE customer_decision = 'pending'
+            """
+        ).fetchone()["count"]
+    finally:
+        conn.close()
+
     return templates.TemplateResponse(
         "pro/dashboard.html",
-        {"request": request},
+        {
+            "request": request,
+            "pending_approvals_count": pending_approvals_count,
+        },
+    )
+
+
+@router.get("/approvals", response_class=HTMLResponse)
+def pro_approvals(request: Request):
+    conn = crm_db_conn()
+    try:
+        ensure_discrepancy_approvals_schema(conn)
+        records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT
+                  a.*,
+                  c.first_name,
+                  c.last_name,
+                  c.phone,
+                  c.email,
+                  v.year AS vehicle_year,
+                  v.make AS vehicle_make,
+                  v.model AS vehicle_model
+                FROM discrepancy_approvals a
+                JOIN customers c ON c.id = a.customer_id
+                JOIN customer_vehicles v ON v.id = a.vehicle_id
+                ORDER BY
+                  CASE a.customer_decision
+                    WHEN 'pending' THEN 0
+                    WHEN 'approved' THEN 1
+                    ELSE 2
+                  END,
+                  a.created_at DESC,
+                  a.id DESC
+                """
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+
+    for record in records:
+        record["customer_name"] = customer_name(record)
+        record["vehicle_label"] = vehicle_label(record)
+        record["vehicle_url"] = f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
+        record["detail_url"] = (
+            f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
+            f"/approvals/{record['id']}"
+        )
+
+    grouped = group_approval_records(records)
+
+    return templates.TemplateResponse(
+        "pro/approvals.html",
+        {
+            "request": request,
+            "groups": grouped,
+            "summary": {key: len(items) for key, items in grouped.items()},
+        },
     )
 
 
@@ -523,8 +656,30 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        ensure_discrepancy_approvals_schema(conn)
+        approval_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM discrepancy_approvals
+                WHERE customer_id = ? AND vehicle_id = ?
+                ORDER BY
+                  CASE customer_decision
+                    WHEN 'pending' THEN 0
+                    WHEN 'approved' THEN 1
+                    ELSE 2
+                  END,
+                  created_at DESC,
+                  id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
     finally:
         conn.close()
+
+    grouped_approval_records = group_approval_records(approval_records)
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -534,6 +689,8 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "vehicle": vehicle,
             "service_history": service_history,
             "maintenance_records": maintenance_records,
+            "approval_records": approval_records,
+            "approval_groups": grouped_approval_records,
         },
     )
 
@@ -579,6 +736,210 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
     finally:
         conn.close()
     return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals")
+async def pro_approval_record_create(request: Request, customer_id: int, vehicle_id: int):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    decision = (form.get("customer_decision") or "pending").lower()
+    if decision not in {"pending", "approved", "declined"}:
+        decision = "pending"
+    decision_recorded_at = form.get("decision_recorded_at", "")
+    if decision == "pending":
+        decision_recorded_at = ""
+    elif not decision_recorded_at:
+        decision_recorded_at = now
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_discrepancy_approvals_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO discrepancy_approvals (
+              customer_id, vehicle_id, finding_title, finding_description,
+              recommended_repair, estimated_cost, customer_decision,
+              decision_notes, decision_recorded_at, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                customer_id,
+                vehicle_id,
+                form.get("finding_title", ""),
+                form.get("finding_description", ""),
+                form.get("recommended_repair", ""),
+                optional_float(form, "estimated_cost"),
+                decision,
+                form.get("decision_notes", ""),
+                decision_recorded_at,
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+
+
+@router.get("/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}", response_class=HTMLResponse)
+def pro_approval_record_detail(
+    request: Request, customer_id: int, vehicle_id: int, approval_id: int
+):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        approval = load_approval_record(conn, customer_id, vehicle_id, approval_id)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/approval_detail.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "approval": approval,
+        },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}")
+async def pro_approval_record_update(
+    request: Request, customer_id: int, vehicle_id: int, approval_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    decision = (form.get("customer_decision") or "pending").lower()
+    if decision not in {"pending", "approved", "declined"}:
+        decision = "pending"
+    decision_recorded_at = form.get("decision_recorded_at", "")
+    if decision == "pending":
+        decision_recorded_at = ""
+    elif not decision_recorded_at:
+        decision_recorded_at = now
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_discrepancy_approvals_schema(conn)
+        cur = conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET
+              finding_title = ?,
+              finding_description = ?,
+              recommended_repair = ?,
+              estimated_cost = ?,
+              customer_decision = ?,
+              decision_notes = ?,
+              decision_recorded_at = ?,
+              updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("finding_title", ""),
+                form.get("finding_description", ""),
+                form.get("recommended_repair", ""),
+                optional_float(form, "estimated_cost"),
+                decision,
+                form.get("decision_notes", ""),
+                decision_recorded_at,
+                now,
+                approval_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Approval record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}/approve")
+async def pro_approval_record_approve(
+    request: Request, customer_id: int, vehicle_id: int, approval_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_discrepancy_approvals_schema(conn)
+        cur = conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET customer_decision = 'approved',
+                decision_notes = ?,
+                decision_recorded_at = ?,
+                updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("decision_notes", ""),
+                now,
+                now,
+                approval_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Approval record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}/decline")
+async def pro_approval_record_decline(
+    request: Request, customer_id: int, vehicle_id: int, approval_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_discrepancy_approvals_schema(conn)
+        cur = conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET customer_decision = 'declined',
+                decision_notes = ?,
+                decision_recorded_at = ?,
+                updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("decision_notes", ""),
+                now,
+                now,
+                approval_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Approval record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+        status_code=303,
+    )
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/history")

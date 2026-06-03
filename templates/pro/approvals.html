@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+
+{% block title %}Approvals | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-approval-shell {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tm-approval-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-approval-summary-card,
+  .tm-approval-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 16px;
+  }
+
+  .tm-approval-summary-card {
+    border-left: 5px solid #334155;
+  }
+
+  .tm-approval-summary-card--pending,
+  .tm-approval-record--pending {
+    border-left-color: #d97706;
+  }
+
+  .tm-approval-summary-card--approved,
+  .tm-approval-record--approved {
+    border-left-color: #0f766e;
+  }
+
+  .tm-approval-summary-card--declined,
+  .tm-approval-record--declined {
+    border-left-color: #991b1b;
+  }
+
+  .tm-approval-count {
+    color: #0f172a;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .tm-approval-label,
+  .tm-approval-title {
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-approval-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-approval-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-approval-record {
+    display: grid;
+    gap: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left-width: 5px;
+    border-radius: 8px;
+    background: #fff;
+    color: inherit;
+    padding: 14px;
+    text-decoration: none;
+  }
+
+  .tm-approval-record:hover {
+    border-color: rgba(14, 116, 144, 0.48);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  }
+
+  .tm-approval-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .tm-approval-meta {
+    color: #64748b;
+    font-size: 0.92rem;
+  }
+
+  .tm-approval-badge {
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  .tm-approval-badge--pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .tm-approval-badge--approved {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .tm-approval-badge--declined {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .tm-approval-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    padding: 16px;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.78);
+    margin-top: 12px;
+  }
+
+  @media (max-width: 760px) {
+    .tm-approval-summary,
+    .tm-approval-head {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% macro approval_record(item) %}
+<a class="tm-approval-record tm-approval-record--{{ item.customer_decision }}" href="{{ item.detail_url }}">
+  <div class="tm-approval-head">
+    <div>
+      <div class="tm-approval-title">{{ item.finding_title or "Additional finding" }}</div>
+      <div class="tm-approval-meta">{{ item.customer_name }} | {{ item.vehicle_label }}</div>
+    </div>
+    <span class="tm-approval-badge tm-approval-badge--{{ item.customer_decision }}">{{ item.customer_decision }}</span>
+  </div>
+  <div class="tm-approval-meta">
+    Recommended: {{ item.recommended_repair or "No recommendation recorded" }}
+    {% if item.estimated_cost is not none %}| Est. ${{ "%.2f"|format(item.estimated_cost) }}{% endif %}
+  </div>
+  <div class="tm-approval-meta">
+    Created {{ item.created_at or "unknown" }}{% if item.decision_recorded_at %} | Decision {{ item.decision_recorded_at }}{% endif %}
+  </div>
+</a>
+{% endmacro %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Approvals</h1>
+      <p class="tm-pro-subtitle">Additional findings and customer decision records.</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro">Back to CRM</a>
+  </div>
+
+  <div class="tm-approval-shell">
+    <section class="tm-approval-summary" aria-label="Approval summary">
+      <div class="tm-approval-summary-card tm-approval-summary-card--pending">
+        <div class="tm-approval-count">{{ summary.pending }}</div>
+        <div class="tm-approval-label">Pending</div>
+      </div>
+      <div class="tm-approval-summary-card tm-approval-summary-card--approved">
+        <div class="tm-approval-count">{{ summary.approved }}</div>
+        <div class="tm-approval-label">Approved</div>
+      </div>
+      <div class="tm-approval-summary-card tm-approval-summary-card--declined">
+        <div class="tm-approval-count">{{ summary.declined }}</div>
+        <div class="tm-approval-label">Declined</div>
+      </div>
+    </section>
+
+    {% set sections = [
+      ("pending", "Pending", "Findings awaiting customer decision."),
+      ("approved", "Approved", "Findings the customer approved."),
+      ("declined", "Declined", "Findings the customer declined.")
+    ] %}
+
+    {% for key, title, description in sections %}
+    <section class="tm-approval-panel" aria-label="{{ title }}">
+      <div class="tm-approval-kicker">{{ groups[key]|length }} record{% if groups[key]|length != 1 %}s{% endif %}</div>
+      <h2 style="margin:4px 0 0;">{{ title }}</h2>
+      <div class="tm-approval-meta">{{ description }}</div>
+
+      {% if groups[key] %}
+      <div class="tm-approval-list">
+        {% for item in groups[key] %}
+          {{ approval_record(item) }}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-approval-empty">No records in this group.</div>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

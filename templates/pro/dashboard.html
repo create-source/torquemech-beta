@@ -2,6 +2,97 @@
 
 {% block title %}TorqueMech Pro CRM{% endblock %}
 
+{% block page_css %}
+<style>
+  .tm-pro-shell {
+    display: grid;
+    gap: 18px;
+  }
+
+  .tm-pro-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .tm-pro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    align-items: stretch;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .tm-pro-card {
+    box-sizing: border-box;
+    display: grid;
+    gap: 8px;
+    min-height: 128px;
+    min-width: 0;
+    width: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-left: 5px solid #0e7490;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    color: inherit;
+    padding: 16px;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  }
+
+  .tm-pro-card:hover {
+    border-color: rgba(14, 116, 144, 0.48);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .tm-pro-card h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 900;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-pro-card p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 640px) {
+    .tm-pro-shell {
+      gap: 14px;
+    }
+
+    .tm-pro-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .tm-pro-card {
+      min-height: 0;
+      padding: 14px;
+    }
+
+    .tm-pro-card p {
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .tm-pro-title {
+      font-size: 2.35rem;
+      line-height: 1.05;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="tm-pro-shell">
   <div class="tm-pro-header">
@@ -22,6 +113,10 @@
     <a class="tm-pro-card" href="/pro/follow-ups">
       <h3>Follow-Ups</h3>
       <p>Review due soon, overdue, and future maintenance follow-up opportunities.</p>
+    </a>
+    <a class="tm-pro-card" href="/pro/approvals">
+      <h3>Approvals</h3>
+      <p>{{ pending_approvals_count or 0 }} pending approval{% if (pending_approvals_count or 0) != 1 %}s{% endif %} for additional findings.</p>
     </a>
   </div>
 </section>

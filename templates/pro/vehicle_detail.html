@@ -71,6 +71,67 @@
     box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
   }
 
+  .tm-approval-helper {
+    border: 1px solid rgba(217, 119, 6, 0.18);
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #78350f;
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-approval-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-approval-item {
+    display: grid;
+    gap: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #d97706;
+    border-radius: 8px;
+    background: #fff;
+    color: inherit;
+    padding: 14px;
+    text-decoration: none;
+  }
+
+  .tm-approval-item--approved {
+    border-left-color: #0f766e;
+  }
+
+  .tm-approval-item--declined {
+    border-left-color: #991b1b;
+  }
+
+  .tm-approval-item:hover {
+    border-color: rgba(14, 116, 144, 0.48);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  }
+
+  .tm-approval-status {
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  .tm-approval-status--approved {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .tm-approval-status--declined {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
   .tm-history-head {
     display: flex;
     align-items: flex-start;
@@ -286,6 +347,101 @@
       </div>
 
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add History Entry</button>
+    </form>
+  </details>
+
+  <section class="tm-crm-panel" aria-label="Approvals and additional findings" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Approvals</div>
+    <h2 style="margin:4px 0 0;">Approvals / Additional Findings</h2>
+    <div class="tm-approval-helper">
+      Use this section to document additional repair findings and customer decisions. This does not replace a formal legal agreement.
+    </div>
+
+    {% set approval_sections = [
+      ("pending", "Pending"),
+      ("approved", "Approved"),
+      ("declined", "Declined")
+    ] %}
+
+    {% for key, title in approval_sections %}
+      <h3 style="margin:16px 0 0;">{{ title }}</h3>
+      {% if approval_groups[key] %}
+      <div class="tm-approval-list">
+        {% for item in approval_groups[key] %}
+        <a class="tm-approval-item tm-approval-item--{{ item.customer_decision }}" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ item.id }}">
+          <div class="tm-history-head">
+            <div>
+              <div class="tm-history-title">{{ item.finding_title or "Additional finding" }}</div>
+              <div style="color:#475569;">{{ item.finding_description or "No finding description recorded." }}</div>
+            </div>
+            <span class="tm-approval-status tm-approval-status--{{ item.customer_decision }}">{{ item.customer_decision }}</span>
+          </div>
+          <div class="tm-crm-chip-row">
+            {% if item.estimated_cost is not none %}
+            <span class="tm-crm-chip">Est. ${{ "%.2f"|format(item.estimated_cost) }}</span>
+            {% endif %}
+            <span class="tm-crm-chip">Created {{ item.created_at }}</span>
+            {% if item.decision_recorded_at %}
+            <span class="tm-crm-chip">Decision {{ item.decision_recorded_at }}</span>
+            {% endif %}
+          </div>
+          <div style="color:#475569;"><strong>Recommended:</strong> {{ item.recommended_repair or "No recommendation recorded." }}</div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-history-empty" style="margin-top:12px;">
+        No {{ title|lower }} findings.
+      </div>
+      {% endif %}
+    {% endfor %}
+  </section>
+
+  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
+    <summary>Add Discrepancy Finding</summary>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals">
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="finding_title">Finding title</label>
+        <input class="tm-input" id="finding_title" name="finding_title" type="text" maxlength="180">
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="finding_description">Finding description</label>
+        <textarea class="tm-input" id="finding_description" name="finding_description" rows="4" maxlength="1600"></textarea>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="recommended_repair">Recommended repair</label>
+        <textarea class="tm-input" id="recommended_repair" name="recommended_repair" rows="3" maxlength="1200"></textarea>
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="estimated_cost">Estimated cost</label>
+          <input class="tm-input" id="estimated_cost" name="estimated_cost" type="number" min="0" step="0.01">
+        </div>
+        <div>
+          <label class="tm-label" for="customer_decision">Customer decision</label>
+          <select class="tm-input" id="customer_decision" name="customer_decision">
+            <option value="pending" selected>Pending</option>
+            <option value="approved">Approved</option>
+            <option value="declined">Declined</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="decision_recorded_at">Decision date/time</label>
+          <input class="tm-input" id="decision_recorded_at" name="decision_recorded_at" type="datetime-local">
+        </div>
+        <div>
+          <label class="tm-label" for="decision_notes">Decision notes</label>
+          <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600">
+        </div>
+      </div>
+
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
     </form>
   </details>
 

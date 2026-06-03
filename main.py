@@ -432,6 +432,36 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_shop_id ON maintenance_records (shop_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_date_performed ON maintenance_records (date_performed)")
 
+        # Pro groundwork: additional findings and customer decision records.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS discrepancy_approvals (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              service_history_id INTEGER,
+              shop_id INTEGER,
+              finding_title TEXT,
+              finding_description TEXT,
+              recommended_repair TEXT,
+              estimated_cost REAL,
+              customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined')),
+              decision_notes TEXT,
+              decision_recorded_at TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+              FOREIGN KEY (service_history_id) REFERENCES service_history(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_vehicle_id ON discrepancy_approvals (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_service_history_id ON discrepancy_approvals (service_history_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_decision ON discrepancy_approvals (customer_decision)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_created_at ON discrepancy_approvals (created_at)")
+
         conn.commit()
     finally:
         conn.close()

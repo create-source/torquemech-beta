@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+
+{% block title %}Approval Record | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-approval-summary,
+  .tm-approval-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 18px;
+    max-width: 920px;
+  }
+
+  .tm-approval-summary {
+    display: grid;
+    gap: 12px;
+    border-left: 5px solid #0e7490;
+    margin-bottom: 16px;
+  }
+
+  .tm-approval-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .tm-approval-chip-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tm-approval-chip {
+    border: 1px solid rgba(14, 116, 144, 0.22);
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-weight: 800;
+    padding: 6px 10px;
+    text-transform: capitalize;
+  }
+
+  .tm-approval-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-approval-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .tm-approval-helper {
+    border: 1px solid rgba(217, 119, 6, 0.18);
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #78350f;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .tm-approval-row {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-approval-actions .tm-btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">{{ approval.finding_title or "Additional finding" }}</h1>
+      <p class="tm-pro-subtitle">
+        {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
+      </p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">Back to Vehicle</a>
+  </div>
+
+  <div class="tm-approval-helper">
+    Use this section to document additional repair findings and customer decisions. This does not replace a formal legal agreement.
+  </div>
+
+  <section class="tm-approval-summary" aria-label="Approval summary">
+    <div class="tm-approval-kicker">Finding</div>
+    <div class="tm-approval-chip-row">
+      <span class="tm-approval-chip">{{ approval.customer_decision or "pending" }}</span>
+      {% if approval.estimated_cost is not none %}
+      <span class="tm-approval-chip">Est. ${{ "%.2f"|format(approval.estimated_cost) }}</span>
+      {% endif %}
+      {% if approval.decision_recorded_at %}
+      <span class="tm-approval-chip">Decision {{ approval.decision_recorded_at }}</span>
+      {% endif %}
+      <span class="tm-approval-chip">Created {{ approval.created_at }}</span>
+    </div>
+    <div style="color:#475569;">{{ approval.finding_description or "No finding description recorded." }}</div>
+    <div style="color:#475569;"><strong>Recommended repair:</strong> {{ approval.recommended_repair or "No recommendation recorded." }}</div>
+    {% if approval.decision_notes %}
+    <div style="color:#475569;"><strong>Decision notes:</strong> {{ approval.decision_notes }}</div>
+    {% endif %}
+  </section>
+
+  <form class="tm-approval-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}">
+    <h2 style="margin-top:0;">Edit Finding</h2>
+
+    <div>
+      <label class="tm-label" for="finding_title">Finding title</label>
+      <input class="tm-input" id="finding_title" name="finding_title" type="text" maxlength="180" value="{{ approval.finding_title or '' }}">
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="finding_description">Finding description</label>
+      <textarea class="tm-input" id="finding_description" name="finding_description" rows="4" maxlength="1600">{{ approval.finding_description or "" }}</textarea>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="recommended_repair">Recommended repair</label>
+      <textarea class="tm-input" id="recommended_repair" name="recommended_repair" rows="3" maxlength="1200">{{ approval.recommended_repair or "" }}</textarea>
+    </div>
+
+    <div class="tm-approval-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="estimated_cost">Estimated cost</label>
+        <input class="tm-input" id="estimated_cost" name="estimated_cost" type="number" min="0" step="0.01" value="{{ approval.estimated_cost if approval.estimated_cost is not none else '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="customer_decision">Customer decision</label>
+        <select class="tm-input" id="customer_decision" name="customer_decision">
+          <option value="pending" {% if approval.customer_decision == "pending" %}selected{% endif %}>Pending</option>
+          <option value="approved" {% if approval.customer_decision == "approved" %}selected{% endif %}>Approved</option>
+          <option value="declined" {% if approval.customer_decision == "declined" %}selected{% endif %}>Declined</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="tm-approval-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="decision_recorded_at">Decision date/time</label>
+        <input class="tm-input" id="decision_recorded_at" name="decision_recorded_at" type="datetime-local" value="{{ approval.decision_recorded_at[:16] if approval.decision_recorded_at else '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="decision_notes">Decision notes</label>
+        <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600" value="{{ approval.decision_notes or '' }}">
+      </div>
+    </div>
+
+    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Finding</button>
+  </form>
+
+  <section class="tm-approval-panel" aria-label="Decision actions" style="margin-top:16px;">
+    <div class="tm-approval-kicker">Decision Actions</div>
+    <h2 style="margin:4px 0 0;">Record Customer Decision</h2>
+    <div style="color:#64748b; margin-top:6px;">These buttons only document the decision in the internal Pro record.</div>
+    <div class="tm-approval-actions">
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}/approve">
+        <input type="hidden" name="decision_notes" value="{{ approval.decision_notes or '' }}">
+        <button class="tm-btn tm-btn-primary" type="submit">Mark Approved</button>
+      </form>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}/decline">
+        <input type="hidden" name="decision_notes" value="{{ approval.decision_notes or '' }}">
+        <button class="tm-btn tm-btn-secondary" type="submit">Mark Declined</button>
+      </form>
+    </div>
+  </section>
+</section>
+{% endblock %}
