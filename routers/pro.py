@@ -299,34 +299,42 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
     if due_date is None and performed_date and interval_months:
         due_date = add_months(performed_date, int(interval_months))
 
-    needs_mileage = current_mileage is None
-    missing_interval = not interval_miles and not interval_months
+    status = "Future"
+    status_key = "future"
+    reason = "Maintenance is outside the follow-up window."
 
-    status = "Candidate"
-    status_key = "candidate"
-    reason = "Interval data recorded for future follow-up."
-
-    if needs_mileage or missing_interval:
+    if due_mileage is None and due_date is None:
         status = "Unknown"
         status_key = "unknown"
-        if needs_mileage and missing_interval:
-            reason = "Current mileage and interval data are missing."
-        elif needs_mileage:
-            reason = "Current mileage is missing."
-        else:
-            reason = "Interval data is missing."
+        reason = "Next due mileage and date are missing."
     else:
-        overdue_by_mileage = due_mileage is not None and int(current_mileage) > due_mileage
+        overdue_by_mileage = (
+            due_mileage is not None
+            and current_mileage is not None
+            and int(current_mileage) > due_mileage
+        )
         overdue_by_date = due_date is not None and today > due_date
         due_soon_by_mileage = (
             due_mileage is not None
+            and current_mileage is not None
             and int(current_mileage) <= due_mileage
-            and due_mileage - int(current_mileage) <= 500
+            and due_mileage - int(current_mileage) <= 1000
         )
         due_soon_by_date = (
             due_date is not None
             and today <= due_date
             and due_date - today <= timedelta(days=30)
+        )
+        candidate_by_mileage = (
+            due_mileage is not None
+            and current_mileage is not None
+            and int(current_mileage) <= due_mileage
+            and due_mileage - int(current_mileage) <= 3000
+        )
+        candidate_by_date = (
+            due_date is not None
+            and today <= due_date
+            and due_date - today <= timedelta(days=90)
         )
 
         if overdue_by_mileage or overdue_by_date:
@@ -335,18 +343,27 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
             if overdue_by_mileage and overdue_by_date:
                 reason = "Past due by mileage and date."
             elif overdue_by_mileage:
-                reason = "Current mileage is past the due mileage."
+                reason = "Vehicle mileage exceeds the next due mileage."
             else:
-                reason = "Today is past the due date."
+                reason = "Current date is past the next due date."
         elif due_soon_by_mileage or due_soon_by_date:
             status = "Due Soon"
             status_key = "due_soon"
             if due_soon_by_mileage and due_soon_by_date:
-                reason = "Within 500 miles and 30 days of the follow-up point."
+                reason = "Within 1,000 miles and 30 days of the follow-up point."
             elif due_soon_by_mileage:
-                reason = "Within 500 miles of the due mileage."
+                reason = "Within 1,000 miles of the next due mileage."
             else:
-                reason = "Within 30 days of the due date."
+                reason = "Within 30 days of the next due date."
+        elif candidate_by_mileage or candidate_by_date:
+            status = "Candidate"
+            status_key = "candidate"
+            if candidate_by_mileage and candidate_by_date:
+                reason = "Within 3,000 miles and 90 days of the follow-up point."
+            elif candidate_by_mileage:
+                reason = "Within 3,000 miles of the next due mileage."
+            else:
+                reason = "Within 90 days of the next due date."
 
     customer = customer_name(record)
     vehicle = vehicle_label(record)
@@ -363,6 +380,7 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
         {
             "customer_name": customer,
             "vehicle_label": vehicle,
+            "customer_url": f"/pro/customers/{record['customer_id']}",
             "vehicle_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}",
             "due_mileage": due_mileage,
             "due_date": due_date.isoformat() if due_date else "",
@@ -593,6 +611,7 @@ def pro_follow_ups(request: Request):
     conn = crm_db_conn()
     try:
         ensure_customer_status_schema(conn)
+        ensure_maintenance_records_schema(conn)
         shop_name = load_shop_name(conn)
         rows = conn.execute(
             """
@@ -623,11 +642,11 @@ def pro_follow_ups(request: Request):
         "overdue": [],
         "due_soon": [],
         "candidate": [],
-        "unknown": [],
     }
     for row in rows:
         follow_up = build_follow_up_record(row, today)
-        grouped[follow_up["status_key"]].append(follow_up)
+        if follow_up["status_key"] in grouped:
+            grouped[follow_up["status_key"]].append(follow_up)
 
     summary = {key: len(items) for key, items in grouped.items()}
 

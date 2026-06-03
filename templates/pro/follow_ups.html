@@ -11,7 +11,7 @@
 
   .tm-follow-summary {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
   }
 
@@ -44,11 +44,6 @@
   .tm-follow-summary-card--candidate,
   .tm-follow-record--candidate {
     border-left-color: #0e7490;
-  }
-
-  .tm-follow-summary-card--unknown,
-  .tm-follow-record--unknown {
-    border-left-color: #64748b;
   }
 
   .tm-follow-count {
@@ -132,11 +127,6 @@
   .tm-follow-status--candidate {
     background: #ecfeff;
     color: #155e75;
-  }
-
-  .tm-follow-status--unknown {
-    background: #f1f5f9;
-    color: #334155;
   }
 
   .tm-follow-grid {
@@ -269,6 +259,7 @@
   </div>
 
   <div class="tm-follow-actions">
+    <a class="tm-btn tm-btn-secondary" href="{{ item.customer_url }}">Open Customer</a>
     <a class="tm-btn tm-btn-secondary" href="{{ item.vehicle_url }}">Open Vehicle</a>
   </div>
 </article>
@@ -280,7 +271,7 @@
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">Follow-Up Dashboard</h1>
-      <p class="tm-pro-subtitle">Maintenance reminders for the mechanic to review and handle manually.</p>
+      <p class="tm-pro-subtitle">Actionable maintenance opportunities for the mechanic to review and handle manually.</p>
     </div>
     <a class="tm-btn tm-btn-secondary" href="/pro">Back to CRM</a>
   </div>
@@ -299,10 +290,6 @@
         <div class="tm-follow-count">{{ summary.candidate }}</div>
         <div class="tm-follow-label">Candidates</div>
       </div>
-      <div class="tm-follow-summary-card tm-follow-summary-card--unknown">
-        <div class="tm-follow-count">{{ summary.unknown }}</div>
-        <div class="tm-follow-label">Incomplete</div>
-      </div>
     </section>
 
     <section class="tm-follow-helper" aria-label="Manual outreach helper">
@@ -315,10 +302,9 @@
     </section>
 
     {% set sections = [
-      ("overdue", "Overdue", "Maintenance that is past the calculated mileage or date."),
-      ("due_soon", "Due Soon", "Maintenance within 500 miles or 30 days of the calculated follow-up point."),
-      ("candidate", "Maintenance Follow-Up Candidates", "Records with interval data that are not due soon or overdue yet."),
-      ("unknown", "Incomplete / Needs Mileage Update", "Records missing current mileage or interval data.")
+      ("due_soon", "Due Soon", "Maintenance due within 30 days or within 1,000 miles."),
+      ("overdue", "Overdue", "Maintenance past the next due date or mileage."),
+      ("candidate", "Follow-Up Candidates", "Maintenance within 90 days or 3,000 miles that is not due soon or overdue yet.")
     ] %}
 
     {% for key, title, description in sections %}
