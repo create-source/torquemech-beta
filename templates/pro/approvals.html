@@ -145,16 +145,18 @@
   <div class="tm-approval-head">
     <div>
       <div class="tm-approval-title">{{ item.finding_title or "Additional finding" }}</div>
-      <div class="tm-approval-meta">{{ item.customer_name }} | {{ item.vehicle_label }}</div>
+      <div class="tm-approval-meta">
+        {{ item.customer_name }}{% if item.phone %} | {{ item.phone|pro_phone }}{% endif %} | {{ item.vehicle_label }}
+      </div>
     </div>
     <span class="tm-approval-badge tm-approval-badge--{{ item.customer_decision }}">{{ item.customer_decision }}</span>
   </div>
   <div class="tm-approval-meta">
     Recommended: {{ item.recommended_repair or "No recommendation recorded" }}
-    {% if item.estimated_cost is not none %}| Est. ${{ "%.2f"|format(item.estimated_cost) }}{% endif %}
+    {% if item.estimated_cost is not none %}| Est. {{ item.estimated_cost|pro_currency }}{% endif %}
   </div>
   <div class="tm-approval-meta">
-    Created {{ item.created_at or "unknown" }}{% if item.decision_recorded_at %} | Decision {{ item.decision_recorded_at }}{% endif %}
+    Created {{ item.created_at|pro_datetime if item.created_at else "unknown" }}{% if item.decision_recorded_at %} | Decision {{ item.decision_recorded_at|pro_datetime }}{% endif %}
   </div>
 </a>
 {% endmacro %}

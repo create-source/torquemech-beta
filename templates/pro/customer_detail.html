@@ -147,7 +147,7 @@
       <div>
         <div class="tm-crm-kicker">Customer</div>
         <div class="tm-crm-contact">
-          <span class="tm-crm-chip">{{ customer.phone or "No phone" }}</span>
+          <span class="tm-crm-chip">{{ customer.phone|pro_phone if customer.phone else "No phone" }}</span>
           {% if customer.email %}
           <span class="tm-crm-chip">{{ customer.email }}</span>
           {% endif %}
@@ -184,7 +184,7 @@
 
           <div style="margin-top:12px;">
             <label class="tm-label" for="customer_notes">Notes</label>
-            <textarea class="tm-input" id="customer_notes" name="notes" rows="3" maxlength="1200">{{ customer.notes or "" }}</textarea>
+            <textarea class="tm-input" id="customer_notes" name="notes" rows="3" maxlength="1200" placeholder="Preferences, contact timing, fleet account details, or reminders for future visits.">{{ customer.notes or "" }}</textarea>
           </div>
 
           <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Customer</button>
@@ -236,7 +236,7 @@
 
             <div style="margin-top:12px;">
               <label class="tm-label" for="notes">Notes</label>
-              <textarea class="tm-input" id="notes" name="notes" rows="3" maxlength="1200"></textarea>
+              <textarea class="tm-input" id="notes" name="notes" rows="3" maxlength="1200" placeholder="Vehicle-specific notes such as known issues, customer concerns, warranty context, or inspection reminders."></textarea>
             </div>
 
             <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Vehicle</button>
@@ -257,7 +257,7 @@
             </div>
           </div>
           <div class="tm-crm-meta">
-            {% if vehicle.mileage %}{{ vehicle.mileage }} miles{% else %}Mileage not recorded{% endif %}
+            {% if vehicle.mileage %}{{ vehicle.mileage|pro_miles }} miles{% else %}Mileage not recorded{% endif %}
           </div>
         </a>
         {% endfor %}

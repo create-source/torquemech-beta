@@ -221,7 +221,7 @@
     <div>
       <div class="tm-follow-name">{{ item.customer_name }}</div>
       <div class="tm-follow-meta">
-        {{ item.phone or "No phone recorded" }}{% if item.email %} | {{ item.email }}{% endif %}
+        {{ item.phone|pro_phone if item.phone else "No phone recorded" }}{% if item.email %} | {{ item.email }}{% endif %}
       </div>
       <div class="tm-follow-meta">{{ item.vehicle_label }}</div>
     </div>
@@ -231,7 +231,7 @@
   <div class="tm-follow-grid">
     <div class="tm-follow-field">
       <span>Current Mileage</span>
-      <strong>{% if item.current_mileage is not none %}{{ "{:,}".format(item.current_mileage) }}{% else %}Needs update{% endif %}</strong>
+      <strong>{% if item.current_mileage is not none %}{{ item.current_mileage|pro_miles }}{% else %}Needs update{% endif %}</strong>
     </div>
     <div class="tm-follow-field">
       <span>Service Type</span>
@@ -239,11 +239,11 @@
     </div>
     <div class="tm-follow-field">
       <span>Last Performed</span>
-      <strong>{{ item.date_performed or "No date" }}</strong>
+      <strong>{{ item.date_performed|pro_date if item.date_performed else "No date" }}</strong>
     </div>
     <div class="tm-follow-field">
       <span>Last Mileage</span>
-      <strong>{% if item.mileage_performed is not none %}{{ "{:,}".format(item.mileage_performed) }}{% else %}-{% endif %}</strong>
+      <strong>{% if item.mileage_performed is not none %}{{ item.mileage_performed|pro_miles }}{% else %}-{% endif %}</strong>
     </div>
     <div class="tm-follow-field">
       <span>Interval</span>
@@ -251,11 +251,11 @@
     </div>
     <div class="tm-follow-field">
       <span>Due Mileage</span>
-      <strong>{% if item.due_mileage is not none %}{{ "{:,}".format(item.due_mileage) }}{% else %}-{% endif %}</strong>
+      <strong>{% if item.due_mileage is not none %}{{ item.due_mileage|pro_miles }}{% else %}-{% endif %}</strong>
     </div>
     <div class="tm-follow-field">
       <span>Due Date</span>
-      <strong>{{ item.due_date or "-" }}</strong>
+      <strong>{{ item.due_date|pro_date if item.due_date else "-" }}</strong>
     </div>
     <div class="tm-follow-field">
       <span>Reason</span>
@@ -301,7 +301,7 @@
       </div>
       <div class="tm-follow-summary-card tm-follow-summary-card--unknown">
         <div class="tm-follow-count">{{ summary.unknown }}</div>
-        <div class="tm-follow-label">Needs Mileage Update</div>
+        <div class="tm-follow-label">Incomplete</div>
       </div>
     </section>
 
@@ -318,7 +318,7 @@
       ("overdue", "Overdue", "Maintenance that is past the calculated mileage or date."),
       ("due_soon", "Due Soon", "Maintenance within 500 miles or 30 days of the calculated follow-up point."),
       ("candidate", "Maintenance Follow-Up Candidates", "Records with interval data that are not due soon or overdue yet."),
-      ("unknown", "Unknown / Needs Mileage Update", "Records missing current mileage or interval data.")
+      ("unknown", "Incomplete / Needs Mileage Update", "Records missing current mileage or interval data.")
     ] %}
 
     {% for key, title, description in sections %}

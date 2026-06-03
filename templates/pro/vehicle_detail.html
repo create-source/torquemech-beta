@@ -188,6 +188,51 @@
     text-decoration: none;
   }
 
+  .tm-maintenance-cards {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-maintenance-card {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #0e7490;
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .tm-maintenance-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .tm-maintenance-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .tm-maintenance-field {
+    display: grid;
+    gap: 2px;
+  }
+
+  .tm-maintenance-field span {
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-maintenance-field strong {
+    color: #0f172a;
+  }
+
   .tm-crm-disclosure summary {
     cursor: pointer;
     font-weight: 900;
@@ -198,8 +243,19 @@
     margin-bottom: 14px;
   }
 
+  .tm-crm-panel input[type="date"],
+  .tm-crm-panel input[type="datetime-local"] {
+    min-height: 48px;
+  }
+
   @media (max-width: 760px) {
-    .tm-crm-row {
+    .tm-crm-row,
+    .tm-maintenance-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-maintenance-card-head {
+      display: grid;
       grid-template-columns: 1fr;
     }
   }
@@ -223,7 +279,7 @@
     <div class="tm-crm-kicker">Vehicle</div>
     <div class="tm-crm-chip-row">
       <span class="tm-crm-chip">{% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}</span>
-      <span class="tm-crm-chip">{% if vehicle.mileage %}Current {{ vehicle.mileage }} miles{% else %}Current mileage not recorded{% endif %}</span>
+      <span class="tm-crm-chip">{% if vehicle.mileage %}Current {{ vehicle.mileage|pro_miles }} miles{% else %}Current mileage not recorded{% endif %}</span>
       {% if vehicle.vin %}
       <span class="tm-crm-chip">VIN {{ vehicle.vin }}</span>
       {% endif %}
@@ -271,7 +327,7 @@
 
     <div style="margin-top:12px;">
       <label class="tm-label" for="notes">Notes</label>
-      <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200">{{ vehicle.notes or "" }}</textarea>
+      <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200" placeholder="Vehicle-specific notes such as known issues, customer concerns, warranty context, or inspection reminders.">{{ vehicle.notes or "" }}</textarea>
     </div>
 
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
@@ -287,18 +343,16 @@
       <a class="tm-history-item" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ item.id }}">
         <div class="tm-history-head">
           <div class="tm-history-title">{{ item.service_title or "Service entry" }}</div>
-          <div class="tm-history-date">{{ item.service_date or "No date" }}</div>
+          <div class="tm-history-date">{{ item.service_date|pro_date if item.service_date else "No date" }}</div>
         </div>
         <div style="color:#475569;">{{ item.service_notes or "No notes recorded." }}</div>
         <div class="tm-crm-chip-row">
           {% if item.mileage_at_service %}
-          <span class="tm-crm-chip">{{ item.mileage_at_service }} miles</span>
+          <span class="tm-crm-chip">{{ item.mileage_at_service|pro_miles }} miles</span>
           {% endif %}
-          {% if item.estimate_total is not none %}
-          <span class="tm-crm-chip">Est. ${{ "%.2f"|format(item.estimate_total) }}</span>
-          {% endif %}
-          {% if item.actual_total is not none %}
-          <span class="tm-crm-chip">Actual ${{ "%.2f"|format(item.actual_total) }}</span>
+          {% set total = item|service_total %}
+          {% if total is not none %}
+          <span class="tm-crm-chip">Service Total {{ total|pro_currency }}</span>
           {% endif %}
         </div>
       </a>
@@ -332,18 +386,14 @@
 
       <div class="tm-crm-row" style="margin-top:12px;">
         <div>
-          <label class="tm-label" for="estimate_total">Estimated cost</label>
-          <input class="tm-input" id="estimate_total" name="estimate_total" type="number" min="0" step="0.01">
-        </div>
-        <div>
-          <label class="tm-label" for="actual_total">Actual cost</label>
-          <input class="tm-input" id="actual_total" name="actual_total" type="number" min="0" step="0.01">
+          <label class="tm-label" for="service_total">Service total</label>
+          <input class="tm-input" id="service_total" name="service_total" type="number" min="0" step="0.01" placeholder="Final or expected total for this service visit">
         </div>
       </div>
 
       <div style="margin-top:12px;">
         <label class="tm-label" for="service_notes">Notes</label>
-        <textarea class="tm-input" id="service_notes" name="service_notes" rows="4" maxlength="1600"></textarea>
+        <textarea class="tm-input" id="service_notes" name="service_notes" rows="4" maxlength="1600" placeholder="What was performed, inspection results, customer concern, parts used, or follow-up context."></textarea>
       </div>
 
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add History Entry</button>
@@ -378,11 +428,11 @@
           </div>
           <div class="tm-crm-chip-row">
             {% if item.estimated_cost is not none %}
-            <span class="tm-crm-chip">Est. ${{ "%.2f"|format(item.estimated_cost) }}</span>
+            <span class="tm-crm-chip">Est. {{ item.estimated_cost|pro_currency }}</span>
             {% endif %}
-            <span class="tm-crm-chip">Created {{ item.created_at }}</span>
+            <span class="tm-crm-chip">Created {{ item.created_at|pro_datetime }}</span>
             {% if item.decision_recorded_at %}
-            <span class="tm-crm-chip">Decision {{ item.decision_recorded_at }}</span>
+            <span class="tm-crm-chip">Decision {{ item.decision_recorded_at|pro_datetime }}</span>
             {% endif %}
           </div>
           <div style="color:#475569;"><strong>Recommended:</strong> {{ item.recommended_repair or "No recommendation recorded." }}</div>
@@ -407,18 +457,18 @@
 
       <div style="margin-top:12px;">
         <label class="tm-label" for="finding_description">Finding description</label>
-        <textarea class="tm-input" id="finding_description" name="finding_description" rows="4" maxlength="1600"></textarea>
+        <textarea class="tm-input" id="finding_description" name="finding_description" rows="4" maxlength="1600" placeholder="Describe what was found, where it was found, and why it matters."></textarea>
       </div>
 
       <div style="margin-top:12px;">
         <label class="tm-label" for="recommended_repair">Recommended repair</label>
-        <textarea class="tm-input" id="recommended_repair" name="recommended_repair" rows="3" maxlength="1200"></textarea>
+        <textarea class="tm-input" id="recommended_repair" name="recommended_repair" rows="3" maxlength="1200" placeholder="Recommended repair or next diagnostic step for the customer decision."></textarea>
       </div>
 
       <div class="tm-crm-row" style="margin-top:12px;">
         <div>
           <label class="tm-label" for="estimated_cost">Estimated cost</label>
-          <input class="tm-input" id="estimated_cost" name="estimated_cost" type="number" min="0" step="0.01">
+          <input class="tm-input" id="estimated_cost" name="estimated_cost" type="number" min="0" step="0.01" placeholder="Optional estimate for the additional repair">
         </div>
         <div>
           <label class="tm-label" for="customer_decision">Customer decision</label>
@@ -430,15 +480,9 @@
         </div>
       </div>
 
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="decision_recorded_at">Decision date/time</label>
-          <input class="tm-input" id="decision_recorded_at" name="decision_recorded_at" type="datetime-local">
-        </div>
-        <div>
-          <label class="tm-label" for="decision_notes">Decision notes</label>
-          <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600">
-        </div>
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="decision_notes">Decision notes</label>
+        <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600" placeholder="Who approved or declined, how they responded, or any scheduling context.">
       </div>
 
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
@@ -450,34 +494,37 @@
     <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
 
     {% if maintenance_records %}
-    <div class="tm-maintenance-table-wrap">
-      <table class="tm-maintenance-table">
-        <thead>
-          <tr>
-            <th>Service</th>
-            <th>Date</th>
-            <th>Mileage</th>
-            <th>Interval</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in maintenance_records %}
-          <tr>
-            <td><a href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">{{ item.service_type or "Maintenance" }}</a></td>
-            <td>{{ item.date_performed or "No date" }}</td>
-            <td>{% if item.mileage_performed %}{{ item.mileage_performed }}{% else %}-{% endif %}</td>
-            <td>
-              {% if item.interval_miles %}{{ item.interval_miles }} miles{% endif %}
-              {% if item.interval_miles and item.interval_months %}<br>{% endif %}
+    <div class="tm-maintenance-cards">
+      {% for item in maintenance_records %}
+      <article class="tm-maintenance-card">
+        <div class="tm-maintenance-card-head">
+          <div class="tm-history-title">{{ item.service_type or "Maintenance" }}</div>
+          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">Open</a>
+        </div>
+        <div class="tm-maintenance-fields">
+          <div class="tm-maintenance-field">
+            <span>Date</span>
+            <strong>{{ item.date_performed|pro_date if item.date_performed else "No date" }}</strong>
+          </div>
+          <div class="tm-maintenance-field">
+            <span>Mileage</span>
+            <strong>{% if item.mileage_performed %}{{ item.mileage_performed|pro_miles }}{% else %}-{% endif %}</strong>
+          </div>
+          <div class="tm-maintenance-field">
+            <span>Interval</span>
+            <strong>
+              {% if item.interval_miles %}{{ item.interval_miles|pro_miles }} miles{% endif %}
+              {% if item.interval_miles and item.interval_months %} / {% endif %}
               {% if item.interval_months %}{{ item.interval_months }} months{% endif %}
               {% if not item.interval_miles and not item.interval_months %}-{% endif %}
-            </td>
-            <td>{{ item.notes or "-" }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </strong>
+          </div>
+        </div>
+        {% if item.notes %}
+        <div style="color:#475569;">{{ item.notes }}</div>
+        {% endif %}
+      </article>
+      {% endfor %}
     </div>
     {% else %}
     <div class="tm-history-empty" style="margin-top:12px;">
@@ -518,7 +565,7 @@
 
       <div style="margin-top:12px;">
         <label class="tm-label" for="maintenance_notes">Notes</label>
-        <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600"></textarea>
+        <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600" placeholder="Maintenance condition, parts/fluids used, customer notes, or interval context."></textarea>
       </div>
 
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Maintenance Record</button>

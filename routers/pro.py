@@ -72,6 +72,74 @@ def optional_float(form: dict[str, str], name: str) -> float | None:
         return None
 
 
+def format_phone(value: Any) -> str:
+    raw = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(raw) == 11 and raw.startswith("1"):
+        raw = raw[1:]
+    if len(raw) == 10:
+        return f"{raw[:3]}-{raw[3:6]}-{raw[6:]}"
+    return str(value or "").strip()
+
+
+def format_mileage(value: Any) -> str:
+    if value is None or value == "":
+        return ""
+    try:
+        return f"{int(value):,}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def format_currency(value: Any) -> str:
+    if value is None or value == "":
+        return ""
+    try:
+        return f"${float(value):,.2f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def format_pro_date(value: Any) -> str:
+    parsed = parse_date_value(value)
+    if not parsed:
+        return str(value or "")
+    return parsed.strftime("%m/%d/%Y")
+
+
+def format_pro_datetime(value: Any) -> str:
+    if not value:
+        return ""
+    raw = str(value).strip()
+    try:
+        parsed = datetime.fromisoformat(raw)
+        return parsed.strftime("%m/%d/%Y")
+    except ValueError:
+        return format_pro_date(raw)
+
+
+def service_total_value(record: dict[str, Any]) -> float | None:
+    actual = record.get("actual_total")
+    estimate = record.get("estimate_total")
+    return actual if actual is not None else estimate
+
+
+def service_total_from_form(form: dict[str, str]) -> float | None:
+    if "service_total" in form:
+        return optional_float(form, "service_total")
+    actual = optional_float(form, "actual_total")
+    if actual is not None:
+        return actual
+    return optional_float(form, "estimate_total")
+
+
+templates.env.filters["pro_phone"] = format_phone
+templates.env.filters["pro_miles"] = format_mileage
+templates.env.filters["pro_currency"] = format_currency
+templates.env.filters["pro_date"] = format_pro_date
+templates.env.filters["pro_datetime"] = format_pro_datetime
+templates.env.filters["service_total"] = service_total_value
+
+
 def parse_date_value(raw: Any) -> date | None:
     if not raw:
         return None
@@ -745,11 +813,7 @@ async def pro_approval_record_create(request: Request, customer_id: int, vehicle
     decision = (form.get("customer_decision") or "pending").lower()
     if decision not in {"pending", "approved", "declined"}:
         decision = "pending"
-    decision_recorded_at = form.get("decision_recorded_at", "")
-    if decision == "pending":
-        decision_recorded_at = ""
-    elif not decision_recorded_at:
-        decision_recorded_at = now
+    decision_recorded_at = now if decision in {"approved", "declined"} else ""
 
     conn = crm_db_conn()
     try:
@@ -815,16 +879,16 @@ async def pro_approval_record_update(
     decision = (form.get("customer_decision") or "pending").lower()
     if decision not in {"pending", "approved", "declined"}:
         decision = "pending"
-    decision_recorded_at = form.get("decision_recorded_at", "")
-    if decision == "pending":
-        decision_recorded_at = ""
-    elif not decision_recorded_at:
-        decision_recorded_at = now
 
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_discrepancy_approvals_schema(conn)
+        existing = load_approval_record(conn, customer_id, vehicle_id, approval_id)
+        if decision == "pending":
+            decision_recorded_at = ""
+        else:
+            decision_recorded_at = existing.get("decision_recorded_at") or now
         cur = conn.execute(
             """
             UPDATE discrepancy_approvals
@@ -946,6 +1010,7 @@ async def pro_approval_record_decline(
 async def pro_service_history_create(request: Request, customer_id: int, vehicle_id: int):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
+    service_total = service_total_from_form(form)
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
@@ -965,8 +1030,8 @@ async def pro_service_history_create(request: Request, customer_id: int, vehicle
                 form.get("service_notes", ""),
                 optional_int(form, "mileage_at_service"),
                 form.get("service_date", ""),
-                optional_float(form, "estimate_total"),
-                optional_float(form, "actual_total"),
+                None,
+                service_total,
                 now,
                 now,
             ),
@@ -1016,6 +1081,7 @@ async def pro_service_history_update(
 ):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
+    service_total = service_total_from_form(form)
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
@@ -1037,8 +1103,8 @@ async def pro_service_history_update(
                 form.get("service_notes", ""),
                 optional_int(form, "mileage_at_service"),
                 form.get("service_date", ""),
-                optional_float(form, "estimate_total"),
-                optional_float(form, "actual_total"),
+                None,
+                service_total,
                 now,
                 history_id,
                 customer_id,
