@@ -174,7 +174,7 @@
           <div class="tm-crm-row" style="margin-top:12px;">
             <div>
               <label class="tm-label" for="phone">Phone</label>
-              <input class="tm-input" id="phone" name="phone" type="tel" value="{{ customer.phone or '' }}" maxlength="80" autocomplete="tel">
+              <input class="tm-input" id="phone" name="phone" type="tel" inputmode="tel" value="{{ customer.phone|pro_phone if customer.phone else '' }}" maxlength="80" autocomplete="tel">
             </div>
             <div>
               <label class="tm-label" for="email">Email</label>
@@ -230,7 +230,7 @@
               </div>
               <div>
                 <label class="tm-label" for="mileage">Mileage</label>
-                <input class="tm-input" id="mileage" name="mileage" type="number" min="0" step="1">
+                <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric">
               </div>
             </div>
 

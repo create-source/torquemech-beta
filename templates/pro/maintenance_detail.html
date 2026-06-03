@@ -106,14 +106,14 @@
       </div>
       <div>
         <label class="tm-label" for="mileage_performed">Mileage performed</label>
-        <input class="tm-input" id="mileage_performed" name="mileage_performed" type="number" min="0" step="1" value="{{ maintenance.mileage_performed or '' }}">
+        <input class="tm-input" id="mileage_performed" name="mileage_performed" type="text" inputmode="numeric" value="{{ maintenance.mileage_performed|pro_miles if maintenance.mileage_performed else '' }}">
       </div>
     </div>
 
     <div class="tm-crm-row" style="margin-top:12px;">
       <div>
         <label class="tm-label" for="interval_miles">Interval miles</label>
-        <input class="tm-input" id="interval_miles" name="interval_miles" type="number" min="0" step="1" value="{{ maintenance.interval_miles or '' }}">
+        <input class="tm-input" id="interval_miles" name="interval_miles" type="text" inputmode="numeric" value="{{ maintenance.interval_miles|pro_miles if maintenance.interval_miles else '' }}">
       </div>
       <div>
         <label class="tm-label" for="interval_months">Interval months</label>

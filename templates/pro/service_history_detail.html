@@ -99,7 +99,7 @@
       </div>
       <div>
         <label class="tm-label" for="mileage_at_service">Mileage</label>
-        <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="number" min="0" step="1" value="{{ history.mileage_at_service or '' }}">
+        <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="text" inputmode="numeric" value="{{ history.mileage_at_service|pro_miles if history.mileage_at_service else '' }}">
       </div>
     </div>
 
@@ -110,7 +110,7 @@
 
     <div style="margin-top:12px;">
       <label class="tm-label" for="service_total">Service total</label>
-      <input class="tm-input" id="service_total" name="service_total" type="number" min="0" step="0.01" value="{{ total if total is not none else '' }}" placeholder="Final or expected total for this service visit">
+      <input class="tm-input" id="service_total" name="service_total" type="text" inputmode="decimal" value="{{ total|pro_currency if total is not none else '' }}" placeholder="Final or expected total for this service visit">
     </div>
 
     <div style="margin-top:12px;">

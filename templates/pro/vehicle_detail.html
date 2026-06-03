@@ -321,7 +321,7 @@
       </div>
       <div>
         <label class="tm-label" for="mileage">Current mileage</label>
-        <input class="tm-input" id="mileage" name="mileage" type="number" min="0" step="1" value="{{ vehicle.mileage or '' }}">
+        <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ vehicle.mileage|pro_miles if vehicle.mileage else '' }}">
       </div>
     </div>
 
@@ -375,7 +375,7 @@
         </div>
         <div>
           <label class="tm-label" for="mileage_at_service">Mileage</label>
-          <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="number" min="0" step="1">
+          <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="text" inputmode="numeric">
         </div>
       </div>
 
@@ -387,7 +387,7 @@
       <div class="tm-crm-row" style="margin-top:12px;">
         <div>
           <label class="tm-label" for="service_total">Service total</label>
-          <input class="tm-input" id="service_total" name="service_total" type="number" min="0" step="0.01" placeholder="Final or expected total for this service visit">
+          <input class="tm-input" id="service_total" name="service_total" type="text" inputmode="decimal" placeholder="Final or expected total for this service visit">
         </div>
       </div>
 
@@ -404,7 +404,7 @@
     <div class="tm-crm-kicker">Approvals</div>
     <h2 style="margin:4px 0 0;">Approvals / Additional Findings</h2>
     <div class="tm-approval-helper">
-      Use this section to document additional repair findings and customer decisions. This does not replace a formal legal agreement.
+      Document additional repair recommendations and customer decisions.
     </div>
 
     {% set approval_sections = [
@@ -468,7 +468,7 @@
       <div class="tm-crm-row" style="margin-top:12px;">
         <div>
           <label class="tm-label" for="estimated_cost">Estimated cost</label>
-          <input class="tm-input" id="estimated_cost" name="estimated_cost" type="number" min="0" step="0.01" placeholder="Optional estimate for the additional repair">
+          <input class="tm-input" id="estimated_cost" name="estimated_cost" type="text" inputmode="decimal" placeholder="Optional estimate for the additional repair">
         </div>
         <div>
           <label class="tm-label" for="customer_decision">Customer decision</label>
@@ -499,7 +499,7 @@
       <article class="tm-maintenance-card">
         <div class="tm-maintenance-card-head">
           <div class="tm-history-title">{{ item.service_type or "Maintenance" }}</div>
-          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">Open</a>
+          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">Open Record</a>
         </div>
         <div class="tm-maintenance-fields">
           <div class="tm-maintenance-field">
@@ -548,14 +548,14 @@
         </div>
         <div>
           <label class="tm-label" for="mileage_performed">Mileage performed</label>
-          <input class="tm-input" id="mileage_performed" name="mileage_performed" type="number" min="0" step="1">
+          <input class="tm-input" id="mileage_performed" name="mileage_performed" type="text" inputmode="numeric">
         </div>
       </div>
 
       <div class="tm-crm-row" style="margin-top:12px;">
         <div>
           <label class="tm-label" for="interval_miles">Interval miles</label>
-          <input class="tm-input" id="interval_miles" name="interval_miles" type="number" min="0" step="1">
+          <input class="tm-input" id="interval_miles" name="interval_miles" type="text" inputmode="numeric">
         </div>
         <div>
           <label class="tm-label" for="interval_months">Interval months</label>
