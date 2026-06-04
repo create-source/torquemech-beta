@@ -514,6 +514,35 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS findings_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          vehicle_id INTEGER NOT NULL,
+          customer_id INTEGER NOT NULL,
+          finding TEXT,
+          recommendation TEXT,
+          severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
+          status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
+          mileage INTEGER,
+          finding_date TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+          FOREIGN KEY (customer_id) REFERENCES customers(id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_mileage_date "
+        "ON findings_records (vehicle_id, mileage, finding_date)"
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_status ON findings_records (status)")
+    conn.commit()
+
+
 def load_repair_record(
     conn: sqlite3.Connection,
     customer_id: int,
@@ -534,6 +563,28 @@ def load_repair_record(
     if not repair:
         raise HTTPException(status_code=404, detail="Repair record not found")
     return repair
+
+
+def load_finding_record(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+) -> dict[str, Any]:
+    ensure_findings_records_schema(conn)
+    finding = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM findings_records
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (finding_id, customer_id, vehicle_id),
+        ).fetchone()
+    )
+    if not finding:
+        raise HTTPException(status_code=404, detail="Finding record not found")
+    return finding
 
 
 def ensure_service_history_schema(conn: sqlite3.Connection) -> None:
@@ -793,6 +844,7 @@ def build_vehicle_timeline(
     customer_id: int,
     vehicle_id: int,
     service_history_records: list[dict[str, Any]],
+    findings_records: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     timeline = [
         {
@@ -806,6 +858,18 @@ def build_vehicle_timeline(
         }
         for record in service_history_records
     ]
+    timeline.extend(
+        {
+            "id": record["id"],
+            "record_type": "Finding",
+            "record_type_key": "finding",
+            "date": record.get("finding_date") or "",
+            "service_name": record.get("finding") or "Finding",
+            "mileage": record.get("mileage"),
+            "url": "#recommendations-findings",
+        }
+        for record in findings_records
+    )
     timeline.sort(
         key=lambda record: (
             record.get("mileage") is not None,
@@ -843,6 +907,21 @@ def build_repair_history_summary(
         "lifetime_repair_spend": sum(
             float(record.get("total_cost") or 0) for record in repair_records
         ),
+    }
+
+
+def build_findings_summary(findings_records: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {"Approved": 0, "Open": 0, "Completed": 0, "Deferred": 0, "Declined": 0}
+    for record in findings_records:
+        status = record.get("status") or "Open"
+        if status in counts:
+            counts[status] += 1
+    return {
+        "approved": counts["Approved"],
+        "open": counts["Open"],
+        "completed": counts["Completed"],
+        "deferred": counts["Deferred"],
+        "declined": counts["Declined"],
     }
 
 
@@ -1275,6 +1354,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_maintenance_records_schema(conn)
         ensure_repair_records_schema(conn)
+        ensure_findings_records_schema(conn)
         ensure_service_history_schema(conn)
         ensure_service_history_records_schema(conn)
         service_history_records = [
@@ -1321,6 +1401,35 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        findings_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM findings_records
+                WHERE customer_id = ? AND vehicle_id = ?
+                ORDER BY
+                  CASE status
+                    WHEN 'Approved' THEN 1
+                    WHEN 'Open' THEN 2
+                    WHEN 'Completed' THEN 3
+                    WHEN 'Deferred' THEN 4
+                    WHEN 'Declined' THEN 5
+                    ELSE 6
+                  END ASC,
+                  CASE severity
+                    WHEN 'Critical' THEN 1
+                    WHEN 'High' THEN 2
+                    WHEN 'Medium' THEN 3
+                    WHEN 'Low' THEN 4
+                    ELSE 5
+                  END ASC,
+                  finding_date DESC,
+                  id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
         ensure_discrepancy_approvals_schema(conn)
         approval_records = [
             dict(row)
@@ -1349,9 +1458,11 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         customer_id,
         vehicle_id,
         service_history_records,
+        findings_records,
     )
     vehicle_history_summary = build_vehicle_history_summary(maintenance_records)
     repair_history_summary = build_repair_history_summary(repair_records)
+    findings_summary = build_findings_summary(findings_records)
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -1364,6 +1475,8 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "vehicle_history_summary": vehicle_history_summary,
             "repair_records": repair_records,
             "repair_history_summary": repair_history_summary,
+            "findings_records": findings_records,
+            "findings_summary": findings_summary,
             "vehicle_timeline": vehicle_timeline,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
@@ -1415,6 +1528,146 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
     finally:
         conn.close()
     return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings")
+async def pro_finding_record_create(request: Request, customer_id: int, vehicle_id: int):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    severity = form.get("severity", "Low").title()
+    status = form.get("status", "Open").title()
+    if severity not in {"Low", "Medium", "High", "Critical"}:
+        severity = "Low"
+    if status not in {"Open", "Approved", "Declined", "Deferred", "Completed"}:
+        status = "Open"
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_findings_records_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO findings_records (
+              vehicle_id, customer_id, finding, recommendation, severity,
+              status, mileage, finding_date, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                vehicle_id,
+                customer_id,
+                form.get("finding", ""),
+                form.get("recommendation", ""),
+                severity,
+                status,
+                optional_int(form, "mileage"),
+                date.today().isoformat(),
+                now,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
+        status_code=303,
+    )
+
+
+@router.get(
+    "/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+    response_class=HTMLResponse,
+)
+def pro_finding_record_detail(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/finding_detail.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "finding": finding,
+        },
+    )
+
+
+@router.get(
+    "/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/edit",
+    response_class=HTMLResponse,
+)
+def pro_finding_record_edit(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/finding_edit.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "finding": finding,
+        },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+async def pro_finding_record_update(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    form = await read_form_data(request)
+    severity = form.get("severity", "Low").title()
+    status = form.get("status", "Open").title()
+    if severity not in {"Low", "Medium", "High", "Critical"}:
+        severity = "Low"
+    if status not in {"Open", "Approved", "Declined", "Deferred", "Completed"}:
+        status = "Open"
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        cur = conn.execute(
+            """
+            UPDATE findings_records
+            SET finding = ?, recommendation = ?, severity = ?, status = ?,
+                mileage = ?, finding_date = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("finding", ""),
+                form.get("recommendation", ""),
+                severity,
+                status,
+                optional_int(form, "mileage"),
+                form.get("finding_date", ""),
+                finding_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Finding record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
+        status_code=303,
+    )
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals")

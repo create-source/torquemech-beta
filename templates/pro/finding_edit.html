@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Finding | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-finding-panel { border:1px solid rgba(15,23,42,.12); border-radius:8px; background:rgba(255,255,255,.94); padding:18px; max-width:920px; }
+  .tm-finding-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:760px) { .tm-finding-row { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Edit Finding</h1>
+      <p class="tm-pro-subtitle">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}">View Finding</a>
+  </div>
+
+  <form class="tm-finding-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}">
+    <div>
+      <label class="tm-label" for="finding">Finding</label>
+      <textarea class="tm-input" id="finding" name="finding" rows="4" maxlength="1600">{{ finding.finding or "" }}</textarea>
+    </div>
+    <div style="margin-top:12px;">
+      <label class="tm-label" for="recommendation">Recommendation</label>
+      <textarea class="tm-input" id="recommendation" name="recommendation" rows="4" maxlength="1600">{{ finding.recommendation or "" }}</textarea>
+    </div>
+    <div class="tm-finding-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="severity">Severity</label>
+        <select class="tm-input" id="severity" name="severity">
+          {% for option in ["Low", "Medium", "High", "Critical"] %}
+          <option value="{{ option }}" {% if finding.severity == option %}selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="tm-label" for="status">Status</label>
+        <select class="tm-input" id="status" name="status">
+          {% for option in ["Open", "Approved", "Declined", "Deferred", "Completed"] %}
+          <option value="{{ option }}" {% if finding.status == option %}selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="tm-finding-row" style="margin-top:12px;">
+      <div><label class="tm-label" for="mileage">Mileage</label><input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ finding.mileage|pro_miles if finding.mileage is not none else '' }}"></div>
+      <div><label class="tm-label" for="finding_date">Finding Date</label><input class="tm-input" id="finding_date" name="finding_date" type="date" value="{{ finding.finding_date or '' }}"></div>
+    </div>
+    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Finding</button>
+  </form>
+</section>
+{% endblock %}

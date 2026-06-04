@@ -214,6 +214,11 @@
     box-shadow: 0 0 0 2px #7c3aed;
   }
 
+  .tm-timeline-dot--finding {
+    background: #d97706;
+    box-shadow: 0 0 0 2px #d97706;
+  }
+
   .tm-timeline-content {
     display: grid;
     gap: 8px;
@@ -254,6 +259,11 @@
   .tm-timeline-badge--repair {
     background: #ede9fe;
     color: #5b21b6;
+  }
+
+  .tm-timeline-badge--finding {
+    background: #fef3c7;
+    color: #92400e;
   }
 
   .tm-maintenance-table-wrap {
@@ -369,6 +379,36 @@
     font-size: 0.74rem;
     font-weight: 900;
     text-transform: uppercase;
+  }
+
+  .tm-findings-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .tm-finding-card {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #d97706;
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .tm-finding-card--high {
+    border-left-color: #dc2626;
+  }
+
+  .tm-finding-card--critical {
+    border-left-color: #991b1b;
+  }
+
+  .tm-finding-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .tm-maintenance-cards {
@@ -663,44 +703,99 @@
     {% endfor %}
   </section>
 
+  <section class="tm-crm-panel" id="recommendations-findings" aria-label="Recommendations and findings" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Recommendations & Findings</div>
+    <h2 style="margin:4px 0 0;">Recommendations & Findings</h2>
+
+    <div class="tm-history-summary" aria-label="Findings summary">
+      <div class="tm-history-summary-card">
+        <span>Approved</span>
+        <strong>{{ findings_summary.approved }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Open</span>
+        <strong>{{ findings_summary.open }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Completed</span>
+        <strong>{{ findings_summary.completed }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Deferred</span>
+        <strong>{{ findings_summary.deferred }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Declined</span>
+        <strong>{{ findings_summary.declined }}</strong>
+      </div>
+    </div>
+
+    {% if findings_records %}
+    <div class="tm-findings-list">
+      {% for item in findings_records %}
+      <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}">
+        <div class="tm-history-head">
+          <div class="tm-history-title">{{ item.finding or "Finding" }}</div>
+          <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
+        </div>
+        <div class="tm-finding-meta">
+          <span class="tm-crm-chip">{{ item.severity }}</span>
+          <span class="tm-crm-chip">{{ item.status }}</span>
+          {% if item.mileage is not none %}
+          <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
+          {% endif %}
+        </div>
+        <div style="color:#475569;"><strong>Recommendation:</strong> {{ item.recommendation or "No recommendation recorded." }}</div>
+        <div class="tm-repair-action-row">
+          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
+          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No recommendations or findings recorded for this vehicle yet.
+    </div>
+    {% endif %}
+  </section>
+
   <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
-    <summary>Add Discrepancy Finding</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals">
+    <summary>+ Add Finding</summary>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings">
       <div style="margin-top:12px;">
-        <label class="tm-label" for="finding_title">Finding title</label>
-        <input class="tm-input" id="finding_title" name="finding_title" type="text" maxlength="180">
+        <label class="tm-label" for="finding">Finding</label>
+        <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600"></textarea>
       </div>
-
       <div style="margin-top:12px;">
-        <label class="tm-label" for="finding_description">Finding description</label>
-        <textarea class="tm-input" id="finding_description" name="finding_description" rows="4" maxlength="1600" placeholder="Describe what was found, where it was found, and why it matters."></textarea>
+        <label class="tm-label" for="recommendation">Recommendation</label>
+        <textarea class="tm-input" id="recommendation" name="recommendation" rows="3" maxlength="1600"></textarea>
       </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="recommended_repair">Recommended repair</label>
-        <textarea class="tm-input" id="recommended_repair" name="recommended_repair" rows="3" maxlength="1200" placeholder="Recommended repair or next diagnostic step for the customer decision."></textarea>
-      </div>
-
       <div class="tm-crm-row" style="margin-top:12px;">
         <div>
-          <label class="tm-label" for="estimated_cost">Estimated cost</label>
-          <input class="tm-input" id="estimated_cost" name="estimated_cost" type="text" inputmode="decimal" placeholder="Optional estimate for the additional repair">
-        </div>
-        <div>
-          <label class="tm-label" for="customer_decision">Customer decision</label>
-          <select class="tm-input" id="customer_decision" name="customer_decision">
-            <option value="pending" selected>Pending</option>
-            <option value="approved">Approved</option>
-            <option value="declined">Declined</option>
+          <label class="tm-label" for="severity">Severity</label>
+          <select class="tm-input" id="severity" name="severity">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
           </select>
         </div>
+        <div>
+          <label class="tm-label" for="finding_mileage">Mileage</label>
+          <input class="tm-input" id="finding_mileage" name="mileage" type="text" inputmode="numeric">
+        </div>
       </div>
-
       <div style="margin-top:12px;">
-        <label class="tm-label" for="decision_notes">Decision notes</label>
-        <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600" placeholder="Who approved or declined, how they responded, or any scheduling context.">
+        <label class="tm-label" for="finding_status">Status</label>
+        <select class="tm-input" id="finding_status" name="status">
+          <option value="Open" selected>Open</option>
+          <option value="Approved">Approved</option>
+          <option value="Declined">Declined</option>
+          <option value="Deferred">Deferred</option>
+          <option value="Completed">Completed</option>
+        </select>
       </div>
-
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
     </form>
   </details>

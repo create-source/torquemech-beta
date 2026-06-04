@@ -509,6 +509,30 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_id ON repair_records (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_date_mileage ON repair_records (vehicle_id, repair_date, mileage)")
 
+        # Pro groundwork: mechanic-authored inspection findings and recommendations.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS findings_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              vehicle_id INTEGER NOT NULL,
+              customer_id INTEGER NOT NULL,
+              finding TEXT,
+              recommendation TEXT,
+              severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
+              status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
+              mileage INTEGER,
+              finding_date TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+              FOREIGN KEY (customer_id) REFERENCES customers(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_mileage_date ON findings_records (vehicle_id, mileage, finding_date)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_status ON findings_records (status)")
+
         # Pro groundwork: additional findings and customer decision records.
         conn.execute(
             """

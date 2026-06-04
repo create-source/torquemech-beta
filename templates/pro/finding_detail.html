@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block title %}Finding Record | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-finding-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-left: 5px solid #d97706;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 18px;
+    max-width: 920px;
+  }
+  .tm-finding-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+  .tm-finding-field { display:grid; gap:3px; }
+  .tm-finding-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
+  .tm-finding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  @media (max-width:760px) { .tm-finding-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">{{ finding.finding or "Finding Record" }}</h1>
+      <p class="tm-pro-subtitle">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#recommendations-findings">Back to Vehicle</a>
+  </div>
+
+  <section class="tm-finding-panel" aria-label="Finding record">
+    <div class="tm-finding-grid">
+      <div class="tm-finding-field"><span>Finding Date</span><strong>{{ finding.finding_date|pro_date if finding.finding_date else "-" }}</strong></div>
+      <div class="tm-finding-field"><span>Mileage</span><strong>{% if finding.mileage is not none %}{{ finding.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
+      <div class="tm-finding-field"><span>Severity</span><strong>{{ finding.severity or "-" }}</strong></div>
+      <div class="tm-finding-field"><span>Status</span><strong>{{ finding.status or "-" }}</strong></div>
+    </div>
+    <div class="tm-finding-field" style="margin-top:14px;"><span>Recommendation</span><strong>{{ finding.recommendation or "-" }}</strong></div>
+    <div class="tm-finding-actions">
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/edit">Edit Finding</a>
+    </div>
+  </section>
+</section>
+{% endblock %}
