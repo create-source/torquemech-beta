@@ -433,6 +433,14 @@ def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_mileage INTEGER")
     if "due_date" not in columns:
         conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_date TEXT")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_records_vehicle_date "
+        "ON maintenance_records (vehicle_id, date_performed)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_records_vehicle_mileage_date "
+        "ON maintenance_records (vehicle_id, mileage_performed, date_performed)"
+    )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_mileage ON maintenance_records (due_mileage)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_date ON maintenance_records (due_date)")
     conn.commit()
@@ -515,12 +523,27 @@ def build_vehicle_timeline(
     )
     timeline.sort(
         key=lambda record: (
+            record.get("mileage") is not None,
+            int(record.get("mileage") or 0),
+            parse_date_value(record.get("date")) is not None,
             parse_date_value(record.get("date")) or date.min,
             int(record.get("id") or 0),
         ),
         reverse=True,
     )
     return timeline
+
+
+def build_vehicle_history_summary(
+    maintenance_records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    latest_record = maintenance_records[0] if maintenance_records else {}
+    return {
+        "total_services": len(maintenance_records),
+        "last_service": latest_record.get("service_type") or "",
+        "last_service_date": latest_record.get("date_performed") or "",
+        "last_recorded_mileage": latest_record.get("mileage_performed"),
+    }
 
 
 def load_customer_vehicle(
@@ -971,7 +994,15 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 SELECT *
                 FROM maintenance_records
                 WHERE customer_id = ? AND vehicle_id = ?
-                ORDER BY date_performed DESC, id DESC
+                ORDER BY
+                  mileage_performed IS NULL ASC,
+                  mileage_performed DESC,
+                  CASE
+                    WHEN date_performed IS NULL OR TRIM(date_performed) = '' THEN 1
+                    ELSE 0
+                  END ASC,
+                  date_performed DESC,
+                  id DESC
                 """,
                 (customer_id, vehicle_id),
             ).fetchall()
@@ -1006,6 +1037,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         maintenance_records,
         service_history,
     )
+    vehicle_history_summary = build_vehicle_history_summary(maintenance_records)
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -1015,6 +1047,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "vehicle": vehicle,
             "service_history": service_history,
             "maintenance_records": maintenance_records,
+            "vehicle_history_summary": vehicle_history_summary,
             "vehicle_timeline": vehicle_timeline,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,

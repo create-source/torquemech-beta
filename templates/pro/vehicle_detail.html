@@ -277,6 +277,34 @@
     text-decoration: none;
   }
 
+  .tm-history-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .tm-history-summary-card {
+    display: grid;
+    gap: 5px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .tm-history-summary-card span {
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-history-summary-card strong {
+    color: #0f172a;
+    font-size: 1.05rem;
+  }
+
   .tm-maintenance-cards {
     display: grid;
     gap: 12px;
@@ -362,7 +390,8 @@
 
   @media (max-width: 760px) {
     .tm-crm-row,
-    .tm-maintenance-fields {
+    .tm-maintenance-fields,
+    .tm-history-summary {
       grid-template-columns: 1fr;
     }
 
@@ -562,6 +591,61 @@
     {% else %}
     <div class="tm-history-empty" style="margin-top:12px;">
       No vehicle history recorded yet.
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="tm-crm-panel" aria-label="Vehicle history" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Vehicle History</div>
+    <h2 style="margin:4px 0 0;">Vehicle History</h2>
+
+    <div class="tm-history-summary" aria-label="Vehicle history summary">
+      <div class="tm-history-summary-card">
+        <span>Total Services</span>
+        <strong>{{ vehicle_history_summary.total_services }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Last Service</span>
+        <strong>{{ vehicle_history_summary.last_service or "-" }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Last Service Date</span>
+        <strong>{{ vehicle_history_summary.last_service_date|pro_date if vehicle_history_summary.last_service_date else "-" }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Last Recorded Mileage</span>
+        <strong>{% if vehicle_history_summary.last_recorded_mileage is not none %}{{ vehicle_history_summary.last_recorded_mileage|pro_miles }} miles{% else %}-{% endif %}</strong>
+      </div>
+    </div>
+
+    {% if maintenance_records %}
+    <div class="tm-maintenance-table-wrap">
+      <table class="tm-maintenance-table">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Mileage</th>
+            <th scope="col">Service Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in maintenance_records %}
+          <tr>
+            <td>{{ item.date_performed|pro_date if item.date_performed else "-" }}</td>
+            <td>{% if item.mileage_performed is not none %}{{ item.mileage_performed|pro_miles }} miles{% else %}-{% endif %}</td>
+            <td>
+              <a href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">
+                {{ item.service_type or "Maintenance" }}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No maintenance records saved for this vehicle yet.
     </div>
     {% endif %}
   </section>
