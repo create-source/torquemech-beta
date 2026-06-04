@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Repair Record | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-repair-panel { border:1px solid rgba(15,23,42,.12); border-radius:8px; background:rgba(255,255,255,.94); padding:18px; max-width:920px; }
+  .tm-repair-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .tm-switch-control { display:inline-flex; align-items:center; gap:10px; cursor:pointer; color:#334155; font-weight:800; }
+  .tm-switch-control input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .tm-switch-track { position:relative; width:46px; height:26px; border:1px solid #94a3b8; border-radius:999px; background:#cbd5e1; }
+  .tm-switch-track::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(15,23,42,.28); transition:transform 160ms ease; }
+  .tm-switch-control input:checked + .tm-switch-track { border-color:#0f766e; background:#0f766e; }
+  .tm-switch-control input:checked + .tm-switch-track::after { transform:translateX(20px); }
+  @media (max-width:760px) { .tm-repair-row { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Edit {{ repair.repair_name or "Repair Record" }}</h1>
+      <p class="tm-pro-subtitle">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}">View Record</a>
+  </div>
+
+  <form class="tm-repair-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}">
+    <div>
+      <label class="tm-label" for="repair_name">Repair Name</label>
+      <input class="tm-input" id="repair_name" name="repair_name" type="text" maxlength="180" value="{{ repair.repair_name or '' }}">
+    </div>
+    <div style="margin-top:12px;">
+      <label class="tm-switch-control" for="also_update_maintenance_tracking">
+        <input id="also_update_maintenance_tracking" name="also_update_maintenance_tracking" type="checkbox" value="1" role="switch" {% if repair.track_as_maintenance %}checked{% endif %}>
+        <span class="tm-switch-track" aria-hidden="true"></span>
+        <span>Track as Maintenance Item</span>
+      </label>
+    </div>
+    <div class="tm-repair-row" style="margin-top:12px;">
+      <div><label class="tm-label" for="repair_date">Repair Date</label><input class="tm-input" id="repair_date" name="repair_date" type="date" value="{{ repair.repair_date or '' }}"></div>
+      <div><label class="tm-label" for="mileage">Mileage</label><input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ repair.mileage|pro_miles if repair.mileage is not none else '' }}"></div>
+    </div>
+    <div class="tm-repair-row" style="margin-top:12px;">
+      <div><label class="tm-label" for="labor_hours">Labor Hours</label><input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1" value="{{ repair.labor_hours if repair.labor_hours is not none else '' }}"></div>
+      <div><label class="tm-label" for="parts_cost">Parts Cost</label><input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.parts_cost) if repair.parts_cost is not none else '' }}"></div>
+    </div>
+    <div style="margin-top:12px;"><label class="tm-label" for="labor_cost">Labor Cost</label><input class="tm-input" id="labor_cost" name="labor_cost" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.labor_cost) if repair.labor_cost is not none else '' }}"></div>
+    <div style="margin-top:12px;"><label class="tm-label" for="notes">Notes</label><textarea class="tm-input" id="notes" name="notes" rows="5" maxlength="1600">{{ repair.notes or "" }}</textarea></div>
+    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Repair Record</button>
+  </form>
+</section>
+{% endblock %}

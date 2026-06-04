@@ -13,6 +13,7 @@ from app.data.maintenance_library import (
     MAINTENANCE_SERVICE_ALIASES,
     MAINTENANCE_SERVICE_OPTIONS,
     maintenance_defaults_for,
+    normalize_maintenance_service_type,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -446,14 +447,311 @@ def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS repair_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          vehicle_id INTEGER NOT NULL,
+          customer_id INTEGER NOT NULL,
+          repair_name TEXT,
+          repair_date TEXT,
+          mileage INTEGER,
+          labor_hours REAL,
+          parts_cost REAL,
+          labor_cost REAL,
+          total_cost REAL,
+          track_as_maintenance INTEGER NOT NULL DEFAULT 0,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+          FOREIGN KEY (customer_id) REFERENCES customers(id)
+        )
+        """
+    )
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_records)").fetchall()}
+    if "track_as_maintenance" not in columns:
+        conn.execute(
+            "ALTER TABLE repair_records ADD COLUMN "
+            "track_as_maintenance INTEGER NOT NULL DEFAULT 0"
+        )
+        maintenance_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT customer_id, vehicle_id, service_type
+                FROM maintenance_records
+                """
+            ).fetchall()
+        ]
+        tracked_services = {
+            (
+                record["customer_id"],
+                record["vehicle_id"],
+                normalize_maintenance_service_type(record["service_type"]),
+            )
+            for record in maintenance_records
+        }
+        for repair in conn.execute(
+            "SELECT id, customer_id, vehicle_id, repair_name FROM repair_records"
+        ).fetchall():
+            key = (
+                repair["customer_id"],
+                repair["vehicle_id"],
+                normalize_maintenance_service_type(repair["repair_name"]),
+            )
+            if key in tracked_services:
+                conn.execute(
+                    "UPDATE repair_records SET track_as_maintenance = 1 WHERE id = ?",
+                    (repair["id"],),
+                )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_customer_id ON repair_records (customer_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_id ON repair_records (vehicle_id)")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_date_mileage "
+        "ON repair_records (vehicle_id, repair_date, mileage)"
+    )
+    conn.commit()
+
+
+def load_repair_record(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+    repair_id: int,
+) -> dict[str, Any]:
+    ensure_repair_records_schema(conn)
+    repair = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM repair_records
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (repair_id, customer_id, vehicle_id),
+        ).fetchone()
+    )
+    if not repair:
+        raise HTTPException(status_code=404, detail="Repair record not found")
+    return repair
+
+
 def ensure_service_history_schema(conn: sqlite3.Connection) -> None:
     columns = {row[1] for row in conn.execute("PRAGMA table_info(service_history)").fetchall()}
     if "labor_amount" not in columns:
         conn.execute("ALTER TABLE service_history ADD COLUMN labor_amount REAL")
     if "parts_amount" not in columns:
         conn.execute("ALTER TABLE service_history ADD COLUMN parts_amount REAL")
+    if "estimate_total" not in columns:
+        conn.execute("ALTER TABLE service_history ADD COLUMN estimate_total REAL")
+    if "actual_total" not in columns:
+        conn.execute("ALTER TABLE service_history ADD COLUMN actual_total REAL")
+    if "created_at" not in columns:
+        conn.execute("ALTER TABLE service_history ADD COLUMN created_at TEXT")
+    if "updated_at" not in columns:
+        conn.execute("ALTER TABLE service_history ADD COLUMN updated_at TEXT")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_vehicle_date ON service_history (vehicle_id, service_date)")
     conn.commit()
+
+
+def ensure_service_history_records_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS service_history_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          source_type TEXT NOT NULL,
+          source_record_id INTEGER NOT NULL,
+          service_name TEXT,
+          service_date TEXT,
+          mileage INTEGER,
+          labor_hours REAL,
+          parts_cost REAL,
+          labor_cost REAL,
+          total_cost REAL,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (customer_id) REFERENCES customers(id),
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+          UNIQUE (source_type, source_record_id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_records_customer_id ON service_history_records (customer_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_records_vehicle_id ON service_history_records (vehicle_id)")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_service_history_records_vehicle_mileage_date "
+        "ON service_history_records (vehicle_id, mileage, service_date)"
+    )
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO service_history_records (
+          customer_id, vehicle_id, source_type, source_record_id, service_name,
+          service_date, mileage, parts_cost, labor_cost, total_cost, notes, created_at
+        )
+        SELECT
+          customer_id, vehicle_id, 'legacy', id, service_title,
+          service_date, mileage_at_service, parts_amount, labor_amount,
+          COALESCE(actual_total, estimate_total), service_notes,
+          COALESCE(created_at, updated_at, service_date)
+        FROM service_history
+        """
+    )
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO service_history_records (
+          customer_id, vehicle_id, source_type, source_record_id, service_name,
+          service_date, mileage, notes, created_at
+        )
+        SELECT
+          customer_id, vehicle_id, 'maintenance', id, service_type,
+          date_performed, mileage_performed, notes, created_at
+        FROM maintenance_records
+        """
+    )
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO service_history_records (
+          customer_id, vehicle_id, source_type, source_record_id, service_name,
+          service_date, mileage, labor_hours, parts_cost, labor_cost,
+          total_cost, notes, created_at
+        )
+        SELECT
+          customer_id, vehicle_id, 'repair', id, repair_name,
+          repair_date, mileage, labor_hours, parts_cost, labor_cost,
+          total_cost, notes, created_at
+        FROM repair_records
+        """
+    )
+    conn.commit()
+
+
+def append_service_history_record(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    source_type: str,
+    source_record_id: int,
+    service_name: str,
+    service_date: str,
+    mileage: int | None,
+    labor_hours: float | None = None,
+    parts_cost: float | None = None,
+    labor_cost: float | None = None,
+    total_cost: float | None = None,
+    notes: str = "",
+    created_at: str,
+) -> None:
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO service_history_records (
+          customer_id, vehicle_id, source_type, source_record_id, service_name,
+          service_date, mileage, labor_hours, parts_cost, labor_cost,
+          total_cost, notes, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            customer_id,
+            vehicle_id,
+            source_type,
+            source_record_id,
+            service_name,
+            service_date,
+            mileage,
+            labor_hours,
+            parts_cost,
+            labor_cost,
+            total_cost,
+            notes,
+            created_at,
+        ),
+    )
+
+
+def upsert_maintenance_from_repair(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    service_type: str,
+    date_performed: str,
+    mileage_performed: int | None,
+    notes: str,
+    now: str,
+) -> int:
+    normalized = normalize_maintenance_service_type(service_type)
+    existing = next(
+        (
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM maintenance_records
+                WHERE customer_id = ? AND vehicle_id = ?
+                ORDER BY id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+            if normalize_maintenance_service_type(row["service_type"]) == normalized
+        ),
+        None,
+    )
+    defaults = maintenance_defaults_for(service_type)
+    interval_miles = defaults.get("interval_miles")
+    interval_months = defaults.get("interval_months")
+    due_mileage = calculated_due_mileage(mileage_performed, interval_miles)
+    due_date = calculated_due_date(date_performed, interval_months)
+    if existing:
+        conn.execute(
+            """
+            UPDATE maintenance_records
+            SET date_performed = ?, mileage_performed = ?, interval_miles = ?,
+                interval_months = ?, due_mileage = ?, due_date = ?, notes = ?,
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                date_performed,
+                mileage_performed,
+                interval_miles,
+                interval_months,
+                due_mileage,
+                due_date,
+                notes,
+                now,
+                existing["id"],
+            ),
+        )
+        return int(existing["id"])
+
+    cur = conn.execute(
+        """
+        INSERT INTO maintenance_records (
+          customer_id, vehicle_id, service_type, date_performed,
+          mileage_performed, interval_miles, interval_months,
+          due_mileage, due_date, notes, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            customer_id,
+            vehicle_id,
+            service_type,
+            date_performed,
+            mileage_performed,
+            interval_miles,
+            interval_months,
+            due_mileage,
+            due_date,
+            notes,
+            now,
+            now,
+        ),
+    )
+    return int(cur.lastrowid)
 
 
 def normalize_customer_status(value: str) -> str:
@@ -494,33 +792,20 @@ def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict
 def build_vehicle_timeline(
     customer_id: int,
     vehicle_id: int,
-    maintenance_records: list[dict[str, Any]],
-    service_history: list[dict[str, Any]],
+    service_history_records: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     timeline = [
         {
             "id": record["id"],
-            "record_type": "Maintenance",
-            "record_type_key": "maintenance",
-            "date": record.get("date_performed") or "",
-            "service_name": record.get("service_type") or "Maintenance",
-            "mileage": record.get("mileage_performed"),
-            "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{record['id']}",
-        }
-        for record in maintenance_records
-    ]
-    timeline.extend(
-        {
-            "id": record["id"],
-            "record_type": "Service History",
-            "record_type_key": "service-history",
+            "record_type": "Repair" if record.get("source_type") == "repair" else "Maintenance",
+            "record_type_key": "repair" if record.get("source_type") == "repair" else "maintenance",
             "date": record.get("service_date") or "",
-            "service_name": record.get("service_title") or "Service entry",
-            "mileage": record.get("mileage_at_service"),
-            "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/history/{record['id']}",
+            "service_name": record.get("service_name") or "Service",
+            "mileage": record.get("mileage"),
+            "url": "#service-history",
         }
-        for record in service_history
-    )
+        for record in service_history_records
+    ]
     timeline.sort(
         key=lambda record: (
             record.get("mileage") is not None,
@@ -543,6 +828,21 @@ def build_vehicle_history_summary(
         "last_service": latest_record.get("service_type") or "",
         "last_service_date": latest_record.get("date_performed") or "",
         "last_recorded_mileage": latest_record.get("mileage_performed"),
+    }
+
+
+def build_repair_history_summary(
+    repair_records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    latest_record = repair_records[0] if repair_records else {}
+    return {
+        "total_repairs": len(repair_records),
+        "last_repair": latest_record.get("repair_name") or "",
+        "last_repair_date": latest_record.get("repair_date") or "",
+        "last_repair_mileage": latest_record.get("mileage"),
+        "lifetime_repair_spend": sum(
+            float(record.get("total_cost") or 0) for record in repair_records
+        ),
     }
 
 
@@ -974,15 +1274,17 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_maintenance_records_schema(conn)
+        ensure_repair_records_schema(conn)
         ensure_service_history_schema(conn)
-        service_history = [
+        ensure_service_history_records_schema(conn)
+        service_history_records = [
             dict(row)
             for row in conn.execute(
                 """
                 SELECT *
-                FROM service_history
+                FROM service_history_records
                 WHERE customer_id = ? AND vehicle_id = ?
-                ORDER BY service_date DESC, id DESC
+                ORDER BY mileage DESC, service_date DESC, id DESC
                 """,
                 (customer_id, vehicle_id),
             ).fetchall()
@@ -1003,6 +1305,18 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                   END ASC,
                   date_performed DESC,
                   id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
+        repair_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM repair_records
+                WHERE customer_id = ? AND vehicle_id = ?
+                ORDER BY repair_date DESC, mileage DESC, id DESC
                 """,
                 (customer_id, vehicle_id),
             ).fetchall()
@@ -1034,10 +1348,10 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     vehicle_timeline = build_vehicle_timeline(
         customer_id,
         vehicle_id,
-        maintenance_records,
-        service_history,
+        service_history_records,
     )
     vehicle_history_summary = build_vehicle_history_summary(maintenance_records)
+    repair_history_summary = build_repair_history_summary(repair_records)
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -1045,9 +1359,11 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "request": request,
             "customer": customer,
             "vehicle": vehicle,
-            "service_history": service_history,
+            "service_history_records": service_history_records,
             "maintenance_records": maintenance_records,
             "vehicle_history_summary": vehicle_history_summary,
+            "repair_records": repair_records,
+            "repair_history_summary": repair_history_summary,
             "vehicle_timeline": vehicle_timeline,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
@@ -1303,41 +1619,7 @@ async def pro_approval_record_decline(
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/history")
 async def pro_service_history_create(request: Request, customer_id: int, vehicle_id: int):
-    form = await read_form_data(request)
-    now = datetime.utcnow().isoformat()
-    conn = crm_db_conn()
-    try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
-        ensure_service_history_schema(conn)
-        conn.execute(
-            """
-            INSERT INTO service_history (
-              customer_id, vehicle_id, service_title, service_notes,
-              mileage_at_service, service_date, labor_amount, parts_amount,
-              estimate_total, actual_total,
-              status, created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)
-            """,
-            (
-                customer_id,
-                vehicle_id,
-                form.get("service_title", ""),
-                form.get("service_notes", ""),
-                optional_int(form, "mileage_at_service"),
-                form.get("service_date", ""),
-                optional_float(form, "labor_amount"),
-                optional_float(form, "parts_amount"),
-                None,
-                None,
-                now,
-                now,
-            ),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-    return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+    raise HTTPException(status_code=405, detail="Service history records are created automatically")
 
 
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}", response_class=HTMLResponse)
@@ -1378,73 +1660,14 @@ def pro_service_history_detail(
 async def pro_service_history_update(
     request: Request, customer_id: int, vehicle_id: int, history_id: int
 ):
-    form = await read_form_data(request)
-    now = datetime.utcnow().isoformat()
-    conn = crm_db_conn()
-    try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
-        ensure_service_history_schema(conn)
-        cur = conn.execute(
-            """
-            UPDATE service_history
-            SET
-              service_title = ?,
-              service_notes = ?,
-              mileage_at_service = ?,
-              service_date = ?,
-              labor_amount = ?,
-              parts_amount = ?,
-              updated_at = ?
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
-            """,
-            (
-                form.get("service_title", ""),
-                form.get("service_notes", ""),
-                optional_int(form, "mileage_at_service"),
-                form.get("service_date", ""),
-                optional_float(form, "labor_amount"),
-                optional_float(form, "parts_amount"),
-                now,
-                history_id,
-                customer_id,
-                vehicle_id,
-            ),
-        )
-        if cur.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Service history not found")
-        conn.commit()
-    finally:
-        conn.close()
-    return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}",
-        status_code=303,
-    )
+    raise HTTPException(status_code=405, detail="Service history records are append-only")
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/history/{history_id}/delete")
 async def pro_service_history_delete(
     customer_id: int, vehicle_id: int, history_id: int
 ):
-    conn = crm_db_conn()
-    try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
-        ensure_service_history_schema(conn)
-        cur = conn.execute(
-            """
-            DELETE FROM service_history
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
-            """,
-            (history_id, customer_id, vehicle_id),
-        )
-        if cur.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Service history not found")
-        conn.commit()
-    finally:
-        conn.close()
-    return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}",
-        status_code=303,
-    )
+    raise HTTPException(status_code=405, detail="Service history records are append-only")
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/maintenance")
@@ -1467,7 +1690,10 @@ async def pro_maintenance_record_create(request: Request, customer_id: int, vehi
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_maintenance_records_schema(conn)
-        conn.execute(
+        ensure_repair_records_schema(conn)
+        ensure_service_history_schema(conn)
+        ensure_service_history_records_schema(conn)
+        cur = conn.execute(
             """
             INSERT INTO maintenance_records (
               customer_id, vehicle_id, service_type, date_performed,
@@ -1491,10 +1717,201 @@ async def pro_maintenance_record_create(request: Request, customer_id: int, vehi
                 now,
             ),
         )
+        append_service_history_record(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            source_type="maintenance",
+            source_record_id=int(cur.lastrowid),
+            service_name=service_type,
+            service_date=date_performed,
+            mileage=mileage_performed,
+            notes=form.get("notes", ""),
+            created_at=now,
+        )
         conn.commit()
     finally:
         conn.close()
     return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs")
+async def pro_repair_record_create(request: Request, customer_id: int, vehicle_id: int):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    parts_cost = optional_float(form, "parts_cost")
+    labor_cost = optional_float(form, "labor_cost")
+    total_cost = float(parts_cost or 0) + float(labor_cost or 0)
+    repair_name = form.get("repair_name", "")
+    repair_date = form.get("repair_date", "")
+    mileage = optional_int(form, "mileage")
+    labor_hours = optional_float(form, "labor_hours")
+    notes = form.get("notes", "")
+    update_maintenance = form.get("also_update_maintenance_tracking") == "1"
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_repair_records_schema(conn)
+        ensure_maintenance_records_schema(conn)
+        ensure_service_history_schema(conn)
+        ensure_service_history_records_schema(conn)
+        cur = conn.execute(
+            """
+            INSERT INTO repair_records (
+              vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, parts_cost, labor_cost, total_cost,
+              track_as_maintenance, notes, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                vehicle_id,
+                customer_id,
+                repair_name,
+                repair_date,
+                mileage,
+                labor_hours,
+                parts_cost,
+                labor_cost,
+                total_cost,
+                1 if update_maintenance else 0,
+                notes,
+                now,
+            ),
+        )
+        if update_maintenance:
+            upsert_maintenance_from_repair(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                service_type=repair_name,
+                date_performed=repair_date,
+                mileage_performed=mileage,
+                notes=notes,
+                now=now,
+            )
+        append_service_history_record(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            source_type="repair",
+            source_record_id=int(cur.lastrowid),
+            service_name=repair_name,
+            service_date=repair_date,
+            mileage=mileage,
+            labor_hours=labor_hours,
+            parts_cost=parts_cost,
+            labor_cost=labor_cost,
+            total_cost=total_cost,
+            notes=notes,
+            created_at=now,
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-history",
+        status_code=303,
+    )
+
+
+@router.get(
+    "/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
+    response_class=HTMLResponse,
+)
+def pro_repair_record_detail(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/repair_detail.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "repair": repair,
+        },
+    )
+
+
+@router.get(
+    "/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/edit",
+    response_class=HTMLResponse,
+)
+def pro_repair_record_edit(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/repair_edit.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "repair": repair,
+        },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}")
+async def pro_repair_record_update(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+):
+    form = await read_form_data(request)
+    parts_cost = optional_float(form, "parts_cost")
+    labor_cost = optional_float(form, "labor_cost")
+    total_cost = float(parts_cost or 0) + float(labor_cost or 0)
+    track_as_maintenance = form.get("also_update_maintenance_tracking") == "1"
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        cur = conn.execute(
+            """
+            UPDATE repair_records
+            SET repair_name = ?, repair_date = ?, mileage = ?, labor_hours = ?,
+                parts_cost = ?, labor_cost = ?, total_cost = ?,
+                track_as_maintenance = ?, notes = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("repair_name", ""),
+                form.get("repair_date", ""),
+                optional_int(form, "mileage"),
+                optional_float(form, "labor_hours"),
+                parts_cost,
+                labor_cost,
+                total_cost,
+                1 if track_as_maintenance else 0,
+                form.get("notes", ""),
+                repair_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Repair record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-history",
+        status_code=303,
+    )
 
 
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_id}", response_class=HTMLResponse)

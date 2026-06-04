@@ -2,86 +2,6 @@
 
 {% block title %}Service History | TorqueMech CRM{% endblock %}
 
-{% block page_css %}
-<style>
-  .tm-crm-summary,
-  .tm-crm-panel {
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.94);
-    padding: 18px;
-    max-width: 920px;
-  }
-
-  .tm-crm-summary {
-    border-left: 5px solid #0e7490;
-    margin-bottom: 16px;
-  }
-
-  .tm-crm-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .tm-crm-chip-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 12px;
-  }
-
-  .tm-crm-chip {
-    border: 1px solid rgba(14, 116, 144, 0.22);
-    border-radius: 999px;
-    background: #ecfeff;
-    color: #155e75;
-    font-weight: 800;
-    padding: 6px 10px;
-  }
-
-  .tm-crm-kicker {
-    color: #0f766e;
-    font-size: 0.78rem;
-    font-weight: 900;
-    text-transform: uppercase;
-  }
-
-  .tm-crm-panel input[type="date"] {
-    min-height: 48px;
-  }
-
-  .tm-money-field {
-    position: relative;
-  }
-
-  .tm-money-field-symbol {
-    display: none;
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #475569;
-    font-weight: 800;
-    pointer-events: none;
-  }
-
-  .tm-money-field.has-value .tm-money-field-symbol {
-    display: block;
-  }
-
-  .tm-money-field.has-value .tm-input {
-    padding-left: 28px;
-  }
-
-  @media (max-width: 760px) {
-    .tm-crm-row {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-{% endblock %}
-
 {% block content %}
 <section class="tm-pro-shell">
   <div class="tm-pro-pagehead">
@@ -92,93 +12,14 @@
         {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
       </p>
     </div>
-    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">Back to Vehicle</a>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#service-history">Back to Vehicle</a>
   </div>
 
-  <section class="tm-crm-summary" aria-label="Service history summary">
-    <div class="tm-crm-kicker">Service Record</div>
-    <div class="tm-crm-chip-row">
-      <span class="tm-crm-chip">{{ history.service_date|pro_date if history.service_date else "No date" }}</span>
-      {% if history.mileage_at_service %}
-      <span class="tm-crm-chip">{{ history.mileage_at_service|pro_miles }} miles</span>
-      {% endif %}
-      {% if history.labor_amount is not none %}
-      <span class="tm-crm-chip">Labor {{ history.labor_amount|pro_currency }}</span>
-      {% endif %}
-      {% if history.parts_amount is not none %}
-      <span class="tm-crm-chip">Parts {{ history.parts_amount|pro_currency }}</span>
-      {% endif %}
-    </div>
-    {% if history.service_notes %}
-    <div style="color:#475569; margin-top:12px;">{{ history.service_notes }}</div>
-    {% endif %}
+  <section class="tm-card" style="max-width:920px;">
+    <h2 style="margin-top:0;">Append-Only Service Record</h2>
+    <p style="color:#64748b;">
+      Service History is the permanent vehicle ledger. Existing records are retained for continuity and cannot be edited or deleted through normal CRM workflows.
+    </p>
   </section>
-
-  <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ history.id }}">
-    <h2 style="margin-top:0;">Edit Service History</h2>
-
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="service_title">Service name</label>
-      <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180" value="{{ history.service_title or '' }}" autocomplete="off">
-    </div>
-
-    <div class="tm-crm-row" style="margin-top:12px;">
-      <div>
-        <label class="tm-label" for="service_date">Service date</label>
-        <input class="tm-input" id="service_date" name="service_date" type="date" value="{{ history.service_date or '' }}">
-      </div>
-      <div>
-        <label class="tm-label" for="mileage_at_service">Vehicle mileage</label>
-        <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="text" inputmode="numeric" value="{{ history.mileage_at_service|pro_miles if history.mileage_at_service else '' }}">
-      </div>
-    </div>
-
-    <div class="tm-crm-row" style="margin-top:12px;">
-      <div>
-        <label class="tm-label" for="labor_amount">Labor amount</label>
-        <div class="tm-money-field" data-money-field>
-          <span class="tm-money-field-symbol" aria-hidden="true">$</span>
-          <input class="tm-input" id="labor_amount" name="labor_amount" type="text" inputmode="decimal" value="{{ '%.2f'|format(history.labor_amount) if history.labor_amount is not none else '' }}" placeholder="Optional" data-money-input>
-        </div>
-      </div>
-      <div>
-        <label class="tm-label" for="parts_amount">Parts amount</label>
-        <div class="tm-money-field" data-money-field>
-          <span class="tm-money-field-symbol" aria-hidden="true">$</span>
-          <input class="tm-input" id="parts_amount" name="parts_amount" type="text" inputmode="decimal" value="{{ '%.2f'|format(history.parts_amount) if history.parts_amount is not none else '' }}" placeholder="Optional" data-money-input>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="service_notes">Notes</label>
-      <textarea class="tm-input" id="service_notes" name="service_notes" rows="5" maxlength="1600" placeholder="What was performed, inspection results, customer concern, parts used, or follow-up context.">{{ history.service_notes or "" }}</textarea>
-    </div>
-
-    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save History Entry</button>
-  </form>
-
-  <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ history.id }}/delete" style="margin-top:16px;">
-    <h2 style="margin-top:0;">Delete Service History</h2>
-    <div style="color:#64748b;">Remove this completed service record from the vehicle. This does not affect maintenance tracking, approvals, or customer details.</div>
-    <button class="tm-btn tm-btn-secondary" type="submit" style="margin-top:14px;">Delete Record</button>
-  </form>
 </section>
-
-<script>
-(() => {
-  document.querySelectorAll("[data-money-field]").forEach((field) => {
-    const input = field.querySelector("[data-money-input]");
-    if (!input) return;
-
-    const sync = () => {
-      field.classList.toggle("has-value", input.value.trim() !== "");
-    };
-
-    input.addEventListener("input", sync);
-    input.addEventListener("change", sync);
-    sync();
-  });
-})();
-</script>
 {% endblock %}

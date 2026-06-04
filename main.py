@@ -394,6 +394,34 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_shop_id ON service_history (shop_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_service_date ON service_history (service_date)")
 
+        # Pro permanent vehicle ledger. Rows are appended from maintenance and repair sources.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS service_history_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              source_type TEXT NOT NULL,
+              source_record_id INTEGER NOT NULL,
+              service_name TEXT,
+              service_date TEXT,
+              mileage INTEGER,
+              labor_hours REAL,
+              parts_cost REAL,
+              labor_cost REAL,
+              total_cost REAL,
+              notes TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+              UNIQUE (source_type, source_record_id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_records_customer_id ON service_history_records (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_records_vehicle_id ON service_history_records (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_service_history_records_vehicle_mileage_date ON service_history_records (vehicle_id, mileage, service_date)")
+
         # Pro groundwork: maintenance reminders for future CRM modules only.
         conn.execute(
             """
@@ -453,6 +481,33 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("maintenance_records", "due_date", "due_date TEXT")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_mileage ON maintenance_records (due_mileage)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_date ON maintenance_records (due_date)")
+
+        # Pro groundwork: completed repair records remain separate from maintenance.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS repair_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              vehicle_id INTEGER NOT NULL,
+              customer_id INTEGER NOT NULL,
+              repair_name TEXT,
+              repair_date TEXT,
+              mileage INTEGER,
+              labor_hours REAL,
+              parts_cost REAL,
+              labor_cost REAL,
+              total_cost REAL,
+              track_as_maintenance INTEGER NOT NULL DEFAULT 0,
+              notes TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+              FOREIGN KEY (customer_id) REFERENCES customers(id)
+            )
+            """
+        )
+        add_column_if_missing("repair_records", "track_as_maintenance", "track_as_maintenance INTEGER NOT NULL DEFAULT 0")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_customer_id ON repair_records (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_id ON repair_records (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_date_mileage ON repair_records (vehicle_id, repair_date, mileage)")
 
         # Pro groundwork: additional findings and customer decision records.
         conn.execute(

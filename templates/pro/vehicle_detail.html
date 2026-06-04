@@ -209,6 +209,11 @@
     box-shadow: 0 0 0 2px #0f766e;
   }
 
+  .tm-timeline-dot--repair {
+    background: #7c3aed;
+    box-shadow: 0 0 0 2px #7c3aed;
+  }
+
   .tm-timeline-content {
     display: grid;
     gap: 8px;
@@ -244,6 +249,11 @@
   .tm-timeline-badge--maintenance {
     background: #ccfbf1;
     color: #115e59;
+  }
+
+  .tm-timeline-badge--repair {
+    background: #ede9fe;
+    color: #5b21b6;
   }
 
   .tm-maintenance-table-wrap {
@@ -284,6 +294,10 @@
     margin-top: 14px;
   }
 
+  .tm-history-summary--repairs {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
   .tm-history-summary-card {
     display: grid;
     gap: 5px;
@@ -303,6 +317,58 @@
   .tm-history-summary-card strong {
     color: #0f172a;
     font-size: 1.05rem;
+  }
+
+  .tm-repair-table .tm-repair-actions-cell {
+    position: sticky;
+    right: 0;
+    min-width: 172px;
+    background: #fff;
+    box-shadow: -8px 0 12px -12px rgba(15, 23, 42, 0.55);
+  }
+
+  .tm-repair-table th.tm-repair-actions-cell {
+    background: #f8fafc;
+  }
+
+  .tm-repair-action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .tm-repair-cards {
+    display: none;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-repair-card {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #7c3aed;
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .tm-repair-card-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .tm-repair-card-field {
+    display: grid;
+    gap: 2px;
+  }
+
+  .tm-repair-card-field span {
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
   }
 
   .tm-maintenance-cards {
@@ -388,16 +454,89 @@
     padding-left: 28px;
   }
 
+  .tm-switch-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #334155;
+    font-weight: 800;
+  }
+
+  .tm-switch-control input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .tm-switch-track {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    flex: 0 0 auto;
+    border: 1px solid #94a3b8;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: background 160ms ease, border-color 160ms ease;
+  }
+
+  .tm-switch-track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.28);
+    transition: transform 160ms ease;
+  }
+
+  .tm-switch-control input:checked + .tm-switch-track {
+    border-color: #0f766e;
+    background: #0f766e;
+  }
+
+  .tm-switch-control input:checked + .tm-switch-track::after {
+    transform: translateX(20px);
+  }
+
+  .tm-switch-control input:focus-visible + .tm-switch-track {
+    outline: 3px solid rgba(14, 116, 144, 0.24);
+    outline-offset: 2px;
+  }
+
   @media (max-width: 760px) {
     .tm-crm-row,
     .tm-maintenance-fields,
-    .tm-history-summary {
+    .tm-history-summary,
+    .tm-history-summary--repairs {
       grid-template-columns: 1fr;
     }
 
     .tm-maintenance-card-head {
       display: grid;
       grid-template-columns: 1fr;
+    }
+
+    .tm-repair-table-wrap {
+      display: none;
+    }
+
+    .tm-repair-cards {
+      display: grid;
+    }
+
+    .tm-repair-card-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-repair-action-row .tm-btn {
+      flex: 1;
+      text-align: center;
     }
   }
 </style>
@@ -650,6 +789,147 @@
     {% endif %}
   </section>
 
+  <section class="tm-crm-panel" id="repair-history" aria-label="Repair history" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Repair History</div>
+    <h2 style="margin:4px 0 0;">Repair History</h2>
+
+    <div class="tm-history-summary tm-history-summary--repairs" aria-label="Repair history summary">
+      <div class="tm-history-summary-card">
+        <span>Total Repairs</span>
+        <strong>{{ repair_history_summary.total_repairs }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Last Repair</span>
+        <strong>{{ repair_history_summary.last_repair or "-" }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Last Repair Date</span>
+        <strong>{{ repair_history_summary.last_repair_date|pro_date if repair_history_summary.last_repair_date else "-" }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Last Repair Mileage</span>
+        <strong>{% if repair_history_summary.last_repair_mileage is not none %}{{ repair_history_summary.last_repair_mileage|pro_miles }} miles{% else %}-{% endif %}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Lifetime Repair Spend</span>
+        <strong>{{ repair_history_summary.lifetime_repair_spend|pro_currency }}</strong>
+      </div>
+    </div>
+
+    {% if repair_records %}
+    <div class="tm-maintenance-table-wrap tm-repair-table-wrap">
+      <table class="tm-maintenance-table tm-repair-table">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Mileage</th>
+            <th scope="col">Repair</th>
+            <th scope="col">Total Cost</th>
+            <th class="tm-repair-actions-cell" scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in repair_records %}
+          <tr>
+            <td>{{ item.repair_date|pro_date if item.repair_date else "-" }}</td>
+            <td>{% if item.mileage is not none %}{{ item.mileage|pro_miles }} miles{% else %}-{% endif %}</td>
+            <td>{{ item.repair_name or "Repair" }}</td>
+            <td>{{ item.total_cost|pro_currency }}</td>
+            <td class="tm-repair-actions-cell">
+              <div class="tm-repair-action-row">
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}">View</a>
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}/edit">Edit</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="tm-repair-cards">
+      {% for item in repair_records %}
+      <article class="tm-repair-card">
+        <div class="tm-history-title">{{ item.repair_name or "Repair" }}</div>
+        <div class="tm-repair-card-fields">
+          <div class="tm-repair-card-field">
+            <span>Date</span>
+            <strong>{{ item.repair_date|pro_date if item.repair_date else "-" }}</strong>
+          </div>
+          <div class="tm-repair-card-field">
+            <span>Mileage</span>
+            <strong>{% if item.mileage is not none %}{{ item.mileage|pro_miles }} miles{% else %}-{% endif %}</strong>
+          </div>
+          <div class="tm-repair-card-field">
+            <span>Total Cost</span>
+            <strong>{{ item.total_cost|pro_currency }}</strong>
+          </div>
+        </div>
+        <div class="tm-repair-action-row">
+          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}">View</a>
+          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}/edit">Edit</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No repair records saved for this vehicle yet.
+    </div>
+    {% endif %}
+  </section>
+
+  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
+    <summary>Add Repair Record</summary>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="repair_name">Repair Name</label>
+        <input class="tm-input" id="repair_name" name="repair_name" type="text" maxlength="180">
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-switch-control" for="also_update_maintenance_tracking">
+          <input id="also_update_maintenance_tracking" name="also_update_maintenance_tracking" type="checkbox" value="1" role="switch" data-repair-maintenance-toggle>
+          <span class="tm-switch-track" aria-hidden="true"></span>
+          <span>Track as Maintenance Item</span>
+        </label>
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="repair_date">Repair Date</label>
+          <input class="tm-input" id="repair_date" name="repair_date" type="date">
+        </div>
+        <div>
+          <label class="tm-label" for="repair_mileage">Mileage</label>
+          <input class="tm-input" id="repair_mileage" name="mileage" type="text" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="labor_hours">Labor Hours</label>
+          <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1">
+        </div>
+        <div>
+          <label class="tm-label" for="parts_cost">Parts Cost</label>
+          <input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="labor_cost">Labor Cost</label>
+        <input class="tm-input" id="labor_cost" name="labor_cost" type="text" inputmode="decimal">
+      </div>
+
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="repair_notes">Notes</label>
+        <textarea class="tm-input" id="repair_notes" name="notes" rows="4" maxlength="1600"></textarea>
+      </div>
+
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Repair Record</button>
+    </form>
+  </details>
+
   <section class="tm-crm-panel" aria-label="Maintenance records" style="margin-top:16px;">
     <div class="tm-crm-kicker">Maintenance</div>
     <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
@@ -757,33 +1037,34 @@
     </form>
   </details>
 
-  <section class="tm-crm-panel" aria-label="Service history" style="margin-top:16px;">
+  <section class="tm-crm-panel" id="service-history" aria-label="Service history" style="margin-top:16px;">
     <div class="tm-crm-kicker">Vehicle History</div>
     <h2 style="margin:4px 0 0;">Service History</h2>
 
-    {% if service_history %}
+    {% if service_history_records %}
     <div class="tm-history-list">
-      {% for item in service_history %}
-      <a class="tm-history-item" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history/{{ item.id }}">
+      {% for item in service_history_records %}
+      <article class="tm-history-item">
         <div class="tm-history-head">
-          <div class="tm-history-title">{{ item.service_title or "Service entry" }}</div>
+          <div class="tm-history-title">{{ item.service_name or "Service entry" }}</div>
           <div class="tm-history-date">{{ item.service_date|pro_date if item.service_date else "No date" }}</div>
         </div>
         <div class="tm-crm-chip-row">
-          {% if item.mileage_at_service %}
-          <span class="tm-crm-chip">{{ item.mileage_at_service|pro_miles }} miles</span>
+          <span class="tm-crm-chip">{{ "Repair" if item.source_type == "repair" else "Maintenance" }}</span>
+          {% if item.mileage is not none %}
+          <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
           {% endif %}
-          {% if item.labor_amount is not none %}
-          <span class="tm-crm-chip">Labor {{ item.labor_amount|pro_currency }}</span>
+          {% if item.labor_cost is not none %}
+          <span class="tm-crm-chip">Labor {{ item.labor_cost|pro_currency }}</span>
           {% endif %}
-          {% if item.parts_amount is not none %}
-          <span class="tm-crm-chip">Parts {{ item.parts_amount|pro_currency }}</span>
+          {% if item.parts_cost is not none %}
+          <span class="tm-crm-chip">Parts {{ item.parts_cost|pro_currency }}</span>
           {% endif %}
         </div>
-        {% if item.service_notes %}
-        <div style="color:#475569;">{{ item.service_notes }}</div>
+        {% if item.notes %}
+        <div style="color:#475569;">{{ item.notes }}</div>
         {% endif %}
-      </a>
+      </article>
       {% endfor %}
     </div>
     {% else %}
@@ -792,51 +1073,6 @@
     </div>
     {% endif %}
   </section>
-
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
-    <summary>Add Service History Record</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/history">
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="service_title">Service name</label>
-        <input class="tm-input" id="service_title" name="service_title" type="text" maxlength="180" autocomplete="off">
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="service_date">Service date</label>
-          <input class="tm-input" id="service_date" name="service_date" type="date">
-        </div>
-        <div>
-          <label class="tm-label" for="mileage_at_service">Vehicle mileage</label>
-          <input class="tm-input" id="mileage_at_service" name="mileage_at_service" type="text" inputmode="numeric">
-        </div>
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="labor_amount">Labor amount</label>
-          <div class="tm-money-field" data-money-field>
-            <span class="tm-money-field-symbol" aria-hidden="true">$</span>
-            <input class="tm-input" id="labor_amount" name="labor_amount" type="text" inputmode="decimal" placeholder="Optional" data-money-input>
-          </div>
-        </div>
-        <div>
-          <label class="tm-label" for="parts_amount">Parts amount</label>
-          <div class="tm-money-field" data-money-field>
-            <span class="tm-money-field-symbol" aria-hidden="true">$</span>
-            <input class="tm-input" id="parts_amount" name="parts_amount" type="text" inputmode="decimal" placeholder="Optional" data-money-input>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="service_notes">Notes</label>
-        <textarea class="tm-input" id="service_notes" name="service_notes" rows="4" maxlength="1600" placeholder="Completed work, inspection notes, parts used, or technician context."></textarea>
-      </div>
-
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Service Record</button>
-    </form>
-  </details>
 </section>
 
 <script>
@@ -963,6 +1199,44 @@
   fields.dueDate.addEventListener("change", () => {
     dirty.dueDate = true;
   });
+})();
+</script>
+
+<script>
+(() => {
+  const form = document.querySelector('form[action$="/repairs"]');
+  if (!form) return;
+
+  const repairName = form.querySelector('[name="repair_name"]');
+  const toggle = form.querySelector("[data-repair-maintenance-toggle]");
+  const defaultOn = new Set([
+    "oil change",
+    "transmission service",
+    "brake fluid service",
+    "coolant service",
+    "spark plug replacement",
+    "air filter",
+    "cabin air filter",
+    "serpentine belt"
+  ]);
+  const defaultOff = new Set([
+    "alternator replacement",
+    "starter replacement",
+    "water pump replacement",
+    "radiator replacement",
+    "control arm replacement",
+    "wheel bearing replacement"
+  ]);
+  const normalize = (value) => String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  const syncToggle = () => {
+    const name = normalize(repairName.value);
+    if (defaultOn.has(name)) toggle.checked = true;
+    if (defaultOff.has(name)) toggle.checked = false;
+  };
+
+  repairName.addEventListener("input", syncToggle);
+  repairName.addEventListener("change", syncToggle);
 })();
 </script>
 
