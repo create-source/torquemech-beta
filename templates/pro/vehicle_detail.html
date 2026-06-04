@@ -163,6 +163,89 @@
     background: rgba(255, 255, 255, 0.78);
   }
 
+  .tm-vehicle-timeline {
+    display: grid;
+    gap: 0;
+    margin-top: 14px;
+  }
+
+  .tm-timeline-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .tm-timeline-item::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 22px;
+    bottom: -12px;
+    width: 2px;
+    background: #cbd5e1;
+  }
+
+  .tm-timeline-item:last-child::before {
+    display: none;
+  }
+
+  .tm-timeline-dot {
+    position: relative;
+    z-index: 1;
+    width: 16px;
+    height: 16px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    background: #0e7490;
+    box-shadow: 0 0 0 2px #0e7490;
+    margin-top: 17px;
+  }
+
+  .tm-timeline-dot--maintenance {
+    background: #0f766e;
+    box-shadow: 0 0 0 2px #0f766e;
+  }
+
+  .tm-timeline-content {
+    display: grid;
+    gap: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    padding: 13px 14px;
+    margin-bottom: 12px;
+  }
+
+  .tm-timeline-item:hover .tm-timeline-content {
+    border-color: rgba(14, 116, 144, 0.48);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
+  }
+
+  .tm-timeline-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tm-timeline-badge {
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 0.74rem;
+    font-weight: 900;
+    padding: 5px 9px;
+  }
+
+  .tm-timeline-badge--maintenance {
+    background: #ccfbf1;
+    color: #115e59;
+  }
+
   .tm-maintenance-table-wrap {
     overflow-x: auto;
     margin-top: 12px;
@@ -453,6 +536,35 @@
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
     </form>
   </details>
+
+  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Vehicle Timeline</div>
+    <h2 style="margin:4px 0 0;">Vehicle Timeline</h2>
+
+    {% if vehicle_timeline %}
+    <div class="tm-vehicle-timeline">
+      {% for item in vehicle_timeline %}
+      <a class="tm-timeline-item" href="{{ item.url }}">
+        <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
+        <div class="tm-timeline-content">
+          <div class="tm-timeline-meta">
+            <span class="tm-timeline-badge tm-timeline-badge--{{ item.record_type_key }}">{{ item.record_type }}</span>
+            <span class="tm-history-date">{{ item.date|pro_date if item.date else "No date" }}</span>
+          </div>
+          <div class="tm-history-title">{{ item.service_name }}</div>
+          {% if item.mileage is not none %}
+          <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No vehicle history recorded yet.
+    </div>
+    {% endif %}
+  </section>
 
   <section class="tm-crm-panel" aria-label="Maintenance records" style="margin-top:16px;">
     <div class="tm-crm-kicker">Maintenance</div>

@@ -611,6 +611,46 @@ def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict
     return grouped
 
 
+def build_vehicle_timeline(
+    customer_id: int,
+    vehicle_id: int,
+    maintenance_records: list[dict[str, Any]],
+    service_history: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    timeline = [
+        {
+            "id": record["id"],
+            "record_type": "Maintenance",
+            "record_type_key": "maintenance",
+            "date": record.get("date_performed") or "",
+            "service_name": record.get("service_type") or "Maintenance",
+            "mileage": record.get("mileage_performed"),
+            "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{record['id']}",
+        }
+        for record in maintenance_records
+    ]
+    timeline.extend(
+        {
+            "id": record["id"],
+            "record_type": "Service History",
+            "record_type_key": "service-history",
+            "date": record.get("service_date") or "",
+            "service_name": record.get("service_title") or "Service entry",
+            "mileage": record.get("mileage_at_service"),
+            "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/history/{record['id']}",
+        }
+        for record in service_history
+    )
+    timeline.sort(
+        key=lambda record: (
+            parse_date_value(record.get("date")) or date.min,
+            int(record.get("id") or 0),
+        ),
+        reverse=True,
+    )
+    return timeline
+
+
 def load_customer_vehicle(
     conn: sqlite3.Connection, customer_id: int, vehicle_id: int
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -1088,6 +1128,12 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         conn.close()
 
     grouped_approval_records = group_approval_records(approval_records)
+    vehicle_timeline = build_vehicle_timeline(
+        customer_id,
+        vehicle_id,
+        maintenance_records,
+        service_history,
+    )
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -1097,6 +1143,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "vehicle": vehicle,
             "service_history": service_history,
             "maintenance_records": maintenance_records,
+            "vehicle_timeline": vehicle_timeline,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
             "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
