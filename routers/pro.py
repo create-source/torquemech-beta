@@ -8,6 +8,13 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
+from app.data.maintenance_library import (
+    MAINTENANCE_INTERVAL_PRESETS,
+    MAINTENANCE_SERVICE_ALIASES,
+    MAINTENANCE_SERVICE_OPTIONS,
+    maintenance_defaults_for,
+)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
@@ -31,127 +38,6 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.globals["static_version"] = static_version
 
 router = APIRouter(prefix="/pro", tags=["pro"])
-
-MAINTENANCE_SERVICE_DEFAULTS = {
-    "oil change": {"interval_miles": 5000, "interval_months": 6},
-    "tire rotation": {"interval_miles": 6000, "interval_months": 6},
-    "engine air filter": {"interval_miles": 15000, "interval_months": 12},
-    "engine air filter replacement": {"interval_miles": 15000, "interval_months": 12},
-    "cabin air filter": {"interval_miles": 15000, "interval_months": 12},
-    "cabin air filter replacement": {"interval_miles": 15000, "interval_months": 12},
-    "transmission service": {"interval_miles": 60000, "interval_months": None},
-    "brake fluid service": {"interval_miles": None, "interval_months": 24},
-    "coolant service": {"interval_miles": None, "interval_months": 60},
-    "spark plugs": {"interval_miles": 100000, "interval_months": None},
-    "spark plug replacement": {"interval_miles": 100000, "interval_months": None},
-    "serpentine belt": {"interval_miles": 90000, "interval_months": None},
-    "battery replacement": {"interval_miles": None, "interval_months": 48},
-    "timing belt service": {"interval_miles": 100000, "interval_months": 84},
-    "drive belt replacement": {"interval_miles": 90000, "interval_months": None},
-    "power steering fluid service": {"interval_miles": 50000, "interval_months": None},
-    "differential service": {"interval_miles": 30000, "interval_months": None},
-    "transfer case service": {"interval_miles": 30000, "interval_months": None},
-    "brake pad replacement": {"interval_miles": None, "interval_months": None},
-    "brake rotor replacement": {"interval_miles": None, "interval_months": None},
-    "brake inspection": {"interval_miles": 12000, "interval_months": 12},
-    "tire balance": {"interval_miles": 12000, "interval_months": None},
-    "wheel alignment": {"interval_miles": 12000, "interval_months": 12},
-    "battery test": {"interval_miles": None, "interval_months": 12},
-    "alternator replacement": {"interval_miles": None, "interval_months": None},
-    "starter replacement": {"interval_miles": None, "interval_months": None},
-    "ac service": {"interval_miles": None, "interval_months": 24},
-    "shock replacement": {"interval_miles": None, "interval_months": None},
-    "strut replacement": {"interval_miles": None, "interval_months": None},
-    "control arm replacement": {"interval_miles": None, "interval_months": None},
-    "ball joint replacement": {"interval_miles": None, "interval_months": None},
-    "tie rod replacement": {"interval_miles": None, "interval_months": None},
-    "wiper blade replacement": {"interval_miles": None, "interval_months": 12},
-    "headlight bulb replacement": {"interval_miles": None, "interval_months": None},
-    "brake light bulb replacement": {"interval_miles": None, "interval_months": None},
-    "turn signal bulb replacement": {"interval_miles": None, "interval_months": None},
-    "multi point inspection": {"interval_miles": None, "interval_months": 12},
-    "safety inspection": {"interval_miles": None, "interval_months": 12},
-    "emissions inspection": {"interval_miles": None, "interval_months": 12},
-}
-
-MAINTENANCE_SERVICE_OPTION_NAMES = [
-    "oil change",
-    "tire rotation",
-    "engine air filter",
-    "cabin air filter",
-    "transmission service",
-    "brake fluid service",
-    "coolant service",
-    "spark plugs",
-    "serpentine belt",
-    "battery replacement",
-]
-
-MAINTENANCE_SERVICE_ALIAS_GROUPS = {
-    "oil change": ["oil", "engine oil", "motor oil", "oil service"],
-    "engine air filter": ["air filter", "engine filter", "intake filter", "engine air filter replacement"],
-    "spark plugs": ["spark plugs", "plugs", "tune up", "tune-up", "spark plug replacement"],
-    "timing belt service": ["timing belt", "timing belt replacement"],
-    "drive belt replacement": ["serpentine belt", "drive belt", "accessory belt"],
-    "coolant service": ["coolant", "antifreeze", "radiator fluid", "coolant flush"],
-    "brake fluid service": ["brake fluid", "brake flush"],
-    "power steering fluid service": ["power steering fluid", "power steering flush", "ps fluid"],
-    "transmission service": [
-        "transmission fluid",
-        "trans fluid",
-        "atf",
-        "automatic transmission fluid",
-        "transmission flush",
-    ],
-    "differential service": ["differential fluid", "diff fluid", "rear diff", "front diff"],
-    "transfer case service": ["transfer case fluid", "transfer case service"],
-    "brake pad replacement": ["brake pads", "pads", "front brakes", "rear brakes"],
-    "brake rotor replacement": ["rotors", "brake rotors"],
-    "brake inspection": ["brake check", "brake inspection"],
-    "tire rotation": ["rotate tires", "tire rotate", "rotation"],
-    "tire balance": ["wheel balance", "tire balancing"],
-    "wheel alignment": ["alignment", "four wheel alignment"],
-    "battery replacement": ["battery", "car battery"],
-    "battery test": ["battery check", "battery inspection"],
-    "alternator replacement": ["alternator"],
-    "starter replacement": ["starter"],
-    "cabin air filter": ["cabin filter", "ac filter", "hvac filter", "cabin air filter replacement"],
-    "ac service": ["ac service", "a c service", "air conditioning service", "refrigerant service"],
-    "shock replacement": ["shocks"],
-    "strut replacement": ["struts"],
-    "control arm replacement": ["control arm"],
-    "ball joint replacement": ["ball joint"],
-    "tie rod replacement": ["tie rod"],
-    "wiper blade replacement": ["wipers", "wiper blades"],
-    "headlight bulb replacement": ["headlight", "headlight bulb"],
-    "brake light bulb replacement": ["brake light", "stop light"],
-    "turn signal bulb replacement": ["turn signal", "blinker"],
-    "multi point inspection": [
-        "inspection",
-        "vehicle inspection",
-        "bumper to bumper inspection",
-        "multi-point inspection",
-        "multipoint inspection",
-    ],
-    "safety inspection": ["safety check", "safety inspection"],
-    "emissions inspection": ["smog", "emissions", "emissions test"],
-}
-
-MAINTENANCE_SERVICE_ALIASES = {
-    alias: preset
-    for preset, aliases in MAINTENANCE_SERVICE_ALIAS_GROUPS.items()
-    for alias in aliases
-}
-
-MAINTENANCE_SERVICE_OPTIONS = [
-    {
-        "name": name.title(),
-        "interval_miles": defaults["interval_miles"],
-        "interval_months": defaults["interval_months"],
-    }
-    for name in MAINTENANCE_SERVICE_OPTION_NAMES
-    for defaults in [MAINTENANCE_SERVICE_DEFAULTS[name]]
-]
 
 
 def crm_db_conn() -> sqlite3.Connection:
@@ -258,27 +144,6 @@ def service_total_from_form(form: dict[str, str]) -> float | None:
     if actual is not None:
         return actual
     return optional_float(form, "estimate_total")
-
-
-def normalize_maintenance_service_type(service_type: str) -> str:
-    normalized = str(service_type or "").strip().lower()
-    normalized = " ".join(
-        "".join(ch if ch.isalnum() else " " for ch in normalized).split()
-    )
-    return normalized
-
-
-def maintenance_defaults_for(service_type: str) -> dict[str, int | None]:
-    normalized = normalize_maintenance_service_type(service_type)
-    if normalized in MAINTENANCE_SERVICE_DEFAULTS:
-        return MAINTENANCE_SERVICE_DEFAULTS[normalized]
-    alias = MAINTENANCE_SERVICE_ALIASES.get(normalized)
-    if alias:
-        return MAINTENANCE_SERVICE_DEFAULTS.get(alias, {})
-    for default_name, defaults in MAINTENANCE_SERVICE_DEFAULTS.items():
-        if default_name in normalized:
-            return defaults
-    return {}
 
 
 def maintenance_interval_value(
@@ -392,6 +257,13 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
     mileage_performed = record.get("mileage_performed")
     interval_miles = record.get("interval_miles")
     interval_months = record.get("interval_months")
+    library_defaults = maintenance_defaults_for(record.get("service_type") or "")
+    if interval_miles is None:
+        interval_miles = library_defaults.get("interval_miles")
+    if interval_months is None:
+        interval_months = library_defaults.get("interval_months")
+    record["interval_miles"] = interval_miles
+    record["interval_months"] = interval_months
     performed_date = parse_date_value(record.get("date_performed"))
 
     due_mileage = record.get("due_mileage")
@@ -1147,7 +1019,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
             "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
-            "maintenance_interval_presets": MAINTENANCE_SERVICE_DEFAULTS,
+            "maintenance_interval_presets": MAINTENANCE_INTERVAL_PRESETS,
             "maintenance_service_aliases": MAINTENANCE_SERVICE_ALIASES,
         },
     )
