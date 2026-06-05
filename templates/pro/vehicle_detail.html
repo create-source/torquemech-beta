@@ -411,6 +411,73 @@
     flex-wrap: wrap;
   }
 
+  .tm-finding-status {
+    display: flex;
+    align-items: end;
+    gap: 10px;
+    flex-wrap: wrap;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px;
+  }
+
+  .tm-finding-status-control {
+    min-width: 180px;
+  }
+
+  .tm-finding-status-select {
+    position: relative;
+    display: block;
+  }
+
+  .tm-finding-status-select::after {
+    content: "\25BE";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #0f766e;
+    font-size: 0.82rem;
+    font-weight: 900;
+    pointer-events: none;
+  }
+
+  .tm-finding-status-select select {
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 36px;
+    border-color: rgba(15, 118, 110, 0.34);
+    background: #ffffff;
+    font-weight: 900;
+    transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+  }
+
+  .tm-finding-status-select:hover select {
+    border-color: rgba(15, 118, 110, 0.7);
+    background: #f0fdfa;
+  }
+
+  .tm-finding-status-select select:focus {
+    border-color: #0f766e;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+    outline: none;
+  }
+
+  .tm-finding-status-select select:disabled {
+    cursor: progress;
+    opacity: 0.72;
+  }
+
+  .tm-finding-status-feedback {
+    color: #0f766e;
+    font-size: 0.84rem;
+    font-weight: 900;
+    min-height: 1.2em;
+  }
+
   .tm-maintenance-cards {
     display: grid;
     gap: 12px;
@@ -733,19 +800,32 @@
     {% if findings_records %}
     <div class="tm-findings-list">
       {% for item in findings_records %}
-      <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}">
+      <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" data-finding-card data-finding-id="{{ item.id }}" data-finding-status="{{ item.status }}" data-finding-severity="{{ item.severity }}" data-finding-date="{{ item.finding_date or '' }}">
         <div class="tm-history-head">
           <div class="tm-history-title">{{ item.finding or "Finding" }}</div>
           <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
         </div>
         <div class="tm-finding-meta">
           <span class="tm-crm-chip">{{ item.severity }}</span>
-          <span class="tm-crm-chip">{{ item.status }}</span>
+          <span class="tm-crm-chip" data-finding-status-chip>{{ item.status }}</span>
           {% if item.mileage is not none %}
           <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
           {% endif %}
         </div>
         <div style="color:#475569;"><strong>Recommendation:</strong> {{ item.recommendation or "No recommendation recorded." }}</div>
+        <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
+          <div class="tm-finding-status-control">
+            <label class="tm-label" for="finding_status_{{ item.id }}">Decision Status</label>
+            <span class="tm-finding-status-select">
+              <select class="tm-input" id="finding_status_{{ item.id }}" name="status" required>
+                {% for option in ["Approved", "Open", "Completed", "Deferred", "Declined"] %}
+                <option value="{{ option }}" {% if item.status == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+              </select>
+            </span>
+          </div>
+          <span class="tm-finding-status-feedback" data-finding-status-feedback aria-live="polite"></span>
+        </form>
         <div class="tm-repair-action-row">
           <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
           <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
@@ -788,12 +868,12 @@
       </div>
       <div style="margin-top:12px;">
         <label class="tm-label" for="finding_status">Status</label>
-        <select class="tm-input" id="finding_status" name="status">
-          <option value="Open" selected>Open</option>
+        <select class="tm-input" id="finding_status" name="status" required>
           <option value="Approved">Approved</option>
-          <option value="Declined">Declined</option>
-          <option value="Deferred">Deferred</option>
+          <option value="Open" selected>Open</option>
           <option value="Completed">Completed</option>
+          <option value="Deferred">Deferred</option>
+          <option value="Declined">Declined</option>
         </select>
       </div>
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
@@ -1171,6 +1251,79 @@
 </section>
 
 <script>
+(() => {
+  const statusRank = { Approved: 1, Open: 2, Completed: 3, Deferred: 4, Declined: 5 };
+  const severityRank = { Critical: 1, High: 2, Medium: 3, Low: 4 };
+  const list = document.querySelector(".tm-findings-list");
+  const summaryCards = Array.from(document.querySelectorAll('[aria-label="Findings summary"] .tm-history-summary-card'));
+  const summaryCounts = new Map(summaryCards.map((card) => {
+    const label = card.querySelector("span")?.textContent?.trim();
+    return [label, card.querySelector("strong")];
+  }));
+
+  function updateSummary(oldStatus, newStatus) {
+    if (oldStatus === newStatus) return;
+    const oldCount = summaryCounts.get(oldStatus);
+    const newCount = summaryCounts.get(newStatus);
+    if (oldCount) oldCount.textContent = String(Math.max(0, Number(oldCount.textContent || 0) - 1));
+    if (newCount) newCount.textContent = String(Number(newCount.textContent || 0) + 1);
+  }
+
+  function sortFindingCards() {
+    if (!list) return;
+    const cards = Array.from(list.querySelectorAll("[data-finding-card]"));
+    cards.sort((a, b) => {
+      const statusDiff = (statusRank[a.dataset.findingStatus] || 99) - (statusRank[b.dataset.findingStatus] || 99);
+      if (statusDiff) return statusDiff;
+      const severityDiff = (severityRank[a.dataset.findingSeverity] || 99) - (severityRank[b.dataset.findingSeverity] || 99);
+      if (severityDiff) return severityDiff;
+      const dateDiff = String(b.dataset.findingDate || "").localeCompare(String(a.dataset.findingDate || ""));
+      if (dateDiff) return dateDiff;
+      return Number(b.dataset.findingId || 0) - Number(a.dataset.findingId || 0);
+    });
+    cards.forEach((card) => list.appendChild(card));
+  }
+
+  document.querySelectorAll("[data-finding-status-form]").forEach((form) => {
+    const select = form.querySelector("select[name='status']");
+    const feedback = form.querySelector("[data-finding-status-feedback]");
+    const card = form.closest("[data-finding-card]");
+    const chip = card?.querySelector("[data-finding-status-chip]");
+    if (!select || !feedback || !card) return;
+
+    select.dataset.previousStatus = select.value;
+    select.addEventListener("change", async () => {
+      const oldStatus = select.dataset.previousStatus || "";
+      const newStatus = select.value;
+      feedback.textContent = "Saving...";
+      select.disabled = true;
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { "Accept": "application/json", "X-Requested-With": "fetch" },
+        });
+        if (!response.ok) throw new Error("Status update failed");
+        const payload = await response.json();
+        const savedStatus = payload.status || newStatus;
+        select.dataset.previousStatus = savedStatus;
+        select.value = savedStatus;
+        card.dataset.findingStatus = savedStatus;
+        if (chip) chip.textContent = savedStatus;
+        updateSummary(oldStatus, savedStatus);
+        sortFindingCards();
+        feedback.textContent = "\u2713 Status Updated";
+      } catch (error) {
+        select.value = oldStatus;
+        feedback.textContent = "Status update failed";
+      } finally {
+        select.disabled = false;
+      }
+    });
+  });
+})();
+
 (() => {
   const form = document.querySelector('form[data-maintenance-defaults="add"]');
   if (!form) return;

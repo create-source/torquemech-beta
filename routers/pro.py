@@ -4,7 +4,7 @@ from typing import Any
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
@@ -39,6 +39,9 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.globals["static_version"] = static_version
 
 router = APIRouter(prefix="/pro", tags=["pro"])
+
+FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined")
+FINDING_SEVERITY_OPTIONS = ("Low", "Medium", "High", "Critical")
 
 
 def crm_db_conn() -> sqlite3.Connection:
@@ -78,6 +81,20 @@ def optional_float(form: dict[str, str], name: str) -> float | None:
         return float(raw)
     except ValueError:
         return None
+
+
+def normalize_finding_status(raw_status: str | None) -> str:
+    status = (raw_status or "").strip().title()
+    if status not in FINDING_STATUS_OPTIONS:
+        raise HTTPException(status_code=400, detail="Invalid finding status")
+    return status
+
+
+def normalize_finding_severity(raw_severity: str | None) -> str:
+    severity = (raw_severity or "").strip().title()
+    if severity not in FINDING_SEVERITY_OPTIONS:
+        raise HTTPException(status_code=400, detail="Invalid finding severity")
+    return severity
 
 
 def format_phone(value: Any) -> str:
@@ -1534,12 +1551,8 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
 async def pro_finding_record_create(request: Request, customer_id: int, vehicle_id: int):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
-    severity = form.get("severity", "Low").title()
-    status = form.get("status", "Open").title()
-    if severity not in {"Low", "Medium", "High", "Critical"}:
-        severity = "Low"
-    if status not in {"Open", "Approved", "Declined", "Deferred", "Completed"}:
-        status = "Open"
+    severity = normalize_finding_severity(form.get("severity", "Low"))
+    status = normalize_finding_status(form.get("status", "Open"))
 
     conn = crm_db_conn()
     try:
@@ -1629,12 +1642,8 @@ async def pro_finding_record_update(
     request: Request, customer_id: int, vehicle_id: int, finding_id: int
 ):
     form = await read_form_data(request)
-    severity = form.get("severity", "Low").title()
-    status = form.get("status", "Open").title()
-    if severity not in {"Low", "Medium", "High", "Critical"}:
-        severity = "Low"
-    if status not in {"Open", "Approved", "Declined", "Deferred", "Completed"}:
-        status = "Open"
+    severity = normalize_finding_severity(form.get("severity"))
+    status = normalize_finding_status(form.get("status"))
 
     conn = crm_db_conn()
     try:
@@ -1664,6 +1673,38 @@ async def pro_finding_record_update(
         conn.commit()
     finally:
         conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/status")
+async def pro_finding_record_status_update(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    form = await read_form_data(request)
+    status = normalize_finding_status(form.get("status"))
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        cur = conn.execute(
+            """
+            UPDATE findings_records
+            SET status = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (status, finding_id, customer_id, vehicle_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Finding record not found")
+        conn.commit()
+    finally:
+        conn.close()
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse({"status": status, "message": "Status Updated"})
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
         status_code=303,

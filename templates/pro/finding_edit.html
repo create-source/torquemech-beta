@@ -41,8 +41,8 @@
       </div>
       <div>
         <label class="tm-label" for="status">Status</label>
-        <select class="tm-input" id="status" name="status">
-          {% for option in ["Open", "Approved", "Declined", "Deferred", "Completed"] %}
+        <select class="tm-input" id="status" name="status" required>
+          {% for option in ["Approved", "Open", "Completed", "Deferred", "Declined"] %}
           <option value="{{ option }}" {% if finding.status == option %}selected{% endif %}>{{ option }}</option>
           {% endfor %}
         </select>
