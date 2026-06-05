@@ -560,6 +560,66 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def ensure_finding_history_records_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS finding_history_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          finding_id INTEGER NOT NULL,
+          previous_status TEXT,
+          new_status TEXT NOT NULL,
+          event_type TEXT NOT NULL,
+          actor_name TEXT,
+          notes TEXT,
+          metadata_json TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (finding_id) REFERENCES findings_records(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_finding_history_records_finding_id "
+        "ON finding_history_records (finding_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_finding_history_records_created_at "
+        "ON finding_history_records (created_at)"
+    )
+    conn.commit()
+
+
+def append_finding_history_record(
+    conn: sqlite3.Connection,
+    finding_id: int,
+    previous_status: str | None,
+    new_status: str,
+    event_type: str,
+    created_at: str,
+    *,
+    notes: str = "",
+) -> None:
+    ensure_finding_history_records_schema(conn)
+    conn.execute(
+        """
+        INSERT INTO finding_history_records (
+          finding_id, previous_status, new_status, event_type,
+          actor_name, notes, metadata_json, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            finding_id,
+            previous_status,
+            new_status,
+            event_type,
+            "",
+            notes,
+            "",
+            created_at,
+        ),
+    )
+
+
 def load_repair_record(
     conn: sqlite3.Connection,
     customer_id: int,
@@ -1372,6 +1432,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         ensure_maintenance_records_schema(conn)
         ensure_repair_records_schema(conn)
         ensure_findings_records_schema(conn)
+        ensure_finding_history_records_schema(conn)
         ensure_service_history_schema(conn)
         ensure_service_history_records_schema(conn)
         service_history_records = [
@@ -1447,6 +1508,19 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        finding_history_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT fhr.*, fr.finding
+                FROM finding_history_records fhr
+                JOIN findings_records fr ON fr.id = fhr.finding_id
+                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                ORDER BY fhr.created_at DESC, fhr.id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
         ensure_discrepancy_approvals_schema(conn)
         approval_records = [
             dict(row)
@@ -1494,6 +1568,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "repair_history_summary": repair_history_summary,
             "findings_records": findings_records,
             "findings_summary": findings_summary,
+            "finding_history_records": finding_history_records,
             "vehicle_timeline": vehicle_timeline,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
@@ -1558,7 +1633,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_findings_records_schema(conn)
-        conn.execute(
+        cur = conn.execute(
             """
             INSERT INTO findings_records (
               vehicle_id, customer_id, finding, recommendation, severity,
@@ -1577,6 +1652,15 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
                 date.today().isoformat(),
                 now,
             ),
+        )
+        append_finding_history_record(
+            conn,
+            cur.lastrowid,
+            None,
+            status,
+            "finding_created",
+            now,
+            notes="Finding Created",
         )
         conn.commit()
     finally:
@@ -1648,7 +1732,7 @@ async def pro_finding_record_update(
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
-        load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         cur = conn.execute(
             """
             UPDATE findings_records
@@ -1670,6 +1754,15 @@ async def pro_finding_record_update(
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Finding record not found")
+        if (existing.get("status") or "") != status:
+            append_finding_history_record(
+                conn,
+                finding_id,
+                existing.get("status") or None,
+                status,
+                "status_changed",
+                datetime.utcnow().isoformat(),
+            )
         conn.commit()
     finally:
         conn.close()
@@ -1689,7 +1782,15 @@ async def pro_finding_record_status_update(
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
-        load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        previous_status = existing.get("status") or ""
+        if previous_status == status:
+            if request.headers.get("x-requested-with") == "fetch":
+                return JSONResponse({"status": status, "message": "Status Updated"})
+            return RedirectResponse(
+                f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
+                status_code=303,
+            )
         cur = conn.execute(
             """
             UPDATE findings_records
@@ -1700,6 +1801,14 @@ async def pro_finding_record_status_update(
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Finding record not found")
+        append_finding_history_record(
+            conn,
+            finding_id,
+            previous_status or None,
+            status,
+            "status_changed",
+            datetime.utcnow().isoformat(),
+        )
         conn.commit()
     finally:
         conn.close()

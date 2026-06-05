@@ -533,6 +533,26 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_mileage_date ON findings_records (vehicle_id, mileage, finding_date)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_status ON findings_records (status)")
 
+        # Pro audit trail: append-only decision history for repair findings.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS finding_history_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              finding_id INTEGER NOT NULL,
+              previous_status TEXT,
+              new_status TEXT NOT NULL,
+              event_type TEXT NOT NULL,
+              actor_name TEXT,
+              notes TEXT,
+              metadata_json TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (finding_id) REFERENCES findings_records(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_finding_history_records_finding_id ON finding_history_records (finding_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_finding_history_records_created_at ON finding_history_records (created_at)")
+
         # Pro groundwork: additional findings and customer decision records.
         conn.execute(
             """
