@@ -553,6 +553,30 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_finding_history_records_finding_id ON finding_history_records (finding_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_finding_history_records_created_at ON finding_history_records (created_at)")
 
+        # Pro approval groundwork: lightweight customer decision logs for findings.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS customer_decision_logs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              finding_id INTEGER NOT NULL,
+              decision_status TEXT NOT NULL,
+              customer_name TEXT,
+              source TEXT NOT NULL,
+              approval_method TEXT,
+              advisor_name TEXT,
+              signature_path TEXT,
+              approval_pdf_path TEXT,
+              estimate_revision_id INTEGER,
+              notes TEXT,
+              metadata_json TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (finding_id) REFERENCES findings_records(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_decision_logs_finding_id ON customer_decision_logs (finding_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_decision_logs_created_at ON customer_decision_logs (created_at)")
+
         # Pro groundwork: additional findings and customer decision records.
         conn.execute(
             """

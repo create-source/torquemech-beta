@@ -911,8 +911,31 @@
     </form>
   </details>
 
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
-    <summary>Finding History ({{ finding_history_records|length }})</summary>
+  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;" data-customer-decision-log-section>
+    <summary data-customer-decision-log-summary>Customer Decision Log (<span data-customer-decision-log-count>{{ customer_decision_logs|length }}</span>)</summary>
+    {% if customer_decision_logs %}
+    <div class="tm-finding-history-list">
+      {% for item in customer_decision_logs %}
+      <article class="tm-finding-history-item">
+        <div class="tm-finding-history-time">{{ item.created_at|pro_datetime }}</div>
+        <div class="tm-finding-history-event">Customer Decision: {{ item.decision_status }}</div>
+        <div class="tm-finding-history-finding">Source: {{ "Manual/Internal" if item.source == "internal/manual" else item.source|title }}</div>
+        {% if item.customer_name %}
+        <div class="tm-finding-history-finding">Customer: {{ item.customer_name }}</div>
+        {% endif %}
+        <div class="tm-finding-history-finding">{{ item.finding or "Finding" }}</div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;" data-section-empty>
+      No customer decision logs recorded for this vehicle yet.
+    </div>
+    {% endif %}
+  </details>
+
+  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;" data-finding-history-section>
+    <summary data-finding-history-summary>Finding History (<span data-finding-history-count>{{ finding_history_records|length }}</span>)</summary>
     {% if finding_history_records %}
     <div class="tm-finding-history-list">
       {% for item in finding_history_records %}
@@ -933,7 +956,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
+    <div class="tm-history-empty" style="margin-top:12px;" data-section-empty>
       No finding history recorded for this vehicle yet.
     </div>
     {% endif %}
@@ -1343,6 +1366,146 @@
     cards.forEach((card) => list.appendChild(card));
   }
 
+  function clearDisclosureBody(section) {
+    const summary = section?.querySelector("summary");
+    if (!section || !summary) return;
+    while (summary.nextSibling) {
+      summary.nextSibling.remove();
+    }
+  }
+
+  function appendTextLine(parent, className, text) {
+    if (!text) return;
+    const line = document.createElement("div");
+    line.className = className;
+    line.textContent = text;
+    parent.appendChild(line);
+  }
+
+  function appendEmptyState(section, message) {
+    const empty = document.createElement("div");
+    empty.className = "tm-history-empty";
+    empty.dataset.sectionEmpty = "";
+    empty.style.marginTop = "12px";
+    empty.textContent = message;
+    section.appendChild(empty);
+  }
+
+  function renderFindingHistory(records) {
+    const section = document.querySelector("[data-finding-history-section]");
+    if (!section?.open) return;
+    clearDisclosureBody(section);
+    if (!records?.length) {
+      appendEmptyState(section, "No finding history recorded for this vehicle yet.");
+      return;
+    }
+    const listEl = document.createElement("div");
+    listEl.className = "tm-finding-history-list";
+    records.forEach((item) => {
+      const article = document.createElement("article");
+      article.className = "tm-finding-history-item";
+      appendTextLine(article, "tm-finding-history-time", item.created_at_display || "");
+      const eventText = item.event_type === "finding_created"
+        ? "Finding Created"
+        : `${item.previous_status || "Unknown"} \u2192 ${item.new_status || ""}`;
+      appendTextLine(article, "tm-finding-history-event", eventText);
+      if (item.event_type === "finding_created") {
+        appendTextLine(article, "tm-finding-history-finding", `Status: ${item.new_status || ""}`);
+      }
+      appendTextLine(article, "tm-finding-history-finding", item.finding || "Finding");
+      listEl.appendChild(article);
+    });
+    section.appendChild(listEl);
+  }
+
+  function renderCustomerDecisionLogs(records) {
+    const section = document.querySelector("[data-customer-decision-log-section]");
+    if (!section?.open) return;
+    clearDisclosureBody(section);
+    if (!records?.length) {
+      appendEmptyState(section, "No customer decision logs recorded for this vehicle yet.");
+      return;
+    }
+    const listEl = document.createElement("div");
+    listEl.className = "tm-finding-history-list";
+    records.forEach((item) => {
+      const article = document.createElement("article");
+      article.className = "tm-finding-history-item";
+      appendTextLine(article, "tm-finding-history-time", item.created_at_display || "");
+      appendTextLine(article, "tm-finding-history-event", `Customer Decision: ${item.decision_status || ""}`);
+      appendTextLine(article, "tm-finding-history-finding", `Source: ${item.source_display || item.source || ""}`);
+      appendTextLine(article, "tm-finding-history-finding", item.customer_name ? `Customer: ${item.customer_name}` : "");
+      appendTextLine(article, "tm-finding-history-finding", item.finding || "Finding");
+      listEl.appendChild(article);
+    });
+    section.appendChild(listEl);
+  }
+
+  function liveCountDebug(...args) {
+    if (window.localStorage?.getItem("tmDebugLiveCounts") === "1") {
+      console.log("[live-counts]", ...args);
+    }
+  }
+
+  function updateDisclosureCount(summarySelector, countSelector, label, count) {
+    if (count === undefined || count === null) return;
+    const summary = document.querySelector(summarySelector);
+    const countEl = document.querySelector(countSelector);
+    liveCountDebug(label, {
+      count,
+      summary,
+      countEl,
+      before: countEl?.textContent || summary?.textContent || "",
+    });
+    if (countEl) {
+      countEl.textContent = String(count);
+    } else if (summary) {
+      summary.textContent = `${label} (${count})`;
+    }
+    liveCountDebug(label, {
+      after: countEl?.textContent || summary?.textContent || "",
+    });
+  }
+
+  function currentDisclosureCount(countSelector) {
+    const count = Number(document.querySelector(countSelector)?.textContent || 0);
+    return Number.isFinite(count) ? count : 0;
+  }
+
+  function updateActivitySections(payload, oldStatus, savedStatus) {
+    const findingHistory = payload.finding_history;
+    const decisionLogs = payload.customer_decision_logs;
+    const statusChanged = oldStatus !== savedStatus;
+    const customerDecisionStatuses = new Set(["Approved", "Deferred", "Declined"]);
+    const findingHistoryCount = payload.finding_history_count
+      ?? findingHistory?.count
+      ?? (statusChanged ? currentDisclosureCount("[data-finding-history-count]") + 1 : undefined);
+    const decisionLogCount = payload.customer_decision_log_count
+      ?? decisionLogs?.count
+      ?? (statusChanged && customerDecisionStatuses.has(savedStatus)
+        ? currentDisclosureCount("[data-customer-decision-log-count]") + 1
+        : undefined);
+    liveCountDebug("payload", payload);
+    updateDisclosureCount(
+      "[data-finding-history-summary]",
+      "[data-finding-history-count]",
+      "Finding History",
+      findingHistoryCount
+    );
+    updateDisclosureCount(
+      "[data-customer-decision-log-summary]",
+      "[data-customer-decision-log-count]",
+      "Customer Decision Log",
+      decisionLogCount
+    );
+    if (findingHistory) {
+      renderFindingHistory(findingHistory.records || []);
+    }
+    if (decisionLogs) {
+      renderCustomerDecisionLogs(decisionLogs.records || []);
+    }
+  }
+
   document.querySelectorAll("[data-finding-status-form]").forEach((form) => {
     const select = form.querySelector("select[name='status']");
     const feedback = form.querySelector("[data-finding-status-feedback]");
@@ -1376,6 +1539,7 @@
         card.dataset.findingStatus = savedStatus;
         if (chip) chip.textContent = savedStatus;
         updateSummary(oldStatus, savedStatus);
+        updateActivitySections(payload, oldStatus, savedStatus);
         sortFindingCards();
         feedback.textContent = "\u2713 Status Updated";
       } catch (error) {

@@ -42,6 +42,7 @@ router = APIRouter(prefix="/pro", tags=["pro"])
 
 FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined")
 FINDING_SEVERITY_OPTIONS = ("Low", "Medium", "High", "Critical")
+CUSTOMER_DECISION_LOG_STATUSES = {"Approved", "Deferred", "Declined"}
 
 
 def crm_db_conn() -> sqlite3.Connection:
@@ -618,6 +619,165 @@ def append_finding_history_record(
             created_at,
         ),
     )
+
+
+def ensure_customer_decision_logs_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customer_decision_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          finding_id INTEGER NOT NULL,
+          decision_status TEXT NOT NULL,
+          customer_name TEXT,
+          source TEXT NOT NULL,
+          approval_method TEXT,
+          advisor_name TEXT,
+          signature_path TEXT,
+          approval_pdf_path TEXT,
+          estimate_revision_id INTEGER,
+          notes TEXT,
+          metadata_json TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (finding_id) REFERENCES findings_records(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_customer_decision_logs_finding_id "
+        "ON customer_decision_logs (finding_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_customer_decision_logs_created_at "
+        "ON customer_decision_logs (created_at)"
+    )
+    conn.commit()
+
+
+def append_customer_decision_log_if_needed(
+    conn: sqlite3.Connection,
+    finding_id: int,
+    decision_status: str,
+    customer_display_name: str,
+    created_at: str,
+    *,
+    notes: str = "",
+) -> None:
+    if decision_status not in CUSTOMER_DECISION_LOG_STATUSES:
+        return
+    ensure_customer_decision_logs_schema(conn)
+    latest = conn.execute(
+        """
+        SELECT decision_status
+        FROM customer_decision_logs
+        WHERE finding_id = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+        """,
+        (finding_id,),
+    ).fetchone()
+    if latest and latest["decision_status"] == decision_status:
+        return
+    conn.execute(
+        """
+        INSERT INTO customer_decision_logs (
+          finding_id, decision_status, customer_name, source,
+          approval_method, advisor_name, signature_path, approval_pdf_path,
+          estimate_revision_id, notes, metadata_json, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            finding_id,
+            decision_status,
+            customer_display_name,
+            "internal/manual",
+            "",
+            "",
+            "",
+            "",
+            None,
+            notes,
+            "",
+            created_at,
+        ),
+    )
+
+
+def customer_decision_log_source_label(value: Any) -> str:
+    source = str(value or "").strip()
+    if source == "internal/manual":
+        return "Manual/Internal"
+    return source.title()
+
+
+def vehicle_finding_activity_payload(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+) -> dict[str, Any]:
+    ensure_finding_history_records_schema(conn)
+    ensure_customer_decision_logs_schema(conn)
+    finding_history_records = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT fhr.*, fr.finding
+            FROM finding_history_records fhr
+            JOIN findings_records fr ON fr.id = fhr.finding_id
+            WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+            ORDER BY fhr.created_at DESC, fhr.id DESC
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
+    customer_decision_logs = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT cdl.*, fr.finding
+            FROM customer_decision_logs cdl
+            JOIN findings_records fr ON fr.id = cdl.finding_id
+            WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+            ORDER BY cdl.created_at DESC, cdl.id DESC
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
+    finding_history_count = len(finding_history_records)
+    customer_decision_log_count = len(customer_decision_logs)
+    return {
+        "finding_history_count": finding_history_count,
+        "customer_decision_log_count": customer_decision_log_count,
+        "finding_history": {
+            "count": finding_history_count,
+            "records": [
+                {
+                    "created_at": record.get("created_at") or "",
+                    "created_at_display": format_pro_datetime(record.get("created_at")),
+                    "event_type": record.get("event_type") or "",
+                    "previous_status": record.get("previous_status") or "",
+                    "new_status": record.get("new_status") or "",
+                    "finding": record.get("finding") or "Finding",
+                }
+                for record in finding_history_records
+            ],
+        },
+        "customer_decision_logs": {
+            "count": customer_decision_log_count,
+            "records": [
+                {
+                    "created_at": record.get("created_at") or "",
+                    "created_at_display": format_pro_datetime(record.get("created_at")),
+                    "decision_status": record.get("decision_status") or "",
+                    "source": record.get("source") or "",
+                    "source_display": customer_decision_log_source_label(record.get("source")),
+                    "customer_name": record.get("customer_name") or "",
+                    "finding": record.get("finding") or "Finding",
+                }
+                for record in customer_decision_logs
+            ],
+        },
+    }
 
 
 def load_repair_record(
@@ -1433,6 +1593,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         ensure_repair_records_schema(conn)
         ensure_findings_records_schema(conn)
         ensure_finding_history_records_schema(conn)
+        ensure_customer_decision_logs_schema(conn)
         ensure_service_history_schema(conn)
         ensure_service_history_records_schema(conn)
         service_history_records = [
@@ -1521,6 +1682,19 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        customer_decision_logs = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT cdl.*, fr.finding
+                FROM customer_decision_logs cdl
+                JOIN findings_records fr ON fr.id = cdl.finding_id
+                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                ORDER BY cdl.created_at DESC, cdl.id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
         ensure_discrepancy_approvals_schema(conn)
         approval_records = [
             dict(row)
@@ -1569,6 +1743,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "findings_records": findings_records,
             "findings_summary": findings_summary,
             "finding_history_records": finding_history_records,
+            "customer_decision_logs": customer_decision_logs,
             "vehicle_timeline": vehicle_timeline,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
@@ -1631,7 +1806,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
 
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_findings_records_schema(conn)
         cur = conn.execute(
             """
@@ -1661,6 +1836,13 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             "finding_created",
             now,
             notes="Finding Created",
+        )
+        append_customer_decision_log_if_needed(
+            conn,
+            cur.lastrowid,
+            status,
+            customer_name(customer),
+            now,
         )
         conn.commit()
     finally:
@@ -1731,7 +1913,7 @@ async def pro_finding_record_update(
 
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         cur = conn.execute(
             """
@@ -1755,13 +1937,21 @@ async def pro_finding_record_update(
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Finding record not found")
         if (existing.get("status") or "") != status:
+            now = datetime.utcnow().isoformat()
             append_finding_history_record(
                 conn,
                 finding_id,
                 existing.get("status") or None,
                 status,
                 "status_changed",
-                datetime.utcnow().isoformat(),
+                now,
+            )
+            append_customer_decision_log_if_needed(
+                conn,
+                finding_id,
+                status,
+                customer_name(customer),
+                now,
             )
         conn.commit()
     finally:
@@ -1781,12 +1971,18 @@ async def pro_finding_record_status_update(
 
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         previous_status = existing.get("status") or ""
         if previous_status == status:
             if request.headers.get("x-requested-with") == "fetch":
-                return JSONResponse({"status": status, "message": "Status Updated"})
+                return JSONResponse(
+                    {
+                        "status": status,
+                        "message": "Status Updated",
+                        **vehicle_finding_activity_payload(conn, customer_id, vehicle_id),
+                    }
+                )
             return RedirectResponse(
                 f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
                 status_code=303,
@@ -1801,19 +1997,30 @@ async def pro_finding_record_status_update(
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Finding record not found")
+        now = datetime.utcnow().isoformat()
         append_finding_history_record(
             conn,
             finding_id,
             previous_status or None,
             status,
             "status_changed",
-            datetime.utcnow().isoformat(),
+            now,
+        )
+        append_customer_decision_log_if_needed(
+            conn,
+            finding_id,
+            status,
+            customer_name(customer),
+            now,
         )
         conn.commit()
+        activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
     finally:
         conn.close()
     if request.headers.get("x-requested-with") == "fetch":
-        return JSONResponse({"status": status, "message": "Status Updated"})
+        return JSONResponse(
+            {"status": status, "message": "Status Updated", **activity_payload}
+        )
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
         status_code=303,
