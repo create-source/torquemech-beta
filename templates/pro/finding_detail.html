@@ -16,6 +16,13 @@
   .tm-finding-field { display:grid; gap:3px; }
   .tm-finding-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
   .tm-finding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .tm-finding-notes { display:grid; gap:12px; margin-top:16px; }
+  .tm-finding-history { margin-top:16px; }
+  .tm-finding-history-list { display:grid; gap:10px; margin-top:12px; }
+  .tm-finding-history-item { border:1px solid rgba(15,23,42,.1); border-radius:8px; padding:12px; background:#fff; }
+  .tm-finding-history-time { color:#64748b; font-size:.82rem; font-weight:800; }
+  .tm-finding-history-event { margin-top:4px; font-weight:900; color:#0f172a; }
+  .tm-finding-history-finding { margin-top:3px; color:#475569; }
   @media (max-width:760px) { .tm-finding-grid { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
@@ -42,6 +49,50 @@
     <div class="tm-finding-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/edit">Edit Finding</a>
     </div>
+  </section>
+
+  <form class="tm-finding-panel tm-finding-notes" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/notes" aria-label="Finding notes">
+    <div>
+      <label class="tm-label" for="customer_notes">Customer Notes</label>
+      <textarea class="tm-input" id="customer_notes" name="customer_notes" rows="5">{{ finding.customer_notes or "" }}</textarea>
+    </div>
+    <div>
+      <label class="tm-label" for="internal_notes">Internal Notes</label>
+      <textarea class="tm-input" id="internal_notes" name="internal_notes" rows="5">{{ finding.internal_notes or "" }}</textarea>
+    </div>
+    <div class="tm-finding-actions" style="margin-top:0;">
+      <button class="tm-btn tm-btn-primary" type="submit">Save Notes</button>
+    </div>
+  </form>
+
+  <section class="tm-finding-panel tm-finding-history" aria-label="Finding History">
+    <div class="tm-crm-kicker">Finding History</div>
+    <h2 style="margin:4px 0 0;">Finding History</h2>
+    {% if finding_history_records %}
+    <div class="tm-finding-history-list">
+      {% for item in finding_history_records %}
+      <article class="tm-finding-history-item">
+        <div class="tm-finding-history-time">{{ item.created_at|pro_datetime }}</div>
+        <div class="tm-finding-history-event">
+          {% if item.event_type == "finding_created" %}
+          Finding Created
+          {% elif item.event_type == "customer_notes_updated" %}
+          Customer Notes updated
+          {% elif item.event_type == "internal_notes_updated" %}
+          Internal Notes updated
+          {% else %}
+          {{ item.previous_status or "Unknown" }} &rarr; {{ item.new_status }}
+          {% endif %}
+        </div>
+        {% if item.event_type == "finding_created" %}
+        <div class="tm-finding-history-finding">Status: {{ item.new_status }}</div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">No finding history recorded yet.</div>
+    {% endif %}
   </section>
 </section>
 {% endblock %}

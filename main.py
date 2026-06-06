@@ -518,6 +518,8 @@ def init_pro_crm_schema_db() -> None:
               customer_id INTEGER NOT NULL,
               finding TEXT,
               recommendation TEXT,
+              customer_notes TEXT,
+              internal_notes TEXT,
               severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
               status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
               mileage INTEGER,
@@ -528,6 +530,8 @@ def init_pro_crm_schema_db() -> None:
             )
             """
         )
+        add_column_if_missing("findings_records", "customer_notes", "customer_notes TEXT")
+        add_column_if_missing("findings_records", "internal_notes", "internal_notes TEXT")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_mileage_date ON findings_records (vehicle_id, mileage, finding_date)")

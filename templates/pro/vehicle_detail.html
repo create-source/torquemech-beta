@@ -944,6 +944,10 @@
         <div class="tm-finding-history-event">
           {% if item.event_type == "finding_created" %}
           Finding Created
+          {% elif item.event_type == "customer_notes_updated" %}
+          Customer Notes updated
+          {% elif item.event_type == "internal_notes_updated" %}
+          Internal Notes updated
           {% else %}
           {{ item.previous_status or "Unknown" }} &rarr; {{ item.new_status }}
           {% endif %}
@@ -961,35 +965,6 @@
     </div>
     {% endif %}
   </details>
-
-  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Vehicle Timeline</div>
-    <h2 style="margin:4px 0 0;">Vehicle Timeline</h2>
-
-    {% if vehicle_timeline %}
-    <div class="tm-vehicle-timeline">
-      {% for item in vehicle_timeline %}
-      <a class="tm-timeline-item" href="{{ item.url }}">
-        <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
-        <div class="tm-timeline-content">
-          <div class="tm-timeline-meta">
-            <span class="tm-timeline-badge tm-timeline-badge--{{ item.record_type_key }}">{{ item.record_type }}</span>
-            <span class="tm-history-date">{{ item.date|pro_date if item.date else "No date" }}</span>
-          </div>
-          <div class="tm-history-title">{{ item.service_name }}</div>
-          {% if item.mileage is not none %}
-          <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
-          {% endif %}
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No vehicle history recorded yet.
-    </div>
-    {% endif %}
-  </section>
 
   <section class="tm-crm-panel" aria-label="Vehicle history" style="margin-top:16px;">
     <div class="tm-crm-kicker">Vehicle History</div>
@@ -1330,6 +1305,35 @@
     </div>
     {% endif %}
   </section>
+
+  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Vehicle Timeline</div>
+    <h2 style="margin:4px 0 0;">Vehicle Timeline</h2>
+
+    {% if vehicle_timeline %}
+    <div class="tm-vehicle-timeline">
+      {% for item in vehicle_timeline %}
+      <a class="tm-timeline-item" href="{{ item.url }}">
+        <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
+        <div class="tm-timeline-content">
+          <div class="tm-timeline-meta">
+            <span class="tm-timeline-badge tm-timeline-badge--{{ item.record_type_key }}">{{ item.record_type }}</span>
+            <span class="tm-history-date">{{ item.date|pro_date if item.date else "No date" }}</span>
+          </div>
+          <div class="tm-history-title">{{ item.service_name }}</div>
+          {% if item.mileage is not none %}
+          <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No vehicle history recorded yet.
+    </div>
+    {% endif %}
+  </section>
 </section>
 
 <script>
@@ -1405,9 +1409,14 @@
       const article = document.createElement("article");
       article.className = "tm-finding-history-item";
       appendTextLine(article, "tm-finding-history-time", item.created_at_display || "");
-      const eventText = item.event_type === "finding_created"
-        ? "Finding Created"
-        : `${item.previous_status || "Unknown"} \u2192 ${item.new_status || ""}`;
+      let eventText = `${item.previous_status || "Unknown"} \u2192 ${item.new_status || ""}`;
+      if (item.event_type === "finding_created") {
+        eventText = "Finding Created";
+      } else if (item.event_type === "customer_notes_updated") {
+        eventText = "Customer Notes updated";
+      } else if (item.event_type === "internal_notes_updated") {
+        eventText = "Internal Notes updated";
+      }
       appendTextLine(article, "tm-finding-history-event", eventText);
       if (item.event_type === "finding_created") {
         appendTextLine(article, "tm-finding-history-finding", `Status: ${item.new_status || ""}`);

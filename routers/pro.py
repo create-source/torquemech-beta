@@ -232,6 +232,17 @@ def parse_date_value(raw: Any) -> date | None:
         return None
 
 
+def parse_datetime_value(raw: Any) -> datetime | None:
+    if not raw:
+        return None
+    value = str(raw).strip()
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        parsed_date = parse_date_value(value)
+        return datetime.combine(parsed_date, datetime.min.time()) if parsed_date else None
+
+
 def add_months(start: date, months: int) -> date:
     month_index = start.month - 1 + months
     year = start.year + month_index // 12
@@ -541,6 +552,8 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
           customer_id INTEGER NOT NULL,
           finding TEXT,
           recommendation TEXT,
+          customer_notes TEXT,
+          internal_notes TEXT,
           severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
           status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
           mileage INTEGER,
@@ -551,6 +564,11 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(findings_records)").fetchall()}
+    if "customer_notes" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN customer_notes TEXT")
+    if "internal_notes" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN internal_notes TEXT")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
     conn.execute(
@@ -824,6 +842,25 @@ def load_finding_record(
     return finding
 
 
+def load_finding_history_records(
+    conn: sqlite3.Connection,
+    finding_id: int,
+) -> list[dict[str, Any]]:
+    ensure_finding_history_records_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM finding_history_records
+            WHERE finding_id = ?
+            ORDER BY created_at DESC, id DESC
+            """,
+            (finding_id,),
+        ).fetchall()
+    ]
+
+
 def ensure_service_history_schema(conn: sqlite3.Connection) -> None:
     columns = {row[1] for row in conn.execute("PRAGMA table_info(service_history)").fetchall()}
     if "labor_amount" not in columns:
@@ -1089,6 +1126,7 @@ def build_vehicle_timeline(
             "record_type": "Repair" if record.get("source_type") == "repair" else "Maintenance",
             "record_type_key": "repair" if record.get("source_type") == "repair" else "maintenance",
             "date": record.get("service_date") or "",
+            "created_at": record.get("created_at") or "",
             "service_name": record.get("service_name") or "Service",
             "mileage": record.get("mileage"),
             "url": "#service-history",
@@ -1101,6 +1139,7 @@ def build_vehicle_timeline(
             "record_type": "Finding",
             "record_type_key": "finding",
             "date": record.get("finding_date") or "",
+            "created_at": record.get("created_at") or "",
             "service_name": record.get("finding") or "Finding",
             "mileage": record.get("mileage"),
             "url": "#recommendations-findings",
@@ -1109,10 +1148,9 @@ def build_vehicle_timeline(
     )
     timeline.sort(
         key=lambda record: (
-            record.get("mileage") is not None,
-            int(record.get("mileage") or 0),
             parse_date_value(record.get("date")) is not None,
             parse_date_value(record.get("date")) or date.min,
+            parse_datetime_value(record.get("created_at")) or datetime.min,
             int(record.get("id") or 0),
         ),
         reverse=True,
@@ -1864,6 +1902,7 @@ def pro_finding_record_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        finding_history_records = load_finding_history_records(conn, finding_id)
     finally:
         conn.close()
 
@@ -1874,6 +1913,7 @@ def pro_finding_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "finding": finding,
+            "finding_history_records": finding_history_records,
         },
     )
 
@@ -1958,6 +1998,67 @@ async def pro_finding_record_update(
         conn.close()
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/notes")
+async def pro_finding_notes_update(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    form = await read_form_data(request)
+    customer_notes = form.get("customer_notes", "")
+    internal_notes = form.get("internal_notes", "")
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        previous_customer_notes = existing.get("customer_notes") or ""
+        previous_internal_notes = existing.get("internal_notes") or ""
+        customer_notes_changed = previous_customer_notes != customer_notes
+        internal_notes_changed = previous_internal_notes != internal_notes
+
+        cur = conn.execute(
+            """
+            UPDATE findings_records
+            SET customer_notes = ?, internal_notes = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (customer_notes, internal_notes, finding_id, customer_id, vehicle_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Finding record not found")
+
+        if customer_notes_changed or internal_notes_changed:
+            now = datetime.utcnow().isoformat()
+            status = existing.get("status") or "Open"
+            if customer_notes_changed:
+                append_finding_history_record(
+                    conn,
+                    finding_id,
+                    status,
+                    status,
+                    "customer_notes_updated",
+                    now,
+                    notes="Customer Notes updated",
+                )
+            if internal_notes_changed:
+                append_finding_history_record(
+                    conn,
+                    finding_id,
+                    status,
+                    status,
+                    "internal_notes_updated",
+                    now,
+                    notes="Internal Notes updated",
+                )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
         status_code=303,
     )
 
