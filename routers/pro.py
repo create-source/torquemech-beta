@@ -43,6 +43,7 @@ router = APIRouter(prefix="/pro", tags=["pro"])
 FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined")
 FINDING_SEVERITY_OPTIONS = ("Low", "Medium", "High", "Critical")
 CUSTOMER_DECISION_LOG_STATUSES = {"Approved", "Deferred", "Declined"}
+APPROVAL_REQUEST_TYPES = ("general", "labor", "parts")
 
 
 def crm_db_conn() -> sqlite3.Connection:
@@ -96,6 +97,32 @@ def normalize_finding_severity(raw_severity: str | None) -> str:
     if severity not in FINDING_SEVERITY_OPTIONS:
         raise HTTPException(status_code=400, detail="Invalid finding severity")
     return severity
+
+
+def normalize_approval_request_type(raw_request_type: str | None) -> str:
+    request_type = (raw_request_type or "general").strip().lower().replace("-", "_")
+    return request_type if request_type in APPROVAL_REQUEST_TYPES else "general"
+
+
+def approval_labor_amount(labor_hours: float | None, labor_rate: float | None) -> float | None:
+    if labor_hours is None or labor_rate is None:
+        return None
+    return round(max(0.0, labor_hours) * max(0.0, labor_rate), 2)
+
+
+def approval_parts_amount(quantity: float | None, unit_cost: float | None) -> float | None:
+    if quantity is None or unit_cost is None:
+        return None
+    return round(max(0.0, quantity) * max(0.0, unit_cost), 2)
+
+
+def approval_request_type_label(value: Any) -> str:
+    request_type = normalize_approval_request_type(str(value or "general"))
+    return {
+        "general": "General Finding",
+        "labor": "Additional Labor",
+        "parts": "Additional Parts",
+    }[request_type]
 
 
 def format_phone(value: Any) -> str:
@@ -420,10 +447,19 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
           vehicle_id INTEGER NOT NULL,
           service_history_id INTEGER,
           shop_id INTEGER,
+          request_type TEXT NOT NULL DEFAULT 'general',
           finding_title TEXT,
           finding_description TEXT,
           recommended_repair TEXT,
           estimated_cost REAL,
+          labor_hours REAL,
+          labor_rate REAL,
+          labor_amount REAL,
+          labor_reason TEXT,
+          part_description TEXT,
+          quantity REAL,
+          unit_cost REAL,
+          parts_amount REAL,
           customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined')),
           decision_notes TEXT,
           decision_recorded_at TEXT,
@@ -433,6 +469,32 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
           FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
           FOREIGN KEY (service_history_id) REFERENCES service_history(id)
         )
+        """
+    )
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(discrepancy_approvals)").fetchall()}
+    if "request_type" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN request_type TEXT NOT NULL DEFAULT 'general'")
+    if "labor_hours" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN labor_hours REAL")
+    if "labor_rate" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN labor_rate REAL")
+    if "labor_amount" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN labor_amount REAL")
+    if "labor_reason" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN labor_reason TEXT")
+    if "part_description" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN part_description TEXT")
+    if "quantity" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN quantity REAL")
+    if "unit_cost" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN unit_cost REAL")
+    if "parts_amount" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN parts_amount REAL")
+    conn.execute(
+        """
+        UPDATE discrepancy_approvals
+        SET request_type = 'general'
+        WHERE request_type IS NULL OR TRIM(request_type) = ''
         """
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")
@@ -1161,9 +1223,10 @@ def finding_history_timeline_label(record: dict[str, Any]) -> str:
         return f"Customer Notes updated: {finding}"
     if event_type == "internal_notes_updated":
         return f"Internal Notes updated: {finding}"
-    previous_status = record.get("previous_status") or "Unknown"
     new_status = record.get("new_status") or ""
-    return f"Finding Status: {previous_status} -> {new_status} - {finding}"
+    if new_status:
+        return f"Finding {new_status}: {finding}"
+    return f"Finding Status Updated: {finding}"
 
 
 def build_vehicle_timeline(
@@ -1399,6 +1462,7 @@ def pro_approvals(request: Request):
     for record in records:
         record["customer_name"] = customer_name(record)
         record["vehicle_label"] = vehicle_label(record)
+        record["request_type_label"] = approval_request_type_label(record.get("request_type"))
         record["vehicle_url"] = f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
         record["detail_url"] = (
             f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
@@ -2247,6 +2311,15 @@ async def pro_approval_record_create(request: Request, customer_id: int, vehicle
     if decision not in {"pending", "approved", "declined"}:
         decision = "pending"
     decision_recorded_at = now if decision in {"approved", "declined"} else ""
+    request_type = normalize_approval_request_type(form.get("request_type"))
+    labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
+    labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
+    labor_amount = approval_labor_amount(labor_hours, labor_rate)
+    labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
+    part_description = form.get("part_description", "") if request_type == "parts" else ""
+    quantity = optional_float(form, "quantity") if request_type == "parts" else None
+    unit_cost = optional_float(form, "unit_cost") if request_type == "parts" else None
+    parts_amount = approval_parts_amount(quantity, unit_cost)
 
     conn = crm_db_conn()
     try:
@@ -2255,19 +2328,30 @@ async def pro_approval_record_create(request: Request, customer_id: int, vehicle
         conn.execute(
             """
             INSERT INTO discrepancy_approvals (
-              customer_id, vehicle_id, finding_title, finding_description,
-              recommended_repair, estimated_cost, customer_decision,
-              decision_notes, decision_recorded_at, created_at, updated_at
+              customer_id, vehicle_id, request_type, finding_title, finding_description,
+              recommended_repair, estimated_cost, labor_hours, labor_rate,
+              labor_amount, labor_reason, part_description, quantity, unit_cost,
+              parts_amount, customer_decision, decision_notes, decision_recorded_at,
+              created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 customer_id,
                 vehicle_id,
+                request_type,
                 form.get("finding_title", ""),
                 form.get("finding_description", ""),
                 form.get("recommended_repair", ""),
                 optional_float(form, "estimated_cost"),
+                labor_hours,
+                labor_rate,
+                labor_amount,
+                labor_reason,
+                part_description,
+                quantity,
+                unit_cost,
+                parts_amount,
                 decision,
                 form.get("decision_notes", ""),
                 decision_recorded_at,
@@ -2312,6 +2396,15 @@ async def pro_approval_record_update(
     decision = (form.get("customer_decision") or "pending").lower()
     if decision not in {"pending", "approved", "declined"}:
         decision = "pending"
+    request_type = normalize_approval_request_type(form.get("request_type"))
+    labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
+    labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
+    labor_amount = approval_labor_amount(labor_hours, labor_rate)
+    labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
+    part_description = form.get("part_description", "") if request_type == "parts" else ""
+    quantity = optional_float(form, "quantity") if request_type == "parts" else None
+    unit_cost = optional_float(form, "unit_cost") if request_type == "parts" else None
+    parts_amount = approval_parts_amount(quantity, unit_cost)
 
     conn = crm_db_conn()
     try:
@@ -2326,10 +2419,19 @@ async def pro_approval_record_update(
             """
             UPDATE discrepancy_approvals
             SET
+              request_type = ?,
               finding_title = ?,
               finding_description = ?,
               recommended_repair = ?,
               estimated_cost = ?,
+              labor_hours = ?,
+              labor_rate = ?,
+              labor_amount = ?,
+              labor_reason = ?,
+              part_description = ?,
+              quantity = ?,
+              unit_cost = ?,
+              parts_amount = ?,
               customer_decision = ?,
               decision_notes = ?,
               decision_recorded_at = ?,
@@ -2337,10 +2439,19 @@ async def pro_approval_record_update(
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
             (
+                request_type,
                 form.get("finding_title", ""),
                 form.get("finding_description", ""),
                 form.get("recommended_repair", ""),
                 optional_float(form, "estimated_cost"),
+                labor_hours,
+                labor_rate,
+                labor_amount,
+                labor_reason,
+                part_description,
+                quantity,
+                unit_cost,
+                parts_amount,
                 decision,
                 form.get("decision_notes", ""),
                 decision_recorded_at,

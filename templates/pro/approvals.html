@@ -162,9 +162,21 @@
     </div>
   </div>
   <div class="tm-approval-meta">
+    Type: {{ item.request_type_label }}
+  </div>
+  <div class="tm-approval-meta">
     Recommended: {{ item.recommended_repair or "No recommendation recorded" }}
     {% if item.estimated_cost is not none %}| Est. {{ item.estimated_cost|pro_currency }}{% endif %}
   </div>
+  {% if item.request_type == "labor" %}
+  <div class="tm-approval-meta">
+    Labor: {{ item.labor_hours if item.labor_hours is not none else "-" }} hrs{% if item.labor_rate is not none %} @ {{ item.labor_rate|pro_currency }}/hr{% endif %}{% if item.labor_amount is not none %} | Total {{ item.labor_amount|pro_currency }}{% endif %}
+  </div>
+  {% elif item.request_type == "parts" %}
+  <div class="tm-approval-meta">
+    Parts: {{ item.part_description or "No part description recorded" }}{% if item.quantity is not none %} | Qty {{ item.quantity }}{% endif %}{% if item.unit_cost is not none %} @ {{ item.unit_cost|pro_currency }}{% endif %}{% if item.parts_amount is not none %} | Total {{ item.parts_amount|pro_currency }}{% endif %}
+  </div>
+  {% endif %}
   <div class="tm-approval-meta">
     Created {{ item.created_at|pro_datetime if item.created_at else "unknown" }}{% if item.decision_recorded_at %} | Decision {{ item.decision_recorded_at|pro_datetime }}{% endif %}
   </div>

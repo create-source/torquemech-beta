@@ -71,6 +71,10 @@
     margin-bottom: 16px;
   }
 
+  .tm-request-type-section[hidden] {
+    display: none;
+  }
+
   @media (max-width: 760px) {
     .tm-approval-row {
       grid-template-columns: 1fr;
@@ -103,6 +107,9 @@
   <section class="tm-approval-summary" aria-label="Approval summary">
     <div class="tm-approval-kicker">Finding</div>
     <div class="tm-approval-chip-row">
+      <span class="tm-approval-chip">
+        {% if approval.request_type == "labor" %}Additional Labor{% elif approval.request_type == "parts" %}Additional Parts{% else %}General Finding{% endif %}
+      </span>
       <span class="tm-approval-chip">{{ approval.customer_decision or "pending" }}</span>
       {% if customer.customer_status == "inactive" %}
       <span class="tm-approval-chip tm-approval-chip--inactive">Customer Inactive</span>
@@ -117,6 +124,14 @@
     </div>
     <div style="color:#475569;">{{ approval.finding_description or "No finding description recorded." }}</div>
     <div style="color:#475569;"><strong>Recommended repair:</strong> {{ approval.recommended_repair or "No recommendation recorded." }}</div>
+    {% if approval.request_type == "labor" %}
+    <div style="color:#475569;"><strong>Labor:</strong> {{ approval.labor_hours if approval.labor_hours is not none else "-" }} hrs{% if approval.labor_rate is not none %} @ {{ approval.labor_rate|pro_currency }}/hr{% endif %}{% if approval.labor_amount is not none %} | Total {{ approval.labor_amount|pro_currency }}{% endif %}</div>
+    {% if approval.labor_reason %}
+    <div style="color:#475569;"><strong>Labor reason:</strong> {{ approval.labor_reason }}</div>
+    {% endif %}
+    {% elif approval.request_type == "parts" %}
+    <div style="color:#475569;"><strong>Parts:</strong> {{ approval.part_description or "No part description recorded." }}{% if approval.quantity is not none %} | Qty {{ approval.quantity }}{% endif %}{% if approval.unit_cost is not none %} @ {{ approval.unit_cost|pro_currency }}{% endif %}{% if approval.parts_amount is not none %} | Total {{ approval.parts_amount|pro_currency }}{% endif %}</div>
+    {% endif %}
     {% if approval.decision_notes %}
     <div style="color:#475569;"><strong>Decision notes:</strong> {{ approval.decision_notes }}</div>
     {% endif %}
@@ -124,6 +139,15 @@
 
   <form class="tm-approval-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}">
     <h2 style="margin-top:0;">Edit Finding</h2>
+
+    <div>
+      <label class="tm-label" for="request_type">Request type</label>
+      <select class="tm-input" id="request_type" name="request_type" data-request-type-select>
+        <option value="general" {% if not approval.request_type or approval.request_type == "general" %}selected{% endif %}>General Finding</option>
+        <option value="labor" {% if approval.request_type == "labor" %}selected{% endif %}>Additional Labor</option>
+        <option value="parts" {% if approval.request_type == "parts" %}selected{% endif %}>Additional Parts</option>
+      </select>
+    </div>
 
     <div>
       <label class="tm-label" for="finding_title">Finding title</label>
@@ -155,6 +179,42 @@
       </div>
     </div>
 
+    <section class="tm-request-type-section" data-request-type-section="labor" {% if approval.request_type != "labor" %}hidden{% endif %} style="margin-top:12px;">
+      <div class="tm-approval-kicker">Additional Labor</div>
+      <div class="tm-approval-row" style="margin-top:8px;">
+        <div>
+          <label class="tm-label" for="labor_hours">Labor hours</label>
+          <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1" value="{{ approval.labor_hours if approval.labor_hours is not none else '' }}">
+        </div>
+        <div>
+          <label class="tm-label" for="labor_rate">Labor rate</label>
+          <input class="tm-input" id="labor_rate" name="labor_rate" type="text" inputmode="decimal" value="{{ '%.2f'|format(approval.labor_rate) if approval.labor_rate is not none else '' }}">
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="labor_reason">Labor reason</label>
+        <textarea class="tm-input" id="labor_reason" name="labor_reason" rows="3" maxlength="1200">{{ approval.labor_reason or "" }}</textarea>
+      </div>
+    </section>
+
+    <section class="tm-request-type-section" data-request-type-section="parts" {% if approval.request_type != "parts" %}hidden{% endif %} style="margin-top:12px;">
+      <div class="tm-approval-kicker">Additional Parts</div>
+      <div style="margin-top:8px;">
+        <label class="tm-label" for="part_description">Part description</label>
+        <input class="tm-input" id="part_description" name="part_description" type="text" maxlength="300" value="{{ approval.part_description or '' }}">
+      </div>
+      <div class="tm-approval-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="quantity">Quantity</label>
+          <input class="tm-input" id="quantity" name="quantity" type="number" min="0" step="0.01" value="{{ approval.quantity if approval.quantity is not none else '' }}">
+        </div>
+        <div>
+          <label class="tm-label" for="unit_cost">Unit cost</label>
+          <input class="tm-input" id="unit_cost" name="unit_cost" type="text" inputmode="decimal" value="{{ '%.2f'|format(approval.unit_cost) if approval.unit_cost is not none else '' }}">
+        </div>
+      </div>
+    </section>
+
     <div style="margin-top:12px;">
       <label class="tm-label" for="decision_notes">Decision notes</label>
       <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600" value="{{ approval.decision_notes or '' }}" placeholder="Who approved or declined, how they responded, or any scheduling context.">
@@ -179,4 +239,19 @@
     </div>
   </section>
 </section>
+
+<script>
+(() => {
+  const select = document.querySelector("[data-request-type-select]");
+  const sections = Array.from(document.querySelectorAll("[data-request-type-section]"));
+  if (!select) return;
+  function updateRequestSections() {
+    sections.forEach((section) => {
+      section.hidden = section.dataset.requestTypeSection !== select.value;
+    });
+  }
+  select.addEventListener("change", updateRequestSections);
+  updateRequestSections();
+})();
+</script>
 {% endblock %}

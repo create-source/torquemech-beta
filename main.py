@@ -590,10 +590,19 @@ def init_pro_crm_schema_db() -> None:
               vehicle_id INTEGER NOT NULL,
               service_history_id INTEGER,
               shop_id INTEGER,
+              request_type TEXT NOT NULL DEFAULT 'general',
               finding_title TEXT,
               finding_description TEXT,
               recommended_repair TEXT,
               estimated_cost REAL,
+              labor_hours REAL,
+              labor_rate REAL,
+              labor_amount REAL,
+              labor_reason TEXT,
+              part_description TEXT,
+              quantity REAL,
+              unit_cost REAL,
+              parts_amount REAL,
               customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined')),
               decision_notes TEXT,
               decision_recorded_at TEXT,
@@ -603,6 +612,22 @@ def init_pro_crm_schema_db() -> None:
               FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
               FOREIGN KEY (service_history_id) REFERENCES service_history(id)
             )
+            """
+        )
+        add_column_if_missing("discrepancy_approvals", "request_type", "request_type TEXT NOT NULL DEFAULT 'general'")
+        add_column_if_missing("discrepancy_approvals", "labor_hours", "labor_hours REAL")
+        add_column_if_missing("discrepancy_approvals", "labor_rate", "labor_rate REAL")
+        add_column_if_missing("discrepancy_approvals", "labor_amount", "labor_amount REAL")
+        add_column_if_missing("discrepancy_approvals", "labor_reason", "labor_reason TEXT")
+        add_column_if_missing("discrepancy_approvals", "part_description", "part_description TEXT")
+        add_column_if_missing("discrepancy_approvals", "quantity", "quantity REAL")
+        add_column_if_missing("discrepancy_approvals", "unit_cost", "unit_cost REAL")
+        add_column_if_missing("discrepancy_approvals", "parts_amount", "parts_amount REAL")
+        conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET request_type = 'general'
+            WHERE request_type IS NULL OR TRIM(request_type) = ''
             """
         )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")

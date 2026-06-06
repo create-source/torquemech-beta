@@ -781,53 +781,6 @@
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
   </form>
 
-  <section class="tm-crm-panel" aria-label="Approvals and additional findings" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Approvals</div>
-    <h2 style="margin:4px 0 0;">Approvals / Additional Findings</h2>
-    <div class="tm-approval-helper">
-      Document additional repair recommendations and customer decisions.
-    </div>
-
-    {% set approval_sections = [
-      ("pending", "Pending"),
-      ("approved", "Approved"),
-      ("declined", "Declined")
-    ] %}
-
-    {% for key, title in approval_sections %}
-      <h3 style="margin:16px 0 0;">{{ title }}</h3>
-      {% if approval_groups[key] %}
-      <div class="tm-approval-list">
-        {% for item in approval_groups[key] %}
-        <a class="tm-approval-item tm-approval-item--{{ item.customer_decision }}" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ item.id }}">
-          <div class="tm-history-head">
-            <div>
-              <div class="tm-history-title">{{ item.finding_title or "Additional finding" }}</div>
-              <div style="color:#475569;">{{ item.finding_description or "No finding description recorded." }}</div>
-            </div>
-            <span class="tm-approval-status tm-approval-status--{{ item.customer_decision }}">{{ item.customer_decision }}</span>
-          </div>
-          <div class="tm-crm-chip-row">
-            {% if item.estimated_cost is not none %}
-            <span class="tm-crm-chip">Est. {{ item.estimated_cost|pro_currency }}</span>
-            {% endif %}
-            <span class="tm-crm-chip">Created {{ item.created_at|pro_datetime }}</span>
-            {% if item.decision_recorded_at %}
-            <span class="tm-crm-chip">Decision {{ item.decision_recorded_at|pro_datetime }}</span>
-            {% endif %}
-          </div>
-          <div style="color:#475569;"><strong>Recommended:</strong> {{ item.recommended_repair or "No recommendation recorded." }}</div>
-        </a>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="tm-history-empty" style="margin-top:12px;">
-        No {{ title|lower }} findings.
-      </div>
-      {% endif %}
-    {% endfor %}
-  </section>
-
   <section class="tm-crm-panel" id="recommendations-findings" aria-label="Recommendations and findings" style="margin-top:16px;">
     <div class="tm-crm-kicker">Recommendations & Findings</div>
     <h2 style="margin:4px 0 0;">Recommendations & Findings</h2>
