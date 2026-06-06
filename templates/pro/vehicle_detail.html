@@ -665,6 +665,10 @@
     outline-offset: 2px;
   }
 
+  .tm-finding-labor-fields[hidden] {
+    display: none;
+  }
+
   @media (max-width: 760px) {
     .tm-crm-row,
     .tm-maintenance-fields,
@@ -789,6 +793,13 @@
       <summary>+ Add Finding</summary>
       <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings">
         <div style="margin-top:12px;">
+          <label class="tm-label" for="request_type">Request Type</label>
+          <select class="tm-input" id="request_type" name="request_type" data-finding-request-type>
+            <option value="finding" selected>Finding</option>
+            <option value="labor">Labor Request</option>
+          </select>
+        </div>
+        <div style="margin-top:12px;">
           <label class="tm-label" for="finding">Finding</label>
           <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600"></textarea>
         </div>
@@ -821,6 +832,30 @@
             <option value="Declined">Declined</option>
           </select>
         </div>
+        <section class="tm-finding-labor-fields" data-finding-labor-fields hidden style="margin-top:12px;">
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="labor_description">Labor Description</label>
+            <textarea class="tm-input" id="labor_description" name="labor_description" rows="3" maxlength="1600"></textarea>
+          </div>
+          <div class="tm-crm-row" style="margin-top:12px;">
+            <div>
+              <label class="tm-label" for="finding_labor_hours">Labor Hours</label>
+              <input class="tm-input" id="finding_labor_hours" name="labor_hours" type="number" min="0" step="0.1" data-labor-hours>
+            </div>
+            <div>
+              <label class="tm-label" for="finding_labor_rate">Labor Rate</label>
+              <input class="tm-input" id="finding_labor_rate" name="labor_rate" type="text" inputmode="decimal" data-labor-rate>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="finding_labor_amount">Labor Amount</label>
+            <input class="tm-input" id="finding_labor_amount" name="labor_amount_display" type="text" readonly data-labor-amount>
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="labor_reason">Labor Reason</label>
+            <textarea class="tm-input" id="labor_reason" name="labor_reason" rows="3" maxlength="1200"></textarea>
+          </div>
+        </section>
         <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
       </form>
     </details>
@@ -853,17 +888,29 @@
       {% for item in findings_records %}
       <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" data-finding-card data-finding-id="{{ item.id }}" data-finding-status="{{ item.status }}" data-finding-severity="{{ item.severity }}" data-finding-date="{{ item.finding_date or '' }}">
         <div class="tm-history-head">
-          <div class="tm-history-title">{{ item.finding or "Finding" }}</div>
+          <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
           <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
         </div>
         <div class="tm-finding-meta">
+          {% if item.request_type == "labor" %}
+          <span class="tm-crm-chip">Labor Request</span>
+          {% endif %}
           <span class="tm-crm-chip">{{ item.severity }}</span>
           <span class="tm-crm-chip" data-finding-status-chip>{{ item.status }}</span>
           {% if item.mileage is not none %}
           <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
           {% endif %}
         </div>
+        {% if item.request_type == "labor" %}
+        <div style="color:#475569;"><strong>Description:</strong> {{ item.labor_description or "No labor description recorded." }}</div>
+        <div style="color:#475569;"><strong>Hours:</strong> {% if item.labor_hours is not none %}{{ item.labor_hours }}{% else %}-{% endif %}</div>
+        <div style="color:#475569;"><strong>Rate:</strong> {% if item.labor_rate is not none %}{{ item.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</div>
+        <div style="color:#475569;"><strong>Amount:</strong> {% if item.labor_amount is not none %}{{ item.labor_amount|pro_currency }}{% else %}-{% endif %}</div>
+        <div style="color:#475569;"><strong>Reason:</strong> {{ item.labor_reason or "No labor reason recorded." }}</div>
+        <div style="color:#475569;"><strong>Status:</strong> {{ item.status }}</div>
+        {% else %}
         <div style="color:#475569;"><strong>Recommendation:</strong> {{ item.recommendation or "No recommendation recorded." }}</div>
+        {% endif %}
         <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
           <div class="tm-finding-status-control">
             <label class="tm-label" for="finding_status_{{ item.id }}">Decision Status</label>
@@ -1176,6 +1223,40 @@
 
 <script>
 (() => {
+  function parseMoney(value) {
+    const numeric = Number(String(value || "").replace(/[$,]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function formatMoney(value) {
+    return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  }
+
+  document.querySelectorAll("[data-finding-request-type]").forEach((select) => {
+    const form = select.closest("form");
+    const laborFields = form?.querySelector("[data-finding-labor-fields]");
+    const hours = form?.querySelector("[data-labor-hours]");
+    const rate = form?.querySelector("[data-labor-rate]");
+    const amount = form?.querySelector("[data-labor-amount]");
+
+    function updateLaborAmount() {
+      if (!amount) return;
+      const hoursValue = parseMoney(hours?.value);
+      const rateValue = parseMoney(rate?.value);
+      amount.value = hoursValue !== null && rateValue !== null ? formatMoney(hoursValue * rateValue) : "";
+    }
+
+    function updateLaborFields() {
+      if (laborFields) laborFields.hidden = select.value !== "labor";
+      updateLaborAmount();
+    }
+
+    select.addEventListener("change", updateLaborFields);
+    hours?.addEventListener("input", updateLaborAmount);
+    rate?.addEventListener("input", updateLaborAmount);
+    updateLaborFields();
+  });
+
   const statusRank = { Approved: 1, Open: 2, Completed: 3, Deferred: 4, Declined: 5 };
   const severityRank = { Critical: 1, High: 2, Medium: 3, Low: 4 };
   const list = document.querySelector(".tm-findings-list");

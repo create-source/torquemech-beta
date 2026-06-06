@@ -32,7 +32,7 @@
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
-      <h1 class="tm-pro-title">{{ finding.finding or "Finding Record" }}</h1>
+      <h1 class="tm-pro-title">{% if finding.request_type == "labor" %}Labor Request{% else %}{{ finding.finding or "Finding Record" }}{% endif %}</h1>
       <p class="tm-pro-subtitle">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</p>
     </div>
     <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#recommendations-findings">Back to Vehicle</a>
@@ -44,8 +44,19 @@
       <div class="tm-finding-field"><span>Mileage</span><strong>{% if finding.mileage is not none %}{{ finding.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
       <div class="tm-finding-field"><span>Severity</span><strong>{{ finding.severity or "-" }}</strong></div>
       <div class="tm-finding-field"><span>Status</span><strong>{{ finding.status or "-" }}</strong></div>
+      <div class="tm-finding-field"><span>Request Type</span><strong>{% if finding.request_type == "labor" %}Labor Request{% else %}Finding{% endif %}</strong></div>
     </div>
+    {% if finding.request_type == "labor" %}
+    <div class="tm-finding-grid" style="margin-top:14px;">
+      <div class="tm-finding-field"><span>Description</span><strong>{{ finding.labor_description or "-" }}</strong></div>
+      <div class="tm-finding-field"><span>Hours</span><strong>{% if finding.labor_hours is not none %}{{ finding.labor_hours }}{% else %}-{% endif %}</strong></div>
+      <div class="tm-finding-field"><span>Rate</span><strong>{% if finding.labor_rate is not none %}{{ finding.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</strong></div>
+      <div class="tm-finding-field"><span>Amount</span><strong>{% if finding.labor_amount is not none %}{{ finding.labor_amount|pro_currency }}{% else %}-{% endif %}</strong></div>
+    </div>
+    <div class="tm-finding-field" style="margin-top:14px;"><span>Reason</span><strong>{{ finding.labor_reason or "-" }}</strong></div>
+    {% else %}
     <div class="tm-finding-field" style="margin-top:14px;"><span>Recommendation</span><strong>{{ finding.recommendation or "-" }}</strong></div>
+    {% endif %}
     <div class="tm-finding-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/edit">Edit Finding</a>
     </div>
@@ -75,11 +86,13 @@
         <div class="tm-finding-history-time">{{ item.created_at|pro_datetime }}</div>
         <div class="tm-finding-history-event">
           {% if item.event_type == "finding_created" %}
-          Finding Created
+          {% if finding.request_type == "labor" %}Labor Request Created{% else %}Finding Created{% endif %}
           {% elif item.event_type == "customer_notes_updated" %}
           Customer Notes updated
           {% elif item.event_type == "internal_notes_updated" %}
           Internal Notes updated
+          {% elif finding.request_type == "labor" and item.new_status %}
+          Labor Request {{ item.new_status }}
           {% else %}
           {{ item.previous_status or "Unknown" }} &rarr; {{ item.new_status }}
           {% endif %}

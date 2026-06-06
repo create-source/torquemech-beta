@@ -6,6 +6,7 @@
 <style>
   .tm-finding-panel { border:1px solid rgba(15,23,42,.12); border-radius:8px; background:rgba(255,255,255,.94); padding:18px; max-width:920px; }
   .tm-finding-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .tm-finding-labor-fields[hidden] { display:none; }
   @media (max-width:760px) { .tm-finding-row { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
@@ -22,6 +23,13 @@
   </div>
 
   <form class="tm-finding-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}">
+    <div>
+      <label class="tm-label" for="request_type">Request Type</label>
+      <select class="tm-input" id="request_type" name="request_type" data-finding-request-type>
+        <option value="finding" {% if finding.request_type != "labor" %}selected{% endif %}>Finding</option>
+        <option value="labor" {% if finding.request_type == "labor" %}selected{% endif %}>Labor Request</option>
+      </select>
+    </div>
     <div>
       <label class="tm-label" for="finding">Finding</label>
       <textarea class="tm-input" id="finding" name="finding" rows="4" maxlength="1600">{{ finding.finding or "" }}</textarea>
@@ -52,7 +60,68 @@
       <div><label class="tm-label" for="mileage">Mileage</label><input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ finding.mileage|pro_miles if finding.mileage is not none else '' }}"></div>
       <div><label class="tm-label" for="finding_date">Finding Date</label><input class="tm-input" id="finding_date" name="finding_date" type="date" value="{{ finding.finding_date or '' }}"></div>
     </div>
+    <section class="tm-finding-labor-fields" data-finding-labor-fields hidden style="margin-top:12px;">
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="labor_description">Labor Description</label>
+        <textarea class="tm-input" id="labor_description" name="labor_description" rows="3" maxlength="1600">{{ finding.labor_description or "" }}</textarea>
+      </div>
+      <div class="tm-finding-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="labor_hours">Labor Hours</label>
+          <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1" value="{{ finding.labor_hours if finding.labor_hours is not none else '' }}" data-labor-hours>
+        </div>
+        <div>
+          <label class="tm-label" for="labor_rate">Labor Rate</label>
+          <input class="tm-input" id="labor_rate" name="labor_rate" type="text" inputmode="decimal" value="{{ finding.labor_rate if finding.labor_rate is not none else '' }}" data-labor-rate>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="labor_amount">Labor Amount</label>
+        <input class="tm-input" id="labor_amount" name="labor_amount_display" type="text" value="{{ finding.labor_amount|pro_currency if finding.labor_amount is not none else '' }}" readonly data-labor-amount>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="labor_reason">Labor Reason</label>
+        <textarea class="tm-input" id="labor_reason" name="labor_reason" rows="3" maxlength="1200">{{ finding.labor_reason or "" }}</textarea>
+      </div>
+    </section>
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Finding</button>
   </form>
 </section>
+<script>
+(() => {
+  function parseMoney(value) {
+    const numeric = Number(String(value || "").replace(/[$,]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function formatMoney(value) {
+    return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  }
+
+  document.querySelectorAll("[data-finding-request-type]").forEach((select) => {
+    const form = select.closest("form");
+    const laborFields = form?.querySelector("[data-finding-labor-fields]");
+    const hours = form?.querySelector("[data-labor-hours]");
+    const rate = form?.querySelector("[data-labor-rate]");
+    const amount = form?.querySelector("[data-labor-amount]");
+
+    function updateLaborAmount() {
+      if (!amount) return;
+      const hoursValue = parseMoney(hours?.value);
+      const rateValue = parseMoney(rate?.value);
+      amount.value = hoursValue !== null && rateValue !== null ? formatMoney(hoursValue * rateValue) : "";
+    }
+
+    function updateLaborFields() {
+      if (laborFields) laborFields.hidden = select.value !== "labor";
+      updateLaborAmount();
+    }
+
+    select.addEventListener("change", updateLaborFields);
+    hours?.addEventListener("input", updateLaborAmount);
+    rate?.addEventListener("input", updateLaborAmount);
+    updateLaborFields();
+  });
+})();
+</script>
 {% endblock %}

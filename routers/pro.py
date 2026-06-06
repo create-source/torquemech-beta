@@ -42,6 +42,7 @@ router = APIRouter(prefix="/pro", tags=["pro"])
 
 FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined")
 FINDING_SEVERITY_OPTIONS = ("Low", "Medium", "High", "Critical")
+FINDING_REQUEST_TYPES = ("finding", "labor")
 CUSTOMER_DECISION_LOG_STATUSES = {"Approved", "Deferred", "Declined"}
 APPROVAL_REQUEST_TYPES = ("general", "labor", "parts")
 
@@ -97,6 +98,17 @@ def normalize_finding_severity(raw_severity: str | None) -> str:
     if severity not in FINDING_SEVERITY_OPTIONS:
         raise HTTPException(status_code=400, detail="Invalid finding severity")
     return severity
+
+
+def normalize_finding_request_type(raw_request_type: str | None) -> str:
+    request_type = (raw_request_type or "finding").strip().lower().replace("-", "_")
+    return request_type if request_type in FINDING_REQUEST_TYPES else "finding"
+
+
+def finding_labor_amount(labor_hours: float | None, labor_rate: float | None) -> float | None:
+    if labor_hours is None or labor_rate is None:
+        return None
+    return round(max(0.0, labor_hours) * max(0.0, labor_rate), 2)
 
 
 def normalize_approval_request_type(raw_request_type: str | None) -> str:
@@ -616,6 +628,12 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
           recommendation TEXT,
           customer_notes TEXT,
           internal_notes TEXT,
+          request_type TEXT NOT NULL DEFAULT 'finding',
+          labor_description TEXT,
+          labor_hours REAL,
+          labor_rate REAL,
+          labor_amount REAL,
+          labor_reason TEXT,
           severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
           status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
           mileage INTEGER,
@@ -631,6 +649,25 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE findings_records ADD COLUMN customer_notes TEXT")
     if "internal_notes" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN internal_notes TEXT")
+    if "request_type" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN request_type TEXT NOT NULL DEFAULT 'finding'")
+    if "labor_description" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN labor_description TEXT")
+    if "labor_hours" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN labor_hours REAL")
+    if "labor_rate" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN labor_rate REAL")
+    if "labor_amount" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN labor_amount REAL")
+    if "labor_reason" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN labor_reason TEXT")
+    conn.execute(
+        """
+        UPDATE findings_records
+        SET request_type = 'finding'
+        WHERE request_type IS NULL OR TRIM(request_type) = ''
+        """
+    )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
     conn.execute(
@@ -801,7 +838,7 @@ def vehicle_finding_activity_payload(
         dict(row)
         for row in conn.execute(
             """
-            SELECT fhr.*, fr.finding
+            SELECT fhr.*, fr.finding, fr.request_type, fr.labor_description
             FROM finding_history_records fhr
             JOIN findings_records fr ON fr.id = fhr.finding_id
             WHERE fr.customer_id = ? AND fr.vehicle_id = ?
@@ -1216,17 +1253,25 @@ def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict
 
 def finding_history_timeline_label(record: dict[str, Any]) -> str:
     finding = record.get("finding") or "Finding"
+    is_labor = normalize_finding_request_type(record.get("request_type")) == "labor"
+    title = (record.get("labor_description") if is_labor else finding) or finding
     event_type = record.get("event_type") or ""
     if event_type == "finding_created":
-        return f"Finding Created: {finding}"
+        if is_labor:
+            return f"Labor Request Created: {title}"
+        return f"Finding Created: {title}"
     if event_type == "customer_notes_updated":
-        return f"Customer Notes updated: {finding}"
+        return f"Customer Notes updated: {title}"
     if event_type == "internal_notes_updated":
-        return f"Internal Notes updated: {finding}"
+        return f"Internal Notes updated: {title}"
     new_status = record.get("new_status") or ""
     if new_status:
-        return f"Finding {new_status}: {finding}"
-    return f"Finding Status Updated: {finding}"
+        if is_labor:
+            return f"Labor Request {new_status}: {title}"
+        return f"Finding {new_status}: {title}"
+    if is_labor:
+        return f"Labor Request Status Updated: {title}"
+    return f"Finding Status Updated: {title}"
 
 
 def build_vehicle_timeline(
@@ -1268,7 +1313,11 @@ def build_vehicle_timeline(
             "record_type_key": "finding",
             "date": record.get("finding_date") or "",
             "created_at": record.get("created_at") or "",
-            "service_name": f"Finding Created: {record.get('finding') or 'Finding'}",
+            "service_name": (
+                f"Labor Request Created: {record.get('labor_description') or record.get('finding') or 'Labor Request'}"
+                if normalize_finding_request_type(record.get("request_type")) == "labor"
+                else f"Finding Created: {record.get('finding') or 'Finding'}"
+            ),
             "mileage": record.get("mileage"),
             "url": "#recommendations-findings",
         }
@@ -1885,7 +1934,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             dict(row)
             for row in conn.execute(
                 """
-                SELECT fhr.*, fr.finding
+                SELECT fhr.*, fr.finding, fr.request_type, fr.labor_description
                 FROM finding_history_records fhr
                 JOIN findings_records fr ON fr.id = fhr.finding_id
                 WHERE fr.customer_id = ? AND fr.vehicle_id = ?
@@ -2016,6 +2065,12 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
     now = datetime.utcnow().isoformat()
     severity = normalize_finding_severity(form.get("severity", "Low"))
     status = normalize_finding_status(form.get("status", "Open"))
+    request_type = normalize_finding_request_type(form.get("request_type"))
+    labor_description = form.get("labor_description", "") if request_type == "labor" else ""
+    labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
+    labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
+    labor_amount = finding_labor_amount(labor_hours, labor_rate)
+    labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
 
     conn = crm_db_conn()
     try:
@@ -2024,16 +2079,23 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
         cur = conn.execute(
             """
             INSERT INTO findings_records (
-              vehicle_id, customer_id, finding, recommendation, severity,
-              status, mileage, finding_date, created_at
+              vehicle_id, customer_id, request_type, finding, recommendation,
+              labor_description, labor_hours, labor_rate, labor_amount, labor_reason,
+              severity, status, mileage, finding_date, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 vehicle_id,
                 customer_id,
+                request_type,
                 form.get("finding", ""),
                 form.get("recommendation", ""),
+                labor_description,
+                labor_hours,
+                labor_rate,
+                labor_amount,
+                labor_reason,
                 severity,
                 status,
                 optional_int(form, "mileage"),
@@ -2048,7 +2110,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             status,
             "finding_created",
             now,
-            notes="Finding Created",
+            notes="Labor Request Created" if request_type == "labor" else "Finding Created",
         )
         append_customer_decision_log_if_needed(
             conn,
@@ -2125,6 +2187,12 @@ async def pro_finding_record_update(
     form = await read_form_data(request)
     severity = normalize_finding_severity(form.get("severity"))
     status = normalize_finding_status(form.get("status"))
+    request_type = normalize_finding_request_type(form.get("request_type"))
+    labor_description = form.get("labor_description", "") if request_type == "labor" else ""
+    labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
+    labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
+    labor_amount = finding_labor_amount(labor_hours, labor_rate)
+    labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
 
     conn = crm_db_conn()
     try:
@@ -2133,13 +2201,21 @@ async def pro_finding_record_update(
         cur = conn.execute(
             """
             UPDATE findings_records
-            SET finding = ?, recommendation = ?, severity = ?, status = ?,
+            SET request_type = ?, finding = ?, recommendation = ?,
+                labor_description = ?, labor_hours = ?, labor_rate = ?,
+                labor_amount = ?, labor_reason = ?, severity = ?, status = ?,
                 mileage = ?, finding_date = ?
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
             (
+                request_type,
                 form.get("finding", ""),
                 form.get("recommendation", ""),
+                labor_description,
+                labor_hours,
+                labor_rate,
+                labor_amount,
+                labor_reason,
                 severity,
                 status,
                 optional_int(form, "mileage"),

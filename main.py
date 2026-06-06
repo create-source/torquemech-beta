@@ -520,6 +520,12 @@ def init_pro_crm_schema_db() -> None:
               recommendation TEXT,
               customer_notes TEXT,
               internal_notes TEXT,
+              request_type TEXT NOT NULL DEFAULT 'finding',
+              labor_description TEXT,
+              labor_hours REAL,
+              labor_rate REAL,
+              labor_amount REAL,
+              labor_reason TEXT,
               severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
               status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
               mileage INTEGER,
@@ -532,6 +538,19 @@ def init_pro_crm_schema_db() -> None:
         )
         add_column_if_missing("findings_records", "customer_notes", "customer_notes TEXT")
         add_column_if_missing("findings_records", "internal_notes", "internal_notes TEXT")
+        add_column_if_missing("findings_records", "request_type", "request_type TEXT NOT NULL DEFAULT 'finding'")
+        add_column_if_missing("findings_records", "labor_description", "labor_description TEXT")
+        add_column_if_missing("findings_records", "labor_hours", "labor_hours REAL")
+        add_column_if_missing("findings_records", "labor_rate", "labor_rate REAL")
+        add_column_if_missing("findings_records", "labor_amount", "labor_amount REAL")
+        add_column_if_missing("findings_records", "labor_reason", "labor_reason TEXT")
+        conn.execute(
+            """
+            UPDATE findings_records
+            SET request_type = 'finding'
+            WHERE request_type IS NULL OR TRIM(request_type) = ''
+            """
+        )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_mileage_date ON findings_records (vehicle_id, mileage, finding_date)")
