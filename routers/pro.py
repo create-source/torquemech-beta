@@ -761,11 +761,49 @@ def vehicle_finding_activity_payload(
             (customer_id, vehicle_id),
         ).fetchall()
     ]
+    _customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+    ensure_maintenance_records_schema(conn)
+    ensure_repair_records_schema(conn)
+    ensure_service_history_schema(conn)
+    ensure_service_history_records_schema(conn)
+    ensure_findings_records_schema(conn)
+    service_history_records = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM service_history_records
+            WHERE customer_id = ? AND vehicle_id = ?
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
+    findings_records = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM findings_records
+            WHERE customer_id = ? AND vehicle_id = ?
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
+    vehicle_timeline = build_vehicle_timeline(
+        customer_id,
+        vehicle_id,
+        vehicle,
+        service_history_records,
+        findings_records,
+        finding_history_records,
+        customer_decision_logs,
+    )
     finding_history_count = len(finding_history_records)
     customer_decision_log_count = len(customer_decision_logs)
     return {
         "finding_history_count": finding_history_count,
         "customer_decision_log_count": customer_decision_log_count,
+        "vehicle_timeline": vehicle_timeline,
         "finding_history": {
             "count": finding_history_count,
             "records": [
@@ -1114,12 +1152,39 @@ def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict
     return grouped
 
 
+def finding_history_timeline_label(record: dict[str, Any]) -> str:
+    finding = record.get("finding") or "Finding"
+    event_type = record.get("event_type") or ""
+    if event_type == "finding_created":
+        return f"Finding Created: {finding}"
+    if event_type == "customer_notes_updated":
+        return f"Customer Notes updated: {finding}"
+    if event_type == "internal_notes_updated":
+        return f"Internal Notes updated: {finding}"
+    previous_status = record.get("previous_status") or "Unknown"
+    new_status = record.get("new_status") or ""
+    return f"Finding Status: {previous_status} -> {new_status} - {finding}"
+
+
 def build_vehicle_timeline(
     customer_id: int,
     vehicle_id: int,
+    vehicle: dict[str, Any],
     service_history_records: list[dict[str, Any]],
     findings_records: list[dict[str, Any]],
+    finding_history_records: list[dict[str, Any]],
+    customer_decision_logs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    finding_ids_with_created_history = {
+        int(record.get("finding_id") or 0)
+        for record in finding_history_records
+        if record.get("event_type") == "finding_created"
+    }
+    finding_status_history_keys = {
+        (int(record.get("finding_id") or 0), record.get("new_status") or "")
+        for record in finding_history_records
+        if record.get("event_type") == "status_changed"
+    }
     timeline = [
         {
             "id": record["id"],
@@ -1129,7 +1194,7 @@ def build_vehicle_timeline(
             "created_at": record.get("created_at") or "",
             "service_name": record.get("service_name") or "Service",
             "mileage": record.get("mileage"),
-            "url": "#service-history",
+            "url": "#repair-history" if record.get("source_type") == "repair" else "#maintenance-tracking",
         }
         for record in service_history_records
     ]
@@ -1140,12 +1205,57 @@ def build_vehicle_timeline(
             "record_type_key": "finding",
             "date": record.get("finding_date") or "",
             "created_at": record.get("created_at") or "",
-            "service_name": record.get("finding") or "Finding",
+            "service_name": f"Finding Created: {record.get('finding') or 'Finding'}",
             "mileage": record.get("mileage"),
             "url": "#recommendations-findings",
         }
         for record in findings_records
+        if int(record.get("id") or 0) not in finding_ids_with_created_history
     )
+    timeline.extend(
+        {
+            "id": record["id"],
+            "record_type": "Finding",
+            "record_type_key": "finding",
+            "date": record.get("created_at") or "",
+            "created_at": record.get("created_at") or "",
+            "service_name": finding_history_timeline_label(record),
+            "mileage": None,
+            "url": "#recommendations-findings",
+        }
+        for record in finding_history_records
+    )
+    timeline.extend(
+        {
+            "id": record["id"],
+            "record_type": "Finding",
+            "record_type_key": "finding",
+            "date": record.get("created_at") or "",
+            "created_at": record.get("created_at") or "",
+            "service_name": f"Customer Decision: {record.get('decision_status') or 'Decision'}",
+            "mileage": None,
+            "url": "#recommendations-findings",
+        }
+        for record in customer_decision_logs
+        if (
+            int(record.get("finding_id") or 0),
+            record.get("decision_status") or "",
+        )
+        not in finding_status_history_keys
+    )
+    if vehicle.get("mileage") is not None and vehicle.get("updated_at"):
+        timeline.append(
+            {
+                "id": vehicle_id,
+                "record_type": "Vehicle",
+                "record_type_key": "vehicle",
+                "date": "",
+                "created_at": vehicle.get("updated_at") or "",
+                "service_name": "Mileage Updated",
+                "mileage": vehicle.get("mileage"),
+                "url": "#vehicle-information",
+            }
+        )
     timeline.sort(
         key=lambda record: (
             parse_date_value(record.get("date")) is not None,
@@ -1760,10 +1870,12 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     vehicle_timeline = build_vehicle_timeline(
         customer_id,
         vehicle_id,
+        vehicle,
         service_history_records,
         findings_records,
+        finding_history_records,
+        customer_decision_logs,
     )
-    vehicle_history_summary = build_vehicle_history_summary(maintenance_records)
     repair_history_summary = build_repair_history_summary(repair_records)
     findings_summary = build_findings_summary(findings_records)
 
@@ -1775,7 +1887,6 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "vehicle": vehicle,
             "service_history_records": service_history_records,
             "maintenance_records": maintenance_records,
-            "vehicle_history_summary": vehicle_history_summary,
             "repair_records": repair_records,
             "repair_history_summary": repair_history_summary,
             "findings_records": findings_records,

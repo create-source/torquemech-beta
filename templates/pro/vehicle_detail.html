@@ -693,7 +693,7 @@
     <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}">Back to Customer</a>
   </div>
 
-  <section class="tm-crm-vehicle-summary" aria-label="Vehicle summary">
+  <section class="tm-crm-vehicle-summary" id="vehicle-information" aria-label="Vehicle summary">
     <div class="tm-crm-kicker">Vehicle</div>
     <div class="tm-crm-chip-row">
       <span class="tm-crm-chip">{% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}</span>
@@ -911,116 +911,6 @@
     </form>
   </details>
 
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;" data-customer-decision-log-section>
-    <summary data-customer-decision-log-summary>Customer Decision Log (<span data-customer-decision-log-count>{{ customer_decision_logs|length }}</span>)</summary>
-    {% if customer_decision_logs %}
-    <div class="tm-finding-history-list">
-      {% for item in customer_decision_logs %}
-      <article class="tm-finding-history-item">
-        <div class="tm-finding-history-time">{{ item.created_at|pro_datetime }}</div>
-        <div class="tm-finding-history-event">Customer Decision: {{ item.decision_status }}</div>
-        <div class="tm-finding-history-finding">Source: {{ "Manual/Internal" if item.source == "internal/manual" else item.source|title }}</div>
-        {% if item.customer_name %}
-        <div class="tm-finding-history-finding">Customer: {{ item.customer_name }}</div>
-        {% endif %}
-        <div class="tm-finding-history-finding">{{ item.finding or "Finding" }}</div>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;" data-section-empty>
-      No customer decision logs recorded for this vehicle yet.
-    </div>
-    {% endif %}
-  </details>
-
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;" data-finding-history-section>
-    <summary data-finding-history-summary>Finding History (<span data-finding-history-count>{{ finding_history_records|length }}</span>)</summary>
-    {% if finding_history_records %}
-    <div class="tm-finding-history-list">
-      {% for item in finding_history_records %}
-      <article class="tm-finding-history-item">
-        <div class="tm-finding-history-time">{{ item.created_at|pro_datetime }}</div>
-        <div class="tm-finding-history-event">
-          {% if item.event_type == "finding_created" %}
-          Finding Created
-          {% elif item.event_type == "customer_notes_updated" %}
-          Customer Notes updated
-          {% elif item.event_type == "internal_notes_updated" %}
-          Internal Notes updated
-          {% else %}
-          {{ item.previous_status or "Unknown" }} &rarr; {{ item.new_status }}
-          {% endif %}
-        </div>
-        {% if item.event_type == "finding_created" %}
-        <div class="tm-finding-history-finding">Status: {{ item.new_status }}</div>
-        {% endif %}
-        <div class="tm-finding-history-finding">{{ item.finding or "Finding" }}</div>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;" data-section-empty>
-      No finding history recorded for this vehicle yet.
-    </div>
-    {% endif %}
-  </details>
-
-  <section class="tm-crm-panel" aria-label="Vehicle history" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Vehicle History</div>
-    <h2 style="margin:4px 0 0;">Vehicle History</h2>
-
-    <div class="tm-history-summary" aria-label="Vehicle history summary">
-      <div class="tm-history-summary-card">
-        <span>Total Services</span>
-        <strong>{{ vehicle_history_summary.total_services }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Last Service</span>
-        <strong>{{ vehicle_history_summary.last_service or "-" }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Last Service Date</span>
-        <strong>{{ vehicle_history_summary.last_service_date|pro_date if vehicle_history_summary.last_service_date else "-" }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Last Recorded Mileage</span>
-        <strong>{% if vehicle_history_summary.last_recorded_mileage is not none %}{{ vehicle_history_summary.last_recorded_mileage|pro_miles }} miles{% else %}-{% endif %}</strong>
-      </div>
-    </div>
-
-    {% if maintenance_records %}
-    <div class="tm-maintenance-table-wrap">
-      <table class="tm-maintenance-table">
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Mileage</th>
-            <th scope="col">Service Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in maintenance_records %}
-          <tr>
-            <td>{{ item.date_performed|pro_date if item.date_performed else "-" }}</td>
-            <td>{% if item.mileage_performed is not none %}{{ item.mileage_performed|pro_miles }} miles{% else %}-{% endif %}</td>
-            <td>
-              <a href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">
-                {{ item.service_type or "Maintenance" }}
-              </a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No maintenance records saved for this vehicle yet.
-    </div>
-    {% endif %}
-  </section>
-
   <section class="tm-crm-panel" id="repair-history" aria-label="Repair history" style="margin-top:16px;">
     <div class="tm-crm-kicker">Repair History</div>
     <h2 style="margin:4px 0 0;">Repair History</h2>
@@ -1162,7 +1052,7 @@
     </form>
   </details>
 
-  <section class="tm-crm-panel" aria-label="Maintenance records" style="margin-top:16px;">
+  <section class="tm-crm-panel" id="maintenance-tracking" aria-label="Maintenance records" style="margin-top:16px;">
     <div class="tm-crm-kicker">Maintenance</div>
     <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
 
@@ -1269,44 +1159,7 @@
     </form>
   </details>
 
-  <section class="tm-crm-panel" id="service-history" aria-label="Service history" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Vehicle History</div>
-    <h2 style="margin:4px 0 0;">Service History</h2>
-
-    {% if service_history_records %}
-    <div class="tm-history-list">
-      {% for item in service_history_records %}
-      <article class="tm-history-item">
-        <div class="tm-history-head">
-          <div class="tm-history-title">{{ item.service_name or "Service entry" }}</div>
-          <div class="tm-history-date">{{ item.service_date|pro_date if item.service_date else "No date" }}</div>
-        </div>
-        <div class="tm-crm-chip-row">
-          <span class="tm-crm-chip">{{ "Repair" if item.source_type == "repair" else "Maintenance" }}</span>
-          {% if item.mileage is not none %}
-          <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
-          {% endif %}
-          {% if item.labor_cost is not none %}
-          <span class="tm-crm-chip">Labor {{ item.labor_cost|pro_currency }}</span>
-          {% endif %}
-          {% if item.parts_cost is not none %}
-          <span class="tm-crm-chip">Parts {{ item.parts_cost|pro_currency }}</span>
-          {% endif %}
-        </div>
-        {% if item.notes %}
-        <div style="color:#475569;">{{ item.notes }}</div>
-        {% endif %}
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No service history recorded for this vehicle yet.
-    </div>
-    {% endif %}
-  </section>
-
-  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;">
+  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section>
     <div class="tm-crm-kicker">Vehicle Timeline</div>
     <h2 style="margin:4px 0 0;">Vehicle Timeline</h2>
 
@@ -1450,6 +1303,77 @@
     section.appendChild(listEl);
   }
 
+  function formatTimelineDate(value) {
+    if (!value) return "No date";
+    const datePart = String(value).slice(0, 10);
+    const parts = datePart.split("-");
+    if (parts.length !== 3) return datePart;
+    return `${parts[1]}/${parts[2]}/${parts[0]}`;
+  }
+
+  function formatTimelineMiles(value) {
+    if (value === undefined || value === null || value === "") return "";
+    const numberValue = Number(value);
+    if (!Number.isFinite(numberValue)) return "";
+    return `${numberValue.toLocaleString()} miles`;
+  }
+
+  function renderVehicleTimeline(records) {
+    const section = document.querySelector("[data-vehicle-timeline-section]");
+    if (!section) return;
+    while (section.children.length > 2) {
+      section.lastElementChild.remove();
+    }
+    if (!records?.length) {
+      const empty = document.createElement("div");
+      empty.className = "tm-history-empty";
+      empty.style.marginTop = "12px";
+      empty.textContent = "No vehicle history recorded yet.";
+      section.appendChild(empty);
+      return;
+    }
+
+    const listEl = document.createElement("div");
+    listEl.className = "tm-vehicle-timeline";
+    records.forEach((item) => {
+      const link = document.createElement("a");
+      link.className = "tm-timeline-item";
+      link.href = item.url || "#";
+
+      const dot = document.createElement("span");
+      dot.className = `tm-timeline-dot tm-timeline-dot--${item.record_type_key || ""}`;
+      dot.setAttribute("aria-hidden", "true");
+      link.appendChild(dot);
+
+      const content = document.createElement("div");
+      content.className = "tm-timeline-content";
+
+      const meta = document.createElement("div");
+      meta.className = "tm-timeline-meta";
+      const badge = document.createElement("span");
+      badge.className = `tm-timeline-badge tm-timeline-badge--${item.record_type_key || ""}`;
+      badge.textContent = item.record_type || "";
+      const dateEl = document.createElement("span");
+      dateEl.className = "tm-history-date";
+      dateEl.textContent = formatTimelineDate(item.date);
+      meta.appendChild(badge);
+      meta.appendChild(dateEl);
+      content.appendChild(meta);
+
+      appendTextLine(content, "tm-history-title", item.service_name || "History event");
+      const mileageText = formatTimelineMiles(item.mileage);
+      if (mileageText) {
+        const mileageEl = document.createElement("div");
+        mileageEl.style.color = "#475569";
+        mileageEl.textContent = mileageText;
+        content.appendChild(mileageEl);
+      }
+      link.appendChild(content);
+      listEl.appendChild(link);
+    });
+    section.appendChild(listEl);
+  }
+
   function liveCountDebug(...args) {
     if (window.localStorage?.getItem("tmDebugLiveCounts") === "1") {
       console.log("[live-counts]", ...args);
@@ -1512,6 +1436,9 @@
     }
     if (decisionLogs) {
       renderCustomerDecisionLogs(decisionLogs.records || []);
+    }
+    if (payload.vehicle_timeline) {
+      renderVehicleTimeline(payload.vehicle_timeline || []);
     }
   }
 
