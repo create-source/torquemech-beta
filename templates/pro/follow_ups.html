@@ -104,6 +104,28 @@
     font-size: 0.92rem;
   }
 
+  .tm-follow-contact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tm-follow-copy-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .tm-follow-copy-status {
+    color: #0f766e;
+    font-size: 0.86rem;
+    font-weight: 900;
+    min-height: 1.2em;
+  }
+
   .tm-follow-status {
     border-radius: 999px;
     background: #e0f2fe;
@@ -201,6 +223,11 @@
     .tm-follow-actions .tm-btn {
       width: 100%;
     }
+
+    .tm-follow-copy-row .tm-btn,
+    .tm-follow-contact .tm-btn {
+      width: 100%;
+    }
   }
 </style>
 {% endblock %}
@@ -211,7 +238,13 @@
     <div>
       <div class="tm-follow-name">{{ item.customer_name }}</div>
       <div class="tm-follow-meta">
-        {{ item.phone|pro_phone if item.phone else "No phone recorded" }}{% if item.email %} | {{ item.email }}{% endif %}
+        <div class="tm-follow-contact">
+          <span>{{ item.phone|pro_phone if item.phone else "No phone recorded" }}{% if item.email %} | {{ item.email }}{% endif %}</span>
+          {% if item.phone %}
+          <button class="tm-btn tm-btn-secondary" type="button" data-copy-value="{{ item.phone }}" data-copy-success="Phone copied">Copy Phone</button>
+          <span class="tm-follow-copy-status" aria-live="polite"></span>
+          {% endif %}
+        </div>
       </div>
       <div class="tm-follow-meta">{{ item.vehicle_label }}</div>
     </div>
@@ -255,7 +288,11 @@
 
   <div class="tm-follow-message">
     <div class="tm-follow-message-label">Suggested Message</div>
-    <div>{{ item.suggested_message }}</div>
+    <div data-suggested-message>{{ item.suggested_message }}</div>
+    <div class="tm-follow-copy-row">
+      <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Copy Message</button>
+      <span class="tm-follow-copy-status" aria-live="polite"></span>
+    </div>
   </div>
 
   <div class="tm-follow-actions">
@@ -297,7 +334,11 @@
       <h2 style="margin:4px 0 8px;">Copy-Only Reminder Text</h2>
       <div class="tm-follow-message">
         <div class="tm-follow-message-label">Suggested Message</div>
-        <div>Hi [Customer Name], this is [Shop Name]. According to our records, your [Vehicle] may be due for [Service Type]. Let me know if you'd like to schedule service.</div>
+        <div data-suggested-message>Hi [Customer Name], this is [Shop Name]. According to our records, your [Vehicle] may be due for [Service Type]. Let me know if you'd like to schedule service.</div>
+        <div class="tm-follow-copy-row">
+          <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Copy Message</button>
+          <span class="tm-follow-copy-status" aria-live="polite"></span>
+        </div>
       </div>
     </section>
 
@@ -326,4 +367,51 @@
     {% endfor %}
   </div>
 </section>
+
+<script>
+(() => {
+  async function copyText(value) {
+    const text = String(value || "");
+    if (!text) return false;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
+  }
+
+  function showCopyStatus(button, message) {
+    const container = button.closest(".tm-follow-copy-row, .tm-follow-contact");
+    const status = container?.querySelector(".tm-follow-copy-status");
+    if (!status) return;
+    status.textContent = message;
+    window.clearTimeout(status.dataset.copyTimer);
+    status.dataset.copyTimer = window.setTimeout(() => {
+      status.textContent = "";
+    }, 2200);
+  }
+
+  document.querySelectorAll("[data-copy-message], [data-copy-value]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const messageEl = button.closest(".tm-follow-message")?.querySelector("[data-suggested-message]");
+      const value = button.dataset.copyValue || messageEl?.textContent?.trim() || "";
+      try {
+        const copied = await copyText(value);
+        showCopyStatus(button, copied ? button.dataset.copySuccess || "Copied" : "Copy failed");
+      } catch (error) {
+        showCopyStatus(button, "Copy failed");
+      }
+    });
+  });
+})();
+</script>
 {% endblock %}
