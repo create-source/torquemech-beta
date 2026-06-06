@@ -169,6 +169,24 @@
     margin-top: 14px;
   }
 
+  .tm-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .tm-timeline-count {
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+
+  .tm-timeline-toggle {
+    margin-top: 2px;
+  }
+
   .tm-timeline-item {
     position: relative;
     display: grid;
@@ -676,6 +694,15 @@
       flex: 1;
       text-align: center;
     }
+
+    .tm-timeline-header {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .tm-timeline-toggle {
+      width: 100%;
+    }
   }
 </style>
 {% endblock %}
@@ -805,6 +832,46 @@
     <div class="tm-crm-kicker">Recommendations & Findings</div>
     <h2 style="margin:4px 0 0;">Recommendations & Findings</h2>
 
+    <details class="tm-crm-disclosure" style="margin-top:16px;">
+      <summary>+ Add Finding</summary>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings">
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="finding">Finding</label>
+          <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600"></textarea>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="recommendation">Recommendation</label>
+          <textarea class="tm-input" id="recommendation" name="recommendation" rows="3" maxlength="1600"></textarea>
+        </div>
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="severity">Severity</label>
+            <select class="tm-input" id="severity" name="severity">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label class="tm-label" for="finding_mileage">Mileage</label>
+            <input class="tm-input" id="finding_mileage" name="mileage" type="text" inputmode="numeric">
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="finding_status">Status</label>
+          <select class="tm-input" id="finding_status" name="status" required>
+            <option value="Approved">Approved</option>
+            <option value="Open" selected>Open</option>
+            <option value="Completed">Completed</option>
+            <option value="Deferred">Deferred</option>
+            <option value="Declined">Declined</option>
+          </select>
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
+      </form>
+    </details>
+
     <div class="tm-history-summary" aria-label="Findings summary">
       <div class="tm-history-summary-card">
         <span>Approved</span>
@@ -871,49 +938,61 @@
     {% endif %}
   </section>
 
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
-    <summary>+ Add Finding</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings">
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="finding">Finding</label>
-        <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600"></textarea>
-      </div>
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="recommendation">Recommendation</label>
-        <textarea class="tm-input" id="recommendation" name="recommendation" rows="3" maxlength="1600"></textarea>
-      </div>
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="severity">Severity</label>
-          <select class="tm-input" id="severity" name="severity">
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
-          </select>
-        </div>
-        <div>
-          <label class="tm-label" for="finding_mileage">Mileage</label>
-          <input class="tm-input" id="finding_mileage" name="mileage" type="text" inputmode="numeric">
-        </div>
-      </div>
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="finding_status">Status</label>
-        <select class="tm-input" id="finding_status" name="status" required>
-          <option value="Approved">Approved</option>
-          <option value="Open" selected>Open</option>
-          <option value="Completed">Completed</option>
-          <option value="Deferred">Deferred</option>
-          <option value="Declined">Declined</option>
-        </select>
-      </div>
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding</button>
-    </form>
-  </details>
-
   <section class="tm-crm-panel" id="repair-history" aria-label="Repair history" style="margin-top:16px;">
     <div class="tm-crm-kicker">Repair History</div>
     <h2 style="margin:4px 0 0;">Repair History</h2>
+
+    <details class="tm-crm-disclosure" style="margin-top:16px;">
+      <summary>Add Repair Record</summary>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="repair_name">Repair Name</label>
+          <input class="tm-input" id="repair_name" name="repair_name" type="text" maxlength="180">
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-switch-control" for="also_update_maintenance_tracking">
+            <input id="also_update_maintenance_tracking" name="also_update_maintenance_tracking" type="checkbox" value="1" role="switch" data-repair-maintenance-toggle>
+            <span class="tm-switch-track" aria-hidden="true"></span>
+            <span>Track as Maintenance Item</span>
+          </label>
+        </div>
+
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="repair_date">Repair Date</label>
+            <input class="tm-input" id="repair_date" name="repair_date" type="date">
+          </div>
+          <div>
+            <label class="tm-label" for="repair_mileage">Mileage</label>
+            <input class="tm-input" id="repair_mileage" name="mileage" type="text" inputmode="numeric">
+          </div>
+        </div>
+
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="labor_hours">Labor Hours</label>
+            <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1">
+          </div>
+          <div>
+            <label class="tm-label" for="parts_cost">Parts Cost</label>
+            <input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="labor_cost">Labor Cost</label>
+          <input class="tm-input" id="labor_cost" name="labor_cost" type="text" inputmode="decimal">
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="repair_notes">Notes</label>
+          <textarea class="tm-input" id="repair_notes" name="notes" rows="4" maxlength="1600"></textarea>
+        </div>
+
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Repair Record</button>
+      </form>
+    </details>
 
     <div class="tm-history-summary tm-history-summary--repairs" aria-label="Repair history summary">
       <div class="tm-history-summary-card">
@@ -1000,61 +1079,64 @@
     {% endif %}
   </section>
 
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
-    <summary>Add Repair Record</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="repair_name">Repair Name</label>
-        <input class="tm-input" id="repair_name" name="repair_name" type="text" maxlength="180">
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-switch-control" for="also_update_maintenance_tracking">
-          <input id="also_update_maintenance_tracking" name="also_update_maintenance_tracking" type="checkbox" value="1" role="switch" data-repair-maintenance-toggle>
-          <span class="tm-switch-track" aria-hidden="true"></span>
-          <span>Track as Maintenance Item</span>
-        </label>
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="repair_date">Repair Date</label>
-          <input class="tm-input" id="repair_date" name="repair_date" type="date">
-        </div>
-        <div>
-          <label class="tm-label" for="repair_mileage">Mileage</label>
-          <input class="tm-input" id="repair_mileage" name="mileage" type="text" inputmode="numeric">
-        </div>
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="labor_hours">Labor Hours</label>
-          <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1">
-        </div>
-        <div>
-          <label class="tm-label" for="parts_cost">Parts Cost</label>
-          <input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal">
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="labor_cost">Labor Cost</label>
-        <input class="tm-input" id="labor_cost" name="labor_cost" type="text" inputmode="decimal">
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="repair_notes">Notes</label>
-        <textarea class="tm-input" id="repair_notes" name="notes" rows="4" maxlength="1600"></textarea>
-      </div>
-
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Repair Record</button>
-    </form>
-  </details>
-
   <section class="tm-crm-panel" id="maintenance-tracking" aria-label="Maintenance records" style="margin-top:16px;">
     <div class="tm-crm-kicker">Maintenance</div>
     <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
+
+    <details class="tm-crm-disclosure" style="margin-top:16px;">
+      <summary>Add Maintenance Record</summary>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance" data-maintenance-defaults="add">
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="service_type">Service type</label>
+          <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="180" list="maintenance-service-options">
+          <datalist id="maintenance-service-options">
+            {% for option in maintenance_service_options %}
+            <option value="{{ option.name }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="date_performed">Date performed</label>
+            <input class="tm-input" id="date_performed" name="date_performed" type="date">
+          </div>
+          <div>
+            <label class="tm-label" for="mileage_performed">Mileage performed</label>
+            <input class="tm-input" id="mileage_performed" name="mileage_performed" type="text" inputmode="numeric">
+          </div>
+        </div>
+
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="interval_miles">Interval miles</label>
+            <input class="tm-input" id="interval_miles" name="interval_miles" type="text" inputmode="numeric">
+          </div>
+          <div>
+            <label class="tm-label" for="interval_months">Interval months</label>
+            <input class="tm-input" id="interval_months" name="interval_months" type="number" min="0" step="1">
+          </div>
+        </div>
+
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="due_mileage">Next due mileage</label>
+            <input class="tm-input" id="due_mileage" name="due_mileage" type="text" inputmode="numeric" placeholder="Auto-calculated unless entered">
+          </div>
+          <div>
+            <label class="tm-label" for="due_date">Next due date</label>
+            <input class="tm-input" id="due_date" name="due_date" type="date">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="maintenance_notes">Notes</label>
+          <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600" placeholder="Maintenance condition, parts/fluids used, customer notes, or interval context."></textarea>
+        </div>
+
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Maintenance Record</button>
+      </form>
+    </details>
 
     {% if maintenance_records %}
     <div class="tm-maintenance-cards">
@@ -1104,69 +1186,19 @@
     {% endif %}
   </section>
 
-  <details class="tm-crm-panel tm-crm-disclosure" style="margin-top:16px;">
-    <summary>Add Maintenance Record</summary>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance" data-maintenance-defaults="add">
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="service_type">Service type</label>
-        <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="180" list="maintenance-service-options">
-        <datalist id="maintenance-service-options">
-          {% for option in maintenance_service_options %}
-          <option value="{{ option.name }}"></option>
-          {% endfor %}
-        </datalist>
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="date_performed">Date performed</label>
-          <input class="tm-input" id="date_performed" name="date_performed" type="date">
-        </div>
-        <div>
-          <label class="tm-label" for="mileage_performed">Mileage performed</label>
-          <input class="tm-input" id="mileage_performed" name="mileage_performed" type="text" inputmode="numeric">
-        </div>
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="interval_miles">Interval miles</label>
-          <input class="tm-input" id="interval_miles" name="interval_miles" type="text" inputmode="numeric">
-        </div>
-        <div>
-          <label class="tm-label" for="interval_months">Interval months</label>
-          <input class="tm-input" id="interval_months" name="interval_months" type="number" min="0" step="1">
-        </div>
-      </div>
-
-      <div class="tm-crm-row" style="margin-top:12px;">
-        <div>
-          <label class="tm-label" for="due_mileage">Next due mileage</label>
-          <input class="tm-input" id="due_mileage" name="due_mileage" type="text" inputmode="numeric" placeholder="Auto-calculated unless entered">
-        </div>
-        <div>
-          <label class="tm-label" for="due_date">Next due date</label>
-          <input class="tm-input" id="due_date" name="due_date" type="date">
-        </div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="maintenance_notes">Notes</label>
-        <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600" placeholder="Maintenance condition, parts/fluids used, customer notes, or interval context."></textarea>
-      </div>
-
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Maintenance Record</button>
-    </form>
-  </details>
-
-  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section>
+  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section data-timeline-limit="5" data-timeline-expanded="false">
     <div class="tm-crm-kicker">Vehicle Timeline</div>
-    <h2 style="margin:4px 0 0;">Vehicle Timeline</h2>
+    <div class="tm-timeline-header">
+      <h2 style="margin:4px 0 0;">Vehicle Timeline <span class="tm-timeline-count" data-timeline-count>({{ vehicle_timeline|length }} {% if vehicle_timeline|length == 1 %}entry{% else %}entries{% endif %})</span></h2>
+      {% if vehicle_timeline|length > 5 %}
+      <button class="tm-btn tm-btn-secondary tm-timeline-toggle" type="button" data-timeline-toggle>Show Full Timeline ({{ vehicle_timeline|length }} entries)</button>
+      {% endif %}
+    </div>
 
     {% if vehicle_timeline %}
     <div class="tm-vehicle-timeline">
       {% for item in vehicle_timeline %}
-      <a class="tm-timeline-item" href="{{ item.url }}">
+      <a class="tm-timeline-item" href="{{ item.url }}" data-timeline-item {% if vehicle_timeline|length > 5 and loop.index > 5 %}hidden{% endif %}>
         <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
         <div class="tm-timeline-content">
           <div class="tm-timeline-meta">
@@ -1318,11 +1350,46 @@
     return `${numberValue.toLocaleString()} miles`;
   }
 
+  function timelineCountLabel(total) {
+    return `(${total} ${total === 1 ? "entry" : "entries"})`;
+  }
+
+  function applyVehicleTimelineCollapse(section) {
+    const limit = Number(section?.dataset.timelineLimit || 5);
+    const items = Array.from(section?.querySelectorAll("[data-timeline-item]") || []);
+    const toggle = section?.querySelector("[data-timeline-toggle]");
+    const countEl = section?.querySelector("[data-timeline-count]");
+    const total = items.length;
+    const expanded = section?.dataset.timelineExpanded === "true";
+    if (countEl) countEl.textContent = timelineCountLabel(total);
+    if (!toggle) return;
+    if (total <= limit) {
+      toggle.hidden = true;
+      items.forEach((item) => {
+        item.hidden = false;
+      });
+      return;
+    }
+    toggle.hidden = false;
+    toggle.textContent = expanded ? "Collapse Timeline" : `Show Full Timeline (${total} entries)`;
+    items.forEach((item, index) => {
+      item.hidden = !expanded && index >= limit;
+    });
+  }
+
   function renderVehicleTimeline(records) {
     const section = document.querySelector("[data-vehicle-timeline-section]");
     if (!section) return;
     while (section.children.length > 2) {
       section.lastElementChild.remove();
+    }
+    let toggle = section.querySelector("[data-timeline-toggle]");
+    if (!toggle && records?.length > 5) {
+      toggle = document.createElement("button");
+      toggle.className = "tm-btn tm-btn-secondary tm-timeline-toggle";
+      toggle.type = "button";
+      toggle.dataset.timelineToggle = "";
+      section.querySelector(".tm-timeline-header")?.appendChild(toggle);
     }
     if (!records?.length) {
       const empty = document.createElement("div");
@@ -1330,6 +1397,7 @@
       empty.style.marginTop = "12px";
       empty.textContent = "No vehicle history recorded yet.";
       section.appendChild(empty);
+      applyVehicleTimelineCollapse(section);
       return;
     }
 
@@ -1339,6 +1407,7 @@
       const link = document.createElement("a");
       link.className = "tm-timeline-item";
       link.href = item.url || "#";
+      link.dataset.timelineItem = "";
 
       const dot = document.createElement("span");
       dot.className = `tm-timeline-dot tm-timeline-dot--${item.record_type_key || ""}`;
@@ -1372,6 +1441,19 @@
       listEl.appendChild(link);
     });
     section.appendChild(listEl);
+    applyVehicleTimelineCollapse(section);
+  }
+
+  const vehicleTimelineSection = document.querySelector("[data-vehicle-timeline-section]");
+  if (vehicleTimelineSection) {
+    applyVehicleTimelineCollapse(vehicleTimelineSection);
+    vehicleTimelineSection.addEventListener("click", (event) => {
+      const toggle = event.target.closest("[data-timeline-toggle]");
+      if (!toggle) return;
+      vehicleTimelineSection.dataset.timelineExpanded =
+        vehicleTimelineSection.dataset.timelineExpanded === "true" ? "false" : "true";
+      applyVehicleTimelineCollapse(vehicleTimelineSection);
+    });
   }
 
   function liveCountDebug(...args) {
