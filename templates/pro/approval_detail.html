@@ -108,7 +108,7 @@
     <div class="tm-approval-kicker">Finding</div>
     <div class="tm-approval-chip-row">
       <span class="tm-approval-chip">
-        {% if approval.request_type == "labor" %}Additional Labor{% elif approval.request_type == "parts" %}Additional Parts{% else %}General Finding{% endif %}
+        {% if approval.request_type == "labor" %}Additional Labor{% elif approval.request_type == "parts" %}Additional Parts{% else %}Finding{% endif %}
       </span>
       <span class="tm-approval-chip">{{ approval.customer_decision or "pending" }}</span>
       {% if customer.customer_status == "inactive" %}
@@ -130,7 +130,11 @@
     <div style="color:#475569;"><strong>Labor reason:</strong> {{ approval.labor_reason }}</div>
     {% endif %}
     {% elif approval.request_type == "parts" %}
-    <div style="color:#475569;"><strong>Parts:</strong> {{ approval.part_description or "No part description recorded." }}{% if approval.quantity is not none %} | Qty {{ approval.quantity }}{% endif %}{% if approval.unit_cost is not none %} @ {{ approval.unit_cost|pro_currency }}{% endif %}{% if approval.parts_amount is not none %} | Total {{ approval.parts_amount|pro_currency }}{% endif %}</div>
+    <div style="color:#475569;"><strong>Part Name:</strong> {{ approval.part_name or approval.part_description or "No part name recorded." }}</div>
+    <div style="color:#475569;"><strong>Part Number:</strong> {{ approval.part_number or "-" }}</div>
+    <div style="color:#475569;"><strong>Quantity:</strong> {% if approval.quantity is not none %}{{ approval.quantity }}{% else %}-{% endif %}</div>
+    <div style="color:#475569;"><strong>Unit Cost:</strong> {% if approval.unit_cost is not none %}{{ approval.unit_cost|pro_currency }}{% else %}-{% endif %}</div>
+    <div style="color:#475569;"><strong>Parts Total:</strong> {% if approval.parts_total is not none %}{{ approval.parts_total|pro_currency }}{% elif approval.parts_amount is not none %}{{ approval.parts_amount|pro_currency }}{% else %}-{% endif %}</div>
     {% endif %}
     {% if approval.decision_notes %}
     <div style="color:#475569;"><strong>Decision notes:</strong> {{ approval.decision_notes }}</div>
@@ -143,7 +147,7 @@
     <div>
       <label class="tm-label" for="request_type">Request type</label>
       <select class="tm-input" id="request_type" name="request_type" data-request-type-select>
-        <option value="general" {% if not approval.request_type or approval.request_type == "general" %}selected{% endif %}>General Finding</option>
+        <option value="finding" {% if not approval.request_type or approval.request_type in ["finding", "general"] %}selected{% endif %}>Finding</option>
         <option value="labor" {% if approval.request_type == "labor" %}selected{% endif %}>Additional Labor</option>
         <option value="parts" {% if approval.request_type == "parts" %}selected{% endif %}>Additional Parts</option>
       </select>
@@ -175,6 +179,7 @@
           <option value="pending" {% if approval.customer_decision == "pending" %}selected{% endif %}>Pending</option>
           <option value="approved" {% if approval.customer_decision == "approved" %}selected{% endif %}>Approved</option>
           <option value="declined" {% if approval.customer_decision == "declined" %}selected{% endif %}>Declined</option>
+          <option value="deferred" {% if approval.customer_decision == "deferred" %}selected{% endif %}>Deferred</option>
         </select>
       </div>
     </div>
@@ -200,8 +205,12 @@
     <section class="tm-request-type-section" data-request-type-section="parts" {% if approval.request_type != "parts" %}hidden{% endif %} style="margin-top:12px;">
       <div class="tm-approval-kicker">Additional Parts</div>
       <div style="margin-top:8px;">
-        <label class="tm-label" for="part_description">Part description</label>
-        <input class="tm-input" id="part_description" name="part_description" type="text" maxlength="300" value="{{ approval.part_description or '' }}">
+        <label class="tm-label" for="part_name">Part Name</label>
+        <input class="tm-input" id="part_name" name="part_name" type="text" maxlength="300" value="{{ approval.part_name or approval.part_description or '' }}">
+      </div>
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="part_number">Part Number</label>
+        <input class="tm-input" id="part_number" name="part_number" type="text" maxlength="160" value="{{ approval.part_number or '' }}">
       </div>
       <div class="tm-approval-row" style="margin-top:12px;">
         <div>
@@ -212,6 +221,10 @@
           <label class="tm-label" for="unit_cost">Unit cost</label>
           <input class="tm-input" id="unit_cost" name="unit_cost" type="text" inputmode="decimal" value="{{ '%.2f'|format(approval.unit_cost) if approval.unit_cost is not none else '' }}">
         </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="parts_total">Parts Total</label>
+        <input class="tm-input" id="parts_total" type="text" readonly value="{% if approval.parts_total is not none %}{{ approval.parts_total|pro_currency }}{% elif approval.parts_amount is not none %}{{ approval.parts_amount|pro_currency }}{% endif %}">
       </div>
     </section>
 
@@ -236,6 +249,10 @@
         <input type="hidden" name="decision_notes" value="{{ approval.decision_notes or '' }}">
         <button class="tm-btn tm-btn-secondary" type="submit">Mark Declined</button>
       </form>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}/defer">
+        <input type="hidden" name="decision_notes" value="{{ approval.decision_notes or '' }}">
+        <button class="tm-btn tm-btn-secondary" type="submit">Mark Deferred</button>
+      </form>
     </div>
   </section>
 </section>
@@ -245,12 +262,35 @@
   const select = document.querySelector("[data-request-type-select]");
   const sections = Array.from(document.querySelectorAll("[data-request-type-section]"));
   if (!select) return;
+  const quantity = document.querySelector("#quantity");
+  const unitCost = document.querySelector("#unit_cost");
+  const partsTotal = document.querySelector("#parts_total");
+
+  function parseMoney(value) {
+    const numeric = Number(String(value || "").replace(/[$,]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function formatMoney(value) {
+    return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  }
+
+  function updatePartsTotal() {
+    if (!partsTotal) return;
+    const quantityValue = parseMoney(quantity?.value);
+    const unitCostValue = parseMoney(unitCost?.value);
+    partsTotal.value = quantityValue !== null && unitCostValue !== null ? formatMoney(quantityValue * unitCostValue) : "";
+  }
+
   function updateRequestSections() {
     sections.forEach((section) => {
       section.hidden = section.dataset.requestTypeSection !== select.value;
     });
+    updatePartsTotal();
   }
   select.addEventListener("change", updateRequestSections);
+  quantity?.addEventListener("input", updatePartsTotal);
+  unitCost?.addEventListener("input", updatePartsTotal);
   updateRequestSections();
 })();
 </script>

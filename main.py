@@ -609,7 +609,7 @@ def init_pro_crm_schema_db() -> None:
               vehicle_id INTEGER NOT NULL,
               service_history_id INTEGER,
               shop_id INTEGER,
-              request_type TEXT NOT NULL DEFAULT 'general',
+              request_type TEXT NOT NULL DEFAULT 'finding',
               finding_title TEXT,
               finding_description TEXT,
               recommended_repair TEXT,
@@ -619,10 +619,13 @@ def init_pro_crm_schema_db() -> None:
               labor_amount REAL,
               labor_reason TEXT,
               part_description TEXT,
+              part_name TEXT,
+              part_number TEXT,
               quantity REAL,
               unit_cost REAL,
               parts_amount REAL,
-              customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined')),
+              parts_total REAL,
+              customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined', 'deferred')),
               decision_notes TEXT,
               decision_recorded_at TEXT,
               created_at TEXT NOT NULL,
@@ -633,20 +636,31 @@ def init_pro_crm_schema_db() -> None:
             )
             """
         )
-        add_column_if_missing("discrepancy_approvals", "request_type", "request_type TEXT NOT NULL DEFAULT 'general'")
+        add_column_if_missing("discrepancy_approvals", "request_type", "request_type TEXT NOT NULL DEFAULT 'finding'")
         add_column_if_missing("discrepancy_approvals", "labor_hours", "labor_hours REAL")
         add_column_if_missing("discrepancy_approvals", "labor_rate", "labor_rate REAL")
         add_column_if_missing("discrepancy_approvals", "labor_amount", "labor_amount REAL")
         add_column_if_missing("discrepancy_approvals", "labor_reason", "labor_reason TEXT")
         add_column_if_missing("discrepancy_approvals", "part_description", "part_description TEXT")
+        add_column_if_missing("discrepancy_approvals", "part_name", "part_name TEXT")
+        add_column_if_missing("discrepancy_approvals", "part_number", "part_number TEXT")
         add_column_if_missing("discrepancy_approvals", "quantity", "quantity REAL")
         add_column_if_missing("discrepancy_approvals", "unit_cost", "unit_cost REAL")
         add_column_if_missing("discrepancy_approvals", "parts_amount", "parts_amount REAL")
+        add_column_if_missing("discrepancy_approvals", "parts_total", "parts_total REAL")
         conn.execute(
             """
             UPDATE discrepancy_approvals
-            SET request_type = 'general'
-            WHERE request_type IS NULL OR TRIM(request_type) = ''
+            SET request_type = 'finding'
+            WHERE request_type IS NULL OR TRIM(request_type) = '' OR request_type = 'general'
+            """
+        )
+        conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET part_name = COALESCE(NULLIF(part_name, ''), part_description),
+                parts_total = COALESCE(parts_total, parts_amount)
+            WHERE request_type = 'parts'
             """
         )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")
@@ -654,6 +668,25 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_service_history_id ON discrepancy_approvals (service_history_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_decision ON discrepancy_approvals (customer_decision)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_created_at ON discrepancy_approvals (created_at)")
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS discrepancy_approval_events (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              approval_id INTEGER NOT NULL,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              event_type TEXT NOT NULL,
+              event_label TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (approval_id) REFERENCES discrepancy_approvals(id),
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approval_events_vehicle ON discrepancy_approval_events (vehicle_id, created_at)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approval_events_approval ON discrepancy_approval_events (approval_id)")
 
         conn.commit()
     finally:

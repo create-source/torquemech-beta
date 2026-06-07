@@ -11,7 +11,7 @@
 
   .tm-approval-summary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
   }
 
@@ -40,6 +40,11 @@
   .tm-approval-summary-card--declined,
   .tm-approval-record--declined {
     border-left-color: #991b1b;
+  }
+
+  .tm-approval-summary-card--deferred,
+  .tm-approval-record--deferred {
+    border-left-color: #475569;
   }
 
   .tm-approval-count {
@@ -122,6 +127,11 @@
     color: #991b1b;
   }
 
+  .tm-approval-badge--deferred {
+    background: #e2e8f0;
+    color: #334155;
+  }
+
   .tm-approval-badge--inactive {
     background: #f1f5f9;
     color: #475569;
@@ -134,6 +144,10 @@
     color: #64748b;
     background: rgba(255, 255, 255, 0.78);
     margin-top: 12px;
+  }
+
+  .tm-request-type-section[hidden] {
+    display: none;
   }
 
   @media (max-width: 760px) {
@@ -174,7 +188,10 @@
   </div>
   {% elif item.request_type == "parts" %}
   <div class="tm-approval-meta">
-    Parts: {{ item.part_description or "No part description recorded" }}{% if item.quantity is not none %} | Qty {{ item.quantity }}{% endif %}{% if item.unit_cost is not none %} @ {{ item.unit_cost|pro_currency }}{% endif %}{% if item.parts_amount is not none %} | Total {{ item.parts_amount|pro_currency }}{% endif %}
+    Part Name: {{ item.part_name or item.part_description or "No part name recorded" }}
+  </div>
+  <div class="tm-approval-meta">
+    Part Number: {{ item.part_number or "-" }} | Quantity: {% if item.quantity is not none %}{{ item.quantity }}{% else %}-{% endif %} | Unit Cost: {% if item.unit_cost is not none %}{{ item.unit_cost|pro_currency }}{% else %}-{% endif %} | Parts Total: {% if item.parts_total is not none %}{{ item.parts_total|pro_currency }}{% elif item.parts_amount is not none %}{{ item.parts_amount|pro_currency }}{% else %}-{% endif %}
   </div>
   {% endif %}
   <div class="tm-approval-meta">
@@ -195,6 +212,93 @@
   </div>
 
   <div class="tm-approval-shell">
+    <details class="tm-approval-panel">
+      <summary>Create Approval Request</summary>
+      <form method="post" action="/pro/approvals" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="vehicle_key">Customer Vehicle</label>
+          <select class="tm-input" id="vehicle_key" name="vehicle_key" required>
+            <option value="">Select vehicle</option>
+            {% for option in vehicle_options %}
+            <option value="{{ option.customer_id }}:{{ option.vehicle_id }}">{{ option.customer_name }} | {{ option.vehicle_label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="request_type">Request Type</label>
+          <select class="tm-input" id="request_type" name="request_type" data-request-type-select>
+            <option value="finding">Finding</option>
+            <option value="labor">Additional Labor</option>
+            <option value="parts">Additional Parts</option>
+          </select>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="finding_title">Title</label>
+          <input class="tm-input" id="finding_title" name="finding_title" type="text" maxlength="180">
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="finding_description">Description</label>
+          <textarea class="tm-input" id="finding_description" name="finding_description" rows="3" maxlength="1600"></textarea>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="recommended_repair">Recommended Repair</label>
+          <textarea class="tm-input" id="recommended_repair" name="recommended_repair" rows="3" maxlength="1200"></textarea>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="customer_decision">Customer Decision</label>
+          <select class="tm-input" id="customer_decision" name="customer_decision">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="declined">Declined</option>
+            <option value="deferred">Deferred</option>
+          </select>
+        </div>
+        <section class="tm-request-type-section" data-request-type-section="labor" hidden style="margin-top:12px;">
+          <div class="tm-approval-kicker">Additional Labor</div>
+          <div style="margin-top:8px;">
+            <label class="tm-label" for="labor_hours">Labor Hours</label>
+            <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1">
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="labor_rate">Labor Rate</label>
+            <input class="tm-input" id="labor_rate" name="labor_rate" type="text" inputmode="decimal">
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="labor_reason">Labor Reason</label>
+            <textarea class="tm-input" id="labor_reason" name="labor_reason" rows="3" maxlength="1200"></textarea>
+          </div>
+        </section>
+        <section class="tm-request-type-section" data-request-type-section="parts" hidden style="margin-top:12px;">
+          <div class="tm-approval-kicker">Additional Parts</div>
+          <div style="margin-top:8px;">
+            <label class="tm-label" for="part_name">Part Name</label>
+            <input class="tm-input" id="part_name" name="part_name" type="text" maxlength="300">
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="part_number">Part Number</label>
+            <input class="tm-input" id="part_number" name="part_number" type="text" maxlength="160">
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="quantity">Quantity</label>
+            <input class="tm-input" id="quantity" name="quantity" type="number" min="0" step="0.01" data-parts-quantity>
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="unit_cost">Unit Cost</label>
+            <input class="tm-input" id="unit_cost" name="unit_cost" type="text" inputmode="decimal" data-parts-unit-cost>
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="parts_total">Parts Total</label>
+            <input class="tm-input" id="parts_total" type="text" readonly data-parts-total>
+          </div>
+        </section>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="decision_notes">Decision Notes</label>
+          <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600">
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Create Approval Request</button>
+      </form>
+    </details>
+
     <section class="tm-approval-summary" aria-label="Approval summary">
       <div class="tm-approval-summary-card tm-approval-summary-card--pending">
         <div class="tm-approval-count">{{ summary.pending }}</div>
@@ -208,12 +312,17 @@
         <div class="tm-approval-count">{{ summary.declined }}</div>
         <div class="tm-approval-label">Declined</div>
       </div>
+      <div class="tm-approval-summary-card tm-approval-summary-card--deferred">
+        <div class="tm-approval-count">{{ summary.deferred }}</div>
+        <div class="tm-approval-label">Deferred</div>
+      </div>
     </section>
 
     {% set sections = [
       ("pending", "Pending", "Findings awaiting customer decision."),
       ("approved", "Approved", "Findings the customer approved."),
-      ("declined", "Declined", "Findings the customer declined.")
+      ("declined", "Declined", "Findings the customer declined."),
+      ("deferred", "Deferred", "Findings the customer deferred.")
     ] %}
 
     {% for key, title, description in sections %}
@@ -235,4 +344,42 @@
     {% endfor %}
   </div>
 </section>
+<script>
+(() => {
+  const select = document.querySelector("[data-request-type-select]");
+  const sections = Array.from(document.querySelectorAll("[data-request-type-section]"));
+  const quantity = document.querySelector("[data-parts-quantity]");
+  const unitCost = document.querySelector("[data-parts-unit-cost]");
+  const total = document.querySelector("[data-parts-total]");
+  if (!select) return;
+
+  function parseMoney(value) {
+    const numeric = Number(String(value || "").replace(/[$,]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function formatMoney(value) {
+    return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  }
+
+  function updateTotal() {
+    if (!total) return;
+    const quantityValue = parseMoney(quantity?.value);
+    const unitCostValue = parseMoney(unitCost?.value);
+    total.value = quantityValue !== null && unitCostValue !== null ? formatMoney(quantityValue * unitCostValue) : "";
+  }
+
+  function updateSections() {
+    sections.forEach((section) => {
+      section.hidden = section.dataset.requestTypeSection !== select.value;
+    });
+    updateTotal();
+  }
+
+  select.addEventListener("change", updateSections);
+  quantity?.addEventListener("input", updateTotal);
+  unitCost?.addEventListener("input", updateTotal);
+  updateSections();
+})();
+</script>
 {% endblock %}

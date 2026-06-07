@@ -44,7 +44,8 @@ FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined
 FINDING_SEVERITY_OPTIONS = ("Low", "Medium", "High", "Critical")
 FINDING_REQUEST_TYPES = ("finding", "labor")
 CUSTOMER_DECISION_LOG_STATUSES = {"Approved", "Deferred", "Declined"}
-APPROVAL_REQUEST_TYPES = ("general", "labor", "parts")
+APPROVAL_REQUEST_TYPES = ("finding", "labor", "parts")
+APPROVAL_DECISION_OPTIONS = ("pending", "approved", "declined", "deferred")
 
 
 def crm_db_conn() -> sqlite3.Connection:
@@ -113,7 +114,14 @@ def finding_labor_amount(labor_hours: float | None, labor_rate: float | None) ->
 
 def normalize_approval_request_type(raw_request_type: str | None) -> str:
     request_type = (raw_request_type or "general").strip().lower().replace("-", "_")
-    return request_type if request_type in APPROVAL_REQUEST_TYPES else "general"
+    if request_type == "general":
+        return "finding"
+    return request_type if request_type in APPROVAL_REQUEST_TYPES else "finding"
+
+
+def normalize_approval_decision(raw_decision: str | None) -> str:
+    decision = (raw_decision or "pending").strip().lower()
+    return decision if decision in APPROVAL_DECISION_OPTIONS else "pending"
 
 
 def approval_labor_amount(labor_hours: float | None, labor_rate: float | None) -> float | None:
@@ -128,10 +136,21 @@ def approval_parts_amount(quantity: float | None, unit_cost: float | None) -> fl
     return round(max(0.0, quantity) * max(0.0, unit_cost), 2)
 
 
+def approval_parts_event_label(decision: str | None = None) -> str:
+    decision_value = (decision or "").strip().lower()
+    if decision_value == "approved":
+        return "Customer Approved Parts Request"
+    if decision_value == "declined":
+        return "Customer Declined Parts Request"
+    if decision_value == "deferred":
+        return "Customer Deferred Parts Request"
+    return "Additional Parts Requested"
+
+
 def approval_request_type_label(value: Any) -> str:
     request_type = normalize_approval_request_type(str(value or "general"))
     return {
-        "general": "General Finding",
+        "finding": "Finding",
         "labor": "Additional Labor",
         "parts": "Additional Parts",
     }[request_type]
@@ -459,7 +478,7 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
           vehicle_id INTEGER NOT NULL,
           service_history_id INTEGER,
           shop_id INTEGER,
-          request_type TEXT NOT NULL DEFAULT 'general',
+          request_type TEXT NOT NULL DEFAULT 'finding',
           finding_title TEXT,
           finding_description TEXT,
           recommended_repair TEXT,
@@ -469,10 +488,13 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
           labor_amount REAL,
           labor_reason TEXT,
           part_description TEXT,
+          part_name TEXT,
+          part_number TEXT,
           quantity REAL,
           unit_cost REAL,
           parts_amount REAL,
-          customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined')),
+          parts_total REAL,
+          customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined', 'deferred')),
           decision_notes TEXT,
           decision_recorded_at TEXT,
           created_at TEXT NOT NULL,
@@ -485,7 +507,7 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
     )
     columns = {row[1] for row in conn.execute("PRAGMA table_info(discrepancy_approvals)").fetchall()}
     if "request_type" not in columns:
-        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN request_type TEXT NOT NULL DEFAULT 'general'")
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN request_type TEXT NOT NULL DEFAULT 'finding'")
     if "labor_hours" not in columns:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN labor_hours REAL")
     if "labor_rate" not in columns:
@@ -496,24 +518,151 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN labor_reason TEXT")
     if "part_description" not in columns:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN part_description TEXT")
+    if "part_name" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN part_name TEXT")
+    if "part_number" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN part_number TEXT")
     if "quantity" not in columns:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN quantity REAL")
     if "unit_cost" not in columns:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN unit_cost REAL")
     if "parts_amount" not in columns:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN parts_amount REAL")
+    if "parts_total" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN parts_total REAL")
     conn.execute(
         """
         UPDATE discrepancy_approvals
-        SET request_type = 'general'
-        WHERE request_type IS NULL OR TRIM(request_type) = ''
+        SET request_type = 'finding'
+        WHERE request_type IS NULL OR TRIM(request_type) = '' OR request_type = 'general'
         """
     )
+    conn.execute(
+        """
+        UPDATE discrepancy_approvals
+        SET part_name = COALESCE(NULLIF(part_name, ''), part_description),
+            parts_total = COALESCE(parts_total, parts_amount)
+        WHERE request_type = 'parts'
+        """
+    )
+    sql = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'discrepancy_approvals'"
+    ).fetchone()
+    if sql and "deferred" not in (sql["sql"] or ""):
+        rebuild_discrepancy_approvals_for_deferred(conn)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_vehicle_id ON discrepancy_approvals (vehicle_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_service_history_id ON discrepancy_approvals (service_history_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_decision ON discrepancy_approvals (customer_decision)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_created_at ON discrepancy_approvals (created_at)")
+
+
+def rebuild_discrepancy_approvals_for_deferred(conn: sqlite3.Connection) -> None:
+    conn.execute("ALTER TABLE discrepancy_approvals RENAME TO discrepancy_approvals_old")
+    conn.execute(
+        """
+        CREATE TABLE discrepancy_approvals (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          service_history_id INTEGER,
+          shop_id INTEGER,
+          request_type TEXT NOT NULL DEFAULT 'finding',
+          finding_title TEXT,
+          finding_description TEXT,
+          recommended_repair TEXT,
+          estimated_cost REAL,
+          labor_hours REAL,
+          labor_rate REAL,
+          labor_amount REAL,
+          labor_reason TEXT,
+          part_description TEXT,
+          part_name TEXT,
+          part_number TEXT,
+          quantity REAL,
+          unit_cost REAL,
+          parts_amount REAL,
+          parts_total REAL,
+          customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined', 'deferred')),
+          decision_notes TEXT,
+          decision_recorded_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (customer_id) REFERENCES customers(id),
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+          FOREIGN KEY (service_history_id) REFERENCES service_history(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO discrepancy_approvals (
+          id, customer_id, vehicle_id, service_history_id, shop_id, request_type,
+          finding_title, finding_description, recommended_repair, estimated_cost,
+          labor_hours, labor_rate, labor_amount, labor_reason, part_description,
+          part_name, part_number, quantity, unit_cost, parts_amount, parts_total,
+          customer_decision, decision_notes, decision_recorded_at, created_at, updated_at
+        )
+        SELECT
+          id, customer_id, vehicle_id, service_history_id, shop_id,
+          CASE WHEN request_type = 'general' OR request_type IS NULL OR TRIM(request_type) = '' THEN 'finding' ELSE request_type END,
+          finding_title, finding_description, recommended_repair, estimated_cost,
+          labor_hours, labor_rate, labor_amount, labor_reason, part_description,
+          COALESCE(NULLIF(part_name, ''), part_description), part_number,
+          quantity, unit_cost, parts_amount, COALESCE(parts_total, parts_amount),
+          customer_decision, decision_notes, decision_recorded_at, created_at, updated_at
+        FROM discrepancy_approvals_old
+        """
+    )
+    conn.execute("DROP TABLE discrepancy_approvals_old")
+
+
+def ensure_discrepancy_approval_events_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS discrepancy_approval_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          approval_id INTEGER NOT NULL,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          event_type TEXT NOT NULL,
+          event_label TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (approval_id) REFERENCES discrepancy_approvals(id),
+          FOREIGN KEY (customer_id) REFERENCES customers(id),
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_discrepancy_approval_events_vehicle "
+        "ON discrepancy_approval_events (vehicle_id, created_at)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_discrepancy_approval_events_approval "
+        "ON discrepancy_approval_events (approval_id)"
+    )
+
+
+def append_discrepancy_approval_event(
+    conn: sqlite3.Connection,
+    approval_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    event_type: str,
+    event_label: str,
+    created_at: str,
+) -> None:
+    ensure_discrepancy_approval_events_schema(conn)
+    conn.execute(
+        """
+        INSERT INTO discrepancy_approval_events (
+          approval_id, customer_id, vehicle_id, event_type, event_label, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (approval_id, customer_id, vehicle_id, event_type, event_label, created_at),
+    )
 
 
 def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
@@ -834,6 +983,7 @@ def vehicle_finding_activity_payload(
 ) -> dict[str, Any]:
     ensure_finding_history_records_schema(conn)
     ensure_customer_decision_logs_schema(conn)
+    ensure_discrepancy_approval_events_schema(conn)
     finding_history_records = [
         dict(row)
         for row in conn.execute(
@@ -856,6 +1006,19 @@ def vehicle_finding_activity_payload(
             JOIN findings_records fr ON fr.id = cdl.finding_id
             WHERE fr.customer_id = ? AND fr.vehicle_id = ?
             ORDER BY cdl.created_at DESC, cdl.id DESC
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
+    approval_event_records = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT dae.*, da.request_type, da.part_name, da.part_number
+            FROM discrepancy_approval_events dae
+            JOIN discrepancy_approvals da ON da.id = dae.approval_id
+            WHERE dae.customer_id = ? AND dae.vehicle_id = ?
+            ORDER BY dae.created_at DESC, dae.id DESC
             """,
             (customer_id, vehicle_id),
         ).fetchall()
@@ -896,6 +1059,7 @@ def vehicle_finding_activity_payload(
         findings_records,
         finding_history_records,
         customer_decision_logs,
+        approval_event_records,
     )
     finding_history_count = len(finding_history_records)
     customer_decision_log_count = len(customer_decision_logs)
@@ -1244,7 +1408,7 @@ def load_approval_record(
 
 
 def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-    grouped = {"pending": [], "approved": [], "declined": []}
+    grouped = {"pending": [], "approved": [], "declined": [], "deferred": []}
     for record in records:
         key = str(record.get("customer_decision") or "pending").lower()
         grouped.setdefault(key, []).append(record)
@@ -1282,6 +1446,7 @@ def build_vehicle_timeline(
     findings_records: list[dict[str, Any]],
     finding_history_records: list[dict[str, Any]],
     customer_decision_logs: list[dict[str, Any]],
+    approval_event_records: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     finding_ids_with_created_history = {
         int(record.get("finding_id") or 0)
@@ -1354,6 +1519,19 @@ def build_vehicle_timeline(
             record.get("decision_status") or "",
         )
         not in finding_status_history_keys
+    )
+    timeline.extend(
+        {
+            "id": record["id"],
+            "record_type": "Approval",
+            "record_type_key": "finding",
+            "date": record.get("created_at") or "",
+            "created_at": record.get("created_at") or "",
+            "service_name": record.get("event_label") or "Approval Event",
+            "mileage": None,
+            "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{record.get('approval_id')}",
+        }
+        for record in (approval_event_records or [])
     )
     if vehicle.get("mileage") is not None and vehicle.get("updated_at"):
         timeline.append(
@@ -1498,10 +1676,30 @@ def pro_approvals(request: Request):
                   CASE a.customer_decision
                     WHEN 'pending' THEN 0
                     WHEN 'approved' THEN 1
-                    ELSE 2
+                    WHEN 'deferred' THEN 2
+                    ELSE 3
                   END,
                   a.created_at DESC,
                   a.id DESC
+                """
+            ).fetchall()
+        ]
+        vehicle_options = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT
+                  v.id AS vehicle_id,
+                  v.customer_id,
+                  v.year AS vehicle_year,
+                  v.make AS vehicle_make,
+                  v.model AS vehicle_model,
+                  c.first_name,
+                  c.last_name,
+                  c.phone
+                FROM customer_vehicles v
+                JOIN customers c ON c.id = v.customer_id
+                ORDER BY c.last_name, c.first_name, v.year DESC, v.make, v.model
                 """
             ).fetchall()
         ]
@@ -1517,6 +1715,9 @@ def pro_approvals(request: Request):
             f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
             f"/approvals/{record['id']}"
         )
+    for option in vehicle_options:
+        option["customer_name"] = customer_name(option)
+        option["vehicle_label"] = vehicle_label(option)
 
     grouped = group_approval_records(records)
 
@@ -1526,6 +1727,7 @@ def pro_approvals(request: Request):
             "request": request,
             "groups": grouped,
             "summary": {key: len(items) for key, items in grouped.items()},
+            "vehicle_options": vehicle_options,
         },
     )
 
@@ -1957,6 +2159,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             ).fetchall()
         ]
         ensure_discrepancy_approvals_schema(conn)
+        ensure_discrepancy_approval_events_schema(conn)
         approval_records = [
             dict(row)
             for row in conn.execute(
@@ -1976,6 +2179,19 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        approval_event_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT dae.*, da.request_type, da.part_name, da.part_number
+                FROM discrepancy_approval_events dae
+                JOIN discrepancy_approvals da ON da.id = dae.approval_id
+                WHERE dae.customer_id = ? AND dae.vehicle_id = ?
+                ORDER BY dae.created_at DESC, dae.id DESC
+                """,
+                (customer_id, vehicle_id),
+            ).fetchall()
+        ]
     finally:
         conn.close()
 
@@ -1988,6 +2204,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         findings_records,
         finding_history_records,
         customer_decision_logs,
+        approval_event_records,
     )
     repair_history_summary = build_repair_history_summary(repair_records)
     findings_summary = build_findings_summary(findings_records)
@@ -2379,65 +2596,143 @@ async def pro_finding_record_status_update(
     )
 
 
-@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals")
-async def pro_approval_record_create(request: Request, customer_id: int, vehicle_id: int):
-    form = await read_form_data(request)
-    now = datetime.utcnow().isoformat()
-    decision = (form.get("customer_decision") or "pending").lower()
-    if decision not in {"pending", "approved", "declined"}:
-        decision = "pending"
-    decision_recorded_at = now if decision in {"approved", "declined"} else ""
+def create_discrepancy_approval_record(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+    form: dict[str, str],
+    now: str,
+) -> int:
+    decision = normalize_approval_decision(form.get("customer_decision"))
+    decision_recorded_at = now if decision != "pending" else ""
     request_type = normalize_approval_request_type(form.get("request_type"))
     labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
     labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
     labor_amount = approval_labor_amount(labor_hours, labor_rate)
     labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
-    part_description = form.get("part_description", "") if request_type == "parts" else ""
+    part_name = (form.get("part_name") or form.get("part_description") or "") if request_type == "parts" else ""
+    part_number = form.get("part_number", "") if request_type == "parts" else ""
+    part_description = part_name
     quantity = optional_float(form, "quantity") if request_type == "parts" else None
     unit_cost = optional_float(form, "unit_cost") if request_type == "parts" else None
-    parts_amount = approval_parts_amount(quantity, unit_cost)
+    parts_total = approval_parts_amount(quantity, unit_cost)
+    parts_amount = parts_total
+    ensure_discrepancy_approvals_schema(conn)
+    cur = conn.execute(
+        """
+        INSERT INTO discrepancy_approvals (
+          customer_id, vehicle_id, request_type, finding_title, finding_description,
+          recommended_repair, estimated_cost, labor_hours, labor_rate,
+          labor_amount, labor_reason, part_description, part_name, part_number,
+          quantity, unit_cost, parts_amount, parts_total, customer_decision,
+          decision_notes, decision_recorded_at, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            customer_id,
+            vehicle_id,
+            request_type,
+            form.get("finding_title", ""),
+            form.get("finding_description", ""),
+            form.get("recommended_repair", ""),
+            optional_float(form, "estimated_cost"),
+            labor_hours,
+            labor_rate,
+            labor_amount,
+            labor_reason,
+            part_description,
+            part_name,
+            part_number,
+            quantity,
+            unit_cost,
+            parts_amount,
+            parts_total,
+            decision,
+            form.get("decision_notes", ""),
+            decision_recorded_at,
+            now,
+            now,
+        ),
+    )
+    approval_id = int(cur.lastrowid)
+    if request_type == "parts":
+        append_discrepancy_approval_event(
+            conn,
+            approval_id,
+            customer_id,
+            vehicle_id,
+            "parts_requested",
+            approval_parts_event_label(),
+            now,
+        )
+        if decision != "pending":
+            append_discrepancy_approval_event(
+                conn,
+                approval_id,
+                customer_id,
+                vehicle_id,
+                f"parts_{decision}",
+                approval_parts_event_label(decision),
+                now,
+            )
+    return approval_id
+
+
+@router.post("/approvals")
+async def pro_approval_record_create_from_dashboard(request: Request):
+    form = await read_form_data(request)
+    vehicle_key = form.get("vehicle_key", "")
+    try:
+        customer_id, vehicle_id = [int(part) for part in vehicle_key.split(":", 1)]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Select a customer vehicle") from exc
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        approval_id = create_discrepancy_approval_record(conn, customer_id, vehicle_id, form, now)
+        conn.commit()
+        activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
+    finally:
+        conn.close()
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse(
+            {
+                "message": "Approval request saved",
+                "approval_id": approval_id,
+                "redirect_url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+                **activity_payload,
+            }
+        )
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals")
+async def pro_approval_record_create(request: Request, customer_id: int, vehicle_id: int):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
 
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
-        ensure_discrepancy_approvals_schema(conn)
-        conn.execute(
-            """
-            INSERT INTO discrepancy_approvals (
-              customer_id, vehicle_id, request_type, finding_title, finding_description,
-              recommended_repair, estimated_cost, labor_hours, labor_rate,
-              labor_amount, labor_reason, part_description, quantity, unit_cost,
-              parts_amount, customer_decision, decision_notes, decision_recorded_at,
-              created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                customer_id,
-                vehicle_id,
-                request_type,
-                form.get("finding_title", ""),
-                form.get("finding_description", ""),
-                form.get("recommended_repair", ""),
-                optional_float(form, "estimated_cost"),
-                labor_hours,
-                labor_rate,
-                labor_amount,
-                labor_reason,
-                part_description,
-                quantity,
-                unit_cost,
-                parts_amount,
-                decision,
-                form.get("decision_notes", ""),
-                decision_recorded_at,
-                now,
-                now,
-            ),
-        )
+        approval_id = create_discrepancy_approval_record(conn, customer_id, vehicle_id, form, now)
         conn.commit()
+        activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
     finally:
         conn.close()
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse(
+            {
+                "message": "Approval request saved",
+                "approval_id": approval_id,
+                "redirect_url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+                **activity_payload,
+            }
+        )
     return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
 
 
@@ -2469,18 +2764,19 @@ async def pro_approval_record_update(
 ):
     form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
-    decision = (form.get("customer_decision") or "pending").lower()
-    if decision not in {"pending", "approved", "declined"}:
-        decision = "pending"
+    decision = normalize_approval_decision(form.get("customer_decision"))
     request_type = normalize_approval_request_type(form.get("request_type"))
     labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
     labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
     labor_amount = approval_labor_amount(labor_hours, labor_rate)
     labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
-    part_description = form.get("part_description", "") if request_type == "parts" else ""
+    part_name = (form.get("part_name") or form.get("part_description") or "") if request_type == "parts" else ""
+    part_number = form.get("part_number", "") if request_type == "parts" else ""
+    part_description = part_name
     quantity = optional_float(form, "quantity") if request_type == "parts" else None
     unit_cost = optional_float(form, "unit_cost") if request_type == "parts" else None
-    parts_amount = approval_parts_amount(quantity, unit_cost)
+    parts_total = approval_parts_amount(quantity, unit_cost)
+    parts_amount = parts_total
 
     conn = crm_db_conn()
     try:
@@ -2505,9 +2801,12 @@ async def pro_approval_record_update(
               labor_amount = ?,
               labor_reason = ?,
               part_description = ?,
+              part_name = ?,
+              part_number = ?,
               quantity = ?,
               unit_cost = ?,
               parts_amount = ?,
+              parts_total = ?,
               customer_decision = ?,
               decision_notes = ?,
               decision_recorded_at = ?,
@@ -2525,9 +2824,12 @@ async def pro_approval_record_update(
                 labor_amount,
                 labor_reason,
                 part_description,
+                part_name,
+                part_number,
                 quantity,
                 unit_cost,
                 parts_amount,
+                parts_total,
                 decision,
                 form.get("decision_notes", ""),
                 decision_recorded_at,
@@ -2539,9 +2841,41 @@ async def pro_approval_record_update(
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Approval record not found")
+        existing_request_type = normalize_approval_request_type(existing.get("request_type"))
+        previous_decision = normalize_approval_decision(existing.get("customer_decision"))
+        if request_type == "parts" and existing_request_type != "parts":
+            append_discrepancy_approval_event(
+                conn,
+                approval_id,
+                customer_id,
+                vehicle_id,
+                "parts_requested",
+                approval_parts_event_label(),
+                now,
+            )
+        if request_type == "parts" and decision != "pending" and previous_decision != decision:
+            append_discrepancy_approval_event(
+                conn,
+                approval_id,
+                customer_id,
+                vehicle_id,
+                f"parts_{decision}",
+                approval_parts_event_label(decision),
+                now,
+            )
         conn.commit()
+        activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
     finally:
         conn.close()
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse(
+            {
+                "message": "Approval request saved",
+                "approval_id": approval_id,
+                "redirect_url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+                **activity_payload,
+            }
+        )
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
         status_code=303,
@@ -2558,6 +2892,8 @@ async def pro_approval_record_approve(
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_discrepancy_approvals_schema(conn)
+        existing = load_approval_record(conn, customer_id, vehicle_id, approval_id)
+        previous_decision = normalize_approval_decision(existing.get("customer_decision"))
         cur = conn.execute(
             """
             UPDATE discrepancy_approvals
@@ -2578,9 +2914,22 @@ async def pro_approval_record_approve(
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Approval record not found")
+        if normalize_approval_request_type(existing.get("request_type")) == "parts" and previous_decision != "approved":
+            append_discrepancy_approval_event(
+                conn,
+                approval_id,
+                customer_id,
+                vehicle_id,
+                "parts_approved",
+                approval_parts_event_label("approved"),
+                now,
+            )
         conn.commit()
+        activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
     finally:
         conn.close()
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse({"status": "approved", "message": "Approval Updated", **activity_payload})
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
         status_code=303,
@@ -2597,6 +2946,8 @@ async def pro_approval_record_decline(
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_discrepancy_approvals_schema(conn)
+        existing = load_approval_record(conn, customer_id, vehicle_id, approval_id)
+        previous_decision = normalize_approval_decision(existing.get("customer_decision"))
         cur = conn.execute(
             """
             UPDATE discrepancy_approvals
@@ -2617,9 +2968,76 @@ async def pro_approval_record_decline(
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Approval record not found")
+        if normalize_approval_request_type(existing.get("request_type")) == "parts" and previous_decision != "declined":
+            append_discrepancy_approval_event(
+                conn,
+                approval_id,
+                customer_id,
+                vehicle_id,
+                "parts_declined",
+                approval_parts_event_label("declined"),
+                now,
+            )
         conn.commit()
+        activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
     finally:
         conn.close()
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse({"status": "declined", "message": "Approval Updated", **activity_payload})
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}/defer")
+async def pro_approval_record_defer(
+    request: Request, customer_id: int, vehicle_id: int, approval_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_discrepancy_approvals_schema(conn)
+        existing = load_approval_record(conn, customer_id, vehicle_id, approval_id)
+        previous_decision = normalize_approval_decision(existing.get("customer_decision"))
+        cur = conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET customer_decision = 'deferred',
+                decision_notes = ?,
+                decision_recorded_at = ?,
+                updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (
+                form.get("decision_notes", ""),
+                now,
+                now,
+                approval_id,
+                customer_id,
+                vehicle_id,
+            ),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Approval record not found")
+        if normalize_approval_request_type(existing.get("request_type")) == "parts" and previous_decision != "deferred":
+            append_discrepancy_approval_event(
+                conn,
+                approval_id,
+                customer_id,
+                vehicle_id,
+                "parts_deferred",
+                approval_parts_event_label("deferred"),
+                now,
+            )
+        conn.commit()
+        activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
+    finally:
+        conn.close()
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse({"status": "deferred", "message": "Approval Updated", **activity_payload})
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
         status_code=303,
