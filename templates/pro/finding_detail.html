@@ -45,6 +45,9 @@
       <div class="tm-finding-field"><span>Severity</span><strong>{{ finding.severity or "-" }}</strong></div>
       <div class="tm-finding-field"><span>Status</span><strong>{{ finding.status or "-" }}</strong></div>
       <div class="tm-finding-field"><span>Request Type</span><strong>{% if finding.request_type == "labor" %}Labor Request{% else %}Finding{% endif %}</strong></div>
+      {% if finding.status in ["Approved", "Completed"] %}
+      <div class="tm-finding-field"><span>Repair Status</span><strong>{{ repair_work_status_label }}</strong></div>
+      {% endif %}
     </div>
     {% if finding.request_type == "labor" %}
     <div class="tm-finding-grid" style="margin-top:14px;">
@@ -61,6 +64,23 @@
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/edit">Edit Finding</a>
     </div>
   </section>
+
+  {% if finding.status in ["Approved", "Completed"] %}
+  <form class="tm-finding-panel tm-finding-notes" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/repair-work" aria-label="Repair workflow">
+    <div class="tm-crm-kicker">Repair Workflow</div>
+    <div>
+      <label class="tm-label" for="repair_work_status">Repair Status</label>
+      <select class="tm-input" id="repair_work_status" name="repair_work_status">
+        {% for option in repair_work_status_options %}
+        <option value="{{ option.value }}" {% if (finding.repair_work_status or ('completed' if finding.status == 'Completed' else 'ready')) == option.value %}selected{% endif %}>{{ option.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="tm-finding-actions" style="margin-top:0;">
+      <button class="tm-btn tm-btn-primary" type="submit">Update Repair Status</button>
+    </div>
+  </form>
+  {% endif %}
 
   <form class="tm-finding-panel tm-finding-notes" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/notes" aria-label="Finding notes">
     <div>
@@ -91,6 +111,8 @@
           Customer Notes updated
           {% elif item.event_type == "internal_notes_updated" %}
           Internal Notes updated
+          {% elif item.event_type == "repair_work_status_changed" %}
+          Repair Work {{ item.new_status|replace("_", " ")|title }}
           {% elif finding.request_type == "labor" and item.new_status %}
           Labor Request {{ item.new_status }}
           {% else %}

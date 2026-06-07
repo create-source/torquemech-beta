@@ -138,6 +138,58 @@
     color: #991b1b;
   }
 
+  .tm-repair-work-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-repair-work-item {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #0f766e;
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .tm-repair-work-item--in_progress {
+    border-left-color: #0e7490;
+  }
+
+  .tm-repair-work-item--waiting_parts {
+    border-left-color: #d97706;
+  }
+
+  .tm-repair-work-item--completed {
+    border-left-color: #475569;
+  }
+
+  .tm-repair-work-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: end;
+  }
+
+  .tm-repair-work-form .tm-input {
+    min-width: 180px;
+  }
+
+  .tm-repair-work-convert {
+    border: 1px solid rgba(14, 116, 144, 0.16);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+
+  .tm-repair-work-convert summary {
+    color: #0f172a;
+    cursor: pointer;
+    font-weight: 900;
+  }
+
   .tm-history-head {
     display: flex;
     align-items: flex-start;
@@ -975,6 +1027,97 @@
         <strong>{{ approval_summary.total_approved_add_ons|pro_currency }}</strong>
       </div>
     </div>
+  </section>
+
+  <section class="tm-crm-panel" id="repair-workflow" aria-label="Repair workflow" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Repair Workflow</div>
+    <h2 style="margin:4px 0 0;">Approved Work</h2>
+
+    {% if repair_work_items %}
+    <div class="tm-repair-work-list">
+      {% for item in repair_work_items %}
+      <article class="tm-repair-work-item tm-repair-work-item--{{ item.repair_work_status }}">
+        <div class="tm-history-head">
+          <div>
+            <div class="tm-history-title">{{ item.title }}</div>
+            <div style="color:#64748b; margin-top:3px;">{{ item.request_type_label }} | {{ item.approval_label }}</div>
+          </div>
+          <span class="tm-crm-chip">{{ item.repair_work_status_label }}</span>
+        </div>
+        {% if item.detail %}
+        <div style="color:#475569;">{{ item.detail }}</div>
+        {% endif %}
+        {% if item.mileage is not none %}
+        <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
+        {% endif %}
+        {% if item.linked_repair_record_id %}
+        <div class="tm-crm-chip-row">
+          <span class="tm-crm-chip">Repair Record Created</span>
+          <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}">Open Repair Record</a>
+        </div>
+        {% endif %}
+        <form class="tm-repair-work-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/{% if item.source_type == 'finding' %}findings{% else %}approvals{% endif %}/{{ item.source_id }}/repair-work">
+          <div>
+            <label class="tm-label" for="repair_work_status_{{ item.source_type }}_{{ item.source_id }}">Repair Status</label>
+            <select class="tm-input" id="repair_work_status_{{ item.source_type }}_{{ item.source_id }}" name="repair_work_status">
+              {% for option in repair_work_status_options %}
+              <option value="{{ option.value }}" {% if item.repair_work_status == option.value %}selected{% endif %}>{{ option.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="tm-btn tm-btn-primary" type="submit">Update</button>
+          <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">Open Source</a>
+        </form>
+        {% if item.repair_work_status == "completed" and not item.linked_repair_record_id %}
+        <details class="tm-repair-work-convert">
+          <summary>Create Repair Record</summary>
+          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs" style="margin-top:12px;">
+            <input type="hidden" name="workflow_source_type" value="{{ item.source_type }}">
+            <input type="hidden" name="workflow_source_id" value="{{ item.source_id }}">
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="workflow_repair_name_{{ item.source_type }}_{{ item.source_id }}">Repair Name</label>
+              <input class="tm-input" id="workflow_repair_name_{{ item.source_type }}_{{ item.source_id }}" name="repair_name" type="text" maxlength="180" value="{{ item.repair_prefill.repair_name or '' }}">
+            </div>
+            <div class="tm-crm-row" style="margin-top:12px;">
+              <div>
+                <label class="tm-label" for="workflow_repair_date_{{ item.source_type }}_{{ item.source_id }}">Repair Date</label>
+                <input class="tm-input" id="workflow_repair_date_{{ item.source_type }}_{{ item.source_id }}" name="repair_date" type="date" value="{{ item.repair_prefill.repair_date or '' }}">
+              </div>
+              <div>
+                <label class="tm-label" for="workflow_repair_mileage_{{ item.source_type }}_{{ item.source_id }}">Mileage</label>
+                <input class="tm-input" id="workflow_repair_mileage_{{ item.source_type }}_{{ item.source_id }}" name="mileage" type="text" inputmode="numeric" value="{% if item.repair_prefill.mileage is not none %}{{ item.repair_prefill.mileage|pro_miles }}{% endif %}">
+              </div>
+            </div>
+            <div class="tm-crm-row" style="margin-top:12px;">
+              <div>
+                <label class="tm-label" for="workflow_labor_hours_{{ item.source_type }}_{{ item.source_id }}">Labor Hours</label>
+                <input class="tm-input" id="workflow_labor_hours_{{ item.source_type }}_{{ item.source_id }}" name="labor_hours" type="number" min="0" step="0.1">
+              </div>
+              <div>
+                <label class="tm-label" for="workflow_parts_cost_{{ item.source_type }}_{{ item.source_id }}">Parts Cost</label>
+                <input class="tm-input" id="workflow_parts_cost_{{ item.source_type }}_{{ item.source_id }}" name="parts_cost" type="text" inputmode="decimal">
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="workflow_labor_cost_{{ item.source_type }}_{{ item.source_id }}">Labor Cost</label>
+              <input class="tm-input" id="workflow_labor_cost_{{ item.source_type }}_{{ item.source_id }}" name="labor_cost" type="text" inputmode="decimal">
+            </div>
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="workflow_repair_notes_{{ item.source_type }}_{{ item.source_id }}">Notes</label>
+              <textarea class="tm-input" id="workflow_repair_notes_{{ item.source_type }}_{{ item.source_id }}" name="notes" rows="4" maxlength="1600">{{ item.repair_prefill.notes or "" }}</textarea>
+            </div>
+            <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Repair Record</button>
+          </form>
+        </details>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">
+      No approved work is ready for repair yet.
+    </div>
+    {% endif %}
   </section>
 
   <section class="tm-crm-panel" id="repair-history" aria-label="Repair history" style="margin-top:16px;">

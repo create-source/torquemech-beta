@@ -46,6 +46,13 @@ FINDING_REQUEST_TYPES = ("finding", "labor")
 CUSTOMER_DECISION_LOG_STATUSES = {"Approved", "Deferred", "Declined"}
 APPROVAL_REQUEST_TYPES = ("finding", "labor", "parts")
 APPROVAL_DECISION_OPTIONS = ("pending", "approved", "declined", "deferred")
+REPAIR_WORK_STATUS_OPTIONS = ("ready", "in_progress", "waiting_parts", "completed")
+REPAIR_WORK_STATUS_LABELS = {
+    "ready": "Ready for Repair",
+    "in_progress": "In Progress",
+    "waiting_parts": "Waiting on Parts",
+    "completed": "Done",
+}
 
 
 def crm_db_conn() -> sqlite3.Connection:
@@ -122,6 +129,23 @@ def normalize_approval_request_type(raw_request_type: str | None) -> str:
 def normalize_approval_decision(raw_decision: str | None) -> str:
     decision = (raw_decision or "pending").strip().lower()
     return decision if decision in APPROVAL_DECISION_OPTIONS else "pending"
+
+
+def normalize_repair_work_status(raw_status: str | None) -> str:
+    status = (raw_status or "ready").strip().lower().replace("-", "_")
+    if status not in REPAIR_WORK_STATUS_OPTIONS:
+        raise HTTPException(status_code=400, detail="Invalid repair workflow status")
+    return status
+
+
+def repair_work_status_label(value: Any) -> str:
+    status = normalize_repair_work_status(str(value or "ready"))
+    return REPAIR_WORK_STATUS_LABELS[status]
+
+
+def normalize_workflow_source_type(raw_source_type: str | None) -> str:
+    source_type = (raw_source_type or "").strip().lower()
+    return source_type if source_type in {"finding", "approval"} else ""
 
 
 def approval_labor_amount(labor_hours: float | None, labor_rate: float | None) -> float | None:
@@ -495,6 +519,10 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
           parts_amount REAL,
           parts_total REAL,
           customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined', 'deferred')),
+          repair_work_status TEXT,
+          repair_work_updated_at TEXT,
+          linked_repair_record_id INTEGER,
+          repair_record_created_at TEXT,
           decision_notes TEXT,
           decision_recorded_at TEXT,
           created_at TEXT NOT NULL,
@@ -530,6 +558,14 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN parts_amount REAL")
     if "parts_total" not in columns:
         conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN parts_total REAL")
+    if "repair_work_status" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN repair_work_status TEXT")
+    if "repair_work_updated_at" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN repair_work_updated_at TEXT")
+    if "linked_repair_record_id" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN linked_repair_record_id INTEGER")
+    if "repair_record_created_at" not in columns:
+        conn.execute("ALTER TABLE discrepancy_approvals ADD COLUMN repair_record_created_at TEXT")
     conn.execute(
         """
         UPDATE discrepancy_approvals
@@ -545,6 +581,38 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
         WHERE request_type = 'parts'
         """
     )
+    conn.execute(
+        """
+        UPDATE discrepancy_approvals
+        SET repair_work_status = 'ready',
+            repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), decision_recorded_at, updated_at, created_at)
+        WHERE customer_decision = 'approved'
+          AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+        """
+    )
+    repair_table_exists = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'repair_records'"
+    ).fetchone()
+    if repair_table_exists:
+        conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET linked_repair_record_id = (
+                SELECT rr.id
+                FROM repair_records rr
+                WHERE rr.workflow_source_type = 'approval'
+                  AND rr.workflow_source_id = discrepancy_approvals.id
+                LIMIT 1
+            )
+            WHERE linked_repair_record_id IS NULL
+              AND EXISTS (
+                SELECT 1
+                FROM repair_records rr
+                WHERE rr.workflow_source_type = 'approval'
+                  AND rr.workflow_source_id = discrepancy_approvals.id
+              )
+            """
+        )
     sql = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'discrepancy_approvals'"
     ).fetchone()
@@ -585,6 +653,10 @@ def rebuild_discrepancy_approvals_for_deferred(conn: sqlite3.Connection) -> None
           parts_amount REAL,
           parts_total REAL,
           customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined', 'deferred')),
+          repair_work_status TEXT,
+          repair_work_updated_at TEXT,
+          linked_repair_record_id INTEGER,
+          repair_record_created_at TEXT,
           decision_notes TEXT,
           decision_recorded_at TEXT,
           created_at TEXT NOT NULL,
@@ -602,7 +674,9 @@ def rebuild_discrepancy_approvals_for_deferred(conn: sqlite3.Connection) -> None
           finding_title, finding_description, recommended_repair, estimated_cost,
           labor_hours, labor_rate, labor_amount, labor_reason, part_description,
           part_name, part_number, quantity, unit_cost, parts_amount, parts_total,
-          customer_decision, decision_notes, decision_recorded_at, created_at, updated_at
+          customer_decision, repair_work_status, repair_work_updated_at,
+          linked_repair_record_id, repair_record_created_at,
+          decision_notes, decision_recorded_at, created_at, updated_at
         )
         SELECT
           id, customer_id, vehicle_id, service_history_id, shop_id,
@@ -611,7 +685,8 @@ def rebuild_discrepancy_approvals_for_deferred(conn: sqlite3.Connection) -> None
           labor_hours, labor_rate, labor_amount, labor_reason, part_description,
           COALESCE(NULLIF(part_name, ''), part_description), part_number,
           quantity, unit_cost, parts_amount, COALESCE(parts_total, parts_amount),
-          customer_decision, decision_notes, decision_recorded_at, created_at, updated_at
+          customer_decision, NULL, NULL, NULL, NULL,
+          decision_notes, decision_recorded_at, created_at, updated_at
         FROM discrepancy_approvals_old
         """
     )
@@ -715,6 +790,8 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
           labor_cost REAL,
           total_cost REAL,
           track_as_maintenance INTEGER NOT NULL DEFAULT 0,
+          workflow_source_type TEXT,
+          workflow_source_id INTEGER,
           notes TEXT,
           created_at TEXT NOT NULL,
           FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
@@ -758,11 +835,24 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
                     "UPDATE repair_records SET track_as_maintenance = 1 WHERE id = ?",
                     (repair["id"],),
                 )
+    if "workflow_source_type" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN workflow_source_type TEXT")
+    if "workflow_source_id" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN workflow_source_id INTEGER")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_customer_id ON repair_records (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_id ON repair_records (vehicle_id)")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_date_mileage "
         "ON repair_records (vehicle_id, repair_date, mileage)"
+    )
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_records_workflow_source
+        ON repair_records (workflow_source_type, workflow_source_id)
+        WHERE workflow_source_type IS NOT NULL
+          AND TRIM(workflow_source_type) != ''
+          AND workflow_source_id IS NOT NULL
+        """
     )
     conn.commit()
 
@@ -786,6 +876,10 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
           labor_reason TEXT,
           severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
           status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
+          repair_work_status TEXT,
+          repair_work_updated_at TEXT,
+          linked_repair_record_id INTEGER,
+          repair_record_created_at TEXT,
           mileage INTEGER,
           finding_date TEXT,
           created_at TEXT NOT NULL,
@@ -811,6 +905,14 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_amount REAL")
     if "labor_reason" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_reason TEXT")
+    if "repair_work_status" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN repair_work_status TEXT")
+    if "repair_work_updated_at" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN repair_work_updated_at TEXT")
+    if "linked_repair_record_id" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN linked_repair_record_id INTEGER")
+    if "repair_record_created_at" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN repair_record_created_at TEXT")
     conn.execute(
         """
         UPDATE findings_records
@@ -818,6 +920,38 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
         WHERE request_type IS NULL OR TRIM(request_type) = ''
         """
     )
+    conn.execute(
+        """
+        UPDATE findings_records
+        SET repair_work_status = CASE WHEN status = 'Completed' THEN 'completed' ELSE 'ready' END,
+            repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), created_at)
+        WHERE status IN ('Approved', 'Completed')
+          AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+        """
+    )
+    repair_table_exists = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'repair_records'"
+    ).fetchone()
+    if repair_table_exists:
+        conn.execute(
+            """
+            UPDATE findings_records
+            SET linked_repair_record_id = (
+                SELECT rr.id
+                FROM repair_records rr
+                WHERE rr.workflow_source_type = 'finding'
+                  AND rr.workflow_source_id = findings_records.id
+                LIMIT 1
+            )
+            WHERE linked_repair_record_id IS NULL
+              AND EXISTS (
+                SELECT 1
+                FROM repair_records rr
+                WHERE rr.workflow_source_type = 'finding'
+                  AND rr.workflow_source_id = findings_records.id
+              )
+            """
+        )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
     conn.execute(
@@ -1441,6 +1575,133 @@ def build_approval_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def repair_work_title_from_finding(record: dict[str, Any]) -> str:
+    if normalize_finding_request_type(record.get("request_type")) == "labor":
+        return record.get("labor_description") or record.get("finding") or "Labor Request"
+    return record.get("recommendation") or record.get("finding") or "Finding"
+
+
+def repair_work_title_from_approval(record: dict[str, Any]) -> str:
+    request_type = normalize_approval_request_type(record.get("request_type"))
+    if request_type == "parts":
+        return record.get("part_name") or record.get("part_description") or record.get("finding_title") or "Parts Request"
+    if request_type == "labor":
+        return record.get("finding_title") or record.get("recommended_repair") or "Labor Request"
+    return record.get("recommended_repair") or record.get("finding_title") or "Approved Request"
+
+
+def build_repair_work_items(
+    vehicle: dict[str, Any],
+    findings_records: list[dict[str, Any]],
+    approval_records: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    current_vehicle_mileage = vehicle.get("mileage")
+    for record in findings_records:
+        if (record.get("status") or "") not in {"Approved", "Completed"}:
+            continue
+        status = record.get("repair_work_status") or ("completed" if record.get("status") == "Completed" else "ready")
+        try:
+            status = normalize_repair_work_status(status)
+        except HTTPException:
+            status = "ready"
+        items.append(
+            {
+                "source_type": "finding",
+                "source_id": record.get("id"),
+                "title": repair_work_title_from_finding(record),
+                "detail": record.get("finding") or record.get("labor_reason") or record.get("recommendation") or "",
+                "request_type_label": "Labor Request" if normalize_finding_request_type(record.get("request_type")) == "labor" else "Finding",
+                "approval_label": record.get("status") or "Approved",
+                "repair_work_status": status,
+                "repair_work_status_label": repair_work_status_label(status),
+                "linked_repair_record_id": record.get("linked_repair_record_id"),
+                "repair_record_created_at": record.get("repair_record_created_at") or "",
+                "repair_record_url": (
+                    f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
+                    f"/repairs/{record.get('linked_repair_record_id')}"
+                    if record.get("linked_repair_record_id")
+                    else ""
+                ),
+                "repair_prefill": {
+                    "repair_name": repair_work_title_from_finding(record),
+                    "repair_date": date.today().isoformat(),
+                    "mileage": current_vehicle_mileage,
+                    "notes": "\n".join(
+                        part
+                        for part in [
+                            f"Source: {record.get('status') or 'Approved'} {('labor request' if normalize_finding_request_type(record.get('request_type')) == 'labor' else 'finding')}",
+                            record.get("finding") or "",
+                            record.get("recommendation") or "",
+                            record.get("labor_reason") or "",
+                        ]
+                        if str(part or "").strip()
+                    ),
+                },
+                "updated_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
+                "mileage": record.get("mileage"),
+                "url": f"#recommendations-findings",
+            }
+        )
+    for record in approval_records:
+        if normalize_approval_decision(record.get("customer_decision")) != "approved":
+            continue
+        status = record.get("repair_work_status") or "ready"
+        try:
+            status = normalize_repair_work_status(status)
+        except HTTPException:
+            status = "ready"
+        items.append(
+            {
+                "source_type": "approval",
+                "source_id": record.get("id"),
+                "title": repair_work_title_from_approval(record),
+                "detail": record.get("finding_description") or record.get("recommended_repair") or "",
+                "request_type_label": approval_request_type_label(record.get("request_type")),
+                "approval_label": "Approved",
+                "repair_work_status": status,
+                "repair_work_status_label": repair_work_status_label(status),
+                "linked_repair_record_id": record.get("linked_repair_record_id"),
+                "repair_record_created_at": record.get("repair_record_created_at") or "",
+                "repair_record_url": (
+                    f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
+                    f"/repairs/{record.get('linked_repair_record_id')}"
+                    if record.get("linked_repair_record_id")
+                    else ""
+                ),
+                "repair_prefill": {
+                    "repair_name": repair_work_title_from_approval(record),
+                    "repair_date": date.today().isoformat(),
+                    "mileage": current_vehicle_mileage,
+                    "notes": "\n".join(
+                        part
+                        for part in [
+                            f"Source: Approved {approval_request_type_label(record.get('request_type')).lower()} request",
+                            record.get("finding_description") or "",
+                            record.get("recommended_repair") or "",
+                            record.get("labor_reason") or "",
+                            record.get("part_number") and f"Part Number: {record.get('part_number')}",
+                        ]
+                        if str(part or "").strip()
+                    ),
+                },
+                "updated_at": record.get("repair_work_updated_at") or record.get("decision_recorded_at") or record.get("updated_at") or "",
+                "mileage": None,
+                "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
+            }
+        )
+    status_rank = {"ready": 1, "in_progress": 2, "waiting_parts": 3, "completed": 4}
+    items.sort(
+        key=lambda item: (
+            status_rank.get(item["repair_work_status"], 9),
+            parse_datetime_value(item.get("updated_at")) or datetime.min,
+            int(item.get("source_id") or 0),
+        ),
+        reverse=False,
+    )
+    return items
+
+
 def finding_history_timeline_label(record: dict[str, Any]) -> str:
     finding = record.get("finding") or "Finding"
     is_labor = normalize_finding_request_type(record.get("request_type")) == "labor"
@@ -1454,6 +1715,9 @@ def finding_history_timeline_label(record: dict[str, Any]) -> str:
         return f"Customer Notes updated: {title}"
     if event_type == "internal_notes_updated":
         return f"Internal Notes updated: {title}"
+    if event_type == "repair_work_status_changed":
+        new_status = record.get("new_status") or "ready"
+        return f"Repair Work {repair_work_status_label(new_status)}: {title}"
     new_status = record.get("new_status") or ""
     if new_status:
         if is_labor:
@@ -1491,7 +1755,11 @@ def build_vehicle_timeline(
             "record_type_key": "repair" if record.get("source_type") == "repair" else "maintenance",
             "date": record.get("service_date") or "",
             "created_at": record.get("created_at") or "",
-            "service_name": record.get("service_name") or "Service",
+            "service_name": (
+                f"Repair Record Created: {record.get('service_name') or 'Repair'}"
+                if record.get("source_type") == "repair"
+                else record.get("service_name") or "Service"
+            ),
             "mileage": record.get("mileage"),
             "url": "#repair-history" if record.get("source_type") == "repair" else "#maintenance-tracking",
         }
@@ -1549,8 +1817,8 @@ def build_vehicle_timeline(
     timeline.extend(
         {
             "id": record["id"],
-            "record_type": "Approval",
-            "record_type_key": "finding",
+            "record_type": "Repair Work" if record.get("event_type") == "repair_work_status_changed" else "Approval",
+            "record_type_key": "repair" if record.get("event_type") == "repair_work_status_changed" else "finding",
             "date": record.get("created_at") or "",
             "created_at": record.get("created_at") or "",
             "service_name": record.get("event_label") or "Approval Event",
@@ -2235,6 +2503,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     repair_history_summary = build_repair_history_summary(repair_records)
     findings_summary = build_findings_summary(findings_records)
     approval_summary = build_approval_summary(approval_records)
+    repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records)
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -2249,6 +2518,11 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "findings_records": findings_records,
             "findings_summary": findings_summary,
             "approval_summary": approval_summary,
+            "repair_work_items": repair_work_items,
+            "repair_work_status_options": [
+                {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
+                for value in REPAIR_WORK_STATUS_OPTIONS
+            ],
             "finding_history_records": finding_history_records,
             "customer_decision_logs": customer_decision_logs,
             "vehicle_timeline": vehicle_timeline,
@@ -2326,9 +2600,10 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             INSERT INTO findings_records (
               vehicle_id, customer_id, request_type, finding, recommendation,
               labor_description, labor_hours, labor_rate, labor_amount, labor_reason,
-              severity, status, mileage, finding_date, created_at
+              severity, status, repair_work_status, repair_work_updated_at,
+              mileage, finding_date, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 vehicle_id,
@@ -2343,6 +2618,8 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
                 labor_reason,
                 severity,
                 status,
+                "completed" if status == "Completed" else "ready" if status == "Approved" else "",
+                now if status in {"Approved", "Completed"} else "",
                 optional_int(form, "mileage"),
                 date.today().isoformat(),
                 now,
@@ -2396,6 +2673,11 @@ def pro_finding_record_detail(
             "vehicle": vehicle,
             "finding": finding,
             "finding_history_records": finding_history_records,
+            "repair_work_status_options": [
+                {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
+                for value in REPAIR_WORK_STATUS_OPTIONS
+            ],
+            "repair_work_status_label": repair_work_status_label(finding.get("repair_work_status") or ("completed" if finding.get("status") == "Completed" else "ready")),
         },
     )
 
@@ -2449,6 +2731,18 @@ async def pro_finding_record_update(
             SET request_type = ?, finding = ?, recommendation = ?,
                 labor_description = ?, labor_hours = ?, labor_rate = ?,
                 labor_amount = ?, labor_reason = ?, severity = ?, status = ?,
+                repair_work_status = CASE
+                  WHEN ? IN ('Approved', 'Completed')
+                    AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+                  THEN CASE WHEN ? = 'Completed' THEN 'completed' ELSE 'ready' END
+                  ELSE repair_work_status
+                END,
+                repair_work_updated_at = CASE
+                  WHEN ? IN ('Approved', 'Completed')
+                    AND (repair_work_updated_at IS NULL OR TRIM(repair_work_updated_at) = '')
+                  THEN ?
+                  ELSE repair_work_updated_at
+                END,
                 mileage = ?, finding_date = ?
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
@@ -2463,6 +2757,10 @@ async def pro_finding_record_update(
                 labor_reason,
                 severity,
                 status,
+                status,
+                status,
+                status,
+                datetime.utcnow().isoformat(),
                 optional_int(form, "mileage"),
                 form.get("finding_date", ""),
                 finding_id,
@@ -2587,10 +2885,22 @@ async def pro_finding_record_status_update(
         cur = conn.execute(
             """
             UPDATE findings_records
-            SET status = ?
+            SET status = ?,
+                repair_work_status = CASE
+                  WHEN ? IN ('Approved', 'Completed')
+                    AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+                  THEN CASE WHEN ? = 'Completed' THEN 'completed' ELSE 'ready' END
+                  ELSE repair_work_status
+                END,
+                repair_work_updated_at = CASE
+                  WHEN ? IN ('Approved', 'Completed')
+                    AND (repair_work_updated_at IS NULL OR TRIM(repair_work_updated_at) = '')
+                  THEN ?
+                  ELSE repair_work_updated_at
+                END
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
-            (status, finding_id, customer_id, vehicle_id),
+            (status, status, status, status, datetime.utcnow().isoformat(), finding_id, customer_id, vehicle_id),
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Finding record not found")
@@ -2624,6 +2934,52 @@ async def pro_finding_record_status_update(
     )
 
 
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/repair-work")
+async def pro_finding_repair_work_status_update(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    form = await read_form_data(request)
+    repair_status = normalize_repair_work_status(form.get("repair_work_status"))
+    now = datetime.utcnow().isoformat()
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        if (existing.get("status") or "") not in {"Approved", "Completed"}:
+            raise HTTPException(status_code=400, detail="Finding must be approved before repair work starts")
+        previous_repair_status = existing.get("repair_work_status") or (
+            "completed" if existing.get("status") == "Completed" else "ready"
+        )
+        next_finding_status = "Completed" if repair_status == "completed" else "Approved"
+        conn.execute(
+            """
+            UPDATE findings_records
+            SET repair_work_status = ?,
+                repair_work_updated_at = ?,
+                status = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (repair_status, now, next_finding_status, finding_id, customer_id, vehicle_id),
+        )
+        if previous_repair_status != repair_status:
+            append_finding_history_record(
+                conn,
+                finding_id,
+                previous_repair_status,
+                repair_status,
+                "repair_work_status_changed",
+                now,
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workflow",
+        status_code=303,
+    )
+
+
 def create_discrepancy_approval_record(
     conn: sqlite3.Connection,
     customer_id: int,
@@ -2653,9 +3009,10 @@ def create_discrepancy_approval_record(
           recommended_repair, estimated_cost, labor_hours, labor_rate,
           labor_amount, labor_reason, part_description, part_name, part_number,
           quantity, unit_cost, parts_amount, parts_total, customer_decision,
-          decision_notes, decision_recorded_at, created_at, updated_at
+          repair_work_status, repair_work_updated_at, decision_notes,
+          decision_recorded_at, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             customer_id,
@@ -2677,6 +3034,8 @@ def create_discrepancy_approval_record(
             parts_amount,
             parts_total,
             decision,
+            "ready" if decision == "approved" else "",
+            now if decision == "approved" else "",
             form.get("decision_notes", ""),
             decision_recorded_at,
             now,
@@ -2782,6 +3141,11 @@ def pro_approval_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "approval": approval,
+            "repair_work_status_options": [
+                {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
+                for value in REPAIR_WORK_STATUS_OPTIONS
+            ],
+            "repair_work_status_label": repair_work_status_label(approval.get("repair_work_status") or "ready"),
         },
     )
 
@@ -2836,6 +3200,20 @@ async def pro_approval_record_update(
               parts_amount = ?,
               parts_total = ?,
               customer_decision = ?,
+              repair_work_status = CASE
+                WHEN ? = 'approved' AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+                THEN 'ready'
+                WHEN ? != 'approved'
+                THEN ''
+                ELSE repair_work_status
+              END,
+              repair_work_updated_at = CASE
+                WHEN ? = 'approved' AND (repair_work_updated_at IS NULL OR TRIM(repair_work_updated_at) = '')
+                THEN ?
+                WHEN ? != 'approved'
+                THEN ''
+                ELSE repair_work_updated_at
+              END,
               decision_notes = ?,
               decision_recorded_at = ?,
               updated_at = ?
@@ -2858,6 +3236,11 @@ async def pro_approval_record_update(
                 unit_cost,
                 parts_amount,
                 parts_total,
+                decision,
+                decision,
+                decision,
+                decision,
+                now,
                 decision,
                 form.get("decision_notes", ""),
                 decision_recorded_at,
@@ -2926,12 +3309,15 @@ async def pro_approval_record_approve(
             """
             UPDATE discrepancy_approvals
             SET customer_decision = 'approved',
+                repair_work_status = COALESCE(NULLIF(repair_work_status, ''), 'ready'),
+                repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), ?),
                 decision_notes = ?,
                 decision_recorded_at = ?,
                 updated_at = ?
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
             (
+                now,
                 form.get("decision_notes", ""),
                 now,
                 now,
@@ -2980,6 +3366,8 @@ async def pro_approval_record_decline(
             """
             UPDATE discrepancy_approvals
             SET customer_decision = 'declined',
+                repair_work_status = '',
+                repair_work_updated_at = '',
                 decision_notes = ?,
                 decision_recorded_at = ?,
                 updated_at = ?
@@ -3034,6 +3422,8 @@ async def pro_approval_record_defer(
             """
             UPDATE discrepancy_approvals
             SET customer_decision = 'deferred',
+                repair_work_status = '',
+                repair_work_updated_at = '',
                 decision_notes = ?,
                 decision_recorded_at = ?,
                 updated_at = ?
@@ -3068,6 +3458,51 @@ async def pro_approval_record_defer(
         return JSONResponse({"status": "deferred", "message": "Approval Updated", **activity_payload})
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{approval_id}/repair-work")
+async def pro_approval_repair_work_status_update(
+    request: Request, customer_id: int, vehicle_id: int, approval_id: int
+):
+    form = await read_form_data(request)
+    repair_status = normalize_repair_work_status(form.get("repair_work_status"))
+    now = datetime.utcnow().isoformat()
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_discrepancy_approvals_schema(conn)
+        existing = load_approval_record(conn, customer_id, vehicle_id, approval_id)
+        if normalize_approval_decision(existing.get("customer_decision")) != "approved":
+            raise HTTPException(status_code=400, detail="Approval request must be approved before repair work starts")
+        previous_repair_status = existing.get("repair_work_status") or "ready"
+        conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET repair_work_status = ?,
+                repair_work_updated_at = ?,
+                updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (repair_status, now, now, approval_id, customer_id, vehicle_id),
+        )
+        if previous_repair_status != repair_status:
+            append_discrepancy_approval_event(
+                conn,
+                approval_id,
+                customer_id,
+                vehicle_id,
+                "repair_work_status_changed",
+                f"Repair Work {repair_work_status_label(repair_status)}: {repair_work_title_from_approval(existing)}",
+                now,
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workflow",
         status_code=303,
     )
 
@@ -3203,22 +3638,60 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
     labor_hours = optional_float(form, "labor_hours")
     notes = form.get("notes", "")
     update_maintenance = form.get("also_update_maintenance_tracking") == "1"
+    workflow_source_type = normalize_workflow_source_type(form.get("workflow_source_type"))
+    workflow_source_id = optional_int(form, "workflow_source_id") if workflow_source_type else None
 
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_repair_records_schema(conn)
+        ensure_findings_records_schema(conn)
+        ensure_discrepancy_approvals_schema(conn)
         ensure_maintenance_records_schema(conn)
         ensure_service_history_schema(conn)
         ensure_service_history_records_schema(conn)
+        if workflow_source_type and workflow_source_id is not None:
+            existing_repair = conn.execute(
+                """
+                SELECT id
+                FROM repair_records
+                WHERE workflow_source_type = ? AND workflow_source_id = ?
+                LIMIT 1
+                """,
+                (workflow_source_type, workflow_source_id),
+            ).fetchone()
+            if existing_repair:
+                return RedirectResponse(
+                    f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{existing_repair['id']}",
+                    status_code=303,
+                )
+            if workflow_source_type == "finding":
+                workflow_record = load_finding_record(conn, customer_id, vehicle_id, workflow_source_id)
+                if (workflow_record.get("repair_work_status") or "") != "completed":
+                    raise HTTPException(status_code=400, detail="Workflow item must be done before creating a repair record")
+                if workflow_record.get("linked_repair_record_id"):
+                    return RedirectResponse(
+                        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{workflow_record['linked_repair_record_id']}",
+                        status_code=303,
+                    )
+            else:
+                workflow_record = load_approval_record(conn, customer_id, vehicle_id, workflow_source_id)
+                if (workflow_record.get("repair_work_status") or "") != "completed":
+                    raise HTTPException(status_code=400, detail="Workflow item must be done before creating a repair record")
+                if workflow_record.get("linked_repair_record_id"):
+                    return RedirectResponse(
+                        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{workflow_record['linked_repair_record_id']}",
+                        status_code=303,
+                    )
         cur = conn.execute(
             """
             INSERT INTO repair_records (
               vehicle_id, customer_id, repair_name, repair_date, mileage,
               labor_hours, parts_cost, labor_cost, total_cost,
-              track_as_maintenance, notes, created_at
+              track_as_maintenance, workflow_source_type, workflow_source_id,
+              notes, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 vehicle_id,
@@ -3231,10 +3704,34 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
                 labor_cost,
                 total_cost,
                 1 if update_maintenance else 0,
+                workflow_source_type or "",
+                workflow_source_id,
                 notes,
                 now,
             ),
         )
+        repair_id = int(cur.lastrowid)
+        if workflow_source_type == "finding" and workflow_source_id is not None:
+            conn.execute(
+                """
+                UPDATE findings_records
+                SET linked_repair_record_id = ?,
+                    repair_record_created_at = ?
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (repair_id, now, workflow_source_id, customer_id, vehicle_id),
+            )
+        elif workflow_source_type == "approval" and workflow_source_id is not None:
+            conn.execute(
+                """
+                UPDATE discrepancy_approvals
+                SET linked_repair_record_id = ?,
+                    repair_record_created_at = ?,
+                    updated_at = ?
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (repair_id, now, now, workflow_source_id, customer_id, vehicle_id),
+            )
         if update_maintenance:
             upsert_maintenance_from_repair(
                 conn,
@@ -3251,7 +3748,7 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
             customer_id=customer_id,
             vehicle_id=vehicle_id,
             source_type="repair",
-            source_record_id=int(cur.lastrowid),
+            source_record_id=repair_id,
             service_name=repair_name,
             service_date=repair_date,
             mileage=mileage,

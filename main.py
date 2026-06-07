@@ -497,6 +497,8 @@ def init_pro_crm_schema_db() -> None:
               labor_cost REAL,
               total_cost REAL,
               track_as_maintenance INTEGER NOT NULL DEFAULT 0,
+              workflow_source_type TEXT,
+              workflow_source_id INTEGER,
               notes TEXT,
               created_at TEXT NOT NULL,
               FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
@@ -505,9 +507,20 @@ def init_pro_crm_schema_db() -> None:
             """
         )
         add_column_if_missing("repair_records", "track_as_maintenance", "track_as_maintenance INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_records", "workflow_source_type", "workflow_source_type TEXT")
+        add_column_if_missing("repair_records", "workflow_source_id", "workflow_source_id INTEGER")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_customer_id ON repair_records (customer_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_id ON repair_records (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_date_mileage ON repair_records (vehicle_id, repair_date, mileage)")
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_records_workflow_source
+            ON repair_records (workflow_source_type, workflow_source_id)
+            WHERE workflow_source_type IS NOT NULL
+              AND TRIM(workflow_source_type) != ''
+              AND workflow_source_id IS NOT NULL
+            """
+        )
 
         # Pro groundwork: mechanic-authored inspection findings and recommendations.
         conn.execute(
@@ -528,6 +541,10 @@ def init_pro_crm_schema_db() -> None:
               labor_reason TEXT,
               severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
               status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
+              repair_work_status TEXT,
+              repair_work_updated_at TEXT,
+              linked_repair_record_id INTEGER,
+              repair_record_created_at TEXT,
               mileage INTEGER,
               finding_date TEXT,
               created_at TEXT NOT NULL,
@@ -544,6 +561,10 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("findings_records", "labor_rate", "labor_rate REAL")
         add_column_if_missing("findings_records", "labor_amount", "labor_amount REAL")
         add_column_if_missing("findings_records", "labor_reason", "labor_reason TEXT")
+        add_column_if_missing("findings_records", "repair_work_status", "repair_work_status TEXT")
+        add_column_if_missing("findings_records", "repair_work_updated_at", "repair_work_updated_at TEXT")
+        add_column_if_missing("findings_records", "linked_repair_record_id", "linked_repair_record_id INTEGER")
+        add_column_if_missing("findings_records", "repair_record_created_at", "repair_record_created_at TEXT")
         conn.execute(
             """
             UPDATE findings_records
@@ -551,6 +572,38 @@ def init_pro_crm_schema_db() -> None:
             WHERE request_type IS NULL OR TRIM(request_type) = ''
             """
         )
+        conn.execute(
+            """
+            UPDATE findings_records
+            SET repair_work_status = CASE WHEN status = 'Completed' THEN 'completed' ELSE 'ready' END,
+                repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), created_at)
+            WHERE status IN ('Approved', 'Completed')
+              AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+            """
+        )
+        repair_table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'repair_records'"
+        ).fetchone()
+        if repair_table_exists:
+            conn.execute(
+                """
+                UPDATE findings_records
+                SET linked_repair_record_id = (
+                    SELECT rr.id
+                    FROM repair_records rr
+                    WHERE rr.workflow_source_type = 'finding'
+                      AND rr.workflow_source_id = findings_records.id
+                    LIMIT 1
+                )
+                WHERE linked_repair_record_id IS NULL
+                  AND EXISTS (
+                    SELECT 1
+                    FROM repair_records rr
+                    WHERE rr.workflow_source_type = 'finding'
+                      AND rr.workflow_source_id = findings_records.id
+                  )
+                """
+            )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_mileage_date ON findings_records (vehicle_id, mileage, finding_date)")
@@ -626,6 +679,10 @@ def init_pro_crm_schema_db() -> None:
               parts_amount REAL,
               parts_total REAL,
               customer_decision TEXT NOT NULL CHECK (customer_decision IN ('pending', 'approved', 'declined', 'deferred')),
+              repair_work_status TEXT,
+              repair_work_updated_at TEXT,
+              linked_repair_record_id INTEGER,
+              repair_record_created_at TEXT,
               decision_notes TEXT,
               decision_recorded_at TEXT,
               created_at TEXT NOT NULL,
@@ -648,6 +705,10 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("discrepancy_approvals", "unit_cost", "unit_cost REAL")
         add_column_if_missing("discrepancy_approvals", "parts_amount", "parts_amount REAL")
         add_column_if_missing("discrepancy_approvals", "parts_total", "parts_total REAL")
+        add_column_if_missing("discrepancy_approvals", "repair_work_status", "repair_work_status TEXT")
+        add_column_if_missing("discrepancy_approvals", "repair_work_updated_at", "repair_work_updated_at TEXT")
+        add_column_if_missing("discrepancy_approvals", "linked_repair_record_id", "linked_repair_record_id INTEGER")
+        add_column_if_missing("discrepancy_approvals", "repair_record_created_at", "repair_record_created_at TEXT")
         conn.execute(
             """
             UPDATE discrepancy_approvals
@@ -663,6 +724,38 @@ def init_pro_crm_schema_db() -> None:
             WHERE request_type = 'parts'
             """
         )
+        conn.execute(
+            """
+            UPDATE discrepancy_approvals
+            SET repair_work_status = 'ready',
+                repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), decision_recorded_at, updated_at, created_at)
+            WHERE customer_decision = 'approved'
+              AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+            """
+        )
+        repair_table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'repair_records'"
+        ).fetchone()
+        if repair_table_exists:
+            conn.execute(
+                """
+                UPDATE discrepancy_approvals
+                SET linked_repair_record_id = (
+                    SELECT rr.id
+                    FROM repair_records rr
+                    WHERE rr.workflow_source_type = 'approval'
+                      AND rr.workflow_source_id = discrepancy_approvals.id
+                    LIMIT 1
+                )
+                WHERE linked_repair_record_id IS NULL
+                  AND EXISTS (
+                    SELECT 1
+                    FROM repair_records rr
+                    WHERE rr.workflow_source_type = 'approval'
+                      AND rr.workflow_source_id = discrepancy_approvals.id
+                  )
+                """
+            )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_vehicle_id ON discrepancy_approvals (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_service_history_id ON discrepancy_approvals (service_history_id)")
