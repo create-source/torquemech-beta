@@ -548,7 +548,8 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
     sql = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'discrepancy_approvals'"
     ).fetchone()
-    if sql and "deferred" not in (sql["sql"] or ""):
+    table_sql = (sql["sql"] if isinstance(sql, sqlite3.Row) else sql[0]) if sql else ""
+    if "deferred" not in (table_sql or ""):
         rebuild_discrepancy_approvals_for_deferred(conn)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_customer_id ON discrepancy_approvals (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approvals_vehicle_id ON discrepancy_approvals (vehicle_id)")
@@ -1415,6 +1416,31 @@ def group_approval_records(records: list[dict[str, Any]]) -> dict[str, list[dict
     return grouped
 
 
+def build_approval_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
+    counts = {"pending": 0, "approved": 0, "deferred": 0, "declined": 0}
+    approved_labor_total = 0.0
+    approved_parts_total = 0.0
+    for record in records:
+        decision = normalize_approval_decision(record.get("customer_decision"))
+        counts[decision] = counts.get(decision, 0) + 1
+        if decision != "approved":
+            continue
+        request_type = normalize_approval_request_type(record.get("request_type"))
+        if request_type == "labor":
+            approved_labor_total += float(record.get("labor_amount") or 0)
+        elif request_type == "parts":
+            approved_parts_total += float(record.get("parts_total") or record.get("parts_amount") or 0)
+    return {
+        "pending": counts["pending"],
+        "approved": counts["approved"],
+        "deferred": counts["deferred"],
+        "declined": counts["declined"],
+        "approved_labor_total": approved_labor_total,
+        "approved_parts_total": approved_parts_total,
+        "total_approved_add_ons": approved_labor_total + approved_parts_total,
+    }
+
+
 def finding_history_timeline_label(record: dict[str, Any]) -> str:
     finding = record.get("finding") or "Finding"
     is_labor = normalize_finding_request_type(record.get("request_type")) == "labor"
@@ -2208,6 +2234,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     )
     repair_history_summary = build_repair_history_summary(repair_records)
     findings_summary = build_findings_summary(findings_records)
+    approval_summary = build_approval_summary(approval_records)
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -2221,6 +2248,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "repair_history_summary": repair_history_summary,
             "findings_records": findings_records,
             "findings_summary": findings_summary,
+            "approval_summary": approval_summary,
             "finding_history_records": finding_history_records,
             "customer_decision_logs": customer_decision_logs,
             "vehicle_timeline": vehicle_timeline,

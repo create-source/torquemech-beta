@@ -938,6 +938,45 @@
     {% endif %}
   </section>
 
+  <section class="tm-crm-panel" id="approval-summary" aria-label="Approval summary" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Approval Summary</div>
+    <h2 style="margin:4px 0 0;">Approval Summary</h2>
+
+    <div class="tm-history-summary" aria-label="Approval request counts">
+      <div class="tm-history-summary-card">
+        <span>Pending Requests</span>
+        <strong>{{ approval_summary.pending }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Approved Requests</span>
+        <strong>{{ approval_summary.approved }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Deferred Requests</span>
+        <strong>{{ approval_summary.deferred }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Declined Requests</span>
+        <strong>{{ approval_summary.declined }}</strong>
+      </div>
+    </div>
+
+    <div class="tm-history-summary" aria-label="Approved add-on totals" style="margin-top:12px;">
+      <div class="tm-history-summary-card">
+        <span>Approved Labor Total</span>
+        <strong>{{ approval_summary.approved_labor_total|pro_currency }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Approved Parts Total</span>
+        <strong>{{ approval_summary.approved_parts_total|pro_currency }}</strong>
+      </div>
+      <div class="tm-history-summary-card">
+        <span>Total Approved Add-ons</span>
+        <strong>{{ approval_summary.total_approved_add_ons|pro_currency }}</strong>
+      </div>
+    </div>
+  </section>
+
   <section class="tm-crm-panel" id="repair-history" aria-label="Repair history" style="margin-top:16px;">
     <div class="tm-crm-kicker">Repair History</div>
     <h2 style="margin:4px 0 0;">Repair History</h2>
