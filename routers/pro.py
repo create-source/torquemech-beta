@@ -15,6 +15,10 @@ from app.data.maintenance_library import (
     maintenance_defaults_for,
     normalize_maintenance_service_type,
 )
+from app.data.repair_blueprints import (
+    blueprint_summary,
+    get_repair_blueprint_for_work_item,
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -1648,44 +1652,49 @@ def build_repair_work_items(
             status = normalize_repair_work_status(status)
         except HTTPException:
             status = "ready"
-        items.append(
-            {
-                "source_type": "finding",
-                "source_id": record.get("id"),
-                "title": repair_work_title_from_finding(record),
-                "detail": record.get("finding") or record.get("labor_reason") or record.get("recommendation") or "",
-                "request_type_label": "Labor Request" if normalize_finding_request_type(record.get("request_type")) == "labor" else "Finding",
-                "approval_label": record.get("status") or "Approved",
-                "repair_work_status": status,
-                "repair_work_status_label": repair_work_status_label(status),
-                "linked_repair_record_id": record.get("linked_repair_record_id"),
-                "repair_record_created_at": record.get("repair_record_created_at") or "",
-                "repair_record_url": (
-                    f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
-                    f"/repairs/{record.get('linked_repair_record_id')}"
-                    if record.get("linked_repair_record_id")
-                    else ""
+        title = repair_work_title_from_finding(record)
+        detail = record.get("finding") or record.get("labor_reason") or record.get("recommendation") or ""
+        blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
+        item = {
+            "source_type": "finding",
+            "source_id": record.get("id"),
+            "title": title,
+            "detail": detail,
+            "request_type_label": "Labor Request" if normalize_finding_request_type(record.get("request_type")) == "labor" else "Finding",
+            "approval_label": record.get("status") or "Approved",
+            "repair_work_status": status,
+            "repair_work_status_label": repair_work_status_label(status),
+            "linked_repair_record_id": record.get("linked_repair_record_id"),
+            "repair_record_created_at": record.get("repair_record_created_at") or "",
+            "repair_record_url": (
+                f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
+                f"/repairs/{record.get('linked_repair_record_id')}"
+                if record.get("linked_repair_record_id")
+                else ""
+            ),
+            "repair_prefill": {
+                "repair_name": repair_work_title_from_finding(record),
+                "repair_date": date.today().isoformat(),
+                "mileage": current_vehicle_mileage,
+                "notes": "\n".join(
+                    part
+                    for part in [
+                        f"Source: {record.get('status') or 'Approved'} {('labor request' if normalize_finding_request_type(record.get('request_type')) == 'labor' else 'finding')}",
+                        record.get("finding") or "",
+                        record.get("recommendation") or "",
+                        record.get("labor_reason") or "",
+                    ]
+                    if str(part or "").strip()
                 ),
-                "repair_prefill": {
-                    "repair_name": repair_work_title_from_finding(record),
-                    "repair_date": date.today().isoformat(),
-                    "mileage": current_vehicle_mileage,
-                    "notes": "\n".join(
-                        part
-                        for part in [
-                            f"Source: {record.get('status') or 'Approved'} {('labor request' if normalize_finding_request_type(record.get('request_type')) == 'labor' else 'finding')}",
-                            record.get("finding") or "",
-                            record.get("recommendation") or "",
-                            record.get("labor_reason") or "",
-                        ]
-                        if str(part or "").strip()
-                    ),
-                },
-                "updated_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
-                "mileage": record.get("mileage"),
-                "url": f"#recommendations-findings",
-            }
-        )
+            },
+            "updated_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
+            "mileage": record.get("mileage"),
+            "url": f"#recommendations-findings",
+        }
+        if blueprint:
+            item["blueprint"] = blueprint
+            item["blueprint_summary"] = blueprint_summary(blueprint)
+        items.append(item)
     for record in approval_records:
         if normalize_approval_decision(record.get("customer_decision")) != "approved":
             continue
@@ -1694,45 +1703,50 @@ def build_repair_work_items(
             status = normalize_repair_work_status(status)
         except HTTPException:
             status = "ready"
-        items.append(
-            {
-                "source_type": "approval",
-                "source_id": record.get("id"),
-                "title": repair_work_title_from_approval(record),
-                "detail": record.get("finding_description") or record.get("recommended_repair") or "",
-                "request_type_label": approval_request_type_label(record.get("request_type")),
-                "approval_label": "Approved",
-                "repair_work_status": status,
-                "repair_work_status_label": repair_work_status_label(status),
-                "linked_repair_record_id": record.get("linked_repair_record_id"),
-                "repair_record_created_at": record.get("repair_record_created_at") or "",
-                "repair_record_url": (
-                    f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
-                    f"/repairs/{record.get('linked_repair_record_id')}"
-                    if record.get("linked_repair_record_id")
-                    else ""
+        title = repair_work_title_from_approval(record)
+        detail = record.get("finding_description") or record.get("recommended_repair") or ""
+        blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
+        item = {
+            "source_type": "approval",
+            "source_id": record.get("id"),
+            "title": title,
+            "detail": detail,
+            "request_type_label": approval_request_type_label(record.get("request_type")),
+            "approval_label": "Approved",
+            "repair_work_status": status,
+            "repair_work_status_label": repair_work_status_label(status),
+            "linked_repair_record_id": record.get("linked_repair_record_id"),
+            "repair_record_created_at": record.get("repair_record_created_at") or "",
+            "repair_record_url": (
+                f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
+                f"/repairs/{record.get('linked_repair_record_id')}"
+                if record.get("linked_repair_record_id")
+                else ""
+            ),
+            "repair_prefill": {
+                "repair_name": repair_work_title_from_approval(record),
+                "repair_date": date.today().isoformat(),
+                "mileage": current_vehicle_mileage,
+                "notes": "\n".join(
+                    part
+                    for part in [
+                        f"Source: Approved {approval_request_type_label(record.get('request_type')).lower()} request",
+                        record.get("finding_description") or "",
+                        record.get("recommended_repair") or "",
+                        record.get("labor_reason") or "",
+                        record.get("part_number") and f"Part Number: {record.get('part_number')}",
+                    ]
+                    if str(part or "").strip()
                 ),
-                "repair_prefill": {
-                    "repair_name": repair_work_title_from_approval(record),
-                    "repair_date": date.today().isoformat(),
-                    "mileage": current_vehicle_mileage,
-                    "notes": "\n".join(
-                        part
-                        for part in [
-                            f"Source: Approved {approval_request_type_label(record.get('request_type')).lower()} request",
-                            record.get("finding_description") or "",
-                            record.get("recommended_repair") or "",
-                            record.get("labor_reason") or "",
-                            record.get("part_number") and f"Part Number: {record.get('part_number')}",
-                        ]
-                        if str(part or "").strip()
-                    ),
-                },
-                "updated_at": record.get("repair_work_updated_at") or record.get("decision_recorded_at") or record.get("updated_at") or "",
-                "mileage": None,
-                "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
-            }
-        )
+            },
+            "updated_at": record.get("repair_work_updated_at") or record.get("decision_recorded_at") or record.get("updated_at") or "",
+            "mileage": None,
+            "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
+        }
+        if blueprint:
+            item["blueprint"] = blueprint
+            item["blueprint_summary"] = blueprint_summary(blueprint)
+        items.append(item)
     status_rank = {"ready": 1, "in_progress": 2, "waiting_parts": 3, "completed": 4}
     items.sort(
         key=lambda item: (

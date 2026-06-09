@@ -194,6 +194,264 @@
     font-weight: 900;
   }
 
+  .tm-blueprint-summary-card {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(14, 116, 144, 0.16);
+    border-left: 5px solid #0f766e;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+
+  .tm-blueprint-summary-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .tm-blueprint-summary-title {
+    color: #0f172a;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .tm-blueprint-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tm-blueprint-summary-metric {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #fff;
+    padding: 9px;
+  }
+
+  .tm-blueprint-summary-metric span {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 900;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .tm-blueprint-summary-metric strong {
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 900;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-blueprint-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+  }
+
+  .tm-blueprint-modal[hidden] {
+    display: none;
+  }
+
+  .tm-blueprint-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+  }
+
+  .tm-blueprint-slideout {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: min(560px, 100%);
+    height: 100%;
+    background: #f8fafc;
+    box-shadow: -24px 0 60px rgba(15, 23, 42, 0.24);
+  }
+
+  .tm-blueprint-slideout-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    background: #fff;
+    padding: 16px;
+  }
+
+  .tm-blueprint-slideout-title {
+    margin: 3px 0 0;
+    color: #0f172a;
+    font-size: 1.28rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.15;
+  }
+
+  .tm-blueprint-close {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    box-shadow: none;
+  }
+
+  .tm-blueprint-slideout-body {
+    overflow: auto;
+    padding: 16px;
+  }
+
+  .tm-intel-dashboard {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-intel-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-intel-card {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+  }
+
+  .tm-intel-card--wide {
+    grid-column: 1 / -1;
+  }
+
+  .tm-intel-card h4 {
+    margin: 0 0 9px;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.2;
+  }
+
+  .tm-intel-list {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tm-intel-list li {
+    display: flex;
+    gap: 8px;
+    color: #334155;
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
+  .tm-intel-list li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #0f766e;
+    margin-top: 0.45em;
+  }
+
+  .tm-intel-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .tm-intel-badge {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.2;
+    padding: 6px 9px;
+  }
+
+  .tm-intel-rows {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+  }
+
+  .tm-intel-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+    padding-bottom: 7px;
+    color: #334155;
+    font-size: 0.84rem;
+    line-height: 1.3;
+  }
+
+  .tm-intel-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .tm-blueprint-spec-label {
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-blueprint-accordion {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tm-blueprint-accordion details {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .tm-blueprint-accordion summary {
+    cursor: pointer;
+    padding: 12px 14px;
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-blueprint-section-body {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 12px 14px 14px;
+  }
+
+  .tm-blueprint-section-body ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+
+  .tm-blueprint-section-body li {
+    color: #475569;
+    line-height: 1.45;
+  }
+
   .tm-history-head {
     display: flex;
     align-items: flex-start;
@@ -884,6 +1142,26 @@
       text-align: center;
     }
 
+    .tm-blueprint-summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tm-intel-card-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-blueprint-summary-head,
+    .tm-repair-work-form {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .tm-repair-work-form .tm-input,
+    .tm-repair-work-form .tm-btn {
+      width: 100%;
+      min-width: 0;
+    }
+
     .tm-timeline-header {
       display: grid;
       grid-template-columns: 1fr;
@@ -1188,6 +1466,40 @@
         {% if item.mileage is not none %}
         <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
         {% endif %}
+        {% if item.blueprint %}
+        <section class="tm-blueprint-summary-card" aria-label="Repair intelligence summary for {{ item.blueprint.title }}">
+          <div class="tm-blueprint-summary-head">
+            <div>
+              <div class="tm-crm-kicker">Repair Intelligence</div>
+              <div class="tm-blueprint-summary-title">{{ item.blueprint.title }}</div>
+            </div>
+            {% if item.blueprint_summary.vehicle_specific %}
+            <span class="tm-crm-chip">Vehicle-Specific</span>
+            {% endif %}
+          </div>
+          <div class="tm-blueprint-summary-grid">
+            <div class="tm-blueprint-summary-metric">
+              <span>Critical Checks</span>
+              <strong>{{ item.blueprint_summary.critical_checks_count }}</strong>
+            </div>
+            <div class="tm-blueprint-summary-metric">
+              <span>Known Patterns</span>
+              <strong>{{ item.blueprint_summary.known_patterns_count }}</strong>
+            </div>
+            <div class="tm-blueprint-summary-metric">
+              <span>Required Parts</span>
+              <strong>{{ item.blueprint_summary.required_parts_count }}</strong>
+            </div>
+            <div class="tm-blueprint-summary-metric">
+              <span>Recommended</span>
+              <strong>{{ item.blueprint_summary.recommended_parts_count }}</strong>
+            </div>
+          </div>
+          <div class="tm-crm-chip-row">
+            <button class="tm-btn tm-btn-secondary" type="button" data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}">Open Intelligence</button>
+          </div>
+        </section>
+        {% endif %}
         {% if item.linked_repair_record_id %}
         <div class="tm-crm-chip-row">
           <span class="tm-crm-chip">Repair Record Created</span>
@@ -1249,6 +1561,176 @@
         </details>
         {% endif %}
       </article>
+      {% if item.blueprint %}
+      <div class="tm-blueprint-modal" id="blueprint-{{ item.source_type }}-{{ item.source_id }}" data-blueprint-modal hidden>
+        <div class="tm-blueprint-modal-backdrop" data-blueprint-close></div>
+        <aside class="tm-blueprint-slideout" role="dialog" aria-modal="true" aria-labelledby="blueprint-title-{{ item.source_type }}-{{ item.source_id }}">
+          <header class="tm-blueprint-slideout-head">
+            <div>
+              <div class="tm-crm-kicker">Vehicle-Specific Repair Intelligence</div>
+              <h3 class="tm-blueprint-slideout-title" id="blueprint-title-{{ item.source_type }}-{{ item.source_id }}">{{ item.blueprint.title }}</h3>
+              {% if item.blueprint_summary.vehicle_specific %}
+              <div class="tm-crm-chip-row" style="margin-top:8px;">
+                <span class="tm-crm-chip">Vehicle-Specific</span>
+              </div>
+              {% endif %}
+            </div>
+            <button class="tm-blueprint-close" type="button" aria-label="Close repair intelligence" data-blueprint-close>x</button>
+          </header>
+          <div class="tm-blueprint-slideout-body">
+            <div class="tm-intel-dashboard">
+              <div class="tm-intel-card tm-intel-card--wide">
+                <h4>Repair Snapshot</h4>
+                <div class="tm-intel-rows">
+                  {% for metric in item.blueprint.snapshot %}
+                  <div class="tm-intel-row">
+                    <span class="tm-blueprint-spec-label">{{ metric.label }}</span>
+                    <span>{{ metric.value }}</span>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="tm-intel-card-grid">
+                <section class="tm-intel-card">
+                  <h4>Vehicle-Specific Critical Checks</h4>
+                  {% if item.blueprint.critical_checks %}
+                  <ul class="tm-intel-list">
+                    {% for check in item.blueprint.critical_checks %}
+                    <li>{{ check }}</li>
+                    {% endfor %}
+                  </ul>
+                  {% else %}
+                  <div class="tm-history-empty">No critical checks listed.</div>
+                  {% endif %}
+                </section>
+
+                <section class="tm-intel-card">
+                  <h4>Vehicle-Specific Known Failure Patterns</h4>
+                  {% if item.blueprint.known_failure_patterns %}
+                  <ul class="tm-intel-list">
+                    {% for pattern in item.blueprint.known_failure_patterns %}
+                    <li>{{ pattern }}</li>
+                    {% endfor %}
+                  </ul>
+                  {% else %}
+                  <div class="tm-history-empty">No known patterns listed.</div>
+                  {% endif %}
+                </section>
+
+                <section class="tm-intel-card">
+                  <h4>Inspection Opportunities</h4>
+                  {% if item.blueprint.inspection_opportunities %}
+                  <div class="tm-intel-badge-row">
+                    {% for opportunity in item.blueprint.inspection_opportunities %}
+                    <span class="tm-intel-badge">{{ opportunity }}</span>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="tm-history-empty">No inspection opportunities listed.</div>
+                  {% endif %}
+                </section>
+
+                <section class="tm-intel-card">
+                  <h4>Common Add-On Repairs</h4>
+                  {% if item.blueprint.common_add_on_repairs %}
+                  <div class="tm-intel-badge-row">
+                    {% for repair in item.blueprint.common_add_on_repairs %}
+                    <span class="tm-intel-badge">{{ repair }}</span>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="tm-history-empty">No add-ons listed.</div>
+                  {% endif %}
+                </section>
+
+                <section class="tm-intel-card">
+                  <h4>Required Parts</h4>
+                  {% if item.blueprint.required_parts %}
+                  <ul class="tm-intel-list">
+                    {% for part in item.blueprint.required_parts %}
+                    <li>{{ part }}</li>
+                    {% endfor %}
+                  </ul>
+                  {% else %}
+                  <div class="tm-history-empty">No required parts listed.</div>
+                  {% endif %}
+                </section>
+
+                <section class="tm-intel-card">
+                  <h4>Recommended Parts</h4>
+                  {% if item.blueprint.recommended_parts %}
+                  <div class="tm-intel-badge-row">
+                    {% for part in item.blueprint.recommended_parts %}
+                    <span class="tm-intel-badge">{{ part }}</span>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="tm-history-empty">No recommended parts listed.</div>
+                  {% endif %}
+                </section>
+
+                <section class="tm-intel-card">
+                  <h4>Labor Benchmark</h4>
+                  <div class="tm-intel-row">
+                    <span>{{ item.blueprint.labor_benchmark or "Not set" }}</span>
+                  </div>
+                </section>
+
+                <section class="tm-intel-card">
+                  <h4>Critical Specs / Torque Specs</h4>
+                  {% if item.blueprint.critical_specs %}
+                  <div class="tm-intel-rows">
+                    {% for spec in item.blueprint.critical_specs %}
+                    <div class="tm-intel-row">
+                      <span class="tm-blueprint-spec-label">{{ spec.label }}</span>
+                      <span>{{ spec.value }}</span>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="tm-history-empty">No specs listed.</div>
+                  {% endif %}
+                </section>
+
+                <section class="tm-intel-card tm-intel-card--wide">
+                  <h4>Vendor Links</h4>
+                  <div class="tm-intel-badge-row">
+                    {% for vendor in item.blueprint.vendor_links %}
+                    <span class="tm-intel-badge">{{ vendor.label }} - {{ vendor.status }}</span>
+                    {% endfor %}
+                  </div>
+                </section>
+              </div>
+
+              <div class="tm-blueprint-accordion">
+                <details>
+                  <summary>Reference Procedure</summary>
+                  <div class="tm-blueprint-section-body">
+                    {% if item.blueprint.repair_steps %}
+                    <ul>
+                      {% for step in item.blueprint.repair_steps %}
+                      <li>{{ step }}</li>
+                      {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="tm-history-empty">No reference procedure available.</div>
+                    {% endif %}
+                    {% if item.blueprint.tools_required %}
+                    <div class="tm-intel-badge-row" style="margin-top:12px;">
+                      {% for tool in item.blueprint.tools_required %}
+                      <span class="tm-intel-badge">{{ tool }}</span>
+                      {% endfor %}
+                    </div>
+                    {% endif %}
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+      {% endif %}
       {% endfor %}
     </div>
     {% else %}
@@ -2111,6 +2593,50 @@
     input.addEventListener("input", sync);
     input.addEventListener("change", sync);
     sync();
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const modals = Array.from(document.querySelectorAll("[data-blueprint-modal]"));
+  if (!modals.length) return;
+
+  const closeModal = (modal) => {
+    if (!modal) return;
+    modal.hidden = true;
+    if (!modals.some((item) => !item.hidden)) {
+      document.body.style.overflow = "";
+    }
+  };
+
+  const openModal = (modal) => {
+    modals.forEach((item) => {
+      if (item !== modal) closeModal(item);
+    });
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+  };
+
+  document.querySelectorAll("[data-blueprint-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const modal = document.getElementById(button.dataset.blueprintOpen || "");
+      if (modal) openModal(modal);
+    });
+  });
+
+  modals.forEach((modal) => {
+    modal.addEventListener("click", (event) => {
+      if (event.target.closest("[data-blueprint-close]")) {
+        closeModal(modal);
+      }
+    });
+
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    modals.forEach(closeModal);
   });
 })();
 </script>
