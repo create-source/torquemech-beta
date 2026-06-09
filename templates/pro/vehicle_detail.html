@@ -6,18 +6,21 @@
 <style>
   .tm-crm-vehicle-summary,
   .tm-crm-panel {
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(15, 23, 42, 0.1);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.94);
-    padding: 18px;
-    max-width: 920px;
+    background: rgba(255, 255, 255, 0.97);
+    padding: 16px;
+    max-width: none;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
   }
 
   .tm-crm-vehicle-summary {
-    display: grid;
-    gap: 12px;
-    border-left: 5px solid #334155;
-    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-left: 5px solid #0f766e;
+    margin-bottom: 0;
   }
 
   .tm-crm-chip-row {
@@ -27,12 +30,13 @@
   }
 
   .tm-crm-chip {
-    border: 1px solid rgba(14, 116, 144, 0.22);
+    border: 1px solid rgba(14, 116, 144, 0.18);
     border-radius: 999px;
-    background: #ecfeff;
+    background: #f0fdfa;
     color: #155e75;
-    font-weight: 800;
-    padding: 6px 10px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
   }
 
   .tm-crm-chip--inactive {
@@ -215,10 +219,87 @@
     background: rgba(255, 255, 255, 0.78);
   }
 
+  .tm-pro-shell--vehicle {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.9fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .tm-pro-shell--vehicle > .tm-pro-pagehead,
+  .tm-pro-shell--vehicle > .tm-crm-vehicle-summary {
+    grid-column: 1 / -1;
+  }
+
+  #recommendations-findings,
+  #repair-workflow {
+    grid-column: 1;
+  }
+
+  #vehicle-edit,
+  #approval-summary,
+  #repair-history,
+  #maintenance-tracking,
+  [data-vehicle-timeline-section] {
+    grid-column: 2;
+  }
+
+  .tm-pro-shell--vehicle > .tm-crm-panel,
+  .tm-pro-shell--vehicle > .tm-crm-vehicle-summary {
+    margin-top: 0 !important;
+  }
+
+  .tm-crm-panel h2 {
+    color: #0f172a;
+    font-size: 1.05rem;
+    letter-spacing: 0;
+    line-height: 1.2;
+  }
+
+  .tm-panel-headline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .tm-panel-headline > strong {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.98rem;
+    line-height: 1;
+    padding: 9px 10px;
+    white-space: nowrap;
+  }
+
+  #maintenance-tracking .tm-panel-headline > strong {
+    min-width: 42px;
+    text-align: center;
+  }
+
+  #vehicle-edit {
+    position: sticky;
+    top: 78px;
+    z-index: 1;
+  }
+
+  .tm-crm-panel .tm-crm-kicker {
+    margin-bottom: 2px;
+  }
+
+  .tm-crm-panel .tm-btn {
+    min-height: 38px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
   .tm-vehicle-timeline {
     display: grid;
-    gap: 0;
-    margin-top: 14px;
+    gap: 8px;
+    margin-top: 12px;
   }
 
   .tm-timeline-header {
@@ -242,8 +323,8 @@
   .tm-timeline-item {
     position: relative;
     display: grid;
-    grid-template-columns: 18px minmax(0, 1fr);
-    gap: 12px;
+    grid-template-columns: 14px minmax(0, 1fr);
+    gap: 10px;
     color: inherit;
     text-decoration: none;
   }
@@ -251,11 +332,11 @@
   .tm-timeline-item::before {
     content: "";
     position: absolute;
-    left: 8px;
-    top: 22px;
-    bottom: -12px;
+    left: 6px;
+    top: 20px;
+    bottom: -10px;
     width: 2px;
-    background: #cbd5e1;
+    background: rgba(148, 163, 184, 0.42);
   }
 
   .tm-timeline-item:last-child::before {
@@ -271,7 +352,7 @@
     border-radius: 50%;
     background: #0e7490;
     box-shadow: 0 0 0 2px #0e7490;
-    margin-top: 17px;
+    margin-top: 15px;
   }
 
   .tm-timeline-dot--maintenance {
@@ -291,12 +372,12 @@
 
   .tm-timeline-content {
     display: grid;
-    gap: 8px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    gap: 6px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 8px;
-    background: #fff;
-    padding: 13px 14px;
-    margin-bottom: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    padding: 11px 12px;
+    margin-bottom: 0;
   }
 
   .tm-timeline-item:hover .tm-timeline-content {
@@ -316,9 +397,9 @@
     border-radius: 999px;
     background: #e0f2fe;
     color: #075985;
-    font-size: 0.74rem;
+    font-size: 0.7rem;
     font-weight: 900;
-    padding: 5px 9px;
+    padding: 4px 8px;
   }
 
   .tm-timeline-badge--maintenance {
@@ -370,33 +451,42 @@
   .tm-history-summary {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    margin-top: 14px;
+    gap: 8px;
+    margin-top: 12px;
   }
 
   .tm-history-summary--repairs {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tm-history-summary--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tm-history-summary--money {
+    grid-template-columns: 1fr;
   }
 
   .tm-history-summary-card {
     display: grid;
-    gap: 5px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    gap: 3px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 8px;
-    background: #fff;
-    padding: 14px;
+    background: #f8fafc;
+    padding: 10px;
   }
 
   .tm-history-summary-card span {
     color: #64748b;
-    font-size: 0.74rem;
+    font-size: 0.68rem;
     font-weight: 900;
     text-transform: uppercase;
   }
 
   .tm-history-summary-card strong {
     color: #0f172a;
-    font-size: 1.05rem;
+    font-size: 0.98rem;
+    line-height: 1.15;
   }
 
   .tm-repair-table .tm-repair-actions-cell {
@@ -417,6 +507,11 @@
     flex-wrap: nowrap;
   }
 
+  .tm-repair-action-row .tm-btn {
+    min-height: 34px;
+    padding: 7px 10px;
+  }
+
   .tm-repair-cards {
     display: none;
     gap: 12px;
@@ -425,18 +520,19 @@
 
   .tm-repair-card {
     display: grid;
-    gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    border-left: 5px solid #7c3aed;
+    gap: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-left: 4px solid #7c3aed;
     border-radius: 8px;
     background: #fff;
-    padding: 14px;
+    padding: 12px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
   }
 
   .tm-repair-card-fields {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    gap: 8px;
   }
 
   .tm-repair-card-field {
@@ -459,12 +555,13 @@
 
   .tm-finding-card {
     display: grid;
-    gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
+    gap: 9px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
     border-left: 5px solid #d97706;
     border-radius: 8px;
     background: #fff;
-    padding: 14px;
+    padding: 13px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
   }
 
   .tm-finding-card--high {
@@ -489,7 +586,7 @@
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 8px;
     background: #f8fafc;
-    padding: 10px;
+    padding: 9px;
   }
 
   .tm-finding-status-control {
@@ -581,31 +678,38 @@
 
   .tm-maintenance-cards {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     margin-top: 12px;
   }
 
   .tm-maintenance-card {
     display: grid;
-    gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    border-left: 5px solid #0e7490;
+    gap: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-left: 4px solid #0e7490;
     border-radius: 8px;
     background: #fff;
-    padding: 14px;
+    padding: 12px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
   }
 
   .tm-maintenance-card-head {
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    align-items: flex-start;
+    align-items: center;
+  }
+
+  .tm-maintenance-card-head .tm-btn {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 7px 10px;
   }
 
   .tm-maintenance-fields {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .tm-maintenance-field {
@@ -615,13 +719,15 @@
 
   .tm-maintenance-field span {
     color: #64748b;
-    font-size: 0.74rem;
+    font-size: 0.68rem;
     font-weight: 900;
     text-transform: uppercase;
   }
 
   .tm-maintenance-field strong {
     color: #0f172a;
+    font-size: 0.9rem;
+    line-height: 1.2;
   }
 
   .tm-crm-disclosure summary {
@@ -636,7 +742,7 @@
 
   .tm-crm-panel input[type="date"],
   .tm-crm-panel input[type="datetime-local"] {
-    min-height: 48px;
+    min-height: 42px;
   }
 
   .tm-money-field {
@@ -722,10 +828,37 @@
   }
 
   @media (max-width: 760px) {
+    .tm-pro-shell--vehicle {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-pro-shell--vehicle > .tm-pro-pagehead,
+    .tm-pro-shell--vehicle > .tm-crm-vehicle-summary,
+    #recommendations-findings,
+    #repair-workflow,
+    #vehicle-edit,
+    #approval-summary,
+    #repair-history,
+    #maintenance-tracking,
+    [data-vehicle-timeline-section] {
+      grid-column: 1;
+    }
+
+    #vehicle-edit {
+      position: static;
+    }
+
+    .tm-crm-vehicle-summary,
+    .tm-panel-headline {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
     .tm-crm-row,
     .tm-maintenance-fields,
     .tm-history-summary,
-    .tm-history-summary--repairs {
+    .tm-history-summary--repairs,
+    .tm-history-summary--compact {
       grid-template-columns: 1fr;
     }
 
@@ -764,7 +897,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-shell">
+<section class="tm-pro-shell tm-pro-shell--vehicle">
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
@@ -779,7 +912,7 @@
   <section class="tm-crm-vehicle-summary" id="vehicle-information" aria-label="Vehicle summary">
     <div class="tm-crm-kicker">Vehicle</div>
     <div class="tm-crm-chip-row">
-      <span class="tm-crm-chip">{% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}</span>
+      <span class="tm-crm-chip">{{ vehicle.engine|pro_engine_badge }}</span>
       <span class="tm-crm-chip">{% if vehicle.mileage %}Current {{ vehicle.mileage|pro_miles }} miles{% else %}Current mileage not recorded{% endif %}</span>
       {% if customer.customer_status == "inactive" %}
       <span class="tm-crm-chip tm-crm-chip--inactive">Customer Inactive</span>
@@ -793,7 +926,7 @@
     {% endif %}
   </section>
 
-  <form class="tm-crm-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
+  <form class="tm-crm-panel" id="vehicle-edit" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
     <h2 style="margin-top:0;">Edit Vehicle</h2>
 
     <div class="tm-crm-row">
@@ -985,16 +1118,21 @@
     </div>
     {% else %}
     <div class="tm-history-empty" style="margin-top:12px;">
-      No recommendations or findings recorded for this vehicle yet.
+      No findings, labor requests, or recommendations recorded for this vehicle yet.
     </div>
     {% endif %}
   </section>
 
   <section class="tm-crm-panel" id="approval-summary" aria-label="Approval summary" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Approval Summary</div>
-    <h2 style="margin:4px 0 0;">Approval Summary</h2>
+    <div class="tm-panel-headline">
+      <div>
+        <div class="tm-crm-kicker">Approval Summary</div>
+        <h2 style="margin:4px 0 0;">Approval Summary</h2>
+      </div>
+      <strong>{{ approval_summary.total_approved_add_ons|pro_currency }}</strong>
+    </div>
 
-    <div class="tm-history-summary" aria-label="Approval request counts">
+    <div class="tm-history-summary tm-history-summary--compact" aria-label="Approval request counts">
       <div class="tm-history-summary-card">
         <span>Pending Requests</span>
         <strong>{{ approval_summary.pending }}</strong>
@@ -1013,7 +1151,7 @@
       </div>
     </div>
 
-    <div class="tm-history-summary" aria-label="Approved add-on totals" style="margin-top:12px;">
+    <div class="tm-history-summary tm-history-summary--compact tm-history-summary--money" aria-label="Approved add-on totals" style="margin-top:8px;">
       <div class="tm-history-summary-card">
         <span>Approved Labor Total</span>
         <strong>{{ approval_summary.approved_labor_total|pro_currency }}</strong>
@@ -1115,14 +1253,19 @@
     </div>
     {% else %}
     <div class="tm-history-empty" style="margin-top:12px;">
-      No approved work is ready for repair yet.
+      No approved workflow items are ready for repair yet.
     </div>
     {% endif %}
   </section>
 
   <section class="tm-crm-panel" id="repair-history" aria-label="Repair history" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Repair History</div>
-    <h2 style="margin:4px 0 0;">Repair History</h2>
+    <div class="tm-panel-headline">
+      <div>
+        <div class="tm-crm-kicker">Repair History</div>
+        <h2 style="margin:4px 0 0;">Repair History</h2>
+      </div>
+      <strong>{{ repair_history_summary.lifetime_repair_spend|pro_currency }}</strong>
+    </div>
 
     <details class="tm-crm-disclosure" style="margin-top:16px;">
       <summary>Add Repair Record</summary>
@@ -1262,8 +1405,13 @@
   </section>
 
   <section class="tm-crm-panel" id="maintenance-tracking" aria-label="Maintenance records" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Maintenance</div>
-    <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
+    <div class="tm-panel-headline">
+      <div>
+        <div class="tm-crm-kicker">Maintenance</div>
+        <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
+      </div>
+      <strong>{{ maintenance_records|length }}</strong>
+    </div>
 
     <details class="tm-crm-disclosure" style="margin-top:16px;">
       <summary>Add Maintenance Record</summary>
@@ -1368,7 +1516,7 @@
     {% endif %}
   </section>
 
-  <section class="tm-crm-panel" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section data-timeline-limit="5" data-timeline-expanded="false">
+  <section class="tm-crm-panel tm-crm-panel--timeline" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section data-timeline-limit="5" data-timeline-expanded="false">
     <div class="tm-crm-kicker">Vehicle Timeline</div>
     <div class="tm-timeline-header">
       <h2 style="margin:4px 0 0;">Vehicle Timeline <span class="tm-timeline-count" data-timeline-count>({{ vehicle_timeline|length }} {% if vehicle_timeline|length == 1 %}entry{% else %}entries{% endif %})</span></h2>

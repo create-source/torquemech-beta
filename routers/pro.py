@@ -168,16 +168,37 @@ def approval_parts_event_label(decision: str | None = None) -> str:
         return "Customer Declined Parts Request"
     if decision_value == "deferred":
         return "Customer Deferred Parts Request"
-    return "Additional Parts Requested"
+    return "Parts Request Created"
 
 
 def approval_request_type_label(value: Any) -> str:
     request_type = normalize_approval_request_type(str(value or "general"))
     return {
         "finding": "Finding",
-        "labor": "Additional Labor",
-        "parts": "Additional Parts",
+        "labor": "Labor Request",
+        "parts": "Parts Request",
     }[request_type]
+
+
+def format_quantity(value: Any) -> str:
+    if value is None or value == "":
+        return ""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value).strip()
+    if number.is_integer():
+        return str(int(number))
+    return f"{number:.2f}".rstrip("0").rstrip(".")
+
+
+def format_engine_badge(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return "Engine: Not recorded"
+    if raw.lower().startswith("engine"):
+        return raw
+    return f"Engine: {raw}"
 
 
 def format_phone(value: Any) -> str:
@@ -302,6 +323,8 @@ templates.env.filters["pro_miles"] = format_mileage
 templates.env.filters["pro_currency"] = format_currency
 templates.env.filters["pro_date"] = format_pro_date
 templates.env.filters["pro_datetime"] = format_pro_datetime
+templates.env.filters["pro_quantity"] = format_quantity
+templates.env.filters["pro_engine_badge"] = format_engine_badge
 templates.env.filters["service_total"] = service_total_value
 
 
@@ -1385,6 +1408,26 @@ def ensure_service_history_records_schema(conn: sqlite3.Connection) -> None:
         FROM repair_records
         """
     )
+    conn.execute(
+        """
+        DELETE FROM service_history_records
+        WHERE source_type = 'maintenance'
+          AND EXISTS (
+            SELECT 1
+            FROM service_history_records repair_history
+            JOIN repair_records rr
+              ON rr.id = repair_history.source_record_id
+             AND repair_history.source_type = 'repair'
+            WHERE rr.track_as_maintenance = 1
+              AND repair_history.customer_id = service_history_records.customer_id
+              AND repair_history.vehicle_id = service_history_records.vehicle_id
+              AND COALESCE(NULLIF(TRIM(LOWER(repair_history.service_name)), ''), '') =
+                  COALESCE(NULLIF(TRIM(LOWER(service_history_records.service_name)), ''), '')
+              AND COALESCE(repair_history.service_date, '') = COALESCE(service_history_records.service_date, '')
+              AND COALESCE(repair_history.mileage, -1) = COALESCE(service_history_records.mileage, -1)
+          )
+        """
+    )
     conn.commit()
 
 
@@ -1717,7 +1760,7 @@ def finding_history_timeline_label(record: dict[str, Any]) -> str:
         return f"Internal Notes updated: {title}"
     if event_type == "repair_work_status_changed":
         new_status = record.get("new_status") or "ready"
-        return f"Repair Work {repair_work_status_label(new_status)}: {title}"
+        return f"Repair Workflow {repair_work_status_label(new_status)}: {title}"
     new_status = record.get("new_status") or ""
     if new_status:
         if is_labor:
@@ -1817,7 +1860,7 @@ def build_vehicle_timeline(
     timeline.extend(
         {
             "id": record["id"],
-            "record_type": "Repair Work" if record.get("event_type") == "repair_work_status_changed" else "Approval",
+            "record_type": "Repair Workflow" if record.get("event_type") == "repair_work_status_changed" else "Approval",
             "record_type_key": "repair" if record.get("event_type") == "repair_work_status_changed" else "finding",
             "date": record.get("created_at") or "",
             "created_at": record.get("created_at") or "",
@@ -3495,7 +3538,7 @@ async def pro_approval_repair_work_status_update(
                 customer_id,
                 vehicle_id,
                 "repair_work_status_changed",
-                f"Repair Work {repair_work_status_label(repair_status)}: {repair_work_title_from_approval(existing)}",
+                f"Repair Workflow {repair_work_status_label(repair_status)}: {repair_work_title_from_approval(existing)}",
                 now,
             )
         conn.commit()

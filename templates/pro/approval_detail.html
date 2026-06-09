@@ -92,7 +92,7 @@
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
-      <h1 class="tm-pro-title">{{ approval.finding_title or "Additional finding" }}</h1>
+      <h1 class="tm-pro-title">{{ approval.finding_title or "Approval Request" }}</h1>
       <p class="tm-pro-subtitle">
         {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
       </p>
@@ -101,14 +101,14 @@
   </div>
 
   <div class="tm-approval-helper">
-    Document additional repair recommendations and customer decisions.
+    Document approval requests and customer decisions.
   </div>
 
   <section class="tm-approval-summary" aria-label="Approval summary">
-    <div class="tm-approval-kicker">Finding</div>
+    <div class="tm-approval-kicker">Approval Request</div>
     <div class="tm-approval-chip-row">
       <span class="tm-approval-chip">
-        {% if approval.request_type == "labor" %}Additional Labor{% elif approval.request_type == "parts" %}Additional Parts{% else %}Finding{% endif %}
+        {% if approval.request_type == "labor" %}Labor Request{% elif approval.request_type == "parts" %}Parts Request{% else %}Finding{% endif %}
       </span>
       <span class="tm-approval-chip">{{ approval.customer_decision or "pending" }}</span>
       {% if customer.customer_status == "inactive" %}
@@ -125,7 +125,7 @@
       {% endif %}
       <span class="tm-approval-chip">Created {{ approval.created_at|pro_datetime }}</span>
     </div>
-    <div style="color:#475569;">{{ approval.finding_description or "No finding description recorded." }}</div>
+    <div style="color:#475569;">{{ approval.finding_description or "No request description recorded." }}</div>
     <div style="color:#475569;"><strong>Recommended repair:</strong> {{ approval.recommended_repair or "No recommendation recorded." }}</div>
     {% if approval.request_type == "labor" %}
     <div style="color:#475569;"><strong>Labor:</strong> {{ approval.labor_hours if approval.labor_hours is not none else "-" }} hrs{% if approval.labor_rate is not none %} @ {{ approval.labor_rate|pro_currency }}/hr{% endif %}{% if approval.labor_amount is not none %} | Total {{ approval.labor_amount|pro_currency }}{% endif %}</div>
@@ -135,7 +135,7 @@
     {% elif approval.request_type == "parts" %}
     <div style="color:#475569;"><strong>Part Name:</strong> {{ approval.part_name or approval.part_description or "No part name recorded." }}</div>
     <div style="color:#475569;"><strong>Part Number:</strong> {{ approval.part_number or "-" }}</div>
-    <div style="color:#475569;"><strong>Quantity:</strong> {% if approval.quantity is not none %}{{ approval.quantity }}{% else %}-{% endif %}</div>
+    <div style="color:#475569;"><strong>Quantity:</strong> {% if approval.quantity is not none %}{{ approval.quantity|pro_quantity }}{% else %}-{% endif %}</div>
     <div style="color:#475569;"><strong>Unit Cost:</strong> {% if approval.unit_cost is not none %}{{ approval.unit_cost|pro_currency }}{% else %}-{% endif %}</div>
     <div style="color:#475569;"><strong>Parts Total:</strong> {% if approval.parts_total is not none %}{{ approval.parts_total|pro_currency }}{% elif approval.parts_amount is not none %}{{ approval.parts_amount|pro_currency }}{% else %}-{% endif %}</div>
     {% endif %}
@@ -161,24 +161,24 @@
   {% endif %}
 
   <form class="tm-approval-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}">
-    <h2 style="margin-top:0;">Edit Finding</h2>
+    <h2 style="margin-top:0;">Edit Approval Request</h2>
 
     <div>
       <label class="tm-label" for="request_type">Request type</label>
       <select class="tm-input" id="request_type" name="request_type" data-request-type-select>
         <option value="finding" {% if not approval.request_type or approval.request_type in ["finding", "general"] %}selected{% endif %}>Finding</option>
-        <option value="labor" {% if approval.request_type == "labor" %}selected{% endif %}>Additional Labor</option>
-        <option value="parts" {% if approval.request_type == "parts" %}selected{% endif %}>Additional Parts</option>
+        <option value="labor" {% if approval.request_type == "labor" %}selected{% endif %}>Labor Request</option>
+        <option value="parts" {% if approval.request_type == "parts" %}selected{% endif %}>Parts Request</option>
       </select>
     </div>
 
     <div>
-      <label class="tm-label" for="finding_title">Finding title</label>
+      <label class="tm-label" for="finding_title">Request title</label>
       <input class="tm-input" id="finding_title" name="finding_title" type="text" maxlength="180" value="{{ approval.finding_title or '' }}">
     </div>
 
     <div style="margin-top:12px;">
-      <label class="tm-label" for="finding_description">Finding description</label>
+      <label class="tm-label" for="finding_description">Request description</label>
       <textarea class="tm-input" id="finding_description" name="finding_description" rows="4" maxlength="1600" placeholder="Describe what was found, where it was found, and why it matters.">{{ approval.finding_description or "" }}</textarea>
     </div>
 
@@ -190,7 +190,7 @@
     <div class="tm-approval-row" style="margin-top:12px;">
       <div>
         <label class="tm-label" for="estimated_cost">Estimated cost</label>
-        <input class="tm-input" id="estimated_cost" name="estimated_cost" type="text" inputmode="decimal" value="{{ approval.estimated_cost|pro_currency if approval.estimated_cost is not none else '' }}" placeholder="Optional estimate for the additional repair">
+        <input class="tm-input" id="estimated_cost" name="estimated_cost" type="text" inputmode="decimal" value="{{ approval.estimated_cost|pro_currency if approval.estimated_cost is not none else '' }}" placeholder="Optional estimate for the request">
       </div>
       <div>
         <label class="tm-label" for="customer_decision">Customer decision</label>
@@ -204,7 +204,7 @@
     </div>
 
     <section class="tm-request-type-section" data-request-type-section="labor" {% if approval.request_type != "labor" %}hidden{% endif %} style="margin-top:12px;">
-      <div class="tm-approval-kicker">Additional Labor</div>
+      <div class="tm-approval-kicker">Labor Request</div>
       <div class="tm-approval-row" style="margin-top:8px;">
         <div>
           <label class="tm-label" for="labor_hours">Labor hours</label>
@@ -222,7 +222,7 @@
     </section>
 
     <section class="tm-request-type-section" data-request-type-section="parts" {% if approval.request_type != "parts" %}hidden{% endif %} style="margin-top:12px;">
-      <div class="tm-approval-kicker">Additional Parts</div>
+      <div class="tm-approval-kicker">Parts Request</div>
       <div style="margin-top:8px;">
         <label class="tm-label" for="part_name">Part Name</label>
         <input class="tm-input" id="part_name" name="part_name" type="text" maxlength="300" value="{{ approval.part_name or approval.part_description or '' }}">
@@ -234,7 +234,7 @@
       <div class="tm-approval-row" style="margin-top:12px;">
         <div>
           <label class="tm-label" for="quantity">Quantity</label>
-          <input class="tm-input" id="quantity" name="quantity" type="number" min="0" step="0.01" value="{{ approval.quantity if approval.quantity is not none else '' }}">
+          <input class="tm-input" id="quantity" name="quantity" type="number" min="0" step="0.01" value="{{ approval.quantity|pro_quantity if approval.quantity is not none else '' }}">
         </div>
         <div>
           <label class="tm-label" for="unit_cost">Unit cost</label>
@@ -252,7 +252,7 @@
       <input class="tm-input" id="decision_notes" name="decision_notes" type="text" maxlength="600" value="{{ approval.decision_notes or '' }}" placeholder="Who approved or declined, how they responded, or any scheduling context.">
     </div>
 
-    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Finding</button>
+    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Request</button>
   </form>
 
   <section class="tm-approval-panel" aria-label="Decision actions" style="margin-top:16px;">

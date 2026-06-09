@@ -112,7 +112,7 @@
           {% elif item.event_type == "internal_notes_updated" %}
           Internal Notes updated
           {% elif item.event_type == "repair_work_status_changed" %}
-          Repair Work {{ item.new_status|replace("_", " ")|title }}
+          Repair Workflow {{ item.new_status|replace("_", " ")|title }}
           {% elif finding.request_type == "labor" and item.new_status %}
           Labor Request {{ item.new_status }}
           {% else %}

@@ -283,7 +283,7 @@
               {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}
             </div>
             <div class="tm-crm-meta">
-              {% if vehicle.engine %}{{ vehicle.engine }}{% else %}Engine not recorded{% endif %}
+              {{ vehicle.engine|pro_engine_badge }}
             </div>
           </div>
           <div class="tm-crm-meta">

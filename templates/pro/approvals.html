@@ -163,7 +163,7 @@
 <a class="tm-approval-record tm-approval-record--{{ item.customer_decision }}" href="{{ item.detail_url }}">
   <div class="tm-approval-head">
     <div>
-      <div class="tm-approval-title">{{ item.finding_title or "Additional finding" }}</div>
+      <div class="tm-approval-title">{{ item.finding_title or "Approval Request" }}</div>
       <div class="tm-approval-meta">
         {{ item.customer_name }}{% if item.phone %} | {{ item.phone|pro_phone }}{% endif %} | {{ item.vehicle_label }}
       </div>
@@ -191,7 +191,7 @@
     Part Name: {{ item.part_name or item.part_description or "No part name recorded" }}
   </div>
   <div class="tm-approval-meta">
-    Part Number: {{ item.part_number or "-" }} | Quantity: {% if item.quantity is not none %}{{ item.quantity }}{% else %}-{% endif %} | Unit Cost: {% if item.unit_cost is not none %}{{ item.unit_cost|pro_currency }}{% else %}-{% endif %} | Parts Total: {% if item.parts_total is not none %}{{ item.parts_total|pro_currency }}{% elif item.parts_amount is not none %}{{ item.parts_amount|pro_currency }}{% else %}-{% endif %}
+    Part Number: {{ item.part_number or "-" }} | Quantity: {% if item.quantity is not none %}{{ item.quantity|pro_quantity }}{% else %}-{% endif %} | Unit Cost: {% if item.unit_cost is not none %}{{ item.unit_cost|pro_currency }}{% else %}-{% endif %} | Parts Total: {% if item.parts_total is not none %}{{ item.parts_total|pro_currency }}{% elif item.parts_amount is not none %}{{ item.parts_amount|pro_currency }}{% else %}-{% endif %}
   </div>
   {% endif %}
   <div class="tm-approval-meta">
@@ -206,7 +206,7 @@
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">Approvals</h1>
-      <p class="tm-pro-subtitle">Additional findings and customer decision records.</p>
+      <p class="tm-pro-subtitle">Approval requests and customer decision records.</p>
     </div>
     <a class="tm-btn tm-btn-secondary" href="/pro">Back to CRM</a>
   </div>
@@ -228,8 +228,8 @@
           <label class="tm-label" for="request_type">Request Type</label>
           <select class="tm-input" id="request_type" name="request_type" data-request-type-select>
             <option value="finding">Finding</option>
-            <option value="labor">Additional Labor</option>
-            <option value="parts">Additional Parts</option>
+            <option value="labor">Labor Request</option>
+            <option value="parts">Parts Request</option>
           </select>
         </div>
         <div style="margin-top:12px;">
@@ -254,7 +254,7 @@
           </select>
         </div>
         <section class="tm-request-type-section" data-request-type-section="labor" hidden style="margin-top:12px;">
-          <div class="tm-approval-kicker">Additional Labor</div>
+          <div class="tm-approval-kicker">Labor Request</div>
           <div style="margin-top:8px;">
             <label class="tm-label" for="labor_hours">Labor Hours</label>
             <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1">
@@ -269,7 +269,7 @@
           </div>
         </section>
         <section class="tm-request-type-section" data-request-type-section="parts" hidden style="margin-top:12px;">
-          <div class="tm-approval-kicker">Additional Parts</div>
+          <div class="tm-approval-kicker">Parts Request</div>
           <div style="margin-top:8px;">
             <label class="tm-label" for="part_name">Part Name</label>
             <input class="tm-input" id="part_name" name="part_name" type="text" maxlength="300">
@@ -319,10 +319,10 @@
     </section>
 
     {% set sections = [
-      ("pending", "Pending", "Findings awaiting customer decision."),
-      ("approved", "Approved", "Findings the customer approved."),
-      ("declined", "Declined", "Findings the customer declined."),
-      ("deferred", "Deferred", "Findings the customer deferred.")
+      ("pending", "Pending", "Requests awaiting customer decision."),
+      ("approved", "Approved", "Requests the customer approved."),
+      ("declined", "Declined", "Requests the customer declined."),
+      ("deferred", "Deferred", "Requests the customer deferred.")
     ] %}
 
     {% for key, title, description in sections %}
@@ -338,7 +338,7 @@
         {% endfor %}
       </div>
       {% else %}
-      <div class="tm-approval-empty">No records in this group.</div>
+      <div class="tm-approval-empty">No {{ title|lower }} approval requests.</div>
       {% endif %}
     </section>
     {% endfor %}
