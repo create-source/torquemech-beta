@@ -10290,13 +10290,16 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             labor_total = max(0.0, float(it.flatRatePrice or 0)) if is_flat_rate else max(0.0, float(it.laborHours or 0)) * max(0.0, float(it.laborRate or 0))
             parts_total = max(0.0, float(it.partsPrice or 0))
             travel_total = max(0.0, float(it.travelFee or 0))
-            cost_parts = [f"Labor ${labor_total:,.0f}"]
-            cost_parts.append(f"Parts ${parts_total:,.0f}" if parts_total > 0 else "Parts not added")
-            if travel_total > 0:
+            cost_parts = []
+            if req.showLaborColumn:
+                cost_parts.append(f"Labor ${labor_total:,.0f}")
+            if req.showPartsColumn:
+                cost_parts.append(f"Parts ${parts_total:,.0f}" if parts_total > 0 else "Parts not added")
+            if cost_parts and travel_total > 0:
                 cost_parts.append(f"Travel ${travel_total:,.0f}")
             if req.showLaborColumn:
                 cost_parts.append("Flat-rate service" if is_flat_rate else f"{it.laborHours:.1f} labor hrs")
-            if req.showHourlyRate and not is_flat_rate:
+            if cost_parts and req.showHourlyRate and not is_flat_rate:
                 cost_parts.append(f"${it.laborRate:.0f}/hr")
             cost_summary_lines = wrap_text("  |  ".join(cost_parts), max_chars=72)[:2]
 

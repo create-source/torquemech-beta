@@ -2396,29 +2396,88 @@ const confidenceEl = document.getElementById("laborConfidence");
     };
   }
 
-  function renderCostBreakdownHtml(it = {}) {
+  function getVisibleLineItemPricingMeta(it = {}, outputOptions = getCustomerOutputOptions()) {
     const cost = getLineItemCostBreakdown(it);
-    const laborLabel = cost.pricingMode === "flat" ? "Job labor" : "Labor";
-    const laborDetail = cost.pricingMode === "flat"
-      ? "Flat job price"
-      : `${cost.laborHours.toFixed(1)}h @ $${Math.round(cost.laborRate).toLocaleString()}/hr`;
-    const partsDetail = cost.hasParts ? "Parts subtotal" : "No parts added";
-    const travelDetail = cost.hasTravel ? "Mobile/travel fee" : "No travel fee";
+    const pricingMeta = [];
 
-    return `
-      <div class="tm-cost-breakdown" aria-label="Line item cost breakdown">
+    if (!outputOptions.showLaborColumn && !outputOptions.showPartsColumn) {
+      return pricingMeta;
+    }
+
+    if (outputOptions.showLaborColumn) {
+      pricingMeta.push(cost.pricingMode === "flat"
+        ? { label: "Job", value: money(cost.laborTotal), kind: "labor" }
+        : { label: "Labor", value: `${cost.laborHours.toFixed(1)}h`, kind: "labor" });
+    }
+
+    if (outputOptions.showPartsColumn) {
+      pricingMeta.push({
+        label: "Parts",
+        value: cost.hasParts ? money(cost.partsPrice) : "None",
+        kind: "parts",
+        empty: !cost.hasParts,
+      });
+    }
+
+    if (outputOptions.showHourlyRate && it.pricingMode !== "flat") {
+      pricingMeta.push({ label: "Rate", value: `$${Math.round(cost.laborRate).toLocaleString()}/hr`, kind: "rate" });
+    }
+
+    if (cost.hasTravel) {
+      pricingMeta.push({ label: "Travel", value: money(cost.travelFee), kind: "travel" });
+    }
+
+    return pricingMeta;
+  }
+
+  function renderCostBreakdownHtml(it = {}, outputOptions = getCustomerOutputOptions()) {
+    const showLabor = !!outputOptions.showLaborColumn;
+    const showParts = !!outputOptions.showPartsColumn;
+
+    if (!showLabor && !showParts) {
+      return "";
+    }
+
+    const cost = getLineItemCostBreakdown(it);
+    const rows = [];
+
+    if (showLabor) {
+      const laborLabel = cost.pricingMode === "flat" ? "Job labor" : "Labor";
+      const laborDetail = cost.pricingMode === "flat"
+        ? "Flat job price"
+        : `${cost.laborHours.toFixed(1)}h @ $${Math.round(cost.laborRate).toLocaleString()}/hr`;
+
+      rows.push(`
         <div class="tm-cost-breakdown__row tm-cost-breakdown__row--labor">
           <span><strong>${laborLabel}</strong><em>${laborDetail}</em></span>
           <b>${money(cost.laborTotal)}</b>
         </div>
+      `);
+    }
+
+    if (showParts) {
+      const partsDetail = cost.hasParts ? "Parts subtotal" : "No parts added";
+      rows.push(`
         <div class="tm-cost-breakdown__row tm-cost-breakdown__row--parts${cost.hasParts ? "" : " is-empty"}">
           <span><strong>Parts</strong><em>${partsDetail}</em></span>
           <b>${money(cost.partsPrice)}</b>
         </div>
-        <div class="tm-cost-breakdown__row tm-cost-breakdown__row--travel${cost.hasTravel ? "" : " is-empty"}">
+      `);
+    }
+
+    const travelDetail = cost.hasTravel ? "Mobile/travel fee" : "No travel fee";
+    if (cost.hasTravel) {
+      rows.push(`
+        <div class="tm-cost-breakdown__row tm-cost-breakdown__row--travel">
           <span><strong>Travel</strong><em>${travelDetail}</em></span>
           <b>${money(cost.travelFee)}</b>
         </div>
+      `);
+    }
+
+    return `
+      <div class="tm-cost-breakdown" aria-label="Line item cost breakdown">
+        ${rows.join("")}
         <div class="tm-cost-breakdown__row tm-cost-breakdown__row--total">
           <span><strong>Line total</strong><em>Prepared estimate subtotal</em></span>
           <b>${money(cost.total)}</b>
@@ -4406,6 +4465,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     const listEl = document.getElementById("confirmServicesList");
     if (listEl) {
       const total = lineItems.reduce((sum, it) => sum + Number(it.estimate || 0), 0);
+      const outputOptions = getCustomerOutputOptions();
 
       listEl.innerHTML = `
         <div class="tm-confirm-services-list">
@@ -4414,15 +4474,10 @@ const confidenceEl = document.getElementById("laborConfidence");
             <strong>${money(total)}</strong>
           </div>
           ${lineItems.map((it) => {
-            const cost = getLineItemCostBreakdown(it);
             const vehicleLabel = getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle());
             const serviceTotal = it.estimate != null ? money(it.estimate) : "Pending";
             const serviceName = escapeServiceResultHtml(it.serviceText || "Service");
-            const laborValue = cost.pricingMode === "flat"
-              ? money(cost.laborTotal)
-              : `${cost.laborHours.toFixed(1)}h`;
-            const partsValue = cost.hasParts ? money(cost.partsPrice) : "None";
-            const travelValue = cost.hasTravel ? money(cost.travelFee) : "None";
+            const pricingMeta = getVisibleLineItemPricingMeta(it, outputOptions);
             return `
             <div class="tm-confirm-service-row">
               <div class="tm-confirm-service-main">
@@ -4433,11 +4488,16 @@ const confidenceEl = document.getElementById("laborConfidence");
                 <div class="tm-confirm-service-vehicle">
                   ${escapeServiceResultHtml(vehicleLabel)}
                 </div>
-                <div class="tm-confirm-service-breakdown" aria-label="Line item pricing">
-                  <span data-kind="labor"><strong>Labor</strong><em>${escapeServiceResultHtml(laborValue)}</em></span>
-                  <span data-kind="parts" class="${cost.hasParts ? "" : "is-empty"}"><strong>Parts</strong><em>${escapeServiceResultHtml(partsValue)}</em></span>
-                  <span data-kind="travel" class="${cost.hasTravel ? "" : "is-empty"}"><strong>Travel</strong><em>${escapeServiceResultHtml(travelValue)}</em></span>
-                </div>
+                ${pricingMeta.length ? `
+                  <div class="tm-confirm-service-breakdown" aria-label="Line item pricing">
+                    ${pricingMeta.map(item => `
+                      <span data-kind="${escapeServiceResultHtml(item.kind || "")}" class="${item.empty ? "is-empty" : ""}">
+                        <strong>${escapeServiceResultHtml(item.label)}</strong>
+                        <em>${escapeServiceResultHtml(item.value)}</em>
+                      </span>
+                    `).join("")}
+                  </div>
+                ` : ""}
                 <div class="tm-confirm-service-note">
                   ${escapeServiceResultHtml(getEstimateRiskNote(it))}
                 </div>
@@ -4492,8 +4552,15 @@ const confidenceEl = document.getElementById("laborConfidence");
     renderLineItems();
     refreshQuotePreview();
   });
-  pdfShowLaborColumnChk?.addEventListener("change", renderLineItems);
-  pdfShowPartsColumnChk?.addEventListener("change", renderLineItems);
+  function refreshLineItemVisibilityPreviews() {
+    renderLineItems();
+    if (confirmModal && !confirmModal.classList.contains("hidden")) {
+      openConfirm();
+    }
+  }
+
+  pdfShowLaborColumnChk?.addEventListener("change", refreshLineItemVisibilityPreviews);
+  pdfShowPartsColumnChk?.addEventListener("change", refreshLineItemVisibilityPreviews);
   pdfShowRiskNotesChk?.addEventListener("change", refreshQuotePreview);
   pdfShowInspectionFindingsChk?.addEventListener("change", refreshQuotePreview);
   pdfShowLaborBreakdownChk?.addEventListener("change", () => {
@@ -4752,24 +4819,7 @@ const confidenceEl = document.getElementById("laborConfidence");
         const est = it.estimate != null ? money(it.estimate) : "—";
         const statusLabel = getRepairStatusLabel(it.status);
 
-        const cost = getLineItemCostBreakdown(it);
-        const pricingMeta = cost.pricingMode === "flat"
-          ? [
-              { label: "Job", value: money(cost.laborTotal), kind: "labor" },
-              { label: "Parts", value: cost.hasParts ? money(cost.partsPrice) : "None", kind: "parts", empty: !cost.hasParts },
-            ]
-          : [
-              { label: "Labor", value: `${cost.laborHours.toFixed(1)}h`, kind: "labor" },
-              { label: "Parts", value: cost.hasParts ? money(cost.partsPrice) : "None", kind: "parts", empty: !cost.hasParts },
-            ];
-
-        if (outputOptions.showHourlyRate && it.pricingMode !== "flat") {
-          pricingMeta.push({ label: "Rate", value: `$${Math.round(cost.laborRate).toLocaleString()}/hr`, kind: "rate" });
-        }
-
-        if (cost.hasTravel) {
-          pricingMeta.push({ label: "Travel", value: money(cost.travelFee), kind: "travel" });
-        }
+        const pricingMeta = getVisibleLineItemPricingMeta(it, outputOptions);
 
         const hasBreakdown =
           outputOptions.showDetailedLaborBreakdown &&
@@ -4810,7 +4860,7 @@ const confidenceEl = document.getElementById("laborConfidence");
                     </span>
                   `).join("")}
                 </div>
-                ${renderCostBreakdownHtml(it)}
+                ${renderCostBreakdownHtml(it, outputOptions)}
                 <div class="tm-service-risk-note">
                   <span class="tm-service-risk-label">Estimate note</span>
                   <span>${riskNote}</span>
