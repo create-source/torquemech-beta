@@ -256,6 +256,15 @@
       return aliases.some((alias) => normalizeModelSearch(alias).includes(normalizedQuery));
     };
 
+    const modelEqualsSearch = (option, query) => {
+      const normalizedQuery = normalizeModelSearch(query);
+      if (!normalizedQuery) return false;
+      return (
+        normalizeModelSearch(option?.display) === normalizedQuery ||
+        normalizeModelSearch(option?.value) === normalizedQuery
+      );
+    };
+
     const getModelDisplayOptions = (query) => {
       const makeKey = getMakeKey();
       const seen = new Set();
@@ -408,7 +417,11 @@
       }
 
       try {
-        models = await vehicleUiApiJSON(`/api/models/${encodeURIComponent(selectedMake)}`);
+        const selectedYear = Number(vehicle.year || yearSelect.value || 0);
+        const modelUrl = selectedYear
+          ? `/api/models/${encodeURIComponent(selectedMake)}?year=${selectedYear}`
+          : `/api/models/${encodeURIComponent(selectedMake)}`;
+        models = await vehicleUiApiJSON(modelUrl);
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
 
         models.forEach((model) => {
@@ -418,11 +431,15 @@
           modelSelect.appendChild(option);
         });
 
+        const validSelectedModel = models.includes(selectedModel) ? selectedModel : "";
+        const validSelectedDisplayModel = validSelectedModel ? selectedDisplayModel : "";
+        vehicle.model = validSelectedModel;
+        vehicle.displayModel = validSelectedDisplayModel || validSelectedModel;
         modelSelect.disabled = false;
-        modelSelect.value = selectedModel;
+        modelSelect.value = validSelectedModel;
         modelSearch.disabled = false;
         modelSearch.placeholder = "Search model...";
-        modelSearch.value = selectedDisplayModel || selectedModel;
+        modelSearch.value = validSelectedDisplayModel || validSelectedModel;
         updateVehicleClearButtons();
       } catch (_) {
         modelSelect.innerHTML = `<option value="">Select model...</option>`;
@@ -471,9 +488,16 @@
     updateVehicleClearButtons();
     notifyChange();
 
-    yearSelect.addEventListener("change", () => {
+    yearSelect.addEventListener("change", async () => {
       vehicle.year = yearSelect.value;
+      vehicle.model = "";
+      vehicle.displayModel = "";
+      modelSelect.value = "";
+      modelSearch.value = "";
+      hideModelResults();
       updateVehicleClearButtons();
+      notifyChange();
+      await populateModels(vehicle.make);
       notifyChange();
     });
 
@@ -525,6 +549,13 @@
     });
 
     modelSearch.addEventListener("input", () => {
+      const currentDisplay = vehicle.displayModel || vehicle.model;
+      if (vehicle.model && normalizeModelSearch(modelSearch.value) !== normalizeModelSearch(currentDisplay)) {
+        vehicle.model = "";
+        vehicle.displayModel = "";
+        modelSelect.value = "";
+        notifyChange();
+      }
       updateVehicleClearButtons();
       renderModelResults(modelSearch.value);
     });
@@ -534,26 +565,18 @@
 
       event.preventDefault();
 
-      const typedModel = modelSearch.value.trim().toLowerCase();
       const modelOptions = getModelDisplayOptions(modelSearch.value);
 
       const exactModel = modelOptions.find(
-        (option) => option.display.toLowerCase() === typedModel
+        (option) => modelEqualsSearch(option, modelSearch.value)
       );
-
-      const firstVisibleModel = modelResults.querySelector(".model-result-item");
 
       if (exactModel) {
         applyModelSelection(exactModel.value, exactModel.display);
         return;
       }
 
-      if (firstVisibleModel) {
-        applyModelSelection(
-          firstVisibleModel.dataset.model || "",
-          firstVisibleModel.dataset.modelDisplay || firstVisibleModel.dataset.model || ""
-        );
-      }
+      renderModelResults(modelSearch.value);
     });
 
     modelSearch.addEventListener("focus", () => {

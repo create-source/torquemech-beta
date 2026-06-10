@@ -8816,9 +8816,12 @@ def service_worker() -> FileResponse:
     return FileResponse(str(p), media_type="application/javascript", headers={"Cache-Control": "no-cache"})
 
 VEHICLE_CATALOG_PATH = BASE_DIR / "data" / "vehicle_catalog.json"
+VEHICLE_MODEL_YEAR_OVERRIDES_PATH = BASE_DIR / "data" / "vehicle_model_year_overrides.json"
 
 _vehicle_catalog_cache: Optional[Dict[str, List[str]]] = None
 _vehicle_catalog_mtime: Optional[float] = None
+_vehicle_model_year_overrides_cache: Optional[Dict[int, Dict[str, List[str]]]] = None
+_vehicle_model_year_overrides_mtime: Optional[float] = None
 
 def load_vehicle_catalog() -> Dict[str, List[str]]:
     global _vehicle_catalog_cache, _vehicle_catalog_mtime
@@ -8862,6 +8865,89 @@ def load_vehicle_catalog() -> Dict[str, List[str]]:
     _vehicle_catalog_mtime = mtime
     return cleaned
 
+
+def normalize_vehicle_model_key(value: str) -> str:
+    return re.sub(r"[^A-Z0-9]", "", str(value or "").upper())
+
+
+def load_vehicle_model_year_overrides() -> Dict[int, Dict[str, List[str]]]:
+    global _vehicle_model_year_overrides_cache, _vehicle_model_year_overrides_mtime
+
+    if not VEHICLE_MODEL_YEAR_OVERRIDES_PATH.exists():
+        return {}
+
+    mtime = VEHICLE_MODEL_YEAR_OVERRIDES_PATH.stat().st_mtime
+    if (
+        _vehicle_model_year_overrides_cache is not None
+        and _vehicle_model_year_overrides_mtime == mtime
+    ):
+        return _vehicle_model_year_overrides_cache
+
+    data = json.loads(VEHICLE_MODEL_YEAR_OVERRIDES_PATH.read_text(encoding="utf-8-sig"))
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=500, detail="vehicle_model_year_overrides.json must be an object")
+
+    cleaned: Dict[int, Dict[str, List[str]]] = {}
+    for year_value, makes in data.items():
+        try:
+            year_key = int(year_value)
+        except (TypeError, ValueError):
+            continue
+
+        if not isinstance(makes, dict):
+            continue
+
+        cleaned[year_key] = {}
+        for make, models in makes.items():
+            make_key = str(make or "").strip().upper()
+            if not make_key or not isinstance(models, list):
+                continue
+
+            seen = set()
+            cleaned_models: List[str] = []
+            for model in models:
+                model_name = str(model or "").strip().upper()
+                model_key = normalize_vehicle_model_key(model_name)
+                if not model_name or not model_key or model_key in seen:
+                    continue
+                seen.add(model_key)
+                cleaned_models.append(model_name)
+
+            cleaned_models.sort()
+            cleaned[year_key][make_key] = cleaned_models
+
+    _vehicle_model_year_overrides_cache = cleaned
+    _vehicle_model_year_overrides_mtime = mtime
+    return cleaned
+
+
+def get_models_for_make_year(make: str, year: Optional[int] = None) -> List[str]:
+    catalog = load_vehicle_catalog()
+    make_key = str(make or "").strip().upper()
+
+    if make_key not in catalog:
+        raise HTTPException(status_code=404, detail=f"Make '{make}' not supported")
+
+    if year:
+        year_models = load_vehicle_model_year_overrides().get(int(year), {}).get(make_key)
+        if year_models:
+            return year_models
+
+    return catalog[make_key]
+
+
+def resolve_valid_vehicle_model(year: int, make: str, model: str) -> Optional[str]:
+    model_key = normalize_vehicle_model_key(model)
+    if not model_key:
+        return None
+
+    allowed_models = get_models_for_make_year(make, year)
+    for allowed_model in allowed_models:
+        if normalize_vehicle_model_key(allowed_model) == model_key:
+            return allowed_model
+
+    return None
+
 # ===============================
 # MAKES / MODELS API
 # ===============================
@@ -8874,14 +8960,8 @@ def get_makes() -> List[str]:
 
 
 @app.get("/api/models/{make}")
-def get_models(make: str) -> List[str]:
-    catalog = load_vehicle_catalog()
-    make_upper = (make or "").strip().upper()
-
-    if make_upper not in catalog:
-        raise HTTPException(status_code=404, detail=f"Make '{make}' not supported")
-
-    return catalog[make_upper]
+def get_models(make: str, year: Optional[int] = None) -> List[str]:
+    return get_models_for_make_year(make, year)
 
 
 @app.get("/api/repair-guides/{slug}/torque-specs")
@@ -9036,12 +9116,12 @@ async def estimate(req: EstimateRequest) -> EstimateResponse:
     if not model:
         raise HTTPException(status_code=400, detail="Model is required")
 
-    catalog = load_vehicle_catalog()
-    models = catalog.get(make_key, [])
-    if models:
-        allowed = {m.upper() for m in models}
-        if model.upper() not in allowed:
-            raise HTTPException(status_code=400, detail="Invalid model for selected make")
+    resolved_model = resolve_valid_vehicle_model(req.year, req.make, model)
+    if not resolved_model:
+        raise HTTPException(status_code=400, detail="Invalid model for selected year and make")
+    if not req.displayModel or normalize_vehicle_model_key(req.displayModel) == normalize_vehicle_model_key(model):
+        req.displayModel = resolved_model
+    req.model = resolved_model
 
     service_name = ""
     service_key = ""

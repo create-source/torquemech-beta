@@ -271,7 +271,7 @@
     right: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    width: min(560px, 100%);
+    width: min(720px, 100%);
     height: 100%;
     background: #f8fafc;
     box-shadow: -24px 0 60px rgba(15, 23, 42, 0.24);
@@ -1479,20 +1479,20 @@
           </div>
           <div class="tm-blueprint-summary-grid">
             <div class="tm-blueprint-summary-metric">
-              <span>Critical Checks</span>
-              <strong>{{ item.blueprint_summary.critical_checks_count }}</strong>
+              <span>Watch For</span>
+              <strong>{{ item.blueprint_summary.watch_for_count }}</strong>
             </div>
             <div class="tm-blueprint-summary-metric">
-              <span>Known Patterns</span>
-              <strong>{{ item.blueprint_summary.known_patterns_count }}</strong>
+              <span>Must Replace</span>
+              <strong>{{ item.blueprint_summary.must_replace_count }}</strong>
             </div>
             <div class="tm-blueprint-summary-metric">
-              <span>Required Parts</span>
-              <strong>{{ item.blueprint_summary.required_parts_count }}</strong>
+              <span>Add-ons</span>
+              <strong>{{ item.blueprint_summary.while_youre_there_count }}</strong>
             </div>
             <div class="tm-blueprint-summary-metric">
-              <span>Recommended</span>
-              <strong>{{ item.blueprint_summary.recommended_parts_count }}</strong>
+              <span>Labor</span>
+              <strong>{{ item.blueprint_summary.labor_benchmark }}</strong>
             </div>
           </div>
           <div class="tm-crm-chip-row">
@@ -1579,6 +1579,9 @@
           </header>
           <div class="tm-blueprint-slideout-body">
             <div class="tm-intel-dashboard">
+              {% set watch_for = item.blueprint.watch_for or item.blueprint.critical_checks or [] %}
+              {% set must_replace = item.blueprint.must_replace or item.blueprint.required_parts or [] %}
+              {% set while_youre_there = item.blueprint.while_youre_there or item.blueprint.common_add_on_repairs or item.blueprint.recommended_parts or [] %}
               <div class="tm-intel-card tm-intel-card--wide">
                 <h4>Repair Snapshot</h4>
                 <div class="tm-intel-rows">
@@ -1593,80 +1596,41 @@
 
               <div class="tm-intel-card-grid">
                 <section class="tm-intel-card">
-                  <h4>Vehicle-Specific Critical Checks</h4>
-                  {% if item.blueprint.critical_checks %}
+                  <h4>Watch For</h4>
+                  {% if watch_for %}
                   <ul class="tm-intel-list">
-                    {% for check in item.blueprint.critical_checks %}
+                    {% for check in watch_for %}
                     <li>{{ check }}</li>
                     {% endfor %}
                   </ul>
                   {% else %}
-                  <div class="tm-history-empty">No critical checks listed.</div>
+                  <div class="tm-history-empty">No watch items listed.</div>
                   {% endif %}
                 </section>
 
                 <section class="tm-intel-card">
-                  <h4>Vehicle-Specific Known Failure Patterns</h4>
-                  {% if item.blueprint.known_failure_patterns %}
+                  <h4>Must Replace</h4>
+                  {% if must_replace %}
                   <ul class="tm-intel-list">
-                    {% for pattern in item.blueprint.known_failure_patterns %}
-                    <li>{{ pattern }}</li>
-                    {% endfor %}
-                  </ul>
-                  {% else %}
-                  <div class="tm-history-empty">No known patterns listed.</div>
-                  {% endif %}
-                </section>
-
-                <section class="tm-intel-card">
-                  <h4>Inspection Opportunities</h4>
-                  {% if item.blueprint.inspection_opportunities %}
-                  <div class="tm-intel-badge-row">
-                    {% for opportunity in item.blueprint.inspection_opportunities %}
-                    <span class="tm-intel-badge">{{ opportunity }}</span>
-                    {% endfor %}
-                  </div>
-                  {% else %}
-                  <div class="tm-history-empty">No inspection opportunities listed.</div>
-                  {% endif %}
-                </section>
-
-                <section class="tm-intel-card">
-                  <h4>Common Add-On Repairs</h4>
-                  {% if item.blueprint.common_add_on_repairs %}
-                  <div class="tm-intel-badge-row">
-                    {% for repair in item.blueprint.common_add_on_repairs %}
-                    <span class="tm-intel-badge">{{ repair }}</span>
-                    {% endfor %}
-                  </div>
-                  {% else %}
-                  <div class="tm-history-empty">No add-ons listed.</div>
-                  {% endif %}
-                </section>
-
-                <section class="tm-intel-card">
-                  <h4>Required Parts</h4>
-                  {% if item.blueprint.required_parts %}
-                  <ul class="tm-intel-list">
-                    {% for part in item.blueprint.required_parts %}
+                    {% for part in must_replace %}
                     <li>{{ part }}</li>
                     {% endfor %}
                   </ul>
                   {% else %}
-                  <div class="tm-history-empty">No required parts listed.</div>
+                  <div class="tm-history-empty">No must-replace parts listed.</div>
                   {% endif %}
                 </section>
 
                 <section class="tm-intel-card">
-                  <h4>Recommended Parts</h4>
-                  {% if item.blueprint.recommended_parts %}
+                  <h4>While You're There</h4>
+                  {% if while_youre_there %}
                   <div class="tm-intel-badge-row">
-                    {% for part in item.blueprint.recommended_parts %}
-                    <span class="tm-intel-badge">{{ part }}</span>
+                    {% for opportunity in while_youre_there %}
+                    <span class="tm-intel-badge">{{ opportunity }}</span>
                     {% endfor %}
                   </div>
                   {% else %}
-                  <div class="tm-history-empty">No recommended parts listed.</div>
+                  <div class="tm-history-empty">No add-on opportunities listed.</div>
                   {% endif %}
                 </section>
 
@@ -1694,10 +1658,10 @@
                 </section>
 
                 <section class="tm-intel-card tm-intel-card--wide">
-                  <h4>Vendor Links</h4>
+                  <h4>Vendor Sources</h4>
                   <div class="tm-intel-badge-row">
                     {% for vendor in item.blueprint.vendor_links %}
-                    <span class="tm-intel-badge">{{ vendor.label }} - {{ vendor.status }}</span>
+                    <span class="tm-intel-badge">{{ vendor.label }}</span>
                     {% endfor %}
                   </div>
                 </section>
@@ -1715,13 +1679,6 @@
                     </ul>
                     {% else %}
                     <div class="tm-history-empty">No reference procedure available.</div>
-                    {% endif %}
-                    {% if item.blueprint.tools_required %}
-                    <div class="tm-intel-badge-row" style="margin-top:12px;">
-                      {% for tool in item.blueprint.tools_required %}
-                      <span class="tm-intel-badge">{{ tool }}</span>
-                      {% endfor %}
-                    </div>
                     {% endif %}
                   </div>
                 </details>
