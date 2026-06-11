@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">2010 Honda Accord front brake exploded view placeholder</title>
+  <desc id="desc">Placeholder exploded view for front brake pads, hardware, caliper bracket, and rotor.</desc>
+  <rect width="640" height="360" fill="#f8fafc"/>
+  <rect x="32" y="32" width="576" height="296" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="142" cy="184" r="74" fill="#e2e8f0" stroke="#64748b" stroke-width="5"/>
+  <circle cx="142" cy="184" r="28" fill="#ffffff" stroke="#94a3b8" stroke-width="4"/>
+  <rect x="270" y="112" width="42" height="144" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="4"/>
+  <rect x="334" y="112" width="42" height="144" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="4"/>
+  <path d="M448 104h76c26 0 48 22 48 48v64c0 26-22 48-48 48h-76v-160z" fill="#0e7490" opacity="0.88"/>
+  <path d="M224 184h40M314 184h18M378 184h62" stroke="#64748b" stroke-width="4" stroke-dasharray="10 8"/>
+  <text x="86" y="286" fill="#0f172a" font-family="Arial, sans-serif" font-size="18" font-weight="700">Rotor</text>
+  <text x="258" y="286" fill="#0f172a" font-family="Arial, sans-serif" font-size="18" font-weight="700">Pads</text>
+  <text x="430" y="286" fill="#0f172a" font-family="Arial, sans-serif" font-size="18" font-weight="700">Caliper bracket</text>
+  <text x="64" y="74" fill="#64748b" font-family="Arial, sans-serif" font-size="18">Placeholder exploded view image</text>
+</svg>

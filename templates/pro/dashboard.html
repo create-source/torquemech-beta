@@ -118,6 +118,10 @@
       <h3>Approvals</h3>
       <p>{{ pending_approvals_count or 0 }} pending approval request{% if (pending_approvals_count or 0) != 1 %}s{% endif %}.</p>
     </a>
+    <a class="tm-pro-card" href="/pro/visual-references">
+      <h3>Visual References</h3>
+      <p>{{ visual_reference_count or 0 }} reference record{% if (visual_reference_count or 0) != 1 %}s{% endif %} for vehicle-specific service content.</p>
+    </a>
   </div>
 </section>
 {% endblock %}

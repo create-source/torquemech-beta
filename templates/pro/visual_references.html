@@ -1,0 +1,156 @@
+{% extends "layout.html" %}
+
+{% block title %}Visual References | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-vr-shell {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tm-vr-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 16px;
+  }
+
+  .tm-vr-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-vr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .tm-vr-card {
+    display: grid;
+    gap: 9px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 5px solid #0e7490;
+    border-radius: 8px;
+    background: #fff;
+    color: inherit;
+    padding: 14px;
+    text-decoration: none;
+  }
+
+  .tm-vr-title {
+    color: #0f172a;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .tm-vr-meta {
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .tm-vr-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-vr-counts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tm-vr-chip {
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
+  }
+
+  .tm-vr-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    color: #64748b;
+    padding: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .tm-vr-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Visual References</h1>
+      <p class="tm-pro-subtitle">Manage vehicle-specific reference records, images, specs, and OEM numbers.</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro">Back to Pro</a>
+  </div>
+
+  <div class="tm-vr-shell">
+    <section class="tm-vr-panel" aria-label="Create visual reference">
+      <div class="tm-vr-kicker">Create Visual Reference</div>
+      <form method="post" action="/pro/visual-references" style="margin-top:12px;">
+        <div class="tm-vr-row">
+          <div>
+            <label class="tm-label" for="vehicle_identifier">Vehicle Identifier</label>
+            <input class="tm-input" id="vehicle_identifier" name="vehicle_identifier" type="text" maxlength="255" placeholder="2010 Honda Accord" required>
+          </div>
+          <div>
+            <label class="tm-label" for="service_type">Service Type</label>
+            <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="160" placeholder="front_brake_pads" required>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="title">Title</label>
+          <input class="tm-input" id="title" name="title" type="text" maxlength="255" placeholder="Front Brake Pads Visual Reference">
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="quick_reference">Quick Reference</label>
+          <textarea class="tm-input" id="quick_reference" name="quick_reference" rows="4" maxlength="2400"></textarea>
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Create Reference</button>
+      </form>
+    </section>
+
+    <section class="tm-vr-panel" aria-label="Visual reference records">
+      <div class="tm-vr-kicker">Records</div>
+      {% if records %}
+      <div class="tm-vr-grid" style="margin-top:12px;">
+        {% for record in records %}
+        <a class="tm-vr-card" href="/pro/visual-references/{{ record.id }}">
+          <div>
+            <div class="tm-vr-title">{{ record.title or record.service_type }}</div>
+            <div class="tm-vr-meta">{{ record.vehicle_identifier }} | {{ record.service_type }}</div>
+          </div>
+          {% if record.quick_reference %}
+          <div class="tm-vr-meta">{{ record.quick_reference }}</div>
+          {% endif %}
+          <div class="tm-vr-counts">
+            <span class="tm-vr-chip">{{ record.image_count }} image{% if record.image_count != 1 %}s{% endif %}</span>
+            <span class="tm-vr-chip">{{ record.spec_count }} spec{% if record.spec_count != 1 %}s{% endif %}</span>
+            <span class="tm-vr-chip">{{ record.oem_part_count }} OEM part{% if record.oem_part_count != 1 %}s{% endif %}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-vr-empty" style="margin-top:12px;">No visual references created yet.</div>
+      {% endif %}
+    </section>
+  </div>
+</section>
+{% endblock %}

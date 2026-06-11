@@ -781,6 +781,75 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approval_events_vehicle ON discrepancy_approval_events (vehicle_id, created_at)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discrepancy_approval_events_approval ON discrepancy_approval_events (approval_id)")
 
+        # Visual Reference Library: vehicle/service-specific reference media, specs, and OEM numbers.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS visual_reference_records (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              vehicle_identifier TEXT NOT NULL,
+              service_type TEXT NOT NULL,
+              title TEXT,
+              quick_reference TEXT,
+              created_at TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS visual_reference_images (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              visual_reference_id INTEGER NOT NULL,
+              image_type TEXT NOT NULL CHECK (
+                image_type IN (
+                  'component_location',
+                  'exploded_view',
+                  'belt_routing',
+                  'connector_view',
+                  'reference_image'
+                )
+              ),
+              image_path TEXT NOT NULL,
+              caption TEXT,
+              FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS visual_reference_specs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              visual_reference_id INTEGER NOT NULL,
+              spec_name TEXT NOT NULL,
+              spec_value TEXT NOT NULL,
+              spec_unit TEXT,
+              FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS visual_reference_oem_parts (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              visual_reference_id INTEGER NOT NULL,
+              part_name TEXT NOT NULL,
+              oem_part_number TEXT NOT NULL,
+              future_parts_intelligence_id INTEGER,
+              FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_visual_reference_records_vehicle_service
+            ON visual_reference_records (vehicle_identifier, service_type)
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_records_vehicle ON visual_reference_records (vehicle_identifier)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_records_service ON visual_reference_records (service_type)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_images_reference ON visual_reference_images (visual_reference_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_specs_reference ON visual_reference_specs (visual_reference_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_oem_parts_reference ON visual_reference_oem_parts (visual_reference_id)")
+
         conn.commit()
     finally:
         conn.close()

@@ -1,7 +1,9 @@
 import sqlite3
-from datetime import date, datetime, timedelta
+import json
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import parse_qs
+from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -23,9 +25,21 @@ from app.data.repair_blueprints import (
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
+VISUAL_REFERENCE_SEED_PATH = BASE_DIR / "data" / "visual_reference_seed.json"
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 DB_PATH = str((STATE_DIR / "app.db").resolve())
 USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
+
+VISUAL_REFERENCE_IMAGE_TYPES = {
+    "component_location",
+    "exploded_view",
+    "belt_routing",
+    "connector_view",
+    "reference_image",
+}
+VISUAL_REFERENCE_UPLOAD_DIR = STATIC_DIR / "visual-references" / "uploads"
+VISUAL_REFERENCE_UPLOAD_URL_PREFIX = "/static/visual-references/uploads"
+VISUAL_REFERENCE_ALLOWED_UPLOAD_EXTENSIONS = {".gif", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
 
 def static_version(asset_path: str) -> int:
     rel_path = str(asset_path or "").split("?", 1)[0].lstrip("/")
@@ -781,6 +795,443 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (customer_status)")
     conn.commit()
+
+
+def ensure_visual_reference_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS visual_reference_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          vehicle_identifier TEXT NOT NULL,
+          service_type TEXT NOT NULL,
+          title TEXT,
+          quick_reference TEXT,
+          created_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS visual_reference_images (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visual_reference_id INTEGER NOT NULL,
+          image_type TEXT NOT NULL CHECK (
+            image_type IN (
+              'component_location',
+              'exploded_view',
+              'belt_routing',
+              'connector_view',
+              'reference_image'
+            )
+          ),
+          image_path TEXT NOT NULL,
+          caption TEXT,
+          FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS visual_reference_specs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visual_reference_id INTEGER NOT NULL,
+          spec_name TEXT NOT NULL,
+          spec_value TEXT NOT NULL,
+          spec_unit TEXT,
+          FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS visual_reference_oem_parts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visual_reference_id INTEGER NOT NULL,
+          part_name TEXT NOT NULL,
+          oem_part_number TEXT NOT NULL,
+          future_parts_intelligence_id INTEGER,
+          FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_visual_reference_records_vehicle_service
+        ON visual_reference_records (vehicle_identifier, service_type)
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_visual_reference_records_vehicle "
+        "ON visual_reference_records (vehicle_identifier)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_visual_reference_records_service "
+        "ON visual_reference_records (service_type)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_visual_reference_images_reference "
+        "ON visual_reference_images (visual_reference_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_visual_reference_specs_reference "
+        "ON visual_reference_specs (visual_reference_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_visual_reference_oem_parts_reference "
+        "ON visual_reference_oem_parts (visual_reference_id)"
+    )
+    conn.commit()
+
+
+def normalize_visual_reference_token(value: Any) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def normalize_visual_reference_service(value: Any) -> str:
+    normalized = normalize_visual_reference_token(value)
+    return "_".join(normalized.replace("-", " ").split())
+
+
+def normalize_visual_reference_image_type(value: Any) -> str:
+    image_type = str(value or "").strip()
+    if image_type not in VISUAL_REFERENCE_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid visual reference image type")
+    return image_type
+
+
+def public_visual_reference_image_types() -> list[str]:
+    return sorted(VISUAL_REFERENCE_IMAGE_TYPES)
+
+
+def visual_reference_vehicle_identifiers(vehicle: dict[str, Any]) -> list[str]:
+    year = str(vehicle.get("year") or "").strip()
+    make = str(vehicle.get("make") or "").strip()
+    model = str(vehicle.get("model") or "").strip()
+    engine = str(vehicle.get("engine") or "").strip()
+    vin = str(vehicle.get("vin") or "").strip()
+    identifiers = [
+        " ".join(part for part in [year, make, model, engine] if part),
+        " ".join(part for part in [year, make, model] if part),
+    ]
+    if vin:
+        identifiers.append(vin)
+    seen: set[str] = set()
+    result: list[str] = []
+    for identifier in identifiers:
+        normalized = normalize_visual_reference_token(identifier)
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            result.append(identifier)
+    return result
+
+
+def load_visual_reference_record(
+    conn: sqlite3.Connection,
+    visual_reference_id: int,
+) -> dict[str, Any]:
+    ensure_visual_reference_schema(conn)
+    record = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM visual_reference_records
+            WHERE id = ?
+            """,
+            (visual_reference_id,),
+        ).fetchone()
+    )
+    if not record:
+        raise HTTPException(status_code=404, detail="Visual reference not found")
+    record["images"] = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM visual_reference_images
+            WHERE visual_reference_id = ?
+            ORDER BY image_type ASC, id ASC
+            """,
+            (visual_reference_id,),
+        ).fetchall()
+    ]
+    record["specs"] = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM visual_reference_specs
+            WHERE visual_reference_id = ?
+            ORDER BY id ASC
+            """,
+            (visual_reference_id,),
+        ).fetchall()
+    ]
+    record["oem_parts"] = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM visual_reference_oem_parts
+            WHERE visual_reference_id = ?
+            ORDER BY id ASC
+            """,
+            (visual_reference_id,),
+        ).fetchall()
+    ]
+    return record
+
+
+def load_visual_reference_child(
+    conn: sqlite3.Connection,
+    table_name: str,
+    visual_reference_id: int,
+    child_id: int,
+) -> dict[str, Any]:
+    allowed_tables = {
+        "visual_reference_images",
+        "visual_reference_specs",
+        "visual_reference_oem_parts",
+    }
+    if table_name not in allowed_tables:
+        raise HTTPException(status_code=400, detail="Invalid visual reference child table")
+    child = row_to_dict(
+        conn.execute(
+            f"""
+            SELECT *
+            FROM {table_name}
+            WHERE id = ? AND visual_reference_id = ?
+            """,
+            (child_id, visual_reference_id),
+        ).fetchone()
+    )
+    if not child:
+        raise HTTPException(status_code=404, detail="Visual reference child record not found")
+    return child
+
+
+def parse_multipart_disposition(value: str) -> dict[str, str]:
+    parts = [part.strip() for part in value.split(";")]
+    result: dict[str, str] = {}
+    for part in parts[1:]:
+        if "=" not in part:
+            continue
+        key, raw_value = part.split("=", 1)
+        result[key.strip().lower()] = raw_value.strip().strip('"')
+    return result
+
+
+async def read_multipart_form_data(request: Request) -> tuple[dict[str, str], dict[str, dict[str, Any]]]:
+    content_type = request.headers.get("content-type", "")
+    if "multipart/form-data" not in content_type or "boundary=" not in content_type:
+        raise HTTPException(status_code=400, detail="Expected multipart form data")
+    boundary = content_type.split("boundary=", 1)[1].split(";", 1)[0].strip().strip('"')
+    if not boundary:
+        raise HTTPException(status_code=400, detail="Missing multipart boundary")
+    body = await request.body()
+    delimiter = b"--" + boundary.encode("utf-8")
+    fields: dict[str, str] = {}
+    files: dict[str, dict[str, Any]] = {}
+    for raw_part in body.split(delimiter):
+        part = raw_part.strip(b"\r\n")
+        if not part or part == b"--":
+            continue
+        if part.endswith(b"--"):
+            part = part[:-2].strip(b"\r\n")
+        header_blob, separator, payload = part.partition(b"\r\n\r\n")
+        if not separator:
+            continue
+        headers: dict[str, str] = {}
+        for header_line in header_blob.decode("utf-8", errors="replace").split("\r\n"):
+            if ":" not in header_line:
+                continue
+            key, value = header_line.split(":", 1)
+            headers[key.strip().lower()] = value.strip()
+        disposition = parse_multipart_disposition(headers.get("content-disposition", ""))
+        name = disposition.get("name", "")
+        if not name:
+            continue
+        payload = payload.rstrip(b"\r\n")
+        filename = disposition.get("filename")
+        if filename is not None:
+            files[name] = {
+                "filename": filename,
+                "content_type": headers.get("content-type", ""),
+                "content": payload,
+            }
+        else:
+            fields[name] = payload.decode("utf-8", errors="replace").strip()
+    return fields, files
+
+
+def save_visual_reference_upload(upload: dict[str, Any] | None) -> str:
+    if not upload:
+        return ""
+    content = upload.get("content") or b""
+    filename = str(upload.get("filename") or "").strip()
+    if not content or not filename:
+        return ""
+    suffix = Path(filename).suffix.lower()
+    if suffix not in VISUAL_REFERENCE_ALLOWED_UPLOAD_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Unsupported image upload type")
+    VISUAL_REFERENCE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    stored_name = f"{uuid4().hex}{suffix}"
+    target = (VISUAL_REFERENCE_UPLOAD_DIR / stored_name).resolve()
+    target.relative_to(VISUAL_REFERENCE_UPLOAD_DIR.resolve())
+    target.write_bytes(content)
+    return f"{VISUAL_REFERENCE_UPLOAD_URL_PREFIX}/{stored_name}"
+
+
+def seed_visual_references(conn: sqlite3.Connection) -> None:
+    ensure_visual_reference_schema(conn)
+    if not VISUAL_REFERENCE_SEED_PATH.exists():
+        return
+    try:
+        records = json.loads(VISUAL_REFERENCE_SEED_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    now = datetime.now(timezone.utc).isoformat()
+    for record in records if isinstance(records, list) else []:
+        vehicle_identifier = str(record.get("vehicle_identifier") or "").strip()
+        service_type = normalize_visual_reference_service(record.get("service_type"))
+        if not vehicle_identifier or not service_type:
+            continue
+        cur = conn.execute(
+            """
+            INSERT OR IGNORE INTO visual_reference_records (
+              vehicle_identifier, service_type, title, quick_reference, created_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                vehicle_identifier,
+                service_type,
+                str(record.get("title") or "").strip(),
+                str(record.get("quick_reference") or "").strip(),
+                str(record.get("created_at") or now).strip() or now,
+            ),
+        )
+        visual_reference_id = cur.lastrowid
+        if not visual_reference_id:
+            continue
+        for image in record.get("images") or []:
+            image_type = str(image.get("image_type") or "").strip()
+            image_path = str(image.get("image_path") or "").strip()
+            if image_type not in VISUAL_REFERENCE_IMAGE_TYPES or not image_path:
+                continue
+            conn.execute(
+                """
+                INSERT INTO visual_reference_images (
+                  visual_reference_id, image_type, image_path, caption
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    visual_reference_id,
+                    image_type,
+                    image_path,
+                    str(image.get("caption") or "").strip(),
+                ),
+            )
+        for spec in record.get("specs") or []:
+            spec_name = str(spec.get("spec_name") or "").strip()
+            spec_value = str(spec.get("spec_value") or "").strip()
+            if not spec_name or not spec_value:
+                continue
+            conn.execute(
+                """
+                INSERT INTO visual_reference_specs (
+                  visual_reference_id, spec_name, spec_value, spec_unit
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    visual_reference_id,
+                    spec_name,
+                    spec_value,
+                    str(spec.get("spec_unit") or "").strip(),
+                ),
+            )
+        for part in record.get("oem_parts") or []:
+            part_name = str(part.get("part_name") or "").strip()
+            oem_part_number = str(part.get("oem_part_number") or "").strip()
+            if not part_name or not oem_part_number:
+                continue
+            conn.execute(
+                """
+                INSERT INTO visual_reference_oem_parts (
+                  visual_reference_id, part_name, oem_part_number, future_parts_intelligence_id
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    visual_reference_id,
+                    part_name,
+                    oem_part_number,
+                    part.get("future_parts_intelligence_id"),
+                ),
+            )
+    conn.commit()
+
+
+def load_visual_references_for_vehicle(
+    conn: sqlite3.Connection,
+    vehicle: dict[str, Any],
+) -> list[dict[str, Any]]:
+    ensure_visual_reference_schema(conn)
+    identifiers = visual_reference_vehicle_identifiers(vehicle)
+    if not identifiers:
+        return []
+    normalized_identifiers = {normalize_visual_reference_token(identifier) for identifier in identifiers}
+    records = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM visual_reference_records
+            ORDER BY service_type ASC, title ASC, id ASC
+            """
+        ).fetchall()
+        if normalize_visual_reference_token(row["vehicle_identifier"]) in normalized_identifiers
+    ]
+    for record in records:
+        visual_reference_id = record["id"]
+        record["images"] = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM visual_reference_images
+                WHERE visual_reference_id = ?
+                ORDER BY image_type ASC, id ASC
+                """,
+                (visual_reference_id,),
+            ).fetchall()
+        ]
+        record["specs"] = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM visual_reference_specs
+                WHERE visual_reference_id = ?
+                ORDER BY id ASC
+                """,
+                (visual_reference_id,),
+            ).fetchall()
+        ]
+        record["oem_parts"] = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM visual_reference_oem_parts
+                WHERE visual_reference_id = ?
+                ORDER BY id ASC
+                """,
+                (visual_reference_id,),
+            ).fetchall()
+        ]
+    return records
 
 
 def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
@@ -1981,11 +2432,18 @@ def pro_dashboard(request: Request):
     try:
         ensure_customer_status_schema(conn)
         ensure_discrepancy_approvals_schema(conn)
+        ensure_visual_reference_schema(conn)
         pending_approvals_count = conn.execute(
             """
             SELECT COUNT(*) AS count
             FROM discrepancy_approvals
             WHERE customer_decision = 'pending'
+            """
+        ).fetchone()["count"]
+        visual_reference_count = conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM visual_reference_records
             """
         ).fetchone()["count"]
     finally:
@@ -1996,8 +2454,348 @@ def pro_dashboard(request: Request):
         {
             "request": request,
             "pending_approvals_count": pending_approvals_count,
+            "visual_reference_count": visual_reference_count,
         },
     )
+
+
+@router.get("/visual-references", response_class=HTMLResponse)
+def pro_visual_references(request: Request):
+    conn = crm_db_conn()
+    try:
+        seed_visual_references(conn)
+        records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT
+                  r.*,
+                  (SELECT COUNT(*) FROM visual_reference_images i WHERE i.visual_reference_id = r.id) AS image_count,
+                  (SELECT COUNT(*) FROM visual_reference_specs s WHERE s.visual_reference_id = r.id) AS spec_count,
+                  (SELECT COUNT(*) FROM visual_reference_oem_parts p WHERE p.visual_reference_id = r.id) AS oem_part_count
+                FROM visual_reference_records r
+                ORDER BY r.vehicle_identifier ASC, r.service_type ASC, r.id ASC
+                """
+            ).fetchall()
+        ]
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/visual_references.html",
+        {
+            "request": request,
+            "records": records,
+        },
+    )
+
+
+@router.post("/visual-references")
+async def pro_visual_reference_create(request: Request):
+    form = await read_form_data(request)
+    vehicle_identifier = form.get("vehicle_identifier", "")
+    service_type = normalize_visual_reference_service(form.get("service_type"))
+    if not vehicle_identifier.strip() or not service_type:
+        raise HTTPException(status_code=400, detail="Vehicle identifier and service type are required")
+    now = datetime.now(timezone.utc).isoformat()
+    conn = crm_db_conn()
+    try:
+        ensure_visual_reference_schema(conn)
+        cur = conn.execute(
+            """
+            INSERT INTO visual_reference_records (
+              vehicle_identifier, service_type, title, quick_reference, created_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                vehicle_identifier.strip(),
+                service_type,
+                form.get("title", ""),
+                form.get("quick_reference", ""),
+                now,
+            ),
+        )
+        visual_reference_id = int(cur.lastrowid)
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}", status_code=303)
+
+
+@router.get("/visual-references/{visual_reference_id}", response_class=HTMLResponse)
+def pro_visual_reference_detail(request: Request, visual_reference_id: int):
+    conn = crm_db_conn()
+    try:
+        reference = load_visual_reference_record(conn, visual_reference_id)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "pro/visual_reference_detail.html",
+        {
+            "request": request,
+            "reference": reference,
+            "image_types": public_visual_reference_image_types(),
+        },
+    )
+
+
+@router.post("/visual-references/{visual_reference_id}")
+async def pro_visual_reference_update(request: Request, visual_reference_id: int):
+    form = await read_form_data(request)
+    vehicle_identifier = form.get("vehicle_identifier", "")
+    service_type = normalize_visual_reference_service(form.get("service_type"))
+    if not vehicle_identifier.strip() or not service_type:
+        raise HTTPException(status_code=400, detail="Vehicle identifier and service type are required")
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        conn.execute(
+            """
+            UPDATE visual_reference_records
+            SET vehicle_identifier = ?, service_type = ?, title = ?, quick_reference = ?
+            WHERE id = ?
+            """,
+            (
+                vehicle_identifier.strip(),
+                service_type,
+                form.get("title", ""),
+                form.get("quick_reference", ""),
+                visual_reference_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/delete")
+async def pro_visual_reference_delete(visual_reference_id: int):
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        conn.execute("DELETE FROM visual_reference_images WHERE visual_reference_id = ?", (visual_reference_id,))
+        conn.execute("DELETE FROM visual_reference_specs WHERE visual_reference_id = ?", (visual_reference_id,))
+        conn.execute("DELETE FROM visual_reference_oem_parts WHERE visual_reference_id = ?", (visual_reference_id,))
+        conn.execute("DELETE FROM visual_reference_records WHERE id = ?", (visual_reference_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/visual-references", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/images")
+async def pro_visual_reference_image_create(request: Request, visual_reference_id: int):
+    form, files = await read_multipart_form_data(request)
+    image_type = normalize_visual_reference_image_type(form.get("image_type"))
+    image_path = save_visual_reference_upload(files.get("image_file")) or form.get("image_path", "").strip()
+    if not image_path:
+        raise HTTPException(status_code=400, detail="Upload an image or provide an image path")
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        conn.execute(
+            """
+            INSERT INTO visual_reference_images (
+              visual_reference_id, image_type, image_path, caption
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (visual_reference_id, image_type, image_path, form.get("caption", "")),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#images", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/images/{image_id}")
+async def pro_visual_reference_image_update(request: Request, visual_reference_id: int, image_id: int):
+    form, files = await read_multipart_form_data(request)
+    image_type = normalize_visual_reference_image_type(form.get("image_type"))
+    uploaded_path = save_visual_reference_upload(files.get("image_file"))
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        image = load_visual_reference_child(conn, "visual_reference_images", visual_reference_id, image_id)
+        image_path = uploaded_path or form.get("image_path", "").strip() or image.get("image_path") or ""
+        if not image_path:
+            raise HTTPException(status_code=400, detail="Image path is required")
+        conn.execute(
+            """
+            UPDATE visual_reference_images
+            SET image_type = ?, image_path = ?, caption = ?
+            WHERE id = ? AND visual_reference_id = ?
+            """,
+            (image_type, image_path, form.get("caption", ""), image_id, visual_reference_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#images", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/images/{image_id}/delete")
+async def pro_visual_reference_image_delete(visual_reference_id: int, image_id: int):
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        load_visual_reference_child(conn, "visual_reference_images", visual_reference_id, image_id)
+        conn.execute(
+            "DELETE FROM visual_reference_images WHERE id = ? AND visual_reference_id = ?",
+            (image_id, visual_reference_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#images", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/specs")
+async def pro_visual_reference_spec_create(request: Request, visual_reference_id: int):
+    form = await read_form_data(request)
+    if not form.get("spec_name", "").strip() or not form.get("spec_value", "").strip():
+        raise HTTPException(status_code=400, detail="Spec name and value are required")
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        conn.execute(
+            """
+            INSERT INTO visual_reference_specs (
+              visual_reference_id, spec_name, spec_value, spec_unit
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                visual_reference_id,
+                form.get("spec_name", ""),
+                form.get("spec_value", ""),
+                form.get("spec_unit", ""),
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#specs", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/specs/{spec_id}")
+async def pro_visual_reference_spec_update(request: Request, visual_reference_id: int, spec_id: int):
+    form = await read_form_data(request)
+    if not form.get("spec_name", "").strip() or not form.get("spec_value", "").strip():
+        raise HTTPException(status_code=400, detail="Spec name and value are required")
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        load_visual_reference_child(conn, "visual_reference_specs", visual_reference_id, spec_id)
+        conn.execute(
+            """
+            UPDATE visual_reference_specs
+            SET spec_name = ?, spec_value = ?, spec_unit = ?
+            WHERE id = ? AND visual_reference_id = ?
+            """,
+            (
+                form.get("spec_name", ""),
+                form.get("spec_value", ""),
+                form.get("spec_unit", ""),
+                spec_id,
+                visual_reference_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#specs", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/specs/{spec_id}/delete")
+async def pro_visual_reference_spec_delete(visual_reference_id: int, spec_id: int):
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        load_visual_reference_child(conn, "visual_reference_specs", visual_reference_id, spec_id)
+        conn.execute(
+            "DELETE FROM visual_reference_specs WHERE id = ? AND visual_reference_id = ?",
+            (spec_id, visual_reference_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#specs", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/oem-parts")
+async def pro_visual_reference_oem_part_create(request: Request, visual_reference_id: int):
+    form = await read_form_data(request)
+    if not form.get("part_name", "").strip() or not form.get("oem_part_number", "").strip():
+        raise HTTPException(status_code=400, detail="Part name and OEM part number are required")
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        conn.execute(
+            """
+            INSERT INTO visual_reference_oem_parts (
+              visual_reference_id, part_name, oem_part_number, future_parts_intelligence_id
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                visual_reference_id,
+                form.get("part_name", ""),
+                form.get("oem_part_number", ""),
+                optional_int(form, "future_parts_intelligence_id"),
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#oem-parts", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/oem-parts/{part_id}")
+async def pro_visual_reference_oem_part_update(request: Request, visual_reference_id: int, part_id: int):
+    form = await read_form_data(request)
+    if not form.get("part_name", "").strip() or not form.get("oem_part_number", "").strip():
+        raise HTTPException(status_code=400, detail="Part name and OEM part number are required")
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        load_visual_reference_child(conn, "visual_reference_oem_parts", visual_reference_id, part_id)
+        conn.execute(
+            """
+            UPDATE visual_reference_oem_parts
+            SET part_name = ?, oem_part_number = ?, future_parts_intelligence_id = ?
+            WHERE id = ? AND visual_reference_id = ?
+            """,
+            (
+                form.get("part_name", ""),
+                form.get("oem_part_number", ""),
+                optional_int(form, "future_parts_intelligence_id"),
+                part_id,
+                visual_reference_id,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#oem-parts", status_code=303)
+
+
+@router.post("/visual-references/{visual_reference_id}/oem-parts/{part_id}/delete")
+async def pro_visual_reference_oem_part_delete(visual_reference_id: int, part_id: int):
+    conn = crm_db_conn()
+    try:
+        load_visual_reference_record(conn, visual_reference_id)
+        load_visual_reference_child(conn, "visual_reference_oem_parts", visual_reference_id, part_id)
+        conn.execute(
+            "DELETE FROM visual_reference_oem_parts WHERE id = ? AND visual_reference_id = ?",
+            (part_id, visual_reference_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(f"/pro/visual-references/{visual_reference_id}#oem-parts", status_code=303)
 
 
 @router.get("/approvals", response_class=HTMLResponse)
@@ -2410,6 +3208,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         ensure_customer_decision_logs_schema(conn)
         ensure_service_history_schema(conn)
         ensure_service_history_records_schema(conn)
+        ensure_visual_reference_schema(conn)
         service_history_records = [
             dict(row)
             for row in conn.execute(
@@ -2543,6 +3342,8 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        seed_visual_references(conn)
+        visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
     finally:
         conn.close()
 
@@ -2576,6 +3377,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "findings_summary": findings_summary,
             "approval_summary": approval_summary,
             "repair_work_items": repair_work_items,
+            "visual_reference_records": visual_reference_records,
             "repair_work_status_options": [
                 {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
                 for value in REPAIR_WORK_STATUS_OPTIONS

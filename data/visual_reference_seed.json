@@ -1,0 +1,91 @@
+[
+  {
+    "vehicle_identifier": "2018 Toyota Camry 2.2",
+    "service_type": "alternator_replacement",
+    "title": "Alternator Visual Reference",
+    "quick_reference": "Architecture seed for component location, specs, and OEM part-number support.",
+    "images": [
+      {
+        "image_type": "component_location",
+        "image_path": "/static/visual-references/placeholders/alternator-location.png",
+        "caption": "Component location placeholder"
+      },
+      {
+        "image_type": "exploded_view",
+        "image_path": "/static/visual-references/placeholders/alternator-exploded.png",
+        "caption": "Exploded view placeholder"
+      }
+    ],
+    "specs": [
+      {
+        "spec_name": "Alternator Bolt",
+        "spec_value": "42",
+        "spec_unit": "Nm"
+      },
+      {
+        "spec_name": "Battery Terminal",
+        "spec_value": "Snug to spec",
+        "spec_unit": ""
+      }
+    ],
+    "oem_parts": [
+      {
+        "part_name": "Alternator Assembly",
+        "oem_part_number": "TBD-OEM-ALT",
+        "future_parts_intelligence_id": null
+      },
+      {
+        "part_name": "Drive Belt",
+        "oem_part_number": "TBD-OEM-BELT",
+        "future_parts_intelligence_id": null
+      }
+    ]
+  },
+  {
+    "vehicle_identifier": "2010 Honda Accord",
+    "service_type": "front_brake_pads",
+    "title": "Front Brake Pads Visual Reference",
+    "quick_reference": "Front axle pad service reference. Confirm brake package before ordering pads, inspect rotor condition, service slide pins, and pump pedal before moving vehicle.",
+    "images": [
+      {
+        "image_type": "component_location",
+        "image_path": "/static/visual-references/placeholders/2010-honda-accord-front-brake-location.svg",
+        "caption": "Placeholder component location: front brake caliper and pad area"
+      },
+      {
+        "image_type": "exploded_view",
+        "image_path": "/static/visual-references/placeholders/2010-honda-accord-front-brake-exploded.svg",
+        "caption": "Placeholder exploded view: pads, hardware, caliper bracket, and rotor"
+      }
+    ],
+    "specs": [
+      {
+        "spec_name": "Caliper Slide Pin Bolt",
+        "spec_value": "26",
+        "spec_unit": "Nm"
+      },
+      {
+        "spec_name": "Caliper Bracket Bolt",
+        "spec_value": "108",
+        "spec_unit": "Nm"
+      },
+      {
+        "spec_name": "Wheel Lug Nut",
+        "spec_value": "108",
+        "spec_unit": "Nm"
+      }
+    ],
+    "oem_parts": [
+      {
+        "part_name": "Front Brake Pad Set",
+        "oem_part_number": "45022-TA0-A00",
+        "future_parts_intelligence_id": null
+      },
+      {
+        "part_name": "Front Pad Hardware Kit",
+        "oem_part_number": "06435-TA0-A00",
+        "future_parts_intelligence_id": null
+      }
+    ]
+  }
+]

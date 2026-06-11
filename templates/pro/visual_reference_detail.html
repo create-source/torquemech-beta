@@ -1,0 +1,296 @@
+{% extends "layout.html" %}
+
+{% block title %}Visual Reference | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-vr-shell {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tm-vr-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 16px;
+  }
+
+  .tm-vr-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-vr-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-vr-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-vr-item {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-left: 4px solid #0e7490;
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+  }
+
+  .tm-vr-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: end;
+  }
+
+  .tm-vr-thumb {
+    width: min(280px, 100%);
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .tm-vr-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    color: #64748b;
+    padding: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .tm-vr-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">{{ reference.title or reference.service_type }}</h1>
+      <p class="tm-pro-subtitle">{{ reference.vehicle_identifier }} | {{ reference.service_type }}</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/visual-references">Back to Visual References</a>
+  </div>
+
+  <div class="tm-vr-shell">
+    <section class="tm-vr-panel" aria-label="Edit visual reference">
+      <div class="tm-vr-kicker">Visual Reference Record</div>
+      <form method="post" action="/pro/visual-references/{{ reference.id }}" style="margin-top:12px;">
+        <div class="tm-vr-row">
+          <div>
+            <label class="tm-label" for="vehicle_identifier">Vehicle Identifier</label>
+            <input class="tm-input" id="vehicle_identifier" name="vehicle_identifier" type="text" maxlength="255" value="{{ reference.vehicle_identifier }}" required>
+          </div>
+          <div>
+            <label class="tm-label" for="service_type">Service Type</label>
+            <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="160" value="{{ reference.service_type }}" required>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="title">Title</label>
+          <input class="tm-input" id="title" name="title" type="text" maxlength="255" value="{{ reference.title or '' }}">
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="quick_reference">Quick Reference</label>
+          <textarea class="tm-input" id="quick_reference" name="quick_reference" rows="5" maxlength="2400">{{ reference.quick_reference or "" }}</textarea>
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Reference</button>
+      </form>
+    </section>
+
+    <section class="tm-vr-panel" id="images" aria-label="Visual reference images">
+      <div class="tm-vr-kicker">Images</div>
+      <form method="post" action="/pro/visual-references/{{ reference.id }}/images" enctype="multipart/form-data" style="margin-top:12px;">
+        <div class="tm-vr-row">
+          <div>
+            <label class="tm-label" for="image_type">Image Type</label>
+            <select class="tm-input" id="image_type" name="image_type" required>
+              {% for image_type in image_types %}
+              <option value="{{ image_type }}">{{ image_type }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="tm-label" for="image_file">Upload Image</label>
+            <input class="tm-input" id="image_file" name="image_file" type="file" accept="image/*">
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="image_path">Image Path</label>
+          <input class="tm-input" id="image_path" name="image_path" type="text" maxlength="600" placeholder="/static/visual-references/placeholders/example.svg">
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="caption">Caption</label>
+          <input class="tm-input" id="caption" name="caption" type="text" maxlength="600">
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Image</button>
+      </form>
+
+      {% if reference.images %}
+      <div class="tm-vr-list">
+        {% for image in reference.images %}
+        <article class="tm-vr-item">
+          <img class="tm-vr-thumb" src="{{ image.image_path }}" alt="{{ image.caption or image.image_type }}">
+          <form method="post" action="/pro/visual-references/{{ reference.id }}/images/{{ image.id }}" enctype="multipart/form-data">
+            <div class="tm-vr-row">
+              <div>
+                <label class="tm-label" for="image_type_{{ image.id }}">Image Type</label>
+                <select class="tm-input" id="image_type_{{ image.id }}" name="image_type" required>
+                  {% for image_type in image_types %}
+                  <option value="{{ image_type }}" {% if image.image_type == image_type %}selected{% endif %}>{{ image_type }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="tm-label" for="image_file_{{ image.id }}">Replace Upload</label>
+                <input class="tm-input" id="image_file_{{ image.id }}" name="image_file" type="file" accept="image/*">
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="image_path_{{ image.id }}">Image Path</label>
+              <input class="tm-input" id="image_path_{{ image.id }}" name="image_path" type="text" maxlength="600" value="{{ image.image_path }}">
+            </div>
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="caption_{{ image.id }}">Caption</label>
+              <input class="tm-input" id="caption_{{ image.id }}" name="caption" type="text" maxlength="600" value="{{ image.caption or '' }}">
+            </div>
+            <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Image</button>
+          </form>
+          <form method="post" action="/pro/visual-references/{{ reference.id }}/images/{{ image.id }}/delete">
+            <button class="tm-btn tm-btn-secondary" type="submit">Delete Image</button>
+          </form>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-vr-empty" style="margin-top:12px;">No images added yet.</div>
+      {% endif %}
+    </section>
+
+    <section class="tm-vr-panel" id="specs" aria-label="Visual reference specs">
+      <div class="tm-vr-kicker">Torque / Specs</div>
+      <form method="post" action="/pro/visual-references/{{ reference.id }}/specs" style="margin-top:12px;">
+        <div class="tm-vr-row">
+          <div>
+            <label class="tm-label" for="spec_name">Spec Name</label>
+            <input class="tm-input" id="spec_name" name="spec_name" type="text" maxlength="160" placeholder="Alternator Bolt" required>
+          </div>
+          <div>
+            <label class="tm-label" for="spec_value">Spec Value</label>
+            <input class="tm-input" id="spec_value" name="spec_value" type="text" maxlength="120" placeholder="42" required>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="spec_unit">Spec Unit</label>
+          <input class="tm-input" id="spec_unit" name="spec_unit" type="text" maxlength="40" placeholder="Nm">
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Spec</button>
+      </form>
+
+      {% if reference.specs %}
+      <div class="tm-vr-list">
+        {% for spec in reference.specs %}
+        <article class="tm-vr-item">
+          <form method="post" action="/pro/visual-references/{{ reference.id }}/specs/{{ spec.id }}">
+            <div class="tm-vr-row">
+              <div>
+                <label class="tm-label" for="spec_name_{{ spec.id }}">Spec Name</label>
+                <input class="tm-input" id="spec_name_{{ spec.id }}" name="spec_name" type="text" maxlength="160" value="{{ spec.spec_name }}" required>
+              </div>
+              <div>
+                <label class="tm-label" for="spec_value_{{ spec.id }}">Spec Value</label>
+                <input class="tm-input" id="spec_value_{{ spec.id }}" name="spec_value" type="text" maxlength="120" value="{{ spec.spec_value }}" required>
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="spec_unit_{{ spec.id }}">Spec Unit</label>
+              <input class="tm-input" id="spec_unit_{{ spec.id }}" name="spec_unit" type="text" maxlength="40" value="{{ spec.spec_unit or '' }}">
+            </div>
+            <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Spec</button>
+          </form>
+          <form method="post" action="/pro/visual-references/{{ reference.id }}/specs/{{ spec.id }}/delete">
+            <button class="tm-btn tm-btn-secondary" type="submit">Delete Spec</button>
+          </form>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-vr-empty" style="margin-top:12px;">No specs added yet.</div>
+      {% endif %}
+    </section>
+
+    <section class="tm-vr-panel" id="oem-parts" aria-label="Visual reference OEM parts">
+      <div class="tm-vr-kicker">OEM Parts</div>
+      <form method="post" action="/pro/visual-references/{{ reference.id }}/oem-parts" style="margin-top:12px;">
+        <div class="tm-vr-row">
+          <div>
+            <label class="tm-label" for="part_name">Part Name</label>
+            <input class="tm-input" id="part_name" name="part_name" type="text" maxlength="180" required>
+          </div>
+          <div>
+            <label class="tm-label" for="oem_part_number">OEM Part Number</label>
+            <input class="tm-input" id="oem_part_number" name="oem_part_number" type="text" maxlength="120" required>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="future_parts_intelligence_id">Future Parts Intelligence ID</label>
+          <input class="tm-input" id="future_parts_intelligence_id" name="future_parts_intelligence_id" type="number" min="0" step="1">
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add OEM Part</button>
+      </form>
+
+      {% if reference.oem_parts %}
+      <div class="tm-vr-list">
+        {% for part in reference.oem_parts %}
+        <article class="tm-vr-item">
+          <form method="post" action="/pro/visual-references/{{ reference.id }}/oem-parts/{{ part.id }}">
+            <div class="tm-vr-row">
+              <div>
+                <label class="tm-label" for="part_name_{{ part.id }}">Part Name</label>
+                <input class="tm-input" id="part_name_{{ part.id }}" name="part_name" type="text" maxlength="180" value="{{ part.part_name }}" required>
+              </div>
+              <div>
+                <label class="tm-label" for="oem_part_number_{{ part.id }}">OEM Part Number</label>
+                <input class="tm-input" id="oem_part_number_{{ part.id }}" name="oem_part_number" type="text" maxlength="120" value="{{ part.oem_part_number }}" required>
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label class="tm-label" for="future_parts_intelligence_id_{{ part.id }}">Future Parts Intelligence ID</label>
+              <input class="tm-input" id="future_parts_intelligence_id_{{ part.id }}" name="future_parts_intelligence_id" type="number" min="0" step="1" value="{{ part.future_parts_intelligence_id or '' }}">
+            </div>
+            <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save OEM Part</button>
+          </form>
+          <form method="post" action="/pro/visual-references/{{ reference.id }}/oem-parts/{{ part.id }}/delete">
+            <button class="tm-btn tm-btn-secondary" type="submit">Delete OEM Part</button>
+          </form>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-vr-empty" style="margin-top:12px;">No OEM parts added yet.</div>
+      {% endif %}
+    </section>
+
+    <form class="tm-vr-panel" method="post" action="/pro/visual-references/{{ reference.id }}/delete">
+      <div class="tm-vr-kicker">Delete</div>
+      <div style="color:#64748b; margin-top:8px;">Delete this visual reference and all linked images, specs, and OEM parts.</div>
+      <button class="tm-btn tm-btn-secondary" type="submit" style="margin-top:14px;">Delete Visual Reference</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">2010 Honda Accord front brake component location placeholder</title>
+  <desc id="desc">Placeholder diagram showing the front wheel brake caliper and pad service area.</desc>
+  <rect width="640" height="360" fill="#f8fafc"/>
+  <rect x="32" y="32" width="576" height="296" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="232" cy="184" r="104" fill="#e2e8f0" stroke="#64748b" stroke-width="6"/>
+  <circle cx="232" cy="184" r="48" fill="#f8fafc" stroke="#94a3b8" stroke-width="5"/>
+  <path d="M308 118h82c30 0 54 24 54 54v24c0 30-24 54-54 54h-82c18-38 18-94 0-132z" fill="#0e7490" opacity="0.88"/>
+  <rect x="328" y="142" width="54" height="84" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="4"/>
+  <path d="M398 132l48-42" stroke="#dc2626" stroke-width="6" stroke-linecap="round"/>
+  <text x="456" y="92" fill="#0f172a" font-family="Arial, sans-serif" font-size="24" font-weight="700">Front caliper</text>
+  <text x="456" y="122" fill="#475569" font-family="Arial, sans-serif" font-size="18">Pad access area</text>
+  <text x="64" y="306" fill="#64748b" font-family="Arial, sans-serif" font-size="18">Placeholder component location image</text>
+</svg>
