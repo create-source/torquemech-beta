@@ -1,8 +1,42 @@
 import unittest
+from unittest.mock import patch
 
 from fastapi import HTTPException
 
 import main
+
+
+class MockVinResponse:
+    status_code = 200
+
+    def json(self):
+        return {
+            "Results": [
+                {
+                    "ModelYear": "2001",
+                    "Make": "MERCEDES-BENZ",
+                    "Model": "E-Class",
+                    "Series": "",
+                    "Trim": "320",
+                    "DisplacementL": "3.2",
+                }
+            ]
+        }
+
+
+class MockVinClient:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+    async def get(self, url):
+        self.url = url
+        return MockVinResponse()
 
 
 class VehicleModelValidationTests(unittest.TestCase):
@@ -56,6 +90,16 @@ class VehicleModelValidationTests(unittest.TestCase):
     def test_unknown_make_still_raises(self):
         with self.assertRaises(HTTPException):
             main.get_models_for_make_year("Not A Make", 2001)
+
+
+class VinDecodeVehicleValidationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_wdbjf65j81b353808_resolves_to_2001_mercedes_e320(self):
+        with patch.object(main.httpx, "AsyncClient", MockVinClient):
+            decoded = await main.decode_vin(" wdb jf65j81b353808 ")
+
+        self.assertEqual(decoded["year"], 2001)
+        self.assertEqual(decoded["make"], "Mercedes-Benz")
+        self.assertEqual(decoded["model"], "E320")
 
 
 if __name__ == "__main__":

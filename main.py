@@ -9017,6 +9017,40 @@ def resolve_valid_vehicle_model(year: int, make: str, model: str) -> Optional[st
 
     return None
 
+
+def normalize_vin_input(vin: str) -> str:
+    return re.sub(r"\s+", "", str(vin or "")).upper()
+
+
+def resolve_decoded_vehicle_model(year: int, make: str, row: Dict[str, Any]) -> Optional[str]:
+    raw_model = str(row.get("Model") or "").strip()
+    raw_trim = str(row.get("Trim") or "").strip()
+    class_match = re.match(r"^([A-Z])\s*-?\s*CLASS$", raw_model.upper())
+    class_trim_candidate = (
+        f"{class_match.group(1)}{raw_trim}"
+        if class_match and re.fullmatch(r"\d{2,4}", raw_trim)
+        else ""
+    )
+    candidates = [
+        row.get("Model"),
+        row.get("Series"),
+        class_trim_candidate,
+        row.get("Trim"),
+        row.get("Series2"),
+        " ".join(str(part or "").strip() for part in [row.get("Model"), row.get("Series")] if str(part or "").strip()),
+        " ".join(str(part or "").strip() for part in [row.get("Model"), row.get("Trim")] if str(part or "").strip()),
+    ]
+    seen = set()
+    for candidate in candidates:
+        candidate_key = normalize_vehicle_model_key(str(candidate or ""))
+        if not candidate_key or candidate_key in seen:
+            continue
+        seen.add(candidate_key)
+        resolved = resolve_valid_vehicle_model(year, make, str(candidate))
+        if resolved:
+            return resolved
+    return None
+
 # ===============================
 # MAKES / MODELS API
 # ===============================
@@ -9123,14 +9157,17 @@ def submit_feedback(request: Request, payload: Dict[str, Any] = Body(...)) -> JS
 
 @app.get("/api/vin/{vin}")
 async def decode_vin(vin: str):
-    vin = (vin or "").strip().upper()
+    vin = normalize_vin_input(vin)
     if len(vin) != 17:
         raise HTTPException(status_code=400, detail="VIN must be 17 characters")
 
     url = f"https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/{vin}?format=json"
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(url)
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(url)
+    except httpx.HTTPError:
+        raise HTTPException(status_code=502, detail="VIN decoder unavailable")
 
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail="VIN decoder unavailable")
@@ -9149,13 +9186,17 @@ async def decode_vin(vin: str):
         # Some VINs return partial data; treat as failure for beta
         raise HTTPException(status_code=404, detail="VIN decoded but missing year/make/model")
 
+    resolved_model = resolve_decoded_vehicle_model(int(year), make, row)
+    if not resolved_model:
+        raise HTTPException(status_code=404, detail="VIN decoded, but model is not supported by this estimator")
+
     engine = row.get("DisplacementL") or row.get("EngineModel") or row.get("EngineCylinders")
     trim = row.get("Trim") or row.get("Series") or row.get("Series2")
 
     return {
         "year": int(year),
         "make": make.title(),
-        "model": model.title(),
+        "model": resolved_model,
         "engine": str(engine).strip() if engine else "",
         "trim": str(trim).strip() if trim else "",
     }

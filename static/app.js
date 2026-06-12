@@ -2647,9 +2647,44 @@ const confidenceEl = document.getElementById("laborConfidence");
     const r = await fetch(url, opts);
     if (!r.ok) {
       const t = await r.text().catch(() => "");
-      throw new Error(`${r.status} ${r.statusText} ${t}`.trim());
+      let detail = t;
+      try {
+        const parsed = JSON.parse(t);
+        detail = parsed?.detail || parsed?.error || t;
+      } catch (_) {}
+      throw new Error(`${r.status} ${r.statusText} ${detail}`.trim());
     }
     return r.json();
+  }
+
+  function normalizeVinInput(value) {
+    return String(value || "").replace(/\s+/g, "").trim().toUpperCase();
+  }
+
+  function normalizeVehicleOption(value) {
+    return String(value || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  }
+
+  function findVehicleOptionIndex(selectEl, value) {
+    const exactNeedle = String(value || "").trim().toLowerCase();
+    const normalizedNeedle = normalizeVehicleOption(value);
+    if (!selectEl || (!exactNeedle && !normalizedNeedle)) return -1;
+
+    for (let i = 0; i < selectEl.options.length; i++) {
+      const option = selectEl.options[i];
+      const optionValues = [
+        option.text || "",
+        option.textContent || "",
+        option.value || "",
+      ];
+      if (optionValues.some(raw => String(raw).trim().toLowerCase() === exactNeedle)) {
+        return i;
+      }
+      if (normalizedNeedle && optionValues.some(raw => normalizeVehicleOption(raw) === normalizedNeedle)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   // ---- OBD → Estimator bridge ----
@@ -2884,6 +2919,18 @@ const confidenceEl = document.getElementById("laborConfidence");
     } finally {
       modelEl.disabled = false;
     }
+  }
+
+  function refreshActiveVehicleControls() {
+    const activeVehicleId = estimateState.activeVehicleId || estimateState.vehicles?.[0]?.id || "";
+    const scopedSelector = (className) =>
+      activeVehicleId
+        ? document.querySelector(`.${className}[data-vehicle-id="${activeVehicleId}"]`)
+        : document.querySelector(`.${className}`);
+
+    yearEl = scopedSelector("vehicle-year") || yearEl;
+    makeEl = scopedSelector("vehicle-make") || makeEl;
+    modelEl = scopedSelector("vehicle-model") || modelEl;
   }
 
   // ---- Categories / services ----
@@ -5852,10 +5899,23 @@ if (getEstimateHint) {
 
   // ---- VIN decode ----
   vinLookupBtn?.addEventListener("click", async () => {
-    const vin = (vinEl?.value || "").trim().toUpperCase();
+    refreshActiveVehicleControls();
+    const vin = normalizeVinInput(vinEl?.value || "");
+    if (vinEl) vinEl.value = vin;
+    if (vinDecodedMeta) vinDecodedMeta.textContent = "";
 
     if (vin.length !== 17) {
       setStatus("error", "VIN must be 17 characters.");
+      return;
+    }
+
+    if (!yearEl || !makeEl || !modelEl) {
+      await renderVehicles();
+      refreshActiveVehicleControls();
+    }
+
+    if (!yearEl || !makeEl || !modelEl) {
+      setStatus("error", "Select Vehicle first, then fill vehicle details from VIN.");
       return;
     }
 
@@ -5864,44 +5924,33 @@ if (getEstimateHint) {
     try {
       const res = await apiJSON(`/api/vin/${encodeURIComponent(vin)}`);
 
-      yearEl.value = String(res.year);
-      // Select make
-      const vinMake = (res.make || "").trim().toLowerCase();
-      let makeIndex = -1;
-      for (let i = 0; i < makeEl.options.length; i++) {
-        const t = (makeEl.options[i].text || "").trim().toLowerCase();
-        const v = (makeEl.options[i].value || "").trim().toLowerCase();
-        if (t === vinMake || v === vinMake) {
-          makeIndex = i;
-          break;
-        }
-      }
+      const makeIndex = findVehicleOptionIndex(makeEl, res.make);
       if (makeIndex < 0) {
         setStatus("warn", `VIN decoded, but make "${res.make}" not found.`);
         return;
       }
-      makeEl.selectedIndex = makeIndex;
-
-      // Load models
-      await loadModels(makeEl.value || makeEl.options[makeIndex].text);
-
-      // Select model
-      const vinModel = (res.model || "").trim().toLowerCase();
-      let modelIndex = -1;
-      for (let i = 0; i < modelEl.options.length; i++) {
-        const t = (modelEl.options[i].text || "").trim().toLowerCase();
-        const v = (modelEl.options[i].value || "").trim().toLowerCase();
-        if (t === vinModel || v === vinModel) {
-          modelIndex = i;
-          break;
-        }
+      const activeVehicle = estimateState.vehicles.find(v => v.id === estimateState.activeVehicleId) || estimateState.vehicles[0];
+      const canonicalMake = makeEl.options[makeIndex]?.value || res.make || "";
+      const canonicalModel = String(res.model || "").trim();
+      if (activeVehicle) {
+        activeVehicle.year = String(res.year || "");
+        activeVehicle.make = canonicalMake;
+        activeVehicle.model = canonicalModel;
+        activeVehicle.displayModel = canonicalModel;
+        window.estimateState = estimateState;
       }
-      if (modelIndex >= 0) modelEl.selectedIndex = modelIndex;
+
+      await renderVehicles();
+      refreshActiveVehicleControls();
+
+      const modelIndex = findVehicleOptionIndex(modelEl, canonicalModel);
+      if (modelIndex < 0 || !modelEl.value) {
+        updateEstimateButtonState();
+        setStatus("error", `VIN decoded, but model "${canonicalModel}" is not available for this year and make.`);
+        return;
+      }
       if (vinDecodedMeta) {
-        const metaBits = [res.engine, res.trim].filter(Boolean);
-        vinDecodedMeta.textContent = metaBits.length
-          ? `Detected: ${metaBits.join(" • ")}`
-          : "";
+        vinDecodedMeta.textContent = `Detected: ${res.year} ${res.make} ${canonicalModel}`;
       }
 
       updateEstimateButtonState();
@@ -6261,6 +6310,7 @@ if (getEstimateHint) {
     `).join("");
 
     await bindVehicleCardFields();
+    refreshActiveVehicleControls();
   }
 
   async function bindVehicleCardFields() {
