@@ -72,6 +72,53 @@ class VisualReferenceLibraryTests(unittest.TestCase):
                 (reference_id, "Hardware Kit", "OEM-HW", None),
             ],
         )
+        conn.executemany(
+            """
+            INSERT INTO visual_reference_hotspots (
+              visual_reference_id, label, hotspot_type, x_percent, y_percent,
+              title, description, torque_spec, fastener_size, tool_size,
+              oem_part_number, related_part_name, parts_intelligence_id,
+              sort_order, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    reference_id,
+                    "Caliper",
+                    "component",
+                    42,
+                    58,
+                    "Caliper",
+                    "Brake caliper body",
+                    "26 Nm",
+                    "14mm",
+                    "",
+                    "",
+                    "Front Caliper",
+                    None,
+                    1,
+                    "2026-06-10T12:00:00",
+                ),
+                (
+                    reference_id,
+                    "Pad Clip",
+                    "fastener",
+                    50,
+                    62,
+                    "Pad Clip",
+                    "Pad retaining clip",
+                    "",
+                    "",
+                    "",
+                    "OEM-CLIP",
+                    "Pad Hardware Kit",
+                    None,
+                    2,
+                    "2026-06-10T12:00:00",
+                ),
+            ],
+        )
         conn.commit()
 
         records = load_visual_references_for_vehicle(
@@ -83,6 +130,7 @@ class VisualReferenceLibraryTests(unittest.TestCase):
         self.assertEqual(len(records[0]["images"]), 2)
         self.assertEqual(len(records[0]["specs"]), 2)
         self.assertEqual(len(records[0]["oem_parts"]), 2)
+        self.assertEqual(len(records[0]["hotspots"]), 2)
 
     def test_seed_support_loads_reference_fixture(self):
         conn = self.open_temp_db()
@@ -119,6 +167,29 @@ class VisualReferenceLibraryTests(unittest.TestCase):
         )
         self.assertGreaterEqual(len(record["specs"]), 3)
         self.assertGreaterEqual(len(record["oem_parts"]), 2)
+
+    def test_mercedes_e320_alternator_repair_map_seed_loads_hotspots(self):
+        conn = self.open_temp_db()
+        seed_visual_references(conn)
+
+        records = load_visual_references_for_vehicle(
+            conn,
+            {"year": 2001, "make": "Mercedes-Benz", "model": "E320"},
+        )
+
+        self.assertEqual(len(records), 1)
+        record = records[0]
+        self.assertEqual(record["service_type"], "alternator_replacement")
+        self.assertEqual(len(record["images"]), 1)
+        self.assertEqual(len(record["hotspots"]), 4)
+        titles = {hotspot["title"] for hotspot in record["hotspots"]}
+        self.assertEqual(
+            titles,
+            {"Alternator", "Belt Tensioner", "Serpentine Belt", "B+ Terminal"},
+        )
+        alternator = next(hotspot for hotspot in record["hotspots"] if hotspot["title"] == "Alternator")
+        self.assertEqual(alternator["torque_spec"], "42 Nm")
+        self.assertEqual(alternator["fastener_size"], "E12")
 
     def test_multipart_upload_parser_reads_fields_and_file(self):
         boundary = "tm-test-boundary"

@@ -4,6 +4,7 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -38,6 +39,11 @@ class VisualReferenceRecord(Base):
     )
     oem_parts = relationship(
         "VisualReferenceOemPart",
+        back_populates="visual_reference",
+        cascade="all, delete-orphan",
+    )
+    hotspots = relationship(
+        "VisualReferenceHotspot",
         back_populates="visual_reference",
         cascade="all, delete-orphan",
     )
@@ -86,3 +92,26 @@ class VisualReferenceOemPart(Base):
     future_parts_intelligence_id = Column(Integer)
 
     visual_reference = relationship("VisualReferenceRecord", back_populates="oem_parts")
+
+
+class VisualReferenceHotspot(Base):
+    __tablename__ = "visual_reference_hotspots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    visual_reference_id = Column(Integer, ForeignKey("visual_reference_records.id"), nullable=False, index=True)
+    label = Column(String(120), nullable=False)
+    hotspot_type = Column(String(64), nullable=False)
+    x_percent = Column(Float, nullable=False)
+    y_percent = Column(Float, nullable=False)
+    title = Column(String(180), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    torque_spec = Column(String(120), nullable=False, default="")
+    fastener_size = Column(String(80), nullable=False, default="")
+    tool_size = Column(String(80), nullable=False, default="")
+    oem_part_number = Column(String(120), nullable=False, default="")
+    related_part_name = Column(String(180), nullable=False, default="")
+    parts_intelligence_id = Column(Integer)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    visual_reference = relationship("VisualReferenceRecord", back_populates="hotspots")

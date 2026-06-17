@@ -87,5 +87,104 @@
         "future_parts_intelligence_id": null
       }
     ]
+  },
+  {
+    "vehicle_identifier": "2001 Mercedes-Benz E320",
+    "service_type": "alternator_replacement",
+    "title": "Alternator Replacement Interactive Repair Map",
+    "quick_reference": "Proof-of-concept interactive repair map for alternator replacement hotspots.",
+    "images": [
+      {
+        "image_type": "component_location",
+        "image_path": "/static/visual-references/placeholders/2001-mercedes-e320-alternator-map.svg",
+        "caption": "POC engine-bay map for alternator service hotspots"
+      }
+    ],
+    "specs": [
+      {
+        "spec_name": "Alternator Fastener",
+        "spec_value": "42",
+        "spec_unit": "Nm"
+      },
+      {
+        "spec_name": "B+ Terminal",
+        "spec_value": "15",
+        "spec_unit": "Nm"
+      }
+    ],
+    "oem_parts": [
+      {
+        "part_name": "Alternator",
+        "oem_part_number": "placeholder",
+        "future_parts_intelligence_id": null
+      },
+      {
+        "part_name": "Serpentine Belt",
+        "oem_part_number": "placeholder",
+        "future_parts_intelligence_id": null
+      }
+    ],
+    "hotspots": [
+      {
+        "label": "Alternator",
+        "hotspot_type": "component",
+        "x_percent": 57,
+        "y_percent": 53,
+        "title": "Alternator",
+        "description": "Main charging unit mounted at front of engine",
+        "torque_spec": "42 Nm",
+        "fastener_size": "E12",
+        "tool_size": "",
+        "oem_part_number": "placeholder",
+        "related_part_name": "Alternator",
+        "parts_intelligence_id": null,
+        "sort_order": 1
+      },
+      {
+        "label": "Belt Tensioner",
+        "hotspot_type": "belt",
+        "x_percent": 37,
+        "y_percent": 42,
+        "title": "Belt Tensioner",
+        "description": "Releases serpentine belt tension before alternator removal",
+        "torque_spec": "",
+        "fastener_size": "",
+        "tool_size": "17mm",
+        "oem_part_number": "",
+        "related_part_name": "Belt Tensioner",
+        "parts_intelligence_id": null,
+        "sort_order": 2
+      },
+      {
+        "label": "Serpentine Belt",
+        "hotspot_type": "belt",
+        "x_percent": 49,
+        "y_percent": 34,
+        "title": "Serpentine Belt",
+        "description": "Remove belt from alternator pulley before alternator removal",
+        "torque_spec": "",
+        "fastener_size": "",
+        "tool_size": "",
+        "oem_part_number": "placeholder",
+        "related_part_name": "Serpentine Belt",
+        "parts_intelligence_id": null,
+        "sort_order": 3
+      },
+      {
+        "label": "B+ Terminal",
+        "hotspot_type": "connector",
+        "x_percent": 68,
+        "y_percent": 58,
+        "title": "B+ Terminal",
+        "description": "Main charging cable terminal on rear of alternator",
+        "torque_spec": "15 Nm",
+        "fastener_size": "13mm",
+        "tool_size": "",
+        "oem_part_number": "",
+        "related_part_name": "",
+        "parts_intelligence_id": null,
+        "sort_order": 4
+      }
+    ]
   }
 ]

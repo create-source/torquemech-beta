@@ -90,6 +90,11 @@
   <div class="tm-vr-shell">
     <section class="tm-vr-panel" aria-label="Edit visual reference">
       <div class="tm-vr-kicker">Visual Reference Record</div>
+      {% if reference.hotspots %}
+      <div style="margin-top:12px;">
+        <a class="tm-btn tm-btn-primary" href="/pro/visual-references/{{ reference.id }}/repair-map">Open Interactive Repair Map</a>
+      </div>
+      {% endif %}
       <form method="post" action="/pro/visual-references/{{ reference.id }}" style="margin-top:12px;">
         <div class="tm-vr-row">
           <div>

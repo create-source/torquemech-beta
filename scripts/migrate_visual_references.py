@@ -70,6 +70,29 @@ def migrate(db_path: Path = DB_PATH) -> None:
         )
         conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS visual_reference_hotspots (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              visual_reference_id INTEGER NOT NULL,
+              label TEXT NOT NULL,
+              hotspot_type TEXT NOT NULL,
+              x_percent REAL NOT NULL,
+              y_percent REAL NOT NULL,
+              title TEXT NOT NULL,
+              description TEXT,
+              torque_spec TEXT,
+              fastener_size TEXT,
+              tool_size TEXT,
+              oem_part_number TEXT,
+              related_part_name TEXT,
+              parts_intelligence_id INTEGER,
+              sort_order INTEGER NOT NULL DEFAULT 0,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+            )
+            """
+        )
+        conn.execute(
+            """
             CREATE UNIQUE INDEX IF NOT EXISTS idx_visual_reference_records_vehicle_service
             ON visual_reference_records (vehicle_identifier, service_type)
             """
@@ -79,6 +102,7 @@ def migrate(db_path: Path = DB_PATH) -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_images_reference ON visual_reference_images (visual_reference_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_specs_reference ON visual_reference_specs (visual_reference_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_oem_parts_reference ON visual_reference_oem_parts (visual_reference_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_visual_reference_hotspots_reference ON visual_reference_hotspots (visual_reference_id, sort_order)")
         conn.commit()
     finally:
         conn.close()

@@ -1,0 +1,309 @@
+{% extends "layout.html" %}
+
+{% block title %}Interactive Repair Map | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-map-shell {
+    display: grid;
+    gap: 14px;
+  }
+
+  .tm-map-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .tm-map-stage {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #0f172a;
+  }
+
+  .tm-map-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 280px;
+    max-height: calc(100vh - 250px);
+    object-fit: contain;
+    background: #f8fafc;
+  }
+
+  .tm-hotspot {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 3px solid #fff;
+    border-radius: 999px;
+    background: #0f766e;
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 900;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.32);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+  }
+
+  .tm-hotspot:hover,
+  .tm-hotspot:focus-visible {
+    background: #0e7490;
+    outline: 3px solid rgba(14, 116, 144, 0.25);
+    outline-offset: 3px;
+  }
+
+  .tm-hotspot span {
+    pointer-events: none;
+  }
+
+  .tm-map-panel {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2100;
+    display: grid;
+    gap: 12px;
+    max-height: min(72vh, 520px);
+    overflow: auto;
+    border-radius: 8px 8px 0 0;
+    background: #fff;
+    box-shadow: 0 -22px 50px rgba(15, 23, 42, 0.28);
+    padding: 16px;
+  }
+
+  .tm-map-panel[hidden] {
+    display: none;
+  }
+
+  .tm-map-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .tm-map-panel-kicker {
+    color: #0f766e;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-map-panel-title {
+    margin: 3px 0 0;
+    color: #0f172a;
+    font-size: 1.24rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.15;
+  }
+
+  .tm-map-close {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 1.2rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .tm-map-description {
+    color: #334155;
+    line-height: 1.45;
+  }
+
+  .tm-map-spec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tm-map-spec {
+    display: grid;
+    gap: 3px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px;
+  }
+
+  .tm-map-spec span {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-map-spec strong {
+    color: #0f172a;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-map-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    background: #fff;
+    color: #64748b;
+    padding: 16px;
+  }
+
+  @media (min-width: 900px) {
+    .tm-map-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .tm-map-panel {
+      position: sticky;
+      top: 86px;
+      max-height: calc(100vh - 110px);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 8px;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1);
+    }
+  }
+
+  @media (max-width: 620px) {
+    .tm-map-image {
+      min-height: 220px;
+      max-height: none;
+    }
+
+    .tm-map-spec-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell tm-map-shell">
+  <div class="tm-pro-pagehead tm-map-header">
+    <div>
+      <div class="tm-pro-eyebrow">Interactive Repair Map</div>
+      <h1 class="tm-pro-title">{{ reference.title or reference.service_type }}</h1>
+      <p class="tm-pro-subtitle">{{ reference.vehicle_identifier }} | {{ reference.service_type }}</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/visual-references/{{ reference.id }}">Back to Reference</a>
+  </div>
+
+  {% if main_image %}
+  <div class="tm-map-layout">
+    <div class="tm-map-stage" aria-label="Interactive visual reference">
+      <img class="tm-map-image" src="{{ main_image.image_path }}" alt="{{ main_image.caption or reference.title or 'Visual reference image' }}">
+      {% for hotspot in reference.hotspots %}
+      <button
+        class="tm-hotspot"
+        type="button"
+        style="--x: {{ hotspot.x_percent }}%; --y: {{ hotspot.y_percent }}%;"
+        data-hotspot
+        data-label="{{ hotspot.label }}"
+        data-type="{{ hotspot.hotspot_type }}"
+        data-title="{{ hotspot.title }}"
+        data-description="{{ hotspot.description or '' }}"
+        data-torque-spec="{{ hotspot.torque_spec or '' }}"
+        data-fastener-size="{{ hotspot.fastener_size or '' }}"
+        data-tool-size="{{ hotspot.tool_size or '' }}"
+        data-oem-part-number="{{ hotspot.oem_part_number or '' }}"
+        data-related-part-name="{{ hotspot.related_part_name or '' }}"
+        aria-label="{{ hotspot.title }}"
+      >
+        <span>{{ loop.index }}</span>
+      </button>
+      {% endfor %}
+    </div>
+
+    <aside class="tm-map-panel" data-hotspot-panel hidden aria-live="polite">
+      <div class="tm-map-panel-head">
+        <div>
+          <div class="tm-map-panel-kicker" data-hotspot-type></div>
+          <h2 class="tm-map-panel-title" data-hotspot-title></h2>
+        </div>
+        <button class="tm-map-close" type="button" data-hotspot-close aria-label="Close hotspot details">x</button>
+      </div>
+      <div class="tm-map-description" data-hotspot-description></div>
+      <div class="tm-map-spec-grid" data-hotspot-specs></div>
+      <button class="tm-btn tm-btn-primary" type="button" data-hotspot-parts hidden>View Parts</button>
+    </aside>
+  </div>
+  {% else %}
+  <div class="tm-map-empty">No reference image is linked for this visual reference yet.</div>
+  {% endif %}
+</section>
+
+<script>
+(() => {
+  const panel = document.querySelector("[data-hotspot-panel]");
+  if (!panel) return;
+
+  const title = panel.querySelector("[data-hotspot-title]");
+  const type = panel.querySelector("[data-hotspot-type]");
+  const description = panel.querySelector("[data-hotspot-description]");
+  const specs = panel.querySelector("[data-hotspot-specs]");
+  const partsButton = panel.querySelector("[data-hotspot-parts]");
+  const closeButton = panel.querySelector("[data-hotspot-close]");
+
+  const specLabels = [
+    ["torqueSpec", "Torque Spec"],
+    ["fastenerSize", "Fastener Size"],
+    ["toolSize", "Tool Size"],
+    ["oemPartNumber", "OEM Part Number"],
+    ["relatedPartName", "Related Part Name"]
+  ];
+
+  const renderSpec = (label, value) => {
+    const item = document.createElement("div");
+    item.className = "tm-map-spec";
+    const labelEl = document.createElement("span");
+    labelEl.textContent = label;
+    const valueEl = document.createElement("strong");
+    valueEl.textContent = value;
+    item.append(labelEl, valueEl);
+    return item;
+  };
+
+  const openHotspot = (button) => {
+    const data = button.dataset;
+    title.textContent = data.title || data.label || "Hotspot";
+    type.textContent = data.type || "";
+    description.textContent = data.description || "";
+    specs.replaceChildren();
+    specLabels.forEach(([key, label]) => {
+      if (data[key]) specs.appendChild(renderSpec(label, data[key]));
+    });
+    partsButton.hidden = !(data.oemPartNumber || data.relatedPartName);
+    panel.hidden = false;
+  };
+
+  document.querySelectorAll("[data-hotspot]").forEach((button) => {
+    button.addEventListener("click", () => openHotspot(button));
+  });
+
+  closeButton?.addEventListener("click", () => {
+    panel.hidden = true;
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") panel.hidden = true;
+  });
+})();
+</script>
+{% endblock %}

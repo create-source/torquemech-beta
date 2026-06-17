@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">2001 Mercedes-Benz E320 alternator replacement repair map placeholder</title>
+  <desc id="desc">Simplified engine bay reference image with alternator, belt tensioner, serpentine belt, and B plus terminal locations.</desc>
+  <rect width="1200" height="760" fill="#f8fafc"/>
+  <rect x="70" y="70" width="1060" height="620" rx="34" fill="#e2e8f0" stroke="#94a3b8" stroke-width="4"/>
+  <rect x="130" y="120" width="940" height="520" rx="24" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="3"/>
+  <path d="M185 225h830c33 0 60 27 60 60v205c0 33-27 60-60 60H185c-33 0-60-27-60-60V285c0-33 27-60 60-60z" fill="#dbe3ea" stroke="#64748b" stroke-width="5"/>
+  <rect x="250" y="265" width="360" height="235" rx="28" fill="#334155"/>
+  <rect x="292" y="303" width="278" height="158" rx="18" fill="#475569"/>
+  <text x="430" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#e2e8f0">M112 V6</text>
+  <path d="M345 320 C450 225, 615 225, 730 320 C790 370, 785 465, 720 505 C600 580, 420 565, 335 470 C295 425, 300 365, 345 320z" fill="none" stroke="#111827" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="588" cy="404" r="70" fill="#cbd5e1" stroke="#0f172a" stroke-width="9"/>
+  <circle cx="588" cy="404" r="30" fill="#f8fafc" stroke="#64748b" stroke-width="7"/>
+  <circle cx="445" cy="319" r="48" fill="#e2e8f0" stroke="#0f172a" stroke-width="8"/>
+  <circle cx="445" cy="319" r="18" fill="#f8fafc" stroke="#64748b" stroke-width="6"/>
+  <circle cx="690" cy="440" r="20" fill="#fef3c7" stroke="#92400e" stroke-width="6"/>
+  <path d="M735 435h100" stroke="#92400e" stroke-width="10" stroke-linecap="round"/>
+  <rect x="845" y="350" width="135" height="130" rx="16" fill="#94a3b8" stroke="#334155" stroke-width="5"/>
+  <rect x="875" y="390" width="78" height="22" rx="8" fill="#cbd5e1"/>
+  <text x="600" y="620" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#334155">Placeholder service visual, not an OEM diagram</text>
+</svg>

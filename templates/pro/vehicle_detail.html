@@ -1568,6 +1568,11 @@
         {% if reference.quick_reference %}
         <div style="color:#475569;">{{ reference.quick_reference }}</div>
         {% endif %}
+        {% if reference.hotspots %}
+        <div>
+          <a class="tm-btn tm-btn-primary" href="/pro/visual-references/{{ reference.id }}/repair-map">Open Interactive Repair Map</a>
+        </div>
+        {% endif %}
         <div class="tm-visual-reference-grid">
           <div class="tm-visual-reference-field">
             <span>Reference Content</span>

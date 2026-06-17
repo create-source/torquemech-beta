@@ -856,6 +856,29 @@ def ensure_visual_reference_schema(conn: sqlite3.Connection) -> None:
     )
     conn.execute(
         """
+        CREATE TABLE IF NOT EXISTS visual_reference_hotspots (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visual_reference_id INTEGER NOT NULL,
+          label TEXT NOT NULL,
+          hotspot_type TEXT NOT NULL,
+          x_percent REAL NOT NULL,
+          y_percent REAL NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT,
+          torque_spec TEXT,
+          fastener_size TEXT,
+          tool_size TEXT,
+          oem_part_number TEXT,
+          related_part_name TEXT,
+          parts_intelligence_id INTEGER,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (visual_reference_id) REFERENCES visual_reference_records(id)
+        )
+        """
+    )
+    conn.execute(
+        """
         CREATE UNIQUE INDEX IF NOT EXISTS idx_visual_reference_records_vehicle_service
         ON visual_reference_records (vehicle_identifier, service_type)
         """
@@ -879,6 +902,10 @@ def ensure_visual_reference_schema(conn: sqlite3.Connection) -> None:
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_visual_reference_oem_parts_reference "
         "ON visual_reference_oem_parts (visual_reference_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_visual_reference_hotspots_reference "
+        "ON visual_reference_hotspots (visual_reference_id, sort_order)"
     )
     conn.commit()
 
@@ -978,6 +1005,18 @@ def load_visual_reference_record(
             (visual_reference_id,),
         ).fetchall()
     ]
+    record["hotspots"] = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM visual_reference_hotspots
+            WHERE visual_reference_id = ?
+            ORDER BY sort_order ASC, id ASC
+            """,
+            (visual_reference_id,),
+        ).fetchall()
+    ]
     return record
 
 
@@ -991,6 +1030,7 @@ def load_visual_reference_child(
         "visual_reference_images",
         "visual_reference_specs",
         "visual_reference_oem_parts",
+        "visual_reference_hotspots",
     }
     if table_name not in allowed_tables:
         raise HTTPException(status_code=400, detail="Invalid visual reference child table")
@@ -1170,6 +1210,49 @@ def seed_visual_references(conn: sqlite3.Connection) -> None:
                     part.get("future_parts_intelligence_id"),
                 ),
             )
+        for hotspot in record.get("hotspots") or []:
+            label = str(hotspot.get("label") or "").strip()
+            hotspot_type = str(hotspot.get("hotspot_type") or "").strip()
+            title = str(hotspot.get("title") or label).strip()
+            try:
+                x_percent = float(hotspot.get("x_percent"))
+                y_percent = float(hotspot.get("y_percent"))
+            except (TypeError, ValueError):
+                continue
+            try:
+                sort_order = int(hotspot.get("sort_order") or 0)
+            except (TypeError, ValueError):
+                sort_order = 0
+            if not label or not hotspot_type or not title:
+                continue
+            conn.execute(
+                """
+                INSERT INTO visual_reference_hotspots (
+                  visual_reference_id, label, hotspot_type, x_percent, y_percent,
+                  title, description, torque_spec, fastener_size, tool_size,
+                  oem_part_number, related_part_name, parts_intelligence_id,
+                  sort_order, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    visual_reference_id,
+                    label,
+                    hotspot_type,
+                    max(0.0, min(100.0, x_percent)),
+                    max(0.0, min(100.0, y_percent)),
+                    title,
+                    str(hotspot.get("description") or "").strip(),
+                    str(hotspot.get("torque_spec") or "").strip(),
+                    str(hotspot.get("fastener_size") or "").strip(),
+                    str(hotspot.get("tool_size") or "").strip(),
+                    str(hotspot.get("oem_part_number") or "").strip(),
+                    str(hotspot.get("related_part_name") or "").strip(),
+                    hotspot.get("parts_intelligence_id"),
+                    sort_order,
+                    str(hotspot.get("created_at") or now).strip() or now,
+                ),
+            )
     conn.commit()
 
 
@@ -1227,6 +1310,18 @@ def load_visual_references_for_vehicle(
                 FROM visual_reference_oem_parts
                 WHERE visual_reference_id = ?
                 ORDER BY id ASC
+                """,
+                (visual_reference_id,),
+            ).fetchall()
+        ]
+        record["hotspots"] = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM visual_reference_hotspots
+                WHERE visual_reference_id = ?
+                ORDER BY sort_order ASC, id ASC
                 """,
                 (visual_reference_id,),
             ).fetchall()
@@ -2540,6 +2635,27 @@ def pro_visual_reference_detail(request: Request, visual_reference_id: int):
     )
 
 
+@router.get("/visual-references/{visual_reference_id}/repair-map", response_class=HTMLResponse)
+def pro_visual_reference_repair_map(request: Request, visual_reference_id: int):
+    conn = crm_db_conn()
+    try:
+        reference = load_visual_reference_record(conn, visual_reference_id)
+    finally:
+        conn.close()
+    main_image = next(
+        (image for image in reference["images"] if image["image_type"] == "component_location"),
+        reference["images"][0] if reference["images"] else None,
+    )
+    return templates.TemplateResponse(
+        "pro/visual_reference_repair_map.html",
+        {
+            "request": request,
+            "reference": reference,
+            "main_image": main_image,
+        },
+    )
+
+
 @router.post("/visual-references/{visual_reference_id}")
 async def pro_visual_reference_update(request: Request, visual_reference_id: int):
     form = await read_form_data(request)
@@ -2575,6 +2691,7 @@ async def pro_visual_reference_delete(visual_reference_id: int):
     conn = crm_db_conn()
     try:
         load_visual_reference_record(conn, visual_reference_id)
+        conn.execute("DELETE FROM visual_reference_hotspots WHERE visual_reference_id = ?", (visual_reference_id,))
         conn.execute("DELETE FROM visual_reference_images WHERE visual_reference_id = ?", (visual_reference_id,))
         conn.execute("DELETE FROM visual_reference_specs WHERE visual_reference_id = ?", (visual_reference_id,))
         conn.execute("DELETE FROM visual_reference_oem_parts WHERE visual_reference_id = ?", (visual_reference_id,))
