@@ -26,6 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 VISUAL_REFERENCE_SEED_PATH = BASE_DIR / "data" / "visual_reference_seed.json"
+REPAIR_INTELLIGENCE_SEED_PATH = BASE_DIR / "data" / "repair_intelligence_seed.json"
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 DB_PATH = str((STATE_DIR / "app.db").resolve())
 USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
@@ -1254,6 +1255,195 @@ def seed_visual_references(conn: sqlite3.Connection) -> None:
                 ),
             )
     conn.commit()
+
+
+def ensure_repair_intelligence_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS repair_intelligence (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          year TEXT NOT NULL DEFAULT '',
+          make TEXT NOT NULL DEFAULT '',
+          model TEXT NOT NULL DEFAULT '',
+          engine TEXT NOT NULL DEFAULT '',
+          repair_name TEXT NOT NULL,
+          difficulty TEXT,
+          labor_time_range TEXT,
+          repair_snapshot TEXT,
+          critical_checks TEXT,
+          known_failure_patterns TEXT,
+          inspection_opportunities TEXT,
+          required_parts TEXT,
+          recommended_parts TEXT,
+          special_tools TEXT,
+          torque_specs TEXT,
+          visual_layout TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_intelligence_vehicle_repair
+        ON repair_intelligence (year, make, model, engine, repair_name)
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_intelligence_vehicle "
+        "ON repair_intelligence (year, make, model, engine)"
+    )
+    conn.commit()
+
+
+def repair_intelligence_json(value: Any) -> str:
+    if value is None:
+        return "[]"
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return "[]"
+        try:
+            json.loads(stripped)
+            return stripped
+        except json.JSONDecodeError:
+            return json.dumps([stripped])
+    return json.dumps(value)
+
+
+def seed_repair_intelligence(conn: sqlite3.Connection) -> None:
+    ensure_repair_intelligence_schema(conn)
+    if not REPAIR_INTELLIGENCE_SEED_PATH.exists():
+        return
+    try:
+        records = json.loads(REPAIR_INTELLIGENCE_SEED_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    now = datetime.now(timezone.utc).isoformat()
+    json_fields = (
+        "repair_snapshot",
+        "critical_checks",
+        "known_failure_patterns",
+        "inspection_opportunities",
+        "required_parts",
+        "recommended_parts",
+        "special_tools",
+        "torque_specs",
+    )
+    for record in records if isinstance(records, list) else []:
+        repair_name = str(record.get("repair_name") or "").strip()
+        if not repair_name:
+            continue
+        values = {
+            "year": str(record.get("year") or "").strip(),
+            "make": str(record.get("make") or "").strip(),
+            "model": str(record.get("model") or "").strip(),
+            "engine": str(record.get("engine") or "").strip(),
+            "repair_name": repair_name,
+            "difficulty": str(record.get("difficulty") or "").strip(),
+            "labor_time_range": str(record.get("labor_time_range") or "").strip(),
+            "visual_layout": str(record.get("visual_layout") or "").strip(),
+            "notes": str(record.get("notes") or "").strip(),
+            "created_at": str(record.get("created_at") or now).strip() or now,
+            "updated_at": str(record.get("updated_at") or now).strip() or now,
+        }
+        for field in json_fields:
+            values[field] = repair_intelligence_json(record.get(field))
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO repair_intelligence (
+              year, make, model, engine, repair_name, difficulty, labor_time_range,
+              repair_snapshot, critical_checks, known_failure_patterns,
+              inspection_opportunities, required_parts, recommended_parts,
+              special_tools, torque_specs, visual_layout, notes, created_at, updated_at
+            )
+            VALUES (
+              :year, :make, :model, :engine, :repair_name, :difficulty, :labor_time_range,
+              :repair_snapshot, :critical_checks, :known_failure_patterns,
+              :inspection_opportunities, :required_parts, :recommended_parts,
+              :special_tools, :torque_specs, :visual_layout, :notes, :created_at, :updated_at
+            )
+            """,
+            values,
+        )
+    conn.commit()
+
+
+def repair_intelligence_token(value: Any) -> str:
+    return " ".join(str(value or "").strip().lower().replace("-", " ").split())
+
+
+def repair_intelligence_engine_token(value: Any) -> str:
+    return repair_intelligence_token(value).replace(" ", "")
+
+
+def repair_intelligence_list(value: Any) -> list[Any]:
+    if not value:
+        return []
+    try:
+        parsed = json.loads(str(value))
+    except (TypeError, json.JSONDecodeError):
+        parsed = str(value)
+    if isinstance(parsed, list):
+        return parsed
+    if isinstance(parsed, dict):
+        return [parsed]
+    text = str(parsed).strip()
+    return [text] if text else []
+
+
+def repair_intelligence_matches_vehicle(record: dict[str, Any], vehicle: dict[str, Any]) -> bool:
+    record_year = repair_intelligence_token(record.get("year"))
+    record_make = repair_intelligence_token(record.get("make"))
+    record_model = repair_intelligence_token(record.get("model"))
+    record_engine = repair_intelligence_engine_token(record.get("engine"))
+    if not any((record_year, record_make, record_model, record_engine)):
+        return True
+    vehicle_year = repair_intelligence_token(vehicle.get("year"))
+    vehicle_make = repair_intelligence_token(vehicle.get("make"))
+    vehicle_model = repair_intelligence_token(vehicle.get("model"))
+    vehicle_engine = repair_intelligence_engine_token(vehicle.get("engine"))
+    return (
+        (not record_year or record_year == vehicle_year)
+        and (not record_make or record_make == vehicle_make)
+        and (not record_model or record_model == vehicle_model)
+        and (not record_engine or record_engine == vehicle_engine)
+    )
+
+
+def load_repair_intelligence_for_vehicle(
+    conn: sqlite3.Connection,
+    vehicle: dict[str, Any],
+) -> list[dict[str, Any]]:
+    ensure_repair_intelligence_schema(conn)
+    json_fields = (
+        "repair_snapshot",
+        "critical_checks",
+        "known_failure_patterns",
+        "inspection_opportunities",
+        "required_parts",
+        "recommended_parts",
+        "special_tools",
+        "torque_specs",
+    )
+    records = []
+    for row in conn.execute(
+        """
+        SELECT *
+        FROM repair_intelligence
+        ORDER BY
+          CASE WHEN year = '' AND make = '' AND model = '' AND engine = '' THEN 1 ELSE 0 END,
+          make ASC, model ASC, repair_name ASC, id ASC
+        """
+    ).fetchall():
+        record = dict(row)
+        if not repair_intelligence_matches_vehicle(record, vehicle):
+            continue
+        for field in json_fields:
+            record[field] = repair_intelligence_list(record.get(field))
+        records.append(record)
+    return records
 
 
 def load_visual_references_for_vehicle(
@@ -3326,6 +3516,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         ensure_service_history_schema(conn)
         ensure_service_history_records_schema(conn)
         ensure_visual_reference_schema(conn)
+        ensure_repair_intelligence_schema(conn)
         service_history_records = [
             dict(row)
             for row in conn.execute(
@@ -3461,6 +3652,8 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         ]
         seed_visual_references(conn)
         visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
+        seed_repair_intelligence(conn)
+        repair_intelligence_records = load_repair_intelligence_for_vehicle(conn, vehicle)
     finally:
         conn.close()
 
@@ -3495,6 +3688,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "approval_summary": approval_summary,
             "repair_work_items": repair_work_items,
             "visual_reference_records": visual_reference_records,
+            "repair_intelligence_records": repair_intelligence_records,
             "repair_work_status_options": [
                 {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
                 for value in REPAIR_WORK_STATUS_OPTIONS

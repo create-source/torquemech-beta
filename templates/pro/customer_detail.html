@@ -129,6 +129,29 @@
     margin-bottom: 14px;
   }
 
+  .tm-add-vehicle-selector {
+    min-width: min(720px, calc(100vw - 48px));
+  }
+
+  .tm-add-vehicle-field {
+    min-width: 0;
+  }
+
+  .tm-add-vehicle-field .vehicle-year,
+  .tm-add-vehicle-field .vehicle-make,
+  .tm-add-vehicle-field .vehicle-model,
+  .tm-add-vehicle-field .vehicle-make-search,
+  .tm-add-vehicle-field .vehicle-model-search {
+    width: 100%;
+  }
+
+  .tm-add-vehicle-field .vehicle-make-results,
+  .tm-add-vehicle-field .vehicle-model-results {
+    max-height: 220px;
+    background: #fff;
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
+  }
+
   @media (max-width: 760px) {
     .tm-crm-customer-card,
     .tm-crm-row {
@@ -230,22 +253,41 @@
         </div>
         <details class="tm-crm-disclosure">
           <summary>Add Vehicle</summary>
-          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles">
+          <form class="tm-add-vehicle-selector" method="post" action="/pro/customers/{{ customer.id }}/vehicles" data-pro-add-vehicle-form>
             <div class="tm-crm-row">
-              <div>
-                <label class="tm-label" for="year">Year</label>
-                <input class="tm-input" id="year" name="year" type="number" min="1900" max="2100" step="1">
+              <div class="tm-add-vehicle-field">
+                <label class="tm-label" for="add_vehicle_year">Year</label>
+                <select class="tm-input vehicle-year" id="add_vehicle_year" name="year" data-add-vehicle-year>
+                  <option value="">Select Year</option>
+                </select>
               </div>
-              <div>
-                <label class="tm-label" for="make">Make</label>
-                <input class="tm-input" id="make" name="make" type="text" maxlength="120">
+              <div class="tm-add-vehicle-field">
+                <label class="tm-label" for="add_vehicle_make_search">Make</label>
+                <div class="tm-inline-clear-field">
+                  <input class="tm-input vehicle-make-search" id="add_vehicle_make_search" type="text" autocomplete="off" placeholder="Search make..." data-add-vehicle-make-search>
+                  <select class="vehicle-make" id="add_vehicle_make" name="make" hidden data-add-vehicle-make>
+                    <option value="">Select make...</option>
+                  </select>
+                  <button type="button" class="tm-input-clear-btn vehicle-make-clear" aria-label="Clear make" hidden>
+                    &times;
+                  </button>
+                </div>
+                <div class="vehicle-make-results" data-add-vehicle-make-results></div>
               </div>
             </div>
 
             <div class="tm-crm-row" style="margin-top:12px;">
-              <div>
-                <label class="tm-label" for="model">Model</label>
-                <input class="tm-input" id="model" name="model" type="text" maxlength="120">
+              <div class="tm-add-vehicle-field">
+                <label class="tm-label" for="add_vehicle_model_search">Model</label>
+                <div class="tm-inline-clear-field">
+                  <input class="tm-input vehicle-model-search" id="add_vehicle_model_search" type="text" autocomplete="off" placeholder="Select make first..." disabled>
+                  <select class="tm-input vehicle-model" id="add_vehicle_model" name="model" data-add-vehicle-model>
+                    <option value="">Select model...</option>
+                  </select>
+                  <button type="button" class="tm-input-clear-btn vehicle-model-clear" aria-label="Clear model" hidden>
+                    &times;
+                  </button>
+                </div>
               </div>
               <div>
                 <label class="tm-label" for="engine">Engine</label>
@@ -298,4 +340,45 @@
     </section>
   </div>
 </section>
+{% endblock %}
+
+{% block page_js %}
+<script>
+(() => {
+  const initAddVehicleSelector = () => {
+    const form = document.querySelector("[data-pro-add-vehicle-form]");
+    if (!form || form.dataset.vehicleSelectorReady === "1") return true;
+    const initializer = window.TorqueMechVehicleUI?.initSharedVehicleSelector;
+    if (!initializer) return false;
+
+    form.dataset.vehicleSelectorReady = "1";
+    initializer({
+      yearSelect: form.querySelector("[data-add-vehicle-year]"),
+      makeSelect: form.querySelector("[data-add-vehicle-make]"),
+      makeSearch: form.querySelector("[data-add-vehicle-make-search]"),
+      makeResults: form.querySelector("[data-add-vehicle-make-results]"),
+      modelSelect: form.querySelector("[data-add-vehicle-model]"),
+      startYear: 1980,
+    });
+    return true;
+  };
+
+  const boot = () => {
+    if (initAddVehicleSelector()) return;
+    let attempts = 0;
+    const retry = window.setInterval(() => {
+      attempts += 1;
+      if (initAddVehicleSelector() || attempts >= 20) {
+        window.clearInterval(retry);
+      }
+    }, 100);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+</script>
 {% endblock %}

@@ -1,0 +1,267 @@
+[
+  {
+    "year": "2002",
+    "make": "Ford",
+    "model": "F-150",
+    "engine": "5.4L",
+    "repair_name": "Spark Plug Replacement",
+    "difficulty": "High",
+    "labor_time_range": "2.5-4.5 hr",
+    "repair_snapshot": [
+      {"label": "Quote Focus", "value": "Access, plug condition, coil boots"},
+      {"label": "Risk", "value": "Thread damage, seized plugs, repeat misfire"},
+      {"label": "Decision", "value": "Inspect coils and plug wells before parts quote"}
+    ],
+    "critical_checks": [
+      "Confirm engine family and plug style before ordering.",
+      "Inspect coil boots for carbon tracking and oil contamination.",
+      "Blow debris from plug wells before loosening plugs.",
+      "Check misfire counters before and after service."
+    ],
+    "known_failure_patterns": [
+      "High-mileage plugs may be tight in aluminum threads.",
+      "Weak or carbon-tracked coil boots can mimic plug failure.",
+      "Oil in plug wells points to valve cover or tube seal concerns."
+    ],
+    "inspection_opportunities": [
+      "Ignition coil boots",
+      "Valve cover gasket and plug well seals",
+      "PCV hoses and vacuum lines",
+      "Fuel trims after misfire repair"
+    ],
+    "required_parts": [
+      "8 spark plugs"
+    ],
+    "recommended_parts": [
+      "Coil boots if brittle or carbon tracked",
+      "Dielectric grease",
+      "Intake or access gaskets if removed"
+    ],
+    "special_tools": [
+      "Spark plug socket",
+      "Long extensions",
+      "Torque wrench",
+      "Compressed air",
+      "Thread repair kit available"
+    ],
+    "torque_specs": [
+      {"label": "Spark plug torque", "value": "Verify by plug design and cylinder head service data"},
+      {"label": "Coil fasteners", "value": "Light torque; verify exact spec"}
+    ],
+    "visual_layout": "FRONT OF ENGINE\nPassenger Side: 1 - 2 - 3 - 4\nDriver Side: 5 - 6 - 7 - 8\nFIREWALL",
+    "notes": "Decision-support snapshot only. Confirm exact ignition service data by VIN before work."
+  },
+  {
+    "year": "2008",
+    "make": "Toyota",
+    "model": "Sequoia",
+    "engine": "5.7L",
+    "repair_name": "Head Gasket Evaluation",
+    "difficulty": "Advanced Diagnosis",
+    "labor_time_range": "1.5-3.0 hr evaluation",
+    "repair_snapshot": [
+      {"label": "Quote Focus", "value": "Confirm failure before teardown"},
+      {"label": "Risk", "value": "Misdiagnosing cooling, ignition, or leak source"},
+      {"label": "Decision", "value": "Evidence package before major engine quote"}
+    ],
+    "critical_checks": [
+      "Pressure-test cooling system hot and cold.",
+      "Check for combustion gas evidence in cooling system.",
+      "Inspect oil and coolant for cross-contamination.",
+      "Review overheating history and cooling fan operation.",
+      "Perform cylinder-specific leak-down or borescope check when indicated."
+    ],
+    "known_failure_patterns": [
+      "Overheating events can create secondary gasket or deck concerns.",
+      "External leaks may imitate coolant-loss head gasket symptoms.",
+      "Misfire on startup can point to cylinder coolant intrusion."
+    ],
+    "inspection_opportunities": [
+      "Radiator and cap condition",
+      "Water pump seepage",
+      "Thermostat behavior",
+      "Cooling fans and relays",
+      "Spark plug evidence by cylinder"
+    ],
+    "required_parts": [
+      "Diagnostic test fluid or tools as needed"
+    ],
+    "recommended_parts": [
+      "Cooling system pressure cap if weak",
+      "Coolant if drained for testing"
+    ],
+    "special_tools": [
+      "Cooling system pressure tester",
+      "Block-test kit",
+      "Leak-down tester",
+      "Borescope",
+      "Scan tool"
+    ],
+    "torque_specs": [
+      {"label": "Head fasteners", "value": "Do not quote from memory; verify if teardown is approved"},
+      {"label": "Cooling pressure", "value": "Use cap/system rating from vehicle data"}
+    ],
+    "visual_layout": "DIAGNOSTIC FLOW\nCoolant Loss -> Pressure Test -> Combustion Gas Test\nMisfire Cold Start -> Cylinder Evidence -> Leak-down/Borescope\nOverheat History -> Root Cause Check -> Repair Scope",
+    "notes": "Evaluation snapshot only. Keep separate from teardown procedure and final repair authorization."
+  },
+  {
+    "year": "2010",
+    "make": "Honda",
+    "model": "Accord",
+    "engine": "",
+    "repair_name": "Front Brake Pads",
+    "difficulty": "Moderate",
+    "labor_time_range": "1.0-1.6 hr",
+    "repair_snapshot": [
+      {"label": "Quote Focus", "value": "Pads, hardware, rotor condition"},
+      {"label": "Risk", "value": "Noise, pulsation, seized slide pins"},
+      {"label": "Decision", "value": "Pad-only or pads plus rotors"}
+    ],
+    "critical_checks": [
+      "Measure inner and outer pad thickness on both front wheels.",
+      "Inspect rotors for grooves, heat spots, thickness, and pulsation complaint.",
+      "Check slide pins, boots, caliper piston boot, and hose condition.",
+      "Confirm brake package before ordering parts."
+    ],
+    "known_failure_patterns": [
+      "Dry slide pins can cause tapered wear.",
+      "Reused hardware can contribute to noise.",
+      "Rotor condition often determines whether pad-only work is appropriate."
+    ],
+    "inspection_opportunities": [
+      "Brake fluid condition",
+      "Front rotors",
+      "Caliper slide service",
+      "Tire wear and front suspension play"
+    ],
+    "required_parts": [
+      "Front brake pad set",
+      "Pad hardware when required"
+    ],
+    "recommended_parts": [
+      "Front rotors if below spec, grooved, or pulsating",
+      "Brake lubricant",
+      "Brake cleaner"
+    ],
+    "special_tools": [
+      "Brake piston compressor",
+      "Torque wrench",
+      "Micrometer",
+      "Brake cleaner"
+    ],
+    "torque_specs": [
+      {"label": "Caliper slide pin bolts", "value": "Verify by trim/brake package"},
+      {"label": "Caliper bracket bolts", "value": "Verify by trim/brake package"},
+      {"label": "Wheel lug nuts", "value": "Verify wheel torque by wheel type"}
+    ],
+    "visual_layout": "FRONT AXLE\nLeft Front: Caliper -> Pads -> Rotor -> Hub\nRight Front: Caliper -> Pads -> Rotor -> Hub\nCHECK BOTH INNER PADS",
+    "notes": "Decision-support snapshot. Confirm rotor measurements and exact torque values before completion."
+  },
+  {
+    "year": "",
+    "make": "",
+    "model": "",
+    "engine": "",
+    "repair_name": "Generic Oil Change",
+    "difficulty": "Basic",
+    "labor_time_range": "0.3-0.6 hr",
+    "repair_snapshot": [
+      {"label": "Quote Focus", "value": "Oil, filter, washer, reset"},
+      {"label": "Risk", "value": "Wrong capacity, leaks, damaged plug"},
+      {"label": "Decision", "value": "Confirm viscosity and filter before service"}
+    ],
+    "critical_checks": [
+      "Confirm oil viscosity, capacity, and filter style.",
+      "Inspect drain plug threads and sealing washer.",
+      "Check for existing oil leaks before draining.",
+      "Verify maintenance reminder reset need."
+    ],
+    "known_failure_patterns": [
+      "Reused sealing washers can seep.",
+      "Plastic filter housings can crack if overtightened.",
+      "Missing undertray fasteners add time and comeback risk."
+    ],
+    "inspection_opportunities": [
+      "Oil leaks",
+      "Belts and hoses",
+      "Tires and brakes while lifted",
+      "Fluid levels"
+    ],
+    "required_parts": [
+      "Engine oil",
+      "Oil filter",
+      "Drain plug washer when equipped"
+    ],
+    "recommended_parts": [
+      "Drain plug if rounded",
+      "Undertray clips if missing",
+      "Engine air filter if dirty"
+    ],
+    "special_tools": [
+      "Oil filter wrench",
+      "Drain pan",
+      "Torque wrench",
+      "Funnel"
+    ],
+    "torque_specs": [
+      {"label": "Oil capacity", "value": "Vehicle specific"},
+      {"label": "Drain plug torque", "value": "Vehicle specific"},
+      {"label": "Filter cap torque", "value": "Vehicle specific when cartridge-style"}
+    ],
+    "visual_layout": "SERVICE PATH\nTop Side: Fill cap - Dipstick - Filter if top-mounted\nUnderside: Drain plug - Filter if bottom-mounted - Leak check\nRESET REMINDER IF EQUIPPED",
+    "notes": "Generic snapshot applies when no more specific oil service intelligence exists."
+  },
+  {
+    "year": "",
+    "make": "",
+    "model": "",
+    "engine": "",
+    "repair_name": "Generic Battery Replacement",
+    "difficulty": "Basic to Moderate",
+    "labor_time_range": "0.3-0.8 hr",
+    "repair_snapshot": [
+      {"label": "Quote Focus", "value": "Battery, test, terminal condition"},
+      {"label": "Risk", "value": "Registration, corrosion, charging fault"},
+      {"label": "Decision", "value": "Battery-only or charging/terminal diagnosis"}
+    ],
+    "critical_checks": [
+      "Test battery state of charge and health.",
+      "Inspect terminals, hold-down, tray, and cable ends.",
+      "Confirm group size, CCA, AGM/EFB requirement, and venting.",
+      "Check charging voltage after replacement.",
+      "Confirm registration or BMS reset requirement."
+    ],
+    "known_failure_patterns": [
+      "Corroded terminals create repeat no-start complaints.",
+      "Weak alternator output can look like battery failure.",
+      "Modern battery monitoring systems may need reset."
+    ],
+    "inspection_opportunities": [
+      "Terminal service",
+      "Battery cable ends",
+      "Charging system output",
+      "Parasitic draw if repeated dead battery"
+    ],
+    "required_parts": [
+      "Correct battery group and chemistry"
+    ],
+    "recommended_parts": [
+      "Terminal protectant",
+      "Hold-down hardware if missing",
+      "Memory saver when appropriate"
+    ],
+    "special_tools": [
+      "Battery tester",
+      "Terminal brush",
+      "Socket set",
+      "Memory saver",
+      "Scan tool when registration is required"
+    ],
+    "torque_specs": [
+      {"label": "Terminal clamp torque", "value": "Snug to spec; avoid overtightening"},
+      {"label": "Hold-down torque", "value": "Secure battery without case distortion"}
+    ],
+    "visual_layout": "BATTERY AREA\nPositive Terminal: cover and main feed\nNegative Terminal: body/engine ground path\nHold-down: clamp or bracket\nVERIFY VENT TUBE IF EQUIPPED",
+    "notes": "Generic snapshot applies across vehicles; verify battery registration needs by model."
+  }
+]
