@@ -1378,6 +1378,20 @@ def repair_intelligence_engine_token(value: Any) -> str:
     return repair_intelligence_token(value).replace(" ", "")
 
 
+def repair_intelligence_repair_token(value: Any) -> str:
+    token = repair_intelligence_token(value)
+    for prefix in ("generic ",):
+        if token.startswith(prefix):
+            token = token[len(prefix):]
+    replacements = {
+        "replacement": "replace",
+        "replacing": "replace",
+        "evaluation": "evaluate",
+        "inspection": "inspect",
+    }
+    return " ".join(replacements.get(part, part) for part in token.split())
+
+
 def repair_intelligence_list(value: Any) -> list[Any]:
     if not value:
         return []
@@ -1412,11 +1426,19 @@ def repair_intelligence_matches_vehicle(record: dict[str, Any], vehicle: dict[st
     )
 
 
-def load_repair_intelligence_for_vehicle(
-    conn: sqlite3.Connection,
-    vehicle: dict[str, Any],
-) -> list[dict[str, Any]]:
-    ensure_repair_intelligence_schema(conn)
+def repair_intelligence_matches_repair(record: dict[str, Any], repair_name: Any) -> bool:
+    record_repair = repair_intelligence_repair_token(record.get("repair_name"))
+    target_repair = repair_intelligence_repair_token(repair_name)
+    if not record_repair or not target_repair:
+        return False
+    return (
+        record_repair == target_repair
+        or record_repair in target_repair
+        or target_repair in record_repair
+    )
+
+
+def hydrate_repair_intelligence_record(record: dict[str, Any]) -> dict[str, Any]:
     json_fields = (
         "repair_snapshot",
         "critical_checks",
@@ -1427,6 +1449,17 @@ def load_repair_intelligence_for_vehicle(
         "special_tools",
         "torque_specs",
     )
+    hydrated = dict(record)
+    for field in json_fields:
+        hydrated[field] = repair_intelligence_list(hydrated.get(field))
+    return hydrated
+
+
+def load_repair_intelligence_for_vehicle(
+    conn: sqlite3.Connection,
+    vehicle: dict[str, Any],
+) -> list[dict[str, Any]]:
+    ensure_repair_intelligence_schema(conn)
     records = []
     for row in conn.execute(
         """
@@ -1440,10 +1473,33 @@ def load_repair_intelligence_for_vehicle(
         record = dict(row)
         if not repair_intelligence_matches_vehicle(record, vehicle):
             continue
-        for field in json_fields:
-            record[field] = repair_intelligence_list(record.get(field))
-        records.append(record)
+        records.append(hydrate_repair_intelligence_record(record))
     return records
+
+
+def load_repair_intelligence_for_repair(
+    conn: sqlite3.Connection,
+    vehicle: dict[str, Any],
+    repair_name: Any,
+) -> list[dict[str, Any]]:
+    ensure_repair_intelligence_schema(conn)
+    matches = []
+    for row in conn.execute(
+        """
+        SELECT *
+        FROM repair_intelligence
+        ORDER BY
+          CASE WHEN year = '' AND make = '' AND model = '' AND engine = '' THEN 1 ELSE 0 END,
+          make ASC, model ASC, repair_name ASC, id ASC
+        """
+    ).fetchall():
+        record = dict(row)
+        if not repair_intelligence_matches_vehicle(record, vehicle):
+            continue
+        if not repair_intelligence_matches_repair(record, repair_name):
+            continue
+        matches.append(hydrate_repair_intelligence_record(record))
+    return matches
 
 
 def load_visual_references_for_vehicle(
@@ -1959,11 +2015,13 @@ def vehicle_finding_activity_payload(
         customer_decision_logs,
         approval_event_records,
     )
+    vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     finding_history_count = len(finding_history_records)
     customer_decision_log_count = len(customer_decision_logs)
     return {
         "finding_history_count": finding_history_count,
         "customer_decision_log_count": customer_decision_log_count,
+        "vehicle_timeline_total": vehicle_timeline_total,
         "vehicle_timeline": vehicle_timeline,
         "finding_history": {
             "count": finding_history_count,
@@ -2388,6 +2446,8 @@ def build_repair_work_items(
             status = normalize_repair_work_status(status)
         except HTTPException:
             status = "ready"
+        if status == "completed" or (record.get("status") or "") == "Completed":
+            continue
         title = repair_work_title_from_finding(record)
         detail = record.get("finding") or record.get("labor_reason") or record.get("recommendation") or ""
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
@@ -2439,6 +2499,8 @@ def build_repair_work_items(
             status = normalize_repair_work_status(status)
         except HTTPException:
             status = "ready"
+        if status == "completed":
+            continue
         title = repair_work_title_from_approval(record)
         detail = record.get("finding_description") or record.get("recommended_repair") or ""
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
@@ -2531,118 +2593,154 @@ def build_vehicle_timeline(
     customer_decision_logs: list[dict[str, Any]],
     approval_event_records: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    finding_ids_with_created_history = {
-        int(record.get("finding_id") or 0)
-        for record in finding_history_records
-        if record.get("event_type") == "finding_created"
+    groups: dict[str, dict[str, Any]] = {
+        "repaired": {"key": "repaired", "title": "Repaired Services", "records": []},
+        "maintenance": {"key": "maintenance", "title": "Maintenance Services", "records": []},
+        "findings": {"key": "findings", "title": "Findings", "records": []},
+        "approvals": {"key": "approvals", "title": "Approvals", "records": []},
     }
+
+    def add_record(group_key: str, record: dict[str, Any]) -> None:
+        record["record_type_key"] = group_key
+        groups[group_key]["records"].append(record)
+
+    def sort_records(records: list[dict[str, Any]]) -> None:
+        records.sort(
+            key=lambda record: (
+                parse_date_value(record.get("date")) is not None,
+                parse_date_value(record.get("date")) or date.min,
+                parse_datetime_value(record.get("created_at")) or datetime.min,
+                int(record.get("id") or 0),
+            ),
+            reverse=True,
+        )
+
+    for record in service_history_records:
+        source_type = record.get("source_type") or ""
+        if source_type == "repair":
+            add_record(
+                "repaired",
+                {
+                    "id": record["id"],
+                    "date": record.get("service_date") or "",
+                    "created_at": record.get("created_at") or "",
+                    "service_name": record.get("service_name") or "Repair",
+                    "mileage": record.get("mileage"),
+                    "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('source_record_id')}",
+                },
+            )
+        else:
+            add_record(
+                "maintenance",
+                {
+                    "id": record["id"],
+                    "date": record.get("service_date") or "",
+                    "created_at": record.get("created_at") or "",
+                    "service_name": record.get("service_name") or "Service",
+                    "mileage": record.get("mileage"),
+                    "url": (
+                        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{record.get('source_record_id')}"
+                        if source_type == "maintenance"
+                        else "#vehicle-timeline"
+                    ),
+                },
+            )
+
+    for record in findings_records:
+        status = record.get("status") or "Open"
+        repair_status = record.get("repair_work_status") or ("completed" if status == "Completed" else "ready")
+        try:
+            repair_status = normalize_repair_work_status(repair_status)
+        except HTTPException:
+            repair_status = "ready"
+        is_completed = status == "Completed" or repair_status == "completed"
+        title = (
+            (record.get("labor_description") or record.get("finding"))
+            if normalize_finding_request_type(record.get("request_type")) == "labor"
+            else record.get("finding")
+        ) or record.get("recommendation") or "Finding"
+        if is_completed:
+            if not record.get("linked_repair_record_id"):
+                add_record(
+                    "repaired",
+                    {
+                        "id": record["id"],
+                        "date": record.get("repair_work_updated_at") or record.get("finding_date") or record.get("created_at") or "",
+                        "created_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
+                        "service_name": title,
+                        "mileage": record.get("mileage"),
+                        "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{record['id']}",
+                    },
+                )
+            continue
+        add_record(
+            "findings",
+            {
+                "id": record["id"],
+                "date": record.get("finding_date") or "",
+                "created_at": record.get("created_at") or "",
+                "service_name": title,
+                "mileage": record.get("mileage"),
+                "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{record['id']}",
+            },
+        )
+
     finding_status_history_keys = {
         (int(record.get("finding_id") or 0), record.get("new_status") or "")
         for record in finding_history_records
         if record.get("event_type") == "status_changed"
     }
-    timeline = [
-        {
-            "id": record["id"],
-            "record_type": "Repair" if record.get("source_type") == "repair" else "Maintenance",
-            "record_type_key": "repair" if record.get("source_type") == "repair" else "maintenance",
-            "date": record.get("service_date") or "",
-            "created_at": record.get("created_at") or "",
-            "service_name": (
-                f"Repair Record Created: {record.get('service_name') or 'Repair'}"
-                if record.get("source_type") == "repair"
-                else record.get("service_name") or "Service"
-            ),
-            "mileage": record.get("mileage"),
-            "url": "#repair-history" if record.get("source_type") == "repair" else "#maintenance-tracking",
-        }
-        for record in service_history_records
-    ]
-    timeline.extend(
-        {
-            "id": record["id"],
-            "record_type": "Finding",
-            "record_type_key": "finding",
-            "date": record.get("finding_date") or "",
-            "created_at": record.get("created_at") or "",
-            "service_name": (
-                f"Labor Request Created: {record.get('labor_description') or record.get('finding') or 'Labor Request'}"
-                if normalize_finding_request_type(record.get("request_type")) == "labor"
-                else f"Finding Created: {record.get('finding') or 'Finding'}"
-            ),
-            "mileage": record.get("mileage"),
-            "url": "#recommendations-findings",
-        }
-        for record in findings_records
-        if int(record.get("id") or 0) not in finding_ids_with_created_history
-    )
-    timeline.extend(
-        {
-            "id": record["id"],
-            "record_type": "Finding",
-            "record_type_key": "finding",
-            "date": record.get("created_at") or "",
-            "created_at": record.get("created_at") or "",
-            "service_name": finding_history_timeline_label(record),
-            "mileage": None,
-            "url": "#recommendations-findings",
-        }
-        for record in finding_history_records
-    )
-    timeline.extend(
-        {
-            "id": record["id"],
-            "record_type": "Finding",
-            "record_type_key": "finding",
-            "date": record.get("created_at") or "",
-            "created_at": record.get("created_at") or "",
-            "service_name": f"Customer Decision: {record.get('decision_status') or 'Decision'}",
-            "mileage": None,
-            "url": "#recommendations-findings",
-        }
-        for record in customer_decision_logs
+    for record in customer_decision_logs:
         if (
             int(record.get("finding_id") or 0),
             record.get("decision_status") or "",
-        )
-        not in finding_status_history_keys
-    )
-    timeline.extend(
-        {
-            "id": record["id"],
-            "record_type": "Repair Workflow" if record.get("event_type") == "repair_work_status_changed" else "Approval",
-            "record_type_key": "repair" if record.get("event_type") == "repair_work_status_changed" else "finding",
-            "date": record.get("created_at") or "",
-            "created_at": record.get("created_at") or "",
-            "service_name": record.get("event_label") or "Approval Event",
-            "mileage": None,
-            "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{record.get('approval_id')}",
-        }
-        for record in (approval_event_records or [])
-    )
-    if vehicle.get("mileage") is not None and vehicle.get("updated_at"):
-        timeline.append(
+        ) in finding_status_history_keys:
+            continue
+        add_record(
+            "approvals",
             {
-                "id": vehicle_id,
-                "record_type": "Vehicle",
-                "record_type_key": "vehicle",
-                "date": "",
-                "created_at": vehicle.get("updated_at") or "",
-                "service_name": "Mileage Updated",
-                "mileage": vehicle.get("mileage"),
-                "url": "#vehicle-information",
-            }
+                "id": record["id"],
+                "date": record.get("created_at") or "",
+                "created_at": record.get("created_at") or "",
+                "service_name": f"Customer Decision: {record.get('decision_status') or 'Decision'}",
+                "mileage": None,
+                "url": "#recommendations-findings",
+            },
         )
-    timeline.sort(
-        key=lambda record: (
-            parse_date_value(record.get("date")) is not None,
-            parse_date_value(record.get("date")) or date.min,
-            parse_datetime_value(record.get("created_at")) or datetime.min,
-            int(record.get("id") or 0),
-        ),
-        reverse=True,
-    )
-    return timeline
+
+    for record in approval_event_records or []:
+        event_type = record.get("event_type") or ""
+        event_label = record.get("event_label") or "Approval Event"
+        new_status = (record.get("new_status") or "").strip().lower().replace("-", "_")
+        if event_type == "repair_work_status_changed" and new_status == "completed":
+            add_record(
+                "repaired",
+                {
+                    "id": record["id"],
+                    "date": record.get("created_at") or "",
+                    "created_at": record.get("created_at") or "",
+                    "service_name": event_label,
+                    "mileage": None,
+                    "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{record.get('approval_id')}",
+                },
+            )
+            continue
+        add_record(
+            "approvals",
+            {
+                "id": record["id"],
+                "date": record.get("created_at") or "",
+                "created_at": record.get("created_at") or "",
+                "service_name": event_label,
+                "mileage": None,
+                "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{record.get('approval_id')}",
+            },
+        )
+
+    for group in groups.values():
+        sort_records(group["records"])
+        group["count"] = len(group["records"])
+    return [groups["repaired"], groups["maintenance"], groups["findings"], groups["approvals"]]
 
 
 def build_vehicle_history_summary(
@@ -3654,6 +3752,12 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
         seed_repair_intelligence(conn)
         repair_intelligence_records = load_repair_intelligence_for_vehicle(conn, vehicle)
+        for repair_record in repair_records:
+            repair_record["repair_intelligence_records"] = load_repair_intelligence_for_repair(
+                conn,
+                vehicle,
+                repair_record.get("repair_name"),
+            )
     finally:
         conn.close()
 
@@ -3668,6 +3772,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         customer_decision_logs,
         approval_event_records,
     )
+    vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     repair_history_summary = build_repair_history_summary(repair_records)
     findings_summary = build_findings_summary(findings_records)
     approval_summary = build_approval_summary(approval_records)
@@ -3696,6 +3801,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "finding_history_records": finding_history_records,
             "customer_decision_logs": customer_decision_logs,
             "vehicle_timeline": vehicle_timeline,
+            "vehicle_timeline_total": vehicle_timeline_total,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
             "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
@@ -4145,7 +4251,7 @@ async def pro_finding_repair_work_status_update(
     finally:
         conn.close()
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workflow",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workspace",
         status_code=303,
     )
 
@@ -4672,7 +4778,7 @@ async def pro_approval_repair_work_status_update(
     finally:
         conn.close()
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workflow",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workspace",
         status_code=303,
     )
 
@@ -4933,7 +5039,7 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
     finally:
         conn.close()
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-history",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#vehicle-timeline",
         status_code=303,
     )
 
@@ -4949,6 +5055,12 @@ def pro_repair_record_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        seed_repair_intelligence(conn)
+        repair_intelligence_records = load_repair_intelligence_for_repair(
+            conn,
+            vehicle,
+            repair.get("repair_name"),
+        )
     finally:
         conn.close()
 
@@ -4959,6 +5071,7 @@ def pro_repair_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "repair": repair,
+            "repair_intelligence_records": repair_intelligence_records,
         },
     )
 
@@ -5031,7 +5144,7 @@ async def pro_repair_record_update(
     finally:
         conn.close()
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-history",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#vehicle-timeline",
         status_code=303,
     )
 

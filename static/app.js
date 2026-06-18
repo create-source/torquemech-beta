@@ -5,6 +5,54 @@
 */
 // static/app.js — CLEAN (Beta-stable)
 (() => {
+  function initRepairIntelligenceDrawers() {
+    if (window.__tmRepairIntelligenceDrawersBooted) return;
+    window.__tmRepairIntelligenceDrawersBooted = true;
+
+    const drawers = () => Array.from(document.querySelectorAll("[data-repair-intelligence-drawer]"));
+
+    const closeDrawer = (drawer) => {
+      if (!drawer) return;
+      drawer.hidden = true;
+      if (!drawers().some((item) => !item.hidden)) {
+        document.body.style.overflow = "";
+      }
+    };
+
+    const openDrawer = (drawer) => {
+      drawers().forEach((item) => {
+        if (item !== drawer) closeDrawer(item);
+      });
+      drawer.hidden = false;
+      document.body.style.overflow = "hidden";
+    };
+
+    window.tmRepairIntelligenceOpenDrawer = (drawerId) => {
+      const drawer = document.getElementById(drawerId || "");
+      if (drawer) openDrawer(drawer);
+    };
+
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-repair-intelligence-open]");
+      if (button) {
+        window.tmRepairIntelligenceOpenDrawer(button.dataset.repairIntelligenceOpen || "");
+        return;
+      }
+
+      const closeTarget = event.target.closest("[data-repair-intelligence-close]");
+      if (closeTarget) {
+        closeDrawer(closeTarget.closest("[data-repair-intelligence-drawer]"));
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      drawers().forEach(closeDrawer);
+    });
+  }
+
+  initRepairIntelligenceDrawers();
+
   if (window.__tmEstimatorAppBooted) return;
   window.__tmEstimatorAppBooted = true;
 

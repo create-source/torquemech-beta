@@ -1,0 +1,261 @@
+<style>
+  .tm-crm-chip {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 999px;
+    background: #f0fdfa;
+    color: #155e75;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
+  }
+
+  .tm-intel-list {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tm-intel-list li {
+    display: flex;
+    gap: 8px;
+    color: #334155;
+    font-size: 0.86rem;
+    line-height: 1.28;
+  }
+
+  .tm-intel-list li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #0f766e;
+    margin-top: 0.42em;
+  }
+
+  .tm-intel-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .tm-intel-badge {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.2;
+    padding: 6px 9px;
+  }
+
+  .tm-intel-rows {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .tm-intel-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+    padding-bottom: 6px;
+    color: #334155;
+    font-size: 0.84rem;
+    line-height: 1.25;
+  }
+
+  .tm-intel-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .tm-blueprint-spec-label {
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-repair-intelligence-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .tm-repair-intelligence-card {
+    display: grid;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-left: 4px solid #7c3aed;
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+  }
+
+  .tm-repair-intelligence-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .tm-repair-intelligence-title {
+    color: #0f172a;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .tm-repair-intelligence-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .tm-repair-intelligence-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tm-repair-intelligence-panel {
+    display: grid;
+    align-content: start;
+    gap: 7px;
+    min-width: 0;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px;
+  }
+
+  .tm-repair-intelligence-panel h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.2;
+  }
+
+  .tm-repair-intelligence-panel .tm-intel-list li {
+    flex-wrap: wrap;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-repair-intelligence-panel--wide {
+    grid-column: 1 / -1;
+  }
+
+  .tm-repair-intelligence-layout {
+    margin: 0;
+    overflow-x: auto;
+    border-radius: 8px;
+    background: #fff;
+    color: #334155;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    padding: 9px;
+    white-space: pre-wrap;
+  }
+
+  .tm-repair-intelligence-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 2200;
+    display: none;
+  }
+
+  .tm-repair-intelligence-drawer:target {
+    display: block;
+  }
+
+  .tm-repair-intelligence-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+  }
+
+  .tm-repair-intelligence-slideout {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(760px, 100%);
+    max-width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    box-shadow: -24px 0 60px rgba(15, 23, 42, 0.24);
+  }
+
+  .tm-repair-intelligence-slideout-head,
+  .tm-repair-intelligence-slideout-foot {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    background: #fff;
+    padding: 16px;
+  }
+
+  .tm-repair-intelligence-slideout-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .tm-repair-intelligence-slideout-foot {
+    border-top: 1px solid rgba(15, 23, 42, 0.1);
+    border-bottom: 0;
+  }
+
+  .tm-repair-intelligence-slideout-title {
+    margin: 3px 0 0;
+    color: #0f172a;
+    font-size: 1.22rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.15;
+  }
+
+  .tm-repair-intelligence-close {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    box-shadow: none;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .tm-repair-intelligence-slideout-body {
+    min-width: 0;
+    overflow: auto;
+    padding: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .tm-repair-intelligence-slideout {
+      width: 100%;
+    }
+
+    .tm-repair-intelligence-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-repair-intelligence-head,
+    .tm-repair-intelligence-slideout-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+    }
+  }
+</style>

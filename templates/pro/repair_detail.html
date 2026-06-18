@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% from "pro/partials/repair_intelligence_cards.html" import repair_intelligence_drawer %}
 
 {% block title %}Repair Record | TorqueMech CRM{% endblock %}
 
@@ -18,6 +19,7 @@
   .tm-repair-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
   @media (max-width:760px) { .tm-repair-grid { grid-template-columns:1fr; } }
 </style>
+{% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
 
 {% block content %}
@@ -45,7 +47,14 @@
     <div class="tm-repair-field" style="margin-top:14px;"><span>Notes</span><strong>{{ repair.notes or "-" }}</strong></div>
     <div class="tm-repair-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/edit">Edit Repair Record</a>
+      <a class="tm-btn tm-btn-secondary" href="#repair-intelligence-repair-{{ repair.id }}" data-repair-intelligence-open="repair-intelligence-repair-{{ repair.id }}">View Intelligence</a>
     </div>
   </section>
+  {{ repair_intelligence_drawer(
+    "repair-intelligence-repair-" ~ repair.id,
+    repair.repair_name or "Repair Intelligence",
+    (vehicle.year ~ " " ~ vehicle.make ~ " " ~ vehicle.model ~ " " ~ (vehicle.engine or ""))|trim,
+    repair_intelligence_records or []
+  ) }}
 </section>
 {% endblock %}

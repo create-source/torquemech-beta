@@ -512,16 +512,11 @@
   }
 
   #recommendations-findings,
-  #repair-workflow {
+  #repair-workspace {
     grid-column: 1;
   }
 
   #vehicle-edit,
-  #approval-summary,
-  #repair-intelligence,
-  #visual-reference-library,
-  #repair-history,
-  #maintenance-tracking,
   [data-vehicle-timeline-section] {
     grid-column: 2;
   }
@@ -557,15 +552,8 @@
     white-space: nowrap;
   }
 
-  #maintenance-tracking .tm-panel-headline > strong {
-    min-width: 42px;
-    text-align: center;
-  }
-
   #vehicle-edit {
-    position: sticky;
-    top: 78px;
-    z-index: 1;
+    position: static;
   }
 
   .tm-crm-panel .tm-crm-kicker {
@@ -578,10 +566,118 @@
     padding-bottom: 8px;
   }
 
+  details.tm-crm-panel {
+    display: block;
+  }
+
+  .tm-workspace-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    list-style: none;
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-workspace-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-workspace-summary::after {
+    content: "+";
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #0f766e;
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  details.tm-crm-panel[open] > .tm-workspace-summary::after {
+    content: "-";
+  }
+
+  .tm-workspace-summary-title {
+    display: grid;
+    gap: 2px;
+  }
+
+  .tm-workspace-summary-title span {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-workspace-summary-title strong {
+    color: #0f172a;
+    font-size: 1.05rem;
+    line-height: 1.2;
+  }
+
+  .tm-workspace-panel-body {
+    margin-top: 16px;
+  }
+
   .tm-vehicle-timeline {
     display: grid;
     gap: 8px;
     margin-top: 12px;
+  }
+
+  .tm-timeline-groups {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tm-timeline-group {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .tm-timeline-group summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    list-style: none;
+    padding: 12px;
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-timeline-group summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-timeline-group summary::after {
+    content: "+";
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #0f766e;
+  }
+
+  .tm-timeline-group[open] summary::after {
+    content: "-";
+  }
+
+  .tm-timeline-group-body {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 12px;
   }
 
   .tm-timeline-header {
@@ -642,14 +738,21 @@
     box-shadow: 0 0 0 2px #0f766e;
   }
 
+  .tm-timeline-dot--repaired,
   .tm-timeline-dot--repair {
     background: #7c3aed;
     box-shadow: 0 0 0 2px #7c3aed;
   }
 
+  .tm-timeline-dot--findings,
   .tm-timeline-dot--finding {
     background: #d97706;
     box-shadow: 0 0 0 2px #d97706;
+  }
+
+  .tm-timeline-dot--approvals {
+    background: #0e7490;
+    box-shadow: 0 0 0 2px #0e7490;
   }
 
   .tm-timeline-content {
@@ -689,14 +792,21 @@
     color: #115e59;
   }
 
+  .tm-timeline-badge--repaired,
   .tm-timeline-badge--repair {
     background: #ede9fe;
     color: #5b21b6;
   }
 
+  .tm-timeline-badge--findings,
   .tm-timeline-badge--finding {
     background: #fef3c7;
     color: #92400e;
+  }
+
+  .tm-timeline-badge--approvals {
+    background: #e0f2fe;
+    color: #075985;
   }
 
   .tm-maintenance-table-wrap {
@@ -732,7 +842,7 @@
 
   .tm-history-summary {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin-top: 12px;
   }
@@ -756,6 +866,19 @@
     border-radius: 8px;
     background: #f8fafc;
     padding: 10px;
+  }
+
+  button.tm-history-summary-card {
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  button.tm-history-summary-card:hover,
+  button.tm-history-summary-card:focus-visible {
+    border-color: rgba(14, 116, 144, 0.48);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
+    outline: none;
   }
 
   .tm-history-summary-card span {
@@ -945,7 +1068,7 @@
   .tm-repair-action-row {
     display: flex;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   .tm-repair-action-row .tm-btn {
@@ -992,6 +1115,64 @@
     display: grid;
     gap: 12px;
     margin-top: 14px;
+  }
+
+  .tm-findings-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+  }
+
+  .tm-findings-modal[hidden] {
+    display: none;
+  }
+
+  .tm-findings-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+  }
+
+  .tm-findings-slideout {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(720px, 100%);
+    height: 100%;
+    background: #f8fafc;
+    box-shadow: -24px 0 60px rgba(15, 23, 42, 0.24);
+  }
+
+  .tm-findings-slideout-head,
+  .tm-findings-slideout-foot {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    background: #fff;
+    padding: 16px;
+  }
+
+  .tm-findings-slideout-foot {
+    border-top: 1px solid rgba(15, 23, 42, 0.1);
+    border-bottom: 0;
+  }
+
+  .tm-findings-slideout-title {
+    margin: 3px 0 0;
+    color: #0f172a;
+    font-size: 1.2rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.15;
+  }
+
+  .tm-findings-slideout-body {
+    overflow: auto;
+    padding: 16px;
   }
 
   .tm-finding-card {
@@ -1276,19 +1457,10 @@
     .tm-pro-shell--vehicle > .tm-pro-pagehead,
     .tm-pro-shell--vehicle > .tm-crm-vehicle-summary,
     #recommendations-findings,
-    #repair-workflow,
+    #repair-workspace,
     #vehicle-edit,
-    #approval-summary,
-    #repair-intelligence,
-    #visual-reference-library,
-    #repair-history,
-    #maintenance-tracking,
     [data-vehicle-timeline-section] {
       grid-column: 1;
-    }
-
-    #vehicle-edit {
-      position: static;
     }
 
     .tm-crm-vehicle-summary,
@@ -1355,8 +1527,13 @@
     .tm-timeline-toggle {
       width: 100%;
     }
+
+    .tm-workspace-summary {
+      align-items: flex-start;
+    }
   }
 </style>
+{% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
 
 {% block content %}
@@ -1389,49 +1566,55 @@
     {% endif %}
   </section>
 
-  <form class="tm-crm-panel" id="vehicle-edit" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
-    <h2 style="margin-top:0;">Edit Vehicle</h2>
+  <details class="tm-crm-panel" id="vehicle-edit">
+    <summary class="tm-workspace-summary">
+      <span class="tm-workspace-summary-title">
+        <span>Vehicle</span>
+        <strong>Edit Vehicle</strong>
+      </span>
+    </summary>
+    <form class="tm-workspace-panel-body" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
+      <div class="tm-crm-row">
+        <div>
+          <label class="tm-label" for="year">Year</label>
+          <input class="tm-input" id="year" name="year" type="number" min="1900" max="2100" step="1" value="{{ vehicle.year or '' }}">
+        </div>
+        <div>
+          <label class="tm-label" for="make">Make</label>
+          <input class="tm-input" id="make" name="make" type="text" maxlength="120" value="{{ vehicle.make or '' }}">
+        </div>
+      </div>
 
-    <div class="tm-crm-row">
-      <div>
-        <label class="tm-label" for="year">Year</label>
-        <input class="tm-input" id="year" name="year" type="number" min="1900" max="2100" step="1" value="{{ vehicle.year or '' }}">
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="model">Model</label>
+          <input class="tm-input" id="model" name="model" type="text" maxlength="120" value="{{ vehicle.model or '' }}">
+        </div>
+        <div>
+          <label class="tm-label" for="engine">Engine</label>
+          <input class="tm-input" id="engine" name="engine" type="text" maxlength="160" value="{{ vehicle.engine or '' }}">
+        </div>
       </div>
-      <div>
-        <label class="tm-label" for="make">Make</label>
-        <input class="tm-input" id="make" name="make" type="text" maxlength="120" value="{{ vehicle.make or '' }}">
-      </div>
-    </div>
 
-    <div class="tm-crm-row" style="margin-top:12px;">
-      <div>
-        <label class="tm-label" for="model">Model</label>
-        <input class="tm-input" id="model" name="model" type="text" maxlength="120" value="{{ vehicle.model or '' }}">
+      <div class="tm-crm-row" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="vin">VIN</label>
+          <input class="tm-input" id="vin" name="vin" type="text" maxlength="32" value="{{ vehicle.vin or '' }}">
+        </div>
+        <div>
+          <label class="tm-label" for="mileage">Current mileage</label>
+          <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ vehicle.mileage|pro_miles if vehicle.mileage else '' }}">
+        </div>
       </div>
-      <div>
-        <label class="tm-label" for="engine">Engine</label>
-        <input class="tm-input" id="engine" name="engine" type="text" maxlength="160" value="{{ vehicle.engine or '' }}">
-      </div>
-    </div>
 
-    <div class="tm-crm-row" style="margin-top:12px;">
-      <div>
-        <label class="tm-label" for="vin">VIN</label>
-        <input class="tm-input" id="vin" name="vin" type="text" maxlength="32" value="{{ vehicle.vin or '' }}">
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="notes">Notes</label>
+        <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200" placeholder="Vehicle-specific notes such as known issues, customer concerns, warranty context, or inspection reminders.">{{ vehicle.notes or "" }}</textarea>
       </div>
-      <div>
-        <label class="tm-label" for="mileage">Current mileage</label>
-        <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ vehicle.mileage|pro_miles if vehicle.mileage else '' }}">
-      </div>
-    </div>
 
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="notes">Notes</label>
-      <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200" placeholder="Vehicle-specific notes such as known issues, customer concerns, warranty context, or inspection reminders.">{{ vehicle.notes or "" }}</textarea>
-    </div>
-
-    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
-  </form>
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
+    </form>
+  </details>
 
   <section class="tm-crm-panel" id="recommendations-findings" aria-label="Recommendations and findings" style="margin-top:16px;">
     <div class="tm-crm-kicker">Recommendations & Findings</div>
@@ -1509,363 +1692,116 @@
     </details>
 
     <div class="tm-history-summary" aria-label="Findings summary">
-      <div class="tm-history-summary-card">
+      <button class="tm-history-summary-card" type="button" data-findings-filter="Approved">
         <span>Approved</span>
         <strong>{{ findings_summary.approved }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Open</span>
-        <strong>{{ findings_summary.open }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
+      </button>
+      <button class="tm-history-summary-card" type="button" data-findings-filter="Completed">
         <span>Completed</span>
         <strong>{{ findings_summary.completed }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Deferred</span>
-        <strong>{{ findings_summary.deferred }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
+      </button>
+      <button class="tm-history-summary-card" type="button" data-findings-filter="Declined">
         <span>Declined</span>
         <strong>{{ findings_summary.declined }}</strong>
-      </div>
+      </button>
     </div>
 
-    {% if findings_records %}
-    <div class="tm-findings-list">
-      {% for item in findings_records %}
-      <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" data-finding-card data-finding-id="{{ item.id }}" data-finding-status="{{ item.status }}" data-finding-severity="{{ item.severity }}" data-finding-date="{{ item.finding_date or '' }}">
-        <div class="tm-history-head">
-          <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
-          <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
-        </div>
-        <div class="tm-finding-meta">
-          {% if item.request_type == "labor" %}
-          <span class="tm-crm-chip">Labor Request</span>
-          {% endif %}
-          <span class="tm-crm-chip">{{ item.severity }}</span>
-          <span class="tm-crm-chip" data-finding-status-chip>{{ item.status }}</span>
-          {% if item.mileage is not none %}
-          <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
-          {% endif %}
-        </div>
-        {% if item.request_type == "labor" %}
-        <div style="color:#475569;"><strong>Description:</strong> {{ item.labor_description or "No labor description recorded." }}</div>
-        <div style="color:#475569;"><strong>Hours:</strong> {% if item.labor_hours is not none %}{{ item.labor_hours }}{% else %}-{% endif %}</div>
-        <div style="color:#475569;"><strong>Rate:</strong> {% if item.labor_rate is not none %}{{ item.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</div>
-        <div style="color:#475569;"><strong>Amount:</strong> {% if item.labor_amount is not none %}{{ item.labor_amount|pro_currency }}{% else %}-{% endif %}</div>
-        <div style="color:#475569;"><strong>Reason:</strong> {{ item.labor_reason or "No labor reason recorded." }}</div>
-        <div style="color:#475569;"><strong>Status:</strong> {{ item.status }}</div>
-        {% else %}
-        <div style="color:#475569;"><strong>Recommendation:</strong> {{ item.recommendation or "No recommendation recorded." }}</div>
-        {% endif %}
-        <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
-          <div class="tm-finding-status-control">
-            <label class="tm-label" for="finding_status_{{ item.id }}">Decision Status</label>
-            <span class="tm-finding-status-select">
-              <select class="tm-input" id="finding_status_{{ item.id }}" name="status" required>
-                {% for option in ["Approved", "Open", "Completed", "Deferred", "Declined"] %}
-                <option value="{{ option }}" {% if item.status == option %}selected{% endif %}>{{ option }}</option>
-                {% endfor %}
-              </select>
-            </span>
-          </div>
-          <span class="tm-finding-status-feedback" data-finding-status-feedback aria-live="polite"></span>
-        </form>
-        <div class="tm-repair-action-row">
-          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
-          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
-        </div>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No findings, labor requests, or recommendations recorded for this vehicle yet.
-    </div>
-    {% endif %}
-  </section>
-
-  <section class="tm-crm-panel" id="approval-summary" aria-label="Approval summary" style="margin-top:16px;">
-    <div class="tm-panel-headline">
-      <div>
-        <div class="tm-crm-kicker">Approval Summary</div>
-        <h2 style="margin:4px 0 0;">Approval Summary</h2>
-      </div>
-      <strong>{{ approval_summary.total_approved_add_ons|pro_currency }}</strong>
-    </div>
-
-    <div class="tm-history-summary tm-history-summary--compact" aria-label="Approval request counts">
-      <div class="tm-history-summary-card">
-        <span>Pending Requests</span>
-        <strong>{{ approval_summary.pending }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Approved Requests</span>
-        <strong>{{ approval_summary.approved }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Deferred Requests</span>
-        <strong>{{ approval_summary.deferred }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Declined Requests</span>
-        <strong>{{ approval_summary.declined }}</strong>
-      </div>
-    </div>
-
-    <div class="tm-history-summary tm-history-summary--compact tm-history-summary--money" aria-label="Approved add-on totals" style="margin-top:8px;">
-      <div class="tm-history-summary-card">
-        <span>Approved Labor Total</span>
-        <strong>{{ approval_summary.approved_labor_total|pro_currency }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Approved Parts Total</span>
-        <strong>{{ approval_summary.approved_parts_total|pro_currency }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Total Approved Add-ons</span>
-        <strong>{{ approval_summary.total_approved_add_ons|pro_currency }}</strong>
-      </div>
-    </div>
-  </section>
-
-  <section class="tm-crm-panel" id="repair-intelligence" aria-label="Repair intelligence" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Repair Intelligence</div>
-    <h2 style="margin:4px 0 0;">Repair Snapshot Intelligence</h2>
-
-    {% if repair_intelligence_records %}
-    <div class="tm-repair-intelligence-list">
-      {% for repair in repair_intelligence_records %}
-      <article class="tm-repair-intelligence-card">
-        <div class="tm-repair-intelligence-head">
+    <div class="tm-findings-modal" id="findings-filter-drawer" data-findings-modal hidden>
+      <div class="tm-findings-backdrop" data-findings-close></div>
+      <aside class="tm-findings-slideout" role="dialog" aria-modal="true" aria-labelledby="findings-filter-title">
+        <header class="tm-findings-slideout-head">
           <div>
-            <div class="tm-repair-intelligence-title">{{ repair.repair_name }}</div>
-            <div class="tm-repair-intelligence-meta" style="margin-top:7px;">
-              {% if repair.year or repair.make or repair.model or repair.engine %}
-              <span class="tm-crm-chip">{{ repair.year }} {{ repair.make }} {{ repair.model }}{% if repair.engine %} {{ repair.engine }}{% endif %}</span>
-              {% else %}
-              <span class="tm-crm-chip">Generic</span>
-              {% endif %}
-              {% if repair.difficulty %}<span class="tm-crm-chip">{{ repair.difficulty }}</span>{% endif %}
-              {% if repair.labor_time_range %}<span class="tm-crm-chip">{{ repair.labor_time_range }}</span>{% endif %}
-            </div>
+            <div class="tm-crm-kicker">Recommendations & Findings</div>
+            <h3 class="tm-findings-slideout-title" id="findings-filter-title" data-findings-title>Findings</h3>
           </div>
-        </div>
-
-        <div class="tm-repair-intelligence-grid">
-          <section class="tm-repair-intelligence-panel">
-            <h3>Repair Snapshot</h3>
-            {% if repair.repair_snapshot %}
-            <ul class="tm-intel-list">
-              {% for item in repair.repair_snapshot %}
-              <li>{% if item.label is defined %}<strong>{{ item.label }}:</strong> {{ item.value }}{% else %}{{ item }}{% endif %}</li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No snapshot added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel">
-            <h3>Critical Checks</h3>
-            {% if repair.critical_checks %}
-            <ul class="tm-intel-list">{% for item in repair.critical_checks %}<li>{{ item }}</li>{% endfor %}</ul>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No checks added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel">
-            <h3>Known Failure Patterns</h3>
-            {% if repair.known_failure_patterns %}
-            <ul class="tm-intel-list">{% for item in repair.known_failure_patterns %}<li>{{ item }}</li>{% endfor %}</ul>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No patterns added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel">
-            <h3>Required Parts</h3>
-            {% if repair.required_parts %}
-            <div class="tm-intel-badge-row">{% for item in repair.required_parts %}<span class="tm-intel-badge">{{ item }}</span>{% endfor %}</div>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No required parts added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel">
-            <h3>Recommended Parts</h3>
-            {% if repair.recommended_parts %}
-            <div class="tm-intel-badge-row">{% for item in repair.recommended_parts %}<span class="tm-intel-badge">{{ item }}</span>{% endfor %}</div>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No recommended parts added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel">
-            <h3>Special Tools</h3>
-            {% if repair.special_tools %}
-            <div class="tm-intel-badge-row">{% for item in repair.special_tools %}<span class="tm-intel-badge">{{ item }}</span>{% endfor %}</div>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No special tools added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel">
-            <h3>Torque / Critical Specs</h3>
-            {% if repair.torque_specs %}
-            <div class="tm-intel-rows">
-              {% for spec in repair.torque_specs %}
-              <div class="tm-intel-row">
-                <span class="tm-blueprint-spec-label">{% if spec.label is defined %}{{ spec.label }}{% else %}Spec{% endif %}</span>
-                <span>{% if spec.value is defined %}{{ spec.value }}{% else %}{{ spec }}{% endif %}</span>
+          <button class="tm-blueprint-close" type="button" aria-label="Close findings" data-findings-close>x</button>
+        </header>
+        <div class="tm-findings-slideout-body">
+          {% if findings_records %}
+          <div class="tm-findings-list">
+            {% for item in findings_records %}
+            <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" data-finding-card data-finding-id="{{ item.id }}" data-finding-status="{{ item.status }}" data-finding-severity="{{ item.severity }}" data-finding-date="{{ item.finding_date or '' }}">
+              <div class="tm-history-head">
+                <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
+                <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
               </div>
-              {% endfor %}
-            </div>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No specs added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel">
-            <h3>Inspection Opportunities</h3>
-            {% if repair.inspection_opportunities %}
-            <ul class="tm-intel-list">{% for item in repair.inspection_opportunities %}<li>{{ item }}</li>{% endfor %}</ul>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No opportunities added.</div></div>
-            {% endif %}
-          </section>
-
-          <section class="tm-repair-intelligence-panel tm-repair-intelligence-panel--wide">
-            <h3>Visual Layout</h3>
-            {% if repair.visual_layout %}
-            <pre class="tm-repair-intelligence-layout">{{ repair.visual_layout }}</pre>
-            {% else %}
-            <div class="tm-visual-reference-field"><div>No visual layout added.</div></div>
-            {% endif %}
-          </section>
+              <div class="tm-finding-meta">
+                {% if item.request_type == "labor" %}
+                <span class="tm-crm-chip">Labor Request</span>
+                {% endif %}
+                <span class="tm-crm-chip">{{ item.severity }}</span>
+                <span class="tm-crm-chip" data-finding-status-chip>{{ item.status }}</span>
+                {% if item.mileage is not none %}
+                <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
+                {% endif %}
+              </div>
+              {% if item.request_type == "labor" %}
+              <div style="color:#475569;"><strong>Description:</strong> {{ item.labor_description or "No labor description recorded." }}</div>
+              <div style="color:#475569;"><strong>Hours:</strong> {% if item.labor_hours is not none %}{{ item.labor_hours }}{% else %}-{% endif %}</div>
+              <div style="color:#475569;"><strong>Rate:</strong> {% if item.labor_rate is not none %}{{ item.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</div>
+              <div style="color:#475569;"><strong>Amount:</strong> {% if item.labor_amount is not none %}{{ item.labor_amount|pro_currency }}{% else %}-{% endif %}</div>
+              <div style="color:#475569;"><strong>Reason:</strong> {{ item.labor_reason or "No labor reason recorded." }}</div>
+              <div style="color:#475569;"><strong>Status:</strong> {{ item.status }}</div>
+              {% else %}
+              <div style="color:#475569;"><strong>Recommendation:</strong> {{ item.recommendation or "No recommendation recorded." }}</div>
+              {% endif %}
+              <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
+                <div class="tm-finding-status-control">
+                  <label class="tm-label" for="finding_status_{{ item.id }}">Decision Status</label>
+                  <span class="tm-finding-status-select">
+                    <select class="tm-input" id="finding_status_{{ item.id }}" name="status" required>
+                      {% for option in ["Approved", "Open", "Completed", "Deferred", "Declined"] %}
+                      <option value="{{ option }}" {% if item.status == option %}selected{% endif %}>{{ option }}</option>
+                      {% endfor %}
+                    </select>
+                  </span>
+                </div>
+                <span class="tm-finding-status-feedback" data-finding-status-feedback aria-live="polite"></span>
+              </form>
+              <div class="tm-repair-action-row">
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
+              </div>
+            </article>
+            {% endfor %}
+          </div>
+          <div class="tm-history-empty" style="margin-top:12px;" data-findings-filter-empty hidden>
+            No findings in this status.
+          </div>
+          {% else %}
+          <div class="tm-history-empty" style="margin-top:12px;">
+            No findings, labor requests, or recommendations recorded for this vehicle yet.
+          </div>
+          {% endif %}
         </div>
-
-        {% if repair.notes %}
-        <div style="color:#475569;">{{ repair.notes }}</div>
-        {% endif %}
-      </article>
-      {% endfor %}
+        <footer class="tm-findings-slideout-foot">
+          <button class="tm-btn tm-btn-secondary" type="button" data-findings-close>Close</button>
+        </footer>
+      </aside>
     </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No repair intelligence added for this vehicle yet.
-    </div>
-    {% endif %}
   </section>
 
-  <section class="tm-crm-panel" id="visual-reference-library" aria-label="Visual reference library" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Visual Reference Library</div>
-    <h2 style="margin:4px 0 0;">Vehicle Visual References</h2>
+  <details class="tm-crm-panel" id="repair-workspace" aria-label="Repair workspace" style="margin-top:16px;">
+    <summary class="tm-workspace-summary">
+      <span class="tm-workspace-summary-title">
+        <span>Repair Workspace</span>
+        <strong>Repair Workspace</strong>
+      </span>
+    </summary>
+    <div class="tm-workspace-panel-body">
 
-    {% if visual_reference_records %}
-    <div class="tm-visual-reference-list">
-      {% for reference in visual_reference_records %}
-      <article class="tm-visual-reference-card">
-        <div class="tm-visual-reference-title">{{ reference.title or reference.service_type }}</div>
-        <div class="tm-visual-reference-meta">
-          <div class="tm-visual-reference-field">
-            <span>Vehicle</span>
-            <strong>{{ reference.vehicle_identifier }}</strong>
-          </div>
-          <div class="tm-visual-reference-field">
-            <span>Service Type</span>
-            <strong>{{ reference.service_type }}</strong>
-          </div>
-          <div class="tm-visual-reference-field">
-            <span>Created</span>
-            <strong>{{ reference.created_at|pro_date if reference.created_at else "Not set" }}</strong>
-          </div>
-        </div>
-        {% if reference.quick_reference %}
-        <div style="color:#475569;">{{ reference.quick_reference }}</div>
-        {% endif %}
-        {% if reference.hotspots %}
-        <div>
-          <a class="tm-btn tm-btn-primary" href="/pro/visual-references/{{ reference.id }}/repair-map">Open Interactive Repair Map</a>
-        </div>
-        {% endif %}
-        <div class="tm-visual-reference-grid">
-          <div class="tm-visual-reference-field">
-            <span>Reference Content</span>
-            <div>
-              Component Location, Exploded View, Quick Reference, Torque Specifications,
-              OEM Part Numbers, Related Parts Links
-            </div>
-          </div>
-          <div class="tm-visual-reference-field">
-            <span>Images</span>
-            {% if reference.images %}
-            <div class="tm-visual-reference-images">
-              {% for image in reference.images %}
-              <figure class="tm-visual-reference-image" style="margin:0;">
-                <img src="{{ image.image_path }}" alt="{{ image.caption or image.image_type }}">
-                <figcaption>
-                  <strong>{{ image.image_type }}</strong>{% if image.caption %}: {{ image.caption }}{% endif %}
-                </figcaption>
-              </figure>
-              {% endfor %}
-            </div>
-            {% else %}
-            <div>No images linked.</div>
-            {% endif %}
-          </div>
-          <div class="tm-visual-reference-field">
-            <span>Torque / Specs</span>
-            <div>
-              {% if reference.specs %}
-                {% for spec in reference.specs %}
-                {{ spec.spec_name }} | {{ spec.spec_value }}{% if spec.spec_unit %} | {{ spec.spec_unit }}{% endif %}{% if not loop.last %}; {% endif %}
-                {% endfor %}
-              {% else %}
-                No specs linked.
-              {% endif %}
-            </div>
-          </div>
-          <div class="tm-visual-reference-field">
-            <span>OEM Part Numbers</span>
-            <div>
-              {% if reference.oem_parts %}
-                {% for part in reference.oem_parts %}
-                {{ part.part_name }} | {{ part.oem_part_number }}{% if not loop.last %}; {% endif %}
-                {% endfor %}
-              {% else %}
-                No OEM numbers linked.
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No visual references linked yet. Framework is ready for component location,
-      exploded view, quick reference, torque specs, OEM part numbers, and related parts links.
-    </div>
-    {% endif %}
-  </section>
-
-  <section class="tm-crm-panel" id="repair-workflow" aria-label="Repair workflow" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Repair Workflow</div>
-    <h2 style="margin:4px 0 0;">Approved Work</h2>
-
-    {% if repair_work_items %}
+    {% set active_repair_work_items = repair_work_items|rejectattr("repair_work_status", "equalto", "completed")|rejectattr("approval_label", "equalto", "Completed")|list %}
+    {% if active_repair_work_items %}
     <div class="tm-repair-work-list">
-      {% for item in repair_work_items %}
+      {% for item in active_repair_work_items %}
       <article class="tm-repair-work-item tm-repair-work-item--{{ item.repair_work_status }}">
+        {% set vendor_links = item.blueprint.vendor_links if item.blueprint else [] %}
         <div class="tm-history-head">
           <div>
             <div class="tm-history-title">{{ item.title }}</div>
-            <div style="color:#64748b; margin-top:3px;">{{ item.request_type_label }} | {{ item.approval_label }}</div>
+            <div style="color:#64748b; margin-top:3px;">Status: {{ item.repair_work_status_label }}</div>
           </div>
-          <span class="tm-crm-chip">{{ item.repair_work_status_label }}</span>
+          <span class="tm-crm-chip">{{ item.approval_label }}</span>
         </div>
         {% if item.detail %}
         <div style="color:#475569;">{{ item.detail }}</div>
@@ -1904,6 +1840,16 @@
           </div>
           <div class="tm-crm-chip-row">
             <button class="tm-btn tm-btn-secondary" type="button" data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}">Open Intelligence</button>
+          </div>
+        </section>
+        {% endif %}
+        {% if vendor_links %}
+        <section class="tm-blueprint-summary-card" aria-label="Recommended vendors for {{ item.title }}">
+          <div class="tm-blueprint-summary-title">Recommended Vendors</div>
+          <div class="tm-intel-badge-row">
+            {% for vendor in vendor_links %}
+            <span class="tm-intel-badge">{{ vendor.label }}</span>
+            {% endfor %}
           </div>
         </section>
         {% endif %}
@@ -2002,8 +1948,8 @@
               {% set safety_notes = item.blueprint.safety_notes or [] %}
               <div class="tm-intel-card-stack">
                 {% if repair_brief %}
-                <section class="tm-intel-card">
-                  <h4>🚀 30-Second Repair Brief</h4>
+                <details class="tm-intel-card tm-intel-card--collapsed" data-intel-section>
+                  <summary>30-Second Repair Brief</summary>
                   <div class="tm-intel-rows">
                     {% for metric in repair_brief %}
                     <div class="tm-intel-row">
@@ -2012,56 +1958,56 @@
                     </div>
                     {% endfor %}
                   </div>
-                </section>
+                </details>
                 {% endif %}
 
                 {% if common_failures %}
-                <section class="tm-intel-card tm-intel-card--failure">
-                  <h4>🔥 Most Common Failures</h4>
+                <details class="tm-intel-card tm-intel-card--failure tm-intel-card--collapsed" data-intel-section>
+                  <summary>Most Common Failures</summary>
                   <ul class="tm-intel-list">
                     {% for failure in common_failures %}
                     <li>{{ failure }}</li>
                     {% endfor %}
                   </ul>
-                </section>
+                </details>
                 {% endif %}
 
                 {% if common_comebacks %}
-                <section class="tm-intel-card tm-intel-card--comeback">
-                  <h4>⚠️ Common Comebacks</h4>
+                <details class="tm-intel-card tm-intel-card--comeback tm-intel-card--collapsed" data-intel-section>
+                  <summary>Common Comebacks</summary>
                   <ul class="tm-intel-list">
                     {% for comeback in common_comebacks %}
                     <li>{{ comeback }}</li>
                     {% endfor %}
                   </ul>
-                </section>
+                </details>
                 {% endif %}
 
                 {% if must_replace %}
-                <section class="tm-intel-card tm-intel-card--parts">
-                  <h4>🔧 Must Replace</h4>
+                <details class="tm-intel-card tm-intel-card--parts tm-intel-card--collapsed" data-intel-section>
+                  <summary>Must Replace</summary>
                   <ul class="tm-intel-list">
                     {% for part in must_replace %}
                     <li>{{ part }}</li>
                     {% endfor %}
                   </ul>
-                </section>
+                </details>
                 {% endif %}
 
                 {% if while_youre_there %}
-                <section class="tm-intel-card tm-intel-card--opportunity">
-                  <h4>👀 While You're There</h4>
+                <details class="tm-intel-card tm-intel-card--opportunity tm-intel-card--collapsed" data-intel-section>
+                  <summary>While You're There</summary>
                   <ul class="tm-intel-list">
                     {% for opportunity in while_youre_there %}
                     <li>{{ opportunity }}</li>
                     {% endfor %}
                   </ul>
-                </section>
+                </details>
                 {% endif %}
 
                 {% if critical_specs %}
-                <details class="tm-intel-card tm-intel-card--collapsed">
-                  <summary>📏 Critical Specs</summary>
+                <details class="tm-intel-card tm-intel-card--collapsed" data-intel-section>
+                  <summary>Critical Specs</summary>
                   <div class="tm-intel-card-body">
                     <div class="tm-intel-rows">
                       {% for spec in critical_specs %}
@@ -2075,9 +2021,9 @@
                 </details>
                 {% endif %}
 
-                {% if show_more_checks or vendor_links or recommended_parts or safety_notes or item.blueprint.labor_benchmark %}
-                <details class="tm-intel-card tm-intel-card--collapsed">
-                  <summary>📚 More Intelligence</summary>
+                {% if show_more_checks or recommended_parts or safety_notes or item.blueprint.labor_benchmark %}
+                <details class="tm-intel-card tm-intel-card--collapsed" data-intel-section>
+                  <summary>More Intelligence</summary>
                   <div class="tm-intel-card-body">
                     <div class="tm-intel-rows">
                       {% if item.blueprint.labor_benchmark %}
@@ -2104,16 +2050,6 @@
                         <span>{{ safety_notes|join("; ") }}</span>
                       </div>
                       {% endif %}
-                      {% if vendor_links %}
-                      <div class="tm-intel-row">
-                        <span class="tm-blueprint-spec-label">Vendor Sources</span>
-                        <span>
-                          {% for vendor in vendor_links %}
-                          {{ vendor.label }}{% if not loop.last %}; {% endif %}
-                          {% endfor %}
-                        </span>
-                      </div>
-                      {% endif %}
                     </div>
                   </div>
                 </details>
@@ -2128,303 +2064,84 @@
     </div>
     {% else %}
     <div class="tm-history-empty" style="margin-top:12px;">
-      No approved workflow items are ready for repair yet.
+      No active repair work is ready right now.
     </div>
     {% endif %}
-  </section>
+    </div>
+  </details>
 
-  <section class="tm-crm-panel" id="repair-history" aria-label="Repair history" style="margin-top:16px;">
-    <div class="tm-panel-headline">
-      <div>
-        <div class="tm-crm-kicker">Repair History</div>
-        <h2 style="margin:4px 0 0;">Repair History</h2>
+  {% set timeline_total = vehicle_timeline_total|default(0, true) %}
+  {% if not timeline_total and vehicle_timeline %}
+    {% set timeline_counter = namespace(total=0) %}
+    {% for group in vehicle_timeline %}
+      {% if group.count is defined %}
+        {% set timeline_counter.total = timeline_counter.total + group.count %}
+      {% elif group.records is defined %}
+        {% set timeline_counter.total = timeline_counter.total + (group.records|length) %}
+      {% endif %}
+    {% endfor %}
+    {% set timeline_total = timeline_counter.total %}
+  {% endif %}
+  <details class="tm-crm-panel tm-crm-panel--timeline" id="vehicle-timeline" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section data-timeline-limit="5" data-timeline-expanded="false">
+    <summary class="tm-workspace-summary">
+      <span class="tm-workspace-summary-title">
+        <span>Vehicle Timeline</span>
+        <strong>Vehicle Timeline <span class="tm-timeline-count" data-timeline-count>({{ timeline_total }} {% if timeline_total == 1 %}entry{% else %}entries{% endif %})</span></strong>
+      </span>
+    </summary>
+    <div class="tm-workspace-panel-body" data-timeline-body>
+      {% if timeline_total %}
+      <div class="tm-timeline-groups">
+        {% for group in vehicle_timeline %}
+        <details class="tm-timeline-group" data-timeline-group="{{ group.key }}">
+          <summary>{{ group.title }} ({{ group.count }})</summary>
+          <div class="tm-timeline-group-body">
+            {% if group.records %}
+            <div class="tm-vehicle-timeline">
+              {% for item in group.records %}
+              <a class="tm-timeline-item" href="{{ item.url }}" data-timeline-item>
+                <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
+                <div class="tm-timeline-content">
+                  <div class="tm-timeline-meta">
+                    <span class="tm-timeline-badge tm-timeline-badge--{{ item.record_type_key }}">{{ group.title }}</span>
+                    <span class="tm-history-date">{{ item.date|pro_date if item.date else "No date" }}</span>
+                  </div>
+                  <div class="tm-history-title">{{ item.service_name }}</div>
+                  {% if item.mileage is not none %}
+                  <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
+                  {% endif %}
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="tm-history-empty">No {{ group.title|lower }} recorded yet.</div>
+            {% endif %}
+          </div>
+        </details>
+        {% endfor %}
       </div>
-      <strong>{{ repair_history_summary.lifetime_repair_spend|pro_currency }}</strong>
-    </div>
-
-    <details class="tm-crm-disclosure" style="margin-top:16px;">
-      <summary>Add Repair Record</summary>
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
-        <div style="margin-top:12px;">
-          <label class="tm-label" for="repair_name">Repair Name</label>
-          <input class="tm-input" id="repair_name" name="repair_name" type="text" maxlength="180">
-        </div>
-
-        <div style="margin-top:12px;">
-          <label class="tm-switch-control" for="also_update_maintenance_tracking">
-            <input id="also_update_maintenance_tracking" name="also_update_maintenance_tracking" type="checkbox" value="1" role="switch" data-repair-maintenance-toggle>
-            <span class="tm-switch-track" aria-hidden="true"></span>
-            <span>Track as Maintenance Item</span>
-          </label>
-        </div>
-
-        <div class="tm-crm-row" style="margin-top:12px;">
-          <div>
-            <label class="tm-label" for="repair_date">Repair Date</label>
-            <input class="tm-input" id="repair_date" name="repair_date" type="date">
-          </div>
-          <div>
-            <label class="tm-label" for="repair_mileage">Mileage</label>
-            <input class="tm-input" id="repair_mileage" name="mileage" type="text" inputmode="numeric">
-          </div>
-        </div>
-
-        <div class="tm-crm-row" style="margin-top:12px;">
-          <div>
-            <label class="tm-label" for="labor_hours">Labor Hours</label>
-            <input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1">
-          </div>
-          <div>
-            <label class="tm-label" for="parts_cost">Parts Cost</label>
-            <input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal">
-          </div>
-        </div>
-
-        <div style="margin-top:12px;">
-          <label class="tm-label" for="labor_cost">Labor Cost</label>
-          <input class="tm-input" id="labor_cost" name="labor_cost" type="text" inputmode="decimal">
-        </div>
-
-        <div style="margin-top:12px;">
-          <label class="tm-label" for="repair_notes">Notes</label>
-          <textarea class="tm-input" id="repair_notes" name="notes" rows="4" maxlength="1600"></textarea>
-        </div>
-
-        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Repair Record</button>
-      </form>
-    </details>
-
-    <div class="tm-history-summary tm-history-summary--repairs" aria-label="Repair history summary">
-      <div class="tm-history-summary-card">
-        <span>Total Repairs</span>
-        <strong>{{ repair_history_summary.total_repairs }}</strong>
+      {% else %}
+      <div class="tm-history-empty" style="margin-top:12px;">
+        No vehicle history recorded yet.
       </div>
-      <div class="tm-history-summary-card">
-        <span>Last Repair</span>
-        <strong>{{ repair_history_summary.last_repair or "-" }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Last Repair Date</span>
-        <strong>{{ repair_history_summary.last_repair_date|pro_date if repair_history_summary.last_repair_date else "-" }}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Last Repair Mileage</span>
-        <strong>{% if repair_history_summary.last_repair_mileage is not none %}{{ repair_history_summary.last_repair_mileage|pro_miles }} miles{% else %}-{% endif %}</strong>
-      </div>
-      <div class="tm-history-summary-card">
-        <span>Lifetime Repair Spend</span>
-        <strong>{{ repair_history_summary.lifetime_repair_spend|pro_currency }}</strong>
-      </div>
-    </div>
-
-    {% if repair_records %}
-    <div class="tm-maintenance-table-wrap tm-repair-table-wrap">
-      <table class="tm-maintenance-table tm-repair-table">
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Mileage</th>
-            <th scope="col">Repair</th>
-            <th scope="col">Total Cost</th>
-            <th class="tm-repair-actions-cell" scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in repair_records %}
-          <tr>
-            <td>{{ item.repair_date|pro_date if item.repair_date else "-" }}</td>
-            <td>{% if item.mileage is not none %}{{ item.mileage|pro_miles }} miles{% else %}-{% endif %}</td>
-            <td>{{ item.repair_name or "Repair" }}</td>
-            <td>{{ item.total_cost|pro_currency }}</td>
-            <td class="tm-repair-actions-cell">
-              <div class="tm-repair-action-row">
-                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}">View</a>
-                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}/edit">Edit</a>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div class="tm-repair-cards">
-      {% for item in repair_records %}
-      <article class="tm-repair-card">
-        <div class="tm-history-title">{{ item.repair_name or "Repair" }}</div>
-        <div class="tm-repair-card-fields">
-          <div class="tm-repair-card-field">
-            <span>Date</span>
-            <strong>{{ item.repair_date|pro_date if item.repair_date else "-" }}</strong>
-          </div>
-          <div class="tm-repair-card-field">
-            <span>Mileage</span>
-            <strong>{% if item.mileage is not none %}{{ item.mileage|pro_miles }} miles{% else %}-{% endif %}</strong>
-          </div>
-          <div class="tm-repair-card-field">
-            <span>Total Cost</span>
-            <strong>{{ item.total_cost|pro_currency }}</strong>
-          </div>
-        </div>
-        <div class="tm-repair-action-row">
-          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}">View</a>
-          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.id }}/edit">Edit</a>
-        </div>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No repair records saved for this vehicle yet.
-    </div>
-    {% endif %}
-  </section>
-
-  <section class="tm-crm-panel" id="maintenance-tracking" aria-label="Maintenance records" style="margin-top:16px;">
-    <div class="tm-panel-headline">
-      <div>
-        <div class="tm-crm-kicker">Maintenance</div>
-        <h2 style="margin:4px 0 0;">Maintenance Tracking</h2>
-      </div>
-      <strong>{{ maintenance_records|length }}</strong>
-    </div>
-
-    <details class="tm-crm-disclosure" style="margin-top:16px;">
-      <summary>Add Maintenance Record</summary>
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance" data-maintenance-defaults="add">
-        <div style="margin-top:12px;">
-          <label class="tm-label" for="service_type">Service type</label>
-          <input class="tm-input" id="service_type" name="service_type" type="text" maxlength="180" list="maintenance-service-options">
-          <datalist id="maintenance-service-options">
-            {% for option in maintenance_service_options %}
-            <option value="{{ option.name }}"></option>
-            {% endfor %}
-          </datalist>
-        </div>
-
-        <div class="tm-crm-row" style="margin-top:12px;">
-          <div>
-            <label class="tm-label" for="date_performed">Date performed</label>
-            <input class="tm-input" id="date_performed" name="date_performed" type="date">
-          </div>
-          <div>
-            <label class="tm-label" for="mileage_performed">Mileage performed</label>
-            <input class="tm-input" id="mileage_performed" name="mileage_performed" type="text" inputmode="numeric">
-          </div>
-        </div>
-
-        <div class="tm-crm-row" style="margin-top:12px;">
-          <div>
-            <label class="tm-label" for="interval_miles">Interval miles</label>
-            <input class="tm-input" id="interval_miles" name="interval_miles" type="text" inputmode="numeric">
-          </div>
-          <div>
-            <label class="tm-label" for="interval_months">Interval months</label>
-            <input class="tm-input" id="interval_months" name="interval_months" type="number" min="0" step="1">
-          </div>
-        </div>
-
-        <div class="tm-crm-row" style="margin-top:12px;">
-          <div>
-            <label class="tm-label" for="due_mileage">Next due mileage</label>
-            <input class="tm-input" id="due_mileage" name="due_mileage" type="text" inputmode="numeric" placeholder="Auto-calculated unless entered">
-          </div>
-          <div>
-            <label class="tm-label" for="due_date">Next due date</label>
-            <input class="tm-input" id="due_date" name="due_date" type="date">
-          </div>
-        </div>
-
-        <div style="margin-top:12px;">
-          <label class="tm-label" for="maintenance_notes">Notes</label>
-          <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600" placeholder="Maintenance condition, parts/fluids used, customer notes, or interval context."></textarea>
-        </div>
-
-        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Maintenance Record</button>
-      </form>
-    </details>
-
-    {% if maintenance_records %}
-    <div class="tm-maintenance-cards">
-      {% for item in maintenance_records %}
-      <article class="tm-maintenance-card">
-        <div class="tm-maintenance-card-head">
-          <div class="tm-history-title">{{ item.service_type or "Maintenance" }}</div>
-          <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ item.id }}">Open Record</a>
-        </div>
-        <div class="tm-maintenance-fields">
-          <div class="tm-maintenance-field">
-            <span>Date</span>
-            <strong>{{ item.date_performed|pro_date if item.date_performed else "No date" }}</strong>
-          </div>
-          <div class="tm-maintenance-field">
-            <span>Mileage</span>
-            <strong>{% if item.mileage_performed %}{{ item.mileage_performed|pro_miles }}{% else %}-{% endif %}</strong>
-          </div>
-          <div class="tm-maintenance-field">
-            <span>Interval</span>
-            <strong>
-              {% if item.interval_miles %}{{ item.interval_miles|pro_miles }} miles{% endif %}
-              {% if item.interval_miles and item.interval_months %} / {% endif %}
-              {% if item.interval_months %}{{ item.interval_months }} months{% endif %}
-              {% if not item.interval_miles and not item.interval_months %}-{% endif %}
-            </strong>
-          </div>
-          <div class="tm-maintenance-field">
-            <span>Next Mileage</span>
-            <strong>{% if item.due_mileage %}{{ item.due_mileage|pro_miles }}{% else %}-{% endif %}</strong>
-          </div>
-          <div class="tm-maintenance-field">
-            <span>Next Date</span>
-            <strong>{{ item.due_date|pro_date if item.due_date else "-" }}</strong>
-          </div>
-        </div>
-        {% if item.notes %}
-        <div style="color:#475569;">{{ item.notes }}</div>
-        {% endif %}
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No maintenance records saved for this vehicle yet.
-    </div>
-    {% endif %}
-  </section>
-
-  <section class="tm-crm-panel tm-crm-panel--timeline" aria-label="Vehicle timeline" style="margin-top:16px;" data-vehicle-timeline-section data-timeline-limit="5" data-timeline-expanded="false">
-    <div class="tm-crm-kicker">Vehicle Timeline</div>
-    <div class="tm-timeline-header">
-      <h2 style="margin:4px 0 0;">Vehicle Timeline <span class="tm-timeline-count" data-timeline-count>({{ vehicle_timeline|length }} {% if vehicle_timeline|length == 1 %}entry{% else %}entries{% endif %})</span></h2>
-      {% if vehicle_timeline|length > 5 %}
-      <button class="tm-btn tm-btn-secondary tm-timeline-toggle" type="button" data-timeline-toggle>Show Full Timeline ({{ vehicle_timeline|length }} entries)</button>
       {% endif %}
     </div>
-
-    {% if vehicle_timeline %}
-    <div class="tm-vehicle-timeline">
-      {% for item in vehicle_timeline %}
-      <a class="tm-timeline-item" href="{{ item.url }}" data-timeline-item {% if vehicle_timeline|length > 5 and loop.index > 5 %}hidden{% endif %}>
-        <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
-        <div class="tm-timeline-content">
-          <div class="tm-timeline-meta">
-            <span class="tm-timeline-badge tm-timeline-badge--{{ item.record_type_key }}">{{ item.record_type }}</span>
-            <span class="tm-history-date">{{ item.date|pro_date if item.date else "No date" }}</span>
-          </div>
-          <div class="tm-history-title">{{ item.service_name }}</div>
-          {% if item.mileage is not none %}
-          <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
-          {% endif %}
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:12px;">
-      No vehicle history recorded yet.
-    </div>
-    {% endif %}
-  </section>
+  </details>
 </section>
+
+<script>
+(() => {
+  document.querySelectorAll(".tm-workspace-summary").forEach((summary) => {
+    summary.addEventListener("click", (event) => {
+      const panel = summary.closest("details.tm-crm-panel");
+      if (!panel) return;
+      event.preventDefault();
+      panel.open = !panel.open;
+    });
+  });
+})();
+</script>
 
 <script>
 (() => {
@@ -2465,6 +2182,10 @@
   const statusRank = { Approved: 1, Open: 2, Completed: 3, Deferred: 4, Declined: 5 };
   const severityRank = { Critical: 1, High: 2, Medium: 3, Low: 4 };
   const list = document.querySelector(".tm-findings-list");
+  const findingsModal = document.querySelector("[data-findings-modal]");
+  const findingsTitle = document.querySelector("[data-findings-title]");
+  const findingsFilterEmpty = document.querySelector("[data-findings-filter-empty]");
+  let activeFindingsFilter = "";
   const summaryCards = Array.from(document.querySelectorAll('[aria-label="Findings summary"] .tm-history-summary-card'));
   const summaryCounts = new Map(summaryCards.map((card) => {
     const label = card.querySelector("span")?.textContent?.trim();
@@ -2493,6 +2214,51 @@
     });
     cards.forEach((card) => list.appendChild(card));
   }
+
+  function applyFindingFilter(status) {
+    activeFindingsFilter = status || activeFindingsFilter;
+    if (findingsTitle) findingsTitle.textContent = `${activeFindingsFilter} Findings`;
+    const cards = Array.from(document.querySelectorAll("[data-finding-card]"));
+    let visibleCount = 0;
+    cards.forEach((card) => {
+      const isVisible = card.dataset.findingStatus === activeFindingsFilter;
+      card.hidden = !isVisible;
+      if (isVisible) visibleCount += 1;
+    });
+    if (findingsFilterEmpty) {
+      findingsFilterEmpty.hidden = visibleCount !== 0;
+      findingsFilterEmpty.textContent = `No ${activeFindingsFilter.toLowerCase()} findings.`;
+    }
+  }
+
+  function openFindingsModal(status) {
+    if (!findingsModal) return;
+    applyFindingFilter(status);
+    findingsModal.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeFindingsModal() {
+    if (!findingsModal) return;
+    findingsModal.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  document.querySelectorAll("[data-findings-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openFindingsModal(button.dataset.findingsFilter || "");
+    });
+  });
+
+  findingsModal?.addEventListener("click", (event) => {
+    if (event.target.closest("[data-findings-close]")) {
+      closeFindingsModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeFindingsModal();
+  });
 
   function clearDisclosureBody(section) {
     const summary = section?.querySelector("summary");
@@ -2593,106 +2359,101 @@
     return `(${total} ${total === 1 ? "entry" : "entries"})`;
   }
 
+  function timelineTotal(records) {
+    return (records || []).reduce((total, group) => total + Number(group.count || group.records?.length || 0), 0);
+  }
+
   function applyVehicleTimelineCollapse(section) {
-    const limit = Number(section?.dataset.timelineLimit || 5);
     const items = Array.from(section?.querySelectorAll("[data-timeline-item]") || []);
-    const toggle = section?.querySelector("[data-timeline-toggle]");
     const countEl = section?.querySelector("[data-timeline-count]");
     const total = items.length;
-    const expanded = section?.dataset.timelineExpanded === "true";
     if (countEl) countEl.textContent = timelineCountLabel(total);
-    if (!toggle) return;
-    if (total <= limit) {
-      toggle.hidden = true;
-      items.forEach((item) => {
-        item.hidden = false;
-      });
-      return;
-    }
-    toggle.hidden = false;
-    toggle.textContent = expanded ? "Collapse Timeline" : `Show Full Timeline (${total} entries)`;
-    items.forEach((item, index) => {
-      item.hidden = !expanded && index >= limit;
-    });
   }
 
   function renderVehicleTimeline(records) {
     const section = document.querySelector("[data-vehicle-timeline-section]");
     if (!section) return;
-    while (section.children.length > 2) {
-      section.lastElementChild.remove();
+    const body = section.querySelector("[data-timeline-body]") || section;
+    while (body.firstElementChild) {
+      body.lastElementChild.remove();
     }
-    let toggle = section.querySelector("[data-timeline-toggle]");
-    if (!toggle && records?.length > 5) {
-      toggle = document.createElement("button");
-      toggle.className = "tm-btn tm-btn-secondary tm-timeline-toggle";
-      toggle.type = "button";
-      toggle.dataset.timelineToggle = "";
-      section.querySelector(".tm-timeline-header")?.appendChild(toggle);
-    }
-    if (!records?.length) {
+    const total = timelineTotal(records);
+    const countEl = section.querySelector("[data-timeline-count]");
+    if (countEl) countEl.textContent = timelineCountLabel(total);
+    if (!total) {
       const empty = document.createElement("div");
       empty.className = "tm-history-empty";
       empty.style.marginTop = "12px";
       empty.textContent = "No vehicle history recorded yet.";
-      section.appendChild(empty);
-      applyVehicleTimelineCollapse(section);
+      body.appendChild(empty);
       return;
     }
 
-    const listEl = document.createElement("div");
-    listEl.className = "tm-vehicle-timeline";
-    records.forEach((item) => {
-      const link = document.createElement("a");
-      link.className = "tm-timeline-item";
-      link.href = item.url || "#";
-      link.dataset.timelineItem = "";
+    const groupsEl = document.createElement("div");
+    groupsEl.className = "tm-timeline-groups";
+    records.forEach((group) => {
+      const groupDetails = document.createElement("details");
+      groupDetails.className = "tm-timeline-group";
+      groupDetails.dataset.timelineGroup = group.key || "";
+      const summary = document.createElement("summary");
+      summary.textContent = `${group.title || "History"} (${group.count || group.records?.length || 0})`;
+      groupDetails.appendChild(summary);
 
-      const dot = document.createElement("span");
-      dot.className = `tm-timeline-dot tm-timeline-dot--${item.record_type_key || ""}`;
-      dot.setAttribute("aria-hidden", "true");
-      link.appendChild(dot);
+      const groupBody = document.createElement("div");
+      groupBody.className = "tm-timeline-group-body";
+      if (group.records?.length) {
+        const listEl = document.createElement("div");
+        listEl.className = "tm-vehicle-timeline";
+        group.records.forEach((item) => {
+          const link = document.createElement("a");
+          link.className = "tm-timeline-item";
+          link.href = item.url || "#";
+          link.dataset.timelineItem = "";
 
-      const content = document.createElement("div");
-      content.className = "tm-timeline-content";
+          const dot = document.createElement("span");
+          dot.className = `tm-timeline-dot tm-timeline-dot--${item.record_type_key || group.key || ""}`;
+          dot.setAttribute("aria-hidden", "true");
+          link.appendChild(dot);
 
-      const meta = document.createElement("div");
-      meta.className = "tm-timeline-meta";
-      const badge = document.createElement("span");
-      badge.className = `tm-timeline-badge tm-timeline-badge--${item.record_type_key || ""}`;
-      badge.textContent = item.record_type || "";
-      const dateEl = document.createElement("span");
-      dateEl.className = "tm-history-date";
-      dateEl.textContent = formatTimelineDate(item.date);
-      meta.appendChild(badge);
-      meta.appendChild(dateEl);
-      content.appendChild(meta);
+          const content = document.createElement("div");
+          content.className = "tm-timeline-content";
 
-      appendTextLine(content, "tm-history-title", item.service_name || "History event");
-      const mileageText = formatTimelineMiles(item.mileage);
-      if (mileageText) {
-        const mileageEl = document.createElement("div");
-        mileageEl.style.color = "#475569";
-        mileageEl.textContent = mileageText;
-        content.appendChild(mileageEl);
+          const meta = document.createElement("div");
+          meta.className = "tm-timeline-meta";
+          const badge = document.createElement("span");
+          badge.className = `tm-timeline-badge tm-timeline-badge--${item.record_type_key || group.key || ""}`;
+          badge.textContent = group.title || "History";
+          const dateEl = document.createElement("span");
+          dateEl.className = "tm-history-date";
+          dateEl.textContent = formatTimelineDate(item.date);
+          meta.appendChild(badge);
+          meta.appendChild(dateEl);
+          content.appendChild(meta);
+
+          appendTextLine(content, "tm-history-title", item.service_name || "History event");
+          const mileageText = formatTimelineMiles(item.mileage);
+          if (mileageText) {
+            const mileageEl = document.createElement("div");
+            mileageEl.style.color = "#475569";
+            mileageEl.textContent = mileageText;
+            content.appendChild(mileageEl);
+          }
+          link.appendChild(content);
+          listEl.appendChild(link);
+        });
+        groupBody.appendChild(listEl);
+      } else {
+        appendEmptyState(groupBody, `No ${(group.title || "history").toLowerCase()} recorded yet.`);
       }
-      link.appendChild(content);
-      listEl.appendChild(link);
+      groupDetails.appendChild(groupBody);
+      groupsEl.appendChild(groupDetails);
     });
-    section.appendChild(listEl);
-    applyVehicleTimelineCollapse(section);
+    body.appendChild(groupsEl);
   }
 
   const vehicleTimelineSection = document.querySelector("[data-vehicle-timeline-section]");
   if (vehicleTimelineSection) {
     applyVehicleTimelineCollapse(vehicleTimelineSection);
-    vehicleTimelineSection.addEventListener("click", (event) => {
-      const toggle = event.target.closest("[data-timeline-toggle]");
-      if (!toggle) return;
-      vehicleTimelineSection.dataset.timelineExpanded =
-        vehicleTimelineSection.dataset.timelineExpanded === "true" ? "false" : "true";
-      applyVehicleTimelineCollapse(vehicleTimelineSection);
-    });
   }
 
   function liveCountDebug(...args) {
@@ -2798,6 +2559,7 @@
         updateSummary(oldStatus, savedStatus);
         updateActivitySections(payload, oldStatus, savedStatus);
         sortFindingCards();
+        if (activeFindingsFilter) applyFindingFilter(activeFindingsFilter);
         feedback.textContent = "\u2713 Status Updated";
       } catch (error) {
         select.value = oldStatus;
@@ -2942,6 +2704,7 @@
 
   const repairName = form.querySelector('[name="repair_name"]');
   const toggle = form.querySelector("[data-repair-maintenance-toggle]");
+  if (!repairName || !toggle) return;
   const defaultOn = new Set([
     "oil change",
     "transmission service",
@@ -2986,6 +2749,33 @@
     input.addEventListener("input", sync);
     input.addEventListener("change", sync);
     sync();
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const storageKey = "tmVehicleIntelOpenSections";
+  let openSections = {};
+  try {
+    openSections = JSON.parse(window.sessionStorage?.getItem(storageKey) || "{}") || {};
+  } catch (error) {
+    openSections = {};
+  }
+
+  document.querySelectorAll("[data-blueprint-modal]").forEach((modal) => {
+    modal.querySelectorAll("[data-intel-section]").forEach((section, index) => {
+      const key = `${modal.id}:${index}`;
+      section.open = openSections[key] === true;
+      section.addEventListener("toggle", () => {
+        openSections[key] = section.open;
+        try {
+          window.sessionStorage?.setItem(storageKey, JSON.stringify(openSections));
+        } catch (error) {
+          // Session storage is a convenience only.
+        }
+      });
+    });
   });
 })();
 </script>
