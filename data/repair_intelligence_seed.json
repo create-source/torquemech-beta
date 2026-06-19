@@ -13,10 +13,10 @@
       {"label": "Decision", "value": "Inspect coils and plug wells before parts quote"}
     ],
     "critical_checks": [
-      "Confirm engine family and plug style before ordering.",
-      "Inspect coil boots for carbon tracking and oil contamination.",
-      "Blow debris from plug wells before loosening plugs.",
-      "Check misfire counters before and after service."
+      "Repeat misfire if carbon-tracked coil boots are reused.",
+      "Plug-well debris can damage threads or keep the new plug from seating.",
+      "Thread damage comeback risk rises if plugs feel loose after breakaway.",
+      "Fuel trims or misfire counters should be rechecked before delivery."
     ],
     "known_failure_patterns": [
       "High-mileage plugs may be tight in aluminum threads.",
@@ -29,26 +29,44 @@
       "PCV hoses and vacuum lines",
       "Fuel trims after misfire repair"
     ],
+    "critical_specs": [
+      {"type": "Torque", "label": "Spark plug torque", "value": "13 lb-ft / 156 lb-in for common 5.4L 2-valve aluminum-head service"},
+      {"type": "Spark plug gap", "label": "Plug gap", "value": "0.054 in / 1.37 mm typical"},
+      {"type": "Torque", "label": "Ignition coil bolt", "value": "62 lb-in typical"},
+      {"type": "Measurement", "label": "Thread inspection", "value": "Stop if plug threads lift aluminum or feel loose after breakaway."},
+      {"type": "TTY warning", "label": "Torque-to-yield bolts", "value": "No TTY bolts normally removed for plug-only service.", "warning": "Replace any damaged ignition fasteners or repaired plug inserts per kit instructions."}
+    ],
     "required_parts": [
-      "8 spark plugs"
+      {"name": "8 spark plugs", "note": "Match engine family and emissions label."}
     ],
     "recommended_parts": [
-      "Coil boots if brittle or carbon tracked",
-      "Dielectric grease",
-      "Intake or access gaskets if removed"
+      {"name": "Coil boots", "note": "Replace if brittle, swollen, oil-soaked, or carbon tracked."},
+      {"name": "Dielectric grease", "note": "Small amount inside boot only."},
+      {"name": "Intake/access gaskets", "note": "Only if removed for access."}
+    ],
+    "vendor_sources": [
+      {"name": "Primary", "value": "Motorcraft-equivalent spark plugs by VIN"},
+      {"name": "Secondary", "value": "Local parts vendor coil boot kits"},
+      {"name": "Shop stock", "value": "Dielectric grease and compressed-air supplies"}
     ],
     "special_tools": [
-      "Spark plug socket",
-      "Long extensions",
-      "Torque wrench",
-      "Compressed air",
-      "Thread repair kit available"
+      {"name": "Spark plug socket", "note": "Rubber insert or magnetic retention"},
+      {"name": "Long extensions and wobble", "note": "Rear cylinders need controlled angle"},
+      {"name": "Inch-pound torque wrench"},
+      {"name": "Compressed air"},
+      {"name": "Thread repair kit available", "note": "Do not begin high-risk service without a recovery plan."}
     ],
     "torque_specs": [
-      {"label": "Spark plug torque", "value": "Verify by plug design and cylinder head service data"},
-      {"label": "Coil fasteners", "value": "Light torque; verify exact spec"}
+      {"label": "Spark plug torque", "value": "13 lb-ft / 156 lb-in typical"},
+      {"label": "Coil fasteners", "value": "62 lb-in typical"}
     ],
-    "visual_layout": "FRONT OF ENGINE\nPassenger Side: 1 - 2 - 3 - 4\nDriver Side: 5 - 6 - 7 - 8\nFIREWALL",
+    "visual_layout": {
+      "kind": "Cylinder layout",
+      "title": "5.4L F-150 Ignition Access Map",
+      "svg": "<svg viewBox=\"0 0 640 300\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"640\" height=\"300\" fill=\"#f8fafc\"/><text x=\"320\" y=\"28\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"18\" font-weight=\"700\" fill=\"#0f172a\">Front of engine</text><path d=\"M320 44 l-18 30 h36 z\" fill=\"#0f766e\"/><rect x=\"90\" y=\"82\" width=\"190\" height=\"160\" rx=\"14\" fill=\"#e0f2fe\" stroke=\"#0891b2\"/><rect x=\"360\" y=\"82\" width=\"190\" height=\"160\" rx=\"14\" fill=\"#ede9fe\" stroke=\"#7c3aed\"/><text x=\"185\" y=\"112\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" font-weight=\"700\" fill=\"#164e63\">Passenger bank</text><text x=\"455\" y=\"112\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" font-weight=\"700\" fill=\"#4c1d95\">Driver bank</text><g font-family=\"Arial\" font-size=\"18\" font-weight=\"700\" text-anchor=\"middle\"><circle cx=\"125\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"125\" y=\"166\" fill=\"#0f172a\">1</text><circle cx=\"165\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"165\" y=\"196\" fill=\"#0f172a\">2</text><circle cx=\"205\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"205\" y=\"166\" fill=\"#0f172a\">3</text><circle cx=\"245\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"245\" y=\"196\" fill=\"#0f172a\">4</text><circle cx=\"395\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"395\" y=\"166\" fill=\"#0f172a\">5</text><circle cx=\"435\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"435\" y=\"196\" fill=\"#0f172a\">6</text><circle cx=\"475\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"475\" y=\"166\" fill=\"#0f172a\">7</text><circle cx=\"515\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"515\" y=\"196\" fill=\"#0f172a\">8</text></g><text x=\"320\" y=\"272\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"16\" font-weight=\"700\" fill=\"#64748b\">Firewall / cowl side</text></svg>",
+      "legend": ["Custom TorqueMech orientation aid only.", "Use service data for exact bank naming when diagnosis depends on cylinder numbering."],
+      "note": "Not an OEM diagram."
+    },
     "notes": "Decision-support snapshot only. Confirm exact ignition service data by VIN before work."
   },
   {
@@ -65,11 +83,11 @@
       {"label": "Decision", "value": "Evidence package before major engine quote"}
     ],
     "critical_checks": [
-      "Pressure-test cooling system hot and cold.",
-      "Check for combustion gas evidence in cooling system.",
-      "Inspect oil and coolant for cross-contamination.",
-      "Review overheating history and cooling fan operation.",
-      "Perform cylinder-specific leak-down or borescope check when indicated."
+      "Comeback risk is high if coolant loss is quoted as a head gasket before pressure testing.",
+      "Missed radiator cap or external seepage can mimic head gasket symptoms.",
+      "A cold-start misfire can return if cylinder evidence is not captured before teardown.",
+      "Cooling fan or thermostat faults can recreate the overheat after gasket work.",
+      "Document block-test, leak-down, and borescope evidence before major authorization."
     ],
     "known_failure_patterns": [
       "Overheating events can create secondary gasket or deck concerns.",
@@ -83,25 +101,44 @@
       "Cooling fans and relays",
       "Spark plug evidence by cylinder"
     ],
+    "critical_specs": [
+      {"type": "Pressure", "label": "Cooling system pressure test", "value": "Test to cap/system rating; commonly near 16 psi", "warning": "Do not exceed cap rating."},
+      {"type": "Fluid capacity", "label": "Engine coolant capacity", "value": "Approximately 13 qt range depending on rear heat and drain scope"},
+      {"type": "Measurement", "label": "Leak-down reference", "value": "Compare cylinders; adjacent-cylinder or coolant-bottle bubbling is decision-grade evidence."},
+      {"type": "TTY warning", "label": "Cylinder head bolts", "value": "Treat as one-time-use if teardown is approved.", "warning": "Do not quote final head-bolt sequence from memory."},
+      {"type": "Service-specific", "label": "Block test", "value": "Run with engine at operating temperature and coolant level stabilized."}
+    ],
     "required_parts": [
-      "Diagnostic test fluid or tools as needed"
+      {"name": "Combustion leak test fluid", "note": "For block-test style verification when applicable."},
+      {"name": "Coolant", "note": "Only if drained or contaminated during evaluation."}
     ],
     "recommended_parts": [
-      "Cooling system pressure cap if weak",
-      "Coolant if drained for testing"
+      {"name": "Radiator cap", "note": "Replace or quote if pressure rating fails."},
+      {"name": "Spark plugs", "note": "Only if removed and coolant-fouled evidence is found."}
+    ],
+    "vendor_sources": [
+      {"name": "Dealer/VIN source", "value": "Head fasteners and gasket set if teardown is authorized"},
+      {"name": "Aftermarket", "value": "Cooling test adapters, cap, coolant, and test fluid"},
+      {"name": "Machine shop", "value": "Cylinder head inspection quote if teardown evidence supports repair"}
     ],
     "special_tools": [
-      "Cooling system pressure tester",
-      "Block-test kit",
-      "Leak-down tester",
-      "Borescope",
-      "Scan tool"
+      {"name": "Cooling system pressure tester"},
+      {"name": "Block-test kit"},
+      {"name": "Leak-down tester"},
+      {"name": "Borescope"},
+      {"name": "Scan tool", "note": "Monitor ECT and misfire history."}
     ],
     "torque_specs": [
-      {"label": "Head fasteners", "value": "Do not quote from memory; verify if teardown is approved"},
-      {"label": "Cooling pressure", "value": "Use cap/system rating from vehicle data"}
+      {"label": "Head fasteners", "value": "Verify if teardown is approved"},
+      {"label": "Cooling pressure", "value": "Use cap/system rating"}
     ],
-    "visual_layout": "DIAGNOSTIC FLOW\nCoolant Loss -> Pressure Test -> Combustion Gas Test\nMisfire Cold Start -> Cylinder Evidence -> Leak-down/Borescope\nOverheat History -> Root Cause Check -> Repair Scope",
+    "visual_layout": {
+      "kind": "Diagnostic flow layout",
+      "title": "Head Gasket Evidence Flow",
+      "svg": "<svg viewBox=\"0 0 680 330\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"680\" height=\"330\" fill=\"#f8fafc\"/><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><rect x=\"40\" y=\"40\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#e0f2fe\" stroke=\"#0891b2\"/><text x=\"120\" y=\"66\" text-anchor=\"middle\" font-weight=\"700\">Coolant loss</text><text x=\"120\" y=\"86\" text-anchor=\"middle\">or overheat</text><rect x=\"260\" y=\"40\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fff\" stroke=\"#64748b\"/><text x=\"340\" y=\"66\" text-anchor=\"middle\" font-weight=\"700\">Pressure test</text><text x=\"340\" y=\"86\" text-anchor=\"middle\">hot and cold</text><rect x=\"480\" y=\"40\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fff\" stroke=\"#64748b\"/><text x=\"560\" y=\"66\" text-anchor=\"middle\" font-weight=\"700\">Cap / leak source</text><text x=\"560\" y=\"86\" text-anchor=\"middle\">confirm first</text><rect x=\"40\" y=\"154\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#ede9fe\" stroke=\"#7c3aed\"/><text x=\"120\" y=\"180\" text-anchor=\"middle\" font-weight=\"700\">Cold misfire</text><text x=\"120\" y=\"200\" text-anchor=\"middle\">or white smoke</text><rect x=\"260\" y=\"154\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fff\" stroke=\"#64748b\"/><text x=\"340\" y=\"180\" text-anchor=\"middle\" font-weight=\"700\">Cylinder evidence</text><text x=\"340\" y=\"200\" text-anchor=\"middle\">plug / borescope</text><rect x=\"480\" y=\"154\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fee2e2\" stroke=\"#e11d48\"/><text x=\"560\" y=\"180\" text-anchor=\"middle\" font-weight=\"700\">Leak-down</text><text x=\"560\" y=\"200\" text-anchor=\"middle\">bubble / adjacent cyl</text><rect x=\"210\" y=\"258\" width=\"260\" height=\"48\" rx=\"10\" fill=\"#dcfce7\" stroke=\"#16a34a\"/><text x=\"340\" y=\"287\" text-anchor=\"middle\" font-weight=\"700\">Evidence package before teardown quote</text></g><g stroke=\"#334155\" stroke-width=\"2\" fill=\"none\" marker-end=\"url(#arrow)\"><defs><marker id=\"arrow\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\"><path d=\"M0,0 L8,4 L0,8 z\" fill=\"#334155\"/></marker></defs><path d=\"M200 71 H260\"/><path d=\"M420 71 H480\"/><path d=\"M200 185 H260\"/><path d=\"M420 185 H480\"/><path d=\"M560 216 C560 260 470 282 470 282\"/><path d=\"M120 216 C120 260 210 282 210 282\"/></g></svg>",
+      "legend": ["Custom TorqueMech evaluation flow.", "Use this to decide whether major engine teardown is justified."],
+      "note": "No OEM routing or component artwork is used."
+    },
     "notes": "Evaluation snapshot only. Keep separate from teardown procedure and final repair authorization."
   },
   {
@@ -118,10 +155,10 @@
       {"label": "Decision", "value": "Pad-only or pads plus rotors"}
     ],
     "critical_checks": [
-      "Measure inner and outer pad thickness on both front wheels.",
-      "Inspect rotors for grooves, heat spots, thickness, and pulsation complaint.",
-      "Check slide pins, boots, caliper piston boot, and hose condition.",
-      "Confirm brake package before ordering parts."
+      "Brake noise comeback risk rises when old abutment clips or dry contact points are reused.",
+      "Pulsation complaint can return if rotors are not measured before pad-only approval.",
+      "Tapered pad wear can return when seized or dry slide pins are not corrected.",
+      "Wrong pad shape or hardware kit is possible if brake package is not confirmed before ordering."
     ],
     "known_failure_patterns": [
       "Dry slide pins can cause tapered wear.",
@@ -134,27 +171,48 @@
       "Caliper slide service",
       "Tire wear and front suspension play"
     ],
+    "critical_specs": [
+      {"type": "Torque", "label": "Front caliper slide pin bolts", "value": "26 lb-ft typical"},
+      {"type": "Torque", "label": "Front caliper bracket bolts", "value": "80 lb-ft typical"},
+      {"type": "Torque", "label": "Wheel lug nuts", "value": "80 lb-ft"},
+      {"type": "Fluid", "label": "Brake fluid", "value": "DOT 3"},
+      {"type": "Measurement", "label": "Rotor thickness/runout", "value": "Measure both rotors and compare to stamped rotor/service spec."},
+      {"type": "TTY warning", "label": "Torque-to-yield bolts", "value": "No TTY fasteners normally part of front pad replacement."}
+    ],
     "required_parts": [
-      "Front brake pad set",
-      "Pad hardware when required"
+      {"name": "Front brake pad set"},
+      {"name": "Pad hardware", "note": "Use when included or when original clips are corroded/noisy."}
     ],
     "recommended_parts": [
-      "Front rotors if below spec, grooved, or pulsating",
-      "Brake lubricant",
-      "Brake cleaner"
+      {"name": "Front rotors", "note": "If below spec, grooved, heat checked, or pulsation is present."},
+      {"name": "Brake lubricant"},
+      {"name": "Brake cleaner"},
+      {"name": "Slide pin boot kit", "note": "If torn, swollen, or seized."}
+    ],
+    "vendor_sources": [
+      {"name": "Primary", "value": "Brake pad set by trim and rotor diameter"},
+      {"name": "Secondary", "value": "Premium coated front rotors when measured condition requires replacement"},
+      {"name": "Shop stock", "value": "Brake cleaner, lubricant, and hardware assortment"}
     ],
     "special_tools": [
-      "Brake piston compressor",
-      "Torque wrench",
-      "Micrometer",
-      "Brake cleaner"
+      {"name": "Brake piston compressor"},
+      {"name": "Torque wrench"},
+      {"name": "Micrometer"},
+      {"name": "Dial indicator", "note": "For pulsation/runout diagnosis."},
+      {"name": "Brake cleaner"}
     ],
     "torque_specs": [
-      {"label": "Caliper slide pin bolts", "value": "Verify by trim/brake package"},
-      {"label": "Caliper bracket bolts", "value": "Verify by trim/brake package"},
-      {"label": "Wheel lug nuts", "value": "Verify wheel torque by wheel type"}
+      {"label": "Caliper slide pin bolts", "value": "26 lb-ft typical"},
+      {"label": "Caliper bracket bolts", "value": "80 lb-ft typical"},
+      {"label": "Wheel lug nuts", "value": "80 lb-ft"}
     ],
-    "visual_layout": "FRONT AXLE\nLeft Front: Caliper -> Pads -> Rotor -> Hub\nRight Front: Caliper -> Pads -> Rotor -> Hub\nCHECK BOTH INNER PADS",
+    "visual_layout": {
+      "kind": "Brake layout",
+      "title": "Front Disc Brake Service Points",
+      "svg": "<svg viewBox=\"0 0 660 340\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"660\" height=\"340\" fill=\"#f8fafc\"/><g transform=\"translate(80 48)\"><circle cx=\"120\" cy=\"125\" r=\"98\" fill=\"#e2e8f0\" stroke=\"#64748b\" stroke-width=\"3\"/><circle cx=\"120\" cy=\"125\" r=\"38\" fill=\"#fff\" stroke=\"#94a3b8\" stroke-width=\"2\"/><path d=\"M178 58 h68 q20 0 20 20 v94 q0 20-20 20 h-68 q22-31 22-67 t-22-67z\" fill=\"#fee2e2\" stroke=\"#e11d48\" stroke-width=\"3\"/><rect x=\"194\" y=\"82\" width=\"34\" height=\"86\" rx=\"7\" fill=\"#fff\" stroke=\"#e11d48\"/><rect x=\"234\" y=\"82\" width=\"18\" height=\"86\" rx=\"6\" fill=\"#fecdd3\" stroke=\"#e11d48\"/><text x=\"120\" y=\"252\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" font-weight=\"700\" fill=\"#334155\">Rotor: measure thickness and surface</text></g><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><line x1=\"330\" y1=\"118\" x2=\"470\" y2=\"78\" stroke=\"#334155\" stroke-width=\"2\"/><circle cx=\"330\" cy=\"118\" r=\"5\" fill=\"#334155\"/><text x=\"478\" y=\"82\" font-weight=\"700\">Slide pins</text><text x=\"478\" y=\"102\">clean, lube, torque</text><line x1=\"305\" y1=\"165\" x2=\"470\" y2=\"168\" stroke=\"#334155\" stroke-width=\"2\"/><circle cx=\"305\" cy=\"165\" r=\"5\" fill=\"#334155\"/><text x=\"478\" y=\"172\" font-weight=\"700\">Pads + hardware</text><text x=\"478\" y=\"192\">replace clips if noisy/corroded</text><line x1=\"200\" y1=\"174\" x2=\"470\" y2=\"258\" stroke=\"#334155\" stroke-width=\"2\"/><circle cx=\"200\" cy=\"174\" r=\"5\" fill=\"#334155\"/><text x=\"478\" y=\"262\" font-weight=\"700\">Hub face</text><text x=\"478\" y=\"282\">clean before rotor install</text></g></svg>",
+      "legend": ["Custom TorqueMech brake layout.", "Shows service points, not exact OEM geometry."],
+      "note": "Confirm trim-specific brake package before ordering."
+    },
     "notes": "Decision-support snapshot. Confirm rotor measurements and exact torque values before completion."
   },
   {
@@ -171,10 +229,10 @@
       {"label": "Decision", "value": "Confirm viscosity and filter before service"}
     ],
     "critical_checks": [
-      "Confirm oil viscosity, capacity, and filter style.",
-      "Inspect drain plug threads and sealing washer.",
-      "Check for existing oil leaks before draining.",
-      "Verify maintenance reminder reset need."
+      "Leak comeback risk rises when a crush washer is reused on a plug designed for one.",
+      "Wrong oil level comeback risk rises when fill amount is not verified after run-and-settle.",
+      "Pre-existing leaks should be noted before draining to avoid false comeback blame.",
+      "Maintenance reminder should be reset or documented if the vehicle requires a manual reset."
     ],
     "known_failure_patterns": [
       "Reused sealing washers can seep.",
@@ -187,28 +245,47 @@
       "Tires and brakes while lifted",
       "Fluid levels"
     ],
+    "critical_specs": [
+      {"type": "Fluid capacity", "label": "Engine oil capacity examples", "value": "4.4 qt on many compact 4-cyl engines; 5.7 qt on many midsize V6 engines; 7.0 qt on many light-truck V8 engines"},
+      {"type": "Torque", "label": "Drain plug torque examples", "value": "25 lb-ft for many small aluminum pans; 30 lb-ft for many steel pans; 33 lb-ft for many light trucks"},
+      {"type": "Torque", "label": "Cartridge filter cap examples", "value": "18 lb-ft on many plastic cartridge caps; 25 Nm / 18 lb-ft when cap-marked"},
+      {"type": "Measurement", "label": "Final oil level", "value": "Fill, run, shut down, wait, and verify between dipstick marks or electronic level target."},
+      {"type": "TTY warning", "label": "Torque-to-yield bolts", "value": "No TTY bolts normally part of oil service."}
+    ],
     "required_parts": [
-      "Engine oil",
-      "Oil filter",
-      "Drain plug washer when equipped"
+      {"name": "Engine oil", "note": "Correct viscosity, approval, and capacity."},
+      {"name": "Oil filter"},
+      {"name": "Drain plug washer", "note": "When equipped."}
     ],
     "recommended_parts": [
-      "Drain plug if rounded",
-      "Undertray clips if missing",
-      "Engine air filter if dirty"
+      {"name": "Drain plug", "note": "If rounded or threads are damaged."},
+      {"name": "Undertray clips", "note": "If missing or broken."},
+      {"name": "Engine air filter", "note": "Recommend only if inspected dirty."}
+    ],
+    "vendor_sources": [
+      {"name": "Primary", "value": "Oil and filter by VIN/engine"},
+      {"name": "Shop stock", "value": "Drain washers, absorbent, undertray clips"},
+      {"name": "Service data", "value": "Capacity, viscosity, filter cap torque, and reset procedure"}
     ],
     "special_tools": [
-      "Oil filter wrench",
-      "Drain pan",
-      "Torque wrench",
-      "Funnel"
+      {"name": "Oil filter wrench"},
+      {"name": "Drain pan"},
+      {"name": "Torque wrench"},
+      {"name": "Funnel"},
+      {"name": "Service reset tool", "note": "If reset cannot be completed from cluster controls."}
     ],
     "torque_specs": [
-      {"label": "Oil capacity", "value": "Vehicle specific"},
-      {"label": "Drain plug torque", "value": "Vehicle specific"},
-      {"label": "Filter cap torque", "value": "Vehicle specific when cartridge-style"}
+      {"label": "Oil capacity examples", "value": "4.4 qt, 5.7 qt, or 7.0 qt depending on engine class"},
+      {"label": "Drain plug torque", "value": "25-33 lb-ft common range"},
+      {"label": "Filter cap torque", "value": "18 lb-ft common cartridge-cap value"}
     ],
-    "visual_layout": "SERVICE PATH\nTop Side: Fill cap - Dipstick - Filter if top-mounted\nUnderside: Drain plug - Filter if bottom-mounted - Leak check\nRESET REMINDER IF EQUIPPED",
+    "visual_layout": {
+      "kind": "Service layout",
+      "title": "Oil Change Service Path",
+      "svg": "<svg viewBox=\"0 0 660 310\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"660\" height=\"310\" fill=\"#f8fafc\"/><rect x=\"60\" y=\"54\" width=\"540\" height=\"86\" rx=\"16\" fill=\"#e0f2fe\" stroke=\"#0891b2\"/><text x=\"330\" y=\"82\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"17\" font-weight=\"700\" fill=\"#0f172a\">Top side</text><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><circle cx=\"170\" cy=\"112\" r=\"20\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"170\" y=\"117\" text-anchor=\"middle\">Fill</text><circle cx=\"330\" cy=\"112\" r=\"20\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"330\" y=\"117\" text-anchor=\"middle\">Level</text><circle cx=\"490\" cy=\"112\" r=\"20\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"490\" y=\"117\" text-anchor=\"middle\">Reset</text></g><rect x=\"60\" y=\"178\" width=\"540\" height=\"86\" rx=\"16\" fill=\"#dcfce7\" stroke=\"#16a34a\"/><text x=\"330\" y=\"206\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"17\" font-weight=\"700\" fill=\"#0f172a\">Underside</text><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><rect x=\"138\" y=\"226\" width=\"64\" height=\"26\" rx=\"8\" fill=\"#fff\" stroke=\"#16a34a\"/><text x=\"170\" y=\"244\" text-anchor=\"middle\">Drain</text><rect x=\"292\" y=\"226\" width=\"76\" height=\"26\" rx=\"8\" fill=\"#fff\" stroke=\"#16a34a\"/><text x=\"330\" y=\"244\" text-anchor=\"middle\">Filter</text><rect x=\"448\" y=\"226\" width=\"84\" height=\"26\" rx=\"8\" fill=\"#fff\" stroke=\"#16a34a\"/><text x=\"490\" y=\"244\" text-anchor=\"middle\">Leak check</text></g><path d=\"M330 144 v30\" stroke=\"#334155\" stroke-width=\"3\" marker-end=\"url(#arrow)\"/><defs><marker id=\"arrow\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\"><path d=\"M0,0 L8,4 L0,8 z\" fill=\"#334155\"/></marker></defs></svg>",
+      "legend": ["Custom TorqueMech service flow.", "Use exact capacity and viscosity from vehicle data."],
+      "note": "Generic layout supports top- or bottom-mounted filters."
+    },
     "notes": "Generic snapshot applies when no more specific oil service intelligence exists."
   },
   {
@@ -225,11 +302,11 @@
       {"label": "Decision", "value": "Battery-only or charging/terminal diagnosis"}
     ],
     "critical_checks": [
-      "Test battery state of charge and health.",
-      "Inspect terminals, hold-down, tray, and cable ends.",
-      "Confirm group size, CCA, AGM/EFB requirement, and venting.",
-      "Check charging voltage after replacement.",
-      "Confirm registration or BMS reset requirement."
+      "No-start comeback risk remains if corroded terminal ends are not corrected.",
+      "Charging-system faults can return as a dead-battery complaint if output is not checked.",
+      "Wrong group size, venting, or chemistry can create fitment and battery-life comebacks.",
+      "BMS-equipped vehicles can set warnings or shorten battery life if registration is skipped.",
+      "Loose hold-downs can damage the case or cable ends after delivery."
     ],
     "known_failure_patterns": [
       "Corroded terminals create repeat no-start complaints.",
@@ -242,26 +319,46 @@
       "Charging system output",
       "Parasitic draw if repeated dead battery"
     ],
+    "critical_specs": [
+      {"type": "Measurement", "label": "Resting voltage", "value": "12.6 V fully charged lead-acid reference; test state of charge before load test."},
+      {"type": "Measurement", "label": "Charging voltage", "value": "Typically 13.5-14.8 V with engine running; verify by system type."},
+      {"type": "Torque", "label": "Battery terminal clamps", "value": "44-62 lb-in common light-terminal range"},
+      {"type": "Torque", "label": "Hold-down clamp", "value": "Secure without case distortion; common range 80-120 lb-in"},
+      {"type": "Service-specific", "label": "Battery registration", "value": "Required on many BMS-equipped vehicles after replacement."},
+      {"type": "TTY warning", "label": "Torque-to-yield bolts", "value": "No TTY fasteners normally part of battery replacement."}
+    ],
     "required_parts": [
-      "Correct battery group and chemistry"
+      {"name": "Correct battery", "note": "Group size, chemistry, CCA, reserve capacity, and venting must match vehicle need."}
     ],
     "recommended_parts": [
-      "Terminal protectant",
-      "Hold-down hardware if missing",
-      "Memory saver when appropriate"
+      {"name": "Terminal protectant"},
+      {"name": "Hold-down hardware", "note": "If missing, corroded, or unable to secure battery."},
+      {"name": "Memory saver", "note": "Use when appropriate for vehicle and shop policy."},
+      {"name": "Terminal ends", "note": "Quote if cracked, loose, or heavily corroded."}
+    ],
+    "vendor_sources": [
+      {"name": "Primary", "value": "Battery by group size, CCA, chemistry, and fitment"},
+      {"name": "Secondary", "value": "Terminal repair ends, hold-down kits, vent tube adapters"},
+      {"name": "Service data", "value": "Registration/BMS reset procedure and scan-tool coverage"}
     ],
     "special_tools": [
-      "Battery tester",
-      "Terminal brush",
-      "Socket set",
-      "Memory saver",
-      "Scan tool when registration is required"
+      {"name": "Battery tester"},
+      {"name": "Terminal brush"},
+      {"name": "Socket set"},
+      {"name": "Memory saver"},
+      {"name": "Scan tool", "note": "When registration or BMS reset is required."}
     ],
     "torque_specs": [
-      {"label": "Terminal clamp torque", "value": "Snug to spec; avoid overtightening"},
-      {"label": "Hold-down torque", "value": "Secure battery without case distortion"}
+      {"label": "Terminal clamp torque", "value": "44-62 lb-in common light-terminal range"},
+      {"label": "Hold-down torque", "value": "80-120 lb-in common range"}
     ],
-    "visual_layout": "BATTERY AREA\nPositive Terminal: cover and main feed\nNegative Terminal: body/engine ground path\nHold-down: clamp or bracket\nVERIFY VENT TUBE IF EQUIPPED",
+    "visual_layout": {
+      "kind": "Battery layout",
+      "title": "Battery Replacement Connection Order",
+      "svg": "<svg viewBox=\"0 0 650 320\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"650\" height=\"320\" fill=\"#f8fafc\"/><rect x=\"160\" y=\"70\" width=\"330\" height=\"160\" rx=\"18\" fill=\"#e2e8f0\" stroke=\"#64748b\" stroke-width=\"3\"/><rect x=\"196\" y=\"102\" width=\"78\" height=\"54\" rx=\"8\" fill=\"#fee2e2\" stroke=\"#e11d48\" stroke-width=\"3\"/><rect x=\"376\" y=\"102\" width=\"78\" height=\"54\" rx=\"8\" fill=\"#dbeafe\" stroke=\"#2563eb\" stroke-width=\"3\"/><text x=\"235\" y=\"136\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"30\" font-weight=\"700\" fill=\"#e11d48\">+</text><text x=\"415\" y=\"136\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"30\" font-weight=\"700\" fill=\"#2563eb\">-</text><rect x=\"250\" y=\"185\" width=\"150\" height=\"24\" rx=\"8\" fill=\"#fff\" stroke=\"#334155\"/><text x=\"325\" y=\"202\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"13\" font-weight=\"700\" fill=\"#0f172a\">Hold-down</text><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><path d=\"M415 102 C520 70 560 76 590 48\" fill=\"none\" stroke=\"#2563eb\" stroke-width=\"4\"/><text x=\"474\" y=\"48\" font-weight=\"700\">Disconnect negative first</text><path d=\"M235 102 C120 68 96 76 62 48\" fill=\"none\" stroke=\"#e11d48\" stroke-width=\"4\"/><text x=\"60\" y=\"48\" font-weight=\"700\">Reconnect positive first</text><text x=\"325\" y=\"262\" text-anchor=\"middle\" font-weight=\"700\" fill=\"#64748b\">Check vent tube, tray, corrosion, and BMS reset need</text></g></svg>",
+      "legend": ["Custom TorqueMech battery layout.", "Negative off first; positive on first unless service data says otherwise."],
+      "note": "Layout is generic and not vehicle-specific packaging."
+    },
     "notes": "Generic snapshot applies across vehicles; verify battery registration needs by model."
   }
 ]

@@ -1,3 +1,95 @@
+{% macro intel_item(item) -%}
+  {%- if item.label is defined -%}
+    <strong>{{ item.label }}:</strong> {{ item.value }}
+  {%- elif item.name is defined -%}
+    <strong>{{ item.name }}</strong>{% if item.value is defined %}: {{ item.value }}{% endif %}{% if item.note is defined %}<span class="tm-intel-muted"> {{ item.note }}</span>{% endif %}
+  {%- else -%}
+    {{ item }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro intel_badge(item) -%}
+  {%- if item.name is defined -%}
+    <span class="tm-intel-badge-main">{{ item.name }}</span>{% if item.note is defined %}<span class="tm-intel-badge-note">{{ item.note }}</span>{% endif %}
+  {%- else -%}
+    {{ item }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro intel_list(items, empty_message) -%}
+  {% if items %}
+  <ul class="tm-intel-list">
+    {% for item in items %}<li>{{ intel_item(item) }}</li>{% endfor %}
+  </ul>
+  {% else %}
+  <div class="tm-visual-reference-field"><div>{{ empty_message }}</div></div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro intel_badges(items, empty_message) -%}
+  {% if items %}
+  <div class="tm-intel-badge-row">
+    {% for item in items %}<span class="tm-intel-badge">{{ intel_badge(item) }}</span>{% endfor %}
+  </div>
+  {% else %}
+  <div class="tm-visual-reference-field"><div>{{ empty_message }}</div></div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro intel_rows(items, empty_message) -%}
+  {% if items %}
+  <div class="tm-intel-rows">
+    {% for item in items %}
+    <div class="tm-intel-row">
+      <span class="tm-blueprint-spec-label">
+        {% if item.label is defined %}{{ item.label }}{% elif item.name is defined %}{{ item.name }}{% elif item.type is defined %}{{ item.type }}{% else %}Spec{% endif %}
+      </span>
+      <span>
+        {% if item.value is defined %}{{ item.value }}{% elif item.note is defined %}{{ item.note }}{% else %}{{ item }}{% endif %}
+        {% if item.warning is defined %}<span class="tm-intel-warning">{{ item.warning }}</span>{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="tm-visual-reference-field"><div>{{ empty_message }}</div></div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro intel_section(title, count=none, wide=false) -%}
+  <details class="tm-repair-intelligence-panel{% if wide %} tm-repair-intelligence-panel--wide{% endif %}">
+    <summary>
+      <span>{{ title }}</span>
+      {% if count is not none %}<span class="tm-intel-count">{{ count }}</span>{% endif %}
+    </summary>
+    <div class="tm-repair-intelligence-panel-body">
+      {{ caller() }}
+    </div>
+  </details>
+{%- endmacro %}
+
+{% macro visual_layout_panel(layout) -%}
+  {% if layout %}
+    {% if layout.svg is defined %}
+    <div class="tm-repair-intelligence-layout-head">
+      {% if layout.title is defined %}<strong>{{ layout.title }}</strong>{% endif %}
+      {% if layout.kind is defined %}<span>{{ layout.kind }}</span>{% endif %}
+    </div>
+    <div class="tm-repair-intelligence-svg" aria-label="{{ layout.title or 'TorqueMech visual layout' }}">
+      {{ layout.svg|safe }}
+    </div>
+    {% if layout.legend is defined %}
+    <ul class="tm-intel-list tm-intel-list--compact">{% for item in layout.legend %}<li>{{ item }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if layout.note is defined %}<div class="tm-intel-muted">{{ layout.note }}</div>{% endif %}
+    {% else %}
+    <pre class="tm-repair-intelligence-layout">{{ layout }}</pre>
+    {% endif %}
+  {% else %}
+  <div class="tm-visual-reference-field"><div>No visual layout added.</div></div>
+  {% endif %}
+{%- endmacro %}
+
 {% macro repair_intelligence_cards(records, empty_message="No repair intelligence found for this repair yet.", empty_secondary="Add a repair intelligence record in a future module.") %}
   {% if records %}
   <div class="tm-repair-intelligence-list">
@@ -19,102 +111,73 @@
       </div>
 
       <div class="tm-repair-intelligence-grid">
-        <section class="tm-repair-intelligence-panel">
-          <h3>Repair Snapshot</h3>
-          {% if repair.repair_snapshot %}
-          <ul class="tm-intel-list">
-            {% for item in repair.repair_snapshot %}
-            <li>{% if item.label is defined %}<strong>{{ item.label }}:</strong> {{ item.value }}{% else %}{{ item }}{% endif %}</li>
-            {% endfor %}
-          </ul>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No snapshot added.</div></div>
-          {% endif %}
-        </section>
+        {% call intel_section("30-Second Repair Brief", repair.repair_snapshot|length) %}
+          {{ intel_list(repair.repair_snapshot, "No repair brief added.") }}
+        {% endcall %}
 
-        <section class="tm-repair-intelligence-panel">
-          <h3>Critical Checks</h3>
-          {% if repair.critical_checks %}
-          <ul class="tm-intel-list">{% for item in repair.critical_checks %}<li>{{ item }}</li>{% endfor %}</ul>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No checks added.</div></div>
-          {% endif %}
-        </section>
+        {% call intel_section("Most Common Failures", repair.known_failure_patterns|length) %}
+          {{ intel_list(repair.known_failure_patterns, "No failure patterns added.") }}
+        {% endcall %}
 
-        <section class="tm-repair-intelligence-panel">
-          <h3>Known Failure Patterns</h3>
-          {% if repair.known_failure_patterns %}
-          <ul class="tm-intel-list">{% for item in repair.known_failure_patterns %}<li>{{ item }}</li>{% endfor %}</ul>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No patterns added.</div></div>
-          {% endif %}
-        </section>
+        {% call intel_section("Common Comebacks", repair.critical_checks|length) %}
+          {{ intel_list(repair.critical_checks, "No comeback risks added.") }}
+        {% endcall %}
 
-        <section class="tm-repair-intelligence-panel">
-          <h3>Required Parts</h3>
-          {% if repair.required_parts %}
-          <div class="tm-intel-badge-row">{% for item in repair.required_parts %}<span class="tm-intel-badge">{{ item }}</span>{% endfor %}</div>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No required parts added.</div></div>
-          {% endif %}
-        </section>
+        {% call intel_section("Must Replace", repair.required_parts|length) %}
+          {{ intel_badges(repair.required_parts, "No must-replace parts added.") }}
+        {% endcall %}
 
-        <section class="tm-repair-intelligence-panel">
-          <h3>Recommended Parts</h3>
-          {% if repair.recommended_parts %}
-          <div class="tm-intel-badge-row">{% for item in repair.recommended_parts %}<span class="tm-intel-badge">{{ item }}</span>{% endfor %}</div>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No recommended parts added.</div></div>
-          {% endif %}
-        </section>
+        {% call intel_section("While You're There", repair.inspection_opportunities|length) %}
+          {{ intel_list(repair.inspection_opportunities, "No while-you're-there checks added.") }}
+        {% endcall %}
 
-        <section class="tm-repair-intelligence-panel">
-          <h3>Special Tools</h3>
-          {% if repair.special_tools %}
-          <div class="tm-intel-badge-row">{% for item in repair.special_tools %}<span class="tm-intel-badge">{{ item }}</span>{% endfor %}</div>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No special tools added.</div></div>
-          {% endif %}
-        </section>
+        {% call intel_section("Critical Specs", repair.critical_specs|length) %}
+          {{ intel_rows(repair.critical_specs, "No critical specs added.") }}
+        {% endcall %}
 
-        <section class="tm-repair-intelligence-panel">
-          <h3>Torque / Critical Specs</h3>
-          {% if repair.torque_specs %}
-          <div class="tm-intel-rows">
-            {% for spec in repair.torque_specs %}
-            <div class="tm-intel-row">
-              <span class="tm-blueprint-spec-label">{% if spec.label is defined %}{{ spec.label }}{% else %}Spec{% endif %}</span>
-              <span>{% if spec.value is defined %}{{ spec.value }}{% else %}{{ spec }}{% endif %}</span>
+        {% call intel_section("Visual Layout", 1 if repair.visual_layout else 0, true) %}
+          {{ visual_layout_panel(repair.visual_layout) }}
+        {% endcall %}
+
+        {% set parts_count = (repair.required_parts|length) + (repair.recommended_parts|length) + (repair.vendor_sources|length) + (repair.special_tools|length) %}
+        {% call intel_section("Parts Intelligence", parts_count, true) %}
+          <div class="tm-parts-intelligence-grid">
+            <div class="tm-parts-intelligence-group">
+              <h4>Required Parts</h4>
+              {{ intel_badges(repair.required_parts, "No required parts added.") }}
             </div>
-            {% endfor %}
+            <div class="tm-parts-intelligence-group">
+              <h4>Recommended Parts</h4>
+              {{ intel_badges(repair.recommended_parts, "No recommended parts added.") }}
+            </div>
+            <div class="tm-parts-intelligence-group">
+              <h4>Vendor Sources</h4>
+              {{ intel_list(repair.vendor_sources, "No vendor sources added.") }}
+            </div>
+            <div class="tm-parts-intelligence-group">
+              <h4>Special Tools</h4>
+              {{ intel_badges(repair.special_tools, "No special tools added.") }}
+            </div>
           </div>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No specs added.</div></div>
-          {% endif %}
-        </section>
+        {% endcall %}
 
-        <section class="tm-repair-intelligence-panel">
-          <h3>Inspection Opportunities</h3>
-          {% if repair.inspection_opportunities %}
-          <ul class="tm-intel-list">{% for item in repair.inspection_opportunities %}<li>{{ item }}</li>{% endfor %}</ul>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No opportunities added.</div></div>
-          {% endif %}
-        </section>
-
-        <section class="tm-repair-intelligence-panel tm-repair-intelligence-panel--wide">
-          <h3>Visual Layout</h3>
-          {% if repair.visual_layout %}
-          <pre class="tm-repair-intelligence-layout">{{ repair.visual_layout }}</pre>
-          {% else %}
-          <div class="tm-visual-reference-field"><div>No visual layout added.</div></div>
-          {% endif %}
-        </section>
+        {% call intel_section("More Intelligence", 3, true) %}
+          <div class="tm-more-intelligence">
+            <div>
+              <h4>Safety Notes</h4>
+              <div class="tm-visual-reference-field"><div>Use normal shop safety procedures, support the vehicle when lifted, and verify system pressure or stored energy before disassembly.</div></div>
+            </div>
+            <div>
+              <h4>Labor Notes</h4>
+              <div class="tm-visual-reference-field"><div>{% if repair.labor_time_range %}Expected labor range: {{ repair.labor_time_range }}.{% else %}No labor note added.{% endif %}</div></div>
+            </div>
+            <div>
+              <h4>Additional Observations</h4>
+              <div class="tm-visual-reference-field"><div>{% if repair.notes %}{{ repair.notes }}{% else %}No additional observations added.{% endif %}</div></div>
+            </div>
+          </div>
+        {% endcall %}
       </div>
-
-      {% if repair.notes %}
-      <div style="color:#475569;">{{ repair.notes }}</div>
-      {% endif %}
     </article>
     {% endfor %}
   </div>

@@ -1273,8 +1273,10 @@ def ensure_repair_intelligence_schema(conn: sqlite3.Connection) -> None:
           critical_checks TEXT,
           known_failure_patterns TEXT,
           inspection_opportunities TEXT,
+          critical_specs TEXT,
           required_parts TEXT,
           recommended_parts TEXT,
+          vendor_sources TEXT,
           special_tools TEXT,
           torque_specs TEXT,
           visual_layout TEXT,
@@ -1284,6 +1286,14 @@ def ensure_repair_intelligence_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    existing_columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_intelligence)").fetchall()}
+    migrations = {
+        "critical_specs": "ALTER TABLE repair_intelligence ADD COLUMN critical_specs TEXT",
+        "vendor_sources": "ALTER TABLE repair_intelligence ADD COLUMN vendor_sources TEXT",
+    }
+    for column, statement in migrations.items():
+        if column not in existing_columns:
+            conn.execute(statement)
     conn.execute(
         """
         CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_intelligence_vehicle_repair
@@ -1326,10 +1336,13 @@ def seed_repair_intelligence(conn: sqlite3.Connection) -> None:
         "critical_checks",
         "known_failure_patterns",
         "inspection_opportunities",
+        "critical_specs",
         "required_parts",
         "recommended_parts",
+        "vendor_sources",
         "special_tools",
         "torque_specs",
+        "visual_layout",
     )
     for record in records if isinstance(records, list) else []:
         repair_name = str(record.get("repair_name") or "").strip()
@@ -1343,7 +1356,6 @@ def seed_repair_intelligence(conn: sqlite3.Connection) -> None:
             "repair_name": repair_name,
             "difficulty": str(record.get("difficulty") or "").strip(),
             "labor_time_range": str(record.get("labor_time_range") or "").strip(),
-            "visual_layout": str(record.get("visual_layout") or "").strip(),
             "notes": str(record.get("notes") or "").strip(),
             "created_at": str(record.get("created_at") or now).strip() or now,
             "updated_at": str(record.get("updated_at") or now).strip() or now,
@@ -1352,18 +1364,34 @@ def seed_repair_intelligence(conn: sqlite3.Connection) -> None:
             values[field] = repair_intelligence_json(record.get(field))
         conn.execute(
             """
-            INSERT OR IGNORE INTO repair_intelligence (
+            INSERT INTO repair_intelligence (
               year, make, model, engine, repair_name, difficulty, labor_time_range,
               repair_snapshot, critical_checks, known_failure_patterns,
-              inspection_opportunities, required_parts, recommended_parts,
-              special_tools, torque_specs, visual_layout, notes, created_at, updated_at
+              inspection_opportunities, critical_specs, required_parts, recommended_parts,
+              vendor_sources, special_tools, torque_specs, visual_layout, notes, created_at, updated_at
             )
             VALUES (
               :year, :make, :model, :engine, :repair_name, :difficulty, :labor_time_range,
               :repair_snapshot, :critical_checks, :known_failure_patterns,
-              :inspection_opportunities, :required_parts, :recommended_parts,
-              :special_tools, :torque_specs, :visual_layout, :notes, :created_at, :updated_at
+              :inspection_opportunities, :critical_specs, :required_parts, :recommended_parts,
+              :vendor_sources, :special_tools, :torque_specs, :visual_layout, :notes, :created_at, :updated_at
             )
+            ON CONFLICT(year, make, model, engine, repair_name) DO UPDATE SET
+              difficulty = excluded.difficulty,
+              labor_time_range = excluded.labor_time_range,
+              repair_snapshot = excluded.repair_snapshot,
+              critical_checks = excluded.critical_checks,
+              known_failure_patterns = excluded.known_failure_patterns,
+              inspection_opportunities = excluded.inspection_opportunities,
+              critical_specs = excluded.critical_specs,
+              required_parts = excluded.required_parts,
+              recommended_parts = excluded.recommended_parts,
+              vendor_sources = excluded.vendor_sources,
+              special_tools = excluded.special_tools,
+              torque_specs = excluded.torque_specs,
+              visual_layout = excluded.visual_layout,
+              notes = excluded.notes,
+              updated_at = excluded.updated_at
             """,
             values,
         )
@@ -1375,7 +1403,12 @@ def repair_intelligence_token(value: Any) -> str:
 
 
 def repair_intelligence_engine_token(value: Any) -> str:
-    return repair_intelligence_token(value).replace(" ", "")
+    token = repair_intelligence_token(value).replace(" ", "")
+    for suffix in ("liter", "litre", "l"):
+        if token.endswith(suffix):
+            token = token[: -len(suffix)]
+            break
+    return token
 
 
 def repair_intelligence_repair_token(value: Any) -> str:
@@ -1405,6 +1438,16 @@ def repair_intelligence_list(value: Any) -> list[Any]:
         return [parsed]
     text = str(parsed).strip()
     return [text] if text else []
+
+
+def repair_intelligence_value(value: Any) -> Any:
+    if not value:
+        return None
+    try:
+        return json.loads(str(value))
+    except (TypeError, json.JSONDecodeError):
+        text = str(value).strip()
+        return text if text else None
 
 
 def repair_intelligence_matches_vehicle(record: dict[str, Any], vehicle: dict[str, Any]) -> bool:
@@ -1439,20 +1482,58 @@ def repair_intelligence_matches_repair(record: dict[str, Any], repair_name: Any)
 
 
 def hydrate_repair_intelligence_record(record: dict[str, Any]) -> dict[str, Any]:
+    list_fields = (
+        "repair_snapshot",
+        "critical_checks",
+        "known_failure_patterns",
+        "inspection_opportunities",
+        "critical_specs",
+        "required_parts",
+        "recommended_parts",
+        "vendor_sources",
+        "special_tools",
+        "torque_specs",
+    )
+    hydrated = dict(record)
+    for field in list_fields:
+        hydrated[field] = repair_intelligence_list(hydrated.get(field))
+    if not hydrated.get("critical_specs") and hydrated.get("torque_specs"):
+        hydrated["critical_specs"] = hydrated["torque_specs"]
+    hydrated["visual_layout"] = repair_intelligence_value(hydrated.get("visual_layout"))
+    return hydrated
+
+
+def load_repair_intelligence_seed_records() -> list[dict[str, Any]]:
+    if not REPAIR_INTELLIGENCE_SEED_PATH.exists():
+        return []
+    try:
+        records = json.loads(REPAIR_INTELLIGENCE_SEED_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if not isinstance(records, list):
+        return []
+    hydrated_records = []
     json_fields = (
         "repair_snapshot",
         "critical_checks",
         "known_failure_patterns",
         "inspection_opportunities",
+        "critical_specs",
         "required_parts",
         "recommended_parts",
+        "vendor_sources",
         "special_tools",
         "torque_specs",
+        "visual_layout",
     )
-    hydrated = dict(record)
-    for field in json_fields:
-        hydrated[field] = repair_intelligence_list(hydrated.get(field))
-    return hydrated
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        normalized = dict(record)
+        for field in json_fields:
+            normalized[field] = repair_intelligence_json(normalized.get(field))
+        hydrated_records.append(hydrate_repair_intelligence_record(normalized))
+    return hydrated_records
 
 
 def load_repair_intelligence_for_vehicle(
@@ -1474,6 +1555,10 @@ def load_repair_intelligence_for_vehicle(
         if not repair_intelligence_matches_vehicle(record, vehicle):
             continue
         records.append(hydrate_repair_intelligence_record(record))
+    if not records:
+        for record in load_repair_intelligence_seed_records():
+            if repair_intelligence_matches_vehicle(record, vehicle):
+                records.append(record)
     return records
 
 
@@ -1499,6 +1584,13 @@ def load_repair_intelligence_for_repair(
         if not repair_intelligence_matches_repair(record, repair_name):
             continue
         matches.append(hydrate_repair_intelligence_record(record))
+    if not matches:
+        for record in load_repair_intelligence_seed_records():
+            if not repair_intelligence_matches_vehicle(record, vehicle):
+                continue
+            if not repair_intelligence_matches_repair(record, repair_name):
+                continue
+            matches.append(record)
     return matches
 
 
@@ -5061,6 +5153,12 @@ def pro_repair_record_detail(
             vehicle,
             repair.get("repair_name"),
         )
+        if not repair_intelligence_records:
+            repair_intelligence_records = [
+                record
+                for record in load_repair_intelligence_seed_records()
+                if repair_intelligence_matches_repair(record, repair.get("repair_name"))
+            ]
     finally:
         conn.close()
 

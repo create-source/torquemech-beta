@@ -326,30 +326,31 @@
 
   .tm-intel-card {
     border: 1px solid rgba(15, 23, 42, 0.1);
-    border-left: 5px solid #0f766e;
+    border-top: 5px solid #0f766e;
+    border-left: 1px solid rgba(15, 23, 42, 0.1);
     border-radius: 8px;
     background: #fff;
     padding: 11px 12px;
   }
 
   .tm-intel-card--failure {
-    border-left-color: #dc2626;
+    border-top-color: #dc2626;
   }
 
   .tm-intel-card--comeback {
-    border-left-color: #d97706;
+    border-top-color: #d97706;
   }
 
   .tm-intel-card--parts {
-    border-left-color: #0e7490;
+    border-top-color: #0e7490;
   }
 
   .tm-intel-card--opportunity {
-    border-left-color: #7c3aed;
+    border-top-color: #7c3aed;
   }
 
   .tm-intel-card--collapsed {
-    border-left-color: #475569;
+    border-top-color: #475569;
     padding: 0;
     overflow: hidden;
   }
@@ -910,7 +911,8 @@
     display: grid;
     gap: 10px;
     border: 1px solid rgba(15, 23, 42, 0.08);
-    border-left: 4px solid #7c3aed;
+    border-top: 4px solid #7c3aed;
+    border-left: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 8px;
     background: #fff;
     padding: 12px;
@@ -1944,7 +1946,9 @@
               {% set critical_checks = item.blueprint.critical_checks or [] %}
               {% set show_more_checks = critical_checks and critical_checks != common_comebacks %}
               {% set vendor_links = item.blueprint.vendor_links or [] %}
+              {% set visual_layout = item.blueprint.visual_layout %}
               {% set recommended_parts = item.blueprint.recommended_parts or [] %}
+              {% set tools_required = item.blueprint.tools_required or [] %}
               {% set safety_notes = item.blueprint.safety_notes or [] %}
               <div class="tm-intel-card-stack">
                 {% if repair_brief %}
@@ -2021,7 +2025,83 @@
                 </details>
                 {% endif %}
 
-                {% if show_more_checks or recommended_parts or safety_notes or item.blueprint.labor_benchmark %}
+                {% if visual_layout %}
+                <details class="tm-intel-card tm-intel-card--collapsed" data-intel-section>
+                  <summary>Visual Layout</summary>
+                  <div class="tm-intel-card-body">
+                    {% if visual_layout.svg is defined %}
+                    <div class="tm-repair-intelligence-layout-head">
+                      {% if visual_layout.title is defined %}<strong>{{ visual_layout.title }}</strong>{% endif %}
+                      {% if visual_layout.kind is defined %}<span>{{ visual_layout.kind }}</span>{% endif %}
+                    </div>
+                    <div class="tm-repair-intelligence-svg" aria-label="{{ visual_layout.title or 'TorqueMech visual layout' }}">
+                      {{ visual_layout.svg|safe }}
+                    </div>
+                    {% if visual_layout.legend is defined %}
+                    <ul class="tm-intel-list tm-intel-list--compact">
+                      {% for item in visual_layout.legend %}
+                      <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% else %}
+                    <pre class="tm-repair-intelligence-layout">{{ visual_layout }}</pre>
+                    {% endif %}
+                  </div>
+                </details>
+                {% endif %}
+
+                {% if must_replace or recommended_parts or vendor_links or tools_required %}
+                <details class="tm-intel-card tm-intel-card--collapsed" data-intel-section>
+                  <summary>Parts Intelligence</summary>
+                  <div class="tm-intel-card-body">
+                    <div class="tm-parts-intelligence-grid">
+                      <div class="tm-parts-intelligence-group">
+                        <h4>Required Parts</h4>
+                        <ul class="tm-intel-list">
+                          {% for part in must_replace %}
+                          <li>{{ part }}</li>
+                          {% else %}
+                          <li>No required parts added.</li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                      <div class="tm-parts-intelligence-group">
+                        <h4>Recommended Parts</h4>
+                        <ul class="tm-intel-list">
+                          {% for part in recommended_parts %}
+                          <li>{{ part }}</li>
+                          {% else %}
+                          <li>No recommended parts added.</li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                      <div class="tm-parts-intelligence-group">
+                        <h4>Vendor Sources</h4>
+                        <ul class="tm-intel-list">
+                          {% for vendor in vendor_links %}
+                          <li>{{ vendor.label }}{% if vendor.status %}: {{ vendor.status }}{% endif %}</li>
+                          {% else %}
+                          <li>No vendor sources added.</li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                      <div class="tm-parts-intelligence-group">
+                        <h4>Special Tools</h4>
+                        <ul class="tm-intel-list">
+                          {% for tool in tools_required %}
+                          <li>{{ tool }}</li>
+                          {% else %}
+                          <li>No special tools added.</li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+                {% endif %}
+
+                {% if show_more_checks or safety_notes or item.blueprint.labor_benchmark %}
                 <details class="tm-intel-card tm-intel-card--collapsed" data-intel-section>
                   <summary>More Intelligence</summary>
                   <div class="tm-intel-card-body">
@@ -2032,22 +2112,16 @@
                         <span>{{ item.blueprint.labor_benchmark }}</span>
                       </div>
                       {% endif %}
-                      {% if show_more_checks %}
-                      <div class="tm-intel-row">
-                        <span class="tm-blueprint-spec-label">Critical Checks</span>
-                        <span>{{ critical_checks|join("; ") }}</span>
-                      </div>
-                      {% endif %}
-                      {% if recommended_parts %}
-                      <div class="tm-intel-row">
-                        <span class="tm-blueprint-spec-label">Recommended Parts</span>
-                        <span>{{ recommended_parts|join("; ") }}</span>
-                      </div>
-                      {% endif %}
                       {% if safety_notes %}
                       <div class="tm-intel-row">
                         <span class="tm-blueprint-spec-label">Safety Notes</span>
                         <span>{{ safety_notes|join("; ") }}</span>
+                      </div>
+                      {% endif %}
+                      {% if show_more_checks %}
+                      <div class="tm-intel-row">
+                        <span class="tm-blueprint-spec-label">Additional Observations</span>
+                        <span>{{ critical_checks|join("; ") }}</span>
                       </div>
                       {% endif %}
                     </div>

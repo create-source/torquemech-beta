@@ -6,10 +6,10 @@ RepairIntelligence = dict[str, Any]
 
 
 VENDOR_LINK_PLACEHOLDERS = [
-    {"label": "OEM", "status": "Placeholder"},
-    {"label": "RockAuto", "status": "Placeholder"},
-    {"label": "NAPA", "status": "Placeholder"},
-    {"label": "AutoZone", "status": "Placeholder"},
+    {"label": "OEM/dealer catalog", "status": "VIN-confirmed source"},
+    {"label": "RockAuto", "status": "Aftermarket fitment source"},
+    {"label": "NAPA", "status": "Local availability source"},
+    {"label": "AutoZone", "status": "Local availability source"},
 ]
 
 
@@ -50,10 +50,16 @@ REPAIR_BLUEPRINTS: dict[str, RepairIntelligence] = {
         "recommended_parts": ["Drain plug if rounded", "Splash shield clips if damaged"],
         "labor_benchmark": "0.3-0.6 hr; adjust for skid plates, cartridge filters, or access panels.",
         "critical_specs": [
-            {"label": "Oil capacity", "value": "Vehicle specific"},
-            {"label": "Oil viscosity", "value": "Vehicle specific"},
-            {"label": "Drain plug torque", "value": "Vehicle specific"},
+            {"label": "Oil capacity examples", "value": "4.4 qt compact 4-cyl; 5.7 qt midsize V6; 7.0 qt light-truck V8"},
+            {"label": "Drain plug torque examples", "value": "25 lb-ft small aluminum pan; 30 lb-ft steel pan; 33 lb-ft light truck"},
+            {"label": "Cartridge filter cap example", "value": "18 lb-ft / 25 Nm on many marked plastic caps"},
         ],
+        "visual_layout": {
+            "kind": "Service layout",
+            "title": "Oil Change Service Path",
+            "svg": "<svg viewBox=\"0 0 660 310\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"660\" height=\"310\" fill=\"#f8fafc\"/><rect x=\"60\" y=\"54\" width=\"540\" height=\"86\" rx=\"16\" fill=\"#e0f2fe\" stroke=\"#0891b2\"/><text x=\"330\" y=\"82\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"17\" font-weight=\"700\" fill=\"#0f172a\">Top side</text><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><circle cx=\"170\" cy=\"112\" r=\"20\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"170\" y=\"117\" text-anchor=\"middle\">Fill</text><circle cx=\"330\" cy=\"112\" r=\"20\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"330\" y=\"117\" text-anchor=\"middle\">Level</text><circle cx=\"490\" cy=\"112\" r=\"20\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"490\" y=\"117\" text-anchor=\"middle\">Reset</text></g><rect x=\"60\" y=\"178\" width=\"540\" height=\"86\" rx=\"16\" fill=\"#dcfce7\" stroke=\"#16a34a\"/><text x=\"330\" y=\"206\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"17\" font-weight=\"700\" fill=\"#0f172a\">Underside</text><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><rect x=\"138\" y=\"226\" width=\"64\" height=\"26\" rx=\"8\" fill=\"#fff\" stroke=\"#16a34a\"/><text x=\"170\" y=\"244\" text-anchor=\"middle\">Drain</text><rect x=\"292\" y=\"226\" width=\"76\" height=\"26\" rx=\"8\" fill=\"#fff\" stroke=\"#16a34a\"/><text x=\"330\" y=\"244\" text-anchor=\"middle\">Filter</text><rect x=\"448\" y=\"226\" width=\"84\" height=\"26\" rx=\"8\" fill=\"#fff\" stroke=\"#16a34a\"/><text x=\"490\" y=\"244\" text-anchor=\"middle\">Leak check</text></g></svg>",
+            "legend": ["Custom TorqueMech layout.", "Use exact capacity from vehicle service data."],
+        },
         "repair_steps": [
             "Confirm oil specification, capacity, filter application, and reset procedure.",
             "Inspect oil level and condition before draining.",
@@ -95,10 +101,17 @@ REPAIR_BLUEPRINTS: dict[str, RepairIntelligence] = {
         "recommended_parts": ["Terminal protectant", "Hold-down hardware if missing", "Memory saver when required"],
         "labor_benchmark": "0.3-0.8 hr; adjust for registration, under-seat, trunk, or cowl location.",
         "critical_specs": [
-            {"label": "Battery group", "value": "Vehicle specific"},
-            {"label": "CCA rating", "value": "Vehicle specific"},
-            {"label": "Terminal torque", "value": "Snug to spec; do not overtighten"},
+            {"label": "Resting voltage", "value": "12.6 V fully charged lead-acid reference"},
+            {"label": "Charging voltage", "value": "13.5-14.8 V typical running range"},
+            {"label": "Terminal clamp torque", "value": "44-62 lb-in common light-terminal range"},
+            {"label": "Hold-down torque", "value": "80-120 lb-in common range"},
         ],
+        "visual_layout": {
+            "kind": "Battery layout",
+            "title": "Battery Replacement Connection Order",
+            "svg": "<svg viewBox=\"0 0 650 320\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"650\" height=\"320\" fill=\"#f8fafc\"/><rect x=\"160\" y=\"70\" width=\"330\" height=\"160\" rx=\"18\" fill=\"#e2e8f0\" stroke=\"#64748b\" stroke-width=\"3\"/><rect x=\"196\" y=\"102\" width=\"78\" height=\"54\" rx=\"8\" fill=\"#fee2e2\" stroke=\"#e11d48\" stroke-width=\"3\"/><rect x=\"376\" y=\"102\" width=\"78\" height=\"54\" rx=\"8\" fill=\"#dbeafe\" stroke=\"#2563eb\" stroke-width=\"3\"/><text x=\"235\" y=\"136\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"30\" font-weight=\"700\" fill=\"#e11d48\">+</text><text x=\"415\" y=\"136\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"30\" font-weight=\"700\" fill=\"#2563eb\">-</text><rect x=\"250\" y=\"185\" width=\"150\" height=\"24\" rx=\"8\" fill=\"#fff\" stroke=\"#334155\"/><text x=\"325\" y=\"202\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"13\" font-weight=\"700\" fill=\"#0f172a\">Hold-down</text><text x=\"325\" y=\"262\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" font-weight=\"700\" fill=\"#64748b\">Negative off first; positive on first</text></svg>",
+            "legend": ["Custom TorqueMech layout.", "Confirm registration/BMS reset by vehicle."],
+        },
         "repair_steps": [
             "Test battery and charging system.",
             "Preserve memory if required.",
@@ -141,10 +154,17 @@ REPAIR_BLUEPRINTS: dict[str, RepairIntelligence] = {
         "recommended_parts": ["Front rotors if below spec or pulsating", "Brake lubricant", "Brake cleaner"],
         "labor_benchmark": "1.0-1.6 hr front axle; add time for rotors, seized hardware, or caliper service.",
         "critical_specs": [
-            {"label": "Wheel lug torque", "value": "Vehicle specific"},
-            {"label": "Caliper slide bolts", "value": "Vehicle specific"},
-            {"label": "Rotor minimum thickness", "value": "Vehicle specific"},
+            {"label": "Wheel lug torque", "value": "80 lb-ft on 2010 Accord example; many passenger cars 76-100 lb-ft"},
+            {"label": "Caliper slide bolts", "value": "26 lb-ft on 2010 Accord example"},
+            {"label": "Caliper bracket bolts", "value": "80 lb-ft on 2010 Accord example"},
+            {"label": "Brake fluid", "value": "DOT 3 on many Honda front brake services"},
         ],
+        "visual_layout": {
+            "kind": "Brake layout",
+            "title": "Front Disc Brake Service Points",
+            "svg": "<svg viewBox=\"0 0 660 340\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"660\" height=\"340\" fill=\"#f8fafc\"/><g transform=\"translate(80 48)\"><circle cx=\"120\" cy=\"125\" r=\"98\" fill=\"#e2e8f0\" stroke=\"#64748b\" stroke-width=\"3\"/><circle cx=\"120\" cy=\"125\" r=\"38\" fill=\"#fff\" stroke=\"#94a3b8\" stroke-width=\"2\"/><path d=\"M178 58 h68 q20 0 20 20 v94 q0 20-20 20 h-68 q22-31 22-67 t-22-67z\" fill=\"#fee2e2\" stroke=\"#e11d48\" stroke-width=\"3\"/><rect x=\"194\" y=\"82\" width=\"34\" height=\"86\" rx=\"7\" fill=\"#fff\" stroke=\"#e11d48\"/><rect x=\"234\" y=\"82\" width=\"18\" height=\"86\" rx=\"6\" fill=\"#fecdd3\" stroke=\"#e11d48\"/><text x=\"120\" y=\"252\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" font-weight=\"700\" fill=\"#334155\">Rotor: measure thickness and surface</text></g><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><line x1=\"330\" y1=\"118\" x2=\"470\" y2=\"78\" stroke=\"#334155\" stroke-width=\"2\"/><circle cx=\"330\" cy=\"118\" r=\"5\" fill=\"#334155\"/><text x=\"478\" y=\"82\" font-weight=\"700\">Slide pins</text><text x=\"478\" y=\"102\">clean, lube, torque</text><line x1=\"305\" y1=\"165\" x2=\"470\" y2=\"168\" stroke=\"#334155\" stroke-width=\"2\"/><circle cx=\"305\" cy=\"165\" r=\"5\" fill=\"#334155\"/><text x=\"478\" y=\"172\" font-weight=\"700\">Pads + hardware</text></g></svg>",
+            "legend": ["Custom TorqueMech layout.", "Shows service points, not exact OEM geometry."],
+        },
         "repair_steps": [
             "Confirm pad wear and rotor condition.",
             "Raise vehicle and remove front wheels.",
@@ -187,10 +207,16 @@ REPAIR_BLUEPRINTS: dict[str, RepairIntelligence] = {
         "recommended_parts": ["Coil boots if brittle or carbon tracked", "Anti-seize only if service information calls for it"],
         "labor_benchmark": "1.0-3.0 hr; adjust for intake removal, seized plugs, or engine bay access.",
         "critical_specs": [
-            {"label": "Plug torque", "value": "Vehicle specific"},
-            {"label": "Plug gap", "value": "Vehicle specific"},
-            {"label": "Coil bolt torque", "value": "Vehicle specific"},
+            {"label": "Plug torque", "value": "13 lb-ft / 156 lb-in for common Ford 5.4L 2-valve service"},
+            {"label": "Plug gap", "value": "0.054 in / 1.37 mm common Ford 5.4L example"},
+            {"label": "Coil bolt torque", "value": "62 lb-in common Ford modular coil fastener value"},
         ],
+        "visual_layout": {
+            "kind": "Cylinder layout",
+            "title": "Ignition Access Map",
+            "svg": "<svg viewBox=\"0 0 640 300\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"640\" height=\"300\" fill=\"#f8fafc\"/><text x=\"320\" y=\"28\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"18\" font-weight=\"700\" fill=\"#0f172a\">Front of engine</text><path d=\"M320 44 l-18 30 h36 z\" fill=\"#0f766e\"/><rect x=\"90\" y=\"82\" width=\"190\" height=\"160\" rx=\"14\" fill=\"#e0f2fe\" stroke=\"#0891b2\"/><rect x=\"360\" y=\"82\" width=\"190\" height=\"160\" rx=\"14\" fill=\"#ede9fe\" stroke=\"#7c3aed\"/><text x=\"185\" y=\"112\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" font-weight=\"700\" fill=\"#164e63\">Passenger bank</text><text x=\"455\" y=\"112\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"14\" font-weight=\"700\" fill=\"#4c1d95\">Driver bank</text><g font-family=\"Arial\" font-size=\"18\" font-weight=\"700\" text-anchor=\"middle\"><circle cx=\"125\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"125\" y=\"166\" fill=\"#0f172a\">1</text><circle cx=\"165\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"165\" y=\"196\" fill=\"#0f172a\">2</text><circle cx=\"205\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"205\" y=\"166\" fill=\"#0f172a\">3</text><circle cx=\"245\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#0891b2\"/><text x=\"245\" y=\"196\" fill=\"#0f172a\">4</text><circle cx=\"395\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"395\" y=\"166\" fill=\"#0f172a\">5</text><circle cx=\"435\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"435\" y=\"196\" fill=\"#0f172a\">6</text><circle cx=\"475\" cy=\"160\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"475\" y=\"166\" fill=\"#0f172a\">7</text><circle cx=\"515\" cy=\"190\" r=\"24\" fill=\"#fff\" stroke=\"#7c3aed\"/><text x=\"515\" y=\"196\" fill=\"#0f172a\">8</text></g><text x=\"320\" y=\"272\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"16\" font-weight=\"700\" fill=\"#64748b\">Firewall / cowl side</text></svg>",
+            "legend": ["Custom TorqueMech layout.", "Use service data for exact bank naming when diagnosis depends on cylinder numbering."],
+        },
         "repair_steps": [
             "Confirm engine configuration and plug application.",
             "Remove coils or wires and inspect boots.",
@@ -233,10 +259,17 @@ REPAIR_BLUEPRINTS: dict[str, RepairIntelligence] = {
         "recommended_parts": ["Water pump", "Thermostat", "Radiator hoses", "Spark plugs", "Valve cover gaskets"],
         "labor_benchmark": "Major engine labor; quote only after access, engine layout, and machine-shop needs are confirmed.",
         "critical_specs": [
-            {"label": "Head bolt sequence", "value": "Vehicle specific"},
-            {"label": "Head bolt torque/angle", "value": "Vehicle specific"},
-            {"label": "Deck warpage limit", "value": "Vehicle specific"},
+            {"label": "Cooling system pressure test", "value": "Test to cap/system rating; commonly near 16 psi"},
+            {"label": "Engine coolant capacity example", "value": "Approximately 13 qt range on large SUV V8 systems"},
+            {"label": "TTY warning", "value": "Treat head bolts as one-time-use when teardown is approved"},
+            {"label": "Leak-down evidence", "value": "Adjacent-cylinder leakage or coolant-bottle bubbling is decision-grade evidence"},
         ],
+        "visual_layout": {
+            "kind": "Diagnostic flow layout",
+            "title": "Head Gasket Evidence Flow",
+            "svg": "<svg viewBox=\"0 0 680 330\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"680\" height=\"330\" fill=\"#f8fafc\"/><g font-family=\"Arial\" font-size=\"14\" fill=\"#0f172a\"><rect x=\"40\" y=\"40\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#e0f2fe\" stroke=\"#0891b2\"/><text x=\"120\" y=\"66\" text-anchor=\"middle\" font-weight=\"700\">Coolant loss</text><text x=\"120\" y=\"86\" text-anchor=\"middle\">or overheat</text><rect x=\"260\" y=\"40\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fff\" stroke=\"#64748b\"/><text x=\"340\" y=\"66\" text-anchor=\"middle\" font-weight=\"700\">Pressure test</text><text x=\"340\" y=\"86\" text-anchor=\"middle\">hot and cold</text><rect x=\"480\" y=\"40\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fff\" stroke=\"#64748b\"/><text x=\"560\" y=\"66\" text-anchor=\"middle\" font-weight=\"700\">Cap / leak source</text><text x=\"560\" y=\"86\" text-anchor=\"middle\">confirm first</text><rect x=\"40\" y=\"154\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#ede9fe\" stroke=\"#7c3aed\"/><text x=\"120\" y=\"180\" text-anchor=\"middle\" font-weight=\"700\">Cold misfire</text><text x=\"120\" y=\"200\" text-anchor=\"middle\">or white smoke</text><rect x=\"260\" y=\"154\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fff\" stroke=\"#64748b\"/><text x=\"340\" y=\"180\" text-anchor=\"middle\" font-weight=\"700\">Cylinder evidence</text><text x=\"340\" y=\"200\" text-anchor=\"middle\">plug / borescope</text><rect x=\"480\" y=\"154\" width=\"160\" height=\"62\" rx=\"10\" fill=\"#fee2e2\" stroke=\"#e11d48\"/><text x=\"560\" y=\"180\" text-anchor=\"middle\" font-weight=\"700\">Leak-down</text><text x=\"560\" y=\"200\" text-anchor=\"middle\">bubble / adjacent cyl</text></g></svg>",
+            "legend": ["Custom TorqueMech layout.", "Use this to decide whether major teardown is justified."],
+        },
         "repair_steps": [
             "Confirm diagnosis and document cylinder-specific evidence.",
             "Set engine timing references before disassembly.",
