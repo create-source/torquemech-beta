@@ -1768,6 +1768,105 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def ensure_repair_checklist_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS repair_checklist_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          repair_record_id INTEGER NOT NULL,
+          task_name TEXT NOT NULL,
+          task_order INTEGER NOT NULL DEFAULT 0,
+          completed INTEGER NOT NULL DEFAULT 0,
+          completed_at TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_checklist_items_repair_record_id "
+        "ON repair_checklist_items (repair_record_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_checklist_items_completed_at "
+        "ON repair_checklist_items (completed_at)"
+    )
+    conn.commit()
+
+
+def load_repair_checklist_items(
+    conn: sqlite3.Connection,
+    repair_record_id: int,
+) -> list[dict[str, Any]]:
+    ensure_repair_checklist_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM repair_checklist_items
+            WHERE repair_record_id = ?
+            ORDER BY task_order ASC, id ASC
+            """,
+            (repair_record_id,),
+        ).fetchall()
+    ]
+
+
+def repair_checklist_progress(items: list[dict[str, Any]]) -> dict[str, int]:
+    total = len(items)
+    completed = sum(1 for item in items if int(item.get("completed") or 0))
+    percent = int(round((completed / total) * 100)) if total else 0
+    return {"completed": completed, "total": total, "percent": percent}
+
+
+def repair_checklist_summary(
+    conn: sqlite3.Connection,
+    repair_record_id: int | None,
+) -> dict[str, int]:
+    if not repair_record_id:
+        return {"completed": 0, "total": 0, "incomplete": 0, "percent": 0}
+    progress = repair_checklist_progress(load_repair_checklist_items(conn, repair_record_id))
+    return {
+        **progress,
+        "incomplete": max(progress["total"] - progress["completed"], 0),
+    }
+
+
+def repair_completion_requires_checklist_override(
+    conn: sqlite3.Connection,
+    repair_record_id: int | None,
+) -> bool:
+    summary = repair_checklist_summary(conn, repair_record_id)
+    return summary["total"] > 0 and summary["incomplete"] > 0
+
+
+def load_vehicle_repair_checklist_events(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+) -> list[dict[str, Any]]:
+    ensure_repair_checklist_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT rci.*, rr.customer_id, rr.vehicle_id, rr.repair_name
+            FROM repair_checklist_items rci
+            JOIN repair_records rr ON rr.id = rci.repair_record_id
+            WHERE rr.customer_id = ?
+              AND rr.vehicle_id = ?
+              AND rci.completed = 1
+              AND rci.completed_at IS NOT NULL
+              AND TRIM(rci.completed_at) != ''
+            ORDER BY rci.completed_at DESC, rci.id DESC
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
+
+
 def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
     conn.execute(
         """
@@ -2072,6 +2171,7 @@ def vehicle_finding_activity_payload(
     _customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
     ensure_maintenance_records_schema(conn)
     ensure_repair_records_schema(conn)
+    ensure_repair_checklist_schema(conn)
     ensure_service_history_schema(conn)
     ensure_service_history_records_schema(conn)
     ensure_findings_records_schema(conn)
@@ -2106,6 +2206,7 @@ def vehicle_finding_activity_payload(
         finding_history_records,
         customer_decision_logs,
         approval_event_records,
+        load_vehicle_repair_checklist_events(conn, customer_id, vehicle_id),
     )
     vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     finding_history_count = len(finding_history_records)
@@ -2684,6 +2785,7 @@ def build_vehicle_timeline(
     finding_history_records: list[dict[str, Any]],
     customer_decision_logs: list[dict[str, Any]],
     approval_event_records: list[dict[str, Any]] | None = None,
+    repair_checklist_events: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     groups: dict[str, dict[str, Any]] = {
         "repaired": {"key": "repaired", "title": "Repaired Services", "records": []},
@@ -2826,6 +2928,19 @@ def build_vehicle_timeline(
                 "service_name": event_label,
                 "mileage": None,
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/approvals/{record.get('approval_id')}",
+            },
+        )
+
+    for record in repair_checklist_events or []:
+        add_record(
+            "repaired",
+            {
+                "id": record["id"],
+                "date": record.get("completed_at") or "",
+                "created_at": record.get("completed_at") or record.get("created_at") or "",
+                "service_name": f"Checklist Completed: {record.get('task_name') or 'Checklist Item'}",
+                "mileage": None,
+                "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
             },
         )
 
@@ -3700,6 +3815,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_maintenance_records_schema(conn)
         ensure_repair_records_schema(conn)
+        ensure_repair_checklist_schema(conn)
         ensure_findings_records_schema(conn)
         ensure_finding_history_records_schema(conn)
         ensure_customer_decision_logs_schema(conn)
@@ -3840,6 +3956,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        repair_checklist_events = load_vehicle_repair_checklist_events(conn, customer_id, vehicle_id)
         seed_visual_references(conn)
         visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
         seed_repair_intelligence(conn)
@@ -3850,6 +3967,15 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 vehicle,
                 repair_record.get("repair_name"),
             )
+        linked_repair_record_ids = {
+            int(record.get("linked_repair_record_id") or 0)
+            for record in [*findings_records, *approval_records]
+            if record.get("linked_repair_record_id")
+        }
+        checklist_summaries = {
+            repair_record_id: repair_checklist_summary(conn, repair_record_id)
+            for repair_record_id in linked_repair_record_ids
+        }
     finally:
         conn.close()
 
@@ -3863,12 +3989,18 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         finding_history_records,
         customer_decision_logs,
         approval_event_records,
+        repair_checklist_events,
     )
     vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     repair_history_summary = build_repair_history_summary(repair_records)
     findings_summary = build_findings_summary(findings_records)
     approval_summary = build_approval_summary(approval_records)
     repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records)
+    for item in repair_work_items:
+        item["checklist_summary"] = checklist_summaries.get(
+            int(item.get("linked_repair_record_id") or 0),
+            {"completed": 0, "total": 0, "incomplete": 0, "percent": 0},
+        )
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",
@@ -4030,6 +4162,7 @@ def pro_finding_record_detail(
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         finding_history_records = load_finding_history_records(conn, finding_id)
+        checklist_summary = repair_checklist_summary(conn, finding.get("linked_repair_record_id"))
     finally:
         conn.close()
 
@@ -4041,6 +4174,7 @@ def pro_finding_record_detail(
             "vehicle": vehicle,
             "finding": finding,
             "finding_history_records": finding_history_records,
+            "checklist_summary": checklist_summary,
             "repair_work_status_options": [
                 {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
                 for value in REPAIR_WORK_STATUS_OPTIONS
@@ -4319,6 +4453,15 @@ async def pro_finding_repair_work_status_update(
         previous_repair_status = existing.get("repair_work_status") or (
             "completed" if existing.get("status") == "Completed" else "ready"
         )
+        if (
+            repair_status == "completed"
+            and repair_completion_requires_checklist_override(conn, existing.get("linked_repair_record_id"))
+            and not str(form.get("checklist_override_notes") or "").strip()
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Repair checklist contains incomplete items. Override notes are required.",
+            )
         next_finding_status = "Completed" if repair_status == "completed" else "Approved"
         conn.execute(
             """
@@ -4338,6 +4481,7 @@ async def pro_finding_repair_work_status_update(
                 repair_status,
                 "repair_work_status_changed",
                 now,
+                notes=str(form.get("checklist_override_notes") or "").strip(),
             )
         conn.commit()
     finally:
@@ -4499,6 +4643,7 @@ def pro_approval_record_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         approval = load_approval_record(conn, customer_id, vehicle_id, approval_id)
+        checklist_summary = repair_checklist_summary(conn, approval.get("linked_repair_record_id"))
     finally:
         conn.close()
 
@@ -4509,6 +4654,7 @@ def pro_approval_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "approval": approval,
+            "checklist_summary": checklist_summary,
             "repair_work_status_options": [
                 {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
                 for value in REPAIR_WORK_STATUS_OPTIONS
@@ -4846,6 +4992,15 @@ async def pro_approval_repair_work_status_update(
         if normalize_approval_decision(existing.get("customer_decision")) != "approved":
             raise HTTPException(status_code=400, detail="Approval request must be approved before repair work starts")
         previous_repair_status = existing.get("repair_work_status") or "ready"
+        if (
+            repair_status == "completed"
+            and repair_completion_requires_checklist_override(conn, existing.get("linked_repair_record_id"))
+            and not str(form.get("checklist_override_notes") or "").strip()
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Repair checklist contains incomplete items. Override notes are required.",
+            )
         conn.execute(
             """
             UPDATE discrepancy_approvals
@@ -4857,13 +5012,17 @@ async def pro_approval_repair_work_status_update(
             (repair_status, now, now, approval_id, customer_id, vehicle_id),
         )
         if previous_repair_status != repair_status:
+            checklist_override_notes = str(form.get("checklist_override_notes") or "").strip()
             append_discrepancy_approval_event(
                 conn,
                 approval_id,
                 customer_id,
                 vehicle_id,
                 "repair_work_status_changed",
-                f"Repair Workflow {repair_work_status_label(repair_status)}: {repair_work_title_from_approval(existing)}",
+                (
+                    f"Repair Workflow {repair_work_status_label(repair_status)}: {repair_work_title_from_approval(existing)}"
+                    + (f" (Checklist override: {checklist_override_notes})" if checklist_override_notes else "")
+                ),
                 now,
             )
         conn.commit()
@@ -5147,6 +5306,8 @@ def pro_repair_record_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        checklist_items = load_repair_checklist_items(conn, repair_id)
+        checklist_progress = repair_checklist_progress(checklist_items)
         seed_repair_intelligence(conn)
         repair_intelligence_records = load_repair_intelligence_for_repair(
             conn,
@@ -5169,8 +5330,170 @@ def pro_repair_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "repair": repair,
+            "checklist_items": checklist_items,
+            "checklist_progress": checklist_progress,
             "repair_intelligence_records": repair_intelligence_records,
         },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/checklist")
+async def pro_repair_checklist_item_create(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+):
+    form = await read_form_data(request)
+    task_name = str(form.get("task_name") or "").strip()
+    if not task_name:
+        raise HTTPException(status_code=400, detail="Checklist task name is required")
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        ensure_repair_checklist_schema(conn)
+        next_order = conn.execute(
+            "SELECT COALESCE(MAX(task_order), 0) + 1 AS next_order FROM repair_checklist_items WHERE repair_record_id = ?",
+            (repair_id,),
+        ).fetchone()["next_order"]
+        conn.execute(
+            """
+            INSERT INTO repair_checklist_items (
+              repair_record_id, task_name, task_order, completed, completed_at, notes, created_at
+            )
+            VALUES (?, ?, ?, 0, NULL, ?, ?)
+            """,
+            (repair_id, task_name, next_order, form.get("notes", ""), now),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-checklist",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/checklist/{item_id}")
+async def pro_repair_checklist_item_update(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int, item_id: int
+):
+    form = await read_form_data(request)
+    task_name = str(form.get("task_name") or "").strip()
+    if not task_name:
+        raise HTTPException(status_code=400, detail="Checklist task name is required")
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        ensure_repair_checklist_schema(conn)
+        cur = conn.execute(
+            """
+            UPDATE repair_checklist_items
+            SET task_name = ?, notes = ?
+            WHERE id = ? AND repair_record_id = ?
+            """,
+            (task_name, form.get("notes", ""), item_id, repair_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Checklist item not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-checklist",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/checklist/{item_id}/toggle")
+async def pro_repair_checklist_item_toggle(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int, item_id: int
+):
+    form = await read_form_data(request)
+    completed = form.get("completed") == "1"
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        ensure_repair_checklist_schema(conn)
+        cur = conn.execute(
+            """
+            UPDATE repair_checklist_items
+            SET completed = ?, completed_at = ?
+            WHERE id = ? AND repair_record_id = ?
+            """,
+            (1 if completed else 0, now if completed else None, item_id, repair_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Checklist item not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-checklist",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/checklist/{item_id}/move")
+async def pro_repair_checklist_item_move(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int, item_id: int
+):
+    form = await read_form_data(request)
+    direction = str(form.get("direction") or "").strip()
+    if direction not in {"up", "down"}:
+        raise HTTPException(status_code=400, detail="Checklist move direction is invalid")
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        items = load_repair_checklist_items(conn, repair_id)
+        index = next((idx for idx, item in enumerate(items) if int(item["id"]) == item_id), None)
+        if index is None:
+            raise HTTPException(status_code=404, detail="Checklist item not found")
+        swap_index = index - 1 if direction == "up" else index + 1
+        if 0 <= swap_index < len(items):
+            current = items[index]
+            other = items[swap_index]
+            conn.execute(
+                "UPDATE repair_checklist_items SET task_order = ? WHERE id = ?",
+                (other["task_order"], current["id"]),
+            )
+            conn.execute(
+                "UPDATE repair_checklist_items SET task_order = ? WHERE id = ?",
+                (current["task_order"], other["id"]),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-checklist",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/checklist/{item_id}/delete")
+async def pro_repair_checklist_item_delete(
+    customer_id: int, vehicle_id: int, repair_id: int, item_id: int
+):
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        ensure_repair_checklist_schema(conn)
+        cur = conn.execute(
+            "DELETE FROM repair_checklist_items WHERE id = ? AND repair_record_id = ?",
+            (item_id, repair_id),
+        )
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Checklist item not found")
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-checklist",
+        status_code=303,
     )
 
 

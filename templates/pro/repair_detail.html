@@ -17,7 +17,50 @@
   .tm-repair-field { display:grid; gap:3px; }
   .tm-repair-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
   .tm-repair-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
-  @media (max-width:760px) { .tm-repair-grid { grid-template-columns:1fr; } }
+  .tm-checklist-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-left: 5px solid #0f766e;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 18px;
+    max-width: 920px;
+    margin-top: 16px;
+  }
+  .tm-checklist-head { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+  .tm-checklist-progress { min-width:180px; display:grid; gap:6px; }
+  .tm-checklist-progress strong { color:#0f172a; font-size:1.4rem; }
+  .tm-checklist-bar { height:10px; border-radius:999px; background:#e2e8f0; overflow:hidden; }
+  .tm-checklist-bar span { display:block; height:100%; background:#0f766e; }
+  .tm-checklist-add { display:grid; grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr) auto; gap:10px; margin-top:16px; align-items:end; }
+  .tm-checklist-list { display:grid; gap:10px; margin-top:16px; }
+  .tm-checklist-item { border:1px solid rgba(15,23,42,.1); border-radius:8px; padding:12px; background:#fff; display:grid; gap:10px; }
+  .tm-checklist-main { display:grid; grid-template-columns:auto minmax(0, 1fr); gap:12px; align-items:start; }
+  .tm-checklist-toggle button {
+    width:48px;
+    height:48px;
+    border-radius:8px;
+    border:2px solid #cbd5e1;
+    background:#f8fafc;
+    color:#0f766e;
+    font-size:1.5rem;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .tm-checklist-toggle button:hover { border-color:#0f766e; background:#ecfdf5; }
+  .tm-checklist-title { font-weight:900; color:#0f172a; overflow-wrap:anywhere; }
+  .tm-checklist-title--done { color:#64748b; text-decoration:line-through; }
+  .tm-checklist-meta { color:#64748b; font-size:.84rem; margin-top:3px; }
+  .tm-checklist-note { color:#475569; margin-top:5px; white-space:pre-wrap; }
+  .tm-checklist-controls { display:flex; gap:8px; flex-wrap:wrap; }
+  .tm-checklist-edit { border-top:1px solid rgba(15,23,42,.08); padding-top:10px; }
+  .tm-checklist-edit summary { cursor:pointer; font-weight:900; color:#334155; }
+  .tm-checklist-edit-grid { display:grid; grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr) auto; gap:10px; margin-top:10px; align-items:end; }
+  @media (max-width:760px) {
+    .tm-repair-grid,
+    .tm-checklist-add,
+    .tm-checklist-edit-grid { grid-template-columns:1fr; }
+    .tm-checklist-toggle button { width:56px; height:56px; }
+  }
 </style>
 {% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
@@ -50,6 +93,88 @@
       <a class="tm-btn tm-btn-secondary" href="#repair-intelligence-repair-{{ repair.id }}" data-repair-intelligence-open="repair-intelligence-repair-{{ repair.id }}">View Intelligence</a>
     </div>
   </section>
+
+  <section class="tm-checklist-panel" id="repair-checklist" aria-label="Repair Checklist">
+    <div class="tm-checklist-head">
+      <div>
+        <div class="tm-crm-kicker">Repair Checklist</div>
+        <h2 style="margin:4px 0 0;">Execution Checklist</h2>
+      </div>
+      <div class="tm-checklist-progress" aria-label="Checklist progress">
+        <strong>{{ checklist_progress.completed }} / {{ checklist_progress.total }}</strong>
+        <span>{{ checklist_progress.percent }}% complete</span>
+        <div class="tm-checklist-bar" aria-hidden="true"><span style="width:{{ checklist_progress.percent }}%;"></span></div>
+      </div>
+    </div>
+
+    <form class="tm-checklist-add" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist">
+      <div>
+        <label class="tm-label" for="task_name">Task</label>
+        <input class="tm-input" id="task_name" name="task_name" type="text" maxlength="180" placeholder="Add checklist item">
+      </div>
+      <div>
+        <label class="tm-label" for="task_notes">Notes</label>
+        <input class="tm-input" id="task_notes" name="notes" type="text" maxlength="600" placeholder="Optional">
+      </div>
+      <button class="tm-btn tm-btn-primary" type="submit">Add Item</button>
+    </form>
+
+    {% if checklist_items %}
+    <div class="tm-checklist-list">
+      {% for item in checklist_items %}
+      <article class="tm-checklist-item">
+        <div class="tm-checklist-main">
+          <form class="tm-checklist-toggle" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/toggle">
+            <input type="hidden" name="completed" value="{{ 0 if item.completed else 1 }}">
+            <button type="submit" aria-label="{% if item.completed %}Mark incomplete{% else %}Mark complete{% endif %}">
+              {% if item.completed %}&#10003;{% else %}{% endif %}
+            </button>
+          </form>
+          <div>
+            <div class="tm-checklist-title{% if item.completed %} tm-checklist-title--done{% endif %}">{{ item.task_name }}</div>
+            <div class="tm-checklist-meta">
+              Item {{ loop.index }}{% if item.completed_at %} | Completed {{ item.completed_at|pro_datetime }}{% endif %}
+            </div>
+            {% if item.notes %}
+            <div class="tm-checklist-note">{{ item.notes }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="tm-checklist-controls">
+          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/move">
+            <input type="hidden" name="direction" value="up">
+            <button class="tm-btn tm-btn-secondary" type="submit" {% if loop.first %}disabled{% endif %}>Move Up</button>
+          </form>
+          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/move">
+            <input type="hidden" name="direction" value="down">
+            <button class="tm-btn tm-btn-secondary" type="submit" {% if loop.last %}disabled{% endif %}>Move Down</button>
+          </form>
+          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/delete">
+            <button class="tm-btn tm-btn-secondary" type="submit">Delete</button>
+          </form>
+        </div>
+        <details class="tm-checklist-edit">
+          <summary>Edit Checklist Item</summary>
+          <form class="tm-checklist-edit-grid" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}">
+            <div>
+              <label class="tm-label" for="edit_task_name_{{ item.id }}">Task</label>
+              <input class="tm-input" id="edit_task_name_{{ item.id }}" name="task_name" type="text" maxlength="180" value="{{ item.task_name }}">
+            </div>
+            <div>
+              <label class="tm-label" for="edit_task_notes_{{ item.id }}">Notes</label>
+              <input class="tm-input" id="edit_task_notes_{{ item.id }}" name="notes" type="text" maxlength="600" value="{{ item.notes or '' }}">
+            </div>
+            <button class="tm-btn tm-btn-primary" type="submit">Save</button>
+          </form>
+        </details>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:16px;">No checklist items yet.</div>
+    {% endif %}
+  </section>
+
   {{ repair_intelligence_drawer(
     "repair-intelligence-repair-" ~ repair.id,
     repair.repair_name or "Repair Intelligence",

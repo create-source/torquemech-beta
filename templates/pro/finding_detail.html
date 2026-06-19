@@ -76,6 +76,16 @@
         {% endfor %}
       </select>
     </div>
+    {% if checklist_summary.total and checklist_summary.incomplete %}
+    <div style="border:1px solid rgba(217,119,6,.28); border-radius:8px; background:#fffbeb; padding:12px; color:#92400e;">
+      <strong>Repair checklist contains incomplete items.</strong>
+      <div style="margin-top:4px;">{{ checklist_summary.completed }} / {{ checklist_summary.total }} complete. Override notes are required to mark this repair complete.</div>
+    </div>
+    <div>
+      <label class="tm-label" for="checklist_override_notes">Checklist override notes</label>
+      <textarea class="tm-input" id="checklist_override_notes" name="checklist_override_notes" rows="3" maxlength="800" placeholder="Reason for completing with checklist items still open."></textarea>
+    </div>
+    {% endif %}
     <div class="tm-finding-actions" style="margin-top:0;">
       <button class="tm-btn tm-btn-primary" type="submit">Update Repair Status</button>
     </div>

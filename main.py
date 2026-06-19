@@ -521,6 +521,29 @@ def init_pro_crm_schema_db() -> None:
               AND workflow_source_id IS NOT NULL
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS repair_checklist_items (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              repair_record_id INTEGER NOT NULL,
+              task_name TEXT NOT NULL,
+              task_order INTEGER NOT NULL DEFAULT 0,
+              completed INTEGER NOT NULL DEFAULT 0,
+              completed_at TEXT,
+              notes TEXT,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
+            )
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_repair_checklist_items_repair_record_id "
+            "ON repair_checklist_items (repair_record_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_repair_checklist_items_completed_at "
+            "ON repair_checklist_items (completed_at)"
+        )
 
         # Pro groundwork: mechanic-authored inspection findings and recommendations.
         conn.execute(

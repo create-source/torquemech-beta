@@ -1869,6 +1869,14 @@
               <option value="{{ option.value }}" {% if item.repair_work_status == option.value %}selected{% endif %}>{{ option.label }}</option>
               {% endfor %}
             </select>
+            {% if item.checklist_summary.total and item.checklist_summary.incomplete %}
+            <div style="border:1px solid rgba(217,119,6,.28); border-radius:8px; background:#fffbeb; padding:10px; color:#92400e; margin-top:10px;">
+              <strong>Repair checklist contains incomplete items.</strong>
+              <div style="margin-top:4px;">{{ item.checklist_summary.completed }} / {{ item.checklist_summary.total }} complete.</div>
+            </div>
+            <label class="tm-label" for="checklist_override_notes_{{ item.source_type }}_{{ item.source_id }}" style="margin-top:10px;">Checklist override notes</label>
+            <textarea class="tm-input" id="checklist_override_notes_{{ item.source_type }}_{{ item.source_id }}" name="checklist_override_notes" rows="3" maxlength="800" placeholder="Required when marking complete with checklist items still open."></textarea>
+            {% endif %}
           </div>
           <button class="tm-btn tm-btn-primary" type="submit">Update</button>
           <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">Open Source</a>
