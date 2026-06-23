@@ -70,6 +70,7 @@ CUSTOMER_DECISION_LOG_STATUSES = {"Approved", "Deferred", "Declined"}
 APPROVAL_REQUEST_TYPES = ("finding", "labor", "parts")
 APPROVAL_DECISION_OPTIONS = ("pending", "approved", "declined", "deferred")
 REPAIR_WORK_STATUS_OPTIONS = ("ready", "in_progress", "waiting_parts", "completed")
+REPAIR_EXECUTION_STATUS_OPTIONS = ("ready", "in_progress", "waiting_parts")
 REPAIR_WORK_STATUS_LABELS = {
     "ready": "Ready for Repair",
     "in_progress": "In Progress",
@@ -1854,11 +1855,16 @@ def load_invoice_record(
               i.*,
               rr.repair_name,
               rr.repair_date,
+              rr.labor_hours,
+              rr.labor_cost AS repair_labor_total,
+              rr.parts_cost AS repair_parts_total,
               rr.mileage AS repair_mileage,
               rr.notes AS repair_notes,
-              rr.completed_at
+              rr.completed_at,
+              rc.completion_notes
             FROM invoices i
             JOIN repair_records rr ON rr.id = i.repair_record_id
+            LEFT JOIN repair_completions rc ON rc.repair_record_id = rr.id
             WHERE i.id = ?
               AND i.customer_id = ?
               AND i.vehicle_id = ?
@@ -1868,7 +1874,40 @@ def load_invoice_record(
     )
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    return invoice
+    return invoice_display_record(invoice)
+
+
+def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
+    record = dict(invoice)
+    repair_labor_total = record.get("repair_labor_total")
+    repair_parts_total = record.get("repair_parts_total")
+    labor_total = round(float(repair_labor_total or 0), 2)
+    parts_total = round(float(repair_parts_total or 0), 2)
+    record["labor_total"] = labor_total
+    record["parts_total"] = parts_total
+    record["parts_cost"] = parts_total
+    record["grand_total"] = round(labor_total + parts_total, 2)
+    try:
+        labor_hours = float(record.get("labor_hours") or 0)
+    except (TypeError, ValueError):
+        labor_hours = 0
+    record["labor_rate"] = round(labor_total / labor_hours, 2) if labor_hours > 0 else None
+    completion_notes = str(record.get("completion_notes") or "").strip()
+    repair_notes = str(record.get("repair_notes") or "").strip()
+    record["repair_notes"] = completion_notes or repair_notes
+    return record
+
+
+def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
+    if (repair.get("status") or "") != "Completed":
+        return []
+    labor_total = float(repair.get("labor_cost") or 0)
+    parts_total = float(repair.get("parts_cost") or 0)
+    if round(labor_total + parts_total, 2) <= 0:
+        return [
+            "Invoice cannot be generated until this completed repair has labor or parts totals recorded."
+        ]
+    return []
 
 
 def load_vehicle_invoice_records(
@@ -1907,6 +1946,9 @@ def create_invoice_for_repair(
         return existing
     if (repair.get("status") or "") != "Completed":
         raise HTTPException(status_code=400, detail="Repair must be completed before invoicing")
+    warnings = repair_invoice_warnings(repair)
+    if warnings:
+        raise HTTPException(status_code=400, detail=warnings[0])
 
     labor_total = round(float(repair.get("labor_cost") or 0), 2)
     parts_total = round(float(repair.get("parts_cost") or 0), 2)
@@ -2017,9 +2059,9 @@ def build_invoice_pdf_bytes(
 
     section("Completed Repair")
     row("Title", invoice.get("repair_name") or "Repair")
-    row("Completed", format_pro_date(invoice.get("completed_at")) or "-")
+    row("Completion Date", format_pro_date(invoice.get("completed_at")) or "-")
     c.setFont("Helvetica-Bold", 9)
-    c.drawString(left, y, "Notes")
+    c.drawString(left, y, "Repair Notes")
     c.setFont("Helvetica", 10)
     note_y = y
     for line in pdf_lines(invoice.get("repair_notes") or "-", 76)[:8]:
@@ -2031,14 +2073,18 @@ def build_invoice_pdf_bytes(
     c.drawString(left, y, "Totals")
     y -= 18
     totals = [
+        ("Labor Hours", invoice.get("labor_hours") if invoice.get("labor_hours") is not None else "-"),
+        ("Labor Rate", f"{format_currency(invoice.get('labor_rate'))}/hr" if invoice.get("labor_rate") is not None else "-"),
         ("Labor Total", invoice.get("labor_total")),
+        ("Parts Cost", invoice.get("parts_cost")),
         ("Parts Total", invoice.get("parts_total")),
         ("Grand Total", invoice.get("grand_total")),
     ]
     for label, value in totals:
         c.setFont("Helvetica-Bold" if label == "Grand Total" else "Helvetica", 11)
         c.drawString(left, y, label)
-        c.drawRightString(right, y, format_currency(value) or "$0.00")
+        display_value = value if isinstance(value, str) else (format_currency(value) or "$0.00")
+        c.drawRightString(right, y, display_value)
         y -= 17
 
     c.setFont("Helvetica", 9)
@@ -2712,6 +2758,44 @@ def load_repair_record(
     if not repair:
         raise HTTPException(status_code=404, detail="Repair record not found")
     return repair
+
+
+def repair_execution_status_context(
+    conn: sqlite3.Connection,
+    repair: dict[str, Any],
+    customer_id: int,
+    vehicle_id: int,
+) -> dict[str, Any] | None:
+    source_type = normalize_workflow_source_type(repair.get("workflow_source_type"))
+    source_id = repair.get("workflow_source_id")
+    if not source_type or source_id is None:
+        return None
+    try:
+        source_id = int(source_id)
+    except (TypeError, ValueError):
+        return None
+    if source_type == "finding":
+        source = load_finding_record(conn, customer_id, vehicle_id, source_id)
+        current_status = source.get("repair_work_status") or (
+            "completed" if source.get("status") == "Completed" else "ready"
+        )
+    else:
+        source = load_approval_record(conn, customer_id, vehicle_id, source_id)
+        current_status = source.get("repair_work_status") or "ready"
+    try:
+        current_status = normalize_repair_work_status(current_status)
+    except HTTPException:
+        current_status = "ready"
+    return {
+        "source_type": source_type,
+        "source_id": source_id,
+        "status": current_status,
+        "status_label": repair_work_status_label(current_status),
+        "options": [
+            {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
+            for value in REPAIR_EXECUTION_STATUS_OPTIONS
+        ],
+    }
 
 
 def load_finding_record(
@@ -5003,6 +5087,7 @@ async def pro_finding_record_status_update(
 async def pro_finding_repair_work_status_update(
     request: Request, customer_id: int, vehicle_id: int, finding_id: int
 ):
+    raise HTTPException(status_code=405, detail="Repair status is managed from the linked repair execution record")
     form = await read_form_data(request)
     repair_status = normalize_repair_work_status(form.get("repair_work_status"))
     now = datetime.utcnow().isoformat()
@@ -5543,6 +5628,7 @@ async def pro_approval_record_defer(
 async def pro_approval_repair_work_status_update(
     request: Request, customer_id: int, vehicle_id: int, approval_id: int
 ):
+    raise HTTPException(status_code=405, detail="Repair status is managed from the linked repair execution record")
     form = await read_form_data(request)
     repair_status = normalize_repair_work_status(form.get("repair_work_status"))
     now = datetime.utcnow().isoformat()
@@ -5875,6 +5961,8 @@ def pro_repair_record_detail(
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
         invoice = load_invoice_for_repair(conn, repair_id)
+        repair_execution_status = repair_execution_status_context(conn, repair, customer_id, vehicle_id)
+        invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
         checklist_items = load_repair_checklist_items(conn, repair_id)
         checklist_progress = repair_checklist_progress(checklist_items)
         completion = load_repair_completion(conn, repair_id)
@@ -5902,6 +5990,8 @@ def pro_repair_record_detail(
             "vehicle": vehicle,
             "repair": repair,
             "invoice": invoice,
+            "invoice_warnings": invoice_warnings,
+            "repair_execution_status": repair_execution_status,
             "checklist_items": checklist_items,
             "checklist_progress": checklist_progress,
             "completion": completion,
@@ -5914,12 +6004,28 @@ def pro_repair_record_detail(
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/invoice")
-async def pro_invoice_generate(customer_id: int, vehicle_id: int, repair_id: int):
+async def pro_invoice_generate(request: Request, customer_id: int, vehicle_id: int, repair_id: int):
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        warnings = repair_invoice_warnings(repair)
+        if warnings and not load_invoice_for_repair(conn, repair_id):
+            context = completion_detail_context(
+                conn,
+                request=request,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                repair_id=repair_id,
+                completion_warnings=[],
+            )
+            context["invoice_warnings"] = warnings
+            return templates.TemplateResponse(
+                "pro/repair_detail.html",
+                context,
+                status_code=400,
+            )
         invoice = create_invoice_for_repair(
             conn,
             repair=repair,
@@ -5992,6 +6098,8 @@ def completion_detail_context(
     customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
     repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
     invoice = load_invoice_for_repair(conn, repair_id)
+    repair_execution_status = repair_execution_status_context(conn, repair, customer_id, vehicle_id)
+    invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
     checklist_items = load_repair_checklist_items(conn, repair_id)
     checklist_progress = repair_checklist_progress(checklist_items)
     completion = load_repair_completion(conn, repair_id)
@@ -6014,6 +6122,8 @@ def completion_detail_context(
         "vehicle": vehicle,
         "repair": repair,
         "invoice": invoice,
+        "invoice_warnings": invoice_warnings,
+        "repair_execution_status": repair_execution_status,
         "checklist_items": checklist_items,
         "checklist_progress": checklist_progress,
         "completion": completion,
@@ -6095,6 +6205,85 @@ def sync_repair_completion_source(
             f"Repair Workflow {repair_work_status_label('completed')}: {repair_work_title_from_approval(existing)}",
             now,
         )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/workflow-status")
+async def pro_repair_execution_status_update(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+):
+    form = await read_form_data(request)
+    repair_status = normalize_repair_work_status(form.get("repair_work_status"))
+    if repair_status == "completed":
+        raise HTTPException(status_code=400, detail="Use Repair Completion to complete repair work")
+    now = datetime.utcnow().isoformat()
+
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        if (repair.get("status") or "") == "Completed":
+            raise HTTPException(status_code=400, detail="Completed repairs cannot be moved back from Repair Execution")
+        source_type = normalize_workflow_source_type(repair.get("workflow_source_type"))
+        source_id = repair.get("workflow_source_id")
+        if not source_type or source_id is None:
+            raise HTTPException(status_code=400, detail="Repair is not linked to a repair workflow source")
+        source_id = int(source_id)
+        if source_type == "finding":
+            existing = load_finding_record(conn, customer_id, vehicle_id, source_id)
+            previous_repair_status = existing.get("repair_work_status") or (
+                "completed" if existing.get("status") == "Completed" else "ready"
+            )
+            if (existing.get("status") or "") not in {"Approved", "Completed"}:
+                raise HTTPException(status_code=400, detail="Finding must be approved before repair work starts")
+            conn.execute(
+                """
+                UPDATE findings_records
+                SET repair_work_status = ?,
+                    repair_work_updated_at = ?,
+                    status = 'Approved'
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (repair_status, now, source_id, customer_id, vehicle_id),
+            )
+            if previous_repair_status != repair_status:
+                append_finding_history_record(
+                    conn,
+                    source_id,
+                    previous_repair_status,
+                    repair_status,
+                    "repair_work_status_changed",
+                    now,
+                )
+        else:
+            existing = load_approval_record(conn, customer_id, vehicle_id, source_id)
+            previous_repair_status = existing.get("repair_work_status") or "ready"
+            conn.execute(
+                """
+                UPDATE discrepancy_approvals
+                SET repair_work_status = ?,
+                    repair_work_updated_at = ?,
+                    updated_at = ?
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (repair_status, now, now, source_id, customer_id, vehicle_id),
+            )
+            if previous_repair_status != repair_status:
+                append_discrepancy_approval_event(
+                    conn,
+                    source_id,
+                    customer_id,
+                    vehicle_id,
+                    "repair_work_status_changed",
+                    f"Repair Workflow {repair_work_status_label(repair_status)}: {repair_work_title_from_approval(existing)}",
+                    now,
+                )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-execution-status",
+        status_code=303,
+    )
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/completion")

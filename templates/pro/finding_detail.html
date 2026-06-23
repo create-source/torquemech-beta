@@ -23,6 +23,18 @@
   .tm-finding-history-time { color:#64748b; font-size:.82rem; font-weight:800; }
   .tm-finding-history-event { margin-top:4px; font-weight:900; color:#0f172a; }
   .tm-finding-history-finding { margin-top:3px; color:#475569; }
+  .tm-status-chip {
+    display:inline-flex;
+    align-items:center;
+    min-height:30px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:#e0f2fe;
+    color:#075985;
+    font-size:.78rem;
+    font-weight:900;
+    text-transform:uppercase;
+  }
   @media (max-width:760px) { .tm-finding-grid { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
@@ -66,30 +78,16 @@
   </section>
 
   {% if finding.status in ["Approved", "Completed"] %}
-  <form class="tm-finding-panel tm-finding-notes" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/repair-work" aria-label="Repair workflow">
+  <section class="tm-finding-panel tm-finding-notes" aria-label="Repair workflow">
     <div class="tm-crm-kicker">Repair Workflow</div>
-    <div>
-      <label class="tm-label" for="repair_work_status">Repair Status</label>
-      <select class="tm-input" id="repair_work_status" name="repair_work_status">
-        {% for option in repair_work_status_options %}
-        <option value="{{ option.value }}" {% if (finding.repair_work_status or ('completed' if finding.status == 'Completed' else 'ready')) == option.value %}selected{% endif %}>{{ option.label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    {% if checklist_summary.total and checklist_summary.incomplete %}
-    <div style="border:1px solid rgba(217,119,6,.28); border-radius:8px; background:#fffbeb; padding:12px; color:#92400e;">
-      <strong>Repair checklist contains incomplete items.</strong>
-      <div style="margin-top:4px;">{{ checklist_summary.completed }} / {{ checklist_summary.total }} complete. Override notes are required to mark this repair complete.</div>
-    </div>
-    <div>
-      <label class="tm-label" for="checklist_override_notes">Checklist override notes</label>
-      <textarea class="tm-input" id="checklist_override_notes" name="checklist_override_notes" rows="3" maxlength="800" placeholder="Reason for completing with checklist items still open."></textarea>
+    <div><span class="tm-status-chip">{{ repair_work_status_label }}</span></div>
+    <div style="color:#64748b;">Repair progress is managed from the linked repair execution record.</div>
+    {% if finding.linked_repair_record_id %}
+    <div class="tm-finding-actions" style="margin-top:0;">
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair</a>
     </div>
     {% endif %}
-    <div class="tm-finding-actions" style="margin-top:0;">
-      <button class="tm-btn tm-btn-primary" type="submit">Update Repair Status</button>
-    </div>
-  </form>
+  </section>
   {% endif %}
 
   <form class="tm-finding-panel tm-finding-notes" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/notes" aria-label="Finding notes">

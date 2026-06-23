@@ -235,13 +235,6 @@
     align-items: center;
   }
 
-  .tm-repair-work-status-form {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: end;
-  }
-
   .tm-repair-work-source {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
     padding-top: 10px;
@@ -1585,8 +1578,7 @@
 
     .tm-blueprint-summary-head,
     .tm-repair-intelligence-head,
-    .tm-repair-work-form,
-    .tm-repair-work-status-form {
+    .tm-repair-work-form {
       display: grid;
       grid-template-columns: 1fr;
     }
@@ -1598,8 +1590,7 @@
     .tm-repair-work-execution-actions .tm-btn,
     .tm-repair-work-open-form,
     .tm-repair-work-open-form .tm-btn,
-    .tm-repair-work-source .tm-btn,
-    .tm-repair-work-status-form .tm-btn {
+    .tm-repair-work-source .tm-btn {
       width: 100%;
       min-width: 0;
     }
@@ -1873,7 +1864,7 @@
     </summary>
     <div class="tm-workspace-panel-body">
 
-    {% set active_repair_work_items = repair_work_items|rejectattr("repair_work_status", "equalto", "completed")|rejectattr("approval_label", "equalto", "Completed")|list %}
+    {% set active_repair_work_items = repair_work_items|list %}
     {% if active_repair_work_items %}
     <div class="tm-repair-work-list">
       {% for item in active_repair_work_items %}
@@ -1882,7 +1873,9 @@
         <div class="tm-history-head">
           <div>
             <div class="tm-history-title">{{ item.title }}</div>
-            <div style="color:#64748b; margin-top:3px;">Status: {{ item.repair_work_status_label }}</div>
+            <div style="margin-top:6px;">
+              <span class="tm-crm-chip">{{ item.repair_work_status_label }}</span>
+            </div>
           </div>
           <span class="tm-crm-chip">{{ item.approval_label }}</span>
         </div>
@@ -1969,25 +1962,6 @@
               </form>
               {% endif %}
             </div>
-            <form class="tm-repair-work-status-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/{% if item.source_type == 'finding' %}findings{% else %}approvals{% endif %}/{{ item.source_id }}/repair-work">
-              <div>
-                <label class="tm-label" for="repair_work_status_{{ item.source_type }}_{{ item.source_id }}">Repair Status</label>
-                <select class="tm-input" id="repair_work_status_{{ item.source_type }}_{{ item.source_id }}" name="repair_work_status">
-                  {% for option in repair_work_status_options %}
-                  <option value="{{ option.value }}" {% if item.repair_work_status == option.value %}selected{% endif %}>{{ option.label }}</option>
-                  {% endfor %}
-                </select>
-                {% if item.checklist_summary.total and item.checklist_summary.incomplete %}
-                <div style="border:1px solid rgba(217,119,6,.28); border-radius:8px; background:#fffbeb; padding:10px; color:#92400e; margin-top:10px;">
-                  <strong>Repair checklist contains incomplete items.</strong>
-                  <div style="margin-top:4px;">{{ item.checklist_summary.completed }} / {{ item.checklist_summary.total }} complete.</div>
-                </div>
-                <label class="tm-label" for="checklist_override_notes_{{ item.source_type }}_{{ item.source_id }}" style="margin-top:10px;">Checklist override notes</label>
-                <textarea class="tm-input" id="checklist_override_notes_{{ item.source_type }}_{{ item.source_id }}" name="checklist_override_notes" rows="3" maxlength="800" placeholder="Required when marking complete with checklist items still open."></textarea>
-                {% endif %}
-              </div>
-              <button class="tm-btn tm-btn-primary" type="submit">Update Status</button>
-            </form>
           </section>
         </div>
         <div class="tm-repair-work-source" aria-label="Source traceability for {{ item.title }}">

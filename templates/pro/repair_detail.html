@@ -114,12 +114,29 @@
     padding:12px;
     font-weight:800;
   }
+  .tm-invoice-warning {
+    border:1px solid rgba(217,119,6,.28);
+    border-radius:8px;
+    background:#fffbeb;
+    color:#92400e;
+    padding:12px;
+    font-weight:800;
+    margin-top:14px;
+  }
   .tm-completion-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .tm-execution-status-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+    margin-top: 16px;
+  }
   @media (max-width:760px) {
     .tm-repair-grid,
     .tm-checklist-add,
     .tm-checklist-edit-grid,
-    .tm-completion-checks { grid-template-columns:1fr; }
+    .tm-completion-checks,
+    .tm-execution-status-form { grid-template-columns:1fr; }
     .tm-checklist-toggle button { width:56px; height:56px; }
     .tm-completion-panel { padding:14px; }
     .tm-completion-check { min-height:58px; }
@@ -157,11 +174,18 @@
       <div class="tm-repair-field"><span>Completed At</span><strong>{{ repair.completed_at|pro_datetime if repair.completed_at else "-" }}</strong></div>
     </div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Notes</span><strong>{{ repair.notes or "-" }}</strong></div>
+    {% if invoice_warnings %}
+    <div class="tm-invoice-warning">
+      {% for warning in invoice_warnings %}
+      <div>{{ warning }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
     <div class="tm-repair-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/edit">Edit Repair Record</a>
       {% if invoice %}
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">View Invoice</a>
-      {% elif repair.status == "Completed" %}
+      {% elif repair.status == "Completed" and not invoice_warnings %}
       <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/invoice">
         <button class="tm-btn tm-btn-primary" type="submit">Generate Invoice</button>
       </form>
@@ -169,6 +193,35 @@
       <a class="tm-btn tm-btn-secondary" href="#repair-intelligence-repair-{{ repair.id }}" data-repair-intelligence-open="repair-intelligence-repair-{{ repair.id }}">View Intelligence</a>
     </div>
   </section>
+
+  {% if repair_execution_status %}
+  <section class="tm-completion-panel" id="repair-execution-status" aria-label="Repair Execution Status">
+    <div class="tm-completion-head">
+      <div>
+        <div class="tm-crm-kicker">Repair Execution</div>
+        <h2 style="margin:4px 0 0;">Repair Status</h2>
+      </div>
+      <span class="tm-status-chip{% if repair_execution_status.status == 'completed' %} tm-status-chip--completed{% endif %}">
+        {{ repair_execution_status.status_label }}
+      </span>
+    </div>
+    {% if repair.status == "Completed" %}
+    <div class="tm-history-empty" style="margin-top:16px;">This repair is completed. Status is now managed by the completed repair record.</div>
+    {% else %}
+    <form class="tm-execution-status-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/workflow-status">
+      <div>
+        <label class="tm-label" for="repair_work_status">Repair Status</label>
+        <select class="tm-input" id="repair_work_status" name="repair_work_status">
+          {% for option in repair_execution_status.options %}
+          <option value="{{ option.value }}" {% if repair_execution_status.status == option.value %}selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="tm-btn tm-btn-primary" type="submit">Update Status</button>
+    </form>
+    {% endif %}
+  </section>
+  {% endif %}
 
   <section class="tm-checklist-panel" id="repair-checklist" aria-label="Repair Checklist">
     <div class="tm-checklist-head">

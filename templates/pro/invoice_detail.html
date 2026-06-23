@@ -91,17 +91,24 @@
       <div class="tm-invoice-field"><span>Vehicle</span><strong>{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</strong></div>
       <div class="tm-invoice-field"><span>VIN</span><strong>{{ vehicle.vin or "-" }}</strong></div>
       <div class="tm-invoice-field"><span>Mileage</span><strong>{% if invoice.repair_mileage is not none %}{{ invoice.repair_mileage|pro_miles }} miles{% elif vehicle.mileage is not none %}{{ vehicle.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
-      <div class="tm-invoice-field"><span>Completed Repair</span><strong>{{ invoice.repair_name or "Repair" }}</strong></div>
-      <div class="tm-invoice-field"><span>Completed At</span><strong>{{ invoice.completed_at|pro_datetime if invoice.completed_at else "-" }}</strong></div>
+      <div class="tm-invoice-field"><span>Repair Title</span><strong>{{ invoice.repair_name or "Repair" }}</strong></div>
+      <div class="tm-invoice-field"><span>Completion Date</span><strong>{{ invoice.completed_at|pro_datetime if invoice.completed_at else "-" }}</strong></div>
+      <div class="tm-invoice-field"><span>Labor Hours</span><strong>{% if invoice.labor_hours is not none %}{{ invoice.labor_hours }}{% else %}-{% endif %}</strong></div>
+      <div class="tm-invoice-field"><span>Labor Rate</span><strong>{% if invoice.labor_rate is not none %}{{ invoice.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</strong></div>
+      <div class="tm-invoice-field"><span>Parts Cost</span><strong>{{ invoice.parts_cost|pro_currency }}</strong></div>
+      <div class="tm-invoice-field"><span>Parts Total</span><strong>{{ invoice.parts_total|pro_currency }}</strong></div>
     </div>
 
     <div class="tm-invoice-field" style="margin-top:16px;">
-      <span>Repair Description / Notes</span>
+      <span>Repair Notes</span>
       <div class="tm-invoice-notes">{{ invoice.repair_notes or "-" }}</div>
     </div>
 
     <div class="tm-invoice-totals" style="margin-top:18px;">
+      <div class="tm-invoice-total-row"><span>Labor Hours</span><strong>{% if invoice.labor_hours is not none %}{{ invoice.labor_hours }}{% else %}-{% endif %}</strong></div>
+      <div class="tm-invoice-total-row"><span>Labor Rate</span><strong>{% if invoice.labor_rate is not none %}{{ invoice.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</strong></div>
       <div class="tm-invoice-total-row"><span>Labor Total</span><strong>{{ invoice.labor_total|pro_currency }}</strong></div>
+      <div class="tm-invoice-total-row"><span>Parts Cost</span><strong>{{ invoice.parts_cost|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row"><span>Parts Total</span><strong>{{ invoice.parts_total|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Grand Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
     </div>

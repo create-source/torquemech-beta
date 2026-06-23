@@ -145,29 +145,17 @@
   </section>
 
   {% if approval.customer_decision == "approved" %}
-  <form class="tm-approval-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}/repair-work" aria-label="Repair workflow" style="margin-bottom:16px;">
+  <section class="tm-approval-panel" aria-label="Repair workflow" style="margin-bottom:16px;">
     <div class="tm-approval-kicker">Repair Workflow</div>
     <h2 style="margin:4px 0 0;">Approved Work Status</h2>
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="repair_work_status">Repair Status</label>
-      <select class="tm-input" id="repair_work_status" name="repair_work_status">
-        {% for option in repair_work_status_options %}
-        <option value="{{ option.value }}" {% if (approval.repair_work_status or "ready") == option.value %}selected{% endif %}>{{ option.label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    {% if checklist_summary.total and checklist_summary.incomplete %}
-    <div style="border:1px solid rgba(217,119,6,.28); border-radius:8px; background:#fffbeb; padding:12px; color:#92400e; margin-top:12px;">
-      <strong>Repair checklist contains incomplete items.</strong>
-      <div style="margin-top:4px;">{{ checklist_summary.completed }} / {{ checklist_summary.total }} complete. Override notes are required to mark this repair complete.</div>
-    </div>
-    <div style="margin-top:12px;">
-      <label class="tm-label" for="checklist_override_notes">Checklist override notes</label>
-      <textarea class="tm-input" id="checklist_override_notes" name="checklist_override_notes" rows="3" maxlength="800" placeholder="Reason for completing with checklist items still open."></textarea>
+    <div style="margin-top:12px;"><span class="tm-approval-chip">{{ repair_work_status_label }}</span></div>
+    <div style="color:#64748b; margin-top:10px;">Repair progress is managed from the linked repair execution record.</div>
+    {% if approval.linked_repair_record_id %}
+    <div class="tm-approval-actions">
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ approval.linked_repair_record_id }}">Open Repair</a>
     </div>
     {% endif %}
-    <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Update Repair Status</button>
-  </form>
+  </section>
   {% endif %}
 
   <form class="tm-approval-panel" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/approvals/{{ approval.id }}">
