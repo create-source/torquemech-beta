@@ -72,6 +72,14 @@ REPAIR_WORK_STATUS_LABELS = {
     "waiting_parts": "Waiting on Parts",
     "completed": "Done",
 }
+REPAIR_COMPLETION_CHECKS = (
+    ("torque_verified", "Torque fasteners verified"),
+    ("fluids_verified", "Fluids filled / topped off"),
+    ("leaks_checked", "Leak check completed"),
+    ("codes_cleared", "Codes cleared if applicable"),
+    ("road_test_completed", "Road test completed"),
+    ("customer_concern_resolved", "Customer concern resolved"),
+)
 
 
 def crm_db_conn() -> sqlite3.Connection:
@@ -1703,6 +1711,8 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
           track_as_maintenance INTEGER NOT NULL DEFAULT 0,
           workflow_source_type TEXT,
           workflow_source_id INTEGER,
+          status TEXT NOT NULL DEFAULT 'Open',
+          completed_at TEXT,
           notes TEXT,
           created_at TEXT NOT NULL,
           FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
@@ -1750,6 +1760,17 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE repair_records ADD COLUMN workflow_source_type TEXT")
     if "workflow_source_id" not in columns:
         conn.execute("ALTER TABLE repair_records ADD COLUMN workflow_source_id INTEGER")
+    if "status" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN status TEXT NOT NULL DEFAULT 'Open'")
+    if "completed_at" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN completed_at TEXT")
+    conn.execute(
+        """
+        UPDATE repair_records
+        SET status = 'Open'
+        WHERE status IS NULL OR TRIM(status) = ''
+        """
+    )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_customer_id ON repair_records (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_id ON repair_records (vehicle_id)")
     conn.execute(
@@ -1793,6 +1814,132 @@ def ensure_repair_checklist_schema(conn: sqlite3.Connection) -> None:
         "ON repair_checklist_items (completed_at)"
     )
     conn.commit()
+
+
+def ensure_repair_completion_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS repair_completions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          repair_record_id INTEGER NOT NULL UNIQUE,
+          torque_verified INTEGER NOT NULL DEFAULT 0,
+          fluids_verified INTEGER NOT NULL DEFAULT 0,
+          leaks_checked INTEGER NOT NULL DEFAULT 0,
+          codes_cleared INTEGER NOT NULL DEFAULT 0,
+          road_test_completed INTEGER NOT NULL DEFAULT 0,
+          customer_concern_resolved INTEGER NOT NULL DEFAULT 0,
+          completion_notes TEXT,
+          override_reason TEXT,
+          completed_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_completions_repair_record_id "
+        "ON repair_completions (repair_record_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_completions_completed_at "
+        "ON repair_completions (completed_at)"
+    )
+    conn.commit()
+
+
+def default_repair_completion() -> dict[str, Any]:
+    record: dict[str, Any] = {
+        "id": None,
+        "repair_record_id": None,
+        "completion_notes": "",
+        "override_reason": "",
+        "completed_at": "",
+        "created_at": "",
+        "updated_at": "",
+    }
+    for key, _label in REPAIR_COMPLETION_CHECKS:
+        record[key] = 0
+    return record
+
+
+def load_repair_completion(
+    conn: sqlite3.Connection,
+    repair_record_id: int,
+) -> dict[str, Any]:
+    ensure_repair_completion_schema(conn)
+    row = conn.execute(
+        """
+        SELECT *
+        FROM repair_completions
+        WHERE repair_record_id = ?
+        """,
+        (repair_record_id,),
+    ).fetchone()
+    completion = default_repair_completion()
+    completion["repair_record_id"] = repair_record_id
+    if row:
+        completion.update(dict(row))
+    return completion
+
+
+def repair_completion_progress(completion: dict[str, Any]) -> dict[str, int]:
+    total = len(REPAIR_COMPLETION_CHECKS)
+    completed = sum(1 for key, _label in REPAIR_COMPLETION_CHECKS if int(completion.get(key) or 0))
+    percent = int(round((completed / total) * 100)) if total else 0
+    return {"completed": completed, "total": total, "incomplete": total - completed, "percent": percent}
+
+
+def upsert_repair_completion(
+    conn: sqlite3.Connection,
+    *,
+    repair_record_id: int,
+    form: dict[str, str],
+    completed_at: str | None,
+    now: str,
+) -> dict[str, Any]:
+    ensure_repair_completion_schema(conn)
+    values = {key: 1 if form.get(key) == "1" else 0 for key, _label in REPAIR_COMPLETION_CHECKS}
+    completion_notes = str(form.get("completion_notes") or "").strip()
+    override_reason = str(form.get("override_reason") or "").strip()
+    existing = load_repair_completion(conn, repair_record_id)
+    effective_completed_at = completed_at or existing.get("completed_at") or ""
+    conn.execute(
+        """
+        INSERT INTO repair_completions (
+          repair_record_id, torque_verified, fluids_verified, leaks_checked,
+          codes_cleared, road_test_completed, customer_concern_resolved,
+          completion_notes, override_reason, completed_at, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(repair_record_id) DO UPDATE SET
+          torque_verified = excluded.torque_verified,
+          fluids_verified = excluded.fluids_verified,
+          leaks_checked = excluded.leaks_checked,
+          codes_cleared = excluded.codes_cleared,
+          road_test_completed = excluded.road_test_completed,
+          customer_concern_resolved = excluded.customer_concern_resolved,
+          completion_notes = excluded.completion_notes,
+          override_reason = excluded.override_reason,
+          completed_at = COALESCE(NULLIF(excluded.completed_at, ''), repair_completions.completed_at),
+          updated_at = excluded.updated_at
+        """,
+        (
+            repair_record_id,
+            values["torque_verified"],
+            values["fluids_verified"],
+            values["leaks_checked"],
+            values["codes_cleared"],
+            values["road_test_completed"],
+            values["customer_concern_resolved"],
+            completion_notes,
+            override_reason,
+            effective_completed_at,
+            now,
+            now,
+        ),
+    )
+    return load_repair_completion(conn, repair_record_id)
 
 
 def load_repair_checklist_items(
@@ -1861,6 +2008,39 @@ def load_vehicle_repair_checklist_events(
               AND rci.completed_at IS NOT NULL
               AND TRIM(rci.completed_at) != ''
             ORDER BY rci.completed_at DESC, rci.id DESC
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
+
+
+def load_vehicle_repair_completion_events(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+) -> list[dict[str, Any]]:
+    ensure_repair_completion_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT
+              rc.id,
+              rc.repair_record_id,
+              rc.completed_at,
+              rc.override_reason,
+              rc.created_at,
+              rc.updated_at,
+              rr.customer_id,
+              rr.vehicle_id,
+              rr.repair_name
+            FROM repair_completions rc
+            JOIN repair_records rr ON rr.id = rc.repair_record_id
+            WHERE rr.customer_id = ?
+              AND rr.vehicle_id = ?
+              AND rc.completed_at IS NOT NULL
+              AND TRIM(rc.completed_at) != ''
+            ORDER BY rc.completed_at DESC, rc.id DESC
             """,
             (customer_id, vehicle_id),
         ).fetchall()
@@ -2172,6 +2352,7 @@ def vehicle_finding_activity_payload(
     ensure_maintenance_records_schema(conn)
     ensure_repair_records_schema(conn)
     ensure_repair_checklist_schema(conn)
+    ensure_repair_completion_schema(conn)
     ensure_service_history_schema(conn)
     ensure_service_history_records_schema(conn)
     ensure_findings_records_schema(conn)
@@ -2207,6 +2388,7 @@ def vehicle_finding_activity_payload(
         customer_decision_logs,
         approval_event_records,
         load_vehicle_repair_checklist_events(conn, customer_id, vehicle_id),
+        load_vehicle_repair_completion_events(conn, customer_id, vehicle_id),
     )
     vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     finding_history_count = len(finding_history_records)
@@ -2466,6 +2648,61 @@ def append_service_history_record(
     )
 
 
+def upsert_service_history_record(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    source_type: str,
+    source_record_id: int,
+    service_name: str,
+    service_date: str,
+    mileage: int | None,
+    labor_hours: float | None = None,
+    parts_cost: float | None = None,
+    labor_cost: float | None = None,
+    total_cost: float | None = None,
+    notes: str = "",
+    created_at: str,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO service_history_records (
+          customer_id, vehicle_id, source_type, source_record_id, service_name,
+          service_date, mileage, labor_hours, parts_cost, labor_cost,
+          total_cost, notes, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(source_type, source_record_id) DO UPDATE SET
+          customer_id = excluded.customer_id,
+          vehicle_id = excluded.vehicle_id,
+          service_name = excluded.service_name,
+          service_date = excluded.service_date,
+          mileage = excluded.mileage,
+          labor_hours = excluded.labor_hours,
+          parts_cost = excluded.parts_cost,
+          labor_cost = excluded.labor_cost,
+          total_cost = excluded.total_cost,
+          notes = excluded.notes
+        """,
+        (
+            customer_id,
+            vehicle_id,
+            source_type,
+            source_record_id,
+            service_name,
+            service_date,
+            mileage,
+            labor_hours,
+            parts_cost,
+            labor_cost,
+            total_cost,
+            notes,
+            created_at,
+        ),
+    )
+
+
 def upsert_maintenance_from_repair(
     conn: sqlite3.Connection,
     *,
@@ -2678,7 +2915,7 @@ def build_repair_work_items(
             },
             "updated_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
             "mileage": record.get("mileage"),
-            "url": f"#recommendations-findings",
+            "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/findings/{record['id']}",
         }
         if blueprint:
             item["blueprint"] = blueprint
@@ -2786,6 +3023,7 @@ def build_vehicle_timeline(
     customer_decision_logs: list[dict[str, Any]],
     approval_event_records: list[dict[str, Any]] | None = None,
     repair_checklist_events: list[dict[str, Any]] | None = None,
+    repair_completion_events: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     groups: dict[str, dict[str, Any]] = {
         "repaired": {"key": "repaired", "title": "Repaired Services", "records": []},
@@ -2799,12 +3037,18 @@ def build_vehicle_timeline(
         groups[group_key]["records"].append(record)
 
     def sort_records(records: list[dict[str, Any]]) -> None:
+        def sortable_id(value: Any) -> int:
+            try:
+                return int(value or 0)
+            except (TypeError, ValueError):
+                return 0
+
         records.sort(
             key=lambda record: (
                 parse_date_value(record.get("date")) is not None,
                 parse_date_value(record.get("date")) or date.min,
                 parse_datetime_value(record.get("created_at")) or datetime.min,
-                int(record.get("id") or 0),
+                sortable_id(record.get("id")),
             ),
             reverse=True,
         )
@@ -2943,6 +3187,32 @@ def build_vehicle_timeline(
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
             },
         )
+
+    for record in repair_completion_events or []:
+        repair_title = record.get("repair_name") or "Repair"
+        add_record(
+            "repaired",
+            {
+                "id": f"completion-{record['id']}",
+                "date": record.get("completed_at") or "",
+                "created_at": record.get("completed_at") or record.get("created_at") or "",
+                "service_name": f"Repair Completed: {repair_title}",
+                "mileage": None,
+                "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
+            },
+        )
+        if str(record.get("override_reason") or "").strip():
+            add_record(
+                "repaired",
+                {
+                    "id": f"completion-override-{record['id']}",
+                    "date": record.get("completed_at") or "",
+                    "created_at": record.get("completed_at") or record.get("created_at") or "",
+                    "service_name": f"Completion Override Used: {repair_title}",
+                    "mileage": None,
+                    "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
+                },
+            )
 
     for group in groups.values():
         sort_records(group["records"])
@@ -3957,6 +4227,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             ).fetchall()
         ]
         repair_checklist_events = load_vehicle_repair_checklist_events(conn, customer_id, vehicle_id)
+        repair_completion_events = load_vehicle_repair_completion_events(conn, customer_id, vehicle_id)
         seed_visual_references(conn)
         visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
         seed_repair_intelligence(conn)
@@ -3990,6 +4261,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
         customer_decision_logs,
         approval_event_records,
         repair_checklist_events,
+        repair_completion_events,
     )
     vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     repair_history_summary = build_repair_history_summary(repair_records)
@@ -5194,8 +5466,8 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
                 )
             if workflow_source_type == "finding":
                 workflow_record = load_finding_record(conn, customer_id, vehicle_id, workflow_source_id)
-                if (workflow_record.get("repair_work_status") or "") != "completed":
-                    raise HTTPException(status_code=400, detail="Workflow item must be done before creating a repair record")
+                if (workflow_record.get("status") or "") not in {"Approved", "Completed"}:
+                    raise HTTPException(status_code=400, detail="Finding must be approved before creating a repair record")
                 if workflow_record.get("linked_repair_record_id"):
                     return RedirectResponse(
                         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{workflow_record['linked_repair_record_id']}",
@@ -5203,8 +5475,8 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
                     )
             else:
                 workflow_record = load_approval_record(conn, customer_id, vehicle_id, workflow_source_id)
-                if (workflow_record.get("repair_work_status") or "") != "completed":
-                    raise HTTPException(status_code=400, detail="Workflow item must be done before creating a repair record")
+                if normalize_approval_decision(workflow_record.get("customer_decision")) != "approved":
+                    raise HTTPException(status_code=400, detail="Approval request must be approved before creating a repair record")
                 if workflow_record.get("linked_repair_record_id"):
                     return RedirectResponse(
                         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{workflow_record['linked_repair_record_id']}",
@@ -5289,6 +5561,11 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
         conn.commit()
     finally:
         conn.close()
+    if form.get("return_to") == "repair_detail":
+        return RedirectResponse(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
+            status_code=303,
+        )
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#vehicle-timeline",
         status_code=303,
@@ -5308,6 +5585,8 @@ def pro_repair_record_detail(
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
         checklist_items = load_repair_checklist_items(conn, repair_id)
         checklist_progress = repair_checklist_progress(checklist_items)
+        completion = load_repair_completion(conn, repair_id)
+        completion_progress = repair_completion_progress(completion)
         seed_repair_intelligence(conn)
         repair_intelligence_records = load_repair_intelligence_for_repair(
             conn,
@@ -5332,8 +5611,229 @@ def pro_repair_record_detail(
             "repair": repair,
             "checklist_items": checklist_items,
             "checklist_progress": checklist_progress,
+            "completion": completion,
+            "completion_checks": REPAIR_COMPLETION_CHECKS,
+            "completion_progress": completion_progress,
+            "completion_warnings": [],
             "repair_intelligence_records": repair_intelligence_records,
         },
+    )
+
+
+def completion_detail_context(
+    conn: sqlite3.Connection,
+    *,
+    request: Request,
+    customer_id: int,
+    vehicle_id: int,
+    repair_id: int,
+    completion_warnings: list[str] | None = None,
+) -> dict[str, Any]:
+    customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+    repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+    checklist_items = load_repair_checklist_items(conn, repair_id)
+    checklist_progress = repair_checklist_progress(checklist_items)
+    completion = load_repair_completion(conn, repair_id)
+    completion_progress = repair_completion_progress(completion)
+    seed_repair_intelligence(conn)
+    repair_intelligence_records = load_repair_intelligence_for_repair(
+        conn,
+        vehicle,
+        repair.get("repair_name"),
+    )
+    if not repair_intelligence_records:
+        repair_intelligence_records = [
+            record
+            for record in load_repair_intelligence_seed_records()
+            if repair_intelligence_matches_repair(record, repair.get("repair_name"))
+        ]
+    return {
+        "request": request,
+        "customer": customer,
+        "vehicle": vehicle,
+        "repair": repair,
+        "checklist_items": checklist_items,
+        "checklist_progress": checklist_progress,
+        "completion": completion,
+        "completion_checks": REPAIR_COMPLETION_CHECKS,
+        "completion_progress": completion_progress,
+        "completion_warnings": completion_warnings or [],
+        "repair_intelligence_records": repair_intelligence_records,
+    }
+
+
+def sync_repair_completion_source(
+    conn: sqlite3.Connection,
+    *,
+    repair: dict[str, Any],
+    customer_id: int,
+    vehicle_id: int,
+    now: str,
+) -> None:
+    source_type = normalize_workflow_source_type(repair.get("workflow_source_type"))
+    source_id = repair.get("workflow_source_id")
+    if not source_type or source_id is None:
+        return
+    source_id = int(source_id)
+    if source_type == "finding":
+        existing = load_finding_record(conn, customer_id, vehicle_id, source_id)
+        previous_status = existing.get("status") or ""
+        previous_repair_status = existing.get("repair_work_status") or (
+            "completed" if previous_status == "Completed" else "ready"
+        )
+        conn.execute(
+            """
+            UPDATE findings_records
+            SET status = 'Completed',
+                repair_work_status = 'completed',
+                repair_work_updated_at = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (now, source_id, customer_id, vehicle_id),
+        )
+        if previous_status != "Completed":
+            append_finding_history_record(
+                conn,
+                source_id,
+                previous_status or None,
+                "Completed",
+                "status_changed",
+                now,
+            )
+        if previous_repair_status != "completed":
+            append_finding_history_record(
+                conn,
+                source_id,
+                previous_repair_status,
+                "completed",
+                "repair_work_status_changed",
+                now,
+            )
+        return
+
+    existing = load_approval_record(conn, customer_id, vehicle_id, source_id)
+    previous_repair_status = existing.get("repair_work_status") or "ready"
+    conn.execute(
+        """
+        UPDATE discrepancy_approvals
+        SET repair_work_status = 'completed',
+            repair_work_updated_at = ?,
+            updated_at = ?
+        WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+        """,
+        (now, now, source_id, customer_id, vehicle_id),
+    )
+    if previous_repair_status != "completed":
+        append_discrepancy_approval_event(
+            conn,
+            source_id,
+            customer_id,
+            vehicle_id,
+            "repair_work_status_changed",
+            f"Repair Workflow {repair_work_status_label('completed')}: {repair_work_title_from_approval(existing)}",
+            now,
+        )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/completion")
+async def pro_repair_completion_update(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    override_reason = str(form.get("override_reason") or "").strip()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        checklist_summary = repair_checklist_summary(conn, repair_id)
+        posted_completion = upsert_repair_completion(
+            conn,
+            repair_record_id=repair_id,
+            form=form,
+            completed_at=None,
+            now=now,
+        )
+        completion_progress = repair_completion_progress(posted_completion)
+        warnings: list[str] = []
+        if checklist_summary["total"] > 0 and checklist_summary["incomplete"] > 0:
+            warnings.append("Repair checklist contains incomplete items.")
+        if completion_progress["incomplete"] > 0:
+            warnings.append("Repair verification is incomplete.")
+        if warnings and not override_reason:
+            conn.commit()
+            context = completion_detail_context(
+                conn,
+                request=request,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                repair_id=repair_id,
+                completion_warnings=warnings,
+            )
+            return templates.TemplateResponse(
+                "pro/repair_detail.html",
+                context,
+                status_code=400,
+            )
+
+        completed_at = repair.get("completed_at") or now
+        upsert_repair_completion(
+            conn,
+            repair_record_id=repair_id,
+            form=form,
+            completed_at=completed_at,
+            now=now,
+        )
+        conn.execute(
+            """
+            UPDATE repair_records
+            SET status = 'Completed',
+                completed_at = COALESCE(NULLIF(completed_at, ''), ?)
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (completed_at, repair_id, customer_id, vehicle_id),
+        )
+        refreshed_repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        upsert_service_history_record(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            source_type="repair",
+            source_record_id=repair_id,
+            service_name=refreshed_repair.get("repair_name") or "Repair",
+            service_date=refreshed_repair.get("repair_date") or completed_at[:10],
+            mileage=refreshed_repair.get("mileage"),
+            labor_hours=refreshed_repair.get("labor_hours"),
+            parts_cost=refreshed_repair.get("parts_cost"),
+            labor_cost=refreshed_repair.get("labor_cost"),
+            total_cost=refreshed_repair.get("total_cost"),
+            notes=posted_completion.get("completion_notes") or refreshed_repair.get("notes") or "",
+            created_at=completed_at,
+        )
+        if refreshed_repair.get("track_as_maintenance"):
+            upsert_maintenance_from_repair(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                service_type=refreshed_repair.get("repair_name") or "Repair",
+                date_performed=refreshed_repair.get("repair_date") or completed_at[:10],
+                mileage_performed=refreshed_repair.get("mileage"),
+                notes=posted_completion.get("completion_notes") or refreshed_repair.get("notes") or "",
+                now=now,
+            )
+        sync_repair_completion_source(
+            conn,
+            repair=refreshed_repair,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            now=now,
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-completion",
+        status_code=303,
     )
 
 

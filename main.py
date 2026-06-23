@@ -499,6 +499,8 @@ def init_pro_crm_schema_db() -> None:
               track_as_maintenance INTEGER NOT NULL DEFAULT 0,
               workflow_source_type TEXT,
               workflow_source_id INTEGER,
+              status TEXT NOT NULL DEFAULT 'Open',
+              completed_at TEXT,
               notes TEXT,
               created_at TEXT NOT NULL,
               FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
@@ -509,6 +511,15 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("repair_records", "track_as_maintenance", "track_as_maintenance INTEGER NOT NULL DEFAULT 0")
         add_column_if_missing("repair_records", "workflow_source_type", "workflow_source_type TEXT")
         add_column_if_missing("repair_records", "workflow_source_id", "workflow_source_id INTEGER")
+        add_column_if_missing("repair_records", "status", "status TEXT NOT NULL DEFAULT 'Open'")
+        add_column_if_missing("repair_records", "completed_at", "completed_at TEXT")
+        conn.execute(
+            """
+            UPDATE repair_records
+            SET status = 'Open'
+            WHERE status IS NULL OR TRIM(status) = ''
+            """
+        )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_customer_id ON repair_records (customer_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_id ON repair_records (vehicle_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_date_mileage ON repair_records (vehicle_id, repair_date, mileage)")
@@ -543,6 +554,34 @@ def init_pro_crm_schema_db() -> None:
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_repair_checklist_items_completed_at "
             "ON repair_checklist_items (completed_at)"
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS repair_completions (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              repair_record_id INTEGER NOT NULL UNIQUE,
+              torque_verified INTEGER NOT NULL DEFAULT 0,
+              fluids_verified INTEGER NOT NULL DEFAULT 0,
+              leaks_checked INTEGER NOT NULL DEFAULT 0,
+              codes_cleared INTEGER NOT NULL DEFAULT 0,
+              road_test_completed INTEGER NOT NULL DEFAULT 0,
+              customer_concern_resolved INTEGER NOT NULL DEFAULT 0,
+              completion_notes TEXT,
+              override_reason TEXT,
+              completed_at TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
+            )
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_repair_completions_repair_record_id "
+            "ON repair_completions (repair_record_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_repair_completions_completed_at "
+            "ON repair_completions (completed_at)"
         )
 
         # Pro groundwork: mechanic-authored inspection findings and recommendations.
