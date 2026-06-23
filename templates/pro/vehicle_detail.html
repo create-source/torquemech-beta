@@ -821,6 +821,11 @@
     box-shadow: 0 0 0 2px #0e7490;
   }
 
+  .tm-timeline-dot--invoices {
+    background: #0891b2;
+    box-shadow: 0 0 0 2px #0891b2;
+  }
+
   .tm-timeline-content {
     display: grid;
     gap: 6px;
@@ -873,6 +878,11 @@
   .tm-timeline-badge--approvals {
     background: #e0f2fe;
     color: #075985;
+  }
+
+  .tm-timeline-badge--invoices {
+    background: #cffafe;
+    color: #155e75;
   }
 
   .tm-maintenance-table-wrap {
@@ -1691,9 +1701,9 @@
     </form>
   </details>
 
-  <section class="tm-crm-panel" id="recommendations-findings" aria-label="Recommendations and findings" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Recommendations & Findings</div>
-    <h2 style="margin:4px 0 0;">Recommendations & Findings</h2>
+  <section class="tm-crm-panel" id="recommendations-findings" aria-label="Inspection findings" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Inspection Findings</div>
+    <h2 style="margin:4px 0 0;">Inspection Findings</h2>
 
     <details class="tm-crm-disclosure" style="margin-top:16px;">
       <summary>+ Add Finding</summary>
@@ -1733,8 +1743,6 @@
           <select class="tm-input" id="finding_status" name="status" required>
             <option value="Approved">Approved</option>
             <option value="Open" selected>Open</option>
-            <option value="Completed">Completed</option>
-            <option value="Deferred">Deferred</option>
             <option value="Declined">Declined</option>
           </select>
         </div>
@@ -1766,14 +1774,14 @@
       </form>
     </details>
 
-    <div class="tm-history-summary" aria-label="Findings summary">
+    <div class="tm-history-summary" aria-label="Inspection findings summary">
+      <button class="tm-history-summary-card" type="button" data-findings-filter="Open">
+        <span>Open</span>
+        <strong>{{ findings_summary.open }}</strong>
+      </button>
       <button class="tm-history-summary-card" type="button" data-findings-filter="Approved">
         <span>Approved</span>
         <strong>{{ findings_summary.approved }}</strong>
-      </button>
-      <button class="tm-history-summary-card" type="button" data-findings-filter="Completed">
-        <span>Completed</span>
-        <strong>{{ findings_summary.completed }}</strong>
       </button>
       <button class="tm-history-summary-card" type="button" data-findings-filter="Declined">
         <span>Declined</span>
@@ -1786,8 +1794,8 @@
       <aside class="tm-findings-slideout" role="dialog" aria-modal="true" aria-labelledby="findings-filter-title">
         <header class="tm-findings-slideout-head">
           <div>
-            <div class="tm-crm-kicker">Recommendations & Findings</div>
-            <h3 class="tm-findings-slideout-title" id="findings-filter-title" data-findings-title>Findings</h3>
+            <div class="tm-crm-kicker">Inspection Findings</div>
+            <h3 class="tm-findings-slideout-title" id="findings-filter-title" data-findings-title>Inspection Findings</h3>
           </div>
           <button class="tm-blueprint-close" type="button" aria-label="Close findings" data-findings-close>x</button>
         </header>
@@ -1825,7 +1833,7 @@
                   <label class="tm-label" for="finding_status_{{ item.id }}">Decision Status</label>
                   <span class="tm-finding-status-select">
                     <select class="tm-input" id="finding_status_{{ item.id }}" name="status" required>
-                      {% for option in ["Approved", "Open", "Completed", "Deferred", "Declined"] %}
+                      {% for option in ["Open", "Approved", "Declined"] %}
                       <option value="{{ option }}" {% if item.status == option %}selected{% endif %}>{{ option }}</option>
                       {% endfor %}
                     </select>
@@ -1841,11 +1849,11 @@
             {% endfor %}
           </div>
           <div class="tm-history-empty" style="margin-top:12px;" data-findings-filter-empty hidden>
-            No findings in this status.
+            No inspection findings in this status.
           </div>
           {% else %}
           <div class="tm-history-empty" style="margin-top:12px;">
-            No findings, labor requests, or recommendations recorded for this vehicle yet.
+            No active inspection findings recorded for this vehicle.
           </div>
           {% endif %}
         </div>
@@ -2366,14 +2374,14 @@
     updateLaborFields();
   });
 
-  const statusRank = { Approved: 1, Open: 2, Completed: 3, Deferred: 4, Declined: 5 };
+  const statusRank = { Open: 1, Approved: 2, Declined: 3 };
   const severityRank = { Critical: 1, High: 2, Medium: 3, Low: 4 };
   const list = document.querySelector(".tm-findings-list");
   const findingsModal = document.querySelector("[data-findings-modal]");
   const findingsTitle = document.querySelector("[data-findings-title]");
   const findingsFilterEmpty = document.querySelector("[data-findings-filter-empty]");
   let activeFindingsFilter = "";
-  const summaryCards = Array.from(document.querySelectorAll('[aria-label="Findings summary"] .tm-history-summary-card'));
+  const summaryCards = Array.from(document.querySelectorAll('[aria-label="Inspection findings summary"] .tm-history-summary-card'));
   const summaryCounts = new Map(summaryCards.map((card) => {
     const label = card.querySelector("span")?.textContent?.trim();
     return [label, card.querySelector("strong")];
@@ -2404,7 +2412,7 @@
 
   function applyFindingFilter(status) {
     activeFindingsFilter = status || activeFindingsFilter;
-    if (findingsTitle) findingsTitle.textContent = `${activeFindingsFilter} Findings`;
+    if (findingsTitle) findingsTitle.textContent = `${activeFindingsFilter} Inspection Findings`;
     const cards = Array.from(document.querySelectorAll("[data-finding-card]"));
     let visibleCount = 0;
     cards.forEach((card) => {
@@ -2678,7 +2686,7 @@
     const findingHistory = payload.finding_history;
     const decisionLogs = payload.customer_decision_logs;
     const statusChanged = oldStatus !== savedStatus;
-    const customerDecisionStatuses = new Set(["Approved", "Deferred", "Declined"]);
+    const customerDecisionStatuses = new Set(["Approved", "Declined"]);
     const findingHistoryCount = payload.finding_history_count
       ?? findingHistory?.count
       ?? (statusChanged ? currentDisclosureCount("[data-finding-history-count]") + 1 : undefined);

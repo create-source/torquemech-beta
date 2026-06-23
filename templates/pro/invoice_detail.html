@@ -1,0 +1,110 @@
+{% extends "layout.html" %}
+
+{% block title %}Invoice {{ invoice.invoice_number }} | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-invoice-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-left: 5px solid #0e7490;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 18px;
+    max-width: 920px;
+  }
+  .tm-invoice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .tm-invoice-field {
+    display: grid;
+    gap: 3px;
+  }
+  .tm-invoice-field span {
+    color: #64748b;
+    font-size: .74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .tm-invoice-notes {
+    color: #334155;
+    white-space: pre-wrap;
+  }
+  .tm-invoice-totals {
+    display: grid;
+    gap: 8px;
+    max-width: 380px;
+    margin-left: auto;
+  }
+  .tm-invoice-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 8px 0;
+  }
+  .tm-invoice-total-row strong {
+    color: #0f172a;
+  }
+  .tm-invoice-total-row--grand {
+    border-bottom: 0;
+    font-size: 1.2rem;
+  }
+  .tm-invoice-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  @media (max-width: 760px) {
+    .tm-invoice-grid { grid-template-columns: 1fr; }
+    .tm-invoice-totals { max-width: none; margin-left: 0; }
+    .tm-invoice-actions .tm-btn { width: 100%; justify-content: center; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Invoice {{ invoice.invoice_number }}</h1>
+      <p class="tm-pro-subtitle">{{ invoice.created_at|pro_date }}</p>
+    </div>
+    <div class="tm-invoice-actions">
+      <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">Back to Vehicle</a>
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">Download Invoice PDF</a>
+    </div>
+  </div>
+
+  <section class="tm-invoice-panel" aria-label="Invoice details">
+    <div class="tm-invoice-grid">
+      <div class="tm-invoice-field"><span>Invoice Number</span><strong>{{ invoice.invoice_number }}</strong></div>
+      <div class="tm-invoice-field"><span>Created Date</span><strong>{{ invoice.created_at|pro_date }}</strong></div>
+      <div class="tm-invoice-field"><span>Customer</span><strong>{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Customer" }}</strong></div>
+      <div class="tm-invoice-field"><span>Phone</span><strong>{{ customer.phone|pro_phone if customer.phone else "-" }}</strong></div>
+      <div class="tm-invoice-field"><span>Email</span><strong>{{ customer.email or "-" }}</strong></div>
+      <div class="tm-invoice-field"><span>Vehicle</span><strong>{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</strong></div>
+      <div class="tm-invoice-field"><span>VIN</span><strong>{{ vehicle.vin or "-" }}</strong></div>
+      <div class="tm-invoice-field"><span>Mileage</span><strong>{% if invoice.repair_mileage is not none %}{{ invoice.repair_mileage|pro_miles }} miles{% elif vehicle.mileage is not none %}{{ vehicle.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
+      <div class="tm-invoice-field"><span>Completed Repair</span><strong>{{ invoice.repair_name or "Repair" }}</strong></div>
+      <div class="tm-invoice-field"><span>Completed At</span><strong>{{ invoice.completed_at|pro_datetime if invoice.completed_at else "-" }}</strong></div>
+    </div>
+
+    <div class="tm-invoice-field" style="margin-top:16px;">
+      <span>Repair Description / Notes</span>
+      <div class="tm-invoice-notes">{{ invoice.repair_notes or "-" }}</div>
+    </div>
+
+    <div class="tm-invoice-totals" style="margin-top:18px;">
+      <div class="tm-invoice-total-row"><span>Labor Total</span><strong>{{ invoice.labor_total|pro_currency }}</strong></div>
+      <div class="tm-invoice-total-row"><span>Parts Total</span><strong>{{ invoice.parts_total|pro_currency }}</strong></div>
+      <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Grand Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
+    </div>
+  </section>
+</section>
+{% endblock %}

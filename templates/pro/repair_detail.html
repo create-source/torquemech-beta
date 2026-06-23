@@ -159,6 +159,13 @@
     <div class="tm-repair-field" style="margin-top:14px;"><span>Notes</span><strong>{{ repair.notes or "-" }}</strong></div>
     <div class="tm-repair-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/edit">Edit Repair Record</a>
+      {% if invoice %}
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">View Invoice</a>
+      {% elif repair.status == "Completed" %}
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/invoice">
+        <button class="tm-btn tm-btn-primary" type="submit">Generate Invoice</button>
+      </form>
+      {% endif %}
       <a class="tm-btn tm-btn-secondary" href="#repair-intelligence-repair-{{ repair.id }}" data-repair-intelligence-open="repair-intelligence-repair-{{ repair.id }}">View Intelligence</a>
     </div>
   </section>

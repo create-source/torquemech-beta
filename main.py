@@ -584,6 +584,28 @@ def init_pro_crm_schema_db() -> None:
             "ON repair_completions (completed_at)"
         )
 
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS invoices (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              invoice_number TEXT NOT NULL UNIQUE,
+              repair_record_id INTEGER NOT NULL UNIQUE,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              labor_total REAL NOT NULL DEFAULT 0,
+              parts_total REAL NOT NULL DEFAULT 0,
+              grand_total REAL NOT NULL DEFAULT 0,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY (repair_record_id) REFERENCES repair_records(id),
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_invoices_vehicle_id ON invoices (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices (created_at)")
+
         # Pro groundwork: mechanic-authored inspection findings and recommendations.
         conn.execute(
             """
