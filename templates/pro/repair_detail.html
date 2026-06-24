@@ -163,9 +163,10 @@
       <div class="tm-repair-field"><span>Repair Date</span><strong>{{ repair.repair_date|pro_date if repair.repair_date else "-" }}</strong></div>
       <div class="tm-repair-field"><span>Mileage</span><strong>{% if repair.mileage is not none %}{{ repair.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
       <div class="tm-repair-field"><span>Labor Hours</span><strong>{{ repair.labor_hours if repair.labor_hours is not none else "-" }}</strong></div>
-      <div class="tm-repair-field"><span>Parts Cost</span><strong>{{ repair.parts_cost|pro_currency if repair.parts_cost is not none else "-" }}</strong></div>
-      <div class="tm-repair-field"><span>Labor Cost</span><strong>{{ repair.labor_cost|pro_currency if repair.labor_cost is not none else "-" }}</strong></div>
-      <div class="tm-repair-field"><span>Total Cost</span><strong>{{ repair.total_cost|pro_currency }}</strong></div>
+      <div class="tm-repair-field"><span>Labor Rate</span><strong>{% if repair.labor_rate is not none %}{{ repair.labor_rate|pro_currency }}/hr{% elif repair.labor_rate_is_legacy %}Legacy total only{% else %}-{% endif %}</strong></div>
+      <div class="tm-repair-field"><span>Labor Total</span><strong>{{ repair.labor_total|pro_currency }}</strong></div>
+      <div class="tm-repair-field"><span>Parts Total</span><strong>{{ repair.parts_total|pro_currency }}</strong></div>
+      <div class="tm-repair-field"><span>Grand Total</span><strong>{{ repair.grand_total|pro_currency }}</strong></div>
       <div class="tm-repair-field"><span>Maintenance Tracking Status</span><strong>{{ "Tracked" if repair.track_as_maintenance else "Not Tracked" }}</strong></div>
       <div class="tm-repair-field">
         <span>Status</span>
@@ -223,87 +224,6 @@
   </section>
   {% endif %}
 
-  <section class="tm-checklist-panel" id="repair-checklist" aria-label="Repair Checklist">
-    <div class="tm-checklist-head">
-      <div>
-        <div class="tm-crm-kicker">Repair Checklist</div>
-        <h2 style="margin:4px 0 0;">Execution Checklist</h2>
-      </div>
-      <div class="tm-checklist-progress" aria-label="Checklist progress">
-        <strong>{{ checklist_progress.completed }} / {{ checklist_progress.total }}</strong>
-        <span>{{ checklist_progress.percent }}% complete</span>
-        <div class="tm-checklist-bar" aria-hidden="true"><span style="width:{{ checklist_progress.percent }}%;"></span></div>
-      </div>
-    </div>
-
-    <form class="tm-checklist-add" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist">
-      <div>
-        <label class="tm-label" for="task_name">Task</label>
-        <input class="tm-input" id="task_name" name="task_name" type="text" maxlength="180" placeholder="Add checklist item">
-      </div>
-      <div>
-        <label class="tm-label" for="task_notes">Notes</label>
-        <input class="tm-input" id="task_notes" name="notes" type="text" maxlength="600" placeholder="Optional">
-      </div>
-      <button class="tm-btn tm-btn-primary" type="submit">Add Item</button>
-    </form>
-
-    {% if checklist_items %}
-    <div class="tm-checklist-list">
-      {% for item in checklist_items %}
-      <article class="tm-checklist-item">
-        <div class="tm-checklist-main">
-          <form class="tm-checklist-toggle" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/toggle">
-            <input type="hidden" name="completed" value="{{ 0 if item.completed else 1 }}">
-            <button type="submit" aria-label="{% if item.completed %}Mark incomplete{% else %}Mark complete{% endif %}">
-              {% if item.completed %}&#10003;{% else %}{% endif %}
-            </button>
-          </form>
-          <div>
-            <div class="tm-checklist-title{% if item.completed %} tm-checklist-title--done{% endif %}">{{ item.task_name }}</div>
-            <div class="tm-checklist-meta">
-              Item {{ loop.index }}{% if item.completed_at %} | Completed {{ item.completed_at|pro_datetime }}{% endif %}
-            </div>
-            {% if item.notes %}
-            <div class="tm-checklist-note">{{ item.notes }}</div>
-            {% endif %}
-          </div>
-        </div>
-        <div class="tm-checklist-controls">
-          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/move">
-            <input type="hidden" name="direction" value="up">
-            <button class="tm-btn tm-btn-secondary" type="submit" {% if loop.first %}disabled{% endif %}>Move Up</button>
-          </form>
-          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/move">
-            <input type="hidden" name="direction" value="down">
-            <button class="tm-btn tm-btn-secondary" type="submit" {% if loop.last %}disabled{% endif %}>Move Down</button>
-          </form>
-          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}/delete">
-            <button class="tm-btn tm-btn-secondary" type="submit">Delete</button>
-          </form>
-        </div>
-        <details class="tm-checklist-edit">
-          <summary>Edit Checklist Item</summary>
-          <form class="tm-checklist-edit-grid" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/checklist/{{ item.id }}">
-            <div>
-              <label class="tm-label" for="edit_task_name_{{ item.id }}">Task</label>
-              <input class="tm-input" id="edit_task_name_{{ item.id }}" name="task_name" type="text" maxlength="180" value="{{ item.task_name }}">
-            </div>
-            <div>
-              <label class="tm-label" for="edit_task_notes_{{ item.id }}">Notes</label>
-              <input class="tm-input" id="edit_task_notes_{{ item.id }}" name="notes" type="text" maxlength="600" value="{{ item.notes or '' }}">
-            </div>
-            <button class="tm-btn tm-btn-primary" type="submit">Save</button>
-          </form>
-        </details>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="tm-history-empty" style="margin-top:16px;">No checklist items yet.</div>
-    {% endif %}
-  </section>
-
   <section class="tm-completion-panel" id="repair-completion" aria-label="Repair Completion">
     <div class="tm-completion-head">
       <div>
@@ -313,48 +233,23 @@
         <div style="color:#64748b; margin-top:6px;">Completed {{ repair.completed_at|pro_datetime }}</div>
         {% endif %}
       </div>
-      <div class="tm-completion-status" aria-label="Completion status">
-        <strong>{{ completion_progress.completed }} / {{ completion_progress.total }} Verified</strong>
-        <span>{{ completion_progress.percent }}%</span>
-        <div class="tm-completion-bar" aria-hidden="true"><span style="width:{{ completion_progress.percent }}%;"></span></div>
-      </div>
     </div>
-
-    {% if completion_warnings %}
-    <div class="tm-completion-warning" style="margin-top:16px;">
-      {% for warning in completion_warnings %}
-      <div>{{ warning }}</div>
-      {% endfor %}
-      <div style="margin-top:6px;">Enter an override reason to force completion.</div>
-    </div>
-    {% endif %}
 
     <form class="tm-completion-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/completion">
-      <section class="tm-completion-section" aria-label="Verification Checklist">
-        <h3 class="tm-completion-title">Verification Checklist</h3>
-        <div class="tm-completion-checks">
-          {% for key, label in completion_checks %}
-          <label class="tm-completion-check" for="completion_{{ key }}">
-            <input id="completion_{{ key }}" name="{{ key }}" type="checkbox" value="1" {% if completion[key] %}checked{% endif %}>
-            <span>{{ label }}</span>
-          </label>
-          {% endfor %}
-        </div>
-      </section>
-
       <section class="tm-completion-section" aria-label="Completion Notes">
         <h3 class="tm-completion-title">Completion Notes</h3>
-        <label class="tm-label" for="completion_notes">Final technician notes, measurements, test results, anything customer should know</label>
-        <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400">{{ completion.completion_notes or "" }}</textarea>
+        <label class="tm-label" for="completion_notes">Final technician notes, test results, measurements, or anything the customer should know.</label>
+        <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400" placeholder="Completion notes are recommended before closing this repair.">{{ completion.completion_notes or "" }}</textarea>
       </section>
 
-      <section class="tm-completion-section" aria-label="Override Reason">
-        <label class="tm-label" for="override_reason">Override Reason</label>
-        <textarea class="tm-input" id="override_reason" name="override_reason" rows="3" maxlength="1000" placeholder="Required when completing with incomplete checklist or verification.">{{ completion.override_reason or "" }}</textarea>
+      <section class="tm-completion-section" aria-label="Final Inspection Notes">
+        <h3 class="tm-completion-title">Final Inspection Notes</h3>
+        <label class="tm-label" for="final_inspection_notes">Optional final checks, road test notes, or quality-control notes.</label>
+        <textarea class="tm-input" id="final_inspection_notes" name="final_inspection_notes" rows="4" maxlength="1600">{{ completion.final_inspection_notes or "" }}</textarea>
       </section>
 
       <div class="tm-completion-actions">
-        <button class="tm-btn tm-btn-primary" type="submit">Mark Repair Complete</button>
+        <button class="tm-btn tm-btn-primary" type="submit">Complete Repair</button>
         {% if repair.status == "Completed" %}
         <span class="tm-status-chip tm-status-chip--completed">Completed</span>
         {% endif %}

@@ -59,8 +59,29 @@
     align-items: center;
     justify-content: flex-end;
   }
+  .tm-invoice-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .tm-invoice-option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    color: #334155;
+    font-weight: 800;
+  }
+  .tm-invoice-option input { width: 18px; height: 18px; accent-color: #0e7490; }
   @media (max-width: 760px) {
-    .tm-invoice-grid { grid-template-columns: 1fr; }
+    .tm-invoice-grid,
+    .tm-invoice-options { grid-template-columns: 1fr; }
     .tm-invoice-totals { max-width: none; margin-left: 0; }
     .tm-invoice-actions .tm-btn { width: 100%; justify-content: center; }
   }
@@ -77,7 +98,6 @@
     </div>
     <div class="tm-invoice-actions">
       <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">Back to Vehicle</a>
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">Download Invoice PDF</a>
     </div>
   </div>
 
@@ -94,8 +114,7 @@
       <div class="tm-invoice-field"><span>Repair Title</span><strong>{{ invoice.repair_name or "Repair" }}</strong></div>
       <div class="tm-invoice-field"><span>Completion Date</span><strong>{{ invoice.completed_at|pro_datetime if invoice.completed_at else "-" }}</strong></div>
       <div class="tm-invoice-field"><span>Labor Hours</span><strong>{% if invoice.labor_hours is not none %}{{ invoice.labor_hours }}{% else %}-{% endif %}</strong></div>
-      <div class="tm-invoice-field"><span>Labor Rate</span><strong>{% if invoice.labor_rate is not none %}{{ invoice.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</strong></div>
-      <div class="tm-invoice-field"><span>Parts Cost</span><strong>{{ invoice.parts_cost|pro_currency }}</strong></div>
+      <div class="tm-invoice-field"><span>Labor Rate</span><strong>{% if invoice.labor_rate is not none %}{{ invoice.labor_rate|pro_currency }}/hr{% elif invoice.labor_rate_is_legacy %}Legacy total only{% else %}-{% endif %}</strong></div>
       <div class="tm-invoice-field"><span>Parts Total</span><strong>{{ invoice.parts_total|pro_currency }}</strong></div>
     </div>
 
@@ -103,15 +122,42 @@
       <span>Repair Notes</span>
       <div class="tm-invoice-notes">{{ invoice.repair_notes or "-" }}</div>
     </div>
+    <div class="tm-invoice-field" style="margin-top:16px;">
+      <span>Completion Notes</span>
+      <div class="tm-invoice-notes">{{ invoice.completion_notes or "-" }}</div>
+    </div>
+    <div class="tm-invoice-field" style="margin-top:16px;">
+      <span>Final Inspection Notes</span>
+      <div class="tm-invoice-notes">{{ invoice.final_inspection_notes or "-" }}</div>
+    </div>
 
     <div class="tm-invoice-totals" style="margin-top:18px;">
       <div class="tm-invoice-total-row"><span>Labor Hours</span><strong>{% if invoice.labor_hours is not none %}{{ invoice.labor_hours }}{% else %}-{% endif %}</strong></div>
-      <div class="tm-invoice-total-row"><span>Labor Rate</span><strong>{% if invoice.labor_rate is not none %}{{ invoice.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</strong></div>
+      <div class="tm-invoice-total-row"><span>Labor Rate</span><strong>{% if invoice.labor_rate is not none %}{{ invoice.labor_rate|pro_currency }}/hr{% elif invoice.labor_rate_is_legacy %}Legacy total only{% else %}-{% endif %}</strong></div>
       <div class="tm-invoice-total-row"><span>Labor Total</span><strong>{{ invoice.labor_total|pro_currency }}</strong></div>
-      <div class="tm-invoice-total-row"><span>Parts Cost</span><strong>{{ invoice.parts_cost|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row"><span>Parts Total</span><strong>{{ invoice.parts_total|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Grand Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
     </div>
+  </section>
+
+  <section class="tm-invoice-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Customer PDF Details</div>
+    <h2 style="margin:4px 0 0;">Customer PDF Details</h2>
+    <form method="get" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">
+      <div class="tm-invoice-options">
+        <label class="tm-invoice-option"><input type="checkbox" name="show_completion_date" value="1" checked><span>Show completion date</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_hours" value="1"><span>Show labor hours</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_rate" value="1"><span>Show labor rate</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_total" value="1" checked><span>Show labor total</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_parts_total" value="1" checked><span>Show parts total</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_repair_notes" value="1" checked><span>Show repair notes</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_final_inspection_notes" value="1"><span>Show final inspection notes</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_inspection_finding_source" value="1"><span>Show inspection finding source</span></label>
+      </div>
+      <div class="tm-invoice-actions" style="margin-top:14px;">
+        <button class="tm-btn tm-btn-primary" type="submit">Download Invoice PDF</button>
+      </div>
+    </form>
   </section>
 </section>
 {% endblock %}
