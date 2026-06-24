@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import base64
+import hashlib
+import hmac
 import io
 import json
 import sqlite3
@@ -168,6 +170,103 @@ class CanonicalHostMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 app.add_middleware(CanonicalHostMiddleware)
+
+PRO_ACCESS_COOKIE = "tm_pro_access"
+PRO_PRIVATE_MESSAGE = "TorqueMech Pro is in private development."
+
+
+def pro_enabled() -> bool:
+    return (os.getenv("PRO_ENABLED") or "").strip().lower() == "true"
+
+
+def pro_access_code() -> str:
+    return (os.getenv("PRO_ACCESS_CODE") or "").strip()
+
+
+def is_local_pro_request(request: Request) -> bool:
+    host = (request.headers.get("host") or "").split(":", 1)[0].strip().lower()
+    client_host = (request.client.host if request.client else "").strip().lower()
+    local_hosts = {"localhost", "127.0.0.1", "::1"}
+    return host in local_hosts or client_host in {"127.0.0.1", "::1"}
+
+
+def pro_access_signature(code: str) -> str:
+    return hmac.new(code.encode("utf-8"), b"torquemech-pro-access", hashlib.sha256).hexdigest()
+
+
+def has_valid_pro_access_cookie(request: Request, code: str) -> bool:
+    cookie_value = request.cookies.get(PRO_ACCESS_COOKIE, "")
+    expected = pro_access_signature(code)
+    return bool(cookie_value) and hmac.compare_digest(cookie_value, expected)
+
+
+def pro_private_response(error: str = "") -> HTMLResponse:
+    error_html = f"<p class=\"tm-pro-gate-error\">{error}</p>" if error else ""
+    return HTMLResponse(
+        f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TorqueMech Pro Private Development</title>
+  <style>
+    body {{ margin:0; font-family: Arial, sans-serif; background:#f8fafc; color:#0f172a; }}
+    main {{ min-height:100vh; display:grid; place-items:center; padding:24px; }}
+    section {{ width:min(100%, 440px); border:1px solid #dbe3ef; border-radius:8px; background:#fff; padding:24px; box-shadow:0 18px 40px rgba(15,23,42,.08); }}
+    h1 {{ margin:0; font-size:1.45rem; line-height:1.2; }}
+    p {{ margin:10px 0 0; color:#475569; line-height:1.5; }}
+    label {{ display:block; margin-top:18px; color:#334155; font-weight:700; }}
+    input {{ box-sizing:border-box; width:100%; margin-top:7px; border:1px solid #cbd5e1; border-radius:8px; padding:11px 12px; font-size:1rem; }}
+    button {{ margin-top:14px; border:0; border-radius:8px; background:#0f766e; color:#fff; padding:11px 14px; font-weight:800; cursor:pointer; }}
+    .tm-pro-gate-error {{ color:#b91c1c; font-weight:700; }}
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>{PRO_PRIVATE_MESSAGE}</h1>
+      <p>TorqueMech Pro is currently in private development.</p>
+      {error_html}
+      <form method="post">
+        <label for="pro_access_code">Access code</label>
+        <input id="pro_access_code" name="pro_access_code" type="password" autocomplete="current-password">
+        <button type="submit">Continue</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>""",
+        status_code=403,
+    )
+
+
+def pro_blocked_response() -> HTMLResponse:
+    return HTMLResponse(
+        f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TorqueMech Pro Private Development</title>
+  <style>
+    body {{ margin:0; font-family: Arial, sans-serif; background:#f8fafc; color:#0f172a; }}
+    main {{ min-height:100vh; display:grid; place-items:center; padding:24px; }}
+    section {{ width:min(100%, 440px); border:1px solid #dbe3ef; border-radius:8px; background:#fff; padding:24px; box-shadow:0 18px 40px rgba(15,23,42,.08); }}
+    h1 {{ margin:0; font-size:1.45rem; line-height:1.2; }}
+    p {{ margin:10px 0 0; color:#475569; line-height:1.5; }}
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>{PRO_PRIVATE_MESSAGE}</h1>
+      <p>TorqueMech Pro is currently in private development.</p>
+    </section>
+  </main>
+</body>
+</html>""",
+        status_code=403,
+    )
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent
@@ -1235,6 +1334,44 @@ async def add_request_id_middleware(request: Request, call_next):
         return response
     finally:
         _request_id_ctx.reset(token)
+
+
+@app.middleware("http")
+async def pro_private_access_middleware(request: Request, call_next):
+    path = request.url.path
+    if path != "/pro" and not path.startswith("/pro/"):
+        return await call_next(request)
+
+    if is_local_pro_request(request):
+        return await call_next(request)
+
+    code = pro_access_code()
+    if code:
+        if has_valid_pro_access_cookie(request, code):
+            return await call_next(request)
+        if request.method.upper() == "POST":
+            raw_body = (await request.body()).decode("utf-8", errors="replace")
+            parsed = parse_qs(raw_body, keep_blank_values=True)
+            submitted_code = (parsed.get("pro_access_code") or [""])[0].strip()
+            if hmac.compare_digest(submitted_code, code):
+                response = RedirectResponse(str(request.url), status_code=303)
+                response.set_cookie(
+                    PRO_ACCESS_COOKIE,
+                    pro_access_signature(code),
+                    max_age=60 * 60 * 8,
+                    httponly=True,
+                    secure=request.url.scheme == "https",
+                    samesite="lax",
+                )
+                return response
+            return pro_private_response("Invalid access code.")
+        return pro_private_response()
+
+    if not pro_enabled():
+        return pro_blocked_response()
+
+    return await call_next(request)
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
