@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sqlite3
 import tempfile
@@ -15,7 +16,9 @@ BASE = BASE_DIR / "data" / "knowledge"
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 STATE_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = STATE_DIR / "app.db"
+LOCAL_FALLBACK_DB_PATH = STATE_DIR / "dev_runtime_app.db"
 USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
+logger = logging.getLogger(__name__)
 
 ALLOWED_CATEGORIES = {
     "obd": "OBD Code",
@@ -58,8 +61,20 @@ def load_article(category: str, slug: str) -> dict:
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     if USE_LOCAL_SQLITE_COMPAT:
-        conn.execute("PRAGMA journal_mode=MEMORY")
-        conn.execute("PRAGMA synchronous=NORMAL")
+        try:
+            conn.execute("PRAGMA journal_mode=MEMORY")
+            conn.execute("PRAGMA synchronous=NORMAL")
+        except sqlite3.OperationalError as exc:
+            logger.warning("Falling back to TRUNCATE journal mode for knowledge DB: %s", exc)
+            try:
+                conn.execute("PRAGMA journal_mode=TRUNCATE")
+                conn.execute("PRAGMA synchronous=NORMAL")
+            except sqlite3.OperationalError as fallback_exc:
+                logger.warning("Using local fallback knowledge DB after PRAGMA failure: %s", fallback_exc)
+                conn.close()
+                conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
+                conn.execute("PRAGMA journal_mode=TRUNCATE")
+                conn.execute("PRAGMA synchronous=NORMAL")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -910,42 +925,62 @@ def seed_services_from_python():
 
 
 def get_all_repair_guides():
-    conn = get_db()
-    cur = conn.cursor()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute("""
-        SELECT slug, name, category, labor_min, labor_max
-        FROM services
-        ORDER BY name ASC
-    """)
+        cur.execute("""
+            SELECT slug, name, category, labor_min, labor_max
+            FROM services
+            ORDER BY name ASC
+        """)
 
-    rows = cur.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+        rows = cur.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+    except sqlite3.Error as exc:
+        logger.warning("Using static repair guide fallback because knowledge DB is unavailable: %s", exc)
+        return sorted(REPAIR_COST_GUIDES, key=lambda item: item["name"])
 
 
 def get_repair_guide_by_slug(slug: str):
-    conn = get_db()
-    cur = conn.cursor()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute("""
-        SELECT slug, name, category, labor_min, labor_max
-        FROM services
-        WHERE slug = ?
-        LIMIT 1
-    """, (slug,))
+        cur.execute("""
+            SELECT slug, name, category, labor_min, labor_max
+            FROM services
+            WHERE slug = ?
+            LIMIT 1
+        """, (slug,))
 
-    row = cur.fetchone()
-    conn.close()
+        row = cur.fetchone()
+        conn.close()
 
-    if not row:
+        if not row:
+            return None
+
+        return dict(row)
+    except sqlite3.Error as exc:
+        logger.warning("Using static repair guide fallback because knowledge DB is unavailable: %s", exc)
+        for service in REPAIR_COST_GUIDES:
+            if service["slug"] == slug:
+                return dict(service)
         return None
 
-    return dict(row)
+
+def initialize_repair_cost_seed_data():
+    try:
+        init_service_tables()
+        seed_services_from_python()
+        return True
+    except sqlite3.Error as exc:
+        logger.warning("Skipping repair-cost knowledge DB initialization: %s", exc)
+        return False
 
 
-init_service_tables()
-seed_services_from_python()
+initialize_repair_cost_seed_data()
 
 
 @router.get("/repair-cost", response_class=HTMLResponse)

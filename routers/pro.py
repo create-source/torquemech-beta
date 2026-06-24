@@ -1,4 +1,5 @@
 import io
+import logging
 import re
 import sqlite3
 import json
@@ -33,7 +34,9 @@ VISUAL_REFERENCE_SEED_PATH = BASE_DIR / "data" / "visual_reference_seed.json"
 REPAIR_INTELLIGENCE_SEED_PATH = BASE_DIR / "data" / "repair_intelligence_seed.json"
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 DB_PATH = str((STATE_DIR / "app.db").resolve())
+LOCAL_FALLBACK_DB_PATH = str((STATE_DIR / "dev_runtime_app.db").resolve())
 USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
+logger = logging.getLogger(__name__)
 
 VISUAL_REFERENCE_IMAGE_TYPES = {
     "component_location",
@@ -90,8 +93,20 @@ REPAIR_COMPLETION_CHECKS = (
 def crm_db_conn() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     if USE_LOCAL_SQLITE_COMPAT:
-        conn.execute("PRAGMA journal_mode=MEMORY")
-        conn.execute("PRAGMA synchronous=NORMAL")
+        try:
+            conn.execute("PRAGMA journal_mode=MEMORY")
+            conn.execute("PRAGMA synchronous=NORMAL")
+        except sqlite3.OperationalError as exc:
+            logger.warning("Falling back to TRUNCATE journal mode for Pro DB: %s", exc)
+            try:
+                conn.execute("PRAGMA journal_mode=TRUNCATE")
+                conn.execute("PRAGMA synchronous=NORMAL")
+            except sqlite3.OperationalError as fallback_exc:
+                logger.warning("Using local fallback Pro DB after PRAGMA failure: %s", fallback_exc)
+                conn.close()
+                conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
+                conn.execute("PRAGMA journal_mode=TRUNCATE")
+                conn.execute("PRAGMA synchronous=NORMAL")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -797,6 +812,22 @@ def append_discrepancy_approval_event(
 
 
 def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER,
+          first_name TEXT,
+          last_name TEXT,
+          phone TEXT,
+          email TEXT,
+          customer_status TEXT NOT NULL DEFAULT 'active',
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
     columns = {row[1] for row in conn.execute("PRAGMA table_info(customers)").fetchall()}
     if "customer_status" not in columns:
         conn.execute("ALTER TABLE customers ADD COLUMN customer_status TEXT NOT NULL DEFAULT 'active'")
@@ -3123,6 +3154,24 @@ def ensure_service_history_records_schema(conn: sqlite3.Connection) -> None:
           repair_date, mileage, labor_hours, parts_cost, labor_cost,
           total_cost, notes, created_at
         FROM repair_records
+        WHERE status = 'Completed'
+          AND completed_at IS NOT NULL
+        """
+    )
+    conn.execute(
+        """
+        DELETE FROM service_history_records
+        WHERE source_type = 'repair'
+          AND EXISTS (
+            SELECT 1
+            FROM repair_records rr
+            WHERE rr.id = service_history_records.source_record_id
+              AND (
+                COALESCE(rr.status, '') != 'Completed'
+                OR rr.completed_at IS NULL
+                OR TRIM(rr.completed_at) = ''
+              )
+          )
         """
     )
     conn.execute(
@@ -3335,6 +3384,87 @@ def normalize_customer_status(value: str) -> str:
     return status if status in {"active", "inactive", "all"} else "active"
 
 
+def split_customer_name(full_name: str) -> tuple[str, str]:
+    parts = [part for part in str(full_name or "").strip().split() if part]
+    if not parts:
+        return "", ""
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], " ".join(parts[1:])
+
+
+def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(raw_payload or "{}")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid estimate payload")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Invalid estimate payload")
+    line_items = payload.get("lineItems")
+    if not isinstance(line_items, list) or not line_items:
+        raise HTTPException(status_code=400, detail="Estimate must include at least one service")
+    normalized_items: list[dict[str, Any]] = []
+    for idx, item in enumerate(line_items):
+        if not isinstance(item, dict):
+            continue
+        service_name = str(
+            item.get("serviceText")
+            or item.get("service_name")
+            or item.get("serviceCode")
+            or item.get("service_code")
+            or "Service"
+        ).strip()
+        if not service_name:
+            continue
+        labor_hours = optional_payload_float(item.get("laborHours", item.get("labor_hours")))
+        labor_rate = optional_payload_float(item.get("laborRate", item.get("labor_rate")))
+        labor_total = optional_payload_float(item.get("laborTotal", item.get("labor_total")))
+        parts_total = optional_payload_float(item.get("partsTotal", item.get("parts_total")))
+        grand_total = optional_payload_float(item.get("grandTotal", item.get("grand_total")))
+        if labor_total is None and labor_hours is not None and labor_rate is not None:
+            labor_total = round(labor_hours * labor_rate, 2)
+        if grand_total is None:
+            grand_total = round(float(labor_total or 0) + float(parts_total or 0), 2)
+        normalized_items.append(
+            {
+                "index": idx,
+                "service_name": service_name[:240],
+                "service_code": str(item.get("serviceCode") or item.get("service_code") or "").strip()[:160],
+                "labor_hours": labor_hours,
+                "labor_rate": labor_rate,
+                "labor_total": labor_total,
+                "parts_total": parts_total,
+                "grand_total": grand_total,
+                "notes": str(item.get("notes") or item.get("description") or "").strip()[:1200],
+            }
+        )
+    if not normalized_items:
+        raise HTTPException(status_code=400, detail="Estimate must include at least one service")
+    payload["lineItems"] = normalized_items
+    vehicle = payload.get("vehicle") if isinstance(payload.get("vehicle"), dict) else {}
+    payload["vehicle"] = {
+        "year": str(vehicle.get("year") or "").strip(),
+        "make": str(vehicle.get("make") or "").strip(),
+        "model": str(vehicle.get("displayModel") or vehicle.get("model") or "").strip(),
+    }
+    customer = payload.get("customer") if isinstance(payload.get("customer"), dict) else {}
+    payload["customer"] = {
+        "name": str(customer.get("name") or "").strip(),
+        "phone": str(customer.get("phone") or "").strip(),
+    }
+    payload["notes"] = str(payload.get("notes") or "").strip()[:1200]
+    return payload
+
+
+def optional_payload_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return round(float(value), 2)
+    except (TypeError, ValueError):
+        return None
+
+
 def load_approval_record(
     conn: sqlite3.Connection,
     customer_id: int,
@@ -3508,9 +3638,11 @@ def build_repair_work_items(
     vehicle: dict[str, Any],
     findings_records: list[dict[str, Any]],
     approval_records: list[dict[str, Any]],
+    repair_records: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     current_vehicle_mileage = vehicle.get("mileage")
+    linked_repair_ids: set[int] = set()
     for record in findings_records:
         if (record.get("status") or "") not in {"Approved", "Completed"}:
             continue
@@ -3523,6 +3655,8 @@ def build_repair_work_items(
             status = "ready"
         if status == "completed" or (record.get("status") or "") == "Completed":
             continue
+        if record.get("linked_repair_record_id"):
+            linked_repair_ids.add(int(record.get("linked_repair_record_id") or 0))
         title = repair_work_title_from_finding(record)
         detail = record.get("finding") or record.get("labor_reason") or record.get("recommendation") or ""
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
@@ -3576,6 +3710,8 @@ def build_repair_work_items(
             status = "ready"
         if status == "completed":
             continue
+        if record.get("linked_repair_record_id"):
+            linked_repair_ids.add(int(record.get("linked_repair_record_id") or 0))
         title = repair_work_title_from_approval(record)
         detail = record.get("finding_description") or record.get("recommended_repair") or ""
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
@@ -3615,6 +3751,36 @@ def build_repair_work_items(
             "updated_at": record.get("repair_work_updated_at") or record.get("decision_recorded_at") or record.get("updated_at") or "",
             "mileage": None,
             "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
+        }
+        if blueprint:
+            item["blueprint"] = blueprint
+            item["blueprint_summary"] = blueprint_summary(blueprint)
+        items.append(item)
+    for record in repair_records or []:
+        repair_id = int(record.get("id") or 0)
+        if not repair_id or repair_id in linked_repair_ids:
+            continue
+        if (record.get("status") or "") == "Completed":
+            continue
+        title = record.get("repair_name") or "Repair"
+        detail = record.get("notes") or ""
+        blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
+        item = {
+            "source_type": "repair",
+            "source_id": repair_id,
+            "title": title,
+            "detail": detail,
+            "request_type_label": "Repair Record",
+            "approval_label": "Estimator Quote" if record.get("workflow_source_type") == "estimate" else "Repair Record",
+            "repair_work_status": "ready",
+            "repair_work_status_label": repair_work_status_label("ready"),
+            "linked_repair_record_id": repair_id,
+            "repair_record_created_at": record.get("created_at") or "",
+            "repair_record_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}",
+            "repair_prefill": {},
+            "updated_at": record.get("created_at") or record.get("repair_date") or "",
+            "mileage": record.get("mileage"),
+            "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}",
         }
         if blueprint:
             item["blueprint"] = blueprint
@@ -4556,6 +4722,228 @@ def pro_customers(request: Request, q: str = "", status: str = "active"):
     )
 
 
+@router.get("/estimate-conversion", response_class=HTMLResponse)
+def pro_estimate_conversion_empty(request: Request):
+    return templates.TemplateResponse(
+        "pro/estimate_conversion.html",
+        {
+            "request": request,
+            "payload": None,
+            "payload_json": "",
+            "customers": [],
+            "vehicles_by_customer": {},
+            "error": "Start from the Estimator after adding at least one service.",
+        },
+    )
+
+
+@router.post("/estimate-conversion", response_class=HTMLResponse)
+async def pro_estimate_conversion(request: Request):
+    form = await read_form_data(request)
+    payload_json = form.get("estimate_payload", "")
+    payload = load_estimate_conversion_payload(payload_json)
+    conn = crm_db_conn()
+    try:
+        ensure_customer_status_schema(conn)
+        customers = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT *
+                FROM customers
+                WHERE customer_status = 'active'
+                ORDER BY updated_at DESC, created_at DESC, id DESC
+                """
+            ).fetchall()
+        ]
+        vehicles_by_customer: dict[str, list[dict[str, Any]]] = {}
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM customer_vehicles
+            ORDER BY updated_at DESC, created_at DESC, id DESC
+            """
+        ).fetchall():
+            vehicle = dict(row)
+            vehicles_by_customer.setdefault(str(vehicle["customer_id"]), []).append(vehicle)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "pro/estimate_conversion.html",
+        {
+            "request": request,
+            "payload": payload,
+            "payload_json": json.dumps(payload),
+            "customers": customers,
+            "vehicles_by_customer": vehicles_by_customer,
+            "error": "",
+        },
+    )
+
+
+@router.post("/estimate-conversion/create")
+async def pro_estimate_conversion_create(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    selected_indices = {
+        int(value)
+        for value in parsed.get("service_index", [])
+        if str(value).strip().isdigit()
+    }
+    payload = load_estimate_conversion_payload(form.get("estimate_payload", ""))
+    selected_items = [
+        item for item in payload["lineItems"] if int(item["index"]) in selected_indices
+    ]
+    if not selected_items:
+        raise HTTPException(status_code=400, detail="Select at least one service to import")
+
+    now = datetime.utcnow().isoformat()
+    repair_date = date.today().isoformat()
+    customer_mode = form.get("customer_mode", "existing")
+    vehicle_mode = form.get("vehicle_mode", "existing")
+
+    conn = crm_db_conn()
+    try:
+        ensure_customer_status_schema(conn)
+        ensure_repair_records_schema(conn)
+        if customer_mode == "new":
+            first_name, last_name = split_customer_name(form.get("new_customer_name", ""))
+            cur = conn.execute(
+                """
+                INSERT INTO customers (
+                  first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
+                """,
+                (
+                    first_name,
+                    last_name,
+                    clean_phone(form.get("new_customer_phone", "")),
+                    form.get("new_customer_email", ""),
+                    "Created from estimator conversion.",
+                    now,
+                    now,
+                ),
+            )
+            customer_id = int(cur.lastrowid)
+            vehicle_mode = "new"
+        else:
+            customer_id = optional_int(form, "customer_id") or 0
+            customer = conn.execute(
+                "SELECT id FROM customers WHERE id = ?",
+                (customer_id,),
+            ).fetchone()
+            if not customer:
+                raise HTTPException(status_code=400, detail="Select a customer")
+
+        if vehicle_mode == "new":
+            vehicle_payload = payload.get("vehicle") or {}
+            cur = conn.execute(
+                """
+                INSERT INTO customer_vehicles (
+                  customer_id, year, make, model, engine, vin, license_plate,
+                  mileage, notes, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    customer_id,
+                    optional_int(form, "new_vehicle_year") or optional_int({"new_vehicle_year": vehicle_payload.get("year")}, "new_vehicle_year"),
+                    form.get("new_vehicle_make") or vehicle_payload.get("make") or "",
+                    form.get("new_vehicle_model") or vehicle_payload.get("model") or "",
+                    form.get("new_vehicle_engine", ""),
+                    form.get("new_vehicle_vin", ""),
+                    form.get("new_vehicle_license_plate", ""),
+                    optional_int(form, "new_vehicle_mileage"),
+                    "Created from estimator conversion.",
+                    now,
+                    now,
+                ),
+            )
+            vehicle_id = int(cur.lastrowid)
+            vehicle_mileage = optional_int(form, "new_vehicle_mileage")
+        else:
+            vehicle_id = optional_int(form, "vehicle_id") or 0
+            vehicle = conn.execute(
+                """
+                SELECT id, mileage
+                FROM customer_vehicles
+                WHERE id = ? AND customer_id = ?
+                """,
+                (vehicle_id, customer_id),
+            ).fetchone()
+            if not vehicle:
+                raise HTTPException(status_code=400, detail="Select a vehicle for this customer")
+            vehicle_mileage = vehicle["mileage"]
+
+        created_count = 0
+        for item in selected_items:
+            existing = conn.execute(
+                """
+                SELECT id
+                FROM repair_records
+                WHERE vehicle_id = ?
+                  AND LOWER(TRIM(COALESCE(repair_name, ''))) = LOWER(TRIM(?))
+                  AND repair_date = ?
+                LIMIT 1
+                """,
+                (vehicle_id, item["service_name"], repair_date),
+            ).fetchone()
+            if existing:
+                continue
+            labor_cost = item["labor_total"]
+            if labor_cost is None and item["labor_hours"] is not None and item["labor_rate"] is not None:
+                labor_cost = round(float(item["labor_hours"]) * float(item["labor_rate"]), 2)
+            total_cost = item["grand_total"]
+            if total_cost is None:
+                total_cost = round(float(labor_cost or 0) + float(item["parts_total"] or 0), 2)
+            notes = "\n".join(
+                part
+                for part in [
+                    "Source: Estimator Quote",
+                    payload.get("notes") or "",
+                    item.get("notes") or "",
+                ]
+                if str(part or "").strip()
+            )
+            cur = conn.execute(
+                """
+                INSERT INTO repair_records (
+                  vehicle_id, customer_id, repair_name, repair_date, mileage,
+                  labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+                  track_as_maintenance, workflow_source_type, workflow_source_id,
+                  notes, status, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'estimate', NULL, ?, 'Open', ?)
+                """,
+                (
+                    vehicle_id,
+                    customer_id,
+                    item["service_name"],
+                    repair_date,
+                    vehicle_mileage,
+                    item["labor_hours"],
+                    item["labor_rate"],
+                    item["parts_total"],
+                    labor_cost,
+                    total_cost,
+                    notes,
+                    now,
+                ),
+            )
+            repair_id = int(cur.lastrowid)
+            created_count += 1
+        conn.commit()
+    finally:
+        conn.close()
+
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}?converted=1&created={created_count}#repair-workspace",
+        status_code=303,
+    )
+
+
 @router.post("/customers")
 async def pro_customer_create(request: Request):
     form = await read_form_data(request)
@@ -4745,7 +5133,13 @@ async def pro_customer_vehicle_create(request: Request, customer_id: int):
 
 
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}", response_class=HTMLResponse)
-def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: int):
+def pro_customer_vehicle_detail(
+    request: Request,
+    customer_id: int,
+    vehicle_id: int,
+    converted: str = "",
+    created: int = 0,
+):
     conn = crm_db_conn()
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
@@ -4922,6 +5316,11 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             for record in [*findings_records, *approval_records]
             if record.get("linked_repair_record_id")
         }
+        linked_repair_record_ids.update(
+            int(record.get("id") or 0)
+            for record in repair_records
+            if record.get("id") and (record.get("status") or "") != "Completed"
+        )
         checklist_summaries = {
             repair_record_id: repair_checklist_summary(conn, repair_record_id)
             for repair_record_id in linked_repair_record_ids
@@ -4950,7 +5349,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
     ]
     findings_summary = build_findings_summary(inspection_findings_records)
     approval_summary = build_approval_summary(approval_records)
-    repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records)
+    repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records, repair_records)
     for item in repair_work_items:
         item["checklist_summary"] = checklist_summaries.get(
             int(item.get("linked_repair_record_id") or 0),
@@ -4988,6 +5387,8 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
             "maintenance_interval_presets": MAINTENANCE_INTERVAL_PRESETS,
             "maintenance_service_aliases": MAINTENANCE_SERVICE_ALIASES,
+            "estimate_conversion_success": converted == "1",
+            "estimate_conversion_created": created,
         },
     )
 

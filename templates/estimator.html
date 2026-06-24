@@ -396,6 +396,17 @@
         <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--saved">Review estimate details before sharing.</div>
         <div id="estimateSavedLinkText" class="tm-hint tm-saved-link-text"></div>
       </div>
+
+      {% if pro_handoff_available and not shared_id %}
+      <div id="proJobHandoffActions" class="actions estimator-final-actions" aria-label="Pro job handoff">
+        <form id="convertToProJobForm" method="post" action="/pro/estimate-conversion" hidden>
+          <input id="convertToProJobPayload" type="hidden" name="estimate_payload" value="">
+        </form>
+        <button id="convertToProJobBtn" type="button" class="tm-btn tm-btn-secondary estimator-final-cta" disabled>
+          Convert to Pro Job
+        </button>
+      </div>
+      {% endif %}
     </div>
 
       <div id="customerQuoteFinalActions" class="actions estimator-final-actions" aria-label="Finish customer quote">

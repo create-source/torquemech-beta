@@ -277,6 +277,7 @@ SERVICES_CATALOG_PATH = BASE_DIR / "services_catalog.json"
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 STATE_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = str((STATE_DIR / "app.db").resolve())
+LOCAL_FALLBACK_DB_PATH = str((STATE_DIR / "dev_runtime_app.db").resolve())
 USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -334,8 +335,20 @@ def app_db_conn(*, row_factory: bool = False) -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     if USE_LOCAL_SQLITE_COMPAT:
         # OneDrive-backed local workspaces can fail on default rollback-journal commits.
-        conn.execute("PRAGMA journal_mode=MEMORY")
-        conn.execute("PRAGMA synchronous=NORMAL")
+        try:
+            conn.execute("PRAGMA journal_mode=MEMORY")
+            conn.execute("PRAGMA synchronous=NORMAL")
+        except sqlite3.OperationalError as exc:
+            logging.warning("Falling back to TRUNCATE journal mode for app DB: %s", exc)
+            try:
+                conn.execute("PRAGMA journal_mode=TRUNCATE")
+                conn.execute("PRAGMA synchronous=NORMAL")
+            except sqlite3.OperationalError as fallback_exc:
+                logging.warning("Using local fallback app DB after PRAGMA failure: %s", fallback_exc)
+                conn.close()
+                conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
+                conn.execute("PRAGMA journal_mode=TRUNCATE")
+                conn.execute("PRAGMA synchronous=NORMAL")
     if row_factory:
         conn.row_factory = sqlite3.Row
     return conn
@@ -506,6 +519,7 @@ def init_pro_crm_schema_db() -> None:
               service_date TEXT,
               mileage INTEGER,
               labor_hours REAL,
+              labor_rate REAL,
               parts_cost REAL,
               labor_cost REAL,
               total_cost REAL,
@@ -610,6 +624,7 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("repair_records", "track_as_maintenance", "track_as_maintenance INTEGER NOT NULL DEFAULT 0")
         add_column_if_missing("repair_records", "workflow_source_type", "workflow_source_type TEXT")
         add_column_if_missing("repair_records", "workflow_source_id", "workflow_source_id INTEGER")
+        add_column_if_missing("repair_records", "labor_rate", "labor_rate REAL")
         add_column_if_missing("repair_records", "status", "status TEXT NOT NULL DEFAULT 'Open'")
         add_column_if_missing("repair_records", "completed_at", "completed_at TEXT")
         conn.execute(
@@ -1485,8 +1500,16 @@ OBD_SEED_JSON_PATH = BASE_DIR / "data" / "obd_codes.json"
 def obd_sqlite_conn(*, row_factory: bool = True) -> sqlite3.Connection:
     conn = sqlite3.connect(str(OBD_SQLITE_PATH))
     if USE_LOCAL_SQLITE_COMPAT:
-        conn.execute("PRAGMA journal_mode=MEMORY")
-        conn.execute("PRAGMA synchronous=NORMAL")
+        try:
+            conn.execute("PRAGMA journal_mode=MEMORY")
+            conn.execute("PRAGMA synchronous=NORMAL")
+        except sqlite3.OperationalError as exc:
+            logging.warning("Falling back to TRUNCATE journal mode for OBD DB: %s", exc)
+            try:
+                conn.execute("PRAGMA journal_mode=TRUNCATE")
+                conn.execute("PRAGMA synchronous=NORMAL")
+            except sqlite3.OperationalError as fallback_exc:
+                logging.warning("Skipping local SQLite compatibility PRAGMAs for OBD DB: %s", fallback_exc)
     if row_factory:
         conn.row_factory = sqlite3.Row
     return conn
@@ -5095,9 +5118,15 @@ def home(request: Request):
 @app.get("/estimator", response_class=HTMLResponse)
 def estimator(request: Request):
     metric_incr("page_estimator")
+    code = pro_access_code()
+    pro_handoff_available = (
+        is_local_pro_request(request)
+        or (bool(code) and has_valid_pro_access_cookie(request, code))
+        or (not code and pro_enabled())
+    )
     return templates.TemplateResponse(
         "estimator.html",
-        {"request": request},
+        {"request": request, "pro_handoff_available": pro_handoff_available},
     )
 
 @app.get("/obd", response_class=HTMLResponse)
@@ -8864,6 +8893,13 @@ def metric_incr(name: str, delta: int = 1) -> None:
     now = datetime.utcnow().isoformat()
     conn = app_db_conn()
     cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS metrics (
+            name TEXT PRIMARY KEY,
+            value INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL
+        )
+    """)
     cur.execute("""
         INSERT INTO metrics(name, value, updated_at)
         VALUES(?, ?, ?)

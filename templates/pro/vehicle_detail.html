@@ -1855,7 +1855,7 @@
     </div>
   </section>
 
-  <details class="tm-crm-panel" id="repair-workspace" aria-label="Repair workspace" style="margin-top:16px;">
+  <details class="tm-crm-panel" id="repair-workspace" aria-label="Repair workspace" style="margin-top:16px;" {% if estimate_conversion_success %}open{% endif %}>
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
         <span>Repair Workspace</span>
@@ -1863,6 +1863,12 @@
       </span>
     </summary>
     <div class="tm-workspace-panel-body">
+
+    {% if estimate_conversion_success %}
+    <div class="tm-history-empty" style="margin-bottom:12px; border-style:solid; background:#ecfdf5; color:#065f46;">
+      Estimate converted. Repair jobs are now available in Repair Workspace.
+    </div>
+    {% endif %}
 
     {% set active_repair_work_items = repair_work_items|list %}
     {% if active_repair_work_items %}
@@ -1966,7 +1972,7 @@
         </div>
         <div class="tm-repair-work-source" aria-label="Source traceability for {{ item.title }}">
           <div class="tm-repair-work-source-label">Source</div>
-          <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">{% if item.source_type == "finding" %}View Source Finding{% else %}View Source Approval{% endif %}</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">{% if item.source_type == "finding" %}View Source Finding{% elif item.source_type == "repair" %}View Repair Record{% else %}View Source Approval{% endif %}</a>
         </div>
         {% if item.repair_work_status == "completed" and not item.linked_repair_record_id %}
         <details class="tm-repair-work-convert">

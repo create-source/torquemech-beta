@@ -936,6 +936,9 @@
   const sharedSnapshotServices = $("sharedSnapshotServices");
   const sharedSnapshotTotal = $("sharedSnapshotTotal");
   const sharedDownloadPdfBtn = $("sharedDownloadPdfBtn");
+  const convertToProJobBtn = $("convertToProJobBtn");
+  const convertToProJobForm = $("convertToProJobForm");
+  const convertToProJobPayload = $("convertToProJobPayload");
 
   // Preview (optional)
   const estimatePreview = $("estimatePreview");
@@ -2441,6 +2444,37 @@ const confidenceEl = document.getElementById("laborConfidence");
       travelFee,
       hasTravel: travelFee > 0,
       total,
+    };
+  }
+
+  function buildProJobConversionPayload() {
+    const vehicle = getCurrentVehicleSnapshot();
+    return {
+      source: "estimator",
+      createdAt: new Date().toISOString(),
+      vehicle,
+      notes: (notesEl?.value || "").trim(),
+      customer: {
+        name: (customerNameEl?.value || "").trim(),
+        phone: (customerPhoneEl?.value || "").trim(),
+      },
+      lineItems: ensureUniqueLineItemIds(lineItems).map((it) => {
+        const cost = getLineItemCostBreakdown(it);
+        return {
+          id: it.id || createLineItemId(),
+          serviceCode: String(it.serviceCode || "").trim(),
+          serviceText: String(it.serviceText || it.serviceCode || "Service").trim(),
+          pricingMode: cost.pricingMode,
+          laborHours: cost.laborHours,
+          laborRate: cost.laborRate,
+          laborTotal: cost.laborTotal,
+          partsTotal: cost.partsPrice,
+          travelFee: cost.travelFee,
+          grandTotal: cost.total,
+          notes: (it.notes || "").trim(),
+          description: (it.inspectionFindings || "").trim(),
+        };
+      }),
     };
   }
 
@@ -5128,6 +5162,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   function syncCustomerQuoteActionState() {
     const hasLines = lineItems.length > 0;
     if (generateAllBtn) generateAllBtn.disabled = isGeneratingAllLines || !hasLines;
+    if (convertToProJobBtn) convertToProJobBtn.disabled = isGeneratingAllLines || !hasLines;
     customerQuoteFinalActions?.classList.toggle("is-disabled", !hasLines);
     if (customerQuoteFinalHint) {
       customerQuoteFinalHint.textContent = hasLines
@@ -6227,6 +6262,15 @@ if (getEstimateHint) {
     if (openConfirm()) {
       setConfirmMessage("info", "Review the shared quote, then generate the customer PDF.");
     }
+  });
+  convertToProJobBtn?.addEventListener("click", () => {
+    if (!lineItems.length) {
+      setStatus("error", "Add at least one service before converting to a Pro job.");
+      return;
+    }
+    if (!convertToProJobForm || !convertToProJobPayload) return;
+    convertToProJobPayload.value = JSON.stringify(buildProJobConversionPayload());
+    convertToProJobForm.submit();
   });
 
   addVehicleBtn?.addEventListener("click", () => {

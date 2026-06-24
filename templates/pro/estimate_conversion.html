@@ -1,0 +1,311 @@
+{% extends "layout.html" %}
+
+{% block title %}Convert Estimate to Pro Job | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-convert-shell {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tm-convert-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 18px;
+  }
+
+  .tm-convert-step-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .tm-convert-step-kicker {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-convert-step-head h2 {
+    margin: 3px 0 0;
+  }
+
+  .tm-convert-mode-row,
+  .tm-convert-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-convert-mode-row {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .tm-convert-choice {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+    font-weight: 900;
+  }
+
+  .tm-convert-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tm-convert-services {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tm-convert-service {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .tm-convert-service-title {
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .tm-convert-money-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .tm-convert-money-grid span {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-convert-money-grid strong {
+    display: block;
+    margin-top: 2px;
+    color: #0f172a;
+  }
+
+  .tm-convert-error {
+    border: 1px solid rgba(185, 28, 28, 0.22);
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 14px;
+    font-weight: 800;
+  }
+
+  @media (max-width: 760px) {
+    .tm-convert-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Convert Estimate to Pro Job</h1>
+      <p class="tm-pro-subtitle">Turn this estimate into active repair jobs for a customer vehicle.</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/estimator">Back to Estimator</a>
+  </div>
+
+  {% if error %}
+  <div class="tm-convert-error">{{ error }}</div>
+  {% endif %}
+
+  {% if payload %}
+  <form class="tm-convert-shell" method="post" action="/pro/estimate-conversion/create">
+    <input type="hidden" name="estimate_payload" value="{{ payload_json|e }}">
+
+    <section class="tm-convert-panel" aria-label="Customer">
+      <div class="tm-convert-step-head">
+        <div>
+          <div class="tm-convert-step-kicker">Step 1</div>
+          <h2>Customer</h2>
+        </div>
+      </div>
+      <div class="tm-convert-mode-row">
+        <label class="tm-convert-choice">
+          <input type="radio" name="customer_mode" value="existing" checked>
+          <span>Select Existing Customer</span>
+        </label>
+        <label class="tm-convert-choice">
+          <input type="radio" name="customer_mode" value="new">
+          <span>Create New Customer</span>
+        </label>
+      </div>
+      <div class="tm-convert-grid" style="margin-top:12px;">
+        <div data-customer-panel="existing">
+          <label class="tm-label" for="customer_id">Customer</label>
+          <select class="tm-input" id="customer_id" name="customer_id">
+            <option value="">Select customer</option>
+            {% for customer in customers %}
+            {% set customer_name = (customer.first_name ~ " " ~ customer.last_name)|trim %}
+            <option value="{{ customer.id }}">{{ customer_name or "Unnamed Customer" }}{% if customer.phone %} - {{ customer.phone }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div data-customer-panel="new">
+          <label class="tm-label" for="new_customer_name">Customer name</label>
+          <input class="tm-input" id="new_customer_name" name="new_customer_name" type="text" value="{{ payload.customer.name }}" maxlength="180" autocomplete="name">
+        </div>
+        <div data-customer-panel="new">
+          <label class="tm-label" for="new_customer_phone">Phone</label>
+          <input class="tm-input" id="new_customer_phone" name="new_customer_phone" type="tel" value="{{ payload.customer.phone }}" maxlength="32" autocomplete="tel">
+        </div>
+        <div data-customer-panel="new">
+          <label class="tm-label" for="new_customer_email">Email</label>
+          <input class="tm-input" id="new_customer_email" name="new_customer_email" type="email" maxlength="180" autocomplete="email">
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-convert-panel" aria-label="Vehicle">
+      <div class="tm-convert-step-head">
+        <div>
+          <div class="tm-convert-step-kicker">Step 2</div>
+          <h2>Vehicle</h2>
+        </div>
+      </div>
+      <div class="tm-convert-mode-row">
+        <label class="tm-convert-choice">
+          <input type="radio" name="vehicle_mode" value="existing" checked>
+          <span>Select Existing Vehicle</span>
+        </label>
+        <label class="tm-convert-choice">
+          <input type="radio" name="vehicle_mode" value="new">
+          <span>Create New Vehicle</span>
+        </label>
+      </div>
+      <div class="tm-convert-grid" style="margin-top:12px;">
+        <div data-vehicle-panel="existing">
+          <label class="tm-label" for="vehicle_id">Vehicle for selected customer</label>
+          <select class="tm-input" id="vehicle_id" name="vehicle_id">
+            <option value="">Select customer first</option>
+          </select>
+        </div>
+        <div data-vehicle-panel="new">
+          <label class="tm-label" for="new_vehicle_year">Year</label>
+          <input class="tm-input" id="new_vehicle_year" name="new_vehicle_year" type="number" value="{{ payload.vehicle.year }}" min="1900" max="2100">
+        </div>
+        <div data-vehicle-panel="new">
+          <label class="tm-label" for="new_vehicle_make">Make</label>
+          <input class="tm-input" id="new_vehicle_make" name="new_vehicle_make" type="text" value="{{ payload.vehicle.make }}" maxlength="120">
+        </div>
+        <div data-vehicle-panel="new">
+          <label class="tm-label" for="new_vehicle_model">Model</label>
+          <input class="tm-input" id="new_vehicle_model" name="new_vehicle_model" type="text" value="{{ payload.vehicle.model }}" maxlength="160">
+        </div>
+        <div data-vehicle-panel="new">
+          <label class="tm-label" for="new_vehicle_mileage">Mileage</label>
+          <input class="tm-input" id="new_vehicle_mileage" name="new_vehicle_mileage" type="text" inputmode="numeric" placeholder="120,000">
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-convert-panel" aria-label="Import Services">
+      <div class="tm-convert-step-head">
+        <div>
+          <div class="tm-convert-step-kicker">Step 3</div>
+          <h2>Import Services</h2>
+          <p class="tm-pro-subtitle" style="margin:4px 0 0;">Select services to create as repair jobs.</p>
+        </div>
+      </div>
+      <div class="tm-convert-services">
+        {% for item in payload.lineItems %}
+        <label class="tm-convert-service">
+          <input type="checkbox" name="service_index" value="{{ item.index }}" checked>
+          <span>
+            <span class="tm-convert-service-title">{{ item.service_name }}</span>
+            <span class="tm-convert-money-grid">
+              <span>Labor hours<strong>{{ "%.1f"|format(item.labor_hours or 0) }}</strong></span>
+              <span>Labor rate<strong>${{ "%.2f"|format(item.labor_rate or 0) }}/hr</strong></span>
+              <span>Labor total<strong>${{ "%.2f"|format(item.labor_total or 0) }}</strong></span>
+              <span>Parts total<strong>${{ "%.2f"|format(item.parts_total or 0) }}</strong></span>
+              <span>Grand total<strong>${{ "%.2f"|format(item.grand_total or 0) }}</strong></span>
+            </span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="tm-convert-panel">
+      <button class="tm-btn tm-btn-primary" type="submit">Create Repair Jobs</button>
+    </div>
+  </form>
+
+  <script>
+    (() => {
+      const vehiclesByCustomer = {{ vehicles_by_customer|tojson }};
+      const customerSelect = document.getElementById("customer_id");
+      const vehicleSelect = document.getElementById("vehicle_id");
+      const panels = {
+        customer: Array.from(document.querySelectorAll("[data-customer-panel]")),
+        vehicle: Array.from(document.querySelectorAll("[data-vehicle-panel]")),
+      };
+
+      function selectedRadio(name) {
+        return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
+      }
+
+      function syncPanels() {
+        const customerMode = selectedRadio("customer_mode");
+        const vehicleMode = customerMode === "new" ? "new" : selectedRadio("vehicle_mode");
+        panels.customer.forEach((panel) => {
+          panel.hidden = panel.dataset.customerPanel !== customerMode;
+        });
+        panels.vehicle.forEach((panel) => {
+          panel.hidden = panel.dataset.vehiclePanel !== vehicleMode;
+        });
+        document.querySelectorAll('input[name="vehicle_mode"]').forEach((input) => {
+          input.disabled = customerMode === "new" && input.value === "existing";
+          if (customerMode === "new" && input.value === "new") input.checked = true;
+        });
+      }
+
+      function syncVehicles() {
+        if (!vehicleSelect || !customerSelect) return;
+        const vehicles = vehiclesByCustomer[String(customerSelect.value || "")] || [];
+        vehicleSelect.innerHTML = vehicles.length
+          ? '<option value="">Select vehicle</option>'
+          : '<option value="">No vehicles for selected customer</option>';
+        vehicles.forEach((vehicle) => {
+          const option = document.createElement("option");
+          option.value = String(vehicle.id);
+          option.textContent = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ") || "Vehicle";
+          if (vehicle.mileage) option.textContent += ` - ${Number(vehicle.mileage).toLocaleString()} mi`;
+          vehicleSelect.appendChild(option);
+        });
+      }
+
+      document.addEventListener("change", (event) => {
+        if (event.target?.name === "customer_mode" || event.target?.name === "vehicle_mode") syncPanels();
+        if (event.target === customerSelect) syncVehicles();
+      });
+      syncPanels();
+      syncVehicles();
+    })();
+  </script>
+  {% endif %}
+</section>
+{% endblock %}
