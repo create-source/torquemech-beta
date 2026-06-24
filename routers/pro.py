@@ -190,6 +190,37 @@ def repair_work_status_label(value: Any) -> str:
     return REPAIR_WORK_STATUS_LABELS[status]
 
 
+REPAIR_WORKSPACE_STATUS_LABELS = {
+    "ready": "Ready for Repair",
+    "in_progress": "In Progress",
+    "waiting_parts": "In Progress",
+    "completed": "Completed",
+}
+
+
+def repair_workspace_status_label(value: Any) -> str:
+    status = normalize_repair_work_status(str(value or "ready"))
+    return REPAIR_WORKSPACE_STATUS_LABELS[status]
+
+
+def repair_workspace_blank_totals() -> dict[str, Any]:
+    return {
+        "labor_total": None,
+        "parts_total": None,
+        "grand_total": None,
+        "has_pricing": False,
+    }
+
+
+def repair_workspace_detail_from_notes(notes: Any) -> str:
+    lines = [
+        line.strip()
+        for line in str(notes or "").splitlines()
+        if line.strip() and not line.strip().lower().startswith("source:")
+    ]
+    return "\n".join(lines)
+
+
 def normalize_workflow_source_type(raw_source_type: str | None) -> str:
     source_type = (raw_source_type or "").strip().lower()
     return source_type if source_type in {"finding", "approval"} else ""
@@ -1138,11 +1169,19 @@ async def read_multipart_form_data(request: Request) -> tuple[dict[str, str], di
         payload = payload.rstrip(b"\r\n")
         filename = disposition.get("filename")
         if filename is not None:
-            files[name] = {
+            upload = {
                 "filename": filename,
                 "content_type": headers.get("content-type", ""),
                 "content": payload,
             }
+            if name in files:
+                existing = files[name]
+                if isinstance(existing, list):
+                    existing.append(upload)
+                else:
+                    files[name] = [existing, upload]
+            else:
+                files[name] = upload
         else:
             fields[name] = payload.decode("utf-8", errors="replace").strip()
     return fields, files
@@ -1164,6 +1203,23 @@ def save_visual_reference_upload(upload: dict[str, Any] | None) -> str:
     target.relative_to(VISUAL_REFERENCE_UPLOAD_DIR.resolve())
     target.write_bytes(content)
     return f"{VISUAL_REFERENCE_UPLOAD_URL_PREFIX}/{stored_name}"
+
+
+def normalize_upload_list(upload_or_uploads: Any) -> list[dict[str, Any]]:
+    if isinstance(upload_or_uploads, list):
+        return [upload for upload in upload_or_uploads if isinstance(upload, dict)]
+    if isinstance(upload_or_uploads, dict):
+        return [upload_or_uploads]
+    return []
+
+
+def save_image_upload_paths(upload_or_uploads: Any) -> list[str]:
+    paths: list[str] = []
+    for upload in normalize_upload_list(upload_or_uploads):
+        path = save_visual_reference_upload(upload)
+        if path:
+            paths.append(path)
+    return paths
 
 
 def seed_visual_references(conn: sqlite3.Connection) -> None:
@@ -2319,6 +2375,7 @@ def ensure_repair_completion_schema(conn: sqlite3.Connection) -> None:
           customer_concern_resolved INTEGER NOT NULL DEFAULT 0,
           completion_notes TEXT,
           final_inspection_notes TEXT,
+          after_repair_photo_paths TEXT,
           override_reason TEXT,
           completed_at TEXT,
           created_at TEXT NOT NULL,
@@ -2330,6 +2387,8 @@ def ensure_repair_completion_schema(conn: sqlite3.Connection) -> None:
     columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_completions)").fetchall()}
     if "final_inspection_notes" not in columns:
         conn.execute("ALTER TABLE repair_completions ADD COLUMN final_inspection_notes TEXT")
+    if "after_repair_photo_paths" not in columns:
+        conn.execute("ALTER TABLE repair_completions ADD COLUMN after_repair_photo_paths TEXT")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_repair_completions_repair_record_id "
         "ON repair_completions (repair_record_id)"
@@ -2347,6 +2406,7 @@ def default_repair_completion() -> dict[str, Any]:
         "repair_record_id": None,
         "completion_notes": "",
         "final_inspection_notes": "",
+        "after_repair_photo_paths": "",
         "override_reason": "",
         "completed_at": "",
         "created_at": "",
@@ -2374,6 +2434,11 @@ def load_repair_completion(
     completion["repair_record_id"] = repair_record_id
     if row:
         completion.update(dict(row))
+    try:
+        after_photo_urls = json.loads(completion.get("after_repair_photo_paths") or "[]")
+    except json.JSONDecodeError:
+        after_photo_urls = []
+    completion["after_repair_photo_urls"] = after_photo_urls if isinstance(after_photo_urls, list) else []
     return completion
 
 
@@ -2388,6 +2453,7 @@ def upsert_repair_completion(
     form: dict[str, str],
     completed_at: str | None,
     now: str,
+    after_repair_photo_paths: list[str] | None = None,
 ) -> dict[str, Any]:
     ensure_repair_completion_schema(conn)
     values = {key: 1 if form.get(key) == "1" else 0 for key, _label in REPAIR_COMPLETION_CHECKS}
@@ -2395,16 +2461,28 @@ def upsert_repair_completion(
     final_inspection_notes = str(form.get("final_inspection_notes") or "").strip()
     override_reason = str(form.get("override_reason") or "").strip()
     existing = load_repair_completion(conn, repair_record_id)
+    try:
+        existing_photo_paths = json.loads(existing.get("after_repair_photo_paths") or "[]")
+    except json.JSONDecodeError:
+        existing_photo_paths = []
+    if not isinstance(existing_photo_paths, list):
+        existing_photo_paths = []
+    merged_photo_paths = [
+        str(path)
+        for path in [*existing_photo_paths, *(after_repair_photo_paths or [])]
+        if str(path or "").strip()
+    ]
+    photo_paths_json = json.dumps(merged_photo_paths)
     effective_completed_at = completed_at or existing.get("completed_at") or ""
     conn.execute(
         """
         INSERT INTO repair_completions (
           repair_record_id, torque_verified, fluids_verified, leaks_checked,
           codes_cleared, road_test_completed, customer_concern_resolved,
-          completion_notes, final_inspection_notes, override_reason, completed_at,
+          completion_notes, final_inspection_notes, after_repair_photo_paths, override_reason, completed_at,
           created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(repair_record_id) DO UPDATE SET
           torque_verified = excluded.torque_verified,
           fluids_verified = excluded.fluids_verified,
@@ -2414,6 +2492,7 @@ def upsert_repair_completion(
           customer_concern_resolved = excluded.customer_concern_resolved,
           completion_notes = excluded.completion_notes,
           final_inspection_notes = excluded.final_inspection_notes,
+          after_repair_photo_paths = excluded.after_repair_photo_paths,
           override_reason = excluded.override_reason,
           completed_at = COALESCE(NULLIF(excluded.completed_at, ''), repair_completions.completed_at),
           updated_at = excluded.updated_at
@@ -2428,6 +2507,7 @@ def upsert_repair_completion(
             values["customer_concern_resolved"],
             completion_notes,
             final_inspection_notes,
+            photo_paths_json,
             override_reason,
             effective_completed_at,
             now,
@@ -3666,9 +3746,11 @@ def build_repair_work_items(
             "title": title,
             "detail": detail,
             "request_type_label": "Labor Request" if normalize_finding_request_type(record.get("request_type")) == "labor" else "Finding",
-            "approval_label": record.get("status") or "Approved",
+            "approval_label": "Finding",
+            "source_label": "Source: Finding",
+            "original_finding": record.get("finding") or detail,
             "repair_work_status": status,
-            "repair_work_status_label": repair_work_status_label(status),
+            "repair_work_status_label": repair_workspace_status_label(status),
             "linked_repair_record_id": record.get("linked_repair_record_id"),
             "repair_record_created_at": record.get("repair_record_created_at") or "",
             "repair_record_url": (
@@ -3695,6 +3777,7 @@ def build_repair_work_items(
             "updated_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
             "mileage": record.get("mileage"),
             "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/findings/{record['id']}",
+            **repair_workspace_blank_totals(),
         }
         if blueprint:
             item["blueprint"] = blueprint
@@ -3721,9 +3804,11 @@ def build_repair_work_items(
             "title": title,
             "detail": detail,
             "request_type_label": approval_request_type_label(record.get("request_type")),
-            "approval_label": "Approved",
+            "approval_label": "Finding",
+            "source_label": "Source: Finding",
+            "original_finding": record.get("finding_description") or detail,
             "repair_work_status": status,
-            "repair_work_status_label": repair_work_status_label(status),
+            "repair_work_status_label": repair_workspace_status_label(status),
             "linked_repair_record_id": record.get("linked_repair_record_id"),
             "repair_record_created_at": record.get("repair_record_created_at") or "",
             "repair_record_url": (
@@ -3751,6 +3836,7 @@ def build_repair_work_items(
             "updated_at": record.get("repair_work_updated_at") or record.get("decision_recorded_at") or record.get("updated_at") or "",
             "mileage": None,
             "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
+            **repair_workspace_blank_totals(),
         }
         if blueprint:
             item["blueprint"] = blueprint
@@ -3762,8 +3848,10 @@ def build_repair_work_items(
             continue
         if (record.get("status") or "") == "Completed":
             continue
+        totals = repair_cost_totals(record)
+        source_label = "Source: Estimate" if record.get("workflow_source_type") == "estimate" else "Source: Manual Repair"
         title = record.get("repair_name") or "Repair"
-        detail = record.get("notes") or ""
+        detail = repair_workspace_detail_from_notes(record.get("notes"))
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
         item = {
             "source_type": "repair",
@@ -3771,9 +3859,11 @@ def build_repair_work_items(
             "title": title,
             "detail": detail,
             "request_type_label": "Repair Record",
-            "approval_label": "Estimator Quote" if record.get("workflow_source_type") == "estimate" else "Repair Record",
+            "approval_label": source_label.replace("Source: ", ""),
+            "source_label": source_label,
+            "original_finding": "",
             "repair_work_status": "ready",
-            "repair_work_status_label": repair_work_status_label("ready"),
+            "repair_work_status_label": repair_workspace_status_label("ready"),
             "linked_repair_record_id": repair_id,
             "repair_record_created_at": record.get("created_at") or "",
             "repair_record_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}",
@@ -3781,6 +3871,13 @@ def build_repair_work_items(
             "updated_at": record.get("created_at") or record.get("repair_date") or "",
             "mileage": record.get("mileage"),
             "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}",
+            "labor_total": totals["labor_total"],
+            "parts_total": totals["parts_total"],
+            "grand_total": totals["grand_total"],
+            "has_pricing": any(
+                float(totals.get(key) or 0) > 0
+                for key in ("labor_total", "parts_total", "grand_total")
+            ),
         }
         if blueprint:
             item["blueprint"] = blueprint
@@ -4901,7 +4998,7 @@ async def pro_estimate_conversion_create(request: Request):
             notes = "\n".join(
                 part
                 for part in [
-                    "Source: Estimator Quote",
+                    "Source: Estimate",
                     payload.get("notes") or "",
                     item.get("notes") or "",
                 ]
@@ -7098,7 +7195,13 @@ async def pro_repair_execution_status_update(
 async def pro_repair_completion_update(
     request: Request, customer_id: int, vehicle_id: int, repair_id: int
 ):
-    form = await read_form_data(request)
+    content_type = request.headers.get("content-type", "")
+    after_repair_photo_paths: list[str] = []
+    if "multipart/form-data" in content_type:
+        form, files = await read_multipart_form_data(request)
+        after_repair_photo_paths = save_image_upload_paths(files.get("after_repair_photos"))
+    else:
+        form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
@@ -7109,6 +7212,7 @@ async def pro_repair_completion_update(
             conn,
             repair_record_id=repair_id,
             form=form,
+            after_repair_photo_paths=after_repair_photo_paths,
             completed_at=completed_at,
             now=now,
         )

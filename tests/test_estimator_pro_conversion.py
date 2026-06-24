@@ -186,6 +186,8 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(repair["parts_cost"], 115)
         self.assertEqual(repair["total_cost"], 265)
         self.assertEqual(repair["workflow_source_type"], "estimate")
+        self.assertIn("Source: Estimate", repair["notes"])
+        self.assertNotIn("Source: Estimator Quote", repair["notes"])
         self.assertEqual(findings_count, 0)
         self.assertEqual(history_count, 0)
 

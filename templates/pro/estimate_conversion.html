@@ -54,6 +54,22 @@
     background: #fff;
     padding: 12px;
     font-weight: 900;
+    cursor: pointer;
+    min-height: 52px;
+    transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+  }
+
+  .tm-convert-choice input {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: #0f766e;
+  }
+
+  .tm-convert-choice--selected {
+    border-color: rgba(15, 118, 110, 0.72);
+    background: #ecfdf5;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
   }
 
   .tm-convert-grid {
@@ -259,6 +275,7 @@
       const vehiclesByCustomer = {{ vehicles_by_customer|tojson }};
       const customerSelect = document.getElementById("customer_id");
       const vehicleSelect = document.getElementById("vehicle_id");
+      const newCustomerPhone = document.getElementById("new_customer_phone");
       const panels = {
         customer: Array.from(document.querySelectorAll("[data-customer-panel]")),
         vehicle: Array.from(document.querySelectorAll("[data-vehicle-panel]")),
@@ -266,6 +283,13 @@
 
       function selectedRadio(name) {
         return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
+      }
+
+      function syncChoiceStyles() {
+        document.querySelectorAll(".tm-convert-choice").forEach((choice) => {
+          const input = choice.querySelector('input[type="radio"]');
+          choice.classList.toggle("tm-convert-choice--selected", Boolean(input?.checked));
+        });
       }
 
       function syncPanels() {
@@ -281,6 +305,14 @@
           input.disabled = customerMode === "new" && input.value === "existing";
           if (customerMode === "new" && input.value === "new") input.checked = true;
         });
+        syncChoiceStyles();
+      }
+
+      function formatPhone(value) {
+        const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
       }
 
       function syncVehicles() {
@@ -302,6 +334,10 @@
         if (event.target?.name === "customer_mode" || event.target?.name === "vehicle_mode") syncPanels();
         if (event.target === customerSelect) syncVehicles();
       });
+      newCustomerPhone?.addEventListener("input", () => {
+        newCustomerPhone.value = formatPhone(newCustomerPhone.value);
+      });
+      if (newCustomerPhone?.value) newCustomerPhone.value = formatPhone(newCustomerPhone.value);
       syncPanels();
       syncVehicles();
     })();

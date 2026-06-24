@@ -216,6 +216,32 @@ class VisualReferenceLibraryTests(unittest.TestCase):
         self.assertEqual(files["image_file"]["filename"], "location.svg")
         self.assertEqual(files["image_file"]["content"], b"<svg></svg>")
 
+    def test_multipart_upload_parser_keeps_multiple_files_for_same_field(self):
+        boundary = "tm-test-boundary"
+        body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="after_repair_photos"; filename="after-1.jpg"\r\n'
+            "Content-Type: image/jpeg\r\n\r\n"
+            "one\r\n"
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="after_repair_photos"; filename="after-2.jpg"\r\n'
+            "Content-Type: image/jpeg\r\n\r\n"
+            "two\r\n"
+            f"--{boundary}--\r\n"
+        ).encode("utf-8")
+
+        class FakeRequest:
+            headers = {"content-type": f"multipart/form-data; boundary={boundary}"}
+
+            async def body(self):
+                return body
+
+        _fields, files = asyncio.run(read_multipart_form_data(FakeRequest()))
+
+        self.assertEqual(len(files["after_repair_photos"]), 2)
+        self.assertEqual(files["after_repair_photos"][0]["filename"], "after-1.jpg")
+        self.assertEqual(files["after_repair_photos"][1]["filename"], "after-2.jpg")
+
 
 if __name__ == "__main__":
     unittest.main()
