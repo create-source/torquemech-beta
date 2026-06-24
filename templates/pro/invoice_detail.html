@@ -98,6 +98,9 @@
     </div>
     <div class="tm-invoice-actions">
       <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">Back to Vehicle</a>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/recalculate">
+        <button class="tm-btn tm-btn-secondary" type="submit">Recalculate Invoice From Repair Record</button>
+      </form>
     </div>
   </div>
 

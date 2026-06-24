@@ -2056,6 +2056,45 @@ def create_invoice_for_repair(
     return load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
 
 
+def recalculate_invoice_from_repair(
+    conn: sqlite3.Connection,
+    *,
+    invoice_id: int,
+    customer_id: int,
+    vehicle_id: int,
+) -> dict[str, Any]:
+    invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+    repair = load_repair_record(
+        conn,
+        customer_id,
+        vehicle_id,
+        int(invoice["repair_record_id"]),
+    )
+    totals = repair_cost_totals(repair)
+    conn.execute(
+        """
+        UPDATE invoices
+        SET labor_total = ?,
+            parts_total = ?,
+            grand_total = ?
+        WHERE id = ?
+          AND repair_record_id = ?
+          AND customer_id = ?
+          AND vehicle_id = ?
+        """,
+        (
+            totals["labor_total"],
+            totals["parts_total"],
+            totals["grand_total"],
+            invoice_id,
+            repair["id"],
+            customer_id,
+            vehicle_id,
+        ),
+    )
+    return load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+
+
 def pdf_lines(text: Any, max_chars: int = 92) -> list[str]:
     words = str(text or "").replace("\r", "").split()
     if not words:
@@ -6405,6 +6444,28 @@ def pro_invoice_detail(
     )
 
 
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/recalculate")
+async def pro_invoice_recalculate(
+    customer_id: int, vehicle_id: int, invoice_id: int
+):
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        recalculate_invoice_from_repair(
+            conn,
+            invoice_id=invoice_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}",
+        status_code=303,
+    )
+
+
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/pdf")
 def pro_invoice_pdf(request: Request, customer_id: int, vehicle_id: int, invoice_id: int):
     conn = crm_db_conn()
@@ -6874,6 +6935,7 @@ def pro_repair_record_edit(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        completion = load_repair_completion(conn, repair_id)
     finally:
         conn.close()
 
@@ -6884,6 +6946,7 @@ def pro_repair_record_edit(
             "customer": customer,
             "vehicle": vehicle,
             "repair": repair,
+            "completion": completion,
         },
     )
 
@@ -6935,6 +6998,14 @@ async def pro_repair_record_update(
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Repair record not found")
+        existing_completion = load_repair_completion(conn, repair_id)
+        upsert_repair_completion(
+            conn,
+            repair_record_id=repair_id,
+            form=form,
+            completed_at=existing_completion.get("completed_at") or None,
+            now=datetime.utcnow().isoformat(),
+        )
         conn.commit()
     finally:
         conn.close()
