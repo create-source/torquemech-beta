@@ -2352,6 +2352,34 @@ def load_vehicle_repair_completion_events(
     ]
 
 
+def table_has_column(conn: sqlite3.Connection, table_name: str, column_name: str) -> bool:
+    return column_name in {
+        row[1] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+    }
+
+
+def findings_records_has_customer_id(conn: sqlite3.Connection) -> bool:
+    return table_has_column(conn, "findings_records", "customer_id")
+
+
+def finding_record_where_sql(conn: sqlite3.Connection, table_alias: str | None = None) -> str:
+    prefix = f"{table_alias}." if table_alias else ""
+    if findings_records_has_customer_id(conn):
+        return f"{prefix}id = ? AND {prefix}customer_id = ? AND {prefix}vehicle_id = ?"
+    return f"{prefix}id = ? AND {prefix}vehicle_id = ?"
+
+
+def finding_record_where_params(
+    conn: sqlite3.Connection,
+    finding_id: int,
+    customer_id: int,
+    vehicle_id: int,
+) -> tuple[Any, ...]:
+    if findings_records_has_customer_id(conn):
+        return (finding_id, customer_id, vehicle_id)
+    return (finding_id, vehicle_id)
+
+
 def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
     conn.execute(
         """
@@ -2447,7 +2475,8 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
               )
             """
         )
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
+    if findings_records_has_customer_id(conn):
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_customer_id ON findings_records (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_id ON findings_records (vehicle_id)")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_findings_records_vehicle_mileage_date "
@@ -2621,10 +2650,10 @@ def vehicle_finding_activity_payload(
             SELECT fhr.*, fr.finding, fr.request_type, fr.labor_description
             FROM finding_history_records fhr
             JOIN findings_records fr ON fr.id = fhr.finding_id
-            WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+            WHERE fr.vehicle_id = ?
             ORDER BY fhr.created_at DESC, fhr.id DESC
             """,
-            (customer_id, vehicle_id),
+            (vehicle_id,),
         ).fetchall()
     ]
     customer_decision_logs = [
@@ -2634,10 +2663,10 @@ def vehicle_finding_activity_payload(
             SELECT cdl.*, fr.finding
             FROM customer_decision_logs cdl
             JOIN findings_records fr ON fr.id = cdl.finding_id
-            WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+            WHERE fr.vehicle_id = ?
             ORDER BY cdl.created_at DESC, cdl.id DESC
             """,
-            (customer_id, vehicle_id),
+            (vehicle_id,),
         ).fetchall()
     ]
     approval_event_records = [
@@ -2680,11 +2709,13 @@ def vehicle_finding_activity_payload(
             """
             SELECT *
             FROM findings_records
-            WHERE customer_id = ? AND vehicle_id = ?
+            WHERE vehicle_id = ?
             """,
-            (customer_id, vehicle_id),
+            (vehicle_id,),
         ).fetchall()
     ]
+    for record in findings_records:
+        record.setdefault("customer_id", customer_id)
     vehicle_timeline = build_vehicle_timeline(
         customer_id,
         vehicle_id,
@@ -2807,12 +2838,12 @@ def load_finding_record(
     ensure_findings_records_schema(conn)
     finding = row_to_dict(
         conn.execute(
-            """
+            f"""
             SELECT *
             FROM findings_records
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            WHERE {finding_record_where_sql(conn)}
             """,
-            (finding_id, customer_id, vehicle_id),
+            finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
         ).fetchone()
     )
     if not finding:
@@ -3283,15 +3314,15 @@ def ensure_repair_record_for_approved_finding(
             repair_id = int(existing_repair["id"])
 
     conn.execute(
-        """
+        f"""
         UPDATE findings_records
         SET linked_repair_record_id = ?,
             repair_record_created_at = COALESCE(NULLIF(repair_record_created_at, ''), ?),
             repair_work_status = COALESCE(NULLIF(repair_work_status, ''), 'ready'),
             repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), ?)
-        WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+        WHERE {finding_record_where_sql(conn)}
         """,
-        (repair_id, now, now, finding_id, customer_id, vehicle_id),
+        (repair_id, now, now, *finding_record_where_params(conn, finding_id, customer_id, vehicle_id)),
     )
     return repair_id
 
@@ -4567,7 +4598,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 """
                 SELECT *
                 FROM service_history_records
-                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                WHERE customer_id = ? AND vehicle_id = ?
                 ORDER BY mileage DESC, service_date DESC, id DESC
                 """,
                 (customer_id, vehicle_id),
@@ -4614,7 +4645,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 FROM findings_records fr
                 LEFT JOIN repair_records rr
                   ON rr.id = fr.linked_repair_record_id
-                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                WHERE fr.vehicle_id = ?
                 ORDER BY
                   CASE fr.status
                     WHEN 'Approved' THEN 1
@@ -4634,9 +4665,11 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                   fr.finding_date DESC,
                   fr.id DESC
                 """,
-                (customer_id, vehicle_id),
+                (vehicle_id,),
             ).fetchall()
         ]
+        for record in findings_records:
+            record.setdefault("customer_id", customer_id)
         finding_history_records = [
             dict(row)
             for row in conn.execute(
@@ -4644,10 +4677,10 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 SELECT fhr.*, fr.finding, fr.request_type, fr.labor_description
                 FROM finding_history_records fhr
                 JOIN findings_records fr ON fr.id = fhr.finding_id
-                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                WHERE fr.vehicle_id = ?
                 ORDER BY fhr.created_at DESC, fhr.id DESC
                 """,
-                (customer_id, vehicle_id),
+                (vehicle_id,),
             ).fetchall()
         ]
         customer_decision_logs = [
@@ -4657,10 +4690,10 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 SELECT cdl.*, fr.finding
                 FROM customer_decision_logs cdl
                 JOIN findings_records fr ON fr.id = cdl.finding_id
-                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                WHERE fr.vehicle_id = ?
                 ORDER BY cdl.created_at DESC, cdl.id DESC
                 """,
-                (customer_id, vehicle_id),
+                (vehicle_id,),
             ).fetchall()
         ]
         ensure_discrepancy_approvals_schema(conn)
@@ -4845,35 +4878,51 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_findings_records_schema(conn)
+        insert_columns = [
+            "vehicle_id",
+            "request_type",
+            "finding",
+            "recommendation",
+            "labor_description",
+            "labor_hours",
+            "labor_rate",
+            "labor_amount",
+            "labor_reason",
+            "severity",
+            "status",
+            "repair_work_status",
+            "repair_work_updated_at",
+            "mileage",
+            "finding_date",
+            "created_at",
+        ]
+        insert_values: list[Any] = [
+            vehicle_id,
+            request_type,
+            form.get("finding", ""),
+            form.get("recommendation", ""),
+            labor_description,
+            labor_hours,
+            labor_rate,
+            labor_amount,
+            labor_reason,
+            severity,
+            status,
+            "completed" if status == "Completed" else "ready" if status == "Approved" else "",
+            now if status in {"Approved", "Completed"} else "",
+            optional_int(form, "mileage"),
+            date.today().isoformat(),
+            now,
+        ]
+        if findings_records_has_customer_id(conn):
+            insert_columns.insert(1, "customer_id")
+            insert_values.insert(1, customer_id)
         cur = conn.execute(
-            """
-            INSERT INTO findings_records (
-              vehicle_id, customer_id, request_type, finding, recommendation,
-              labor_description, labor_hours, labor_rate, labor_amount, labor_reason,
-              severity, status, repair_work_status, repair_work_updated_at,
-              mileage, finding_date, created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            f"""
+            INSERT INTO findings_records ({", ".join(insert_columns)})
+            VALUES ({", ".join("?" for _ in insert_columns)})
             """,
-            (
-                vehicle_id,
-                customer_id,
-                request_type,
-                form.get("finding", ""),
-                form.get("recommendation", ""),
-                labor_description,
-                labor_hours,
-                labor_rate,
-                labor_amount,
-                labor_reason,
-                severity,
-                status,
-                "completed" if status == "Completed" else "ready" if status == "Approved" else "",
-                now if status in {"Approved", "Completed"} else "",
-                optional_int(form, "mileage"),
-                date.today().isoformat(),
-                now,
-            ),
+            tuple(insert_values),
         )
         append_finding_history_record(
             conn,
@@ -4986,7 +5035,7 @@ async def pro_finding_record_update(
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         cur = conn.execute(
-            """
+            f"""
             UPDATE findings_records
             SET request_type = ?, finding = ?, recommendation = ?,
                 labor_description = ?, labor_hours = ?, labor_rate = ?,
@@ -5004,7 +5053,7 @@ async def pro_finding_record_update(
                   ELSE repair_work_updated_at
                 END,
                 mileage = ?, finding_date = ?
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            WHERE {finding_record_where_sql(conn)}
             """,
             (
                 request_type,
@@ -5023,9 +5072,7 @@ async def pro_finding_record_update(
                 datetime.utcnow().isoformat(),
                 optional_int(form, "mileage"),
                 form.get("finding_date", ""),
-                finding_id,
-                customer_id,
-                vehicle_id,
+                *finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
             ),
         )
         if cur.rowcount == 0:
@@ -5082,12 +5129,12 @@ async def pro_finding_notes_update(
         internal_notes_changed = previous_internal_notes != internal_notes
 
         cur = conn.execute(
-            """
+            f"""
             UPDATE findings_records
             SET customer_notes = ?, internal_notes = ?
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            WHERE {finding_record_where_sql(conn)}
             """,
-            (customer_notes, internal_notes, finding_id, customer_id, vehicle_id),
+            (customer_notes, internal_notes, *finding_record_where_params(conn, finding_id, customer_id, vehicle_id)),
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Finding record not found")
@@ -5160,7 +5207,7 @@ async def pro_finding_record_status_update(
                 status_code=303,
             )
         cur = conn.execute(
-            """
+            f"""
             UPDATE findings_records
             SET status = ?,
                 repair_work_status = CASE
@@ -5175,9 +5222,16 @@ async def pro_finding_record_status_update(
                   THEN ?
                   ELSE repair_work_updated_at
                 END
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            WHERE {finding_record_where_sql(conn)}
             """,
-            (status, status, status, status, datetime.utcnow().isoformat(), finding_id, customer_id, vehicle_id),
+            (
+                status,
+                status,
+                status,
+                status,
+                datetime.utcnow().isoformat(),
+                *finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
+            ),
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Finding record not found")
@@ -5248,14 +5302,19 @@ async def pro_finding_repair_work_status_update(
             )
         next_finding_status = "Completed" if repair_status == "completed" else "Approved"
         conn.execute(
-            """
+            f"""
             UPDATE findings_records
             SET repair_work_status = ?,
                 repair_work_updated_at = ?,
                 status = ?
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            WHERE {finding_record_where_sql(conn)}
             """,
-            (repair_status, now, next_finding_status, finding_id, customer_id, vehicle_id),
+            (
+                repair_status,
+                now,
+                next_finding_status,
+                *finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
+            ),
         )
         if previous_repair_status != repair_status:
             append_finding_history_record(
@@ -6025,13 +6084,17 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
         repair_id = int(cur.lastrowid)
         if workflow_source_type == "finding" and workflow_source_id is not None:
             conn.execute(
-                """
+                f"""
                 UPDATE findings_records
                 SET linked_repair_record_id = ?,
                     repair_record_created_at = ?
-                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                WHERE {finding_record_where_sql(conn)}
                 """,
-                (repair_id, now, workflow_source_id, customer_id, vehicle_id),
+                (
+                    repair_id,
+                    now,
+                    *finding_record_where_params(conn, workflow_source_id, customer_id, vehicle_id),
+                ),
             )
         elif workflow_source_type == "approval" and workflow_source_id is not None:
             conn.execute(
@@ -6290,14 +6353,14 @@ def sync_repair_completion_source(
             "completed" if previous_status == "Completed" else "ready"
         )
         conn.execute(
-            """
+            f"""
             UPDATE findings_records
             SET status = 'Completed',
                 repair_work_status = 'completed',
                 repair_work_updated_at = ?
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            WHERE {finding_record_where_sql(conn)}
             """,
-            (now, source_id, customer_id, vehicle_id),
+            (now, *finding_record_where_params(conn, source_id, customer_id, vehicle_id)),
         )
         if previous_status != "Completed":
             append_finding_history_record(
@@ -6372,14 +6435,18 @@ async def pro_repair_execution_status_update(
             if (existing.get("status") or "") not in {"Approved", "Completed"}:
                 raise HTTPException(status_code=400, detail="Finding must be approved before repair work starts")
             conn.execute(
-                """
+                f"""
                 UPDATE findings_records
                 SET repair_work_status = ?,
                     repair_work_updated_at = ?,
                     status = 'Approved'
-                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                WHERE {finding_record_where_sql(conn)}
                 """,
-                (repair_status, now, source_id, customer_id, vehicle_id),
+                (
+                    repair_status,
+                    now,
+                    *finding_record_where_params(conn, source_id, customer_id, vehicle_id),
+                ),
             )
             if previous_repair_status != repair_status:
                 append_finding_history_record(
