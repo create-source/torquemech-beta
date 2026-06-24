@@ -1824,7 +1824,7 @@ def repair_labor_totals(repair: dict[str, Any]) -> dict[str, Any]:
         "labor_hours": labor_hours,
         "labor_rate": None,
         "labor_total": round(max(0.0, legacy_labor_total), 2),
-        "labor_rate_is_legacy": True if legacy_labor_total and labor_hours else False,
+        "labor_rate_is_legacy": True if legacy_labor_total else False,
     }
 
 
@@ -6959,19 +6959,19 @@ async def pro_repair_record_update(
     parts_cost = optional_float(form, "parts_cost")
     labor_hours = optional_float(form, "labor_hours")
     labor_rate = optional_float(form, "labor_rate")
-    legacy_labor_cost = optional_float(form, "labor_cost")
-    labor_cost = (
-        round(float(labor_hours or 0) * float(labor_rate or 0), 2)
-        if labor_hours is not None and labor_rate is not None
-        else legacy_labor_cost
-    )
-    total_cost = float(parts_cost or 0) + float(labor_cost or 0)
     track_as_maintenance = form.get("also_update_maintenance_tracking") == "1"
 
     conn = crm_db_conn()
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
-        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        existing_repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        if labor_hours is not None and labor_rate is not None:
+            labor_cost = round(float(labor_hours or 0) * float(labor_rate or 0), 2)
+        elif "labor_cost" in form:
+            labor_cost = optional_float(form, "labor_cost")
+        else:
+            labor_cost = existing_repair.get("labor_cost")
+        total_cost = float(parts_cost or 0) + float(labor_cost or 0)
         cur = conn.execute(
             """
             UPDATE repair_records

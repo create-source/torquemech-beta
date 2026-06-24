@@ -6,13 +6,17 @@
 <style>
   .tm-repair-panel { border:1px solid rgba(15,23,42,.12); border-radius:8px; background:rgba(255,255,255,.94); padding:18px; max-width:920px; }
   .tm-repair-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .tm-repair-preview { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  .tm-repair-preview-item { border:1px solid rgba(15,23,42,.12); border-radius:8px; background:#f8fafc; padding:12px; }
+  .tm-repair-preview-item span { display:block; color:#64748b; font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.02em; }
+  .tm-repair-preview-item strong { display:block; margin-top:4px; color:#0f172a; font-size:1.05rem; }
   .tm-switch-control { display:inline-flex; align-items:center; gap:10px; cursor:pointer; color:#334155; font-weight:800; }
   .tm-switch-control input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
   .tm-switch-track { position:relative; width:46px; height:26px; border:1px solid #94a3b8; border-radius:999px; background:#cbd5e1; }
   .tm-switch-track::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(15,23,42,.28); transition:transform 160ms ease; }
   .tm-switch-control input:checked + .tm-switch-track { border-color:#0f766e; background:#0f766e; }
   .tm-switch-control input:checked + .tm-switch-track::after { transform:translateX(20px); }
-  @media (max-width:760px) { .tm-repair-row { grid-template-columns:1fr; } }
+  @media (max-width:760px) { .tm-repair-row, .tm-repair-preview { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
 
@@ -44,12 +48,15 @@
       <div><label class="tm-label" for="mileage">Mileage</label><input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ repair.mileage|pro_miles if repair.mileage is not none else '' }}"></div>
     </div>
     <div class="tm-repair-row" style="margin-top:12px;">
-      <div><label class="tm-label" for="labor_hours">Labor Hours</label><input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1" value="{{ repair.labor_hours if repair.labor_hours is not none else '' }}"></div>
-      <div><label class="tm-label" for="labor_rate">Labor Rate</label><input class="tm-input" id="labor_rate" name="labor_rate" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.labor_rate) if repair.labor_rate is not none else '' }}"></div>
+      <div><label class="tm-label" for="labor_hours">Labor Hours</label><input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1" value="{{ repair.labor_hours if repair.labor_hours is not none else '' }}" data-labor-hours></div>
+      <div><label class="tm-label" for="labor_rate">Labor Rate</label><input class="tm-input" id="labor_rate" name="labor_rate" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.labor_rate) if repair.labor_rate is not none else '' }}" data-labor-rate></div>
     </div>
     <div class="tm-repair-row" style="margin-top:12px;">
-      <div><label class="tm-label" for="parts_cost">Parts Cost</label><input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.parts_cost) if repair.parts_cost is not none else '' }}"></div>
-      <div><label class="tm-label" for="labor_cost">Legacy Labor Total</label><input class="tm-input" id="labor_cost" name="labor_cost" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.labor_cost) if repair.labor_cost is not none and repair.labor_rate is none else '' }}" placeholder="Only for older records without a labor rate"></div>
+      <div><label class="tm-label" for="parts_cost">Parts Cost</label><input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.parts_cost) if repair.parts_cost is not none else '' }}" data-parts-cost></div>
+    </div>
+    <div class="tm-repair-preview" aria-live="polite">
+      <div class="tm-repair-preview-item"><span>Labor Total</span><strong data-labor-total>{{ repair.labor_total|pro_currency if repair.labor_total is not none else "$0.00" }}</strong></div>
+      <div class="tm-repair-preview-item"><span>Grand Total</span><strong data-grand-total>{{ repair.grand_total|pro_currency if repair.grand_total is not none else "$0.00" }}</strong></div>
     </div>
     <div style="margin-top:12px;">
       <label class="tm-label" for="notes">Repair Notes</label>
@@ -66,4 +73,32 @@
     <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Repair Record</button>
   </form>
 </section>
+{% endblock %}
+
+{% block page_js %}
+<script>
+  (() => {
+    const hours = document.querySelector("[data-labor-hours]");
+    const rate = document.querySelector("[data-labor-rate]");
+    const parts = document.querySelector("[data-parts-cost]");
+    const laborTotal = document.querySelector("[data-labor-total]");
+    const grandTotal = document.querySelector("[data-grand-total]");
+    if (!hours || !rate || !parts || !laborTotal || !grandTotal) return;
+
+    const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+    const toNumber = (value) => {
+      const parsed = Number(String(value || "").replace(/[^0-9.-]+/g, ""));
+      return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+    };
+    const updateTotals = () => {
+      const labor = toNumber(hours.value) * toNumber(rate.value);
+      const grand = labor + toNumber(parts.value);
+      laborTotal.textContent = money.format(labor);
+      grandTotal.textContent = money.format(grand);
+    };
+
+    [hours, rate, parts].forEach((input) => input.addEventListener("input", updateTotals));
+    updateTotals();
+  })();
+</script>
 {% endblock %}
