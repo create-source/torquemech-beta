@@ -1707,12 +1707,12 @@
           </select>
         </div>
         <div style="margin-top:12px;">
-          <label class="tm-label" for="finding">Finding</label>
-          <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600"></textarea>
+          <label class="tm-label" for="finding">Problem Found</label>
+          <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600" placeholder="What was discovered or observed?"></textarea>
         </div>
         <div style="margin-top:12px;">
-          <label class="tm-label" for="recommendation">Recommendation</label>
-          <textarea class="tm-input" id="recommendation" name="recommendation" rows="3" maxlength="1600"></textarea>
+          <label class="tm-label" for="recommendation">Recommended Repair</label>
+          <textarea class="tm-input" id="recommendation" name="recommendation" rows="3" maxlength="1600" placeholder="What should be done?"></textarea>
         </div>
         <div class="tm-crm-row" style="margin-top:12px;">
           <div>
@@ -1817,7 +1817,7 @@
               <div style="color:#475569;"><strong>Reason:</strong> {{ item.labor_reason or "No labor reason recorded." }}</div>
               <div style="color:#475569;"><strong>Status:</strong> {{ item.status }}</div>
               {% else %}
-              <div style="color:#475569;"><strong>Recommendation:</strong> {{ item.recommendation or "No recommendation recorded." }}</div>
+              <div style="color:#475569;"><strong>Recommended Repair:</strong> {{ item.recommendation or "No recommended repair recorded." }}</div>
               {% endif %}
               <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
                 <div class="tm-finding-status-control">

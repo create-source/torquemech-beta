@@ -31,12 +31,12 @@
       </select>
     </div>
     <div>
-      <label class="tm-label" for="finding">Finding</label>
-      <textarea class="tm-input" id="finding" name="finding" rows="4" maxlength="1600">{{ finding.finding or "" }}</textarea>
+      <label class="tm-label" for="finding">Problem Found</label>
+      <textarea class="tm-input" id="finding" name="finding" rows="4" maxlength="1600" placeholder="What was discovered or observed?">{{ finding.finding or "" }}</textarea>
     </div>
     <div style="margin-top:12px;">
-      <label class="tm-label" for="recommendation">Recommendation</label>
-      <textarea class="tm-input" id="recommendation" name="recommendation" rows="4" maxlength="1600">{{ finding.recommendation or "" }}</textarea>
+      <label class="tm-label" for="recommendation">Recommended Repair</label>
+      <textarea class="tm-input" id="recommendation" name="recommendation" rows="4" maxlength="1600" placeholder="What should be done?">{{ finding.recommendation or "" }}</textarea>
     </div>
     <div class="tm-finding-row" style="margin-top:12px;">
       <div>

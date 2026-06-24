@@ -3198,6 +3198,104 @@ def repair_work_title_from_finding(record: dict[str, Any]) -> str:
     return record.get("recommendation") or record.get("finding") or "Finding"
 
 
+def repair_work_notes_from_finding(record: dict[str, Any]) -> str:
+    return "\n".join(
+        part
+        for part in [
+            "Source: Approved finding",
+            record.get("finding") or "",
+            record.get("recommendation") or "",
+            record.get("labor_reason") or "",
+        ]
+        if str(part or "").strip()
+    )
+
+
+def ensure_repair_record_for_approved_finding(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    now: str,
+) -> int | None:
+    ensure_repair_records_schema(conn)
+    ensure_findings_records_schema(conn)
+    finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    if (finding.get("status") or "") != "Approved":
+        return None
+
+    linked_repair_record_id = finding.get("linked_repair_record_id")
+    if linked_repair_record_id:
+        return int(linked_repair_record_id)
+
+    existing_repair = conn.execute(
+        """
+        SELECT id
+        FROM repair_records
+        WHERE workflow_source_type = 'finding' AND workflow_source_id = ?
+        LIMIT 1
+        """,
+        (finding_id,),
+    ).fetchone()
+    if existing_repair:
+        repair_id = int(existing_repair["id"])
+    else:
+        try:
+            cur = conn.execute(
+                """
+                INSERT INTO repair_records (
+                  vehicle_id, customer_id, repair_name, repair_date, mileage,
+                  labor_hours, parts_cost, labor_cost, total_cost,
+                  track_as_maintenance, workflow_source_type, workflow_source_id,
+                  notes, status, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'finding', ?, ?, 'Open', ?)
+                """,
+                (
+                    vehicle_id,
+                    customer_id,
+                    repair_work_title_from_finding(finding),
+                    date.today().isoformat(),
+                    finding.get("mileage"),
+                    finding.get("labor_hours"),
+                    None,
+                    finding.get("labor_amount"),
+                    float(finding.get("labor_amount") or 0),
+                    finding_id,
+                    repair_work_notes_from_finding(finding),
+                    now,
+                ),
+            )
+            repair_id = int(cur.lastrowid)
+        except sqlite3.IntegrityError:
+            existing_repair = conn.execute(
+                """
+                SELECT id
+                FROM repair_records
+                WHERE workflow_source_type = 'finding' AND workflow_source_id = ?
+                LIMIT 1
+                """,
+                (finding_id,),
+            ).fetchone()
+            if not existing_repair:
+                raise
+            repair_id = int(existing_repair["id"])
+
+    conn.execute(
+        """
+        UPDATE findings_records
+        SET linked_repair_record_id = ?,
+            repair_record_created_at = COALESCE(NULLIF(repair_record_created_at, ''), ?),
+            repair_work_status = COALESCE(NULLIF(repair_work_status, ''), 'ready'),
+            repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), ?)
+        WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+        """,
+        (repair_id, now, now, finding_id, customer_id, vehicle_id),
+    )
+    return repair_id
+
+
 def repair_work_title_from_approval(record: dict[str, Any]) -> str:
     request_type = normalize_approval_request_type(record.get("request_type"))
     if request_type == "parts":
@@ -3216,6 +3314,8 @@ def build_repair_work_items(
     current_vehicle_mileage = vehicle.get("mileage")
     for record in findings_records:
         if (record.get("status") or "") not in {"Approved", "Completed"}:
+            continue
+        if (record.get("linked_repair_status") or "") == "Completed":
             continue
         status = record.get("repair_work_status") or ("completed" if record.get("status") == "Completed" else "ready")
         try:
@@ -4467,7 +4567,7 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                 """
                 SELECT *
                 FROM service_history_records
-                WHERE customer_id = ? AND vehicle_id = ?
+                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
                 ORDER BY mileage DESC, service_date DESC, id DESC
                 """,
                 (customer_id, vehicle_id),
@@ -4509,11 +4609,14 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
             dict(row)
             for row in conn.execute(
                 """
-                SELECT *
-                FROM findings_records
-                WHERE customer_id = ? AND vehicle_id = ?
+                SELECT fr.*,
+                       rr.status AS linked_repair_status
+                FROM findings_records fr
+                LEFT JOIN repair_records rr
+                  ON rr.id = fr.linked_repair_record_id
+                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
                 ORDER BY
-                  CASE status
+                  CASE fr.status
                     WHEN 'Approved' THEN 1
                     WHEN 'Open' THEN 2
                     WHEN 'Completed' THEN 3
@@ -4521,15 +4624,15 @@ def pro_customer_vehicle_detail(request: Request, customer_id: int, vehicle_id: 
                     WHEN 'Declined' THEN 5
                     ELSE 6
                   END ASC,
-                  CASE severity
+                  CASE fr.severity
                     WHEN 'Critical' THEN 1
                     WHEN 'High' THEN 2
                     WHEN 'Medium' THEN 3
                     WHEN 'Low' THEN 4
                     ELSE 5
                   END ASC,
-                  finding_date DESC,
-                  id DESC
+                  fr.finding_date DESC,
+                  fr.id DESC
                 """,
                 (customer_id, vehicle_id),
             ).fetchall()
@@ -4788,6 +4891,14 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             customer_name(customer),
             now,
         )
+        if status == "Approved":
+            ensure_repair_record_for_approved_finding(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                finding_id=int(cur.lastrowid),
+                now=now,
+            )
         conn.commit()
     finally:
         conn.close()
@@ -4936,6 +5047,14 @@ async def pro_finding_record_update(
                 customer_name(customer),
                 now,
             )
+        if status == "Approved":
+            ensure_repair_record_for_approved_finding(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                finding_id=finding_id,
+                now=datetime.utcnow().isoformat(),
+            )
         conn.commit()
     finally:
         conn.close()
@@ -5019,6 +5138,15 @@ async def pro_finding_record_status_update(
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         previous_status = existing.get("status") or ""
         if previous_status == status:
+            if status == "Approved":
+                ensure_repair_record_for_approved_finding(
+                    conn,
+                    customer_id=customer_id,
+                    vehicle_id=vehicle_id,
+                    finding_id=finding_id,
+                    now=datetime.utcnow().isoformat(),
+                )
+                conn.commit()
             if request.headers.get("x-requested-with") == "fetch":
                 return JSONResponse(
                     {
@@ -5069,6 +5197,14 @@ async def pro_finding_record_status_update(
             customer_name(customer),
             now,
         )
+        if status == "Approved":
+            ensure_repair_record_for_approved_finding(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                finding_id=finding_id,
+                now=now,
+            )
         conn.commit()
         activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
     finally:

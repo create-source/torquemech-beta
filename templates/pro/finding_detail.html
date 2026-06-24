@@ -70,7 +70,8 @@
     </div>
     <div class="tm-finding-field" style="margin-top:14px;"><span>Reason</span><strong>{{ finding.labor_reason or "-" }}</strong></div>
     {% else %}
-    <div class="tm-finding-field" style="margin-top:14px;"><span>Recommendation</span><strong>{{ finding.recommendation or "-" }}</strong></div>
+    <div class="tm-finding-field" style="margin-top:14px;"><span>Problem Found</span><strong>{{ finding.finding or "-" }}</strong></div>
+    <div class="tm-finding-field" style="margin-top:14px;"><span>Recommended Repair</span><strong>{{ finding.recommendation or "-" }}</strong></div>
     {% endif %}
     <div class="tm-finding-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/edit">Edit Finding</a>
