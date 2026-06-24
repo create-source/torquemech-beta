@@ -1927,16 +1927,16 @@
         </section>
         {% endif %}
         <div class="tm-repair-work-sections">
-          <section class="tm-repair-work-section" aria-label="Repair Guide for {{ item.title }}">
+          <section class="tm-repair-work-section" aria-label="Repair Intelligence for {{ item.title }}">
             <div class="tm-repair-work-section-head">
-              <div class="tm-repair-work-section-title">📘 Repair Guide</div>
+              <div class="tm-repair-work-section-title">Repair Intelligence</div>
               <div class="tm-repair-work-section-help">Labor, specifications, critical checks, parts, and recommendations.</div>
             </div>
             <div class="tm-repair-work-guide-actions">
               {% if item.blueprint %}
-              <button class="tm-btn tm-btn-secondary" type="button" data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}">View Repair Guide</button>
+              <button class="tm-btn tm-btn-secondary" type="button" data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}">View Repair Intelligence</button>
               {% else %}
-              <button class="tm-btn tm-btn-secondary" type="button" disabled>View Repair Guide</button>
+              <button class="tm-btn tm-btn-secondary" type="button" disabled>View Repair Intelligence</button>
               {% endif %}
             </div>
           </section>

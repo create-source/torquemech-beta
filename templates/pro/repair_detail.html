@@ -1,5 +1,4 @@
 {% extends "layout.html" %}
-{% from "pro/partials/repair_intelligence_cards.html" import repair_intelligence_drawer %}
 
 {% block title %}Repair Record | TorqueMech CRM{% endblock %}
 
@@ -143,7 +142,6 @@
     .tm-completion-actions .tm-btn { width:100%; justify-content:center; }
   }
 </style>
-{% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
 
 {% block content %}
@@ -191,7 +189,6 @@
         <button class="tm-btn tm-btn-primary" type="submit">Generate Invoice</button>
       </form>
       {% endif %}
-      <a class="tm-btn tm-btn-secondary" href="#repair-intelligence-repair-{{ repair.id }}" data-repair-intelligence-open="repair-intelligence-repair-{{ repair.id }}">View Intelligence</a>
     </div>
   </section>
 
@@ -256,12 +253,5 @@
       </div>
     </form>
   </section>
-
-  {{ repair_intelligence_drawer(
-    "repair-intelligence-repair-" ~ repair.id,
-    repair.repair_name or "Repair Intelligence",
-    (vehicle.year ~ " " ~ vehicle.make ~ " " ~ vehicle.model ~ " " ~ (vehicle.engine or ""))|trim,
-    repair_intelligence_records or []
-  ) }}
 </section>
 {% endblock %}
