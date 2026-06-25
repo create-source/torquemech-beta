@@ -172,6 +172,7 @@ class CanonicalHostMiddleware(BaseHTTPMiddleware):
 app.add_middleware(CanonicalHostMiddleware)
 
 PRO_ACCESS_COOKIE = "tm_pro_access"
+PRO_QA_ACCESS_COOKIE = "tm_pro_qa_access"
 PRO_PRIVATE_MESSAGE = "TorqueMech Pro is in private development."
 
 
@@ -181,6 +182,10 @@ def pro_enabled() -> bool:
 
 def pro_access_code() -> str:
     return (os.getenv("PRO_ACCESS_CODE") or "").strip()
+
+
+def pro_qa_key() -> str:
+    return (os.getenv("PRO_QA_KEY") or "").strip()
 
 
 def is_local_pro_request(request: Request) -> bool:
@@ -194,9 +199,19 @@ def pro_access_signature(code: str) -> str:
     return hmac.new(code.encode("utf-8"), b"torquemech-pro-access", hashlib.sha256).hexdigest()
 
 
+def pro_qa_access_signature(key: str) -> str:
+    return hmac.new(key.encode("utf-8"), b"torquemech-pro-qa-access", hashlib.sha256).hexdigest()
+
+
 def has_valid_pro_access_cookie(request: Request, code: str) -> bool:
     cookie_value = request.cookies.get(PRO_ACCESS_COOKIE, "")
     expected = pro_access_signature(code)
+    return bool(cookie_value) and hmac.compare_digest(cookie_value, expected)
+
+
+def has_valid_pro_qa_cookie(request: Request, key: str) -> bool:
+    cookie_value = request.cookies.get(PRO_QA_ACCESS_COOKIE, "")
+    expected = pro_qa_access_signature(key)
     return bool(cookie_value) and hmac.compare_digest(cookie_value, expected)
 
 
@@ -1359,6 +1374,23 @@ async def pro_private_access_middleware(request: Request, call_next):
 
     if is_local_pro_request(request):
         return await call_next(request)
+
+    qa_key = pro_qa_key()
+    if qa_key:
+        if has_valid_pro_qa_cookie(request, qa_key):
+            return await call_next(request)
+        submitted_qa_key = (request.query_params.get("qa_key") or "").strip()
+        if submitted_qa_key and hmac.compare_digest(submitted_qa_key, qa_key):
+            response = await call_next(request)
+            response.set_cookie(
+                PRO_QA_ACCESS_COOKIE,
+                pro_qa_access_signature(qa_key),
+                max_age=60 * 60 * 8,
+                httponly=True,
+                secure=request.url.scheme == "https",
+                samesite="lax",
+            )
+            return response
 
     code = pro_access_code()
     if code:
