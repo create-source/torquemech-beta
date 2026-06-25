@@ -98,8 +98,18 @@ class EstimatorProConversionTests(unittest.TestCase):
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               vehicle_id INTEGER NOT NULL,
               customer_id INTEGER,
+              request_type TEXT,
               finding TEXT,
+              recommendation TEXT,
               status TEXT,
+              mileage INTEGER,
+              finding_date TEXT,
+              labor_description TEXT,
+              labor_hours REAL,
+              labor_rate REAL,
+              labor_amount REAL,
+              labor_reason TEXT,
+              parts_cost REAL,
               created_at TEXT
             );
             """
@@ -126,6 +136,39 @@ class EstimatorProConversionTests(unittest.TestCase):
                 }
             ],
         }
+
+    def finding_conversion_payload(self):
+        payload = self.conversion_payload()
+        payload.update(
+            {
+                "source": "finding",
+                "customerId": "1",
+                "vehicleId": "1",
+                "findingId": "1",
+                "sourceContext": {
+                    "source": "finding",
+                    "customerName": "Natalie Htut",
+                    "problemFound": "Rotors are worn",
+                    "recommendedRepair": "Front Rotors Replacement",
+                },
+                "vehicle": {
+                    "year": "2008",
+                    "make": "Toyota",
+                    "model": "Sequoia",
+                },
+                "lineItems": [
+                    {
+                        "serviceText": "Front Rotors Replacement",
+                        "laborHours": 1.5,
+                        "laborRate": 140,
+                        "laborTotal": 210,
+                        "partsTotal": 180,
+                        "grandTotal": 390,
+                    }
+                ],
+            }
+        )
+        return payload
 
     def test_conversion_creates_repair_record_without_finding_or_completed_history(self):
         app = FastAPI()
@@ -190,6 +233,87 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertNotIn("Source: Estimator Quote", repair["notes"])
         self.assertEqual(findings_count, 0)
         self.assertEqual(history_count, 0)
+
+    def test_finding_estimate_conversion_creates_source_finding_repair_job(self):
+        now = "2026-06-25T12:00:00"
+        self.conn.execute(
+            """
+            INSERT INTO customers (id, first_name, last_name, phone, email, created_at, updated_at)
+            VALUES (1, 'Natalie', 'Htut', '555-0100', '', ?, ?)
+            """,
+            (now, now),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO customer_vehicles (id, customer_id, year, make, model, mileage, created_at, updated_at)
+            VALUES (1, 1, 2008, 'Toyota', 'Sequoia', 150000, ?, ?)
+            """,
+            (now, now),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO findings_records (id, vehicle_id, customer_id, finding, status, created_at)
+            VALUES (1, 1, 1, 'Rotors are worn', 'Open', ?)
+            """,
+            (now,),
+        )
+        self.conn.commit()
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        form_data = {
+            "estimate_payload": json.dumps(self.finding_conversion_payload()),
+            "customer_mode": "existing",
+            "customer_id": "1",
+            "vehicle_mode": "existing",
+            "vehicle_id": "1",
+            "service_index": "0",
+        }
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data=form_data,
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("?converted=1&created=1#repair-workspace", response.headers["location"])
+
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+        finding = dict(self.conn.execute("SELECT * FROM findings_records WHERE id = 1").fetchone())
+
+        self.assertEqual(repair["repair_name"], "Front Rotors Replacement")
+        self.assertEqual(repair["workflow_source_type"], "finding")
+        self.assertEqual(repair["workflow_source_id"], 1)
+        self.assertEqual(repair["labor_hours"], 1.5)
+        self.assertEqual(repair["labor_rate"], 140)
+        self.assertEqual(repair["labor_cost"], 210)
+        self.assertEqual(repair["parts_cost"], 180)
+        self.assertEqual(repair["total_cost"], 390)
+        self.assertIn("Source: Finding", repair["notes"])
+        self.assertEqual(finding["status"], "Approved")
+        self.assertEqual(finding["linked_repair_record_id"], repair["id"])
+        self.assertEqual(finding["repair_work_status"], "ready")
+
+    def test_finding_estimator_href_carries_encoded_context(self):
+        href = pro_module.build_finding_estimator_href(
+            {"id": 7, "first_name": "Natalie", "last_name": "Htut"},
+            {"id": 12, "year": 2008, "make": "TOYOTA", "model": "SEQUOIA"},
+            {
+                "id": 44,
+                "finding": "Rotors are worn",
+                "recommendation": "Front Rotors Replacement",
+            },
+        )
+
+        self.assertTrue(href.startswith("/estimator?"))
+        self.assertIn("customer_id=7", href)
+        self.assertIn("vehicle_id=12", href)
+        self.assertIn("finding_id=44", href)
+        self.assertIn("source=finding", href)
+        self.assertIn("recommended_repair=Front+Rotors+Replacement", href)
+        self.assertIn("problem_found=Rotors+are+worn", href)
 
 
 if __name__ == "__main__":

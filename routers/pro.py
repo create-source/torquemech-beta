@@ -5,7 +5,7 @@ import sqlite3
 import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Request
@@ -60,6 +60,56 @@ DEFAULT_PARTS_SOURCE_LABELS = [
     "eBay",
 ]
 
+
+def record_value(record: dict[str, Any] | sqlite3.Row | None, key: str) -> Any:
+    if not record:
+        return None
+    try:
+        return record.get(key)  # type: ignore[attr-defined]
+    except AttributeError:
+        return record[key] if key in record.keys() else None
+
+
+def customer_display_name(customer: dict[str, Any] | sqlite3.Row | None) -> str:
+    if not customer:
+        return ""
+    first_name = str(record_value(customer, "first_name") or "").strip()
+    last_name = str(record_value(customer, "last_name") or "").strip()
+    return " ".join(part for part in (first_name, last_name) if part).strip()
+
+
+def build_finding_estimator_href(
+    customer: dict[str, Any] | sqlite3.Row | None,
+    vehicle: dict[str, Any] | sqlite3.Row | None,
+    finding: dict[str, Any] | sqlite3.Row | None,
+) -> str:
+    params: dict[str, Any] = {"source": "finding"}
+    customer_id = record_value(customer, "id")
+    vehicle_id = record_value(vehicle, "id")
+    finding_id = record_value(finding, "id")
+    if customer_id is not None:
+        params["customer_id"] = customer_id
+    customer_name = customer_display_name(customer)
+    if customer_name:
+        params["customer_name"] = customer_name
+    if vehicle_id is not None:
+        params["vehicle_id"] = vehicle_id
+    if vehicle:
+        for key in ("year", "make", "model"):
+            value = str(record_value(vehicle, key) or "").strip()
+            if value:
+                params[key] = value
+    if finding_id is not None:
+        params["finding_id"] = finding_id
+    if finding:
+        problem = str(record_value(finding, "finding") or "").strip()
+        recommendation = str(record_value(finding, "recommendation") or record_value(finding, "labor_description") or "").strip()
+        if problem:
+            params["problem_found"] = problem
+        if recommendation:
+            params["recommended_repair"] = recommendation
+    return f"/estimator?{urlencode(params)}"
+
 def static_version(asset_path: str) -> int:
     rel_path = str(asset_path or "").split("?", 1)[0].lstrip("/")
     if rel_path.startswith("static/"):
@@ -74,6 +124,7 @@ def static_version(asset_path: str) -> int:
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.globals["static_version"] = static_version
+templates.env.globals["build_finding_estimator_href"] = build_finding_estimator_href
 
 router = APIRouter(prefix="/pro", tags=["pro"])
 
@@ -3606,6 +3657,17 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         "name": str(customer.get("name") or "").strip(),
         "phone": str(customer.get("phone") or "").strip(),
     }
+    source_context = payload.get("sourceContext") if isinstance(payload.get("sourceContext"), dict) else {}
+    payload["source"] = str(payload.get("source") or source_context.get("source") or "estimator").strip().lower()
+    payload["customer_id"] = optional_int({"customer_id": str(payload.get("customerId") or payload.get("customer_id") or source_context.get("customerId") or "")}, "customer_id")
+    payload["vehicle_id"] = optional_int({"vehicle_id": str(payload.get("vehicleId") or payload.get("vehicle_id") or source_context.get("vehicleId") or "")}, "vehicle_id")
+    payload["finding_id"] = optional_int({"finding_id": str(payload.get("findingId") or payload.get("finding_id") or source_context.get("findingId") or "")}, "finding_id")
+    payload["sourceContext"] = {
+        "source": payload["source"],
+        "customerName": str(source_context.get("customerName") or "").strip(),
+        "problemFound": str(source_context.get("problemFound") or "").strip(),
+        "recommendedRepair": str(source_context.get("recommendedRepair") or "").strip(),
+    }
     payload["notes"] = str(payload.get("notes") or "").strip()[:1200]
     return payload
 
@@ -5168,19 +5230,46 @@ async def pro_estimate_conversion_create(request: Request):
                 raise HTTPException(status_code=400, detail="Select a vehicle for this customer")
             vehicle_mileage = vehicle["mileage"]
 
+        source_type = "finding" if payload.get("source") == "finding" and payload.get("finding_id") else "estimate"
+        source_id = int(payload["finding_id"]) if source_type == "finding" else None
+        if source_type == "finding":
+            ensure_findings_records_schema(conn)
+            finding = conn.execute(
+                f"""
+                SELECT id
+                FROM findings_records
+                WHERE {finding_record_where_sql(conn)}
+                """,
+                finding_record_where_params(conn, source_id, customer_id, vehicle_id),
+            ).fetchone()
+            if not finding:
+                raise HTTPException(status_code=400, detail="Finding context does not match selected customer and vehicle")
+
         created_count = 0
         for item in selected_items:
-            existing = conn.execute(
-                """
-                SELECT id
-                FROM repair_records
-                WHERE vehicle_id = ?
-                  AND LOWER(TRIM(COALESCE(repair_name, ''))) = LOWER(TRIM(?))
-                  AND repair_date = ?
-                LIMIT 1
-                """,
-                (vehicle_id, item["service_name"], repair_date),
-            ).fetchone()
+            if source_type == "finding" and source_id is not None:
+                existing = conn.execute(
+                    """
+                    SELECT id
+                    FROM repair_records
+                    WHERE workflow_source_type = 'finding'
+                      AND workflow_source_id = ?
+                    LIMIT 1
+                    """,
+                    (source_id,),
+                ).fetchone()
+            else:
+                existing = conn.execute(
+                    """
+                    SELECT id
+                    FROM repair_records
+                    WHERE vehicle_id = ?
+                      AND LOWER(TRIM(COALESCE(repair_name, ''))) = LOWER(TRIM(?))
+                      AND repair_date = ?
+                    LIMIT 1
+                    """,
+                    (vehicle_id, item["service_name"], repair_date),
+                ).fetchone()
             if existing:
                 continue
             labor_cost = item["labor_total"]
@@ -5192,7 +5281,7 @@ async def pro_estimate_conversion_create(request: Request):
             notes = "\n".join(
                 part
                 for part in [
-                    "Source: Estimate",
+                    "Source: Finding" if source_type == "finding" else "Source: Estimate",
                     payload.get("notes") or "",
                     item.get("notes") or "",
                 ]
@@ -5206,7 +5295,7 @@ async def pro_estimate_conversion_create(request: Request):
                   track_as_maintenance, workflow_source_type, workflow_source_id,
                   notes, status, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'estimate', NULL, ?, 'Open', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 'Open', ?)
                 """,
                 (
                     vehicle_id,
@@ -5219,11 +5308,26 @@ async def pro_estimate_conversion_create(request: Request):
                     item["parts_total"],
                     labor_cost,
                     total_cost,
+                    source_type,
+                    source_id,
                     notes,
                     now,
                 ),
             )
             repair_id = int(cur.lastrowid)
+            if source_type == "finding" and source_id is not None:
+                conn.execute(
+                    f"""
+                    UPDATE findings_records
+                    SET status = 'Approved',
+                        linked_repair_record_id = ?,
+                        repair_record_created_at = COALESCE(NULLIF(repair_record_created_at, ''), ?),
+                        repair_work_status = COALESCE(NULLIF(repair_work_status, ''), 'ready'),
+                        repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), ?)
+                    WHERE {finding_record_where_sql(conn)}
+                    """,
+                    (repair_id, now, now, *finding_record_where_params(conn, source_id, customer_id, vehicle_id)),
+                )
             created_count += 1
         conn.commit()
     finally:

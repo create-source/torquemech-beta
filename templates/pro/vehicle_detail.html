@@ -2422,55 +2422,11 @@
               </section>
               {% endif %}
               {% if item.status == "Open" %}
-              <details class="tm-crm-disclosure tm-finding-estimate" data-finding-estimate>
-                <summary>{% if item.labor_amount or item.parts_cost %}View / Update Estimate{% else %}Create Estimate / Recommended Repair{% endif %}</summary>
-                <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}" style="margin-top:12px;">
-                  <input type="hidden" name="request_type" value="labor">
-                  <input type="hidden" name="finding" value="{{ item.finding or '' }}">
-                  <input type="hidden" name="severity" value="{{ item.severity or 'Low' }}">
-                  <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
-                  <input type="hidden" name="finding_date" value="{{ item.finding_date or '' }}">
-                  <div style="margin-top:12px;">
-                    <label class="tm-label" for="estimate_recommendation_{{ item.id }}">Recommended Repair title / service name</label>
-                    <input class="tm-input" id="estimate_recommendation_{{ item.id }}" name="labor_description" type="text" maxlength="1600" value="{{ item.labor_description or item.recommendation or '' }}">
-                  </div>
-                  <input type="hidden" name="recommendation" value="{{ item.recommendation or '' }}">
-                  <div class="tm-crm-row" style="margin-top:12px;">
-                    <div>
-                      <label class="tm-label" for="estimate_labor_hours_{{ item.id }}">Labor Hours</label>
-                      <input class="tm-input" id="estimate_labor_hours_{{ item.id }}" name="labor_hours" type="number" min="0" step="0.1" value="{{ item.labor_hours if item.labor_hours is not none else '' }}" data-labor-hours>
-                    </div>
-                    <div>
-                      <label class="tm-label" for="estimate_labor_rate_{{ item.id }}">Labor Rate</label>
-                      <input class="tm-input" id="estimate_labor_rate_{{ item.id }}" name="labor_rate" type="text" inputmode="decimal" value="{{ item.labor_rate if item.labor_rate is not none else '' }}" data-labor-rate>
-                    </div>
-                  </div>
-                  <div class="tm-crm-row" style="margin-top:12px;">
-                    <div>
-                      <label class="tm-label" for="estimate_parts_cost_{{ item.id }}">Parts Cost</label>
-                      <input class="tm-input" id="estimate_parts_cost_{{ item.id }}" name="parts_cost" type="text" inputmode="decimal" value="{{ item.parts_cost if item.parts_cost is not none else '' }}" data-parts-cost>
-                    </div>
-                    <div>
-                      <label class="tm-label" for="estimate_total_{{ item.id }}">Estimated Total</label>
-                      <input class="tm-input" id="estimate_total_{{ item.id }}" name="estimate_total_display" type="text" readonly data-estimate-total>
-                    </div>
-                  </div>
-                  <div style="margin-top:12px;">
-                    <label class="tm-label" for="estimate_notes_{{ item.id }}">Notes</label>
-                    <textarea class="tm-input" id="estimate_notes_{{ item.id }}" name="labor_reason" rows="3" maxlength="1200">{{ item.labor_reason or '' }}</textarea>
-                  </div>
-                  <div style="margin-top:12px;">
-                    <label class="tm-label" for="estimate_status_{{ item.id }}">Customer Decision / Approval Status</label>
-                    <select class="tm-input" id="estimate_status_{{ item.id }}" name="status" required>
-                      <option value="Open" selected>Open</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Declined">Declined</option>
-                      <option value="Deferred">Deferred</option>
-                    </select>
-                  </div>
-                  <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Estimate / Recommended Repair</button>
-                </form>
-              </details>
+              <div class="tm-finding-estimate" data-finding-estimate>
+                <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">
+                  {% if item.labor_amount or item.parts_cost %}View / Update Estimate{% else %}Create Estimate / Recommended Repair{% endif %}
+                </a>
+              </div>
               {% endif %}
               <details class="tm-crm-disclosure tm-finding-estimate">
                 <summary>Customer Decision / Update Status</summary>

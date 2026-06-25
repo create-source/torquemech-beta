@@ -176,7 +176,7 @@
             <option value="">Select customer</option>
             {% for customer in customers %}
             {% set customer_name = (customer.first_name ~ " " ~ customer.last_name)|trim %}
-            <option value="{{ customer.id }}">{{ customer_name or "Unnamed Customer" }}{% if customer.phone %} - {{ customer.phone }}{% endif %}</option>
+            <option value="{{ customer.id }}" {% if payload.customer_id and payload.customer_id == customer.id %}selected{% endif %}>{{ customer_name or "Unnamed Customer" }}{% if customer.phone %} - {{ customer.phone }}{% endif %}</option>
             {% endfor %}
           </select>
         </div>
@@ -274,6 +274,7 @@
   <script>
     (() => {
       const vehiclesByCustomer = {{ vehicles_by_customer|tojson }};
+      const preselectedVehicleId = "{{ payload.vehicle_id or '' }}";
       const customerSelect = document.getElementById("customer_id");
       const vehicleSelect = document.getElementById("vehicle_id");
       const panels = {
@@ -319,6 +320,7 @@
           option.value = String(vehicle.id);
           option.textContent = [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ") || "Vehicle";
           if (vehicle.mileage) option.textContent += ` - ${Number(vehicle.mileage).toLocaleString()} mi`;
+          if (preselectedVehicleId && String(vehicle.id) === preselectedVehicleId) option.selected = true;
           vehicleSelect.appendChild(option);
         });
       }

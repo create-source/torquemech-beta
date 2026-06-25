@@ -91,32 +91,11 @@
       <div class="tm-finding-field"><span>Total</span><strong>{{ estimate_total|pro_currency }}</strong></div>
     </div>
     {% endif %}
-    <details class="tm-crm-disclosure" {% if not has_estimate %}open{% endif %}>
-      <summary>{% if has_estimate %}Update Estimate{% else %}Create Estimate / Recommended Repair{% endif %}</summary>
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}" style="margin-top:12px;">
-        <input type="hidden" name="request_type" value="labor">
-        <input type="hidden" name="finding" value="{{ finding.finding or '' }}">
-        <input type="hidden" name="recommendation" value="{{ finding.recommendation or '' }}">
-        <input type="hidden" name="severity" value="{{ finding.severity or 'Low' }}">
-        <input type="hidden" name="status" value="{{ finding.status or 'Open' }}">
-        <input type="hidden" name="mileage" value="{% if finding.mileage is not none %}{{ finding.mileage }}{% endif %}">
-        <input type="hidden" name="finding_date" value="{{ finding.finding_date or '' }}">
-        <div>
-          <label class="tm-label" for="estimate_labor_description">Recommended Repair title / service name</label>
-          <input class="tm-input" id="estimate_labor_description" name="labor_description" type="text" maxlength="1600" value="{{ finding.labor_description or finding.recommendation or '' }}">
-        </div>
-        <div class="tm-finding-grid" style="margin-top:12px;">
-          <div><label class="tm-label" for="estimate_labor_hours">Labor Hours</label><input class="tm-input" id="estimate_labor_hours" name="labor_hours" type="number" min="0" step="0.1" value="{{ finding.labor_hours if finding.labor_hours is not none else '' }}"></div>
-          <div><label class="tm-label" for="estimate_labor_rate">Labor Rate</label><input class="tm-input" id="estimate_labor_rate" name="labor_rate" type="text" inputmode="decimal" value="{{ finding.labor_rate if finding.labor_rate is not none else '' }}"></div>
-          <div><label class="tm-label" for="estimate_parts_cost">Parts Cost</label><input class="tm-input" id="estimate_parts_cost" name="parts_cost" type="text" inputmode="decimal" value="{{ finding.parts_cost if finding.parts_cost is not none else '' }}"></div>
-        </div>
-        <div style="margin-top:12px;">
-          <label class="tm-label" for="estimate_labor_reason">Notes</label>
-          <textarea class="tm-input" id="estimate_labor_reason" name="labor_reason" rows="3" maxlength="1200">{{ finding.labor_reason or "" }}</textarea>
-        </div>
-        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Estimate / Recommended Repair</button>
-      </form>
-    </details>
+    <div class="tm-finding-actions" style="margin-top:0;">
+      <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, finding) }}">
+        {% if has_estimate %}View / Update Estimate{% else %}Create Estimate / Recommended Repair{% endif %}
+      </a>
+    </div>
   </section>
 
   <section class="tm-finding-panel tm-finding-action-panel" aria-label="Customer Decision">

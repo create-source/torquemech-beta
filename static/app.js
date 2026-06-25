@@ -939,6 +939,8 @@
   const convertToProJobBtn = $("convertToProJobBtn");
   const convertToProJobForm = $("convertToProJobForm");
   const convertToProJobPayload = $("convertToProJobPayload");
+  const findingEstimateContext = $("findingEstimateContext");
+  const findingEstimateContextText = $("findingEstimateContextText");
 
   // Preview (optional)
   const estimatePreview = $("estimatePreview");
@@ -1024,6 +1026,23 @@
   const MECHANIC_PREFERENCES_KEY = "torquemech_mechanic_preferences_v1";
   const DEFAULT_LABOR_RATE = 90;
   const DEFAULT_TRAVEL_FEE = 0;
+
+  function getEstimatorSourceContext() {
+    const params = new URLSearchParams(window.location.search);
+    const source = String(params.get("source") || "").trim().toLowerCase();
+    if (source !== "finding") {
+      return { source: "estimator" };
+    }
+    return {
+      source: "finding",
+      customerId: String(params.get("customer_id") || "").trim(),
+      customerName: String(params.get("customer_name") || "").trim(),
+      vehicleId: String(params.get("vehicle_id") || "").trim(),
+      findingId: String(params.get("finding_id") || "").trim(),
+      problemFound: String(params.get("problem_found") || "").trim(),
+      recommendedRepair: String(params.get("recommended_repair") || "").trim(),
+    };
+  }
 
   function safeReadStorage(storage, key) {
     try {
@@ -2449,13 +2468,18 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   function buildProJobConversionPayload() {
     const vehicle = getCurrentVehicleSnapshot();
+    const sourceContext = getEstimatorSourceContext();
     return {
-      source: "estimator",
+      source: sourceContext.source || "estimator",
       createdAt: new Date().toISOString(),
       vehicle,
+      customerId: sourceContext.customerId || "",
+      vehicleId: sourceContext.vehicleId || "",
+      findingId: sourceContext.findingId || "",
+      sourceContext,
       notes: (notesEl?.value || "").trim(),
       customer: {
-        name: (customerNameEl?.value || "").trim(),
+        name: (customerNameEl?.value || sourceContext.customerName || "").trim(),
         phone: (customerPhoneEl?.value || "").trim(),
       },
       lineItems: ensureUniqueLineItemIds(lineItems).map((it) => {
@@ -6556,9 +6580,10 @@ if (getEstimateHint) {
     const displayModel = params.get("displayModel") || params.get("display_model");
     const service = params.get("service");
     const source = params.get("source") || "";
+    const findingContext = getEstimatorSourceContext();
     const handoffTrustEl = $("repairGuideHandoffTrust");
 
-    if (!year && !make && !model && !displayModel && !service) return;
+    if (!year && !make && !model && !displayModel && !service && findingContext.source !== "finding") return;
 
     function updateRepairGuideHandoffTrust({ vehicleLoaded = false, serviceLoaded = false } = {}) {
       if (!handoffTrustEl) return;
@@ -6600,6 +6625,30 @@ if (getEstimateHint) {
       renderActiveVehicleBanner();
       updateEstimateButtonState();
       return Boolean(year || make || model || displayModel);
+    }
+
+    function renderFindingEstimateContext() {
+      if (findingContext.source !== "finding") return;
+
+      if (customerNameEl && findingContext.customerName) {
+        customerNameEl.value = findingContext.customerName;
+      }
+
+      const vehicleText = [year, make, displayModel || model].filter(Boolean).join(" ");
+      const findingText = findingContext.problemFound || findingContext.recommendedRepair || "";
+      if (findingEstimateContextText) {
+        const lines = [
+          findingContext.customerName ? `Customer: ${findingContext.customerName}` : "",
+          vehicleText ? `Vehicle: ${vehicleText}` : "",
+          findingText ? `Finding: ${findingText}` : "",
+        ].filter(Boolean);
+        findingEstimateContextText.textContent = lines.join(" | ");
+      }
+      findingEstimateContext?.classList.remove("hidden");
+
+      if (findingContext.recommendedRepair && notesEl && !notesEl.value.trim()) {
+        notesEl.value = `Recommended Repair: ${findingContext.recommendedRepair}`;
+      }
     }
 
     async function preloadServiceByCode(serviceCode) {
@@ -6652,6 +6701,7 @@ if (getEstimateHint) {
         }
 
         updateRepairGuideHandoffTrust({ vehicleLoaded, serviceLoaded });
+        renderFindingEstimateContext();
       } catch (e) {
         console.warn("Repair guide preload failed:", e);
       }
