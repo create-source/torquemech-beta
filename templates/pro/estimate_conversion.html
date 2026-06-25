@@ -186,7 +186,7 @@
         </div>
         <div data-customer-panel="new">
           <label class="tm-label" for="new_customer_phone">Phone</label>
-          <input class="tm-input" id="new_customer_phone" name="new_customer_phone" type="tel" value="{{ payload.customer.phone }}" maxlength="32" autocomplete="tel">
+          <input class="tm-input" id="new_customer_phone" name="new_customer_phone" type="tel" value="{{ payload.customer.phone }}" maxlength="32" autocomplete="tel" data-pro-phone-input>
         </div>
         <div data-customer-panel="new">
           <label class="tm-label" for="new_customer_email">Email</label>
@@ -233,7 +233,7 @@
         </div>
         <div data-vehicle-panel="new">
           <label class="tm-label" for="new_vehicle_mileage">Mileage</label>
-          <input class="tm-input" id="new_vehicle_mileage" name="new_vehicle_mileage" type="text" inputmode="numeric" placeholder="120,000">
+          <input class="tm-input" id="new_vehicle_mileage" name="new_vehicle_mileage" type="text" inputmode="numeric" placeholder="120,000" data-pro-mileage-input>
         </div>
       </div>
     </section>
@@ -270,12 +270,12 @@
     </div>
   </form>
 
+  <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
   <script>
     (() => {
       const vehiclesByCustomer = {{ vehicles_by_customer|tojson }};
       const customerSelect = document.getElementById("customer_id");
       const vehicleSelect = document.getElementById("vehicle_id");
-      const newCustomerPhone = document.getElementById("new_customer_phone");
       const panels = {
         customer: Array.from(document.querySelectorAll("[data-customer-panel]")),
         vehicle: Array.from(document.querySelectorAll("[data-vehicle-panel]")),
@@ -308,13 +308,6 @@
         syncChoiceStyles();
       }
 
-      function formatPhone(value) {
-        const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
-        if (digits.length <= 3) return digits;
-        if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-      }
-
       function syncVehicles() {
         if (!vehicleSelect || !customerSelect) return;
         const vehicles = vehiclesByCustomer[String(customerSelect.value || "")] || [];
@@ -334,10 +327,6 @@
         if (event.target?.name === "customer_mode" || event.target?.name === "vehicle_mode") syncPanels();
         if (event.target === customerSelect) syncVehicles();
       });
-      newCustomerPhone?.addEventListener("input", () => {
-        newCustomerPhone.value = formatPhone(newCustomerPhone.value);
-      });
-      if (newCustomerPhone?.value) newCustomerPhone.value = formatPhone(newCustomerPhone.value);
       syncPanels();
       syncVehicles();
     })();

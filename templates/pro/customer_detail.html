@@ -226,7 +226,7 @@
             <div class="tm-crm-row" style="margin-top:12px;">
               <div>
                 <label class="tm-label" for="phone">Phone</label>
-                <input class="tm-input" id="phone" name="phone" type="tel" inputmode="tel" value="{{ customer.phone|pro_phone if customer.phone else '' }}" maxlength="80" autocomplete="tel">
+                <input class="tm-input" id="phone" name="phone" type="tel" inputmode="tel" value="{{ customer.phone|pro_phone if customer.phone else '' }}" maxlength="80" autocomplete="tel" data-pro-phone-input>
               </div>
               <div>
                 <label class="tm-label" for="email">Email</label>
@@ -302,7 +302,7 @@
               </div>
               <div>
                 <label class="tm-label" for="mileage">Mileage</label>
-                <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric">
+                <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" data-pro-mileage-input>
               </div>
             </div>
 
@@ -343,6 +343,7 @@
 {% endblock %}
 
 {% block page_js %}
+<script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
 <script>
 (() => {
   const initAddVehicleSelector = () => {

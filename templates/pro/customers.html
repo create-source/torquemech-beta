@@ -260,7 +260,7 @@
         <div class="tm-crm-row" style="margin-top:12px;">
           <div>
             <label class="tm-label" for="phone">Phone</label>
-            <input class="tm-input" id="phone" name="phone" type="tel" inputmode="tel" maxlength="80" autocomplete="tel">
+            <input class="tm-input" id="phone" name="phone" type="tel" inputmode="tel" maxlength="80" autocomplete="tel" data-pro-phone-input>
           </div>
           <div>
             <label class="tm-label" for="email">Email</label>
@@ -278,4 +278,8 @@
     </details>
   </div>
 </section>
+{% endblock %}
+
+{% block page_js %}
+<script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
 {% endblock %}

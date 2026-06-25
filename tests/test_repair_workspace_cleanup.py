@@ -127,12 +127,32 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         conversion = (ROOT / "templates" / "pro" / "estimate_conversion.html").read_text(encoding="utf-8")
 
         self.assertIn("tm-convert-choice--selected", conversion)
-        self.assertIn("function formatPhone", conversion)
+        self.assertIn("/static/pro_form_helpers.js", conversion)
         self.assertIn('id="new_customer_phone"', conversion)
+        self.assertIn("data-pro-phone-input", conversion)
+        self.assertIn('id="new_vehicle_mileage"', conversion)
+        self.assertIn("data-pro-mileage-input", conversion)
         self.assertIn("Select Existing Customer", conversion)
         self.assertIn("Create New Customer", conversion)
         self.assertIn("Select Existing Vehicle", conversion)
         self.assertIn("Create New Vehicle", conversion)
+
+    def test_pro_customer_and_vehicle_forms_use_shared_input_formatters(self):
+        customers = (ROOT / "templates" / "pro" / "customers.html").read_text(encoding="utf-8")
+        customer_detail = (ROOT / "templates" / "pro" / "customer_detail.html").read_text(encoding="utf-8")
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        helper = (ROOT / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
+
+        self.assertIn("/static/pro_form_helpers.js", customers)
+        self.assertIn("/static/pro_form_helpers.js", customer_detail)
+        self.assertIn("/static/pro_form_helpers.js", vehicle_detail)
+        self.assertIn("data-pro-phone-input", customers)
+        self.assertIn("data-pro-phone-input", customer_detail)
+        self.assertIn("data-pro-mileage-input", customer_detail)
+        self.assertIn("data-pro-mileage-input", vehicle_detail)
+        self.assertIn("function formatPhone", helper)
+        self.assertIn("function formatMileage", helper)
+        self.assertIn("normalizeMileageBeforeSubmit", helper)
 
 
 if __name__ == "__main__":

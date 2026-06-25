@@ -1780,7 +1780,7 @@
         </div>
         <div>
           <label class="tm-label" for="mileage">Current mileage</label>
-          <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ vehicle.mileage|pro_miles if vehicle.mileage else '' }}">
+          <input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ vehicle.mileage|pro_miles if vehicle.mileage else '' }}" data-pro-mileage-input>
         </div>
       </div>
 
@@ -2446,6 +2446,7 @@
   </details>
 </section>
 
+<script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
 <script>
 (() => {
   document.querySelectorAll(".tm-workspace-summary").forEach((summary) => {

@@ -243,6 +243,39 @@ def log_pro_qa_gate(
     uvicorn_error_logger.warning(message, *args)
 
 
+def pro_request_access_state(request: Request) -> dict[str, Any]:
+    qa_key = pro_qa_key()
+    submitted_qa_key = (request.query_params.get("qa_key") or "").strip()
+    qa_key_present = bool(qa_key)
+    qa_param_present = bool(submitted_qa_key)
+    qa_cookie_valid = has_valid_pro_qa_cookie(request, qa_key) if qa_key_present else False
+    qa_key_matched = (
+        qa_key_present
+        and qa_param_present
+        and hmac.compare_digest(submitted_qa_key, qa_key)
+    )
+    code = pro_access_code()
+    legacy_cookie_valid = bool(code) and has_valid_pro_access_cookie(request, code)
+    enabled_without_access_code = not code and pro_enabled()
+    access_allowed = (
+        is_local_pro_request(request)
+        or qa_cookie_valid
+        or qa_key_matched
+        or legacy_cookie_valid
+        or enabled_without_access_code
+    )
+    return {
+        "access_allowed": access_allowed,
+        "qa_key": qa_key,
+        "qa_key_present": qa_key_present,
+        "qa_param_present": qa_param_present,
+        "qa_cookie_valid": qa_cookie_valid,
+        "qa_key_matched": qa_key_matched,
+        "legacy_access_code": code,
+        "legacy_cookie_valid": legacy_cookie_valid,
+    }
+
+
 def pro_private_response(error: str = "") -> HTMLResponse:
     error_html = f"<p class=\"tm-pro-gate-error\">{error}</p>" if error else ""
     return HTMLResponse(
@@ -1400,16 +1433,12 @@ async def pro_private_access_middleware(request: Request, call_next):
     if path != "/pro" and not path.startswith("/pro/"):
         return await call_next(request)
 
-    qa_key = pro_qa_key()
-    submitted_qa_key = (request.query_params.get("qa_key") or "").strip()
-    qa_key_present = bool(qa_key)
-    qa_param_present = bool(submitted_qa_key)
-    qa_cookie_valid = has_valid_pro_qa_cookie(request, qa_key) if qa_key_present else False
-    qa_key_matched = (
-        qa_key_present
-        and qa_param_present
-        and hmac.compare_digest(submitted_qa_key, qa_key)
-    )
+    access_state = pro_request_access_state(request)
+    qa_key = access_state["qa_key"]
+    qa_key_present = access_state["qa_key_present"]
+    qa_param_present = access_state["qa_param_present"]
+    qa_cookie_valid = access_state["qa_cookie_valid"]
+    qa_key_matched = access_state["qa_key_matched"]
 
     if is_local_pro_request(request):
         log_pro_qa_gate(
@@ -1443,9 +1472,9 @@ async def pro_private_access_middleware(request: Request, call_next):
             )
         return response
 
-    code = pro_access_code()
+    code = access_state["legacy_access_code"]
     if code:
-        if has_valid_pro_access_cookie(request, code):
+        if access_state["legacy_cookie_valid"]:
             log_pro_qa_gate(
                 request,
                 pro_qa_key_present=qa_key_present,
@@ -5249,16 +5278,21 @@ def home(request: Request):
 @app.get("/estimator", response_class=HTMLResponse)
 def estimator(request: Request):
     metric_incr("page_estimator")
-    code = pro_access_code()
-    pro_handoff_available = (
-        is_local_pro_request(request)
-        or (bool(code) and has_valid_pro_access_cookie(request, code))
-        or (not code and pro_enabled())
-    )
-    return templates.TemplateResponse(
+    pro_access_state = pro_request_access_state(request)
+    response = templates.TemplateResponse(
         "estimator.html",
-        {"request": request, "pro_handoff_available": pro_handoff_available},
+        {"request": request, "pro_handoff_available": pro_access_state["access_allowed"]},
     )
+    if pro_access_state["qa_key_matched"]:
+        response.set_cookie(
+            PRO_QA_ACCESS_COOKIE,
+            pro_qa_access_signature(pro_access_state["qa_key"]),
+            max_age=60 * 60 * 8,
+            httponly=True,
+            secure=request.url.scheme == "https",
+            samesite="lax",
+        )
+    return response
 
 @app.get("/obd", response_class=HTMLResponse)
 def obd(request: Request):
