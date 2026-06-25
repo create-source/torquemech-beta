@@ -79,6 +79,19 @@ class ProAccessGateTests(unittest.TestCase):
         self.assertTrue(cookie_value)
         self.assertNotEqual(cookie_value, "qa-secret")
 
+    def test_qa_gate_logs_only_boolean_diagnostics(self):
+        with patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": "qa-secret"}):
+            client = TestClient(main.app, base_url="https://torquemech.com")
+            with self.assertLogs("torquemech.pro_gate", level="WARNING") as logs:
+                response = client.get("/pro?qa_key=qa-secret")
+
+        joined_logs = "\n".join(logs.output)
+        self.assertNotEqual(response.status_code, 403)
+        self.assertIn("pro_qa_key_present=True", joined_logs)
+        self.assertIn("qa_key_param_present=True", joined_logs)
+        self.assertIn("qa_key_matched=True", joined_logs)
+        self.assertNotIn("qa-secret", joined_logs)
+
 
 if __name__ == "__main__":
     unittest.main()

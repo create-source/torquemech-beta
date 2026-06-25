@@ -135,6 +135,8 @@ logging.basicConfig(
     level=logging.ERROR,
     format="%(asctime)s %(levelname)s %(message)s",
 )
+pro_gate_logger = logging.getLogger("torquemech.pro_gate")
+pro_gate_logger.setLevel(logging.WARNING)
 
 # ===============================
 # Request ID (adds X-Request-ID)
@@ -1377,10 +1379,20 @@ async def pro_private_access_middleware(request: Request, call_next):
 
     qa_key = pro_qa_key()
     if qa_key:
-        if has_valid_pro_qa_cookie(request, qa_key):
-            return await call_next(request)
+        qa_cookie_valid = has_valid_pro_qa_cookie(request, qa_key)
         submitted_qa_key = (request.query_params.get("qa_key") or "").strip()
-        if submitted_qa_key and hmac.compare_digest(submitted_qa_key, qa_key):
+        qa_param_present = bool(submitted_qa_key)
+        qa_key_matched = qa_param_present and hmac.compare_digest(submitted_qa_key, qa_key)
+        pro_gate_logger.warning(
+            "PRO_QA_GATE pro_qa_key_present=%s qa_key_param_present=%s qa_key_matched=%s qa_cookie_valid=%s",
+            True,
+            qa_param_present,
+            qa_key_matched,
+            qa_cookie_valid,
+        )
+        if qa_cookie_valid:
+            return await call_next(request)
+        if qa_key_matched:
             response = await call_next(request)
             response.set_cookie(
                 PRO_QA_ACCESS_COOKIE,
@@ -1391,6 +1403,14 @@ async def pro_private_access_middleware(request: Request, call_next):
                 samesite="lax",
             )
             return response
+    else:
+        pro_gate_logger.warning(
+            "PRO_QA_GATE pro_qa_key_present=%s qa_key_param_present=%s qa_key_matched=%s qa_cookie_valid=%s",
+            False,
+            bool((request.query_params.get("qa_key") or "").strip()),
+            False,
+            False,
+        )
 
     code = pro_access_code()
     if code:
