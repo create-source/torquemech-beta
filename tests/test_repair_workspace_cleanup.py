@@ -210,6 +210,48 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(items[0]["grand_total"], 400)
         self.assertEqual(items[0]["after_repair_photo_urls"], ["/static/uploads/after.jpg"])
 
+    def test_completed_repairs_render_in_vehicle_timeline_repaired_services(self):
+        timeline = pro_module.build_vehicle_timeline(
+            1,
+            1,
+            {"id": 1},
+            [
+                {
+                    "id": 40,
+                    "source_type": "repair",
+                    "source_record_id": 30,
+                    "service_date": "2026-06-24",
+                    "service_name": "Replace alternator",
+                    "mileage": 177000,
+                    "total_cost": 400,
+                    "created_at": "2026-06-24T12:00:00",
+                }
+            ],
+            [],
+            [],
+            [],
+            [],
+            repair_completion_events=[
+                {
+                    "id": 50,
+                    "repair_record_id": 30,
+                    "repair_name": "Replace alternator",
+                    "completed_at": "2026-06-24T13:00:00",
+                    "created_at": "2026-06-24T13:00:00",
+                    "workflow_source_type": "estimate",
+                    "after_repair_photo_paths": json.dumps(["/static/uploads/after.jpg"]),
+                }
+            ],
+        )
+
+        repaired = timeline[0]
+        self.assertEqual(repaired["title"], "Repaired Services")
+        self.assertEqual(repaired["records"][0]["service_name"], "Replace alternator")
+        self.assertEqual(repaired["records"][0]["source_label"], "Source: Estimate")
+        self.assertEqual(repaired["records"][0]["total"], 400)
+        self.assertEqual(repaired["records"][0]["photo_count"], 1)
+        self.assertEqual(repaired["records"][0]["action_label"], "Open Repair Record")
+
     def test_photo_stage_labels_are_present(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
         repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
@@ -292,6 +334,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('class="tm-history-summary-card tm-findings-status-card"', vehicle_detail)
         self.assertIn('data-finding-status-group="{{ group.label }}"', vehicle_detail)
         self.assertIn("Create Estimate / Recommended Repair", vehicle_detail)
+        self.assertIn("Customer Decision / Update Status", vehicle_detail)
+        self.assertIn("Edit Finding", vehicle_detail)
         self.assertIn("Save Estimate / Recommended Repair", vehicle_detail)
         self.assertIn("Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.", vehicle_detail)
         self.assertIn("+ Add Finding / Recommended Work", vehicle_detail)
@@ -300,10 +344,23 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('"statuses": ["Approved"]', vehicle_detail)
         self.assertIn('"statuses": ["Declined", "Deferred"]', vehicle_detail)
         self.assertNotIn('tm-findings-visible-list" aria-label="Saved additional findings and recommended work"', vehicle_detail)
-        self.assertIn("Completed / Repaired Services", vehicle_detail)
-        self.assertIn("completed_repair_work_items", vehicle_detail)
-        self.assertIn("Open Repair Record", vehicle_detail)
+        self.assertNotIn("Completed / Repaired Services", vehicle_detail)
+        self.assertNotIn("completed_repair_work_items", vehicle_detail)
+        self.assertIn("Vehicle Timeline", vehicle_detail)
+        self.assertIn("item.action_label", vehicle_detail)
+        self.assertIn("item.photo_count", vehicle_detail)
+        self.assertIn("item.source_label", vehicle_detail)
         self.assertNotIn('<h2 style="margin:4px 0 0;">Inspection Findings</h2>', vehicle_detail)
+
+    def test_finding_detail_has_estimate_and_customer_decision_actions(self):
+        finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn("Recommended Repair Estimate", finding_detail)
+        self.assertIn("Create Estimate / Recommended Repair", finding_detail)
+        self.assertIn("Update Estimate", finding_detail)
+        self.assertIn("Customer Decision", finding_detail)
+        self.assertIn("Update Customer Decision", finding_detail)
+        self.assertIn("Open Source: Finding Repair Job", finding_detail)
 
     def test_repair_completion_persists_uploaded_after_photos(self):
         conn = sqlite3.connect(":memory:")

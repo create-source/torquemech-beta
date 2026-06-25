@@ -2657,12 +2657,16 @@ def load_vehicle_repair_completion_events(
               rc.id,
               rc.repair_record_id,
               rc.completed_at,
+              rc.after_repair_photo_paths,
               rc.override_reason,
               rc.created_at,
               rc.updated_at,
               rr.customer_id,
               rr.vehicle_id,
-              rr.repair_name
+              rr.repair_name,
+              rr.workflow_source_type,
+              rr.workflow_source_id,
+              rr.total_cost
             FROM repair_completions rc
             JOIN repair_records rr ON rr.id = rc.repair_record_id
             WHERE rr.customer_id = ?
@@ -4128,18 +4132,36 @@ def build_vehicle_timeline(
             reverse=True,
         )
 
+    repaired_source_ids = {
+        int(record.get("source_record_id") or 0)
+        for record in service_history_records
+        if (record.get("source_type") or "") == "repair" and record.get("source_record_id")
+    }
+    completion_events_by_repair_id = {
+        int(record.get("repair_record_id") or 0): record
+        for record in repair_completion_events or []
+        if record.get("repair_record_id")
+    }
+
     for record in service_history_records:
         source_type = record.get("source_type") or ""
         if source_type == "repair":
+            repair_id = int(record.get("source_record_id") or 0)
+            completion_event = completion_events_by_repair_id.get(repair_id, {})
+            photo_urls = parse_stored_photo_paths(completion_event.get("after_repair_photo_paths"))
             add_record(
                 "repaired",
                 {
                     "id": record["id"],
-                    "date": record.get("service_date") or "",
-                    "created_at": record.get("created_at") or "",
+                    "date": completion_event.get("completed_at") or record.get("service_date") or "",
+                    "created_at": completion_event.get("completed_at") or record.get("created_at") or "",
                     "service_name": record.get("service_name") or "Repair",
                     "mileage": record.get("mileage"),
-                    "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('source_record_id')}",
+                    "source_label": repair_workspace_source_label(completion_event),
+                    "total": record.get("total_cost"),
+                    "photo_count": len(photo_urls),
+                    "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
+                    "action_label": "Open Repair Record",
                 },
             )
         else:
@@ -4279,7 +4301,10 @@ def build_vehicle_timeline(
         )
 
     for record in repair_completion_events or []:
+        if int(record.get("repair_record_id") or 0) in repaired_source_ids:
+            continue
         repair_title = record.get("repair_name") or "Repair"
+        photo_urls = parse_stored_photo_paths(record.get("after_repair_photo_paths"))
         add_record(
             "repaired",
             {
@@ -4288,7 +4313,11 @@ def build_vehicle_timeline(
                 "created_at": record.get("completed_at") or record.get("created_at") or "",
                 "service_name": f"Repair Completed: {repair_title}",
                 "mileage": None,
+                "source_label": repair_workspace_source_label(record),
+                "total": None,
+                "photo_count": len(photo_urls),
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
+                "action_label": "Open Repair Record",
             },
         )
         if str(record.get("override_reason") or "").strip():
@@ -5618,7 +5647,6 @@ def pro_customer_vehicle_detail(
     findings_summary = build_findings_summary(inspection_findings_records)
     approval_summary = build_approval_summary(approval_records)
     repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records, repair_records)
-    completed_repair_work_items = build_completed_repair_work_items(repair_records)
     for item in repair_work_items:
         item["checklist_summary"] = checklist_summaries.get(
             int(item.get("linked_repair_record_id") or 0),
@@ -5640,7 +5668,6 @@ def pro_customer_vehicle_detail(
             "findings_summary": findings_summary,
             "approval_summary": approval_summary,
             "repair_work_items": repair_work_items,
-            "completed_repair_work_items": completed_repair_work_items,
             "visual_reference_records": visual_reference_records,
             "repair_intelligence_records": repair_intelligence_records,
             "repair_work_status_options": [

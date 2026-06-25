@@ -2421,13 +2421,9 @@
                 </div>
               </section>
               {% endif %}
-              <div class="tm-repair-action-row">
-                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
-                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
-              </div>
               {% if item.status == "Open" %}
               <details class="tm-crm-disclosure tm-finding-estimate" data-finding-estimate>
-                <summary>Create Estimate / Recommended Repair</summary>
+                <summary>{% if item.labor_amount or item.parts_cost %}View / Update Estimate{% else %}Create Estimate / Recommended Repair{% endif %}</summary>
                 <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}" style="margin-top:12px;">
                   <input type="hidden" name="request_type" value="labor">
                   <input type="hidden" name="finding" value="{{ item.finding or '' }}">
@@ -2476,6 +2472,43 @@
                 </form>
               </details>
               {% endif %}
+              <details class="tm-crm-disclosure tm-finding-estimate">
+                <summary>Customer Decision / Update Status</summary>
+                <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" style="margin-top:12px;">
+                  <div class="tm-finding-status-control">
+                    <label class="tm-label" for="inline_finding_status_{{ item.id }}">Customer Decision</label>
+                    <span class="tm-finding-status-select">
+                      <select class="tm-input" id="inline_finding_status_{{ item.id }}" name="status" required>
+                        {% for option in ["Open", "Approved", "Deferred", "Declined"] %}
+                        <option value="{{ option }}" {% if item.status == option %}selected{% endif %}>{{ option }}</option>
+                        {% endfor %}
+                      </select>
+                    </span>
+                  </div>
+                  <button class="tm-btn tm-btn-primary" type="submit">Update Status</button>
+                </form>
+              </details>
+              <div class="tm-repair-action-row">
+                {% if item.status == "Approved" and item.linked_repair_record_id %}
+                <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Source: Finding Repair Job</a>
+                {% elif item.status == "Approved" %}
+                <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
+                  <input type="hidden" name="workflow_source_type" value="finding">
+                  <input type="hidden" name="workflow_source_id" value="{{ item.id }}">
+                  <input type="hidden" name="return_to" value="repair_detail">
+                  <input type="hidden" name="repair_name" value="{{ item.labor_description or item.recommendation or item.finding or 'Finding' }}">
+                  <input type="hidden" name="repair_date" value="{{ item.finding_date or '' }}">
+                  <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
+                  <input type="hidden" name="labor_hours" value="{% if item.labor_hours is not none %}{{ item.labor_hours }}{% endif %}">
+                  <input type="hidden" name="labor_rate" value="{% if item.labor_rate is not none %}{{ item.labor_rate }}{% endif %}">
+                  <input type="hidden" name="parts_cost" value="{% if item.parts_cost is not none %}{{ item.parts_cost }}{% endif %}">
+                  <input type="hidden" name="labor_cost" value="{% if item.labor_amount is not none %}{{ item.labor_amount }}{% endif %}">
+                  <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
+                  <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
+                </form>
+                {% endif %}
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit Finding</a>
+              </div>
             </article>
             {% endif %}
             {% endfor %}
@@ -2562,67 +2595,6 @@
       </div>
     </section>
 
-    <section class="tm-workspace-subsection" aria-label="Completed repaired services" style="margin-top:18px;">
-      <div class="tm-crm-kicker">Completed / Repaired Services</div>
-      <h3 style="margin:4px 0 0;">Completed / Repaired Services</h3>
-      {% if completed_repair_work_items %}
-      <div class="tm-repair-work-list" style="margin-top:12px;">
-        {% for item in completed_repair_work_items %}
-        <article class="tm-repair-work-item tm-repair-work-item--completed">
-          <div class="tm-repair-card-head">
-            <div>
-              <h3 class="tm-repair-card-title">{{ item.title }}</h3>
-              <div class="tm-repair-card-meta">
-                <span class="tm-repair-source-chip">{{ item.source_label }}</span>
-                <span class="tm-repair-status-chip">Status: Completed</span>
-                {% if item.completed_at %}
-                <span class="tm-repair-status-chip">Completed {{ item.completed_at|pro_datetime }}</span>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-          {% if item.has_pricing %}
-          <div class="tm-repair-price-grid" aria-label="Completed repair pricing for {{ item.title }}">
-            <div>
-              <span>Labor</span>
-              <strong>{{ item.labor_total|pro_currency }}</strong>
-            </div>
-            <div>
-              <span>Parts</span>
-              <strong>{{ item.parts_total|pro_currency }}</strong>
-            </div>
-            <div>
-              <span>Total</span>
-              <strong>{{ item.grand_total|pro_currency }}</strong>
-            </div>
-          </div>
-          {% endif %}
-          <section class="tm-photo-stage" aria-label="After Repair Photos for {{ item.title }}">
-            <strong>After Repair Photos</strong>
-            {% if item.after_repair_photo_urls %}
-            <span>{{ item.after_repair_photo_urls|length }} uploaded after photo{% if item.after_repair_photo_urls|length != 1 %}s{% endif %}</span>
-            <div class="tm-photo-list">
-              {% for photo_url in item.after_repair_photo_urls[:5] %}
-              <a href="{{ photo_url }}" target="_blank" rel="noopener">
-                <img src="{{ photo_url }}" alt="Completed repair after photo {{ loop.index }}">
-                <span>After photo {{ loop.index }}</span>
-              </a>
-              {% endfor %}
-            </div>
-            {% else %}
-            <span>No after repair photos uploaded.</span>
-            {% endif %}
-          </section>
-          <div class="tm-repair-action-row">
-            <a class="tm-btn tm-btn-primary" href="{{ item.repair_record_url }}">Open Repair Record</a>
-          </div>
-        </article>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="tm-history-empty" style="margin-top:12px;">No completed repairs yet.</div>
-      {% endif %}
-    </section>
     </div>
   </details>
 
@@ -2665,6 +2637,16 @@
                   <div class="tm-history-title">{{ item.service_name }}</div>
                   {% if item.mileage is not none %}
                   <div style="color:#475569;">{{ item.mileage|pro_miles }} miles</div>
+                  {% endif %}
+                  {% if group.key == "repaired" %}
+                  <div class="tm-finding-meta" style="margin-top:8px;">
+                    {% if item.source_label %}<span class="tm-crm-chip">{{ item.source_label }}</span>{% endif %}
+                    {% if item.total is not none %}<span class="tm-crm-chip">Total {{ item.total|pro_currency }}</span>{% endif %}
+                    {% if item.photo_count is not none %}<span class="tm-crm-chip">{{ item.photo_count }} after photo{% if item.photo_count != 1 %}s{% endif %}</span>{% endif %}
+                  </div>
+                  {% if item.action_label %}
+                  <span class="tm-btn tm-btn-secondary" style="margin-top:10px;">{{ item.action_label }}</span>
+                  {% endif %}
                   {% endif %}
                 </div>
               </a>
@@ -3014,6 +2996,28 @@
             mileageEl.style.color = "#475569";
             mileageEl.textContent = mileageText;
             content.appendChild(mileageEl);
+          }
+          if ((group.key || "") === "repaired") {
+            const metaRow = document.createElement("div");
+            metaRow.className = "tm-finding-meta";
+            metaRow.style.marginTop = "8px";
+            if (item.source_label) {
+              appendTextLine(metaRow, "tm-crm-chip", item.source_label);
+            }
+            if (item.total !== undefined && item.total !== null && item.total !== "") {
+              appendTextLine(metaRow, "tm-crm-chip", `Total ${formatMoney(Number(item.total || 0))}`);
+            }
+            if (item.photo_count !== undefined && item.photo_count !== null) {
+              appendTextLine(metaRow, "tm-crm-chip", `${item.photo_count} after ${Number(item.photo_count) === 1 ? "photo" : "photos"}`);
+            }
+            if (metaRow.children.length) content.appendChild(metaRow);
+            if (item.action_label) {
+              const action = document.createElement("span");
+              action.className = "tm-btn tm-btn-secondary";
+              action.style.marginTop = "10px";
+              action.textContent = item.action_label;
+              content.appendChild(action);
+            }
           }
           link.appendChild(content);
           listEl.appendChild(link);
