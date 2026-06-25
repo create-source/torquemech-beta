@@ -1310,6 +1310,13 @@
     margin-top: 14px;
   }
 
+  .tm-findings-status-group {
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding-top: 14px;
+  }
+
   .tm-findings-modal {
     position: fixed;
     inset: 0;
@@ -2261,7 +2268,8 @@
           <section class="tm-photo-stage" aria-label="Before / Inspection Photos">
             <strong>Before / Inspection Photos</strong>
             <label class="tm-label" for="before_inspection_photos">Upload photos of the original problem before repair.</label>
-            <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/*" multiple>
+            <span>Upload up to 5 photos.</span>
+            <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/png,image/jpeg,image/webp" multiple>
           </section>
           <div style="margin-top:12px;">
             <label class="tm-label" for="recommendation">Recommended Repair</label>
@@ -2336,49 +2344,66 @@
 
       {% if findings_records %}
       <div class="tm-findings-visible-list" aria-label="Saved additional findings and recommended work">
-        {% for item in findings_records %}
-        <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}">
-          <div class="tm-history-head">
-            <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
-            <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
-          </div>
-          <div class="tm-finding-meta">
-            {% if item.request_type == "labor" %}
-            <span class="tm-crm-chip">Labor Request</span>
+        {% for group in [
+          {"label": "Open", "statuses": ["Open"], "count": findings_summary.open},
+          {"label": "Approved Recommended Work", "statuses": ["Approved"], "count": findings_summary.approved},
+          {"label": "Declined / Deferred", "statuses": ["Declined", "Deferred"], "count": findings_summary.declined}
+        ] %}
+        <section class="tm-findings-status-group" aria-label="{{ group.label }} findings">
+          <div class="tm-repair-work-section-title">{{ group.label }} <span class="tm-crm-chip">{{ group.count }}</span></div>
+          {% if group.count %}
+          <div class="tm-findings-list">
+            {% for item in findings_records %}
+            {% if item.status in group.statuses %}
+            <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}">
+              <div class="tm-history-head">
+                <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
+                <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
+              </div>
+              <div class="tm-finding-meta">
+                {% if item.request_type == "labor" %}
+                <span class="tm-crm-chip">Labor Request</span>
+                {% endif %}
+                <span class="tm-crm-chip">{{ item.severity }}</span>
+                <span class="tm-crm-chip">{{ item.status }}</span>
+                {% if item.mileage is not none %}
+                <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
+                {% endif %}
+              </div>
+              {% if item.request_type == "labor" %}
+              <div style="color:#475569;"><strong>Problem Found:</strong> {{ item.finding or "No problem recorded." }}</div>
+              <div style="color:#475569;"><strong>Labor Description:</strong> {{ item.labor_description or "No labor description recorded." }}</div>
+              <div style="color:#475569;"><strong>Estimated Labor:</strong> {% if item.labor_hours is not none %}{{ item.labor_hours }} hrs{% else %}-{% endif %} at {% if item.labor_rate is not none %}{{ item.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</div>
+              <div style="color:#475569;"><strong>Estimated Total:</strong> {% if item.labor_amount is not none %}{{ item.labor_amount|pro_currency }}{% else %}-{% endif %}</div>
+              {% else %}
+              <div style="color:#475569;"><strong>Problem Found:</strong> {{ item.finding or "No problem recorded." }}</div>
+              <div style="color:#475569;"><strong>Recommended Repair:</strong> {{ item.recommendation or "No recommended repair recorded." }}</div>
+              {% endif %}
+              {% if item.before_inspection_photo_urls %}
+              <section class="tm-photo-stage" aria-label="Before / Inspection Photos for {{ item.finding or 'finding' }}">
+                <strong>Before / Inspection Photos</strong>
+                <div class="tm-photo-list">
+                  {% for photo_url in item.before_inspection_photo_urls %}
+                  <a href="{{ photo_url }}" target="_blank" rel="noopener">
+                    <img src="{{ photo_url }}" alt="Before inspection photo {{ loop.index }}">
+                    <span>Before photo {{ loop.index }}</span>
+                  </a>
+                  {% endfor %}
+                </div>
+              </section>
+              {% endif %}
+              <div class="tm-repair-action-row">
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
+              </div>
+            </article>
             {% endif %}
-            <span class="tm-crm-chip">{{ item.severity }}</span>
-            <span class="tm-crm-chip">{{ item.status }}</span>
-            {% if item.mileage is not none %}
-            <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
-            {% endif %}
+            {% endfor %}
           </div>
-          {% if item.request_type == "labor" %}
-          <div style="color:#475569;"><strong>Problem Found:</strong> {{ item.finding or "No problem recorded." }}</div>
-          <div style="color:#475569;"><strong>Labor Description:</strong> {{ item.labor_description or "No labor description recorded." }}</div>
-          <div style="color:#475569;"><strong>Estimated Labor:</strong> {% if item.labor_hours is not none %}{{ item.labor_hours }} hrs{% else %}-{% endif %} at {% if item.labor_rate is not none %}{{ item.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</div>
-          <div style="color:#475569;"><strong>Estimated Total:</strong> {% if item.labor_amount is not none %}{{ item.labor_amount|pro_currency }}{% else %}-{% endif %}</div>
           {% else %}
-          <div style="color:#475569;"><strong>Problem Found:</strong> {{ item.finding or "No problem recorded." }}</div>
-          <div style="color:#475569;"><strong>Recommended Repair:</strong> {{ item.recommendation or "No recommended repair recorded." }}</div>
+          <div class="tm-history-empty" style="margin-top:10px;">No {{ group.label|lower }} findings.</div>
           {% endif %}
-          {% if item.before_inspection_photo_urls %}
-          <section class="tm-photo-stage" aria-label="Before / Inspection Photos for {{ item.finding or 'finding' }}">
-            <strong>Before / Inspection Photos</strong>
-            <div class="tm-photo-list">
-              {% for photo_url in item.before_inspection_photo_urls %}
-              <a href="{{ photo_url }}" target="_blank" rel="noopener">
-                <img src="{{ photo_url }}" alt="Before inspection photo {{ loop.index }}">
-                <span>Before photo {{ loop.index }}</span>
-              </a>
-              {% endfor %}
-            </div>
-          </section>
-          {% endif %}
-          <div class="tm-repair-action-row">
-            <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
-            <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
-          </div>
-        </article>
+        </section>
         {% endfor %}
       </div>
       {% else %}
@@ -2465,7 +2490,63 @@
     <section class="tm-workspace-subsection" aria-label="Completed repaired services" style="margin-top:18px;">
       <div class="tm-crm-kicker">Completed / Repaired Services</div>
       <h3 style="margin:4px 0 0;">Completed / Repaired Services</h3>
-      <div class="tm-history-empty" style="margin-top:12px;">Completed repairs continue to appear in the Vehicle Timeline and repair history.</div>
+      {% if completed_repair_work_items %}
+      <div class="tm-repair-work-list" style="margin-top:12px;">
+        {% for item in completed_repair_work_items %}
+        <article class="tm-repair-work-item tm-repair-work-item--completed">
+          <div class="tm-repair-card-head">
+            <div>
+              <h3 class="tm-repair-card-title">{{ item.title }}</h3>
+              <div class="tm-repair-card-meta">
+                <span class="tm-repair-source-chip">{{ item.source_label }}</span>
+                <span class="tm-repair-status-chip">Status: Completed</span>
+                {% if item.completed_at %}
+                <span class="tm-repair-status-chip">Completed {{ item.completed_at|pro_datetime }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% if item.has_pricing %}
+          <div class="tm-repair-price-grid" aria-label="Completed repair pricing for {{ item.title }}">
+            <div>
+              <span>Labor</span>
+              <strong>{{ item.labor_total|pro_currency }}</strong>
+            </div>
+            <div>
+              <span>Parts</span>
+              <strong>{{ item.parts_total|pro_currency }}</strong>
+            </div>
+            <div>
+              <span>Total</span>
+              <strong>{{ item.grand_total|pro_currency }}</strong>
+            </div>
+          </div>
+          {% endif %}
+          <section class="tm-photo-stage" aria-label="After Repair Photos for {{ item.title }}">
+            <strong>After Repair Photos</strong>
+            {% if item.after_repair_photo_urls %}
+            <span>{{ item.after_repair_photo_urls|length }} uploaded after photo{% if item.after_repair_photo_urls|length != 1 %}s{% endif %}</span>
+            <div class="tm-photo-list">
+              {% for photo_url in item.after_repair_photo_urls[:5] %}
+              <a href="{{ photo_url }}" target="_blank" rel="noopener">
+                <img src="{{ photo_url }}" alt="Completed repair after photo {{ loop.index }}">
+                <span>After photo {{ loop.index }}</span>
+              </a>
+              {% endfor %}
+            </div>
+            {% else %}
+            <span>No after repair photos uploaded.</span>
+            {% endif %}
+          </section>
+          <div class="tm-repair-action-row">
+            <a class="tm-btn tm-btn-primary" href="{{ item.repair_record_url }}">Open Repair Record</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-history-empty" style="margin-top:12px;">No completed repairs yet.</div>
+      {% endif %}
     </section>
     </div>
   </details>

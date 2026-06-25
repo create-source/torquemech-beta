@@ -83,6 +83,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         finding_item = next(item for item in items if item["source_type"] == "finding")
         self.assertEqual(finding_item["source_label"], "Source: Finding")
         self.assertEqual(finding_item["original_finding"], "Front pads are below spec")
+        self.assertIn("O'Reilly", [source["label"] for source in by_title["Rotate tires"]["parts_sources"]])
 
     def test_workspace_card_includes_parts_sources_when_vendor_data_exists(self):
         vehicle = {"id": 1, "year": 2016, "make": "Honda", "model": "Accord", "mileage": 120000}
@@ -119,6 +120,40 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(items[0]["parts_sources"][0]["note"], "VIN-confirmed source")
         self.assertEqual(items[0]["parts_sources"][1]["url"], "https://example.test/napa")
 
+    def test_completed_repair_items_include_totals_source_and_after_photos(self):
+        items = pro_module.build_completed_repair_work_items(
+            [
+                {
+                    "id": 30,
+                    "customer_id": 1,
+                    "vehicle_id": 1,
+                    "repair_name": "Replace alternator",
+                    "status": "Completed",
+                    "workflow_source_type": "estimate",
+                    "completed_at": "2026-06-24T12:00:00",
+                    "labor_hours": 1.5,
+                    "labor_rate": 120,
+                    "parts_cost": 220,
+                    "completion": {"after_repair_photo_urls": ["/static/uploads/after.jpg"]},
+                },
+                {
+                    "id": 31,
+                    "customer_id": 1,
+                    "vehicle_id": 1,
+                    "repair_name": "Open repair",
+                    "status": "Open",
+                },
+            ]
+        )
+
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["source_label"], "Source: Estimate")
+        self.assertEqual(items[0]["repair_work_status_label"], "Completed")
+        self.assertEqual(items[0]["labor_total"], 180)
+        self.assertEqual(items[0]["parts_total"], 220)
+        self.assertEqual(items[0]["grand_total"], 400)
+        self.assertEqual(items[0]["after_repair_photo_urls"], ["/static/uploads/after.jpg"])
+
     def test_photo_stage_labels_are_present(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
         repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
@@ -135,6 +170,34 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Upload photos showing the completed repair or proof of work.", repair_detail)
         self.assertIn("completion.after_repair_photo_urls", repair_detail)
         self.assertIn("Uploaded After Photos", repair_detail)
+        self.assertIn("Upload up to 5 photos.", vehicle_detail)
+        self.assertIn("Upload up to 5 photos.", repair_detail)
+        self.assertIn('accept="image/png,image/jpeg,image/webp"', vehicle_detail)
+        self.assertIn('accept="image/png,image/jpeg,image/webp"', repair_detail)
+
+    def test_photo_upload_helpers_limit_before_and_after_photos_to_five(self):
+        uploads = [
+            {"filename": f"photo-{idx}.jpg", "content_type": "image/jpeg", "content": b"img"}
+            for idx in range(6)
+        ]
+
+        with self.assertRaises(pro_module.HTTPException) as raised:
+            pro_module.save_image_upload_paths(
+                uploads,
+                max_files=pro_module.PHOTO_UPLOAD_MAX_FILES,
+                allowed_extensions=pro_module.PHOTO_UPLOAD_ALLOWED_EXTENSIONS,
+            )
+
+        self.assertEqual(raised.exception.status_code, 400)
+        self.assertIn("Upload up to 5 photos", raised.exception.detail)
+
+    def test_photo_upload_helpers_restrict_completion_photo_types(self):
+        with self.assertRaises(pro_module.HTTPException):
+            pro_module.save_image_upload_paths(
+                [{"filename": "photo.svg", "content_type": "image/svg+xml", "content": b"<svg></svg>"}],
+                max_files=pro_module.PHOTO_UPLOAD_MAX_FILES,
+                allowed_extensions=pro_module.PHOTO_UPLOAD_ALLOWED_EXTENSIONS,
+            )
 
     def test_finding_form_uploads_before_photos_separately_from_after_photos(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
@@ -173,7 +236,13 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.", vehicle_detail)
         self.assertIn("+ Add Finding / Recommended Work", vehicle_detail)
         self.assertIn("Declined / Deferred", vehicle_detail)
+        self.assertIn('aria-label="{{ group.label }} findings"', vehicle_detail)
+        self.assertIn('"statuses": ["Open"]', vehicle_detail)
+        self.assertIn('"statuses": ["Approved"]', vehicle_detail)
+        self.assertIn('"statuses": ["Declined", "Deferred"]', vehicle_detail)
         self.assertIn("Completed / Repaired Services", vehicle_detail)
+        self.assertIn("completed_repair_work_items", vehicle_detail)
+        self.assertIn("Open Repair Record", vehicle_detail)
         self.assertNotIn('<h2 style="margin:4px 0 0;">Inspection Findings</h2>', vehicle_detail)
 
     def test_repair_completion_persists_uploaded_after_photos(self):
@@ -207,6 +276,31 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             json.loads(saved["after_repair_photo_paths"]),
             ["/static/uploads/after-1.jpg", "/static/uploads/after-2.jpg"],
         )
+
+    def test_repair_completion_total_after_photos_cannot_exceed_five(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        now = "2026-06-24T12:00:00"
+
+        pro_module.upsert_repair_completion(
+            conn,
+            repair_record_id=77,
+            form={},
+            completed_at=now,
+            now=now,
+            after_repair_photo_paths=[f"/static/uploads/after-{idx}.jpg" for idx in range(5)],
+        )
+
+        with self.assertRaises(pro_module.HTTPException):
+            pro_module.upsert_repair_completion(
+                conn,
+                repair_record_id=77,
+                form={},
+                completed_at=now,
+                now=now,
+                after_repair_photo_paths=["/static/uploads/after-extra.jpg"],
+            )
 
     def test_estimate_conversion_mobile_controls_and_phone_mask_are_present(self):
         conversion = (ROOT / "templates" / "pro" / "estimate_conversion.html").read_text(encoding="utf-8")
@@ -250,6 +344,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
         self.assertIn("Parts Sources", vehicle_detail)
         self.assertIn("item.parts_sources", vehicle_detail)
+        self.assertIn("O'Reilly", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
 
     def test_pro_customer_and_vehicle_forms_use_shared_input_formatters(self):
         customers = (ROOT / "templates" / "pro" / "customers.html").read_text(encoding="utf-8")

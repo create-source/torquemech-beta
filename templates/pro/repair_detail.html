@@ -271,7 +271,8 @@
       <section class="tm-completion-section tm-photo-stage" aria-label="After Repair Photos">
         <strong>After Repair Photos</strong>
         <label class="tm-label" for="after_repair_photos">Upload photos showing the completed repair or proof of work.</label>
-        <input class="tm-input" id="after_repair_photos" name="after_repair_photos" type="file" accept="image/*" multiple>
+        <span>Upload up to 5 photos.</span>
+        <input class="tm-input" id="after_repair_photos" name="after_repair_photos" type="file" accept="image/png,image/jpeg,image/webp" multiple>
         {% if completion.after_repair_photo_urls %}
         <strong>Uploaded After Photos</strong>
         <div class="tm-photo-list" aria-label="Uploaded after repair photos">

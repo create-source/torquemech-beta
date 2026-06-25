@@ -48,6 +48,17 @@ VISUAL_REFERENCE_IMAGE_TYPES = {
 VISUAL_REFERENCE_UPLOAD_DIR = STATIC_DIR / "visual-references" / "uploads"
 VISUAL_REFERENCE_UPLOAD_URL_PREFIX = "/static/visual-references/uploads"
 VISUAL_REFERENCE_ALLOWED_UPLOAD_EXTENSIONS = {".gif", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
+PHOTO_UPLOAD_ALLOWED_EXTENSIONS = {".jpeg", ".jpg", ".png", ".webp"}
+PHOTO_UPLOAD_MAX_FILES = 5
+DEFAULT_PARTS_SOURCE_LABELS = [
+    "O'Reilly",
+    "AutoZone",
+    "NAPA",
+    "RockAuto",
+    "OEM/dealer catalog",
+    "Amazon",
+    "eBay",
+]
 
 def static_version(asset_path: str) -> int:
     rel_path = str(asset_path or "").split("?", 1)[0].lstrip("/")
@@ -1187,7 +1198,11 @@ async def read_multipart_form_data(request: Request) -> tuple[dict[str, str], di
     return fields, files
 
 
-def save_visual_reference_upload(upload: dict[str, Any] | None) -> str:
+def save_visual_reference_upload(
+    upload: dict[str, Any] | None,
+    *,
+    allowed_extensions: set[str] | None = None,
+) -> str:
     if not upload:
         return ""
     content = upload.get("content") or b""
@@ -1195,7 +1210,7 @@ def save_visual_reference_upload(upload: dict[str, Any] | None) -> str:
     if not content or not filename:
         return ""
     suffix = Path(filename).suffix.lower()
-    if suffix not in VISUAL_REFERENCE_ALLOWED_UPLOAD_EXTENSIONS:
+    if suffix not in (allowed_extensions or VISUAL_REFERENCE_ALLOWED_UPLOAD_EXTENSIONS):
         raise HTTPException(status_code=400, detail="Unsupported image upload type")
     VISUAL_REFERENCE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     stored_name = f"{uuid4().hex}{suffix}"
@@ -1213,10 +1228,22 @@ def normalize_upload_list(upload_or_uploads: Any) -> list[dict[str, Any]]:
     return []
 
 
-def save_image_upload_paths(upload_or_uploads: Any) -> list[str]:
+def save_image_upload_paths(
+    upload_or_uploads: Any,
+    *,
+    max_files: int | None = None,
+    allowed_extensions: set[str] | None = None,
+) -> list[str]:
     paths: list[str] = []
-    for upload in normalize_upload_list(upload_or_uploads):
-        path = save_visual_reference_upload(upload)
+    uploads = [
+        upload
+        for upload in normalize_upload_list(upload_or_uploads)
+        if upload.get("filename") and upload.get("content")
+    ]
+    if max_files is not None and len(uploads) > max_files:
+        raise HTTPException(status_code=400, detail=f"Upload up to {max_files} photos.")
+    for upload in uploads:
+        path = save_visual_reference_upload(upload, allowed_extensions=allowed_extensions)
         if path:
             paths.append(path)
     return paths
@@ -2489,6 +2516,8 @@ def upsert_repair_completion(
         for path in [*existing_photo_paths, *(after_repair_photo_paths or [])]
         if str(path or "").strip()
     ]
+    if after_repair_photo_paths and len(merged_photo_paths) > PHOTO_UPLOAD_MAX_FILES:
+        raise HTTPException(status_code=400, detail=f"Upload up to {PHOTO_UPLOAD_MAX_FILES} photos.")
     photo_paths_json = json.dumps(merged_photo_paths)
     effective_completed_at = completed_at or existing.get("completed_at") or ""
     conn.execute(
@@ -3746,9 +3775,7 @@ def repair_work_title_from_approval(record: dict[str, Any]) -> str:
 
 
 def repair_workspace_parts_sources(blueprint: dict[str, Any] | None) -> list[dict[str, str]]:
-    if not blueprint:
-        return []
-    raw_sources = blueprint.get("vendor_sources") or blueprint.get("vendor_links") or []
+    raw_sources = (blueprint or {}).get("vendor_sources") or (blueprint or {}).get("vendor_links") or []
     if not isinstance(raw_sources, list):
         raw_sources = [raw_sources]
     sources: list[dict[str, str]] = []
@@ -3763,7 +3790,18 @@ def repair_workspace_parts_sources(blueprint: dict[str, Any] | None) -> list[dic
             url = ""
         if label or note:
             sources.append({"label": label or note, "note": note, "url": url})
-    return sources
+    if sources:
+        return sources
+    return [{"label": label, "note": "", "url": ""} for label in DEFAULT_PARTS_SOURCE_LABELS]
+
+
+def repair_workspace_source_label(record: dict[str, Any]) -> str:
+    source_type = str(record.get("workflow_source_type") or "").strip().lower()
+    if source_type == "estimate":
+        return "Source: Estimate"
+    if source_type in {"finding", "approval"}:
+        return "Source: Finding"
+    return "Source: Manual Repair"
 
 
 def build_repair_work_items(
@@ -3834,7 +3872,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
-            item["parts_sources"] = repair_workspace_parts_sources(blueprint)
+        item["parts_sources"] = repair_workspace_parts_sources(blueprint)
         items.append(item)
     for record in approval_records:
         if normalize_approval_decision(record.get("customer_decision")) != "approved":
@@ -3894,7 +3932,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
-            item["parts_sources"] = repair_workspace_parts_sources(blueprint)
+        item["parts_sources"] = repair_workspace_parts_sources(blueprint)
         items.append(item)
     for record in repair_records or []:
         repair_id = int(record.get("id") or 0)
@@ -3903,7 +3941,7 @@ def build_repair_work_items(
         if (record.get("status") or "") == "Completed":
             continue
         totals = repair_cost_totals(record)
-        source_label = "Source: Estimate" if record.get("workflow_source_type") == "estimate" else "Source: Manual Repair"
+        source_label = repair_workspace_source_label(record)
         title = record.get("repair_name") or "Repair"
         detail = repair_workspace_detail_from_notes(record.get("notes"))
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
@@ -3936,7 +3974,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
-            item["parts_sources"] = repair_workspace_parts_sources(blueprint)
+        item["parts_sources"] = repair_workspace_parts_sources(blueprint)
         items.append(item)
     status_rank = {"ready": 1, "in_progress": 2, "waiting_parts": 3, "completed": 4}
     items.sort(
@@ -3946,6 +3984,62 @@ def build_repair_work_items(
             int(item.get("source_id") or 0),
         ),
         reverse=False,
+    )
+    return items
+
+
+def build_completed_repair_work_items(
+    repair_records: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    def completed_sort_datetime(item: dict[str, Any]) -> datetime:
+        parsed_datetime = parse_datetime_value(item.get("completed_at"))
+        if parsed_datetime:
+            return parsed_datetime
+        parsed_date = parse_date_value(item.get("repair_date"))
+        if parsed_date:
+            return datetime.combine(parsed_date, datetime.min.time())
+        return datetime.min
+
+    items: list[dict[str, Any]] = []
+    for record in repair_records:
+        if (record.get("status") or "") != "Completed":
+            continue
+        totals = repair_cost_totals(record)
+        completion = record.get("completion") if isinstance(record.get("completion"), dict) else {}
+        after_photo_urls = completion.get("after_repair_photo_urls") or record.get("after_repair_photo_urls") or []
+        if not isinstance(after_photo_urls, list):
+            after_photo_urls = []
+        repair_id = int(record.get("id") or 0)
+        items.append(
+            {
+                "source_type": "repair",
+                "source_id": repair_id,
+                "title": record.get("repair_name") or "Repair",
+                "source_label": repair_workspace_source_label(record),
+                "repair_work_status_label": "Completed",
+                "completed_at": record.get("completed_at") or completion.get("completed_at") or "",
+                "repair_date": record.get("repair_date") or "",
+                "labor_total": totals["labor_total"],
+                "parts_total": totals["parts_total"],
+                "grand_total": totals["grand_total"],
+                "has_pricing": any(
+                    float(totals.get(key) or 0) > 0
+                    for key in ("labor_total", "parts_total", "grand_total")
+                ),
+                "after_repair_photo_urls": [str(url) for url in after_photo_urls if str(url or "").strip()],
+                "repair_record_url": (
+                    f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}"
+                    if repair_id
+                    else ""
+                ),
+            }
+        )
+    items.sort(
+        key=lambda item: (
+            completed_sort_datetime(item),
+            int(item.get("source_id") or 0),
+        ),
+        reverse=True,
     )
     return items
 
@@ -5356,6 +5450,11 @@ def pro_customer_vehicle_detail(
             repair_record["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
             repair_record["labor_cost"] = totals["labor_total"]
             repair_record["total_cost"] = totals["grand_total"]
+            repair_record["parts_cost"] = totals["parts_total"]
+            if (repair_record.get("status") or "") == "Completed":
+                completion = load_repair_completion(conn, int(repair_record.get("id") or 0))
+                repair_record["completion"] = completion
+                repair_record["after_repair_photo_urls"] = completion.get("after_repair_photo_urls") or []
         findings_records = [
             dict(row)
             for row in conn.execute(
@@ -5503,6 +5602,7 @@ def pro_customer_vehicle_detail(
     findings_summary = build_findings_summary(inspection_findings_records)
     approval_summary = build_approval_summary(approval_records)
     repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records, repair_records)
+    completed_repair_work_items = build_completed_repair_work_items(repair_records)
     for item in repair_work_items:
         item["checklist_summary"] = checklist_summaries.get(
             int(item.get("linked_repair_record_id") or 0),
@@ -5524,6 +5624,7 @@ def pro_customer_vehicle_detail(
             "findings_summary": findings_summary,
             "approval_summary": approval_summary,
             "repair_work_items": repair_work_items,
+            "completed_repair_work_items": completed_repair_work_items,
             "visual_reference_records": visual_reference_records,
             "repair_intelligence_records": repair_intelligence_records,
             "repair_work_status_options": [
@@ -5595,7 +5696,11 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
     before_inspection_photo_paths: list[str] = []
     if "multipart/form-data" in content_type:
         form, files = await read_multipart_form_data(request)
-        before_inspection_photo_paths = save_image_upload_paths(files.get("before_inspection_photos"))
+        before_inspection_photo_paths = save_image_upload_paths(
+            files.get("before_inspection_photos"),
+            max_files=PHOTO_UPLOAD_MAX_FILES,
+            allowed_extensions=PHOTO_UPLOAD_ALLOWED_EXTENSIONS,
+        )
     else:
         form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
@@ -7268,7 +7373,11 @@ async def pro_repair_completion_update(
     after_repair_photo_paths: list[str] = []
     if "multipart/form-data" in content_type:
         form, files = await read_multipart_form_data(request)
-        after_repair_photo_paths = save_image_upload_paths(files.get("after_repair_photos"))
+        after_repair_photo_paths = save_image_upload_paths(
+            files.get("after_repair_photos"),
+            max_files=PHOTO_UPLOAD_MAX_FILES,
+            allowed_extensions=PHOTO_UPLOAD_ALLOWED_EXTENSIONS,
+        )
     else:
         form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
