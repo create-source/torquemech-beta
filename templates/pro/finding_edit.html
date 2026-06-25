@@ -80,6 +80,10 @@
         <input class="tm-input" id="labor_amount" name="labor_amount_display" type="text" value="{{ finding.labor_amount|pro_currency if finding.labor_amount is not none else '' }}" readonly data-labor-amount>
       </div>
       <div style="margin-top:12px;">
+        <label class="tm-label" for="parts_cost">Parts Cost</label>
+        <input class="tm-input" id="parts_cost" name="parts_cost" type="text" inputmode="decimal" value="{{ finding.parts_cost if finding.parts_cost is not none else '' }}">
+      </div>
+      <div style="margin-top:12px;">
         <label class="tm-label" for="labor_reason">Labor Reason</label>
         <textarea class="tm-input" id="labor_reason" name="labor_reason" rows="3" maxlength="1200">{{ finding.labor_reason or "" }}</textarea>
       </div>

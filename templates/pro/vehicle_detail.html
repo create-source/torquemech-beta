@@ -1310,11 +1310,52 @@
     margin-top: 14px;
   }
 
-  .tm-findings-status-group {
+  .tm-findings-status-groups,
+  .tm-findings-status-card {
     display: grid;
-    gap: 10px;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .tm-findings-status-card {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .tm-findings-status-card summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 12px;
+    align-items: center;
+    min-height: 76px;
+    cursor: pointer;
+    list-style: none;
+    padding: 14px;
+  }
+
+  .tm-findings-status-card summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-findings-status-card summary em {
+    color: #64748b;
+    font-style: normal;
+    font-weight: 900;
+  }
+
+  .tm-findings-status-card[open] summary em {
+    transform: rotate(180deg);
+  }
+
+  .tm-findings-status-card > .tm-findings-list,
+  .tm-findings-status-card > .tm-history-empty {
+    margin: 0;
+    padding: 0 14px 14px;
+  }
+
+  .tm-finding-estimate {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
-    padding-top: 14px;
+    padding-top: 10px;
   }
 
   .tm-findings-modal {
@@ -2327,30 +2368,18 @@
         </form>
       </details>
 
-      <div class="tm-history-summary" aria-label="Additional findings summary">
-        <button class="tm-history-summary-card" type="button" data-findings-filter="Open">
-          <span>Open</span>
-          <strong>{{ findings_summary.open }}</strong>
-        </button>
-        <button class="tm-history-summary-card" type="button" data-findings-filter="Approved">
-          <span>Approved Recommended Work</span>
-          <strong>{{ findings_summary.approved }}</strong>
-        </button>
-        <button class="tm-history-summary-card" type="button" data-findings-filter="Declined">
-          <span>Declined / Deferred</span>
-          <strong>{{ findings_summary.declined }}</strong>
-        </button>
-      </div>
-
-      {% if findings_records %}
-      <div class="tm-findings-visible-list" aria-label="Saved additional findings and recommended work">
+      <div class="tm-findings-status-groups" aria-label="Expandable additional finding status groups">
         {% for group in [
-          {"label": "Open", "statuses": ["Open"], "count": findings_summary.open},
-          {"label": "Approved Recommended Work", "statuses": ["Approved"], "count": findings_summary.approved},
-          {"label": "Declined / Deferred", "statuses": ["Declined", "Deferred"], "count": findings_summary.declined}
+          {"label": "Open", "statuses": ["Open"], "count": findings_summary.open, "empty": "No open findings."},
+          {"label": "Approved Recommended Work", "statuses": ["Approved"], "count": findings_summary.approved, "empty": "No approved recommended work."},
+          {"label": "Declined / Deferred", "statuses": ["Declined", "Deferred"], "count": findings_summary.declined, "empty": "No declined or deferred findings."}
         ] %}
-        <section class="tm-findings-status-group" aria-label="{{ group.label }} findings">
-          <div class="tm-repair-work-section-title">{{ group.label }} <span class="tm-crm-chip">{{ group.count }}</span></div>
+        <details class="tm-history-summary-card tm-findings-status-card" data-finding-status-group="{{ group.label }}" {% if group.label == "Open" and group.count %}open{% endif %}>
+          <summary>
+            <span>{{ group.label }}</span>
+            <strong>{{ group.count }}</strong>
+            <em aria-hidden="true">v</em>
+          </summary>
           {% if group.count %}
           <div class="tm-findings-list">
             {% for item in findings_records %}
@@ -2396,21 +2425,67 @@
                 <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
                 <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
               </div>
+              {% if item.status == "Open" %}
+              <details class="tm-crm-disclosure tm-finding-estimate" data-finding-estimate>
+                <summary>Create Estimate / Recommended Repair</summary>
+                <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}" style="margin-top:12px;">
+                  <input type="hidden" name="request_type" value="labor">
+                  <input type="hidden" name="finding" value="{{ item.finding or '' }}">
+                  <input type="hidden" name="severity" value="{{ item.severity or 'Low' }}">
+                  <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
+                  <input type="hidden" name="finding_date" value="{{ item.finding_date or '' }}">
+                  <div style="margin-top:12px;">
+                    <label class="tm-label" for="estimate_recommendation_{{ item.id }}">Recommended Repair title / service name</label>
+                    <input class="tm-input" id="estimate_recommendation_{{ item.id }}" name="labor_description" type="text" maxlength="1600" value="{{ item.labor_description or item.recommendation or '' }}">
+                  </div>
+                  <input type="hidden" name="recommendation" value="{{ item.recommendation or '' }}">
+                  <div class="tm-crm-row" style="margin-top:12px;">
+                    <div>
+                      <label class="tm-label" for="estimate_labor_hours_{{ item.id }}">Labor Hours</label>
+                      <input class="tm-input" id="estimate_labor_hours_{{ item.id }}" name="labor_hours" type="number" min="0" step="0.1" value="{{ item.labor_hours if item.labor_hours is not none else '' }}" data-labor-hours>
+                    </div>
+                    <div>
+                      <label class="tm-label" for="estimate_labor_rate_{{ item.id }}">Labor Rate</label>
+                      <input class="tm-input" id="estimate_labor_rate_{{ item.id }}" name="labor_rate" type="text" inputmode="decimal" value="{{ item.labor_rate if item.labor_rate is not none else '' }}" data-labor-rate>
+                    </div>
+                  </div>
+                  <div class="tm-crm-row" style="margin-top:12px;">
+                    <div>
+                      <label class="tm-label" for="estimate_parts_cost_{{ item.id }}">Parts Cost</label>
+                      <input class="tm-input" id="estimate_parts_cost_{{ item.id }}" name="parts_cost" type="text" inputmode="decimal" value="{{ item.parts_cost if item.parts_cost is not none else '' }}" data-parts-cost>
+                    </div>
+                    <div>
+                      <label class="tm-label" for="estimate_total_{{ item.id }}">Estimated Total</label>
+                      <input class="tm-input" id="estimate_total_{{ item.id }}" name="estimate_total_display" type="text" readonly data-estimate-total>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;">
+                    <label class="tm-label" for="estimate_notes_{{ item.id }}">Notes</label>
+                    <textarea class="tm-input" id="estimate_notes_{{ item.id }}" name="labor_reason" rows="3" maxlength="1200">{{ item.labor_reason or '' }}</textarea>
+                  </div>
+                  <div style="margin-top:12px;">
+                    <label class="tm-label" for="estimate_status_{{ item.id }}">Customer Decision / Approval Status</label>
+                    <select class="tm-input" id="estimate_status_{{ item.id }}" name="status" required>
+                      <option value="Open" selected>Open</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Declined">Declined</option>
+                      <option value="Deferred">Deferred</option>
+                    </select>
+                  </div>
+                  <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Estimate / Recommended Repair</button>
+                </form>
+              </details>
+              {% endif %}
             </article>
             {% endif %}
             {% endfor %}
           </div>
           {% else %}
-          <div class="tm-history-empty" style="margin-top:10px;">No {{ group.label|lower }} findings.</div>
+          <div class="tm-history-empty" style="margin-top:10px;">{{ group.empty }}</div>
           {% endif %}
-        </section>
+        </details>
         {% endfor %}
       </div>
-      {% else %}
-      <div class="tm-history-empty" style="margin-top:12px;">
-        No active additional findings or recommended work recorded for this vehicle.
-      </div>
-      {% endif %}
 
       <div class="tm-findings-modal" id="findings-filter-drawer" data-findings-modal hidden>
         <div class="tm-findings-backdrop" data-findings-close></div>
@@ -2659,6 +2734,26 @@
     hours?.addEventListener("input", updateLaborAmount);
     rate?.addEventListener("input", updateLaborAmount);
     updateLaborFields();
+  });
+
+  document.querySelectorAll("[data-finding-estimate]").forEach((section) => {
+    const hours = section.querySelector("[data-labor-hours]");
+    const rate = section.querySelector("[data-labor-rate]");
+    const parts = section.querySelector("[data-parts-cost]");
+    const total = section.querySelector("[data-estimate-total]");
+
+    function updateEstimateTotal() {
+      if (!total) return;
+      const hoursValue = parseMoney(hours?.value) || 0;
+      const rateValue = parseMoney(rate?.value) || 0;
+      const partsValue = parseMoney(parts?.value) || 0;
+      total.value = formatMoney((hoursValue * rateValue) + partsValue);
+    }
+
+    hours?.addEventListener("input", updateEstimateTotal);
+    rate?.addEventListener("input", updateEstimateTotal);
+    parts?.addEventListener("input", updateEstimateTotal);
+    updateEstimateTotal();
   });
 
   const statusRank = { Open: 1, Approved: 2, Declined: 3, Deferred: 4 };

@@ -177,6 +177,13 @@ def finding_labor_amount(labor_hours: float | None, labor_rate: float | None) ->
     return round(max(0.0, labor_hours) * max(0.0, labor_rate), 2)
 
 
+def finding_parts_cost(form: dict[str, str]) -> float | None:
+    value = optional_float(form, "parts_cost")
+    if value is None:
+        return None
+    return max(0.0, value)
+
+
 def normalize_approval_request_type(raw_request_type: str | None) -> str:
     request_type = (raw_request_type or "general").strip().lower().replace("-", "_")
     if request_type == "general":
@@ -622,6 +629,7 @@ def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
           labor_hours REAL,
           labor_rate REAL,
           labor_amount REAL,
+          parts_cost REAL,
           labor_reason TEXT,
           part_description TEXT,
           part_name TEXT,
@@ -2743,6 +2751,8 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_rate REAL")
     if "labor_amount" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_amount REAL")
+    if "parts_cost" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN parts_cost REAL")
     if "labor_reason" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_reason TEXT")
     if "before_inspection_photo_paths" not in columns:
@@ -3728,9 +3738,9 @@ def ensure_repair_record_for_approved_finding(
                     finding.get("mileage"),
                     finding.get("labor_hours"),
                     finding.get("labor_rate"),
-                    None,
+                    finding.get("parts_cost"),
                     finding.get("labor_amount"),
-                    float(finding.get("labor_amount") or 0),
+                    float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0),
                     finding_id,
                     repair_work_notes_from_finding(finding),
                     now,
@@ -3830,6 +3840,9 @@ def build_repair_work_items(
         title = repair_work_title_from_finding(record)
         detail = record.get("finding") or record.get("labor_reason") or record.get("recommendation") or ""
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
+        finding_labor_total = float(record.get("labor_amount") or 0)
+        finding_parts_total = float(record.get("parts_cost") or 0)
+        finding_grand_total = finding_labor_total + finding_parts_total
         item = {
             "source_type": "finding",
             "source_id": record.get("id"),
@@ -3867,7 +3880,10 @@ def build_repair_work_items(
             "updated_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
             "mileage": record.get("mileage"),
             "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/findings/{record['id']}",
-            **repair_workspace_blank_totals(),
+            "labor_total": finding_labor_total,
+            "parts_total": finding_parts_total,
+            "grand_total": finding_grand_total,
+            "has_pricing": finding_grand_total > 0,
         }
         if blueprint:
             item["blueprint"] = blueprint
@@ -5711,6 +5727,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
     labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
     labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
     labor_amount = finding_labor_amount(labor_hours, labor_rate)
+    parts_cost = finding_parts_cost(form)
     labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
 
     conn = crm_db_conn()
@@ -5726,6 +5743,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             "labor_hours",
             "labor_rate",
             "labor_amount",
+            "parts_cost",
             "labor_reason",
             "before_inspection_photo_paths",
             "severity",
@@ -5745,6 +5763,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             labor_hours,
             labor_rate,
             labor_amount,
+            parts_cost,
             labor_reason,
             json.dumps(before_inspection_photo_paths),
             severity,
@@ -5869,6 +5888,7 @@ async def pro_finding_record_update(
     labor_hours = optional_float(form, "labor_hours") if request_type == "labor" else None
     labor_rate = optional_float(form, "labor_rate") if request_type == "labor" else None
     labor_amount = finding_labor_amount(labor_hours, labor_rate)
+    parts_cost = finding_parts_cost(form)
     labor_reason = form.get("labor_reason", "") if request_type == "labor" else ""
 
     conn = crm_db_conn()
@@ -5880,7 +5900,7 @@ async def pro_finding_record_update(
             UPDATE findings_records
             SET request_type = ?, finding = ?, recommendation = ?,
                 labor_description = ?, labor_hours = ?, labor_rate = ?,
-                labor_amount = ?, labor_reason = ?, severity = ?, status = ?,
+                labor_amount = ?, parts_cost = ?, labor_reason = ?, severity = ?, status = ?,
                 repair_work_status = CASE
                   WHEN ? IN ('Approved', 'Completed')
                     AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
@@ -5904,6 +5924,7 @@ async def pro_finding_record_update(
                 labor_hours,
                 labor_rate,
                 labor_amount,
+                parts_cost,
                 labor_reason,
                 severity,
                 status,

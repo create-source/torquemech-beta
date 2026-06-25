@@ -25,6 +25,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "repair_work_status": "ready",
                 "created_at": "2026-06-24T10:00:00",
                 "mileage": 120000,
+                "labor_amount": 90,
+                "parts_cost": 180,
             }
         ]
         repairs = [
@@ -83,6 +85,10 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         finding_item = next(item for item in items if item["source_type"] == "finding")
         self.assertEqual(finding_item["source_label"], "Source: Finding")
         self.assertEqual(finding_item["original_finding"], "Front pads are below spec")
+        self.assertEqual(finding_item["labor_total"], 90)
+        self.assertEqual(finding_item["parts_total"], 180)
+        self.assertEqual(finding_item["grand_total"], 270)
+        self.assertTrue(finding_item["has_pricing"])
         self.assertIn("O'Reilly", [source["label"] for source in by_title["Rotate tires"]["parts_sources"]])
 
     def test_workspace_card_includes_parts_sources_when_vendor_data_exists(self):
@@ -119,6 +125,56 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(items[0]["parts_sources"][0]["label"], "OEM/dealer catalog")
         self.assertEqual(items[0]["parts_sources"][0]["note"], "VIN-confirmed source")
         self.assertEqual(items[0]["parts_sources"][1]["url"], "https://example.test/napa")
+
+    def test_approved_finding_creates_source_finding_repair_job_with_estimate_totals(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        pro_module.ensure_findings_records_schema(conn)
+        pro_module.ensure_repair_records_schema(conn)
+        now = "2026-06-24T12:00:00"
+        cur = conn.execute(
+            """
+            INSERT INTO findings_records (
+              customer_id, vehicle_id, request_type, finding, recommendation,
+              labor_description, labor_hours, labor_rate, labor_amount, parts_cost,
+              labor_reason, severity, status, repair_work_status,
+              repair_work_updated_at, mileage, finding_date, created_at
+            )
+            VALUES (?, ?, 'labor', ?, ?, ?, ?, ?, ?, ?, ?, 'Medium', 'Approved', '', '', ?, ?, ?)
+            """,
+            (
+                1,
+                1,
+                "Rotors are worn",
+                "Front Rotors Replacement",
+                "Front Rotors Replacement",
+                1.4,
+                125,
+                175,
+                210,
+                "Rotor thickness below spec.",
+                177000,
+                "2026-06-24",
+                now,
+            ),
+        )
+
+        repair_id = pro_module.ensure_repair_record_for_approved_finding(
+            conn,
+            customer_id=1,
+            vehicle_id=1,
+            finding_id=int(cur.lastrowid),
+            now=now,
+        )
+        repair = dict(conn.execute("SELECT * FROM repair_records WHERE id = ?", (repair_id,)).fetchone())
+
+        self.assertEqual(repair["repair_name"], "Front Rotors Replacement")
+        self.assertEqual(repair["workflow_source_type"], "finding")
+        self.assertEqual(repair["status"], "Open")
+        self.assertEqual(repair["parts_cost"], 210)
+        self.assertEqual(repair["labor_cost"], 175)
+        self.assertEqual(repair["total_cost"], 385)
 
     def test_completed_repair_items_include_totals_source_and_after_photos(self):
         items = pro_module.build_completed_repair_work_items(
@@ -232,14 +288,18 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertLess(findings_idx, timeline_idx)
         self.assertIn("Active Repair Jobs", vehicle_detail)
         self.assertIn("Additional Findings / Recommended Work", vehicle_detail)
-        self.assertIn('aria-label="Saved additional findings and recommended work"', vehicle_detail)
+        self.assertIn('aria-label="Expandable additional finding status groups"', vehicle_detail)
+        self.assertIn('class="tm-history-summary-card tm-findings-status-card"', vehicle_detail)
+        self.assertIn('data-finding-status-group="{{ group.label }}"', vehicle_detail)
+        self.assertIn("Create Estimate / Recommended Repair", vehicle_detail)
+        self.assertIn("Save Estimate / Recommended Repair", vehicle_detail)
         self.assertIn("Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.", vehicle_detail)
         self.assertIn("+ Add Finding / Recommended Work", vehicle_detail)
         self.assertIn("Declined / Deferred", vehicle_detail)
-        self.assertIn('aria-label="{{ group.label }} findings"', vehicle_detail)
         self.assertIn('"statuses": ["Open"]', vehicle_detail)
         self.assertIn('"statuses": ["Approved"]', vehicle_detail)
         self.assertIn('"statuses": ["Declined", "Deferred"]', vehicle_detail)
+        self.assertNotIn('tm-findings-visible-list" aria-label="Saved additional findings and recommended work"', vehicle_detail)
         self.assertIn("Completed / Repaired Services", vehicle_detail)
         self.assertIn("completed_repair_work_items", vehicle_detail)
         self.assertIn("Open Repair Record", vehicle_detail)
