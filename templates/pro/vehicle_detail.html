@@ -348,6 +348,28 @@
     font-size: 0.88rem;
   }
 
+  .tm-photo-list {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .tm-photo-list a {
+    color: #0f766e;
+    font-weight: 900;
+  }
+
+  .tm-photo-list img {
+    display: block;
+    width: 96px;
+    height: 72px;
+    object-fit: cover;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #fff;
+  }
+
   .tm-blueprint-summary-card {
     display: grid;
     gap: 10px;
@@ -599,6 +621,10 @@
     font-weight: 800;
     line-height: 1.2;
     padding: 6px 9px;
+  }
+
+  a.tm-intel-badge {
+    text-decoration: none;
   }
 
   .tm-intel-rows {
@@ -1277,7 +1303,8 @@
     text-transform: uppercase;
   }
 
-  .tm-findings-list {
+  .tm-findings-list,
+  .tm-findings-visible-list {
     display: grid;
     gap: 12px;
     margin-top: 14px;
@@ -1817,7 +1844,7 @@
     <div class="tm-repair-work-list">
       {% for item in active_repair_work_items %}
       <article class="tm-repair-work-item tm-repair-work-item--{{ item.repair_work_status }}">
-        {% set vendor_links = item.blueprint.vendor_links if item.blueprint else [] %}
+        {% set parts_sources = item.parts_sources or [] %}
         <div class="tm-repair-card-head">
           <div>
             <h3 class="tm-repair-card-title">{{ item.title }}</h3>
@@ -1886,12 +1913,16 @@
           </div>
         </section>
         {% endif %}
-        {% if vendor_links %}
-        <section class="tm-blueprint-summary-card" aria-label="Recommended vendors for {{ item.title }}">
-          <div class="tm-blueprint-summary-title">Recommended Vendors</div>
+        {% if parts_sources %}
+        <section class="tm-blueprint-summary-card" aria-label="Parts sources for {{ item.title }}">
+          <div class="tm-blueprint-summary-title">Parts Sources</div>
           <div class="tm-intel-badge-row">
-            {% for vendor in vendor_links %}
-            <span class="tm-intel-badge">{{ vendor.label }}</span>
+            {% for source in parts_sources %}
+              {% if source.url %}
+              <a class="tm-intel-badge" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</a>
+              {% else %}
+              <span class="tm-intel-badge">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</span>
+              {% endif %}
             {% endfor %}
           </div>
         </section>
@@ -2214,7 +2245,7 @@
 
       <details class="tm-crm-disclosure" style="margin-top:16px;">
         <summary>+ Add Finding / Recommended Work</summary>
-        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings">
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings" enctype="multipart/form-data">
           <div class="tm-history-empty" style="margin-top:12px;">Approved recommended repairs become repair jobs in the Repair Workspace.</div>
           <div style="margin-top:12px;">
             <label class="tm-label" for="request_type">Request Type</label>
@@ -2230,7 +2261,7 @@
           <section class="tm-photo-stage" aria-label="Before / Inspection Photos">
             <strong>Before / Inspection Photos</strong>
             <label class="tm-label" for="before_inspection_photos">Upload photos of the original problem before repair.</label>
-            <input class="tm-input" id="before_inspection_photos" type="file" accept="image/*">
+            <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/*" multiple>
           </section>
           <div style="margin-top:12px;">
             <label class="tm-label" for="recommendation">Recommended Repair</label>
@@ -2302,6 +2333,59 @@
           <strong>{{ findings_summary.declined }}</strong>
         </button>
       </div>
+
+      {% if findings_records %}
+      <div class="tm-findings-visible-list" aria-label="Saved additional findings and recommended work">
+        {% for item in findings_records %}
+        <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}">
+          <div class="tm-history-head">
+            <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
+            <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
+          </div>
+          <div class="tm-finding-meta">
+            {% if item.request_type == "labor" %}
+            <span class="tm-crm-chip">Labor Request</span>
+            {% endif %}
+            <span class="tm-crm-chip">{{ item.severity }}</span>
+            <span class="tm-crm-chip">{{ item.status }}</span>
+            {% if item.mileage is not none %}
+            <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
+            {% endif %}
+          </div>
+          {% if item.request_type == "labor" %}
+          <div style="color:#475569;"><strong>Problem Found:</strong> {{ item.finding or "No problem recorded." }}</div>
+          <div style="color:#475569;"><strong>Labor Description:</strong> {{ item.labor_description or "No labor description recorded." }}</div>
+          <div style="color:#475569;"><strong>Estimated Labor:</strong> {% if item.labor_hours is not none %}{{ item.labor_hours }} hrs{% else %}-{% endif %} at {% if item.labor_rate is not none %}{{ item.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</div>
+          <div style="color:#475569;"><strong>Estimated Total:</strong> {% if item.labor_amount is not none %}{{ item.labor_amount|pro_currency }}{% else %}-{% endif %}</div>
+          {% else %}
+          <div style="color:#475569;"><strong>Problem Found:</strong> {{ item.finding or "No problem recorded." }}</div>
+          <div style="color:#475569;"><strong>Recommended Repair:</strong> {{ item.recommendation or "No recommended repair recorded." }}</div>
+          {% endif %}
+          {% if item.before_inspection_photo_urls %}
+          <section class="tm-photo-stage" aria-label="Before / Inspection Photos for {{ item.finding or 'finding' }}">
+            <strong>Before / Inspection Photos</strong>
+            <div class="tm-photo-list">
+              {% for photo_url in item.before_inspection_photo_urls %}
+              <a href="{{ photo_url }}" target="_blank" rel="noopener">
+                <img src="{{ photo_url }}" alt="Before inspection photo {{ loop.index }}">
+                <span>Before photo {{ loop.index }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </section>
+          {% endif %}
+          <div class="tm-repair-action-row">
+            <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
+            <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-history-empty" style="margin-top:12px;">
+        No active additional findings or recommended work recorded for this vehicle.
+      </div>
+      {% endif %}
 
       <div class="tm-findings-modal" id="findings-filter-drawer" data-findings-modal hidden>
         <div class="tm-findings-backdrop" data-findings-close></div>
@@ -2496,7 +2580,7 @@
     updateLaborFields();
   });
 
-  const statusRank = { Open: 1, Approved: 2, Declined: 3 };
+  const statusRank = { Open: 1, Approved: 2, Declined: 3, Deferred: 4 };
   const severityRank = { Critical: 1, High: 2, Medium: 3, Low: 4 };
   const list = document.querySelector(".tm-findings-list");
   const findingsModal = document.querySelector("[data-findings-modal]");

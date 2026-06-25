@@ -1222,6 +1222,23 @@ def save_image_upload_paths(upload_or_uploads: Any) -> list[str]:
     return paths
 
 
+def parse_stored_photo_paths(value: Any) -> list[str]:
+    try:
+        paths = json.loads(str(value or "[]"))
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(paths, list):
+        return []
+    return [str(path) for path in paths if str(path or "").strip()]
+
+
+def attach_finding_photo_urls(record: dict[str, Any]) -> dict[str, Any]:
+    record["before_inspection_photo_urls"] = parse_stored_photo_paths(
+        record.get("before_inspection_photo_paths")
+    )
+    return record
+
+
 def seed_visual_references(conn: sqlite3.Connection) -> None:
     ensure_visual_reference_schema(conn)
     if not VISUAL_REFERENCE_SEED_PATH.exists():
@@ -2667,6 +2684,7 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
           labor_rate REAL,
           labor_amount REAL,
           labor_reason TEXT,
+          before_inspection_photo_paths TEXT,
           severity TEXT NOT NULL CHECK (severity IN ('Low', 'Medium', 'High', 'Critical')),
           status TEXT NOT NULL CHECK (status IN ('Open', 'Approved', 'Declined', 'Deferred', 'Completed')),
           repair_work_status TEXT,
@@ -2698,6 +2716,8 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_amount REAL")
     if "labor_reason" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_reason TEXT")
+    if "before_inspection_photo_paths" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN before_inspection_photo_paths TEXT")
     if "repair_work_status" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN repair_work_status TEXT")
     if "repair_work_updated_at" not in columns:
@@ -3126,7 +3146,7 @@ def load_finding_record(
     )
     if not finding:
         raise HTTPException(status_code=404, detail="Finding record not found")
-    return finding
+    return attach_finding_photo_urls(finding)
 
 
 def load_finding_history_records(
@@ -3526,6 +3546,17 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         "year": str(vehicle.get("year") or "").strip(),
         "make": str(vehicle.get("make") or "").strip(),
         "model": str(vehicle.get("displayModel") or vehicle.get("model") or "").strip(),
+        "mileage": optional_int(
+            {
+                "mileage": str(
+                    vehicle.get("mileage")
+                    or vehicle.get("current_mileage")
+                    or vehicle.get("currentMileage")
+                    or ""
+                )
+            },
+            "mileage",
+        ),
     }
     customer = payload.get("customer") if isinstance(payload.get("customer"), dict) else {}
     payload["customer"] = {
@@ -3714,6 +3745,27 @@ def repair_work_title_from_approval(record: dict[str, Any]) -> str:
     return record.get("recommended_repair") or record.get("finding_title") or "Approved Request"
 
 
+def repair_workspace_parts_sources(blueprint: dict[str, Any] | None) -> list[dict[str, str]]:
+    if not blueprint:
+        return []
+    raw_sources = blueprint.get("vendor_sources") or blueprint.get("vendor_links") or []
+    if not isinstance(raw_sources, list):
+        raw_sources = [raw_sources]
+    sources: list[dict[str, str]] = []
+    for source in raw_sources:
+        if isinstance(source, dict):
+            label = str(source.get("label") or source.get("name") or source.get("title") or "").strip()
+            note = str(source.get("status") or source.get("value") or source.get("note") or "").strip()
+            url = str(source.get("url") or source.get("href") or "").strip()
+        else:
+            label = str(source or "").strip()
+            note = ""
+            url = ""
+        if label or note:
+            sources.append({"label": label or note, "note": note, "url": url})
+    return sources
+
+
 def build_repair_work_items(
     vehicle: dict[str, Any],
     findings_records: list[dict[str, Any]],
@@ -3782,6 +3834,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
+            item["parts_sources"] = repair_workspace_parts_sources(blueprint)
         items.append(item)
     for record in approval_records:
         if normalize_approval_decision(record.get("customer_decision")) != "approved":
@@ -3841,6 +3894,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
+            item["parts_sources"] = repair_workspace_parts_sources(blueprint)
         items.append(item)
     for record in repair_records or []:
         repair_id = int(record.get("id") or 0)
@@ -3882,6 +3936,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
+            item["parts_sources"] = repair_workspace_parts_sources(blueprint)
         items.append(item)
     status_rank = {"ready": 1, "in_progress": 2, "waiting_parts": 3, "completed": 4}
     items.sort(
@@ -4173,7 +4228,7 @@ def build_repair_history_summary(
 
 
 def build_findings_summary(findings_records: list[dict[str, Any]]) -> dict[str, int]:
-    counts = {"Approved": 0, "Open": 0, "Declined": 0}
+    counts = {"Approved": 0, "Open": 0, "Declined": 0, "Deferred": 0}
     for record in findings_records:
         status = record.get("status") or "Open"
         if status in counts:
@@ -4181,14 +4236,14 @@ def build_findings_summary(findings_records: list[dict[str, Any]]) -> dict[str, 
     return {
         "approved": counts["Approved"],
         "open": counts["Open"],
-        "declined": counts["Declined"],
+        "declined": counts["Declined"] + counts["Deferred"],
     }
 
 
 def is_active_inspection_finding(record: dict[str, Any]) -> bool:
     status = record.get("status") or "Open"
     repair_status = str(record.get("repair_work_status") or "").strip().lower().replace("-", "_")
-    return status in {"Open", "Approved", "Declined"} and repair_status != "completed"
+    return status in {"Open", "Approved", "Declined", "Deferred"} and repair_status != "completed"
 
 
 def load_customer_vehicle(
@@ -5335,6 +5390,7 @@ def pro_customer_vehicle_detail(
         ]
         for record in findings_records:
             record.setdefault("customer_id", customer_id)
+            attach_finding_photo_urls(record)
         finding_history_records = [
             dict(row)
             for row in conn.execute(
@@ -5535,7 +5591,13 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings")
 async def pro_finding_record_create(request: Request, customer_id: int, vehicle_id: int):
-    form = await read_form_data(request)
+    content_type = request.headers.get("content-type", "")
+    before_inspection_photo_paths: list[str] = []
+    if "multipart/form-data" in content_type:
+        form, files = await read_multipart_form_data(request)
+        before_inspection_photo_paths = save_image_upload_paths(files.get("before_inspection_photos"))
+    else:
+        form = await read_form_data(request)
     now = datetime.utcnow().isoformat()
     severity = normalize_finding_severity(form.get("severity", "Low"))
     status = normalize_finding_status(form.get("status", "Open"))
@@ -5560,6 +5622,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             "labor_rate",
             "labor_amount",
             "labor_reason",
+            "before_inspection_photo_paths",
             "severity",
             "status",
             "repair_work_status",
@@ -5578,6 +5641,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             labor_rate,
             labor_amount,
             labor_reason,
+            json.dumps(before_inspection_photo_paths),
             severity,
             status,
             "completed" if status == "Completed" else "ready" if status == "Approved" else "",
@@ -6860,6 +6924,10 @@ def pro_repair_record_detail(
     finally:
         conn.close()
 
+    repair_display_mileage = repair.get("mileage")
+    if repair_display_mileage is None:
+        repair_display_mileage = vehicle.get("mileage")
+
     return templates.TemplateResponse(
         "pro/repair_detail.html",
         {
@@ -6867,6 +6935,7 @@ def pro_repair_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "repair": repair,
+            "repair_display_mileage": repair_display_mileage,
             "invoice": invoice,
             "invoice_warnings": invoice_warnings,
             "repair_execution_status": repair_execution_status,

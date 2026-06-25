@@ -96,6 +96,15 @@
   .tm-photo-stage span { color:#64748b; font-size:.88rem; }
   .tm-photo-list { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
   .tm-photo-list a { color:#0f766e; font-weight:900; }
+  .tm-photo-list img {
+    display:block;
+    width:96px;
+    height:72px;
+    object-fit:cover;
+    border:1px solid rgba(15,23,42,.12);
+    border-radius:8px;
+    background:#fff;
+  }
   .tm-completion-checks { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
   .tm-completion-check {
     display:grid;
@@ -173,7 +182,7 @@
     <div class="tm-repair-grid">
       <div class="tm-repair-field"><span>Repair Name</span><strong>{{ repair.repair_name or "-" }}</strong></div>
       <div class="tm-repair-field"><span>Repair Date</span><strong>{{ repair.repair_date|pro_date if repair.repair_date else "-" }}</strong></div>
-      <div class="tm-repair-field"><span>Mileage</span><strong>{% if repair.mileage is not none %}{{ repair.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
+      <div class="tm-repair-field"><span>Mileage</span><strong>{% if repair_display_mileage is not none %}{{ repair_display_mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
       <div class="tm-repair-field"><span>Labor Hours</span><strong>{{ repair.labor_hours if repair.labor_hours is not none else "-" }}</strong></div>
       <div class="tm-repair-field"><span>Labor Rate</span><strong>{% if repair.labor_rate is not none %}{{ repair.labor_rate|pro_currency }}/hr{% elif repair.labor_rate_is_legacy %}Legacy total only{% else %}-{% endif %}</strong></div>
       <div class="tm-repair-field"><span>Labor Total</span><strong>{{ repair.labor_total|pro_currency }}</strong></div>
@@ -264,11 +273,17 @@
         <label class="tm-label" for="after_repair_photos">Upload photos showing the completed repair or proof of work.</label>
         <input class="tm-input" id="after_repair_photos" name="after_repair_photos" type="file" accept="image/*" multiple>
         {% if completion.after_repair_photo_urls %}
+        <strong>Uploaded After Photos</strong>
         <div class="tm-photo-list" aria-label="Uploaded after repair photos">
           {% for photo_url in completion.after_repair_photo_urls %}
-          <a href="{{ photo_url }}" target="_blank" rel="noopener">After photo {{ loop.index }}</a>
+          <a href="{{ photo_url }}" target="_blank" rel="noopener">
+            <img src="{{ photo_url }}" alt="Uploaded after repair photo {{ loop.index }}">
+            <span>After photo {{ loop.index }}</span>
+          </a>
           {% endfor %}
         </div>
+        {% else %}
+        <span>No uploaded after photos saved yet.</span>
         {% endif %}
       </section>
 

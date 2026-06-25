@@ -233,7 +233,7 @@
         </div>
         <div data-vehicle-panel="new">
           <label class="tm-label" for="new_vehicle_mileage">Mileage</label>
-          <input class="tm-input" id="new_vehicle_mileage" name="new_vehicle_mileage" type="text" inputmode="numeric" placeholder="120,000" data-pro-mileage-input>
+          <input class="tm-input" id="new_vehicle_mileage" name="new_vehicle_mileage" type="text" inputmode="numeric" value="{{ payload.vehicle.mileage|pro_miles if payload.vehicle.mileage is not none else '' }}" placeholder="Enter current mileage" data-pro-mileage-input>
         </div>
       </div>
     </section>
