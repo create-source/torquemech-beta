@@ -4160,6 +4160,99 @@ def repair_workspace_source_label(record: dict[str, Any]) -> str:
     return "Source: Manual Repair"
 
 
+def repair_workspace_source_action(record: dict[str, Any]) -> dict[str, str]:
+    source_type = str(record.get("workflow_source_type") or "").strip().lower()
+    source_id = record.get("workflow_source_id")
+    customer_id = record.get("customer_id")
+    vehicle_id = record.get("vehicle_id")
+    if source_type == "finding" and source_id and customer_id and vehicle_id:
+        return {
+            "label": "View Source Finding",
+            "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{source_id}",
+        }
+    if source_type == "estimate":
+        return {"label": "View Source Estimate", "url": ""}
+    return {"label": "View Repair Record", "url": ""}
+
+
+def repair_workspace_item_from_repair_record(
+    record: dict[str, Any],
+    vehicle: dict[str, Any],
+    *,
+    status_label: str | None = None,
+) -> dict[str, Any]:
+    repair_id = int(record.get("id") or 0)
+    totals = repair_cost_totals(record)
+    source_label = repair_workspace_source_label(record)
+    title = record.get("repair_name") or "Repair"
+    detail = repair_workspace_detail_from_notes(record.get("notes"))
+    blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
+    source_action = repair_workspace_source_action(record)
+    repair_record_url = f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}"
+    item = {
+        "source_type": "repair",
+        "source_id": repair_id,
+        "title": title,
+        "detail": detail,
+        "request_type_label": "Repair Record",
+        "approval_label": source_label.replace("Source: ", ""),
+        "source_label": source_label,
+        "source_action_label": source_action["label"],
+        "source_action_url": source_action["url"] or repair_record_url,
+        "original_finding": "",
+        "repair_work_status": "ready",
+        "repair_work_status_label": status_label or repair_workspace_status_label("ready"),
+        "linked_repair_record_id": repair_id,
+        "repair_record_created_at": record.get("created_at") or "",
+        "repair_record_url": repair_record_url,
+        "repair_prefill": {},
+        "updated_at": record.get("completed_at") or record.get("created_at") or record.get("repair_date") or "",
+        "mileage": record.get("mileage"),
+        "url": repair_record_url,
+        "labor_total": totals["labor_total"],
+        "parts_total": totals["parts_total"],
+        "grand_total": totals["grand_total"],
+        "has_pricing": any(
+            float(totals.get(key) or 0) > 0
+            for key in ("labor_total", "parts_total", "grand_total")
+        ),
+        "is_invoiced": bool(record.get("is_invoiced")),
+        "invoice_number": record.get("invoice_number") or "",
+        "invoice_url": record.get("invoice_url") or "",
+    }
+    if blueprint:
+        item["blueprint"] = blueprint
+        item["blueprint_summary"] = blueprint_summary(blueprint)
+    item["parts_sources"] = repair_workspace_parts_sources(blueprint)
+    return item
+
+
+def build_repair_workspace_groups(
+    vehicle: dict[str, Any],
+    repair_work_items: list[dict[str, Any]],
+    repair_records: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    ready_for_invoice: list[dict[str, Any]] = []
+    invoiced: list[dict[str, Any]] = []
+    for record in repair_records:
+        if (record.get("status") or "") != "Completed":
+            continue
+        item = repair_workspace_item_from_repair_record(
+            record,
+            vehicle,
+            status_label="Ready for Invoice" if not record.get("is_invoiced") else "Invoiced",
+        )
+        if record.get("is_invoiced"):
+            invoiced.append(item)
+        else:
+            ready_for_invoice.append(item)
+    return {
+        "active": repair_work_items,
+        "ready_for_invoice": ready_for_invoice,
+        "invoiced": invoiced,
+    }
+
+
 def build_repair_work_items(
     vehicle: dict[str, Any],
     findings_records: list[dict[str, Any]],
@@ -4197,6 +4290,8 @@ def build_repair_work_items(
             "request_type_label": "Labor Request" if normalize_finding_request_type(record.get("request_type")) == "labor" else "Finding",
             "approval_label": "Finding",
             "source_label": "Source: Finding",
+            "source_action_label": "View Source Finding",
+            "source_action_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/findings/{record['id']}",
             "original_finding": record.get("finding") or detail,
             "repair_work_status": status,
             "repair_work_status_label": repair_workspace_status_label(status),
@@ -4259,6 +4354,8 @@ def build_repair_work_items(
             "request_type_label": approval_request_type_label(record.get("request_type")),
             "approval_label": "Finding",
             "source_label": "Source: Finding",
+            "source_action_label": "View Source Finding",
+            "source_action_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
             "original_finding": record.get("finding_description") or detail,
             "repair_work_status": status,
             "repair_work_status_label": repair_workspace_status_label(status),
@@ -4302,45 +4399,7 @@ def build_repair_work_items(
             continue
         if (record.get("status") or "") == "Completed":
             continue
-        totals = repair_cost_totals(record)
-        source_label = repair_workspace_source_label(record)
-        title = record.get("repair_name") or "Repair"
-        detail = repair_workspace_detail_from_notes(record.get("notes"))
-        blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
-        item = {
-            "source_type": "repair",
-            "source_id": repair_id,
-            "title": title,
-            "detail": detail,
-            "request_type_label": "Repair Record",
-            "approval_label": source_label.replace("Source: ", ""),
-            "source_label": source_label,
-            "original_finding": "",
-            "repair_work_status": "ready",
-            "repair_work_status_label": repair_workspace_status_label("ready"),
-            "linked_repair_record_id": repair_id,
-            "repair_record_created_at": record.get("created_at") or "",
-            "repair_record_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}",
-            "repair_prefill": {},
-            "updated_at": record.get("created_at") or record.get("repair_date") or "",
-            "mileage": record.get("mileage"),
-            "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}",
-            "labor_total": totals["labor_total"],
-            "parts_total": totals["parts_total"],
-            "grand_total": totals["grand_total"],
-            "has_pricing": any(
-                float(totals.get(key) or 0) > 0
-                for key in ("labor_total", "parts_total", "grand_total")
-            ),
-            "is_invoiced": bool(record.get("is_invoiced")),
-            "invoice_number": record.get("invoice_number") or "",
-            "invoice_url": record.get("invoice_url") or "",
-        }
-        if blueprint:
-            item["blueprint"] = blueprint
-            item["blueprint_summary"] = blueprint_summary(blueprint)
-        item["parts_sources"] = repair_workspace_parts_sources(blueprint)
-        items.append(item)
+        items.append(repair_workspace_item_from_repair_record(record, vehicle))
     status_rank = {"ready": 1, "in_progress": 2, "waiting_parts": 3, "completed": 4}
     items.sort(
         key=lambda item: (
@@ -6039,6 +6098,7 @@ def pro_customer_vehicle_detail(
     findings_summary = build_findings_summary(inspection_findings_records)
     approval_summary = build_approval_summary(approval_records)
     repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records, repair_records)
+    repair_workspace_groups = build_repair_workspace_groups(vehicle, repair_work_items, repair_records)
     for item in repair_work_items:
         item["checklist_summary"] = checklist_summaries.get(
             int(item.get("linked_repair_record_id") or 0),
@@ -6060,6 +6120,7 @@ def pro_customer_vehicle_detail(
             "findings_summary": findings_summary,
             "approval_summary": approval_summary,
             "repair_work_items": repair_work_items,
+            "repair_workspace_groups": repair_workspace_groups,
             "visual_reference_records": visual_reference_records,
             "repair_intelligence_records": repair_intelligence_records,
             "repair_work_status_options": [

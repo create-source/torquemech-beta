@@ -210,6 +210,67 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(items[0]["grand_total"], 400)
         self.assertEqual(items[0]["after_repair_photo_urls"], ["/static/uploads/after.jpg"])
 
+    def test_repair_workspace_groups_active_ready_and_invoiced_jobs(self):
+        vehicle = {"id": 1, "year": 2016, "make": "Honda", "model": "Accord", "mileage": 120000}
+        active = [
+            {
+                "source_type": "repair",
+                "source_id": 20,
+                "title": "Replace front brake pads",
+                "repair_work_status": "ready",
+            }
+        ]
+        repairs = [
+            {
+                "id": 20,
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "repair_name": "Replace front brake pads",
+                "status": "Open",
+                "labor_hours": 1,
+                "labor_rate": 120,
+                "parts_cost": 80,
+            },
+            {
+                "id": 21,
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "repair_name": "Front rotors",
+                "status": "Completed",
+                "workflow_source_type": "finding",
+                "workflow_source_id": 10,
+                "labor_hours": 1.5,
+                "labor_rate": 120,
+                "parts_cost": 180,
+                "is_invoiced": False,
+            },
+            {
+                "id": 22,
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "repair_name": "Brake fluid",
+                "status": "Completed",
+                "workflow_source_type": "estimate",
+                "labor_hours": 0.5,
+                "labor_rate": 120,
+                "parts_cost": 30,
+                "is_invoiced": True,
+                "invoice_number": "INV-20260625-0003",
+                "invoice_url": "/pro/customers/1/vehicles/1/invoices/3",
+            },
+        ]
+
+        with patch.object(pro_module, "get_repair_blueprint_for_work_item", return_value=None):
+            groups = pro_module.build_repair_workspace_groups(vehicle, active, repairs)
+
+        self.assertEqual(groups["active"], active)
+        self.assertEqual([item["title"] for item in groups["ready_for_invoice"]], ["Front rotors"])
+        self.assertEqual(groups["ready_for_invoice"][0]["repair_work_status_label"], "Ready for Invoice")
+        self.assertEqual(groups["ready_for_invoice"][0]["source_action_label"], "View Source Finding")
+        self.assertEqual([item["title"] for item in groups["invoiced"]], ["Brake fluid"])
+        self.assertEqual(groups["invoiced"][0]["invoice_number"], "INV-20260625-0003")
+        self.assertEqual(groups["invoiced"][0]["source_action_label"], "View Source Estimate")
+
     def test_completed_repairs_render_in_vehicle_timeline_repaired_services(self):
         timeline = pro_module.build_vehicle_timeline(
             1,
@@ -334,6 +395,13 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertLess(workspace_idx, findings_idx)
         self.assertLess(findings_idx, timeline_idx)
         self.assertIn("Active Repair Jobs", vehicle_detail)
+        self.assertIn("Ready for Invoice", vehicle_detail)
+        self.assertIn("Invoiced Jobs", vehicle_detail)
+        self.assertIn("Create Final Invoice", vehicle_detail)
+        self.assertIn("Complete repair jobs before creating a final invoice.", vehicle_detail)
+        self.assertIn("View Invoice", vehicle_detail)
+        self.assertIn("Not Invoiced", vehicle_detail)
+        self.assertIn("Invoiced: {{ item.invoice_number }}", vehicle_detail)
         self.assertIn("Additional Findings / Recommended Work", vehicle_detail)
         self.assertIn('aria-label="Expandable additional finding status groups"', vehicle_detail)
         self.assertIn('class="tm-history-summary-card tm-findings-status-card"', vehicle_detail)

@@ -1883,13 +1883,18 @@
     </div>
     {% endif %}
 
-    {% set active_repair_work_items = repair_work_items|list %}
+    {% set active_repair_work_items = repair_workspace_groups.active|list %}
+    {% set ready_invoice_items = repair_workspace_groups.ready_for_invoice|list %}
+    {% set invoiced_repair_items = repair_workspace_groups.invoiced|list %}
     <section class="tm-workspace-subsection" aria-label="Active repair jobs">
       <div class="tm-crm-kicker">Active Repair Jobs</div>
       <h3 style="margin:4px 0 0;">Active Repair Jobs</h3>
       <div class="tm-repair-card-actions" style="margin-top:10px;">
         <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/new">Create Final Invoice</a>
       </div>
+      {% if not ready_invoice_items %}
+      <div class="tm-history-empty" style="margin-top:12px;">Complete repair jobs before creating a final invoice.</div>
+      {% endif %}
     </section>
     {% if active_repair_work_items %}
     <div class="tm-repair-work-list">
@@ -1904,6 +1909,8 @@
               <span class="tm-repair-status-chip">Status: {{ item.repair_work_status_label }}</span>
               {% if item.is_invoiced %}
               <a class="tm-repair-status-chip" href="{{ item.invoice_url }}">Invoice {{ item.invoice_number }}</a>
+              {% else %}
+              <span class="tm-repair-status-chip">Not Invoiced</span>
               {% endif %}
             </div>
           </div>
@@ -2004,6 +2011,7 @@
             <div class="tm-repair-work-execution-actions">
               {% if item.linked_repair_record_id %}
               <a class="tm-btn tm-btn-primary" href="{{ item.repair_record_url }}">Open Repair</a>
+              <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}#repair-completion">Complete Repair</a>
               {% else %}
               <form class="tm-repair-work-open-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
                 <input type="hidden" name="workflow_source_type" value="{{ item.source_type }}">
@@ -2021,7 +2029,7 @@
         </div>
         <div class="tm-repair-work-source" aria-label="Source traceability for {{ item.title }}">
           <div class="tm-repair-work-source-label">Source Record</div>
-          <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">{% if item.source_type == "finding" %}View Source Finding{% elif item.source_type == "repair" %}View Repair Record{% else %}View Source Approval{% endif %}</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ item.source_action_url or item.url }}">{{ item.source_action_label or "View Repair Record" }}</a>
         </div>
         {% if item.repair_work_status == "completed" and not item.linked_repair_record_id %}
         <details class="tm-repair-work-convert">
@@ -2290,6 +2298,77 @@
     <div class="tm-history-empty" style="margin-top:12px;">
       No active repair work is ready right now.
     </div>
+    {% endif %}
+
+    <section class="tm-workspace-subsection" aria-label="Ready for Invoice" style="margin-top:18px;">
+      <div class="tm-crm-kicker">Ready for Invoice</div>
+      <h3 style="margin:4px 0 0;">Ready for Invoice</h3>
+    </section>
+    {% if ready_invoice_items %}
+    <div class="tm-repair-work-list">
+      {% for item in ready_invoice_items %}
+      <article class="tm-repair-work-item tm-repair-work-item--ready">
+        <div class="tm-repair-card-head">
+          <div>
+            <h3 class="tm-repair-card-title">{{ item.title }}</h3>
+            <div class="tm-repair-card-meta">
+              <span class="tm-repair-source-chip">{{ item.source_label }}</span>
+              <span class="tm-repair-status-chip">Status: Ready for Invoice</span>
+              <span class="tm-repair-status-chip">Not Invoiced</span>
+            </div>
+          </div>
+        </div>
+        {% if item.detail %}<div style="color:#475569;">{{ item.detail }}</div>{% endif %}
+        <div class="tm-repair-price-grid" aria-label="Repair pricing for {{ item.title }}">
+          <div><span>Labor</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
+          <div><span>Parts</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
+          <div><span>Total</span><strong>{{ item.grand_total|pro_currency }}</strong></div>
+        </div>
+        <div class="tm-repair-card-actions">
+          <a class="tm-btn tm-btn-primary" href="{{ item.repair_record_url }}">Open Repair</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ item.source_action_url or item.repair_record_url }}">{{ item.source_action_label or "View Repair Record" }}</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">No completed repair jobs are ready for invoice.</div>
+    {% endif %}
+
+    <section class="tm-workspace-subsection" aria-label="Invoiced Jobs" style="margin-top:18px;">
+      <div class="tm-crm-kicker">Invoiced Jobs</div>
+      <h3 style="margin:4px 0 0;">Invoiced Jobs</h3>
+    </section>
+    {% if invoiced_repair_items %}
+    <div class="tm-repair-work-list">
+      {% for item in invoiced_repair_items %}
+      <article class="tm-repair-work-item tm-repair-work-item--completed">
+        <div class="tm-repair-card-head">
+          <div>
+            <h3 class="tm-repair-card-title">{{ item.title }}</h3>
+            <div class="tm-repair-card-meta">
+              <span class="tm-repair-source-chip">{{ item.source_label }}</span>
+              <span class="tm-repair-status-chip">Status: Invoiced</span>
+              <a class="tm-repair-status-chip" href="{{ item.invoice_url }}">Invoiced: {{ item.invoice_number }}</a>
+            </div>
+          </div>
+        </div>
+        {% if item.detail %}<div style="color:#475569;">{{ item.detail }}</div>{% endif %}
+        <div class="tm-repair-price-grid" aria-label="Repair pricing for {{ item.title }}">
+          <div><span>Labor</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
+          <div><span>Parts</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
+          <div><span>Total</span><strong>{{ item.grand_total|pro_currency }}</strong></div>
+        </div>
+        <div class="tm-repair-card-actions">
+          <a class="tm-btn tm-btn-primary" href="{{ item.invoice_url }}">View Invoice</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}">Open Repair</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ item.source_action_url or item.repair_record_url }}">{{ item.source_action_label or "View Repair Record" }}</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty" style="margin-top:12px;">No repair jobs have been invoiced yet.</div>
     {% endif %}
 
     <section class="tm-workspace-subsection" id="recommendations-findings" aria-label="Additional findings and recommended work" style="margin-top:18px;">
