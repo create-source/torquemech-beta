@@ -59,6 +59,8 @@ class ProAccessGateTests(unittest.TestCase):
             bad_key_response = client.get("/pro?qa_key=wrong")
             good_key_response = client.get("/pro?qa_key=qa-secret")
             persisted_response = client.get("/pro/customers")
+            estimate_conversion_response = client.get("/pro/estimate-conversion")
+            vehicle_detail_response = client.get("/pro/customers/1/vehicles/1")
 
         self.assertEqual(locked_response.status_code, 403)
         self.assertIn("TorqueMech Pro is in private development.", locked_response.text)
@@ -69,6 +71,8 @@ class ProAccessGateTests(unittest.TestCase):
         self.assertNotIn("qa-secret", good_key_response.text)
         self.assertNotIn("qa-secret", good_key_response.headers.get("set-cookie", ""))
         self.assertNotEqual(persisted_response.status_code, 403)
+        self.assertNotEqual(estimate_conversion_response.status_code, 403)
+        self.assertNotEqual(vehicle_detail_response.status_code, 403)
 
     def test_qa_key_cookie_does_not_store_raw_key(self):
         with patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": "qa-secret"}):
@@ -90,6 +94,7 @@ class ProAccessGateTests(unittest.TestCase):
         self.assertIn("pro_qa_key_present=True", joined_logs)
         self.assertIn("qa_key_param_present=True", joined_logs)
         self.assertIn("qa_key_matched=True", joined_logs)
+        self.assertIn("access_allowed=True", joined_logs)
         self.assertNotIn("qa-secret", joined_logs)
 
 

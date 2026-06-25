@@ -137,6 +137,7 @@ logging.basicConfig(
 )
 pro_gate_logger = logging.getLogger("torquemech.pro_gate")
 pro_gate_logger.setLevel(logging.WARNING)
+uvicorn_error_logger = logging.getLogger("uvicorn.error")
 
 # ===============================
 # Request ID (adds X-Request-ID)
@@ -215,6 +216,31 @@ def has_valid_pro_qa_cookie(request: Request, key: str) -> bool:
     cookie_value = request.cookies.get(PRO_QA_ACCESS_COOKIE, "")
     expected = pro_qa_access_signature(key)
     return bool(cookie_value) and hmac.compare_digest(cookie_value, expected)
+
+
+def log_pro_qa_gate(
+    request: Request,
+    *,
+    pro_qa_key_present: bool,
+    qa_key_param_present: bool,
+    qa_key_matched: bool,
+    qa_cookie_valid: bool,
+    access_allowed: bool,
+) -> None:
+    message = (
+        "PRO_QA_GATE path=%s pro_qa_key_present=%s qa_key_param_present=%s "
+        "qa_key_matched=%s qa_cookie_valid=%s access_allowed=%s"
+    )
+    args = (
+        request.url.path,
+        pro_qa_key_present,
+        qa_key_param_present,
+        qa_key_matched,
+        qa_cookie_valid,
+        access_allowed,
+    )
+    pro_gate_logger.warning(message, *args)
+    uvicorn_error_logger.warning(message, *args)
 
 
 def pro_private_response(error: str = "") -> HTMLResponse:
@@ -1374,26 +1400,39 @@ async def pro_private_access_middleware(request: Request, call_next):
     if path != "/pro" and not path.startswith("/pro/"):
         return await call_next(request)
 
+    qa_key = pro_qa_key()
+    submitted_qa_key = (request.query_params.get("qa_key") or "").strip()
+    qa_key_present = bool(qa_key)
+    qa_param_present = bool(submitted_qa_key)
+    qa_cookie_valid = has_valid_pro_qa_cookie(request, qa_key) if qa_key_present else False
+    qa_key_matched = (
+        qa_key_present
+        and qa_param_present
+        and hmac.compare_digest(submitted_qa_key, qa_key)
+    )
+
     if is_local_pro_request(request):
+        log_pro_qa_gate(
+            request,
+            pro_qa_key_present=qa_key_present,
+            qa_key_param_present=qa_param_present,
+            qa_key_matched=qa_key_matched,
+            qa_cookie_valid=qa_cookie_valid,
+            access_allowed=True,
+        )
         return await call_next(request)
 
-    qa_key = pro_qa_key()
-    if qa_key:
-        qa_cookie_valid = has_valid_pro_qa_cookie(request, qa_key)
-        submitted_qa_key = (request.query_params.get("qa_key") or "").strip()
-        qa_param_present = bool(submitted_qa_key)
-        qa_key_matched = qa_param_present and hmac.compare_digest(submitted_qa_key, qa_key)
-        pro_gate_logger.warning(
-            "PRO_QA_GATE pro_qa_key_present=%s qa_key_param_present=%s qa_key_matched=%s qa_cookie_valid=%s",
-            True,
-            qa_param_present,
-            qa_key_matched,
-            qa_cookie_valid,
+    if qa_cookie_valid or qa_key_matched:
+        log_pro_qa_gate(
+            request,
+            pro_qa_key_present=qa_key_present,
+            qa_key_param_present=qa_param_present,
+            qa_key_matched=qa_key_matched,
+            qa_cookie_valid=qa_cookie_valid,
+            access_allowed=True,
         )
-        if qa_cookie_valid:
-            return await call_next(request)
+        response = await call_next(request)
         if qa_key_matched:
-            response = await call_next(request)
             response.set_cookie(
                 PRO_QA_ACCESS_COOKIE,
                 pro_qa_access_signature(qa_key),
@@ -1402,25 +1441,33 @@ async def pro_private_access_middleware(request: Request, call_next):
                 secure=request.url.scheme == "https",
                 samesite="lax",
             )
-            return response
-    else:
-        pro_gate_logger.warning(
-            "PRO_QA_GATE pro_qa_key_present=%s qa_key_param_present=%s qa_key_matched=%s qa_cookie_valid=%s",
-            False,
-            bool((request.query_params.get("qa_key") or "").strip()),
-            False,
-            False,
-        )
+        return response
 
     code = pro_access_code()
     if code:
         if has_valid_pro_access_cookie(request, code):
+            log_pro_qa_gate(
+                request,
+                pro_qa_key_present=qa_key_present,
+                qa_key_param_present=qa_param_present,
+                qa_key_matched=qa_key_matched,
+                qa_cookie_valid=qa_cookie_valid,
+                access_allowed=True,
+            )
             return await call_next(request)
         if request.method.upper() == "POST":
             raw_body = (await request.body()).decode("utf-8", errors="replace")
             parsed = parse_qs(raw_body, keep_blank_values=True)
             submitted_code = (parsed.get("pro_access_code") or [""])[0].strip()
             if hmac.compare_digest(submitted_code, code):
+                log_pro_qa_gate(
+                    request,
+                    pro_qa_key_present=qa_key_present,
+                    qa_key_param_present=qa_param_present,
+                    qa_key_matched=qa_key_matched,
+                    qa_cookie_valid=qa_cookie_valid,
+                    access_allowed=True,
+                )
                 response = RedirectResponse(str(request.url), status_code=303)
                 response.set_cookie(
                     PRO_ACCESS_COOKIE,
@@ -1431,12 +1478,44 @@ async def pro_private_access_middleware(request: Request, call_next):
                     samesite="lax",
                 )
                 return response
+            log_pro_qa_gate(
+                request,
+                pro_qa_key_present=qa_key_present,
+                qa_key_param_present=qa_param_present,
+                qa_key_matched=qa_key_matched,
+                qa_cookie_valid=qa_cookie_valid,
+                access_allowed=False,
+            )
             return pro_private_response("Invalid access code.")
+        log_pro_qa_gate(
+            request,
+            pro_qa_key_present=qa_key_present,
+            qa_key_param_present=qa_param_present,
+            qa_key_matched=qa_key_matched,
+            qa_cookie_valid=qa_cookie_valid,
+            access_allowed=False,
+        )
         return pro_private_response()
 
     if not pro_enabled():
+        log_pro_qa_gate(
+            request,
+            pro_qa_key_present=qa_key_present,
+            qa_key_param_present=qa_param_present,
+            qa_key_matched=qa_key_matched,
+            qa_cookie_valid=qa_cookie_valid,
+            access_allowed=False,
+        )
         return pro_blocked_response()
 
+    log_pro_qa_gate(
+        request,
+        pro_qa_key_present=qa_key_present,
+        qa_key_param_present=qa_param_present,
+        qa_key_matched=qa_key_matched,
+        qa_cookie_valid=qa_cookie_valid,
+        access_allowed=True,
+    )
     return await call_next(request)
 
 
