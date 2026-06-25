@@ -59,6 +59,10 @@
 </style>
 {% endblock %}
 
+{% block page_js %}
+<script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <section class="tm-pro-shell">
   <div class="tm-pro-pagehead">
@@ -117,14 +121,14 @@
       </div>
       <div>
         <label class="tm-label" for="mileage_performed">Mileage performed</label>
-        <input class="tm-input" id="mileage_performed" name="mileage_performed" type="text" inputmode="numeric" value="{{ maintenance.mileage_performed|pro_miles if maintenance.mileage_performed else '' }}">
+        <input class="tm-input" id="mileage_performed" name="mileage_performed" type="text" inputmode="numeric" value="{{ maintenance.mileage_performed|pro_miles if maintenance.mileage_performed else '' }}" data-pro-mileage-input>
       </div>
     </div>
 
     <div class="tm-crm-row" style="margin-top:12px;">
       <div>
         <label class="tm-label" for="interval_miles">Interval miles</label>
-        <input class="tm-input" id="interval_miles" name="interval_miles" type="text" inputmode="numeric" value="{{ maintenance.interval_miles|pro_miles if maintenance.interval_miles else '' }}">
+        <input class="tm-input" id="interval_miles" name="interval_miles" type="text" inputmode="numeric" value="{{ maintenance.interval_miles|pro_miles if maintenance.interval_miles else '' }}" data-pro-mileage-input>
       </div>
       <div>
         <label class="tm-label" for="interval_months">Interval months</label>
@@ -135,7 +139,7 @@
     <div class="tm-crm-row" style="margin-top:12px;">
       <div>
         <label class="tm-label" for="due_mileage">Next due mileage</label>
-        <input class="tm-input" id="due_mileage" name="due_mileage" type="text" inputmode="numeric" value="{{ maintenance.due_mileage|pro_miles if maintenance.due_mileage else '' }}" placeholder="Auto-calculated unless entered">
+        <input class="tm-input" id="due_mileage" name="due_mileage" type="text" inputmode="numeric" value="{{ maintenance.due_mileage|pro_miles if maintenance.due_mileage else '' }}" placeholder="Auto-calculated unless entered" data-pro-mileage-input>
       </div>
       <div>
         <label class="tm-label" for="due_date">Next due date</label>

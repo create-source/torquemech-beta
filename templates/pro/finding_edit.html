@@ -11,6 +11,10 @@
 </style>
 {% endblock %}
 
+{% block page_js %}
+<script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 <section class="tm-pro-shell">
   <div class="tm-pro-pagehead">
@@ -57,7 +61,7 @@
       </div>
     </div>
     <div class="tm-finding-row" style="margin-top:12px;">
-      <div><label class="tm-label" for="mileage">Mileage</label><input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ finding.mileage|pro_miles if finding.mileage is not none else '' }}"></div>
+      <div><label class="tm-label" for="mileage">Mileage</label><input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ finding.mileage|pro_miles if finding.mileage is not none else '' }}" data-pro-mileage-input></div>
       <div><label class="tm-label" for="finding_date">Finding Date</label><input class="tm-input" id="finding_date" name="finding_date" type="date" value="{{ finding.finding_date or '' }}"></div>
     </div>
     <section class="tm-finding-labor-fields" data-finding-labor-fields hidden style="margin-top:12px;">

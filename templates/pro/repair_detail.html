@@ -194,8 +194,10 @@
         <strong><span class="tm-status-chip{% if repair.status == 'Completed' %} tm-status-chip--completed{% endif %}">{{ repair_status_display }}</span></strong>
       </div>
       <div class="tm-repair-field"><span>Completed At</span><strong>{{ repair.completed_at|pro_datetime if repair.completed_at else "-" }}</strong></div>
+      <div class="tm-repair-field"><span>Final Inspection</span><strong>{% if completion.final_inspection_passed %}Passed{% else %}Not marked passed{% endif %}</strong></div>
     </div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Notes</span><strong>{{ repair.notes or "-" }}</strong></div>
+    <div class="tm-repair-field" style="margin-top:14px;"><span>Final Inspection Comments</span><strong>{{ completion.final_inspection_notes or "-" }}</strong></div>
     {% if invoice_warnings %}
     <div class="tm-invoice-warning">
       {% for warning in invoice_warnings %}
@@ -207,10 +209,9 @@
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/edit">Edit Repair Record</a>
       {% if invoice %}
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">View Invoice</a>
-      {% elif repair.status == "Completed" and not invoice_warnings %}
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/invoice">
-        <button class="tm-btn tm-btn-primary" type="submit">Generate Invoice</button>
-      </form>
+      <span class="tm-status-chip">Invoiced: {{ invoice.invoice_number }}</span>
+      {% else %}
+      <span class="tm-status-chip">Not Invoiced</span>
       {% endif %}
     </div>
   </section>
@@ -262,9 +263,13 @@
         <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400" placeholder="Completion notes are recommended before closing this repair.">{{ completion.completion_notes or "" }}</textarea>
       </section>
 
-      <section class="tm-completion-section" aria-label="Final Inspection Notes">
-        <h3 class="tm-completion-title">Final Inspection Notes</h3>
-        <label class="tm-label" for="final_inspection_notes">Optional final checks, road test notes, or quality-control notes.</label>
+      <section class="tm-completion-section" aria-label="Final Inspection">
+        <h3 class="tm-completion-title">Final Inspection</h3>
+        <label class="tm-completion-check" for="final_inspection_passed">
+          <input id="final_inspection_passed" name="final_inspection_passed" type="checkbox" value="1" {% if completion.final_inspection_passed %}checked{% endif %}>
+          <span>Passed</span>
+        </label>
+        <label class="tm-label" for="final_inspection_notes">Final Inspection Comments</label>
         <textarea class="tm-input" id="final_inspection_notes" name="final_inspection_notes" rows="4" maxlength="1600">{{ completion.final_inspection_notes or "" }}</textarea>
       </section>
 

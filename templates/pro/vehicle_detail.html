@@ -1887,6 +1887,9 @@
     <section class="tm-workspace-subsection" aria-label="Active repair jobs">
       <div class="tm-crm-kicker">Active Repair Jobs</div>
       <h3 style="margin:4px 0 0;">Active Repair Jobs</h3>
+      <div class="tm-repair-card-actions" style="margin-top:10px;">
+        <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/new">Create Final Invoice</a>
+      </div>
     </section>
     {% if active_repair_work_items %}
     <div class="tm-repair-work-list">
@@ -1899,6 +1902,9 @@
             <div class="tm-repair-card-meta">
               <span class="tm-repair-source-chip">{{ item.source_label or item.approval_label }}</span>
               <span class="tm-repair-status-chip">Status: {{ item.repair_work_status_label }}</span>
+              {% if item.is_invoiced %}
+              <a class="tm-repair-status-chip" href="{{ item.invoice_url }}">Invoice {{ item.invoice_number }}</a>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -2034,7 +2040,7 @@
               </div>
               <div>
                 <label class="tm-label" for="workflow_repair_mileage_{{ item.source_type }}_{{ item.source_id }}">Mileage</label>
-                <input class="tm-input" id="workflow_repair_mileage_{{ item.source_type }}_{{ item.source_id }}" name="mileage" type="text" inputmode="numeric" value="{% if item.repair_prefill.mileage is not none %}{{ item.repair_prefill.mileage|pro_miles }}{% endif %}">
+                <input class="tm-input" id="workflow_repair_mileage_{{ item.source_type }}_{{ item.source_id }}" name="mileage" type="text" inputmode="numeric" value="{% if item.repair_prefill.mileage is not none %}{{ item.repair_prefill.mileage|pro_miles }}{% endif %}" data-pro-mileage-input>
               </div>
             </div>
             <div class="tm-crm-row" style="margin-top:12px;">
@@ -2353,7 +2359,7 @@
             </div>
             <div>
               <label class="tm-label" for="finding_mileage">Mileage</label>
-              <input class="tm-input" id="finding_mileage" name="mileage" type="text" inputmode="numeric">
+              <input class="tm-input" id="finding_mileage" name="mileage" type="text" inputmode="numeric" data-pro-mileage-input>
             </div>
           </div>
           <div style="margin-top:12px;">

@@ -318,6 +318,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('repair_status_display = "Ready for Repair"', repair_detail)
         self.assertIn("{{ repair_status_display }}", repair_detail)
         self.assertIn("repair_display_mileage", repair_detail)
+        self.assertIn("Not Invoiced", repair_detail)
+        self.assertIn("Invoiced: {{ invoice.invoice_number }}", repair_detail)
+        self.assertNotIn("Generate Invoice", repair_detail)
+        self.assertIn("Final Inspection Comments", repair_detail)
+        self.assertIn('name="final_inspection_passed"', repair_detail)
 
     def test_vehicle_detail_moves_findings_inside_repair_workspace(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
@@ -372,7 +377,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         saved = pro_module.upsert_repair_completion(
             conn,
             repair_record_id=77,
-            form={"completion_notes": "Done", "final_inspection_notes": "QA pass"},
+            form={"completion_notes": "Done", "final_inspection_passed": "1", "final_inspection_notes": "QA pass"},
             completed_at=now,
             now=now,
             after_repair_photo_paths=["/static/uploads/after-1.jpg"],
@@ -394,6 +399,25 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             json.loads(saved["after_repair_photo_paths"]),
             ["/static/uploads/after-1.jpg", "/static/uploads/after-2.jpg"],
         )
+        self.assertEqual(saved["final_inspection_passed"], 0)
+        self.assertEqual(saved["final_inspection_notes"], "QA pass")
+
+    def test_final_inspection_passed_and_legacy_comments_are_preserved(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        now = "2026-06-24T12:00:00"
+
+        saved = pro_module.upsert_repair_completion(
+            conn,
+            repair_record_id=78,
+            form={"final_inspection_passed": "1", "final_inspection_notes": "Old QA notes still visible."},
+            completed_at=now,
+            now=now,
+        )
+
+        self.assertEqual(saved["final_inspection_passed"], 1)
+        self.assertEqual(saved["final_inspection_notes"], "Old QA notes still visible.")
 
     def test_repair_completion_total_after_photos_cannot_exceed_five(self):
         conn = sqlite3.connect(":memory:")
@@ -457,6 +481,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(payload["vehicle"]["mileage"], 177000)
         self.assertIsNone(blank_payload["vehicle"]["mileage"])
 
+    def test_mileage_formats_with_commas_and_parses_clean(self):
+        self.assertEqual(pro_module.format_mileage(120000), "120,000")
+        self.assertEqual(pro_module.format_mileage("177000"), "177,000")
+        self.assertEqual(pro_module.optional_int({"mileage": "177,000"}, "mileage"), 177000)
+
     def test_parts_sources_section_is_visible_on_workspace_cards(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
 
@@ -468,6 +497,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         customers = (ROOT / "templates" / "pro" / "customers.html").read_text(encoding="utf-8")
         customer_detail = (ROOT / "templates" / "pro" / "customer_detail.html").read_text(encoding="utf-8")
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        repair_edit = (ROOT / "templates" / "pro" / "repair_edit.html").read_text(encoding="utf-8")
+        finding_edit = (ROOT / "templates" / "pro" / "finding_edit.html").read_text(encoding="utf-8")
+        maintenance_detail = (ROOT / "templates" / "pro" / "maintenance_detail.html").read_text(encoding="utf-8")
         helper = (ROOT / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
 
         self.assertIn("/static/pro_form_helpers.js", customers)
@@ -478,6 +510,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("data-pro-mileage-input", customer_detail)
         self.assertIn('placeholder="Enter current mileage"', customer_detail)
         self.assertIn("data-pro-mileage-input", vehicle_detail)
+        self.assertIn("data-pro-mileage-input", repair_edit)
+        self.assertIn("data-pro-mileage-input", finding_edit)
+        self.assertIn("data-pro-mileage-input", maintenance_detail)
+        self.assertIn("/static/pro_form_helpers.js", repair_edit)
+        self.assertIn("/static/pro_form_helpers.js", finding_edit)
+        self.assertIn("/static/pro_form_helpers.js", maintenance_detail)
         self.assertIn("function formatPhone", helper)
         self.assertIn("function formatMileage", helper)
         self.assertIn("normalizeMileageBeforeSubmit", helper)

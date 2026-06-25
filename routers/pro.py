@@ -2034,6 +2034,7 @@ def repair_cost_totals(repair: dict[str, Any]) -> dict[str, Any]:
 
 
 def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
+    ensure_repair_records_schema(conn)
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS invoices (
@@ -2052,9 +2053,42 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS invoice_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          invoice_id INTEGER NOT NULL,
+          repair_record_id INTEGER NOT NULL UNIQUE,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (invoice_id) REFERENCES invoices(id),
+          FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
+        )
+        """
+    )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices (customer_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_invoices_vehicle_id ON invoices (vehicle_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices (created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice_id ON invoice_items (invoice_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_invoice_items_repair_record_id ON invoice_items (repair_record_id)")
+    for invoice in conn.execute("SELECT id, repair_record_id, created_at FROM invoices").fetchall():
+        if not invoice["repair_record_id"]:
+            continue
+        existing = conn.execute(
+            "SELECT id FROM invoice_items WHERE invoice_id = ? AND repair_record_id = ?",
+            (invoice["id"], invoice["repair_record_id"]),
+        ).fetchone()
+        if existing:
+            continue
+        try:
+            conn.execute(
+                """
+                INSERT INTO invoice_items (invoice_id, repair_record_id, created_at)
+                VALUES (?, ?, ?)
+                """,
+                (invoice["id"], invoice["repair_record_id"], invoice["created_at"]),
+            )
+        except sqlite3.IntegrityError:
+            pass
     conn.commit()
 
 
@@ -2068,6 +2102,20 @@ def load_invoice_for_repair(
     repair_record_id: int,
 ) -> dict[str, Any] | None:
     ensure_invoices_schema(conn)
+    invoice = row_to_dict(
+        conn.execute(
+            """
+            SELECT i.*
+            FROM invoice_items ii
+            JOIN invoices i ON i.id = ii.invoice_id
+            WHERE ii.repair_record_id = ?
+            LIMIT 1
+            """,
+            (repair_record_id,),
+        ).fetchone()
+    )
+    if invoice:
+        return invoice
     return row_to_dict(
         conn.execute(
             """
@@ -2080,6 +2128,85 @@ def load_invoice_for_repair(
     )
 
 
+def invoice_source_label(repair: dict[str, Any]) -> str:
+    return repair_workspace_source_label(repair)
+
+
+def invoice_item_display_record(record: dict[str, Any]) -> dict[str, Any]:
+    item = dict(record)
+    totals = repair_cost_totals(item)
+    item["service_title"] = item.get("repair_name") or "Repair"
+    item["source_label"] = invoice_source_label(item)
+    item["labor_total"] = totals["labor_total"]
+    item["parts_total"] = totals["parts_total"]
+    item["grand_total"] = totals["grand_total"]
+    item["labor_rate"] = totals["labor_rate"]
+    item["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
+    item["repair_notes"] = str(item.get("repair_notes") or item.get("notes") or "").strip()
+    item["completion_notes"] = str(item.get("completion_notes") or "").strip()
+    item["final_inspection_passed"] = 1 if item.get("final_inspection_passed") else 0
+    item["final_inspection_status"] = "Passed" if item["final_inspection_passed"] else "Not marked passed"
+    item["final_inspection_notes"] = str(item.get("final_inspection_notes") or "").strip()
+    source_finding = str(item.get("source_finding") or "").strip()
+    source_recommendation = str(item.get("source_recommendation") or "").strip()
+    item["inspection_finding_source"] = "\n".join(
+        part
+        for part in [
+            source_finding and f"Problem Found: {source_finding}",
+            source_recommendation and f"Recommended Repair: {source_recommendation}",
+        ]
+        if part
+    )
+    return item
+
+
+def load_invoice_item_records(
+    conn: sqlite3.Connection,
+    invoice_id: int,
+) -> list[dict[str, Any]]:
+    ensure_invoices_schema(conn)
+    ensure_repair_completion_schema(conn)
+    ensure_findings_records_schema(conn)
+    return [
+        invoice_item_display_record(dict(row))
+        for row in conn.execute(
+            """
+            SELECT
+              ii.id AS invoice_item_id,
+              ii.invoice_id,
+              rr.id AS repair_record_id,
+              rr.repair_name,
+              rr.repair_date,
+              rr.labor_hours,
+              rr.labor_rate,
+              rr.labor_cost,
+              rr.parts_cost,
+              rr.total_cost,
+              rr.mileage AS repair_mileage,
+              rr.notes,
+              rr.status,
+              rr.completed_at,
+              rr.workflow_source_type,
+              rr.workflow_source_id,
+              rc.completion_notes,
+              rc.final_inspection_passed,
+              rc.final_inspection_notes,
+              fr.finding AS source_finding,
+              fr.recommendation AS source_recommendation
+            FROM invoice_items ii
+            JOIN repair_records rr ON rr.id = ii.repair_record_id
+            LEFT JOIN repair_completions rc ON rc.repair_record_id = rr.id
+            LEFT JOIN findings_records fr
+              ON rr.workflow_source_type = 'finding'
+             AND fr.id = rr.workflow_source_id
+            WHERE ii.invoice_id = ?
+            ORDER BY ii.id ASC
+            """,
+            (invoice_id,),
+        ).fetchall()
+    ]
+
+
 def load_invoice_record(
     conn: sqlite3.Connection,
     customer_id: int,
@@ -2087,35 +2214,11 @@ def load_invoice_record(
     invoice_id: int,
 ) -> dict[str, Any]:
     ensure_invoices_schema(conn)
-    ensure_repair_records_schema(conn)
-    ensure_repair_completion_schema(conn)
-    ensure_findings_records_schema(conn)
     invoice = row_to_dict(
         conn.execute(
             """
-            SELECT
-              i.*,
-              rr.repair_name,
-              rr.repair_date,
-              rr.labor_hours,
-              rr.labor_rate,
-              rr.labor_cost AS repair_labor_total,
-              rr.parts_cost AS repair_parts_total,
-              rr.mileage AS repair_mileage,
-              rr.notes AS repair_notes,
-              rr.completed_at,
-              rr.workflow_source_type,
-              rr.workflow_source_id,
-              rc.completion_notes,
-              rc.final_inspection_notes,
-              fr.finding AS source_finding,
-              fr.recommendation AS source_recommendation
+            SELECT i.*
             FROM invoices i
-            JOIN repair_records rr ON rr.id = i.repair_record_id
-            LEFT JOIN repair_completions rc ON rc.repair_record_id = rr.id
-            LEFT JOIN findings_records fr
-              ON rr.workflow_source_type = 'finding'
-             AND fr.id = rr.workflow_source_id
             WHERE i.id = ?
               AND i.customer_id = ?
               AND i.vehicle_id = ?
@@ -2125,46 +2228,35 @@ def load_invoice_record(
     )
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    invoice["items"] = load_invoice_item_records(conn, invoice_id)
     return invoice_display_record(invoice)
 
 
 def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
     record = dict(invoice)
-    totals = repair_cost_totals(
-        {
-            "labor_hours": record.get("labor_hours"),
-            "labor_rate": record.get("labor_rate"),
-            "labor_cost": record.get("repair_labor_total"),
-            "parts_cost": record.get("repair_parts_total"),
-        }
-    )
-    labor_total = totals["labor_total"]
-    parts_total = totals["parts_total"]
-    record["labor_total"] = labor_total
-    record["parts_total"] = parts_total
-    record["parts_cost"] = parts_total
-    record["grand_total"] = totals["grand_total"]
-    record["labor_rate"] = totals["labor_rate"]
-    record["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
-    completion_notes = str(record.get("completion_notes") or "").strip()
-    repair_notes = str(record.get("repair_notes") or "").strip()
-    record["repair_notes"] = repair_notes
-    record["completion_notes"] = completion_notes
-    source_finding = str(record.get("source_finding") or "").strip()
-    source_recommendation = str(record.get("source_recommendation") or "").strip()
-    record["inspection_finding_source"] = "\n".join(
-        part
-        for part in [
-            source_finding and f"Problem Found: {source_finding}",
-            source_recommendation and f"Recommended Repair: {source_recommendation}",
-        ]
-        if part
-    )
+    items = list(record.get("items") or [])
+    record["items"] = items
+    record["service_count"] = len(items)
+    record["labor_total"] = round(sum(float(item.get("labor_total") or 0) for item in items), 2)
+    record["parts_total"] = round(sum(float(item.get("parts_total") or 0) for item in items), 2)
+    record["parts_cost"] = record["parts_total"]
+    record["grand_total"] = round(sum(float(item.get("grand_total") or 0) for item in items), 2)
+    primary = items[0] if items else {}
+    record["repair_name"] = primary.get("service_title") or "Repair"
+    record["repair_mileage"] = primary.get("repair_mileage")
+    record["completed_at"] = primary.get("completed_at")
+    record["labor_hours"] = primary.get("labor_hours")
+    record["labor_rate"] = primary.get("labor_rate")
+    record["labor_rate_is_legacy"] = primary.get("labor_rate_is_legacy")
+    record["repair_notes"] = primary.get("repair_notes") or ""
+    record["completion_notes"] = primary.get("completion_notes") or ""
+    record["final_inspection_notes"] = primary.get("final_inspection_notes") or ""
+    record["inspection_finding_source"] = primary.get("inspection_finding_source") or ""
     return record
 
 
 def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
-    if (repair.get("status") or "") != "Completed":
+    if (repair.get("status") or "") not in {"Completed", "Open"}:
         return []
     totals = repair_cost_totals(repair)
     if totals["grand_total"] <= 0:
@@ -2172,6 +2264,117 @@ def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
             "Invoice cannot be generated until this completed repair has labor or parts totals recorded."
         ]
     return []
+
+
+def load_repair_invoice_map(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+) -> dict[int, dict[str, Any]]:
+    ensure_invoices_schema(conn)
+    rows = conn.execute(
+        """
+        SELECT
+          ii.repair_record_id,
+          i.id AS invoice_id,
+          i.invoice_number,
+          i.created_at
+        FROM invoice_items ii
+        JOIN invoices i ON i.id = ii.invoice_id
+        WHERE i.customer_id = ?
+          AND i.vehicle_id = ?
+        """,
+        (customer_id, vehicle_id),
+    ).fetchall()
+    invoice_map = {
+        int(row["repair_record_id"]): {
+            "invoice_id": row["invoice_id"],
+            "invoice_number": row["invoice_number"],
+            "created_at": row["created_at"],
+        }
+        for row in rows
+    }
+    for row in conn.execute(
+        """
+        SELECT id, repair_record_id, invoice_number, created_at
+        FROM invoices
+        WHERE customer_id = ?
+          AND vehicle_id = ?
+        """,
+        (customer_id, vehicle_id),
+    ).fetchall():
+        repair_id = int(row["repair_record_id"] or 0)
+        if repair_id and repair_id not in invoice_map:
+            invoice_map[repair_id] = {
+                "invoice_id": row["id"],
+                "invoice_number": row["invoice_number"],
+                "created_at": row["created_at"],
+            }
+    return invoice_map
+
+
+def annotate_repairs_with_invoice_status(
+    repair_records: list[dict[str, Any]],
+    invoice_map: dict[int, dict[str, Any]],
+) -> None:
+    for repair in repair_records:
+        repair_id = int(repair.get("id") or 0)
+        invoice = invoice_map.get(repair_id)
+        repair["invoice"] = invoice
+        repair["invoice_id"] = invoice.get("invoice_id") if invoice else None
+        repair["invoice_number"] = invoice.get("invoice_number") if invoice else ""
+        repair["invoice_url"] = (
+            f"/pro/customers/{repair['customer_id']}/vehicles/{repair['vehicle_id']}/invoices/{invoice['invoice_id']}"
+            if invoice else ""
+        )
+        repair["is_invoiced"] = bool(invoice)
+
+
+def invoice_builder_status_group(repair: dict[str, Any]) -> str:
+    if repair.get("is_invoiced"):
+        return "already_invoiced"
+    if (repair.get("status") or "") == "Completed":
+        return "ready"
+    return "approved"
+
+
+def load_invoice_builder_jobs(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+) -> dict[str, list[dict[str, Any]]]:
+    ensure_repair_records_schema(conn)
+    invoice_map = load_repair_invoice_map(conn, customer_id, vehicle_id)
+    jobs: list[dict[str, Any]] = []
+    for row in conn.execute(
+        """
+        SELECT *
+        FROM repair_records
+        WHERE customer_id = ?
+          AND vehicle_id = ?
+          AND COALESCE(status, '') NOT IN ('Declined', 'Deleted', 'Denied')
+        ORDER BY
+          CASE status WHEN 'Completed' THEN 0 WHEN 'Open' THEN 1 ELSE 2 END,
+          repair_date DESC,
+          id DESC
+        """,
+        (customer_id, vehicle_id),
+    ).fetchall():
+        repair = dict(row)
+        totals = repair_cost_totals(repair)
+        repair["labor_total"] = totals["labor_total"]
+        repair["parts_total"] = totals["parts_total"]
+        repair["grand_total"] = totals["grand_total"]
+        repair["labor_rate"] = totals["labor_rate"]
+        repair["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
+        repair["source_label"] = repair_workspace_source_label(repair)
+        repair["status_label"] = "Ready for Invoice" if repair.get("status") == "Completed" else repair_workspace_status_label("ready")
+        jobs.append(repair)
+    annotate_repairs_with_invoice_status(jobs, invoice_map)
+    grouped = {"ready": [], "approved": [], "already_invoiced": []}
+    for job in jobs:
+        grouped[invoice_builder_status_group(job)].append(job)
+    return grouped
 
 
 def load_vehicle_invoice_records(
@@ -2184,11 +2387,23 @@ def load_vehicle_invoice_records(
         dict(row)
         for row in conn.execute(
             """
-            SELECT i.*, rr.repair_name
+            SELECT
+              i.*,
+              COALESCE(first_rr.repair_name, rr.repair_name, 'Invoice') AS repair_name,
+              COUNT(ii.id) AS service_count
             FROM invoices i
-            JOIN repair_records rr ON rr.id = i.repair_record_id
+            LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
+            LEFT JOIN repair_records first_rr ON first_rr.id = (
+              SELECT repair_record_id
+              FROM invoice_items
+              WHERE invoice_id = i.id
+              ORDER BY id ASC
+              LIMIT 1
+            )
+            LEFT JOIN repair_records rr ON rr.id = i.repair_record_id
             WHERE i.customer_id = ?
               AND i.vehicle_id = ?
+            GROUP BY i.id
             ORDER BY i.created_at DESC, i.id DESC
             """,
             (customer_id, vehicle_id),
@@ -2204,20 +2419,43 @@ def create_invoice_for_repair(
     vehicle_id: int,
     now: str,
 ) -> dict[str, Any]:
-    ensure_invoices_schema(conn)
-    existing = load_invoice_for_repair(conn, int(repair["id"]))
-    if existing:
-        return existing
-    if (repair.get("status") or "") != "Completed":
-        raise HTTPException(status_code=400, detail="Repair must be completed before invoicing")
-    warnings = repair_invoice_warnings(repair)
-    if warnings:
-        raise HTTPException(status_code=400, detail=warnings[0])
+    return create_invoice_for_repairs(
+        conn,
+        repairs=[repair],
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        now=now,
+    )
 
-    totals = repair_cost_totals(repair)
-    labor_total = totals["labor_total"]
-    parts_total = totals["parts_total"]
-    grand_total = totals["grand_total"]
+
+def create_invoice_for_repairs(
+    conn: sqlite3.Connection,
+    *,
+    repairs: list[dict[str, Any]],
+    customer_id: int,
+    vehicle_id: int,
+    now: str,
+) -> dict[str, Any]:
+    ensure_invoices_schema(conn)
+    selected_repairs = [repair for repair in repairs if repair.get("id")]
+    if not selected_repairs:
+        raise HTTPException(status_code=400, detail="Select at least one repair job")
+
+    for repair in selected_repairs:
+        if int(repair.get("customer_id") or customer_id) != customer_id or int(repair.get("vehicle_id") or vehicle_id) != vehicle_id:
+            raise HTTPException(status_code=400, detail="Selected repair does not match this customer vehicle")
+        existing = load_invoice_for_repair(conn, int(repair["id"]))
+        if existing:
+            raise HTTPException(status_code=400, detail="One or more selected repair jobs are already invoiced")
+        warnings = repair_invoice_warnings(repair)
+        if warnings:
+            raise HTTPException(status_code=400, detail=warnings[0])
+
+    totals = [repair_cost_totals(repair) for repair in selected_repairs]
+    labor_total = round(sum(float(total["labor_total"] or 0) for total in totals), 2)
+    parts_total = round(sum(float(total["parts_total"] or 0) for total in totals), 2)
+    grand_total = round(sum(float(total["grand_total"] or 0) for total in totals), 2)
+    primary_repair = selected_repairs[0]
     cur = conn.execute(
         """
         INSERT INTO invoices (
@@ -2228,7 +2466,7 @@ def create_invoice_for_repair(
         """,
         (
             f"PENDING-{uuid4().hex[:12]}",
-            repair["id"],
+            primary_repair["id"],
             customer_id,
             vehicle_id,
             labor_total,
@@ -2238,6 +2476,14 @@ def create_invoice_for_repair(
         ),
     )
     invoice_id = int(cur.lastrowid)
+    for repair in selected_repairs:
+        conn.execute(
+            """
+            INSERT INTO invoice_items (invoice_id, repair_record_id, created_at)
+            VALUES (?, ?, ?)
+            """,
+            (invoice_id, repair["id"], now),
+        )
     invoice_number = invoice_number_for(invoice_id, now)
     conn.execute(
         "UPDATE invoices SET invoice_number = ? WHERE id = ?",
@@ -2254,13 +2500,13 @@ def recalculate_invoice_from_repair(
     vehicle_id: int,
 ) -> dict[str, Any]:
     invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
-    repair = load_repair_record(
-        conn,
-        customer_id,
-        vehicle_id,
-        int(invoice["repair_record_id"]),
-    )
-    totals = repair_cost_totals(repair)
+    repairs = [
+        load_repair_record(conn, customer_id, vehicle_id, int(item["repair_record_id"]))
+        for item in invoice.get("items", [])
+    ]
+    if not repairs:
+        repairs = [load_repair_record(conn, customer_id, vehicle_id, int(invoice["repair_record_id"]))]
+    totals = [repair_cost_totals(repair) for repair in repairs]
     conn.execute(
         """
         UPDATE invoices
@@ -2273,11 +2519,11 @@ def recalculate_invoice_from_repair(
           AND vehicle_id = ?
         """,
         (
-            totals["labor_total"],
-            totals["parts_total"],
-            totals["grand_total"],
+            round(sum(float(total["labor_total"] or 0) for total in totals), 2),
+            round(sum(float(total["parts_total"] or 0) for total in totals), 2),
+            round(sum(float(total["grand_total"] or 0) for total in totals), 2),
             invoice_id,
-            repair["id"],
+            invoice["repair_record_id"],
             customer_id,
             vehicle_id,
         ),
@@ -2362,12 +2608,18 @@ def build_invoice_pdf_bytes(
 
     def section(title: str) -> None:
         nonlocal y
+        if y < 120:
+            c.showPage()
+            y = h - 54
         c.setFont("Helvetica-Bold", 12)
         c.drawString(left, y, title)
         y -= 16
 
     def row(label: str, value: Any) -> None:
         nonlocal y
+        if y < 80:
+            c.showPage()
+            y = h - 54
         c.setFont("Helvetica-Bold", 9)
         c.drawString(left, y, label)
         c.setFont("Helvetica", 10)
@@ -2387,13 +2639,11 @@ def build_invoice_pdf_bytes(
     row("Mileage", f"{format_mileage(invoice.get('repair_mileage') or vehicle.get('mileage'))} miles" if (invoice.get("repair_mileage") or vehicle.get("mileage")) is not None else "-")
     y -= 8
 
-    section("Completed Repair")
-    row("Title", invoice.get("repair_name") or "Repair")
-    if options["show_completion_date"]:
-        row("Completion Date", format_pro_date(invoice.get("completed_at")) or "-")
-
     def notes_block(label: str, value: Any, max_lines: int = 8) -> None:
         nonlocal y
+        if y < 100:
+            c.showPage()
+            y = h - 54
         c.setFont("Helvetica-Bold", 9)
         c.drawString(left, y, label)
         c.setFont("Helvetica", 10)
@@ -2403,12 +2653,35 @@ def build_invoice_pdf_bytes(
             note_y -= 13
         y = note_y - 10
 
-    if options["show_repair_notes"]:
-        notes_block("Repair Notes", invoice.get("repair_notes") or "-")
-    if options["show_final_inspection_notes"]:
-        notes_block("Final Inspection", invoice.get("final_inspection_notes") or "-")
-    if options["show_inspection_finding_source"]:
-        notes_block("Inspection Finding", invoice.get("inspection_finding_source") or "-", 10)
+    section("Included Services")
+    for index, item in enumerate(invoice.get("items") or [], start=1):
+        if y < 150:
+            c.showPage()
+            y = h - 54
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(left, y, f"{index}. {item.get('service_title') or 'Repair'}")
+        c.setFont("Helvetica", 9)
+        c.drawRightString(right, y, format_currency(item.get("grand_total")) or "$0.00")
+        y -= 15
+        row("Source", item.get("source_label") or "-")
+        if options["show_completion_date"]:
+            row("Completion Date", format_pro_date(item.get("completed_at")) or "-")
+        if options["show_labor_hours"]:
+            row("Labor Hours", item.get("labor_hours") if item.get("labor_hours") is not None else "-")
+        if options["show_labor_rate"]:
+            row("Labor Rate", f"{format_currency(item.get('labor_rate'))}/hr" if item.get("labor_rate") is not None else "-")
+        if options["show_labor_total"]:
+            row("Labor Total", format_currency(item.get("labor_total")) or "$0.00")
+        if options["show_parts_total"]:
+            row("Parts Total", format_currency(item.get("parts_total")) or "$0.00")
+        if options["show_repair_notes"]:
+            notes_block("Repair Notes", item.get("repair_notes") or "-")
+        row("Final Inspection", item.get("final_inspection_status") or "Not marked passed")
+        if options["show_final_inspection_notes"]:
+            notes_block("Final Inspection Comments", item.get("final_inspection_notes") or "-")
+        if options["show_inspection_finding_source"]:
+            notes_block("Inspection Finding", item.get("inspection_finding_source") or "-", 10)
+        y -= 4
 
     c.setFont("Helvetica-Bold", 12)
     c.drawString(left, y, "Totals")
@@ -2477,6 +2750,7 @@ def ensure_repair_completion_schema(conn: sqlite3.Connection) -> None:
           road_test_completed INTEGER NOT NULL DEFAULT 0,
           customer_concern_resolved INTEGER NOT NULL DEFAULT 0,
           completion_notes TEXT,
+          final_inspection_passed INTEGER NOT NULL DEFAULT 0,
           final_inspection_notes TEXT,
           after_repair_photo_paths TEXT,
           override_reason TEXT,
@@ -2490,6 +2764,8 @@ def ensure_repair_completion_schema(conn: sqlite3.Connection) -> None:
     columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_completions)").fetchall()}
     if "final_inspection_notes" not in columns:
         conn.execute("ALTER TABLE repair_completions ADD COLUMN final_inspection_notes TEXT")
+    if "final_inspection_passed" not in columns:
+        conn.execute("ALTER TABLE repair_completions ADD COLUMN final_inspection_passed INTEGER NOT NULL DEFAULT 0")
     if "after_repair_photo_paths" not in columns:
         conn.execute("ALTER TABLE repair_completions ADD COLUMN after_repair_photo_paths TEXT")
     conn.execute(
@@ -2508,6 +2784,7 @@ def default_repair_completion() -> dict[str, Any]:
         "id": None,
         "repair_record_id": None,
         "completion_notes": "",
+        "final_inspection_passed": 0,
         "final_inspection_notes": "",
         "after_repair_photo_paths": "",
         "override_reason": "",
@@ -2561,6 +2838,7 @@ def upsert_repair_completion(
     ensure_repair_completion_schema(conn)
     values = {key: 1 if form.get(key) == "1" else 0 for key, _label in REPAIR_COMPLETION_CHECKS}
     completion_notes = str(form.get("completion_notes") or "").strip()
+    final_inspection_passed = 1 if form.get("final_inspection_passed") == "1" else 0
     final_inspection_notes = str(form.get("final_inspection_notes") or "").strip()
     override_reason = str(form.get("override_reason") or "").strip()
     existing = load_repair_completion(conn, repair_record_id)
@@ -2584,10 +2862,10 @@ def upsert_repair_completion(
         INSERT INTO repair_completions (
           repair_record_id, torque_verified, fluids_verified, leaks_checked,
           codes_cleared, road_test_completed, customer_concern_resolved,
-          completion_notes, final_inspection_notes, after_repair_photo_paths, override_reason, completed_at,
+          completion_notes, final_inspection_passed, final_inspection_notes, after_repair_photo_paths, override_reason, completed_at,
           created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(repair_record_id) DO UPDATE SET
           torque_verified = excluded.torque_verified,
           fluids_verified = excluded.fluids_verified,
@@ -2596,6 +2874,7 @@ def upsert_repair_completion(
           road_test_completed = excluded.road_test_completed,
           customer_concern_resolved = excluded.customer_concern_resolved,
           completion_notes = excluded.completion_notes,
+          final_inspection_passed = excluded.final_inspection_passed,
           final_inspection_notes = excluded.final_inspection_notes,
           after_repair_photo_paths = excluded.after_repair_photo_paths,
           override_reason = excluded.override_reason,
@@ -2611,6 +2890,7 @@ def upsert_repair_completion(
             values["road_test_completed"],
             values["customer_concern_resolved"],
             completion_notes,
+            final_inspection_passed,
             final_inspection_notes,
             photo_paths_json,
             override_reason,
@@ -4052,6 +4332,9 @@ def build_repair_work_items(
                 float(totals.get(key) or 0) > 0
                 for key in ("labor_total", "parts_total", "grand_total")
             ),
+            "is_invoiced": bool(record.get("is_invoiced")),
+            "invoice_number": record.get("invoice_number") or "",
+            "invoice_url": record.get("invoice_url") or "",
         }
         if blueprint:
             item["blueprint"] = blueprint
@@ -4114,6 +4397,9 @@ def build_completed_repair_work_items(
                     if repair_id
                     else ""
                 ),
+                "is_invoiced": bool(record.get("is_invoiced")),
+                "invoice_number": record.get("invoice_number") or "",
+                "invoice_url": record.get("invoice_url") or "",
             }
         )
     items.sort(
@@ -5702,6 +5988,8 @@ def pro_customer_vehicle_detail(
         repair_checklist_events = load_vehicle_repair_checklist_events(conn, customer_id, vehicle_id)
         repair_completion_events = load_vehicle_repair_completion_events(conn, customer_id, vehicle_id)
         invoice_records = load_vehicle_invoice_records(conn, customer_id, vehicle_id)
+        repair_invoice_map = load_repair_invoice_map(conn, customer_id, vehicle_id)
+        annotate_repairs_with_invoice_status(repair_records, repair_invoice_map)
         seed_visual_references(conn)
         visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
         seed_repair_intelligence(conn)
@@ -7237,6 +7525,73 @@ async def pro_invoice_generate(request: Request, customer_id: int, vehicle_id: i
             vehicle_id=vehicle_id,
             now=now,
         )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice['id']}",
+        status_code=303,
+    )
+
+
+@router.get("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/new", response_class=HTMLResponse)
+def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "pro/invoice_builder.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "job_groups": job_groups,
+            "error": "",
+        },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/invoices")
+async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    selected_ids = [
+        int(value)
+        for value in parsed.get("repair_record_id", [])
+        if str(value).strip().isdigit()
+    ]
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        repairs = [
+            load_repair_record(conn, customer_id, vehicle_id, repair_id)
+            for repair_id in selected_ids
+        ]
+        try:
+            invoice = create_invoice_for_repairs(
+                conn,
+                repairs=repairs,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                now=now,
+            )
+        except HTTPException as exc:
+            job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
+            return templates.TemplateResponse(
+                "pro/invoice_builder.html",
+                {
+                    "request": request,
+                    "customer": customer,
+                    "vehicle": vehicle,
+                    "job_groups": job_groups,
+                    "error": str(exc.detail),
+                },
+                status_code=400,
+            )
         conn.commit()
     finally:
         conn.close()

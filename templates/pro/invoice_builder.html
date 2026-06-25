@@ -1,0 +1,182 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Final Invoice | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-invoice-builder-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-left: 5px solid #0e7490;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 18px;
+    max-width: 980px;
+  }
+  .tm-invoice-builder-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .tm-invoice-builder-job {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+  .tm-invoice-builder-job input {
+    width: 20px;
+    height: 20px;
+    margin-top: 3px;
+    accent-color: #0e7490;
+  }
+  .tm-invoice-builder-title {
+    color: #0f172a;
+    font-weight: 900;
+  }
+  .tm-invoice-builder-meta,
+  .tm-invoice-builder-money {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .tm-invoice-builder-meta span,
+  .tm-invoice-builder-money span {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 5px 9px;
+  }
+  .tm-invoice-builder-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 14px;
+    margin-top: 12px;
+  }
+  .tm-invoice-builder-error {
+    border: 1px solid rgba(185, 28, 28, 0.22);
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-weight: 900;
+    padding: 12px;
+    max-width: 980px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Create Final Invoice</h1>
+      <p class="tm-pro-subtitle">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#repair-workspace">Back to Repair Workspace</a>
+  </div>
+
+  {% if error %}
+  <div class="tm-invoice-builder-error">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices">
+    <section class="tm-invoice-builder-panel" aria-label="Select Repair Jobs">
+      <div class="tm-crm-kicker">Select Repair Jobs</div>
+      <h2 style="margin:4px 0 0;">Ready for Invoice</h2>
+      {% if job_groups.ready %}
+      <div class="tm-invoice-builder-list">
+        {% for job in job_groups.ready %}
+        <label class="tm-invoice-builder-job">
+          <input type="checkbox" name="repair_record_id" value="{{ job.id }}" checked>
+          <span>
+            <span class="tm-invoice-builder-title">{{ job.repair_name or "Repair" }}</span>
+            <span class="tm-invoice-builder-meta">
+              <span>{{ job.source_label }}</span>
+              <span>{{ job.status_label }}</span>
+              {% if job.completed_at %}<span>Completed {{ job.completed_at|pro_date }}</span>{% endif %}
+            </span>
+            <span class="tm-invoice-builder-money">
+              <span>Labor Hours: {{ job.labor_hours if job.labor_hours is not none else "-" }}</span>
+              <span>Labor Rate: {% if job.labor_rate is not none %}{{ job.labor_rate|pro_currency }}/hr{% elif job.labor_rate_is_legacy %}Legacy total{% else %}-{% endif %}</span>
+              <span>Labor: {{ job.labor_total|pro_currency }}</span>
+              <span>Parts: {{ job.parts_total|pro_currency }}</span>
+              <span>Total: {{ job.grand_total|pro_currency }}</span>
+            </span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-invoice-builder-empty">No completed repair jobs are ready for invoice.</div>
+      {% endif %}
+    </section>
+
+    <section class="tm-invoice-builder-panel" aria-label="Approved but not completed" style="margin-top:16px;">
+      <div class="tm-crm-kicker">Approved But Not Completed</div>
+      <h2 style="margin:4px 0 0;">Approved but not completed</h2>
+      {% if job_groups.approved %}
+      <div class="tm-invoice-builder-list">
+        {% for job in job_groups.approved %}
+        <label class="tm-invoice-builder-job">
+          <input type="checkbox" name="repair_record_id" value="{{ job.id }}">
+          <span>
+            <span class="tm-invoice-builder-title">{{ job.repair_name or "Repair" }}</span>
+            <span class="tm-invoice-builder-meta">
+              <span>{{ job.source_label }}</span>
+              <span>{{ job.status_label }}</span>
+            </span>
+            <span class="tm-invoice-builder-money">
+              <span>Labor Hours: {{ job.labor_hours if job.labor_hours is not none else "-" }}</span>
+              <span>Labor Rate: {% if job.labor_rate is not none %}{{ job.labor_rate|pro_currency }}/hr{% elif job.labor_rate_is_legacy %}Legacy total{% else %}-{% endif %}</span>
+              <span>Labor: {{ job.labor_total|pro_currency }}</span>
+              <span>Parts: {{ job.parts_total|pro_currency }}</span>
+              <span>Total: {{ job.grand_total|pro_currency }}</span>
+            </span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-invoice-builder-empty">No approved open repair jobs.</div>
+      {% endif %}
+    </section>
+
+    <section class="tm-invoice-builder-panel" aria-label="Already Invoiced" style="margin-top:16px;">
+      <div class="tm-crm-kicker">Already Invoiced</div>
+      <h2 style="margin:4px 0 0;">Already Invoiced</h2>
+      {% if job_groups.already_invoiced %}
+      <div class="tm-invoice-builder-list">
+        {% for job in job_groups.already_invoiced %}
+        <div class="tm-invoice-builder-job">
+          <span></span>
+          <span>
+            <span class="tm-invoice-builder-title">{{ job.repair_name or "Repair" }}</span>
+            <span class="tm-invoice-builder-meta">
+              <span>{{ job.source_label }}</span>
+              <span>Invoice {{ job.invoice_number }}</span>
+              <a class="tm-btn tm-btn-secondary" href="{{ job.invoice_url }}">View Invoice</a>
+            </span>
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-invoice-builder-empty">No repair jobs have been invoiced yet.</div>
+      {% endif %}
+    </section>
+
+    <div class="tm-invoice-builder-panel" style="margin-top:16px;">
+      <button class="tm-btn tm-btn-primary" type="submit">Create Invoice</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
