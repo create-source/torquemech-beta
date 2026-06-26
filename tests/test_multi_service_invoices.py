@@ -160,6 +160,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.conn.commit()
 
         self.assertEqual(invoice["service_count"], 2)
+        self.assertEqual(invoice["invoice_number"], "TM-1001")
         self.assertEqual(invoice["labor_total"], 360)
         self.assertEqual(invoice["parts_total"], 295)
         self.assertEqual(invoice["grand_total"], 655)
@@ -180,6 +181,8 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         pdf = client.get("/pro/customers/1/vehicles/1/invoices/1/pdf?show_labor_hours=1&show_labor_rate=1")
 
         self.assertEqual(detail.status_code, 200)
+        self.assertIn("Invoice TM-1001", detail.text)
+        self.assertIn("<strong>TM-1001</strong>", detail.text)
         self.assertIn("Included Services", detail.text)
         self.assertIn("Front Brake Pads Replacement", detail.text)
         self.assertIn("Front Brake Rotors Replacement", detail.text)
@@ -189,6 +192,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(pdf.status_code, 200)
         self.assertEqual(pdf.headers["content-type"], "application/pdf")
         self.assertTrue(pdf.content.startswith(b"%PDF"))
+        self.assertIn(b"TM-1001", pdf.content)
 
     def test_old_single_job_invoice_still_loads_as_one_service(self):
         self.insert_repair(20, "Alternator Replacement", 1.5, 120, 220)
@@ -206,8 +210,36 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         invoice = pro_module.load_invoice_record(self.conn, 1, 1, 7)
 
         self.assertEqual(invoice["service_count"], 1)
+        self.assertEqual(invoice["invoice_number"], "INV-20260625-0007")
         self.assertEqual(invoice["items"][0]["service_title"], "Alternator Replacement")
         self.assertEqual(invoice["grand_total"], 400)
+
+    def test_repair_completion_redirects_to_repair_workspace(self):
+        self.insert_repair(30, "Water Pump Replacement", 2.0, 120, 180)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/repairs/30/completion",
+            data={
+                "completion_date": "",
+                "completion_mileage": "151,000",
+                "technician_notes": "Road tested.",
+                "completion_notes": "Ready.",
+                "final_inspection_passed": "1",
+                "final_inspection_notes": "Passed.",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/customers/1/vehicles/1#repair-workspace")
+        completion = pro_module.load_repair_completion(self.conn, 30)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 30)
+        self.assertEqual(completion["completion_date"], "")
+        self.assertEqual(completion["completion_mileage"], 151000)
+        self.assertEqual(repair["mileage"], 151000)
 
 
 if __name__ == "__main__":

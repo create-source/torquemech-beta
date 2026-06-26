@@ -189,14 +189,20 @@
       <div class="tm-repair-field"><span>Parts Total</span><strong>{{ repair.parts_total|pro_currency }}</strong></div>
       <div class="tm-repair-field"><span>Grand Total</span><strong>{{ repair.grand_total|pro_currency }}</strong></div>
       <div class="tm-repair-field"><span>Maintenance Tracking Status</span><strong>{{ "Tracked" if repair.track_as_maintenance else "Not Tracked" }}</strong></div>
+      <div class="tm-repair-field"><span>Source</span><strong>{{ repair.workflow_source_type|title if repair.workflow_source_type else "Manual" }}</strong></div>
+      <div class="tm-repair-field"><span>Invoice Status</span><strong>{% if invoice %}Invoiced{% elif repair.status == "Completed" %}Ready for Invoice{% else %}Not Ready{% endif %}</strong></div>
+      <div class="tm-repair-field"><span>Completion Status</span><strong>{% if repair.status == "Completed" %}Completed{% else %}Not Completed{% endif %}</strong></div>
       <div class="tm-repair-field">
         <span>Status</span>
         <strong><span class="tm-status-chip{% if repair.status == 'Completed' %} tm-status-chip--completed{% endif %}">{{ repair_status_display }}</span></strong>
       </div>
-      <div class="tm-repair-field"><span>Completed At</span><strong>{{ repair.completed_at|pro_datetime if repair.completed_at else "-" }}</strong></div>
+      <div class="tm-repair-field"><span>Completion Date</span><strong>{{ completion.completion_date|pro_date if completion.completion_date else "-" }}</strong></div>
+      <div class="tm-repair-field"><span>Completion Mileage</span><strong>{% if completion.completion_mileage is not none %}{{ completion.completion_mileage|pro_miles }} miles{% elif repair.mileage is not none %}{{ repair.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
       <div class="tm-repair-field"><span>Final Inspection</span><strong>{% if completion.final_inspection_passed %}Passed{% else %}Not marked passed{% endif %}</strong></div>
     </div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Notes</span><strong>{{ repair.notes or "-" }}</strong></div>
+    <div class="tm-repair-field" style="margin-top:14px;"><span>Technician Notes</span><strong>{{ completion.technician_notes or "-" }}</strong></div>
+    <div class="tm-repair-field" style="margin-top:14px;"><span>Completion Notes</span><strong>{{ completion.completion_notes or "-" }}</strong></div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Final Inspection Comments</span><strong>{{ completion.final_inspection_notes or "-" }}</strong></div>
     {% if invoice_warnings %}
     <div class="tm-invoice-warning">
@@ -257,6 +263,26 @@
     </div>
 
     <form class="tm-completion-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/completion" enctype="multipart/form-data">
+      <section class="tm-completion-section" aria-label="Completion Details">
+        <h3 class="tm-completion-title">Completion Details</h3>
+        <div class="tm-repair-grid">
+          <div>
+            <label class="tm-label" for="completion_date">Completion Date</label>
+            <input class="tm-input" id="completion_date" name="completion_date" type="date" value="{{ completion.completion_date or '' }}">
+          </div>
+          <div>
+            <label class="tm-label" for="completion_mileage">Completion Mileage</label>
+            <input class="tm-input" id="completion_mileage" name="completion_mileage" type="text" inputmode="numeric" value="{% if completion.completion_mileage is not none %}{{ completion.completion_mileage|pro_miles }}{% elif repair.mileage is not none %}{{ repair.mileage|pro_miles }}{% elif vehicle.mileage is not none %}{{ vehicle.mileage|pro_miles }}{% endif %}" data-pro-mileage-input>
+          </div>
+        </div>
+      </section>
+
+      <section class="tm-completion-section" aria-label="Technician Notes">
+        <h3 class="tm-completion-title">Technician Notes</h3>
+        <label class="tm-label" for="technician_notes">Internal notes from the technician who completed the work.</label>
+        <textarea class="tm-input" id="technician_notes" name="technician_notes" rows="4" maxlength="1600">{{ completion.technician_notes or "" }}</textarea>
+      </section>
+
       <section class="tm-completion-section" aria-label="Completion Notes">
         <h3 class="tm-completion-title">Completion Notes</h3>
         <label class="tm-label" for="completion_notes">Final technician notes, test results, measurements, or anything the customer should know.</label>
@@ -273,8 +299,22 @@
         <textarea class="tm-input" id="final_inspection_notes" name="final_inspection_notes" rows="4" maxlength="1600">{{ completion.final_inspection_notes or "" }}</textarea>
       </section>
 
-      <section class="tm-completion-section tm-photo-stage" aria-label="After Repair Photos">
-        <strong>After Repair Photos</strong>
+      {% if source_finding and source_finding.before_inspection_photo_urls %}
+      <section class="tm-completion-section tm-photo-stage" aria-label="Before / Inspection Photos">
+        <strong>Before / Inspection Photos</strong>
+        <div class="tm-photo-list" aria-label="Source finding before inspection photos">
+          {% for photo_url in source_finding.before_inspection_photo_urls %}
+          <a href="{{ photo_url }}" target="_blank" rel="noopener">
+            <img src="{{ photo_url }}" alt="Before inspection photo {{ loop.index }}">
+            <span>Before photo {{ loop.index }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+
+      <section class="tm-completion-section tm-photo-stage" aria-label="After / Completion Photos">
+        <strong>After / Completion Photos</strong>
         <label class="tm-label" for="after_repair_photos">Upload photos showing the completed repair or proof of work.</label>
         <span>Upload up to 5 photos.</span>
         <input class="tm-input" id="after_repair_photos" name="after_repair_photos" type="file" accept="image/png,image/jpeg,image/webp" multiple>
@@ -294,7 +334,7 @@
       </section>
 
       <div class="tm-completion-actions">
-        <button class="tm-btn tm-btn-primary" type="submit">Complete Repair</button>
+        <button class="tm-btn tm-btn-primary" type="submit">Mark Repair Completed</button>
         {% if repair.status == "Completed" %}
         <span class="tm-status-chip tm-status-chip--completed">Completed</span>
         {% endif %}
@@ -302,4 +342,8 @@
     </form>
   </section>
 </section>
+{% endblock %}
+
+{% block page_js %}
+<script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
 {% endblock %}

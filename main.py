@@ -756,7 +756,13 @@ def init_pro_crm_schema_db() -> None:
               codes_cleared INTEGER NOT NULL DEFAULT 0,
               road_test_completed INTEGER NOT NULL DEFAULT 0,
               customer_concern_resolved INTEGER NOT NULL DEFAULT 0,
+              completion_date TEXT,
+              completion_mileage INTEGER,
+              technician_notes TEXT,
               completion_notes TEXT,
+              final_inspection_passed INTEGER NOT NULL DEFAULT 0,
+              final_inspection_notes TEXT,
+              after_repair_photo_paths TEXT,
               override_reason TEXT,
               completed_at TEXT,
               created_at TEXT NOT NULL,
@@ -765,6 +771,19 @@ def init_pro_crm_schema_db() -> None:
             )
             """
         )
+        add_column_if_missing("repair_completions", "completion_date", "completion_date TEXT")
+        add_column_if_missing("repair_completions", "completion_mileage", "completion_mileage INTEGER")
+        add_column_if_missing("repair_completions", "technician_notes", "technician_notes TEXT")
+        add_column_if_missing("repair_completions", "torque_verified", "torque_verified INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_completions", "fluids_verified", "fluids_verified INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_completions", "leaks_checked", "leaks_checked INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_completions", "codes_cleared", "codes_cleared INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_completions", "road_test_completed", "road_test_completed INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_completions", "customer_concern_resolved", "customer_concern_resolved INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_completions", "final_inspection_passed", "final_inspection_passed INTEGER NOT NULL DEFAULT 0")
+        add_column_if_missing("repair_completions", "final_inspection_notes", "final_inspection_notes TEXT")
+        add_column_if_missing("repair_completions", "after_repair_photo_paths", "after_repair_photo_paths TEXT")
+        add_column_if_missing("repair_completions", "override_reason", "override_reason TEXT")
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_repair_completions_repair_record_id "
             "ON repair_completions (repair_record_id)"

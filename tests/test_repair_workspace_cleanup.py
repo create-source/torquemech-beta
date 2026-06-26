@@ -255,7 +255,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "labor_rate": 120,
                 "parts_cost": 30,
                 "is_invoiced": True,
-                "invoice_number": "INV-20260625-0003",
+                "invoice_number": "TM-1003",
                 "invoice_url": "/pro/customers/1/vehicles/1/invoices/3",
             },
         ]
@@ -268,7 +268,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(groups["ready_for_invoice"][0]["repair_work_status_label"], "Ready for Invoice")
         self.assertEqual(groups["ready_for_invoice"][0]["source_action_label"], "View Source Finding")
         self.assertEqual([item["title"] for item in groups["invoiced"]], ["Brake fluid"])
-        self.assertEqual(groups["invoiced"][0]["invoice_number"], "INV-20260625-0003")
+        self.assertEqual(groups["invoiced"][0]["invoice_number"], "TM-1003")
         self.assertEqual(groups["invoiced"][0]["source_action_label"], "View Source Estimate")
 
     def test_completed_repairs_render_in_vehicle_timeline_repaired_services(self):
@@ -308,10 +308,44 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         repaired = timeline[0]
         self.assertEqual(repaired["title"], "Repaired Services")
         self.assertEqual(repaired["records"][0]["service_name"], "Replace alternator")
+        self.assertEqual(repaired["records"][0]["mileage"], 177000)
         self.assertEqual(repaired["records"][0]["source_label"], "Source: Estimate")
         self.assertEqual(repaired["records"][0]["total"], 400)
+        self.assertEqual(repaired["records"][0]["status_label"], "Completed")
         self.assertEqual(repaired["records"][0]["photo_count"], 1)
         self.assertEqual(repaired["records"][0]["action_label"], "Open Repair Record")
+
+    def test_completion_event_timeline_fallback_includes_repair_details(self):
+        timeline = pro_module.build_vehicle_timeline(
+            1,
+            1,
+            {"id": 1},
+            [],
+            [],
+            [],
+            [],
+            [],
+            repair_completion_events=[
+                {
+                    "id": 51,
+                    "repair_record_id": 31,
+                    "repair_name": "Replace water pump",
+                    "completed_at": "2026-06-24T13:00:00",
+                    "created_at": "2026-06-24T13:00:00",
+                    "workflow_source_type": "finding",
+                    "mileage": 177000,
+                    "total_cost": 650,
+                    "after_repair_photo_paths": json.dumps(["/static/uploads/after.jpg"]),
+                }
+            ],
+        )
+
+        repaired = timeline[0]["records"][0]
+        self.assertEqual(repaired["service_name"], "Replace water pump")
+        self.assertEqual(repaired["mileage"], 177000)
+        self.assertEqual(repaired["source_label"], "Source: Finding")
+        self.assertEqual(repaired["total"], 650)
+        self.assertEqual(repaired["status_label"], "Completed")
 
     def test_photo_stage_labels_are_present(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
@@ -321,7 +355,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('id="before_inspection_photos"', vehicle_detail)
         self.assertIn('type="file"', vehicle_detail)
         self.assertIn("Upload photos of the original problem before repair.", vehicle_detail)
-        self.assertIn("After Repair Photos", repair_detail)
+        self.assertIn("After / Completion Photos", repair_detail)
+        self.assertIn("Before / Inspection Photos", repair_detail)
         self.assertIn('id="after_repair_photos"', repair_detail)
         self.assertIn('name="after_repair_photos"', repair_detail)
         self.assertIn('type="file"', repair_detail)
@@ -376,9 +411,23 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
     def test_repair_detail_status_open_displays_ready_for_repair(self):
         repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
+        form_helpers = (ROOT / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
         self.assertIn('repair_status_display = "Ready for Repair"', repair_detail)
         self.assertIn("{{ repair_status_display }}", repair_detail)
         self.assertIn("repair_display_mileage", repair_detail)
+        self.assertIn("Completion Date", repair_detail)
+        self.assertIn('name="completion_date"', repair_detail)
+        self.assertIn("Completion Mileage", repair_detail)
+        self.assertIn('name="completion_mileage"', repair_detail)
+        self.assertIn("data-pro-mileage-input", repair_detail)
+        self.assertIn("Technician Notes", repair_detail)
+        self.assertIn('name="technician_notes"', repair_detail)
+        self.assertIn("Mark Repair Completed", repair_detail)
+        self.assertIn("Invoice Status", repair_detail)
+        self.assertIn("Completion Status", repair_detail)
+        self.assertIn('querySelectorAll(\'input[type="date"]\')', form_helpers)
+        self.assertIn("tm-date-clear-button", form_helpers)
+        self.assertIn("Clear date", form_helpers)
         self.assertIn("Not Invoiced", repair_detail)
         self.assertIn("Invoiced: {{ invoice.invoice_number }}", repair_detail)
         self.assertNotIn("Generate Invoice", repair_detail)
@@ -424,7 +473,22 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("item.action_label", vehicle_detail)
         self.assertIn("item.photo_count", vehicle_detail)
         self.assertIn("item.source_label", vehicle_detail)
+        self.assertIn("item.status_label", vehicle_detail)
+        self.assertIn("Status {{ item.status_label }}", vehicle_detail)
         self.assertNotIn('<h2 style="margin:4px 0 0;">Inspection Findings</h2>', vehicle_detail)
+
+    def test_invoice_builder_selects_completed_ready_jobs(self):
+        invoice_builder = (ROOT / "templates" / "pro" / "invoice_builder.html").read_text(encoding="utf-8")
+
+        self.assertIn("Ready for Invoice", invoice_builder)
+        self.assertIn('{% for job in job_groups.ready %}', invoice_builder)
+        self.assertIn('type="checkbox" name="repair_record_id" value="{{ job.id }}" checked', invoice_builder)
+        self.assertIn("Create Invoice", invoice_builder)
+        self.assertIn("Already Invoiced", invoice_builder)
+
+    def test_invoice_number_helper_uses_tm_sequence(self):
+        self.assertEqual(pro_module.invoice_number_for(1, "2026-06-25T12:30:00"), "TM-1001")
+        self.assertEqual(pro_module.invoice_number_for(4, "2026-06-25T12:30:00"), "TM-1004")
 
     def test_finding_detail_has_estimate_and_customer_decision_actions(self):
         finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")
@@ -469,6 +533,33 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         )
         self.assertEqual(saved["final_inspection_passed"], 0)
         self.assertEqual(saved["final_inspection_notes"], "QA pass")
+
+    def test_repair_completion_persists_date_mileage_and_technician_notes(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        now = "2026-06-24T12:00:00"
+
+        saved = pro_module.upsert_repair_completion(
+            conn,
+            repair_record_id=79,
+            form={
+                "completion_date": "2026-06-24",
+                "completion_mileage": "177,000",
+                "technician_notes": "Road tested and rechecked.",
+                "completion_notes": "Ready for customer.",
+                "final_inspection_passed": "1",
+                "final_inspection_notes": "QA pass",
+            },
+            completed_at=now,
+            now=now,
+        )
+
+        self.assertEqual(saved["completion_date"], "2026-06-24")
+        self.assertEqual(saved["completion_mileage"], 177000)
+        self.assertEqual(pro_module.format_mileage(saved["completion_mileage"]), "177,000")
+        self.assertEqual(saved["technician_notes"], "Road tested and rechecked.")
+        self.assertEqual(saved["completion_notes"], "Ready for customer.")
 
     def test_final_inspection_passed_and_legacy_comments_are_preserved(self):
         conn = sqlite3.connect(":memory:")

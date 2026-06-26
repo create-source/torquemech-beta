@@ -2093,8 +2093,7 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
 
 
 def invoice_number_for(invoice_id: int, created_at: str) -> str:
-    date_part = (created_at or "").replace("-", "")[:8] or date.today().strftime("%Y%m%d")
-    return f"INV-{date_part}-{invoice_id:04d}"
+    return f"TM-{1000 + int(invoice_id):04d}"
 
 
 def load_invoice_for_repair(
@@ -2588,7 +2587,7 @@ def build_invoice_pdf_bytes(
 ) -> bytes:
     options = {**INVOICE_PDF_DEFAULT_OPTIONS, **(display_options or {})}
     buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=letter)
+    c = canvas.Canvas(buf, pagesize=letter, pageCompression=0)
     w, h = letter
     left = 54
     right = w - 54
@@ -2749,6 +2748,9 @@ def ensure_repair_completion_schema(conn: sqlite3.Connection) -> None:
           codes_cleared INTEGER NOT NULL DEFAULT 0,
           road_test_completed INTEGER NOT NULL DEFAULT 0,
           customer_concern_resolved INTEGER NOT NULL DEFAULT 0,
+          completion_date TEXT,
+          completion_mileage INTEGER,
+          technician_notes TEXT,
           completion_notes TEXT,
           final_inspection_passed INTEGER NOT NULL DEFAULT 0,
           final_inspection_notes TEXT,
@@ -2762,12 +2764,23 @@ def ensure_repair_completion_schema(conn: sqlite3.Connection) -> None:
         """
     )
     columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_completions)").fetchall()}
+    for key, _label in REPAIR_COMPLETION_CHECKS:
+        if key not in columns:
+            conn.execute(f"ALTER TABLE repair_completions ADD COLUMN {key} INTEGER NOT NULL DEFAULT 0")
     if "final_inspection_notes" not in columns:
         conn.execute("ALTER TABLE repair_completions ADD COLUMN final_inspection_notes TEXT")
     if "final_inspection_passed" not in columns:
         conn.execute("ALTER TABLE repair_completions ADD COLUMN final_inspection_passed INTEGER NOT NULL DEFAULT 0")
     if "after_repair_photo_paths" not in columns:
         conn.execute("ALTER TABLE repair_completions ADD COLUMN after_repair_photo_paths TEXT")
+    if "completion_date" not in columns:
+        conn.execute("ALTER TABLE repair_completions ADD COLUMN completion_date TEXT")
+    if "completion_mileage" not in columns:
+        conn.execute("ALTER TABLE repair_completions ADD COLUMN completion_mileage INTEGER")
+    if "technician_notes" not in columns:
+        conn.execute("ALTER TABLE repair_completions ADD COLUMN technician_notes TEXT")
+    if "override_reason" not in columns:
+        conn.execute("ALTER TABLE repair_completions ADD COLUMN override_reason TEXT")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_repair_completions_repair_record_id "
         "ON repair_completions (repair_record_id)"
@@ -2783,6 +2796,9 @@ def default_repair_completion() -> dict[str, Any]:
     record: dict[str, Any] = {
         "id": None,
         "repair_record_id": None,
+        "completion_date": "",
+        "completion_mileage": None,
+        "technician_notes": "",
         "completion_notes": "",
         "final_inspection_passed": 0,
         "final_inspection_notes": "",
@@ -2837,6 +2853,9 @@ def upsert_repair_completion(
 ) -> dict[str, Any]:
     ensure_repair_completion_schema(conn)
     values = {key: 1 if form.get(key) == "1" else 0 for key, _label in REPAIR_COMPLETION_CHECKS}
+    completion_date = str(form.get("completion_date") or "").strip()
+    completion_mileage = optional_int(form, "completion_mileage")
+    technician_notes = str(form.get("technician_notes") or "").strip()
     completion_notes = str(form.get("completion_notes") or "").strip()
     final_inspection_passed = 1 if form.get("final_inspection_passed") == "1" else 0
     final_inspection_notes = str(form.get("final_inspection_notes") or "").strip()
@@ -2856,16 +2875,25 @@ def upsert_repair_completion(
     if after_repair_photo_paths and len(merged_photo_paths) > PHOTO_UPLOAD_MAX_FILES:
         raise HTTPException(status_code=400, detail=f"Upload up to {PHOTO_UPLOAD_MAX_FILES} photos.")
     photo_paths_json = json.dumps(merged_photo_paths)
-    effective_completed_at = completed_at or existing.get("completed_at") or ""
+    existing_completed_at = existing.get("completed_at") or ""
+    effective_completed_at = completed_at or existing_completed_at or ""
+    if "completion_date" in form:
+        effective_completion_date = completion_date
+    else:
+        effective_completion_date = existing.get("completion_date") or str(effective_completed_at or "")[:10]
+    effective_completion_mileage = completion_mileage
+    if effective_completion_mileage is None:
+        effective_completion_mileage = existing.get("completion_mileage")
     conn.execute(
         """
         INSERT INTO repair_completions (
           repair_record_id, torque_verified, fluids_verified, leaks_checked,
           codes_cleared, road_test_completed, customer_concern_resolved,
+          completion_date, completion_mileage, technician_notes,
           completion_notes, final_inspection_passed, final_inspection_notes, after_repair_photo_paths, override_reason, completed_at,
           created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(repair_record_id) DO UPDATE SET
           torque_verified = excluded.torque_verified,
           fluids_verified = excluded.fluids_verified,
@@ -2873,6 +2901,9 @@ def upsert_repair_completion(
           codes_cleared = excluded.codes_cleared,
           road_test_completed = excluded.road_test_completed,
           customer_concern_resolved = excluded.customer_concern_resolved,
+          completion_date = excluded.completion_date,
+          completion_mileage = COALESCE(excluded.completion_mileage, repair_completions.completion_mileage),
+          technician_notes = excluded.technician_notes,
           completion_notes = excluded.completion_notes,
           final_inspection_passed = excluded.final_inspection_passed,
           final_inspection_notes = excluded.final_inspection_notes,
@@ -2889,6 +2920,9 @@ def upsert_repair_completion(
             values["codes_cleared"],
             values["road_test_completed"],
             values["customer_concern_resolved"],
+            effective_completion_date,
+            effective_completion_mileage,
+            technician_notes,
             completion_notes,
             final_inspection_passed,
             final_inspection_notes,
@@ -2995,6 +3029,7 @@ def load_vehicle_repair_completion_events(
               rr.customer_id,
               rr.vehicle_id,
               rr.repair_name,
+              rr.mileage,
               rr.workflow_source_type,
               rr.workflow_source_id,
               rr.total_cost
@@ -3463,6 +3498,23 @@ def load_repair_record(
     return repair
 
 
+def load_repair_source_finding_for_detail(
+    conn: sqlite3.Connection,
+    repair: dict[str, Any],
+    customer_id: int,
+    vehicle_id: int,
+) -> dict[str, Any] | None:
+    if normalize_workflow_source_type(repair.get("workflow_source_type")) != "finding":
+        return None
+    source_id = repair.get("workflow_source_id")
+    if source_id is None:
+        return None
+    try:
+        return load_finding_record(conn, customer_id, vehicle_id, int(source_id))
+    except (ValueError, HTTPException):
+        return None
+
+
 def repair_execution_status_context(
     conn: sqlite3.Connection,
     repair: dict[str, Any],
@@ -3590,84 +3642,92 @@ def ensure_service_history_records_schema(conn: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_service_history_records_vehicle_mileage_date "
         "ON service_history_records (vehicle_id, mileage, service_date)"
     )
-    conn.execute(
-        """
-        INSERT OR IGNORE INTO service_history_records (
-          customer_id, vehicle_id, source_type, source_record_id, service_name,
-          service_date, mileage, parts_cost, labor_cost, total_cost, notes, created_at
+    existing_tables = {
+        row["name"]
+        for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()
+    }
+    if "service_history" in existing_tables:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO service_history_records (
+              customer_id, vehicle_id, source_type, source_record_id, service_name,
+              service_date, mileage, parts_cost, labor_cost, total_cost, notes, created_at
+            )
+            SELECT
+              customer_id, vehicle_id, 'legacy', id, service_title,
+              service_date, mileage_at_service, parts_amount, labor_amount,
+              COALESCE(actual_total, estimate_total), service_notes,
+              COALESCE(created_at, updated_at, service_date)
+            FROM service_history
+            """
         )
-        SELECT
-          customer_id, vehicle_id, 'legacy', id, service_title,
-          service_date, mileage_at_service, parts_amount, labor_amount,
-          COALESCE(actual_total, estimate_total), service_notes,
-          COALESCE(created_at, updated_at, service_date)
-        FROM service_history
-        """
-    )
-    conn.execute(
-        """
-        INSERT OR IGNORE INTO service_history_records (
-          customer_id, vehicle_id, source_type, source_record_id, service_name,
-          service_date, mileage, notes, created_at
+    if "maintenance_records" in existing_tables:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO service_history_records (
+              customer_id, vehicle_id, source_type, source_record_id, service_name,
+              service_date, mileage, notes, created_at
+            )
+            SELECT
+              customer_id, vehicle_id, 'maintenance', id, service_type,
+              date_performed, mileage_performed, notes, created_at
+            FROM maintenance_records
+            """
         )
-        SELECT
-          customer_id, vehicle_id, 'maintenance', id, service_type,
-          date_performed, mileage_performed, notes, created_at
-        FROM maintenance_records
-        """
-    )
-    conn.execute(
-        """
-        INSERT OR IGNORE INTO service_history_records (
-          customer_id, vehicle_id, source_type, source_record_id, service_name,
-          service_date, mileage, labor_hours, parts_cost, labor_cost,
-          total_cost, notes, created_at
+    if "repair_records" in existing_tables:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO service_history_records (
+              customer_id, vehicle_id, source_type, source_record_id, service_name,
+              service_date, mileage, labor_hours, parts_cost, labor_cost,
+              total_cost, notes, created_at
+            )
+            SELECT
+              customer_id, vehicle_id, 'repair', id, repair_name,
+              repair_date, mileage, labor_hours, parts_cost, labor_cost,
+              total_cost, notes, created_at
+            FROM repair_records
+            WHERE status = 'Completed'
+              AND completed_at IS NOT NULL
+            """
         )
-        SELECT
-          customer_id, vehicle_id, 'repair', id, repair_name,
-          repair_date, mileage, labor_hours, parts_cost, labor_cost,
-          total_cost, notes, created_at
-        FROM repair_records
-        WHERE status = 'Completed'
-          AND completed_at IS NOT NULL
-        """
-    )
-    conn.execute(
-        """
-        DELETE FROM service_history_records
-        WHERE source_type = 'repair'
-          AND EXISTS (
-            SELECT 1
-            FROM repair_records rr
-            WHERE rr.id = service_history_records.source_record_id
-              AND (
-                COALESCE(rr.status, '') != 'Completed'
-                OR rr.completed_at IS NULL
-                OR TRIM(rr.completed_at) = ''
+    if "repair_records" in existing_tables:
+        conn.execute(
+            """
+            DELETE FROM service_history_records
+            WHERE source_type = 'repair'
+              AND EXISTS (
+                SELECT 1
+                FROM repair_records rr
+                WHERE rr.id = service_history_records.source_record_id
+                  AND (
+                    COALESCE(rr.status, '') != 'Completed'
+                    OR rr.completed_at IS NULL
+                    OR TRIM(rr.completed_at) = ''
+                  )
               )
-          )
-        """
-    )
-    conn.execute(
-        """
-        DELETE FROM service_history_records
-        WHERE source_type = 'maintenance'
-          AND EXISTS (
-            SELECT 1
-            FROM service_history_records repair_history
-            JOIN repair_records rr
-              ON rr.id = repair_history.source_record_id
-             AND repair_history.source_type = 'repair'
-            WHERE rr.track_as_maintenance = 1
-              AND repair_history.customer_id = service_history_records.customer_id
-              AND repair_history.vehicle_id = service_history_records.vehicle_id
-              AND COALESCE(NULLIF(TRIM(LOWER(repair_history.service_name)), ''), '') =
-                  COALESCE(NULLIF(TRIM(LOWER(service_history_records.service_name)), ''), '')
-              AND COALESCE(repair_history.service_date, '') = COALESCE(service_history_records.service_date, '')
-              AND COALESCE(repair_history.mileage, -1) = COALESCE(service_history_records.mileage, -1)
-          )
-        """
-    )
+            """
+        )
+        conn.execute(
+            """
+            DELETE FROM service_history_records
+            WHERE source_type = 'maintenance'
+              AND EXISTS (
+                SELECT 1
+                FROM service_history_records repair_history
+                JOIN repair_records rr
+                  ON rr.id = repair_history.source_record_id
+                 AND repair_history.source_type = 'repair'
+                WHERE rr.track_as_maintenance = 1
+                  AND repair_history.customer_id = service_history_records.customer_id
+                  AND repair_history.vehicle_id = service_history_records.vehicle_id
+                  AND COALESCE(NULLIF(TRIM(LOWER(repair_history.service_name)), ''), '') =
+                      COALESCE(NULLIF(TRIM(LOWER(service_history_records.service_name)), ''), '')
+                  AND COALESCE(repair_history.service_date, '') = COALESCE(service_history_records.service_date, '')
+                  AND COALESCE(repair_history.mileage, -1) = COALESCE(service_history_records.mileage, -1)
+              )
+            """
+        )
     conn.commit()
 
 
@@ -3732,6 +3792,7 @@ def upsert_service_history_record(
     notes: str = "",
     created_at: str,
 ) -> None:
+    ensure_service_history_records_schema(conn)
     conn.execute(
         """
         INSERT INTO service_history_records (
@@ -4566,6 +4627,7 @@ def build_vehicle_timeline(
                     "mileage": record.get("mileage"),
                     "source_label": repair_workspace_source_label(completion_event),
                     "total": record.get("total_cost"),
+                    "status_label": "Completed",
                     "photo_count": len(photo_urls),
                     "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
                     "action_label": "Open Repair Record",
@@ -4718,10 +4780,11 @@ def build_vehicle_timeline(
                 "id": f"completion-{record['id']}",
                 "date": record.get("completed_at") or "",
                 "created_at": record.get("completed_at") or record.get("created_at") or "",
-                "service_name": f"Repair Completed: {repair_title}",
-                "mileage": None,
+                "service_name": repair_title,
+                "mileage": record.get("mileage"),
                 "source_label": repair_workspace_source_label(record),
-                "total": None,
+                "total": record.get("total_cost"),
+                "status_label": "Completed",
                 "photo_count": len(photo_urls),
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
                 "action_label": "Open Repair Record",
@@ -7515,6 +7578,7 @@ def pro_repair_record_detail(
         checklist_progress = repair_checklist_progress(checklist_items)
         completion = load_repair_completion(conn, repair_id)
         completion_progress = repair_completion_progress(completion)
+        source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
         seed_repair_intelligence(conn)
         repair_intelligence_records = load_repair_intelligence_for_repair(
             conn,
@@ -7548,6 +7612,7 @@ def pro_repair_record_detail(
             "checklist_items": checklist_items,
             "checklist_progress": checklist_progress,
             "completion": completion,
+            "source_finding": source_finding,
             "completion_checks": REPAIR_COMPLETION_CHECKS,
             "completion_progress": completion_progress,
             "completion_warnings": [],
@@ -7747,6 +7812,7 @@ def completion_detail_context(
     checklist_progress = repair_checklist_progress(checklist_items)
     completion = load_repair_completion(conn, repair_id)
     completion_progress = repair_completion_progress(completion)
+    source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
     seed_repair_intelligence(conn)
     repair_intelligence_records = load_repair_intelligence_for_repair(
         conn,
@@ -7764,12 +7830,14 @@ def completion_detail_context(
         "customer": customer,
         "vehicle": vehicle,
         "repair": repair,
+        "repair_display_mileage": repair.get("mileage") if repair.get("mileage") is not None else vehicle.get("mileage"),
         "invoice": invoice,
         "invoice_warnings": invoice_warnings,
         "repair_execution_status": repair_execution_status,
         "checklist_items": checklist_items,
         "checklist_progress": checklist_progress,
         "completion": completion,
+        "source_finding": source_finding,
         "completion_checks": REPAIR_COMPLETION_CHECKS,
         "completion_progress": completion_progress,
         "completion_warnings": completion_warnings or [],
@@ -7953,7 +8021,9 @@ async def pro_repair_completion_update(
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
-        completed_at = repair.get("completed_at") or now
+        completion_date = str(form.get("completion_date") or "").strip()
+        completion_mileage = optional_int(form, "completion_mileage")
+        completed_at = repair.get("completed_at") or (f"{completion_date}T{now.split('T', 1)[1]}" if completion_date else now)
         posted_completion = upsert_repair_completion(
             conn,
             repair_record_id=repair_id,
@@ -7966,10 +8036,11 @@ async def pro_repair_completion_update(
             """
             UPDATE repair_records
             SET status = 'Completed',
-                completed_at = COALESCE(NULLIF(completed_at, ''), ?)
+                completed_at = COALESCE(NULLIF(completed_at, ''), ?),
+                mileage = COALESCE(?, mileage)
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
-            (completed_at, repair_id, customer_id, vehicle_id),
+            (completed_at, completion_mileage, repair_id, customer_id, vehicle_id),
         )
         refreshed_repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
         upsert_service_history_record(
@@ -7979,13 +8050,13 @@ async def pro_repair_completion_update(
             source_type="repair",
             source_record_id=repair_id,
             service_name=refreshed_repair.get("repair_name") or "Repair",
-            service_date=refreshed_repair.get("repair_date") or completed_at[:10],
+            service_date=posted_completion.get("completion_date") or completed_at[:10],
             mileage=refreshed_repair.get("mileage"),
             labor_hours=refreshed_repair.get("labor_hours"),
             parts_cost=refreshed_repair.get("parts_cost"),
             labor_cost=refreshed_repair.get("labor_cost"),
             total_cost=refreshed_repair.get("total_cost"),
-            notes=posted_completion.get("completion_notes") or refreshed_repair.get("notes") or "",
+            notes=posted_completion.get("completion_notes") or posted_completion.get("technician_notes") or refreshed_repair.get("notes") or "",
             created_at=completed_at,
         )
         if refreshed_repair.get("track_as_maintenance"):
@@ -7994,9 +8065,9 @@ async def pro_repair_completion_update(
                 customer_id=customer_id,
                 vehicle_id=vehicle_id,
                 service_type=refreshed_repair.get("repair_name") or "Repair",
-                date_performed=refreshed_repair.get("repair_date") or completed_at[:10],
+                date_performed=posted_completion.get("completion_date") or completed_at[:10],
                 mileage_performed=refreshed_repair.get("mileage"),
-                notes=posted_completion.get("completion_notes") or refreshed_repair.get("notes") or "",
+                notes=posted_completion.get("completion_notes") or posted_completion.get("technician_notes") or refreshed_repair.get("notes") or "",
                 now=now,
             )
         sync_repair_completion_source(
@@ -8010,7 +8081,7 @@ async def pro_repair_completion_update(
     finally:
         conn.close()
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#repair-completion",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workspace",
         status_code=303,
     )
 

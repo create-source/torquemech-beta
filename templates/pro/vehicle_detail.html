@@ -2683,6 +2683,7 @@
                   <div class="tm-finding-meta" style="margin-top:8px;">
                     {% if item.source_label %}<span class="tm-crm-chip">{{ item.source_label }}</span>{% endif %}
                     {% if item.total is not none %}<span class="tm-crm-chip">Total {{ item.total|pro_currency }}</span>{% endif %}
+                    {% if item.status_label %}<span class="tm-crm-chip">Status {{ item.status_label }}</span>{% endif %}
                     {% if item.photo_count is not none %}<span class="tm-crm-chip">{{ item.photo_count }} after photo{% if item.photo_count != 1 %}s{% endif %}</span>{% endif %}
                   </div>
                   {% if item.action_label %}
@@ -3047,6 +3048,9 @@
             }
             if (item.total !== undefined && item.total !== null && item.total !== "") {
               appendTextLine(metaRow, "tm-crm-chip", `Total ${formatMoney(Number(item.total || 0))}`);
+            }
+            if (item.status_label) {
+              appendTextLine(metaRow, "tm-crm-chip", `Status ${item.status_label}`);
             }
             if (item.photo_count !== undefined && item.photo_count !== null) {
               appendTextLine(metaRow, "tm-crm-chip", `${item.photo_count} after ${Number(item.photo_count) === 1 ? "photo" : "photos"}`);
