@@ -58,13 +58,32 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('id="serviceQuantity"', response.text)
+        self.assertIn('id="serviceQuantityClearBtn"', response.text)
+        self.assertIn('aria-label="Clear quantity"', response.text)
+        self.assertIn("How should labor be calculated?", response.text)
+        self.assertIn("Use entered labor as total job labor", response.text)
+        self.assertIn("Multiply labor by quantity", response.text)
+        self.assertIn("Parts Cost (optional)", response.text)
         self.assertIn("Use quantity for coils, plugs, injectors, tires, or per-side parts.", response.text)
+        self.assertIn("Most jobs should use total job labor. Only multiply labor when the same labor time repeats for each item.", response.text)
+        self.assertIn("Labor will not multiply. The labor hours entered are for the full job.", response.text)
         self.assertIn("Labor hours stay editable. Adjust total labor for the full job.", response.text)
         with open("static/app.js", encoding="utf-8") as handle:
             app_js = handle.read()
+        self.assertIn("Parts Cost Per Item (optional)", app_js)
         self.assertIn("displayServiceNameWithQuantity", app_js)
         self.assertIn("partsUnitCost", app_js)
         self.assertIn("getPartsTotal(it)", app_js)
+        self.assertIn("laborCalculationMode", app_js)
+        self.assertIn("getBillableLaborHours", app_js)
+        self.assertIn("Labor hours will multiply by quantity.", app_js)
+        self.assertIn("Parts total", app_js)
+        self.assertIn("showLaborCalculation = quantity > 1", app_js)
+        self.assertIn("laborCalculationWrapEl.hidden = !showLaborCalculation", app_js)
+        self.assertIn("serviceQuantityClearBtn.hidden", app_js)
+        self.assertIn('serviceQuantityEl.value = "";', app_js)
+        self.assertIn('laborCalculationModeEl.value = "total"', app_js)
+        self.assertIn("normalizeQuantity(serviceQuantityEl?.value)", app_js)
 
     def test_pdf_generation_accepts_quantity_line_item(self):
         client = TestClient(main.app, base_url="http://localhost")
@@ -83,11 +102,12 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
                         "quantity": 4,
                         "partsUnitCost": 45,
                         "pricingMode": "hourly",
-                        "laborHours": 1.1,
+                        "laborHoursInput": 1,
+                        "laborCalculationMode": "per_item",
+                        "laborHours": 4,
                         "partsPrice": 180,
-                        "laborRate": 125,
+                        "laborRate": 90,
                         "travelFee": 0,
-                        "estimate": 318,
                     }
                 ],
             },

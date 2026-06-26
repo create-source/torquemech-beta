@@ -902,9 +902,15 @@
   const laborHoursEl = $("laborHours");
   const laborHoursRangeEl = $("laborHoursRange");
   const partsPriceEl = $("partsPrice");
+  const partsPriceLabelEl = $("partsPriceLabel");
   const serviceQuantityEl = $("serviceQuantity");
+  const serviceQuantityClearBtn = $("serviceQuantityClearBtn");
   const quantityHelpEl = $("quantityHelp");
   const partsTotalPreviewEl = $("partsTotalPreview");
+  const laborCalculationWrapEl = $("laborCalculationWrap");
+  const laborCalculationModeEl = $("laborCalculationMode");
+  const laborCalculationHelpEl = $("laborCalculationHelp");
+  const laborTotalPreviewEl = $("laborTotalPreview");
   const laborRateEl = $("laborRate");
   const pricingModeEl = $("pricingMode");
   const flatRatePriceEl = $("flatRatePrice");
@@ -1593,6 +1599,10 @@
     return normalizeQuantity(it.quantity) > 1 || serviceUsesEachPricing(it.serviceText);
   }
 
+  function normalizeLaborCalculationMode(value) {
+    return String(value || "").trim() === "per_item" ? "per_item" : "total";
+  }
+
   function displayServiceNameWithQuantity(serviceText = "Service", quantity = 1) {
     const cleanName = String(serviceText || "Service").trim() || "Service";
     const qty = normalizeQuantity(quantity);
@@ -1608,6 +1618,15 @@
     return getPartsUnitCost(it) * normalizeQuantity(it.quantity);
   }
 
+  function getLaborCalculationMode(it = {}) {
+    return normalizeLaborCalculationMode(it.laborCalculationMode);
+  }
+
+  function getBillableLaborHours(it = {}) {
+    const hours = normalizeMoneyValue(it.laborHours);
+    return getLaborCalculationMode(it) === "per_item" ? hours * normalizeQuantity(it.quantity) : hours;
+  }
+
   function getCurrentServiceLabelForQuantity() {
     if (editingLineItem) return editingLineItem.serviceText || editingLineItem.serviceCode || "";
     return serviceEl?.options?.[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl?.value || "";
@@ -1617,16 +1636,48 @@
     if (serviceQuantityEl && normalizeQuantity(serviceQuantityEl.value) !== Number(serviceQuantityEl.value || 1)) {
       serviceQuantityEl.value = String(normalizeQuantity(serviceQuantityEl.value));
     }
+    if (serviceQuantityClearBtn) {
+      serviceQuantityClearBtn.hidden = !String(serviceQuantityEl?.value || "").trim();
+    }
     const quantity = normalizeQuantity(serviceQuantityEl?.value);
     const serviceLabel = getCurrentServiceLabelForQuantity();
-    const showQuantityHelp = quantity > 1 || serviceUsesEachPricing(serviceLabel);
-    if (quantityHelpEl) quantityHelpEl.hidden = !showQuantityHelp;
+    const showPartsPerItem = quantity > 1 || serviceUsesEachPricing(serviceLabel);
+    const showLaborCalculation = quantity > 1;
+    if (quantityHelpEl) quantityHelpEl.hidden = !showPartsPerItem;
+    if (partsPriceLabelEl) {
+      partsPriceLabelEl.textContent = showPartsPerItem ? "Parts Cost Per Item (optional)" : "Parts Cost (optional)";
+    }
+    if (laborCalculationWrapEl) {
+      laborCalculationWrapEl.hidden = !showLaborCalculation;
+    }
+    if (!showLaborCalculation && laborCalculationModeEl) {
+      laborCalculationModeEl.value = "total";
+    }
+    const laborMode = normalizeLaborCalculationMode(laborCalculationModeEl?.value);
+    const enteredHours = pricingInputNumber(laborHoursEl);
+    const laborRate = pricingInputNumber(laborRateEl);
+    const billableHours = laborMode === "per_item" ? enteredHours * quantity : enteredHours;
+    if (laborCalculationHelpEl) {
+      laborCalculationHelpEl.textContent = laborMode === "per_item"
+        ? "Labor hours will multiply by quantity."
+        : "Labor will not multiply. The labor hours entered are for the full job.";
+    }
+    if (laborTotalPreviewEl) {
+      const laborTotal = billableHours * laborRate;
+      if (!showLaborCalculation) {
+        laborTotalPreviewEl.textContent = "";
+      } else if (laborMode === "per_item") {
+        laborTotalPreviewEl.textContent = `Labor total: ${money(laborTotal)} = ${enteredHours.toFixed(1)} hrs × ${quantity} × $${Math.round(laborRate).toLocaleString()}`;
+      } else {
+        laborTotalPreviewEl.textContent = `Labor total: ${money(laborTotal)} = ${enteredHours.toFixed(1)} hrs × $${Math.round(laborRate).toLocaleString()}`;
+      }
+    }
     if (!partsTotalPreviewEl) return;
     const unitParts = pricingInputNumber(partsPriceEl);
     const partsTotal = unitParts * quantity;
-    if (showQuantityHelp || unitParts > 0) {
-      const noun = showQuantityHelp ? "Parts total" : "Parts total";
-      partsTotalPreviewEl.textContent = `${noun}: ${money(partsTotal)}${quantity > 1 || serviceUsesEachPricing(serviceLabel) ? ` (${money(unitParts)} × ${quantity})` : ""}`;
+    if (showPartsPerItem || unitParts > 0) {
+      const noun = "Parts total";
+      partsTotalPreviewEl.textContent = `${noun}: ${money(partsTotal)}${showPartsPerItem ? ` = ${money(unitParts)} × ${quantity}` : ""}`;
     } else {
       partsTotalPreviewEl.textContent = "";
     }
@@ -1903,7 +1954,12 @@
     const vehicleLabel = it?.vehicleLabel || getVehicleLabel({ id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel, displayModel: vehicleDisplayModel }, 0);
     const flatRatePrice = normalizeMoneyValue(it?.flatRatePrice);
     const travelFee = normalizeMoneyValue(it?.travelFee);
-    const laborHours = normalizeMoneyValue(it?.laborHours);
+    const laborCalculationMode = normalizeLaborCalculationMode(it?.laborCalculationMode);
+    const laborHours = normalizeMoneyValue(
+      it?.laborHoursInput != null && laborCalculationMode === "per_item"
+        ? it?.laborHoursInput
+        : it?.laborHours
+    );
     const partsPrice = normalizeMoneyValue(it?.partsPrice);
     const quantity = normalizeQuantity(it?.quantity);
     const partsUnitCost = it?.partsUnitCost != null ? normalizeMoneyValue(it?.partsUnitCost) : (quantity > 1 || serviceUsesEachPricing(it?.serviceText) ? partsPrice / quantity : partsPrice);
@@ -1929,6 +1985,7 @@
       flatRatePrice,
       travelFee,
       laborHours,
+      laborCalculationMode,
       quantity,
       partsUnitCost,
       partsPrice: Math.round(partsUnitCost * quantity * 100) / 100,
@@ -2126,14 +2183,28 @@
   // Track if user manually edited labor hours (so we don't overwrite it)
   laborHoursEl?.addEventListener("input", () => {
     laborHoursTouched = true;
+    updateQuantityPricingPreview();
     syncLivePricingFromInputs();
   });
   laborRateEl?.addEventListener("input", syncLivePricingFromInputs);
+  laborRateEl?.addEventListener("input", updateQuantityPricingPreview);
   partsPriceEl?.addEventListener("input", () => {
     updateQuantityPricingPreview();
     syncLivePricingFromInputs();
   });
   serviceQuantityEl?.addEventListener("input", () => {
+    updateQuantityPricingPreview();
+    syncLivePricingFromInputs();
+  });
+  serviceQuantityClearBtn?.addEventListener("click", () => {
+    if (!serviceQuantityEl) return;
+    serviceQuantityEl.value = "";
+    if (laborCalculationModeEl) laborCalculationModeEl.value = "total";
+    updateQuantityPricingPreview();
+    syncLivePricingFromInputs();
+    serviceQuantityEl.focus({ preventScroll: true });
+  });
+  laborCalculationModeEl?.addEventListener("change", () => {
     updateQuantityPricingPreview();
     syncLivePricingFromInputs();
   });
@@ -2491,38 +2562,28 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   function calcLineItemEstimate(it) {
-    const pricingMode = (it.pricingMode || "hourly").trim();
-    const parts = normalizeMoneyValue(it.partsPrice);
-    const travel = normalizeMoneyValue(it.travelFee);
-
-    let base = 0;
-
-    if (pricingMode === "flat") {
-      base = normalizeMoneyValue(it.flatRatePrice) + parts;
-    } else {
-      const laborHours = normalizeMoneyValue(it.laborHours);
-      const laborRate = normalizeMoneyValue(it.laborRate);
-      base = (laborHours * laborRate) + parts;
-    }
-
-    return Math.round(base + travel);
+    return getLineItemCostBreakdown(it).total;
   }
 
   function getLineItemCostBreakdown(it = {}) {
     const pricingMode = (it.pricingMode || "hourly").trim() === "flat" ? "flat" : "hourly";
     const laborHours = normalizeMoneyValue(it.laborHours);
+    const laborCalculationMode = getLaborCalculationMode(it);
+    const billableLaborHours = getBillableLaborHours(it);
     const laborRate = normalizeMoneyValue(it.laborRate);
     const flatRatePrice = normalizeMoneyValue(it.flatRatePrice);
     const quantity = normalizeQuantity(it.quantity);
     const partsUnitCost = getPartsUnitCost(it);
     const partsPrice = getPartsTotal(it);
     const travelFee = normalizeMoneyValue(it.travelFee);
-    const laborTotal = pricingMode === "flat" ? flatRatePrice : laborHours * laborRate;
+    const laborTotal = pricingMode === "flat" ? flatRatePrice : billableLaborHours * laborRate;
     const total = Math.round(laborTotal + partsPrice + travelFee);
 
     return {
       pricingMode,
       laborHours,
+      laborCalculationMode,
+      billableLaborHours,
       laborRate,
       flatRatePrice,
       laborTotal,
@@ -2562,7 +2623,9 @@ const confidenceEl = document.getElementById("laborConfidence");
           quantity: cost.quantity,
           partsUnitCost: cost.partsUnitCost,
           pricingMode: cost.pricingMode,
-          laborHours: cost.laborHours,
+          laborHours: cost.billableLaborHours,
+          laborHoursInput: cost.laborHours,
+          laborCalculationMode: cost.laborCalculationMode,
           laborRate: cost.laborRate,
           laborTotal: cost.laborTotal,
           partsTotal: cost.partsPrice,
@@ -2590,7 +2653,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (outputOptions.showLaborColumn) {
       pricingMeta.push(cost.pricingMode === "flat"
         ? { label: "Job", value: money(cost.laborTotal), kind: "labor" }
-        : { label: "Labor", value: `${cost.laborHours.toFixed(1)}h`, kind: "labor" });
+        : { label: "Labor", value: `${cost.billableLaborHours.toFixed(1)}h`, kind: "labor" });
     }
 
     if (outputOptions.showPartsColumn) {
@@ -2608,6 +2671,10 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     if (cost.hasTravel) {
       pricingMeta.push({ label: "Travel", value: money(cost.travelFee), kind: "travel" });
+    }
+
+    if (cost.laborCalculationMode === "per_item" && cost.quantity > 1 && cost.pricingMode !== "flat") {
+      pricingMeta.push({ label: "Labor", value: "Calculated per item", kind: "labor-mode" });
     }
 
     return pricingMeta;
@@ -2628,7 +2695,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       const laborLabel = cost.pricingMode === "flat" ? "Job labor" : "Labor";
       const laborDetail = cost.pricingMode === "flat"
         ? "Flat job price"
-        : `${cost.laborHours.toFixed(1)}h @ $${Math.round(cost.laborRate).toLocaleString()}/hr`;
+        : `${cost.billableLaborHours.toFixed(1)}h @ $${Math.round(cost.laborRate).toLocaleString()}/hr`;
 
       rows.push(`
         <div class="tm-cost-breakdown__row tm-cost-breakdown__row--labor">
@@ -2683,6 +2750,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       flatRatePrice: pricingInputNumber(flatRatePriceEl),
       travelFee: pricingInputNumber(travelFeeEl),
       laborHours: pricingInputNumber(laborHoursEl),
+      laborCalculationMode: normalizeLaborCalculationMode(laborCalculationModeEl?.value),
       quantity: normalizeQuantity(serviceQuantityEl?.value),
       partsUnitCost: pricingInputNumber(partsPriceEl),
       partsPrice: pricingInputNumber(partsPriceEl) * normalizeQuantity(serviceQuantityEl?.value),
@@ -2696,6 +2764,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (flatRatePriceEl) flatRatePriceEl.value = String(Number(it.flatRatePrice || 0));
     if (travelFeeEl) travelFeeEl.value = String(Number(it.travelFee || 0));
     if (laborHoursEl) laborHoursEl.value = String(Number(it.laborHours || 0));
+    if (laborCalculationModeEl) laborCalculationModeEl.value = getLaborCalculationMode(it);
     if (serviceQuantityEl) serviceQuantityEl.value = String(normalizeQuantity(it.quantity));
     if (partsPriceEl) partsPriceEl.value = String(Number(getPartsUnitCost(it) || 0));
     if (laborRateEl) laborRateEl.value = String(Number(it.laborRate || 0));
@@ -2712,7 +2781,9 @@ const confidenceEl = document.getElementById("laborConfidence");
       pricingMode: it.pricingMode,
       flatRatePrice: Number(it.flatRatePrice || 0),
       travelFee: Number(it.travelFee || 0),
-      laborHours: Number(it.laborHours || 0),
+      laborHours: Number(getBillableLaborHours(it) || 0),
+      laborHoursInput: Number(it.laborHours || 0),
+      laborCalculationMode: getLaborCalculationMode(it),
       quantity: normalizeQuantity(it.quantity),
       partsUnitCost: Number(getPartsUnitCost(it) || 0),
       partsPrice: Number(getPartsTotal(it) || 0),
@@ -5024,6 +5095,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       flatRatePrice: pricingInputNumber(flatRatePriceEl),
       travelFee: pricingInputNumber(travelFeeEl),
       laborHours: pricingInputNumber(laborHoursEl),
+      laborCalculationMode: normalizeLaborCalculationMode(laborCalculationModeEl?.value),
       quantity: normalizeQuantity(serviceQuantityEl?.value),
       partsUnitCost: pricingInputNumber(partsPriceEl),
       partsPrice: pricingInputNumber(partsPriceEl) * normalizeQuantity(serviceQuantityEl?.value),
@@ -5576,6 +5648,7 @@ if (getEstimateHint) {
     if (notesEl) notesEl.value = "";
 
     if (pricingModeEl) pricingModeEl.value = "hourly";
+    if (laborCalculationModeEl) laborCalculationModeEl.value = "total";
     if (laborRateEl) laborRateEl.value = String(getPreferredLaborRate());
     if (flatRatePriceEl) flatRatePriceEl.value = "0";
     if (travelFeeEl) travelFeeEl.value = String(getPreferredTravelFee());
@@ -5807,7 +5880,9 @@ if (getEstimateHint) {
         partsUnitCost: Number(getPartsUnitCost(it) || 0),
         pricingMode: it.pricingMode,
         flatRatePrice: Number(it.flatRatePrice || 0),
-        laborHours: Number(it.laborHours || 0),
+        laborHours: Number(getBillableLaborHours(it) || 0),
+        laborHoursInput: Number(it.laborHours || 0),
+        laborCalculationMode: getLaborCalculationMode(it),
         partsPrice: Number(getPartsTotal(it) || 0),
         laborRate: Number(it.laborRate || 0),
         travelFee: Number(it.travelFee || 0),
@@ -6041,6 +6116,7 @@ if (getEstimateHint) {
     if (serviceQuantityEl) serviceQuantityEl.value = "1";
     if (laborRateEl) laborRateEl.value = String(getPreferredLaborRate());
     if (pricingModeEl) pricingModeEl.value = "hourly";
+    if (laborCalculationModeEl) laborCalculationModeEl.value = "total";
     if (flatRatePriceEl) flatRatePriceEl.value = "0";
     if (travelFeeEl) travelFeeEl.value = String(getPreferredTravelFee());
     togglePricingModeUI();
@@ -6657,6 +6733,7 @@ if (getEstimateHint) {
       if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
       resetServiceSearch();
 
+      updateQuantityPricingPreview();
       updateEstimateButtonState();
       setStatus("info", "Estimator ready.");
     } catch (e) {

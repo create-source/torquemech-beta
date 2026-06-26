@@ -276,16 +276,30 @@
 
           <div class="pricing-control">
             <label for="serviceQuantity">Quantity</label>
-            <input id="serviceQuantity" type="number" inputmode="numeric" min="1" step="1" value="1" />
+            <span class="tm-clearable-field tm-quantity-field">
+              <input id="serviceQuantity" type="number" inputmode="numeric" min="1" step="1" value="1" />
+              <button id="serviceQuantityClearBtn" type="button" class="tm-input-clear-btn" aria-label="Clear quantity" hidden>&times;</button>
+            </span>
             <div id="quantityHelp" class="tm-hint tm-field-helper" hidden>
               Use quantity for coils, plugs, injectors, tires, or per-side parts.
             </div>
           </div>
 
           <div class="pricing-control">
-            <label for="partsPrice">Parts Cost (optional)</label>
+            <label id="partsPriceLabel" for="partsPrice">Parts Cost (optional)</label>
             <input id="partsPrice" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="0" />
             <div id="partsTotalPreview" class="tm-hint tm-field-helper" aria-live="polite"></div>
+          </div>
+
+          <div id="laborCalculationWrap" class="pricing-control hourly-pricing-field" hidden>
+            <label for="laborCalculationMode">How should labor be calculated?</label>
+            <select id="laborCalculationMode">
+              <option value="total" selected>Use entered labor as total job labor</option>
+              <option value="per_item">Multiply labor by quantity</option>
+            </select>
+            <div class="tm-hint tm-field-helper">Most jobs should use total job labor. Only multiply labor when the same labor time repeats for each item.</div>
+            <div id="laborCalculationHelp" class="tm-hint tm-field-helper">Labor will not multiply. The labor hours entered are for the full job.</div>
+            <div id="laborTotalPreview" class="tm-hint tm-field-helper" aria-live="polite"></div>
           </div>
 
           <div class="pricing-control">

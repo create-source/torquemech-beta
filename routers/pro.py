@@ -4064,6 +4064,10 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         if not display_service_name:
             display_service_name = estimate_service_name_with_quantity(service_name, quantity)
         labor_hours = optional_payload_float(item.get("laborHours", item.get("labor_hours")))
+        labor_hours_input = optional_payload_float(item.get("laborHoursInput", item.get("labor_hours_input")))
+        labor_calculation_mode = str(item.get("laborCalculationMode") or item.get("labor_calculation_mode") or "total").strip()
+        if labor_calculation_mode == "per_item" and labor_hours_input is not None:
+            labor_hours = round(float(labor_hours_input) * quantity, 2)
         labor_rate = optional_payload_float(item.get("laborRate", item.get("labor_rate")))
         labor_total = optional_payload_float(item.get("laborTotal", item.get("labor_total")))
         parts_total = optional_payload_float(item.get("partsTotal", item.get("parts_total")))
@@ -4084,6 +4088,8 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
                 "quantity": quantity,
                 "parts_unit_cost": parts_unit_cost,
                 "labor_hours": labor_hours,
+                "labor_hours_input": labor_hours_input,
+                "labor_calculation_mode": labor_calculation_mode,
                 "labor_rate": labor_rate,
                 "labor_total": labor_total,
                 "parts_total": parts_total,

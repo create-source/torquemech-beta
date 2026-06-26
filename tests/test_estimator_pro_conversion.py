@@ -278,6 +278,98 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(repair["parts_cost"], 180)
         self.assertEqual(repair["total_cost"], 317.5)
 
+    def test_quantity_labor_per_item_conversion_calculates_final_totals(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        payload = self.conversion_payload()
+        payload["lineItems"] = [
+            {
+                "serviceText": "Ignition Coil Replacement (each)",
+                "quantity": 4,
+                "laborHoursInput": 1,
+                "laborCalculationMode": "per_item",
+                "laborRate": 90,
+                "partsUnitCost": 45,
+            }
+        ]
+        form_data = {
+            "estimate_payload": json.dumps(payload),
+            "customer_mode": "new",
+            "new_customer_name": "Mike Johnson",
+            "new_customer_phone": "555-222-1111",
+            "new_customer_email": "mike@test.com",
+            "vehicle_mode": "new",
+            "new_vehicle_year": "2016",
+            "new_vehicle_make": "Honda",
+            "new_vehicle_model": "Accord",
+            "service_index": "0",
+        }
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data=form_data,
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+        self.assertEqual(repair["repair_name"], "Ignition Coil Replacement (each) × 4")
+        self.assertEqual(repair["labor_hours"], 4)
+        self.assertEqual(repair["labor_rate"], 90)
+        self.assertEqual(repair["labor_cost"], 360)
+        self.assertEqual(repair["parts_cost"], 180)
+        self.assertEqual(repair["total_cost"], 540)
+
+    def test_quantity_default_labor_mode_does_not_multiply_labor(self):
+        payload = pro_module.load_estimate_conversion_payload(
+            json.dumps(
+                {
+                    "vehicle": {"year": "2016", "make": "Honda", "model": "Accord"},
+                    "lineItems": [
+                        {
+                            "serviceText": "Ignition Coil Replacement (each)",
+                            "quantity": 4,
+                            "laborHours": 1,
+                            "laborRate": 90,
+                            "partsUnitCost": 45,
+                        }
+                    ],
+                }
+            )
+        )
+
+        item = payload["lineItems"][0]
+        self.assertEqual(item["service_name"], "Ignition Coil Replacement (each) × 4")
+        self.assertEqual(item["labor_hours"], 1)
+        self.assertEqual(item["labor_total"], 90)
+        self.assertEqual(item["parts_total"], 180)
+        self.assertEqual(item["grand_total"], 270)
+
+    def test_quantity_payload_clamps_invalid_quantity_to_one(self):
+        payload = pro_module.load_estimate_conversion_payload(
+            json.dumps(
+                {
+                    "vehicle": {"year": "2016", "make": "Honda", "model": "Accord"},
+                    "lineItems": [
+                        {
+                            "serviceText": "Ignition Coil Replacement (each)",
+                            "quantity": 0,
+                            "laborHours": 1,
+                            "laborRate": 90,
+                            "partsUnitCost": 45,
+                        }
+                    ],
+                }
+            )
+        )
+
+        item = payload["lineItems"][0]
+        self.assertEqual(item["quantity"], 1)
+        self.assertEqual(item["parts_total"], 45)
+        self.assertEqual(item["labor_hours"], 1)
+        self.assertEqual(item["grand_total"], 135)
+
     def test_finding_estimate_conversion_creates_source_finding_repair_job(self):
         now = "2026-06-25T12:00:00"
         self.conn.execute(

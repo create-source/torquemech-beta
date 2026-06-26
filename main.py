@@ -10491,6 +10491,8 @@ class LineItemPDF(BaseModel):
     displayServiceText: Optional[str] = None
     quantity: int = Field(1, ge=1)
     partsUnitCost: Optional[float] = Field(None, ge=0)
+    laborHoursInput: Optional[float] = Field(None, ge=0)
+    laborCalculationMode: Optional[str] = None
     pricingMode: Optional[str] = None
     status: Optional[str] = "recommended"
     flatRatePrice: Optional[float] = None
@@ -10593,6 +10595,17 @@ def estimate_display_service_name(service_name: Any, quantity: Any = 1) -> str:
         qty = 1
     qty = max(1, qty)
     return f"{name} × {qty}" if qty > 1 else name
+
+
+def estimate_line_billable_labor_hours(item: Any) -> float:
+    mode = str(getattr(item, "laborCalculationMode", "") or "").strip()
+    quantity = max(1, int(getattr(item, "quantity", 1) or 1))
+    if mode == "per_item":
+        entered = getattr(item, "laborHoursInput", None)
+        if entered is None:
+            entered = getattr(item, "laborHours", 0) or 0
+        return max(0.0, float(entered or 0)) * quantity
+    return max(0.0, float(getattr(item, "laborHours", 0) or 0))
 
 
 def pdf_multi_summary_approval_needed(
@@ -10871,16 +10884,18 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             if req.showDetailedLaborBreakdown:
                 lb = build_labor_breakdown(
                     it.serviceCode,
-                    it.laborHours,
+                    estimate_line_billable_labor_hours(it),
                     display_name=it.serviceText,
                 )
                 if lb and lb.get("steps"):
                     labor_breakdown_steps = lb["steps"]
 
             is_flat_rate = str(it.pricingMode or "").strip().lower() == "flat"
-            labor_total = max(0.0, float(it.flatRatePrice or 0)) if is_flat_rate else max(0.0, float(it.laborHours or 0)) * max(0.0, float(it.laborRate or 0))
+            billable_labor_hours = estimate_line_billable_labor_hours(it)
+            labor_total = max(0.0, float(it.flatRatePrice or 0)) if is_flat_rate else billable_labor_hours * max(0.0, float(it.laborRate or 0))
             parts_total = max(0.0, float(it.partsPrice or 0))
             travel_total = max(0.0, float(it.travelFee or 0))
+            computed_total = round(labor_total + parts_total + travel_total)
             cost_parts = []
             if req.showLaborColumn:
                 cost_parts.append(f"Labor ${labor_total:,.0f}")
@@ -10889,7 +10904,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             if cost_parts and travel_total > 0:
                 cost_parts.append(f"Travel ${travel_total:,.0f}")
             if req.showLaborColumn:
-                cost_parts.append("Flat-rate service" if is_flat_rate else f"{it.laborHours:.1f} labor hrs")
+                cost_parts.append("Flat-rate service" if is_flat_rate else f"{billable_labor_hours:.1f} labor hrs")
             if cost_parts and req.showHourlyRate and not is_flat_rate:
                 cost_parts.append(f"${it.laborRate:.0f}/hr")
             cost_summary_lines = wrap_text("  |  ".join(cost_parts), max_chars=72)[:2]
@@ -10929,7 +10944,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             c.setStrokeGray(0)
             c.setFillGray(0)
 
-            est = float(it.estimate) if it.estimate is not None else 0.0
+            est = float(it.estimate) if it.estimate is not None else computed_total
             grand_total += est
 
             c.setFont("Helvetica-Bold", 10.6)
