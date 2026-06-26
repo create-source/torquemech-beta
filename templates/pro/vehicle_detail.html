@@ -158,8 +158,20 @@
     padding: 14px;
   }
 
+  .tm-repair-work-item--open {
+    border-left-color: #475569;
+  }
+
+  .tm-repair-work-item--approved {
+    border-left-color: #0f766e;
+  }
+
   .tm-repair-work-item--in_progress {
     border-left-color: #0e7490;
+  }
+
+  .tm-repair-work-item--ready_to_complete {
+    border-left-color: #2563eb;
   }
 
   .tm-repair-work-item--waiting_parts {
@@ -293,6 +305,31 @@
   .tm-repair-status-chip {
     background: #e0f2fe;
     color: #075985;
+  }
+
+  .tm-repair-status-chip--open {
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  .tm-repair-status-chip--approved {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .tm-repair-status-chip--in_progress {
+    background: #cffafe;
+    color: #155e75;
+  }
+
+  .tm-repair-status-chip--ready_to_complete {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  .tm-repair-status-chip--completed {
+    background: #ede9fe;
+    color: #5b21b6;
   }
 
   .tm-repair-price-grid {
@@ -1884,6 +1921,145 @@
     {% endif %}
 
     {% set active_repair_work_items = repair_workspace_groups.active|list %}
+    {% set open_repair_items = repair_workspace_groups.open|list %}
+    {% set approved_repair_items = repair_workspace_groups.approved|list %}
+    {% set in_progress_repair_items = repair_workspace_groups.in_progress|list %}
+    {% set ready_to_complete_items = repair_workspace_groups.ready_to_complete|list %}
+    {% set recently_completed_items = repair_workspace_groups.recently_completed|list %}
+    {% set workspace_sections = [
+      {"title": "Open Repairs", "items": open_repair_items, "empty": "No active repairs yet. Create one from a finding, estimate, or manual repair."},
+      {"title": "Approved Repairs", "items": approved_repair_items, "empty": "No approved repairs waiting to start."},
+      {"title": "In Progress Repairs", "items": in_progress_repair_items, "empty": "No repairs currently in progress."},
+      {"title": "Ready to Complete", "items": ready_to_complete_items, "empty": "No repairs ready to complete."}
+    ] %}
+
+    <section class="tm-workspace-subsection" aria-label="Active repair jobs">
+      <div class="tm-crm-kicker">Active Work Board</div>
+      <h3 style="margin:4px 0 0;">Active Repair Jobs</h3>
+      <div class="tm-repair-card-actions" style="margin-top:10px;">
+        <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/new">Create Final Invoice</a>
+        <a class="tm-btn tm-btn-secondary" href="#vehicle-timeline">Vehicle Timeline</a>
+      </div>
+      {% if not active_repair_work_items %}
+      <div class="tm-history-empty" style="margin-top:12px;">No active repairs yet. Create one from a finding, estimate, or manual repair.</div>
+      {% endif %}
+    </section>
+
+    {% for section in workspace_sections %}
+    <section class="tm-workspace-subsection" aria-label="{{ section['title'] }}" style="margin-top:18px;">
+      <div class="tm-crm-kicker">{{ section["title"] }}</div>
+      <h3 style="margin:4px 0 0;">{{ section["title"] }}</h3>
+      {% if section["items"] %}
+      <div class="tm-repair-work-list">
+        {% for item in section["items"] %}
+        {% set parts_sources = item.parts_sources or [] %}
+        <article class="tm-repair-work-item tm-repair-work-item--{{ item.workspace_status_key }}">
+          <div class="tm-repair-card-head">
+            <div>
+              <h3 class="tm-repair-card-title">{{ item.title }}</h3>
+              <div class="tm-repair-card-meta">
+                <span class="tm-repair-status-chip tm-repair-status-chip--{{ item.workspace_status_key }}">Status {{ item.workspace_status_label }}</span>
+                <span class="tm-repair-source-chip">{{ item.source_label or item.approval_label }}</span>
+                {% if item.customer_approval_label %}<span class="tm-repair-status-chip">{{ item.customer_approval_label }}</span>{% endif %}
+                {% if item.date_value %}<span class="tm-repair-status-chip">{{ item.date_label }} {{ item.date_value|pro_date }}</span>{% endif %}
+                {% if item.mileage is not none %}<span class="tm-repair-status-chip">{{ item.mileage|pro_miles }} miles</span>{% endif %}
+                {% if item.estimate_badge %}<span class="tm-repair-status-chip">{{ item.estimate_badge }}</span>{% endif %}
+                {% if item.is_invoiced %}
+                <a class="tm-repair-status-chip" href="{{ item.invoice_url }}">Invoice {{ item.invoice_number }}</a>
+                {% else %}
+                <span class="tm-repair-status-chip">Not Invoiced</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% if item.detail %}<div style="color:#475569;">{{ item.detail }}</div>{% endif %}
+          {% if item.original_finding and item.source_type in ["finding", "approval"] %}
+          <div class="tm-repair-original-finding">
+            <span>Original Finding</span>
+            <strong>{{ item.original_finding }}</strong>
+          </div>
+          {% endif %}
+          {% if item.has_pricing %}
+          <div class="tm-repair-price-grid" aria-label="Repair pricing for {{ item.title }}">
+            <div><span>Labor</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
+            <div><span>Parts</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
+            <div><span>Total</span><strong>{{ item.grand_total|pro_currency }}</strong></div>
+          </div>
+          {% endif %}
+          {% if parts_sources %}
+          <section class="tm-blueprint-summary-card" aria-label="Parts sources for {{ item.title }}">
+            <div class="tm-blueprint-summary-title">Parts Sources</div>
+            <div class="tm-intel-badge-row">
+              {% for source in parts_sources %}
+                {% if source.url %}
+                <a class="tm-intel-badge" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</a>
+                {% else %}
+                <span class="tm-intel-badge">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</span>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </section>
+          {% endif %}
+          <div class="tm-repair-card-actions">
+            {% if item.linked_repair_record_id %}
+            <a class="tm-btn tm-btn-primary" href="{{ item.primary_action_url }}">{{ item.primary_action_label }}</a>
+            {% else %}
+            <form class="tm-repair-work-open-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
+              <input type="hidden" name="workflow_source_type" value="{{ item.source_type }}">
+              <input type="hidden" name="workflow_source_id" value="{{ item.source_id }}">
+              <input type="hidden" name="return_to" value="repair_detail">
+              <input type="hidden" name="repair_name" value="{{ item.repair_prefill.repair_name or item.title }}">
+              <input type="hidden" name="repair_date" value="{{ item.repair_prefill.repair_date or '' }}">
+              <input type="hidden" name="mileage" value="{% if item.repair_prefill.mileage is not none %}{{ item.repair_prefill.mileage }}{% endif %}">
+              <input type="hidden" name="notes" value="{{ item.repair_prefill.notes or '' }}">
+              <button class="tm-btn tm-btn-primary" type="submit">{{ item.primary_action_label }}</button>
+            </form>
+            {% endif %}
+            {% if item.blueprint %}<button class="tm-btn tm-btn-secondary" type="button" data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}">Review Repair Intelligence</button>{% endif %}
+            <a class="tm-btn tm-btn-secondary" href="{{ item.source_action_url or item.url }}">{{ item.source_action_label or "Review Repair" }}</a>
+          </div>
+          <div class="tm-repair-work-source" aria-label="Source traceability for {{ item.title }}">
+            <div class="tm-repair-work-source-label">Source Record</div>
+            <span>{{ item.source_label or "Source: Manual Repair" }}</span>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-history-empty" style="margin-top:12px;">{{ section["empty"] }}</div>
+      {% endif %}
+    </section>
+    {% endfor %}
+
+    {% if recently_completed_items %}
+    <section class="tm-workspace-subsection" aria-label="Recently Completed" style="margin-top:18px;">
+      <div class="tm-crm-kicker">Recently Completed</div>
+      <h3 style="margin:4px 0 0;">Recently Completed</h3>
+      <div class="tm-repair-work-list">
+        {% for item in recently_completed_items %}
+        <article class="tm-repair-work-item tm-repair-work-item--completed">
+          <div class="tm-repair-card-head">
+            <div>
+              <h3 class="tm-repair-card-title">{{ item.title }}</h3>
+              <div class="tm-repair-card-meta">
+                <span class="tm-repair-status-chip tm-repair-status-chip--completed">Status Completed</span>
+                <span class="tm-repair-source-chip">{{ item.source_label }}</span>
+                {% if item.is_invoiced %}<a class="tm-repair-status-chip" href="{{ item.invoice_url }}">Invoice {{ item.invoice_number }}</a>{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="tm-repair-card-actions">
+            <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}">View Completed Repair</a>
+            <a class="tm-btn tm-btn-secondary" href="#vehicle-timeline">View in Vehicle Timeline</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if false %}
+    {% set active_repair_work_items = repair_workspace_groups.active|list %}
     {% set ready_invoice_items = repair_workspace_groups.ready_for_invoice|list %}
     {% set invoiced_repair_items = repair_workspace_groups.invoiced|list %}
     <section class="tm-workspace-subsection" aria-label="Active repair jobs">
@@ -2369,6 +2545,7 @@
     </div>
     {% else %}
     <div class="tm-history-empty" style="margin-top:12px;">No repair jobs have been invoiced yet.</div>
+    {% endif %}
     {% endif %}
 
     <section class="tm-workspace-subsection" id="recommendations-findings" aria-label="Additional findings and recommended work" style="margin-top:18px;">

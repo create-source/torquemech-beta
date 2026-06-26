@@ -266,10 +266,69 @@ REPAIR_WORKSPACE_STATUS_LABELS = {
     "completed": "Completed",
 }
 
-
 def repair_workspace_status_label(value: Any) -> str:
     status = normalize_repair_work_status(str(value or "ready"))
     return REPAIR_WORKSPACE_STATUS_LABELS[status]
+
+
+def repair_workspace_display_status(item: dict[str, Any]) -> tuple[str, str]:
+    if item.get("repair_work_status") == "completed" or item.get("record_status") == "Completed":
+        return "completed", "Completed"
+    checklist = item.get("checklist_summary") if isinstance(item.get("checklist_summary"), dict) else {}
+    if (
+        item.get("linked_repair_record_id")
+        and int(checklist.get("total") or 0) > 0
+        and int(checklist.get("incomplete") or 0) == 0
+    ):
+        return "ready_to_complete", "Ready to Complete"
+    if item.get("repair_work_status") in {"in_progress", "waiting_parts"}:
+        return "in_progress", "In Progress"
+    if item.get("source_type") == "repair":
+        return "open", "Open"
+    return "approved", "Approved"
+
+
+def repair_workspace_primary_action(item: dict[str, Any], status_key: str) -> dict[str, str]:
+    repair_url = str(item.get("repair_record_url") or item.get("url") or "")
+    source_url = str(item.get("source_action_url") or item.get("url") or "")
+    if status_key == "completed":
+        return {"label": "View Completed Repair", "url": repair_url or source_url}
+    if status_key == "ready_to_complete":
+        return {"label": "Mark Completed", "url": f"{repair_url}#repair-completion" if repair_url else source_url}
+    if status_key == "in_progress":
+        return {"label": "Continue Repair", "url": repair_url or source_url}
+    if status_key == "approved":
+        return {"label": "Start Repair", "url": repair_url or source_url}
+    if item.get("source_label") == "Source: Finding":
+        return {"label": "Create Estimate", "url": source_url}
+    return {"label": "Review Repair", "url": repair_url or source_url}
+
+
+def enrich_repair_workspace_item(item: dict[str, Any]) -> dict[str, Any]:
+    status_key, status_label = repair_workspace_display_status(item)
+    action = repair_workspace_primary_action(item, status_key)
+    date_value = (
+        item.get("approved_at")
+        or item.get("repair_record_created_at")
+        or item.get("updated_at")
+        or item.get("created_at")
+        or ""
+    )
+    date_label = "Approved" if status_key in {"approved", "in_progress", "ready_to_complete"} else "Created"
+    if status_key == "completed":
+        date_label = "Completed"
+    item.update(
+        {
+            "workspace_status_key": status_key,
+            "workspace_status_label": status_label,
+            "workspace_group_key": status_key,
+            "primary_action_label": action["label"],
+            "primary_action_url": action["url"],
+            "date_label": date_label,
+            "date_value": date_value,
+        }
+    )
+    return item
 
 
 def repair_workspace_blank_totals() -> dict[str, Any]:
@@ -4260,13 +4319,18 @@ def repair_workspace_item_from_repair_record(
         "request_type_label": "Repair Record",
         "approval_label": source_label.replace("Source: ", ""),
         "source_label": source_label,
+        "customer_approval_label": "Customer Approved" if record.get("workflow_source_type") == "estimate" else "",
         "source_action_label": source_action["label"],
         "source_action_url": source_action["url"] or repair_record_url,
         "original_finding": "",
         "repair_work_status": "ready",
         "repair_work_status_label": status_label or repair_workspace_status_label("ready"),
+        "record_status": record.get("status") or "Open",
+        "workflow_source_type": record.get("workflow_source_type") or "",
         "linked_repair_record_id": repair_id,
         "repair_record_created_at": record.get("created_at") or "",
+        "created_at": record.get("created_at") or "",
+        "approved_at": record.get("customer_authorized_at") or "",
         "repair_record_url": repair_record_url,
         "repair_prefill": {},
         "updated_at": record.get("completed_at") or record.get("created_at") or record.get("repair_date") or "",
@@ -4282,6 +4346,7 @@ def repair_workspace_item_from_repair_record(
         "is_invoiced": bool(record.get("is_invoiced")),
         "invoice_number": record.get("invoice_number") or "",
         "invoice_url": record.get("invoice_url") or "",
+        "estimate_badge": "Estimate" if record.get("workflow_source_type") == "estimate" else "",
     }
     if blueprint:
         item["blueprint"] = blueprint
@@ -4297,6 +4362,7 @@ def build_repair_workspace_groups(
 ) -> dict[str, list[dict[str, Any]]]:
     ready_for_invoice: list[dict[str, Any]] = []
     invoiced: list[dict[str, Any]] = []
+    recently_completed: list[dict[str, Any]] = []
     for record in repair_records:
         if (record.get("status") or "") != "Completed":
             continue
@@ -4305,12 +4371,40 @@ def build_repair_workspace_groups(
             vehicle,
             status_label="Ready for Invoice" if not record.get("is_invoiced") else "Invoiced",
         )
+        item["repair_work_status"] = "completed"
+        item["record_status"] = "Completed"
+        item["updated_at"] = record.get("completed_at") or record.get("repair_date") or record.get("created_at") or ""
+        enrich_repair_workspace_item(item)
+        recently_completed.append(item)
         if record.get("is_invoiced"):
             invoiced.append(item)
         else:
             ready_for_invoice.append(item)
+    active_groups: dict[str, list[dict[str, Any]]] = {
+        "open": [],
+        "approved": [],
+        "in_progress": [],
+        "ready_to_complete": [],
+    }
+    for item in repair_work_items:
+        enrich_repair_workspace_item(item)
+        group_key = item.get("workspace_group_key")
+        if group_key in active_groups:
+            active_groups[group_key].append(item)
+    recently_completed.sort(
+        key=lambda item: (
+            parse_datetime_value(item.get("updated_at")) or datetime.min,
+            int(item.get("source_id") or 0),
+        ),
+        reverse=True,
+    )
     return {
         "active": repair_work_items,
+        "open": active_groups["open"],
+        "approved": active_groups["approved"],
+        "in_progress": active_groups["in_progress"],
+        "ready_to_complete": active_groups["ready_to_complete"],
+        "recently_completed": recently_completed[:3],
         "ready_for_invoice": ready_for_invoice,
         "invoiced": invoiced,
     }
@@ -4353,13 +4447,18 @@ def build_repair_work_items(
             "request_type_label": "Labor Request" if normalize_finding_request_type(record.get("request_type")) == "labor" else "Finding",
             "approval_label": "Finding",
             "source_label": "Source: Finding",
+            "customer_approval_label": "Customer Approved",
             "source_action_label": "View Source Finding",
             "source_action_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/findings/{record['id']}",
             "original_finding": record.get("finding") or detail,
             "repair_work_status": status,
             "repair_work_status_label": repair_workspace_status_label(status),
+            "record_status": record.get("status") or "Approved",
+            "workflow_source_type": "finding",
             "linked_repair_record_id": record.get("linked_repair_record_id"),
             "repair_record_created_at": record.get("repair_record_created_at") or "",
+            "created_at": record.get("created_at") or "",
+            "approved_at": record.get("repair_work_updated_at") or record.get("updated_at") or record.get("created_at") or "",
             "repair_record_url": (
                 f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
                 f"/repairs/{record.get('linked_repair_record_id')}"
@@ -4417,13 +4516,18 @@ def build_repair_work_items(
             "request_type_label": approval_request_type_label(record.get("request_type")),
             "approval_label": "Finding",
             "source_label": "Source: Finding",
+            "customer_approval_label": "Customer Approved",
             "source_action_label": "View Source Finding",
             "source_action_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
             "original_finding": record.get("finding_description") or detail,
             "repair_work_status": status,
             "repair_work_status_label": repair_workspace_status_label(status),
+            "record_status": "Approved",
+            "workflow_source_type": "approval",
             "linked_repair_record_id": record.get("linked_repair_record_id"),
             "repair_record_created_at": record.get("repair_record_created_at") or "",
+            "created_at": record.get("created_at") or "",
+            "approved_at": record.get("decision_recorded_at") or record.get("updated_at") or record.get("created_at") or "",
             "repair_record_url": (
                 f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}"
                 f"/repairs/{record.get('linked_repair_record_id')}"
@@ -6177,12 +6281,12 @@ def pro_customer_vehicle_detail(
     findings_summary = build_findings_summary(inspection_findings_records)
     approval_summary = build_approval_summary(approval_records)
     repair_work_items = build_repair_work_items(vehicle, findings_records, approval_records, repair_records)
-    repair_workspace_groups = build_repair_workspace_groups(vehicle, repair_work_items, repair_records)
     for item in repair_work_items:
         item["checklist_summary"] = checklist_summaries.get(
             int(item.get("linked_repair_record_id") or 0),
             {"completed": 0, "total": 0, "incomplete": 0, "percent": 0},
         )
+    repair_workspace_groups = build_repair_workspace_groups(vehicle, repair_work_items, repair_records)
 
     return templates.TemplateResponse(
         "pro/vehicle_detail.html",

@@ -76,6 +76,10 @@
     font-weight:900;
     text-transform:uppercase;
   }
+  .tm-status-chip--open { background:#f1f5f9; color:#334155; }
+  .tm-status-chip--approved { background:#dcfce7; color:#166534; }
+  .tm-status-chip--in-progress { background:#cffafe; color:#155e75; }
+  .tm-status-chip--ready { background:#dbeafe; color:#1d4ed8; }
   .tm-status-chip--completed { background:#dcfce7; color:#166534; }
   .tm-completion-status { min-width:180px; display:grid; gap:6px; }
   .tm-completion-status strong { color:#0f172a; font-size:1.4rem; }
@@ -173,12 +177,22 @@
       <h1 class="tm-pro-title">{{ repair.repair_name or "Repair Record" }}</h1>
       <p class="tm-pro-subtitle">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</p>
     </div>
-    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#repair-history">Back to Vehicle</a>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#repair-workspace">Back to Repair Workspace</a>
   </div>
 
   <section class="tm-repair-panel" aria-label="Repair record">
     {% set stored_repair_status = (repair.status or "Open")|lower|replace(" ", "_") %}
-    {% set repair_status_display = "Ready for Repair" if stored_repair_status == "open" else ("In Progress" if stored_repair_status == "in_progress" else ("Completed" if stored_repair_status == "completed" else (repair.status or "Ready for Repair"))) %}
+    {% set execution_status = repair_execution_status.status if repair_execution_status else "" %}
+    {% set ready_to_complete = repair.status != "Completed" and checklist_progress.total and checklist_progress.completed == checklist_progress.total %}
+    {% set repair_status_display = "Completed" if stored_repair_status == "completed" else ("Ready to Complete" if ready_to_complete else ("In Progress" if execution_status in ["in_progress", "waiting_parts"] else ("Approved" if execution_status == "ready" else "Open"))) %}
+    {% set repair_status_class = "completed" if repair_status_display == "Completed" else ("ready" if repair_status_display == "Ready to Complete" else ("in-progress" if repair_status_display == "In Progress" else ("approved" if repair_status_display == "Approved" else "open"))) %}
+    <div class="tm-repair-card-meta" style="margin:0 0 14px;">
+      <span class="tm-status-chip tm-status-chip--{{ repair_status_class }}">Status {{ repair_status_display }}</span>
+      <span class="tm-status-chip">{{ customer.first_name }} {{ customer.last_name }}</span>
+      <span class="tm-status-chip">{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</span>
+      {% if invoice %}<a class="tm-status-chip" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">Invoiced: {{ invoice.invoice_number }}</a>{% else %}<span class="tm-status-chip">Not Invoiced</span>{% endif %}
+      {% if repair.workflow_source_type == "estimate" %}<span class="tm-status-chip">Estimate</span>{% endif %}
+    </div>
     <div class="tm-repair-grid">
       <div class="tm-repair-field"><span>Repair Name</span><strong>{{ repair.repair_name or "-" }}</strong></div>
       <div class="tm-repair-field"><span>Repair Date</span><strong>{{ repair.repair_date|pro_date if repair.repair_date else "-" }}</strong></div>
@@ -194,7 +208,7 @@
       <div class="tm-repair-field"><span>Completion Status</span><strong>{% if repair.status == "Completed" %}Completed{% else %}Not Completed{% endif %}</strong></div>
       <div class="tm-repair-field">
         <span>Status</span>
-        <strong><span class="tm-status-chip{% if repair.status == 'Completed' %} tm-status-chip--completed{% endif %}">{{ repair_status_display }}</span></strong>
+        <strong><span class="tm-status-chip tm-status-chip--{{ repair_status_class }}">{{ repair_status_display }}</span></strong>
       </div>
       <div class="tm-repair-field"><span>Completion Date</span><strong>{{ completion.completion_date|pro_date if completion.completion_date else "-" }}</strong></div>
       <div class="tm-repair-field"><span>Completion Mileage</span><strong>{% if completion.completion_mileage is not none %}{{ completion.completion_mileage|pro_miles }} miles{% elif repair.mileage is not none %}{{ repair.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
@@ -218,6 +232,9 @@
       <span class="tm-status-chip">Invoiced: {{ invoice.invoice_number }}</span>
       {% else %}
       <span class="tm-status-chip">Not Invoiced</span>
+      {% endif %}
+      {% if repair.status == "Completed" %}
+      <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">View in Vehicle Timeline</a>
       {% endif %}
     </div>
   </section>
@@ -262,6 +279,14 @@
       </div>
     </div>
 
+    {% if repair.status == "Completed" %}
+    <div class="tm-history-empty" style="margin-top:16px;">
+      This repair is completed. Completion details are shown as history, and active checklist/completion controls are closed.
+      <div class="tm-repair-actions">
+        <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">View Completed Repair in Timeline</a>
+      </div>
+    </div>
+    {% else %}
     <form class="tm-completion-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/completion" enctype="multipart/form-data">
       <section class="tm-completion-section" aria-label="Completion Details">
         <h3 class="tm-completion-title">Completion Details</h3>
@@ -340,6 +365,7 @@
         {% endif %}
       </div>
     </form>
+    {% endif %}
   </section>
 </section>
 {% endblock %}

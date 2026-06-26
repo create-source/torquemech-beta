@@ -465,10 +465,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Source Record", vehicle_detail)
         self.assertNotIn('tm-repair-work-source-label">{{ item.source_label', vehicle_detail)
 
-    def test_repair_detail_status_open_displays_ready_for_repair(self):
+    def test_repair_detail_status_open_displays_clear_workspace_status(self):
         repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
         form_helpers = (ROOT / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
-        self.assertIn('repair_status_display = "Ready for Repair"', repair_detail)
+        self.assertIn('repair_status_display = "Completed"', repair_detail)
+        self.assertIn('"Approved" if execution_status == "ready" else "Open"', repair_detail)
+        self.assertIn("Ready to Complete", repair_detail)
         self.assertIn("{{ repair_status_display }}", repair_detail)
         self.assertIn("repair_display_mileage", repair_detail)
         self.assertIn("Completion Date", repair_detail)
@@ -486,6 +488,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Clear date", form_helpers)
         self.assertIn("Not Invoiced", repair_detail)
         self.assertIn("Invoiced: {{ invoice.invoice_number }}", repair_detail)
+        self.assertIn("Back to Repair Workspace", repair_detail)
+        self.assertIn("View Completed Repair in Timeline", repair_detail)
         self.assertNotIn("Generate Invoice", repair_detail)
         self.assertIn("Final Inspection Comments", repair_detail)
         self.assertIn('name="final_inspection_passed"', repair_detail)
@@ -500,6 +504,14 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertLess(workspace_idx, findings_idx)
         self.assertLess(findings_idx, timeline_idx)
         self.assertIn("Active Repair Jobs", vehicle_detail)
+        self.assertIn("Open Repairs", vehicle_detail)
+        self.assertIn("Approved Repairs", vehicle_detail)
+        self.assertIn("In Progress Repairs", vehicle_detail)
+        self.assertIn("Ready to Complete", vehicle_detail)
+        self.assertIn("Recently Completed", vehicle_detail)
+        self.assertIn("No active repairs yet. Create one from a finding, estimate, or manual repair.", vehicle_detail)
+        self.assertIn("No approved repairs waiting to start.", vehicle_detail)
+        self.assertIn("No repairs currently in progress.", vehicle_detail)
         self.assertIn("Ready for Invoice", vehicle_detail)
         self.assertIn("Invoiced Jobs", vehicle_detail)
         self.assertIn("Create Final Invoice", vehicle_detail)
@@ -530,8 +542,63 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("item.photo_count", vehicle_detail)
         self.assertIn("item.source_label", vehicle_detail)
         self.assertIn("item.status_label", vehicle_detail)
+        self.assertIn("item.workspace_status_label", vehicle_detail)
+        self.assertIn("item.primary_action_label", vehicle_detail)
         self.assertIn("Status {{ item.status_label }}", vehicle_detail)
         self.assertNotIn('<h2 style="margin:4px 0 0;">Inspection Findings</h2>', vehicle_detail)
+
+    def test_workspace_groups_status_lanes_and_primary_actions(self):
+        vehicle = {"id": 1, "year": 2016, "make": "Honda", "model": "Accord", "mileage": 120000}
+        active = [
+            {
+                "source_type": "repair",
+                "source_id": 20,
+                "title": "Manual tire repair",
+                "repair_work_status": "ready",
+                "record_status": "Open",
+                "repair_record_url": "/repairs/20",
+                "url": "/repairs/20",
+            },
+            {
+                "source_type": "finding",
+                "source_id": 21,
+                "title": "Front pads",
+                "repair_work_status": "ready",
+                "linked_repair_record_id": 21,
+                "repair_record_url": "/repairs/21",
+                "url": "/findings/21",
+            },
+            {
+                "source_type": "finding",
+                "source_id": 22,
+                "title": "Front rotors",
+                "repair_work_status": "in_progress",
+                "linked_repair_record_id": 22,
+                "repair_record_url": "/repairs/22",
+                "url": "/findings/22",
+            },
+            {
+                "source_type": "finding",
+                "source_id": 23,
+                "title": "Brake fluid",
+                "repair_work_status": "ready",
+                "linked_repair_record_id": 23,
+                "repair_record_url": "/repairs/23",
+                "url": "/findings/23",
+                "checklist_summary": {"completed": 2, "total": 2, "incomplete": 0, "percent": 100},
+            },
+        ]
+
+        groups = pro_module.build_repair_workspace_groups(vehicle, active, [])
+
+        self.assertEqual(groups["open"][0]["workspace_status_label"], "Open")
+        self.assertEqual(groups["open"][0]["primary_action_label"], "Review Repair")
+        self.assertEqual(groups["approved"][0]["workspace_status_label"], "Approved")
+        self.assertEqual(groups["approved"][0]["primary_action_label"], "Start Repair")
+        self.assertEqual(groups["in_progress"][0]["workspace_status_label"], "In Progress")
+        self.assertEqual(groups["in_progress"][0]["primary_action_label"], "Continue Repair")
+        self.assertEqual(groups["ready_to_complete"][0]["workspace_status_label"], "Ready to Complete")
+        self.assertEqual(groups["ready_to_complete"][0]["primary_action_label"], "Mark Completed")
 
     def test_invoice_builder_selects_completed_ready_jobs(self):
         invoice_builder = (ROOT / "templates" / "pro" / "invoice_builder.html").read_text(encoding="utf-8")
