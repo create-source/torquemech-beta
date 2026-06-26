@@ -2389,6 +2389,7 @@ def load_vehicle_invoice_records(
             SELECT
               i.*,
               COALESCE(first_rr.repair_name, rr.repair_name, 'Invoice') AS repair_name,
+              GROUP_CONCAT(ii.repair_record_id) AS repair_record_ids,
               COUNT(ii.id) AS service_count
             FROM invoices i
             LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
@@ -3021,6 +3022,7 @@ def load_vehicle_repair_completion_events(
             SELECT
               rc.id,
               rc.repair_record_id,
+              rc.completion_date,
               rc.completed_at,
               rc.after_repair_photo_paths,
               rc.override_reason,
@@ -4575,8 +4577,8 @@ def build_vehicle_timeline(
         "repaired": {"key": "repaired", "title": "Repaired Services", "records": []},
         "maintenance": {"key": "maintenance", "title": "Maintenance Services", "records": []},
         "invoices": {"key": "invoices", "title": "Invoices", "records": []},
-        "findings": {"key": "findings", "title": "Inspection Findings", "records": []},
-        "approvals": {"key": "approvals", "title": "Approvals", "records": []},
+        "findings": {"key": "findings", "title": "Findings", "records": []},
+        "approvals": {"key": "approvals", "title": "Approvals / Decisions", "records": []},
     }
 
     def add_record(group_key: str, record: dict[str, Any]) -> None:
@@ -4610,23 +4612,42 @@ def build_vehicle_timeline(
         for record in repair_completion_events or []
         if record.get("repair_record_id")
     }
+    invoice_by_repair_id: dict[int, dict[str, Any]] = {}
+    for invoice_record in invoice_records or []:
+        repair_ids = [
+            int(value)
+            for value in str(invoice_record.get("repair_record_ids") or "").split(",")
+            if str(value or "").strip().isdigit()
+        ]
+        fallback_repair_id = invoice_record.get("repair_record_id")
+        if str(fallback_repair_id or "").strip().isdigit() and int(fallback_repair_id) not in repair_ids:
+            repair_ids.append(int(fallback_repair_id))
+        for repair_id in repair_ids:
+            invoice_by_repair_id[repair_id] = invoice_record
 
     for record in service_history_records:
         source_type = record.get("source_type") or ""
         if source_type == "repair":
             repair_id = int(record.get("source_record_id") or 0)
             completion_event = completion_events_by_repair_id.get(repair_id, {})
+            invoice_record = invoice_by_repair_id.get(repair_id, {})
             photo_urls = parse_stored_photo_paths(completion_event.get("after_repair_photo_paths"))
             add_record(
                 "repaired",
                 {
                     "id": record["id"],
-                    "date": completion_event.get("completed_at") or record.get("service_date") or "",
+                    "date": completion_event.get("completion_date") or completion_event.get("completed_at") or record.get("service_date") or record.get("created_at") or "",
                     "created_at": completion_event.get("completed_at") or record.get("created_at") or "",
                     "service_name": record.get("service_name") or "Repair",
                     "mileage": record.get("mileage"),
                     "source_label": repair_workspace_source_label(completion_event),
                     "total": record.get("total_cost"),
+                    "invoice_number": invoice_record.get("invoice_number") or "",
+                    "invoice_url": (
+                        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_record.get('id')}"
+                        if invoice_record.get("id")
+                        else ""
+                    ),
                     "status_label": "Completed",
                     "photo_count": len(photo_urls),
                     "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
@@ -4756,34 +4777,29 @@ def build_vehicle_timeline(
             },
         )
 
-    for record in repair_checklist_events or []:
-        add_record(
-            "repaired",
-            {
-                "id": record["id"],
-                "date": record.get("completed_at") or "",
-                "created_at": record.get("completed_at") or record.get("created_at") or "",
-                "service_name": f"Checklist Completed: {record.get('task_name') or 'Checklist Item'}",
-                "mileage": None,
-                "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
-            },
-        )
-
     for record in repair_completion_events or []:
         if int(record.get("repair_record_id") or 0) in repaired_source_ids:
             continue
+        repair_id = int(record.get("repair_record_id") or 0)
+        invoice_record = invoice_by_repair_id.get(repair_id, {})
         repair_title = record.get("repair_name") or "Repair"
         photo_urls = parse_stored_photo_paths(record.get("after_repair_photo_paths"))
         add_record(
             "repaired",
             {
                 "id": f"completion-{record['id']}",
-                "date": record.get("completed_at") or "",
+                "date": record.get("completion_date") or record.get("completed_at") or record.get("created_at") or "",
                 "created_at": record.get("completed_at") or record.get("created_at") or "",
                 "service_name": repair_title,
                 "mileage": record.get("mileage"),
                 "source_label": repair_workspace_source_label(record),
                 "total": record.get("total_cost"),
+                "invoice_number": invoice_record.get("invoice_number") or "",
+                "invoice_url": (
+                    f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_record.get('id')}"
+                    if invoice_record.get("id")
+                    else ""
+                ),
                 "status_label": "Completed",
                 "photo_count": len(photo_urls),
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",

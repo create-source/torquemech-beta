@@ -2682,6 +2682,7 @@
                   {% if group.key == "repaired" %}
                   <div class="tm-finding-meta" style="margin-top:8px;">
                     {% if item.source_label %}<span class="tm-crm-chip">{{ item.source_label }}</span>{% endif %}
+                    {% if item.invoice_number %}<span class="tm-crm-chip">Invoice {{ item.invoice_number }}</span>{% endif %}
                     {% if item.total is not none %}<span class="tm-crm-chip">Total {{ item.total|pro_currency }}</span>{% endif %}
                     {% if item.status_label %}<span class="tm-crm-chip">Status {{ item.status_label }}</span>{% endif %}
                     {% if item.photo_count is not none %}<span class="tm-crm-chip">{{ item.photo_count }} after photo{% if item.photo_count != 1 %}s{% endif %}</span>{% endif %}
@@ -3045,6 +3046,9 @@
             metaRow.style.marginTop = "8px";
             if (item.source_label) {
               appendTextLine(metaRow, "tm-crm-chip", item.source_label);
+            }
+            if (item.invoice_number) {
+              appendTextLine(metaRow, "tm-crm-chip", `Invoice ${item.invoice_number}`);
             }
             if (item.total !== undefined && item.total !== null && item.total !== "") {
               appendTextLine(metaRow, "tm-crm-chip", `Total ${formatMoney(Number(item.total || 0))}`);

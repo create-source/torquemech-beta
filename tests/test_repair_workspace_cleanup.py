@@ -288,7 +288,17 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     "created_at": "2026-06-24T12:00:00",
                 }
             ],
-            [],
+            [
+                {
+                    "id": 9,
+                    "invoice_number": "TM-1009",
+                    "repair_record_id": 30,
+                    "repair_record_ids": "30",
+                    "repair_name": "Replace alternator",
+                    "grand_total": 400,
+                    "created_at": "2026-06-25T09:00:00",
+                }
+            ],
             [],
             [],
             [],
@@ -297,6 +307,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     "id": 50,
                     "repair_record_id": 30,
                     "repair_name": "Replace alternator",
+                    "completion_date": "2026-06-24",
                     "completed_at": "2026-06-24T13:00:00",
                     "created_at": "2026-06-24T13:00:00",
                     "workflow_source_type": "estimate",
@@ -311,8 +322,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(repaired["records"][0]["mileage"], 177000)
         self.assertEqual(repaired["records"][0]["source_label"], "Source: Estimate")
         self.assertEqual(repaired["records"][0]["total"], 400)
+        self.assertEqual(repaired["records"][0]["invoice_number"], "TM-1009")
+        self.assertEqual(repaired["records"][0]["invoice_url"], "/pro/customers/1/vehicles/1/invoices/9")
         self.assertEqual(repaired["records"][0]["status_label"], "Completed")
         self.assertEqual(repaired["records"][0]["photo_count"], 1)
+        self.assertEqual(repaired["records"][0]["url"], "/pro/customers/1/vehicles/1/repairs/30")
         self.assertEqual(repaired["records"][0]["action_label"], "Open Repair Record")
 
     def test_completion_event_timeline_fallback_includes_repair_details(self):
@@ -330,6 +344,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     "id": 51,
                     "repair_record_id": 31,
                     "repair_name": "Replace water pump",
+                    "completion_date": "",
                     "completed_at": "2026-06-24T13:00:00",
                     "created_at": "2026-06-24T13:00:00",
                     "workflow_source_type": "finding",
@@ -346,6 +361,47 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(repaired["source_label"], "Source: Finding")
         self.assertEqual(repaired["total"], 650)
         self.assertEqual(repaired["status_label"], "Completed")
+        self.assertEqual(repaired["date"], "2026-06-24T13:00:00")
+
+    def test_timeline_does_not_put_active_work_or_checklists_in_repaired_services(self):
+        timeline = pro_module.build_vehicle_timeline(
+            1,
+            1,
+            {"id": 1},
+            [],
+            [],
+            [
+                {
+                    "id": 41,
+                    "customer_id": 1,
+                    "vehicle_id": 1,
+                    "status": "Approved",
+                    "repair_work_status": "in_progress",
+                    "finding": "Brake pulsation",
+                    "recommendation": "Replace front rotors",
+                    "mileage": 177000,
+                    "finding_date": "2026-06-24",
+                    "created_at": "2026-06-24T09:00:00",
+                }
+            ],
+            [],
+            [],
+            repair_checklist_events=[
+                {
+                    "id": 88,
+                    "repair_record_id": 30,
+                    "task_name": "Road test",
+                    "completed_at": "2026-06-24T12:00:00",
+                    "created_at": "2026-06-24T11:00:00",
+                }
+            ],
+        )
+
+        self.assertEqual(timeline[0]["title"], "Repaired Services")
+        self.assertEqual(timeline[0]["records"], [])
+        self.assertEqual(timeline[3]["title"], "Findings")
+        self.assertEqual(timeline[3]["records"][0]["service_name"], "Brake pulsation")
+        self.assertEqual(timeline[4]["title"], "Approvals / Decisions")
 
     def test_photo_stage_labels_are_present(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
