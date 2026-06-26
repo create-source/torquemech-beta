@@ -2686,7 +2686,7 @@
               {% if item.status == "Open" %}
               <div class="tm-finding-estimate" data-finding-estimate>
                 <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">
-                  {% if item.labor_amount or item.parts_cost %}View / Update Estimate{% else %}Create Estimate / Recommended Repair{% endif %}
+                  {% if item.labor_amount or item.parts_cost %}Review Estimate{% else %}Create Estimate{% endif %}
                 </a>
               </div>
               {% endif %}
@@ -2791,7 +2791,7 @@
                   <span class="tm-finding-status-feedback" data-finding-status-feedback aria-live="polite"></span>
                 </form>
                 <div class="tm-repair-action-row">
-                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">View</a>
+                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">Review Finding</a>
                   <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
                 </div>
               </article>

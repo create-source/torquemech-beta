@@ -241,6 +241,84 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(completion["completion_mileage"], 151000)
         self.assertEqual(repair["mileage"], 151000)
 
+    def test_full_pro_finding_to_completion_to_invoice_workflow(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        finding_response = client.post(
+            "/pro/customers/1/vehicles/1/findings",
+            data={
+                "request_type": "labor",
+                "finding": "Front brake vibration",
+                "recommendation": "Replace front brake pads",
+                "labor_description": "Front Brake Pads Replacement",
+                "labor_hours": "1.2",
+                "labor_rate": "125",
+                "parts_cost": "115",
+                "labor_reason": "Pads below service limit.",
+                "severity": "Medium",
+                "status": "Approved",
+                "mileage": "150,000",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(finding_response.status_code, 303)
+        repair = dict(self.conn.execute("SELECT * FROM repair_records ORDER BY id DESC LIMIT 1").fetchone())
+        self.assertEqual(repair["status"], "Open")
+        self.assertEqual(repair["workflow_source_type"], "finding")
+
+        repair_detail = client.get(f"/pro/customers/1/vehicles/1/repairs/{repair['id']}")
+        self.assertEqual(repair_detail.status_code, 200)
+        self.assertIn("Status Approved", repair_detail.text)
+
+        completion_response = client.post(
+            f"/pro/customers/1/vehicles/1/repairs/{repair['id']}/completion",
+            data={
+                "completion_date": "",
+                "completion_mileage": "151,250",
+                "technician_notes": "Road tested.",
+                "completion_notes": "Brake vibration resolved.",
+                "final_inspection_passed": "1",
+                "final_inspection_notes": "Final check passed.",
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(completion_response.status_code, 303)
+        self.assertEqual(completion_response.headers["location"], "/pro/customers/1/vehicles/1#repair-workspace")
+        completion = pro_module.load_repair_completion(self.conn, repair["id"])
+        self.assertEqual(completion["completion_date"], "")
+
+        repairs = [dict(row) for row in self.conn.execute("SELECT * FROM repair_records").fetchall()]
+        findings = [dict(row) for row in self.conn.execute("SELECT * FROM findings_records").fetchall()]
+        repair_work_items = pro_module.build_repair_work_items({"id": 1, "mileage": 151250}, findings, [], repairs)
+        groups = pro_module.build_repair_workspace_groups({"id": 1}, repair_work_items, repairs)
+        self.assertEqual(groups["active"], [])
+        self.assertEqual(groups["recently_completed"][0]["workspace_status_label"], "Completed")
+
+        invoice_response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={"repair_record_id": str(repair["id"])},
+            follow_redirects=False,
+        )
+        self.assertEqual(invoice_response.status_code, 303)
+        self.assertEqual(invoice_response.headers["location"], "/pro/customers/1/vehicles/1/invoices/1")
+
+        invoice_detail = client.get("/pro/customers/1/vehicles/1/invoices/1")
+        invoice_pdf = client.get("/pro/customers/1/vehicles/1/invoices/1/pdf")
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(invoice_detail.status_code, 200)
+        self.assertIn("Invoice TM-1001", invoice_detail.text)
+        self.assertIn("Download PDF", invoice_detail.text)
+        self.assertEqual(invoice_pdf.status_code, 200)
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn("Repaired Services", vehicle_detail.text)
+        self.assertIn("Front Brake Pads Replacement", vehicle_detail.text)
+        self.assertIn("Invoice TM-1001", vehicle_detail.text)
+        self.assertIn("View Completed Repair", vehicle_detail.text)
+
 
 if __name__ == "__main__":
     unittest.main()

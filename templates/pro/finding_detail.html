@@ -93,7 +93,7 @@
     {% endif %}
     <div class="tm-finding-actions" style="margin-top:0;">
       <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, finding) }}">
-        {% if has_estimate %}View / Update Estimate{% else %}Create Estimate / Recommended Repair{% endif %}
+        {% if has_estimate %}Review Estimate{% else %}Create Estimate{% endif %}
       </a>
     </div>
   </section>
@@ -111,7 +111,7 @@
     </form>
     {% if finding.status == "Approved" and finding.linked_repair_record_id %}
     <div class="tm-finding-actions" style="margin-top:0;">
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Source: Finding Repair Job</a>
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
     </div>
     {% elif finding.status == "Approved" %}
     <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
@@ -126,7 +126,7 @@
       <input type="hidden" name="parts_cost" value="{% if finding.parts_cost is not none %}{{ finding.parts_cost }}{% endif %}">
       <input type="hidden" name="labor_cost" value="{% if finding.labor_amount is not none %}{{ finding.labor_amount }}{% endif %}">
       <input type="hidden" name="notes" value="{{ finding.labor_reason or finding.recommendation or finding.finding or '' }}">
-      <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
+      <button class="tm-btn tm-btn-primary" type="submit">Start Repair</button>
     </form>
     {% endif %}
   </section>
@@ -138,7 +138,7 @@
     <div style="color:#64748b;">Repair progress is managed from the linked repair execution record.</div>
     {% if finding.linked_repair_record_id %}
     <div class="tm-finding-actions" style="margin-top:0;">
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair</a>
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
     </div>
     {% endif %}
   </section>

@@ -1930,6 +1930,26 @@ def load_visual_references_for_vehicle(
 
 
 def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS maintenance_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          shop_id INTEGER,
+          service_type TEXT,
+          date_performed TEXT,
+          mileage_performed INTEGER,
+          interval_miles INTEGER,
+          interval_months INTEGER,
+          due_mileage INTEGER,
+          due_date TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
     columns = {row[1] for row in conn.execute("PRAGMA table_info(maintenance_records)").fetchall()}
     if "due_mileage" not in columns:
         conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_mileage INTEGER")
@@ -3188,6 +3208,8 @@ def ensure_findings_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE findings_records ADD COLUMN labor_reason TEXT")
     if "before_inspection_photo_paths" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN before_inspection_photo_paths TEXT")
+    if "severity" not in columns:
+        conn.execute("ALTER TABLE findings_records ADD COLUMN severity TEXT NOT NULL DEFAULT 'Low'")
     if "repair_work_status" not in columns:
         conn.execute("ALTER TABLE findings_records ADD COLUMN repair_work_status TEXT")
     if "repair_work_updated_at" not in columns:
@@ -3656,6 +3678,26 @@ def load_finding_history_records(
 
 
 def ensure_service_history_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS service_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          shop_id INTEGER,
+          service_title TEXT,
+          service_date TEXT,
+          mileage_at_service INTEGER,
+          service_notes TEXT,
+          labor_amount REAL,
+          parts_amount REAL,
+          estimate_total REAL,
+          actual_total REAL,
+          created_at TEXT,
+          updated_at TEXT
+        )
+        """
+    )
     columns = {row[1] for row in conn.execute("PRAGMA table_info(service_history)").fetchall()}
     if "labor_amount" not in columns:
         conn.execute("ALTER TABLE service_history ADD COLUMN labor_amount REAL")

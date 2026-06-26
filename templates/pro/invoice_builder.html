@@ -61,6 +61,22 @@
     padding: 14px;
     margin-top: 12px;
   }
+  @media (max-width: 760px) {
+    .tm-invoice-builder-panel {
+      padding: 14px;
+    }
+    .tm-invoice-builder-job {
+      grid-template-columns: 1fr;
+    }
+    .tm-invoice-builder-job input {
+      margin-top: 0;
+    }
+    .tm-invoice-builder-meta .tm-btn,
+    .tm-invoice-builder-panel > .tm-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
   .tm-invoice-builder-error {
     border: 1px solid rgba(185, 28, 28, 0.22);
     border-radius: 8px;

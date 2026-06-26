@@ -523,7 +523,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('aria-label="Expandable additional finding status groups"', vehicle_detail)
         self.assertIn('class="tm-history-summary-card tm-findings-status-card"', vehicle_detail)
         self.assertIn('data-finding-status-group="{{ group.label }}"', vehicle_detail)
-        self.assertIn("Create Estimate / Recommended Repair", vehicle_detail)
+        self.assertIn("Create Estimate", vehicle_detail)
+        self.assertIn("Review Estimate", vehicle_detail)
         self.assertIn("Customer Decision / Update Status", vehicle_detail)
         self.assertIn("Edit Finding", vehicle_detail)
         self.assertIn("build_finding_estimator_href(customer, vehicle, item)", vehicle_detail)
@@ -617,11 +618,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")
 
         self.assertIn("Recommended Repair Estimate", finding_detail)
-        self.assertIn("Create Estimate / Recommended Repair", finding_detail)
-        self.assertIn("Update Estimate", finding_detail)
+        self.assertIn("Create Estimate", finding_detail)
+        self.assertIn("Review Estimate", finding_detail)
         self.assertIn("Customer Decision", finding_detail)
         self.assertIn("Update Customer Decision", finding_detail)
-        self.assertIn("Open Source: Finding Repair Job", finding_detail)
+        self.assertIn("Open Repair Workspace", finding_detail)
+        self.assertIn("Start Repair", finding_detail)
 
     def test_repair_completion_persists_uploaded_after_photos(self):
         conn = sqlite3.connect(":memory:")
