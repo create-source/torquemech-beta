@@ -494,12 +494,16 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Final Inspection Comments", repair_detail)
         self.assertIn('name="final_inspection_passed"', repair_detail)
 
-    def test_vehicle_detail_moves_findings_inside_repair_workspace(self):
+    def test_vehicle_detail_keeps_add_finding_action_outside_repair_workspace(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        vehicle_card_idx = vehicle_detail.index('id="vehicle-information"')
+        add_finding_idx = vehicle_detail.index('aria-label="Add finding or recommended work"')
         workspace_idx = vehicle_detail.index('id="repair-workspace"')
         timeline_idx = vehicle_detail.index('id="vehicle-timeline"')
         findings_idx = vehicle_detail.index('id="recommendations-findings"')
 
+        self.assertLess(vehicle_card_idx, add_finding_idx)
+        self.assertLess(add_finding_idx, workspace_idx)
         self.assertLess(workspace_idx, timeline_idx)
         self.assertLess(workspace_idx, findings_idx)
         self.assertLess(findings_idx, timeline_idx)
@@ -531,6 +535,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertNotIn("Save Estimate / Recommended Repair", vehicle_detail)
         self.assertIn("Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.", vehicle_detail)
         self.assertIn("+ Add Finding / Recommended Work", vehicle_detail)
+        self.assertEqual(vehicle_detail.count("+ Add Finding / Recommended Work"), 1)
         self.assertIn("Declined / Deferred", vehicle_detail)
         self.assertIn('"statuses": ["Open"]', vehicle_detail)
         self.assertIn('"statuses": ["Approved"]', vehicle_detail)

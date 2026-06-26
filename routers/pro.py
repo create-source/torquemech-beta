@@ -4054,10 +4054,22 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         ).strip()
         if not service_name:
             continue
+        quantity = normalize_payload_quantity(item.get("quantity", item.get("qty", 1)))
+        display_service_name = str(
+            item.get("displayServiceText")
+            or item.get("display_service_name")
+            or item.get("display_service_text")
+            or ""
+        ).strip()
+        if not display_service_name:
+            display_service_name = estimate_service_name_with_quantity(service_name, quantity)
         labor_hours = optional_payload_float(item.get("laborHours", item.get("labor_hours")))
         labor_rate = optional_payload_float(item.get("laborRate", item.get("labor_rate")))
         labor_total = optional_payload_float(item.get("laborTotal", item.get("labor_total")))
         parts_total = optional_payload_float(item.get("partsTotal", item.get("parts_total")))
+        parts_unit_cost = optional_payload_float(item.get("partsUnitCost", item.get("parts_unit_cost")))
+        if parts_total is None and parts_unit_cost is not None:
+            parts_total = round(float(parts_unit_cost) * quantity, 2)
         grand_total = optional_payload_float(item.get("grandTotal", item.get("grand_total")))
         if labor_total is None and labor_hours is not None and labor_rate is not None:
             labor_total = round(labor_hours * labor_rate, 2)
@@ -4066,8 +4078,11 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         normalized_items.append(
             {
                 "index": idx,
-                "service_name": service_name[:240],
+                "service_name": display_service_name[:240],
+                "base_service_name": service_name[:240],
                 "service_code": str(item.get("serviceCode") or item.get("service_code") or "").strip()[:160],
+                "quantity": quantity,
+                "parts_unit_cost": parts_unit_cost,
                 "labor_hours": labor_hours,
                 "labor_rate": labor_rate,
                 "labor_total": labor_total,
@@ -4123,6 +4138,20 @@ def optional_payload_float(value: Any) -> float | None:
         return round(float(value), 2)
     except (TypeError, ValueError):
         return None
+
+
+def normalize_payload_quantity(value: Any) -> int:
+    try:
+        quantity = int(float(value or 1))
+    except (TypeError, ValueError):
+        quantity = 1
+    return max(1, quantity)
+
+
+def estimate_service_name_with_quantity(service_name: str, quantity: Any = 1) -> str:
+    name = str(service_name or "Service").strip() or "Service"
+    quantity_value = normalize_payload_quantity(quantity)
+    return f"{name} × {quantity_value}" if quantity_value > 1 else name
 
 
 def load_approval_record(

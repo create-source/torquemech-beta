@@ -10488,6 +10488,9 @@ from fastapi import Request
 class LineItemPDF(BaseModel):
     serviceCode: str
     serviceText: Optional[str] = None
+    displayServiceText: Optional[str] = None
+    quantity: int = Field(1, ge=1)
+    partsUnitCost: Optional[float] = Field(None, ge=0)
     pricingMode: Optional[str] = None
     status: Optional[str] = "recommended"
     flatRatePrice: Optional[float] = None
@@ -10580,6 +10583,16 @@ REPAIR_STATUS_LABELS = {
 def pdf_repair_status_label(value: Any) -> str:
     status = str(value or "").strip().lower()
     return REPAIR_STATUS_LABELS.get(status, "Recommended")
+
+
+def estimate_display_service_name(service_name: Any, quantity: Any = 1) -> str:
+    name = str(service_name or "Repair service").strip() or "Repair service"
+    try:
+        qty = int(quantity or 1)
+    except (TypeError, ValueError):
+        qty = 1
+    qty = max(1, qty)
+    return f"{name} × {qty}" if qty > 1 else name
 
 
 def pdf_multi_summary_approval_needed(
@@ -10837,7 +10850,10 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         grand_total = 0.0
         for it in (req.lineItems or []):
-            service_name = (it.serviceText or it.serviceCode or "Repair service").strip()
+            service_name = (
+                it.displayServiceText
+                or estimate_display_service_name(it.serviceText or it.serviceCode or "Repair service", it.quantity)
+            ).strip()
             service_name_lines = wrap_text(service_name, max_chars=title_max_chars)[:3]
             status_label = pdf_repair_status_label(it.status)
 

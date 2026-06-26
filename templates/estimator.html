@@ -275,8 +275,17 @@
           </div>
 
           <div class="pricing-control">
-            <label for="partsPrice">Parts Total (optional)</label>
+            <label for="serviceQuantity">Quantity</label>
+            <input id="serviceQuantity" type="number" inputmode="numeric" min="1" step="1" value="1" />
+            <div id="quantityHelp" class="tm-hint tm-field-helper" hidden>
+              Use quantity for coils, plugs, injectors, tires, or per-side parts.
+            </div>
+          </div>
+
+          <div class="pricing-control">
+            <label for="partsPrice">Parts Cost (optional)</label>
             <input id="partsPrice" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="0" />
+            <div id="partsTotalPreview" class="tm-hint tm-field-helper" aria-live="polite"></div>
           </div>
 
           <div class="pricing-control">
@@ -305,7 +314,7 @@
 
       <div class="labor-help">
         <span class="tm-hint">
-          You control hours, rate, parts, and total.
+          Labor hours stay editable. Adjust total labor for the full job.
         </span>
         
       </div>

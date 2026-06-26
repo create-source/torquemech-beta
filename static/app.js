@@ -902,6 +902,9 @@
   const laborHoursEl = $("laborHours");
   const laborHoursRangeEl = $("laborHoursRange");
   const partsPriceEl = $("partsPrice");
+  const serviceQuantityEl = $("serviceQuantity");
+  const quantityHelpEl = $("quantityHelp");
+  const partsTotalPreviewEl = $("partsTotalPreview");
   const laborRateEl = $("laborRate");
   const pricingModeEl = $("pricingMode");
   const flatRatePriceEl = $("flatRatePrice");
@@ -1577,6 +1580,58 @@
   let isAddingLineItem = false;
   let isGeneratingAllLines = false;
 
+  function normalizeQuantity(value) {
+    const parsed = Number.parseInt(String(value ?? "").replace(/[^\d]/g, ""), 10);
+    return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+  }
+
+  function serviceUsesEachPricing(serviceText = "") {
+    return /\(each\)/i.test(String(serviceText || ""));
+  }
+
+  function shouldShowQuantityForLine(it = {}) {
+    return normalizeQuantity(it.quantity) > 1 || serviceUsesEachPricing(it.serviceText);
+  }
+
+  function displayServiceNameWithQuantity(serviceText = "Service", quantity = 1) {
+    const cleanName = String(serviceText || "Service").trim() || "Service";
+    const qty = normalizeQuantity(quantity);
+    return qty > 1 ? `${cleanName} × ${qty}` : cleanName;
+  }
+
+  function getPartsUnitCost(it = {}) {
+    if (it.partsUnitCost != null) return normalizeMoneyValue(it.partsUnitCost);
+    return normalizeMoneyValue(it.partsPrice);
+  }
+
+  function getPartsTotal(it = {}) {
+    return getPartsUnitCost(it) * normalizeQuantity(it.quantity);
+  }
+
+  function getCurrentServiceLabelForQuantity() {
+    if (editingLineItem) return editingLineItem.serviceText || editingLineItem.serviceCode || "";
+    return serviceEl?.options?.[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl?.value || "";
+  }
+
+  function updateQuantityPricingPreview() {
+    if (serviceQuantityEl && normalizeQuantity(serviceQuantityEl.value) !== Number(serviceQuantityEl.value || 1)) {
+      serviceQuantityEl.value = String(normalizeQuantity(serviceQuantityEl.value));
+    }
+    const quantity = normalizeQuantity(serviceQuantityEl?.value);
+    const serviceLabel = getCurrentServiceLabelForQuantity();
+    const showQuantityHelp = quantity > 1 || serviceUsesEachPricing(serviceLabel);
+    if (quantityHelpEl) quantityHelpEl.hidden = !showQuantityHelp;
+    if (!partsTotalPreviewEl) return;
+    const unitParts = pricingInputNumber(partsPriceEl);
+    const partsTotal = unitParts * quantity;
+    if (showQuantityHelp || unitParts > 0) {
+      const noun = showQuantityHelp ? "Parts total" : "Parts total";
+      partsTotalPreviewEl.textContent = `${noun}: ${money(partsTotal)}${quantity > 1 || serviceUsesEachPricing(serviceLabel) ? ` (${money(unitParts)} × ${quantity})` : ""}`;
+    } else {
+      partsTotalPreviewEl.textContent = "";
+    }
+  }
+
   function createLineItemId() {
     if (window.crypto?.randomUUID) {
       return `line_${window.crypto.randomUUID()}`;
@@ -1850,6 +1905,8 @@
     const travelFee = normalizeMoneyValue(it?.travelFee);
     const laborHours = normalizeMoneyValue(it?.laborHours);
     const partsPrice = normalizeMoneyValue(it?.partsPrice);
+    const quantity = normalizeQuantity(it?.quantity);
+    const partsUnitCost = it?.partsUnitCost != null ? normalizeMoneyValue(it?.partsUnitCost) : (quantity > 1 || serviceUsesEachPricing(it?.serviceText) ? partsPrice / quantity : partsPrice);
     const laborRate = normalizeMoneyValue(it?.laborRate);
     const normalizedEstimate = Number(it?.estimate);
 
@@ -1872,7 +1929,9 @@
       flatRatePrice,
       travelFee,
       laborHours,
-      partsPrice,
+      quantity,
+      partsUnitCost,
+      partsPrice: Math.round(partsUnitCost * quantity * 100) / 100,
       laborRate,
       status: normalizeRepairStatus(it?.status),
       notes: (it?.notes || "").trim() || null,
@@ -2070,7 +2129,14 @@
     syncLivePricingFromInputs();
   });
   laborRateEl?.addEventListener("input", syncLivePricingFromInputs);
-  partsPriceEl?.addEventListener("input", syncLivePricingFromInputs);
+  partsPriceEl?.addEventListener("input", () => {
+    updateQuantityPricingPreview();
+    syncLivePricingFromInputs();
+  });
+  serviceQuantityEl?.addEventListener("input", () => {
+    updateQuantityPricingPreview();
+    syncLivePricingFromInputs();
+  });
   flatRatePriceEl?.addEventListener("input", syncLivePricingFromInputs);
   travelFeeEl?.addEventListener("input", syncLivePricingFromInputs);
 
@@ -2361,7 +2427,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     lineItems.forEach((it) => {
       const statusLabel = getRepairStatusLabel(it.status);
       const travelNote = Number(it.travelFee || 0) > 0 ? `Includes ${money(it.travelFee)} travel` : "";
-      lines.push(`- ${it.serviceText || "Repair service"}`);
+      lines.push(`- ${displayServiceNameWithQuantity(it.serviceText || "Repair service", it.quantity)}`);
       lines.push(`  Status: ${statusLabel}`);
       lines.push(`  Estimate: ${money(it.estimate)}`);
       if (it.pricingMode === "flat") lines.push("  Pricing: Flat-rate");
@@ -2389,7 +2455,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     const vehicle = [currentVehicle.year, currentVehicle.make, currentVehicle.displayModel || currentVehicle.model].filter(Boolean).join(" ");
     const serviceCount = lineItems.length;
     const serviceText = serviceCount === 1
-      ? lineItems[0]?.serviceText
+      ? displayServiceNameWithQuantity(lineItems[0]?.serviceText, lineItems[0]?.quantity)
       : `${serviceCount} Service Estimate`;
 
     return [vehicle, serviceText || "Repair Estimate"].filter(Boolean).join(" - ");
@@ -2447,7 +2513,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     const laborHours = normalizeMoneyValue(it.laborHours);
     const laborRate = normalizeMoneyValue(it.laborRate);
     const flatRatePrice = normalizeMoneyValue(it.flatRatePrice);
-    const partsPrice = normalizeMoneyValue(it.partsPrice);
+    const quantity = normalizeQuantity(it.quantity);
+    const partsUnitCost = getPartsUnitCost(it);
+    const partsPrice = getPartsTotal(it);
     const travelFee = normalizeMoneyValue(it.travelFee);
     const laborTotal = pricingMode === "flat" ? flatRatePrice : laborHours * laborRate;
     const total = Math.round(laborTotal + partsPrice + travelFee);
@@ -2458,6 +2526,8 @@ const confidenceEl = document.getElementById("laborConfidence");
       laborRate,
       flatRatePrice,
       laborTotal,
+      quantity,
+      partsUnitCost,
       partsPrice,
       hasParts: partsPrice > 0,
       travelFee,
@@ -2488,6 +2558,9 @@ const confidenceEl = document.getElementById("laborConfidence");
           id: it.id || createLineItemId(),
           serviceCode: String(it.serviceCode || "").trim(),
           serviceText: String(it.serviceText || it.serviceCode || "Service").trim(),
+          displayServiceText: displayServiceNameWithQuantity(it.serviceText || it.serviceCode || "Service", cost.quantity),
+          quantity: cost.quantity,
+          partsUnitCost: cost.partsUnitCost,
           pricingMode: cost.pricingMode,
           laborHours: cost.laborHours,
           laborRate: cost.laborRate,
@@ -2505,6 +2578,10 @@ const confidenceEl = document.getElementById("laborConfidence");
   function getVisibleLineItemPricingMeta(it = {}, outputOptions = getCustomerOutputOptions()) {
     const cost = getLineItemCostBreakdown(it);
     const pricingMeta = [];
+
+    if (shouldShowQuantityForLine(it)) {
+      pricingMeta.push({ label: "Qty", value: String(cost.quantity), kind: "quantity" });
+    }
 
     if (!outputOptions.showLaborColumn && !outputOptions.showPartsColumn) {
       return pricingMeta;
@@ -2562,7 +2639,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     if (showParts) {
-      const partsDetail = cost.hasParts ? "Parts subtotal" : "No parts added";
+      const partsDetail = cost.hasParts && (cost.quantity > 1 || serviceUsesEachPricing(it.serviceText))
+        ? `${money(cost.partsUnitCost)} × ${cost.quantity}`
+        : (cost.hasParts ? "Parts subtotal" : "No parts added");
       rows.push(`
         <div class="tm-cost-breakdown__row tm-cost-breakdown__row--parts${cost.hasParts ? "" : " is-empty"}">
           <span><strong>Parts</strong><em>${partsDetail}</em></span>
@@ -2604,7 +2683,9 @@ const confidenceEl = document.getElementById("laborConfidence");
       flatRatePrice: pricingInputNumber(flatRatePriceEl),
       travelFee: pricingInputNumber(travelFeeEl),
       laborHours: pricingInputNumber(laborHoursEl),
-      partsPrice: pricingInputNumber(partsPriceEl),
+      quantity: normalizeQuantity(serviceQuantityEl?.value),
+      partsUnitCost: pricingInputNumber(partsPriceEl),
+      partsPrice: pricingInputNumber(partsPriceEl) * normalizeQuantity(serviceQuantityEl?.value),
       laborRate: pricingInputNumber(laborRateEl),
     };
   }
@@ -2615,7 +2696,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (flatRatePriceEl) flatRatePriceEl.value = String(Number(it.flatRatePrice || 0));
     if (travelFeeEl) travelFeeEl.value = String(Number(it.travelFee || 0));
     if (laborHoursEl) laborHoursEl.value = String(Number(it.laborHours || 0));
-    if (partsPriceEl) partsPriceEl.value = String(Number(it.partsPrice || 0));
+    if (serviceQuantityEl) serviceQuantityEl.value = String(normalizeQuantity(it.quantity));
+    if (partsPriceEl) partsPriceEl.value = String(Number(getPartsUnitCost(it) || 0));
     if (laborRateEl) laborRateEl.value = String(Number(it.laborRate || 0));
     laborHoursTouched = true;
     togglePricingModeUI();
@@ -2631,7 +2713,9 @@ const confidenceEl = document.getElementById("laborConfidence");
       flatRatePrice: Number(it.flatRatePrice || 0),
       travelFee: Number(it.travelFee || 0),
       laborHours: Number(it.laborHours || 0),
-      partsPrice: Number(it.partsPrice || 0),
+      quantity: normalizeQuantity(it.quantity),
+      partsUnitCost: Number(getPartsUnitCost(it) || 0),
+      partsPrice: Number(getPartsTotal(it) || 0),
       laborRate: Number(it.laborRate || 0),
       notes: it.notes,
     };
@@ -4629,7 +4713,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           ${lineItems.map((it) => {
             const vehicleLabel = getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle());
             const serviceTotal = it.estimate != null ? money(it.estimate) : "Pending";
-            const serviceName = escapeServiceResultHtml(it.serviceText || "Service");
+            const serviceName = escapeServiceResultHtml(displayServiceNameWithQuantity(it.serviceText || "Service", it.quantity));
             const pricingMeta = getVisibleLineItemPricingMeta(it, outputOptions);
             return `
             <div class="tm-confirm-service-row">
@@ -4940,7 +5024,9 @@ const confidenceEl = document.getElementById("laborConfidence");
       flatRatePrice: pricingInputNumber(flatRatePriceEl),
       travelFee: pricingInputNumber(travelFeeEl),
       laborHours: pricingInputNumber(laborHoursEl),
-      partsPrice: pricingInputNumber(partsPriceEl),
+      quantity: normalizeQuantity(serviceQuantityEl?.value),
+      partsUnitCost: pricingInputNumber(partsPriceEl),
+      partsPrice: pricingInputNumber(partsPriceEl) * normalizeQuantity(serviceQuantityEl?.value),
       laborRate: pricingInputNumber(laborRateEl),
       notes: (notesEl?.value || "").trim() || null,
       customerName: (customerNameEl?.value || "").trim() || null,
@@ -4990,7 +5076,7 @@ const confidenceEl = document.getElementById("laborConfidence");
             <div class="tm-service-head">
               <div class="tm-service-head-main">
                 <div class="tm-service-title-row">
-                  <div class="tm-service-title">${it.serviceText || "Service"}</div>
+                  <div class="tm-service-title">${escapeServiceResultHtml(displayServiceNameWithQuantity(it.serviceText || "Service", it.quantity))}</div>
                   <label class="tm-repair-status-control" data-status="${it.status}">
                     <span>Repair Status</span>
                     <select
@@ -5484,8 +5570,9 @@ if (getEstimateHint) {
     if (laborHoursRangeEl) laborHoursRangeEl.textContent = "";
 
     laborHoursTouched = false;
-    laborHoursEl.value = "0";
-    partsPriceEl.value = "0";
+    if (laborHoursEl) laborHoursEl.value = "0";
+    if (partsPriceEl) partsPriceEl.value = "0";
+    if (serviceQuantityEl) serviceQuantityEl.value = "1";
     if (notesEl) notesEl.value = "";
 
     if (pricingModeEl) pricingModeEl.value = "hourly";
@@ -5493,6 +5580,7 @@ if (getEstimateHint) {
     if (flatRatePriceEl) flatRatePriceEl.value = "0";
     if (travelFeeEl) travelFeeEl.value = String(getPreferredTravelFee());
     togglePricingModeUI();
+    updateQuantityPricingPreview();
 
     // Unlock Add Service to Estimate
     readyForNextService = true;
@@ -5714,10 +5802,13 @@ if (getEstimateHint) {
       const pdfLineItems = lineItems.map((it) => ({
         serviceCode: it.serviceCode,
         serviceText: it.serviceText,
+        displayServiceText: displayServiceNameWithQuantity(it.serviceText, it.quantity),
+        quantity: normalizeQuantity(it.quantity),
+        partsUnitCost: Number(getPartsUnitCost(it) || 0),
         pricingMode: it.pricingMode,
         flatRatePrice: Number(it.flatRatePrice || 0),
         laborHours: Number(it.laborHours || 0),
-        partsPrice: Number(it.partsPrice || 0),
+        partsPrice: Number(getPartsTotal(it) || 0),
         laborRate: Number(it.laborRate || 0),
         travelFee: Number(it.travelFee || 0),
         estimate: it.estimate != null ? Number(it.estimate) : null,
@@ -5947,11 +6038,13 @@ if (getEstimateHint) {
     // inputs
     if (laborHoursEl) laborHoursEl.value = "0";
     if (partsPriceEl) partsPriceEl.value = "0";
+    if (serviceQuantityEl) serviceQuantityEl.value = "1";
     if (laborRateEl) laborRateEl.value = String(getPreferredLaborRate());
     if (pricingModeEl) pricingModeEl.value = "hourly";
     if (flatRatePriceEl) flatRatePriceEl.value = "0";
     if (travelFeeEl) travelFeeEl.value = String(getPreferredTravelFee());
     togglePricingModeUI();
+    updateQuantityPricingPreview();
     if (notesEl) notesEl.value = "";
     if (customerNameEl) customerNameEl.value = "";
     if (customerPhoneEl) customerPhoneEl.value = "";
@@ -6108,6 +6201,7 @@ if (getEstimateHint) {
     try {
       syncServiceSearchFromSelect();
       await loadServiceMeta(serviceEl.value);
+      updateQuantityPricingPreview();
       updateEstimateButtonState();
       void refreshPairedSuggestions();
     } catch (e) {
@@ -6130,6 +6224,7 @@ if (getEstimateHint) {
     }
 
     serviceEl.value = "";
+    updateQuantityPricingPreview();
     hidePairedSuggestions();
 
     if (categoryEl?.value && categorySelectionSource !== "manual") {
@@ -6183,6 +6278,7 @@ if (getEstimateHint) {
       service_name: serviceEl?.options?.[serviceEl.selectedIndex]?.textContent?.trim() || ""
     });
     await loadServiceMeta(serviceEl.value);
+    updateQuantityPricingPreview();
     updateEstimateButtonState();
     void refreshPairedSuggestions();
   });

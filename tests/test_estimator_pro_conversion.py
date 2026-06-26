@@ -234,6 +234,50 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(findings_count, 0)
         self.assertEqual(history_count, 0)
 
+    def test_quantity_estimate_conversion_preserves_display_name_and_parts_total(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        payload = self.conversion_payload()
+        payload["lineItems"] = [
+            {
+                "serviceText": "Ignition Coil Replacement (each)",
+                "displayServiceText": "Ignition Coil Replacement (each) × 4",
+                "quantity": 4,
+                "laborHours": 1.1,
+                "laborRate": 125,
+                "laborTotal": 137.5,
+                "partsUnitCost": 45,
+                "partsTotal": 180,
+                "grandTotal": 317.5,
+            }
+        ]
+        form_data = {
+            "estimate_payload": json.dumps(payload),
+            "customer_mode": "new",
+            "new_customer_name": "Mike Johnson",
+            "new_customer_phone": "555-222-1111",
+            "new_customer_email": "mike@test.com",
+            "vehicle_mode": "new",
+            "new_vehicle_year": "2016",
+            "new_vehicle_make": "Honda",
+            "new_vehicle_model": "Accord",
+            "service_index": "0",
+        }
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data=form_data,
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+        self.assertEqual(repair["repair_name"], "Ignition Coil Replacement (each) × 4")
+        self.assertEqual(repair["labor_hours"], 1.1)
+        self.assertEqual(repair["parts_cost"], 180)
+        self.assertEqual(repair["total_cost"], 317.5)
+
     def test_finding_estimate_conversion_creates_source_finding_repair_job(self):
         now = "2026-06-25T12:00:00"
         self.conn.execute(

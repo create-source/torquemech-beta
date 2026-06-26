@@ -1905,6 +1905,86 @@
     </form>
   </details>
 
+  <section class="tm-crm-panel" aria-label="Add finding or recommended work" style="margin-top:16px;">
+    <div class="tm-crm-kicker">Finding / Recommended Work</div>
+    <details class="tm-crm-disclosure" style="margin-top:10px;">
+      <summary>+ Add Finding / Recommended Work</summary>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings" enctype="multipart/form-data">
+        <div class="tm-history-empty" style="margin-top:12px;">Approved recommended repairs become repair jobs in the Repair Workspace.</div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="request_type">Request Type</label>
+          <select class="tm-input" id="request_type" name="request_type" data-finding-request-type>
+            <option value="finding" selected>Finding</option>
+            <option value="labor">Labor Request</option>
+          </select>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="finding">Problem Found</label>
+          <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600" placeholder="What was discovered or observed?"></textarea>
+        </div>
+        <section class="tm-photo-stage" aria-label="Before / Inspection Photos">
+          <strong>Before / Inspection Photos</strong>
+          <label class="tm-label" for="before_inspection_photos">Upload photos of the original problem before repair.</label>
+          <span>Upload up to 5 photos.</span>
+          <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+        </section>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="recommendation">Recommended Repair</label>
+          <textarea class="tm-input" id="recommendation" name="recommendation" rows="3" maxlength="1600" placeholder="What should be done?"></textarea>
+        </div>
+        <section class="tm-finding-labor-fields" data-finding-labor-fields hidden style="margin-top:12px;">
+          <h4 style="margin:0;">Estimated Labor / Parts / Total</h4>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="labor_description">Labor Description</label>
+            <textarea class="tm-input" id="labor_description" name="labor_description" rows="3" maxlength="1600"></textarea>
+          </div>
+          <div class="tm-crm-row" style="margin-top:12px;">
+            <div>
+              <label class="tm-label" for="finding_labor_hours">Labor Hours</label>
+              <input class="tm-input" id="finding_labor_hours" name="labor_hours" type="number" min="0" step="0.1" data-labor-hours>
+            </div>
+            <div>
+              <label class="tm-label" for="finding_labor_rate">Labor Rate</label>
+              <input class="tm-input" id="finding_labor_rate" name="labor_rate" type="text" inputmode="decimal" data-labor-rate>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="finding_labor_amount">Labor Amount</label>
+            <input class="tm-input" id="finding_labor_amount" name="labor_amount_display" type="text" readonly data-labor-amount>
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="labor_reason">Labor Reason</label>
+            <textarea class="tm-input" id="labor_reason" name="labor_reason" rows="3" maxlength="1200"></textarea>
+          </div>
+        </section>
+        <div class="tm-crm-row" style="margin-top:12px;">
+          <div>
+            <label class="tm-label" for="severity">Severity</label>
+            <select class="tm-input" id="severity" name="severity">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label class="tm-label" for="finding_mileage">Mileage</label>
+            <input class="tm-input" id="finding_mileage" name="mileage" type="text" inputmode="numeric" data-pro-mileage-input>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="finding_status">Customer Decision / Approval Status</label>
+          <select class="tm-input" id="finding_status" name="status" required>
+            <option value="Approved">Approved</option>
+            <option value="Open" selected>Open</option>
+            <option value="Declined">Declined</option>
+          </select>
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding / Recommended Work</button>
+      </form>
+    </details>
+  </section>
+
   <details class="tm-crm-panel" id="repair-workspace" aria-label="Repair workspace" style="margin-top:16px;" {% if estimate_conversion_success %}open{% endif %}>
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
@@ -2552,83 +2632,6 @@
       <div class="tm-crm-kicker">Additional Findings / Recommended Work</div>
       <h3 style="margin:4px 0 0;">Additional Findings / Recommended Work</h3>
       <p class="tm-pro-subtitle" style="margin:4px 0 0;">Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.</p>
-
-      <details class="tm-crm-disclosure" style="margin-top:16px;">
-        <summary>+ Add Finding / Recommended Work</summary>
-        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings" enctype="multipart/form-data">
-          <div class="tm-history-empty" style="margin-top:12px;">Approved recommended repairs become repair jobs in the Repair Workspace.</div>
-          <div style="margin-top:12px;">
-            <label class="tm-label" for="request_type">Request Type</label>
-            <select class="tm-input" id="request_type" name="request_type" data-finding-request-type>
-              <option value="finding" selected>Finding</option>
-              <option value="labor">Labor Request</option>
-            </select>
-          </div>
-          <div style="margin-top:12px;">
-            <label class="tm-label" for="finding">Problem Found</label>
-            <textarea class="tm-input" id="finding" name="finding" rows="3" maxlength="1600" placeholder="What was discovered or observed?"></textarea>
-          </div>
-          <section class="tm-photo-stage" aria-label="Before / Inspection Photos">
-            <strong>Before / Inspection Photos</strong>
-            <label class="tm-label" for="before_inspection_photos">Upload photos of the original problem before repair.</label>
-            <span>Upload up to 5 photos.</span>
-            <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/png,image/jpeg,image/webp" multiple>
-          </section>
-          <div style="margin-top:12px;">
-            <label class="tm-label" for="recommendation">Recommended Repair</label>
-            <textarea class="tm-input" id="recommendation" name="recommendation" rows="3" maxlength="1600" placeholder="What should be done?"></textarea>
-          </div>
-          <section class="tm-finding-labor-fields" data-finding-labor-fields hidden style="margin-top:12px;">
-            <h4 style="margin:0;">Estimated Labor / Parts / Total</h4>
-            <div style="margin-top:12px;">
-              <label class="tm-label" for="labor_description">Labor Description</label>
-              <textarea class="tm-input" id="labor_description" name="labor_description" rows="3" maxlength="1600"></textarea>
-            </div>
-            <div class="tm-crm-row" style="margin-top:12px;">
-              <div>
-                <label class="tm-label" for="finding_labor_hours">Labor Hours</label>
-                <input class="tm-input" id="finding_labor_hours" name="labor_hours" type="number" min="0" step="0.1" data-labor-hours>
-              </div>
-              <div>
-                <label class="tm-label" for="finding_labor_rate">Labor Rate</label>
-                <input class="tm-input" id="finding_labor_rate" name="labor_rate" type="text" inputmode="decimal" data-labor-rate>
-              </div>
-            </div>
-            <div style="margin-top:12px;">
-              <label class="tm-label" for="finding_labor_amount">Labor Amount</label>
-              <input class="tm-input" id="finding_labor_amount" name="labor_amount_display" type="text" readonly data-labor-amount>
-            </div>
-            <div style="margin-top:12px;">
-              <label class="tm-label" for="labor_reason">Labor Reason</label>
-              <textarea class="tm-input" id="labor_reason" name="labor_reason" rows="3" maxlength="1200"></textarea>
-            </div>
-          </section>
-          <div class="tm-crm-row" style="margin-top:12px;">
-            <div>
-              <label class="tm-label" for="severity">Severity</label>
-              <select class="tm-input" id="severity" name="severity">
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
-              </select>
-            </div>
-            <div>
-              <label class="tm-label" for="finding_mileage">Mileage</label>
-              <input class="tm-input" id="finding_mileage" name="mileage" type="text" inputmode="numeric" data-pro-mileage-input>
-            </div>
-          </div>
-          <div style="margin-top:12px;">
-            <label class="tm-label" for="finding_status">Customer Decision / Approval Status</label>
-            <select class="tm-input" id="finding_status" name="status" required>
-              <option value="Approved">Approved</option>
-              <option value="Open" selected>Open</option>
-              <option value="Declined">Declined</option>
-            </select>
-          </div>
-          <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Add Finding / Recommended Work</button>
-        </form>
-      </details>
 
       <div class="tm-findings-status-groups" aria-label="Expandable additional finding status groups">
         {% for group in [

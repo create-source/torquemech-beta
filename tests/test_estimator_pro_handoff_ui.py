@@ -53,6 +53,50 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertLess(handoff_idx, convert_idx)
         self.assertLess(convert_idx, final_idx)
 
+    def test_estimator_quantity_controls_and_line_item_display_are_present(self):
+        response = TestClient(main.app, base_url="http://localhost").get("/estimator")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id="serviceQuantity"', response.text)
+        self.assertIn("Use quantity for coils, plugs, injectors, tires, or per-side parts.", response.text)
+        self.assertIn("Labor hours stay editable. Adjust total labor for the full job.", response.text)
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+        self.assertIn("displayServiceNameWithQuantity", app_js)
+        self.assertIn("partsUnitCost", app_js)
+        self.assertIn("getPartsTotal(it)", app_js)
+
+    def test_pdf_generation_accepts_quantity_line_item(self):
+        client = TestClient(main.app, base_url="http://localhost")
+
+        response = client.post(
+            "/estimate/pdf_multi",
+            json={
+                "year": 2016,
+                "make": "Honda",
+                "model": "Accord",
+                "lineItems": [
+                    {
+                        "serviceCode": "ignition_coil_replacement",
+                        "serviceText": "Ignition Coil Replacement (each)",
+                        "displayServiceText": "Ignition Coil Replacement (each) × 4",
+                        "quantity": 4,
+                        "partsUnitCost": 45,
+                        "pricingMode": "hourly",
+                        "laborHours": 1.1,
+                        "partsPrice": 180,
+                        "laborRate": 125,
+                        "travelFee": 0,
+                        "estimate": 318,
+                    }
+                ],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["content-type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
 
 if __name__ == "__main__":
     unittest.main()
