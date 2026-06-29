@@ -2040,6 +2040,7 @@
     {% set in_progress_repair_items = repair_workspace_groups.in_progress|list %}
     {% set ready_to_complete_items = repair_workspace_groups.ready_to_complete|list %}
     {% set recently_completed_items = repair_workspace_groups.recently_completed|list %}
+    {% set ready_invoice_items = repair_workspace_groups.ready_for_invoice|list %}
     {% set workspace_sections = [
       {"title": "Open Repairs", "items": open_repair_items, "empty": "No active repairs yet. Create one from a finding, estimate, or manual repair."},
       {"title": "Approved Repairs", "items": approved_repair_items, "empty": "No approved repairs waiting to start."},
@@ -2050,10 +2051,11 @@
     <section class="tm-workspace-subsection" aria-label="Active repair jobs">
       <div class="tm-crm-kicker">Active Work Board</div>
       <h3 style="margin:4px 0 0;">Active Repair Jobs</h3>
+      {% if ready_invoice_items %}
       <div class="tm-repair-card-actions" style="margin-top:10px;">
         <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/new">Create Final Invoice</a>
-        <a class="tm-btn tm-btn-secondary" href="#vehicle-timeline">Vehicle Timeline</a>
       </div>
+      {% endif %}
       {% if not active_repair_work_items %}
       <div class="tm-history-empty" style="margin-top:12px;">No active repairs yet. Create one from a finding, estimate, or manual repair.</div>
       {% endif %}

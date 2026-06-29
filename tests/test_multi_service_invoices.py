@@ -266,6 +266,21 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn(expected_title, vehicle_detail.text)
         self.assertNotIn(f"{quantity_marker} 4 {quantity_marker} 4", vehicle_detail.text)
 
+    def test_empty_repair_workspace_hides_timeline_and_invoice_header_actions(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn('id="vehicle-timeline"', vehicle_detail.text)
+        self.assertNotIn('href="#vehicle-timeline">Vehicle Timeline</a>', vehicle_detail.text)
+        workspace_start = vehicle_detail.text.index('id="repair-workspace"')
+        workspace_end = vehicle_detail.text.index('id="recommendations-findings"')
+        workspace_html = vehicle_detail.text[workspace_start:workspace_end]
+        self.assertNotIn("Create Final Invoice", workspace_html)
+
     def test_old_single_job_invoice_still_loads_as_one_service(self):
         self.insert_repair(20, "Alternator Replacement", 1.5, 120, 220)
         self.conn.execute(
