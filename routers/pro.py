@@ -2172,7 +2172,20 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
 
 
 def invoice_number_for(invoice_id: int, created_at: str) -> str:
-    return f"TM-{1000 + int(invoice_id):04d}"
+    return f"TM-INV-{int(invoice_id):04d}"
+
+
+def next_invoice_number(conn: sqlite3.Connection, invoice_id: int) -> str:
+    highest = 0
+    for row in conn.execute("SELECT invoice_number FROM invoices").fetchall():
+        number = str(row["invoice_number"] or "")
+        match = re.fullmatch(r"TM-INV-(\d+)", number)
+        if not match:
+            match = re.fullmatch(r"TM-(\d+)", number)
+        if match:
+            highest = max(highest, int(match.group(1)))
+    next_number = highest + 1 if highest else int(invoice_id)
+    return f"TM-INV-{next_number:04d}"
 
 
 def load_invoice_for_repair(
@@ -2206,35 +2219,65 @@ def load_invoice_for_repair(
     )
 
 
-def invoice_source_label(repair: dict[str, Any]) -> str:
-    return repair_workspace_source_label(repair)
+def clean_invoice_repair_notes(
+    notes: Any,
+    *,
+    service_title: str = "",
+    source_recommendation: str = "",
+) -> str:
+    text = str(notes or "").replace("\r", "\n").strip()
+    if not text:
+        return ""
+    internal_prefixes = (
+        "source:",
+        "created from estimator",
+        "created from approved finding",
+        "recommended repair:",
+    )
+    cleaned_lines: list[str] = []
+    for raw_line in re.split(r"[\n;]+", text):
+        line = re.sub(r"\s+", " ", raw_line).strip(" -")
+        if not line:
+            continue
+        lowered = line.lower()
+        if lowered.startswith(internal_prefixes):
+            continue
+        line = re.sub(r"\bSource:\s*(Finding|Estimate|Manual Repair|Approved finding)\b", "", line, flags=re.I)
+        line = re.sub(r"\bRecommended Repair:\s*", "", line, flags=re.I)
+        line = re.sub(r"\s+", " ", line).strip(" -")
+        if not line:
+            continue
+        if service_title and line.lower() == service_title.lower():
+            continue
+        if source_recommendation and line.lower() == source_recommendation.lower():
+            continue
+        if line not in cleaned_lines:
+            cleaned_lines.append(line)
+    return "\n".join(cleaned_lines)
 
 
 def invoice_item_display_record(record: dict[str, Any]) -> dict[str, Any]:
     item = dict(record)
     totals = repair_cost_totals(item)
     item["service_title"] = item.get("repair_name") or "Repair"
-    item["source_label"] = invoice_source_label(item)
     item["labor_total"] = totals["labor_total"]
     item["parts_total"] = totals["parts_total"]
     item["grand_total"] = totals["grand_total"]
     item["labor_rate"] = totals["labor_rate"]
     item["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
-    item["repair_notes"] = str(item.get("repair_notes") or item.get("notes") or "").strip()
     item["completion_notes"] = str(item.get("completion_notes") or "").strip()
     item["final_inspection_passed"] = 1 if item.get("final_inspection_passed") else 0
     item["final_inspection_status"] = "Passed" if item["final_inspection_passed"] else "Not marked passed"
     item["final_inspection_notes"] = str(item.get("final_inspection_notes") or "").strip()
     source_finding = str(item.get("source_finding") or "").strip()
     source_recommendation = str(item.get("source_recommendation") or "").strip()
-    item["inspection_finding_source"] = "\n".join(
-        part
-        for part in [
-            source_finding and f"Problem Found: {source_finding}",
-            source_recommendation and f"Recommended Repair: {source_recommendation}",
-        ]
-        if part
+    item["repair_notes"] = clean_invoice_repair_notes(
+        item.get("repair_notes") or item.get("notes") or item.get("completion_notes") or "",
+        service_title=item["service_title"],
+        source_recommendation=source_recommendation,
     )
+    for internal_key in ("notes", "source_finding", "source_recommendation"):
+        item.pop(internal_key, None)
     return item
 
 
@@ -2329,13 +2372,24 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
     record["repair_notes"] = primary.get("repair_notes") or ""
     record["completion_notes"] = primary.get("completion_notes") or ""
     record["final_inspection_notes"] = primary.get("final_inspection_notes") or ""
-    record["inspection_finding_source"] = primary.get("inspection_finding_source") or ""
+    completed_dates = sorted(
+        {
+            str(item.get("completed_at") or "").strip()[:10]
+            for item in items
+            if str(item.get("completed_at") or "").strip()
+        }
+    )
+    inspections = {item.get("final_inspection_status") or "Not marked passed" for item in items}
+    record["completion_summary_date"] = completed_dates[0] if len(completed_dates) == 1 else ""
+    record["completion_summary_status"] = (
+        inspections.pop() if len(inspections) == 1 else ("Mixed" if inspections else "Not marked passed")
+    )
     return record
 
 
 def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
-    if (repair.get("status") or "") not in {"Completed", "Open"}:
-        return []
+    if (repair.get("status") or "") != "Completed":
+        return ["Final invoice can only include completed repair work."]
     totals = repair_cost_totals(repair)
     if totals["grand_total"] <= 0:
         return [
@@ -2563,7 +2617,7 @@ def create_invoice_for_repairs(
             """,
             (invoice_id, repair["id"], now),
         )
-    invoice_number = invoice_number_for(invoice_id, now)
+    invoice_number = next_invoice_number(conn, invoice_id)
     conn.execute(
         "UPDATE invoices SET invoice_number = ? WHERE id = ?",
         (invoice_number, invoice_id),
@@ -2641,7 +2695,6 @@ INVOICE_PDF_DEFAULT_OPTIONS = {
     "show_parts_total": True,
     "show_repair_notes": True,
     "show_final_inspection_notes": False,
-    "show_inspection_finding_source": False,
 }
 
 
@@ -2699,11 +2752,26 @@ def build_invoice_pdf_bytes(
         if y < 80:
             c.showPage()
             y = h - 54
+        c.setFillColorRGB(0, 0, 0)
         c.setFont("Helvetica-Bold", 9)
         c.drawString(left, y, label)
         c.setFont("Helvetica", 10)
         c.drawString(left + 120, y, str(value or "-"))
         y -= 15
+
+    def service_row(label: str, value: Any, *, emphasis: bool = False) -> None:
+        nonlocal y
+        if y < 80:
+            c.showPage()
+            y = h - 54
+        c.setFillColorRGB(0.38, 0.45, 0.55)
+        c.setFont("Helvetica-Bold" if emphasis else "Helvetica", 9)
+        c.drawString(left + 18, y, label)
+        c.setFillColorRGB(0, 0, 0)
+        c.setFont("Helvetica-Bold" if emphasis else "Helvetica", 10)
+        display_value = value if isinstance(value, str) else str(value or "-")
+        c.drawRightString(right, y, display_value)
+        y -= 14 if emphasis else 13
 
     section("Customer")
     row("Name", customer_name(customer))
@@ -2732,35 +2800,45 @@ def build_invoice_pdf_bytes(
             note_y -= 13
         y = note_y - 10
 
-    section("Included Services")
+    section("Completed Services")
     for index, item in enumerate(invoice.get("items") or [], start=1):
         if y < 150:
             c.showPage()
             y = h - 54
+        if index > 1:
+            c.setStrokeColorRGB(0.84, 0.87, 0.91)
+            c.line(left, y, right, y)
+            c.setStrokeColorRGB(0, 0, 0)
+            y -= 14
+        c.setFillColorRGB(0, 0, 0)
         c.setFont("Helvetica-Bold", 11)
-        c.drawString(left, y, f"{index}. {item.get('service_title') or 'Repair'}")
-        c.setFont("Helvetica", 9)
-        c.drawRightString(right, y, format_currency(item.get("grand_total")) or "$0.00")
-        y -= 15
-        row("Source", item.get("source_label") or "-")
-        if options["show_completion_date"]:
-            row("Completion Date", format_pro_date(item.get("completed_at")) or "-")
+        title = f"{index}. {item.get('service_title') or 'Repair'}"
+        title_lines = pdf_lines(title, 66)
+        for line in title_lines:
+            c.drawString(left, y, line)
+            y -= 13
+        y -= 5
         if options["show_labor_hours"]:
-            row("Labor Hours", item.get("labor_hours") if item.get("labor_hours") is not None else "-")
+            service_row("Labor Hours", item.get("labor_hours") if item.get("labor_hours") is not None else "-")
         if options["show_labor_rate"]:
-            row("Labor Rate", f"{format_currency(item.get('labor_rate'))}/hr" if item.get("labor_rate") is not None else "-")
+            service_row("Labor Rate", f"{format_currency(item.get('labor_rate'))}/hr" if item.get("labor_rate") is not None else "-")
         if options["show_labor_total"]:
-            row("Labor Total", format_currency(item.get("labor_total")) or "$0.00")
+            service_row("Labor", format_currency(item.get("labor_total")) or "$0.00")
         if options["show_parts_total"]:
-            row("Parts Total", format_currency(item.get("parts_total")) or "$0.00")
-        if options["show_repair_notes"]:
-            notes_block("Repair Notes", item.get("repair_notes") or "-")
-        row("Final Inspection", item.get("final_inspection_status") or "Not marked passed")
+            service_row("Parts", format_currency(item.get("parts_total")) or "$0.00")
+        service_row("Line Total", format_currency(item.get("grand_total")) or "$0.00", emphasis=True)
+        y -= 3
+        if options["show_repair_notes"] and item.get("repair_notes"):
+            notes_block("Notes", item.get("repair_notes"))
         if options["show_final_inspection_notes"]:
             notes_block("Final Inspection Comments", item.get("final_inspection_notes") or "-")
-        if options["show_inspection_finding_source"]:
-            notes_block("Inspection Finding", item.get("inspection_finding_source") or "-", 10)
-        y -= 4
+        y -= 6
+
+    if invoice.get("items"):
+        section("Completion Summary")
+        if options["show_completion_date"]:
+            row("Completion Date", format_pro_date(invoice.get("completion_summary_date")) or "-")
+        row("Final Inspection", invoice.get("completion_summary_status") or "Not marked passed")
 
     c.setFont("Helvetica-Bold", 12)
     c.drawString(left, y, "Totals")
@@ -7932,6 +8010,7 @@ def pro_invoice_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        shop_name = load_shop_name(conn)
     finally:
         conn.close()
 
@@ -7942,6 +8021,7 @@ def pro_invoice_detail(
             "customer": customer,
             "vehicle": vehicle,
             "invoice": invoice,
+            "shop_name": shop_name,
         },
     )
 

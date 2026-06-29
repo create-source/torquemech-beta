@@ -104,7 +104,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         )
         self.conn.commit()
 
-    def insert_repair(self, repair_id, name, labor_hours, labor_rate, parts, source="estimate"):
+    def insert_repair(self, repair_id, name, labor_hours, labor_rate, parts, source="estimate", status="Completed", notes=None):
         now = "2026-06-25T12:00:00"
         labor_total = round(labor_hours * labor_rate, 2)
         self.conn.execute(
@@ -114,7 +114,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
               labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
               workflow_source_type, status, completed_at, notes, created_at
             )
-            VALUES (?, 1, 1, ?, '2026-06-25', 150000, ?, ?, ?, ?, ?, ?, 'Completed', ?, ?, ?)
+            VALUES (?, 1, 1, ?, '2026-06-25', 150000, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 repair_id,
@@ -125,8 +125,9 @@ class MultiServiceInvoiceTests(unittest.TestCase):
                 labor_total,
                 labor_total + parts,
                 source,
+                status,
                 now,
-                f"Source: {source.title()}",
+                notes if notes is not None else f"Source: {source.title()}",
                 now,
             ),
         )
@@ -160,7 +161,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.conn.commit()
 
         self.assertEqual(invoice["service_count"], 2)
-        self.assertEqual(invoice["invoice_number"], "TM-1001")
+        self.assertEqual(invoice["invoice_number"], "TM-INV-0001")
         self.assertEqual(invoice["labor_total"], 360)
         self.assertEqual(invoice["parts_total"], 295)
         self.assertEqual(invoice["grand_total"], 655)
@@ -181,18 +182,54 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         pdf = client.get("/pro/customers/1/vehicles/1/invoices/1/pdf?show_labor_hours=1&show_labor_rate=1")
 
         self.assertEqual(detail.status_code, 200)
-        self.assertIn("Invoice TM-1001", detail.text)
-        self.assertIn("<strong>TM-1001</strong>", detail.text)
-        self.assertIn("Included Services", detail.text)
+        self.assertIn("Invoice TM-INV-0001", detail.text)
+        self.assertIn("<strong>TM-INV-0001</strong>", detail.text)
+        self.assertIn("Completed Services", detail.text)
         self.assertIn("Front Brake Pads Replacement", detail.text)
         self.assertIn("Front Brake Rotors Replacement", detail.text)
         self.assertIn("Final Inspection", detail.text)
         self.assertIn("Passed", detail.text)
-        self.assertIn("Final Inspection Comments", detail.text)
+        self.assertEqual(detail.text.count("Final Inspection"), 1)
+        self.assertNotIn("Source: Finding", detail.text)
+        self.assertNotIn("Recommended Repair: Replace", detail.text)
         self.assertEqual(pdf.status_code, 200)
         self.assertEqual(pdf.headers["content-type"], "application/pdf")
         self.assertTrue(pdf.content.startswith(b"%PDF"))
-        self.assertIn(b"TM-1001", pdf.content)
+        self.assertIn(b"TM-INV-0001", pdf.content)
+        self.assertNotIn(b"Source: Finding", pdf.content)
+
+    def test_invoice_notes_hide_internal_generated_text(self):
+        self.conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, vehicle_id, customer_id, finding, recommendation, status, mileage, finding_date, created_at
+            )
+            VALUES (99, 1, 1, 'Cylinder misfire', 'Replace', 'Completed', 150000, '2026-06-25', '2026-06-25T12:00:00')
+            """
+        )
+        self.insert_repair(
+            12,
+            "Ignition Coil Replacement",
+            1.0,
+            150,
+            45,
+            "finding",
+            notes="Source: Finding Recommended Repair: Replace Recommended Repair: Replace",
+        )
+        self.conn.execute("UPDATE repair_records SET workflow_source_id = 99 WHERE id = 12")
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 12)
+
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T12:30:00",
+        )
+
+        self.assertEqual(invoice["items"][0]["repair_notes"], "")
+        self.assertNotIn("Source: Finding", str(invoice))
+        self.assertNotIn("Recommended Repair", str(invoice))
 
     def test_old_single_job_invoice_still_loads_as_one_service(self):
         self.insert_repair(20, "Alternator Replacement", 1.5, 120, 220)
@@ -213,6 +250,54 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(invoice["invoice_number"], "INV-20260625-0007")
         self.assertEqual(invoice["items"][0]["service_title"], "Alternator Replacement")
         self.assertEqual(invoice["grand_total"], 400)
+
+    def test_invoice_number_continues_from_existing_tm_inv_numbers(self):
+        self.insert_repair(21, "Battery Replacement", 0.5, 120, 185)
+        self.insert_repair(22, "Starter Replacement", 1.5, 120, 225)
+        self.conn.execute(
+            """
+            INSERT INTO invoices (
+              id, invoice_number, repair_record_id, customer_id, vehicle_id,
+              labor_total, parts_total, grand_total, created_at
+            )
+            VALUES (8, 'TM-INV-0007', 21, 1, 1, 60, 185, 245, '2026-06-25T13:00:00')
+            """
+        )
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 22)
+
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T14:00:00",
+        )
+
+        self.assertEqual(invoice["invoice_number"], "TM-INV-0008")
+
+    def test_invoice_number_uses_invoice_id_when_only_date_legacy_numbers_exist(self):
+        self.insert_repair(23, "Alternator Replacement", 1.5, 120, 220)
+        self.insert_repair(24, "Serpentine Belt Replacement", 0.8, 120, 65)
+        self.conn.execute(
+            """
+            INSERT INTO invoices (
+              id, invoice_number, repair_record_id, customer_id, vehicle_id,
+              labor_total, parts_total, grand_total, created_at
+            )
+            VALUES (7, 'INV-20260625-0007', 23, 1, 1, 180, 220, 400, '2026-06-25T13:00:00')
+            """
+        )
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 24)
+
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T14:00:00",
+        )
+
+        self.assertEqual(invoice["invoice_number"], "TM-INV-0008")
 
     def test_repair_completion_redirects_to_repair_workspace(self):
         self.insert_repair(30, "Water Pump Replacement", 2.0, 120, 180)
@@ -310,14 +395,28 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         vehicle_detail = client.get("/pro/customers/1/vehicles/1")
 
         self.assertEqual(invoice_detail.status_code, 200)
-        self.assertIn("Invoice TM-1001", invoice_detail.text)
+        self.assertIn("Invoice TM-INV-0001", invoice_detail.text)
         self.assertIn("Download PDF", invoice_detail.text)
         self.assertEqual(invoice_pdf.status_code, 200)
         self.assertEqual(vehicle_detail.status_code, 200)
         self.assertIn("Repaired Services", vehicle_detail.text)
         self.assertIn("Front Brake Pads Replacement", vehicle_detail.text)
-        self.assertIn("Invoice TM-1001", vehicle_detail.text)
+        self.assertIn("Invoice TM-INV-0001", vehicle_detail.text)
         self.assertIn("View Completed Repair", vehicle_detail.text)
+
+    def test_invoice_creation_rejects_open_declined_deferred_and_approved_work(self):
+        statuses = ["Open", "Approved", "Declined", "Deferred"]
+        for idx, status in enumerate(statuses, start=40):
+            self.insert_repair(idx, f"{status} Repair", 1.0, 100, 10, status=status)
+            repair = pro_module.load_repair_record(self.conn, 1, 1, idx)
+            with self.assertRaises(pro_module.HTTPException):
+                pro_module.create_invoice_for_repairs(
+                    self.conn,
+                    repairs=[repair],
+                    customer_id=1,
+                    vehicle_id=1,
+                    now="2026-06-25T12:30:00",
+                )
 
 
 if __name__ == "__main__":

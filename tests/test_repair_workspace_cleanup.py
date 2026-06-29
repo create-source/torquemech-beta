@@ -255,7 +255,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "labor_rate": 120,
                 "parts_cost": 30,
                 "is_invoiced": True,
-                "invoice_number": "TM-1003",
+                "invoice_number": "TM-INV-1003",
                 "invoice_url": "/pro/customers/1/vehicles/1/invoices/3",
             },
         ]
@@ -268,7 +268,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(groups["ready_for_invoice"][0]["repair_work_status_label"], "Ready for Invoice")
         self.assertEqual(groups["ready_for_invoice"][0]["source_action_label"], "View Source Finding")
         self.assertEqual([item["title"] for item in groups["invoiced"]], ["Brake fluid"])
-        self.assertEqual(groups["invoiced"][0]["invoice_number"], "TM-1003")
+        self.assertEqual(groups["invoiced"][0]["invoice_number"], "TM-INV-1003")
         self.assertEqual(groups["invoiced"][0]["source_action_label"], "View Source Estimate")
 
     def test_completed_repairs_render_in_vehicle_timeline_repaired_services(self):
@@ -291,7 +291,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             [
                 {
                     "id": 9,
-                    "invoice_number": "TM-1009",
+                    "invoice_number": "TM-INV-1009",
                     "repair_record_id": 30,
                     "repair_record_ids": "30",
                     "repair_name": "Replace alternator",
@@ -322,7 +322,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(repaired["records"][0]["mileage"], 177000)
         self.assertEqual(repaired["records"][0]["source_label"], "Source: Estimate")
         self.assertEqual(repaired["records"][0]["total"], 400)
-        self.assertEqual(repaired["records"][0]["invoice_number"], "TM-1009")
+        self.assertEqual(repaired["records"][0]["invoice_number"], "TM-INV-1009")
         self.assertEqual(repaired["records"][0]["invoice_url"], "/pro/customers/1/vehicles/1/invoices/9")
         self.assertEqual(repaired["records"][0]["status_label"], "Completed")
         self.assertEqual(repaired["records"][0]["photo_count"], 1)
@@ -616,8 +616,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Already Invoiced", invoice_builder)
 
     def test_invoice_number_helper_uses_tm_sequence(self):
-        self.assertEqual(pro_module.invoice_number_for(1, "2026-06-25T12:30:00"), "TM-1001")
-        self.assertEqual(pro_module.invoice_number_for(4, "2026-06-25T12:30:00"), "TM-1004")
+        self.assertEqual(pro_module.invoice_number_for(1, "2026-06-25T12:30:00"), "TM-INV-0001")
+        self.assertEqual(pro_module.invoice_number_for(4, "2026-06-25T12:30:00"), "TM-INV-0004")
 
     def test_finding_detail_has_estimate_and_customer_decision_actions(self):
         finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")
@@ -770,10 +770,27 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(payload["vehicle"]["mileage"], 177000)
         self.assertIsNone(blank_payload["vehicle"]["mileage"])
 
+    def test_estimator_customer_quote_phone_fields_use_hyphen_mask(self):
+        estimator = (ROOT / "templates" / "estimator.html").read_text(encoding="utf-8")
+        app_js = (ROOT / "static" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="customerPhone" type="tel" placeholder="###-###-####"', estimator)
+        self.assertIn('id="businessPhone" type="tel"', estimator)
+        self.assertIn("function formatPhone", app_js)
+        self.assertIn("bindEstimatorPhoneInput(customerPhoneEl)", app_js)
+        self.assertIn("bindEstimatorPhoneInput(businessPhoneEl)", app_js)
+        self.assertIn("phoneValue(customerPhoneEl)", app_js)
+
     def test_mileage_formats_with_commas_and_parses_clean(self):
         self.assertEqual(pro_module.format_mileage(120000), "120,000")
         self.assertEqual(pro_module.format_mileage("177000"), "177,000")
         self.assertEqual(pro_module.optional_int({"mileage": "177,000"}, "mileage"), 177000)
+
+    def test_phone_formats_with_hyphens_and_parses_raw_digits(self):
+        self.assertEqual(pro_module.format_phone("2223334444"), "222-333-4444")
+        self.assertEqual(pro_module.format_phone("1 (222) 333-4444"), "222-333-4444")
+        self.assertEqual(pro_module.clean_phone("222-333-4444"), "2223334444")
+        self.assertEqual(pro_module.clean_phone("1-222-333-4444"), "2223334444")
 
     def test_parts_sources_section_is_visible_on_workspace_cards(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
@@ -806,8 +823,28 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("/static/pro_form_helpers.js", finding_edit)
         self.assertIn("/static/pro_form_helpers.js", maintenance_detail)
         self.assertIn("function formatPhone", helper)
+        self.assertIn("return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`", helper)
         self.assertIn("function formatMileage", helper)
         self.assertIn("normalizeMileageBeforeSubmit", helper)
+
+    def test_pro_date_fields_use_native_picker_with_calendar_and_clear_controls(self):
+        helper = (ROOT / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
+        repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
+        maintenance_detail = (ROOT / "templates" / "pro" / "maintenance_detail.html").read_text(encoding="utf-8")
+        repair_edit = (ROOT / "templates" / "pro" / "repair_edit.html").read_text(encoding="utf-8")
+        finding_edit = (ROOT / "templates" / "pro" / "finding_edit.html").read_text(encoding="utf-8")
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn('id="completion_date" name="completion_date" type="date"', repair_detail)
+        self.assertIn('id="date_performed" name="date_performed" type="date"', maintenance_detail)
+        self.assertIn('id="due_date" name="due_date" type="date"', maintenance_detail)
+        self.assertIn('id="repair_date" name="repair_date" type="date"', repair_edit)
+        self.assertIn('id="finding_date" name="finding_date" type="date"', finding_edit)
+        self.assertIn('name="repair_date" type="date"', vehicle_detail)
+        self.assertIn("tm-date-picker-button", helper)
+        self.assertIn("tm-date-clear-button", helper)
+        self.assertIn("input.showPicker", helper)
+        self.assertIn('scope.querySelectorAll(\'input[type="date"]\').forEach(bindDateInput)', helper)
 
 
 if __name__ == "__main__":

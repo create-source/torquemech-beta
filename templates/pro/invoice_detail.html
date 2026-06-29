@@ -15,7 +15,24 @@
   .tm-invoice-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
+  }
+  .tm-invoice-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+  .tm-invoice-heading {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.85rem;
+    letter-spacing: 0;
+  }
+  .tm-invoice-header-right {
+    text-align: right;
   }
   .tm-invoice-field {
     display: grid;
@@ -88,15 +105,49 @@
     border: 1px solid rgba(15, 23, 42, 0.1);
     border-radius: 8px;
     background: #fff;
-    padding: 14px;
+    padding: 16px;
   }
   .tm-invoice-service h3 {
     margin: 0;
     color: #0f172a;
   }
+  .tm-invoice-service-money {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .tm-invoice-service-money div {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px;
+  }
+  .tm-invoice-service-money span {
+    display: block;
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .tm-invoice-service-money strong {
+    display: block;
+    margin-top: 4px;
+    color: #0f172a;
+  }
+  .tm-invoice-summary {
+    border: 1px solid rgba(14, 116, 144, 0.16);
+    border-radius: 8px;
+    background: #f0fdfa;
+    padding: 14px;
+    margin-top: 18px;
+  }
   @media (max-width: 760px) {
     .tm-invoice-grid,
-    .tm-invoice-options { grid-template-columns: 1fr; }
+    .tm-invoice-options,
+    .tm-invoice-service-money { grid-template-columns: 1fr; }
+    .tm-invoice-header { display: grid; }
+    .tm-invoice-header-right { text-align: left; }
     .tm-invoice-totals { max-width: none; margin-left: 0; }
     .tm-invoice-actions .tm-btn { width: 100%; justify-content: center; }
   }
@@ -120,43 +171,52 @@
   </div>
 
   <section class="tm-invoice-panel" aria-label="Invoice details">
+    <header class="tm-invoice-header">
+      <div>
+        <h2 class="tm-invoice-heading">{{ shop_name or "TorqueMech Pro" }}</h2>
+        <div class="tm-invoice-field" style="margin-top:8px;"><span>Invoice Number</span><strong>{{ invoice.invoice_number }}</strong></div>
+      </div>
+      <div class="tm-invoice-header-right">
+        <h2 class="tm-invoice-heading">INVOICE</h2>
+        <div class="tm-invoice-field" style="margin-top:8px;"><span>Created</span><strong>{{ invoice.created_at|pro_date }}</strong></div>
+      </div>
+    </header>
+
     <div class="tm-invoice-grid">
-      <div class="tm-invoice-field"><span>Invoice Number</span><strong>{{ invoice.invoice_number }}</strong></div>
-      <div class="tm-invoice-field"><span>Created Date</span><strong>{{ invoice.created_at|pro_date }}</strong></div>
-      <div class="tm-invoice-field"><span>Customer</span><strong>{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Customer" }}</strong></div>
+      <div class="tm-invoice-field"><span>Name</span><strong>{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Customer" }}</strong></div>
       <div class="tm-invoice-field"><span>Phone</span><strong>{{ customer.phone|pro_phone if customer.phone else "-" }}</strong></div>
       <div class="tm-invoice-field"><span>Email</span><strong>{{ customer.email or "-" }}</strong></div>
       <div class="tm-invoice-field"><span>Vehicle</span><strong>{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</strong></div>
       <div class="tm-invoice-field"><span>VIN</span><strong>{{ vehicle.vin or "-" }}</strong></div>
       <div class="tm-invoice-field"><span>Mileage</span><strong>{% if invoice.repair_mileage is not none %}{{ invoice.repair_mileage|pro_miles }} miles{% elif vehicle.mileage is not none %}{{ vehicle.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
-      <div class="tm-invoice-field"><span>Included Services</span><strong>{{ invoice.service_count }}</strong></div>
+      <div class="tm-invoice-field"><span>Service Count</span><strong>{{ invoice.service_count }}</strong></div>
     </div>
 
-    <section style="margin-top:18px;" aria-label="Included Services">
-      <div class="tm-crm-kicker">Included Services</div>
-      <h2 style="margin:4px 0 0;">Included Services</h2>
+    <section style="margin-top:18px;" aria-label="Completed Services">
+      <div class="tm-crm-kicker">Completed Services</div>
+      <h2 style="margin:4px 0 0;">Completed Services</h2>
       <div class="tm-invoice-service-list">
         {% for item in invoice["items"] %}
         <article class="tm-invoice-service">
-          <h3>{{ item.service_title }}</h3>
-          <div class="tm-invoice-grid" style="margin-top:12px;">
-            <div class="tm-invoice-field"><span>Source</span><strong>{{ item.source_label }}</strong></div>
-            <div class="tm-invoice-field"><span>Status</span><strong>{{ item.status or "-" }}</strong></div>
-            <div class="tm-invoice-field"><span>Completion Date</span><strong>{{ item.completed_at|pro_datetime if item.completed_at else "-" }}</strong></div>
-            <div class="tm-invoice-field"><span>Labor Hours</span><strong>{% if item.labor_hours is not none %}{{ item.labor_hours }}{% else %}-{% endif %}</strong></div>
-            <div class="tm-invoice-field"><span>Labor Rate</span><strong>{% if item.labor_rate is not none %}{{ item.labor_rate|pro_currency }}/hr{% elif item.labor_rate_is_legacy %}Legacy total only{% else %}-{% endif %}</strong></div>
-            <div class="tm-invoice-field"><span>Labor Total</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
-            <div class="tm-invoice-field"><span>Parts Total</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
-            <div class="tm-invoice-field"><span>Service Total</span><strong>{{ item.grand_total|pro_currency }}</strong></div>
+          <h3>{{ loop.index }}. {{ item.service_title }}</h3>
+          <div class="tm-invoice-service-money">
+            <div><span>Labor</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
+            <div><span>Parts</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
+            <div><span>Total</span><strong>{{ item.grand_total|pro_currency }}</strong></div>
           </div>
+          {% if item.repair_notes %}
           <div class="tm-invoice-field" style="margin-top:12px;"><span>Notes</span><div class="tm-invoice-notes">{{ item.repair_notes or "-" }}</div></div>
-          <div class="tm-invoice-field" style="margin-top:12px;"><span>Final Inspection</span><div class="tm-invoice-notes">{{ item.final_inspection_status }}</div></div>
-          <div class="tm-invoice-field" style="margin-top:12px;"><span>Final Inspection Comments</span><div class="tm-invoice-notes">{{ item.final_inspection_notes or "-" }}</div></div>
-          {% if item.inspection_finding_source %}
-          <div class="tm-invoice-field" style="margin-top:12px;"><span>Inspection Finding Source</span><div class="tm-invoice-notes">{{ item.inspection_finding_source }}</div></div>
           {% endif %}
         </article>
         {% endfor %}
+      </div>
+    </section>
+
+    <section class="tm-invoice-summary" aria-label="Completion Summary">
+      <div class="tm-crm-kicker">Completion Summary</div>
+      <div class="tm-invoice-grid" style="margin-top:10px;">
+        <div class="tm-invoice-field"><span>Completion Date</span><strong>{{ invoice.completion_summary_date|pro_date if invoice.completion_summary_date else "-" }}</strong></div>
+        <div class="tm-invoice-field"><span>Final Inspection</span><strong>{{ invoice.completion_summary_status }}</strong></div>
       </div>
     </section>
 
@@ -179,7 +239,6 @@
         <label class="tm-invoice-option"><input type="checkbox" name="show_parts_total" value="1" checked><span>Show parts total</span></label>
         <label class="tm-invoice-option"><input type="checkbox" name="show_repair_notes" value="1" checked><span>Show repair notes</span></label>
         <label class="tm-invoice-option"><input type="checkbox" name="show_final_inspection_notes" value="1"><span>Show final inspection comments</span></label>
-        <label class="tm-invoice-option"><input type="checkbox" name="show_inspection_finding_source" value="1"><span>Show inspection finding source</span></label>
       </div>
       <div class="tm-invoice-actions" style="margin-top:14px;">
         <button class="tm-btn tm-btn-primary" type="submit">Download PDF</button>

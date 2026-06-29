@@ -143,7 +143,7 @@
       <div class="tm-invoice-builder-list">
         {% for job in job_groups.approved %}
         <label class="tm-invoice-builder-job">
-          <input type="checkbox" name="repair_record_id" value="{{ job.id }}">
+          <input type="checkbox" value="{{ job.id }}" disabled>
           <span>
             <span class="tm-invoice-builder-title">{{ job.repair_name or "Repair" }}</span>
             <span class="tm-invoice-builder-meta">

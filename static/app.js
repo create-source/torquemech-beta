@@ -1036,6 +1036,31 @@
   const DEFAULT_LABOR_RATE = 90;
   const DEFAULT_TRAVEL_FEE = 0;
 
+  function formatPhone(value) {
+    const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+
+  function phoneValue(input) {
+    return formatPhone(input?.value || "").trim();
+  }
+
+  function bindEstimatorPhoneInput(input) {
+    if (!input) return;
+    input.value = formatPhone(input.value);
+    input.addEventListener("input", () => {
+      input.value = formatPhone(input.value);
+    });
+    input.addEventListener("blur", () => {
+      input.value = formatPhone(input.value);
+    });
+  }
+
+  bindEstimatorPhoneInput(customerPhoneEl);
+  bindEstimatorPhoneInput(businessPhoneEl);
+
   function getEstimatorSourceContext() {
     const params = new URLSearchParams(window.location.search);
     const source = String(params.get("source") || "").trim().toLowerCase();
@@ -1083,7 +1108,7 @@
     return {
       businessName: normalizePreferenceText(identity.businessName, 80),
       mechanicName: normalizePreferenceText(identity.mechanicName, 80),
-      businessPhone: normalizePreferenceText(identity.businessPhone, 32),
+      businessPhone: formatPhone(normalizePreferenceText(identity.businessPhone, 32)),
       businessNote: normalizePreferenceText(identity.businessNote, 180),
     };
   }
@@ -1137,7 +1162,7 @@
     return normalizeBusinessIdentity({
       businessName: (businessNameEl?.value || "").trim(),
       mechanicName: (mechanicNameEl?.value || "").trim(),
-      businessPhone: (businessPhoneEl?.value || "").trim(),
+      businessPhone: phoneValue(businessPhoneEl),
       businessNote: (businessNoteEl?.value || "").trim(),
     });
   }
@@ -1396,7 +1421,7 @@
     if (!estimateState.vehicles.length) return;
 
     estimateState.customer.name = customerNameEl?.value || "";
-    estimateState.customer.phone = customerPhoneEl?.value || "";
+    estimateState.customer.phone = phoneValue(customerPhoneEl);
 
     window.estimateState = estimateState;
   }
@@ -1882,7 +1907,7 @@
       customer: {
         agrees: !!customerAgreesChk?.checked,
         name: customerNameEl?.value || "",
-        phone: customerPhoneEl?.value || "",
+        phone: phoneValue(customerPhoneEl),
         notes: notesEl?.value || "",
       },
       businessIdentity: getBusinessIdentity(),
@@ -1936,7 +1961,7 @@
       businessIdentity: {
         businessName: String(businessIdentity.businessName || "").trim(),
         mechanicName: String(businessIdentity.mechanicName || "").trim(),
-        businessPhone: String(businessIdentity.businessPhone || "").trim(),
+        businessPhone: formatPhone(businessIdentity.businessPhone),
         businessNote: String(businessIdentity.businessNote || "").trim(),
       },
       signatureDataUrl: null,
@@ -2050,7 +2075,7 @@
       // Sync top-level customer fields
       if (customerAgreesChk) customerAgreesChk.checked = !!d.customer?.agrees;
       if (customerNameEl) customerNameEl.value = d.customer?.name || "";
-      if (customerPhoneEl) customerPhoneEl.value = d.customer?.phone || "";
+      if (customerPhoneEl) customerPhoneEl.value = formatPhone(d.customer?.phone || "");
       if (notesEl) notesEl.value = d.customer?.notes || "";
       if (hasDraftBusinessIdentity) {
         applyBusinessIdentity(d.businessIdentity);
@@ -2611,7 +2636,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       notes: (notesEl?.value || "").trim(),
       customer: {
         name: (customerNameEl?.value || sourceContext.customerName || "").trim(),
-        phone: (customerPhoneEl?.value || "").trim(),
+        phone: phoneValue(customerPhoneEl),
       },
       lineItems: ensureUniqueLineItemIds(lineItems).map((it) => {
         const cost = getLineItemCostBreakdown(it);
@@ -5102,7 +5127,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       laborRate: pricingInputNumber(laborRateEl),
       notes: (notesEl?.value || "").trim() || null,
       customerName: (customerNameEl?.value || "").trim() || null,
-      customerPhone: (customerPhoneEl?.value || "").trim() || null,
+      customerPhone: phoneValue(customerPhoneEl) || null,
 
       customerAgrees: !!(customerAgreesChk?.checked),
       signatureDataUrl: null,
@@ -5910,10 +5935,10 @@ if (getEstimateHint) {
           displayModel: getVehicleDisplayModel(activeVehicle),
           notes: (notesEl?.value || "").trim() || null,
           customerName: (customerNameEl?.value || "").trim() || null,
-          customerPhone: (customerPhoneEl?.value || "").trim() || null,
+          customerPhone: phoneValue(customerPhoneEl) || null,
           businessName: businessIdentity.businessName || null,
           mechanicName: businessIdentity.mechanicName || null,
-          businessPhone: businessIdentity.businessPhone || null,
+          businessPhone: formatPhone(businessIdentity.businessPhone) || null,
           businessNote: businessIdentity.businessNote || null,
           customerAgrees: !!customerAgreesChk?.checked || !!signatureDataUrl,
           signatureDataUrl,
