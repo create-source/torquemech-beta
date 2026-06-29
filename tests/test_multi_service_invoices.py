@@ -231,6 +231,41 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertNotIn("Source: Finding", str(invoice))
         self.assertNotIn("Recommended Repair", str(invoice))
 
+    def test_quantity_service_title_is_not_duplicated_on_invoice_and_cards(self):
+        quantity_marker = chr(215)
+        duplicated_title = f"Spark Plug Replacement {quantity_marker} 4 {quantity_marker} 4"
+        expected_title = f"Spark Plug Replacement {quantity_marker} 4"
+        self.insert_repair(13, duplicated_title, 1.8, 125, 48)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 13)
+
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T12:30:00",
+        )
+        self.conn.commit()
+
+        self.assertEqual(invoice["items"][0]["service_title"], expected_title)
+        self.assertNotIn(f"{quantity_marker} 4 {quantity_marker} 4", invoice["items"][0]["service_title"])
+        self.assertEqual(invoice["labor_total"], 225)
+        self.assertEqual(invoice["parts_total"], 48)
+        self.assertEqual(invoice["grand_total"], 273)
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        detail = client.get("/pro/customers/1/vehicles/1/invoices/1")
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn(expected_title, detail.text)
+        self.assertNotIn(f"{quantity_marker} 4 {quantity_marker} 4", detail.text)
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn(expected_title, vehicle_detail.text)
+        self.assertNotIn(f"{quantity_marker} 4 {quantity_marker} 4", vehicle_detail.text)
+
     def test_old_single_job_invoice_still_loads_as_one_service(self):
         self.insert_repair(20, "Alternator Replacement", 1.5, 120, 220)
         self.conn.execute(

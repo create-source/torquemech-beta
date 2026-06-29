@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import io
 import json
+import re
 import sqlite3
 import tempfile
 import time
@@ -10739,6 +10740,16 @@ def save_repair_estimate_pdf_if_available(
 
 def estimate_display_service_name(service_name: Any, quantity: Any = 1) -> str:
     name = str(service_name or "Repair service").strip() or "Repair service"
+    quantity_suffix_re = re.compile(
+        r"(?:\s*(?:[-\u2013\u2014]\s*)?(?:Qty\.?|Quantity)\s*\d+(?:\.\d+)?"
+        r"|\s*[\u00d7xX]\s*\d+(?:\.\d+)?)\s*$",
+        re.IGNORECASE,
+    )
+    while True:
+        match = quantity_suffix_re.search(name)
+        if not match:
+            break
+        name = name[: match.start()].rstrip(" -\u2013\u2014") or "Repair service"
     try:
         qty = int(quantity or 1)
     except (TypeError, ValueError):
@@ -11022,9 +11033,9 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         grand_total = 0.0
         for it in (req.lineItems or []):
-            service_name = (
-                it.displayServiceText
-                or estimate_display_service_name(it.serviceText or it.serviceCode or "Repair service", it.quantity)
+            service_name = estimate_display_service_name(
+                it.displayServiceText or it.serviceText or it.serviceCode or "Repair service",
+                it.quantity,
             ).strip()
             service_name_lines = wrap_text(service_name, max_chars=title_max_chars)[:3]
             status_label = pdf_repair_status_label(it.status)
@@ -11301,9 +11312,9 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         first_line_item = (req.lineItems or [None])[0]
         first_service_title = ""
         if first_line_item is not None:
-            first_service_title = (
-                first_line_item.displayServiceText
-                or estimate_display_service_name(first_line_item.serviceText or first_line_item.serviceCode or "Repair service", first_line_item.quantity)
+            first_service_title = estimate_display_service_name(
+                first_line_item.displayServiceText or first_line_item.serviceText or first_line_item.serviceCode or "Repair service",
+                first_line_item.quantity,
             )
         save_repair_estimate_pdf_if_available(
             req,

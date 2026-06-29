@@ -2307,7 +2307,7 @@ def clean_invoice_repair_notes(
 def invoice_item_display_record(record: dict[str, Any]) -> dict[str, Any]:
     item = dict(record)
     totals = repair_cost_totals(item)
-    item["service_title"] = item.get("repair_name") or "Repair"
+    item["service_title"] = clean_service_quantity_title(item.get("repair_name") or "Repair")
     item["labor_total"] = totals["labor_total"]
     item["parts_total"] = totals["parts_total"]
     item["grand_total"] = totals["grand_total"]
@@ -4436,6 +4436,8 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         ).strip()
         if not display_service_name:
             display_service_name = estimate_service_name_with_quantity(service_name, quantity)
+        else:
+            display_service_name = estimate_service_name_with_quantity(display_service_name, quantity)
         labor_hours = optional_payload_float(item.get("laborHours", item.get("labor_hours")))
         labor_hours_input = optional_payload_float(item.get("laborHoursInput", item.get("labor_hours_input")))
         labor_calculation_mode = str(item.get("laborCalculationMode") or item.get("labor_calculation_mode") or "total").strip()
@@ -4527,8 +4529,37 @@ def normalize_payload_quantity(value: Any) -> int:
     return max(1, quantity)
 
 
-def estimate_service_name_with_quantity(service_name: str, quantity: Any = 1) -> str:
+SERVICE_QUANTITY_SUFFIX_RE = re.compile(
+    r"(?:\s*(?:[-\u2013\u2014]\s*)?(?:Qty\.?|Quantity)\s*(?P<qty_word>\d+(?:\.\d+)?)"
+    r"|\s*[\u00d7xX]\s*(?P<qty_symbol>\d+(?:\.\d+)?))\s*$",
+    re.IGNORECASE,
+)
+
+
+def split_service_quantity_suffix(service_name: Any) -> tuple[str, str]:
     name = str(service_name or "Service").strip() or "Service"
+    quantity = ""
+    while True:
+        match = SERVICE_QUANTITY_SUFFIX_RE.search(name)
+        if not match:
+            break
+        quantity = quantity or (match.group("qty_word") or match.group("qty_symbol") or "")
+        name = name[: match.start()].rstrip(" -\u2013\u2014")
+        if not name:
+            name = "Service"
+            break
+    return name, quantity
+
+
+def clean_service_quantity_title(service_name: Any) -> str:
+    name, quantity = split_service_quantity_suffix(service_name)
+    if quantity:
+        return f"{name} \u00d7 {format_quantity(quantity)}"
+    return name
+
+
+def estimate_service_name_with_quantity(service_name: str, quantity: Any = 1) -> str:
+    name, _existing_quantity = split_service_quantity_suffix(service_name)
     quantity_value = normalize_payload_quantity(quantity)
     return f"{name} × {quantity_value}" if quantity_value > 1 else name
 
@@ -4887,7 +4918,7 @@ def repair_workspace_item_from_repair_record(
     repair_id = int(record.get("id") or 0)
     totals = repair_cost_totals(record)
     source_label = repair_workspace_source_label(record)
-    title = record.get("repair_name") or "Repair"
+    title = clean_service_quantity_title(record.get("repair_name") or "Repair")
     detail = repair_workspace_detail_from_notes(record.get("notes"))
     blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
     source_action = repair_workspace_source_action(record)
@@ -5199,7 +5230,7 @@ def build_completed_repair_work_items(
             {
                 "source_type": "repair",
                 "source_id": repair_id,
-                "title": record.get("repair_name") or "Repair",
+                "title": clean_service_quantity_title(record.get("repair_name") or "Repair"),
                 "source_label": repair_workspace_source_label(record),
                 "repair_work_status_label": "Completed",
                 "completed_at": record.get("completed_at") or completion.get("completed_at") or "",
@@ -5338,7 +5369,7 @@ def build_vehicle_timeline(
                     "id": record["id"],
                     "date": completion_event.get("completion_date") or completion_event.get("completed_at") or record.get("service_date") or record.get("created_at") or "",
                     "created_at": completion_event.get("completed_at") or record.get("created_at") or "",
-                    "service_name": record.get("service_name") or "Repair",
+                    "service_name": clean_service_quantity_title(record.get("service_name") or "Repair"),
                     "mileage": record.get("mileage"),
                     "source_label": repair_workspace_source_label(completion_event),
                     "total": record.get("total_cost"),
@@ -5361,7 +5392,7 @@ def build_vehicle_timeline(
                     "id": record["id"],
                     "date": record.get("service_date") or "",
                     "created_at": record.get("created_at") or "",
-                    "service_name": record.get("service_name") or "Service",
+                    "service_name": clean_service_quantity_title(record.get("service_name") or "Service"),
                     "mileage": record.get("mileage"),
                     "url": (
                         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{record.get('source_record_id')}"
@@ -5373,7 +5404,7 @@ def build_vehicle_timeline(
 
     for record in estimate_document_records or []:
         total = format_currency(record.get("estimate_total")) if record.get("estimate_total") is not None else ""
-        related_title = record.get("related_title") or "Recommended Repair"
+        related_title = clean_service_quantity_title(record.get("related_title") or "Recommended Repair")
         service_name = "Repair Estimate"
         if related_title:
             service_name = f"{service_name} | {related_title}"
@@ -5405,7 +5436,7 @@ def build_vehicle_timeline(
 
     for record in invoice_records or []:
         total = format_currency(record.get("grand_total")) or "$0.00"
-        repair_title = record.get("repair_name") or "Completed Repair"
+        repair_title = clean_service_quantity_title(record.get("repair_name") or "Completed Repair")
         add_record(
             "invoices",
             {
@@ -5515,7 +5546,7 @@ def build_vehicle_timeline(
             continue
         repair_id = int(record.get("repair_record_id") or 0)
         invoice_record = invoice_by_repair_id.get(repair_id, {})
-        repair_title = record.get("repair_name") or "Repair"
+        repair_title = clean_service_quantity_title(record.get("repair_name") or "Repair")
         photo_urls = parse_stored_photo_paths(record.get("after_repair_photo_paths"))
         add_record(
             "repaired",
