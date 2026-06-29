@@ -89,7 +89,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(finding_item["parts_total"], 180)
         self.assertEqual(finding_item["grand_total"], 270)
         self.assertTrue(finding_item["has_pricing"])
-        self.assertIn("O'Reilly", [source["label"] for source in by_title["Rotate tires"]["parts_sources"]])
+        self.assertIn("O'Reilly", [source["source_label"] for source in by_title["Rotate tires"]["parts_sources"]])
 
     def test_workspace_card_includes_parts_sources_when_vendor_data_exists(self):
         vehicle = {"id": 1, "year": 2016, "make": "Honda", "model": "Accord", "mileage": 120000}
@@ -122,9 +122,114 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         with patch.object(pro_module, "get_repair_blueprint_for_work_item", return_value=blueprint):
             items = pro_module.build_repair_work_items(vehicle, [], [], repairs)
 
-        self.assertEqual(items[0]["parts_sources"][0]["label"], "OEM/dealer catalog")
+        self.assertEqual(items[0]["parts_sources"][0]["source_label"], "OEM/dealer catalog")
+        self.assertEqual(items[0]["parts_sources"][0]["label"], "OEM Catalog Search")
         self.assertEqual(items[0]["parts_sources"][0]["note"], "VIN-confirmed source")
-        self.assertEqual(items[0]["parts_sources"][1]["url"], "https://example.test/napa")
+        self.assertIn("2016+Honda+Accord+front+brake+pads", items[0]["parts_sources"][1]["url"])
+        self.assertNotIn("example.test", items[0]["parts_sources"][1]["url"])
+
+    def test_parts_search_query_helper_uses_vehicle_engine_and_service_keywords(self):
+        self.assertEqual(
+            pro_module.build_parts_search_query(
+                {"year": 2008, "make": "Toyota", "model": "Sequoia"},
+                "Water Pump Replacement",
+            ),
+            "2008 Toyota Sequoia water pump",
+        )
+        self.assertEqual(
+            pro_module.build_parts_search_query(
+                {"year": 2008, "make": "TOYOTA", "model": "SEQUOIA", "engine": "5.7"},
+                "water pump need replacement",
+            ),
+            "2008 Toyota Sequoia 5.7L water pump",
+        )
+        self.assertEqual(
+            pro_module.build_parts_search_query(
+                {"year": 2008, "make": "Toyota", "model": "Sequoia"},
+                "water pump needs replacement",
+            ),
+            "2008 Toyota Sequoia water pump",
+        )
+        self.assertEqual(
+            pro_module.build_parts_search_query(
+                {"year": 2016, "make": "Honda", "model": "Accord"},
+                "needs radiator replacement",
+            ),
+            "2016 Honda Accord radiator",
+        )
+        self.assertEqual(
+            pro_module.build_parts_search_query(
+                {"year": 2002, "make": "Ford", "model": "F-150"},
+                "customer approved spark plug replacement",
+            ),
+            "2002 Ford F-150 spark plugs",
+        )
+        self.assertEqual(
+            pro_module.build_parts_search_query(
+                {"year": 2008, "make": "Toyota", "model": "Sequoia", "engine": "5.7"},
+                "recommended upper radiator hose replacement",
+            ),
+            "2008 Toyota Sequoia 5.7L upper radiator hose",
+        )
+
+    def test_parts_sources_build_prefilled_vendor_search_links(self):
+        sources = pro_module.repair_workspace_parts_sources(
+            None,
+            {"year": 2008, "make": "TOYOTA", "model": "SEQUOIA", "engine": "5.7"},
+            "water pump need replacement",
+        )
+        by_label = {source["source_label"]: source for source in sources}
+
+        self.assertEqual(by_label["RockAuto"]["query"], "2008 Toyota Sequoia 5.7L water pump")
+        self.assertIn("site%3Arockauto.com+2008+Toyota+Sequoia+5.7L+water+pump", by_label["RockAuto"]["url"])
+        self.assertEqual(by_label["RockAuto"]["label"], "RockAuto Catalog Search")
+        self.assertEqual(by_label["OEM/dealer catalog"]["label"], "OEM Catalog Search")
+        self.assertEqual(by_label["O'Reilly"]["label"], "O'Reilly Catalog Search")
+        self.assertEqual(by_label["AutoZone"]["label"], "AutoZone Catalog Search")
+        self.assertEqual(by_label["NAPA"]["label"], "NAPA Catalog Search")
+        self.assertEqual(by_label["1A Auto"]["label"], "1A Auto Catalog Search")
+        self.assertEqual(by_label["Amazon"]["search_group"], "Marketplace Search")
+        self.assertEqual(by_label["eBay"]["search_group"], "Marketplace Search")
+        self.assertEqual(by_label["AutoZone"]["search_group"], "Catalog Search")
+        self.assertEqual(by_label["O'Reilly"]["search_group"], "Catalog Search")
+        self.assertEqual(by_label["Google Shopping"]["search_group"], "Catalog Search")
+        self.assertEqual(by_label["RockAuto"]["search_group"], "Catalog Search")
+        self.assertEqual(by_label["NAPA"]["search_group"], "Catalog Search")
+        self.assertEqual(by_label["1A Auto"]["search_group"], "Catalog Search")
+        self.assertEqual(by_label["OEM/dealer catalog"]["search_group"], "Catalog Search")
+        self.assertEqual(
+            sorted(source["source_label"] for source in sources if source["search_group"] == "Marketplace Search"),
+            ["Amazon", "eBay"],
+        )
+        self.assertIn("site%3Aoreillyauto.com+2008+Toyota+Sequoia+5.7L+water+pump", by_label["O'Reilly"]["url"])
+        self.assertIn("google.com/search", by_label["O'Reilly"]["url"])
+        self.assertNotIn("oreillyauto.com/search", by_label["O'Reilly"]["url"])
+        self.assertIn("site%3Aautozone.com+2008+Toyota+Sequoia+5.7L+water+pump", by_label["AutoZone"]["url"])
+        self.assertIn("google.com/search", by_label["AutoZone"]["url"])
+        self.assertNotIn("autozone.com/searchresult", by_label["AutoZone"]["url"])
+        self.assertIn("site%3Anapaonline.com+2008+Toyota+Sequoia+5.7L+water+pump", by_label["NAPA"]["url"])
+        self.assertIn("site%3A1aauto.com+2008+Toyota+Sequoia+5.7L+water+pump", by_label["1A Auto"]["url"])
+        self.assertIn("2008+Toyota+Sequoia+5.7L+water+pump", by_label["Amazon"]["url"])
+        self.assertIn("amazon.com", by_label["Amazon"]["url"])
+        self.assertNotIn("google.com", by_label["Amazon"]["url"])
+        self.assertIn("2008+Toyota+Sequoia+5.7L+water+pump", by_label["eBay"]["url"])
+        self.assertIn("ebay.com", by_label["eBay"]["url"])
+        self.assertNotIn("google.com", by_label["eBay"]["url"])
+        self.assertIn("2008+Toyota+Sequoia+5.7L+water+pump", by_label["Google Shopping"]["url"])
+        self.assertIn("google.com/search", by_label["Google Shopping"]["url"])
+        self.assertIn("tbm=shop", by_label["Google Shopping"]["url"])
+        self.assertNotIn("partnum", by_label["RockAuto"]["url"])
+        self.assertNotIn("/tools", by_label["AutoZone"]["url"].lower())
+        self.assertNotIn("/2002-ford-f150", by_label["1A Auto"]["url"].lower())
+        for source in sources:
+            self.assertTrue(source["url"])
+            self.assertNotIn("need", source["url"].lower())
+            self.assertNotIn("fit", source["label"].lower())
+            self.assertNotIn("match", source["label"].lower())
+            if "google.com/search" in source["url"] and source["source_label"] != "Google Shopping":
+                self.assertTrue("via Google" in source["label"] or "Search" in source["label"])
+            self.assertNotEqual(source["url"].rstrip("/"), "https://www.rockauto.com")
+            self.assertNotEqual(source["url"].rstrip("/"), "https://www.napaonline.com")
 
     def test_approved_finding_creates_source_finding_repair_job_with_estimate_totals(self):
         conn = sqlite3.connect(":memory:")
@@ -796,8 +901,15 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
 
         self.assertIn("Parts Sources", vehicle_detail)
+        self.assertIn("Searches by vehicle + repair. Confirm fitment on the vendor site before ordering.", vehicle_detail)
+        self.assertIn("Vendor sites may use saved garage filters. Always confirm year, make, model, engine, and fitment before ordering.", vehicle_detail)
+        self.assertIn("Marketplace Search", vehicle_detail)
+        self.assertIn("Catalog Search", vehicle_detail)
+        self.assertIn("source.search_group == source_group", vehicle_detail)
         self.assertIn("item.parts_sources", vehicle_detail)
         self.assertIn("O'Reilly", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
+        self.assertIn("Google Shopping", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
+        self.assertIn("1A Auto", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
 
     def test_pro_customer_and_vehicle_forms_use_shared_input_formatters(self):
         customers = (ROOT / "templates" / "pro" / "customers.html").read_text(encoding="utf-8")

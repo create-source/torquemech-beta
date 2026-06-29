@@ -58,7 +58,38 @@ DEFAULT_PARTS_SOURCE_LABELS = [
     "OEM/dealer catalog",
     "Amazon",
     "eBay",
+    "Google Shopping",
+    "1A Auto",
 ]
+
+PARTS_SEARCH_KEYWORDS = {
+    "water pump replacement": "water pump",
+    "radiator replacement": "radiator",
+    "alternator replacement": "alternator",
+    "starter replacement": "starter",
+    "battery replacement": "battery",
+    "brake pad replacement": "brake pads",
+    "front brake pad replacement": "front brake pads",
+    "front brake pads replacement": "front brake pads",
+    "rear brake pad replacement": "rear brake pads",
+    "rear brake pads replacement": "rear brake pads",
+    "ignition coil replacement": "ignition coil",
+    "spark plug replacement": "spark plugs",
+    "spark plugs replacement": "spark plugs",
+    "oxygen sensor replacement": "oxygen sensor",
+    "thermostat replacement": "thermostat",
+    "fuel pump replacement": "fuel pump",
+    "serpentine belt replacement": "serpentine belt",
+    "control arm replacement": "control arm",
+    "tie rod replacement": "tie rod",
+    "wheel bearing replacement": "wheel bearing",
+    "strut replacement": "strut",
+    "shock replacement": "shock",
+    "shock absorber replacement": "shock",
+    "headlight replacement": "headlight",
+    "taillight replacement": "taillight",
+    "tail light replacement": "taillight",
+}
 
 
 def record_value(record: dict[str, Any] | sqlite3.Row | None, key: str) -> Any:
@@ -4407,25 +4438,156 @@ def repair_work_title_from_approval(record: dict[str, Any]) -> str:
     return record.get("recommended_repair") or record.get("finding_title") or "Approved Request"
 
 
-def repair_workspace_parts_sources(blueprint: dict[str, Any] | None) -> list[dict[str, str]]:
+def normalize_parts_service_title(value: Any) -> str:
+    text = re.sub(r"[^A-Za-z0-9]+", " ", str(value or "").lower()).strip()
+    return re.sub(r"\s+", " ", text)
+
+
+def parts_keyword_for_service(service_title: Any) -> str:
+    normalized = normalize_parts_service_title(service_title)
+    if normalized in PARTS_SEARCH_KEYWORDS:
+        return PARTS_SEARCH_KEYWORDS[normalized]
+
+    cleaned = f" {normalized} "
+    for phrase in (
+        "customer approved",
+        "approved",
+        "replacement",
+        "repair",
+        "service",
+        "recommended",
+        "finding",
+        "needed",
+        "needs",
+        "need",
+        "replace",
+        "work",
+        "job",
+    ):
+        cleaned = re.sub(rf"\b{re.escape(phrase)}\b", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    mapped_cleaned = PARTS_SEARCH_KEYWORDS.get(f"{cleaned} replacement")
+    return mapped_cleaned or PARTS_SEARCH_KEYWORDS.get(cleaned) or cleaned
+
+
+def format_parts_vehicle_value(value: Any, *, title_case: bool = False) -> str:
+    text = re.sub(r"\s+", " ", str(value or "").strip())
+    if not text:
+        return ""
+    return text.title() if title_case else text
+
+
+def format_parts_engine(value: Any) -> str:
+    engine = re.sub(r"\s+", " ", str(value or "").strip())
+    if not engine:
+        return ""
+    if re.fullmatch(r"\d+(?:\.\d+)?", engine):
+        return f"{engine}L"
+    if re.fullmatch(r"\d+(?:\.\d+)?\s*[Ll]", engine):
+        return re.sub(r"\s+", "", engine).upper()
+    return engine
+
+
+def build_parts_search_query(vehicle: dict[str, Any] | sqlite3.Row | None, service_title: Any) -> str:
+    vehicle_parts = [
+        str(record_value(vehicle, "year") or "").strip(),
+        format_parts_vehicle_value(record_value(vehicle, "make"), title_case=True),
+        format_parts_vehicle_value(record_value(vehicle, "model"), title_case=True),
+        format_parts_engine(record_value(vehicle, "engine")),
+    ]
+    keyword = parts_keyword_for_service(service_title)
+    return re.sub(r"\s+", " ", " ".join(part for part in [*vehicle_parts, keyword] if part)).strip()
+
+
+def parts_search_url(label: str, query: str) -> str:
+    params = {"q": query}
+    if label == "O'Reilly":
+        return f"https://www.google.com/search?{urlencode({'q': f'site:oreillyauto.com {query}'})}"
+    if label == "AutoZone":
+        return f"https://www.google.com/search?{urlencode({'q': f'site:autozone.com {query}'})}"
+    if label == "NAPA":
+        return f"https://www.google.com/search?{urlencode({'q': f'site:napaonline.com {query}'})}"
+    if label == "RockAuto":
+        return f"https://www.google.com/search?{urlencode({'q': f'site:rockauto.com {query}'})}"
+    if label == "OEM/dealer catalog":
+        return f"https://www.google.com/search?{urlencode({'q': f'{query} OEM dealer parts catalog'})}"
+    if label == "Amazon":
+        return f"https://www.amazon.com/s?{urlencode({'k': query})}"
+    if label == "eBay":
+        return f"https://www.ebay.com/sch/i.html?{urlencode({'_nkw': query})}"
+    if label == "Google Shopping":
+        return f"https://www.google.com/search?{urlencode({'tbm': 'shop', 'q': query})}"
+    if label == "1A Auto":
+        return f"https://www.google.com/search?{urlencode({'q': f'site:1aauto.com {query}'})}"
+    return f"https://www.google.com/search?{urlencode(params)}"
+
+
+def parts_source_display_label(label: str, url: str) -> str:
+    if label == "OEM/dealer catalog":
+        return "OEM Catalog Search"
+    if label == "O'Reilly":
+        return "O'Reilly Catalog Search"
+    if label == "AutoZone":
+        return "AutoZone Catalog Search"
+    if label == "Google Shopping":
+        return "Google Shopping"
+    if label == "RockAuto":
+        return "RockAuto Catalog Search"
+    if label == "NAPA":
+        return "NAPA Catalog Search"
+    if label == "1A Auto":
+        return "1A Auto Catalog Search"
+    return label
+
+
+def parts_source_search_group(label: str) -> str:
+    if label in {"Amazon", "eBay"}:
+        return "Marketplace Search"
+    return "Catalog Search"
+
+
+def repair_workspace_parts_sources(
+    blueprint: dict[str, Any] | None,
+    vehicle: dict[str, Any] | sqlite3.Row | None,
+    service_title: Any,
+) -> list[dict[str, str]]:
+    query = build_parts_search_query(vehicle, service_title)
     raw_sources = (blueprint or {}).get("vendor_sources") or (blueprint or {}).get("vendor_links") or []
     if not isinstance(raw_sources, list):
         raw_sources = [raw_sources]
+    notes_by_label: dict[str, str] = {}
     sources: list[dict[str, str]] = []
     for source in raw_sources:
         if isinstance(source, dict):
             label = str(source.get("label") or source.get("name") or source.get("title") or "").strip()
             note = str(source.get("status") or source.get("value") or source.get("note") or "").strip()
-            url = str(source.get("url") or source.get("href") or "").strip()
         else:
             label = str(source or "").strip()
             note = ""
-            url = ""
-        if label or note:
-            sources.append({"label": label or note, "note": note, "url": url})
-    if sources:
-        return sources
-    return [{"label": label, "note": "", "url": ""} for label in DEFAULT_PARTS_SOURCE_LABELS]
+        if label:
+            notes_by_label[label] = note
+
+    ordered_labels = [label for label in notes_by_label if label in DEFAULT_PARTS_SOURCE_LABELS]
+    for label in notes_by_label:
+        if label in DEFAULT_PARTS_SOURCE_LABELS and label not in ordered_labels:
+            ordered_labels.append(label)
+    for label in DEFAULT_PARTS_SOURCE_LABELS:
+        if label not in ordered_labels:
+            ordered_labels.append(label)
+
+    for label in ordered_labels:
+        url = parts_search_url(label, query) if query else ""
+        sources.append(
+            {
+                "label": parts_source_display_label(label, url),
+                "source_label": label,
+                "search_group": parts_source_search_group(label),
+                "note": notes_by_label.get(label, ""),
+                "url": url,
+                "query": query,
+            }
+        )
+    return sources
 
 
 def repair_workspace_source_label(record: dict[str, Any]) -> str:
@@ -4506,7 +4668,7 @@ def repair_workspace_item_from_repair_record(
     if blueprint:
         item["blueprint"] = blueprint
         item["blueprint_summary"] = blueprint_summary(blueprint)
-    item["parts_sources"] = repair_workspace_parts_sources(blueprint)
+    item["parts_sources"] = repair_workspace_parts_sources(blueprint, vehicle, title)
     return item
 
 
@@ -4646,7 +4808,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
-        item["parts_sources"] = repair_workspace_parts_sources(blueprint)
+        item["parts_sources"] = repair_workspace_parts_sources(blueprint, vehicle, title)
         items.append(item)
     for record in approval_records:
         if normalize_approval_decision(record.get("customer_decision")) != "approved":
@@ -4713,7 +4875,7 @@ def build_repair_work_items(
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
-        item["parts_sources"] = repair_workspace_parts_sources(blueprint)
+        item["parts_sources"] = repair_workspace_parts_sources(blueprint, vehicle, title)
         items.append(item)
     for record in repair_records or []:
         repair_id = int(record.get("id") or 0)
