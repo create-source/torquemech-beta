@@ -1033,6 +1033,7 @@
 
   // ---- State ----
   let lineItems = [];
+  let estimatorPartsSourcesRefreshTimer = null;
   const BUSINESS_IDENTITY_SESSION_KEY = "torquemech_business_identity_v1";
   const MECHANIC_PREFERENCES_KEY = "torquemech_mechanic_preferences_v1";
   const DEFAULT_LABOR_RATE = 90;
@@ -2978,11 +2979,19 @@ const confidenceEl = document.getElementById("laborConfidence");
     });
   }
 
+  function getEstimatorPartsSourceServiceText() {
+    const selectedService = getSelectedServiceDisplayName();
+    if (selectedService) return selectedService;
+    const typedService = String(serviceSearch?.value || "").trim();
+    if (typedService) return typedService;
+    return "";
+  }
+
   async function refreshEstimatorPartsSources() {
     if (!estimatorPartsSourcesEl) return;
     const sourceContext = getEstimatorSourceContext();
     const activeVehicle = getActiveVehicle() || {};
-    const selectedService = getSelectedServiceDisplayName();
+    const selectedService = getEstimatorPartsSourceServiceText();
     const params = new URLSearchParams();
     params.set("year", String(activeVehicle.year || ""));
     params.set("make", String(activeVehicle.make || ""));
@@ -2996,6 +3005,14 @@ const confidenceEl = document.getElementById("laborConfidence");
     } catch (error) {
       console.warn("Parts sources refresh failed:", error);
     }
+  }
+
+  function scheduleEstimatorPartsSourcesRefresh(delayMs = 180) {
+    if (!estimatorPartsSourcesEl) return;
+    clearTimeout(estimatorPartsSourcesRefreshTimer);
+    estimatorPartsSourcesRefreshTimer = setTimeout(() => {
+      void refreshEstimatorPartsSources();
+    }, delayMs);
   }
 
   function normalizeVinInput(value) {
@@ -4450,6 +4467,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     readyForNextService = true;
     updateEstimateButtonState();
     void refreshPairedSuggestions();
+    void refreshEstimatorPartsSources();
 
     const serviceName = serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || "Suggested job";
     setStatus("info", `${serviceName} selected. Review pricing, then add it to the quote.`);
@@ -4479,6 +4497,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     hidePairedSuggestions();
     updateEstimateButtonState();
     if (!addToQuote) void refreshPairedSuggestions();
+    void refreshEstimatorPartsSources();
 
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => {
       btn.classList.toggle("is-selected", btn.dataset.quickQuote === shortcutKey);
@@ -4618,6 +4637,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     await loadServiceMeta("");
     updateServiceClearButton();
     updateEstimateButtonState();
+    void refreshEstimatorPartsSources();
     if (focus && serviceSearch && !serviceSearch.disabled) {
       serviceSearch.focus({ preventScroll: true });
     }
@@ -6252,6 +6272,7 @@ if (getEstimateHint) {
 
     refreshQuotePreview();
     updateEstimateButtonState();
+    void refreshEstimatorPartsSources();
     setStatus("info", "Cleared. Start a new estimate.");
   });
 
@@ -6349,6 +6370,7 @@ if (getEstimateHint) {
       updateCategoryClearButton();
       await loadServices(categoryEl.value);
       updateEstimateButtonState();
+      void refreshEstimatorPartsSources();
     } catch (e) {
       setStatus("error", `Services failed: ${e.message}`);
     }
@@ -6358,6 +6380,7 @@ if (getEstimateHint) {
     setCategoryValue("", "none");
     await loadServices("");
     updateEstimateButtonState();
+    void refreshEstimatorPartsSources();
     categoryEl?.focus();
   });
 
@@ -6405,6 +6428,7 @@ if (getEstimateHint) {
     await loadServiceMeta("");
     updateServiceClearButton();
     updateEstimateButtonState();
+    scheduleEstimatorPartsSourcesRefresh();
   });
 
   serviceSearch?.addEventListener("focus", async () => {
@@ -6446,6 +6470,7 @@ if (getEstimateHint) {
     updateQuantityPricingPreview();
     updateEstimateButtonState();
     void refreshPairedSuggestions();
+    void refreshEstimatorPartsSources();
   });
 
   serviceEl?.addEventListener("change", () => {

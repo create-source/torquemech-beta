@@ -134,6 +134,29 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("2002+Ford+F-150+rear+brake+pads", by_label["eBay"]["url"])
         self.assertIn("site%3Aoreillyauto.com+2002+Ford+F-150+rear+brake+pads", by_label["O'Reilly"]["url"])
 
+    def test_estimator_parts_sources_refreshes_from_current_service_dom_paths(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        self.assertIn("function getEstimatorPartsSourceServiceText()", app_js)
+        self.assertIn('const typedService = String(serviceSearch?.value || "").trim();', app_js)
+        self.assertIn('if (selectedService) params.set("service_name", selectedService);', app_js)
+        self.assertIn("apiJSON(`/api/parts-sources?${params.toString()}`)", app_js)
+        self.assertIn("scheduleEstimatorPartsSourcesRefresh();", app_js)
+        self.assertGreaterEqual(app_js.count("void refreshEstimatorPartsSources();"), 7)
+
+    def test_parts_sources_api_falls_back_to_recommended_repair_when_service_cleared(self):
+        response = TestClient(main.app, base_url="http://localhost").get(
+            "/api/parts-sources?year=2002&make=Ford&model=F-150"
+            "&recommended_repair=Rear+Brake+Pads+Replacement"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["service_keyword"], "Rear Brake Pads Replacement")
+        by_label = {source["source_label"]: source for source in payload["sources"]}
+        self.assertEqual(by_label["Amazon"]["query"], "2002 Ford F-150 rear brake pads")
+
     def test_plain_estimator_does_not_show_parts_sources_card(self):
         response = TestClient(main.app, base_url="http://localhost").get("/estimator")
 
