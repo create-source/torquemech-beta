@@ -242,14 +242,14 @@
     </div>
 
       {% if estimator_parts_sources %}
-      <section class="tm-estimator-parts-sources" aria-label="Parts sources for {{ estimator_parts_source_title or 'recommended repair' }}">
+      <section id="estimatorPartsSources" class="tm-estimator-parts-sources" aria-label="Parts sources for {{ estimator_parts_source_title or 'recommended repair' }}">
         <div class="tm-estimator-parts-sources__head">
           <div>
             <div class="tm-section-kicker">Parts Sources</div>
             <h3>Research Parts Pricing</h3>
           </div>
           {% if estimator_parts_source_title %}
-          <span class="tm-estimator-parts-sources__repair">{{ estimator_parts_source_title }}</span>
+          <span id="estimatorPartsSourceRepair" class="tm-estimator-parts-sources__repair">{{ estimator_parts_source_title }}</span>
           {% endif %}
         </div>
         <p class="tm-estimator-parts-sources__helper">
@@ -258,7 +258,7 @@
         {% for source_group in ["Marketplace Search", "Catalog Search"] %}
         <div class="tm-estimator-parts-source-group">
           <div class="tm-estimator-parts-source-group__title">{{ source_group }}</div>
-          <div class="tm-estimator-parts-source-list">
+          <div class="tm-estimator-parts-source-list" data-estimator-parts-source-group="{{ source_group }}">
             {% for source in estimator_parts_sources if source.search_group == source_group %}
               {% if source.url %}
               <a class="tm-estimator-parts-source-link" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</a>

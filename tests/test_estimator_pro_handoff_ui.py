@@ -104,6 +104,36 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("2008+Toyota+Sequoia+water+pump", html)
         self.assertLess(html.index("Research Parts Pricing"), html.index("Price Job"))
 
+    def test_finding_estimator_parts_sources_include_service_keyword(self):
+        response = TestClient(main.app, base_url="http://localhost").get(
+            "/estimator?source=finding&customer_id=1&vehicle_id=2&finding_id=3"
+            "&year=2002&make=Ford&model=F-150"
+            "&service_name=Rear+Brake+Pads+Replacement"
+            "&recommended_repair=Brake+Concern"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.text
+        self.assertIn("Rear Brake Pads Replacement", html)
+        self.assertIn("2002+Ford+F-150+rear+brake+pads", html)
+        self.assertIn("site%3Aoreillyauto.com+2002+Ford+F-150+rear+brake+pads", html)
+        self.assertNotIn("site%3Aoreillyauto.com+2002+Ford+F-150%22", html)
+
+    def test_parts_sources_api_prioritizes_selected_service_keyword(self):
+        response = TestClient(main.app, base_url="http://localhost").get(
+            "/api/parts-sources?year=2002&make=Ford&model=F-150"
+            "&service_name=Rear+Brake+Pads+Replacement"
+            "&recommended_repair=Brake+Concern"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["service_keyword"], "Rear Brake Pads Replacement")
+        by_label = {source["source_label"]: source for source in payload["sources"]}
+        self.assertEqual(by_label["Amazon"]["query"], "2002 Ford F-150 rear brake pads")
+        self.assertIn("2002+Ford+F-150+rear+brake+pads", by_label["eBay"]["url"])
+        self.assertIn("site%3Aoreillyauto.com+2002+Ford+F-150+rear+brake+pads", by_label["O'Reilly"]["url"])
+
     def test_plain_estimator_does_not_show_parts_sources_card(self):
         response = TestClient(main.app, base_url="http://localhost").get("/estimator")
 

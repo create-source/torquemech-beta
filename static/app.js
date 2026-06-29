@@ -917,6 +917,8 @@
   const travelFeeEl = $("travelFee");
   const flatRateWrap = $("flatRateWrap");
   const selectedServiceContextEl = $("selectedServiceContext");
+  const estimatorPartsSourcesEl = $("estimatorPartsSources");
+  const estimatorPartsSourceRepairEl = $("estimatorPartsSourceRepair");
   const hourlyPricingFields = Array.from(document.querySelectorAll(".hourly-pricing-field"));
   const notesEl = $("notes");
 
@@ -2941,6 +2943,59 @@ const confidenceEl = document.getElementById("laborConfidence");
       throw new Error(`${r.status} ${r.statusText} ${detail}`.trim());
     }
     return r.json();
+  }
+
+  function renderEstimatorPartsSources(payload = {}) {
+    if (!estimatorPartsSourcesEl) return;
+    const sources = Array.isArray(payload.sources) ? payload.sources : [];
+    if (!sources.length) {
+      estimatorPartsSourcesEl.hidden = true;
+      return;
+    }
+    estimatorPartsSourcesEl.hidden = false;
+    if (estimatorPartsSourceRepairEl) {
+      const keyword = String(payload.service_keyword || "").trim();
+      estimatorPartsSourceRepairEl.textContent = keyword || "Vehicle search";
+      estimatorPartsSourceRepairEl.hidden = !keyword;
+    }
+    estimatorPartsSourcesEl.querySelectorAll("[data-estimator-parts-source-group]").forEach((groupEl) => {
+      const groupName = groupEl.dataset.estimatorPartsSourceGroup || "";
+      const groupSources = sources.filter((source) => source.search_group === groupName);
+      groupEl.innerHTML = "";
+      groupSources.forEach((source) => {
+        const text = `${source.label || source.source_label || "Source"}${source.note ? `: ${source.note}` : ""}`;
+        const url = String(source.url || "").trim();
+        const node = document.createElement(url ? "a" : "span");
+        node.className = "tm-estimator-parts-source-link";
+        node.textContent = text;
+        if (url) {
+          node.href = url;
+          node.target = "_blank";
+          node.rel = "noopener";
+        }
+        groupEl.appendChild(node);
+      });
+    });
+  }
+
+  async function refreshEstimatorPartsSources() {
+    if (!estimatorPartsSourcesEl) return;
+    const sourceContext = getEstimatorSourceContext();
+    const activeVehicle = getActiveVehicle() || {};
+    const selectedService = getSelectedServiceDisplayName();
+    const params = new URLSearchParams();
+    params.set("year", String(activeVehicle.year || ""));
+    params.set("make", String(activeVehicle.make || ""));
+    params.set("model", getVehicleDisplayModel(activeVehicle) || String(activeVehicle.model || ""));
+    params.set("engine", String(activeVehicle.engine || ""));
+    if (selectedService) params.set("service_name", selectedService);
+    if (sourceContext.recommendedRepair) params.set("recommended_repair", sourceContext.recommendedRepair);
+    if (sourceContext.problemFound) params.set("problem_found", sourceContext.problemFound);
+    try {
+      renderEstimatorPartsSources(await apiJSON(`/api/parts-sources?${params.toString()}`));
+    } catch (error) {
+      console.warn("Parts sources refresh failed:", error);
+    }
   }
 
   function normalizeVinInput(value) {
@@ -6313,6 +6368,7 @@ if (getEstimateHint) {
       updateQuantityPricingPreview();
       updateEstimateButtonState();
       void refreshPairedSuggestions();
+      void refreshEstimatorPartsSources();
     } catch (e) {
       setStatus("error", `Service detail failed: ${e.message}`);
     }
@@ -6908,6 +6964,7 @@ if (getEstimateHint) {
 
         updateRepairGuideHandoffTrust({ vehicleLoaded, serviceLoaded });
         renderFindingEstimateContext();
+        void refreshEstimatorPartsSources();
       } catch (e) {
         console.warn("Repair guide preload failed:", e);
       }

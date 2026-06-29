@@ -5302,17 +5302,8 @@ def estimator(request: Request):
     estimator_parts_sources: List[Dict[str, str]] = []
     estimator_parts_source_title = ""
     if str(query.get("source") or "").strip().lower() == "finding":
-        estimator_parts_source_title = (
-            str(query.get("recommended_repair") or "").strip()
-            or str(query.get("problem_found") or "").strip()
-            or str(query.get("service") or "").strip()
-        )
-        estimator_vehicle = {
-            "year": str(query.get("year") or "").strip(),
-            "make": str(query.get("make") or "").strip(),
-            "model": str(query.get("displayModel") or query.get("display_model") or query.get("model") or "").strip(),
-            "engine": str(query.get("engine") or "").strip(),
-        }
+        estimator_parts_source_title = estimator_repair_keyword_from_query(query)
+        estimator_vehicle = estimator_vehicle_from_query(query)
         estimator_parts_sources = repair_workspace_parts_sources(
             None,
             estimator_vehicle,
@@ -5337,6 +5328,20 @@ def estimator(request: Request):
             samesite="lax",
         )
     return response
+
+
+@app.get("/api/parts-sources")
+def estimator_parts_sources_api(request: Request):
+    query = request.query_params
+    service_keyword = estimator_repair_keyword_from_query(query)
+    vehicle = estimator_vehicle_from_query(query)
+    sources = repair_workspace_parts_sources(None, vehicle, service_keyword)
+    return JSONResponse(
+        {
+            "service_keyword": service_keyword,
+            "sources": sources,
+        }
+    )
 
 @app.get("/obd", response_class=HTMLResponse)
 def obd(request: Request):
@@ -9353,6 +9358,37 @@ def customer_vehicle_model(model: str, display_model: Optional[str] = None) -> s
 
 def customer_vehicle_line(year: Any, make: str, model: str, display_model: Optional[str] = None) -> str:
     return f"{year} {make} {customer_vehicle_model(model, display_model)}".strip()
+
+
+def estimator_service_keyword_from_query(query: Any) -> str:
+    for key in ("service_name", "serviceText", "service_text", "selected_service", "selectedService"):
+        value = str(query.get(key) or "").strip()
+        if value:
+            return value
+    service_value = str(query.get("service") or query.get("serviceCode") or query.get("service_code") or "").strip()
+    if service_value:
+        service_meta = find_service_by_code(service_value)
+        if service_meta:
+            return str(service_meta.get("name") or service_value).strip()
+        return service_value.replace("_", " ").strip()
+    return ""
+
+
+def estimator_repair_keyword_from_query(query: Any) -> str:
+    return (
+        estimator_service_keyword_from_query(query)
+        or str(query.get("recommended_repair") or query.get("recommendedRepair") or "").strip()
+        or str(query.get("problem_found") or query.get("problemFound") or "").strip()
+    )
+
+
+def estimator_vehicle_from_query(query: Any) -> Dict[str, str]:
+    return {
+        "year": str(query.get("year") or "").strip(),
+        "make": str(query.get("make") or "").strip(),
+        "model": str(query.get("displayModel") or query.get("display_model") or query.get("model") or "").strip(),
+        "engine": str(query.get("engine") or "").strip(),
+    }
 
 app.add_middleware(
     CORSMiddleware,
