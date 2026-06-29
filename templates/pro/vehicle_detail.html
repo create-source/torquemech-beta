@@ -2735,19 +2735,19 @@
                 </div>
               </section>
               {% endif %}
-              {% if item.status == "Open" %}
               <div class="tm-finding-estimate" data-finding-estimate>
-                {% if item.estimate_document_url %}
-                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_url }}">
-                  Open Estimate
-                </a>
+                {% if item.estimate_document_url and item.linked_repair_record_id %}
+                <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
+                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
+                {% elif item.estimate_document_url %}
+                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_url }}">Open Estimate</a>
                 {% else %}
-                <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">
-                  {% if item.labor_amount or item.parts_cost %}Review Estimate{% else %}Create Estimate{% endif %}
-                </a>
+                <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                {% if item.linked_repair_record_id %}
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
+                {% endif %}
                 {% endif %}
               </div>
-              {% endif %}
               <details class="tm-crm-disclosure tm-finding-estimate">
                 <summary>Customer Decision / Update Status</summary>
                 <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" style="margin-top:12px;">
@@ -2765,9 +2765,7 @@
                 </form>
               </details>
               <div class="tm-repair-action-row">
-                {% if item.status == "Approved" and item.linked_repair_record_id %}
-                <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Source: Finding Repair Job</a>
-                {% elif item.status == "Approved" %}
+                {% if item.status == "Approved" and not item.linked_repair_record_id %}
                 <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
                   <input type="hidden" name="workflow_source_type" value="finding">
                   <input type="hidden" name="workflow_source_id" value="{{ item.id }}">
@@ -2835,6 +2833,19 @@
                 {% else %}
                 <div style="color:#475569;"><strong>Recommended Repair:</strong> {{ item.recommendation or "No recommended repair recorded." }}</div>
                 {% endif %}
+                <div class="tm-finding-estimate" data-finding-estimate>
+                  {% if item.estimate_document_url and item.linked_repair_record_id %}
+                  <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
+                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
+                  {% elif item.estimate_document_url %}
+                  <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_url }}">Open Estimate</a>
+                  {% else %}
+                  <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                  {% if item.linked_repair_record_id %}
+                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
+                  {% endif %}
+                  {% endif %}
+                </div>
                 <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
                   <div class="tm-finding-status-control">
                     <label class="tm-label" for="finding_status_{{ item.id }}">Customer Decision / Approval Status</label>

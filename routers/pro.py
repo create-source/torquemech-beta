@@ -337,7 +337,6 @@ def repair_workspace_primary_action(item: dict[str, Any], status_key: str) -> di
     if (
         item.get("source_label") == "Source: Finding"
         and item.get("source_type") == "finding"
-        and not item.get("linked_repair_record_id")
     ):
         return {"label": "Create Estimate", "url": create_estimate_url, "kind": "link"}
     if status_key == "ready_to_complete":

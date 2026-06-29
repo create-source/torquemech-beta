@@ -383,6 +383,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             "source_action_url": "/pro/customers/1/vehicles/1/findings/10",
             "create_estimate_url": "/estimator?source=finding&finding_id=10",
         }
+        no_estimate_with_repair = {
+            **no_estimate,
+            "linked_repair_record_id": 30,
+            "repair_record_url": "/pro/customers/1/vehicles/1/repairs/30",
+        }
         open_estimate = {
             **no_estimate,
             "estimate_document_url": "/pro/customers/1/vehicles/1/estimates/12/pdf",
@@ -394,6 +399,10 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
         self.assertEqual(
             pro_module.repair_workspace_primary_action(no_estimate, "open"),
+            {"label": "Create Estimate", "url": "/estimator?source=finding&finding_id=10", "kind": "link"},
+        )
+        self.assertEqual(
+            pro_module.repair_workspace_primary_action(no_estimate_with_repair, "approved"),
             {"label": "Create Estimate", "url": "/estimator?source=finding&finding_id=10", "kind": "link"},
         )
         self.assertEqual(
@@ -781,10 +790,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('class="tm-history-summary-card tm-findings-status-card"', vehicle_detail)
         self.assertIn('data-finding-status-group="{{ group.label }}"', vehicle_detail)
         self.assertIn("Create Estimate", vehicle_detail)
-        self.assertIn("Review Estimate", vehicle_detail)
+        self.assertIn("Open Repair", vehicle_detail)
         self.assertIn("Customer Decision / Update Status", vehicle_detail)
         self.assertIn("Edit Finding", vehicle_detail)
         self.assertIn("build_finding_estimator_href(customer, vehicle, item)", vehicle_detail)
+        self.assertNotIn("Open Source: Finding Repair Job", vehicle_detail)
         self.assertNotIn("Save Estimate / Recommended Repair", vehicle_detail)
         self.assertIn("Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.", vehicle_detail)
         self.assertIn("+ Add Finding / Recommended Work", vehicle_detail)
@@ -855,7 +865,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(groups["open"][0]["workspace_status_label"], "Open")
         self.assertEqual(groups["open"][0]["primary_action_label"], "Open Repair")
         self.assertEqual(groups["approved"][0]["workspace_status_label"], "Approved")
-        self.assertEqual(groups["approved"][0]["primary_action_label"], "Open Repair")
+        self.assertEqual(groups["approved"][0]["primary_action_label"], "Create Estimate")
         self.assertEqual(groups["in_progress"][0]["workspace_status_label"], "In Progress")
         self.assertEqual(groups["in_progress"][0]["primary_action_label"], "Continue Repair")
         self.assertEqual(groups["ready_to_complete"][0]["workspace_status_label"], "Ready to Complete")

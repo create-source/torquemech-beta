@@ -439,6 +439,52 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn("Invoice TM-INV-0001", vehicle_detail.text)
         self.assertIn("Open Final Invoice", vehicle_detail.text)
 
+    def test_approved_finding_without_estimate_keeps_create_estimate_cta(self):
+        pro_module.ensure_findings_records_schema(self.conn)
+        self.insert_repair(
+            35,
+            "Water Pump Replacement",
+            1.8,
+            125,
+            160,
+            source="finding",
+            status="Open",
+        )
+        self.conn.execute(
+            """
+            UPDATE repair_records
+            SET workflow_source_id = 77
+            WHERE id = 35
+            """
+        )
+        self.conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, vehicle_id, customer_id, finding, recommendation, request_type,
+              severity, status, repair_work_status, linked_repair_record_id,
+              mileage, finding_date, created_at
+            )
+            VALUES (
+              77, 1, 1, 'Coolant leak at water pump', 'Water Pump Replacement',
+              'finding', 'Medium', 'Approved', 'ready', 35, 150000,
+              '2026-06-25', '2026-06-25T12:00:00'
+            )
+            """
+        )
+        self.conn.commit()
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn("Coolant leak at water pump", vehicle_detail.text)
+        self.assertIn("finding_id=77", vehicle_detail.text)
+        self.assertIn("Create Estimate", vehicle_detail.text)
+        self.assertIn("Open Repair", vehicle_detail.text)
+        self.assertNotIn("Open Source: Finding Repair Job", vehicle_detail.text)
+
     def test_invoice_creation_rejects_open_declined_deferred_and_approved_work(self):
         statuses = ["Open", "Approved", "Declined", "Deferred"]
         for idx, status in enumerate(statuses, start=40):
