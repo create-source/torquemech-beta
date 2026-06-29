@@ -24,7 +24,7 @@ from fastapi import (
 )
 
 from routers.knowledge import router as knowledge_router
-from routers.pro import record_estimate_pdf_document, router as pro_router
+from routers.pro import record_estimate_pdf_document, repair_workspace_parts_sources, router as pro_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
@@ -5298,9 +5298,34 @@ def home(request: Request):
 def estimator(request: Request):
     metric_incr("page_estimator")
     pro_access_state = pro_request_access_state(request)
+    query = request.query_params
+    estimator_parts_sources: List[Dict[str, str]] = []
+    estimator_parts_source_title = ""
+    if str(query.get("source") or "").strip().lower() == "finding":
+        estimator_parts_source_title = (
+            str(query.get("recommended_repair") or "").strip()
+            or str(query.get("problem_found") or "").strip()
+            or str(query.get("service") or "").strip()
+        )
+        estimator_vehicle = {
+            "year": str(query.get("year") or "").strip(),
+            "make": str(query.get("make") or "").strip(),
+            "model": str(query.get("displayModel") or query.get("display_model") or query.get("model") or "").strip(),
+            "engine": str(query.get("engine") or "").strip(),
+        }
+        estimator_parts_sources = repair_workspace_parts_sources(
+            None,
+            estimator_vehicle,
+            estimator_parts_source_title,
+        )
     response = templates.TemplateResponse(
         "estimator.html",
-        {"request": request, "pro_handoff_available": pro_access_state["access_allowed"]},
+        {
+            "request": request,
+            "pro_handoff_available": pro_access_state["access_allowed"],
+            "estimator_parts_sources": estimator_parts_sources,
+            "estimator_parts_source_title": estimator_parts_source_title,
+        },
     )
     if pro_access_state["qa_key_matched"]:
         response.set_cookie(

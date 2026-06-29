@@ -85,6 +85,31 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('laborCalculationModeEl.value = "total"', app_js)
         self.assertIn("normalizeQuantity(serviceQuantityEl?.value)", app_js)
 
+    def test_finding_estimator_shows_parts_sources_before_price_job(self):
+        response = TestClient(main.app, base_url="http://localhost").get(
+            "/estimator?source=finding&customer_id=1&vehicle_id=2&finding_id=3"
+            "&year=2008&make=Toyota&model=Sequoia&recommended_repair=Water+Pump+Replacement"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.text
+        self.assertIn("Parts Sources", html)
+        self.assertIn("Research Parts Pricing", html)
+        self.assertIn(
+            "Use these source links to research parts pricing before entering Parts Cost. Confirm fitment on the vendor site before ordering.",
+            html,
+        )
+        self.assertIn("Amazon", html)
+        self.assertIn("O&#39;Reilly Catalog Search", html)
+        self.assertIn("2008+Toyota+Sequoia+water+pump", html)
+        self.assertLess(html.index("Research Parts Pricing"), html.index("Price Job"))
+
+    def test_plain_estimator_does_not_show_parts_sources_card(self):
+        response = TestClient(main.app, base_url="http://localhost").get("/estimator")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Research Parts Pricing", response.text)
+
     def test_pdf_generation_accepts_quantity_line_item(self):
         client = TestClient(main.app, base_url="http://localhost")
 

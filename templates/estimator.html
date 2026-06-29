@@ -241,6 +241,37 @@
       <div id="completionSuggestionsList" class="tm-completion-suggestions__list"></div>
     </div>
 
+      {% if estimator_parts_sources %}
+      <section class="tm-estimator-parts-sources" aria-label="Parts sources for {{ estimator_parts_source_title or 'recommended repair' }}">
+        <div class="tm-estimator-parts-sources__head">
+          <div>
+            <div class="tm-section-kicker">Parts Sources</div>
+            <h3>Research Parts Pricing</h3>
+          </div>
+          {% if estimator_parts_source_title %}
+          <span class="tm-estimator-parts-sources__repair">{{ estimator_parts_source_title }}</span>
+          {% endif %}
+        </div>
+        <p class="tm-estimator-parts-sources__helper">
+          Use these source links to research parts pricing before entering Parts Cost. Confirm fitment on the vendor site before ordering.
+        </p>
+        {% for source_group in ["Marketplace Search", "Catalog Search"] %}
+        <div class="tm-estimator-parts-source-group">
+          <div class="tm-estimator-parts-source-group__title">{{ source_group }}</div>
+          <div class="tm-estimator-parts-source-list">
+            {% for source in estimator_parts_sources if source.search_group == source_group %}
+              {% if source.url %}
+              <a class="tm-estimator-parts-source-link" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</a>
+              {% else %}
+              <span class="tm-estimator-parts-source-link">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </section>
+      {% endif %}
+
       <div class="pricing-controls" aria-label="Pricing Controls">
         <div class="pricing-controls__head">
           <div class="pricing-controls__title">Price Job</div>

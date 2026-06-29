@@ -1465,6 +1465,80 @@ button:active{
   opacity: .68;
 }
 
+.tm-estimator-parts-sources{
+  display:grid;
+  gap:10px;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(14,116,144,.16);
+  border-left:5px solid #0f766e;
+  border-radius:12px;
+  background:#f8fafc;
+  box-shadow:0 8px 18px rgba(15,23,42,.04);
+}
+
+.tm-estimator-parts-sources__head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.tm-estimator-parts-sources__head h3{
+  margin:2px 0 0;
+  color:#0f172a;
+  font-size:1rem;
+  line-height:1.2;
+}
+
+.tm-estimator-parts-sources__repair{
+  border:1px solid rgba(14,116,144,.18);
+  border-radius:999px;
+  background:#ecfeff;
+  color:#155e75;
+  font-size:.76rem;
+  font-weight:900;
+  padding:5px 9px;
+}
+
+.tm-estimator-parts-sources__helper{
+  margin:0;
+  color:#475569;
+  font-size:.84rem;
+  line-height:1.4;
+}
+
+.tm-estimator-parts-source-group{
+  display:grid;
+  gap:7px;
+}
+
+.tm-estimator-parts-source-group__title{
+  color:#334155;
+  font-size:.74rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+.tm-estimator-parts-source-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.tm-estimator-parts-source-link{
+  border:1px solid rgba(15,23,42,.1);
+  border-radius:999px;
+  background:#fff;
+  color:#0f172a;
+  font-size:.78rem;
+  font-weight:800;
+  line-height:1.2;
+  padding:6px 9px;
+  text-decoration:none;
+}
+
 .pricing-controls{
   margin-top: 12px;
   padding: 12px;
