@@ -117,6 +117,56 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertEqual(response.headers["content-type"], "application/pdf")
         self.assertTrue(response.content.startswith(b"%PDF"))
 
+    def test_finding_pdf_generation_saves_estimate_timeline_document(self):
+        client = TestClient(main.app, base_url="http://localhost")
+
+        with patch.object(main, "record_estimate_pdf_document", return_value={"id": 77}) as save_mock:
+            response = client.post(
+                "/estimate/pdf_multi",
+                json={
+                    "year": 2008,
+                    "make": "Toyota",
+                    "model": "Sequoia",
+                    "customerName": "Sam Driver",
+                    "source": "finding",
+                    "customerId": "5",
+                    "vehicleId": "8",
+                    "findingId": "13",
+                    "recommendedRepair": "Water Pump Replacement",
+                    "customerAgrees": True,
+                    "lineItems": [
+                        {
+                            "serviceCode": "water_pump_replacement",
+                            "serviceText": "Water Pump Replacement",
+                            "displayServiceText": "Water Pump Replacement",
+                            "quantity": 1,
+                            "partsUnitCost": 325,
+                            "pricingMode": "hourly",
+                            "laborHoursInput": 3,
+                            "laborCalculationMode": "total",
+                            "laborHours": 3,
+                            "partsPrice": 325,
+                            "laborRate": 125,
+                            "travelFee": 0,
+                            "estimate": 700,
+                        }
+                    ],
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        save_mock.assert_called_once()
+        kwargs = save_mock.call_args.kwargs
+        self.assertTrue(kwargs["pdf_bytes"].startswith(b"%PDF"))
+        self.assertEqual(kwargs["customer_id"], "5")
+        self.assertEqual(kwargs["vehicle_id"], "8")
+        self.assertEqual(kwargs["finding_id"], "13")
+        self.assertEqual(kwargs["customer_name"], "Sam Driver")
+        self.assertEqual(kwargs["vehicle_label"], "2008 Toyota Sequoia")
+        self.assertEqual(kwargs["related_title"], "Water Pump Replacement")
+        self.assertEqual(kwargs["estimate_total"], 700)
+        self.assertEqual(kwargs["approval_status"], "Customer reviewed estimate")
+
 
 if __name__ == "__main__":
     unittest.main()

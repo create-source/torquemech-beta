@@ -24,7 +24,7 @@ from fastapi import (
 )
 
 from routers.knowledge import router as knowledge_router
-from routers.pro import router as pro_router
+from routers.pro import record_estimate_pdf_document, router as pro_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
@@ -9295,6 +9295,13 @@ class EstimateRequest(BaseModel):
     notes: Optional[str] = None
     customerName: Optional[str] = None
     customerPhone: Optional[str] = None
+    source: Optional[str] = None
+    customerId: Optional[str] = None
+    vehicleId: Optional[str] = None
+    findingId: Optional[str] = None
+    problemFound: Optional[str] = None
+    recommendedRepair: Optional[str] = None
+    sourceContext: Optional[Dict[str, Any]] = None
 
     customerAgrees: bool = False
     zip: Optional[str] = Field(default="00000", min_length=5, max_length=10)
@@ -10420,8 +10427,9 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
             c.drawString(72, y, f"Name: {req.customerName}")
             y -= 14
 
-        if req.customerPhone:
-            c.drawString(72, y, f"Phone: {req.customerPhone}")
+        customer_phone = format_pdf_phone(req.customerPhone)
+        if customer_phone:
+            c.drawString(72, y, f"Phone: {customer_phone}")
             y -= 14
 
         # ---------------- Notes Box ----------------
@@ -10468,9 +10476,17 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         c.save()
 
         buf.seek(0)
+        pdf_bytes = buf.read()
+        save_repair_estimate_pdf_if_available(
+            req,
+            pdf_bytes,
+            vehicle_line=customer_vehicle_line(req.year, req.make, req.model, req.displayModel),
+            related_title=estimate_pdf_related_title(req, est.service_name),
+            estimate_total=float(est.estimate or 0),
+        )
 
         return Response(
-            content=buf.read(),
+            content=pdf_bytes,
             media_type="application/pdf",
             headers={"Content-Disposition": "attachment; filename=torquemech_estimate.pdf"}
         )
@@ -10511,6 +10527,13 @@ class MultiPDFRequest(BaseModel):
     notes: Optional[str] = None
     customerName: Optional[str] = None
     customerPhone: Optional[str] = None
+    source: Optional[str] = None
+    customerId: Optional[str] = None
+    vehicleId: Optional[str] = None
+    findingId: Optional[str] = None
+    problemFound: Optional[str] = None
+    recommendedRepair: Optional[str] = None
+    sourceContext: Optional[Dict[str, Any]] = None
     businessName: Optional[str] = None
     mechanicName: Optional[str] = None
     businessPhone: Optional[str] = None
@@ -10587,6 +10610,72 @@ def pdf_repair_status_label(value: Any) -> str:
     return REPAIR_STATUS_LABELS.get(status, "Recommended")
 
 
+def estimate_request_source_value(req: Any, key: str) -> str:
+    direct = getattr(req, key, None)
+    if direct not in (None, ""):
+        return str(direct).strip()
+    source_context = getattr(req, "sourceContext", None)
+    if isinstance(source_context, dict):
+        camel_key = key[0].lower() + key[1:]
+        for candidate in (key, camel_key):
+            value = source_context.get(candidate)
+            if value not in (None, ""):
+                return str(value).strip()
+    return ""
+
+
+def estimate_pdf_approval_status(req: Any) -> str:
+    if getattr(req, "signatureDataUrl", None):
+        return "Signed customer approval"
+    if getattr(req, "customerAgrees", False):
+        return "Customer reviewed estimate"
+    return "Prepared estimate"
+
+
+def estimate_pdf_related_title(req: Any, fallback_title: str = "") -> str:
+    title = (
+        estimate_request_source_value(req, "recommendedRepair")
+        or estimate_request_source_value(req, "problemFound")
+        or fallback_title
+        or "Recommended Repair"
+    )
+    return re.sub(r"\s+", " ", str(title or "")).strip()
+
+
+def save_repair_estimate_pdf_if_available(
+    req: Any,
+    pdf_bytes: bytes,
+    *,
+    vehicle_line: str,
+    related_title: str,
+    estimate_total: float,
+) -> None:
+    customer_id = estimate_request_source_value(req, "customerId")
+    vehicle_id = estimate_request_source_value(req, "vehicleId")
+    if not customer_id or not vehicle_id:
+        return
+    try:
+        record_estimate_pdf_document(
+            pdf_bytes=pdf_bytes,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=estimate_request_source_value(req, "findingId"),
+            estimate_date=datetime.utcnow().date().isoformat(),
+            customer_name=str(getattr(req, "customerName", "") or "").strip(),
+            vehicle_label=vehicle_line,
+            related_title=related_title,
+            estimate_total=estimate_total,
+            approval_status=estimate_pdf_approval_status(req),
+            payload={
+                "source": estimate_request_source_value(req, "source") or "estimator",
+                "finding_id": estimate_request_source_value(req, "findingId"),
+                "related_title": related_title,
+            },
+        )
+    except Exception:
+        logging.exception("ESTIMATE_TIMELINE_SAVE_FAILED")
+
+
 def estimate_display_service_name(service_name: Any, quantity: Any = 1) -> str:
     name = str(service_name or "Repair service").strip() or "Repair service"
     try:
@@ -10606,6 +10695,15 @@ def estimate_line_billable_labor_hours(item: Any) -> float:
             entered = getattr(item, "laborHours", 0) or 0
         return max(0.0, float(entered or 0)) * quantity
     return max(0.0, float(getattr(item, "laborHours", 0) or 0))
+
+
+def format_pdf_phone(value: Any) -> str:
+    raw = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(raw) == 11 and raw.startswith("1"):
+        raw = raw[1:]
+    if len(raw) == 10:
+        return f"{raw[:3]}-{raw[3:6]}-{raw[6:]}"
+    return str(value or "").strip()
 
 
 def pdf_multi_summary_approval_needed(
@@ -10759,7 +10857,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         business_name = (req.businessName or "").strip()[:80]
         mechanic_name = (req.mechanicName or "").strip()[:80]
-        business_phone = (req.businessPhone or "").strip()[:32]
+        business_phone = format_pdf_phone(req.businessPhone)[:32]
         business_note = (req.businessNote or "").strip()[:180]
         business_note_lines = wrap_text(business_note, max_chars=48)[:3] if business_note else []
 
@@ -11029,11 +11127,12 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         final_note_lines = wrap_text(CUSTOMER_FINAL_PRICE_NOTE, max_chars=96)[:2] if req.showRiskNotes else []
         customer_note_lines = wrap_text(req.notes.strip(), max_chars=90) if req.notes else []
+        customer_phone = format_pdf_phone(req.customerPhone)
         has_signature = bool(req.signatureDataUrl)
         summary_needed = pdf_multi_summary_approval_needed(
             final_note_lines=final_note_lines,
             customer_name=req.customerName,
-            customer_phone=req.customerPhone,
+            customer_phone=customer_phone,
             has_signature=has_signature,
         )
 
@@ -11108,7 +11207,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             approval_line=approval_line,
             approval_note=approval_note,
             customer_name=req.customerName,
-            customer_phone=req.customerPhone,
+            customer_phone=customer_phone,
             signature_data_url=req.signatureDataUrl,
         )
 
@@ -11137,9 +11236,24 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         c.save()
         buf.seek(0)
+        pdf_bytes = buf.getvalue()
+        first_line_item = (req.lineItems or [None])[0]
+        first_service_title = ""
+        if first_line_item is not None:
+            first_service_title = (
+                first_line_item.displayServiceText
+                or estimate_display_service_name(first_line_item.serviceText or first_line_item.serviceCode or "Repair service", first_line_item.quantity)
+            )
+        save_repair_estimate_pdf_if_available(
+            req,
+            pdf_bytes,
+            vehicle_line=vehicle_line,
+            related_title=estimate_pdf_related_title(req, first_service_title),
+            estimate_total=float(grand_total or 0),
+        )
 
         return Response(
-            content=buf.getvalue(),
+            content=pdf_bytes,
             media_type="application/pdf",
             headers={"Content-Disposition": "inline; filename=torquemech_estimate.pdf"},
         )

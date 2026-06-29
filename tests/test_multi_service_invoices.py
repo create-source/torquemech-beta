@@ -399,10 +399,10 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn("Download PDF", invoice_detail.text)
         self.assertEqual(invoice_pdf.status_code, 200)
         self.assertEqual(vehicle_detail.status_code, 200)
-        self.assertIn("Repaired Services", vehicle_detail.text)
+        self.assertIn("Completed Repairs", vehicle_detail.text)
         self.assertIn("Front Brake Pads Replacement", vehicle_detail.text)
         self.assertIn("Invoice TM-INV-0001", vehicle_detail.text)
-        self.assertIn("View Completed Repair", vehicle_detail.text)
+        self.assertIn("Open Final Invoice", vehicle_detail.text)
 
     def test_invoice_creation_rejects_open_declined_deferred_and_approved_work(self):
         statuses = ["Open", "Approved", "Declined", "Deferred"]

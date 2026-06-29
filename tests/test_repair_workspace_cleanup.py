@@ -376,6 +376,96 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(groups["invoiced"][0]["invoice_number"], "TM-INV-1003")
         self.assertEqual(groups["invoiced"][0]["source_action_label"], "View Source Estimate")
 
+    def test_repair_workspace_primary_cta_uses_saved_estimate_state(self):
+        no_estimate = {
+            "source_type": "finding",
+            "source_label": "Source: Finding",
+            "source_action_url": "/pro/customers/1/vehicles/1/findings/10",
+            "create_estimate_url": "/estimator?source=finding&finding_id=10",
+        }
+        open_estimate = {
+            **no_estimate,
+            "estimate_document_url": "/pro/customers/1/vehicles/1/estimates/12/pdf",
+        }
+        completed_invoice = {
+            "repair_record_url": "/pro/customers/1/vehicles/1/repairs/30",
+            "invoice_url": "/pro/customers/1/vehicles/1/invoices/9",
+        }
+
+        self.assertEqual(
+            pro_module.repair_workspace_primary_action(no_estimate, "open"),
+            {"label": "Create Estimate", "url": "/estimator?source=finding&finding_id=10", "kind": "link"},
+        )
+        self.assertEqual(
+            pro_module.repair_workspace_primary_action(open_estimate, "open"),
+            {"label": "Open Estimate", "url": "/pro/customers/1/vehicles/1/estimates/12/pdf", "kind": "link"},
+        )
+        self.assertEqual(
+            pro_module.repair_workspace_primary_action(open_estimate, "approved")["label"],
+            "Open Repair",
+        )
+        self.assertEqual(
+            pro_module.repair_workspace_primary_action(completed_invoice, "completed"),
+            {"label": "Open Final Invoice", "url": "/pro/customers/1/vehicles/1/invoices/9", "kind": "link"},
+        )
+
+    def test_approved_finding_with_saved_estimate_opens_repair_not_duplicate_estimate(self):
+        vehicle = {"id": 1, "year": 2008, "make": "Toyota", "model": "Sequoia", "mileage": 177000}
+        findings = [
+            {
+                "id": 10,
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "status": "Approved",
+                "finding": "Coolant leak at water pump",
+                "recommendation": "Water Pump Replacement",
+                "request_type": "finding",
+                "repair_work_status": "ready",
+                "created_at": "2026-06-24T10:00:00",
+            }
+        ]
+        estimate_docs = [
+            {
+                "id": 12,
+                "finding_id": 10,
+                "estimate_date": "2026-06-24",
+                "created_at": "2026-06-24T10:05:00",
+                "approval_status": "Prepared estimate",
+            }
+        ]
+
+        with patch.object(pro_module, "get_repair_blueprint_for_work_item", return_value=None):
+            items = pro_module.build_repair_work_items(vehicle, findings, [], [], estimate_docs)
+
+        self.assertEqual(items[0]["estimate_document_url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
+        self.assertEqual(items[0]["estimate_badge"], "Estimate PDF")
+        pro_module.enrich_repair_workspace_item(items[0])
+        self.assertEqual(items[0]["primary_action_label"], "Open Repair")
+        self.assertEqual(items[0]["primary_action_kind"], "repair")
+        self.assertNotEqual(items[0]["primary_action_label"], "Create Estimate")
+
+    def test_open_finding_with_saved_estimate_gets_open_estimate_metadata(self):
+        findings = [{"id": 10, "customer_id": 1, "vehicle_id": 1, "status": "Open"}]
+        pro_module.attach_estimate_documents_to_findings(
+            findings,
+            [
+                {
+                    "id": 12,
+                    "finding_id": 10,
+                    "estimate_date": "2026-06-24",
+                    "created_at": "2026-06-24T10:05:00",
+                    "approval_status": "Prepared estimate",
+                    "estimate_total": 700,
+                }
+            ],
+            customer_id=1,
+            vehicle_id=1,
+        )
+
+        self.assertEqual(findings[0]["estimate_document_url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
+        self.assertEqual(findings[0]["estimate_document_status"], "Prepared estimate")
+        self.assertEqual(findings[0]["estimate_total"], 700)
+
     def test_completed_repairs_render_in_vehicle_timeline_repaired_services(self):
         timeline = pro_module.build_vehicle_timeline(
             1,
@@ -421,8 +511,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             ],
         )
 
-        repaired = timeline[0]
-        self.assertEqual(repaired["title"], "Repaired Services")
+        repaired = next(group for group in timeline if group["key"] == "repaired")
+        self.assertEqual(repaired["title"], "Completed Repairs")
         self.assertEqual(repaired["records"][0]["service_name"], "Replace alternator")
         self.assertEqual(repaired["records"][0]["mileage"], 177000)
         self.assertEqual(repaired["records"][0]["source_label"], "Source: Estimate")
@@ -460,7 +550,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             ],
         )
 
-        repaired = timeline[0]["records"][0]
+        repaired = next(group for group in timeline if group["key"] == "repaired")["records"][0]
         self.assertEqual(repaired["service_name"], "Replace water pump")
         self.assertEqual(repaired["mileage"], 177000)
         self.assertEqual(repaired["source_label"], "Source: Finding")
@@ -502,11 +592,69 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(timeline[0]["title"], "Repaired Services")
-        self.assertEqual(timeline[0]["records"], [])
-        self.assertEqual(timeline[3]["title"], "Findings")
-        self.assertEqual(timeline[3]["records"][0]["service_name"], "Brake pulsation")
-        self.assertEqual(timeline[4]["title"], "Approvals / Decisions")
+        groups = {group["key"]: group for group in timeline}
+        self.assertEqual(groups["repaired"]["title"], "Completed Repairs")
+        self.assertEqual(groups["repaired"]["records"], [])
+        self.assertEqual(groups["findings"]["title"], "Findings")
+        self.assertEqual(groups["findings"]["records"][0]["service_name"], "Brake pulsation")
+        self.assertEqual(groups["approvals"]["title"], "Approvals / Decisions")
+
+    def test_repair_estimate_documents_render_as_estimates_not_completed_repairs(self):
+        timeline = pro_module.build_vehicle_timeline(
+            1,
+            1,
+            {"id": 1},
+            [],
+            [
+                {
+                    "id": 9,
+                    "invoice_number": "TM-INV-1009",
+                    "repair_record_id": 30,
+                    "repair_record_ids": "30",
+                    "repair_name": "Water pump replacement",
+                    "grand_total": 825,
+                    "created_at": "2026-06-25T09:00:00",
+                }
+            ],
+            [],
+            [],
+            [],
+            estimate_document_records=[
+                {
+                    "id": 12,
+                    "estimate_date": "2026-06-24",
+                    "created_at": "2026-06-24T10:00:00",
+                    "customer_name": "Sam Driver",
+                    "vehicle_label": "2008 Toyota Sequoia",
+                    "related_title": "Water pump replacement",
+                    "estimate_total": 825,
+                    "approval_status": "Signed customer approval",
+                    "invoice_id": 9,
+                    "invoice_number": "TM-INV-1009",
+                }
+            ],
+        )
+
+        groups = {group["key"]: group for group in timeline}
+        self.assertEqual(groups["findings"]["title"], "Findings")
+        self.assertEqual(groups["estimates"]["title"], "Estimates")
+        self.assertEqual(groups["repaired"]["title"], "Completed Repairs")
+        self.assertEqual(groups["invoices"]["title"], "Invoices")
+        self.assertEqual(groups["repaired"]["records"], [])
+        estimate = groups["estimates"]["records"][0]
+        self.assertIn("Repair Estimate", estimate["service_name"])
+        self.assertNotIn("Completed Repair", estimate["service_name"])
+        self.assertEqual(estimate["customer_name"], "Sam Driver")
+        self.assertEqual(estimate["vehicle_label"], "2008 Toyota Sequoia")
+        self.assertEqual(estimate["related_title"], "Water pump replacement")
+        self.assertEqual(estimate["total"], 825)
+        self.assertEqual(estimate["approval_status"], "Signed customer approval")
+        self.assertEqual(estimate["url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
+        self.assertEqual(estimate["action_label"], "Open Estimate PDF")
+        self.assertEqual(estimate["invoice_number"], "TM-INV-1009")
+        invoice = groups["invoices"]["records"][0]
+        self.assertIn("Final Invoice TM-INV-1009", invoice["service_name"])
+        self.assertEqual(invoice["action_label"], "Open Final Invoice")
 
     def test_photo_stage_labels_are_present(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
@@ -673,6 +821,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             {
                 "source_type": "finding",
                 "source_id": 21,
+                "source_label": "Source: Finding",
+                "create_estimate_url": "/estimator?source=finding&finding_id=21",
                 "title": "Front pads",
                 "repair_work_status": "ready",
                 "linked_repair_record_id": 21,
@@ -703,9 +853,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         groups = pro_module.build_repair_workspace_groups(vehicle, active, [])
 
         self.assertEqual(groups["open"][0]["workspace_status_label"], "Open")
-        self.assertEqual(groups["open"][0]["primary_action_label"], "Review Repair")
+        self.assertEqual(groups["open"][0]["primary_action_label"], "Open Repair")
         self.assertEqual(groups["approved"][0]["workspace_status_label"], "Approved")
-        self.assertEqual(groups["approved"][0]["primary_action_label"], "Start Repair")
+        self.assertEqual(groups["approved"][0]["primary_action_label"], "Open Repair")
         self.assertEqual(groups["in_progress"][0]["workspace_status_label"], "In Progress")
         self.assertEqual(groups["in_progress"][0]["primary_action_label"], "Continue Repair")
         self.assertEqual(groups["ready_to_complete"][0]["workspace_status_label"], "Ready to Complete")

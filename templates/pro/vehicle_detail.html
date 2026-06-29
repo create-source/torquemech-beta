@@ -430,6 +430,30 @@
     line-height: 1.2;
   }
 
+  .tm-blueprint-summary-subtitle {
+    color: #64748b;
+    font-size: .82rem;
+    font-weight: 800;
+  }
+
+  .tm-blueprint-summary-note {
+    color: #475569;
+    font-size: .78rem;
+    line-height: 1.35;
+  }
+
+  .tm-parts-source-group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .tm-parts-source-group-title {
+    color: #334155;
+    font-size: .76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
   .tm-blueprint-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -978,6 +1002,11 @@
     box-shadow: 0 0 0 2px #0891b2;
   }
 
+  .tm-timeline-dot--estimates {
+    background: #2563eb;
+    box-shadow: 0 0 0 2px #2563eb;
+  }
+
   .tm-timeline-content {
     display: grid;
     gap: 6px;
@@ -1035,6 +1064,11 @@
   .tm-timeline-badge--invoices {
     background: #cffafe;
     color: #155e75;
+  }
+
+  .tm-timeline-badge--estimates {
+    background: #dbeafe;
+    color: #1e40af;
   }
 
   .tm-maintenance-table-wrap {
@@ -2039,7 +2073,6 @@
               <h3 class="tm-repair-card-title">{{ item.title }}</h3>
               <div class="tm-repair-card-meta">
                 <span class="tm-repair-status-chip tm-repair-status-chip--{{ item.workspace_status_key }}">Status {{ item.workspace_status_label }}</span>
-                <span class="tm-repair-source-chip">{{ item.source_label or item.approval_label }}</span>
                 {% if item.customer_approval_label %}<span class="tm-repair-status-chip">{{ item.customer_approval_label }}</span>{% endif %}
                 {% if item.date_value %}<span class="tm-repair-status-chip">{{ item.date_label }} {{ item.date_value|pro_date }}</span>{% endif %}
                 {% if item.mileage is not none %}<span class="tm-repair-status-chip">{{ item.mileage|pro_miles }} miles</span>{% endif %}
@@ -2069,19 +2102,28 @@
           {% if parts_sources %}
           <section class="tm-blueprint-summary-card" aria-label="Parts sources for {{ item.title }}">
             <div class="tm-blueprint-summary-title">Parts Sources</div>
-            <div class="tm-intel-badge-row">
-              {% for source in parts_sources %}
+            <div class="tm-blueprint-summary-subtitle">Searches by vehicle + repair. Confirm fitment on the vendor site before ordering.</div>
+            <div class="tm-blueprint-summary-note">Vendor sites may use saved garage filters. Always confirm year, make, model, engine, and fitment before ordering.</div>
+            {% for source_group in ["Marketplace Search", "Catalog Search"] %}
+            <div class="tm-parts-source-group">
+              <div class="tm-parts-source-group-title">{{ source_group }}</div>
+              <div class="tm-intel-badge-row">
+              {% for source in parts_sources if source.search_group == source_group %}
                 {% if source.url %}
                 <a class="tm-intel-badge" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</a>
                 {% else %}
                 <span class="tm-intel-badge">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</span>
                 {% endif %}
               {% endfor %}
+              </div>
             </div>
+            {% endfor %}
           </section>
           {% endif %}
           <div class="tm-repair-card-actions">
-            {% if item.linked_repair_record_id %}
+            {% if item.primary_action_kind == "link" %}
+            <a class="tm-btn tm-btn-primary" href="{{ item.primary_action_url }}">{{ item.primary_action_label }}</a>
+            {% elif item.linked_repair_record_id %}
             <a class="tm-btn tm-btn-primary" href="{{ item.primary_action_url }}">{{ item.primary_action_label }}</a>
             {% else %}
             <form class="tm-repair-work-open-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
@@ -2097,10 +2139,6 @@
             {% endif %}
             {% if item.blueprint %}<button class="tm-btn tm-btn-secondary" type="button" data-blueprint-open="blueprint-{{ item.source_type }}-{{ item.source_id }}">Review Repair Intelligence</button>{% endif %}
             <a class="tm-btn tm-btn-secondary" href="{{ item.source_action_url or item.url }}">{{ item.source_action_label or "Review Repair" }}</a>
-          </div>
-          <div class="tm-repair-work-source" aria-label="Source traceability for {{ item.title }}">
-            <div class="tm-repair-work-source-label">Source Record</div>
-            <span>{{ item.source_label or "Source: Manual Repair" }}</span>
           </div>
         </article>
         {% endfor %}
@@ -2129,7 +2167,11 @@
             </div>
           </div>
           <div class="tm-repair-card-actions">
+            {% if item.is_invoiced and item.invoice_url %}
+            <a class="tm-btn tm-btn-secondary" href="{{ item.invoice_url }}">Open Final Invoice</a>
+            {% else %}
             <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}">View Completed Repair</a>
+            {% endif %}
             <a class="tm-btn tm-btn-secondary" href="#vehicle-timeline">View in Vehicle Timeline</a>
           </div>
         </article>
@@ -2233,15 +2275,22 @@
         {% if parts_sources %}
         <section class="tm-blueprint-summary-card" aria-label="Parts sources for {{ item.title }}">
           <div class="tm-blueprint-summary-title">Parts Sources</div>
-          <div class="tm-intel-badge-row">
-            {% for source in parts_sources %}
+          <div class="tm-blueprint-summary-subtitle">Searches by vehicle + repair. Confirm fitment on the vendor site before ordering.</div>
+          <div class="tm-blueprint-summary-note">Vendor sites may use saved garage filters. Always confirm year, make, model, engine, and fitment before ordering.</div>
+          {% for source_group in ["Marketplace Search", "Catalog Search"] %}
+          <div class="tm-parts-source-group">
+            <div class="tm-parts-source-group-title">{{ source_group }}</div>
+            <div class="tm-intel-badge-row">
+            {% for source in parts_sources if source.search_group == source_group %}
               {% if source.url %}
               <a class="tm-intel-badge" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</a>
               {% else %}
               <span class="tm-intel-badge">{{ source.label }}{% if source.note %}: {{ source.note }}{% endif %}</span>
               {% endif %}
             {% endfor %}
+            </div>
           </div>
+          {% endfor %}
         </section>
         {% endif %}
         <div class="tm-repair-work-sections">
@@ -2688,9 +2737,15 @@
               {% endif %}
               {% if item.status == "Open" %}
               <div class="tm-finding-estimate" data-finding-estimate>
+                {% if item.estimate_document_url %}
+                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_url }}">
+                  Open Estimate
+                </a>
+                {% else %}
                 <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">
                   {% if item.labor_amount or item.parts_cost %}Review Estimate{% else %}Create Estimate{% endif %}
                 </a>
+                {% endif %}
               </div>
               {% endif %}
               <details class="tm-crm-disclosure tm-finding-estimate">
@@ -2870,6 +2925,22 @@
                   {% if item.action_label %}
                   <span class="tm-btn tm-btn-secondary" style="margin-top:10px;">{{ item.action_label }}</span>
                   {% endif %}
+                  {% endif %}
+                  {% if group.key == "estimates" %}
+                  <div class="tm-finding-meta" style="margin-top:8px;">
+                    {% if item.customer_name %}<span class="tm-crm-chip">Customer {{ item.customer_name }}</span>{% endif %}
+                    {% if item.vehicle_label %}<span class="tm-crm-chip">Vehicle {{ item.vehicle_label }}</span>{% endif %}
+                    {% if item.related_title %}<span class="tm-crm-chip">Related {{ item.related_title }}</span>{% endif %}
+                    {% if item.total is not none %}<span class="tm-crm-chip">Estimate {{ item.total|pro_currency }}</span>{% endif %}
+                    {% if item.approval_status %}<span class="tm-crm-chip">{{ item.approval_status }}</span>{% endif %}
+                    {% if item.invoice_number %}<span class="tm-crm-chip">Linked invoice {{ item.invoice_number }}</span>{% endif %}
+                  </div>
+                  {% if item.action_label %}
+                  <span class="tm-btn tm-btn-secondary" style="margin-top:10px;">{{ item.action_label }}</span>
+                  {% endif %}
+                  {% endif %}
+                  {% if group.key == "invoices" and item.action_label %}
+                  <span class="tm-btn tm-btn-secondary" style="margin-top:10px;">{{ item.action_label }}</span>
                   {% endif %}
                 </div>
               </a>
@@ -3247,6 +3318,34 @@
               action.textContent = item.action_label;
               content.appendChild(action);
             }
+          }
+          if ((group.key || "") === "estimates") {
+            const metaRow = document.createElement("div");
+            metaRow.className = "tm-finding-meta";
+            metaRow.style.marginTop = "8px";
+            if (item.customer_name) appendTextLine(metaRow, "tm-crm-chip", `Customer ${item.customer_name}`);
+            if (item.vehicle_label) appendTextLine(metaRow, "tm-crm-chip", `Vehicle ${item.vehicle_label}`);
+            if (item.related_title) appendTextLine(metaRow, "tm-crm-chip", `Related ${item.related_title}`);
+            if (item.total !== undefined && item.total !== null && item.total !== "") {
+              appendTextLine(metaRow, "tm-crm-chip", `Estimate ${formatMoney(Number(item.total || 0))}`);
+            }
+            if (item.approval_status) appendTextLine(metaRow, "tm-crm-chip", item.approval_status);
+            if (item.invoice_number) appendTextLine(metaRow, "tm-crm-chip", `Linked invoice ${item.invoice_number}`);
+            if (metaRow.children.length) content.appendChild(metaRow);
+            if (item.action_label) {
+              const action = document.createElement("span");
+              action.className = "tm-btn tm-btn-secondary";
+              action.style.marginTop = "10px";
+              action.textContent = item.action_label;
+              content.appendChild(action);
+            }
+          }
+          if ((group.key || "") === "invoices" && item.action_label) {
+            const action = document.createElement("span");
+            action.className = "tm-btn tm-btn-secondary";
+            action.style.marginTop = "10px";
+            action.textContent = item.action_label;
+            content.appendChild(action);
           }
           link.appendChild(content);
           listEl.appendChild(link);

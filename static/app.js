@@ -5923,6 +5923,7 @@ if (getEstimateHint) {
       const activeVehicle = getActiveVehicle() || {};
       const outputOptions = getCustomerOutputOptions();
       const businessIdentity = getBusinessIdentity();
+      const sourceContext = getEstimatorSourceContext();
       persistMechanicPreferencesFromControls();
 
       const pdfResponse = await fetch("/estimate/pdf_multi", {
@@ -5936,6 +5937,13 @@ if (getEstimateHint) {
           notes: (notesEl?.value || "").trim() || null,
           customerName: (customerNameEl?.value || "").trim() || null,
           customerPhone: phoneValue(customerPhoneEl) || null,
+          source: sourceContext.source || "estimator",
+          customerId: sourceContext.customerId || null,
+          vehicleId: sourceContext.vehicleId || null,
+          findingId: sourceContext.findingId || null,
+          problemFound: sourceContext.problemFound || null,
+          recommendedRepair: sourceContext.recommendedRepair || null,
+          sourceContext,
           businessName: businessIdentity.businessName || null,
           mechanicName: businessIdentity.mechanicName || null,
           businessPhone: formatPhone(businessIdentity.businessPhone) || null,
