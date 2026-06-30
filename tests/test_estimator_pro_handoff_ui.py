@@ -24,14 +24,17 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
             persisted_response = client.get("/estimator")
 
         self.assertEqual(unlocked_response.status_code, 200)
-        self.assertIn('id="convertToProJobBtn"', unlocked_response.text)
+        self.assertIn('id="proJobHandoffActions"', unlocked_response.text)
+        self.assertIn('id="convertToProJobMount"', unlocked_response.text)
+        self.assertNotIn('id="convertToProJobBtn"', unlocked_response.text)
         self.assertIn(main.PRO_QA_ACCESS_COOKIE, unlocked_response.cookies)
         self.assertNotIn("qa-secret", unlocked_response.text)
         self.assertNotIn("qa-secret", unlocked_response.headers.get("set-cookie", ""))
         self.assertEqual(persisted_response.status_code, 200)
-        self.assertIn('id="convertToProJobBtn"', persisted_response.text)
+        self.assertIn('id="convertToProJobMount"', persisted_response.text)
+        self.assertNotIn('id="convertToProJobBtn"', persisted_response.text)
 
-    def test_convert_to_pro_job_renders_after_customer_quote_actions(self):
+    def test_convert_to_pro_job_is_not_rendered_in_initial_estimator_html(self):
         with patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": ""}):
             client = TestClient(main.app, base_url="http://localhost")
             response = client.get("/estimator")
@@ -41,19 +44,31 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('id="estimateSavedBlock"', html)
         self.assertIn('id="customerQuoteFinalActions"', html)
         self.assertIn('id="proJobHandoffActions"', html)
-        self.assertIn('id="convertToProJobBtn"', html)
+        self.assertIn('id="convertToProJobMount"', html)
+        self.assertIn('id="proJobHandoffActions" class="actions estimator-final-actions" aria-label="Pro job handoff" hidden', html)
+        self.assertNotIn('id="convertToProJobBtn"', html)
+        self.assertNotIn(">Convert to Pro Job<", html)
 
         saved_idx = html.index('id="estimateSavedBlock"')
         handoff_idx = html.index('id="proJobHandoffActions"')
         final_idx = html.index('id="customerQuoteFinalActions"')
-        convert_idx = html.index('id="convertToProJobBtn"')
         drafts_idx = html.index('id="draftsCard"')
         drafts_end_idx = html.index('id="customerQuoteFinalActions"')
 
         self.assertLess(saved_idx, final_idx)
         self.assertLess(final_idx, handoff_idx)
-        self.assertLess(handoff_idx, convert_idx)
         self.assertNotIn('id="convertToProJobBtn"', html[drafts_idx:drafts_end_idx])
+
+    def test_convert_to_pro_job_is_created_after_quote_generation(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        self.assertIn("function showEstimateSavedBlock(d)", app_js)
+        self.assertIn("showProJobHandoffActions();", app_js)
+        self.assertIn("function ensureConvertToProJobButton()", app_js)
+        self.assertIn('button.id = "convertToProJobBtn";', app_js)
+        self.assertIn('button.textContent = convertToProJobMount.dataset.readyLabel || "Convert to Pro Job";', app_js)
+        self.assertIn("button.addEventListener(\"click\", handleConvertToProJob);", app_js)
 
     def test_estimator_quantity_controls_and_line_item_display_are_present(self):
         response = TestClient(main.app, base_url="http://localhost").get("/estimator")

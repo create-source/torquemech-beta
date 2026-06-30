@@ -492,13 +492,11 @@
       </div>
 
       {% if pro_handoff_available and not shared_id %}
-      <div id="proJobHandoffActions" class="actions estimator-final-actions" aria-label="Pro job handoff">
+      <div id="proJobHandoffActions" class="actions estimator-final-actions" aria-label="Pro job handoff" hidden>
         <form id="convertToProJobForm" method="post" action="/pro/estimate-conversion" hidden>
           <input id="convertToProJobPayload" type="hidden" name="estimate_payload" value="">
         </form>
-        <button id="convertToProJobBtn" type="button" class="tm-btn tm-btn-secondary estimator-final-cta" disabled>
-          Convert to Pro Job
-        </button>
+        <div id="convertToProJobMount" data-ready-label="Convert to Pro Job"></div>
       </div>
       {% endif %}
 

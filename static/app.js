@@ -986,7 +986,9 @@
   const sharedSnapshotServices = $("sharedSnapshotServices");
   const sharedSnapshotTotal = $("sharedSnapshotTotal");
   const sharedDownloadPdfBtn = $("sharedDownloadPdfBtn");
-  const convertToProJobBtn = $("convertToProJobBtn");
+  let convertToProJobBtn = $("convertToProJobBtn");
+  const convertToProJobMount = $("convertToProJobMount");
+  const proJobHandoffActions = $("proJobHandoffActions");
   const convertToProJobForm = $("convertToProJobForm");
   const convertToProJobPayload = $("convertToProJobPayload");
   const findingEstimateContext = $("findingEstimateContext");
@@ -1850,6 +1852,7 @@
     if (!estimateSavedBlock || !lastSavedEstimateLink) return;
 
     estimateSavedBlock.hidden = false;
+    showProJobHandoffActions();
     if (customerQuoteFinalActions) {
       customerQuoteFinalActions.hidden = true;
     }
@@ -1861,8 +1864,39 @@
   function hideEstimateSavedBlock() {
     lastSavedEstimateLink = "";
     if (estimateSavedBlock) estimateSavedBlock.hidden = true;
+    if (proJobHandoffActions) proJobHandoffActions.hidden = true;
     if (estimateSavedLinkText) estimateSavedLinkText.textContent = "";
     if (customerQuoteFinalActions) customerQuoteFinalActions.hidden = false;
+  }
+
+  function handleConvertToProJob() {
+    if (!lineItems.length) {
+      setStatus("error", "Add at least one service before converting to a Pro job.");
+      return;
+    }
+    if (!convertToProJobForm || !convertToProJobPayload) return;
+    convertToProJobPayload.value = JSON.stringify(buildProJobConversionPayload());
+    convertToProJobForm.submit();
+  }
+
+  function ensureConvertToProJobButton() {
+    if (convertToProJobBtn) return convertToProJobBtn;
+    if (!convertToProJobMount) return null;
+    const button = document.createElement("button");
+    button.id = "convertToProJobBtn";
+    button.type = "button";
+    button.className = "tm-btn tm-btn-secondary estimator-final-cta";
+    button.textContent = convertToProJobMount.dataset.readyLabel || "Convert to Pro Job";
+    button.addEventListener("click", handleConvertToProJob);
+    convertToProJobMount.appendChild(button);
+    convertToProJobBtn = button;
+    return button;
+  }
+
+  function showProJobHandoffActions() {
+    const button = ensureConvertToProJobButton();
+    if (proJobHandoffActions && button) proJobHandoffActions.hidden = false;
+    syncCustomerQuoteActionState();
   }
 
   function sharedEstimateIdFromPath() {
@@ -6652,16 +6686,6 @@ if (getEstimateHint) {
       setConfirmMessage("info", "Review the shared quote, then generate the customer PDF.");
     }
   });
-  convertToProJobBtn?.addEventListener("click", () => {
-    if (!lineItems.length) {
-      setStatus("error", "Add at least one service before converting to a Pro job.");
-      return;
-    }
-    if (!convertToProJobForm || !convertToProJobPayload) return;
-    convertToProJobPayload.value = JSON.stringify(buildProJobConversionPayload());
-    convertToProJobForm.submit();
-  });
-
   addVehicleBtn?.addEventListener("click", () => {
     addVehicleCard();
   });
