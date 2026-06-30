@@ -450,7 +450,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         )
         self.assertEqual(
             pro_module.repair_workspace_primary_action(open_estimate, "approved")["label"],
-            "Open Repair",
+            "Open Repair / Track Parts",
         )
         self.assertEqual(
             pro_module.repair_workspace_primary_action(completed_invoice, "completed"),
@@ -488,7 +488,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(items[0]["estimate_document_url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
         self.assertEqual(items[0]["estimate_badge"], "Estimate PDF")
         pro_module.enrich_repair_workspace_item(items[0])
-        self.assertEqual(items[0]["primary_action_label"], "Open Repair")
+        self.assertEqual(items[0]["primary_action_label"], "Open Repair / Track Parts")
         self.assertEqual(items[0]["primary_action_kind"], "repair")
         self.assertNotEqual(items[0]["primary_action_label"], "Create Estimate")
 
@@ -555,6 +555,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     "created_at": "2026-06-24T13:00:00",
                     "workflow_source_type": "estimate",
                     "after_repair_photo_paths": json.dumps(["/static/uploads/after.jpg"]),
+                    "tracked_parts": [
+                        {"part_name": "Alternator", "status": "Installed", "subtotal": 225},
+                    ],
+                    "tracked_parts_total": 225,
+                    "tracked_parts_count": 1,
                 }
             ],
         )
@@ -569,6 +574,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(repaired["records"][0]["invoice_url"], "/pro/customers/1/vehicles/1/invoices/9")
         self.assertEqual(repaired["records"][0]["status_label"], "Completed")
         self.assertEqual(repaired["records"][0]["photo_count"], 1)
+        self.assertEqual(repaired["records"][0]["tracked_parts_count"], 1)
+        self.assertEqual(repaired["records"][0]["tracked_parts_total"], 225)
+        self.assertEqual(repaired["records"][0]["tracked_parts"][0]["part_name"], "Alternator")
         self.assertEqual(repaired["records"][0]["url"], "/pro/customers/1/vehicles/1/repairs/30")
         self.assertEqual(repaired["records"][0]["action_label"], "Open Repair Record")
 
@@ -594,6 +602,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     "mileage": 177000,
                     "total_cost": 650,
                     "after_repair_photo_paths": json.dumps(["/static/uploads/after.jpg"]),
+                    "tracked_parts": [
+                        {"part_name": "Water Pump", "status": "Arrived", "subtotal": 180},
+                    ],
+                    "tracked_parts_total": 180,
+                    "tracked_parts_count": 1,
                 }
             ],
         )
@@ -605,6 +618,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(repaired["total"], 650)
         self.assertEqual(repaired["status_label"], "Completed")
         self.assertEqual(repaired["date"], "2026-06-24T13:00:00")
+        self.assertEqual(repaired["tracked_parts_count"], 1)
+        self.assertEqual(repaired["tracked_parts"][0]["status"], "Arrived")
 
     def test_timeline_does_not_put_active_work_or_checklists_in_repaired_services(self):
         timeline = pro_module.build_vehicle_timeline(
@@ -905,11 +920,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         groups = pro_module.build_repair_workspace_groups(vehicle, active, [])
 
         self.assertEqual(groups["open"][0]["workspace_status_label"], "Open")
-        self.assertEqual(groups["open"][0]["primary_action_label"], "Open Repair")
+        self.assertEqual(groups["open"][0]["primary_action_label"], "Open Repair / Track Parts")
         self.assertEqual(groups["approved"][0]["workspace_status_label"], "Approved")
         self.assertEqual(groups["approved"][0]["primary_action_label"], "Create Estimate")
         self.assertEqual(groups["in_progress"][0]["workspace_status_label"], "In Progress")
-        self.assertEqual(groups["in_progress"][0]["primary_action_label"], "Continue Repair")
+        self.assertEqual(groups["in_progress"][0]["primary_action_label"], "Continue Repair / Track Parts")
         self.assertEqual(groups["ready_to_complete"][0]["workspace_status_label"], "Ready to Complete")
         self.assertEqual(groups["ready_to_complete"][0]["primary_action_label"], "Mark Completed")
 
@@ -1112,6 +1127,92 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("O'Reilly", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
         self.assertIn("Google Shopping", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
         self.assertIn("1A Auto", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
+
+    def test_parts_tracking_crud_summary_excludes_returned_and_not_needed(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        pro_module.ensure_repair_records_schema(conn)
+        pro_module.ensure_repair_job_parts_schema(conn)
+        now = "2026-06-29T10:00:00"
+        conn.execute(
+            """
+            INSERT INTO repair_records (id, customer_id, vehicle_id, repair_name, status, created_at)
+            VALUES (44, 1, 1, 'Coolant Drain & Refill', 'Open', ?)
+            """,
+            (now,),
+        )
+
+        coolant_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {"part_name": "Engine Coolant", "qty": "2", "unit_cost": "18.50", "status": "Ordered"},
+            now,
+        )
+        returned_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {"part_name": "Wrong Cap", "qty": "1", "unit_cost": "12", "status": "Returned"},
+            now,
+        )
+        not_needed_id = pro_module.create_repair_job_part(
+            conn,
+            44,
+            {"part_name": "Extra Hose", "qty": "1", "unit_cost": "22", "status": "Not Needed"},
+            now,
+        )
+
+        parts = pro_module.load_repair_job_parts(conn, 44)
+        summary = pro_module.repair_job_parts_summary(parts)
+
+        self.assertEqual(summary["count"], 3)
+        self.assertEqual(summary["tracked_parts_total"], 37)
+        self.assertEqual(parts[0]["qty_display"], "2")
+        self.assertEqual(parts[0]["subtotal"], 37)
+
+        pro_module.update_repair_job_part(
+            conn,
+            44,
+            coolant_id,
+            {"status": "Installed"},
+            "2026-06-29T10:05:00",
+        )
+        self.assertEqual(pro_module.load_repair_job_parts(conn, 44)[0]["status"], "Installed")
+
+        pro_module.delete_repair_job_part(conn, 44, returned_id)
+        summary = pro_module.repair_job_parts_summary(pro_module.load_repair_job_parts(conn, 44))
+        self.assertEqual(summary["count"], 2)
+        self.assertEqual(summary["tracked_parts_total"], 37)
+        self.assertIn(not_needed_id, [part["id"] for part in summary["parts"]])
+
+    def test_parts_tracking_ui_is_available_on_workspace_and_repair_detail(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
+        partial = (ROOT / "templates" / "pro" / "partials" / "parts_tracking.html").read_text(encoding="utf-8")
+
+        self.assertIn('include "pro/partials/parts_tracking.html"', vehicle_detail)
+        self.assertIn('include "pro/partials/parts_tracking.html"', repair_detail)
+        self.assertIn("Parts Tracking", partial)
+        self.assertIn("No parts tracked yet.", partial)
+        self.assertIn("Vendor / Source", partial)
+        self.assertIn("Part Number", partial)
+        self.assertIn("repair_job_part_status_options", partial)
+
+    def test_repair_workspace_collapsible_sections_and_track_parts_actions_render(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        pro_py = (ROOT / "routers" / "pro.py").read_text(encoding="utf-8")
+
+        self.assertIn('"key": "in_progress"', vehicle_detail)
+        self.assertIn('"key": "ready_to_complete"', vehicle_detail)
+        self.assertIn('data-workspace-section="recently_completed"', vehicle_detail)
+        self.assertIn("tm-workspace-section-summary", vehicle_detail)
+        self.assertIn('Recently Completed <span class="tm-workspace-section-count">({{ recently_completed_count }})</span>', vehicle_detail)
+        self.assertIn("No recently completed repairs.", vehicle_detail)
+        self.assertIn("Open Repair / Track Parts", pro_py)
+        self.assertIn("Continue Repair / Track Parts", pro_py)
+        recent_section_start = vehicle_detail.index('data-workspace-section="recently_completed"')
+        recent_section_open_window = vehicle_detail[recent_section_start - 140:recent_section_start + 140]
+        self.assertNotIn(" open", recent_section_open_window)
 
     def test_pro_customer_and_vehicle_forms_use_shared_input_formatters(self):
         customers = (ROOT / "templates" / "pro" / "customers.html").read_text(encoding="utf-8")

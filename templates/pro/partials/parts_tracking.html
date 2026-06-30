@@ -1,0 +1,103 @@
+{% set tracked_parts = item.tracked_parts or [] %}
+{% set linked_repair_id = item.linked_repair_record_id or item.id %}
+<section class="tm-blueprint-summary-card tm-parts-tracking" id="parts-tracking" aria-label="Parts tracking for {{ item.title or item.repair_name or 'repair' }}">
+  <div class="tm-blueprint-summary-head">
+    <div>
+      <div class="tm-crm-kicker">Parts Tracking</div>
+      <div class="tm-blueprint-summary-title">Parts Tracking</div>
+      <div class="tm-blueprint-summary-subtitle">Tracked Parts Total: {{ (item.tracked_parts_total or 0)|pro_currency }}</div>
+    </div>
+  </div>
+
+  {% if tracked_parts %}
+  <div style="display:grid; gap:10px; margin-top:12px;">
+    {% for part in tracked_parts %}
+    <article style="display:grid; gap:8px; border:1px solid rgba(15,23,42,.1); border-radius:8px; background:#fff; padding:12px;">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <strong style="color:#0f172a;">{{ part.part_name }}</strong>
+        <span class="tm-repair-status-chip">{{ part.status }}</span>
+      </div>
+      <div class="tm-repair-card-meta">
+        <span class="tm-crm-chip">Qty {{ part.qty|pro_quantity }}</span>
+        {% if part.vendor %}<span class="tm-crm-chip">{{ part.vendor }}</span>{% endif %}
+        {% if part.part_number %}<span class="tm-crm-chip">Part # {{ part.part_number }}</span>{% endif %}
+        <span class="tm-crm-chip">Unit {{ part.unit_cost|pro_currency }}</span>
+        <span class="tm-crm-chip">Subtotal {{ part.subtotal|pro_currency }}</span>
+      </div>
+      {% if part.notes %}<div style="color:#475569; white-space:pre-wrap;">{{ part.notes }}</div>{% endif %}
+      <div class="tm-repair-card-actions">
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}">
+          <select class="tm-input" name="status" aria-label="Update status for {{ part.part_name }}" onchange="this.form.submit()">
+            {% for option in repair_job_part_status_options %}
+            <option value="{{ option }}" {% if part.status == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        <details>
+          <summary class="tm-btn tm-btn-secondary">Edit</summary>
+          <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}" style="display:grid; gap:10px; margin-top:10px;">
+            <div class="tm-crm-row">
+              <div><label class="tm-label">Part Name</label><input class="tm-input" name="part_name" type="text" maxlength="180" value="{{ part.part_name }}"></div>
+              <div><label class="tm-label">Qty</label><input class="tm-input" name="qty" type="number" min="0" step="0.01" value="{{ part.qty|pro_quantity }}"></div>
+            </div>
+            <div class="tm-crm-row">
+              <div><label class="tm-label">Vendor / Source</label><input class="tm-input" name="vendor" type="text" maxlength="180" value="{{ part.vendor or '' }}"></div>
+              <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180" value="{{ part.part_number or '' }}"></div>
+            </div>
+            <div class="tm-crm-row">
+              <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" value="{{ part.unit_cost }}"></div>
+              <div>
+                <label class="tm-label">Status</label>
+                <select class="tm-input" name="status">
+                  {% for option in repair_job_part_status_options %}
+                  <option value="{{ option }}" {% if part.status == option %}selected{% endif %}>{{ option }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div><label class="tm-label">Notes</label><textarea class="tm-input" name="notes" rows="3" maxlength="1200">{{ part.notes or "" }}</textarea></div>
+            <button class="tm-btn tm-btn-primary" type="submit">Save Part</button>
+          </form>
+        </details>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts/{{ part.id }}/delete">
+          <button class="tm-btn tm-btn-secondary" type="submit">Delete</button>
+        </form>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="tm-history-empty" style="margin-top:12px;">No parts tracked yet.</div>
+  {% endif %}
+
+  {% if linked_repair_id %}
+  <details style="margin-top:12px;">
+    <summary class="tm-btn tm-btn-primary">Add Part</summary>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ linked_repair_id }}/parts" style="display:grid; gap:10px; margin-top:12px;">
+      <div class="tm-crm-row">
+        <div><label class="tm-label">Part Name</label><input class="tm-input" name="part_name" type="text" maxlength="180" value="{{ item.default_part_name or '' }}" required></div>
+        <div><label class="tm-label">Qty</label><input class="tm-input" name="qty" type="number" min="0" step="0.01" value="1"></div>
+      </div>
+      <div class="tm-crm-row">
+        <div><label class="tm-label">Vendor / Source</label><input class="tm-input" name="vendor" type="text" maxlength="180"></div>
+        <div><label class="tm-label">Part Number</label><input class="tm-input" name="part_number" type="text" maxlength="180"></div>
+      </div>
+      <div class="tm-crm-row">
+        <div><label class="tm-label">Unit Cost</label><input class="tm-input" name="unit_cost" type="text" inputmode="decimal" placeholder="0"></div>
+        <div>
+          <label class="tm-label">Status</label>
+          <select class="tm-input" name="status">
+            {% for option in repair_job_part_status_options %}
+            <option value="{{ option }}" {% if option == "Needed" %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div><label class="tm-label">Notes</label><textarea class="tm-input" name="notes" rows="3" maxlength="1200"></textarea></div>
+      <button class="tm-btn tm-btn-primary" type="submit">Save Part</button>
+    </form>
+  </details>
+  {% else %}
+  <div class="tm-history-empty" style="margin-top:12px;">Open this repair before tracking parts.</div>
+  {% endif %}
+</section>

@@ -142,6 +142,21 @@
     padding: 14px;
     margin-top: 18px;
   }
+  .tm-invoice-parts-detail {
+    border: 1px solid rgba(14, 116, 144, 0.16);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .tm-invoice-parts-detail ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    color: #334155;
+  }
+  .tm-invoice-parts-detail li + li {
+    margin-top: 6px;
+  }
   @media (max-width: 760px) {
     .tm-invoice-grid,
     .tm-invoice-options,
@@ -206,6 +221,21 @@
           </div>
           {% if item.repair_notes %}
           <div class="tm-invoice-field" style="margin-top:12px;"><span>Notes</span><div class="tm-invoice-notes">{{ item.repair_notes or "-" }}</div></div>
+          {% endif %}
+          {% if item.tracked_parts %}
+          <div class="tm-invoice-parts-detail">
+            <div class="tm-invoice-field"><span>Tracked Parts</span><strong>{{ item.tracked_parts_total|pro_currency }} tracked, detail only</strong></div>
+            <ul>
+              {% for part in item.tracked_parts %}
+              <li>
+                <strong>{{ part.part_name }}</strong>
+                <span>({{ part.qty_display or part.qty }} x {{ part.unit_cost|pro_currency }}, {{ part.status }}, subtotal {{ part.subtotal|pro_currency }})</span>
+                {% if part.vendor %}<span> - {{ part.vendor }}</span>{% endif %}
+                {% if part.part_number %}<span> #{{ part.part_number }}</span>{% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
           {% endif %}
         </article>
         {% endfor %}

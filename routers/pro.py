@@ -193,6 +193,18 @@ REPAIR_COMPLETION_CHECKS = (
     ("customer_concern_resolved", "Customer concern resolved"),
 )
 
+REPAIR_JOB_PART_STATUS_OPTIONS = (
+    "Needed",
+    "Researching",
+    "Ordered",
+    "Arrived",
+    "Installed",
+    "Returned",
+    "Customer Supplied",
+    "Not Needed",
+)
+REPAIR_JOB_PART_EXCLUDED_TOTAL_STATUSES = {"Returned", "Not Needed"}
+
 
 def crm_db_conn() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
@@ -341,7 +353,7 @@ def repair_workspace_primary_action(item: dict[str, Any], status_key: str) -> di
             return {"label": "Open Final Invoice", "url": invoice_url, "kind": "link"}
         return {"label": "View Completed Repair", "url": repair_url or source_url, "kind": "link"}
     if estimate_url and status_key in {"approved", "in_progress", "ready_to_complete"}:
-        return {"label": "Open Repair", "url": repair_url or source_url, "kind": "repair"}
+        return {"label": "Open Repair / Track Parts", "url": repair_url or source_url, "kind": "repair"}
     if estimate_url and item.get("source_label") == "Source: Finding":
         return {"label": "Open Estimate", "url": estimate_url, "kind": "link"}
     if (
@@ -352,9 +364,9 @@ def repair_workspace_primary_action(item: dict[str, Any], status_key: str) -> di
     if status_key == "ready_to_complete":
         return {"label": "Mark Completed", "url": f"{repair_url}#repair-completion" if repair_url else source_url, "kind": "link"}
     if status_key == "in_progress":
-        return {"label": "Continue Repair", "url": repair_url or source_url, "kind": "link"}
+        return {"label": "Continue Repair / Track Parts", "url": repair_url or source_url, "kind": "link"}
     if item.get("source_type") == "repair" or item.get("linked_repair_record_id"):
-        return {"label": "Open Repair", "url": repair_url or source_url, "kind": "link"}
+        return {"label": "Open Repair / Track Parts", "url": repair_url or source_url, "kind": "link"}
     if status_key == "approved":
         return {"label": "Start Repair", "url": repair_url or source_url, "kind": "repair"}
     return {"label": "Review Repair", "url": repair_url or source_url, "kind": "link"}
@@ -2172,8 +2184,241 @@ def repair_cost_totals(repair: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def ensure_repair_job_parts_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS repair_job_parts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          repair_record_id INTEGER NOT NULL,
+          part_name TEXT NOT NULL,
+          qty REAL NOT NULL DEFAULT 1,
+          vendor TEXT,
+          part_number TEXT,
+          unit_cost REAL NOT NULL DEFAULT 0,
+          subtotal REAL NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'Needed',
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_repair_job_parts_repair_record_id "
+        "ON repair_job_parts (repair_record_id)"
+    )
+    conn.commit()
+
+
+def normalize_repair_job_part_status(raw_status: Any) -> str:
+    value = re.sub(r"\s+", " ", str(raw_status or "").strip()).title()
+    aliases = {
+        "Customer Supplied": "Customer Supplied",
+        "Customer-Supplied": "Customer Supplied",
+        "Not Needed": "Not Needed",
+        "Not-Needed": "Not Needed",
+    }
+    value = aliases.get(value, value)
+    return value if value in REPAIR_JOB_PART_STATUS_OPTIONS else "Needed"
+
+
+def repair_job_part_subtotal(qty: Any, unit_cost: Any) -> float:
+    try:
+        qty_value = float(qty if qty not in (None, "") else 1)
+    except (TypeError, ValueError):
+        qty_value = 1.0
+    try:
+        unit_cost_value = float(unit_cost if unit_cost not in (None, "") else 0)
+    except (TypeError, ValueError):
+        unit_cost_value = 0.0
+    return round(max(0.0, qty_value) * max(0.0, unit_cost_value), 2)
+
+
+def repair_job_part_display_record(part: dict[str, Any]) -> dict[str, Any]:
+    record = dict(part)
+    record["status"] = normalize_repair_job_part_status(record.get("status"))
+    record["subtotal"] = repair_job_part_subtotal(record.get("qty"), record.get("unit_cost"))
+    record["qty_display"] = format_quantity(record.get("qty"))
+    record["included_in_tracked_total"] = record["status"] not in REPAIR_JOB_PART_EXCLUDED_TOTAL_STATUSES
+    return record
+
+
+def repair_job_parts_summary(parts: list[dict[str, Any]]) -> dict[str, Any]:
+    total = round(
+        sum(
+            float(part.get("subtotal") or 0)
+            for part in parts
+            if normalize_repair_job_part_status(part.get("status")) not in REPAIR_JOB_PART_EXCLUDED_TOTAL_STATUSES
+        ),
+        2,
+    )
+    return {"parts": parts, "tracked_parts_total": total, "count": len(parts)}
+
+
+def load_repair_job_parts(conn: sqlite3.Connection, repair_record_id: int) -> list[dict[str, Any]]:
+    ensure_repair_job_parts_schema(conn)
+    return [
+        repair_job_part_display_record(dict(row))
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM repair_job_parts
+            WHERE repair_record_id = ?
+            ORDER BY id ASC
+            """,
+            (repair_record_id,),
+        ).fetchall()
+    ]
+
+
+def load_repair_job_parts_map(
+    conn: sqlite3.Connection,
+    repair_record_ids: list[int] | set[int],
+) -> dict[int, dict[str, Any]]:
+    ensure_repair_job_parts_schema(conn)
+    repair_ids: set[int] = set()
+    for value in repair_record_ids:
+        try:
+            repair_id = int(value or 0)
+        except (TypeError, ValueError):
+            continue
+        if repair_id > 0:
+            repair_ids.add(repair_id)
+    ids = sorted(repair_ids)
+    if not ids:
+        return {}
+    placeholders = ",".join("?" for _ in ids)
+    grouped: dict[int, list[dict[str, Any]]] = {repair_id: [] for repair_id in ids}
+    for row in conn.execute(
+        f"""
+        SELECT *
+        FROM repair_job_parts
+        WHERE repair_record_id IN ({placeholders})
+        ORDER BY repair_record_id ASC, id ASC
+        """,
+        ids,
+    ).fetchall():
+        part = repair_job_part_display_record(dict(row))
+        grouped[int(part["repair_record_id"])].append(part)
+    return {repair_id: repair_job_parts_summary(parts) for repair_id, parts in grouped.items()}
+
+
+def attach_repair_job_parts(
+    records: list[dict[str, Any]],
+    parts_map: dict[int, dict[str, Any]],
+    *,
+    id_key: str = "id",
+) -> None:
+    for record in records:
+        repair_id = int(record.get(id_key) or record.get("linked_repair_record_id") or 0)
+        summary = parts_map.get(repair_id) or repair_job_parts_summary([])
+        record["tracked_parts"] = summary["parts"]
+        record["tracked_parts_total"] = summary["tracked_parts_total"]
+        record["tracked_parts_count"] = summary["count"]
+
+
+def create_repair_job_part(
+    conn: sqlite3.Connection,
+    repair_record_id: int,
+    form: dict[str, str],
+    now: str,
+) -> int:
+    ensure_repair_job_parts_schema(conn)
+    part_name = str(form.get("part_name") or "").strip()
+    if not part_name:
+        raise HTTPException(status_code=400, detail="Part name is required")
+    qty = optional_float(form, "qty")
+    if qty is None:
+        qty = 1.0
+    unit_cost = optional_float(form, "unit_cost")
+    if unit_cost is None:
+        unit_cost = 0.0
+    status = normalize_repair_job_part_status(form.get("status"))
+    subtotal = repair_job_part_subtotal(qty, unit_cost)
+    cur = conn.execute(
+        """
+        INSERT INTO repair_job_parts (
+          repair_record_id, part_name, qty, vendor, part_number,
+          unit_cost, subtotal, status, notes, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            repair_record_id,
+            part_name,
+            qty,
+            str(form.get("vendor") or "").strip(),
+            str(form.get("part_number") or "").strip(),
+            unit_cost,
+            subtotal,
+            status,
+            str(form.get("notes") or "").strip(),
+            now,
+            now,
+        ),
+    )
+    return int(cur.lastrowid)
+
+
+def update_repair_job_part(
+    conn: sqlite3.Connection,
+    repair_record_id: int,
+    part_id: int,
+    form: dict[str, str],
+    now: str,
+) -> None:
+    ensure_repair_job_parts_schema(conn)
+    existing = conn.execute(
+        "SELECT * FROM repair_job_parts WHERE id = ? AND repair_record_id = ?",
+        (part_id, repair_record_id),
+    ).fetchone()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Tracked part not found")
+    current = dict(existing)
+    part_name = str(form.get("part_name", current.get("part_name") or "") or "").strip()
+    if not part_name:
+        raise HTTPException(status_code=400, detail="Part name is required")
+    qty = optional_float(form, "qty") if "qty" in form else current.get("qty")
+    unit_cost = optional_float(form, "unit_cost") if "unit_cost" in form else current.get("unit_cost")
+    status = normalize_repair_job_part_status(form.get("status", current.get("status")))
+    subtotal = repair_job_part_subtotal(qty, unit_cost)
+    conn.execute(
+        """
+        UPDATE repair_job_parts
+        SET part_name = ?, qty = ?, vendor = ?, part_number = ?,
+            unit_cost = ?, subtotal = ?, status = ?, notes = ?, updated_at = ?
+        WHERE id = ? AND repair_record_id = ?
+        """,
+        (
+            part_name,
+            qty,
+            str(form.get("vendor", current.get("vendor") or "") or "").strip(),
+            str(form.get("part_number", current.get("part_number") or "") or "").strip(),
+            unit_cost,
+            subtotal,
+            status,
+            str(form.get("notes", current.get("notes") or "") or "").strip(),
+            now,
+            part_id,
+            repair_record_id,
+        ),
+    )
+
+
+def delete_repair_job_part(conn: sqlite3.Connection, repair_record_id: int, part_id: int) -> None:
+    ensure_repair_job_parts_schema(conn)
+    cur = conn.execute(
+        "DELETE FROM repair_job_parts WHERE id = ? AND repair_record_id = ?",
+        (part_id, repair_record_id),
+    )
+    if cur.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Tracked part not found")
+
+
 def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
     ensure_repair_records_schema(conn)
+    ensure_repair_job_parts_schema(conn)
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS invoices (
@@ -2348,7 +2593,7 @@ def load_invoice_item_records(
     ensure_invoices_schema(conn)
     ensure_repair_completion_schema(conn)
     ensure_findings_records_schema(conn)
-    return [
+    items = [
         invoice_item_display_record(dict(row))
         for row in conn.execute(
             """
@@ -2386,6 +2631,12 @@ def load_invoice_item_records(
             (invoice_id,),
         ).fetchall()
     ]
+    parts_map = load_repair_job_parts_map(
+        conn,
+        {int(item.get("repair_record_id") or 0) for item in items if item.get("repair_record_id")},
+    )
+    attach_repair_job_parts(items, parts_map, id_key="repair_record_id")
+    return items
 
 
 def load_invoice_record(
@@ -3126,6 +3377,28 @@ def build_invoice_pdf_bytes(
         if options["show_parts_total"]:
             service_row("Parts", format_currency(item.get("parts_total")) or "$0.00")
         service_row("Line Total", format_currency(item.get("grand_total")) or "$0.00", emphasis=True)
+        tracked_parts = item.get("tracked_parts") or []
+        if tracked_parts:
+            y -= 2
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(left + 18, y, "Tracked Parts")
+            y -= 13
+            c.setFont("Helvetica", 9)
+            for part in tracked_parts:
+                if y < 80:
+                    c.showPage()
+                    y = h - 54
+                    c.setFont("Helvetica", 9)
+                qty = part.get("qty_display") or part.get("qty") or 1
+                subtotal = format_currency(part.get("subtotal")) or "$0.00"
+                status = part.get("status") or "Needed"
+                vendor = str(part.get("vendor") or "").strip()
+                part_label = f"{qty} x {part.get('part_name') or 'Part'}"
+                if vendor:
+                    part_label = f"{part_label} from {vendor}"
+                for line in pdf_lines(f"{part_label} | {status} | {subtotal}", 72)[:2]:
+                    c.drawString(left + 30, y, line)
+                    y -= 12
         y -= 3
         if options["show_repair_notes"] and item.get("repair_notes"):
             notes_block("Notes", item.get("repair_notes"))
@@ -3471,7 +3744,7 @@ def load_vehicle_repair_completion_events(
     vehicle_id: int,
 ) -> list[dict[str, Any]]:
     ensure_repair_completion_schema(conn)
-    return [
+    records = [
         dict(row)
         for row in conn.execute(
             """
@@ -3502,6 +3775,12 @@ def load_vehicle_repair_completion_events(
             (customer_id, vehicle_id),
         ).fetchall()
     ]
+    parts_map = load_repair_job_parts_map(
+        conn,
+        {int(record.get("repair_record_id") or 0) for record in records if record.get("repair_record_id")},
+    )
+    attach_repair_job_parts(records, parts_map, id_key="repair_record_id")
+    return records
 
 
 def table_has_column(conn: sqlite3.Connection, table_name: str, column_name: str) -> bool:
@@ -3963,6 +4242,11 @@ def load_repair_record(
     repair["grand_total"] = totals["grand_total"]
     repair["labor_cost"] = totals["labor_total"]
     repair["total_cost"] = totals["grand_total"]
+    summary = repair_job_parts_summary(load_repair_job_parts(conn, repair_id))
+    repair["tracked_parts"] = summary["parts"]
+    repair["tracked_parts_total"] = summary["tracked_parts_total"]
+    repair["tracked_parts_count"] = summary["count"]
+    repair["default_part_name"] = default_part_name_for_repair(repair)
     return repair
 
 
@@ -4818,6 +5102,28 @@ def repair_record_parts_search_title(record: dict[str, Any] | sqlite3.Row | None
     return custom_keyword or str(fallback_title or record_value(record, "repair_name") or "Repair").strip()
 
 
+BAD_PART_NAME_DEFAULTS = {
+    "and refill",
+    "drain refill",
+    "drain and refill",
+    "replacement",
+    "service",
+}
+
+
+def default_part_name_for_repair(record: dict[str, Any] | sqlite3.Row | None, fallback_title: Any = "") -> str:
+    custom_keyword = str(record_value(record, "parts_search_term") or "").strip()
+    normalized_custom = normalize_parts_service_title(custom_keyword)
+    if custom_keyword and normalized_custom not in BAD_PART_NAME_DEFAULTS:
+        return custom_keyword.title()
+
+    visible_title = str(fallback_title or record_value(record, "repair_name") or "").strip()
+    mapped_keyword = PARTS_SEARCH_KEYWORDS.get(normalize_parts_service_title(visible_title))
+    if mapped_keyword:
+        return mapped_keyword.title()
+    return ""
+
+
 def parts_search_url(label: str, query: str) -> str:
     params = {"q": query}
     if label == "O'Reilly":
@@ -4975,6 +5281,10 @@ def repair_workspace_item_from_repair_record(
         "labor_total": totals["labor_total"],
         "parts_total": totals["parts_total"],
         "grand_total": totals["grand_total"],
+        "tracked_parts": record.get("tracked_parts") or [],
+        "tracked_parts_total": record.get("tracked_parts_total") or 0,
+        "tracked_parts_count": record.get("tracked_parts_count") or 0,
+        "default_part_name": default_part_name_for_repair(record, title),
         "has_pricing": any(
             float(totals.get(key) or 0) > 0
             for key in ("labor_total", "parts_total", "grand_total")
@@ -5045,6 +5355,7 @@ def build_repair_workspace_groups(
         "in_progress": active_groups["in_progress"],
         "ready_to_complete": active_groups["ready_to_complete"],
         "recently_completed": recently_completed[:3],
+        "recently_completed_count": len(recently_completed),
         "ready_for_invoice": ready_for_invoice,
         "invoiced": invoiced,
     }
@@ -5060,6 +5371,11 @@ def build_repair_work_items(
     items: list[dict[str, Any]] = []
     current_vehicle_mileage = vehicle.get("mileage")
     linked_repair_ids: set[int] = set()
+    repairs_by_id = {
+        int(record.get("id") or 0): record
+        for record in repair_records or []
+        if int(record.get("id") or 0) > 0
+    }
     estimates_by_finding_id = latest_estimate_documents_by_finding_id(estimate_document_records)
     for record in findings_records:
         if (record.get("status") or "") not in {"Approved", "Completed"}:
@@ -5138,12 +5454,22 @@ def build_repair_work_items(
             "labor_total": finding_labor_total,
             "parts_total": finding_parts_total,
             "grand_total": finding_grand_total,
+            "tracked_parts": [],
+            "tracked_parts_total": 0,
+            "tracked_parts_count": 0,
+            "default_part_name": default_part_name_for_repair(None, title),
             "has_pricing": finding_grand_total > 0,
             "estimate_badge": "Estimate PDF" if estimate_doc else "",
         }
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
+        if item.get("linked_repair_record_id"):
+            linked_repair = repairs_by_id.get(int(item.get("linked_repair_record_id") or 0), {})
+            item["tracked_parts"] = linked_repair.get("tracked_parts") or []
+            item["tracked_parts_total"] = linked_repair.get("tracked_parts_total") or 0
+            item["tracked_parts_count"] = linked_repair.get("tracked_parts_count") or 0
+            item["default_part_name"] = linked_repair.get("default_part_name") or item["default_part_name"]
         item["parts_sources"] = repair_workspace_parts_sources(blueprint, vehicle, title)
         items.append(item)
     for record in approval_records:
@@ -5207,10 +5533,20 @@ def build_repair_work_items(
             "mileage": None,
             "url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/approvals/{record['id']}",
             **repair_workspace_blank_totals(),
+            "tracked_parts": [],
+            "tracked_parts_total": 0,
+            "tracked_parts_count": 0,
+            "default_part_name": default_part_name_for_repair(None, title),
         }
         if blueprint:
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
+        if item.get("linked_repair_record_id"):
+            linked_repair = repairs_by_id.get(int(item.get("linked_repair_record_id") or 0), {})
+            item["tracked_parts"] = linked_repair.get("tracked_parts") or []
+            item["tracked_parts_total"] = linked_repair.get("tracked_parts_total") or 0
+            item["tracked_parts_count"] = linked_repair.get("tracked_parts_count") or 0
+            item["default_part_name"] = linked_repair.get("default_part_name") or item["default_part_name"]
         item["parts_sources"] = repair_workspace_parts_sources(blueprint, vehicle, title)
         items.append(item)
     for record in repair_records or []:
@@ -5266,6 +5602,9 @@ def build_completed_repair_work_items(
                 "labor_total": totals["labor_total"],
                 "parts_total": totals["parts_total"],
                 "grand_total": totals["grand_total"],
+                "tracked_parts": record.get("tracked_parts") or [],
+                "tracked_parts_total": record.get("tracked_parts_total") or 0,
+                "tracked_parts_count": record.get("tracked_parts_count") or 0,
                 "has_pricing": any(
                     float(totals.get(key) or 0) > 0
                     for key in ("labor_total", "parts_total", "grand_total")
@@ -5409,6 +5748,9 @@ def build_vehicle_timeline(
                     ),
                     "status_label": "Completed",
                     "photo_count": len(photo_urls),
+                    "tracked_parts": completion_event.get("tracked_parts") or [],
+                    "tracked_parts_total": completion_event.get("tracked_parts_total") or 0,
+                    "tracked_parts_count": completion_event.get("tracked_parts_count") or 0,
                     "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
                     "action_label": "Open Repair Record",
                 },
@@ -5594,6 +5936,9 @@ def build_vehicle_timeline(
                 ),
                 "status_label": "Completed",
                 "photo_count": len(photo_urls),
+                "tracked_parts": record.get("tracked_parts") or [],
+                "tracked_parts_total": record.get("tracked_parts_total") or 0,
+                "tracked_parts_count": record.get("tracked_parts_count") or 0,
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
                 "action_label": "Open Repair Record",
             },
@@ -6764,6 +7109,7 @@ def pro_customer_vehicle_detail(
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_maintenance_records_schema(conn)
         ensure_repair_records_schema(conn)
+        ensure_repair_job_parts_schema(conn)
         ensure_repair_checklist_schema(conn)
         ensure_findings_records_schema(conn)
         ensure_finding_history_records_schema(conn)
@@ -6817,6 +7163,11 @@ def pro_customer_vehicle_detail(
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        repair_parts_map = load_repair_job_parts_map(
+            conn,
+            {int(record.get("id") or 0) for record in repair_records if record.get("id")},
+        )
+        attach_repair_job_parts(repair_records, repair_parts_map)
         for repair_record in repair_records:
             totals = repair_cost_totals(repair_record)
             repair_record["labor_rate"] = totals["labor_rate"]
@@ -7020,6 +7371,7 @@ def pro_customer_vehicle_detail(
                 {"value": value, "label": REPAIR_WORK_STATUS_LABELS[value]}
                 for value in REPAIR_WORK_STATUS_OPTIONS
             ],
+            "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
             "finding_history_records": finding_history_records,
             "customer_decision_logs": customer_decision_logs,
             "vehicle_timeline": vehicle_timeline,
@@ -8449,7 +8801,62 @@ def pro_repair_record_detail(
             "completion_progress": completion_progress,
             "completion_warnings": [],
             "repair_intelligence_records": repair_intelligence_records,
+            "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
         },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/parts")
+async def pro_repair_job_part_create(request: Request, customer_id: int, vehicle_id: int, repair_id: int):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        create_repair_job_part(conn, repair_id, form, now)
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#parts-tracking",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/parts/{part_id}")
+async def pro_repair_job_part_update(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int, part_id: int
+):
+    form = await read_form_data(request)
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        update_repair_job_part(conn, repair_id, part_id, form, now)
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#parts-tracking",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/parts/{part_id}/delete")
+async def pro_repair_job_part_delete(customer_id: int, vehicle_id: int, repair_id: int, part_id: int):
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        delete_repair_job_part(conn, repair_id, part_id)
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}#parts-tracking",
+        status_code=303,
     )
 
 
@@ -8715,6 +9122,7 @@ def completion_detail_context(
         "completion_progress": completion_progress,
         "completion_warnings": completion_warnings or [],
         "repair_intelligence_records": repair_intelligence_records,
+        "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
     }
 
 

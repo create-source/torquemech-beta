@@ -198,6 +198,92 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn(b"TM-INV-0001", pdf.content)
         self.assertNotIn(b"Source: Finding", pdf.content)
 
+    def test_invoice_shows_tracked_parts_without_changing_totals(self):
+        self.insert_repair(60, "Radio Antenna Replacement", 1.0, 120, 0)
+        pro_module.create_repair_job_part(
+            self.conn,
+            60,
+            {
+                "part_name": "Radio Antenna",
+                "qty": "1",
+                "unit_cost": "45",
+                "vendor": "OEM",
+                "part_number": "ANT-1",
+                "status": "Installed",
+            },
+            "2026-06-25T12:10:00",
+        )
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 60)
+
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T12:30:00",
+        )
+        self.conn.commit()
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+
+        self.assertEqual(loaded["labor_total"], 120)
+        self.assertEqual(loaded["parts_total"], 0)
+        self.assertEqual(loaded["grand_total"], 120)
+        self.assertEqual(loaded["items"][0]["tracked_parts_total"], 45)
+        self.assertEqual(loaded["items"][0]["tracked_parts"][0]["part_name"], "Radio Antenna")
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        detail = client.get("/pro/customers/1/vehicles/1/invoices/1")
+        pdf = client.get("/pro/customers/1/vehicles/1/invoices/1/pdf")
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn("Tracked Parts", detail.text)
+        self.assertIn("Radio Antenna", detail.text)
+        self.assertIn("detail only", detail.text)
+        self.assertIn("<span>Parts</span><strong>$0.00</strong>", detail.text)
+        self.assertEqual(pdf.status_code, 200)
+        self.assertIn(b"Radio Antenna", pdf.content)
+
+    def test_parts_tracking_add_part_default_uses_parts_search_term(self):
+        self.insert_repair(61, "Coolant Drain & Refill", 1.0, 120, 0, status="Open")
+        self.conn.execute(
+            "UPDATE repair_records SET parts_search_term = 'engine coolant' WHERE id = 61"
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        detail = client.get("/pro/customers/1/vehicles/1/repairs/61")
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn('name="part_name" type="text" maxlength="180" value="Engine Coolant"', detail.text)
+        self.assertNotIn("And Refill", detail.text)
+
+    def test_parts_tracking_add_part_default_does_not_use_leftover_fragments(self):
+        self.insert_repair(62, "Coolant Drain & Refill", 1.0, 120, 0, status="Open")
+        self.conn.execute(
+            "UPDATE repair_records SET parts_search_term = 'And Refill' WHERE id = 62"
+        )
+        self.insert_repair(63, "Mystery Calibration Replacement", 1.0, 120, 0, status="Open")
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        coolant_detail = client.get("/pro/customers/1/vehicles/1/repairs/62")
+        unknown_detail = client.get("/pro/customers/1/vehicles/1/repairs/63")
+
+        self.assertEqual(coolant_detail.status_code, 200)
+        self.assertIn('name="part_name" type="text" maxlength="180" value="Engine Coolant"', coolant_detail.text)
+        self.assertNotIn('value="And Refill"', coolant_detail.text)
+        self.assertNotIn('value="Drain &amp; Refill"', coolant_detail.text)
+        self.assertEqual(unknown_detail.status_code, 200)
+        self.assertIn('name="part_name" type="text" maxlength="180" value=""', unknown_detail.text)
+        self.assertNotIn('value="Replacement"', unknown_detail.text)
+        self.assertNotIn('value="Service"', unknown_detail.text)
+
     def test_invoice_notes_hide_internal_generated_text(self):
         self.conn.execute(
             """

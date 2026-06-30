@@ -31,7 +31,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertEqual(persisted_response.status_code, 200)
         self.assertIn('id="convertToProJobBtn"', persisted_response.text)
 
-    def test_convert_to_pro_job_is_not_inside_hidden_customer_quote_actions(self):
+    def test_convert_to_pro_job_renders_after_customer_quote_actions(self):
         with patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": ""}):
             client = TestClient(main.app, base_url="http://localhost")
             response = client.get("/estimator")
@@ -47,11 +47,13 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         handoff_idx = html.index('id="proJobHandoffActions"')
         final_idx = html.index('id="customerQuoteFinalActions"')
         convert_idx = html.index('id="convertToProJobBtn"')
+        drafts_idx = html.index('id="draftsCard"')
+        drafts_end_idx = html.index('id="customerQuoteFinalActions"')
 
-        self.assertLess(saved_idx, handoff_idx)
-        self.assertLess(handoff_idx, final_idx)
+        self.assertLess(saved_idx, final_idx)
+        self.assertLess(final_idx, handoff_idx)
         self.assertLess(handoff_idx, convert_idx)
-        self.assertLess(convert_idx, final_idx)
+        self.assertNotIn('id="convertToProJobBtn"', html[drafts_idx:drafts_end_idx])
 
     def test_estimator_quantity_controls_and_line_item_display_are_present(self):
         response = TestClient(main.app, base_url="http://localhost").get("/estimator")
