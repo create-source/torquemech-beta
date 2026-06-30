@@ -689,6 +689,7 @@ def init_pro_crm_schema_db() -> None:
               track_as_maintenance INTEGER NOT NULL DEFAULT 0,
               workflow_source_type TEXT,
               workflow_source_id INTEGER,
+              parts_search_term TEXT,
               status TEXT NOT NULL DEFAULT 'Open',
               completed_at TEXT,
               notes TEXT,
@@ -701,6 +702,7 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("repair_records", "track_as_maintenance", "track_as_maintenance INTEGER NOT NULL DEFAULT 0")
         add_column_if_missing("repair_records", "workflow_source_type", "workflow_source_type TEXT")
         add_column_if_missing("repair_records", "workflow_source_id", "workflow_source_id INTEGER")
+        add_column_if_missing("repair_records", "parts_search_term", "parts_search_term TEXT")
         add_column_if_missing("repair_records", "labor_rate", "labor_rate REAL")
         add_column_if_missing("repair_records", "status", "status TEXT NOT NULL DEFAULT 'Open'")
         add_column_if_missing("repair_records", "completed_at", "completed_at TEXT")

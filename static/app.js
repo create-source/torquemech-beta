@@ -898,11 +898,50 @@
   }
   updateCategoryClearButton();
 
+  function isCustomServiceMode() {
+    return !!customServiceToggle?.checked;
+  }
+
+  function getCustomServiceName() {
+    return String(customServiceNameEl?.value || "").trim();
+  }
+
+  function getCustomPartsSearchTerm() {
+    return String(customPartsSearchTermEl?.value || "").trim();
+  }
+
+  function getActivePartsSearchTerm() {
+    if (!isCustomServiceMode()) return "";
+    return getCustomPartsSearchTerm() || getCustomServiceName();
+  }
+
+  function syncCustomServiceMode() {
+    const customMode = isCustomServiceMode();
+    customServiceFields?.classList.toggle("hidden", !customMode);
+    if (categoryEl) categoryEl.required = false;
+    if (serviceEl) serviceEl.required = false;
+    if (customServiceNameEl) customServiceNameEl.required = customMode;
+    if (customMode) {
+      if (categoryEl) setCategoryValue("", "none");
+      if (serviceEl) serviceEl.value = "";
+      if (serviceSearch) serviceSearch.value = "";
+      hideServiceResults();
+    }
+    updateServiceClearButton();
+    updateCategoryClearButton();
+    updateEstimateButtonState();
+    scheduleEstimatorPartsSourcesRefresh();
+  }
+
   // Inputs
   const laborHoursEl = $("laborHours");
   const laborHoursRangeEl = $("laborHoursRange");
   const partsPriceEl = $("partsPrice");
   const partsPriceLabelEl = $("partsPriceLabel");
+  const customServiceToggle = $("customServiceToggle");
+  const customServiceFields = $("customServiceFields");
+  const customServiceNameEl = $("customServiceName");
+  const customPartsSearchTermEl = $("customPartsSearchTerm");
   const serviceQuantityEl = $("serviceQuantity");
   const serviceQuantityClearBtn = $("serviceQuantityClearBtn");
   const quantityHelpEl = $("quantityHelp");
@@ -2009,6 +2048,8 @@
         it?.serviceText || it?.serviceCode || "Service",
         { id: vehicleId, year: vehicleYear, make: vehicleMake, model: vehicleModel, displayModel: vehicleDisplayModel }
       ),
+      partsSearchTerm: String(it?.partsSearchTerm || it?.parts_search_term || "").trim(),
+      isCustomService: !!it?.isCustomService,
       pricingMode,
       flatRatePrice,
       travelFee,
@@ -2648,6 +2689,8 @@ const confidenceEl = document.getElementById("laborConfidence");
           serviceCode: String(it.serviceCode || "").trim(),
           serviceText: String(it.serviceText || it.serviceCode || "Service").trim(),
           displayServiceText: displayServiceNameWithQuantity(it.serviceText || it.serviceCode || "Service", cost.quantity),
+          partsSearchTerm: String(it.partsSearchTerm || "").trim(),
+          isCustomService: !!it.isCustomService,
           quantity: cost.quantity,
           partsUnitCost: cost.partsUnitCost,
           pricingMode: cost.pricingMode,
@@ -2806,6 +2849,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       make: String(it.vehicleMake || "").trim(),
       model: String(it.vehicleModel || "").trim(),
       serviceCode: it.serviceCode,
+      service: it.serviceText,
       pricingMode: it.pricingMode,
       flatRatePrice: Number(it.flatRatePrice || 0),
       travelFee: Number(it.travelFee || 0),
@@ -2980,10 +3024,12 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   function getEstimatorPartsSourceServiceText() {
+    const typedService = String(serviceSearch?.value || "").trim();
+    const customPartsSearch = getActivePartsSearchTerm();
+    if (customPartsSearch) return customPartsSearch;
     const selectedService = getSelectedServiceDisplayName();
     if (selectedService) return selectedService;
-    const typedService = String(serviceSearch?.value || "").trim();
-    if (typedService) return typedService;
+    if (!isCustomServiceMode() && typedService) return typedService;
     return "";
   }
 
@@ -4633,6 +4679,10 @@ const confidenceEl = document.getElementById("laborConfidence");
     editingLineItem = null;
     activeEditingLineId = null;
     readyForNextService = true;
+    if (customServiceToggle) customServiceToggle.checked = false;
+    if (customServiceNameEl) customServiceNameEl.value = "";
+    if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+    syncCustomServiceMode();
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
     await loadServiceMeta("");
     updateServiceClearButton();
@@ -5190,6 +5240,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       displayModel: getVehicleDisplayModel(activeVehicle),
       category: (categoryEl?.value || "").trim() || null,
       serviceCode: (serviceEl?.value || "").trim() || null,
+      service: isCustomServiceMode() ? getCustomServiceName() : null,
 
       pricingMode: getPricingMode(),
       flatRatePrice: pricingInputNumber(flatRatePriceEl),
@@ -5454,15 +5505,18 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   function setServiceAddFieldsLocked(isLocked) {
-    if (categoryEl) categoryEl.disabled = isLocked;
-    if (serviceEl) serviceEl.disabled = isLocked;
+    const customMode = isCustomServiceMode();
+    if (categoryEl) categoryEl.disabled = isLocked || customMode;
+    if (serviceEl) serviceEl.disabled = isLocked || customMode;
     if (serviceSearch) {
-      serviceSearch.disabled = isLocked;
-      serviceSearch.placeholder = isLocked
+      serviceSearch.disabled = isLocked || customMode;
+      serviceSearch.placeholder = customMode
+        ? "Custom service enabled."
+        : isLocked
         ? "Tap + Add Another Repair to add the next job."
         : SERVICE_SEARCH_PLACEHOLDER;
     }
-    if (isLocked) hideServiceResults();
+    if (isLocked || customMode) hideServiceResults();
     updateServiceClearButton();
   }
 
@@ -5471,7 +5525,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     const activeVehicle = getActiveVehicle() || {};
     const hasBasics = !!(activeVehicle.year && activeVehicle.make && activeVehicle.model);
-    const hasSelection = !!serviceEl?.value;
+    const hasSelection = isCustomServiceMode() ? !!getCustomServiceName() : !!serviceEl?.value;
     const isEditingSavedLine = !!activeEditingLineId;
     const isServiceAddLocked = !readyForNextService && !isEditingSavedLine;
 
@@ -5586,7 +5640,12 @@ if (getEstimateHint) {
       return;
     }
     if (!editingLineItem) {
-      if (!serviceEl.value) {
+      if (isCustomServiceMode() && !getCustomServiceName()) {
+        setStatus("error", "Enter a custom service name.");
+        customServiceNameEl?.focus({ preventScroll: true });
+        return;
+      }
+      if (!isCustomServiceMode() && !serviceEl.value) {
         setStatus("error", "Select a service.");
         return;
       }
@@ -5599,6 +5658,8 @@ if (getEstimateHint) {
 
     const rawServiceText = editingLineItem
       ? (editingLineItem.serviceText || editingLineItem.serviceCode)
+      : isCustomServiceMode()
+        ? getCustomServiceName()
       : (serviceEl.options[serviceEl.selectedIndex]?.textContent?.trim() || serviceEl.value);
 
     if (!activeVehicle) {
@@ -5606,8 +5667,9 @@ if (getEstimateHint) {
       return;
     }
 
-    const serviceCode = editingLineItem ? editingLineItem.serviceCode : serviceEl.value;
+    const serviceCode = editingLineItem ? editingLineItem.serviceCode : (isCustomServiceMode() ? "" : serviceEl.value);
     const serviceText = cleanCustomerFacingServiceLabel(serviceCode, rawServiceText, activeVehicle);
+    const partsSearchTerm = editingLineItem?.partsSearchTerm || getActivePartsSearchTerm();
 
     const pricingSnapshot = buildPricingSnapshotFromControls();
     const it = {
@@ -5620,6 +5682,8 @@ if (getEstimateHint) {
       vehicleDisplayModel: getVehicleDisplayModel(activeVehicle),
       serviceCode,
       serviceText,
+      partsSearchTerm,
+      isCustomService: isCustomServiceMode(),
       status: "recommended",
       ...pricingSnapshot,
       notes: (notesEl?.value || "").trim() || null,
@@ -5735,6 +5799,10 @@ if (getEstimateHint) {
     resetServiceSearch();
     serviceEl.innerHTML = `<option value="">Select service…</option>`;
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
+    if (customServiceToggle) customServiceToggle.checked = false;
+    if (customServiceNameEl) customServiceNameEl.value = "";
+    if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+    syncCustomServiceMode();
     hidePairedSuggestions();
     hideEstimatorWorkflowShortcuts();
 
@@ -6217,6 +6285,10 @@ if (getEstimateHint) {
     if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
     resetServiceSearch();
     document.querySelectorAll(".tm-quick-quote").forEach((btn) => btn.classList.remove("is-selected"));
+    if (customServiceToggle) customServiceToggle.checked = false;
+    if (customServiceNameEl) customServiceNameEl.value = "";
+    if (customPartsSearchTermEl) customPartsSearchTermEl.value = "";
+    syncCustomServiceMode();
 
     // inputs
     if (laborHoursEl) laborHoursEl.value = "0";
@@ -6383,6 +6455,13 @@ if (getEstimateHint) {
     void refreshEstimatorPartsSources();
     categoryEl?.focus();
   });
+
+  customServiceToggle?.addEventListener("change", syncCustomServiceMode);
+  customServiceNameEl?.addEventListener("input", () => {
+    updateEstimateButtonState();
+    scheduleEstimatorPartsSourcesRefresh();
+  });
+  customPartsSearchTermEl?.addEventListener("input", scheduleEstimatorPartsSourcesRefresh);
 
   serviceEl?.addEventListener("change", async () => {
     try {

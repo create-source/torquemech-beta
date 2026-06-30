@@ -231,6 +231,45 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
             self.assertNotEqual(source["url"].rstrip("/"), "https://www.rockauto.com")
             self.assertNotEqual(source["url"].rstrip("/"), "https://www.napaonline.com")
 
+    def test_parts_sources_use_mapped_search_intent_for_coolant_service(self):
+        sources = pro_module.repair_workspace_parts_sources(
+            None,
+            {"year": 2021, "make": "Kia", "model": "Forte"},
+            "Coolant Drain & Refill",
+        )
+
+        self.assertEqual(sources[0]["query"], "2021 Kia Forte engine coolant")
+        self.assertNotIn("coolant drain refill", sources[0]["query"].lower())
+
+    def test_parts_sources_fall_back_to_unknown_service_label(self):
+        sources = pro_module.repair_workspace_parts_sources(
+            None,
+            {"year": 2021, "make": "Kia", "model": "Forte"},
+            "Unknown Calibration",
+        )
+
+        self.assertEqual(sources[0]["query"], "2021 Kia Forte unknown calibration")
+
+    def test_repair_record_parts_sources_use_custom_parts_search_term(self):
+        record = {"repair_name": "Radio Antenna Replacement", "parts_search_term": "radio antenna"}
+        sources = pro_module.repair_workspace_parts_sources(
+            None,
+            {"year": 2021, "make": "Kia", "model": "Forte"},
+            pro_module.repair_record_parts_search_title(record),
+        )
+
+        self.assertEqual(sources[0]["query"], "2021 Kia Forte radio antenna")
+
+    def test_repair_record_parts_sources_fall_back_to_custom_service_name(self):
+        record = {"repair_name": "Radio Antenna Replacement", "parts_search_term": ""}
+        sources = pro_module.repair_workspace_parts_sources(
+            None,
+            {"year": 2021, "make": "Kia", "model": "Forte"},
+            pro_module.repair_record_parts_search_title(record),
+        )
+
+        self.assertEqual(sources[0]["query"], "2021 Kia Forte radio antenna")
+
     def test_approved_finding_creates_source_finding_repair_job_with_estimate_totals(self):
         conn = sqlite3.connect(":memory:")
         conn.row_factory = sqlite3.Row

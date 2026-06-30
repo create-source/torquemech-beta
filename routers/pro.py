@@ -64,6 +64,11 @@ DEFAULT_PARTS_SOURCE_LABELS = [
 ]
 
 PARTS_SEARCH_KEYWORDS = {
+    "coolant drain refill": "engine coolant",
+    "coolant drain and refill": "engine coolant",
+    "coolant flush": "engine coolant",
+    "oil change": "engine oil filter",
+    "oil and filter change": "engine oil filter",
     "water pump replacement": "water pump",
     "radiator replacement": "radiator",
     "alternator replacement": "alternator",
@@ -77,6 +82,11 @@ PARTS_SEARCH_KEYWORDS = {
     "ignition coil replacement": "ignition coil",
     "spark plug replacement": "spark plugs",
     "spark plugs replacement": "spark plugs",
+    "air filter replacement": "engine air filter",
+    "engine air filter replacement": "engine air filter",
+    "cabin air filter replacement": "cabin air filter",
+    "transmission fluid service": "transmission fluid",
+    "differential fluid service": "differential fluid",
     "oxygen sensor replacement": "oxygen sensor",
     "thermostat replacement": "thermostat",
     "fuel pump replacement": "fuel pump",
@@ -2033,6 +2043,7 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
           track_as_maintenance INTEGER NOT NULL DEFAULT 0,
           workflow_source_type TEXT,
           workflow_source_id INTEGER,
+          parts_search_term TEXT,
           status TEXT NOT NULL DEFAULT 'Open',
           completed_at TEXT,
           notes TEXT,
@@ -2082,6 +2093,8 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE repair_records ADD COLUMN workflow_source_type TEXT")
     if "workflow_source_id" not in columns:
         conn.execute("ALTER TABLE repair_records ADD COLUMN workflow_source_id INTEGER")
+    if "parts_search_term" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN parts_search_term TEXT")
     if "labor_rate" not in columns:
         conn.execute("ALTER TABLE repair_records ADD COLUMN labor_rate REAL")
     if "status" not in columns:
@@ -4459,6 +4472,13 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
                 "service_name": display_service_name[:240],
                 "base_service_name": service_name[:240],
                 "service_code": str(item.get("serviceCode") or item.get("service_code") or "").strip()[:160],
+                "parts_search_term": str(
+                    item.get("partsSearchTerm")
+                    or item.get("parts_search_term")
+                    or item.get("partsKeyword")
+                    or item.get("parts_keyword")
+                    or ""
+                ).strip()[:240],
                 "quantity": quantity,
                 "parts_unit_cost": parts_unit_cost,
                 "labor_hours": labor_hours,
@@ -4793,6 +4813,11 @@ def build_parts_search_query(vehicle: dict[str, Any] | sqlite3.Row | None, servi
     return re.sub(r"\s+", " ", " ".join(part for part in [*vehicle_parts, keyword] if part)).strip()
 
 
+def repair_record_parts_search_title(record: dict[str, Any] | sqlite3.Row | None, fallback_title: Any = "") -> str:
+    custom_keyword = str(record_value(record, "parts_search_term") or "").strip()
+    return custom_keyword or str(fallback_title or record_value(record, "repair_name") or "Repair").strip()
+
+
 def parts_search_url(label: str, query: str) -> str:
     params = {"q": query}
     if label == "O'Reilly":
@@ -4962,7 +4987,11 @@ def repair_workspace_item_from_repair_record(
     if blueprint:
         item["blueprint"] = blueprint
         item["blueprint_summary"] = blueprint_summary(blueprint)
-    item["parts_sources"] = repair_workspace_parts_sources(blueprint, vehicle, title)
+    item["parts_sources"] = repair_workspace_parts_sources(
+        blueprint,
+        vehicle,
+        repair_record_parts_search_title(record, title),
+    )
     return item
 
 
@@ -6486,10 +6515,10 @@ async def pro_estimate_conversion_create(request: Request):
                 INSERT INTO repair_records (
                   vehicle_id, customer_id, repair_name, repair_date, mileage,
                   labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
-                  track_as_maintenance, workflow_source_type, workflow_source_id,
+                  track_as_maintenance, workflow_source_type, workflow_source_id, parts_search_term,
                   notes, status, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 'Open', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'Open', ?)
                 """,
                 (
                     vehicle_id,
@@ -6504,6 +6533,7 @@ async def pro_estimate_conversion_create(request: Request):
                     total_cost,
                     source_type,
                     source_id,
+                    item.get("parts_search_term") or "",
                     notes,
                     now,
                 ),
@@ -8216,6 +8246,7 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
     )
     total_cost = float(parts_cost or 0) + float(labor_cost or 0)
     repair_name = form.get("repair_name", "")
+    parts_search_term = form.get("parts_search_term", "")
     repair_date = form.get("repair_date", "")
     mileage = optional_int(form, "mileage")
     notes = form.get("notes", "")
@@ -8270,10 +8301,10 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
             INSERT INTO repair_records (
               vehicle_id, customer_id, repair_name, repair_date, mileage,
               labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
-              track_as_maintenance, workflow_source_type, workflow_source_id,
+              track_as_maintenance, workflow_source_type, workflow_source_id, parts_search_term,
               notes, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 vehicle_id,
@@ -8289,6 +8320,7 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
                 1 if update_maintenance else 0,
                 workflow_source_type or "",
                 workflow_source_id,
+                parts_search_term,
                 notes,
                 now,
             ),

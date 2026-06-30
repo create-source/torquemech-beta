@@ -234,6 +234,42 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(findings_count, 0)
         self.assertEqual(history_count, 0)
 
+    def test_conversion_preserves_custom_service_parts_search_term(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        payload = self.conversion_payload()
+        payload["lineItems"] = [
+            {
+                "serviceText": "Radio Antenna Replacement",
+                "partsSearchTerm": "radio antenna",
+                "laborHours": 0.8,
+                "laborRate": 125,
+                "laborTotal": 100,
+                "partsTotal": 45,
+                "grandTotal": 145,
+            }
+        ]
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "customer_mode": "new",
+                "new_customer_name": "Mike Johnson",
+                "vehicle_mode": "new",
+                "new_vehicle_year": "2021",
+                "new_vehicle_make": "Kia",
+                "new_vehicle_model": "Forte",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+        self.assertEqual(repair["repair_name"], "Radio Antenna Replacement")
+        self.assertEqual(repair["parts_search_term"], "radio antenna")
+
     def test_quantity_estimate_conversion_preserves_display_name_and_parts_total(self):
         app = FastAPI()
         app.include_router(pro_module.router)

@@ -1417,6 +1417,24 @@ button:active{
   min-width: 0;
 }
 
+.tm-custom-service-toggle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:14px;
+  font-weight:800;
+  color:var(--tm-text);
+}
+
+.tm-custom-service-toggle input{
+  width:18px;
+  height:18px;
+}
+
+.tm-custom-service-fields{
+  margin-top:12px;
+}
+
 .tm-quick-quotes__head{
   flex: 0 0 auto;
   padding-top: 9px;
