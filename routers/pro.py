@@ -2126,9 +2126,10 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_repair_records_vehicle_date_mileage "
         "ON repair_records (vehicle_id, repair_date, mileage)"
     )
+    conn.execute("DROP INDEX IF EXISTS idx_repair_records_workflow_source")
     conn.execute(
         """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_records_workflow_source
+        CREATE INDEX IF NOT EXISTS idx_repair_records_workflow_source
         ON repair_records (workflow_source_type, workflow_source_id)
         WHERE workflow_source_type IS NOT NULL
           AND TRIM(workflow_source_type) != ''
@@ -6822,9 +6823,12 @@ async def pro_estimate_conversion_create(request: Request):
                     FROM repair_records
                     WHERE workflow_source_type = 'finding'
                       AND workflow_source_id = ?
+                      AND vehicle_id = ?
+                      AND LOWER(TRIM(COALESCE(repair_name, ''))) = LOWER(TRIM(?))
+                      AND repair_date = ?
                     LIMIT 1
                     """,
-                    (source_id,),
+                    (source_id, vehicle_id, item["service_name"], repair_date),
                 ).fetchone()
             else:
                 existing = conn.execute(
@@ -6889,7 +6893,10 @@ async def pro_estimate_conversion_create(request: Request):
                     f"""
                     UPDATE findings_records
                     SET status = 'Approved',
-                        linked_repair_record_id = ?,
+                        linked_repair_record_id = CASE
+                            WHEN linked_repair_record_id IS NULL OR linked_repair_record_id = 0 THEN ?
+                            ELSE linked_repair_record_id
+                        END,
                         repair_record_created_at = COALESCE(NULLIF(repair_record_created_at, ''), ?),
                         repair_work_status = COALESCE(NULLIF(repair_work_status, ''), 'ready'),
                         repair_work_updated_at = COALESCE(NULLIF(repair_work_updated_at, ''), ?)

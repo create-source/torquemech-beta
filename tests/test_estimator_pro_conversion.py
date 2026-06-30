@@ -468,6 +468,100 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(finding["linked_repair_record_id"], repair["id"])
         self.assertEqual(finding["repair_work_status"], "ready")
 
+    def test_finding_conversion_creates_selected_service_even_when_old_finding_repair_exists(self):
+        now = "2026-06-25T12:00:00"
+        self.conn.execute(
+            """
+            INSERT INTO customers (id, first_name, last_name, phone, email, created_at, updated_at)
+            VALUES (1, 'Natalie', 'Htut', '555-0100', '', ?, ?)
+            """,
+            (now, now),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO customer_vehicles (id, customer_id, year, make, model, mileage, created_at, updated_at)
+            VALUES (1, 1, 2021, 'Kia', 'Forte', 81000, ?, ?)
+            """,
+            (now, now),
+        )
+        pro_module.ensure_findings_records_schema(self.conn)
+        pro_module.ensure_repair_records_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, vehicle_id, customer_id, finding, recommendation, status,
+              linked_repair_record_id, repair_work_status, created_at
+            )
+            VALUES (1, 1, 1, 'Coolant leak', 'Inspect cooling system', 'Approved', 99, 'ready', ?)
+            """,
+            (now,),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO repair_records (
+              id, vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+              workflow_source_type, workflow_source_id, status, notes, created_at
+            )
+            VALUES (99, 1, 1, 'tire', '2026-06-24', 81000, 0.5, 90, 0, 45, 45,
+                    'finding', 1, 'Open', 'Source: Finding', ?)
+            """,
+            (now,),
+        )
+        self.conn.commit()
+        payload = self.finding_conversion_payload()
+        payload["vehicle"] = {"year": "2021", "make": "Kia", "model": "Forte"}
+        payload["sourceContext"]["problemFound"] = "Coolant leak"
+        payload["sourceContext"]["recommendedRepair"] = "Coolant Reservoir Replacement"
+        payload["lineItems"] = [
+            {
+                "serviceText": "Coolant Reservoir Replacement",
+                "laborHours": 2.5,
+                "laborRate": 90,
+                "laborTotal": 225,
+                "partsTotal": 0,
+                "grandTotal": 225,
+            }
+        ]
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "customer_mode": "existing",
+                "customer_id": "1",
+                "vehicle_mode": "existing",
+                "vehicle_id": "1",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("?converted=1&created=1#repair-workspace", response.headers["location"])
+        repairs = [
+            dict(row)
+            for row in self.conn.execute("SELECT * FROM repair_records ORDER BY id ASC").fetchall()
+        ]
+        self.assertEqual([repair["repair_name"] for repair in repairs], ["tire", "Coolant Reservoir Replacement"])
+        converted = repairs[1]
+        self.assertEqual(converted["workflow_source_type"], "finding")
+        self.assertEqual(converted["workflow_source_id"], 1)
+        self.assertEqual(converted["labor_hours"], 2.5)
+        self.assertEqual(converted["labor_rate"], 90)
+        self.assertEqual(converted["labor_cost"], 225)
+        self.assertEqual(converted["parts_cost"], 0)
+        self.assertEqual(converted["total_cost"], 225)
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn("Coolant Reservoir Replacement", vehicle_detail.text)
+        self.assertIn("Parts Sources", vehicle_detail.text)
+        self.assertIn("Parts Tracking", vehicle_detail.text)
+
     def test_finding_estimator_href_carries_encoded_context(self):
         href = pro_module.build_finding_estimator_href(
             {"id": 7, "first_name": "Natalie", "last_name": "Htut"},

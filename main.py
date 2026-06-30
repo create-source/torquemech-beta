@@ -736,9 +736,10 @@ def init_pro_crm_schema_db() -> None:
             """
         )
         conn.execute("CREATE INDEX IF NOT EXISTS idx_repair_job_parts_repair_record_id ON repair_job_parts (repair_record_id)")
+        conn.execute("DROP INDEX IF EXISTS idx_repair_records_workflow_source")
         conn.execute(
             """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_records_workflow_source
+            CREATE INDEX IF NOT EXISTS idx_repair_records_workflow_source
             ON repair_records (workflow_source_type, workflow_source_id)
             WHERE workflow_source_type IS NOT NULL
               AND TRIM(workflow_source_type) != ''
