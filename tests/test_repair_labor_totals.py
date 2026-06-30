@@ -34,6 +34,19 @@ class RepairLaborTotalsTests(unittest.TestCase):
         self.assertEqual(totals["labor_total"], 180)
         self.assertTrue(totals["labor_rate_is_legacy"])
 
+    def test_tracked_parts_are_added_to_final_repair_totals(self):
+        totals = repair_cost_totals(
+            {
+                "labor_hours": 1.0,
+                "labor_rate": 120,
+                "parts_cost": 25,
+                "tracked_parts_total": 45,
+            }
+        )
+
+        self.assertEqual(totals["parts_total"], 70)
+        self.assertEqual(totals["grand_total"], 190)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -224,7 +224,7 @@
           {% endif %}
           {% if item.tracked_parts %}
           <div class="tm-invoice-parts-detail">
-            <div class="tm-invoice-field"><span>Tracked Parts</span><strong>{{ item.tracked_parts_total|pro_currency }} tracked, detail only</strong></div>
+            <div class="tm-invoice-field"><span>Tracked Parts</span><strong>{{ item.tracked_parts_total|pro_currency }} added to final total</strong></div>
             <ul>
               {% for part in item.tracked_parts %}
               <li>
@@ -253,7 +253,13 @@
     <div class="tm-invoice-totals" style="margin-top:18px;">
       <div class="tm-invoice-total-row"><span>Labor Total</span><strong>{{ invoice.labor_total|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row"><span>Parts Total</span><strong>{{ invoice.parts_total|pro_currency }}</strong></div>
+      {% if invoice.approved_estimate_total is not none %}
+      <div class="tm-invoice-total-row"><span>Approved Estimate Total</span><strong>{{ invoice.approved_estimate_total|pro_currency }}</strong></div>
+      <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Final Invoice Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
+      <div class="tm-invoice-total-row"><span>{{ invoice.estimate_difference_label or "Difference" }}</span><strong>{{ invoice.estimate_final_difference|pro_currency }}</strong></div>
+      {% else %}
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Grand Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
+      {% endif %}
     </div>
   </section>
 

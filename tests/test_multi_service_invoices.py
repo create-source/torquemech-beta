@@ -198,8 +198,24 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn(b"TM-INV-0001", pdf.content)
         self.assertNotIn(b"Source: Finding", pdf.content)
 
-    def test_invoice_shows_tracked_parts_without_changing_totals(self):
-        self.insert_repair(60, "Radio Antenna Replacement", 1.0, 120, 0)
+    def test_invoice_shows_tracked_parts_in_final_total_and_estimate_difference(self):
+        self.insert_repair(60, "Radio Antenna Replacement", 1.0, 120, 0, source="finding")
+        self.conn.execute("UPDATE repair_records SET workflow_source_id = 7 WHERE id = 60")
+        pro_module.ensure_repair_estimate_documents_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO repair_estimate_documents (
+              id, customer_id, vehicle_id, finding_id, estimate_date,
+              customer_name, vehicle_label, related_title, estimate_total,
+              approval_status, pdf_path, invoice_id, payload_json, created_at
+            )
+            VALUES (
+              12, 1, 1, 7, '2026-06-25',
+              'Natalie Htut', '2008 Toyota Sequoia', 'Radio Antenna Replacement', 120,
+              'Signed customer approval', 'estimate.pdf', NULL, '{}', '2026-06-25T12:05:00'
+            )
+            """
+        )
         pro_module.create_repair_job_part(
             self.conn,
             60,
@@ -226,8 +242,10 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
 
         self.assertEqual(loaded["labor_total"], 120)
-        self.assertEqual(loaded["parts_total"], 0)
-        self.assertEqual(loaded["grand_total"], 120)
+        self.assertEqual(loaded["parts_total"], 45)
+        self.assertEqual(loaded["grand_total"], 165)
+        self.assertEqual(loaded["approved_estimate_total"], 120)
+        self.assertEqual(loaded["estimate_final_difference"], 45)
         self.assertEqual(loaded["items"][0]["tracked_parts_total"], 45)
         self.assertEqual(loaded["items"][0]["tracked_parts"][0]["part_name"], "Radio Antenna")
 
@@ -240,10 +258,48 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(detail.status_code, 200)
         self.assertIn("Tracked Parts", detail.text)
         self.assertIn("Radio Antenna", detail.text)
-        self.assertIn("detail only", detail.text)
-        self.assertIn("<span>Parts</span><strong>$0.00</strong>", detail.text)
+        self.assertIn("added to final total", detail.text)
+        self.assertIn("<span>Parts</span><strong>$45.00</strong>", detail.text)
+        self.assertIn("Approved Estimate Total", detail.text)
+        self.assertIn("Final Invoice Total", detail.text)
+        self.assertIn("Additional Approved Amount", detail.text)
         self.assertEqual(pdf.status_code, 200)
         self.assertIn(b"Radio Antenna", pdf.content)
+        self.assertIn(b"Approved Estimate Total", pdf.content)
+        self.assertIn(b"Final Invoice Total", pdf.content)
+
+    def test_invoice_estimate_difference_is_zero_when_final_matches_approval(self):
+        self.insert_repair(62, "Brake Inspection", 1.0, 120, 20, source="finding")
+        self.conn.execute("UPDATE repair_records SET workflow_source_id = 8 WHERE id = 62")
+        pro_module.ensure_repair_estimate_documents_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO repair_estimate_documents (
+              id, customer_id, vehicle_id, finding_id, estimate_date,
+              customer_name, vehicle_label, related_title, estimate_total,
+              approval_status, pdf_path, invoice_id, payload_json, created_at
+            )
+            VALUES (
+              13, 1, 1, 8, '2026-06-25',
+              'Natalie Htut', '2008 Toyota Sequoia', 'Brake Inspection', 140,
+              'Signed customer approval', 'estimate.pdf', NULL, '{}', '2026-06-25T12:05:00'
+            )
+            """
+        )
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 62)
+
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T12:30:00",
+        )
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+
+        self.assertEqual(loaded["grand_total"], 140)
+        self.assertEqual(loaded["approved_estimate_total"], 140)
+        self.assertEqual(loaded["estimate_final_difference"], 0)
 
     def test_parts_tracking_add_part_default_uses_parts_search_term(self):
         self.insert_repair(61, "Coolant Drain & Refill", 1.0, 120, 0, status="Open")

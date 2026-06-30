@@ -2176,8 +2176,12 @@ def repair_cost_totals(repair: dict[str, Any]) -> dict[str, Any]:
         parts_total = float(repair.get("parts_cost") or 0)
     except (TypeError, ValueError):
         parts_total = 0.0
+    try:
+        tracked_parts_total = float(repair.get("tracked_parts_total") or 0)
+    except (TypeError, ValueError):
+        tracked_parts_total = 0.0
     labor_total = round(float(labor["labor_total"] or 0), 2)
-    parts_total = round(max(0.0, parts_total), 2)
+    parts_total = round(max(0.0, parts_total) + max(0.0, tracked_parts_total), 2)
     return {
         **labor,
         "parts_total": parts_total,
@@ -2637,6 +2641,10 @@ def load_invoice_item_records(
         {int(item.get("repair_record_id") or 0) for item in items if item.get("repair_record_id")},
     )
     attach_repair_job_parts(items, parts_map, id_key="repair_record_id")
+    for item in items:
+        totals = repair_cost_totals(item)
+        item["parts_total"] = totals["parts_total"]
+        item["grand_total"] = totals["grand_total"]
     return items
 
 
@@ -2662,7 +2670,10 @@ def load_invoice_record(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     invoice["items"] = load_invoice_item_records(conn, invoice_id)
-    return invoice_display_record(invoice)
+    record = invoice_display_record(invoice)
+    estimate_summary = invoice_estimate_summary(conn, invoice_id, final_total=record.get("grand_total"))
+    record.update(estimate_summary)
+    return record
 
 
 def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
@@ -2697,6 +2708,41 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
         inspections.pop() if len(inspections) == 1 else ("Mixed" if inspections else "Not marked passed")
     )
     return record
+
+
+def invoice_estimate_summary(conn: sqlite3.Connection, invoice_id: int, *, final_total: Any = None) -> dict[str, Any]:
+    ensure_repair_estimate_documents_schema(conn)
+    rows = conn.execute(
+        """
+        SELECT estimate_total
+        FROM repair_estimate_documents
+        WHERE invoice_id = ?
+          AND estimate_total IS NOT NULL
+        """,
+        (invoice_id,),
+    ).fetchall()
+    if not rows:
+        return {
+            "approved_estimate_total": None,
+            "estimate_final_difference": None,
+            "estimate_difference_label": "",
+        }
+    approved_total = round(sum(float(row["estimate_total"] or 0) for row in rows), 2)
+    try:
+        difference = round(float(final_total or 0) - approved_total, 2)
+    except (TypeError, ValueError):
+        difference = 0.0
+    if difference > 0:
+        label = "Additional Approved Amount"
+    elif difference < 0:
+        label = "Final Invoice Credit"
+    else:
+        label = "Difference"
+    return {
+        "approved_estimate_total": approved_total,
+        "estimate_final_difference": difference,
+        "estimate_difference_label": label,
+    }
 
 
 def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
@@ -3009,6 +3055,55 @@ def load_vehicle_estimate_documents(
 
 def estimate_document_url(customer_id: int, vehicle_id: int, estimate_id: Any) -> str:
     return f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/estimates/{estimate_id}/pdf" if estimate_id else ""
+
+
+def estimate_document_payload(record: dict[str, Any]) -> dict[str, Any]:
+    raw_payload = record.get("payload_json") or "{}"
+    try:
+        payload = json.loads(raw_payload)
+    except (TypeError, ValueError):
+        payload = {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def estimate_document_edit_url(customer_id: int, vehicle_id: int, record: dict[str, Any]) -> str:
+    payload = estimate_document_payload(record)
+    params: dict[str, Any] = {
+        "source": payload.get("source") or ("finding" if record.get("finding_id") else "estimator"),
+        "customer_id": customer_id,
+        "vehicle_id": vehicle_id,
+        "estimate_id": record.get("id"),
+    }
+    if record.get("finding_id"):
+        params["finding_id"] = record.get("finding_id")
+    for key, param_name in (
+        ("problem_found", "problem_found"),
+        ("recommended_repair", "recommended_repair"),
+        ("notes", "notes"),
+    ):
+        value = str(payload.get(key) or "").strip()
+        if value:
+            params[param_name] = value
+    line_items = payload.get("line_items") if isinstance(payload.get("line_items"), list) else []
+    if line_items:
+        first = line_items[0] if isinstance(line_items[0], dict) else {}
+        if first.get("service_code"):
+            params["service"] = first.get("service_code")
+        if first.get("service_text"):
+            params["service_text"] = first.get("service_text")
+        if first.get("labor_hours") is not None:
+            params["labor_hours"] = first.get("labor_hours")
+        if first.get("labor_rate") is not None:
+            params["labor_rate"] = first.get("labor_rate")
+        if first.get("parts_total") is not None:
+            params["parts_total"] = first.get("parts_total")
+        if first.get("pricing_mode"):
+            params["pricing_mode"] = first.get("pricing_mode")
+        if first.get("quantity") is not None:
+            params["quantity"] = first.get("quantity")
+        if len(line_items) > 1:
+            params["estimate_payload"] = json.dumps(payload, ensure_ascii=True, separators=(",", ":"))
+    return f"/estimator?{urlencode(params)}"
 
 
 def latest_estimate_documents_by_finding_id(
@@ -3425,7 +3520,12 @@ def build_invoice_pdf_bytes(
         totals.append(("Labor Total", invoice.get("labor_total")))
     if options["show_parts_total"]:
         totals.append(("Parts Total", invoice.get("parts_total")))
-    totals.append(("Grand Total", invoice.get("grand_total")))
+    if invoice.get("approved_estimate_total") is not None:
+        totals.append(("Approved Estimate Total", invoice.get("approved_estimate_total")))
+        totals.append(("Final Invoice Total", invoice.get("grand_total")))
+        totals.append((invoice.get("estimate_difference_label") or "Difference", invoice.get("estimate_final_difference")))
+    else:
+        totals.append(("Grand Total", invoice.get("grand_total")))
     for label, value in totals:
         c.setFont("Helvetica-Bold" if label == "Grand Total" else "Helvetica", 11)
         c.drawString(left, y, label)
@@ -4235,6 +4335,10 @@ def load_repair_record(
     )
     if not repair:
         raise HTTPException(status_code=404, detail="Repair record not found")
+    summary = repair_job_parts_summary(load_repair_job_parts(conn, repair_id))
+    repair["tracked_parts"] = summary["parts"]
+    repair["tracked_parts_total"] = summary["tracked_parts_total"]
+    repair["tracked_parts_count"] = summary["count"]
     totals = repair_cost_totals(repair)
     repair["labor_rate"] = totals["labor_rate"]
     repair["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
@@ -4243,10 +4347,6 @@ def load_repair_record(
     repair["grand_total"] = totals["grand_total"]
     repair["labor_cost"] = totals["labor_total"]
     repair["total_cost"] = totals["grand_total"]
-    summary = repair_job_parts_summary(load_repair_job_parts(conn, repair_id))
-    repair["tracked_parts"] = summary["parts"]
-    repair["tracked_parts_total"] = summary["tracked_parts_total"]
-    repair["tracked_parts_count"] = summary["count"]
     repair["default_part_name"] = default_part_name_for_repair(repair)
     return repair
 
@@ -5801,6 +5901,7 @@ def build_vehicle_timeline(
                 ),
                 "mileage": None,
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/estimates/{record['id']}/pdf",
+                "edit_url": estimate_document_edit_url(customer_id, vehicle_id, record),
                 "action_label": "Open Estimate PDF",
             },
         )
@@ -5834,20 +5935,20 @@ def build_vehicle_timeline(
             if normalize_finding_request_type(record.get("request_type")) == "labor"
             else record.get("finding")
         ) or record.get("recommendation") or "Finding"
-        if is_completed:
-            if not record.get("linked_repair_record_id"):
-                add_record(
-                    "repaired",
-                    {
-                        "id": record["id"],
-                        "date": record.get("repair_work_updated_at") or record.get("finding_date") or record.get("created_at") or "",
-                        "created_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
-                        "service_name": title,
-                        "mileage": record.get("mileage"),
-                        "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{record['id']}",
-                    },
-                )
-            continue
+        linked_repair_id = optional_int_value(record.get("linked_repair_record_id"))
+        linked_invoice = invoice_by_repair_id.get(linked_repair_id or 0, {})
+        if is_completed and not linked_repair_id:
+            add_record(
+                "repaired",
+                {
+                    "id": record["id"],
+                    "date": record.get("repair_work_updated_at") or record.get("finding_date") or record.get("created_at") or "",
+                    "created_at": record.get("repair_work_updated_at") or record.get("created_at") or "",
+                    "service_name": title,
+                    "mileage": record.get("mileage"),
+                    "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{record['id']}",
+                },
+            )
         add_record(
             "findings",
             {
@@ -5855,6 +5956,23 @@ def build_vehicle_timeline(
                 "date": record.get("finding_date") or "",
                 "created_at": record.get("created_at") or "",
                 "service_name": title,
+                "finding": record.get("finding") or "",
+                "recommendation": record.get("recommendation") or record.get("labor_description") or "",
+                "severity": record.get("severity") or "",
+                "status_label": status,
+                "estimate_url": record.get("estimate_document_url") or "",
+                "estimate_total": record.get("estimate_total"),
+                "repair_url": (
+                    f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{linked_repair_id}"
+                    if linked_repair_id
+                    else ""
+                ),
+                "invoice_number": linked_invoice.get("invoice_number") or "",
+                "invoice_url": (
+                    f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{linked_invoice.get('id')}"
+                    if linked_invoice.get("id")
+                    else ""
+                ),
                 "mileage": record.get("mileage"),
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{record['id']}",
             },

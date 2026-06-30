@@ -6969,11 +6969,73 @@ if (getEstimateHint) {
     const model = params.get("model");
     const displayModel = params.get("displayModel") || params.get("display_model");
     const service = params.get("service");
+    const serviceText = params.get("service_text");
     const source = params.get("source") || "";
     const findingContext = getEstimatorSourceContext();
     const handoffTrustEl = $("repairGuideHandoffTrust");
 
-    if (!year && !make && !model && !displayModel && !service && findingContext.source !== "finding") return;
+    if (!year && !make && !model && !displayModel && !service && !params.get("estimate_payload") && !params.get("estimate_id") && findingContext.source !== "finding") return;
+
+    function estimateEditDraftFromQuery() {
+      const rawPayload = params.get("estimate_payload") || "";
+      let payload = {};
+      if (rawPayload) {
+        try {
+          payload = JSON.parse(rawPayload);
+        } catch (_) {
+          payload = {};
+        }
+      }
+      const payloadItems = Array.isArray(payload.line_items) ? payload.line_items : [];
+      const fallbackItem = {
+        service_code: service || "",
+        service_text: serviceText || findingContext.recommendedRepair || "Recommended Repair",
+        quantity: params.get("quantity") || 1,
+        pricing_mode: params.get("pricing_mode") || "hourly",
+        labor_hours: params.get("labor_hours") || 0,
+        labor_rate: params.get("labor_rate") || getPreferredLaborRate(),
+        parts_total: params.get("parts_total") || 0,
+        status: "recommended",
+      };
+      const lineItemsForDraft = (payloadItems.length ? payloadItems : [fallbackItem]).map((item) => {
+        const quantityValue = normalizeQuantity(item.quantity);
+        const partsTotal = normalizeMoneyValue(item.parts_total);
+        return {
+          serviceCode: item.service_code || "",
+          serviceText: item.service_text || item.recommended_repair || findingContext.recommendedRepair || "Recommended Repair",
+          pricingMode: item.pricing_mode || "hourly",
+          flatRatePrice: normalizeMoneyValue(item.flat_rate_price),
+          laborHours: normalizeMoneyValue(item.labor_hours_input != null ? item.labor_hours_input : item.labor_hours),
+          laborCalculationMode: item.labor_calculation_mode || "per_job",
+          quantity: quantityValue,
+          partsUnitCost: quantityValue > 1 ? partsTotal / quantityValue : partsTotal,
+          partsPrice: partsTotal,
+          laborRate: normalizeMoneyValue(item.labor_rate || getPreferredLaborRate()),
+          status: normalizeRepairStatus(item.status),
+          notes: item.notes || "",
+          inspectionFindings: item.inspection_findings || payload.problem_found || findingContext.problemFound || "",
+          estimate: null,
+        };
+      });
+      const draftNotes = params.get("notes") || payload.notes || "";
+      return {
+        id: `estimate-${params.get("estimate_id") || Date.now()}-edit`,
+        title: `Estimate ${params.get("estimate_id") || ""} edit`,
+        vehicle: {
+          year: year || payload.year || "",
+          make: make || payload.make || "",
+          model: model || payload.model || "",
+          displayModel: displayModel || model || payload.display_model || payload.model || "",
+        },
+        customer: {
+          agrees: true,
+          name: findingContext.customerName || payload.customer_name || "",
+          phone: "",
+          notes: draftNotes,
+        },
+        lineItems: lineItemsForDraft,
+      };
+    }
 
     function updateRepairGuideHandoffTrust({ vehicleLoaded = false, serviceLoaded = false } = {}) {
       if (!handoffTrustEl) return;
@@ -7079,6 +7141,13 @@ if (getEstimateHint) {
 
     initReady.then(async () => {
       try {
+        if (params.get("estimate_payload") || params.get("estimate_id")) {
+          await applyDraft(estimateEditDraftFromQuery());
+          renderFindingEstimateContext();
+          setStatus("ok", "Estimate reopened. Adjust values and regenerate a new customer quote.");
+          void refreshEstimatorPartsSources();
+          return;
+        }
         const vehicleLoaded = await preloadVehicle();
         let serviceLoaded = false;
 

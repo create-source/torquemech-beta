@@ -10727,6 +10727,61 @@ def estimate_pdf_related_title(req: Any, fallback_title: str = "") -> str:
     return re.sub(r"\s+", " ", str(title or "")).strip()
 
 
+def estimate_pdf_payload(req: Any, *, related_title: str, estimate_total: float) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {
+        "source": estimate_request_source_value(req, "source") or "estimator",
+        "customer_id": estimate_request_source_value(req, "customerId"),
+        "vehicle_id": estimate_request_source_value(req, "vehicleId"),
+        "finding_id": estimate_request_source_value(req, "findingId"),
+        "year": getattr(req, "year", None),
+        "make": str(getattr(req, "make", "") or "").strip(),
+        "model": str(getattr(req, "model", "") or "").strip(),
+        "display_model": str(getattr(req, "displayModel", "") or "").strip(),
+        "customer_name": str(getattr(req, "customerName", "") or "").strip(),
+        "customer_phone": str(getattr(req, "customerPhone", "") or "").strip(),
+        "problem_found": estimate_request_source_value(req, "problemFound"),
+        "recommended_repair": estimate_request_source_value(req, "recommendedRepair") or related_title,
+        "related_title": related_title,
+        "estimate_total": float(estimate_total or 0),
+        "notes": str(getattr(req, "notes", "") or "").strip(),
+    }
+    line_items = getattr(req, "lineItems", None)
+    if line_items:
+        payload["line_items"] = [
+            {
+                "service_code": getattr(item, "serviceCode", "") or "",
+                "service_text": getattr(item, "displayServiceText", None) or getattr(item, "serviceText", None) or "",
+                "quantity": getattr(item, "quantity", 1) or 1,
+                "pricing_mode": getattr(item, "pricingMode", None) or "hourly",
+                "flat_rate_price": getattr(item, "flatRatePrice", None),
+                "labor_hours": estimate_line_billable_labor_hours(item),
+                "labor_hours_input": getattr(item, "laborHoursInput", None),
+                "labor_calculation_mode": getattr(item, "laborCalculationMode", None),
+                "labor_rate": getattr(item, "laborRate", None),
+                "parts_total": getattr(item, "partsPrice", None),
+                "status": getattr(item, "status", None) or "recommended",
+                "inspection_findings": getattr(item, "inspectionFindings", None) or "",
+            }
+            for item in line_items
+        ]
+    else:
+        payload["line_items"] = [
+            {
+                "service_code": getattr(req, "serviceCode", "") or "",
+                "service_text": getattr(req, "service", None) or related_title,
+                "quantity": getattr(req, "quantity", 1) or 1,
+                "pricing_mode": getattr(req, "pricingMode", None) or "hourly",
+                "flat_rate_price": getattr(req, "flatRatePrice", None),
+                "labor_hours": getattr(req, "laborHours", None),
+                "labor_calculation_mode": getattr(req, "laborCalculationMode", None),
+                "labor_rate": getattr(req, "laborRate", None),
+                "parts_total": getattr(req, "partsPrice", None),
+                "status": "recommended",
+            }
+        ]
+    return payload
+
+
 def save_repair_estimate_pdf_if_available(
     req: Any,
     pdf_bytes: bytes,
@@ -10751,11 +10806,7 @@ def save_repair_estimate_pdf_if_available(
             related_title=related_title,
             estimate_total=estimate_total,
             approval_status=estimate_pdf_approval_status(req),
-            payload={
-                "source": estimate_request_source_value(req, "source") or "estimator",
-                "finding_id": estimate_request_source_value(req, "findingId"),
-                "related_title": related_title,
-            },
+            payload=estimate_pdf_payload(req, related_title=related_title, estimate_total=estimate_total),
         )
     except Exception:
         logging.exception("ESTIMATE_TIMELINE_SAVE_FAILED")

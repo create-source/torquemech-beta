@@ -1989,7 +1989,7 @@
           <strong>Before / Inspection Photos</strong>
           <label class="tm-label" for="before_inspection_photos">Upload photos of the original problem before repair.</label>
           <span>Upload up to 5 photos.</span>
-          <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+          <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/*" capture="environment" multiple>
         </section>
         <div style="margin-top:12px;">
           <label class="tm-label" for="recommendation">Recommended Repair</label>
@@ -3010,7 +3010,7 @@
             {% if group.records %}
             <div class="tm-vehicle-timeline">
               {% for item in group.records %}
-              <a class="tm-timeline-item" href="{{ item.url }}" data-timeline-item>
+              <article class="tm-timeline-item" data-timeline-item>
                 <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
                 <div class="tm-timeline-content">
                   <div class="tm-timeline-meta">
@@ -3051,14 +3051,33 @@
                     {% if item.invoice_number %}<span class="tm-crm-chip">Linked invoice {{ item.invoice_number }}</span>{% endif %}
                   </div>
                   {% if item.action_label %}
-                  <span class="tm-btn tm-btn-secondary" style="margin-top:10px;">{{ item.action_label }}</span>
+                  <div class="tm-repair-card-actions" style="margin-top:10px;">
+                    <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">{{ item.action_label }}</a>
+                    {% if item.edit_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.edit_url }}">Edit / Reopen Estimate</a>{% endif %}
+                  </div>
                   {% endif %}
+                  {% endif %}
+                  {% if group.key == "findings" %}
+                  <div class="tm-finding-meta" style="margin-top:8px;">
+                    {% if item.finding %}<span class="tm-crm-chip">Finding: {{ item.finding }}</span>{% endif %}
+                    {% if item.recommendation %}<span class="tm-crm-chip">Recommended: {{ item.recommendation }}</span>{% endif %}
+                    {% if item.severity %}<span class="tm-crm-chip">Severity {{ item.severity }}</span>{% endif %}
+                    {% if item.status_label %}<span class="tm-crm-chip">Decision {{ item.status_label }}</span>{% endif %}
+                    {% if item.estimate_total is not none %}<span class="tm-crm-chip">Estimate {{ item.estimate_total|pro_currency }}</span>{% endif %}
+                    {% if item.invoice_number %}<span class="tm-crm-chip">Invoice {{ item.invoice_number }}</span>{% endif %}
+                  </div>
+                  <div class="tm-repair-card-actions" style="margin-top:10px;">
+                    <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">Review Finding</a>
+                    {% if item.estimate_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_url }}">Open Estimate PDF</a>{% endif %}
+                    {% if item.repair_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.repair_url }}">Open Repair</a>{% endif %}
+                    {% if item.invoice_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.invoice_url }}">Open Final Invoice</a>{% endif %}
+                  </div>
                   {% endif %}
                   {% if group.key == "invoices" and item.action_label %}
-                  <span class="tm-btn tm-btn-secondary" style="margin-top:10px;">{{ item.action_label }}</span>
+                  <a class="tm-btn tm-btn-secondary" href="{{ item.url }}" style="margin-top:10px;">{{ item.action_label }}</a>
                   {% endif %}
                 </div>
-              </a>
+              </article>
               {% endfor %}
             </div>
             {% else %}
@@ -3373,9 +3392,8 @@
         const listEl = document.createElement("div");
         listEl.className = "tm-vehicle-timeline";
         group.records.forEach((item) => {
-          const link = document.createElement("a");
+          const link = document.createElement("article");
           link.className = "tm-timeline-item";
-          link.href = item.url || "#";
           link.dataset.timelineItem = "";
 
           const dot = document.createElement("span");
@@ -3439,8 +3457,9 @@
               content.appendChild(partsRow);
             }
             if (item.action_label) {
-              const action = document.createElement("span");
+              const action = document.createElement("a");
               action.className = "tm-btn tm-btn-secondary";
+              action.href = item.url || "#";
               action.style.marginTop = "10px";
               action.textContent = item.action_label;
               content.appendChild(action);
@@ -3460,16 +3479,59 @@
             if (item.invoice_number) appendTextLine(metaRow, "tm-crm-chip", `Linked invoice ${item.invoice_number}`);
             if (metaRow.children.length) content.appendChild(metaRow);
             if (item.action_label) {
-              const action = document.createElement("span");
+              const actionRow = document.createElement("div");
+              actionRow.className = "tm-repair-card-actions";
+              actionRow.style.marginTop = "10px";
+              const action = document.createElement("a");
               action.className = "tm-btn tm-btn-secondary";
-              action.style.marginTop = "10px";
+              action.href = item.url || "#";
               action.textContent = item.action_label;
-              content.appendChild(action);
+              actionRow.appendChild(action);
+              if (item.edit_url) {
+                const editAction = document.createElement("a");
+                editAction.className = "tm-btn tm-btn-secondary";
+                editAction.href = item.edit_url;
+                editAction.textContent = "Edit / Reopen Estimate";
+                actionRow.appendChild(editAction);
+              }
+              content.appendChild(actionRow);
             }
           }
+          if ((group.key || "") === "findings") {
+            const metaRow = document.createElement("div");
+            metaRow.className = "tm-finding-meta";
+            metaRow.style.marginTop = "8px";
+            if (item.finding) appendTextLine(metaRow, "tm-crm-chip", `Finding: ${item.finding}`);
+            if (item.recommendation) appendTextLine(metaRow, "tm-crm-chip", `Recommended: ${item.recommendation}`);
+            if (item.severity) appendTextLine(metaRow, "tm-crm-chip", `Severity ${item.severity}`);
+            if (item.status_label) appendTextLine(metaRow, "tm-crm-chip", `Decision ${item.status_label}`);
+            if (item.estimate_total !== undefined && item.estimate_total !== null && item.estimate_total !== "") {
+              appendTextLine(metaRow, "tm-crm-chip", `Estimate ${formatMoney(Number(item.estimate_total || 0))}`);
+            }
+            if (item.invoice_number) appendTextLine(metaRow, "tm-crm-chip", `Invoice ${item.invoice_number}`);
+            if (metaRow.children.length) content.appendChild(metaRow);
+            const actionRow = document.createElement("div");
+            actionRow.className = "tm-repair-card-actions";
+            actionRow.style.marginTop = "10px";
+            [
+              ["Review Finding", item.url],
+              ["Open Estimate PDF", item.estimate_url],
+              ["Open Repair", item.repair_url],
+              ["Open Final Invoice", item.invoice_url],
+            ].forEach(([label, href]) => {
+              if (!href) return;
+              const action = document.createElement("a");
+              action.className = "tm-btn tm-btn-secondary";
+              action.href = href;
+              action.textContent = label;
+              actionRow.appendChild(action);
+            });
+            if (actionRow.children.length) content.appendChild(actionRow);
+          }
           if ((group.key || "") === "invoices" && item.action_label) {
-            const action = document.createElement("span");
+            const action = document.createElement("a");
             action.className = "tm-btn tm-btn-secondary";
+            action.href = item.url || "#";
             action.style.marginTop = "10px";
             action.textContent = item.action_label;
             content.appendChild(action);

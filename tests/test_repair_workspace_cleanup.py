@@ -660,7 +660,57 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(groups["repaired"]["records"], [])
         self.assertEqual(groups["findings"]["title"], "Findings")
         self.assertEqual(groups["findings"]["records"][0]["service_name"], "Brake pulsation")
+        self.assertEqual(groups["findings"]["records"][0]["recommendation"], "Replace front rotors")
+        self.assertEqual(groups["findings"]["records"][0]["status_label"], "Approved")
         self.assertEqual(groups["approvals"]["title"], "Approvals / Decisions")
+
+    def test_completed_linked_finding_stays_visible_in_findings_timeline(self):
+        timeline = pro_module.build_vehicle_timeline(
+            1,
+            1,
+            {"id": 1},
+            [],
+            [
+                {
+                    "id": 9,
+                    "invoice_number": "TM-INV-1009",
+                    "repair_record_id": 30,
+                    "repair_record_ids": "30",
+                    "repair_name": "Water pump replacement",
+                    "grand_total": 900,
+                    "created_at": "2026-06-25T09:00:00",
+                }
+            ],
+            [
+                {
+                    "id": 41,
+                    "customer_id": 1,
+                    "vehicle_id": 1,
+                    "status": "Completed",
+                    "repair_work_status": "completed",
+                    "linked_repair_record_id": 30,
+                    "finding": "Coolant leak",
+                    "recommendation": "Replace water pump",
+                    "severity": "High",
+                    "mileage": 177000,
+                    "finding_date": "2026-06-24",
+                    "created_at": "2026-06-24T09:00:00",
+                    "estimate_document_url": "/pro/customers/1/vehicles/1/estimates/12/pdf",
+                    "estimate_total": 825,
+                }
+            ],
+            [],
+            [],
+        )
+
+        groups = {group["key"]: group for group in timeline}
+        finding = groups["findings"]["records"][0]
+        self.assertEqual(groups["findings"]["count"], 1)
+        self.assertEqual(finding["service_name"], "Coolant leak")
+        self.assertEqual(finding["severity"], "High")
+        self.assertEqual(finding["estimate_total"], 825)
+        self.assertEqual(finding["repair_url"], "/pro/customers/1/vehicles/1/repairs/30")
+        self.assertEqual(finding["invoice_number"], "TM-INV-1009")
 
     def test_repair_estimate_documents_render_as_estimates_not_completed_repairs(self):
         timeline = pro_module.build_vehicle_timeline(
@@ -713,6 +763,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(estimate["total"], 825)
         self.assertEqual(estimate["approval_status"], "Signed customer approval")
         self.assertEqual(estimate["url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
+        self.assertIn("/estimator?", estimate["edit_url"])
+        self.assertIn("estimate_id=12", estimate["edit_url"])
         self.assertEqual(estimate["action_label"], "Open Estimate PDF")
         self.assertEqual(estimate["invoice_number"], "TM-INV-1009")
         invoice = groups["invoices"]["records"][0]
@@ -726,20 +778,22 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Before / Inspection Photos", vehicle_detail)
         self.assertIn('id="before_inspection_photos"', vehicle_detail)
         self.assertIn('type="file"', vehicle_detail)
+        self.assertIn('accept="image/*"', vehicle_detail)
+        self.assertIn('capture="environment"', vehicle_detail)
         self.assertIn("Upload photos of the original problem before repair.", vehicle_detail)
         self.assertIn("After / Completion Photos", repair_detail)
         self.assertIn("Before / Inspection Photos", repair_detail)
         self.assertIn('id="after_repair_photos"', repair_detail)
         self.assertIn('name="after_repair_photos"', repair_detail)
         self.assertIn('type="file"', repair_detail)
+        self.assertIn('accept="image/*"', repair_detail)
+        self.assertIn('capture="environment"', repair_detail)
         self.assertIn('enctype="multipart/form-data"', repair_detail)
         self.assertIn("Upload photos showing the completed repair or proof of work.", repair_detail)
         self.assertIn("completion.after_repair_photo_urls", repair_detail)
         self.assertIn("Uploaded After Photos", repair_detail)
         self.assertIn("Upload up to 5 photos.", vehicle_detail)
         self.assertIn("Upload up to 5 photos.", repair_detail)
-        self.assertIn('accept="image/png,image/jpeg,image/webp"', vehicle_detail)
-        self.assertIn('accept="image/png,image/jpeg,image/webp"', repair_detail)
 
     def test_photo_upload_helpers_limit_before_and_after_photos_to_five(self):
         uploads = [
