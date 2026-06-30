@@ -1988,8 +1988,11 @@
         <section class="tm-photo-stage" aria-label="Before / Inspection Photos">
           <strong>Before / Inspection Photos</strong>
           <label class="tm-label" for="before_inspection_photos">Upload photos of the original problem before repair.</label>
-          <span>Upload up to 5 photos.</span>
-          <input class="tm-input" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/*" capture="environment" multiple>
+          <input class="tm-photo-input-hidden" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/*" capture="environment" multiple data-pro-photo-input>
+          <label class="tm-photo-upload-button" for="before_inspection_photos">Add Before Photos</label>
+          <span class="tm-photo-helper">Camera or photo library &bull; Up to 5 photos</span>
+          <span class="tm-photo-privacy">Photos are optional. TorqueMech only uses the photos you choose to attach to this repair record.</span>
+          <span class="tm-photo-selected-count" data-photo-selected-count="before_inspection_photos">No photos selected</span>
         </section>
         <div style="margin-top:12px;">
           <label class="tm-label" for="recommendation">Recommended Repair</label>

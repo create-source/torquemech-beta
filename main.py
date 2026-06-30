@@ -690,6 +690,9 @@ def init_pro_crm_schema_db() -> None:
               workflow_source_type TEXT,
               workflow_source_id INTEGER,
               parts_search_term TEXT,
+              pricing_mode TEXT,
+              flat_rate_price REAL,
+              approved_estimate_total REAL,
               status TEXT NOT NULL DEFAULT 'Open',
               completed_at TEXT,
               notes TEXT,
@@ -703,6 +706,9 @@ def init_pro_crm_schema_db() -> None:
         add_column_if_missing("repair_records", "workflow_source_type", "workflow_source_type TEXT")
         add_column_if_missing("repair_records", "workflow_source_id", "workflow_source_id INTEGER")
         add_column_if_missing("repair_records", "parts_search_term", "parts_search_term TEXT")
+        add_column_if_missing("repair_records", "pricing_mode", "pricing_mode TEXT")
+        add_column_if_missing("repair_records", "flat_rate_price", "flat_rate_price REAL")
+        add_column_if_missing("repair_records", "approved_estimate_total", "approved_estimate_total REAL")
         add_column_if_missing("repair_records", "labor_rate", "labor_rate REAL")
         add_column_if_missing("repair_records", "status", "status TEXT NOT NULL DEFAULT 'Open'")
         add_column_if_missing("repair_records", "completed_at", "completed_at TEXT")
@@ -10747,35 +10753,59 @@ def estimate_pdf_payload(req: Any, *, related_title: str, estimate_total: float)
     }
     line_items = getattr(req, "lineItems", None)
     if line_items:
-        payload["line_items"] = [
-            {
+        normalized_line_items = []
+        for item in line_items:
+            is_flat_rate = str(getattr(item, "pricingMode", "") or "").strip().lower() == "flat"
+            labor_hours = estimate_line_billable_labor_hours(item)
+            labor_rate = getattr(item, "laborRate", None)
+            flat_rate_price = getattr(item, "flatRatePrice", None)
+            labor_total = max(0.0, float(flat_rate_price or 0)) if is_flat_rate else labor_hours * max(0.0, float(labor_rate or 0))
+            parts_total = max(0.0, float(getattr(item, "partsPrice", 0) or 0))
+            travel_total = max(0.0, float(getattr(item, "travelFee", 0) or 0))
+            line_total = round(labor_total + parts_total + travel_total)
+            normalized_line_items.append(
+                {
                 "service_code": getattr(item, "serviceCode", "") or "",
                 "service_text": getattr(item, "displayServiceText", None) or getattr(item, "serviceText", None) or "",
                 "quantity": getattr(item, "quantity", 1) or 1,
                 "pricing_mode": getattr(item, "pricingMode", None) or "hourly",
-                "flat_rate_price": getattr(item, "flatRatePrice", None),
-                "labor_hours": estimate_line_billable_labor_hours(item),
+                "flat_rate_price": flat_rate_price,
+                "labor_hours": labor_hours,
                 "labor_hours_input": getattr(item, "laborHoursInput", None),
                 "labor_calculation_mode": getattr(item, "laborCalculationMode", None),
-                "labor_rate": getattr(item, "laborRate", None),
-                "parts_total": getattr(item, "partsPrice", None),
+                "labor_rate": labor_rate,
+                "labor_total": labor_total,
+                "parts_total": parts_total,
+                "line_total": line_total,
+                "grand_total": line_total,
                 "status": getattr(item, "status", None) or "recommended",
                 "inspection_findings": getattr(item, "inspectionFindings", None) or "",
-            }
-            for item in line_items
-        ]
+                }
+            )
+        payload["line_items"] = normalized_line_items
     else:
+        is_flat_rate = str(getattr(req, "pricingMode", "") or "").strip().lower() == "flat"
+        labor_hours = float(getattr(req, "laborHours", 0) or 0)
+        labor_rate = getattr(req, "laborRate", None)
+        flat_rate_price = getattr(req, "flatRatePrice", None)
+        labor_total = max(0.0, float(flat_rate_price or 0)) if is_flat_rate else labor_hours * max(0.0, float(labor_rate or 0))
+        parts_total = max(0.0, float(getattr(req, "partsPrice", 0) or 0))
+        travel_total = max(0.0, float(getattr(req, "travelFee", 0) or 0))
+        line_total = round(labor_total + parts_total + travel_total)
         payload["line_items"] = [
             {
                 "service_code": getattr(req, "serviceCode", "") or "",
                 "service_text": getattr(req, "service", None) or related_title,
                 "quantity": getattr(req, "quantity", 1) or 1,
                 "pricing_mode": getattr(req, "pricingMode", None) or "hourly",
-                "flat_rate_price": getattr(req, "flatRatePrice", None),
-                "labor_hours": getattr(req, "laborHours", None),
+                "flat_rate_price": flat_rate_price,
+                "labor_hours": labor_hours,
                 "labor_calculation_mode": getattr(req, "laborCalculationMode", None),
-                "labor_rate": getattr(req, "laborRate", None),
-                "parts_total": getattr(req, "partsPrice", None),
+                "labor_rate": labor_rate,
+                "labor_total": labor_total,
+                "parts_total": parts_total,
+                "line_total": line_total,
+                "grand_total": line_total,
                 "status": "recommended",
             }
         ]

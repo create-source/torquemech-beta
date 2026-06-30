@@ -314,6 +314,72 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(repair["parts_cost"], 180)
         self.assertEqual(repair["total_cost"], 317.5)
 
+    def test_flat_rate_estimate_conversion_preserves_invoice_total(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        payload = self.conversion_payload()
+        payload["lineItems"] = [
+            {
+                "serviceText": "Left tail light",
+                "pricingMode": "flat",
+                "flatRatePrice": 75,
+                "laborHours": 0,
+                "laborRate": 0,
+                "laborTotal": 75,
+                "partsTotal": 99,
+                "grandTotal": 174,
+            }
+        ]
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "customer_mode": "new",
+                "new_customer_name": "Mike Johnson",
+                "new_customer_phone": "555-222-1111",
+                "new_customer_email": "mike@test.com",
+                "vehicle_mode": "new",
+                "new_vehicle_year": "2016",
+                "new_vehicle_make": "Honda",
+                "new_vehicle_model": "Accord",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+        self.assertEqual(repair["repair_name"], "Left tail light")
+        self.assertEqual(repair["pricing_mode"], "flat")
+        self.assertEqual(repair["flat_rate_price"], 75)
+        self.assertEqual(repair["labor_cost"], 75)
+        self.assertEqual(repair["parts_cost"], 99)
+        self.assertEqual(repair["total_cost"], 174)
+        self.assertEqual(repair["approved_estimate_total"], 174)
+
+        self.conn.execute("UPDATE repair_records SET status = 'Completed' WHERE id = ?", (repair["id"],))
+        loaded_repair = pro_module.load_repair_record(self.conn, 1, 1, repair["id"])
+        self.assertEqual(loaded_repair["labor_total"], 75)
+        self.assertEqual(loaded_repair["parts_total"], 99)
+        self.assertEqual(loaded_repair["grand_total"], 174)
+
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[loaded_repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T12:30:00",
+        )
+        loaded_invoice = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+
+        self.assertEqual(loaded_invoice["labor_total"], 75)
+        self.assertEqual(loaded_invoice["parts_total"], 99)
+        self.assertEqual(loaded_invoice["grand_total"], 174)
+        self.assertEqual(loaded_invoice["approved_estimate_total"], 174)
+        self.assertEqual(loaded_invoice["estimate_final_difference"], 0)
+
     def test_quantity_labor_per_item_conversion_calculates_final_totals(self):
         app = FastAPI()
         app.include_router(pro_module.router)

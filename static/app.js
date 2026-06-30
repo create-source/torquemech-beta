@@ -2728,6 +2728,7 @@ const confidenceEl = document.getElementById("laborConfidence");
           quantity: cost.quantity,
           partsUnitCost: cost.partsUnitCost,
           pricingMode: cost.pricingMode,
+          flatRatePrice: cost.flatRatePrice,
           laborHours: cost.billableLaborHours,
           laborHoursInput: cost.laborHours,
           laborCalculationMode: cost.laborCalculationMode,

@@ -344,8 +344,11 @@
       <section class="tm-completion-section tm-photo-stage" aria-label="After / Completion Photos">
         <strong>After / Completion Photos</strong>
         <label class="tm-label" for="after_repair_photos">Upload photos showing the completed repair or proof of work.</label>
-        <span>Upload up to 5 photos.</span>
-        <input class="tm-input" id="after_repair_photos" name="after_repair_photos" type="file" accept="image/*" capture="environment" multiple>
+        <input class="tm-photo-input-hidden" id="after_repair_photos" name="after_repair_photos" type="file" accept="image/*" capture="environment" multiple data-pro-photo-input>
+        <label class="tm-photo-upload-button" for="after_repair_photos">Add Completion Photos</label>
+        <span class="tm-photo-helper">Camera or photo library &bull; Up to 5 photos</span>
+        <span class="tm-photo-privacy">Photos are optional. TorqueMech only uses the photos you choose to attach to this repair record.</span>
+        <span class="tm-photo-selected-count" data-photo-selected-count="after_repair_photos">No photos selected</span>
         {% if completion.after_repair_photo_urls %}
         <strong>Uploaded After Photos</strong>
         <div class="tm-photo-list" aria-label="Uploaded after repair photos">

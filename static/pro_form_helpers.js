@@ -130,6 +130,85 @@
     document.head.appendChild(style);
   }
 
+  function ensurePhotoUploadStyles() {
+    if (document.getElementById("tm-pro-photo-upload-styles")) return;
+    const style = document.createElement("style");
+    style.id = "tm-pro-photo-upload-styles";
+    style.textContent = `
+      .tm-photo-input-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        border: 0;
+        white-space: nowrap;
+      }
+      .tm-photo-upload-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+        min-height: 44px;
+        border: 1px solid rgba(15, 118, 110, 0.28);
+        border-radius: 8px;
+        background: #0f766e;
+        color: #fff;
+        font-weight: 900;
+        line-height: 1.1;
+        padding: 11px 14px;
+        cursor: pointer;
+      }
+      .tm-photo-upload-button:hover,
+      .tm-photo-upload-button:focus-visible,
+      .tm-photo-input-hidden:focus-visible + .tm-photo-upload-button {
+        background: #115e59;
+        outline: 3px solid rgba(20, 184, 166, 0.22);
+        outline-offset: 2px;
+      }
+      .tm-photo-helper,
+      .tm-photo-privacy,
+      .tm-photo-selected-count {
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.35;
+      }
+      .tm-photo-privacy {
+        color: #475569;
+      }
+      .tm-photo-selected-count {
+        font-weight: 900;
+      }
+      @media (max-width: 640px) {
+        .tm-photo-upload-button {
+          width: 100%;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function photoSelectionLabel(count) {
+    if (count === 1) return "1 photo selected";
+    if (count > 1) return `${count} photos selected`;
+    return "No photos selected";
+  }
+
+  function bindPhotoInput(input) {
+    if (input.dataset.proPhotoBound === "1") return;
+    input.dataset.proPhotoBound = "1";
+    const countEl = document.querySelector(`[data-photo-selected-count="${input.id}"]`);
+    const update = () => {
+      if (!countEl) return;
+      countEl.textContent = photoSelectionLabel(input.files ? input.files.length : 0);
+    };
+    input.addEventListener("change", update);
+    update();
+  }
+
   function normalizeMileageBeforeSubmit(form) {
     form.addEventListener("submit", () => {
       form.querySelectorAll("[data-pro-mileage-input]").forEach((input) => {
@@ -141,8 +220,10 @@
   function init(root) {
     const scope = root || document;
     ensureDateClearStyles();
+    ensurePhotoUploadStyles();
     scope.querySelectorAll("[data-pro-phone-input]").forEach(bindPhoneInput);
     scope.querySelectorAll("[data-pro-mileage-input]").forEach(bindMileageInput);
+    scope.querySelectorAll("[data-pro-photo-input]").forEach(bindPhotoInput);
     scope.querySelectorAll('input[type="date"]').forEach(bindDateInput);
     scope.querySelectorAll("form").forEach(normalizeMileageBeforeSubmit);
   }

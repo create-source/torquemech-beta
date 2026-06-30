@@ -2056,6 +2056,9 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
           workflow_source_type TEXT,
           workflow_source_id INTEGER,
           parts_search_term TEXT,
+          pricing_mode TEXT,
+          flat_rate_price REAL,
+          approved_estimate_total REAL,
           status TEXT NOT NULL DEFAULT 'Open',
           completed_at TEXT,
           notes TEXT,
@@ -2107,6 +2110,12 @@ def ensure_repair_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE repair_records ADD COLUMN workflow_source_id INTEGER")
     if "parts_search_term" not in columns:
         conn.execute("ALTER TABLE repair_records ADD COLUMN parts_search_term TEXT")
+    if "pricing_mode" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN pricing_mode TEXT")
+    if "flat_rate_price" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN flat_rate_price REAL")
+    if "approved_estimate_total" not in columns:
+        conn.execute("ALTER TABLE repair_records ADD COLUMN approved_estimate_total REAL")
     if "labor_rate" not in columns:
         conn.execute("ALTER TABLE repair_records ADD COLUMN labor_rate REAL")
     if "status" not in columns:
@@ -2152,6 +2161,20 @@ def repair_labor_totals(repair: dict[str, Any]) -> dict[str, Any]:
         legacy_labor_total = float(repair.get("labor_cost") or 0)
     except (TypeError, ValueError):
         legacy_labor_total = 0.0
+    pricing_mode = str(repair.get("pricing_mode") or "").strip().lower()
+    try:
+        flat_rate_price = float(repair.get("flat_rate_price") or 0)
+    except (TypeError, ValueError):
+        flat_rate_price = 0.0
+
+    if pricing_mode == "flat":
+        labor_total = round(max(0.0, flat_rate_price or legacy_labor_total), 2)
+        return {
+            "labor_hours": labor_hours,
+            "labor_rate": None,
+            "labor_total": labor_total,
+            "labor_rate_is_legacy": True if labor_total else False,
+        }
 
     if labor_hours is not None and labor_rate is not None:
         labor_total = round(max(0.0, labor_hours) * max(0.0, labor_rate), 2)
@@ -2610,6 +2633,8 @@ def load_invoice_item_records(
               rr.repair_date,
               rr.labor_hours,
               rr.labor_rate,
+              rr.pricing_mode,
+              rr.flat_rate_price,
               rr.labor_cost,
               rr.parts_cost,
               rr.total_cost,
@@ -2712,7 +2737,17 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
 
 def invoice_estimate_summary(conn: sqlite3.Connection, invoice_id: int, *, final_total: Any = None) -> dict[str, Any]:
     ensure_repair_estimate_documents_schema(conn)
-    rows = conn.execute(
+    repair_rows = conn.execute(
+        """
+        SELECT rr.approved_estimate_total
+        FROM invoice_items ii
+        JOIN repair_records rr ON rr.id = ii.repair_record_id
+        WHERE ii.invoice_id = ?
+          AND rr.approved_estimate_total IS NOT NULL
+        """,
+        (invoice_id,),
+    ).fetchall()
+    rows = repair_rows or conn.execute(
         """
         SELECT estimate_total
         FROM repair_estimate_documents
@@ -2727,7 +2762,10 @@ def invoice_estimate_summary(conn: sqlite3.Connection, invoice_id: int, *, final
             "estimate_final_difference": None,
             "estimate_difference_label": "",
         }
-    approved_total = round(sum(float(row["estimate_total"] or 0) for row in rows), 2)
+    approved_total = round(
+        sum(float((row["approved_estimate_total"] if "approved_estimate_total" in row.keys() else row["estimate_total"]) or 0) for row in rows),
+        2,
+    )
     try:
         difference = round(float(final_total or 0) - approved_total, 2)
     except (TypeError, ValueError):
@@ -3469,7 +3507,7 @@ def build_invoice_pdf_bytes(
         if options["show_labor_rate"]:
             service_row("Labor Rate", f"{format_currency(item.get('labor_rate'))}/hr" if item.get("labor_rate") is not None else "-")
         if options["show_labor_total"]:
-            service_row("Labor", format_currency(item.get("labor_total")) or "$0.00")
+            service_row("Flat Rate / Labor" if item.get("pricing_mode") == "flat" else "Labor", format_currency(item.get("labor_total")) or "$0.00")
         if options["show_parts_total"]:
             service_row("Parts", format_currency(item.get("parts_total")) or "$0.00")
         service_row("Line Total", format_currency(item.get("grand_total")) or "$0.00", emphasis=True)
@@ -3523,7 +3561,8 @@ def build_invoice_pdf_bytes(
     if invoice.get("approved_estimate_total") is not None:
         totals.append(("Approved Estimate Total", invoice.get("approved_estimate_total")))
         totals.append(("Final Invoice Total", invoice.get("grand_total")))
-        totals.append((invoice.get("estimate_difference_label") or "Difference", invoice.get("estimate_final_difference")))
+        if invoice.get("estimate_final_difference"):
+            totals.append((invoice.get("estimate_difference_label") or "Difference", invoice.get("estimate_final_difference")))
     else:
         totals.append(("Grand Total", invoice.get("grand_total")))
     for label, value in totals:
@@ -4838,6 +4877,9 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         labor_hours = optional_payload_float(item.get("laborHours", item.get("labor_hours")))
         labor_hours_input = optional_payload_float(item.get("laborHoursInput", item.get("labor_hours_input")))
         labor_calculation_mode = str(item.get("laborCalculationMode") or item.get("labor_calculation_mode") or "total").strip()
+        pricing_mode = str(item.get("pricingMode") or item.get("pricing_mode") or "hourly").strip().lower()
+        pricing_mode = "flat" if pricing_mode == "flat" else "hourly"
+        flat_rate_price = optional_payload_float(item.get("flatRatePrice", item.get("flat_rate_price")))
         if labor_calculation_mode == "per_item" and labor_hours_input is not None:
             labor_hours = round(float(labor_hours_input) * quantity, 2)
         labor_rate = optional_payload_float(item.get("laborRate", item.get("labor_rate")))
@@ -4847,6 +4889,11 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         if parts_total is None and parts_unit_cost is not None:
             parts_total = round(float(parts_unit_cost) * quantity, 2)
         grand_total = optional_payload_float(item.get("grandTotal", item.get("grand_total")))
+        if pricing_mode == "flat":
+            if flat_rate_price is None:
+                flat_rate_price = labor_total
+            if labor_total is None:
+                labor_total = flat_rate_price
         if labor_total is None and labor_hours is not None and labor_rate is not None:
             labor_total = round(labor_hours * labor_rate, 2)
         if grand_total is None:
@@ -4870,6 +4917,8 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
                 "labor_hours_input": labor_hours_input,
                 "labor_calculation_mode": labor_calculation_mode,
                 "labor_rate": labor_rate,
+                "pricing_mode": pricing_mode,
+                "flat_rate_price": flat_rate_price,
                 "labor_total": labor_total,
                 "parts_total": parts_total,
                 "grand_total": grand_total,
@@ -6983,9 +7032,10 @@ async def pro_estimate_conversion_create(request: Request):
                   vehicle_id, customer_id, repair_name, repair_date, mileage,
                   labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
                   track_as_maintenance, workflow_source_type, workflow_source_id, parts_search_term,
+                  pricing_mode, flat_rate_price, approved_estimate_total,
                   notes, status, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'Open', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, 'Open', ?)
                 """,
                 (
                     vehicle_id,
@@ -7001,6 +7051,9 @@ async def pro_estimate_conversion_create(request: Request):
                     source_type,
                     source_id,
                     item.get("parts_search_term") or "",
+                    item.get("pricing_mode") or "hourly",
+                    item.get("flat_rate_price"),
+                    total_cost,
                     notes,
                     now,
                 ),

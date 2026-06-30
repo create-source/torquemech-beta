@@ -253,8 +253,13 @@
           <span>
             <span class="tm-convert-service-title">{{ item.service_name }}</span>
             <span class="tm-convert-money-grid">
+              {% if item.pricing_mode == "flat" %}
+              <span>Pricing<strong>Flat rate</strong></span>
+              <span>Flat rate<strong>${{ "%.2f"|format(item.flat_rate_price or item.labor_total or 0) }}</strong></span>
+              {% else %}
               <span>Labor hours<strong>{{ "%.1f"|format(item.labor_hours or 0) }}</strong></span>
               <span>Labor rate<strong>${{ "%.2f"|format(item.labor_rate or 0) }}/hr</strong></span>
+              {% endif %}
               <span>Labor total<strong>${{ "%.2f"|format(item.labor_total or 0) }}</strong></span>
               <span>Parts total<strong>${{ "%.2f"|format(item.parts_total or 0) }}</strong></span>
               <span>Grand total<strong>${{ "%.2f"|format(item.grand_total or 0) }}</strong></span>

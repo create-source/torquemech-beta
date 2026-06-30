@@ -215,7 +215,7 @@
         <article class="tm-invoice-service">
           <h3>{{ loop.index }}. {{ item.service_title }}</h3>
           <div class="tm-invoice-service-money">
-            <div><span>Labor</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
+            <div><span>{% if item.pricing_mode == "flat" %}Flat Rate / Labor{% else %}Labor{% endif %}</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
             <div><span>Parts</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
             <div><span>Total</span><strong>{{ item.grand_total|pro_currency }}</strong></div>
           </div>
@@ -256,7 +256,9 @@
       {% if invoice.approved_estimate_total is not none %}
       <div class="tm-invoice-total-row"><span>Approved Estimate Total</span><strong>{{ invoice.approved_estimate_total|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Final Invoice Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
+      {% if invoice.estimate_final_difference %}
       <div class="tm-invoice-total-row"><span>{{ invoice.estimate_difference_label or "Difference" }}</span><strong>{{ invoice.estimate_final_difference|pro_currency }}</strong></div>
+      {% endif %}
       {% else %}
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Grand Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
       {% endif %}
