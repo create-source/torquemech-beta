@@ -1205,14 +1205,21 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('"key": "in_progress"', vehicle_detail)
         self.assertIn('"key": "ready_to_complete"', vehicle_detail)
         self.assertIn('data-workspace-section="recently_completed"', vehicle_detail)
+        self.assertIn('data-workspace-section="already_invoiced"', vehicle_detail)
         self.assertIn("tm-workspace-section-summary", vehicle_detail)
         self.assertIn('Recently Completed <span class="tm-workspace-section-count">({{ recently_completed_count }})</span>', vehicle_detail)
+        self.assertIn('Already Invoiced <span class="tm-workspace-section-count">({{ invoiced_repair_items|length }})</span>', vehicle_detail)
         self.assertIn("No recently completed repairs.", vehicle_detail)
+        self.assertIn("No repair jobs have been invoiced yet.", vehicle_detail)
+        self.assertIn("View Invoice", vehicle_detail)
         self.assertIn("Open Repair / Track Parts", pro_py)
         self.assertIn("Continue Repair / Track Parts", pro_py)
         recent_section_start = vehicle_detail.index('data-workspace-section="recently_completed"')
         recent_section_open_window = vehicle_detail[recent_section_start - 140:recent_section_start + 140]
         self.assertNotIn(" open", recent_section_open_window)
+        invoiced_section_start = vehicle_detail.index('data-workspace-section="already_invoiced"')
+        invoiced_section_open_window = vehicle_detail[invoiced_section_start - 140:invoiced_section_start + 140]
+        self.assertNotIn(" open", invoiced_section_open_window)
 
     def test_pro_customer_and_vehicle_forms_use_shared_input_formatters(self):
         customers = (ROOT / "templates" / "pro" / "customers.html").read_text(encoding="utf-8")
