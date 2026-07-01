@@ -6414,7 +6414,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
             ],
         },
         {
-            "title": "Estimate / Approval Follow-Up",
+            "title": "Estimates & Approvals",
             "empty": "No findings or approval follow-ups are waiting.",
             "cards": [
                 dashboard_card("Open Findings", finding_counts["open"], "Findings still waiting on a decision.", "/pro/customers", "Review Findings"),

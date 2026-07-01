@@ -51,6 +51,78 @@
     font-weight: 800;
   }
 
+  .tm-work-summary {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-work-group {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .tm-work-group[open] {
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .tm-work-group-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    list-style: none;
+    padding: 14px 16px;
+  }
+
+  .tm-work-group-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-work-group-title {
+    color: #0f172a;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-work-group-count {
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-size: 0.82rem;
+    font-weight: 900;
+    padding: 5px 9px;
+    white-space: nowrap;
+  }
+
+  .tm-work-group-indicator {
+    color: #0f766e;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .tm-work-group-indicator::before {
+    content: "+";
+  }
+
+  .tm-work-group[open] .tm-work-group-indicator::before {
+    content: "-";
+  }
+
+  .tm-work-group-body {
+    display: grid;
+    gap: 12px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 14px;
+  }
+
+  .tm-work-group:not([open]) .tm-work-group-body {
+    display: none;
+  }
+
   .tm-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -164,6 +236,11 @@
       gap: 4px;
     }
 
+    .tm-work-group-summary {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      padding: 13px 14px;
+    }
+
     .tm-dashboard-grid,
     .tm-quick-grid {
       grid-template-columns: 1fr;
@@ -209,29 +286,44 @@
     </div>
   </section>
 
+  {% set summary_total = namespace(count=0) %}
   {% for section in dashboard.sections %}
-  {% set section_total = section.cards | sum(attribute='count') %}
-  <section class="tm-dashboard-section" aria-label="{{ section.title }}">
+    {% set summary_total.count = summary_total.count + (section.cards | sum(attribute='count')) %}
+  {% endfor %}
+  <section class="tm-dashboard-section" aria-label="Work Summary">
     <div class="tm-dashboard-section-head">
-      <h2>{{ section.title }}</h2>
-      <div class="tm-dashboard-section-note">{{ section_total }} item{% if section_total != 1 %}s{% endif %}</div>
+      <h2>Work Summary</h2>
+      <div class="tm-dashboard-section-note">{{ summary_total.count }} item{% if summary_total.count != 1 %}s{% endif %}</div>
     </div>
 
-    {% if section_total == 0 %}
-    <div class="tm-dashboard-empty">{{ section.empty }}</div>
-    {% endif %}
+    <div class="tm-work-summary">
+      {% for section in dashboard.sections %}
+      {% set section_total = section.cards | sum(attribute='count') %}
+      <details class="tm-work-group" {% if loop.first %}open{% endif %}>
+        <summary class="tm-work-group-summary">
+          <span class="tm-work-group-title">{{ section.title }}</span>
+          <span class="tm-work-group-count">{{ section_total }} item{% if section_total != 1 %}s{% endif %}</span>
+          <span class="tm-work-group-indicator" aria-hidden="true"></span>
+        </summary>
+        <div class="tm-work-group-body">
+          {% if section_total == 0 %}
+          <div class="tm-dashboard-empty">{{ section.empty }}</div>
+          {% endif %}
 
-    <div class="tm-dashboard-grid">
-      {% for card in section.cards %}
-      <a class="tm-pro-card" href="{{ card.href }}">
-        <h3>{{ card.title }}</h3>
-        <div class="tm-dashboard-count">{{ card.count }}</div>
-        <p>{{ card.helper }}</p>
-        <div class="tm-dashboard-action">{{ card.action_label }}</div>
-      </a>
+          <div class="tm-dashboard-grid">
+            {% for card in section.cards %}
+            <a class="tm-pro-card" href="{{ card.href }}">
+              <h3>{{ card.title }}</h3>
+              <div class="tm-dashboard-count">{{ card.count }}</div>
+              <p>{{ card.helper }}</p>
+              <div class="tm-dashboard-action">{{ card.action_label }}</div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </details>
       {% endfor %}
     </div>
   </section>
-  {% endfor %}
 </section>
 {% endblock %}
