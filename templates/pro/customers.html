@@ -182,6 +182,7 @@
 {% endblock %}
 
 {% block content %}
+{% set add_mode = request.query_params.get("mode") == "add" %}
 <section class="tm-pro-shell">
   <div class="tm-pro-pagehead">
     <div>
@@ -243,6 +244,7 @@
       {% endif %}
     </div>
 
+    {% if add_mode %}
     <details id="add-customer" class="tm-crm-add">
       <summary>Add Customer</summary>
       <form method="post" action="/pro/customers">
@@ -276,6 +278,7 @@
         <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Create Customer</button>
       </form>
     </details>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

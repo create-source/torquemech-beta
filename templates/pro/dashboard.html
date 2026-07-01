@@ -281,7 +281,7 @@
     <h2>Quick Actions</h2>
     <div class="tm-quick-grid">
       {% for action in dashboard.quick_actions %}
-      <a class="tm-quick-link" href="{{ action.href }}">{{ action.label }}</a>
+      <a class="tm-quick-link" href="{% if action.label == 'Add Customer' %}/pro/customers?mode=add#add-customer{% else %}{{ action.href }}{% endif %}">{{ action.label }}</a>
       {% endfor %}
     </div>
   </section>
