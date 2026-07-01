@@ -17,11 +17,189 @@
   }
 
   .tm-dashboard-section,
-  .tm-quick-actions {
+  .tm-quick-actions,
+  .tm-pro-welcome {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
     padding: 16px;
+  }
+
+  .tm-pro-welcome {
+    display: grid;
+    gap: 16px;
+    border-color: rgba(14, 116, 144, 0.24);
+    background:
+      linear-gradient(135deg, rgba(236, 254, 255, 0.92), rgba(255, 255, 255, 0.96) 44%, rgba(240, 253, 250, 0.9));
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+  }
+
+  .tm-pro-welcome[hidden],
+  .tm-pro-show-welcome[hidden] {
+    display: none !important;
+  }
+
+  .tm-pro-welcome-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .tm-pro-welcome-copy {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .tm-pro-welcome-badge {
+    width: fit-content;
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: #0f766e;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    padding: 5px 9px;
+    text-transform: uppercase;
+  }
+
+  .tm-pro-welcome h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.55rem;
+    font-weight: 900;
+    line-height: 1.15;
+  }
+
+  .tm-pro-welcome p {
+    margin: 0;
+    color: #475569;
+    font-size: 0.98rem;
+    line-height: 1.5;
+    max-width: 760px;
+  }
+
+  .tm-pro-first-step {
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-pro-welcome-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .tm-pro-welcome-action,
+  .tm-pro-welcome-secondary,
+  .tm-pro-welcome-dismiss,
+  .tm-pro-show-welcome {
+    border: 1px solid rgba(14, 116, 144, 0.24);
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .tm-pro-welcome-action {
+    background: #0f766e;
+    color: #fff;
+    padding: 11px 14px;
+  }
+
+  .tm-pro-welcome-secondary {
+    background: #fff;
+    color: #0f766e;
+    padding: 11px 14px;
+  }
+
+  .tm-pro-welcome-dismiss {
+    background: rgba(255, 255, 255, 0.68);
+    color: #475569;
+    padding: 9px 11px;
+  }
+
+  .tm-pro-show-welcome {
+    justify-self: start;
+    background: transparent;
+    color: #0f766e;
+    padding: 0;
+    border: 0;
+    font-size: 0.9rem;
+  }
+
+  .tm-pro-workflow {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.74);
+    overflow: hidden;
+  }
+
+  .tm-pro-workflow summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+    list-style: none;
+    padding: 12px 14px;
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  .tm-pro-workflow summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-pro-workflow-indicator::before {
+    content: "-";
+    color: #0f766e;
+  }
+
+  .tm-pro-workflow:not([open]) .tm-pro-workflow-indicator::before {
+    content: "+";
+  }
+
+  .tm-pro-workflow-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 14px;
+  }
+
+  .tm-pro-workflow-step {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .tm-pro-workflow-step span {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-size: 0.86rem;
+    font-weight: 900;
+  }
+
+  .tm-pro-workflow-step strong {
+    color: #0f172a;
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+
+  .tm-pro-workflow-step p {
+    color: #64748b;
+    font-size: 0.85rem;
+    line-height: 1.35;
   }
 
   .tm-dashboard-section {
@@ -227,8 +405,31 @@
     }
 
     .tm-dashboard-section,
-    .tm-quick-actions {
+    .tm-quick-actions,
+    .tm-pro-welcome {
       padding: 14px;
+    }
+
+    .tm-pro-welcome-main,
+    .tm-pro-workflow-list {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-pro-welcome h2 {
+      font-size: 1.34rem;
+    }
+
+    .tm-pro-welcome-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .tm-pro-welcome-action,
+    .tm-pro-welcome-secondary,
+    .tm-pro-welcome-dismiss {
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
     }
 
     .tm-dashboard-section-head {
@@ -276,6 +477,61 @@
       </p>
     </div>
   </div>
+
+  <button class="tm-pro-show-welcome" type="button" data-pro-welcome-show hidden>Show welcome</button>
+
+  <section class="tm-pro-welcome" aria-label="Welcome to TorqueMech Pro" data-pro-welcome>
+    <div class="tm-pro-welcome-main">
+      <div class="tm-pro-welcome-copy">
+        <div class="tm-pro-welcome-badge">TorqueMech Pro</div>
+        <h2>Welcome to TorqueMech Pro</h2>
+        <p>
+          Run your repair workflow from one place: customers, vehicles, estimates, approvals,
+          repairs, invoices, maintenance follow-ups, and vehicle history.
+        </p>
+        <p class="tm-pro-first-step">Recommended first step: add your first customer and vehicle.</p>
+        <div class="tm-pro-welcome-actions" aria-label="Welcome actions">
+          <a class="tm-pro-welcome-action" href="/pro/customers?mode=add#add-customer">Add Customer</a>
+          <button class="tm-pro-welcome-secondary" type="button" data-pro-view-workflow>View Workflow</button>
+          <button class="tm-pro-welcome-dismiss" type="button" data-pro-welcome-dismiss>Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <details class="tm-pro-workflow" id="tm-pro-workflow" open>
+      <summary>
+        <span>How TorqueMech Works</span>
+        <span class="tm-pro-workflow-indicator" aria-hidden="true"></span>
+      </summary>
+      <div class="tm-pro-workflow-list">
+        <div class="tm-pro-workflow-step">
+          <span>1</span>
+          <strong>Customer & Vehicle</strong>
+          <p>Create the customer profile and vehicle record.</p>
+        </div>
+        <div class="tm-pro-workflow-step">
+          <span>2</span>
+          <strong>Estimate or Finding</strong>
+          <p>Build a quote or document recommended work.</p>
+        </div>
+        <div class="tm-pro-workflow-step">
+          <span>3</span>
+          <strong>Approval</strong>
+          <p>Track what the customer approved, declined, or deferred.</p>
+        </div>
+        <div class="tm-pro-workflow-step">
+          <span>4</span>
+          <strong>Repair Workspace</strong>
+          <p>Manage active work, photos, parts, and repair progress.</p>
+        </div>
+        <div class="tm-pro-workflow-step">
+          <span>5</span>
+          <strong>Invoice & History</strong>
+          <p>Create the final invoice and save work to vehicle history.</p>
+        </div>
+      </div>
+    </details>
+  </section>
 
   <section class="tm-quick-actions" aria-label="Quick actions">
     <h2>Quick Actions</h2>
@@ -326,4 +582,68 @@
     </div>
   </section>
 </section>
+
+<script>
+  (function () {
+    var storageKey = "torquemechProWelcomeDismissed";
+    var welcome = document.querySelector("[data-pro-welcome]");
+    var dismiss = document.querySelector("[data-pro-welcome-dismiss]");
+    var show = document.querySelector("[data-pro-welcome-show]");
+    var viewWorkflow = document.querySelector("[data-pro-view-workflow]");
+    var workflow = document.getElementById("tm-pro-workflow");
+
+    if (!welcome || !show) return;
+
+    function setWelcomeVisible(isVisible) {
+      welcome.hidden = !isVisible;
+      show.hidden = isVisible;
+    }
+
+    function welcomeDismissed() {
+      try {
+        return localStorage.getItem(storageKey) === "true";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function rememberDismissed() {
+      try {
+        localStorage.setItem(storageKey, "true");
+      } catch (error) {
+        return;
+      }
+    }
+
+    function clearDismissed() {
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (error) {
+        return;
+      }
+    }
+
+    setWelcomeVisible(!welcomeDismissed());
+
+    if (dismiss) {
+      dismiss.addEventListener("click", function () {
+        rememberDismissed();
+        setWelcomeVisible(false);
+      });
+    }
+
+    show.addEventListener("click", function () {
+      clearDismissed();
+      setWelcomeVisible(true);
+      welcome.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    if (viewWorkflow && workflow) {
+      viewWorkflow.addEventListener("click", function () {
+        workflow.open = true;
+        workflow.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  })();
+</script>
 {% endblock %}
