@@ -243,7 +243,7 @@
       {% endif %}
     </div>
 
-    <details class="tm-crm-add" id="add-customer">
+    <details id="add-customer" class="tm-crm-add">
       <summary>Add Customer</summary>
       <form method="post" action="/pro/customers">
         <div class="tm-crm-row">
@@ -282,4 +282,26 @@
 
 {% block page_js %}
 <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
+<script>
+  function openAddCustomerFromHash() {
+    if (window.location.hash !== "#add-customer") return;
+
+    const target = document.getElementById("add-customer");
+    if (!target) return;
+
+    const details = target.tagName.toLowerCase() === "details"
+      ? target
+      : target.closest("details");
+
+    if (details) {
+      details.open = true;
+      setTimeout(function () {
+        details.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", openAddCustomerFromHash);
+  window.addEventListener("hashchange", openAddCustomerFromHash);
+</script>
 {% endblock %}
