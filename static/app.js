@@ -53,6 +53,682 @@
 
   initRepairIntelligenceDrawers();
 
+  function initTorqueMechOnboarding() {
+    if (window.__tmOnboardingBooted) return;
+    window.__tmOnboardingBooted = true;
+
+    const TOUR_VERSION = "7B1";
+    const INTRO_VERSION = "7B0";
+    const storage = {
+      get(key) {
+        try {
+          return window.localStorage.getItem(key);
+        } catch (_) {
+          return null;
+        }
+      },
+      set(key, value) {
+        try {
+          window.localStorage.setItem(key, value);
+        } catch (_) {}
+      },
+      remove(key) {
+        try {
+          window.localStorage.removeItem(key);
+        } catch (_) {}
+      },
+    };
+
+    const tourStorageKey = (tourId) => `tmOnboardingTour:${tourId}:${TOUR_VERSION}`;
+    const helperStorageKey = (helperId) => `tmOnboardingHelper:${helperId}:${TOUR_VERSION}`;
+    const introStorageKey = (introId) => `tmWelcomeIntro:${introId}:${INTRO_VERSION}`;
+
+    const tours = {
+      estimator: {
+        route: () => window.location.pathname === "/estimator",
+        label: "Restart Estimator Tour",
+        steps: [
+          {
+            title: "Welcome to TorqueMech",
+            body: "Let's build your first estimate in less than 3 minutes. TorqueMech helps mechanics create professional estimates without getting lost.",
+            selectors: ['[data-tour-target="estimator-welcome"]', ".tm-estimator-header"],
+          },
+          {
+            title: "Start with the vehicle",
+            body: "Enter a VIN or choose Year, Make, and Model. VIN lookup can automatically fill the vehicle information.",
+            selectors: ['[data-tour-target="estimator-vin"]', "#vinToggle", '[data-tour-target="estimator-vehicle"]'],
+          },
+          {
+            title: "Choose the repair",
+            body: "Search for the job or open Common Repairs to pick a frequent service fast.",
+            selectors: [".service-search", ".tm-quick-quotes", '[data-tour-target="estimator-service"]', "#service"],
+          },
+          {
+            title: "Review labor",
+            body: "TorqueMech suggests labor details when available. Adjust labor hours or rate to match your shop.",
+            selectors: ['[data-tour-target="estimator-labor"]', "#laborHours", "#laborBreakdownBox"],
+          },
+          {
+            title: "Add parts",
+            body: "Enter Parts Cost for the job. Parts Sources can help compare prices later.",
+            selectors: ["#partsPrice", "#partsPriceLabel", "#estimatorPartsSources", '[data-tour-target="estimator-parts"]'],
+          },
+          {
+            title: "Watch the total update",
+            body: "Your labor, parts, and total update as you build the job. No calculator needed.",
+            selectors: ['[data-tour-target="estimator-total"]', "#estimateTotalBar", "#estimatePreview"],
+          },
+          {
+            title: "Create customer quote",
+            body: "Create Customer Quote opens the customer-ready review and PDF flow.",
+            selectors: ['[data-tour-target="estimator-pdf"]', "#generateAllBtn", "#downloadSavedEstimatePdfBtn", "#sharedDownloadPdfBtn"],
+          },
+          {
+            title: "You're ready",
+            body: "You just learned the TorqueMech estimate workflow. Now build your first real estimate.",
+            selectors: ['[data-tour-target="estimator-finish"]', "#quickEstimateBtn", ".tm-estimate-action-panel"],
+          },
+        ],
+      },
+      pro: {
+        route: () => window.location.pathname === "/pro" || window.location.pathname.startsWith("/pro/"),
+        label: "Restart Pro Tour",
+        steps: [
+          {
+            title: "Welcome to TorqueMech Pro",
+            body: "Pro helps mobile mechanics manage the full repair workflow: customer, vehicle, estimate, approval, repair, invoice, and history.",
+            selectors: ['[data-tour-target="pro-dashboard"]', ".tm-pro-header", ".tm-pro-shell"],
+          },
+          {
+            title: "Add your customer",
+            body: "Save customer details once so estimates, repairs, invoices, and follow-ups stay connected.",
+            selectors: ['[data-tour-target="pro-add-customer"]', "#add-customer", 'a[href*="mode=add#add-customer"]'],
+          },
+          {
+            title: "Add the vehicle",
+            body: "Attach each job to the correct vehicle with year, make, model, mileage, VIN, and notes.",
+            selectors: ['[data-tour-target="pro-vehicle"]', "#vehicle-edit", ".tm-crm-vehicle-summary", 'a[href*="/vehicles"]'],
+          },
+          {
+            title: "Create an estimate",
+            body: "Build a customer-ready quote with labor, parts, and notes.",
+            selectors: ['[data-tour-target="pro-create-estimate"]', 'a[href*="/estimator"]', 'a[href*="Create Estimate"]'],
+          },
+          {
+            title: "Track approval",
+            body: "Mark work as Open, Approved, Declined, Deferred, or Completed so nothing gets lost.",
+            selectors: ['[data-tour-target="pro-approval"]', "[data-finding-status-form]", ".tm-approval-list", ".tm-findings-status-card"],
+          },
+          {
+            title: "Convert to Pro Job",
+            body: "Once the customer approves, convert the estimate into a live repair job. Nothing gets entered twice.",
+            selectors: ["#convertToProJobMount", "#convertToProJobForm", ".tm-repair-work-convert"],
+          },
+          {
+            title: "Repair Workspace",
+            body: "Track the approved repair from diagnosis to completion.",
+            selectors: ['#repair-workspace', '[href*="#repair-workspace"]', "#repair-execution-status", ".tm-completion-panel"],
+          },
+          {
+            title: "Add photos",
+            body: "Save before-and-after photos with every repair for documentation and professionalism.",
+            selectors: ["#after_repair_photos", "[data-pro-photo-input]", ".tm-photo-stage"],
+          },
+          {
+            title: "Final invoice",
+            body: "When the repair is complete, generate the final invoice from the job details.",
+            selectors: ['a[href*="/invoices"]', ".tm-invoice-warning", '[data-tour-target="pro-work-summary"]'],
+          },
+          {
+            title: "Vehicle timeline",
+            body: "Completed repairs, invoices, maintenance, and decisions are saved to the vehicle history automatically.",
+            selectors: ["#vehicle-timeline", "[data-vehicle-timeline-section]", 'a[href*="#vehicle-timeline"]'],
+          },
+          {
+            title: "You're ready",
+            body: "You just learned the TorqueMech Pro workflow from customer to invoice.",
+            selectors: ['[data-tour-target="pro-work-summary"]', '[data-tour-target="pro-dashboard"]', ".tm-pro-shell"],
+          },
+        ],
+      },
+    };
+
+    function isVisibleElement(element) {
+      if (!element || !(element instanceof Element)) return false;
+      if (element.hidden || element.closest("[hidden]")) return false;
+      const style = window.getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    }
+
+    function findTarget(selectors) {
+      for (const selector of selectors || []) {
+        try {
+          const matches = Array.from(document.querySelectorAll(selector));
+          const visible = matches.find(isVisibleElement);
+          if (visible) return visible;
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    function buildRunnableSteps(tour) {
+      return tour.steps
+        .map((step) => ({ ...step, target: findTarget(step.selectors) }))
+        .filter((step) => step.target);
+    }
+
+    function isIntroOpen() {
+      const intro = document.querySelector("[data-tm-intro-root]");
+      return Boolean(intro && !intro.hidden);
+    }
+
+    function isTourOpen() {
+      const tour = document.querySelector("[data-tm-tour-root]");
+      return Boolean(tour && !tour.hidden);
+    }
+
+    function hasActiveOnboardingLayer() {
+      return isIntroOpen() || isTourOpen();
+    }
+
+    function removeHelperTips() {
+      document.querySelectorAll(".tm-helper-tip").forEach((tip) => tip.remove());
+    }
+
+    function ensureIntroDom() {
+      let root = document.querySelector("[data-tm-intro-root]");
+      if (root) return root;
+
+      root = document.createElement("div");
+      root.className = "tm-intro-root";
+      root.dataset.tmIntroRoot = "";
+      root.hidden = true;
+      root.innerHTML = `
+        <div class="tm-intro-overlay"></div>
+        <section class="tm-intro-modal" role="dialog" aria-modal="true" aria-labelledby="tmIntroTitle" aria-describedby="tmIntroBody">
+          <div class="tm-intro-copy">
+            <div class="tm-intro-kicker">TorqueMech Estimator</div>
+            <h2 id="tmIntroTitle">Welcome to TorqueMech</h2>
+            <p class="tm-intro-subtitle">Build professional estimates in minutes.</p>
+            <p id="tmIntroBody" class="tm-intro-body">TorqueMech helps mobile mechanics turn customer problems into estimates, approvals, repair jobs, invoices, and vehicle history — without entering the same information twice.</p>
+          </div>
+          <div class="tm-intro-actions">
+            <button type="button" class="tm-intro-link" data-tm-intro-skip>Skip</button>
+            <button type="button" class="tm-intro-primary" data-tm-intro-build>Build My First Estimate</button>
+          </div>
+        </section>
+      `;
+      root.innerHTML = `
+        <div class="tm-intro-overlay"></div>
+        <section class="tm-intro-modal" role="dialog" aria-modal="true" aria-labelledby="tmIntroTitle" aria-describedby="tmIntroBody">
+          <div class="tm-intro-copy">
+            <div class="tm-intro-kicker">TorqueMech Estimator</div>
+            <h2 id="tmIntroTitle">Welcome to TorqueMech</h2>
+            <p class="tm-intro-subtitle">Build professional estimates in minutes.</p>
+            <p id="tmIntroBody" class="tm-intro-body">See how a customer problem becomes a clean estimate, a customer-ready quote, and a professional PDF.</p>
+          </div>
+          <div class="tm-intro-preview" aria-label="TorqueMech result preview">
+            <article class="tm-intro-preview-card tm-intro-preview-card--estimate" style="--tm-preview-step:0;">
+              <div class="tm-intro-preview-label">Filled Estimate</div>
+              <div class="tm-intro-mini-app">
+                <div class="tm-intro-mini-top">
+                  <span>Estimator</span>
+                  <strong>$280</strong>
+                </div>
+                <div class="tm-intro-mini-row"><span>Vehicle</span><strong>2019 Toyota Camry</strong></div>
+                <div class="tm-intro-mini-row"><span>Service</span><strong>Front Brake Pads Replacement</strong></div>
+                <div class="tm-intro-mini-grid">
+                  <div><span>Labor</span><strong>2.5 hrs</strong></div>
+                  <div><span>Parts</span><strong>$55</strong></div>
+                </div>
+                <div class="tm-intro-mini-total"><span>Quote Total</span><strong>$280</strong></div>
+              </div>
+            </article>
+
+            <article class="tm-intro-preview-card tm-intro-preview-card--quote" style="--tm-preview-step:1;">
+              <div class="tm-intro-preview-label">Customer Review</div>
+              <div class="tm-intro-mini-quote">
+                <div class="tm-intro-mini-title">Create Customer Quote</div>
+                <div class="tm-intro-mini-summary">Prepared Estimate Summary</div>
+                <div class="tm-intro-mini-row"><span>Customer</span><strong>Jane Alexander</strong></div>
+                <div class="tm-intro-mini-status">Ready for Customer Review</div>
+                <div class="tm-intro-mini-cta">Download Customer PDF</div>
+              </div>
+            </article>
+
+            <article class="tm-intro-preview-card tm-intro-preview-card--pdf" style="--tm-preview-step:2;">
+              <div class="tm-intro-preview-label">Professional PDF</div>
+              <div class="tm-intro-mini-pdf">
+                <div class="tm-intro-pdf-title">Repair Estimate</div>
+                <div class="tm-intro-pdf-line"><span>Prepared By:</span><strong>JAX Shop</strong></div>
+                <div class="tm-intro-pdf-line"><span>Vehicle:</span><strong>2019 Toyota Camry</strong></div>
+                <div class="tm-intro-pdf-service">Front Brake Pads Replacement</div>
+                <div class="tm-intro-pdf-total">Estimated Total: $280</div>
+                <div class="tm-intro-pdf-signature"><span>Customer approval</span></div>
+              </div>
+            </article>
+          </div>
+          <div class="tm-intro-actions">
+            <button type="button" class="tm-intro-link" data-tm-intro-skip>Skip</button>
+            <button type="button" class="tm-intro-primary" data-tm-intro-build>Build My First Estimate</button>
+          </div>
+        </section>
+      `;
+      root.innerHTML = `
+        <div class="tm-intro-overlay"></div>
+        <section class="tm-intro-modal" role="dialog" aria-modal="true" aria-labelledby="tmIntroTitle" aria-describedby="tmIntroBody">
+          <div class="tm-intro-screens">
+            <article class="tm-intro-screen is-active" data-tm-intro-screen="0">
+              <div class="tm-intro-copy">
+                <div class="tm-intro-kicker">TorqueMech Estimator</div>
+                <h2 id="tmIntroTitle">Welcome to TorqueMech</h2>
+                <p class="tm-intro-subtitle">Build a customer-ready repair quote in minutes.</p>
+                <p id="tmIntroBody" class="tm-intro-body">TorqueMech helps you select the vehicle, choose the repair, price labor and parts, then create a professional PDF for your customer.</p>
+              </div>
+            </article>
+
+            <article class="tm-intro-screen" data-tm-intro-screen="1" hidden>
+              <div class="tm-intro-copy">
+                <div class="tm-intro-kicker">Estimate Builder</div>
+                <h2>Step 1: Build the estimate</h2>
+                <p class="tm-intro-body">Start with the vehicle and repair. TorqueMech keeps the quote organized while you price the job.</p>
+              </div>
+              <div class="tm-intro-preview tm-intro-preview--single" aria-label="Completed estimate preview">
+                <article class="tm-intro-preview-card tm-intro-preview-card--estimate">
+                  <div class="tm-intro-preview-label">Completed Estimate</div>
+                  <div class="tm-intro-mini-app">
+                    <div class="tm-intro-mini-row"><span>Vehicle</span><strong>2019 Toyota Camry</strong></div>
+                    <div class="tm-intro-mini-row"><span>Service</span><strong>Front Brake Pads Replacement</strong></div>
+                    <div class="tm-intro-mini-grid">
+                      <div><span>Labor</span><strong>2.5 hrs</strong></div>
+                      <div><span>Parts</span><strong>Included</strong></div>
+                    </div>
+                    <div class="tm-intro-mini-total"><span>Estimate Total</span><strong>$280</strong></div>
+                  </div>
+                </article>
+              </div>
+            </article>
+
+            <article class="tm-intro-screen" data-tm-intro-screen="2" hidden>
+              <div class="tm-intro-copy">
+                <div class="tm-intro-kicker">Customer PDF</div>
+                <h2>Step 2: Share a professional quote</h2>
+                <p class="tm-intro-body">When the estimate is ready, create a customer quote and download a clean PDF your customer can review.</p>
+              </div>
+              <div class="tm-intro-preview tm-intro-preview--single" aria-label="Customer quote PDF preview">
+                <article class="tm-intro-preview-card tm-intro-preview-card--pdf">
+                  <div class="tm-intro-preview-label">Customer Quote PDF</div>
+                  <div class="tm-intro-mini-pdf">
+                    <div class="tm-intro-pdf-title">Repair Estimate</div>
+                    <div class="tm-intro-pdf-line"><span>Prepared By:</span><strong>JAX Shop</strong></div>
+                    <div class="tm-intro-pdf-line"><span>Vehicle:</span><strong>2019 Toyota Camry</strong></div>
+                    <div class="tm-intro-pdf-service">Front Brake Pads Replacement</div>
+                    <div class="tm-intro-pdf-total">Estimated Total: $280</div>
+                    <div class="tm-intro-pdf-signature"><span>Customer approval / signature</span></div>
+                  </div>
+                </article>
+              </div>
+            </article>
+          </div>
+
+          <div class="tm-intro-actions">
+            <button type="button" class="tm-intro-link" data-tm-intro-skip>Skip</button>
+            <button type="button" class="tm-intro-button tm-intro-button--secondary" data-tm-intro-back hidden>Back</button>
+            <button type="button" class="tm-intro-primary" data-tm-intro-next>Show Me How It Works</button>
+            <button type="button" class="tm-intro-primary" data-tm-intro-build hidden>Build My First Estimate</button>
+          </div>
+        </section>
+      `;
+      document.body.appendChild(root);
+      return root;
+    }
+
+    function showEstimatorIntro() {
+      if (window.location.pathname !== "/estimator") return false;
+      if (storage.get(introStorageKey("estimator")) === "complete") return false;
+
+      const root = ensureIntroDom();
+      const build = root.querySelector("[data-tm-intro-build]");
+      const skip = root.querySelector("[data-tm-intro-skip]");
+      const next = root.querySelector("[data-tm-intro-next]");
+      const back = root.querySelector("[data-tm-intro-back]");
+      const screens = Array.from(root.querySelectorAll("[data-tm-intro-screen]"));
+      let introIndex = 0;
+
+      function closeIntro({ startEstimatorTour = false } = {}) {
+        root.hidden = true;
+        document.body.classList.remove("tm-intro-active");
+        storage.set(introStorageKey("estimator"), "complete");
+        if (startEstimatorTour) {
+          storage.remove(tourStorageKey("estimator"));
+          window.setTimeout(() => startTour("estimator", { instant: true }), 160);
+        } else {
+          storage.set(tourStorageKey("estimator"), "complete");
+          window.setTimeout(initHelperTips, 180);
+        }
+      }
+
+      function renderIntroScreen() {
+        root.dataset.tmIntroStep = String(introIndex);
+        screens.forEach((screen, index) => {
+          const active = index === introIndex;
+          screen.hidden = !active;
+          screen.classList.toggle("is-active", active);
+        });
+        if (back) back.hidden = introIndex === 0;
+        if (next) next.hidden = introIndex >= screens.length - 1;
+        if (next) next.textContent = introIndex === 0 ? "Show Me How It Works" : "Next";
+        if (build) build.hidden = introIndex !== screens.length - 1;
+        if (skip) skip.hidden = introIndex === 1;
+        const focusTarget = introIndex === screens.length - 1 ? build : next;
+        window.setTimeout(() => focusTarget?.focus({ preventScroll: true }), 40);
+      }
+
+      build.onclick = () => closeIntro({ startEstimatorTour: true });
+      skip.onclick = () => closeIntro({ startEstimatorTour: false });
+      next.onclick = () => {
+        introIndex = Math.min(introIndex + 1, screens.length - 1);
+        renderIntroScreen();
+      };
+      back.onclick = () => {
+        introIndex = Math.max(introIndex - 1, 0);
+        renderIntroScreen();
+      };
+      root.hidden = false;
+      document.body.classList.add("tm-intro-active");
+      removeHelperTips();
+      renderIntroScreen();
+      return true;
+    }
+
+    function ensureTourDom() {
+      let root = document.querySelector("[data-tm-tour-root]");
+      if (root) return root;
+
+      root = document.createElement("div");
+      root.className = "tm-tour-root";
+      root.dataset.tmTourRoot = "";
+      root.hidden = true;
+      root.innerHTML = `
+        <div class="tm-tour-overlay" data-tm-tour-skip></div>
+        <section class="tm-tour-card" role="dialog" aria-modal="true" aria-live="polite" aria-labelledby="tmTourTitle">
+          <div class="tm-tour-progress" data-tm-tour-progress></div>
+          <h2 id="tmTourTitle" data-tm-tour-title></h2>
+          <p data-tm-tour-body></p>
+          <div class="tm-tour-actions">
+            <button type="button" class="tm-tour-link" data-tm-tour-skip>Skip</button>
+            <div class="tm-tour-nav">
+              <button type="button" class="tm-tour-button tm-tour-button--secondary" data-tm-tour-back>Back</button>
+              <button type="button" class="tm-tour-button" data-tm-tour-next>Next</button>
+            </div>
+          </div>
+        </section>
+      `;
+      document.body.appendChild(root);
+      return root;
+    }
+
+    function setBubblePlacement(card, placement, arrowX = null) {
+      card.classList.remove("tm-tour-card--above", "tm-tour-card--below", "tm-tour-card--sheet");
+      card.classList.add(`tm-tour-card--${placement}`);
+      if (arrowX === null) {
+        card.style.removeProperty("--tm-tour-arrow-x");
+      } else {
+        card.style.setProperty("--tm-tour-arrow-x", `${Math.round(arrowX)}px`);
+      }
+    }
+
+    function positionCard(card, target) {
+      const margin = 16;
+      const gap = 18;
+      const targetRect = target.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const belowSpace = viewportHeight - targetRect.bottom - gap;
+      const aboveSpace = targetRect.top - gap;
+      const fitsBelow = belowSpace >= cardRect.height + margin;
+      const fitsAbove = aboveSpace >= cardRect.height + margin;
+      const targetCenterY = targetRect.top + targetRect.height / 2;
+      let placement = "below";
+      let top;
+
+      if (fitsBelow && (!fitsAbove || targetCenterY < viewportHeight * 0.55)) {
+        top = targetRect.bottom + gap;
+        placement = "below";
+      } else if (fitsAbove) {
+        top = targetRect.top - cardRect.height - gap;
+        placement = "above";
+      } else if (fitsBelow) {
+        top = targetRect.bottom + gap;
+        placement = "below";
+      } else {
+        top = viewportHeight - cardRect.height - margin;
+        placement = "sheet";
+      }
+
+      top = Math.max(margin, Math.min(top, viewportHeight - cardRect.height - margin));
+      let left = (viewportWidth - cardRect.width) / 2;
+      left = Math.max(margin, Math.min(left, viewportWidth - cardRect.width - margin));
+      card.style.top = `${Math.round(top)}px`;
+      card.style.left = `${Math.round(left)}px`;
+      const arrowX = placement === "sheet" ? null : Math.max(28, Math.min(targetRect.left + targetRect.width / 2 - left, cardRect.width - 28));
+      setBubblePlacement(card, placement, arrowX);
+    }
+
+    function startTour(tourId, options = {}) {
+      const tour = tours[tourId];
+      if (!tour) return;
+      if (isIntroOpen()) return;
+      const steps = buildRunnableSteps(tour);
+      if (!steps.length) return;
+      removeHelperTips();
+
+      const root = ensureTourDom();
+      const card = root.querySelector(".tm-tour-card");
+      const title = root.querySelector("[data-tm-tour-title]");
+      const body = root.querySelector("[data-tm-tour-body]");
+      const progress = root.querySelector("[data-tm-tour-progress]");
+      const next = root.querySelector("[data-tm-tour-next]");
+      const back = root.querySelector("[data-tm-tour-back]");
+      const skipControls = root.querySelectorAll("[data-tm-tour-skip]");
+      let index = 0;
+      let activeTarget = null;
+
+      function finish() {
+        if (activeTarget) activeTarget.classList.remove("tm-tour-highlight");
+        root.hidden = true;
+        document.body.classList.remove("tm-tour-active");
+        storage.set(tourStorageKey(tourId), "complete");
+        window.removeEventListener("resize", render);
+        window.removeEventListener("scroll", render, true);
+      }
+
+      function render() {
+        const step = steps[index];
+        if (!step) {
+          finish();
+          return;
+        }
+        if (activeTarget) activeTarget.classList.remove("tm-tour-highlight");
+        activeTarget = step.target;
+        activeTarget.classList.add("tm-tour-highlight");
+        activeTarget.scrollIntoView({ behavior: options.instant ? "auto" : "smooth", block: "center", inline: "nearest" });
+
+        window.setTimeout(() => {
+          title.textContent = step.title;
+          body.textContent = step.body;
+          progress.textContent = `${index + 1}/${steps.length}`;
+          back.disabled = index === 0;
+          next.textContent = index === steps.length - 1 ? "Finish" : "Next";
+          root.hidden = false;
+          document.body.classList.add("tm-tour-active");
+          positionCard(card, activeTarget);
+        }, options.instant ? 0 : 120);
+      }
+
+      next.onclick = () => {
+        if (index >= steps.length - 1) {
+          finish();
+          return;
+        }
+        index += 1;
+        render();
+      };
+      back.onclick = () => {
+        if (index === 0) return;
+        index -= 1;
+        render();
+      };
+      skipControls.forEach((control) => {
+        control.onclick = finish;
+      });
+      window.addEventListener("resize", render);
+      window.addEventListener("scroll", render, true);
+      render();
+    }
+
+    function maybeStartTour(tourId) {
+      const tour = tours[tourId];
+      if (!tour || !tour.route()) return;
+      if (storage.get(tourStorageKey(tourId)) === "complete") return;
+      if (tourId === "estimator" && showEstimatorIntro()) return;
+      window.setTimeout(() => startTour(tourId), 650);
+    }
+
+    function injectRestartButton(tourId) {
+      const tour = tours[tourId];
+      if (!tour || !tour.route() || document.querySelector(`[data-tm-tour-restart="${tourId}"]`)) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "tm-tour-restart";
+      button.dataset.tmTourRestart = tourId;
+      button.textContent = tour.label;
+      const header = document.querySelector(".tm-estimator-header, .tm-pro-header, .tm-pro-pagehead");
+      if (header) {
+        header.insertAdjacentElement("afterend", button);
+      } else {
+        document.querySelector("main")?.prepend(button);
+      }
+    }
+
+    function showHelperTip(helper) {
+      if (hasActiveOnboardingLayer()) return;
+      if (storage.get(helperStorageKey(helper.id)) === "dismissed") return;
+      const target = findTarget(helper.selectors);
+      if (!target) return;
+
+      const tip = document.createElement("div");
+      tip.className = "tm-helper-tip";
+      tip.innerHTML = `
+        <p>${helper.text}</p>
+        <button type="button" aria-label="Dismiss tip">Got it</button>
+      `;
+      document.body.appendChild(tip);
+
+      function place() {
+        const rect = target.getBoundingClientRect();
+        const tipRect = tip.getBoundingClientRect();
+        const margin = 12;
+        const gap = 12;
+        tip.classList.remove("tm-helper-tip--above", "tm-helper-tip--below");
+        let top = rect.bottom + 8;
+        let placement = "below";
+        if (top + tipRect.height > window.innerHeight - margin) {
+          top = rect.top - tipRect.height - gap;
+          placement = "above";
+        }
+        top = Math.max(margin, Math.min(top, window.innerHeight - tipRect.height - margin));
+        let left = (window.innerWidth - tipRect.width) / 2;
+        left = Math.max(margin, Math.min(left, window.innerWidth - tipRect.width - margin));
+        tip.style.top = `${Math.round(top)}px`;
+        tip.style.left = `${Math.round(left)}px`;
+        const arrowX = Math.max(22, Math.min(rect.left + rect.width / 2 - left, tipRect.width - 22));
+        tip.style.setProperty("--tm-helper-arrow-x", `${Math.round(arrowX)}px`);
+        tip.classList.add(`tm-helper-tip--${placement}`);
+      }
+
+      tip.querySelector("button")?.addEventListener("click", () => {
+        storage.set(helperStorageKey(helper.id), "dismissed");
+        tip.remove();
+      });
+      window.setTimeout(place, 20);
+      window.addEventListener("resize", place, { passive: true });
+      window.addEventListener("scroll", place, { passive: true });
+    }
+
+    function initHelperTips() {
+      return;
+      if (hasActiveOnboardingLayer()) return;
+      if (window.location.pathname === "/estimator") {
+        if (
+          storage.get(introStorageKey("estimator")) !== "complete" ||
+          storage.get(tourStorageKey("estimator")) !== "complete"
+        ) {
+          return;
+        }
+        showHelperTip({
+          id: "estimator-search-repairs",
+          text: "Search repairs here.",
+          selectors: ["#service", '[data-tour-target="estimator-service"]'],
+        });
+
+        document.addEventListener("click", (event) => {
+          const pdfButton = event.target.closest("#generateAllBtn, #downloadSavedEstimatePdfBtn, #sharedDownloadPdfBtn, #confirmAddBtn");
+          if (!pdfButton) return;
+          showHelperTip({
+            id: "estimator-customer-pdf",
+            text: "Customer estimates include professional customer-ready details.",
+            selectors: ["#generateAllBtn", "#downloadSavedEstimatePdfBtn", "#sharedDownloadPdfBtn", "#confirmAddBtn"],
+          });
+        });
+
+        if (findTarget(["#convertToProJobMount", "#convertToProJobForm"])) {
+          showHelperTip({
+            id: "convert-to-pro-job",
+            text: "This creates a repair job and preserves your estimate.",
+            selectors: ["#convertToProJobMount", "#convertToProJobForm"],
+          });
+        }
+      }
+
+      if (window.location.pathname.startsWith("/pro/")) {
+        if (findTarget(["#repair-execution-status", ".tm-completion-panel", '#repair-workspace'])) {
+          showHelperTip({
+            id: "repair-workspace",
+            text: "Approved estimates become active repairs here.",
+            selectors: ["#repair-execution-status", ".tm-completion-panel", '#repair-workspace'],
+          });
+        }
+        if (findTarget([".tm-repair-work-convert", "#convertToProJobMount"])) {
+          showHelperTip({
+            id: "convert-to-pro-job-pro",
+            text: "This creates a repair job and preserves your estimate.",
+            selectors: [".tm-repair-work-convert", "#convertToProJobMount"],
+          });
+        }
+      }
+    }
+
+    document.addEventListener("click", (event) => {
+      const restart = event.target.closest("[data-tm-tour-restart]");
+      if (!restart) return;
+      const tourId = restart.dataset.tmTourRestart;
+      storage.remove(tourStorageKey(tourId));
+      removeHelperTips();
+      startTour(tourId, { instant: true });
+    });
+
+    Object.keys(tours).forEach(injectRestartButton);
+    maybeStartTour("estimator");
+    maybeStartTour("pro");
+    window.setTimeout(initHelperTips, 800);
+  }
+
+  initTorqueMechOnboarding();
+
   if (window.__tmEstimatorAppBooted) return;
   window.__tmEstimatorAppBooted = true;
 

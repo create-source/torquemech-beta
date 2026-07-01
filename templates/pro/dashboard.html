@@ -132,6 +132,13 @@
     font-size: 0.9rem;
   }
 
+  .tm-pro-tour-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
   .tm-pro-workflow {
     border: 1px solid rgba(15, 23, 42, 0.1);
     border-radius: 8px;
@@ -478,9 +485,12 @@
     </div>
   </div>
 
-  <button class="tm-pro-show-welcome" type="button" data-pro-welcome-show hidden>Show welcome</button>
+  <div class="tm-pro-tour-actions">
+    <button class="tm-pro-show-welcome" type="button" data-pro-welcome-show hidden>Show welcome</button>
+    <button class="tm-tour-restart" type="button" data-tm-tour-restart="pro">Restart Tour</button>
+  </div>
 
-  <section class="tm-pro-welcome" aria-label="Welcome to TorqueMech Pro" data-pro-welcome>
+  <section class="tm-pro-welcome" aria-label="Welcome to TorqueMech Pro" data-pro-welcome data-tour-target="pro-dashboard">
     <div class="tm-pro-welcome-main">
       <div class="tm-pro-welcome-copy">
         <div class="tm-pro-welcome-badge">TorqueMech Pro</div>
@@ -491,7 +501,7 @@
         </p>
         <p class="tm-pro-first-step">Recommended first step: add your first customer and vehicle.</p>
         <div class="tm-pro-welcome-actions" aria-label="Welcome actions">
-          <a class="tm-pro-welcome-action" href="/pro/customers?mode=add#add-customer">Add Customer</a>
+          <a class="tm-pro-welcome-action" href="/pro/customers?mode=add#add-customer" data-tour-target="pro-add-customer">Add Customer</a>
           <button class="tm-pro-welcome-secondary" type="button" data-pro-view-workflow>View Workflow</button>
           <button class="tm-pro-welcome-dismiss" type="button" data-pro-welcome-dismiss>Got it</button>
         </div>
@@ -533,11 +543,15 @@
     </details>
   </section>
 
-  <section class="tm-quick-actions" aria-label="Quick actions">
+  <section class="tm-quick-actions" aria-label="Quick actions" data-tour-target="pro-quick-actions">
     <h2>Quick Actions</h2>
     <div class="tm-quick-grid">
       {% for action in dashboard.quick_actions %}
-      <a class="tm-quick-link" href="{% if action.label == 'Add Customer' %}/pro/customers?mode=add#add-customer{% else %}{{ action.href }}{% endif %}">{{ action.label }}</a>
+      <a
+        class="tm-quick-link"
+        href="{% if action.label == 'Add Customer' %}/pro/customers?mode=add#add-customer{% else %}{{ action.href }}{% endif %}"
+        {% if action.label == 'Add Customer' %}data-tour-target="pro-add-customer"{% elif action.label == 'Start Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'Add Finding / Recommended Work' %}data-tour-target="pro-approval"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
+      >{{ action.label }}</a>
       {% endfor %}
     </div>
   </section>
@@ -546,7 +560,7 @@
   {% for section in dashboard.sections %}
     {% set summary_total.count = summary_total.count + (section.cards | sum(attribute='count')) %}
   {% endfor %}
-  <section class="tm-dashboard-section" aria-label="Work Summary">
+  <section class="tm-dashboard-section" aria-label="Work Summary" data-tour-target="pro-work-summary">
     <div class="tm-dashboard-section-head">
       <h2>Work Summary</h2>
       <div class="tm-dashboard-section-note">{{ summary_total.count }} item{% if summary_total.count != 1 %}s{% endif %}</div>

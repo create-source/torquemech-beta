@@ -5,7 +5,7 @@
 
 {% block content %}
 
-    <header class="tm-estimator-header">
+    <header class="tm-estimator-header" data-tour-target="estimator-welcome">
       <div>
         <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% else %}Mechanic estimator{% endif %}</div>
         <h1>{% if shared_id %}Customer Repair Quote{% else %}Build a customer-ready quote{% endif %}</h1>
@@ -96,7 +96,7 @@
     {% endif %}
 
     <!-- Vehicles -->
-    <section class="tm-card tm-estimator-section" aria-label="Vehicles">
+    <section class="tm-card tm-estimator-section" aria-label="Vehicles" data-tour-target="estimator-vehicle">
       <div class="section-header--vehicles">
         <div>
           <div class="tm-section-kicker">Step 1</div>
@@ -114,7 +114,7 @@
 
       <div id="vehiclesContainer"></div>
 
-      <div class="vin-section">
+      <div class="vin-section" data-tour-target="estimator-vin">
         <button type="button" id="vinToggle" class="vin-toggle">
           <span class="vin-toggle-text">Use VIN to fill vehicle details</span>
           <span id="vinArrow" class="vin-arrow">▸</span>
@@ -131,7 +131,7 @@
       </div>
     </section>
 
-    <div id="estimateTotalBar" class="tm-estimate-total-bar" aria-live="polite">
+    <div id="estimateTotalBar" class="tm-estimate-total-bar" aria-live="polite" data-tour-target="estimator-total">
       <div class="tm-estimate-total-bar__label">Quote Total</div>
       <div id="estimateTotalValue" class="tm-estimate-total-bar__value">$0.00</div>
     </div>
@@ -141,7 +141,7 @@
     </div>
 
     <!-- Service -->
-    <section class="tm-card tm-estimator-section" aria-label="Service">
+    <section class="tm-card tm-estimator-section" aria-label="Service" data-tour-target="estimator-service">
 
     <div id="activeVehicleBanner" class="tm-active-vehicle-banner">
       <div>Quoting vehicle</div>
@@ -307,7 +307,7 @@
             </select>
           </div>
 
-          <div class="pricing-control hourly-pricing-field">
+          <div class="pricing-control hourly-pricing-field" data-tour-target="estimator-labor">
             <label for="laborHours" class="pricing-control__label-row">
               <span id="laborLabelText">Billable Labor Hours</span>
               <span id="laborHoursRange" class="labor-range"></span>
@@ -323,7 +323,7 @@
             <input id="laborRate" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="90" />
           </div>
 
-          <div class="pricing-control">
+          <div class="pricing-control" data-tour-target="estimator-parts">
             <label for="serviceQuantity">Quantity</label>
             <span class="tm-clearable-field tm-quantity-field">
               <input id="serviceQuantity" type="number" inputmode="numeric" min="1" step="1" value="1" />
@@ -478,14 +478,14 @@
 
     </div>
 
-      <div id="customerQuoteFinalActions" class="actions estimator-final-actions" aria-label="Finish customer quote">
+      <div id="customerQuoteFinalActions" class="actions estimator-final-actions" aria-label="Finish customer quote" data-tour-target="estimator-finish">
         {% if shared_id %}
         <div class="tm-hint">This shared estimate is ready for customer review with PDF, email, and share handoff support.</div>
         {% endif %}
         <div class="estimator-final-step">Final action</div>
         <div class="estimator-final-heading">Ready for Customer Review</div>
         <div class="tm-hint estimator-final-hint">Review estimate details before sharing.</div>
-        <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta" aria-describedby="customerQuoteFinalHint" disabled>
+        <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta" aria-describedby="customerQuoteFinalHint" disabled data-tour-target="estimator-pdf">
           Create Customer Quote
         </button>
         <div id="customerQuoteFinalHint" class="tm-quote-trust-microcopy">Includes services, pricing, notes, and total.</div>
