@@ -781,9 +781,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('accept="image/*"', vehicle_detail)
         self.assertIn('capture="environment"', vehicle_detail)
         self.assertIn('class="tm-photo-input-hidden"', vehicle_detail)
-        self.assertIn("Add Before Photos", vehicle_detail)
-        self.assertIn("Camera or photo library &bull; Up to 5 photos", vehicle_detail)
-        self.assertIn("Photos are optional. TorqueMech only uses the photos you choose to attach to this repair record.", vehicle_detail)
+        self.assertIn("Add Photos", vehicle_detail)
+        self.assertNotIn("Add Before Photos", vehicle_detail)
+        self.assertIn("Tap Add Photos to choose Camera or Photo Library.", vehicle_detail)
+        self.assertIn("Photos are optional and only saved when you attach them to this repair record.", vehicle_detail)
+        self.assertIn("Up to 5 photos.", vehicle_detail)
         self.assertIn("No photos selected", vehicle_detail)
         self.assertIn("Upload photos of the original problem before repair.", vehicle_detail)
         self.assertIn("After / Completion Photos", repair_detail)
@@ -794,9 +796,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('accept="image/*"', repair_detail)
         self.assertIn('capture="environment"', repair_detail)
         self.assertIn('class="tm-photo-input-hidden"', repair_detail)
-        self.assertIn("Add Completion Photos", repair_detail)
-        self.assertIn("Camera or photo library &bull; Up to 5 photos", repair_detail)
-        self.assertIn("Photos are optional. TorqueMech only uses the photos you choose to attach to this repair record.", repair_detail)
+        self.assertIn("Add Photos", repair_detail)
+        self.assertNotIn("Add Completion Photos", repair_detail)
+        self.assertIn("Tap Add Photos to choose Camera or Photo Library.", repair_detail)
+        self.assertIn("Photos are optional and only saved when you attach them to this repair record.", repair_detail)
+        self.assertIn("Up to 5 photos.", repair_detail)
         self.assertIn("No photos selected", repair_detail)
         self.assertIn('enctype="multipart/form-data"', repair_detail)
         self.assertIn("Upload photos showing the completed repair or proof of work.", repair_detail)
@@ -1004,6 +1008,11 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
     def test_invoice_number_helper_uses_tm_sequence(self):
         self.assertEqual(pro_module.invoice_number_for(1, "2026-06-25T12:30:00"), "TM-INV-0001")
         self.assertEqual(pro_module.invoice_number_for(4, "2026-06-25T12:30:00"), "TM-INV-0004")
+
+    def test_pro_date_filter_displays_utc_timestamps_in_shop_local_date(self):
+        self.assertEqual(pro_module.format_pro_date("2026-07-01T05:57:00+00:00"), "06/30/2026")
+        self.assertEqual(pro_module.format_pro_date("2026-07-01T05:57:00"), "06/30/2026")
+        self.assertEqual(pro_module.format_pro_date("2026-06-30"), "06/30/2026")
 
     def test_finding_detail_has_estimate_and_customer_decision_actions(self):
         finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")

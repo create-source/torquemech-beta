@@ -1989,9 +1989,10 @@
           <strong>Before / Inspection Photos</strong>
           <label class="tm-label" for="before_inspection_photos">Upload photos of the original problem before repair.</label>
           <input class="tm-photo-input-hidden" id="before_inspection_photos" name="before_inspection_photos" type="file" accept="image/*" capture="environment" multiple data-pro-photo-input>
-          <label class="tm-photo-upload-button" for="before_inspection_photos">Add Before Photos</label>
-          <span class="tm-photo-helper">Camera or photo library &bull; Up to 5 photos</span>
-          <span class="tm-photo-privacy">Photos are optional. TorqueMech only uses the photos you choose to attach to this repair record.</span>
+          <label class="tm-photo-upload-button" for="before_inspection_photos">Add Photos</label>
+          <span class="tm-photo-helper">Tap Add Photos to choose Camera or Photo Library.</span>
+          <span class="tm-photo-privacy">Photos are optional and only saved when you attach them to this repair record.</span>
+          <span class="tm-photo-helper">Up to 5 photos.</span>
           <span class="tm-photo-selected-count" data-photo-selected-count="before_inspection_photos">No photos selected</span>
         </section>
         <div style="margin-top:12px;">
@@ -3332,7 +3333,20 @@
 
   function formatTimelineDate(value) {
     if (!value) return "No date";
-    const datePart = String(value).slice(0, 10);
+    const raw = String(value);
+    if (raw.includes("T") || raw.endsWith("Z")) {
+      const normalized = raw.endsWith("Z") || /[+-]\d\d:\d\d$/.test(raw) ? raw : `${raw}Z`;
+      const parsed = new Date(normalized);
+      if (!Number.isNaN(parsed.getTime())) {
+        return new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Los_Angeles",
+          month: "2-digit",
+          day: "2-digit",
+          year: "numeric",
+        }).format(parsed);
+      }
+    }
+    const datePart = raw.slice(0, 10);
     const parts = datePart.split("-");
     if (parts.length !== 3) return datePart;
     return `${parts[1]}/${parts[2]}/${parts[0]}`;

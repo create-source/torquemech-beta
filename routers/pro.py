@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import parse_qs, urlencode
 from uuid import uuid4
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -62,6 +63,11 @@ DEFAULT_PARTS_SOURCE_LABELS = [
     "Google Shopping",
     "1A Auto",
 ]
+DEFAULT_SHOP_TIMEZONE = "America/Los_Angeles"
+try:
+    SHOP_ZONEINFO = ZoneInfo(DEFAULT_SHOP_TIMEZONE)
+except ZoneInfoNotFoundError:
+    SHOP_ZONEINFO = timezone(timedelta(hours=-7), DEFAULT_SHOP_TIMEZONE)
 
 PARTS_SEARCH_KEYWORDS = {
     "coolant drain refill": "engine coolant",
@@ -510,6 +516,29 @@ def format_currency(value: Any) -> str:
         return str(value)
 
 
+def local_now() -> datetime:
+    return datetime.now(timezone.utc).astimezone(SHOP_ZONEINFO)
+
+
+def local_today() -> date:
+    return local_now().date()
+
+
+def parse_local_datetime_value(raw: Any) -> datetime | None:
+    if not raw:
+        return None
+    value = str(raw).strip()
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(SHOP_ZONEINFO)
+
+
 def format_pro_date(value: Any) -> str:
     parsed = parse_date_value(value)
     if not parsed:
@@ -521,11 +550,10 @@ def format_pro_datetime(value: Any) -> str:
     if not value:
         return ""
     raw = str(value).strip()
-    try:
-        parsed = datetime.fromisoformat(raw)
+    parsed = parse_local_datetime_value(raw)
+    if parsed:
         return parsed.strftime("%m/%d/%Y")
-    except ValueError:
-        return format_pro_date(raw)
+    return format_pro_date(raw)
 
 
 def service_total_value(record: dict[str, Any]) -> float | None:
@@ -606,8 +634,15 @@ templates.env.filters["service_total"] = service_total_value
 def parse_date_value(raw: Any) -> date | None:
     if not raw:
         return None
+    value = str(raw).strip()
+    if not value:
+        return None
+    if "T" in value or " " in value or value.endswith("Z"):
+        parsed_datetime = parse_local_datetime_value(value)
+        if parsed_datetime:
+            return parsed_datetime.date()
     try:
-        return date.fromisoformat(str(raw)[:10])
+        return date.fromisoformat(value[:10])
     except ValueError:
         return None
 
@@ -3010,8 +3045,8 @@ def record_estimate_pdf_document(
     if not parsed_customer_id or not parsed_vehicle_id or not pdf_bytes:
         return None
 
-    created_at = datetime.utcnow().isoformat()
-    estimate_date = str(estimate_date or "").strip() or created_at[:10]
+    created_at = datetime.now(timezone.utc).isoformat()
+    estimate_date = str(estimate_date or "").strip() or local_today().isoformat()
     try:
         parsed_total = float(estimate_total) if estimate_total is not None and str(estimate_total).strip() != "" else None
     except (TypeError, ValueError):
@@ -5136,7 +5171,7 @@ def ensure_repair_record_for_approved_finding(
                     vehicle_id,
                     customer_id,
                     repair_work_title_from_finding(finding),
-                    date.today().isoformat(),
+                    local_today().isoformat(),
                     finding.get("mileage"),
                     finding.get("labor_hours"),
                     finding.get("labor_rate"),
@@ -5585,7 +5620,7 @@ def build_repair_work_items(
             ),
             "repair_prefill": {
                 "repair_name": repair_work_title_from_finding(record),
-                "repair_date": date.today().isoformat(),
+                "repair_date": local_today().isoformat(),
                 "mileage": current_vehicle_mileage,
                 "notes": "\n".join(
                     part
@@ -5665,7 +5700,7 @@ def build_repair_work_items(
             ),
             "repair_prefill": {
                 "repair_name": repair_work_title_from_approval(record),
-                "repair_date": date.today().isoformat(),
+                "repair_date": local_today().isoformat(),
                 "mileage": current_vehicle_mileage,
                 "notes": "\n".join(
                     part
@@ -6686,7 +6721,7 @@ def pro_approvals(request: Request):
 
 @router.get("/follow-ups", response_class=HTMLResponse)
 def pro_follow_ups(request: Request):
-    today = date.today()
+    today = local_today()
     conn = crm_db_conn()
     try:
         ensure_customer_status_schema(conn)
@@ -6888,7 +6923,7 @@ async def pro_estimate_conversion_create(request: Request):
         raise HTTPException(status_code=400, detail="Select at least one service to import")
 
     now = datetime.utcnow().isoformat()
-    repair_date = date.today().isoformat()
+    repair_date = local_today().isoformat()
     customer_mode = form.get("customer_mode", "existing")
     vehicle_mode = form.get("vehicle_mode", "existing")
 
@@ -7674,7 +7709,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             "completed" if status == "Completed" else "ready" if status == "Approved" else "",
             now if status in {"Approved", "Completed"} else "",
             optional_int(form, "mileage"),
-            date.today().isoformat(),
+            local_today().isoformat(),
             now,
         ]
         if findings_records_has_customer_id(conn):

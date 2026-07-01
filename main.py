@@ -9,10 +9,11 @@ import re
 import sqlite3
 import tempfile
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, quote, urlencode
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
 import qrcode
@@ -162,6 +163,20 @@ for _h in logging.getLogger().handlers:
 # ============================================================
 
 app = FastAPI()
+
+DEFAULT_SHOP_TIMEZONE = "America/Los_Angeles"
+try:
+    SHOP_ZONEINFO = ZoneInfo(DEFAULT_SHOP_TIMEZONE)
+except ZoneInfoNotFoundError:
+    SHOP_ZONEINFO = timezone(timedelta(hours=-7), DEFAULT_SHOP_TIMEZONE)
+
+
+def local_now() -> datetime:
+    return datetime.now(timezone.utc).astimezone(SHOP_ZONEINFO)
+
+
+def local_today_iso() -> str:
+    return local_now().date().isoformat()
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -9984,7 +9999,7 @@ def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=
     if show_generated_date:
         c.setFont("Helvetica", 9)
         c.setFillGray(0.38)
-        c.drawString(left, y, f"Prepared {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        c.drawString(left, y, f"Prepared {local_now().strftime('%Y-%m-%d %H:%M')}")
         y -= 8
 
     c.setStrokeColorRGB(0.08, 0.57, 0.54)
@@ -10197,7 +10212,7 @@ def pdf_draw_pro_header(c, w: float, h: float, profile: Dict[str, Any]) -> float
     c.drawString(left, y, "Service Estimate")
     c.setFont("Helvetica", 9)
     c.setFillColorRGB(0.36, 0.42, 0.50)
-    c.drawRightString(w - right, y + 6, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
+    c.drawRightString(w - right, y + 6, f"Date: {local_today_iso()}")
     c.setFillGray(0)
     return y - 24
 
@@ -10265,7 +10280,7 @@ def build_pro_pdf_bytes(profile: Optional[Dict[str, Any]] = None, estimate_data:
     c.setFont("Helvetica", 8)
     c.setFillColorRGB(0.38, 0.44, 0.52)
     c.drawRightString(w - right - 16, y - 46, "Total Estimate")
-    c.drawRightString(w - right - 16, y - 61, datetime.now().strftime("%Y-%m-%d"))
+    c.drawRightString(w - right - 16, y - 61, local_today_iso())
     c.setFillGray(0)
     c.setStrokeGray(0)
     y -= 104
@@ -10830,7 +10845,7 @@ def save_repair_estimate_pdf_if_available(
             customer_id=customer_id,
             vehicle_id=vehicle_id,
             finding_id=estimate_request_source_value(req, "findingId"),
-            estimate_date=datetime.utcnow().date().isoformat(),
+            estimate_date=local_today_iso(),
             customer_name=str(getattr(req, "customerName", "") or "").strip(),
             vehicle_label=vehicle_line,
             related_title=related_title,
