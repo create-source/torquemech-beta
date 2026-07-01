@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 
-{% block title %}TorqueMech Pro CRM{% endblock %}
+{% block title %}TorqueMech Pro Command Center{% endblock %}
 
 {% block page_css %}
 <style>
   .tm-pro-shell {
     display: grid;
-    gap: 18px;
+    gap: 16px;
   }
 
   .tm-pro-header {
@@ -16,10 +16,45 @@
     align-items: flex-start;
   }
 
-  .tm-pro-grid {
+  .tm-dashboard-section,
+  .tm-quick-actions {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 16px;
+  }
+
+  .tm-dashboard-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
+    gap: 12px;
+  }
+
+  .tm-dashboard-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .tm-dashboard-section h2,
+  .tm-quick-actions h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.1rem;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .tm-dashboard-section-note {
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+
+  .tm-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
     align-items: stretch;
     min-width: 0;
     width: 100%;
@@ -28,8 +63,8 @@
   .tm-pro-card {
     box-sizing: border-box;
     display: grid;
-    gap: 8px;
-    min-height: 128px;
+    gap: 10px;
+    min-height: 154px;
     min-width: 0;
     width: 100%;
     border: 1px solid rgba(15, 23, 42, 0.12);
@@ -51,7 +86,7 @@
   .tm-pro-card h3 {
     margin: 0;
     color: #0f172a;
-    font-size: 1.05rem;
+    font-size: 0.98rem;
     font-weight: 900;
     line-height: 1.2;
     overflow-wrap: anywhere;
@@ -65,12 +100,72 @@
     overflow-wrap: anywhere;
   }
 
+  .tm-dashboard-count {
+    color: #0f172a;
+    font-size: 2.25rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .tm-dashboard-action {
+    align-self: end;
+    color: #0f766e;
+    font-size: 0.88rem;
+    font-weight: 900;
+  }
+
+  .tm-dashboard-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    color: #64748b;
+    background: rgba(248, 250, 252, 0.84);
+    padding: 14px;
+  }
+
+  .tm-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .tm-quick-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 900;
+    text-align: center;
+    text-decoration: none;
+    padding: 10px 12px;
+  }
+
+  .tm-quick-link:hover {
+    border-color: rgba(14, 116, 144, 0.48);
+    color: #0f766e;
+  }
+
   @media (max-width: 640px) {
     .tm-pro-shell {
       gap: 14px;
     }
 
-    .tm-pro-grid {
+    .tm-dashboard-section,
+    .tm-quick-actions {
+      padding: 14px;
+    }
+
+    .tm-dashboard-section-head {
+      display: grid;
+      gap: 4px;
+    }
+
+    .tm-dashboard-grid,
+    .tm-quick-grid {
       grid-template-columns: 1fr;
       gap: 10px;
     }
@@ -98,30 +193,45 @@
   <div class="tm-pro-header">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
-      <h1 class="tm-pro-title">Customer CRM</h1>
+      <h1 class="tm-pro-title">Command Center</h1>
       <p class="tm-pro-subtitle">
-        Internal customer and vehicle records.
+        What needs attention today: repairs, approvals, invoices, and follow-ups.
       </p>
     </div>
   </div>
 
-  <div class="tm-pro-grid">
-    <a class="tm-pro-card" href="/pro/customers">
-      <h3>Customers</h3>
-      <p>Search customers, create records, and manage saved vehicles.</p>
-    </a>
-    <a class="tm-pro-card" href="/pro/follow-ups">
-      <h3>Follow-Up Dashboard</h3>
-      <p>Review due soon, overdue, and future maintenance follow-up opportunities.</p>
-    </a>
-    <a class="tm-pro-card" href="/pro/approvals">
-      <h3>Approvals</h3>
-      <p>{{ pending_approvals_count or 0 }} pending approval request{% if (pending_approvals_count or 0) != 1 %}s{% endif %}.</p>
-    </a>
-    <a class="tm-pro-card" href="/pro/visual-references">
-      <h3>Visual References</h3>
-      <p>{{ visual_reference_count or 0 }} reference record{% if (visual_reference_count or 0) != 1 %}s{% endif %} for vehicle-specific service content.</p>
-    </a>
-  </div>
+  <section class="tm-quick-actions" aria-label="Quick actions">
+    <h2>Quick Actions</h2>
+    <div class="tm-quick-grid">
+      {% for action in dashboard.quick_actions %}
+      <a class="tm-quick-link" href="{{ action.href }}">{{ action.label }}</a>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% for section in dashboard.sections %}
+  {% set section_total = section.cards | sum(attribute='count') %}
+  <section class="tm-dashboard-section" aria-label="{{ section.title }}">
+    <div class="tm-dashboard-section-head">
+      <h2>{{ section.title }}</h2>
+      <div class="tm-dashboard-section-note">{{ section_total }} item{% if section_total != 1 %}s{% endif %}</div>
+    </div>
+
+    {% if section_total == 0 %}
+    <div class="tm-dashboard-empty">{{ section.empty }}</div>
+    {% endif %}
+
+    <div class="tm-dashboard-grid">
+      {% for card in section.cards %}
+      <a class="tm-pro-card" href="{{ card.href }}">
+        <h3>{{ card.title }}</h3>
+        <div class="tm-dashboard-count">{{ card.count }}</div>
+        <p>{{ card.helper }}</p>
+        <div class="tm-dashboard-action">{{ card.action_label }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
 </section>
 {% endblock %}

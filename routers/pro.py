@@ -6218,6 +6218,243 @@ def is_active_inspection_finding(record: dict[str, Any]) -> bool:
     return status in {"Open", "Approved", "Declined", "Deferred"} and repair_status != "completed"
 
 
+def dashboard_card(
+    title: str,
+    count: int,
+    helper: str,
+    href: str,
+    action_label: str,
+) -> dict[str, Any]:
+    return {
+        "title": title,
+        "count": count,
+        "helper": helper,
+        "href": href,
+        "action_label": action_label,
+    }
+
+
+def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
+    today = local_today()
+    ensure_customer_status_schema(conn)
+    ensure_repair_records_schema(conn)
+    ensure_findings_records_schema(conn)
+    ensure_discrepancy_approvals_schema(conn)
+    ensure_maintenance_records_schema(conn)
+    ensure_invoices_schema(conn)
+    ensure_repair_estimate_documents_schema(conn)
+
+    active_customers_clause = "COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'"
+    repair_counts = {
+        "open": 0,
+        "approved": 0,
+        "in_progress": 0,
+        "ready_to_complete": 0,
+        "not_invoiced": 0,
+        "already_invoiced": 0,
+        "recently_invoiced": 0,
+    }
+    repair_columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_records)").fetchall()}
+    repair_status_select = (
+        "rr.repair_work_status"
+        if "repair_work_status" in repair_columns
+        else "'' AS repair_work_status"
+    )
+    repair_rows = [
+        dict(row)
+        for row in conn.execute(
+            f"""
+            SELECT
+              rr.id,
+              rr.status,
+              {repair_status_select},
+              rr.completed_at,
+              CASE WHEN invoice_hits.repair_record_id IS NULL THEN 0 ELSE 1 END AS is_invoiced
+            FROM repair_records rr
+            JOIN customers c ON c.id = rr.customer_id
+            LEFT JOIN (
+              SELECT DISTINCT repair_record_id
+              FROM invoice_items
+              WHERE repair_record_id IS NOT NULL
+              UNION
+              SELECT repair_record_id
+              FROM invoices
+              WHERE repair_record_id IS NOT NULL
+            ) invoice_hits ON invoice_hits.repair_record_id = rr.id
+            WHERE {active_customers_clause}
+              AND COALESCE(rr.status, '') NOT IN ('Declined', 'Deleted', 'Denied')
+            """
+        ).fetchall()
+    ]
+    for repair in repair_rows:
+        status = repair.get("status") or "Open"
+        repair_status = str(repair.get("repair_work_status") or "").strip().lower().replace("-", "_")
+        is_invoiced = bool(repair.get("is_invoiced"))
+        if status == "Completed":
+            if is_invoiced:
+                repair_counts["already_invoiced"] += 1
+            else:
+                repair_counts["not_invoiced"] += 1
+            continue
+        repair_counts["open"] += 1
+        if repair_status == "in_progress":
+            repair_counts["in_progress"] += 1
+            repair_counts["ready_to_complete"] += 1
+        elif repair_status == "waiting_parts":
+            repair_counts["ready_to_complete"] += 1
+        else:
+            repair_counts["approved"] += 1
+
+    recent_invoice_cutoff = (today - timedelta(days=14)).isoformat()
+    repair_counts["recently_invoiced"] = int(
+        conn.execute(
+            f"""
+            SELECT COUNT(*) AS count
+            FROM invoices i
+            JOIN customers c ON c.id = i.customer_id
+            WHERE {active_customers_clause}
+              AND COALESCE(i.created_at, '') >= ?
+            """,
+            (recent_invoice_cutoff,),
+        ).fetchone()["count"]
+        or 0
+    )
+
+    finding_counts = {"open": 0, "estimate_ready": 0, "approved_not_converted": 0, "deferred_declined": 0}
+    finding_counts["open"] = int(
+        conn.execute(
+            f"""
+            SELECT COUNT(*) AS count
+            FROM findings_records fr
+            JOIN customers c ON c.id = fr.customer_id
+            WHERE {active_customers_clause}
+              AND COALESCE(fr.status, 'Open') = 'Open'
+            """
+        ).fetchone()["count"]
+        or 0
+    )
+    finding_counts["estimate_ready"] = int(
+        conn.execute(
+            f"""
+            SELECT COUNT(DISTINCT fr.id) AS count
+            FROM findings_records fr
+            JOIN customers c ON c.id = fr.customer_id
+            JOIN repair_estimate_documents red
+              ON red.finding_id = fr.id
+             AND red.customer_id = fr.customer_id
+             AND red.vehicle_id = fr.vehicle_id
+            WHERE {active_customers_clause}
+            """
+        ).fetchone()["count"]
+        or 0
+    )
+    finding_counts["approved_not_converted"] = int(
+        conn.execute(
+            f"""
+            SELECT COUNT(*) AS count
+            FROM findings_records fr
+            JOIN customers c ON c.id = fr.customer_id
+            WHERE {active_customers_clause}
+              AND COALESCE(fr.status, '') = 'Approved'
+              AND (fr.linked_repair_record_id IS NULL OR fr.linked_repair_record_id = 0)
+            """
+        ).fetchone()["count"]
+        or 0
+    )
+    finding_counts["deferred_declined"] = int(
+        conn.execute(
+            f"""
+            SELECT COUNT(*) AS count
+            FROM findings_records fr
+            JOIN customers c ON c.id = fr.customer_id
+            WHERE {active_customers_clause}
+              AND COALESCE(fr.status, '') IN ('Deferred', 'Declined')
+            """
+        ).fetchone()["count"]
+        or 0
+    )
+
+    maintenance_counts = {"overdue": 0, "due_soon": 0, "candidate": 0}
+    shop_name = load_shop_name(conn)
+    maintenance_rows = conn.execute(
+        f"""
+        SELECT
+          m.*,
+          c.first_name,
+          c.last_name,
+          c.phone,
+          c.email,
+          c.customer_status,
+          v.year AS vehicle_year,
+          v.make AS vehicle_make,
+          v.model AS vehicle_model,
+          v.mileage AS current_mileage,
+          ? AS shop_name
+        FROM maintenance_records m
+        JOIN customers c ON c.id = m.customer_id
+        JOIN customer_vehicles v ON v.id = m.vehicle_id
+        WHERE {active_customers_clause}
+        """,
+        (shop_name,),
+    ).fetchall()
+    for row in maintenance_rows:
+        status_key = build_follow_up_record(row, today).get("status_key")
+        if status_key in maintenance_counts:
+            maintenance_counts[status_key] += 1
+
+    sections = [
+        {
+            "title": "Active Work",
+            "empty": "No active repairs need attention right now.",
+            "cards": [
+                dashboard_card("Open Repairs", repair_counts["open"], "Active jobs not completed yet.", "/pro/customers", "Find Repair"),
+                dashboard_card("Approved Repairs", repair_counts["approved"], "Approved work ready to start.", "/pro/approvals", "Review Approvals"),
+                dashboard_card("In Progress Repairs", repair_counts["in_progress"], "Jobs currently being worked.", "/pro/customers", "Open Customers"),
+                dashboard_card("Ready to Complete", repair_counts["ready_to_complete"], "Started work ready for final checks.", "/pro/customers", "Open Work"),
+            ],
+        },
+        {
+            "title": "Estimate / Approval Follow-Up",
+            "empty": "No findings or approval follow-ups are waiting.",
+            "cards": [
+                dashboard_card("Open Findings", finding_counts["open"], "Findings still waiting on a decision.", "/pro/customers", "Review Findings"),
+                dashboard_card("Estimates Ready", finding_counts["estimate_ready"], "Saved estimate PDFs are available.", "/pro/customers", "Open Estimates"),
+                dashboard_card("Approved Not Converted", finding_counts["approved_not_converted"], "Approved findings without repair records.", "/pro/approvals", "Review Queue"),
+                dashboard_card("Deferred / Declined", finding_counts["deferred_declined"], "Customer decisions to revisit later.", "/pro/approvals", "Review Decisions"),
+            ],
+        },
+        {
+            "title": "Invoice Follow-Up",
+            "empty": "No invoice follow-up is needed right now.",
+            "cards": [
+                dashboard_card("Not Invoiced Repairs", repair_counts["not_invoiced"], "Completed repairs still need an invoice.", "/pro/customers", "Create Invoice"),
+                dashboard_card("Recently Invoiced", repair_counts["recently_invoiced"], "Invoices created in the last 14 days.", "/pro/customers", "View Customers"),
+                dashboard_card("Already Invoiced", repair_counts["already_invoiced"], "Completed jobs with final invoices.", "/pro/customers", "Open Invoices"),
+            ],
+        },
+        {
+            "title": "Maintenance Follow-Up",
+            "empty": "No maintenance follow-ups are due right now.",
+            "cards": [
+                dashboard_card("Overdue Maintenance", maintenance_counts["overdue"], "Past due by mileage or date.", "/pro/follow-ups", "View Follow-Ups"),
+                dashboard_card("Due Soon Maintenance", maintenance_counts["due_soon"], "Due within 30 days or 1,000 miles.", "/pro/follow-ups", "View Follow-Ups"),
+                dashboard_card("Candidate Maintenance", maintenance_counts["candidate"], "Possible outreach within 90 days or 3,000 miles.", "/pro/follow-ups", "View Candidates"),
+            ],
+        },
+    ]
+
+    return {
+        "sections": sections,
+        "quick_actions": [
+            {"label": "Add Customer", "href": "/pro/customers#add-customer"},
+            {"label": "View Customers", "href": "/pro/customers"},
+            {"label": "Start Estimate", "href": "/estimator"},
+            {"label": "Add Finding / Recommended Work", "href": "/pro/customers"},
+            {"label": "View Maintenance Follow-Ups", "href": "/pro/follow-ups"},
+        ],
+    }
+
+
 def load_customer_vehicle(
     conn: sqlite3.Connection, customer_id: int, vehicle_id: int
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -6246,22 +6483,7 @@ def load_customer_vehicle(
 def pro_dashboard(request: Request):
     conn = crm_db_conn()
     try:
-        ensure_customer_status_schema(conn)
-        ensure_discrepancy_approvals_schema(conn)
-        ensure_visual_reference_schema(conn)
-        pending_approvals_count = conn.execute(
-            """
-            SELECT COUNT(*) AS count
-            FROM discrepancy_approvals
-            WHERE customer_decision = 'pending'
-            """
-        ).fetchone()["count"]
-        visual_reference_count = conn.execute(
-            """
-            SELECT COUNT(*) AS count
-            FROM visual_reference_records
-            """
-        ).fetchone()["count"]
+        dashboard = build_pro_dashboard_summary(conn)
     finally:
         conn.close()
 
@@ -6269,8 +6491,7 @@ def pro_dashboard(request: Request):
         "pro/dashboard.html",
         {
             "request": request,
-            "pending_approvals_count": pending_approvals_count,
-            "visual_reference_count": visual_reference_count,
+            "dashboard": dashboard,
         },
     )
 
