@@ -513,6 +513,11 @@
     function positionCard(card, target, tourId = "") {
       const isProTour = tourId === "pro";
       const isMobile = window.matchMedia("(max-width: 640px)").matches;
+      const isProWelcomeTarget =
+        isProTour &&
+        isMobile &&
+        target.matches &&
+        target.matches('[data-tour-target="pro-dashboard"]');
       const margin = isProTour && isMobile ? 20 : 16;
       const gap = 18;
       const targetRect = target.getBoundingClientRect();
@@ -527,7 +532,10 @@
       let placement = "below";
       let top;
 
-      if (fitsBelow && (!fitsAbove || targetCenterY < viewportHeight * 0.55)) {
+      if (isProWelcomeTarget && fitsBelow) {
+        top = targetRect.bottom + gap;
+        placement = "below";
+      } else if (fitsBelow && (!fitsAbove || targetCenterY < viewportHeight * 0.55)) {
         top = targetRect.bottom + gap;
         placement = "below";
       } else if (fitsAbove) {
