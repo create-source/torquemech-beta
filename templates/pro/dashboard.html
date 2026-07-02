@@ -470,6 +470,256 @@
       line-height: 1.05;
     }
   }
+
+  /* Module 7C: Pro dashboard command-center polish */
+  .tm-pro-shell {
+    gap: 18px;
+  }
+
+  .tm-pro-header {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 10px;
+    background:
+      linear-gradient(135deg, #08111f, #0f2741 54%, #0f766e);
+    color: #fff;
+    padding: 18px;
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
+  }
+
+  .tm-pro-header .tm-pro-eyebrow,
+  .tm-pro-header .tm-pro-title,
+  .tm-pro-header .tm-pro-subtitle {
+    color: #fff;
+  }
+
+  .tm-pro-header .tm-pro-subtitle {
+    color: #dbeafe;
+  }
+
+  .tm-pro-welcome {
+    border-radius: 10px;
+    border-color: rgba(14, 116, 144, 0.22);
+    background:
+      linear-gradient(135deg, rgba(236, 254, 255, 0.96), rgba(255, 255, 255, 0.98) 48%, rgba(240, 253, 250, 0.94));
+    padding: 18px;
+  }
+
+  .tm-pro-welcome-main {
+    grid-template-columns: 1fr;
+  }
+
+  .tm-pro-welcome h2 {
+    max-width: 820px;
+    font-size: clamp(1.55rem, 3vw, 2.25rem);
+  }
+
+  .tm-pro-welcome p {
+    max-width: 860px;
+  }
+
+  .tm-pro-welcome-support {
+    color: #0f172a !important;
+    font-weight: 900;
+  }
+
+  .tm-pro-flow-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 2px;
+  }
+
+  .tm-pro-flow-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: #0f172a;
+    font-size: 0.84rem;
+    font-weight: 900;
+    padding: 7px 10px;
+    white-space: nowrap;
+  }
+
+  .tm-pro-flow-step::after {
+    content: "->";
+    color: #0f766e;
+    font-weight: 900;
+  }
+
+  .tm-pro-flow-step:last-child::after {
+    content: "";
+  }
+
+  .tm-pro-welcome-actions {
+    margin-top: 4px;
+  }
+
+  .tm-pro-welcome-dismiss {
+    background: #fff;
+  }
+
+  .tm-quick-actions,
+  .tm-dashboard-section {
+    border-radius: 10px;
+  }
+
+  .tm-quick-actions h2,
+  .tm-dashboard-section h2 {
+    font-size: 1.18rem;
+  }
+
+  .tm-quick-actions__note {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 0.92rem;
+    font-weight: 800;
+  }
+
+  .tm-quick-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .tm-quick-link {
+    background: #0f172a;
+    border-color: rgba(15, 23, 42, 0.18);
+    color: #fff;
+  }
+
+  .tm-quick-link:hover {
+    background: #0f766e;
+    color: #fff;
+  }
+
+  .tm-pro-card {
+    border-left: 0;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .tm-pro-card--overview {
+    min-height: 170px;
+  }
+
+  .tm-pro-card h3 {
+    font-size: 1rem;
+  }
+
+  .tm-dashboard-count {
+    color: #0e7490;
+    font-size: 2.1rem;
+  }
+
+  .tm-dashboard-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-height: 34px;
+    border-radius: 8px;
+    background: #ecfeff;
+    color: #155e75;
+    padding: 7px 10px;
+  }
+
+  .tm-work-summary {
+    gap: 10px;
+  }
+
+  .tm-work-group {
+    border-radius: 10px;
+  }
+
+  .tm-work-group-summary {
+    background: #fff;
+  }
+
+  .tm-work-group-count {
+    background: #0f172a;
+    color: #fff;
+  }
+
+  .tm-work-group:first-child .tm-work-group-count {
+    background: #0e7490;
+  }
+
+  @media (max-width: 900px) {
+    .tm-quick-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .tm-pro-header {
+      padding: 16px;
+    }
+
+    .tm-pro-welcome {
+      padding: 10px;
+    }
+
+    .tm-pro-welcome-copy {
+      gap: 7px;
+    }
+
+    .tm-pro-welcome-badge {
+      font-size: 0.68rem;
+      padding: 4px 7px;
+    }
+
+    .tm-pro-welcome h2 {
+      font-size: 1.16rem;
+      line-height: 1.12;
+    }
+
+    .tm-pro-welcome p {
+      font-size: 0.84rem;
+      line-height: 1.3;
+    }
+
+    .tm-pro-welcome-support {
+      font-size: 0.8rem !important;
+      line-height: 1.26 !important;
+    }
+
+    .tm-pro-flow-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tm-pro-flow-step {
+      justify-content: center;
+      width: auto;
+      box-sizing: border-box;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      padding: 4px 6px;
+      white-space: nowrap;
+    }
+
+    .tm-pro-flow-step::after {
+      content: "";
+    }
+
+    .tm-quick-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-quick-link,
+    .tm-dashboard-action {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .tm-dashboard-count {
+      font-size: 1.9rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -480,7 +730,7 @@
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">Command Center</h1>
       <p class="tm-pro-subtitle">
-        What needs attention today: repairs, approvals, invoices, and follow-ups.
+        See what needs attention today: active repairs, approvals, invoices, maintenance follow-ups, and customer work.
       </p>
     </div>
   </div>
@@ -493,65 +743,58 @@
   <section class="tm-pro-welcome" aria-label="Welcome to TorqueMech Pro" data-pro-welcome data-tour-target="pro-dashboard">
     <div class="tm-pro-welcome-main">
       <div class="tm-pro-welcome-copy">
-        <div class="tm-pro-welcome-badge">TorqueMech Pro</div>
-        <h2>Welcome to TorqueMech Pro</h2>
+        <div class="tm-pro-welcome-badge">TORQUEMECH PRO</div>
+        <h2>Your mobile mechanic command center.</h2>
         <p>
-          Run your repair workflow from one place: customers, vehicles, estimates, approvals,
-          repairs, invoices, maintenance follow-ups, and vehicle history.
+          Manage customers, vehicles, estimates, approvals, active repairs, invoices, maintenance follow-ups,
+          and vehicle history from one organized workspace.
         </p>
-        <p class="tm-pro-first-step">Recommended first step: add your first customer and vehicle.</p>
+        <p class="tm-pro-welcome-support">Start with the customer. Build the estimate. Get approval. Complete the repair. Keep the history.</p>
+        <div class="tm-pro-flow-row" aria-label="TorqueMech Pro workflow">
+          <span class="tm-pro-flow-step">Customer</span>
+          <span class="tm-pro-flow-step">Vehicle</span>
+          <span class="tm-pro-flow-step">Estimate</span>
+          <span class="tm-pro-flow-step">Approval</span>
+          <span class="tm-pro-flow-step">Repair</span>
+          <span class="tm-pro-flow-step">Invoice</span>
+          <span class="tm-pro-flow-step">History</span>
+        </div>
         <div class="tm-pro-welcome-actions" aria-label="Welcome actions">
-          <a class="tm-pro-welcome-action" href="/pro/customers?mode=add#add-customer" data-tour-target="pro-add-customer">Add Customer</a>
-          <button class="tm-pro-welcome-secondary" type="button" data-pro-view-workflow>View Workflow</button>
           <button class="tm-pro-welcome-dismiss" type="button" data-pro-welcome-dismiss>Got it</button>
         </div>
       </div>
     </div>
-
-    <details class="tm-pro-workflow" id="tm-pro-workflow" open>
-      <summary>
-        <span>How TorqueMech Works</span>
-        <span class="tm-pro-workflow-indicator" aria-hidden="true"></span>
-      </summary>
-      <div class="tm-pro-workflow-list">
-        <div class="tm-pro-workflow-step">
-          <span>1</span>
-          <strong>Customer & Vehicle</strong>
-          <p>Create the customer profile and vehicle record.</p>
-        </div>
-        <div class="tm-pro-workflow-step">
-          <span>2</span>
-          <strong>Estimate or Finding</strong>
-          <p>Build a quote or document recommended work.</p>
-        </div>
-        <div class="tm-pro-workflow-step">
-          <span>3</span>
-          <strong>Approval</strong>
-          <p>Track what the customer approved, declined, or deferred.</p>
-        </div>
-        <div class="tm-pro-workflow-step">
-          <span>4</span>
-          <strong>Repair Workspace</strong>
-          <p>Manage active work, photos, parts, and repair progress.</p>
-        </div>
-        <div class="tm-pro-workflow-step">
-          <span>5</span>
-          <strong>Invoice & History</strong>
-          <p>Create the final invoice and save work to vehicle history.</p>
-        </div>
-      </div>
-    </details>
   </section>
 
   <section class="tm-quick-actions" aria-label="Quick actions" data-tour-target="pro-quick-actions">
-    <h2>Quick Actions</h2>
+    <h2>Fast Actions</h2>
+    <p class="tm-quick-actions__note">The main moves for starting or continuing shop work.</p>
     <div class="tm-quick-grid">
       {% for action in dashboard.quick_actions %}
       <a
         class="tm-quick-link"
         href="{% if action.label == 'Add Customer' %}/pro/customers?mode=add#add-customer{% else %}{{ action.href }}{% endif %}"
-        {% if action.label == 'Add Customer' %}data-tour-target="pro-add-customer"{% elif action.label == 'Start Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'Add Finding / Recommended Work' %}data-tour-target="pro-approval"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
+        {% if action.label == 'Add Customer' %}data-tour-target="pro-add-customer"{% elif action.label == 'Create Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'View Active Jobs' %}data-tour-target="pro-approval"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
       >{{ action.label }}</a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="tm-dashboard-section" aria-label="Command Center Overview">
+    <div class="tm-dashboard-section-head">
+      <div>
+        <h2>Command Center Overview</h2>
+        <div class="tm-dashboard-section-note">Customers, vehicles, jobs, quotes, invoices, and follow-ups at a glance.</div>
+      </div>
+    </div>
+    <div class="tm-dashboard-grid">
+      {% for card in dashboard.overview_cards %}
+      <a class="tm-pro-card tm-pro-card--overview" href="{{ card.href }}">
+        <h3>{{ card.title }}</h3>
+        <div class="tm-dashboard-count">{{ card.count }}</div>
+        <p>{{ card.helper }}</p>
+        <div class="tm-dashboard-action">{{ card.action_label }}</div>
+      </a>
       {% endfor %}
     </div>
   </section>
@@ -560,9 +803,12 @@
   {% for section in dashboard.sections %}
     {% set summary_total.count = summary_total.count + (section.cards | sum(attribute='count')) %}
   {% endfor %}
-  <section class="tm-dashboard-section" aria-label="Work Summary" data-tour-target="pro-work-summary">
+  <section class="tm-dashboard-section" aria-label="Today's Attention" data-tour-target="pro-work-summary">
     <div class="tm-dashboard-section-head">
-      <h2>Work Summary</h2>
+      <div>
+        <h2>Today's Attention</h2>
+        <div class="tm-dashboard-section-note">Work Queue groups active jobs and follow-ups so the dashboard stays calm.</div>
+      </div>
       <div class="tm-dashboard-section-note">{{ summary_total.count }} item{% if summary_total.count != 1 %}s{% endif %}</div>
     </div>
 
