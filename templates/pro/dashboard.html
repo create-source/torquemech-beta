@@ -764,6 +764,11 @@
     .tm-dashboard-count {
       font-size: 1.9rem;
     }
+
+    .tm-dashboard-section[data-overview-collapsed="true"] .tm-dashboard-section-note,
+    .tm-dashboard-section[data-overview-collapsed="true"] .tm-overview-summary {
+      display: none;
+    }
   }
 </style>
 {% endblock %}
@@ -900,29 +905,12 @@
 
 <script>
   (function () {
-    var overviewStorageKey = "tmProOverviewCollapsed";
     var overview = document.querySelector("[data-pro-overview]");
     var overviewToggle = document.querySelector("[data-pro-overview-toggle]");
     var overviewCards = document.querySelector("[data-pro-overview-cards]");
     var overviewLabel = document.querySelector("[data-pro-overview-toggle-label]");
 
-    function storedOverviewCollapsed() {
-      try {
-        return localStorage.getItem(overviewStorageKey);
-      } catch (error) {
-        return null;
-      }
-    }
-
-    function rememberOverviewCollapsed(isCollapsed) {
-      try {
-        localStorage.setItem(overviewStorageKey, isCollapsed ? "true" : "false");
-      } catch (error) {
-        return;
-      }
-    }
-
-    function setOverviewCollapsed(isCollapsed, shouldRemember) {
+    function setOverviewCollapsed(isCollapsed) {
       if (!overview || !overviewToggle || !overviewCards) return;
       overview.dataset.overviewCollapsed = isCollapsed ? "true" : "false";
       overviewToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
@@ -930,16 +918,13 @@
       if (overviewLabel) {
         overviewLabel.textContent = isCollapsed ? "Open" : "Close";
       }
-      if (shouldRemember) {
-        rememberOverviewCollapsed(isCollapsed);
-      }
     }
 
     if (overview && overviewToggle && overviewCards) {
-      setOverviewCollapsed(storedOverviewCollapsed() !== "false", false);
+      setOverviewCollapsed(true);
       overviewToggle.addEventListener("click", function () {
         var isCollapsed = overview.dataset.overviewCollapsed === "true";
-        setOverviewCollapsed(!isCollapsed, true);
+        setOverviewCollapsed(!isCollapsed);
       });
     }
 
