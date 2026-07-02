@@ -6245,27 +6245,6 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
     ensure_repair_estimate_documents_schema(conn)
 
     active_customers_clause = "COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'"
-    customer_count = int(
-        conn.execute(
-            f"""
-            SELECT COUNT(*) AS count
-            FROM customers c
-            WHERE {active_customers_clause}
-            """
-        ).fetchone()["count"]
-        or 0
-    )
-    vehicle_count = int(
-        conn.execute(
-            f"""
-            SELECT COUNT(*) AS count
-            FROM customer_vehicles v
-            JOIN customers c ON c.id = v.customer_id
-            WHERE {active_customers_clause}
-            """
-        ).fetchone()["count"]
-        or 0
-    )
     repair_counts = {
         "open": 0,
         "approved": 0,
@@ -6471,14 +6450,6 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
 
     return {
         "sections": sections,
-        "overview_cards": [
-            dashboard_card("Customers", customer_count, "Active customer records in your Pro workspace.", "/pro/customers", "View Customers"),
-            dashboard_card("Vehicles", vehicle_count, "Customer vehicles connected to repair history.", "/pro/customers", "Open Vehicles"),
-            dashboard_card("Active Work", active_work_total, "Open, approved, and in-progress jobs to keep moving.", "/pro/customers", "View Active Jobs"),
-            dashboard_card("Estimates / Approvals", estimate_approval_total, "Quotes, findings, and decisions waiting on next steps.", "/pro/approvals", "Review Approvals"),
-            dashboard_card("Invoices", invoice_total, "Completed work and invoice follow-up activity.", "/pro/customers", "Open Invoices"),
-            dashboard_card("Maintenance Follow-Up", maintenance_total, "Maintenance due, due soon, or ready for outreach.", "/pro/follow-ups", "View Follow-Ups"),
-        ],
         "attention_total": attention_total,
         "quick_actions": [
             {"label": "Add Customer", "href": "/pro/customers#add-customer"},
