@@ -222,9 +222,11 @@
   }
 
   .tm-dashboard-section h2,
+  .tm-overview-title,
   .tm-quick-actions h2 {
     margin: 0;
     color: #0f172a;
+    display: block;
     font-size: 1.1rem;
     font-weight: 900;
     line-height: 1.2;
@@ -234,6 +236,67 @@
     color: #64748b;
     font-size: 0.9rem;
     font-weight: 800;
+  }
+
+  .tm-overview-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-align: left;
+  }
+
+  .tm-overview-toggle__copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .tm-overview-toggle__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f766e;
+    font-size: 0.88rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .tm-overview-chevron {
+    display: inline-block;
+    color: #0f766e;
+    font-size: 1.05rem;
+    line-height: 1;
+    transform: rotate(180deg);
+    transition: transform 150ms ease;
+  }
+
+  .tm-overview-chevron::before {
+    content: "^";
+  }
+
+  .tm-dashboard-section[data-overview-collapsed="true"] .tm-overview-chevron {
+    transform: rotate(0deg);
+  }
+
+  .tm-overview-summary {
+    color: #475569;
+    font-size: 0.92rem;
+    font-weight: 800;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-overview-cards[hidden],
+  .tm-dashboard-section[data-overview-collapsed="false"] .tm-overview-summary {
+    display: none;
   }
 
   .tm-work-summary {
@@ -780,14 +843,25 @@
     </div>
   </section>
 
-  <section class="tm-dashboard-section" aria-label="Command Center Overview">
+  <section class="tm-dashboard-section" aria-label="Command Center Overview" data-pro-overview data-overview-collapsed="true">
     <div class="tm-dashboard-section-head">
-      <div>
-        <h2>Command Center Overview</h2>
-        <div class="tm-dashboard-section-note">Customers, vehicles, jobs, quotes, invoices, and follow-ups at a glance.</div>
-      </div>
+      <button class="tm-overview-toggle" type="button" aria-expanded="false" aria-controls="tm-pro-overview-cards" data-pro-overview-toggle>
+        <span class="tm-overview-toggle__copy">
+          <span class="tm-overview-title">Command Center Overview</span>
+          <span class="tm-dashboard-section-note">Customers, vehicles, jobs, quotes, invoices, and follow-ups at a glance.</span>
+        </span>
+        <span class="tm-overview-toggle__meta">
+          <span data-pro-overview-toggle-label>Open</span>
+          <span class="tm-overview-chevron" aria-hidden="true"></span>
+        </span>
+      </button>
     </div>
-    <div class="tm-dashboard-grid">
+    <div class="tm-overview-summary" data-pro-overview-summary>
+      {% for card in dashboard.overview_cards %}
+        {{ card.title | replace('Estimates / Approvals', 'Approvals') }} {{ card.count }}{% if not loop.last %} · {% endif %}
+      {% endfor %}
+    </div>
+    <div class="tm-dashboard-grid tm-overview-cards" id="tm-pro-overview-cards" data-pro-overview-cards hidden>
       {% for card in dashboard.overview_cards %}
       <a class="tm-pro-card tm-pro-card--overview" href="{{ card.href }}">
         <h3>{{ card.title }}</h3>
@@ -845,6 +919,49 @@
 
 <script>
   (function () {
+    var overviewStorageKey = "tmProOverviewCollapsed";
+    var overview = document.querySelector("[data-pro-overview]");
+    var overviewToggle = document.querySelector("[data-pro-overview-toggle]");
+    var overviewCards = document.querySelector("[data-pro-overview-cards]");
+    var overviewLabel = document.querySelector("[data-pro-overview-toggle-label]");
+
+    function storedOverviewCollapsed() {
+      try {
+        return localStorage.getItem(overviewStorageKey);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function rememberOverviewCollapsed(isCollapsed) {
+      try {
+        localStorage.setItem(overviewStorageKey, isCollapsed ? "true" : "false");
+      } catch (error) {
+        return;
+      }
+    }
+
+    function setOverviewCollapsed(isCollapsed, shouldRemember) {
+      if (!overview || !overviewToggle || !overviewCards) return;
+      overview.dataset.overviewCollapsed = isCollapsed ? "true" : "false";
+      overviewToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      overviewCards.hidden = isCollapsed;
+      if (overviewLabel) {
+        overviewLabel.textContent = isCollapsed ? "Open" : "Close";
+      }
+      if (shouldRemember) {
+        rememberOverviewCollapsed(isCollapsed);
+      }
+    }
+
+    if (overview && overviewToggle && overviewCards) {
+      setOverviewCollapsed(storedOverviewCollapsed() !== "false", false);
+      overviewToggle.addEventListener("click", function () {
+        var isCollapsed = overview.dataset.overviewCollapsed === "true";
+        setOverviewCollapsed(!isCollapsed, true);
+      });
+    }
+
     var storageKey = "torquemechProWelcomeDismissed";
     var welcome = document.querySelector("[data-pro-welcome]");
     var dismiss = document.querySelector("[data-pro-welcome-dismiss]");
