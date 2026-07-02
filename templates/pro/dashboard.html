@@ -752,8 +752,8 @@
       {% for action in dashboard.quick_actions %}
       <a
         class="tm-quick-link"
-        href="{% if action.label == 'Add Customer' %}/pro/customers?mode=add#add-customer{% else %}{{ action.href }}{% endif %}"
-        {% if action.label == 'Add Customer' %}data-tour-target="pro-add-customer"{% elif action.label == 'Create Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'View Active Jobs' %}data-tour-target="pro-approval"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
+        href="{{ action.href }}"
+        {% if action.label == 'Add Customer' %}data-tour-target="pro-add-customer"{% elif action.label == 'Create Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
       >{{ action.label }}</a>
       {% endfor %}
     </div>
@@ -763,7 +763,7 @@
   {% for section in dashboard.sections %}
     {% set summary_total.count = summary_total.count + (section.cards | sum(attribute='count')) %}
   {% endfor %}
-  <section class="tm-dashboard-section" aria-label="Today's Attention" data-tour-target="pro-work-summary">
+  <section class="tm-dashboard-section" aria-label="Today's Attention" data-tour-target="pro-work-summary" data-tour-target-pro-approval>
     <div class="tm-dashboard-section-head">
       <div>
         <h2>Today's Attention</h2>

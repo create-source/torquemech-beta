@@ -6407,10 +6407,10 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
             "title": "Active Work",
             "empty": "No active repairs need attention right now.",
             "cards": [
-                dashboard_card("Open Repairs", repair_counts["open"], "Active jobs not completed yet.", "/pro/customers", "Find Repair"),
+                dashboard_card("Open Repairs", repair_counts["open"], "Active jobs not completed yet.", "/pro/customers#customer-list", "Find Repair"),
                 dashboard_card("Approved Repairs", repair_counts["approved"], "Approved work ready to start.", "/pro/approvals", "Review Approvals"),
-                dashboard_card("In Progress Repairs", repair_counts["in_progress"], "Jobs currently being worked.", "/pro/customers", "Open Customers"),
-                dashboard_card("Ready to Complete", repair_counts["ready_to_complete"], "Started work ready for final checks.", "/pro/customers", "Open Work"),
+                dashboard_card("In Progress Repairs", repair_counts["in_progress"], "Jobs currently being worked.", "/pro/customers#customer-list", "View Active Jobs"),
+                dashboard_card("Ready to Complete", repair_counts["ready_to_complete"], "Started work ready for final checks.", "/pro/customers#customer-list", "Complete Repairs"),
             ],
         },
         {
@@ -6427,18 +6427,18 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
             "title": "Invoice Follow-Up",
             "empty": "No invoice follow-up is needed right now.",
             "cards": [
-                dashboard_card("Not Invoiced Repairs", repair_counts["not_invoiced"], "Completed repairs still need an invoice.", "/pro/customers", "Create Invoice"),
-                dashboard_card("Recently Invoiced", repair_counts["recently_invoiced"], "Invoices created in the last 14 days.", "/pro/customers", "View Customers"),
-                dashboard_card("Already Invoiced", repair_counts["already_invoiced"], "Completed jobs with final invoices.", "/pro/customers", "Open Invoices"),
+                dashboard_card("Not Invoiced Repairs", repair_counts["not_invoiced"], "Completed repairs still need an invoice.", "/pro/customers#customer-list", "Create Invoice"),
+                dashboard_card("Recently Invoiced", repair_counts["recently_invoiced"], "Invoices created in the last 14 days.", "/pro/customers#customer-list", "View Invoices"),
+                dashboard_card("Already Invoiced", repair_counts["already_invoiced"], "Completed jobs with final invoices.", "/pro/customers#customer-list", "View Invoices"),
             ],
         },
         {
             "title": "Maintenance Follow-Up",
             "empty": "No maintenance follow-ups are due right now.",
             "cards": [
-                dashboard_card("Overdue Maintenance", maintenance_counts["overdue"], "Past due by mileage or date.", "/pro/follow-ups", "View Follow-Ups"),
-                dashboard_card("Due Soon Maintenance", maintenance_counts["due_soon"], "Due within 30 days or 1,000 miles.", "/pro/follow-ups", "View Follow-Ups"),
-                dashboard_card("Candidate Maintenance", maintenance_counts["candidate"], "Possible outreach within 90 days or 3,000 miles.", "/pro/follow-ups", "View Candidates"),
+                dashboard_card("Overdue Maintenance", maintenance_counts["overdue"], "Past due by mileage or date.", "/pro/follow-ups", "View Maintenance"),
+                dashboard_card("Due Soon Maintenance", maintenance_counts["due_soon"], "Due within 30 days or 1,000 miles.", "/pro/follow-ups", "View Maintenance"),
+                dashboard_card("Candidate Maintenance", maintenance_counts["candidate"], "Possible outreach within 90 days or 3,000 miles.", "/pro/follow-ups", "View Maintenance"),
             ],
         },
     ]
@@ -6452,10 +6452,10 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
         "sections": sections,
         "attention_total": attention_total,
         "quick_actions": [
-            {"label": "Add Customer", "href": "/pro/customers#add-customer"},
+            {"label": "Add Customer", "href": "/pro/customers?mode=add#add-customer"},
             {"label": "View Customers", "href": "/pro/customers"},
             {"label": "Create Estimate", "href": "/estimator"},
-            {"label": "View Active Jobs", "href": "/pro/customers"},
+            {"label": "View Active Jobs", "href": "/pro/customers#customer-list"},
         ],
     }
 

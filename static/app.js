@@ -157,7 +157,7 @@
           {
             title: "Track approval",
             body: "Mark work as Open, Approved, Declined, Deferred, or Completed so nothing gets lost.",
-            selectors: ['[data-tour-target="pro-approval"]', "[data-finding-status-form]", ".tm-approval-list", ".tm-findings-status-card"],
+            selectors: ["[data-tour-target-pro-approval]", "[data-finding-status-form]", ".tm-approval-list", ".tm-findings-status-card"],
           },
           {
             title: "Convert to Pro Job",
