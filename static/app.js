@@ -135,7 +135,7 @@
         label: "Restart Pro Tour",
         steps: [
           {
-            title: "Welcome to TorqueMech Pro",
+            title: "Welcome to TorqueMech",
             body: "This is your command center for running repair work from first customer contact to final invoice. Track the customer, vehicle, estimate, approval, repair, and history without entering the same information twice.",
             selectors: ['[data-tour-target="pro-dashboard"]', ".tm-pro-header", ".tm-pro-shell"],
           },
