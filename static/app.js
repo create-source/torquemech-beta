@@ -480,8 +480,40 @@
       }
     }
 
-    function positionCard(card, target) {
-      const margin = 16;
+    function getTourHeaderHeight() {
+      const header = document.querySelector(".tm-nav");
+      if (!header) return 0;
+      const style = window.getComputedStyle(header);
+      if (style.position !== "fixed" && style.position !== "sticky") return 0;
+      const rect = header.getBoundingClientRect();
+      if (rect.bottom <= 0 || rect.top > 8) return 0;
+      return rect.height;
+    }
+
+    function getTourScrollOffset() {
+      const isMobile = window.matchMedia("(max-width: 640px)").matches;
+      const headerHeight = getTourHeaderHeight();
+      const breathingRoom = isMobile ? 24 : 18;
+      const preferredOffset = isMobile ? 148 : 128;
+      return Math.max(preferredOffset, headerHeight + breathingRoom);
+    }
+
+    function scrollTourTargetIntoView(target, behavior = "smooth", tourId = "") {
+      if (!target) return;
+      if (tourId !== "pro") {
+        target.scrollIntoView({ behavior, block: "center", inline: "nearest" });
+        return;
+      }
+      const targetTop = target.getBoundingClientRect().top + window.scrollY;
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const top = Math.max(0, Math.min(targetTop - getTourScrollOffset(), maxScroll));
+      window.scrollTo({ top, behavior });
+    }
+
+    function positionCard(card, target, tourId = "") {
+      const isProTour = tourId === "pro";
+      const isMobile = window.matchMedia("(max-width: 640px)").matches;
+      const margin = isProTour && isMobile ? 20 : 16;
       const gap = 18;
       const targetRect = target.getBoundingClientRect();
       const cardRect = card.getBoundingClientRect();
@@ -505,7 +537,9 @@
         top = targetRect.bottom + gap;
         placement = "below";
       } else {
-        top = viewportHeight - cardRect.height - margin;
+        top = isProTour && isMobile
+          ? Math.min(targetRect.top + gap, viewportHeight - cardRect.height - margin)
+          : viewportHeight - cardRect.height - margin;
         placement = "sheet";
       }
 
@@ -536,14 +570,21 @@
       const skipControls = root.querySelectorAll("[data-tm-tour-skip]");
       let index = 0;
       let activeTarget = null;
+      let scrollTimer = null;
 
       function finish() {
         if (activeTarget) activeTarget.classList.remove("tm-tour-highlight");
         root.hidden = true;
         document.body.classList.remove("tm-tour-active");
         storage.set(tourStorageKey(tourId), "complete");
-        window.removeEventListener("resize", render);
-        window.removeEventListener("scroll", render, true);
+        if (scrollTimer) window.clearTimeout(scrollTimer);
+        window.removeEventListener("resize", reposition);
+        window.removeEventListener("scroll", reposition, true);
+      }
+
+      function reposition() {
+        if (root.hidden || !activeTarget) return;
+        positionCard(card, activeTarget, tourId);
       }
 
       function render() {
@@ -555,7 +596,7 @@
         if (activeTarget) activeTarget.classList.remove("tm-tour-highlight");
         activeTarget = step.target;
         activeTarget.classList.add("tm-tour-highlight");
-        activeTarget.scrollIntoView({ behavior: options.instant ? "auto" : "smooth", block: "center", inline: "nearest" });
+        scrollTourTargetIntoView(activeTarget, options.instant ? "auto" : "smooth", tourId);
 
         window.setTimeout(() => {
           title.textContent = step.title;
@@ -565,8 +606,10 @@
           next.textContent = index === steps.length - 1 ? "Finish" : "Next";
           root.hidden = false;
           document.body.classList.add("tm-tour-active");
-          positionCard(card, activeTarget);
+          positionCard(card, activeTarget, tourId);
         }, options.instant ? 0 : 120);
+        if (scrollTimer) window.clearTimeout(scrollTimer);
+        scrollTimer = window.setTimeout(reposition, options.instant ? 0 : 360);
       }
 
       next.onclick = () => {
@@ -585,8 +628,8 @@
       skipControls.forEach((control) => {
         control.onclick = finish;
       });
-      window.addEventListener("resize", render);
-      window.addEventListener("scroll", render, true);
+      window.addEventListener("resize", reposition);
+      window.addEventListener("scroll", reposition, true);
       render();
     }
 
