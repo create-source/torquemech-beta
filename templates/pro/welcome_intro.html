@@ -203,11 +203,11 @@
     position: absolute;
     top: 0;
     left: 50%;
-    width: 5px;
+    width: 6px;
     height: 69px;
     transform: translateX(-50%);
     background:
-      linear-gradient(90deg, transparent 0 1px, rgba(241, 245, 249, 0.62) 1px 2px, rgba(100, 116, 139, 0.52) 2px 3px, transparent 3px 5px);
+      linear-gradient(90deg, transparent 0 1px, rgba(241, 245, 249, 0.58) 1px 3px, rgba(100, 116, 139, 0.5) 3px 5px, transparent 5px 6px);
     border-radius: 999px;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
   }
@@ -268,9 +268,20 @@
     margin: 184px auto 20px;
   }
 
+  .tm-pro-workflow-card::before {
+    content: "";
+    position: absolute;
+    top: 26px;
+    bottom: 26px;
+    left: 20px;
+    width: 1px;
+    background: linear-gradient(180deg, rgba(249, 115, 22, 0.18), rgba(249, 115, 22, 0.44), rgba(148, 163, 184, 0.16));
+  }
+
   .tm-pro-flow-pill {
+    position: relative;
     display: grid;
-    grid-template-columns: 12px minmax(0, 1fr) auto;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
     gap: 12px;
     align-items: center;
     min-height: 58px;
@@ -283,6 +294,8 @@
     opacity: 0;
     transform: translateY(12px);
     animation: tmCardIn 520ms ease-out both;
+    cursor: default;
+    pointer-events: none;
   }
 
   .tm-pro-flow-pill:nth-child(1) { animation-delay: 620ms; }
@@ -292,11 +305,14 @@
   .tm-pro-flow-pill:nth-child(5) { animation-delay: 1020ms; }
 
   .tm-pro-flow-dot {
-    width: 10px;
-    height: 10px;
+    position: relative;
+    z-index: 1;
+    width: 11px;
+    height: 11px;
     border-radius: 999px;
     background: var(--tm-pro-orange);
-    box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.12);
+    border: 2px solid rgba(15, 23, 42, 0.95);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12), 0 0 14px rgba(249, 115, 22, 0.22);
   }
 
   .tm-pro-flow-pill strong {
@@ -667,36 +683,59 @@
     padding-bottom: 34px;
   }
 
-  .tm-pro-step-grid {
+  .tm-pro-step-carousel {
     position: relative;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
+    padding: 4px 0 4px;
   }
 
-  .tm-pro-step-grid::before {
-    content: "";
-    position: absolute;
-    top: 30px;
-    left: 8%;
-    right: 8%;
-    height: 2px;
-    background: linear-gradient(90deg, rgba(249, 115, 22, 0.18), rgba(249, 115, 22, 0.68), rgba(148, 163, 184, 0.18));
+  .tm-pro-step-carousel .tm-pro-carousel-track {
+    padding-top: 22px;
+    padding-bottom: 22px;
   }
 
-  .tm-pro-step {
+  .tm-pro-step-slide {
+    flex-basis: min(460px, 70%);
+  }
+
+  .tm-pro-step-card {
     position: relative;
     z-index: 1;
     display: grid;
-    gap: 8px;
+    min-height: 220px;
+    gap: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-top: 3px solid var(--tm-pro-orange);
-    border-radius: 10px;
+    border-radius: 14px;
     background:
-      radial-gradient(circle at 20% 0%, rgba(249, 115, 22, 0.1), transparent 12rem),
-      linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.82));
-    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
-    padding: 15px;
+      radial-gradient(circle at 16% 0%, rgba(249, 115, 22, 0.14), transparent 13rem),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.86));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 18px 42px rgba(0, 0, 0, 0.24);
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .tm-pro-step-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--tm-pro-orange), rgba(249, 115, 22, 0.24));
+  }
+
+  .tm-pro-step-card::after {
+    content: "";
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    width: 74px;
+    height: 74px;
+    border: 1px solid rgba(249, 115, 22, 0.14);
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.04);
+    pointer-events: none;
   }
 
   .tm-pro-step-number {
@@ -710,20 +749,20 @@
     color: #fed7aa;
     font-size: 0.8rem;
     font-weight: 900;
-    box-shadow: 0 0 0 6px #101827, 0 0 24px rgba(249, 115, 22, 0.12);
+    box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.08), 0 0 24px rgba(249, 115, 22, 0.12);
   }
 
-  .tm-pro-step h3 {
+  .tm-pro-step-card h3 {
     margin: 2px 0 0;
     color: #f8fafc;
-    font-size: 1rem;
+    font-size: 1.2rem;
     font-weight: 900;
   }
 
-  .tm-pro-step p {
+  .tm-pro-step-card p {
     margin: 0;
     color: #cbd5e1;
-    font-size: 0.87rem;
+    font-size: 0.94rem;
     font-weight: 750;
     line-height: 1.45;
   }
@@ -877,12 +916,8 @@
       flex-basis: min(500px, 78%);
     }
 
-    .tm-pro-step-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .tm-pro-step-grid::before {
-      display: none;
+    .tm-pro-step-slide {
+      flex-basis: min(440px, 78%);
     }
   }
 
@@ -910,8 +945,12 @@
     }
 
     .tm-pro-hero {
-      gap: 28px;
-      padding: 32px 0 44px;
+      gap: 20px;
+      padding: 20px 0 28px;
+    }
+
+    .tm-pro-hero-copy {
+      gap: 14px;
     }
 
     .tm-pro-hero h1 {
@@ -925,6 +964,7 @@
 
     .tm-pro-hero-actions {
       align-items: stretch;
+      gap: 10px;
     }
 
     .tm-pro-hero-actions .tm-pro-landing-btn {
@@ -960,12 +1000,14 @@
       display: none;
     }
 
-    .tm-pro-step-grid {
-      grid-template-columns: 1fr;
+    .tm-pro-section-head {
+      gap: 6px;
+      padding-top: 28px;
+      margin-bottom: 10px;
     }
 
     .tm-pro-product-preview {
-      padding-bottom: 28px;
+      padding-bottom: 18px;
     }
 
     .tm-pro-carousel-shell::before,
@@ -1011,10 +1053,15 @@
     }
 
     .tm-pro-steps {
-      padding-bottom: 28px;
+      padding-bottom: 22px;
     }
 
-    .tm-pro-step {
+    .tm-pro-step-slide {
+      flex-basis: min(340px, 92%);
+    }
+
+    .tm-pro-step-card {
+      min-height: 210px;
       padding: 14px;
     }
 
@@ -1040,7 +1087,7 @@
       </a>
       <nav class="tm-pro-header-actions" aria-label="TorqueMech">
         <button class="tm-pro-landing-link" type="button" aria-disabled="true" title="Sign in is coming soon">Sign In</button>
-        <a class="tm-pro-landing-btn" href="/pro/dashboard">Get Started</a>
+        <a class="tm-pro-landing-btn" href="/pro/dashboard">Sign Up</a>
       </nav>
     </div>
   </header>
@@ -1147,20 +1194,36 @@
         <h2>From quote to completed repair.</h2>
         <p>TorqueMech keeps each step connected, so the job does not get lost between estimate, approval, repair, and invoice.</p>
       </div>
-      <div class="tm-pro-step-grid">
-        {% set workflow_steps = [
-          ("01", "Price the job", "Build a clean estimate with labor, parts, notes, and customer-ready pricing."),
-          ("02", "Get approval", "Move approved work forward and keep declined or deferred work organized."),
-          ("03", "Finish the repair", "Track active repairs, completion status, and final invoice details."),
-          ("04", "Save the history", "Every estimate, invoice, repair, and follow-up stays with the vehicle.")
-        ] %}
-        {% for number, title, body in workflow_steps %}
-        <article class="tm-pro-step">
-          <div class="tm-pro-step-number">{{ number }}</div>
-          <h3>{{ title }}</h3>
-          <p>{{ body }}</p>
-        </article>
-        {% endfor %}
+      {% set workflow_steps = [
+        ("01", "Price the job", "Build a clean estimate with labor, parts, notes, and customer-ready pricing."),
+        ("02", "Get approval", "Move approved work forward and keep declined or deferred work organized."),
+        ("03", "Finish the repair", "Track active repairs, completion status, and final invoice details."),
+        ("04", "Save the history", "Every estimate, invoice, repair, and follow-up stays with the vehicle.")
+      ] %}
+      <div class="tm-pro-step-carousel" data-tm-carousel aria-label="TorqueMech repair workflow">
+        <div class="tm-pro-carousel-shell">
+          <button class="tm-pro-carousel-arrow tm-pro-carousel-arrow--prev" type="button" aria-label="Previous workflow step" data-tm-carousel-prev>&lsaquo;</button>
+          <div class="tm-pro-carousel-track" tabindex="0" data-tm-carousel-track aria-label="Swipe through workflow steps">
+            {% for number, title, body in workflow_steps %}
+            <div class="tm-pro-carousel-slide tm-pro-step-slide{% if loop.first %} is-active{% endif %}" data-tm-carousel-slide data-title="{{ title }}" id="tm-workflow-carousel-{{ loop.index0 }}">
+              <article class="tm-pro-step-card">
+                <div class="tm-pro-step-number">{{ number }}</div>
+                <h3>{{ title }}</h3>
+                <p>{{ body }}</p>
+              </article>
+            </div>
+            {% endfor %}
+          </div>
+          <button class="tm-pro-carousel-arrow tm-pro-carousel-arrow--next" type="button" aria-label="Next workflow step" data-tm-carousel-next>&rsaquo;</button>
+        </div>
+        <div class="tm-pro-carousel-nav" aria-label="Workflow carousel position">
+          <div class="tm-pro-carousel-dots">
+            {% for number, title, body in workflow_steps %}
+            <button class="tm-pro-carousel-dot{% if loop.first %} is-active{% endif %}" type="button" aria-label="Show {{ title }}" aria-current="{{ 'true' if loop.first else 'false' }}" data-tm-carousel-dot="{{ loop.index0 }}"></button>
+            {% endfor %}
+          </div>
+          <div class="tm-pro-carousel-label" data-tm-carousel-label>Price the job</div>
+        </div>
       </div>
     </section>
 
@@ -1170,7 +1233,6 @@
           <h2>Ready to start?</h2>
           <p>Open TorqueMech and move from estimate to repair history in one organized workflow.</p>
         </div>
-        <a class="tm-pro-landing-btn" href="/pro/dashboard">Get Started</a>
       </div>
     </section>
   </div>
@@ -1178,94 +1240,97 @@
 
 <script>
   (function () {
-    var carousel = document.querySelector("[data-tm-carousel]");
-    if (!carousel) return;
+    var carousels = Array.prototype.slice.call(document.querySelectorAll("[data-tm-carousel]"));
 
-    var track = carousel.querySelector("[data-tm-carousel-track]");
-    var slides = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-slide]"));
-    var dots = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-dot]"));
-    var label = carousel.querySelector("[data-tm-carousel-label]");
-    var prev = carousel.querySelector("[data-tm-carousel-prev]");
-    var next = carousel.querySelector("[data-tm-carousel-next]");
-    var activeIndex = 0;
-    var scrollTimer = 0;
+    carousels.forEach(function (carousel) {
+      var track = carousel.querySelector("[data-tm-carousel-track]");
+      var slides = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-slide]"));
+      var dots = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-dot]"));
+      var label = carousel.querySelector("[data-tm-carousel-label]");
+      var prev = carousel.querySelector("[data-tm-carousel-prev]");
+      var next = carousel.querySelector("[data-tm-carousel-next]");
+      var activeIndex = 0;
+      var scrollTimer = 0;
 
-    function setActive(index) {
-      activeIndex = Math.max(0, Math.min(index, slides.length - 1));
-      slides.forEach(function (slide, slideIndex) {
-        slide.classList.toggle("is-active", slideIndex === activeIndex);
-        slide.setAttribute("aria-hidden", slideIndex === activeIndex ? "false" : "true");
-      });
-      dots.forEach(function (dot, dotIndex) {
-        var isActive = dotIndex === activeIndex;
-        dot.classList.toggle("is-active", isActive);
-        dot.setAttribute("aria-current", isActive ? "true" : "false");
-      });
-      if (label && slides[activeIndex]) {
-        label.textContent = slides[activeIndex].getAttribute("data-title") || "";
+      if (!track || !slides.length) return;
+
+      function setActive(index) {
+        activeIndex = Math.max(0, Math.min(index, slides.length - 1));
+        slides.forEach(function (slide, slideIndex) {
+          slide.classList.toggle("is-active", slideIndex === activeIndex);
+          slide.setAttribute("aria-hidden", slideIndex === activeIndex ? "false" : "true");
+        });
+        dots.forEach(function (dot, dotIndex) {
+          var isActive = dotIndex === activeIndex;
+          dot.classList.toggle("is-active", isActive);
+          dot.setAttribute("aria-current", isActive ? "true" : "false");
+        });
+        if (label && slides[activeIndex]) {
+          label.textContent = slides[activeIndex].getAttribute("data-title") || "";
+        }
       }
-    }
 
-    function scrollToSlide(index) {
-      var slide = slides[Math.max(0, Math.min(index, slides.length - 1))];
-      if (!slide) return;
-      slide.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-      setActive(slides.indexOf(slide));
-    }
+      function scrollToSlide(index) {
+        var slide = slides[Math.max(0, Math.min(index, slides.length - 1))];
+        if (!slide) return;
+        slide.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        setActive(slides.indexOf(slide));
+      }
 
-    function nearestSlideIndex() {
-      var trackRect = track.getBoundingClientRect();
-      var center = trackRect.left + trackRect.width / 2;
-      var closestIndex = 0;
-      var closestDistance = Infinity;
-      slides.forEach(function (slide, index) {
-        var rect = slide.getBoundingClientRect();
-        var distance = Math.abs(rect.left + rect.width / 2 - center);
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestIndex = index;
+      function nearestSlideIndex() {
+        var trackRect = track.getBoundingClientRect();
+        var center = trackRect.left + trackRect.width / 2;
+        var closestIndex = 0;
+        var closestDistance = Infinity;
+        slides.forEach(function (slide, index) {
+          var rect = slide.getBoundingClientRect();
+          var distance = Math.abs(rect.left + rect.width / 2 - center);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+          }
+        });
+        return closestIndex;
+      }
+
+      if (prev) {
+        prev.addEventListener("click", function () {
+          scrollToSlide(activeIndex - 1);
+        });
+      }
+
+      if (next) {
+        next.addEventListener("click", function () {
+          scrollToSlide(activeIndex + 1);
+        });
+      }
+
+      dots.forEach(function (dot, index) {
+        dot.addEventListener("click", function () {
+          scrollToSlide(index);
+        });
+      });
+
+      track.addEventListener("scroll", function () {
+        window.clearTimeout(scrollTimer);
+        scrollTimer = window.setTimeout(function () {
+          setActive(nearestSlideIndex());
+        }, 80);
+      }, { passive: true });
+
+      track.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          scrollToSlide(activeIndex - 1);
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          scrollToSlide(activeIndex + 1);
         }
       });
-      return closestIndex;
-    }
 
-    if (prev) {
-      prev.addEventListener("click", function () {
-        scrollToSlide(activeIndex - 1);
-      });
-    }
-
-    if (next) {
-      next.addEventListener("click", function () {
-        scrollToSlide(activeIndex + 1);
-      });
-    }
-
-    dots.forEach(function (dot, index) {
-      dot.addEventListener("click", function () {
-        scrollToSlide(index);
-      });
+      setActive(0);
     });
-
-    track.addEventListener("scroll", function () {
-      window.clearTimeout(scrollTimer);
-      scrollTimer = window.setTimeout(function () {
-        setActive(nearestSlideIndex());
-      }, 80);
-    }, { passive: true });
-
-    track.addEventListener("keydown", function (event) {
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        scrollToSlide(activeIndex - 1);
-      }
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        scrollToSlide(activeIndex + 1);
-      }
-    });
-
-    setActive(0);
   })();
 </script>
 {% endblock %}
