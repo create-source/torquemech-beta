@@ -1477,6 +1477,9 @@ app.include_router(knowledge_router)
 app.include_router(pro_router)
 
 # --- Static Mount ---
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(STATIC_DIR / "favicon.ico")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.middleware("http")
