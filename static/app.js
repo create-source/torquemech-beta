@@ -131,7 +131,10 @@
         ],
       },
       pro: {
-        route: () => window.location.pathname === "/pro" || window.location.pathname.startsWith("/pro/"),
+        route: () => {
+          const path = window.location.pathname;
+          return path === "/pro/dashboard" || (path.startsWith("/pro/") && path !== "/pro/");
+        },
         label: "Restart Pro Tour",
         steps: [
           {
