@@ -148,8 +148,8 @@
             selectors: ['[data-tour-target="pro-add-customer"]', "#add-customer", 'a[href*="mode=add#add-customer"]'],
           },
           {
-            title: "Add the vehicle",
-            body: "Attach each job to the correct vehicle with year, make, model, mileage, VIN, and notes.",
+            title: "Open customer records",
+            body: "View customers first, then attach each job to the correct vehicle with year, make, model, mileage, VIN, and notes.",
             selectors: ['[data-tour-target="pro-vehicle"]', "#vehicle-edit", ".tm-crm-vehicle-summary", 'a[href*="/vehicles"]'],
           },
           {
