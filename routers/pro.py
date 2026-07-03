@@ -6485,6 +6485,16 @@ def load_customer_vehicle(
 
 
 @router.get("", response_class=HTMLResponse)
+def pro_welcome(request: Request):
+    return templates.TemplateResponse(
+        "pro/welcome_intro.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@router.get("/dashboard", response_class=HTMLResponse)
 def pro_dashboard(request: Request):
     conn = crm_db_conn()
     try:
