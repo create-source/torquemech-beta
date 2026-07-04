@@ -126,18 +126,6 @@
     min-height: 1.2em;
   }
 
-  .tm-follow-reminder-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-  }
-
-  .tm-follow-reminder-actions form {
-    margin: 0;
-  }
-
   .tm-follow-history {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
     display: grid;
@@ -250,7 +238,6 @@
     }
 
     .tm-follow-copy-row .tm-btn,
-    .tm-follow-reminder-actions .tm-btn,
     .tm-follow-contact .tm-btn {
       width: 100%;
     }
@@ -326,42 +313,17 @@
       >Copy Message</button>
       <span class="tm-follow-copy-status" aria-live="polite"></span>
     </div>
-    {% set reminder_action_base = "/pro/customers/" ~ item.customer_id ~ "/vehicles/" ~ item.vehicle_id ~ "/maintenance/" ~ item.id ~ "/reminders" %}
-    <div class="tm-follow-reminder-actions">
-      <form method="post" action="{{ reminder_action_base }}/mark-sent">
-        <input type="hidden" name="message" value="{{ item.suggested_message }}">
-        <input type="hidden" name="return_to" value="/pro/follow-ups">
-        <button class="tm-btn tm-btn-secondary" type="submit">Mark as Sent</button>
-      </form>
-      <form method="post" action="{{ reminder_action_base }}/snooze-7">
-        <input type="hidden" name="message" value="{{ item.suggested_message }}">
-        <input type="hidden" name="return_to" value="/pro/follow-ups">
-        <button class="tm-btn tm-btn-secondary" type="submit">Snooze 7 Days</button>
-      </form>
-      <form method="post" action="{{ reminder_action_base }}/snooze-30">
-        <input type="hidden" name="message" value="{{ item.suggested_message }}">
-        <input type="hidden" name="return_to" value="/pro/follow-ups">
-        <button class="tm-btn tm-btn-secondary" type="submit">Snooze 30 Days</button>
-      </form>
-      <form method="post" action="{{ reminder_action_base }}/complete">
-        <input type="hidden" name="message" value="{{ item.suggested_message }}">
-        <input type="hidden" name="return_to" value="/pro/follow-ups">
-        <button class="tm-btn tm-btn-secondary" type="submit">Mark Completed</button>
-      </form>
-    </div>
   </div>
 
-  {% if item.reminder_events %}
-  {% set latest_event = item.latest_reminder_event %}
+  {% if item.automatic_reminder_events %}
+  {% set latest_event = item.latest_automatic_reminder_event %}
   <div class="tm-follow-history">
     <div class="tm-follow-history-line">
       <strong>Reminder:</strong> {{ latest_event.status_label }} via {{ latest_event.method or "manual" }}
-      {% if latest_event.sent_at %} | sent {{ latest_event.sent_at|pro_datetime }}{% endif %}
-      {% if latest_event.snoozed_until %} | snoozed until {{ latest_event.snoozed_until|pro_date }}{% endif %}
-      | created {{ latest_event.created_at|pro_datetime }}
+      | {{ latest_event.created_at|pro_datetime }}
     </div>
-    {% if latest_event.notes or latest_event.message %}
-    <div class="tm-follow-history-line">{{ latest_event.notes or latest_event.message|truncate(120, true) }}</div>
+    {% if latest_event.message %}
+    <div class="tm-follow-history-line">{{ latest_event.message|truncate(120, true) }}</div>
     {% endif %}
   </div>
   {% endif %}
@@ -414,7 +376,7 @@
     </section>
 
     {% set sections = [
-      ("sent_waiting", "Sent / Waiting", "Reminder copied or marked sent, still waiting on customer follow-up."),
+      ("sent_waiting", "Sent / Waiting", "Reminder prepared or copied; waiting on customer follow-up."),
       ("due_soon", "Due Soon", "Maintenance due within 30 days or within 1,000 miles."),
       ("overdue", "Overdue", "Maintenance past the next due date or mileage.")
     ] %}

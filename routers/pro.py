@@ -762,6 +762,7 @@ MAINTENANCE_REMINDER_STATUS_LABELS = {
     "customer_replied": "Customer Replied",
     "completed": "Completed",
 }
+AUTOMATIC_MAINTENANCE_REMINDER_STATUSES = {"drafted", "copied"}
 
 
 def maintenance_reminder_status_label(status: Any) -> str:
@@ -897,24 +898,37 @@ def attach_maintenance_reminder_events(
     for record in records:
         record_id = optional_int_value(record.get("id")) or 0
         events = events_map.get(record_id, [])
+        automatic_events = [
+            event for event in events if event.get("status") in AUTOMATIC_MAINTENANCE_REMINDER_STATUSES
+        ]
         record["reminder_events"] = events
+        record["automatic_reminder_events"] = automatic_events
         record["latest_reminder_event"] = events[0] if events else None
+        record["latest_automatic_reminder_event"] = automatic_events[0] if automatic_events else None
     return records
 
 
-def maintenance_reminder_follow_up_bucket(record: dict[str, Any], today: date) -> str | None:
+def mark_active_maintenance_baselines(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    active_ids = {
+        optional_int_value(record.get("id"))
+        for record in latest_maintenance_records_by_vehicle_service(records)
+    }
+    for record in records:
+        record["is_active_maintenance_baseline"] = optional_int_value(record.get("id")) in active_ids
+        if not record["is_active_maintenance_baseline"]:
+            record["reminder_message"] = ""
+    return records
+
+
+def maintenance_reminder_follow_up_bucket(record: dict[str, Any], today: date | None = None) -> str | None:
+    if record.get("is_active_maintenance_baseline") is False:
+        return None
     status_key = record.get("maintenance_status_key")
     if status_key not in {"overdue", "due_soon"}:
         return None
-    event = record.get("latest_reminder_event") or {}
+    event = record.get("latest_automatic_reminder_event") or record.get("latest_reminder_event") or {}
     event_status = event.get("status")
-    if event_status == "completed":
-        return None
-    if event_status == "snoozed":
-        snoozed_until = parse_date_value(event.get("snoozed_until"))
-        if snoozed_until and snoozed_until > today:
-            return None
-    if event_status in {"copied", "marked_sent"}:
+    if event_status in AUTOMATIC_MAINTENANCE_REMINDER_STATUSES:
         return "sent_waiting"
     return str(status_key)
 
@@ -7515,7 +7529,8 @@ def pro_follow_ups(request: Request):
                 continue
             item = follow_up_item_from_maintenance_record(record)
             if bucket == "sent_waiting":
-                item["queue_status"] = "Sent / Waiting"
+                latest_event = record.get("latest_automatic_reminder_event") or {}
+                item["queue_status"] = "Reminder copied" if latest_event.get("status") == "copied" else "Reminder prepared"
                 item["queue_status_key"] = "sent_waiting"
             grouped[bucket].append(
                 item
@@ -8329,6 +8344,7 @@ def pro_customer_vehicle_detail(
         today,
         maintenance_driving_rate,
     )
+    mark_active_maintenance_baselines(maintenance_records)
     attach_maintenance_reminder_events(maintenance_records, maintenance_reminder_events)
     repair_history_summary = build_repair_history_summary(repair_records)
     inspection_findings_records = [
@@ -10664,21 +10680,11 @@ async def pro_maintenance_reminder_event_action(
     status = {
         "draft": "drafted",
         "copy": "copied",
-        "mark-sent": "marked_sent",
-        "snooze-7": "snoozed",
-        "snooze-30": "snoozed",
-        "complete": "completed",
     }.get(action_key)
     if not status:
         raise HTTPException(status_code=400, detail="Reminder action is invalid")
 
     now = datetime.utcnow().isoformat()
-    sent_at = now if status == "marked_sent" else None
-    snoozed_until = None
-    if action_key == "snooze-7":
-        snoozed_until = (local_today() + timedelta(days=7)).isoformat()
-    elif action_key == "snooze-30":
-        snoozed_until = (local_today() + timedelta(days=30)).isoformat()
 
     conn = crm_db_conn()
     try:
@@ -10714,8 +10720,6 @@ async def pro_maintenance_reminder_event_action(
             status=status,
             method="manual",
             message=message,
-            sent_at=sent_at,
-            snoozed_until=snoozed_until,
             notes=str(form.get("notes") or ""),
             created_at=now,
         )
@@ -10730,8 +10734,6 @@ async def pro_maintenance_reminder_event_action(
                 "event_id": event_id,
                 "status": status,
                 "status_label": maintenance_reminder_status_label(status),
-                "sent_at": sent_at,
-                "snoozed_until": snoozed_until,
             }
         )
 

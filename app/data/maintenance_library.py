@@ -9,7 +9,7 @@ MAINTENANCE_LIBRARY: dict[str, dict[str, Any]] = {
         "category": "Engine",
         "interval_miles": 5000,
         "interval_months": 6,
-        "aliases": ["oil", "engine oil", "motor oil", "oil service"],
+        "aliases": ["oil", "engine oil", "motor oil", "oil service", "engine oil service"],
         "suggest_in_ui": True,
     },
     "engine air filter replacement": {

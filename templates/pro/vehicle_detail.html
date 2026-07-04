@@ -1731,18 +1731,6 @@
     margin-top: 10px;
   }
 
-  .tm-maintenance-reminder-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-  }
-
-  .tm-maintenance-reminder-actions form {
-    margin: 0;
-  }
-
   .tm-maintenance-history {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
     display: grid;
@@ -3180,45 +3168,20 @@
               >Copy Message</button>
               <span class="tm-maintenance-copy-status" aria-live="polite"></span>
             </div>
-            {% set reminder_action_base = "/pro/customers/" ~ customer.id ~ "/vehicles/" ~ vehicle.id ~ "/maintenance/" ~ record.id ~ "/reminders" %}
-            <div class="tm-maintenance-reminder-actions">
-              <form method="post" action="{{ reminder_action_base }}/mark-sent">
-                <input type="hidden" name="message" value="{{ record.reminder_message }}">
-                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
-                <button class="tm-btn tm-btn-secondary" type="submit">Mark as Sent</button>
-              </form>
-              <form method="post" action="{{ reminder_action_base }}/snooze-7">
-                <input type="hidden" name="message" value="{{ record.reminder_message }}">
-                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
-                <button class="tm-btn tm-btn-secondary" type="submit">Snooze 7 Days</button>
-              </form>
-              <form method="post" action="{{ reminder_action_base }}/snooze-30">
-                <input type="hidden" name="message" value="{{ record.reminder_message }}">
-                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
-                <button class="tm-btn tm-btn-secondary" type="submit">Snooze 30 Days</button>
-              </form>
-              <form method="post" action="{{ reminder_action_base }}/complete">
-                <input type="hidden" name="message" value="{{ record.reminder_message }}">
-                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
-                <button class="tm-btn tm-btn-secondary" type="submit">Mark Completed</button>
-              </form>
-            </div>
           </div>
           {% endif %}
-          {% if record.reminder_events %}
-          {% set latest_event = record.latest_reminder_event %}
+          {% if record.automatic_reminder_events %}
+          {% set latest_event = record.latest_automatic_reminder_event %}
           <div class="tm-maintenance-history">
             <div class="tm-maintenance-history-title">Reminder History</div>
             <div class="tm-maintenance-history-line">
               <strong>{{ latest_event.status_label }}</strong>
               via {{ latest_event.method or "manual" }}
-              {% if latest_event.sent_at %} | sent {{ latest_event.sent_at|pro_datetime }}{% endif %}
-              {% if latest_event.snoozed_until %} | snoozed until {{ latest_event.snoozed_until|pro_date }}{% endif %}
-              | created {{ latest_event.created_at|pro_datetime }}
+              | {{ latest_event.created_at|pro_datetime }}
             </div>
-            {% if latest_event.notes or latest_event.message %}
+            {% if latest_event.message %}
             <div class="tm-maintenance-history-line">
-              {{ latest_event.notes or latest_event.message|truncate(120, true) }}
+              {{ latest_event.message|truncate(120, true) }}
             </div>
             {% endif %}
           </div>
