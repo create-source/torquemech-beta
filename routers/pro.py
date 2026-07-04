@@ -745,6 +745,180 @@ def build_maintenance_reminder_message(
     )
 
 
+MAINTENANCE_REMINDER_EVENT_STATUSES = {
+    "drafted",
+    "copied",
+    "marked_sent",
+    "snoozed",
+    "customer_replied",
+    "completed",
+}
+MAINTENANCE_REMINDER_METHODS = {"manual", "sms", "email", "phone", "other"}
+MAINTENANCE_REMINDER_STATUS_LABELS = {
+    "drafted": "Drafted",
+    "copied": "Copied",
+    "marked_sent": "Sent / Waiting",
+    "snoozed": "Snoozed",
+    "customer_replied": "Customer Replied",
+    "completed": "Completed",
+}
+
+
+def maintenance_reminder_status_label(status: Any) -> str:
+    key = str(status or "").strip()
+    return MAINTENANCE_REMINDER_STATUS_LABELS.get(key, key.replace("_", " ").title() if key else "")
+
+
+def ensure_maintenance_reminder_events_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS maintenance_reminder_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          maintenance_record_id INTEGER NOT NULL,
+          service_type TEXT,
+          status TEXT NOT NULL CHECK (status IN ('drafted', 'copied', 'marked_sent', 'snoozed', 'customer_replied', 'completed')),
+          method TEXT NOT NULL CHECK (method IN ('manual', 'sms', 'email', 'phone', 'other')),
+          message TEXT,
+          created_at TEXT NOT NULL,
+          sent_at TEXT,
+          snoozed_until TEXT,
+          notes TEXT,
+          FOREIGN KEY (customer_id) REFERENCES customers(id),
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+          FOREIGN KEY (maintenance_record_id) REFERENCES maintenance_records(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_customer_id "
+        "ON maintenance_reminder_events (customer_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_vehicle_id "
+        "ON maintenance_reminder_events (vehicle_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_record_id "
+        "ON maintenance_reminder_events (maintenance_record_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_status "
+        "ON maintenance_reminder_events (status)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_snoozed_until "
+        "ON maintenance_reminder_events (snoozed_until)"
+    )
+    conn.commit()
+
+
+def create_maintenance_reminder_event(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    maintenance_record_id: int,
+    service_type: str,
+    status: str,
+    method: str = "manual",
+    message: str = "",
+    sent_at: str | None = None,
+    snoozed_until: str | None = None,
+    notes: str = "",
+    created_at: str | None = None,
+) -> int:
+    if status not in MAINTENANCE_REMINDER_EVENT_STATUSES:
+        raise ValueError("Invalid maintenance reminder status")
+    if method not in MAINTENANCE_REMINDER_METHODS:
+        raise ValueError("Invalid maintenance reminder method")
+    ensure_maintenance_reminder_events_schema(conn)
+    now = created_at or datetime.utcnow().isoformat()
+    cur = conn.execute(
+        """
+        INSERT INTO maintenance_reminder_events (
+          customer_id, vehicle_id, maintenance_record_id, service_type,
+          status, method, message, created_at, sent_at, snoozed_until, notes
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            customer_id,
+            vehicle_id,
+            maintenance_record_id,
+            service_type,
+            status,
+            method,
+            message,
+            now,
+            sent_at,
+            snoozed_until,
+            notes,
+        ),
+    )
+    return int(cur.lastrowid)
+
+
+def load_maintenance_reminder_events_map(
+    conn: sqlite3.Connection,
+    maintenance_record_ids: set[int] | list[int],
+) -> dict[int, list[dict[str, Any]]]:
+    record_ids = sorted({int(record_id) for record_id in maintenance_record_ids if record_id})
+    if not record_ids:
+        return {}
+    ensure_maintenance_reminder_events_schema(conn)
+    placeholders = ",".join("?" for _ in record_ids)
+    rows = [
+        dict(row)
+        for row in conn.execute(
+            f"""
+            SELECT *
+            FROM maintenance_reminder_events
+            WHERE maintenance_record_id IN ({placeholders})
+            ORDER BY created_at DESC, id DESC
+            """,
+            record_ids,
+        ).fetchall()
+    ]
+    grouped: dict[int, list[dict[str, Any]]] = {}
+    for row in rows:
+        row["status_label"] = maintenance_reminder_status_label(row.get("status"))
+        record_id = optional_int_value(row.get("maintenance_record_id"))
+        if record_id is not None:
+            grouped.setdefault(record_id, []).append(row)
+    return grouped
+
+
+def attach_maintenance_reminder_events(
+    records: list[dict[str, Any]],
+    events_map: dict[int, list[dict[str, Any]]],
+) -> list[dict[str, Any]]:
+    for record in records:
+        record_id = optional_int_value(record.get("id")) or 0
+        events = events_map.get(record_id, [])
+        record["reminder_events"] = events
+        record["latest_reminder_event"] = events[0] if events else None
+    return records
+
+
+def maintenance_reminder_follow_up_bucket(record: dict[str, Any], today: date) -> str | None:
+    status_key = record.get("maintenance_status_key")
+    if status_key not in {"overdue", "due_soon"}:
+        return None
+    event = record.get("latest_reminder_event") or {}
+    event_status = event.get("status")
+    if event_status == "completed":
+        return None
+    if event_status == "snoozed":
+        snoozed_until = parse_date_value(event.get("snoozed_until"))
+        if snoozed_until and snoozed_until > today:
+            return None
+    if event_status in {"copied", "marked_sent"}:
+        return "sent_waiting"
+    return str(status_key)
+
+
 def latest_maintenance_records_by_vehicle_service(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     latest: dict[tuple[int, int, str], dict[str, Any]] = {}
 
@@ -7239,6 +7413,7 @@ def pro_follow_ups(request: Request):
     try:
         ensure_customer_status_schema(conn)
         ensure_maintenance_records_schema(conn)
+        ensure_maintenance_reminder_events_schema(conn)
         ensure_service_history_records_schema(conn)
         maintenance_records = [
             dict(row)
@@ -7281,12 +7456,17 @@ def pro_follow_ups(request: Request):
                 """
             ).fetchall()
         ]
+        maintenance_reminder_events = load_maintenance_reminder_events_map(
+            conn,
+            {int(record.get("id") or 0) for record in maintenance_records if record.get("id")},
+        )
     finally:
         conn.close()
 
     grouped = {
         "overdue": [],
         "due_soon": [],
+        "sent_waiting": [],
     }
     service_history_by_vehicle: dict[int, list[dict[str, Any]]] = {}
     for record in service_history_records:
@@ -7328,11 +7508,17 @@ def pro_follow_ups(request: Request):
             today,
             driving_rate,
         )
+        attach_maintenance_reminder_events(annotated_records, maintenance_reminder_events)
         for record in annotated_records:
-            if record.get("maintenance_status_key") not in grouped:
+            bucket = maintenance_reminder_follow_up_bucket(record, today)
+            if bucket not in grouped:
                 continue
-            grouped[record["maintenance_status_key"]].append(
-                follow_up_item_from_maintenance_record(record)
+            item = follow_up_item_from_maintenance_record(record)
+            if bucket == "sent_waiting":
+                item["queue_status"] = "Sent / Waiting"
+                item["queue_status_key"] = "sent_waiting"
+            grouped[bucket].append(
+                item
             )
 
     for items in grouped.values():
@@ -7903,6 +8089,7 @@ def pro_customer_vehicle_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         ensure_maintenance_records_schema(conn)
+        ensure_maintenance_reminder_events_schema(conn)
         ensure_repair_records_schema(conn)
         ensure_repair_job_parts_schema(conn)
         ensure_repair_checklist_schema(conn)
@@ -7946,6 +8133,10 @@ def pro_customer_vehicle_detail(
                 (customer_id, vehicle_id),
             ).fetchall()
         ]
+        maintenance_reminder_events = load_maintenance_reminder_events_map(
+            conn,
+            {int(record.get("id") or 0) for record in maintenance_records if record.get("id")},
+        )
         repair_records = [
             dict(row)
             for row in conn.execute(
@@ -8138,6 +8329,7 @@ def pro_customer_vehicle_detail(
         today,
         maintenance_driving_rate,
     )
+    attach_maintenance_reminder_events(maintenance_records, maintenance_reminder_events)
     repair_history_summary = build_repair_history_summary(repair_records)
     inspection_findings_records = [
         record for record in findings_records if is_active_inspection_finding(record)
@@ -10460,6 +10652,95 @@ def pro_maintenance_record_detail(
             "maintenance": maintenance,
             "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
         },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_id}/reminders/{action}")
+async def pro_maintenance_reminder_event_action(
+    request: Request, customer_id: int, vehicle_id: int, maintenance_id: int, action: str
+):
+    form = await read_form_data(request)
+    action_key = action.strip().lower()
+    status = {
+        "draft": "drafted",
+        "copy": "copied",
+        "mark-sent": "marked_sent",
+        "snooze-7": "snoozed",
+        "snooze-30": "snoozed",
+        "complete": "completed",
+    }.get(action_key)
+    if not status:
+        raise HTTPException(status_code=400, detail="Reminder action is invalid")
+
+    now = datetime.utcnow().isoformat()
+    sent_at = now if status == "marked_sent" else None
+    snoozed_until = None
+    if action_key == "snooze-7":
+        snoozed_until = (local_today() + timedelta(days=7)).isoformat()
+    elif action_key == "snooze-30":
+        snoozed_until = (local_today() + timedelta(days=30)).isoformat()
+
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        ensure_maintenance_records_schema(conn)
+        maintenance = row_to_dict(
+            conn.execute(
+                """
+                SELECT *
+                FROM maintenance_records
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (maintenance_id, customer_id, vehicle_id),
+            ).fetchone()
+        )
+        if not maintenance:
+            raise HTTPException(status_code=404, detail="Maintenance record not found")
+
+        annotated = annotate_vehicle_maintenance_records(
+            [maintenance],
+            vehicle,
+            customer,
+            local_today(),
+            None,
+        )[0]
+        message = str(form.get("message") or annotated.get("reminder_message") or "").strip()
+        event_id = create_maintenance_reminder_event(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            maintenance_record_id=maintenance_id,
+            service_type=str(maintenance.get("service_type") or ""),
+            status=status,
+            method="manual",
+            message=message,
+            sent_at=sent_at,
+            snoozed_until=snoozed_until,
+            notes=str(form.get("notes") or ""),
+            created_at=now,
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    if request.headers.get("x-requested-with") == "fetch":
+        return JSONResponse(
+            {
+                "ok": True,
+                "event_id": event_id,
+                "status": status,
+                "status_label": maintenance_reminder_status_label(status),
+                "sent_at": sent_at,
+                "snoozed_until": snoozed_until,
+            }
+        )
+
+    return_to = str(form.get("return_to") or "").strip()
+    if return_to.startswith("/pro/"):
+        return RedirectResponse(return_to, status_code=303)
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#maintenance",
+        status_code=303,
     )
 
 

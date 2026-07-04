@@ -653,6 +653,34 @@ def init_pro_crm_schema_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_shop_id ON maintenance_reminders (shop_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminders_due_date ON maintenance_reminders (due_date)")
 
+        # Pro maintenance reminder action tracking only; no external sending.
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS maintenance_reminder_events (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              customer_id INTEGER NOT NULL,
+              vehicle_id INTEGER NOT NULL,
+              maintenance_record_id INTEGER NOT NULL,
+              service_type TEXT,
+              status TEXT NOT NULL CHECK (status IN ('drafted', 'copied', 'marked_sent', 'snoozed', 'customer_replied', 'completed')),
+              method TEXT NOT NULL CHECK (method IN ('manual', 'sms', 'email', 'phone', 'other')),
+              message TEXT,
+              created_at TEXT NOT NULL,
+              sent_at TEXT,
+              snoozed_until TEXT,
+              notes TEXT,
+              FOREIGN KEY (customer_id) REFERENCES customers(id),
+              FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+              FOREIGN KEY (maintenance_record_id) REFERENCES maintenance_records(id)
+            )
+            """
+        )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_customer_id ON maintenance_reminder_events (customer_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_vehicle_id ON maintenance_reminder_events (vehicle_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_record_id ON maintenance_reminder_events (maintenance_record_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_status ON maintenance_reminder_events (status)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_reminder_events_snoozed_until ON maintenance_reminder_events (snoozed_until)")
+
         # Pro groundwork: performed maintenance records for future follow-up workflows.
         conn.execute(
             """

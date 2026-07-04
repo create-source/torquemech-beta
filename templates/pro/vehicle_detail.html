@@ -1731,6 +1731,39 @@
     margin-top: 10px;
   }
 
+  .tm-maintenance-reminder-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .tm-maintenance-reminder-actions form {
+    margin: 0;
+  }
+
+  .tm-maintenance-history {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    display: grid;
+    gap: 6px;
+    margin-top: 2px;
+    padding-top: 8px;
+  }
+
+  .tm-maintenance-history-title {
+    color: #0f172a;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-maintenance-history-line {
+    color: #475569;
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
   .tm-maintenance-copy-status {
     color: #0f766e;
     font-size: 0.86rem;
@@ -3127,15 +3160,67 @@
           </div>
           {% if record.reminder_message %}
           <div class="tm-repair-card-actions">
-            <button class="tm-btn tm-btn-secondary" type="button" data-maintenance-reminder-toggle>Send Reminder</button>
+            <button
+              class="tm-btn tm-btn-secondary"
+              type="button"
+              data-maintenance-reminder-toggle
+              data-draft-url="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ record.id }}/reminders/draft"
+            >Send Reminder</button>
           </div>
           <div class="tm-maintenance-reminder" data-maintenance-reminder hidden>
             <div class="tm-maintenance-reminder-label">Ready-to-copy reminder</div>
             <div data-suggested-message>{{ record.reminder_message }}</div>
             <div class="tm-maintenance-copy-row">
-              <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Copy Message</button>
+              <button
+                class="tm-btn tm-btn-secondary"
+                type="button"
+                data-copy-message
+                data-copy-url="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ record.id }}/reminders/copy"
+                data-copy-success="Message copied"
+              >Copy Message</button>
               <span class="tm-maintenance-copy-status" aria-live="polite"></span>
             </div>
+            {% set reminder_action_base = "/pro/customers/" ~ customer.id ~ "/vehicles/" ~ vehicle.id ~ "/maintenance/" ~ record.id ~ "/reminders" %}
+            <div class="tm-maintenance-reminder-actions">
+              <form method="post" action="{{ reminder_action_base }}/mark-sent">
+                <input type="hidden" name="message" value="{{ record.reminder_message }}">
+                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
+                <button class="tm-btn tm-btn-secondary" type="submit">Mark as Sent</button>
+              </form>
+              <form method="post" action="{{ reminder_action_base }}/snooze-7">
+                <input type="hidden" name="message" value="{{ record.reminder_message }}">
+                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
+                <button class="tm-btn tm-btn-secondary" type="submit">Snooze 7 Days</button>
+              </form>
+              <form method="post" action="{{ reminder_action_base }}/snooze-30">
+                <input type="hidden" name="message" value="{{ record.reminder_message }}">
+                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
+                <button class="tm-btn tm-btn-secondary" type="submit">Snooze 30 Days</button>
+              </form>
+              <form method="post" action="{{ reminder_action_base }}/complete">
+                <input type="hidden" name="message" value="{{ record.reminder_message }}">
+                <input type="hidden" name="return_to" value="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#maintenance">
+                <button class="tm-btn tm-btn-secondary" type="submit">Mark Completed</button>
+              </form>
+            </div>
+          </div>
+          {% endif %}
+          {% if record.reminder_events %}
+          {% set latest_event = record.latest_reminder_event %}
+          <div class="tm-maintenance-history">
+            <div class="tm-maintenance-history-title">Reminder History</div>
+            <div class="tm-maintenance-history-line">
+              <strong>{{ latest_event.status_label }}</strong>
+              via {{ latest_event.method or "manual" }}
+              {% if latest_event.sent_at %} | sent {{ latest_event.sent_at|pro_datetime }}{% endif %}
+              {% if latest_event.snoozed_until %} | snoozed until {{ latest_event.snoozed_until|pro_date }}{% endif %}
+              | created {{ latest_event.created_at|pro_datetime }}
+            </div>
+            {% if latest_event.notes or latest_event.message %}
+            <div class="tm-maintenance-history-line">
+              {{ latest_event.notes or latest_event.message|truncate(120, true) }}
+            </div>
+            {% endif %}
           </div>
           {% endif %}
           {% if record.notes %}
@@ -3324,13 +3409,34 @@
 <script>
 (() => {
   document.querySelectorAll("[data-maintenance-reminder-toggle]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const reminder = button.closest(".tm-maintenance-card")?.querySelector("[data-maintenance-reminder]");
       if (!reminder) return;
       reminder.hidden = !reminder.hidden;
       button.textContent = reminder.hidden ? "Send Reminder" : "Hide Reminder";
+      if (!reminder.hidden && button.dataset.draftUrl && button.dataset.drafted !== "1") {
+        const message = reminder.querySelector("[data-suggested-message]")?.textContent?.trim() || "";
+        button.dataset.drafted = "1";
+        await postReminderEvent(button.dataset.draftUrl, message);
+      }
     });
   });
+
+  async function postReminderEvent(url, message) {
+    if (!url) return false;
+    const body = new FormData();
+    body.append("message", message || "");
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body,
+        headers: { "X-Requested-With": "fetch" },
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }
 
   async function copyText(value) {
     const text = String(value || "");
@@ -3368,6 +3474,9 @@
       const value = messageEl?.textContent?.trim() || "";
       try {
         const copied = await copyText(value);
+        if (copied && button.dataset.copyUrl) {
+          await postReminderEvent(button.dataset.copyUrl, value);
+        }
         showCopyStatus(button, copied ? button.dataset.copySuccess || "Copied" : "Copy failed");
       } catch (error) {
         showCopyStatus(button, "Copy failed");

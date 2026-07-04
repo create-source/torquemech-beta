@@ -11,7 +11,7 @@
 
   .tm-follow-summary {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
   }
 
@@ -39,6 +39,11 @@
   .tm-follow-summary-card--due-soon,
   .tm-follow-record--due-soon {
     border-left-color: #d97706;
+  }
+
+  .tm-follow-summary-card--sent-waiting,
+  .tm-follow-record--sent-waiting {
+    border-left-color: #0e7490;
   }
 
   .tm-follow-count {
@@ -121,6 +126,31 @@
     min-height: 1.2em;
   }
 
+  .tm-follow-reminder-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .tm-follow-reminder-actions form {
+    margin: 0;
+  }
+
+  .tm-follow-history {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    display: grid;
+    gap: 5px;
+    padding-top: 8px;
+  }
+
+  .tm-follow-history-line {
+    color: #475569;
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
   .tm-follow-status {
     border-radius: 999px;
     background: #e0f2fe;
@@ -139,6 +169,11 @@
   .tm-follow-status--due-soon {
     background: #fef3c7;
     color: #92400e;
+  }
+
+  .tm-follow-status--sent-waiting {
+    background: #ccfbf1;
+    color: #115e59;
   }
 
   .tm-follow-grid {
@@ -215,6 +250,7 @@
     }
 
     .tm-follow-copy-row .tm-btn,
+    .tm-follow-reminder-actions .tm-btn,
     .tm-follow-contact .tm-btn {
       width: 100%;
     }
@@ -223,7 +259,8 @@
 {% endblock %}
 
 {% macro follow_record(item) %}
-<article class="tm-follow-record tm-follow-record--{{ item.status_key|replace('_', '-') }}">
+{% set display_status_key = item.queue_status_key or item.status_key %}
+<article class="tm-follow-record tm-follow-record--{{ display_status_key|replace('_', '-') }}">
   <div class="tm-follow-record-head">
     <div>
       <div class="tm-follow-name">{{ item.customer_name }}</div>
@@ -238,7 +275,7 @@
       </div>
       <div class="tm-follow-meta">{{ item.vehicle_label }}</div>
     </div>
-    <span class="tm-follow-status tm-follow-status--{{ item.status_key|replace('_', '-') }}">{{ item.status }}</span>
+    <span class="tm-follow-status tm-follow-status--{{ display_status_key|replace('_', '-') }}">{{ item.queue_status or item.status }}</span>
   </div>
 
   <div class="tm-follow-grid">
@@ -280,10 +317,54 @@
     <div class="tm-follow-message-label">Suggested Message</div>
     <div data-suggested-message>{{ item.suggested_message }}</div>
     <div class="tm-follow-copy-row">
-      <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Send Reminder</button>
+      <button
+        class="tm-btn tm-btn-secondary"
+        type="button"
+        data-copy-message
+        data-copy-url="/pro/customers/{{ item.customer_id }}/vehicles/{{ item.vehicle_id }}/maintenance/{{ item.id }}/reminders/copy"
+        data-copy-success="Message copied"
+      >Copy Message</button>
       <span class="tm-follow-copy-status" aria-live="polite"></span>
     </div>
+    {% set reminder_action_base = "/pro/customers/" ~ item.customer_id ~ "/vehicles/" ~ item.vehicle_id ~ "/maintenance/" ~ item.id ~ "/reminders" %}
+    <div class="tm-follow-reminder-actions">
+      <form method="post" action="{{ reminder_action_base }}/mark-sent">
+        <input type="hidden" name="message" value="{{ item.suggested_message }}">
+        <input type="hidden" name="return_to" value="/pro/follow-ups">
+        <button class="tm-btn tm-btn-secondary" type="submit">Mark as Sent</button>
+      </form>
+      <form method="post" action="{{ reminder_action_base }}/snooze-7">
+        <input type="hidden" name="message" value="{{ item.suggested_message }}">
+        <input type="hidden" name="return_to" value="/pro/follow-ups">
+        <button class="tm-btn tm-btn-secondary" type="submit">Snooze 7 Days</button>
+      </form>
+      <form method="post" action="{{ reminder_action_base }}/snooze-30">
+        <input type="hidden" name="message" value="{{ item.suggested_message }}">
+        <input type="hidden" name="return_to" value="/pro/follow-ups">
+        <button class="tm-btn tm-btn-secondary" type="submit">Snooze 30 Days</button>
+      </form>
+      <form method="post" action="{{ reminder_action_base }}/complete">
+        <input type="hidden" name="message" value="{{ item.suggested_message }}">
+        <input type="hidden" name="return_to" value="/pro/follow-ups">
+        <button class="tm-btn tm-btn-secondary" type="submit">Mark Completed</button>
+      </form>
+    </div>
   </div>
+
+  {% if item.reminder_events %}
+  {% set latest_event = item.latest_reminder_event %}
+  <div class="tm-follow-history">
+    <div class="tm-follow-history-line">
+      <strong>Reminder:</strong> {{ latest_event.status_label }} via {{ latest_event.method or "manual" }}
+      {% if latest_event.sent_at %} | sent {{ latest_event.sent_at|pro_datetime }}{% endif %}
+      {% if latest_event.snoozed_until %} | snoozed until {{ latest_event.snoozed_until|pro_date }}{% endif %}
+      | created {{ latest_event.created_at|pro_datetime }}
+    </div>
+    {% if latest_event.notes or latest_event.message %}
+    <div class="tm-follow-history-line">{{ latest_event.notes or latest_event.message|truncate(120, true) }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
 
   <div class="tm-follow-actions">
     <a class="tm-btn tm-btn-secondary" href="{{ item.customer_url }}">Open Customer</a>
@@ -313,6 +394,10 @@
         <div class="tm-follow-count">{{ summary.due_soon }}</div>
         <div class="tm-follow-label">Due Soon</div>
       </div>
+      <div class="tm-follow-summary-card tm-follow-summary-card--sent-waiting">
+        <div class="tm-follow-count">{{ summary.sent_waiting }}</div>
+        <div class="tm-follow-label">Sent / Waiting</div>
+      </div>
     </section>
 
     <section class="tm-follow-helper" aria-label="Manual outreach helper">
@@ -329,6 +414,7 @@
     </section>
 
     {% set sections = [
+      ("sent_waiting", "Sent / Waiting", "Reminder copied or marked sent, still waiting on customer follow-up."),
       ("due_soon", "Due Soon", "Maintenance due within 30 days or within 1,000 miles."),
       ("overdue", "Overdue", "Maintenance past the next due date or mileage.")
     ] %}
@@ -385,12 +471,31 @@
     }, 2200);
   }
 
+  async function postReminderEvent(url, message) {
+    if (!url) return false;
+    const body = new FormData();
+    body.append("message", message || "");
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body,
+        headers: { "X-Requested-With": "fetch" },
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }
+
   document.querySelectorAll("[data-copy-message], [data-copy-value]").forEach((button) => {
     button.addEventListener("click", async () => {
       const messageEl = button.closest(".tm-follow-message")?.querySelector("[data-suggested-message]");
       const value = button.dataset.copyValue || messageEl?.textContent?.trim() || "";
       try {
         const copied = await copyText(value);
+        if (copied && button.dataset.copyUrl) {
+          await postReminderEvent(button.dataset.copyUrl, value);
+        }
         showCopyStatus(button, copied ? button.dataset.copySuccess || "Copied" : "Copy failed");
       } catch (error) {
         showCopyStatus(button, "Copy failed");

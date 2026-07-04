@@ -1,5 +1,5 @@
 from pathlib import Path
-from datetime import date
+from datetime import date, timedelta
 import json
 import sqlite3
 import unittest
@@ -12,6 +12,141 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RepairWorkspaceCleanupTests(unittest.TestCase):
+    def reminder_conn(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        pro_module.ensure_maintenance_records_schema(conn)
+        pro_module.ensure_maintenance_reminder_events_schema(conn)
+        return conn
+
+    def base_reminder_record(self):
+        return {
+            "id": 1,
+            "customer_id": 1,
+            "vehicle_id": 1,
+            "service_type": "Oil Change",
+            "maintenance_status_key": "overdue",
+            "maintenance_status": "Overdue",
+        }
+
+    def test_maintenance_reminder_event_creation_and_copy(self):
+        conn = self.reminder_conn()
+
+        drafted_id = pro_module.create_maintenance_reminder_event(
+            conn,
+            customer_id=1,
+            vehicle_id=1,
+            maintenance_record_id=1,
+            service_type="Oil Change",
+            status="drafted",
+            method="manual",
+            message="Draft reminder",
+            created_at="2026-07-03T12:00:00",
+        )
+        copied_id = pro_module.create_maintenance_reminder_event(
+            conn,
+            customer_id=1,
+            vehicle_id=1,
+            maintenance_record_id=1,
+            service_type="Oil Change",
+            status="copied",
+            method="manual",
+            message="Copied reminder",
+            created_at="2026-07-03T12:01:00",
+        )
+        conn.commit()
+
+        self.assertNotEqual(drafted_id, copied_id)
+        events = pro_module.load_maintenance_reminder_events_map(conn, {1})[1]
+        self.assertEqual(events[0]["status"], "copied")
+        self.assertEqual(events[0]["method"], "manual")
+        self.assertEqual(events[0]["message"], "Copied reminder")
+
+    def test_maintenance_reminder_mark_sent_snooze_and_complete_events(self):
+        conn = self.reminder_conn()
+
+        pro_module.create_maintenance_reminder_event(
+            conn,
+            customer_id=1,
+            vehicle_id=1,
+            maintenance_record_id=1,
+            service_type="Oil Change",
+            status="marked_sent",
+            sent_at="2026-07-03T12:05:00",
+            created_at="2026-07-03T12:05:00",
+        )
+        pro_module.create_maintenance_reminder_event(
+            conn,
+            customer_id=1,
+            vehicle_id=1,
+            maintenance_record_id=1,
+            service_type="Oil Change",
+            status="snoozed",
+            snoozed_until="2026-07-10",
+            created_at="2026-07-03T12:06:00",
+        )
+        pro_module.create_maintenance_reminder_event(
+            conn,
+            customer_id=1,
+            vehicle_id=1,
+            maintenance_record_id=1,
+            service_type="Oil Change",
+            status="snoozed",
+            snoozed_until="2026-08-02",
+            created_at="2026-07-03T12:07:00",
+        )
+        pro_module.create_maintenance_reminder_event(
+            conn,
+            customer_id=1,
+            vehicle_id=1,
+            maintenance_record_id=1,
+            service_type="Oil Change",
+            status="completed",
+            created_at="2026-07-03T12:08:00",
+        )
+        conn.commit()
+
+        events = pro_module.load_maintenance_reminder_events_map(conn, {1})[1]
+        self.assertEqual(events[3]["status"], "marked_sent")
+        self.assertEqual(events[3]["sent_at"], "2026-07-03T12:05:00")
+        self.assertEqual(events[2]["snoozed_until"], "2026-07-10")
+        self.assertEqual(events[1]["snoozed_until"], "2026-08-02")
+        self.assertEqual(events[0]["status"], "completed")
+
+    def test_completed_reminders_hidden_from_active_follow_ups(self):
+        record = self.base_reminder_record()
+        record["latest_reminder_event"] = {"status": "completed"}
+
+        self.assertIsNone(
+            pro_module.maintenance_reminder_follow_up_bucket(record, date(2026, 7, 3))
+        )
+
+    def test_snoozed_reminders_hidden_until_snoozed_date_passes(self):
+        record = self.base_reminder_record()
+        record["latest_reminder_event"] = {
+            "status": "snoozed",
+            "snoozed_until": (date(2026, 7, 3) + timedelta(days=7)).isoformat(),
+        }
+
+        self.assertIsNone(
+            pro_module.maintenance_reminder_follow_up_bucket(record, date(2026, 7, 3))
+        )
+        self.assertEqual(
+            pro_module.maintenance_reminder_follow_up_bucket(record, date(2026, 7, 11)),
+            "overdue",
+        )
+
+    def test_sent_waiting_reminders_remain_trackable(self):
+        for status in ("copied", "marked_sent"):
+            record = self.base_reminder_record()
+            record["latest_reminder_event"] = {"status": status}
+
+            self.assertEqual(
+                pro_module.maintenance_reminder_follow_up_bucket(record, date(2026, 7, 3)),
+                "sent_waiting",
+            )
+
     def test_workspace_items_label_sources_and_estimate_totals(self):
         vehicle = {"id": 1, "year": 2016, "make": "Honda", "model": "Accord", "mileage": 120000}
         findings = [
