@@ -11,7 +11,7 @@
 
   .tm-follow-summary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
 
@@ -39,11 +39,6 @@
   .tm-follow-summary-card--due-soon,
   .tm-follow-record--due-soon {
     border-left-color: #d97706;
-  }
-
-  .tm-follow-summary-card--candidate,
-  .tm-follow-record--candidate {
-    border-left-color: #0e7490;
   }
 
   .tm-follow-count {
@@ -144,11 +139,6 @@
   .tm-follow-status--due-soon {
     background: #fef3c7;
     color: #92400e;
-  }
-
-  .tm-follow-status--candidate {
-    background: #ecfeff;
-    color: #155e75;
   }
 
   .tm-follow-grid {
@@ -290,7 +280,7 @@
     <div class="tm-follow-message-label">Suggested Message</div>
     <div data-suggested-message>{{ item.suggested_message }}</div>
     <div class="tm-follow-copy-row">
-      <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Copy Message</button>
+      <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Send Reminder</button>
       <span class="tm-follow-copy-status" aria-live="polite"></span>
     </div>
   </div>
@@ -310,7 +300,7 @@
       <h1 class="tm-pro-title">Follow-Up Dashboard</h1>
       <p class="tm-pro-subtitle">Actionable maintenance opportunities for the mechanic to review and handle manually.</p>
     </div>
-    <a class="tm-btn tm-btn-secondary" href="/pro">Back to CRM</a>
+    <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
   </div>
 
   <div class="tm-follow-shell">
@@ -323,10 +313,6 @@
         <div class="tm-follow-count">{{ summary.due_soon }}</div>
         <div class="tm-follow-label">Due Soon</div>
       </div>
-      <div class="tm-follow-summary-card tm-follow-summary-card--candidate">
-        <div class="tm-follow-count">{{ summary.candidate }}</div>
-        <div class="tm-follow-label">Candidates</div>
-      </div>
     </section>
 
     <section class="tm-follow-helper" aria-label="Manual outreach helper">
@@ -336,7 +322,7 @@
         <div class="tm-follow-message-label">Suggested Message</div>
         <div data-suggested-message>Hi [Customer Name], this is [Shop Name]. According to our records, your [Vehicle] may be due for [Service Type]. Let me know if you'd like to schedule service.</div>
         <div class="tm-follow-copy-row">
-          <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Copy Message</button>
+          <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Send Reminder</button>
           <span class="tm-follow-copy-status" aria-live="polite"></span>
         </div>
       </div>
@@ -344,8 +330,7 @@
 
     {% set sections = [
       ("due_soon", "Due Soon", "Maintenance due within 30 days or within 1,000 miles."),
-      ("overdue", "Overdue", "Maintenance past the next due date or mileage."),
-      ("candidate", "Follow-Up Candidates", "Maintenance within 90 days or 3,000 miles that is not due soon or overdue yet.")
+      ("overdue", "Overdue", "Maintenance past the next due date or mileage.")
     ] %}
 
     {% for key, title, description in sections %}

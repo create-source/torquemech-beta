@@ -621,6 +621,283 @@ def maintenance_due_values(
     return due_mileage, due_date
 
 
+def maintenance_prediction_source_candidates(
+    maintenance_records: list[dict[str, Any]],
+    service_history_records: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    candidates = []
+    for record in maintenance_records:
+        candidates.append(
+            {
+                "source_type": "maintenance",
+                "date": parse_date_value(record.get("date_performed")),
+                "mileage": optional_int_value(record.get("mileage_performed")),
+            }
+        )
+    for record in service_history_records:
+        candidates.append(
+            {
+                "source_type": "service",
+                "date": parse_date_value(record.get("service_date")),
+                "mileage": optional_int_value(record.get("mileage")),
+            }
+        )
+    return candidates
+
+
+def estimate_vehicle_driving_rate(
+    maintenance_records: list[dict[str, Any]],
+    service_history_records: list[dict[str, Any]],
+    vehicle: dict[str, Any],
+    today: date,
+) -> dict[str, Any] | None:
+    current_mileage = optional_int_value(vehicle.get("mileage"))
+    if current_mileage is None:
+        return None
+
+    reliable = []
+    for candidate in maintenance_prediction_source_candidates(maintenance_records, service_history_records):
+        previous_date = candidate.get("date")
+        previous_mileage = candidate.get("mileage")
+        if previous_date is None or previous_mileage is None:
+            continue
+        days = (today - previous_date).days
+        miles = current_mileage - previous_mileage
+        if days < 14 or miles < 0:
+            continue
+        reliable.append(
+            {
+                **candidate,
+                "days": days,
+                "miles": miles,
+                "miles_per_month": miles / days * 30.4375 if days else 0,
+            }
+        )
+
+    if not reliable:
+        return None
+
+    latest = max(reliable, key=lambda item: (item["date"], item["mileage"]))
+    return {
+        "miles_per_month": int(round(latest["miles_per_month"])),
+        "miles_per_day": latest["miles"] / latest["days"] if latest["days"] else 0,
+        "source_date": latest["date"].isoformat(),
+        "source_mileage": latest["mileage"],
+        "source_type": latest["source_type"],
+    }
+
+
+def estimated_due_date_by_mileage(
+    *,
+    current_mileage: int | None,
+    next_due_mileage: int | None,
+    miles_per_day: float | None,
+    today: date,
+) -> date | None:
+    if current_mileage is None or next_due_mileage is None or not miles_per_day or miles_per_day <= 0:
+        return None
+    remaining_miles = max(0, next_due_mileage - current_mileage)
+    days_until_due = int((remaining_miles + miles_per_day - 1) // miles_per_day)
+    return today + timedelta(days=days_until_due)
+
+
+def vehicle_reminder_label(vehicle: dict[str, Any]) -> str:
+    label = " ".join(
+        str(vehicle.get(key) or "").strip()
+        for key in ("year", "make", "model")
+    ).strip()
+    return label or "vehicle"
+
+
+def build_maintenance_reminder_message(
+    *,
+    customer: dict[str, Any],
+    vehicle: dict[str, Any],
+    record: dict[str, Any],
+) -> str:
+    first_name = str(customer.get("first_name") or "").strip()
+    greeting = f"Hi {first_name}," if first_name else "Hi,"
+    vehicle_label_text = vehicle_reminder_label(vehicle)
+    service_type = str(record.get("service_type") or "maintenance service").strip()
+    service_phrase = service_type.lower()
+    due_mileage = record.get("next_due_mileage")
+    due_date = record.get("earliest_estimated_due_date") or record.get("due_date_by_time_interval") or record.get("next_due_date")
+
+    due_parts = []
+    if due_mileage is not None:
+        due_parts.append(f"around {format_mileage(due_mileage)} miles")
+    if due_date:
+        due_parts.append(f"by {format_pro_date(due_date)}")
+
+    if record.get("maintenance_status_key") == "overdue":
+        message = (
+            f"{greeting} your {vehicle_label_text} is overdue for {service_phrase}. "
+            "We recommend scheduling it soon to keep the vehicle maintained."
+        )
+        if due_parts:
+            message += f" Our records show it was due {' or '.join(due_parts)}."
+        return message
+
+    due_target = " or ".join(due_parts) if due_parts else "within the next few weeks"
+    return (
+        f"{greeting} this is a reminder that your {vehicle_label_text} is coming due for "
+        f"{service_phrase} soon. Based on recent mileage, we recommend scheduling {due_target}."
+    )
+
+
+def latest_maintenance_records_by_vehicle_service(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    latest: dict[tuple[int, int, str], dict[str, Any]] = {}
+
+    def sort_key(record: dict[str, Any]) -> tuple[date, int, int]:
+        record_date = parse_date_value(record.get("date_performed")) or date.min
+        mileage = optional_int_value(record.get("mileage_performed")) or -1
+        record_id = optional_int_value(record.get("id")) or -1
+        return record_date, mileage, record_id
+
+    for record in records:
+        customer_id = optional_int_value(record.get("customer_id")) or 0
+        vehicle_id = optional_int_value(record.get("vehicle_id")) or 0
+        service_key = normalize_maintenance_service_type(record.get("service_type") or "")
+        if not service_key:
+            service_key = f"maintenance-{optional_int_value(record.get('id')) or 0}"
+        alias_key = MAINTENANCE_SERVICE_ALIASES.get(service_key)
+        key = (customer_id, vehicle_id, alias_key or service_key)
+        existing = latest.get(key)
+        if existing is None or sort_key(record) > sort_key(existing):
+            latest[key] = record
+
+    return list(latest.values())
+
+
+def follow_up_item_from_maintenance_record(record: dict[str, Any]) -> dict[str, Any]:
+    customer = customer_name(record)
+    vehicle = vehicle_label(record)
+    interval_parts = []
+    if record.get("interval_miles"):
+        interval_parts.append(f"{format_miles(record['interval_miles'])} miles")
+    if record.get("interval_months"):
+        interval_parts.append(f"{int(record['interval_months'])} months")
+
+    reason = "Maintenance is due soon."
+    if record.get("maintenance_status_key") == "overdue":
+        if record.get("remaining_miles") is not None and int(record["remaining_miles"]) <= 0:
+            reason = "Past the next due mileage."
+        elif record.get("remaining_days") is not None and int(record["remaining_days"]) < 0:
+            reason = "Past the next due date."
+        else:
+            reason = "Maintenance is overdue."
+    elif record.get("remaining_miles") is not None and int(record["remaining_miles"]) <= 1000:
+        reason = "Within 1,000 miles of the next due mileage."
+    elif record.get("remaining_days") is not None and int(record["remaining_days"]) <= 30:
+        reason = "Within 30 days of the next due date."
+
+    return {
+        **record,
+        "customer_name": customer,
+        "vehicle_label": vehicle,
+        "customer_url": f"/pro/customers/{record['customer_id']}",
+        "vehicle_url": f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}",
+        "status": record.get("maintenance_status") or "",
+        "status_key": record.get("maintenance_status_key") or "",
+        "current_mileage": record.get("current_mileage"),
+        "due_mileage": record.get("next_due_mileage"),
+        "due_date": record.get("next_due_date") or record.get("earliest_estimated_due_date") or "",
+        "interval_label": " / ".join(interval_parts) if interval_parts else "-",
+        "reason": reason,
+        "suggested_message": record.get("reminder_message") or "",
+    }
+
+
+def annotate_vehicle_maintenance_records(
+    records: list[dict[str, Any]],
+    vehicle: dict[str, Any],
+    customer: dict[str, Any],
+    today: date,
+    driving_rate: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    current_mileage = optional_int_value(vehicle.get("mileage"))
+    for record in records:
+        mileage_performed = optional_int_value(record.get("mileage_performed"))
+        interval_miles = optional_int_value(record.get("interval_miles"))
+        interval_months = optional_int_value(record.get("interval_months"))
+        defaults = maintenance_defaults_for(record.get("service_type") or "")
+        if interval_miles is None:
+            interval_miles = defaults.get("interval_miles")
+        if interval_months is None:
+            interval_months = defaults.get("interval_months")
+
+        completed_date = parse_date_value(record.get("date_performed"))
+        next_due_mileage = calculated_due_mileage(mileage_performed, interval_miles)
+        next_due_date = add_months(completed_date, int(interval_months)) if completed_date and interval_months is not None else None
+        remaining_miles = (
+            next_due_mileage - current_mileage
+            if next_due_mileage is not None and current_mileage is not None
+            else None
+        )
+        remaining_days = (next_due_date - today).days if next_due_date else None
+        mileage_due_date = estimated_due_date_by_mileage(
+            current_mileage=current_mileage,
+            next_due_mileage=next_due_mileage,
+            miles_per_day=driving_rate.get("miles_per_day") if driving_rate else None,
+            today=today,
+        )
+        earliest_due_date = None
+        if mileage_due_date and next_due_date:
+            earliest_due_date = min(mileage_due_date, next_due_date)
+        else:
+            earliest_due_date = mileage_due_date or next_due_date
+
+        overdue = (
+            (remaining_miles is not None and remaining_miles <= 0)
+            or (next_due_date is not None and today > next_due_date)
+        )
+        due_soon = (
+            (remaining_miles is not None and 0 <= remaining_miles <= 1000)
+            or (remaining_days is not None and 0 <= remaining_days <= 30)
+        )
+        upcoming = (
+            (remaining_miles is not None and 0 <= remaining_miles <= 3000)
+            or (remaining_days is not None and 0 <= remaining_days <= 90)
+        )
+
+        if overdue:
+            status = "Overdue"
+            status_key = "overdue"
+        elif due_soon:
+            status = "Due Soon"
+            status_key = "due_soon"
+        elif upcoming:
+            status = "Upcoming"
+            status_key = "upcoming"
+        else:
+            status = "Current"
+            status_key = "current"
+
+        record.update(
+            {
+                "interval_miles": interval_miles,
+                "interval_months": interval_months,
+                "next_due_mileage": next_due_mileage,
+                "next_due_date": next_due_date.isoformat() if next_due_date else "",
+                "remaining_miles": remaining_miles,
+                "remaining_days": remaining_days,
+                "estimated_due_date_by_mileage": mileage_due_date.isoformat() if mileage_due_date else "",
+                "due_date_by_time_interval": next_due_date.isoformat() if next_due_date else "",
+                "earliest_estimated_due_date": earliest_due_date.isoformat() if earliest_due_date else "",
+                "maintenance_status": status,
+                "maintenance_status_key": status_key,
+                "reminder_message": "",
+            }
+        )
+        if status_key in {"overdue", "due_soon"}:
+            record["reminder_message"] = build_maintenance_reminder_message(
+                customer=customer,
+                vehicle=vehicle,
+                record=record,
+            )
+    return records
+
+
 templates.env.filters["pro_phone"] = format_phone
 templates.env.filters["pro_miles"] = format_mileage
 templates.env.filters["pro_currency"] = format_currency
@@ -6962,8 +7239,10 @@ def pro_follow_ups(request: Request):
     try:
         ensure_customer_status_schema(conn)
         ensure_maintenance_records_schema(conn)
-        shop_name = load_shop_name(conn)
-        rows = conn.execute(
+        ensure_service_history_records_schema(conn)
+        maintenance_records = [
+            dict(row)
+            for row in conn.execute(
             """
             SELECT
               m.*,
@@ -6975,28 +7254,95 @@ def pro_follow_ups(request: Request):
               v.year AS vehicle_year,
               v.make AS vehicle_make,
               v.model AS vehicle_model,
-              v.mileage AS current_mileage,
-              ? AS shop_name
+              v.mileage AS current_mileage
             FROM maintenance_records m
             JOIN customers c ON c.id = m.customer_id
             JOIN customer_vehicles v ON v.id = m.vehicle_id
             WHERE COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'
-            ORDER BY c.last_name, c.first_name, v.year DESC, v.make, v.model, m.service_type
+            ORDER BY
+              m.customer_id,
+              m.vehicle_id,
+              m.service_type,
+              m.date_performed DESC,
+              m.mileage_performed DESC,
+              m.id DESC
             """,
-            (shop_name,),
-        ).fetchall()
+            ).fetchall()
+        ]
+        service_history_records = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT shr.*
+                FROM service_history_records shr
+                JOIN customers c ON c.id = shr.customer_id
+                WHERE COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'
+                ORDER BY shr.vehicle_id, shr.service_date DESC, shr.mileage DESC, shr.id DESC
+                """
+            ).fetchall()
+        ]
     finally:
         conn.close()
 
     grouped = {
         "overdue": [],
         "due_soon": [],
-        "candidate": [],
     }
-    for row in rows:
-        follow_up = build_follow_up_record(row, today)
-        if follow_up["status_key"] in grouped:
-            grouped[follow_up["status_key"]].append(follow_up)
+    service_history_by_vehicle: dict[int, list[dict[str, Any]]] = {}
+    for record in service_history_records:
+        vehicle_id = optional_int_value(record.get("vehicle_id"))
+        if vehicle_id is not None:
+            service_history_by_vehicle.setdefault(vehicle_id, []).append(record)
+
+    maintenance_by_vehicle: dict[int, list[dict[str, Any]]] = {}
+    for record in maintenance_records:
+        vehicle_id = optional_int_value(record.get("vehicle_id"))
+        if vehicle_id is not None:
+            maintenance_by_vehicle.setdefault(vehicle_id, []).append(record)
+
+    for vehicle_id, vehicle_maintenance_records in maintenance_by_vehicle.items():
+        if not vehicle_maintenance_records:
+            continue
+        sample = vehicle_maintenance_records[0]
+        vehicle = {
+            "year": sample.get("vehicle_year"),
+            "make": sample.get("vehicle_make"),
+            "model": sample.get("vehicle_model"),
+            "mileage": sample.get("current_mileage"),
+        }
+        customer = {
+            "first_name": sample.get("first_name"),
+            "last_name": sample.get("last_name"),
+        }
+        driving_rate = estimate_vehicle_driving_rate(
+            vehicle_maintenance_records,
+            service_history_by_vehicle.get(vehicle_id, []),
+            vehicle,
+            today,
+        )
+        latest_records = latest_maintenance_records_by_vehicle_service(vehicle_maintenance_records)
+        annotated_records = annotate_vehicle_maintenance_records(
+            latest_records,
+            vehicle,
+            customer,
+            today,
+            driving_rate,
+        )
+        for record in annotated_records:
+            if record.get("maintenance_status_key") not in grouped:
+                continue
+            grouped[record["maintenance_status_key"]].append(
+                follow_up_item_from_maintenance_record(record)
+            )
+
+    for items in grouped.values():
+        items.sort(
+            key=lambda item: (
+                str(item.get("customer_name") or ""),
+                str(item.get("vehicle_label") or ""),
+                str(item.get("service_type") or ""),
+            )
+        )
 
     summary = {key: len(items) for key, items in grouped.items()}
 
@@ -7778,6 +8124,20 @@ def pro_customer_vehicle_detail(
         estimate_document_records,
     )
     vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
+    today = date.today()
+    maintenance_driving_rate = estimate_vehicle_driving_rate(
+        maintenance_records,
+        service_history_records,
+        vehicle,
+        today,
+    )
+    maintenance_records = annotate_vehicle_maintenance_records(
+        maintenance_records,
+        vehicle,
+        customer,
+        today,
+        maintenance_driving_rate,
+    )
     repair_history_summary = build_repair_history_summary(repair_records)
     inspection_findings_records = [
         record for record in findings_records if is_active_inspection_finding(record)
@@ -7828,6 +8188,7 @@ def pro_customer_vehicle_detail(
             "invoice_records": invoice_records,
             "approval_records": approval_records,
             "approval_groups": grouped_approval_records,
+            "maintenance_driving_rate": maintenance_driving_rate,
             "maintenance_service_options": MAINTENANCE_SERVICE_OPTIONS,
             "maintenance_interval_presets": MAINTENANCE_INTERVAL_PRESETS,
             "maintenance_service_aliases": MAINTENANCE_SERVICE_ALIASES,

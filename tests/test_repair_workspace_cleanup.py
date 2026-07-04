@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import date
 import json
 import sqlite3
 import unittest
@@ -1321,6 +1322,187 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`", helper)
         self.assertIn("function formatMileage", helper)
         self.assertIn("normalizeMileageBeforeSubmit", helper)
+
+    def test_vehicle_maintenance_records_calculate_due_status(self):
+        records = [
+            {
+                "service_type": "Oil Change",
+                "date_performed": "2026-01-01",
+                "mileage_performed": 95000,
+                "interval_miles": 5000,
+                "interval_months": 6,
+            },
+            {
+                "service_type": "Transmission Service",
+                "date_performed": "2026-05-15",
+                "mileage_performed": 141500,
+                "interval_miles": 60000,
+                "interval_months": 48,
+            },
+            {
+                "service_type": "Tire Rotation",
+                "date_performed": "2026-05-01",
+                "mileage_performed": 140800,
+                "interval_miles": 5000,
+                "interval_months": 6,
+            },
+            {
+                "service_type": "Brake Fluid",
+                "date_performed": "2024-10-20",
+                "mileage_performed": 118000,
+                "interval_miles": 30000,
+                "interval_months": 24,
+            },
+            {
+                "service_type": "Cabin Air Filter",
+                "date_performed": "2026-07-01",
+                "mileage_performed": 130000,
+                "interval_miles": 15000,
+                "interval_months": 12,
+            },
+        ]
+
+        annotated = pro_module.annotate_vehicle_maintenance_records(
+            records,
+            {"mileage": 145000},
+            {"first_name": "Natalie"},
+            date(2026, 7, 4),
+        )
+
+        self.assertEqual(annotated[0]["next_due_mileage"], 100000)
+        self.assertEqual(annotated[0]["next_due_date"], "2026-07-01")
+        self.assertEqual(annotated[0]["remaining_miles"], -45000)
+        self.assertEqual(annotated[0]["remaining_days"], -3)
+        self.assertEqual(annotated[0]["maintenance_status"], "Overdue")
+        self.assertIn("Hi Natalie", annotated[0]["reminder_message"])
+        self.assertIn("overdue for oil change", annotated[0]["reminder_message"])
+        self.assertIn("around 100,000 miles", annotated[0]["reminder_message"])
+
+        self.assertEqual(annotated[1]["remaining_miles"], 56500)
+        self.assertEqual(annotated[1]["maintenance_status"], "Current")
+        self.assertEqual(annotated[1]["reminder_message"], "")
+
+        self.assertEqual(annotated[2]["remaining_miles"], 800)
+        self.assertEqual(annotated[2]["maintenance_status"], "Due Soon")
+        self.assertIn("coming due for tire rotation soon", annotated[2]["reminder_message"])
+        self.assertIn("around 145,800 miles", annotated[2]["reminder_message"])
+
+        self.assertEqual(annotated[3]["remaining_miles"], 3000)
+        self.assertEqual(annotated[3]["remaining_days"], 108)
+        self.assertEqual(annotated[3]["maintenance_status"], "Upcoming")
+
+        self.assertEqual(annotated[4]["remaining_miles"], 0)
+        self.assertEqual(annotated[4]["remaining_days"], 362)
+        self.assertEqual(annotated[4]["maintenance_status"], "Overdue")
+
+    def test_vehicle_maintenance_driving_rate_prefers_recent_reliable_pair(self):
+        today = date(2026, 7, 4)
+        maintenance_records = [
+            {
+                "service_type": "Oil Change",
+                "date_performed": "2026-05-01",
+                "mileage_performed": 140000,
+                "interval_miles": 5000,
+                "interval_months": 6,
+            },
+            {
+                "service_type": "Tire Rotation",
+                "date_performed": "2026-06-25",
+                "mileage_performed": 144000,
+                "interval_miles": 5000,
+                "interval_months": 6,
+            },
+        ]
+        service_history_records = [
+            {"service_date": "2026-06-01", "mileage": 143000},
+            {"service_date": "2026-06-20", "mileage": 146000},
+            {"service_date": "", "mileage": 142000},
+            {"service_date": "2026-04-01", "mileage": None},
+        ]
+
+        rate = pro_module.estimate_vehicle_driving_rate(
+            maintenance_records,
+            service_history_records,
+            {"mileage": 145000},
+            today,
+        )
+
+        self.assertIsNotNone(rate)
+        self.assertEqual(rate["source_date"], "2026-06-01")
+        self.assertEqual(rate["source_mileage"], 143000)
+        self.assertEqual(rate["miles_per_month"], 1845)
+
+        annotated = pro_module.annotate_vehicle_maintenance_records(
+            [
+                {
+                    "service_type": "Oil Change",
+                    "date_performed": "2026-02-01",
+                    "mileage_performed": 145000,
+                    "interval_miles": 5000,
+                    "interval_months": 6,
+                }
+            ],
+            {"mileage": 145000},
+            {"first_name": "Natalie"},
+            today,
+            rate,
+        )
+
+        self.assertEqual(annotated[0]["next_due_mileage"], 150000)
+        self.assertEqual(annotated[0]["estimated_due_date_by_mileage"], "2026-09-25")
+        self.assertEqual(annotated[0]["due_date_by_time_interval"], "2026-08-01")
+        self.assertEqual(annotated[0]["earliest_estimated_due_date"], "2026-08-01")
+
+    def test_vehicle_maintenance_template_has_copy_only_reminder_controls(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn("data-maintenance-reminder-toggle", vehicle_detail)
+        self.assertIn("Send Reminder", vehicle_detail)
+        self.assertIn("data-suggested-message", vehicle_detail)
+        self.assertIn("data-copy-message", vehicle_detail)
+        self.assertIn("navigator.clipboard?.writeText", vehicle_detail)
+
+    def test_follow_up_maintenance_uses_latest_record_per_vehicle_service(self):
+        records = [
+            {
+                "id": 1,
+                "customer_id": 7,
+                "vehicle_id": 9,
+                "service_type": "Oil Change",
+                "date_performed": "2026-01-01",
+                "mileage_performed": 100000,
+            },
+            {
+                "id": 2,
+                "customer_id": 7,
+                "vehicle_id": 9,
+                "service_type": "oil service",
+                "date_performed": "2026-07-01",
+                "mileage_performed": 105000,
+            },
+            {
+                "id": 3,
+                "customer_id": 7,
+                "vehicle_id": 9,
+                "service_type": "Brake Fluid",
+                "date_performed": "2024-01-01",
+                "mileage_performed": 80000,
+            },
+        ]
+
+        latest = pro_module.latest_maintenance_records_by_vehicle_service(records)
+
+        self.assertEqual(len(latest), 2)
+        self.assertIn(2, {record["id"] for record in latest})
+        self.assertIn(3, {record["id"] for record in latest})
+
+    def test_follow_up_dashboard_template_is_maintenance_reminder_only(self):
+        follow_ups = (ROOT / "templates" / "pro" / "follow_ups.html").read_text(encoding="utf-8")
+
+        self.assertIn("Send Reminder", follow_ups)
+        self.assertIn("Due Mileage", follow_ups)
+        self.assertIn("Due Date", follow_ups)
+        self.assertNotIn("Follow-Up Candidates", follow_ups)
 
     def test_pro_date_fields_use_native_picker_with_calendar_and_clear_controls(self):
         helper = (ROOT / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")

@@ -1669,6 +1669,75 @@
     padding: 7px 10px;
   }
 
+  .tm-maintenance-status-chip {
+    justify-self: start;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  .tm-maintenance-status-chip--overdue {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .tm-maintenance-status-chip--due_soon {
+    background: #ffedd5;
+    color: #9a3412;
+  }
+
+  .tm-maintenance-status-chip--upcoming {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .tm-maintenance-status-chip--current {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .tm-maintenance-smart-note {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    background: #ecfeff;
+    color: #155e75;
+    font-weight: 800;
+    padding: 10px 12px;
+  }
+
+  .tm-maintenance-reminder {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+
+  .tm-maintenance-reminder-label {
+    color: #0f766e;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-maintenance-copy-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .tm-maintenance-copy-status {
+    color: #0f766e;
+    font-size: 0.86rem;
+    font-weight: 900;
+    min-height: 1.2em;
+  }
+
   .tm-maintenance-fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2985,6 +3054,144 @@
     </div>
   </details>
 
+  <details class="tm-crm-panel" id="maintenance" aria-label="Maintenance" style="margin-top:16px;">
+    <summary class="tm-workspace-summary">
+      <span class="tm-workspace-summary-title">
+        <span>Maintenance Records / Smart Reminders</span>
+        <strong>Maintenance</strong>
+      </span>
+    </summary>
+    <div class="tm-workspace-panel-body">
+      {% if maintenance_driving_rate %}
+      <div class="tm-maintenance-smart-note">
+        Based on recent mileage, this customer drives about {{ maintenance_driving_rate.miles_per_month|pro_miles }} miles/month.
+      </div>
+      {% endif %}
+      {% if maintenance_records %}
+      <div class="tm-maintenance-cards" aria-label="Maintenance records">
+        {% for record in maintenance_records %}
+        <article class="tm-maintenance-card">
+          <div class="tm-maintenance-card-head">
+            <div>
+              <div class="tm-crm-kicker">Maintenance Record</div>
+              <h3 class="tm-repair-card-title">{{ record.service_type or "Maintenance service" }}</h3>
+            </div>
+            <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ record.id }}">Review</a>
+          </div>
+          <span class="tm-maintenance-status-chip tm-maintenance-status-chip--{{ record.maintenance_status_key }}">{{ record.maintenance_status }}</span>
+          <div class="tm-maintenance-fields">
+            <div class="tm-maintenance-field">
+              <span>Completed date</span>
+              <strong>{{ record.date_performed|pro_date if record.date_performed else "Not recorded" }}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Completed mileage</span>
+              <strong>{% if record.mileage_performed is not none %}{{ record.mileage_performed|pro_miles }} miles{% else %}Not recorded{% endif %}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Interval miles</span>
+              <strong>{% if record.interval_miles is not none %}{{ record.interval_miles|pro_miles }} miles{% else %}Not set{% endif %}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Interval months</span>
+              <strong>{% if record.interval_months is not none %}{{ record.interval_months }} months{% else %}Not set{% endif %}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Next due mileage</span>
+              <strong>{% if record.next_due_mileage is not none %}{{ record.next_due_mileage|pro_miles }} miles{% else %}Not calculated{% endif %}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Next due date</span>
+              <strong>{{ record.next_due_date|pro_date if record.next_due_date else "Not calculated" }}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Remaining miles</span>
+              <strong>{% if record.remaining_miles is not none %}{{ record.remaining_miles|pro_miles }} miles{% else %}Needs current mileage{% endif %}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Remaining days</span>
+              <strong>{% if record.remaining_days is not none %}{{ record.remaining_days }} days{% else %}Needs due date{% endif %}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Estimated due date by mileage</span>
+              <strong>{{ record.estimated_due_date_by_mileage|pro_date if record.estimated_due_date_by_mileage else "Needs driving rate" }}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Due date by time interval</span>
+              <strong>{{ record.due_date_by_time_interval|pro_date if record.due_date_by_time_interval else "Not calculated" }}</strong>
+            </div>
+            <div class="tm-maintenance-field">
+              <span>Whichever comes first</span>
+              <strong>{{ record.earliest_estimated_due_date|pro_date if record.earliest_estimated_due_date else "Not calculated" }}</strong>
+            </div>
+          </div>
+          {% if record.reminder_message %}
+          <div class="tm-repair-card-actions">
+            <button class="tm-btn tm-btn-secondary" type="button" data-maintenance-reminder-toggle>Send Reminder</button>
+          </div>
+          <div class="tm-maintenance-reminder" data-maintenance-reminder hidden>
+            <div class="tm-maintenance-reminder-label">Ready-to-copy reminder</div>
+            <div data-suggested-message>{{ record.reminder_message }}</div>
+            <div class="tm-maintenance-copy-row">
+              <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Copy Message</button>
+              <span class="tm-maintenance-copy-status" aria-live="polite"></span>
+            </div>
+          </div>
+          {% endif %}
+          {% if record.notes %}
+          <div style="color:#475569;">{{ record.notes }}</div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-history-empty" style="margin-top:12px;">
+        No maintenance records saved for this vehicle yet.
+      </div>
+      {% endif %}
+
+      <details class="tm-crm-disclosure" style="margin-top:12px;">
+        <summary>+ Add Maintenance</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance" style="margin-top:12px;" data-maintenance-defaults="add">
+          <div>
+            <label class="tm-label" for="maintenance_service_type">Service type</label>
+            <input class="tm-input" id="maintenance_service_type" name="service_type" type="text" maxlength="180" list="maintenance-service-options" required>
+            <datalist id="maintenance-service-options">
+              {% for option in maintenance_service_options %}
+              <option value="{{ option.name }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+          <div class="tm-crm-row" style="margin-top:12px;">
+            <div>
+              <label class="tm-label" for="maintenance_date_performed">Completed date</label>
+              <input class="tm-input" id="maintenance_date_performed" name="date_performed" type="date">
+            </div>
+            <div>
+              <label class="tm-label" for="maintenance_mileage_performed">Completed mileage</label>
+              <input class="tm-input" id="maintenance_mileage_performed" name="mileage_performed" type="text" inputmode="numeric" data-pro-mileage-input>
+            </div>
+          </div>
+          <div class="tm-crm-row" style="margin-top:12px;">
+            <div>
+              <label class="tm-label" for="maintenance_interval_miles">Interval miles</label>
+              <input class="tm-input" id="maintenance_interval_miles" name="interval_miles" type="text" inputmode="numeric" data-pro-mileage-input>
+            </div>
+            <div>
+              <label class="tm-label" for="maintenance_interval_months">Interval months</label>
+              <input class="tm-input" id="maintenance_interval_months" name="interval_months" type="number" min="0" step="1">
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <label class="tm-label" for="maintenance_notes">Notes</label>
+            <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600"></textarea>
+          </div>
+          <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Maintenance</button>
+        </form>
+      </details>
+    </div>
+  </details>
+
   {% set timeline_total = vehicle_timeline_total|default(0, true) %}
   {% if not timeline_total and vehicle_timeline %}
     {% set timeline_counter = namespace(total=0) %}
@@ -3109,6 +3316,62 @@
       if (!panel) return;
       event.preventDefault();
       panel.open = !panel.open;
+    });
+  });
+})();
+</script>
+
+<script>
+(() => {
+  document.querySelectorAll("[data-maintenance-reminder-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const reminder = button.closest(".tm-maintenance-card")?.querySelector("[data-maintenance-reminder]");
+      if (!reminder) return;
+      reminder.hidden = !reminder.hidden;
+      button.textContent = reminder.hidden ? "Send Reminder" : "Hide Reminder";
+    });
+  });
+
+  async function copyText(value) {
+    const text = String(value || "");
+    if (!text) return false;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
+  }
+
+  function showCopyStatus(button, message) {
+    const container = button.closest(".tm-maintenance-copy-row");
+    const status = container?.querySelector(".tm-maintenance-copy-status");
+    if (!status) return;
+    status.textContent = message;
+    window.clearTimeout(status.dataset.copyTimer);
+    status.dataset.copyTimer = window.setTimeout(() => {
+      status.textContent = "";
+    }, 2200);
+  }
+
+  document.querySelectorAll(".tm-maintenance-reminder [data-copy-message]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const messageEl = button.closest(".tm-maintenance-reminder")?.querySelector("[data-suggested-message]");
+      const value = messageEl?.textContent?.trim() || "";
+      try {
+        const copied = await copyText(value);
+        showCopyStatus(button, copied ? button.dataset.copySuccess || "Copied" : "Copy failed");
+      } catch (error) {
+        showCopyStatus(button, "Copy failed");
+      }
     });
   });
 })();
@@ -3765,12 +4028,12 @@
   const recalculateDue = () => {
     const mileage = cleanNumber(fields.mileagePerformed.value);
     const intervalMiles = cleanNumber(fields.intervalMiles.value);
-    if (!dirty.dueMileage && mileage !== null && intervalMiles !== null) {
+    if (fields.dueMileage && !dirty.dueMileage && mileage !== null && intervalMiles !== null) {
       fields.dueMileage.value = formatMiles(mileage + intervalMiles);
     }
 
     const intervalMonths = cleanNumber(fields.intervalMonths.value);
-    if (!dirty.dueDate && fields.datePerformed.value && intervalMonths !== null) {
+    if (fields.dueDate && !dirty.dueDate && fields.datePerformed.value && intervalMonths !== null) {
       fields.dueDate.value = addMonths(fields.datePerformed.value, intervalMonths);
     }
   };
@@ -3784,8 +4047,8 @@
 
     fields.intervalMiles.value = option && option.intervalMiles !== null ? formatMiles(option.intervalMiles) : "";
     fields.intervalMonths.value = option && option.intervalMonths !== null ? option.intervalMonths : "";
-    fields.dueMileage.value = "";
-    fields.dueDate.value = "";
+    if (fields.dueMileage) fields.dueMileage.value = "";
+    if (fields.dueDate) fields.dueDate.value = "";
     recalculateDue();
   };
 
@@ -3803,10 +4066,10 @@
     dirty.intervalMonths = true;
     recalculateDue();
   });
-  fields.dueMileage.addEventListener("input", () => {
+  fields.dueMileage?.addEventListener("input", () => {
     dirty.dueMileage = true;
   });
-  fields.dueDate.addEventListener("change", () => {
+  fields.dueDate?.addEventListener("change", () => {
     dirty.dueDate = true;
   });
 })();
