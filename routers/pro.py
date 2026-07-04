@@ -709,19 +709,80 @@ def vehicle_reminder_label(vehicle: dict[str, Any]) -> str:
     return label or "vehicle"
 
 
+def _context_lookup(context: Any, key: str) -> Any:
+    if context is None:
+        return None
+    if isinstance(context, dict):
+        return context.get(key)
+    return getattr(context, key, None)
+
+
+def _sender_contexts(context: Any) -> list[Any]:
+    if context is None:
+        return []
+    contexts = [context]
+    for key in ("shop_profile", "profile", "current_user", "account", "user", "session"):
+        nested = _context_lookup(context, key)
+        if nested is not None and nested is not context:
+            contexts.append(nested)
+    return contexts
+
+
+def resolve_sender_display_name(*contexts: Any) -> str:
+    priority_keys = (
+        ("shop_name",),
+        ("business_name",),
+        ("mechanic_name",),
+        ("full_name", "user_full_name", "account_full_name", "name", "display_name"),
+        ("first_name", "user_first_name", "account_first_name"),
+    )
+    expanded_contexts: list[Any] = []
+    for context in contexts:
+        expanded_contexts.extend(_sender_contexts(context))
+
+    for keys in priority_keys:
+        for context in expanded_contexts:
+            for key in keys:
+                value = str(_context_lookup(context, key) or "").strip()
+                if value:
+                    return value
+    return "your mechanic"
+
+
+def load_shop_profile_context(conn: sqlite3.Connection) -> dict[str, Any]:
+    try:
+        row = conn.execute("SELECT * FROM shop_profile WHERE id = 1").fetchone()
+    except sqlite3.OperationalError:
+        return {}
+    return dict(row) if row else {}
+
+
 def build_maintenance_reminder_message(
     *,
     customer: dict[str, Any],
     vehicle: dict[str, Any],
     record: dict[str, Any],
+    sender_context: Any | None = None,
 ) -> str:
     first_name = str(customer.get("first_name") or "").strip()
     greeting = f"Hi {first_name}," if first_name else "Hi,"
+    sender_display_name = resolve_sender_display_name(sender_context)
     vehicle_label_text = vehicle_reminder_label(vehicle)
     service_type = str(record.get("service_type") or "maintenance service").strip()
     service_phrase = service_type.lower()
     due_mileage = record.get("next_due_mileage")
     due_date = record.get("earliest_estimated_due_date") or record.get("due_date_by_time_interval") or record.get("next_due_date")
+    current_mileage = optional_int_value(vehicle.get("mileage"))
+    if current_mileage is None:
+        current_mileage = optional_int_value(record.get("current_mileage"))
+
+    status_text = "coming due soon"
+    if record.get("maintenance_status_key") == "overdue":
+        status_text = "overdue"
+    elif record.get("maintenance_status_key") == "due_soon":
+        status_text = "coming due soon"
+    elif record.get("maintenance_status"):
+        status_text = str(record.get("maintenance_status") or "").strip().lower()
 
     due_parts = []
     if due_mileage is not None:
@@ -729,20 +790,15 @@ def build_maintenance_reminder_message(
     if due_date:
         due_parts.append(f"by {format_pro_date(due_date)}")
 
-    if record.get("maintenance_status_key") == "overdue":
-        message = (
-            f"{greeting} your {vehicle_label_text} is overdue for {service_phrase}. "
-            "We recommend scheduling it soon to keep the vehicle maintained."
-        )
-        if due_parts:
-            message += f" Our records show it was due {' or '.join(due_parts)}."
-        return message
-
-    due_target = " or ".join(due_parts) if due_parts else "within the next few weeks"
-    return (
-        f"{greeting} this is a reminder that your {vehicle_label_text} is coming due for "
-        f"{service_phrase} soon. Based on recent mileage, we recommend scheduling {due_target}."
-    )
+    message_parts = [
+        f"{greeting} this is {sender_display_name}. Your {vehicle_label_text} is {status_text} for {service_phrase}."
+    ]
+    if due_parts:
+        message_parts.append(f"Our records show it was due {' or '.join(due_parts)}.")
+    if current_mileage is not None:
+        message_parts.append(f"You are currently at about {format_mileage(current_mileage)} miles.")
+    message_parts.append("Reply here when you're ready to schedule.")
+    return " ".join(message_parts)
 
 
 MAINTENANCE_REMINDER_EVENT_STATUSES = {
@@ -1002,6 +1058,7 @@ def annotate_vehicle_maintenance_records(
     customer: dict[str, Any],
     today: date,
     driving_rate: dict[str, Any] | None = None,
+    sender_context: Any | None = None,
 ) -> list[dict[str, Any]]:
     current_mileage = optional_int_value(vehicle.get("mileage"))
     for record in records:
@@ -1082,6 +1139,7 @@ def annotate_vehicle_maintenance_records(
                 customer=customer,
                 vehicle=vehicle,
                 record=record,
+                sender_context=sender_context,
             )
     return records
 
@@ -1252,8 +1310,25 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
 
     customer = customer_name(record)
     vehicle = vehicle_label(record)
-    shop_name = (record.get("shop_name") or "").strip() or "our shop"
     service_type = (record.get("service_type") or "maintenance").strip()
+    reminder_record = {
+        **record,
+        "service_type": service_type,
+        "maintenance_status": status,
+        "maintenance_status_key": status_key,
+        "next_due_mileage": due_mileage,
+        "next_due_date": due_date.isoformat() if due_date else "",
+    }
+    reminder_customer = {
+        "first_name": record.get("first_name"),
+        "last_name": record.get("last_name"),
+    }
+    reminder_vehicle = {
+        "year": record.get("vehicle_year"),
+        "make": record.get("vehicle_make"),
+        "model": record.get("vehicle_model"),
+        "mileage": record.get("current_mileage"),
+    }
 
     interval_parts = []
     if interval_miles:
@@ -1273,10 +1348,11 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
             "status_key": status_key,
             "reason": reason,
             "interval_label": " / ".join(interval_parts) if interval_parts else "-",
-            "suggested_message": (
-                f"Hi {customer}, this is {shop_name}. According to our records, "
-                f"your {vehicle} may be due for {service_type}. Let me know if "
-                "you'd like to schedule service."
+            "suggested_message": build_maintenance_reminder_message(
+                customer=reminder_customer,
+                vehicle=reminder_vehicle,
+                record=reminder_record,
+                sender_context=record,
             ),
         }
     )
@@ -1284,11 +1360,7 @@ def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
 
 
 def load_shop_name(conn: sqlite3.Connection) -> str:
-    try:
-        row = conn.execute("SELECT shop_name FROM shop_profile WHERE id = 1").fetchone()
-    except sqlite3.OperationalError:
-        return ""
-    return str(row["shop_name"] or "").strip() if row else ""
+    return str(load_shop_profile_context(conn).get("shop_name") or "").strip()
 
 
 def ensure_discrepancy_approvals_schema(conn: sqlite3.Connection) -> None:
@@ -7474,6 +7546,7 @@ def pro_follow_ups(request: Request):
             conn,
             {int(record.get("id") or 0) for record in maintenance_records if record.get("id")},
         )
+        sender_context = load_shop_profile_context(conn)
     finally:
         conn.close()
 
@@ -7521,6 +7594,7 @@ def pro_follow_ups(request: Request):
             customer,
             today,
             driving_rate,
+            sender_context,
         )
         attach_maintenance_reminder_events(annotated_records, maintenance_reminder_events)
         for record in annotated_records:
@@ -8152,6 +8226,7 @@ def pro_customer_vehicle_detail(
             conn,
             {int(record.get("id") or 0) for record in maintenance_records if record.get("id")},
         )
+        sender_context = load_shop_profile_context(conn)
         repair_records = [
             dict(row)
             for row in conn.execute(
@@ -8343,6 +8418,7 @@ def pro_customer_vehicle_detail(
         customer,
         today,
         maintenance_driving_rate,
+        sender_context,
     )
     mark_active_maintenance_baselines(maintenance_records)
     attach_maintenance_reminder_events(maintenance_records, maintenance_reminder_events)
@@ -10702,6 +10778,7 @@ async def pro_maintenance_reminder_event_action(
         )
         if not maintenance:
             raise HTTPException(status_code=404, detail="Maintenance record not found")
+        sender_context = load_shop_profile_context(conn)
 
         annotated = annotate_vehicle_maintenance_records(
             [maintenance],
@@ -10709,8 +10786,9 @@ async def pro_maintenance_reminder_event_action(
             customer,
             local_today(),
             None,
+            sender_context,
         )[0]
-        message = str(form.get("message") or annotated.get("reminder_message") or "").strip()
+        message = str(annotated.get("reminder_message") or form.get("message") or "").strip()
         event_id = create_maintenance_reminder_event(
             conn,
             customer_id=customer_id,

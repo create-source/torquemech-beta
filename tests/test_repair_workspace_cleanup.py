@@ -1,4 +1,5 @@
 from pathlib import Path
+import asyncio
 from datetime import date
 import json
 import sqlite3
@@ -9,6 +10,18 @@ import routers.pro as pro_module
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+class NoCloseConnection(sqlite3.Connection):
+    def close(self):
+        pass
+
+
+class FakeRequest:
+    headers = {"x-requested-with": "fetch"}
+
+    async def body(self):
+        return b"message=old%20message"
 
 
 class RepairWorkspaceCleanupTests(unittest.TestCase):
@@ -62,6 +75,43 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(events[0]["status"], "copied")
         self.assertEqual(events[0]["method"], "manual")
         self.assertEqual(events[0]["message"], "Copied reminder")
+
+    def test_copied_reminder_event_stores_final_generated_message(self):
+        conn = sqlite3.connect(":memory:", factory=NoCloseConnection)
+        conn.row_factory = sqlite3.Row
+        pro_module.ensure_maintenance_records_schema(conn)
+        pro_module.ensure_maintenance_reminder_events_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO maintenance_records (
+              id, customer_id, vehicle_id, service_type, date_performed, mileage_performed,
+              interval_miles, interval_months, created_at, updated_at
+            )
+            VALUES (1, 1, 2, 'Oil Change', '2026-01-03', 177000, 5000, 6, '2026-07-03', '2026-07-03')
+            """
+        )
+        conn.commit()
+
+        with (
+            patch.object(pro_module, "crm_db_conn", return_value=conn),
+            patch.object(
+                pro_module,
+                "load_customer_vehicle",
+                return_value=(
+                    {"id": 1, "first_name": "Natalie"},
+                    {"id": 2, "year": 2008, "make": "TOYOTA", "model": "SEQUOIA", "mileage": 183777},
+                ),
+            ),
+            patch.object(pro_module, "load_shop_profile_context", return_value={"shop_name": "Bryan from TorqueMech Auto"}),
+            patch.object(pro_module, "local_today", return_value=date(2026, 7, 4)),
+        ):
+            asyncio.run(pro_module.pro_maintenance_reminder_event_action(FakeRequest(), 1, 2, 1, "copy"))
+
+        events = pro_module.load_maintenance_reminder_events_map(conn, {1})[1]
+        self.assertEqual(events[0]["status"], "copied")
+        self.assertIn("this is Bryan from TorqueMech Auto", events[0]["message"])
+        self.assertIn("Your 2008 TOYOTA SEQUOIA is overdue for oil change.", events[0]["message"])
+        self.assertTrue(events[0]["message"].endswith("Reply here when you're ready to schedule."))
 
     def test_maintenance_reminder_history_uses_automatic_events(self):
         conn = self.reminder_conn()
@@ -1422,6 +1472,65 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("function formatMileage", helper)
         self.assertIn("normalizeMileageBeforeSubmit", helper)
 
+    def test_maintenance_reminder_message_includes_sender_vehicle_service_and_cta(self):
+        message = pro_module.build_maintenance_reminder_message(
+            customer={"first_name": "Natalie"},
+            vehicle={"year": 2008, "make": "TOYOTA", "model": "SEQUOIA", "mileage": 183777},
+            record={
+                "service_type": "Oil Change",
+                "maintenance_status_key": "overdue",
+                "next_due_mileage": 182000,
+                "next_due_date": "2026-07-03",
+            },
+            sender_context={"shop_name": "Bryan from TorqueMech Auto"},
+        )
+
+        self.assertIn("Hi Natalie, this is Bryan from TorqueMech Auto.", message)
+        self.assertIn("Your 2008 TOYOTA SEQUOIA is overdue for oil change.", message)
+        self.assertIn("Our records show it was due around 182,000 miles or by 07/03/2026.", message)
+        self.assertIn("You are currently at about 183,777 miles.", message)
+        self.assertTrue(message.endswith("Reply here when you're ready to schedule."))
+
+    def test_maintenance_reminder_sender_name_priority_and_fallback(self):
+        self.assertEqual(
+            pro_module.resolve_sender_display_name(
+                {
+                    "business_name": "Business Name",
+                    "mechanic_name": "Mechanic Name",
+                    "shop_profile": {"shop_name": "Shop Name"},
+                }
+            ),
+            "Shop Name",
+        )
+        self.assertEqual(
+            pro_module.resolve_sender_display_name({"business_name": "Business Name", "mechanic_name": "Mechanic Name"}),
+            "Business Name",
+        )
+        self.assertEqual(pro_module.resolve_sender_display_name({"mechanic_name": "Mechanic Name"}), "Mechanic Name")
+        self.assertEqual(pro_module.resolve_sender_display_name({"user": {"full_name": "Alex Mechanic"}}), "Alex Mechanic")
+        self.assertEqual(pro_module.resolve_sender_display_name({"account": {"first_name": "Alex"}}), "Alex")
+        self.assertEqual(pro_module.resolve_sender_display_name({}), "your mechanic")
+
+    def test_maintenance_reminder_message_avoids_missing_data_wording(self):
+        base = {
+            "customer": {"first_name": "Natalie"},
+            "vehicle": {"year": 2008, "make": "TOYOTA", "model": "SEQUOIA"},
+            "sender_context": {},
+        }
+
+        mileage_only = pro_module.build_maintenance_reminder_message(
+            **base,
+            record={"service_type": "Oil Change", "maintenance_status_key": "overdue", "next_due_mileage": 182000},
+        )
+        date_only = pro_module.build_maintenance_reminder_message(
+            **base,
+            record={"service_type": "Oil Change", "maintenance_status_key": "overdue", "next_due_date": "2026-07-03"},
+        )
+
+        self.assertIn("Our records show it was due around 182,000 miles.", mileage_only)
+        self.assertNotIn("You are currently at about", mileage_only)
+        self.assertIn("Our records show it was due by 07/03/2026.", date_only)
+
     def test_vehicle_maintenance_records_calculate_due_status(self):
         records = [
             {
@@ -1473,9 +1582,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(annotated[0]["remaining_miles"], -45000)
         self.assertEqual(annotated[0]["remaining_days"], -3)
         self.assertEqual(annotated[0]["maintenance_status"], "Overdue")
-        self.assertIn("Hi Natalie", annotated[0]["reminder_message"])
-        self.assertIn("overdue for oil change", annotated[0]["reminder_message"])
+        self.assertIn("Hi Natalie, this is your mechanic.", annotated[0]["reminder_message"])
+        self.assertIn("Your vehicle is overdue for oil change.", annotated[0]["reminder_message"])
         self.assertIn("around 100,000 miles", annotated[0]["reminder_message"])
+        self.assertIn("by 07/01/2026", annotated[0]["reminder_message"])
+        self.assertIn("You are currently at about 145,000 miles.", annotated[0]["reminder_message"])
+        self.assertTrue(annotated[0]["reminder_message"].endswith("Reply here when you're ready to schedule."))
 
         self.assertEqual(annotated[1]["remaining_miles"], 56500)
         self.assertEqual(annotated[1]["maintenance_status"], "Current")
@@ -1483,7 +1595,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
         self.assertEqual(annotated[2]["remaining_miles"], 800)
         self.assertEqual(annotated[2]["maintenance_status"], "Due Soon")
-        self.assertIn("coming due for tire rotation soon", annotated[2]["reminder_message"])
+        self.assertIn("coming due soon for tire rotation", annotated[2]["reminder_message"])
         self.assertIn("around 145,800 miles", annotated[2]["reminder_message"])
 
         self.assertEqual(annotated[3]["remaining_miles"], 3000)
