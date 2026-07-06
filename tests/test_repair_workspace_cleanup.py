@@ -102,7 +102,14 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     {"id": 2, "year": 2008, "make": "TOYOTA", "model": "SEQUOIA", "mileage": 183777},
                 ),
             ),
-            patch.object(pro_module, "load_shop_profile_context", return_value={"shop_name": "Bryan from TorqueMech Auto"}),
+            patch.object(
+                pro_module,
+                "load_shop_profile_context",
+                return_value={
+                    "shop_name": "Bryan from TorqueMech Auto",
+                    "scheduling_link": "https://book.example.com/torquemech",
+                },
+            ),
             patch.object(pro_module, "local_today", return_value=date(2026, 7, 4)),
         ):
             asyncio.run(pro_module.pro_maintenance_reminder_event_action(FakeRequest(), 1, 2, 1, "copy"))
@@ -110,8 +117,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         events = pro_module.load_maintenance_reminder_events_map(conn, {1})[1]
         self.assertEqual(events[0]["status"], "copied")
         self.assertIn("this is Bryan from TorqueMech Auto", events[0]["message"])
-        self.assertIn("Your 2008 TOYOTA SEQUOIA is overdue for oil change.", events[0]["message"])
-        self.assertTrue(events[0]["message"].endswith("Reply here when you're ready to schedule."))
+        self.assertIn("Your 2008 TOYOTA SEQUOIA is overdue for Oil Change.", events[0]["message"])
+        self.assertIn("Schedule your service here:\nhttps://book.example.com/torquemech", events[0]["message"])
+        self.assertTrue(events[0]["message"].endswith("Reply here if you have any questions."))
 
     def test_maintenance_reminder_history_uses_automatic_events(self):
         conn = self.reminder_conn()
@@ -1482,13 +1490,34 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "next_due_mileage": 182000,
                 "next_due_date": "2026-07-03",
             },
-            sender_context={"shop_name": "Bryan from TorqueMech Auto"},
+            sender_context={
+                "shop_name": "Bryan from TorqueMech Auto",
+                "scheduling_link": "https://calendly.com/torquemech/service",
+            },
         )
 
         self.assertIn("Hi Natalie, this is Bryan from TorqueMech Auto.", message)
-        self.assertIn("Your 2008 TOYOTA SEQUOIA is overdue for oil change.", message)
+        self.assertIn("Your 2008 TOYOTA SEQUOIA is overdue for Oil Change.", message)
         self.assertIn("Our records show it was due around 182,000 miles or by 07/03/2026.", message)
         self.assertIn("You are currently at about 183,777 miles.", message)
+        self.assertIn("Schedule your service here:\nhttps://calendly.com/torquemech/service", message)
+        self.assertTrue(message.endswith("Reply here if you have any questions."))
+
+    def test_maintenance_reminder_message_without_scheduling_link_uses_reply_cta(self):
+        message = pro_module.build_maintenance_reminder_message(
+            customer={"first_name": "Natalie"},
+            vehicle={"year": 2008, "make": "TOYOTA", "model": "SEQUOIA", "mileage": 183777},
+            record={
+                "service_type": "Oil Change",
+                "maintenance_status_key": "overdue",
+                "next_due_mileage": 182000,
+                "next_due_date": "2026-07-03",
+            },
+            sender_context={"shop_name": "Bryan from TorqueMech Auto"},
+        )
+
+        self.assertNotIn("Schedule your service here:", message)
+        self.assertNotIn("http", message)
         self.assertTrue(message.endswith("Reply here when you're ready to schedule."))
 
     def test_maintenance_reminder_sender_name_priority_and_fallback(self):
@@ -1583,7 +1612,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(annotated[0]["remaining_days"], -3)
         self.assertEqual(annotated[0]["maintenance_status"], "Overdue")
         self.assertIn("Hi Natalie, this is your mechanic.", annotated[0]["reminder_message"])
-        self.assertIn("Your vehicle is overdue for oil change.", annotated[0]["reminder_message"])
+        self.assertIn("Your vehicle is overdue for Oil Change.", annotated[0]["reminder_message"])
         self.assertIn("around 100,000 miles", annotated[0]["reminder_message"])
         self.assertIn("by 07/01/2026", annotated[0]["reminder_message"])
         self.assertIn("You are currently at about 145,000 miles.", annotated[0]["reminder_message"])
@@ -1595,7 +1624,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
         self.assertEqual(annotated[2]["remaining_miles"], 800)
         self.assertEqual(annotated[2]["maintenance_status"], "Due Soon")
-        self.assertIn("coming due soon for tire rotation", annotated[2]["reminder_message"])
+        self.assertIn("due for Tire Rotation", annotated[2]["reminder_message"])
         self.assertIn("around 145,800 miles", annotated[2]["reminder_message"])
 
         self.assertEqual(annotated[3]["remaining_miles"], 3000)
@@ -1671,6 +1700,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Send Reminder", vehicle_detail)
         self.assertIn("data-suggested-message", vehicle_detail)
         self.assertIn("data-copy-message", vehicle_detail)
+        self.assertIn("Scheduling link included", vehicle_detail)
+        self.assertIn("No scheduling link saved", vehicle_detail)
+        self.assertIn("Add Scheduling Link", vehicle_detail)
         self.assertIn("Reminder History", vehicle_detail)
         self.assertIn("navigator.clipboard?.writeText", vehicle_detail)
         self.assertNotIn("Mark as Sent", vehicle_detail)
@@ -1811,7 +1843,10 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
     def test_follow_up_dashboard_template_is_maintenance_reminder_only(self):
         follow_ups = (ROOT / "templates" / "pro" / "follow_ups.html").read_text(encoding="utf-8")
 
-        self.assertIn("Send Reminder", follow_ups)
+        self.assertIn("Copy Message", follow_ups)
+        self.assertIn("Scheduling link included", follow_ups)
+        self.assertIn("No scheduling link saved", follow_ups)
+        self.assertIn("Add your scheduling link in Shop Settings to include it in customer reminders.", follow_ups)
         self.assertIn("Due Mileage", follow_ups)
         self.assertIn("Due Date", follow_ups)
         self.assertIn("Sent / Waiting", follow_ups)

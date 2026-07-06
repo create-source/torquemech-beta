@@ -749,12 +749,91 @@ def resolve_sender_display_name(*contexts: Any) -> str:
     return "your mechanic"
 
 
+def resolve_scheduling_link(*contexts: Any) -> str:
+    expanded_contexts: list[Any] = []
+    for context in contexts:
+        expanded_contexts.extend(_sender_contexts(context))
+    for context in expanded_contexts:
+        value = str(_context_lookup(context, "scheduling_link") or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS shop_profile (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          shop_name TEXT,
+          phone TEXT,
+          email TEXT,
+          address TEXT,
+          website TEXT,
+          scheduling_link TEXT,
+          logo_url TEXT,
+          labor_rate_default REAL,
+          tax_rate_default REAL,
+          warranty_note TEXT,
+          quote_expiration_days INTEGER,
+          custom_footer_note TEXT,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    columns = {
+        row[1]
+        for row in conn.execute("PRAGMA table_info(shop_profile)").fetchall()
+    }
+    if "scheduling_link" not in columns:
+        conn.execute("ALTER TABLE shop_profile ADD COLUMN scheduling_link TEXT")
+    conn.commit()
+
+
 def load_shop_profile_context(conn: sqlite3.Connection) -> dict[str, Any]:
     try:
+        ensure_shop_profile_schema(conn)
         row = conn.execute("SELECT * FROM shop_profile WHERE id = 1").fetchone()
     except sqlite3.OperationalError:
         return {}
     return dict(row) if row else {}
+
+
+def save_shop_scheduling_link(conn: sqlite3.Connection, scheduling_link: str) -> dict[str, Any]:
+    ensure_shop_profile_schema(conn)
+    current = load_shop_profile_context(conn)
+    current["scheduling_link"] = str(scheduling_link or "").strip()
+    current["updated_at"] = datetime.utcnow().isoformat()
+    conn.execute(
+        """
+        INSERT INTO shop_profile (
+          id, shop_name, phone, email, address, website, scheduling_link,
+          logo_url, labor_rate_default, tax_rate_default, warranty_note,
+          quote_expiration_days, custom_footer_note, updated_at
+        )
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          scheduling_link = excluded.scheduling_link,
+          updated_at = excluded.updated_at
+        """,
+        (
+            current.get("shop_name") or "",
+            current.get("phone") or "",
+            current.get("email") or "",
+            current.get("address") or "",
+            current.get("website") or "",
+            current.get("scheduling_link") or "",
+            current.get("logo_url") or "",
+            current.get("labor_rate_default") or 90.0,
+            current.get("tax_rate_default") or 0.0,
+            current.get("warranty_note") or "",
+            current.get("quote_expiration_days") or 30,
+            current.get("custom_footer_note") or "",
+            current["updated_at"],
+        ),
+    )
+    conn.commit()
+    return current
 
 
 def build_maintenance_reminder_message(
@@ -767,20 +846,21 @@ def build_maintenance_reminder_message(
     first_name = str(customer.get("first_name") or "").strip()
     greeting = f"Hi {first_name}," if first_name else "Hi,"
     sender_display_name = resolve_sender_display_name(sender_context)
+    scheduling_link = resolve_scheduling_link(sender_context)
     vehicle_label_text = vehicle_reminder_label(vehicle)
     service_type = str(record.get("service_type") or "maintenance service").strip()
-    service_phrase = service_type.lower()
+    service_phrase = service_type
     due_mileage = record.get("next_due_mileage")
     due_date = record.get("earliest_estimated_due_date") or record.get("due_date_by_time_interval") or record.get("next_due_date")
     current_mileage = optional_int_value(vehicle.get("mileage"))
     if current_mileage is None:
         current_mileage = optional_int_value(record.get("current_mileage"))
 
-    status_text = "coming due soon"
+    status_text = "due"
     if record.get("maintenance_status_key") == "overdue":
         status_text = "overdue"
     elif record.get("maintenance_status_key") == "due_soon":
-        status_text = "coming due soon"
+        status_text = "due"
     elif record.get("maintenance_status"):
         status_text = str(record.get("maintenance_status") or "").strip().lower()
 
@@ -797,8 +877,10 @@ def build_maintenance_reminder_message(
         message_parts.append(f"Our records show it was due {' or '.join(due_parts)}.")
     if current_mileage is not None:
         message_parts.append(f"You are currently at about {format_mileage(current_mileage)} miles.")
-    message_parts.append("Reply here when you're ready to schedule.")
-    return " ".join(message_parts)
+    body = " ".join(message_parts)
+    if scheduling_link:
+        return f"{body}\n\nSchedule your service here:\n{scheduling_link}\n\nReply here if you have any questions."
+    return f"{body}\n\nReply here when you're ready to schedule."
 
 
 MAINTENANCE_REMINDER_EVENT_STATUSES = {
@@ -1061,6 +1143,7 @@ def annotate_vehicle_maintenance_records(
     sender_context: Any | None = None,
 ) -> list[dict[str, Any]]:
     current_mileage = optional_int_value(vehicle.get("mileage"))
+    scheduling_link = resolve_scheduling_link(sender_context)
     for record in records:
         mileage_performed = optional_int_value(record.get("mileage_performed"))
         interval_miles = optional_int_value(record.get("interval_miles"))
@@ -1131,6 +1214,9 @@ def annotate_vehicle_maintenance_records(
                 "earliest_estimated_due_date": earliest_due_date.isoformat() if earliest_due_date else "",
                 "maintenance_status": status,
                 "maintenance_status_key": status_key,
+                "scheduling_link": scheduling_link,
+                "has_scheduling_link": bool(scheduling_link),
+                "scheduling_link_warning": "" if scheduling_link else "Add your scheduling link in Shop Settings to include it in customer reminders.",
                 "reminder_message": "",
             }
         )
@@ -6992,6 +7078,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
             {"label": "Add Customer", "href": "/pro/customers?mode=add#add-customer"},
             {"label": "View Customers", "href": "/pro/customers"},
             {"label": "Create Estimate", "href": "/estimator"},
+            {"label": "Shop Settings", "href": "/pro/shop-settings"},
             {"label": "View Active Jobs", "href": "/pro/customers#customer-list"},
         ],
     }
@@ -7628,8 +7715,38 @@ def pro_follow_ups(request: Request):
             "today": today.isoformat(),
             "groups": grouped,
             "summary": summary,
+            "shop_profile": sender_context,
         },
     )
+
+
+@router.get("/shop-settings", response_class=HTMLResponse)
+def pro_shop_settings(request: Request, saved: str = ""):
+    conn = crm_db_conn()
+    try:
+        profile = load_shop_profile_context(conn)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "pro/shop_settings.html",
+        {
+            "request": request,
+            "profile": profile,
+            "saved": saved == "1",
+        },
+    )
+
+
+@router.post("/shop-settings")
+async def pro_shop_settings_save(request: Request):
+    form = await read_form_data(request)
+    conn = crm_db_conn()
+    try:
+        save_shop_scheduling_link(conn, form.get("scheduling_link", ""))
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-settings?saved=1", status_code=303)
 
 
 @router.get("/customers", response_class=HTMLResponse)

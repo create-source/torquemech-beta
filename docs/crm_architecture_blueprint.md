@@ -100,6 +100,12 @@ Key fields:
 
 Workflow role: reminders can be generated from completed service history, manually created by a future CRM workflow, or derived from mileage/date intervals.
 
+Scheduling foundation:
+
+- Store a shop-level scheduling link in shop/account settings so copied maintenance reminders can include a direct customer booking path.
+- If no scheduling link is saved, reminders should avoid fake links and ask the customer to reply when ready to schedule.
+- Future phase: add built-in TorqueMech calendar scheduling so customers can choose available service times and mechanics can manage appointments directly inside TorqueMech. This should come after shop accounts/settings and the scheduling-link foundation are complete.
+
 ## 6. Future Discrepancy Tracking
 
 Future discrepancy tracking should live on or near `service_history` because discrepancies are usually tied to a specific estimate or service event.

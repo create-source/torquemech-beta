@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+{% block title %}Shop Settings | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-shop-settings {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tm-shop-settings-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 16px;
+  }
+
+  .tm-shop-settings-form {
+    display: grid;
+    gap: 12px;
+    max-width: 720px;
+  }
+
+  .tm-shop-settings-help,
+  .tm-shop-settings-saved {
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .tm-shop-settings-saved {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    background: #f0fdfa;
+    color: #115e59;
+    padding: 10px 12px;
+    font-weight: 800;
+  }
+
+  .tm-shop-settings-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell tm-shop-settings">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Shop Settings</h1>
+      <p class="tm-pro-subtitle">Manage shop-level details used by customer-facing TorqueMech Pro workflows.</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
+  </div>
+
+  <section class="tm-shop-settings-panel" aria-label="Scheduling settings">
+    <form class="tm-shop-settings-form" method="post" action="/pro/shop-settings">
+      {% if saved %}
+      <div class="tm-shop-settings-saved">Shop settings saved.</div>
+      {% endif %}
+      <div>
+        <label class="tm-label" for="scheduling_link">Scheduling Link</label>
+        <input
+          class="tm-input"
+          id="scheduling_link"
+          name="scheduling_link"
+          type="url"
+          value="{{ profile.scheduling_link or '' }}"
+          maxlength="500"
+          placeholder="https://calendly.com/your-shop/service"
+        >
+        <div class="tm-shop-settings-help" style="margin-top:6px;">
+          Use your booking page from Calendly, Google Calendar appointment schedules, Square appointments, Shopify or booking tools, or a future TorqueMech calendar page.
+        </div>
+      </div>
+      <div class="tm-shop-settings-actions">
+        <button class="tm-btn tm-btn-primary" type="submit">Save Settings</button>
+        <a class="tm-btn tm-btn-secondary" href="/pro/follow-ups">Back to Follow-Ups</a>
+      </div>
+    </form>
+  </section>
+</section>
+{% endblock %}
