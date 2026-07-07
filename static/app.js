@@ -5,6 +5,55 @@
 */
 // static/app.js — CLEAN (Beta-stable)
 (() => {
+  function initNativeDateInputs() {
+    const dateInputs = Array.from(document.querySelectorAll('input[type="date"]:not([data-tm-date-enhanced])'));
+
+    dateInputs.forEach((input) => {
+      input.dataset.tmDateEnhanced = "1";
+
+      const openPicker = () => {
+        if (typeof input.showPicker !== "function") return;
+        try {
+          input.showPicker();
+        } catch (_) {}
+      };
+
+      input.addEventListener("focus", openPicker);
+      input.addEventListener("click", openPicker);
+
+      if (input.dataset.tmDateClear === "off" || input.closest("[data-tm-date-clear='off']")) return;
+
+      const wrapper = document.createElement("span");
+      wrapper.className = "tm-date-input-wrap";
+      input.parentNode?.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+
+      const clearButton = document.createElement("button");
+      clearButton.type = "button";
+      clearButton.className = "tm-date-clear";
+      clearButton.setAttribute("aria-label", `Clear ${input.getAttribute("aria-label") || input.name || "date"}`);
+      clearButton.textContent = "X";
+      wrapper.appendChild(clearButton);
+
+      const updateClearState = () => {
+        clearButton.hidden = !input.value;
+      };
+
+      clearButton.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        input.focus();
+        updateClearState();
+      });
+      input.addEventListener("input", updateClearState);
+      input.addEventListener("change", updateClearState);
+      updateClearState();
+    });
+  }
+
+  initNativeDateInputs();
+
   function initRepairIntelligenceDrawers() {
     if (window.__tmRepairIntelligenceDrawersBooted) return;
     window.__tmRepairIntelligenceDrawersBooted = true;

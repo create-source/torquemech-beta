@@ -68,7 +68,7 @@
   <div class="tm-calendar-grid">
     <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.vehicle_label or "-" }}</strong></div>
     <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
-    <div class="tm-calendar-field"><span>Date / Time</span><strong>{{ item.requested_date|pro_date }} {{ item.requested_time }}</strong></div>
+    <div class="tm-calendar-field"><span>Date / Time</span><strong>{{ item.requested_date|pro_date }} {{ item.requested_time|pro_time }}</strong></div>
     <div class="tm-calendar-field"><span>Source</span><strong>{{ item.source|replace("_", " ")|title }}</strong></div>
   </div>
   {% if item.notes %}<div style="color:#475569;">{{ item.notes }}</div>{% endif %}

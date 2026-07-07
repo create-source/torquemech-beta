@@ -28,6 +28,33 @@
   .tm-closed-list { display: grid; gap: 8px; }
   .tm-closed-item { display: flex; justify-content: space-between; gap: 10px; align-items: center; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 8px; }
   .tm-schedule-saved { color: #115e59; font-weight: 900; }
+  .tm-schedule-help {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px 12px;
+  }
+  .tm-schedule-help summary {
+    color: #0f766e;
+    cursor: pointer;
+    font-weight: 900;
+  }
+  .tm-schedule-help-body {
+    color: #475569;
+    display: grid;
+    gap: 6px;
+    font-size: .92rem;
+    line-height: 1.42;
+    margin-top: 10px;
+  }
+  .tm-schedule-help-body p { margin: 0; }
+  .tm-schedule-help-list {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+  }
+  .tm-schedule-help-list li { list-style: none; }
   @media (max-width: 760px) {
     .tm-schedule-day, .tm-schedule-options { grid-template-columns: 1fr; }
     .tm-schedule-day .tm-btn, .tm-booking-link .tm-btn { width: 100%; }
@@ -62,6 +89,22 @@
   <section class="tm-schedule-panel" aria-label="Weekly availability">
     <form class="tm-schedule-form" method="post" action="/pro/shop-schedule">
       {% if saved %}<div class="tm-schedule-saved">Shop schedule saved.</div>{% endif %}
+      <details class="tm-schedule-help">
+        <summary>Default shop schedule example</summary>
+        <div class="tm-schedule-help-body">
+          <p><strong>Default appointment length:</strong> 60 minutes</p>
+          <p><strong>Buffer time:</strong> 0 minutes</p>
+          <ul class="tm-schedule-help-list">
+            <li>Monday: Open, 9:00 AM - 5:00 PM</li>
+            <li>Tuesday: Open, 9:00 AM - 5:00 PM</li>
+            <li>Wednesday: Open, 9:00 AM - 5:00 PM</li>
+            <li>Thursday: Open, 9:00 AM - 5:00 PM</li>
+            <li>Friday: Open, 9:00 AM - 5:00 PM</li>
+            <li>Saturday: Closed</li>
+            <li>Sunday: Closed</li>
+          </ul>
+        </div>
+      </details>
       <div class="tm-schedule-options">
         <div>
           <label class="tm-label" for="appointment_length_minutes">Default Appointment Length</label>
@@ -106,6 +149,19 @@
   <section class="tm-schedule-panel" aria-label="Closed days">
     <h2 style="margin:0;">Closed Days</h2>
     {% if closed_saved %}<div class="tm-schedule-saved">Closed day saved.</div>{% endif %}
+    <details class="tm-schedule-help">
+      <summary>When to use closed days</summary>
+      <div class="tm-schedule-help-body">
+        <p>Closed days are for special dates like:</p>
+        <ul class="tm-schedule-help-list">
+          <li>Holiday</li>
+          <li>Vacation</li>
+          <li>Shop closed for training</li>
+          <li>Family emergency</li>
+          <li>Fully booked day</li>
+        </ul>
+      </div>
+    </details>
     <form class="tm-schedule-options" method="post" action="/pro/shop-schedule/closed-days">
       <div>
         <label class="tm-label" for="closed_date">Closed Date</label>

@@ -570,6 +570,19 @@ def format_pro_datetime(value: Any) -> str:
     return format_pro_date(raw)
 
 
+def format_pro_time(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    if "AM" in raw.upper() or "PM" in raw.upper():
+        return raw
+    try:
+        parsed = datetime.strptime(raw[:5], "%H:%M")
+    except ValueError:
+        return raw
+    return parsed.strftime("%I:%M %p").lstrip("0")
+
+
 def service_total_value(record: dict[str, Any]) -> float | None:
     actual = record.get("actual_total")
     estimate = record.get("estimate_total")
@@ -887,6 +900,9 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
           shop_id INTEGER,
           customer_id INTEGER,
           vehicle_id INTEGER,
+          estimate_id INTEGER,
+          repair_id INTEGER,
+          invoice_id INTEGER,
           customer_name TEXT NOT NULL,
           customer_phone TEXT NOT NULL,
           customer_email TEXT,
@@ -906,6 +922,9 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
         "shop_id": "shop_id INTEGER",
         "customer_id": "customer_id INTEGER",
         "vehicle_id": "vehicle_id INTEGER",
+        "estimate_id": "estimate_id INTEGER",
+        "repair_id": "repair_id INTEGER",
+        "invoice_id": "invoice_id INTEGER",
         "customer_name": "customer_name TEXT",
         "customer_phone": "customer_phone TEXT",
         "customer_email": "customer_email TEXT",
@@ -923,6 +942,10 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_date ON service_appointments (requested_date, requested_time)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_status ON service_appointments (status)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_customer ON service_appointments (customer_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_vehicle ON service_appointments (vehicle_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_estimate ON service_appointments (estimate_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_repair ON service_appointments (repair_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_invoice ON service_appointments (invoice_id)")
     conn.commit()
 
 
@@ -1094,15 +1117,18 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -
     cur = conn.execute(
         """
         INSERT INTO service_appointments (
-          shop_id, customer_id, vehicle_id, customer_name, customer_phone,
+          shop_id, customer_id, vehicle_id, estimate_id, repair_id, invoice_id, customer_name, customer_phone,
           customer_email, vehicle_label, service_name, requested_date,
           requested_time, notes, source, status, created_at, updated_at
         )
-        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             optional_int_value(data.get("customer_id")),
             optional_int_value(data.get("vehicle_id")),
+            optional_int_value(data.get("estimate_id")),
+            optional_int_value(data.get("repair_id")),
+            optional_int_value(data.get("invoice_id")),
             str(data.get("customer_name") or "").strip(),
             str(data.get("customer_phone") or "").strip(),
             str(data.get("customer_email") or "").strip(),
@@ -1646,6 +1672,7 @@ templates.env.filters["pro_miles"] = format_mileage
 templates.env.filters["pro_currency"] = format_currency
 templates.env.filters["pro_date"] = format_pro_date
 templates.env.filters["pro_datetime"] = format_pro_datetime
+templates.env.filters["pro_time"] = format_pro_time
 templates.env.filters["pro_quantity"] = format_quantity
 templates.env.filters["pro_engine_badge"] = format_engine_badge
 templates.env.filters["service_total"] = service_total_value
