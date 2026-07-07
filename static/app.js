@@ -86,7 +86,6 @@
     const tours = {
       estimator: {
         route: () => window.location.pathname === "/estimator",
-        label: "Restart Estimator Tour",
         steps: [
           {
             title: "Welcome to TorqueMech",
@@ -133,10 +132,9 @@
       pro: {
         route: () => {
           const path = window.location.pathname;
-          if (path === "/pro/shop-schedule" || path === "/pro/calendar") return false;
+          if (path === "/pro/shop-schedule" || path === "/pro/calendar" || path === "/pro/shop-settings") return false;
           return path === "/pro/dashboard" || (path.startsWith("/pro/") && path !== "/pro/");
         },
-        label: "Restart Pro Tour",
         steps: [
           {
             title: "Welcome to TorqueMech",
@@ -653,22 +651,6 @@
       window.setTimeout(() => startTour(tourId), 650);
     }
 
-    function injectRestartButton(tourId) {
-      const tour = tours[tourId];
-      if (!tour || !tour.route() || document.querySelector(`[data-tm-tour-restart="${tourId}"]`)) return;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "tm-tour-restart";
-      button.dataset.tmTourRestart = tourId;
-      button.textContent = tour.label;
-      const header = document.querySelector(".tm-estimator-header, .tm-pro-header, .tm-pro-pagehead");
-      if (header) {
-        header.insertAdjacentElement("afterend", button);
-      } else {
-        document.querySelector("main")?.prepend(button);
-      }
-    }
-
     function showHelperTip(helper) {
       if (hasActiveOnboardingLayer()) return;
       if (storage.get(helperStorageKey(helper.id)) === "dismissed") return;
@@ -767,16 +749,6 @@
       }
     }
 
-    document.addEventListener("click", (event) => {
-      const restart = event.target.closest("[data-tm-tour-restart]");
-      if (!restart) return;
-      const tourId = restart.dataset.tmTourRestart;
-      storage.remove(tourStorageKey(tourId));
-      removeHelperTips();
-      startTour(tourId, { instant: true });
-    });
-
-    Object.keys(tours).forEach(injectRestartButton);
     maybeStartTour("estimator");
     maybeStartTour("pro");
     window.setTimeout(initHelperTips, 800);
