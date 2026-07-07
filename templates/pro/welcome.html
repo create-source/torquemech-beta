@@ -1,0 +1,602 @@
+{% extends "layout.html" %}
+
+{% block title %}TorqueMech Pro | Professional Shop Workflow, Simplified{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-nav {
+    display: none;
+  }
+
+  body {
+    background: #f8fafc;
+  }
+
+  .tm-container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  .tm-pro-landing {
+    min-height: 100vh;
+    color: #0f172a;
+    background:
+      linear-gradient(180deg, #f8fafc 0%, #eef7f7 44%, #f8fafc 100%);
+  }
+
+  .tm-pro-landing-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    background: rgba(248, 250, 252, 0.94);
+    backdrop-filter: blur(16px);
+  }
+
+  .tm-pro-landing-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: min(1120px, calc(100% - 32px));
+    min-height: 64px;
+    margin: 0 auto;
+  }
+
+  .tm-pro-brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    color: #0f172a;
+    font-size: 1.02rem;
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .tm-pro-brand span:last-child {
+    color: #0f766e;
+  }
+
+  .tm-pro-header-actions,
+  .tm-pro-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tm-pro-landing-link,
+  .tm-pro-landing-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .tm-pro-landing-link {
+    color: #334155;
+    padding: 0 4px;
+  }
+
+  .tm-pro-landing-btn {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: #0f172a;
+    color: #fff;
+    padding: 0 15px;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+  }
+
+  .tm-pro-landing-btn--secondary {
+    background: #fff;
+    color: #0f766e;
+    box-shadow: none;
+  }
+
+  .tm-pro-landing-section {
+    width: min(1120px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .tm-pro-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.98fr);
+    gap: 42px;
+    align-items: center;
+    padding: 72px 0 46px;
+  }
+
+  .tm-pro-hero-copy {
+    display: grid;
+    gap: 18px;
+  }
+
+  .tm-pro-eyebrow {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tm-pro-hero h1 {
+    margin: 0;
+    max-width: 780px;
+    color: #0f172a;
+    font-size: 3.3rem;
+    font-weight: 900;
+    line-height: 1.02;
+  }
+
+  .tm-pro-hero p {
+    margin: 0;
+    max-width: 690px;
+    color: #475569;
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.65;
+  }
+
+  .tm-pro-trust-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  .tm-pro-trust-chip {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 900;
+    padding: 7px 10px;
+  }
+
+  .tm-pro-preview {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+  }
+
+  .tm-pro-preview-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 14px 16px;
+  }
+
+  .tm-pro-preview-title {
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 900;
+  }
+
+  .tm-pro-preview-status {
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #155e75;
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 5px 8px;
+  }
+
+  .tm-pro-preview-body {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .tm-pro-preview-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 10px;
+    background: #fff;
+    padding: 12px;
+  }
+
+  .tm-pro-preview-row strong {
+    display: block;
+    color: #0f172a;
+    font-size: 0.9rem;
+    line-height: 1.2;
+  }
+
+  .tm-pro-preview-row span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .tm-pro-preview-value {
+    color: #0f766e;
+    font-size: 0.92rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .tm-pro-section-head {
+    display: grid;
+    gap: 8px;
+    max-width: 720px;
+    margin-bottom: 18px;
+  }
+
+  .tm-pro-section-head h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.65rem;
+    font-weight: 900;
+    line-height: 1.15;
+  }
+
+  .tm-pro-section-head p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.98rem;
+    font-weight: 750;
+    line-height: 1.55;
+  }
+
+  .tm-pro-product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 22px 0 52px;
+  }
+
+  .tm-pro-product-card {
+    display: grid;
+    gap: 14px;
+    min-height: 190px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+    padding: 16px;
+  }
+
+  .tm-pro-product-card h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  .tm-pro-product-card p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 750;
+    line-height: 1.5;
+  }
+
+  .tm-pro-card-preview {
+    display: grid;
+    gap: 7px;
+    margin-top: auto;
+  }
+
+  .tm-pro-preview-line {
+    height: 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+  }
+
+  .tm-pro-preview-line:nth-child(2) {
+    width: 72%;
+    background: #ccfbf1;
+  }
+
+  .tm-pro-preview-line:nth-child(3) {
+    width: 48%;
+  }
+
+  .tm-pro-steps {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 48px 0 72px;
+  }
+
+  .tm-pro-step-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-pro-step {
+    border-left: 3px solid #0f766e;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+    padding: 16px;
+  }
+
+  .tm-pro-step-number {
+    color: #0f766e;
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+
+  .tm-pro-step h3 {
+    margin: 8px 0 6px;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  .tm-pro-step p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.88rem;
+    font-weight: 750;
+    line-height: 1.5;
+  }
+
+  .tm-pro-final-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 12px;
+    background: #0f172a;
+    color: #fff;
+    padding: 22px;
+  }
+
+  .tm-pro-final-cta h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.35rem;
+    font-weight: 900;
+  }
+
+  .tm-pro-final-cta p {
+    margin: 5px 0 0;
+    color: #cbd5e1;
+    font-size: 0.94rem;
+    font-weight: 750;
+  }
+
+  .tm-pro-final-cta .tm-pro-landing-btn {
+    background: #fff;
+    color: #0f172a;
+    box-shadow: none;
+  }
+
+  @media (max-width: 900px) {
+    .tm-pro-hero {
+      grid-template-columns: 1fr;
+      padding-top: 46px;
+    }
+
+    .tm-pro-hero h1 {
+      font-size: 2.45rem;
+    }
+
+    .tm-pro-product-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tm-pro-step-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .tm-pro-landing-header__inner {
+      width: min(100% - 24px, 1120px);
+      min-height: 60px;
+    }
+
+    .tm-pro-header-actions {
+      gap: 8px;
+    }
+
+    .tm-pro-landing-link,
+    .tm-pro-landing-btn {
+      min-height: 38px;
+      font-size: 0.82rem;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    .tm-pro-landing-section {
+      width: min(100% - 24px, 1120px);
+    }
+
+    .tm-pro-hero {
+      gap: 26px;
+      padding: 34px 0 34px;
+    }
+
+    .tm-pro-hero h1 {
+      font-size: 2rem;
+    }
+
+    .tm-pro-hero p {
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .tm-pro-hero-actions {
+      align-items: stretch;
+    }
+
+    .tm-pro-hero-actions .tm-pro-landing-btn {
+      flex: 1 1 150px;
+    }
+
+    .tm-pro-preview-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .tm-pro-preview-value {
+      white-space: normal;
+    }
+
+    .tm-pro-product-grid,
+    .tm-pro-step-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-pro-product-card {
+      min-height: 0;
+    }
+
+    .tm-pro-final-cta {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-landing">
+  <header class="tm-pro-landing-header">
+    <div class="tm-pro-landing-header__inner">
+      <a class="tm-pro-brand" href="/pro" aria-label="TorqueMech Pro Home">
+        <span>Torque</span><span>Mech</span>
+      </a>
+      <nav class="tm-pro-header-actions" aria-label="TorqueMech Pro">
+        <a class="tm-pro-landing-link" href="/pro/dashboard">Sign In</a>
+        <a class="tm-pro-landing-btn" href="/pro/dashboard">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="tm-pro-landing-section tm-pro-hero" aria-label="TorqueMech Pro welcome">
+    <div class="tm-pro-hero-copy">
+      <div class="tm-pro-eyebrow">TorqueMech Pro</div>
+      <h1>Professional shop workflow, simplified.</h1>
+      <p>Create estimates, manage customers, track repairs, generate PDFs, and keep vehicle history organized — without complicated shop software.</p>
+      <div class="tm-pro-hero-actions">
+        <a class="tm-pro-landing-btn" href="/pro/dashboard">Get Started</a>
+        <a class="tm-pro-landing-btn tm-pro-landing-btn--secondary" href="#how-it-works">See How It Works</a>
+      </div>
+      <div class="tm-pro-trust-row" aria-label="TorqueMech Pro strengths">
+        <span class="tm-pro-trust-chip">Customer-ready PDFs</span>
+        <span class="tm-pro-trust-chip">Repair workflow tracking</span>
+        <span class="tm-pro-trust-chip">Vehicle history included</span>
+      </div>
+    </div>
+
+    <aside class="tm-pro-preview" aria-label="TorqueMech Pro product preview">
+      <div class="tm-pro-preview-head">
+        <div class="tm-pro-preview-title">Today in TorqueMech Pro</div>
+        <div class="tm-pro-preview-status">Ready</div>
+      </div>
+      <div class="tm-pro-preview-body">
+        <div class="tm-pro-preview-row">
+          <div>
+            <strong>Estimate Builder</strong>
+            <span>Labor, parts, notes, and customer-ready PDF output.</span>
+          </div>
+          <div class="tm-pro-preview-value">$842.40</div>
+        </div>
+        <div class="tm-pro-preview-row">
+          <div>
+            <strong>Repair Workspace</strong>
+            <span>Approved brake repair waiting for final inspection.</span>
+          </div>
+          <div class="tm-pro-preview-value">In progress</div>
+        </div>
+        <div class="tm-pro-preview-row">
+          <div>
+            <strong>Vehicle Timeline</strong>
+            <span>Estimate, approval, repair, invoice, and follow-up saved together.</span>
+          </div>
+          <div class="tm-pro-preview-value">Updated</div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="tm-pro-landing-section" aria-label="TorqueMech Pro product areas">
+    <div class="tm-pro-section-head">
+      <h2>Built around the work you already do.</h2>
+      <p>Keep the daily shop flow organized without turning every repair into a software project.</p>
+    </div>
+
+    <div class="tm-pro-product-grid">
+      {% set product_cards = [
+        ("Estimate Builder", "Build clean estimates with labor, parts, notes, and PDF output."),
+        ("Customers", "Keep contact details, vehicles, and job history connected."),
+        ("Vehicle Timeline", "See completed repairs, invoices, findings, and maintenance in one place."),
+        ("Maintenance Follow-Up", "Spot overdue and upcoming maintenance opportunities."),
+        ("Repair Workspace", "Track approved work from open repair to completion."),
+        ("Customer PDF / Invoice", "Give customers professional documents without retyping job details.")
+      ] %}
+      {% for title, body in product_cards %}
+      <article class="tm-pro-product-card">
+        <h3>{{ title }}</h3>
+        <p>{{ body }}</p>
+        <div class="tm-pro-card-preview" aria-hidden="true">
+          <span class="tm-pro-preview-line"></span>
+          <span class="tm-pro-preview-line"></span>
+          <span class="tm-pro-preview-line"></span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="tm-pro-landing-section tm-pro-steps" id="how-it-works" aria-label="How TorqueMech Works">
+    <div class="tm-pro-section-head">
+      <h2>How TorqueMech Works</h2>
+      <p>A simple path from first estimate to completed repair history.</p>
+    </div>
+    <div class="tm-pro-step-grid">
+      <article class="tm-pro-step">
+        <div class="tm-pro-step-number">01</div>
+        <h3>Create the estimate</h3>
+        <p>Start with the customer, vehicle, labor, parts, and notes.</p>
+      </article>
+      <article class="tm-pro-step">
+        <div class="tm-pro-step-number">02</div>
+        <h3>Send the customer PDF</h3>
+        <p>Share a clear quote the customer can understand and approve.</p>
+      </article>
+      <article class="tm-pro-step">
+        <div class="tm-pro-step-number">03</div>
+        <h3>Track approved repairs</h3>
+        <p>Move accepted work into the repair workspace and keep status clear.</p>
+      </article>
+      <article class="tm-pro-step">
+        <div class="tm-pro-step-number">04</div>
+        <h3>Save history and follow up</h3>
+        <p>Keep invoices, service history, and maintenance opportunities organized.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="tm-pro-landing-section" style="padding-bottom:72px;" aria-label="Enter TorqueMech Pro">
+    <div class="tm-pro-final-cta">
+      <div>
+        <h2>Ready to open the command center?</h2>
+        <p>Get started with customers, estimates, approvals, or active work.</p>
+      </div>
+      <a class="tm-pro-landing-btn" href="/pro/dashboard">Get Started</a>
+    </div>
+  </section>
+</section>
+{% endblock %}

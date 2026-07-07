@@ -126,6 +126,25 @@
     min-height: 1.2em;
   }
 
+  .tm-follow-scheduling-line {
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.84rem;
+    font-weight: 800;
+    margin: 6px 0;
+  }
+
+  .tm-follow-scheduling-line--ready {
+    color: #0f766e;
+  }
+
+  .tm-follow-scheduling-line--missing {
+    color: #92400e;
+  }
+
   .tm-follow-history {
     border-top: 1px solid rgba(15, 23, 42, 0.08);
     display: grid;
@@ -302,6 +321,19 @@
 
   <div class="tm-follow-message">
     <div class="tm-follow-message-label">Suggested Message</div>
+    {% if item.has_scheduling_link %}
+    <div class="tm-follow-scheduling-line tm-follow-scheduling-line--ready">
+      {% if item.scheduling_link_source == "builtin" %}TorqueMech booking link included{% else %}External scheduling link included{% endif %}
+    </div>
+    {% else %}
+    <div class="tm-follow-scheduling-line tm-follow-scheduling-line--missing">
+      <span>No scheduling link saved</span>
+      <a class="tm-btn tm-btn-secondary" href="/pro/shop-settings">Add Scheduling Link</a>
+    </div>
+    {% if item.scheduling_link_warning %}
+    <div class="tm-follow-scheduling-line tm-follow-scheduling-line--missing">{{ item.scheduling_link_warning }}</div>
+    {% endif %}
+    {% endif %}
     <div data-suggested-message>{{ item.suggested_message }}</div>
     <div class="tm-follow-copy-row">
       <button
@@ -343,7 +375,10 @@
       <h1 class="tm-pro-title">Follow-Up Dashboard</h1>
       <p class="tm-pro-subtitle">Actionable maintenance opportunities for the mechanic to review and handle manually.</p>
     </div>
-    <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
+    <div class="tm-follow-actions">
+      <a class="tm-btn tm-btn-secondary" href="/pro/calendar">Shop Calendar</a>
+      <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
+    </div>
   </div>
 
   <div class="tm-follow-shell">
@@ -367,9 +402,25 @@
       <h2 style="margin:4px 0 8px;">Copy-Only Reminder Text</h2>
       <div class="tm-follow-message">
         <div class="tm-follow-message-label">Suggested Message</div>
-        <div data-suggested-message>Hi [Customer Name], this is [Shop Name]. According to our records, your [Vehicle] may be due for [Service Type]. Let me know if you'd like to schedule service.</div>
+        {% if shop_profile.booking_link or shop_profile.scheduling_link %}
+        <div class="tm-follow-scheduling-line tm-follow-scheduling-line--ready">
+          {% if shop_profile.booking_link %}TorqueMech booking link included{% else %}External scheduling link included{% endif %}
+        </div>
+        {% else %}
+        <div class="tm-follow-scheduling-line tm-follow-scheduling-line--missing">
+          <span>No scheduling link saved</span>
+          <a class="tm-btn tm-btn-secondary" href="/pro/shop-settings">Add Scheduling Link</a>
+        </div>
+        <div class="tm-follow-scheduling-line tm-follow-scheduling-line--missing">Add your scheduling link in Shop Settings to include it in customer reminders.</div>
+        {% endif %}
+        <div data-suggested-message>Hi [Customer First Name], this is {{ shop_profile.shop_name or "[Shop/Mechanic Name]" }}. Your [Year Make Model] is due for [Service Name]. Our records show it was due around [Due Mileage] miles or by [Due Date].{% if shop_profile.booking_link or shop_profile.scheduling_link %}
+
+Schedule your service here:
+{{ shop_profile.booking_link or shop_profile.scheduling_link }}
+
+Reply here if you have any questions.{% else %} Reply here when you're ready to schedule.{% endif %}</div>
         <div class="tm-follow-copy-row">
-          <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Send Reminder</button>
+          <button class="tm-btn tm-btn-secondary" type="button" data-copy-message data-copy-success="Message copied">Copy Message</button>
           <span class="tm-follow-copy-status" aria-live="polite"></span>
         </div>
       </div>

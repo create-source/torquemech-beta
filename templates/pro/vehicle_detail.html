@@ -1723,6 +1723,25 @@
     text-transform: uppercase;
   }
 
+  .tm-maintenance-scheduling-line {
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.84rem;
+    font-weight: 800;
+    margin-top: 6px;
+  }
+
+  .tm-maintenance-scheduling-line--ready {
+    color: #0f766e;
+  }
+
+  .tm-maintenance-scheduling-line--missing {
+    color: #92400e;
+  }
+
   .tm-maintenance-copy-row {
     display: flex;
     align-items: center;
@@ -3157,6 +3176,19 @@
           </div>
           <div class="tm-maintenance-reminder" data-maintenance-reminder hidden>
             <div class="tm-maintenance-reminder-label">Ready-to-copy reminder</div>
+            {% if record.has_scheduling_link %}
+            <div class="tm-maintenance-scheduling-line tm-maintenance-scheduling-line--ready">
+              {% if record.scheduling_link_source == "builtin" %}TorqueMech booking link included{% else %}External scheduling link included{% endif %}
+            </div>
+            {% else %}
+            <div class="tm-maintenance-scheduling-line tm-maintenance-scheduling-line--missing">
+              <span>No scheduling link saved</span>
+              <a class="tm-btn tm-btn-secondary" href="/pro/shop-settings">Add Scheduling Link</a>
+            </div>
+            {% if record.scheduling_link_warning %}
+            <div class="tm-maintenance-scheduling-line tm-maintenance-scheduling-line--missing">{{ record.scheduling_link_warning }}</div>
+            {% endif %}
+            {% endif %}
             <div data-suggested-message>{{ record.reminder_message }}</div>
             <div class="tm-maintenance-copy-row">
               <button

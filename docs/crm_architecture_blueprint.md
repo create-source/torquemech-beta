@@ -114,6 +114,22 @@ Current dormant support:
 
 - `service_history.discrepancy_notes`
 
+## Built-In TorqueMech Calendar Foundation
+
+TorqueMech Pro now has a first-party calendar foundation that does not depend on Calendly, Google Calendar, or Outlook as the primary scheduling system.
+
+- Shop Schedule Settings: `/pro/shop-schedule` stores weekly availability in `shop_availability`, with open/closed days, start/end times, appointment length, buffer time, and closed-day exceptions in `shop_closed_days`.
+- Appointment records: `service_appointments` stores customer request details, vehicle label, service name, requested date/time, notes, source, and status.
+- Public booking link: the shop profile exposes `/book/{shop_slug}` using a slug generated from the shop name, with a fallback slug of `torquemech-shop`.
+- Customer appointment request page: public customers can submit a requested appointment, which creates a `Requested` appointment with source `customer_booking`.
+- Mechanic calendar: `/pro/calendar` groups appointment cards into Today, This Week, Upcoming, and collapsed Completed / Cancelled sections.
+- Appointment statuses: `Requested`, `Confirmed`, `Completed`, and `Cancelled`.
+- Maintenance reminder integration: built-in TorqueMech booking links are preferred in reminder copy; the external Scheduling Link remains a fallback; if neither is available, reminders ask customers to reply when ready to schedule.
+- Future SMS reminders: not included in this foundation.
+- Future Google/Outlook sync: not included in this foundation.
+- Future advanced time-slot engine: can enforce generated availability, buffers, appointment length, and existing bookings later.
+- Future customer reschedule/cancel links: can be added after appointment confirmation and secure public token handling exist.
+
 Recommended future expansion, only when needed:
 
 - Add a separate `service_discrepancies` table if multiple discrepancy records per service are required.

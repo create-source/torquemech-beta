@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+
+{% block title %}Schedule Service | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-book-shell {
+    display: grid;
+    gap: 16px;
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+  .tm-book-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 18px;
+  }
+  .tm-book-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .tm-book-wide { grid-column: 1 / -1; }
+  .tm-book-shop { color: #0f766e; font-weight: 900; text-transform: uppercase; }
+  .tm-book-success {
+    border: 1px solid rgba(14, 116, 144, 0.22);
+    border-radius: 8px;
+    background: #f0fdfa;
+    color: #115e59;
+    padding: 14px;
+    font-weight: 900;
+  }
+  .tm-book-warning {
+    border: 1px solid rgba(217, 119, 6, 0.28);
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+    padding: 12px;
+    font-weight: 800;
+  }
+  @media (max-width: 640px) {
+    .tm-book-form { grid-template-columns: 1fr; }
+    .tm-book-form .tm-btn { width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="tm-book-shell">
+  <header>
+    <div class="tm-book-shop">{{ profile.shop_name or "TorqueMech Shop" }}</div>
+    <h1 class="tm-pro-title">Schedule Service</h1>
+    <p class="tm-pro-subtitle">Your appointment request will be sent to the shop for confirmation.</p>
+  </header>
+
+  {% if success %}
+  <section class="tm-book-success">Appointment request received. The shop will confirm your appointment.</section>
+  {% else %}
+  <section class="tm-book-panel" aria-label="Schedule service">
+    {% if warning %}<div class="tm-book-warning">{{ warning }}</div>{% endif %}
+    <form class="tm-book-form" method="post" action="/book/{{ shop_slug }}">
+      <div>
+        <label class="tm-label" for="customer_name">Customer Name</label>
+        <input class="tm-input" id="customer_name" name="customer_name" type="text" maxlength="180" value="{{ form.customer_name if form else '' }}" required>
+      </div>
+      <div>
+        <label class="tm-label" for="customer_phone">Phone</label>
+        <input class="tm-input" id="customer_phone" name="customer_phone" type="tel" maxlength="80" value="{{ form.customer_phone if form else '' }}" required>
+      </div>
+      <div>
+        <label class="tm-label" for="customer_email">Email</label>
+        <input class="tm-input" id="customer_email" name="customer_email" type="email" maxlength="180" value="{{ form.customer_email if form else '' }}">
+      </div>
+      <div>
+        <label class="tm-label" for="vehicle_label">Vehicle Year / Make / Model</label>
+        <input class="tm-input" id="vehicle_label" name="vehicle_label" type="text" maxlength="220" value="{{ form.vehicle_label if form else '' }}" required>
+      </div>
+      <div>
+        <label class="tm-label" for="service_name">Service Needed</label>
+        <input class="tm-input" id="service_name" name="service_name" type="text" maxlength="220" value="{{ form.service_name if form else '' }}" required>
+      </div>
+      <div>
+        <label class="tm-label" for="requested_date">Preferred Date</label>
+        <input class="tm-input" id="requested_date" name="requested_date" type="date" value="{{ form.requested_date if form else '' }}" required>
+      </div>
+      <div>
+        <label class="tm-label" for="requested_time">Preferred Time</label>
+        <input class="tm-input" id="requested_time" name="requested_time" type="time" value="{{ form.requested_time if form else '' }}" required>
+      </div>
+      <div class="tm-book-wide">
+        <label class="tm-label" for="notes">Notes</label>
+        <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1600">{{ form.notes if form else '' }}</textarea>
+      </div>
+      <button class="tm-btn tm-btn-primary" type="submit">Request Appointment</button>
+    </form>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}

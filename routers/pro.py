@@ -175,6 +175,7 @@ templates.env.globals["static_version"] = static_version
 templates.env.globals["build_finding_estimator_href"] = build_finding_estimator_href
 
 router = APIRouter(prefix="/pro", tags=["pro"])
+public_router = APIRouter(tags=["booking"])
 
 FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined")
 FINDING_SEVERITY_OPTIONS = ("Low", "Medium", "High", "Critical")
@@ -197,6 +198,19 @@ REPAIR_COMPLETION_CHECKS = (
     ("codes_cleared", "Codes cleared if applicable"),
     ("road_test_completed", "Road test completed"),
     ("customer_concern_resolved", "Customer concern resolved"),
+)
+
+APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Completed", "Cancelled")
+APPOINTMENT_LENGTH_OPTIONS = (30, 45, 60, 90, 120)
+APPOINTMENT_BUFFER_OPTIONS = (0, 15, 30)
+SHOP_SCHEDULE_DAYS = (
+    {"index": 0, "name": "Monday"},
+    {"index": 1, "name": "Tuesday"},
+    {"index": 2, "name": "Wednesday"},
+    {"index": 3, "name": "Thursday"},
+    {"index": 4, "name": "Friday"},
+    {"index": 5, "name": "Saturday"},
+    {"index": 6, "name": "Sunday"},
 )
 
 REPAIR_JOB_PART_STATUS_OPTIONS = (
@@ -754,10 +768,405 @@ def resolve_scheduling_link(*contexts: Any) -> str:
     for context in contexts:
         expanded_contexts.extend(_sender_contexts(context))
     for context in expanded_contexts:
+        value = str(_context_lookup(context, "booking_link") or "").strip()
+        if value:
+            return value
+    for context in expanded_contexts:
         value = str(_context_lookup(context, "scheduling_link") or "").strip()
         if value:
             return value
     return ""
+
+
+def resolve_scheduling_link_source(*contexts: Any) -> str:
+    expanded_contexts: list[Any] = []
+    for context in contexts:
+        expanded_contexts.extend(_sender_contexts(context))
+    for context in expanded_contexts:
+        if str(_context_lookup(context, "booking_link") or "").strip():
+            return "builtin"
+    for context in expanded_contexts:
+        if str(_context_lookup(context, "scheduling_link") or "").strip():
+            return "external"
+    return ""
+
+
+def slugify_shop_name(value: Any) -> str:
+    slug = re.sub(r"[^a-z0-9\s-]", "", str(value or "").strip().lower())
+    slug = re.sub(r"\s+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug or "torquemech-shop"
+
+
+def shop_booking_slug(profile: dict[str, Any] | None = None) -> str:
+    profile = profile or {}
+    return slugify_shop_name(profile.get("shop_slug") or profile.get("shop_name") or "torquemech-shop")
+
+
+def request_base_url(request: Request | None = None) -> str:
+    if request is not None:
+        return str(request.base_url).rstrip("/")
+    return "http://127.0.0.1:8125"
+
+
+def build_shop_booking_link(profile: dict[str, Any] | None = None, request: Request | None = None) -> str:
+    return f"{request_base_url(request)}/book/{shop_booking_slug(profile)}"
+
+
+def attach_shop_booking_context(
+    profile: dict[str, Any] | None,
+    request: Request | None = None,
+) -> dict[str, Any]:
+    enriched = dict(profile or {})
+    enriched["booking_slug"] = shop_booking_slug(enriched)
+    enriched["booking_link"] = build_shop_booking_link(enriched, request)
+    return enriched
+
+
+def add_column_if_missing(conn: sqlite3.Connection, table_name: str, column_name: str, column_sql: str) -> None:
+    columns = {row[1] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
+    if column_name not in columns:
+        conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}")
+
+
+def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS shop_availability (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER,
+          day_of_week INTEGER NOT NULL,
+          is_open INTEGER NOT NULL DEFAULT 0,
+          start_time TEXT NOT NULL DEFAULT '09:00',
+          end_time TEXT NOT NULL DEFAULT '17:00',
+          appointment_length_minutes INTEGER NOT NULL DEFAULT 60,
+          buffer_minutes INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    for column_name, column_sql in {
+        "shop_id": "shop_id INTEGER",
+        "day_of_week": "day_of_week INTEGER NOT NULL DEFAULT 0",
+        "is_open": "is_open INTEGER NOT NULL DEFAULT 0",
+        "start_time": "start_time TEXT NOT NULL DEFAULT '09:00'",
+        "end_time": "end_time TEXT NOT NULL DEFAULT '17:00'",
+        "appointment_length_minutes": "appointment_length_minutes INTEGER NOT NULL DEFAULT 60",
+        "buffer_minutes": "buffer_minutes INTEGER NOT NULL DEFAULT 0",
+        "created_at": "created_at TEXT",
+        "updated_at": "updated_at TEXT",
+    }.items():
+        add_column_if_missing(conn, "shop_availability", column_name, column_sql)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_availability_shop_day ON shop_availability (shop_id, day_of_week)")
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS shop_closed_days (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER,
+          closed_date TEXT NOT NULL,
+          reason TEXT,
+          created_at TEXT NOT NULL
+        )
+        """
+    )
+    for column_name, column_sql in {
+        "shop_id": "shop_id INTEGER",
+        "closed_date": "closed_date TEXT",
+        "reason": "reason TEXT",
+        "created_at": "created_at TEXT",
+    }.items():
+        add_column_if_missing(conn, "shop_closed_days", column_name, column_sql)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_closed_days_date ON shop_closed_days (shop_id, closed_date)")
+
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS service_appointments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER,
+          customer_id INTEGER,
+          vehicle_id INTEGER,
+          customer_name TEXT NOT NULL,
+          customer_phone TEXT NOT NULL,
+          customer_email TEXT,
+          vehicle_label TEXT,
+          service_name TEXT NOT NULL,
+          requested_date TEXT NOT NULL,
+          requested_time TEXT NOT NULL,
+          notes TEXT,
+          source TEXT NOT NULL DEFAULT 'customer_booking',
+          status TEXT NOT NULL DEFAULT 'Requested',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    for column_name, column_sql in {
+        "shop_id": "shop_id INTEGER",
+        "customer_id": "customer_id INTEGER",
+        "vehicle_id": "vehicle_id INTEGER",
+        "customer_name": "customer_name TEXT",
+        "customer_phone": "customer_phone TEXT",
+        "customer_email": "customer_email TEXT",
+        "vehicle_label": "vehicle_label TEXT",
+        "service_name": "service_name TEXT",
+        "requested_date": "requested_date TEXT",
+        "requested_time": "requested_time TEXT",
+        "notes": "notes TEXT",
+        "source": "source TEXT NOT NULL DEFAULT 'customer_booking'",
+        "status": "status TEXT NOT NULL DEFAULT 'Requested'",
+        "created_at": "created_at TEXT",
+        "updated_at": "updated_at TEXT",
+    }.items():
+        add_column_if_missing(conn, "service_appointments", column_name, column_sql)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_date ON service_appointments (requested_date, requested_time)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_status ON service_appointments (status)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_service_appointments_customer ON service_appointments (customer_id)")
+    conn.commit()
+
+
+def default_shop_availability_rows() -> list[dict[str, Any]]:
+    return [
+        {
+            "day_of_week": day["index"],
+            "day_name": day["name"],
+            "is_open": day["index"] < 5,
+            "start_time": "09:00",
+            "end_time": "17:00",
+            "appointment_length_minutes": 60,
+            "buffer_minutes": 0,
+        }
+        for day in SHOP_SCHEDULE_DAYS
+    ]
+
+
+def load_shop_availability(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    ensure_calendar_schema(conn)
+    rows = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM shop_availability
+            WHERE shop_id IS NULL OR shop_id = 1
+            ORDER BY day_of_week ASC, id ASC
+            """
+        ).fetchall()
+    ]
+    by_day: dict[int, dict[str, Any]] = {}
+    for row in rows:
+        day_index = optional_int_value(row.get("day_of_week"))
+        if day_index is not None and day_index not in by_day:
+            by_day[day_index] = row
+    defaults = default_shop_availability_rows()
+    availability = []
+    for default_row in defaults:
+        row = dict(default_row)
+        saved = by_day.get(int(default_row["day_of_week"]))
+        if saved:
+            row.update(saved)
+            row["is_open"] = bool(saved.get("is_open"))
+        availability.append(row)
+    return availability
+
+
+def save_shop_availability(
+    conn: sqlite3.Connection,
+    availability: list[dict[str, Any]],
+    *,
+    appointment_length_minutes: int = 60,
+    buffer_minutes: int = 0,
+) -> None:
+    ensure_calendar_schema(conn)
+    appointment_length_minutes = appointment_length_minutes if appointment_length_minutes in APPOINTMENT_LENGTH_OPTIONS else 60
+    buffer_minutes = buffer_minutes if buffer_minutes in APPOINTMENT_BUFFER_OPTIONS else 0
+    now = datetime.utcnow().isoformat()
+    for item in availability:
+        day_index = optional_int_value(item.get("day_of_week"))
+        if day_index is None or day_index < 0 or day_index > 6:
+            continue
+        is_open = 1 if item.get("is_open") else 0
+        start_time = str(item.get("start_time") or "09:00").strip()[:5] or "09:00"
+        end_time = str(item.get("end_time") or "17:00").strip()[:5] or "17:00"
+        existing = conn.execute(
+            """
+            SELECT id
+            FROM shop_availability
+            WHERE (shop_id IS NULL OR shop_id = 1) AND day_of_week = ?
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (day_index,),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """
+                UPDATE shop_availability
+                SET is_open = ?, start_time = ?, end_time = ?,
+                    appointment_length_minutes = ?, buffer_minutes = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (is_open, start_time, end_time, appointment_length_minutes, buffer_minutes, now, existing["id"]),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO shop_availability (
+                  shop_id, day_of_week, is_open, start_time, end_time,
+                  appointment_length_minutes, buffer_minutes, created_at, updated_at
+                )
+                VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (day_index, is_open, start_time, end_time, appointment_length_minutes, buffer_minutes, now, now),
+            )
+    conn.commit()
+
+
+def load_closed_days(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    ensure_calendar_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM shop_closed_days
+            WHERE shop_id IS NULL OR shop_id = 1
+            ORDER BY closed_date ASC, id ASC
+            """
+        ).fetchall()
+    ]
+
+
+def create_closed_day(conn: sqlite3.Connection, closed_date: str, reason: str = "") -> int | None:
+    parsed_date = parse_date_value(closed_date)
+    if not parsed_date:
+        return None
+    ensure_calendar_schema(conn)
+    now = datetime.utcnow().isoformat()
+    cur = conn.execute(
+        """
+        INSERT INTO shop_closed_days (shop_id, closed_date, reason, created_at)
+        VALUES (NULL, ?, ?, ?)
+        """,
+        (parsed_date.isoformat(), str(reason or "").strip(), now),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def delete_closed_day(conn: sqlite3.Connection, closed_day_id: int) -> None:
+    ensure_calendar_schema(conn)
+    conn.execute("DELETE FROM shop_closed_days WHERE id = ?", (closed_day_id,))
+    conn.commit()
+
+
+def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str) -> tuple[bool, str]:
+    parsed_date = parse_date_value(requested_date)
+    if not parsed_date:
+        return False, ""
+    ensure_calendar_schema(conn)
+    closed_day = conn.execute(
+        """
+        SELECT reason
+        FROM shop_closed_days
+        WHERE (shop_id IS NULL OR shop_id = 1) AND closed_date = ?
+        LIMIT 1
+        """,
+        (parsed_date.isoformat(),),
+    ).fetchone()
+    if closed_day:
+        return True, str(closed_day["reason"] or "").strip()
+    availability = load_shop_availability(conn)
+    day_row = next((row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()), None)
+    if day_row and not bool(day_row.get("is_open")):
+        return True, "The shop is marked closed that day."
+    return False, ""
+
+
+def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -> int:
+    ensure_calendar_schema(conn)
+    status = str(data.get("status") or "Requested").strip()
+    if status not in APPOINTMENT_STATUS_OPTIONS:
+        status = "Requested"
+    source = str(data.get("source") or "customer_booking").strip() or "customer_booking"
+    now = datetime.utcnow().isoformat()
+    cur = conn.execute(
+        """
+        INSERT INTO service_appointments (
+          shop_id, customer_id, vehicle_id, customer_name, customer_phone,
+          customer_email, vehicle_label, service_name, requested_date,
+          requested_time, notes, source, status, created_at, updated_at
+        )
+        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            optional_int_value(data.get("customer_id")),
+            optional_int_value(data.get("vehicle_id")),
+            str(data.get("customer_name") or "").strip(),
+            str(data.get("customer_phone") or "").strip(),
+            str(data.get("customer_email") or "").strip(),
+            str(data.get("vehicle_label") or "").strip(),
+            str(data.get("service_name") or "").strip(),
+            str(data.get("requested_date") or "").strip(),
+            str(data.get("requested_time") or "").strip(),
+            str(data.get("notes") or "").strip(),
+            source,
+            status,
+            now,
+            now,
+        ),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def update_service_appointment_status(conn: sqlite3.Connection, appointment_id: int, status: str) -> None:
+    if status not in APPOINTMENT_STATUS_OPTIONS:
+        raise HTTPException(status_code=400, detail="Invalid appointment status")
+    ensure_calendar_schema(conn)
+    conn.execute(
+        """
+        UPDATE service_appointments
+        SET status = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (status, datetime.utcnow().isoformat(), appointment_id),
+    )
+    conn.commit()
+
+
+def load_service_appointments(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    ensure_calendar_schema(conn)
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM service_appointments
+            ORDER BY requested_date ASC, requested_time ASC, id ASC
+            """
+        ).fetchall()
+    ]
+
+
+def group_calendar_appointments(appointments: list[dict[str, Any]], today: date | None = None) -> dict[str, list[dict[str, Any]]]:
+    today = today or local_today()
+    week_end = today + timedelta(days=6)
+    grouped = {"today": [], "this_week": [], "upcoming": [], "completed_cancelled": []}
+    for appointment in appointments:
+        status = str(appointment.get("status") or "")
+        if status in {"Completed", "Cancelled"}:
+            grouped["completed_cancelled"].append(appointment)
+            continue
+        requested = parse_date_value(appointment.get("requested_date"))
+        if requested == today:
+            grouped["today"].append(appointment)
+        elif requested and today < requested <= week_end:
+            grouped["this_week"].append(appointment)
+        else:
+            grouped["upcoming"].append(appointment)
+    return grouped
 
 
 def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
@@ -1144,6 +1553,7 @@ def annotate_vehicle_maintenance_records(
 ) -> list[dict[str, Any]]:
     current_mileage = optional_int_value(vehicle.get("mileage"))
     scheduling_link = resolve_scheduling_link(sender_context)
+    scheduling_link_source = resolve_scheduling_link_source(sender_context)
     for record in records:
         mileage_performed = optional_int_value(record.get("mileage_performed"))
         interval_miles = optional_int_value(record.get("interval_miles"))
@@ -1215,6 +1625,7 @@ def annotate_vehicle_maintenance_records(
                 "maintenance_status": status,
                 "maintenance_status_key": status_key,
                 "scheduling_link": scheduling_link,
+                "scheduling_link_source": scheduling_link_source,
                 "has_scheduling_link": bool(scheduling_link),
                 "scheduling_link_warning": "" if scheduling_link else "Add your scheduling link in Shop Settings to include it in customer reminders.",
                 "reminder_message": "",
@@ -3640,7 +4051,7 @@ def ensure_repair_estimate_documents_schema(conn: sqlite3.Connection) -> None:
 
 
 def optional_int_value(value: Any) -> int | None:
-    raw = str(value or "").replace(",", "").strip()
+    raw = "" if value is None else str(value).replace(",", "").strip()
     if not raw:
         return None
     try:
@@ -7078,6 +7489,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
             {"label": "Add Customer", "href": "/pro/customers?mode=add#add-customer"},
             {"label": "View Customers", "href": "/pro/customers"},
             {"label": "Create Estimate", "href": "/estimator"},
+            {"label": "Shop Calendar", "href": "/pro/calendar"},
             {"label": "Shop Settings", "href": "/pro/shop-settings"},
             {"label": "View Active Jobs", "href": "/pro/customers#customer-list"},
         ],
@@ -7633,7 +8045,7 @@ def pro_follow_ups(request: Request):
             conn,
             {int(record.get("id") or 0) for record in maintenance_records if record.get("id")},
         )
-        sender_context = load_shop_profile_context(conn)
+        sender_context = attach_shop_booking_context(load_shop_profile_context(conn), request)
     finally:
         conn.close()
 
@@ -7724,7 +8136,7 @@ def pro_follow_ups(request: Request):
 def pro_shop_settings(request: Request, saved: str = ""):
     conn = crm_db_conn()
     try:
-        profile = load_shop_profile_context(conn)
+        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
     finally:
         conn.close()
 
@@ -7747,6 +8159,198 @@ async def pro_shop_settings_save(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/pro/shop-settings?saved=1", status_code=303)
+
+
+@router.get("/shop-schedule", response_class=HTMLResponse)
+def pro_shop_schedule(request: Request, saved: str = "", closed_saved: str = ""):
+    conn = crm_db_conn()
+    try:
+        availability = load_shop_availability(conn)
+        closed_days = load_closed_days(conn)
+        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
+    finally:
+        conn.close()
+    appointment_length = int(availability[0].get("appointment_length_minutes") or 60) if availability else 60
+    buffer_minutes = int(availability[0].get("buffer_minutes") or 0) if availability else 0
+    return templates.TemplateResponse(
+        "pro/shop_schedule.html",
+        {
+            "request": request,
+            "availability": availability,
+            "closed_days": closed_days,
+            "profile": profile,
+            "appointment_length": appointment_length,
+            "buffer_minutes": buffer_minutes,
+            "appointment_length_options": APPOINTMENT_LENGTH_OPTIONS,
+            "buffer_options": APPOINTMENT_BUFFER_OPTIONS,
+            "saved": saved == "1",
+            "closed_saved": closed_saved == "1",
+        },
+    )
+
+
+@router.post("/shop-schedule")
+async def pro_shop_schedule_save(request: Request):
+    form = await read_form_data(request)
+    appointment_length = optional_int_value(form.get("appointment_length_minutes")) or 60
+    buffer_minutes = optional_int_value(form.get("buffer_minutes")) or 0
+    availability = []
+    for day in SHOP_SCHEDULE_DAYS:
+        index = day["index"]
+        availability.append(
+            {
+                "day_of_week": index,
+                "is_open": form.get(f"is_open_{index}") == "1",
+                "start_time": form.get(f"start_time_{index}", "09:00"),
+                "end_time": form.get(f"end_time_{index}", "17:00"),
+            }
+        )
+    conn = crm_db_conn()
+    try:
+        save_shop_availability(
+            conn,
+            availability,
+            appointment_length_minutes=appointment_length,
+            buffer_minutes=buffer_minutes,
+        )
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-schedule?saved=1", status_code=303)
+
+
+@router.post("/shop-schedule/closed-days")
+async def pro_shop_schedule_closed_day_add(request: Request):
+    form = await read_form_data(request)
+    conn = crm_db_conn()
+    try:
+        create_closed_day(conn, form.get("closed_date", ""), form.get("reason", ""))
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-schedule?closed_saved=1", status_code=303)
+
+
+@router.post("/shop-schedule/closed-days/{closed_day_id}/delete")
+def pro_shop_schedule_closed_day_delete(closed_day_id: int):
+    conn = crm_db_conn()
+    try:
+        delete_closed_day(conn, closed_day_id)
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-schedule", status_code=303)
+
+
+@router.get("/calendar", response_class=HTMLResponse)
+def pro_calendar(request: Request, saved: str = ""):
+    conn = crm_db_conn()
+    try:
+        appointments = load_service_appointments(conn)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "pro/calendar.html",
+        {
+            "request": request,
+            "groups": group_calendar_appointments(appointments),
+            "status_options": APPOINTMENT_STATUS_OPTIONS,
+            "saved": saved == "1",
+        },
+    )
+
+
+@router.post("/calendar")
+async def pro_calendar_add(request: Request):
+    form = await read_form_data(request)
+    conn = crm_db_conn()
+    try:
+        create_service_appointment(
+            conn,
+            {
+                "customer_name": form.get("customer_name", ""),
+                "customer_phone": form.get("customer_phone", ""),
+                "vehicle_label": form.get("vehicle_label", ""),
+                "service_name": form.get("service_name", ""),
+                "requested_date": form.get("requested_date", ""),
+                "requested_time": form.get("requested_time", ""),
+                "notes": form.get("notes", ""),
+                "status": form.get("status", "Requested"),
+                "source": "manual",
+            },
+        )
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/calendar?saved=1", status_code=303)
+
+
+@router.post("/calendar/{appointment_id}/status")
+async def pro_calendar_status_update(request: Request, appointment_id: int):
+    form = await read_form_data(request)
+    conn = crm_db_conn()
+    try:
+        update_service_appointment_status(conn, appointment_id, form.get("status", "Requested"))
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/calendar", status_code=303)
+
+
+@public_router.get("/book/{shop_slug}", response_class=HTMLResponse)
+def public_booking_page(request: Request, shop_slug: str, success: str = "", warning: str = ""):
+    conn = crm_db_conn()
+    try:
+        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "booking.html",
+        {
+            "request": request,
+            "profile": profile,
+            "shop_slug": profile["booking_slug"],
+            "success": success == "1",
+            "warning": warning,
+        },
+    )
+
+
+@public_router.post("/book/{shop_slug}", response_class=HTMLResponse)
+async def public_booking_submit(request: Request, shop_slug: str):
+    form = await read_form_data(request)
+    warning = ""
+    conn = crm_db_conn()
+    try:
+        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
+        closed, closed_reason = is_closed_booking_day(conn, form.get("requested_date", ""))
+        if closed:
+            warning = closed_reason or "The shop is marked closed that day."
+            return templates.TemplateResponse(
+                "booking.html",
+                {
+                    "request": request,
+                    "profile": profile,
+                    "shop_slug": profile["booking_slug"],
+                    "success": False,
+                    "warning": warning,
+                    "form": form,
+                },
+                status_code=400,
+            )
+        create_service_appointment(
+            conn,
+            {
+                "customer_name": form.get("customer_name", ""),
+                "customer_phone": form.get("customer_phone", ""),
+                "customer_email": form.get("customer_email", ""),
+                "vehicle_label": form.get("vehicle_label", ""),
+                "service_name": form.get("service_name", ""),
+                "requested_date": form.get("requested_date", ""),
+                "requested_time": form.get("requested_time", ""),
+                "notes": form.get("notes", ""),
+                "source": "customer_booking",
+                "status": "Requested",
+            },
+        )
+    finally:
+        conn.close()
+    return RedirectResponse(f"/book/{profile['booking_slug']}?success=1", status_code=303)
 
 
 @router.get("/customers", response_class=HTMLResponse)

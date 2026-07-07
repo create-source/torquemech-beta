@@ -26,7 +26,12 @@ from fastapi import (
 )
 
 from routers.knowledge import router as knowledge_router
-from routers.pro import record_estimate_pdf_document, repair_workspace_parts_sources, router as pro_router
+from routers.pro import (
+    public_router as booking_router,
+    record_estimate_pdf_document,
+    repair_workspace_parts_sources,
+    router as pro_router,
+)
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
@@ -452,6 +457,7 @@ DEFAULT_SHOP_PROFILE: Dict[str, Any] = {
     "email": "",
     "address": "",
     "website": "",
+    "scheduling_link": "",
     "logo_url": "",
     "labor_rate_default": 90.0,
     "tax_rate_default": 0.0,
@@ -473,6 +479,7 @@ def init_shop_profile_db() -> None:
               email TEXT,
               address TEXT,
               website TEXT,
+              scheduling_link TEXT,
               logo_url TEXT,
               labor_rate_default REAL,
               tax_rate_default REAL,
@@ -483,6 +490,12 @@ def init_shop_profile_db() -> None:
             )
             """
         )
+        columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(shop_profile)").fetchall()
+        }
+        if "scheduling_link" not in columns:
+            conn.execute("ALTER TABLE shop_profile ADD COLUMN scheduling_link TEXT")
         conn.commit()
     finally:
         conn.close()
@@ -1253,7 +1266,7 @@ def normalize_shop_profile(raw: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             if value is not None:
                 profile[key] = value
 
-    for key in ("shop_name", "phone", "email", "address", "website", "logo_url", "warranty_note", "custom_footer_note"):
+    for key in ("shop_name", "phone", "email", "address", "website", "scheduling_link", "logo_url", "warranty_note", "custom_footer_note"):
         profile[key] = str(profile.get(key) or "").strip()
 
     try:
@@ -1296,17 +1309,18 @@ def save_shop_profile(profile_data: Dict[str, Any]) -> Dict[str, Any]:
         conn.execute(
             """
             INSERT INTO shop_profile (
-              id, shop_name, phone, email, address, website, logo_url,
+              id, shop_name, phone, email, address, website, scheduling_link, logo_url,
               labor_rate_default, tax_rate_default, warranty_note,
               quote_expiration_days, custom_footer_note, updated_at
             )
-            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               shop_name = excluded.shop_name,
               phone = excluded.phone,
               email = excluded.email,
               address = excluded.address,
               website = excluded.website,
+              scheduling_link = excluded.scheduling_link,
               logo_url = excluded.logo_url,
               labor_rate_default = excluded.labor_rate_default,
               tax_rate_default = excluded.tax_rate_default,
@@ -1321,6 +1335,7 @@ def save_shop_profile(profile_data: Dict[str, Any]) -> Dict[str, Any]:
                 profile["email"],
                 profile["address"],
                 profile["website"],
+                profile["scheduling_link"],
                 profile["logo_url"],
                 profile["labor_rate_default"],
                 profile["tax_rate_default"],
@@ -1502,6 +1517,7 @@ app.state.templates = templates
 
 # routers
 app.include_router(knowledge_router)
+app.include_router(booking_router)
 app.include_router(pro_router)
 
 # --- Static Mount ---
@@ -2419,6 +2435,7 @@ async def shop_profile_save(request: Request):
             "email": form_value("email"),
             "address": form_value("address"),
             "website": form_value("website"),
+            "scheduling_link": form_value("scheduling_link"),
             "logo_url": form_value("logo_url"),
             "labor_rate_default": form_value("labor_rate_default"),
             "tax_rate_default": form_value("tax_rate_default"),

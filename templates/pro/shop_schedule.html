@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+
+{% block title %}Shop Schedule | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-schedule-shell, .tm-schedule-panel, .tm-schedule-form { display: grid; gap: 16px; }
+  .tm-schedule-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 16px;
+  }
+  .tm-schedule-days { display: grid; gap: 10px; }
+  .tm-schedule-day {
+    display: grid;
+    grid-template-columns: 1.1fr .7fr .7fr .8fr;
+    gap: 10px;
+    align-items: end;
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .tm-schedule-toggle { display: flex; gap: 8px; align-items: center; font-weight: 900; }
+  .tm-schedule-options { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 12px; }
+  .tm-booking-link { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .tm-booking-link code { overflow-wrap: anywhere; white-space: normal; }
+  .tm-closed-list { display: grid; gap: 8px; }
+  .tm-closed-item { display: flex; justify-content: space-between; gap: 10px; align-items: center; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 8px; }
+  .tm-schedule-saved { color: #115e59; font-weight: 900; }
+  @media (max-width: 760px) {
+    .tm-schedule-day, .tm-schedule-options { grid-template-columns: 1fr; }
+    .tm-schedule-day .tm-btn, .tm-booking-link .tm-btn { width: 100%; }
+    .tm-closed-item { align-items: stretch; flex-direction: column; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell tm-schedule-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Shop Schedule</h1>
+      <p class="tm-pro-subtitle">Set when customers can request service appointments.</p>
+    </div>
+    <div class="tm-pro-actions">
+      <a class="tm-btn tm-btn-secondary" href="/pro/shop-settings">Shop Settings</a>
+      <a class="tm-btn tm-btn-secondary" href="/pro/follow-ups">CRM / Follow-Ups</a>
+    </div>
+  </div>
+
+  <section class="tm-schedule-panel" aria-label="Booking link">
+    <h2 style="margin:0;">Booking Link</h2>
+    <div class="tm-booking-link">
+      <code data-booking-link>{{ profile.booking_link }}</code>
+      <button class="tm-btn tm-btn-secondary" type="button" data-copy-booking-link>Copy Booking Link</button>
+      <span class="tm-schedule-saved" aria-live="polite" data-copy-status></span>
+    </div>
+  </section>
+
+  <section class="tm-schedule-panel" aria-label="Weekly availability">
+    <form class="tm-schedule-form" method="post" action="/pro/shop-schedule">
+      {% if saved %}<div class="tm-schedule-saved">Shop schedule saved.</div>{% endif %}
+      <div class="tm-schedule-options">
+        <div>
+          <label class="tm-label" for="appointment_length_minutes">Default Appointment Length</label>
+          <select class="tm-input" id="appointment_length_minutes" name="appointment_length_minutes">
+            {% for option in appointment_length_options %}
+            <option value="{{ option }}" {% if option == appointment_length %}selected{% endif %}>{{ option }} minutes</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="tm-label" for="buffer_minutes">Buffer Time</label>
+          <select class="tm-input" id="buffer_minutes" name="buffer_minutes">
+            {% for option in buffer_options %}
+            <option value="{{ option }}" {% if option == buffer_minutes %}selected{% endif %}>{{ option }} minutes</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="tm-schedule-days">
+        {% for day in availability %}
+        <div class="tm-schedule-day">
+          <label class="tm-schedule-toggle">
+            <input type="checkbox" name="is_open_{{ day.day_of_week }}" value="1" {% if day.is_open %}checked{% endif %}>
+            {{ day.day_name }}
+          </label>
+          <div>
+            <label class="tm-label" for="start_time_{{ day.day_of_week }}">Start</label>
+            <input class="tm-input" id="start_time_{{ day.day_of_week }}" name="start_time_{{ day.day_of_week }}" type="time" value="{{ day.start_time or '09:00' }}">
+          </div>
+          <div>
+            <label class="tm-label" for="end_time_{{ day.day_of_week }}">End</label>
+            <input class="tm-input" id="end_time_{{ day.day_of_week }}" name="end_time_{{ day.day_of_week }}" type="time" value="{{ day.end_time or '17:00' }}">
+          </div>
+          <span style="color:#64748b;font-weight:800;">{% if day.is_open %}Open{% else %}Closed{% endif %}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="tm-btn tm-btn-primary" type="submit">Save Schedule</button>
+    </form>
+  </section>
+
+  <section class="tm-schedule-panel" aria-label="Closed days">
+    <h2 style="margin:0;">Closed Days</h2>
+    {% if closed_saved %}<div class="tm-schedule-saved">Closed day saved.</div>{% endif %}
+    <form class="tm-schedule-options" method="post" action="/pro/shop-schedule/closed-days">
+      <div>
+        <label class="tm-label" for="closed_date">Closed Date</label>
+        <input class="tm-input" id="closed_date" name="closed_date" type="date" required>
+      </div>
+      <div>
+        <label class="tm-label" for="reason">Reason</label>
+        <input class="tm-input" id="reason" name="reason" type="text" maxlength="180">
+      </div>
+      <button class="tm-btn tm-btn-secondary" type="submit">Add Closed Day</button>
+    </form>
+    <div class="tm-closed-list">
+      {% for day in closed_days %}
+      <div class="tm-closed-item">
+        <div><strong>{{ day.closed_date|pro_date }}</strong>{% if day.reason %}<div style="color:#64748b;">{{ day.reason }}</div>{% endif %}</div>
+        <form method="post" action="/pro/shop-schedule/closed-days/{{ day.id }}/delete">
+          <button class="tm-btn tm-btn-secondary" type="submit">Remove</button>
+        </form>
+      </div>
+      {% else %}
+      <div style="color:#64748b;">No closed days saved.</div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+
+<script>
+(() => {
+  const button = document.querySelector("[data-copy-booking-link]");
+  const link = document.querySelector("[data-booking-link]");
+  const status = document.querySelector("[data-copy-status]");
+  button?.addEventListener("click", async () => {
+    const value = link?.textContent?.trim() || "";
+    if (!value) return;
+    await navigator.clipboard?.writeText(value);
+    if (status) status.textContent = "Copied";
+    window.setTimeout(() => { if (status) status.textContent = ""; }, 2200);
+  });
+})();
+</script>
+{% endblock %}

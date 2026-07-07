@@ -133,6 +133,7 @@
       pro: {
         route: () => {
           const path = window.location.pathname;
+          if (path === "/pro/shop-schedule" || path === "/pro/calendar") return false;
           return path === "/pro/dashboard" || (path.startsWith("/pro/") && path !== "/pro/");
         },
         label: "Restart Pro Tour",

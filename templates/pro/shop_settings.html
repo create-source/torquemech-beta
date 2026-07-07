@@ -44,6 +44,25 @@
     flex-wrap: wrap;
     align-items: center;
   }
+
+  .tm-shop-booking-link {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .tm-shop-booking-link code {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .tm-shop-copy-status {
+    color: #115e59;
+    font-size: 0.9rem;
+    font-weight: 900;
+  }
 </style>
 {% endblock %}
 
@@ -55,8 +74,20 @@
       <h1 class="tm-pro-title">Shop Settings</h1>
       <p class="tm-pro-subtitle">Manage shop-level details used by customer-facing TorqueMech Pro workflows.</p>
     </div>
-    <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
+    <div class="tm-shop-settings-actions">
+      <a class="tm-btn tm-btn-secondary" href="/pro/shop-schedule">Shop Schedule</a>
+      <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
+    </div>
   </div>
+
+  <section class="tm-shop-settings-panel" aria-label="TorqueMech booking link">
+    <h2 style="margin:0;">TorqueMech Booking Link</h2>
+    <div class="tm-shop-booking-link">
+      <code data-booking-link>{{ profile.booking_link }}</code>
+      <button class="tm-btn tm-btn-secondary" type="button" data-copy-booking-link>Copy Booking Link</button>
+      <span class="tm-shop-copy-status" aria-live="polite" data-copy-status></span>
+    </div>
+  </section>
 
   <section class="tm-shop-settings-panel" aria-label="Scheduling settings">
     <form class="tm-shop-settings-form" method="post" action="/pro/shop-settings">
@@ -75,14 +106,30 @@
           placeholder="https://calendly.com/your-shop/service"
         >
         <div class="tm-shop-settings-help" style="margin-top:6px;">
-          Use your booking page from Calendly, Google Calendar appointment schedules, Square appointments, Shopify or booking tools, or a future TorqueMech calendar page.
+          External scheduling stays available as a fallback. TorqueMech's built-in booking link is preferred in customer reminders.
         </div>
       </div>
       <div class="tm-shop-settings-actions">
         <button class="tm-btn tm-btn-primary" type="submit">Save Settings</button>
+        <a class="tm-btn tm-btn-secondary" href="/pro/calendar">Shop Calendar</a>
         <a class="tm-btn tm-btn-secondary" href="/pro/follow-ups">Back to Follow-Ups</a>
       </div>
     </form>
   </section>
 </section>
+
+<script>
+(() => {
+  const button = document.querySelector("[data-copy-booking-link]");
+  const link = document.querySelector("[data-booking-link]");
+  const status = document.querySelector("[data-copy-status]");
+  button?.addEventListener("click", async () => {
+    const value = link?.textContent?.trim() || "";
+    if (!value) return;
+    await navigator.clipboard?.writeText(value);
+    if (status) status.textContent = "Copied";
+    window.setTimeout(() => { if (status) status.textContent = ""; }, 2200);
+  });
+})();
+</script>
 {% endblock %}
