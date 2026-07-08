@@ -107,6 +107,11 @@
     min-width: 0;
   }
 
+  .tm-shop-settings .tm-input::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+  }
+
   .tm-affix-input {
     align-items: center;
     border: 1px solid rgba(15, 23, 42, 0.16);
@@ -213,15 +218,16 @@
         </div>
         <div>
           <label class="tm-label" for="shop_phone">Shop Phone</label>
-          <input class="tm-input" id="shop_phone" name="shop_phone" type="tel" inputmode="numeric" value="{{ profile.shop_phone or '' }}" maxlength="14" autocomplete="tel" placeholder="Shop phone">
+          <input class="tm-input" id="shop_phone" name="shop_phone" type="tel" inputmode="numeric" value="{{ profile.shop_phone or '' }}" maxlength="14" autocomplete="tel" placeholder="(555) 123-4567" data-shop-phone-input>
         </div>
         <div>
           <label class="tm-label" for="shop_email">Shop Email</label>
-          <input class="tm-input" id="shop_email" name="shop_email" type="email" value="{{ profile.shop_email or '' }}" maxlength="160" autocomplete="email" placeholder="Shop email">
+          <input class="tm-input" id="shop_email" name="shop_email" type="email" value="{{ profile.shop_email or '' }}" maxlength="160" autocomplete="email" placeholder="shop@example.com">
         </div>
         <div>
-          <label class="tm-label" for="shop_address">Shop Address</label>
-          <input class="tm-input" id="shop_address" name="shop_address" type="text" value="{{ profile.shop_address or '' }}" maxlength="220" autocomplete="street-address" placeholder="Shop street address">
+          <label class="tm-label" for="shop_address">Street Address</label>
+          <input class="tm-input" id="shop_address" name="shop_address" type="text" value="{{ profile.shop_address or '' }}" maxlength="220" autocomplete="street-address" placeholder="123 Main St" data-shop-address-input>
+          <div class="tm-shop-settings-help" style="margin-top:6px;">Street address only.</div>
         </div>
       </div>
       <div class="tm-shop-settings-grid tm-shop-settings-grid--three" style="margin-top:12px;">
@@ -333,6 +339,7 @@
     "92648": { city: "Huntington Beach", state: "CA" },
     "94102": { city: "San Francisco", state: "CA" },
     "93701": { city: "Fresno", state: "CA" },
+    "21201": { city: "Baltimore", state: "MD" },
     "98101": { city: "Seattle", state: "WA" }
   };
 
@@ -352,9 +359,25 @@
     phoneInput.value = formatShopPhone(phoneInput.value);
   }
 
+  const stateAliases = {
+    alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA",
+    colorado: "CO", connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA",
+    hawaii: "HI", idaho: "ID", illinois: "IL", indiana: "IN", iowa: "IA",
+    kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME", maryland: "MD",
+    massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS",
+    missouri: "MO", montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH",
+    "new jersey": "NJ", "new mexico": "NM", "new york": "NY", "north carolina": "NC",
+    "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR", pennsylvania: "PA",
+    "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN",
+    texas: "TX", utah: "UT", vermont: "VT", virginia: "VA", washington: "WA",
+    "west virginia": "WV", wisconsin: "WI", wyoming: "WY", dc: "DC"
+  };
+  Object.values(stateAliases).forEach((abbr) => { stateAliases[abbr.toLowerCase()] = abbr; });
+
   const zipInput = document.querySelector("[data-shop-zip-input]");
   const cityInput = document.querySelector("#shop_city");
   const stateInput = document.querySelector("#shop_state");
+  const addressInput = document.querySelector("[data-shop-address-input]");
   let lastAutoZip = "";
   let lastAutoCity = "";
   let lastAutoState = "";
@@ -394,6 +417,48 @@
   zipInput?.addEventListener("change", applyZip);
   zipInput?.addEventListener("paste", () => {
     window.setTimeout(applyZip, 0);
+  });
+
+  const normalizeState = (value) => stateAliases[String(value || "").trim().toLowerCase()] || "";
+  const parseFullAddress = (value) => {
+    const parts = String(value || "").split(",").map((part) => part.trim()).filter(Boolean);
+    if (parts.length < 3) return null;
+    const tail = parts[parts.length - 1] || "";
+    const tailZip = tail.match(/\b(\d{5})(?:-\d{4})?\b/);
+    const zip = tailZip?.[1] || "";
+    const stateFromTail = normalizeState(tail.replace(/\b\d{5}(?:-\d{4})?\b/g, ""));
+    const hasSeparateZip = !!zip && !stateFromTail;
+    const stateIndex = hasSeparateZip ? parts.length - 2 : parts.length - 1;
+    const cityIndex = stateIndex - 1;
+    const state = stateFromTail || normalizeState(parts[stateIndex]);
+    const city = parts[cityIndex] || "";
+    const streetParts = parts.slice(0, cityIndex);
+    if (!streetParts.length || !city || !state || !zip) return null;
+    return { street: streetParts.join(", "), city, state, zip };
+  };
+
+  const applyParsedAddress = () => {
+    if (!addressInput || !cityInput || !stateInput || !zipInput) return;
+    const parsed = parseFullAddress(addressInput.value);
+    if (!parsed) return;
+    addressInput.value = parsed.street;
+    cityInput.value = parsed.city;
+    stateInput.value = parsed.state;
+    zipInput.value = parsed.zip;
+    lastAutoZip = parsed.zip;
+    lastAutoCity = parsed.city;
+    lastAutoState = parsed.state;
+    cityManuallyEdited = false;
+    stateManuallyEdited = false;
+    cityInput.dispatchEvent(new Event("change", { bubbles: true }));
+    stateInput.dispatchEvent(new Event("change", { bubbles: true }));
+    zipInput.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  addressInput?.addEventListener("input", applyParsedAddress);
+  addressInput?.addEventListener("change", applyParsedAddress);
+  addressInput?.addEventListener("paste", () => {
+    window.setTimeout(applyParsedAddress, 0);
   });
 
   const initializeZipState = () => {

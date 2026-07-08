@@ -181,6 +181,23 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Hi Natalie, this is Htut Auto Care.", message)
         self.assertIn("Schedule your service here:\nhttps://calendly.com/htut-auto/service", message)
 
+    def test_shop_settings_phone_normalization_trims_to_ten_digits(self):
+        conn = self.memory_conn()
+        try:
+            pro_module.save_shop_settings(
+                conn,
+                {
+                    "shop_name": "Htut Auto Care",
+                    "shop_phone": "6673359567222",
+                },
+            )
+            loaded = pro_module.load_shop_profile_context(conn)
+        finally:
+            conn.close()
+
+        self.assertEqual(pro_module.clean_shop_phone("6673359567222"), "6673359567")
+        self.assertEqual(loaded["shop_phone"], "6673359567")
+
     def test_shop_settings_unchecked_tax_saves_zero_and_phone_digits(self):
         conn = self.memory_conn()
         try:
@@ -206,13 +223,23 @@ class CalendarFoundationTests(unittest.TestCase):
         template = (main.BASE_DIR / "templates" / "pro" / "shop_settings.html").read_text(encoding="utf-8")
 
         self.assertIn('placeholder="Your shop name"', template)
-        self.assertIn('placeholder="Shop phone"', template)
+        self.assertIn('placeholder="(555) 123-4567"', template)
+        self.assertIn('placeholder="shop@example.com"', template)
+        self.assertIn('placeholder="123 Main St"', template)
+        self.assertIn('placeholder="City"', template)
+        self.assertIn('placeholder="State"', template)
+        self.assertIn('placeholder="ZIP code"', template)
+        self.assertIn(".tm-shop-settings .tm-input::placeholder", template)
+        self.assertIn('data-shop-address-input', template)
         self.assertIn("data-shop-phone-input", template)
         self.assertIn("formatShopPhone", template)
         self.assertIn('"93701": { city: "Fresno", state: "CA" }', template)
         self.assertIn('"92648": { city: "Huntington Beach", state: "CA" }', template)
+        self.assertIn('"21201": { city: "Baltimore", state: "MD" }', template)
         self.assertIn('id="use_tax_rate"', template)
         self.assertIn("data-tax-rate-field", template)
+        self.assertIn("const parseFullAddress", template)
+        self.assertIn("addressInput?.addEventListener(\"paste\"", template)
         self.assertIn('zipInput?.addEventListener("paste"', template)
         self.assertIn("initializeZipState();", template)
         self.assertIn("if (zipChanged) {", template)
@@ -259,8 +286,41 @@ class CalendarFoundationTests(unittest.TestCase):
 
         self.assertIn('"93701": { city: "Fresno", state: "CA" }', template)
         self.assertIn('"92648": { city: "Huntington Beach", state: "CA" }', template)
+        self.assertIn('"21201": { city: "Baltimore", state: "MD" }', template)
         self.assertLess(template.index('"92648"'), template.index("const applyZip"))
+        self.assertLess(template.index('"21201"'), template.index("const applyZip"))
         self.assertIn("if (zipChanged) {\n      cityManuallyEdited = false;\n      stateManuallyEdited = false;", template)
+
+    def test_shop_settings_tax_toggle_reflects_saved_rate(self):
+        conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
+        conn.row_factory = sqlite3.Row
+        pro_module.ensure_shop_profile_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO shop_profile (id, shop_name, tax_rate_default, tax_rate, updated_at)
+            VALUES (1, 'Htut Auto Care', 0, 0, '2026-07-05T06:01:16')
+            """,
+        )
+        conn.commit()
+
+        with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
+            with patch.object(pro_module, "crm_db_conn", return_value=conn):
+                blank_response = TestClient(main.app, base_url="http://localhost").get("/pro/shop-settings")
+
+        self.assertEqual(blank_response.status_code, 200)
+        self.assertIn('data-tax-rate-field hidden', blank_response.text)
+        self.assertNotIn('id="use_tax_rate" name="use_tax_rate" type="checkbox" value="1" checked', blank_response.text)
+
+        conn.execute("UPDATE shop_profile SET tax_rate_default = 8.25, tax_rate = 8.25 WHERE id = 1")
+        conn.commit()
+        with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
+            with patch.object(pro_module, "crm_db_conn", return_value=conn):
+                taxable_response = TestClient(main.app, base_url="http://localhost").get("/pro/shop-settings")
+
+        self.assertEqual(taxable_response.status_code, 200)
+        self.assertIn('id="use_tax_rate" name="use_tax_rate" type="checkbox" value="1" checked', taxable_response.text)
+        self.assertIn('value="8.250"', taxable_response.text)
+        conn.close()
 
     def test_maintenance_reminder_without_links_keeps_reply_fallback(self):
         message = pro_module.build_maintenance_reminder_message(

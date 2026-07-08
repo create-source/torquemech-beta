@@ -516,7 +516,7 @@ def clean_shop_phone(value: Any) -> str:
     raw = "".join(ch for ch in str(value or "") if ch.isdigit())
     if len(raw) == 11 and raw.startswith("1"):
         raw = raw[1:]
-    return raw if len(raw) == 10 else ""
+    return raw[:10] if len(raw) >= 10 else ""
 
 
 DEMO_SHOP_NAME_PREFIXES = (
@@ -540,7 +540,7 @@ def scrub_demo_shop_name(value: Any) -> str:
 
 def scrub_demo_shop_phone(value: Any) -> str:
     raw_digits = "".join(ch for ch in str(value or "") if ch.isdigit())
-    if raw_digits in DEMO_SHOP_PHONE_DIGITS:
+    if raw_digits in DEMO_SHOP_PHONE_DIGITS or raw_digits[:10] in DEMO_SHOP_PHONE_DIGITS:
         return ""
     return clean_shop_phone(value)
 
