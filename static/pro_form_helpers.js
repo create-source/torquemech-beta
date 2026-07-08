@@ -1,9 +1,10 @@
 (function () {
   function formatPhone(value) {
     const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+    if (!digits) return "";
+    if (digits.length <= 3) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)})${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
 
   function digitsOnly(value) {
@@ -17,13 +18,20 @@
   }
 
   function bindPhoneInput(input) {
+    if (input.dataset.proPhoneBound === "1") return;
+    input.dataset.proPhoneBound = "1";
     input.value = formatPhone(input.value);
     input.addEventListener("input", () => {
+      input.value = formatPhone(input.value);
+    });
+    input.addEventListener("blur", () => {
       input.value = formatPhone(input.value);
     });
   }
 
   function bindMileageInput(input) {
+    if (input.dataset.proMileageBound === "1") return;
+    input.dataset.proMileageBound = "1";
     input.value = formatMileage(input.value);
     input.addEventListener("input", () => {
       input.value = formatMileage(input.value);
@@ -210,6 +218,8 @@
   }
 
   function normalizeMileageBeforeSubmit(form) {
+    if (form.dataset.proMileageSubmitBound === "1") return;
+    form.dataset.proMileageSubmitBound = "1";
     form.addEventListener("submit", () => {
       form.querySelectorAll("[data-pro-mileage-input]").forEach((input) => {
         input.value = digitsOnly(input.value);
@@ -217,11 +227,25 @@
     });
   }
 
+  function isPhoneLikeInput(input) {
+    if (!(input instanceof HTMLInputElement)) return false;
+    const haystack = [
+      input.type,
+      input.name,
+      input.id,
+      input.className,
+      input.getAttribute("autocomplete"),
+    ].join(" ").toLowerCase();
+    return input.type === "tel" || haystack.includes("phone");
+  }
+
   function init(root) {
     const scope = root || document;
     ensureDateClearStyles();
     ensurePhotoUploadStyles();
-    scope.querySelectorAll("[data-pro-phone-input]").forEach(bindPhoneInput);
+    scope.querySelectorAll("input").forEach((input) => {
+      if (isPhoneLikeInput(input)) bindPhoneInput(input);
+    });
     scope.querySelectorAll("[data-pro-mileage-input]").forEach(bindMileageInput);
     scope.querySelectorAll("[data-pro-photo-input]").forEach(bindPhotoInput);
     scope.querySelectorAll('input[type="date"]').forEach(bindDateInput);
@@ -233,6 +257,11 @@
     formatMileage,
     bindDateInput,
     init,
+  };
+  window.TorqueMechPhone = {
+    format: formatPhone,
+    digitsOnly: (value) => digitsOnly(value).slice(0, 10),
+    bind: bindPhoneInput,
   };
 
   document.addEventListener("DOMContentLoaded", () => init(document));

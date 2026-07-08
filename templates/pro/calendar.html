@@ -102,7 +102,7 @@
     {% if saved %}<div style="color:#115e59;font-weight:900;">Appointment saved.</div>{% endif %}
     <form class="tm-calendar-form-grid" method="post" action="/pro/calendar">
       <div><label class="tm-label" for="customer_name">Customer Name</label><input class="tm-input" id="customer_name" name="customer_name" type="text" required></div>
-      <div><label class="tm-label" for="customer_phone">Phone</label><input class="tm-input" id="customer_phone" name="customer_phone" type="tel" required></div>
+      <div><label class="tm-label" for="customer_phone">Phone</label><input class="tm-input" id="customer_phone" name="customer_phone" type="tel" placeholder="(***)***-****" required></div>
       <div><label class="tm-label" for="vehicle_label">Vehicle</label><input class="tm-input" id="vehicle_label" name="vehicle_label" type="text"></div>
       <div><label class="tm-label" for="service_name">Service</label><input class="tm-input" id="service_name" name="service_name" type="text" required></div>
       <div><label class="tm-label" for="requested_date">Date</label><input class="tm-input" id="requested_date" name="requested_date" type="date" required></div>

@@ -218,7 +218,7 @@
         </div>
         <div>
           <label class="tm-label" for="shop_phone">Shop Phone</label>
-          <input class="tm-input" id="shop_phone" name="shop_phone" type="tel" inputmode="numeric" value="{{ profile.shop_phone or '' }}" maxlength="14" autocomplete="tel" placeholder="(555) 123-4567" data-shop-phone-input>
+          <input class="tm-input" id="shop_phone" name="shop_phone" type="tel" inputmode="numeric" value="{{ profile.shop_phone or '' }}" maxlength="14" autocomplete="tel" placeholder="(***)***-****" data-shop-phone-input>
         </div>
         <div>
           <label class="tm-label" for="shop_email">Shop Email</label>
@@ -344,20 +344,7 @@
   };
 
   const digitsOnly = (value) => String(value || "").replace(/\D/g, "");
-  const formatShopPhone = (value) => {
-    const digits = digitsOnly(value).slice(0, 10);
-    if (digits.length <= 3) return digits ? `(${digits}` : "";
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  };
-
   const phoneInput = document.querySelector("[data-shop-phone-input]");
-  phoneInput?.addEventListener("input", () => {
-    phoneInput.value = formatShopPhone(phoneInput.value);
-  });
-  if (phoneInput) {
-    phoneInput.value = formatShopPhone(phoneInput.value);
-  }
 
   const stateAliases = {
     alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA",
