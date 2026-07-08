@@ -11,17 +11,52 @@
     background: rgba(255, 255, 255, 0.94);
     padding: 16px;
   }
+  .tm-schedule-intro {
+    color: #475569;
+    font-size: .95rem;
+    line-height: 1.45;
+    margin: 0;
+  }
   .tm-schedule-days { display: grid; gap: 10px; }
   .tm-schedule-day {
     display: grid;
-    grid-template-columns: 1.1fr .7fr .7fr .8fr;
-    gap: 10px;
-    align-items: end;
+    grid-template-columns: minmax(160px, 1.1fr) minmax(124px, .7fr) minmax(124px, .7fr) minmax(86px, auto);
+    gap: 12px;
+    align-items: center;
     border: 1px solid rgba(15, 23, 42, 0.09);
     border-radius: 8px;
     padding: 12px;
   }
-  .tm-schedule-toggle { display: flex; gap: 8px; align-items: center; font-weight: 900; }
+  .tm-schedule-day[data-open="0"] {
+    background: #f8fafc;
+  }
+  .tm-schedule-day[data-open="0"] [data-schedule-time] {
+    opacity: .62;
+  }
+  .tm-schedule-toggle {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-weight: 900;
+  }
+  .tm-schedule-toggle input {
+    height: 18px;
+    width: 18px;
+  }
+  .tm-schedule-status {
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: .78rem;
+    font-weight: 900;
+    justify-self: end;
+    padding: 5px 9px;
+    white-space: nowrap;
+  }
+  .tm-schedule-status[data-open="0"] {
+    background: #f1f5f9;
+    color: #475569;
+  }
   .tm-schedule-options { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 12px; }
   .tm-closed-list { display: grid; gap: 8px; }
   .tm-closed-item { display: flex; justify-content: space-between; gap: 10px; align-items: center; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 8px; }
@@ -68,6 +103,7 @@
   .tm-schedule-help-list li { list-style: none; }
   @media (max-width: 760px) {
     .tm-schedule-day, .tm-schedule-options { grid-template-columns: 1fr; }
+    .tm-schedule-status { justify-self: start; }
     .tm-schedule-day .tm-btn, .tm-schedule-note .tm-btn { width: 100%; }
     .tm-closed-item { align-items: stretch; flex-direction: column; }
   }
@@ -89,13 +125,17 @@
   </div>
 
   <section class="tm-schedule-note" aria-label="Booking schedule note">
-    <p>Customer booking requests use this schedule. To copy or manage your booking link, open Shop Settings.</p>
+    <p>Set the days and times customers can request appointments through your TorqueMech booking link.</p>
     <a class="tm-btn tm-btn-secondary" href="/pro/shop-settings">Open Shop Settings</a>
   </section>
 
   <section class="tm-schedule-panel" aria-label="Weekly availability">
     <form class="tm-schedule-form" method="post" action="/pro/shop-schedule">
       {% if saved %}<div class="tm-schedule-saved">Shop schedule saved.</div>{% endif %}
+      <div>
+        <h2 style="margin:0 0 6px;">Appointment Availability</h2>
+        <p class="tm-schedule-intro">These settings control the built-in TorqueMech calendar and the public booking request form.</p>
+      </div>
       <details class="tm-schedule-help">
         <summary>Default shop schedule example</summary>
         <div class="tm-schedule-help-body">
@@ -132,20 +172,20 @@
       </div>
       <div class="tm-schedule-days">
         {% for day in availability %}
-        <div class="tm-schedule-day">
+        <div class="tm-schedule-day" data-schedule-day data-open="{{ 1 if day.is_open else 0 }}">
           <label class="tm-schedule-toggle">
-            <input type="checkbox" name="is_open_{{ day.day_of_week }}" value="1" {% if day.is_open %}checked{% endif %}>
-            {{ day.day_name }}
+            <input type="checkbox" name="is_open_{{ day.day_of_week }}" value="1" data-schedule-open {% if day.is_open %}checked{% endif %}>
+            <span>{{ day.day_name }}</span>
           </label>
           <div>
             <label class="tm-label" for="start_time_{{ day.day_of_week }}">Start</label>
-            <input class="tm-input" id="start_time_{{ day.day_of_week }}" name="start_time_{{ day.day_of_week }}" type="time" value="{{ day.start_time or '09:00' }}">
+            <input class="tm-input" id="start_time_{{ day.day_of_week }}" name="start_time_{{ day.day_of_week }}" type="time" value="{{ day.start_time or '09:00' }}" data-schedule-time>
           </div>
           <div>
             <label class="tm-label" for="end_time_{{ day.day_of_week }}">End</label>
-            <input class="tm-input" id="end_time_{{ day.day_of_week }}" name="end_time_{{ day.day_of_week }}" type="time" value="{{ day.end_time or '17:00' }}">
+            <input class="tm-input" id="end_time_{{ day.day_of_week }}" name="end_time_{{ day.day_of_week }}" type="time" value="{{ day.end_time or '17:00' }}" data-schedule-time>
           </div>
-          <span style="color:#64748b;font-weight:800;">{% if day.is_open %}Open{% else %}Closed{% endif %}</span>
+          <span class="tm-schedule-status" data-schedule-status data-open="{{ 1 if day.is_open else 0 }}">{% if day.is_open %}Open{% else %}Closed{% endif %}</span>
         </div>
         {% endfor %}
       </div>
@@ -195,4 +235,29 @@
   </section>
 </section>
 
+{% endblock %}
+
+{% block page_js %}
+<script>
+(() => {
+  const syncDay = (row) => {
+    const checkbox = row.querySelector("[data-schedule-open]");
+    const isOpen = Boolean(checkbox?.checked);
+    row.dataset.open = isOpen ? "1" : "0";
+    row.querySelectorAll("[data-schedule-time]").forEach((input) => {
+      input.setAttribute("aria-disabled", isOpen ? "false" : "true");
+    });
+    const status = row.querySelector("[data-schedule-status]");
+    if (status) {
+      status.dataset.open = isOpen ? "1" : "0";
+      status.textContent = isOpen ? "Open" : "Closed";
+    }
+  };
+
+  document.querySelectorAll("[data-schedule-day]").forEach((row) => {
+    syncDay(row);
+    row.querySelector("[data-schedule-open]")?.addEventListener("change", () => syncDay(row));
+  });
+})();
+</script>
 {% endblock %}

@@ -59,6 +59,19 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(monday["appointment_length_minutes"], 45)
         self.assertEqual(monday["buffer_minutes"], 15)
 
+    def test_default_shop_availability_matches_foundation_schedule(self):
+        rows = pro_module.default_shop_availability_rows()
+
+        self.assertEqual(len(rows), 7)
+        for day in rows[:5]:
+            self.assertTrue(day["is_open"])
+            self.assertEqual(day["start_time"], "09:00")
+            self.assertEqual(day["end_time"], "17:00")
+            self.assertEqual(day["appointment_length_minutes"], 60)
+            self.assertEqual(day["buffer_minutes"], 0)
+        self.assertFalse(rows[5]["is_open"])
+        self.assertFalse(rows[6]["is_open"])
+
     def test_creating_and_changing_service_appointment(self):
         conn = self.memory_conn()
         try:
@@ -66,7 +79,7 @@ class CalendarFoundationTests(unittest.TestCase):
                 conn,
                 {
                     "customer_name": "Natalie King",
-                    "customer_phone": "555-123-4567",
+                    "customer_phone": "(555)123-4567",
                     "vehicle_label": "2008 Toyota Sequoia",
                     "service_name": "Oil Change",
                     "requested_date": "2026-07-08",
@@ -97,7 +110,7 @@ class CalendarFoundationTests(unittest.TestCase):
                     "/book/torquemech-shop",
                     data={
                         "customer_name": "Natalie King",
-                        "customer_phone": "555-123-4567",
+                        "customer_phone": "(555)123-4567",
                         "customer_email": "natalie@example.com",
                         "vehicle_label": "2008 Toyota Sequoia",
                         "service_name": "Oil Change",
@@ -115,6 +128,45 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(post_response.status_code, 303)
         self.assertEqual(row["status"], "Requested")
         self.assertEqual(row["source"], "customer_booking")
+
+    def test_public_booking_rejects_times_outside_shop_schedule(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [
+                    {"day_of_week": 0, "is_open": True, "start_time": "10:00", "end_time": "12:00"},
+                ],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                client = TestClient(main.app, base_url="http://localhost")
+                response = client.post(
+                    "/book/torquemech-shop",
+                    data={
+                        "customer_name": "Natalie King",
+                        "customer_phone": "(555)123-4567",
+                        "customer_email": "natalie@example.com",
+                        "vehicle_label": "2008 Toyota Sequoia",
+                        "service_name": "Oil Change",
+                        "requested_date": "2026-07-13",
+                        "requested_time": "09:30",
+                        "notes": "",
+                    },
+                    follow_redirects=False,
+                )
+                row = conn.execute("SELECT * FROM service_appointments").fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Please choose a time between 10:00 AM and 12:00 PM.", response.text)
+        self.assertIsNone(row)
 
     def test_maintenance_reminder_prefers_builtin_booking_link(self):
         message = pro_module.build_maintenance_reminder_message(
@@ -223,7 +275,7 @@ class CalendarFoundationTests(unittest.TestCase):
         template = (main.BASE_DIR / "templates" / "pro" / "shop_settings.html").read_text(encoding="utf-8")
 
         self.assertIn('placeholder="Your shop name"', template)
-        self.assertIn('placeholder="(555) 123-4567"', template)
+        self.assertIn('placeholder="(***)***-****"', template)
         self.assertIn('placeholder="shop@example.com"', template)
         self.assertIn('placeholder="123 Main St"', template)
         self.assertIn('placeholder="City"', template)
@@ -232,7 +284,7 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn(".tm-shop-settings .tm-input::placeholder", template)
         self.assertIn('data-shop-address-input', template)
         self.assertIn("data-shop-phone-input", template)
-        self.assertIn("formatShopPhone", template)
+        self.assertNotIn("formatShopPhone", template)
         self.assertIn('"93701": { city: "Fresno", state: "CA" }', template)
         self.assertIn('"92648": { city: "Huntington Beach", state: "CA" }', template)
         self.assertIn('"21201": { city: "Baltimore", state: "MD" }', template)
@@ -244,6 +296,66 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("initializeZipState();", template)
         self.assertIn("if (zipChanged) {", template)
         self.assertIn("phoneInput.value = digitsOnly(phoneInput.value).slice(0, 10)", template)
+
+    def test_shop_schedule_page_uses_foundation_controls_and_helper_text(self):
+        template = (main.BASE_DIR / "templates" / "pro" / "shop_schedule.html").read_text(encoding="utf-8")
+        settings_template = (main.BASE_DIR / "templates" / "pro" / "shop_settings.html").read_text(encoding="utf-8")
+
+        helper = "Set the days and times customers can request appointments through your TorqueMech booking link."
+        self.assertIn(helper, template)
+        self.assertIn(helper, settings_template)
+        self.assertIn('id="appointment_length_minutes"', template)
+        self.assertIn('id="buffer_minutes"', template)
+        self.assertIn("data-schedule-day", template)
+        self.assertIn("data-schedule-open", template)
+        self.assertIn("data-schedule-time", template)
+
+    def test_shop_schedule_route_saves_and_renders_persisted_settings(self):
+        conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
+        conn.row_factory = sqlite3.Row
+        try:
+            with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
+                with patch.object(pro_module, "crm_db_conn", return_value=conn):
+                    client = TestClient(main.app, base_url="http://localhost")
+                    post_response = client.post(
+                        "/pro/shop-schedule",
+                        data={
+                            "appointment_length_minutes": "90",
+                            "buffer_minutes": "15",
+                            "is_open_0": "1",
+                            "start_time_0": "08:30",
+                            "end_time_0": "16:30",
+                            "start_time_1": "09:00",
+                            "end_time_1": "17:00",
+                            "is_open_2": "1",
+                            "start_time_2": "10:00",
+                            "end_time_2": "15:00",
+                            "is_open_3": "1",
+                            "start_time_3": "09:00",
+                            "end_time_3": "17:00",
+                            "is_open_4": "1",
+                            "start_time_4": "09:00",
+                            "end_time_4": "17:00",
+                            "start_time_5": "09:00",
+                            "end_time_5": "17:00",
+                            "start_time_6": "09:00",
+                            "end_time_6": "17:00",
+                        },
+                        follow_redirects=False,
+                    )
+                    response = client.get("/pro/shop-schedule")
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(post_response.status_code, 303)
+        self.assertEqual(post_response.headers["location"], "/pro/shop-schedule?saved=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('<option value="90" selected>90 minutes</option>', response.text)
+        self.assertIn('<option value="15" selected>15 minutes</option>', response.text)
+        self.assertIn('id="start_time_0" name="start_time_0" type="time" value="08:30"', response.text)
+        self.assertIn('id="end_time_0" name="end_time_0" type="time" value="16:30"', response.text)
+        self.assertIn('id="start_time_2" name="start_time_2" type="time" value="10:00"', response.text)
+        self.assertIn('id="end_time_2" name="end_time_2" type="time" value="15:00"', response.text)
 
     def test_shop_settings_page_does_not_render_seeded_demo_values_as_inputs(self):
         conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
@@ -330,7 +442,7 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertNotIn('value="old@example.com"', response.text)
         self.assertNotIn('value="742 Cedar Ave"', response.text)
         self.assertNotIn('value="https://calendly.com/old"', response.text)
-        self.assertIn('placeholder="(555) 123-4567"', response.text)
+        self.assertIn('placeholder="(***)***-****"', response.text)
         self.assertIn('placeholder="shop@example.com"', response.text)
         self.assertIn('placeholder="123 Main St"', response.text)
         self.assertIn('data-tax-rate-field hidden', response.text)

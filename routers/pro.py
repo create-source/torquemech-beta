@@ -501,7 +501,7 @@ def format_phone(value: Any) -> str:
     if len(raw) == 11 and raw.startswith("1"):
         raw = raw[1:]
     if len(raw) == 10:
-        return f"{raw[:3]}-{raw[3:6]}-{raw[6:]}"
+        return f"({raw[:3]}){raw[3:6]}-{raw[6:]}"
     return str(value or "").strip()
 
 
@@ -1136,6 +1136,19 @@ def delete_closed_day(conn: sqlite3.Connection, closed_day_id: int) -> None:
     conn.commit()
 
 
+def format_time_label(value: Any) -> str:
+    raw = str(value or "").strip()[:5]
+    try:
+        hour_text, minute_text = raw.split(":", 1)
+        hour = int(hour_text)
+        minute = int(minute_text)
+    except (TypeError, ValueError):
+        return raw
+    suffix = "AM" if hour < 12 else "PM"
+    display_hour = hour % 12 or 12
+    return f"{display_hour}:{minute:02d} {suffix}"
+
+
 def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str) -> tuple[bool, str]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
@@ -1157,6 +1170,24 @@ def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str) -> tupl
     if day_row and not bool(day_row.get("is_open")):
         return True, "The shop is marked closed that day."
     return False, ""
+
+
+def is_booking_time_available(conn: sqlite3.Connection, requested_date: str, requested_time: str) -> tuple[bool, str]:
+    parsed_date = parse_date_value(requested_date)
+    if not parsed_date:
+        return True, ""
+    raw_time = str(requested_time or "").strip()[:5]
+    if not raw_time:
+        return True, ""
+    availability = load_shop_availability(conn)
+    day_row = next((row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()), None)
+    if not day_row or not bool(day_row.get("is_open")):
+        return False, "The shop is marked closed that day."
+    start_time = str(day_row.get("start_time") or "09:00").strip()[:5]
+    end_time = str(day_row.get("end_time") or "17:00").strip()[:5]
+    if raw_time < start_time or raw_time >= end_time:
+        return False, f"Please choose a time between {format_time_label(start_time)} and {format_time_label(end_time)}."
+    return True, ""
 
 
 def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -> int:
@@ -8536,6 +8567,25 @@ async def public_booking_submit(request: Request, shop_slug: str):
         closed, closed_reason = is_closed_booking_day(conn, form.get("requested_date", ""))
         if closed:
             warning = closed_reason or "The shop is marked closed that day."
+            return templates.TemplateResponse(
+                "booking.html",
+                {
+                    "request": request,
+                    "profile": profile,
+                    "shop_slug": profile["booking_slug"],
+                    "success": False,
+                    "warning": warning,
+                    "form": form,
+                },
+                status_code=400,
+            )
+        available, availability_warning = is_booking_time_available(
+            conn,
+            form.get("requested_date", ""),
+            form.get("requested_time", ""),
+        )
+        if not available:
+            warning = availability_warning or "Please choose a time during shop availability."
             return templates.TemplateResponse(
                 "booking.html",
                 {
