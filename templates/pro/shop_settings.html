@@ -14,6 +14,7 @@
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
     padding: 16px;
+    min-width: 0;
   }
 
   .tm-shop-settings-form {
@@ -103,39 +104,82 @@
 
   .tm-money-field,
   .tm-percent-field {
-    position: relative;
+    min-width: 0;
   }
 
-  .tm-money-field::before,
-  .tm-percent-field::after {
+  .tm-affix-input {
+    align-items: center;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 8px;
+    display: grid;
+    min-height: 44px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .tm-money-field .tm-affix-input {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .tm-percent-field .tm-affix-input {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .tm-affix-input__symbol {
     color: #64748b;
+    display: inline-grid;
     font-weight: 900;
-    position: absolute;
-    top: 36px;
+    min-width: 36px;
+    place-items: center;
   }
 
-  .tm-money-field::before {
-    content: "$";
-    left: 12px;
+  .tm-affix-input .tm-input {
+    border: 0;
+    border-radius: 0;
+    min-width: 0;
+    width: 100%;
   }
 
-  .tm-percent-field::after {
-    content: "%";
-    right: 12px;
+  .tm-affix-input .tm-input:focus {
+    box-shadow: none;
+    outline: none;
   }
 
-  .tm-money-field .tm-input {
-    padding-left: 28px;
+  .tm-affix-input:focus-within {
+    border-color: #0f766e;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.16);
   }
 
-  .tm-percent-field .tm-input {
-    padding-right: 30px;
+  .tm-tax-toggle {
+    align-items: center;
+    display: inline-flex;
+    gap: 8px;
+    font-size: 0.92rem;
+    font-weight: 900;
+    margin: 0 0 8px;
+  }
+
+  .tm-tax-toggle input {
+    height: 18px;
+    width: 18px;
+  }
+
+  .tm-tax-field[hidden] {
+    display: none !important;
   }
 
   @media (max-width: 760px) {
     .tm-shop-settings-grid,
     .tm-shop-settings-grid--three {
       grid-template-columns: 1fr;
+    }
+
+    .tm-shop-settings-panel {
+      padding: 14px;
+    }
+
+    .tm-shop-settings-form {
+      gap: 14px;
     }
   }
 </style>
@@ -165,33 +209,33 @@
       <div class="tm-shop-settings-grid">
         <div>
           <label class="tm-label" for="shop_name">Shop Name</label>
-          <input class="tm-input" id="shop_name" name="shop_name" type="text" value="{{ profile.shop_name or '' }}" maxlength="160" autocomplete="organization">
+          <input class="tm-input" id="shop_name" name="shop_name" type="text" value="{{ profile.shop_name or '' }}" maxlength="160" autocomplete="organization" placeholder="Your shop name">
         </div>
         <div>
           <label class="tm-label" for="shop_phone">Shop Phone</label>
-          <input class="tm-input" id="shop_phone" name="shop_phone" type="tel" value="{{ profile.shop_phone or '' }}" maxlength="80" autocomplete="tel">
+          <input class="tm-input" id="shop_phone" name="shop_phone" type="tel" inputmode="numeric" value="{{ profile.shop_phone or '' }}" maxlength="14" autocomplete="tel" placeholder="Shop phone">
         </div>
         <div>
           <label class="tm-label" for="shop_email">Shop Email</label>
-          <input class="tm-input" id="shop_email" name="shop_email" type="email" value="{{ profile.shop_email or '' }}" maxlength="160" autocomplete="email">
+          <input class="tm-input" id="shop_email" name="shop_email" type="email" value="{{ profile.shop_email or '' }}" maxlength="160" autocomplete="email" placeholder="Shop email">
         </div>
         <div>
           <label class="tm-label" for="shop_address">Shop Address</label>
-          <input class="tm-input" id="shop_address" name="shop_address" type="text" value="{{ profile.shop_address or '' }}" maxlength="220" autocomplete="street-address">
+          <input class="tm-input" id="shop_address" name="shop_address" type="text" value="{{ profile.shop_address or '' }}" maxlength="220" autocomplete="street-address" placeholder="Shop street address">
         </div>
       </div>
       <div class="tm-shop-settings-grid tm-shop-settings-grid--three" style="margin-top:12px;">
         <div>
           <label class="tm-label" for="shop_city">City</label>
-          <input class="tm-input" id="shop_city" name="shop_city" type="text" value="{{ profile.shop_city or '' }}" maxlength="120" autocomplete="address-level2">
+          <input class="tm-input" id="shop_city" name="shop_city" type="text" value="{{ profile.shop_city or '' }}" maxlength="120" autocomplete="address-level2" placeholder="City">
         </div>
         <div>
           <label class="tm-label" for="shop_state">State</label>
-          <input class="tm-input" id="shop_state" name="shop_state" type="text" value="{{ profile.shop_state or '' }}" maxlength="40" autocomplete="address-level1">
+          <input class="tm-input" id="shop_state" name="shop_state" type="text" value="{{ profile.shop_state or '' }}" maxlength="40" autocomplete="address-level1" placeholder="State">
         </div>
         <div>
           <label class="tm-label" for="shop_zip">ZIP Code</label>
-          <input class="tm-input" id="shop_zip" name="shop_zip" type="text" value="{{ profile.shop_zip or '' }}" maxlength="20" autocomplete="postal-code">
+          <input class="tm-input" id="shop_zip" name="shop_zip" type="text" inputmode="numeric" value="{{ profile.shop_zip or '' }}" maxlength="5" autocomplete="postal-code" placeholder="ZIP code" data-shop-zip-input>
         </div>
       </div>
     </section>
@@ -201,15 +245,30 @@
       <div class="tm-shop-settings-grid tm-shop-settings-grid--three">
         <div class="tm-money-field">
           <label class="tm-label" for="default_labor_rate">Default Labor Rate</label>
-          <input class="tm-input" id="default_labor_rate" name="default_labor_rate" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.default_labor_rate_input }}">
+          <span class="tm-affix-input">
+            <span class="tm-affix-input__symbol" aria-hidden="true">$</span>
+            <input class="tm-input" id="default_labor_rate" name="default_labor_rate" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.default_labor_rate_input }}">
+          </span>
         </div>
         <div class="tm-percent-field">
-          <label class="tm-label" for="tax_rate">Tax Rate</label>
-          <input class="tm-input" id="tax_rate" name="tax_rate" type="number" min="0" step="0.001" inputmode="decimal" value="{{ profile.tax_rate_input }}">
+          <label class="tm-tax-toggle" for="use_tax_rate">
+            <input id="use_tax_rate" name="use_tax_rate" type="checkbox" value="1" {% if profile.tax_rate %}checked{% endif %}>
+            <span>Use Tax Rate</span>
+          </label>
+          <div class="tm-tax-field" data-tax-rate-field {% if not profile.tax_rate %}hidden{% endif %}>
+            <label class="tm-label" for="tax_rate">Tax Rate</label>
+            <span class="tm-affix-input">
+              <input class="tm-input" id="tax_rate" name="tax_rate" type="number" min="0" step="0.001" inputmode="decimal" value="{{ profile.tax_rate_input }}" {% if not profile.tax_rate %}disabled{% endif %}>
+              <span class="tm-affix-input__symbol" aria-hidden="true">%</span>
+            </span>
+          </div>
         </div>
         <div class="tm-money-field">
           <label class="tm-label" for="shop_supplies_fee">Shop Supplies / Fees</label>
-          <input class="tm-input" id="shop_supplies_fee" name="shop_supplies_fee" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.shop_supplies_fee_input }}">
+          <span class="tm-affix-input">
+            <span class="tm-affix-input__symbol" aria-hidden="true">$</span>
+            <input class="tm-input" id="shop_supplies_fee" name="shop_supplies_fee" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.shop_supplies_fee_input }}">
+          </span>
         </div>
       </div>
       <div class="tm-shop-settings-help" style="margin-top:8px;">
@@ -263,6 +322,122 @@
 
 <script>
 (() => {
+  const zipLookup = {
+    "10001": { city: "New York", state: "NY" },
+    "30301": { city: "Atlanta", state: "GA" },
+    "33101": { city: "Miami", state: "FL" },
+    "60601": { city: "Chicago", state: "IL" },
+    "73301": { city: "Austin", state: "TX" },
+    "85001": { city: "Phoenix", state: "AZ" },
+    "90001": { city: "Los Angeles", state: "CA" },
+    "92648": { city: "Huntington Beach", state: "CA" },
+    "94102": { city: "San Francisco", state: "CA" },
+    "93701": { city: "Fresno", state: "CA" },
+    "98101": { city: "Seattle", state: "WA" }
+  };
+
+  const digitsOnly = (value) => String(value || "").replace(/\D/g, "");
+  const formatShopPhone = (value) => {
+    const digits = digitsOnly(value).slice(0, 10);
+    if (digits.length <= 3) return digits ? `(${digits}` : "";
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
+  const phoneInput = document.querySelector("[data-shop-phone-input]");
+  phoneInput?.addEventListener("input", () => {
+    phoneInput.value = formatShopPhone(phoneInput.value);
+  });
+  if (phoneInput) {
+    phoneInput.value = formatShopPhone(phoneInput.value);
+  }
+
+  const zipInput = document.querySelector("[data-shop-zip-input]");
+  const cityInput = document.querySelector("#shop_city");
+  const stateInput = document.querySelector("#shop_state");
+  let lastAutoZip = "";
+  let lastAutoCity = "";
+  let lastAutoState = "";
+  let cityManuallyEdited = false;
+  let stateManuallyEdited = false;
+
+  cityInput?.addEventListener("input", () => {
+    cityManuallyEdited = String(cityInput.value || "").trim() !== lastAutoCity;
+  });
+  stateInput?.addEventListener("input", () => {
+    stateManuallyEdited = String(stateInput.value || "").trim().toUpperCase() !== lastAutoState;
+  });
+
+  const applyZip = () => {
+    if (!zipInput || !cityInput || !stateInput) return;
+    const zip = digitsOnly(zipInput.value).slice(0, 5);
+    if (zipInput.value !== zip) zipInput.value = zip;
+    if (zip.length !== 5 || !zipLookup[zip]) return;
+    const location = zipLookup[zip];
+    const zipChanged = zip !== lastAutoZip;
+    if (zipChanged) {
+      cityManuallyEdited = false;
+      stateManuallyEdited = false;
+    }
+    if (zipChanged || !cityManuallyEdited) cityInput.value = location.city;
+    if (zipChanged || !stateManuallyEdited) stateInput.value = location.state;
+    lastAutoZip = zip;
+    lastAutoCity = location.city;
+    lastAutoState = location.state;
+    cityManuallyEdited = false;
+    stateManuallyEdited = false;
+    cityInput.dispatchEvent(new Event("change", { bubbles: true }));
+    stateInput.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  zipInput?.addEventListener("input", applyZip);
+  zipInput?.addEventListener("change", applyZip);
+  zipInput?.addEventListener("paste", () => {
+    window.setTimeout(applyZip, 0);
+  });
+
+  const initializeZipState = () => {
+    if (!zipInput || !cityInput || !stateInput) return;
+    const zip = digitsOnly(zipInput.value).slice(0, 5);
+    const location = zipLookup[zip];
+    if (!location) return;
+    const currentCity = String(cityInput.value || "").trim();
+    const currentState = String(stateInput.value || "").trim().toUpperCase();
+    const cityEmpty = !currentCity;
+    const stateEmpty = !currentState;
+    const alreadyAutoFilled = currentCity === location.city && currentState === location.state;
+    if (cityEmpty || stateEmpty || alreadyAutoFilled) {
+      cityInput.value = location.city;
+      stateInput.value = location.state;
+      lastAutoZip = zip;
+      lastAutoCity = location.city;
+      lastAutoState = location.state;
+      cityManuallyEdited = false;
+      stateManuallyEdited = false;
+    }
+  };
+  initializeZipState();
+
+  const taxToggle = document.querySelector("#use_tax_rate");
+  const taxField = document.querySelector("[data-tax-rate-field]");
+  const taxInput = document.querySelector("#tax_rate");
+  const syncTax = () => {
+    const enabled = !!taxToggle?.checked;
+    if (taxField) taxField.hidden = !enabled;
+    if (taxInput) {
+      taxInput.disabled = !enabled;
+      if (!enabled) taxInput.value = "";
+    }
+  };
+  taxToggle?.addEventListener("change", syncTax);
+  syncTax();
+
+  document.querySelector(".tm-shop-settings-form")?.addEventListener("submit", () => {
+    if (phoneInput) phoneInput.value = digitsOnly(phoneInput.value).slice(0, 10);
+    if (zipInput) zipInput.value = digitsOnly(zipInput.value).slice(0, 5);
+    syncTax();
+  });
+
   const button = document.querySelector("[data-copy-booking-link]");
   const link = document.querySelector("[data-booking-link]");
   const status = document.querySelector("[data-copy-status]");

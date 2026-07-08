@@ -512,6 +512,49 @@ def clean_phone(value: Any) -> str:
     return raw if len(raw) == 10 else str(value or "").strip()
 
 
+def clean_shop_phone(value: Any) -> str:
+    raw = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(raw) == 11 and raw.startswith("1"):
+        raw = raw[1:]
+    return raw if len(raw) == 10 else ""
+
+
+DEMO_SHOP_NAME_PREFIXES = (
+    "flow test auto",
+    "test shop",
+    "demo shop",
+    "torquemech demo",
+    "dee's auto services",
+    "dee\u2019s auto services",
+)
+DEMO_SHOP_EMAILS = {"test@example.com", "demo@example.com", "service@example.com", "service@shop.com"}
+DEMO_SHOP_ADDRESSES = {"1 test st", "123 test st", "123 main st"}
+DEMO_SHOP_PHONE_DIGITS = {"5551212", "5552223333"}
+
+
+def scrub_demo_shop_name(value: Any) -> str:
+    name = str(value or "").strip()
+    lowered = name.lower()
+    return "" if any(lowered.startswith(prefix) for prefix in DEMO_SHOP_NAME_PREFIXES) else name
+
+
+def scrub_demo_shop_phone(value: Any) -> str:
+    raw_digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if raw_digits in DEMO_SHOP_PHONE_DIGITS:
+        return ""
+    return clean_shop_phone(value)
+
+
+def scrub_demo_shop_email(value: Any) -> str:
+    email = str(value or "").strip()
+    return "" if email.lower() in DEMO_SHOP_EMAILS else email
+
+
+def scrub_demo_shop_address(value: Any) -> str:
+    address = str(value or "").strip()
+    return "" if address.lower() in DEMO_SHOP_ADDRESSES else address
+
+
 def format_mileage(value: Any) -> str:
     if value is None or value == "":
         return ""
@@ -1271,12 +1314,19 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
 
 def normalize_shop_profile_context(profile: dict[str, Any] | None) -> dict[str, Any]:
     normalized = dict(profile or {})
-    normalized["shop_phone"] = str(normalized.get("shop_phone") or normalized.get("phone") or "").strip()
-    normalized["shop_email"] = str(normalized.get("shop_email") or normalized.get("email") or "").strip()
-    normalized["shop_address"] = str(normalized.get("shop_address") or normalized.get("address") or "").strip()
-    normalized["shop_city"] = str(normalized.get("shop_city") or "").strip()
-    normalized["shop_state"] = str(normalized.get("shop_state") or "").strip()
-    normalized["shop_zip"] = str(normalized.get("shop_zip") or "").strip()
+    raw_shop_name = str(normalized.get("shop_name") or "").strip()
+    is_demo_profile = bool(raw_shop_name) and not scrub_demo_shop_name(raw_shop_name)
+    normalized["shop_name"] = "" if is_demo_profile else raw_shop_name
+    legacy_phone = normalized.get("phone")
+    legacy_email = scrub_demo_shop_email(normalized.get("email"))
+    legacy_address = scrub_demo_shop_address(normalized.get("address"))
+
+    normalized["shop_phone"] = scrub_demo_shop_phone(normalized.get("shop_phone") or legacy_phone or "")
+    normalized["shop_email"] = scrub_demo_shop_email(normalized.get("shop_email")) or legacy_email
+    normalized["shop_address"] = scrub_demo_shop_address(normalized.get("shop_address")) or legacy_address
+    normalized["shop_city"] = "" if is_demo_profile else str(normalized.get("shop_city") or "").strip()
+    normalized["shop_state"] = "" if is_demo_profile else str(normalized.get("shop_state") or "").strip()
+    normalized["shop_zip"] = "" if is_demo_profile else str(normalized.get("shop_zip") or "").strip()
     normalized["phone"] = normalized["shop_phone"]
     normalized["email"] = normalized["shop_email"]
     normalized["address"] = normalized["shop_address"]
@@ -1323,10 +1373,11 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
     current = load_shop_profile_context(conn)
     for key in ("shop_name", "shop_phone", "shop_email", "shop_address", "shop_city", "shop_state", "shop_zip"):
         if key in form:
-            current[key] = form.get(key, "")
-    for key in ("default_labor_rate", "tax_rate", "shop_supplies_fee"):
+            current[key] = clean_shop_phone(form.get(key, "")) if key == "shop_phone" else form.get(key, "")
+    for key in ("default_labor_rate", "shop_supplies_fee"):
         if key in form:
             current[key] = max(0.0, optional_float(form, key) or 0.0)
+    current["tax_rate"] = max(0.0, optional_float(form, "tax_rate") or 0.0) if "use_tax_rate" in form else 0.0
     if "external_scheduling_link" in form or "scheduling_link" in form:
         current["external_scheduling_link"] = form.get("external_scheduling_link", form.get("scheduling_link", ""))
     current = normalize_shop_profile_context(current)
