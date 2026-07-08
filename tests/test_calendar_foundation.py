@@ -281,6 +281,61 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertNotIn('value="123 Main St"', response.text)
         self.assertIn('placeholder="Your shop name"', response.text)
 
+    def test_shop_settings_posted_blanks_clear_saved_contact_values(self):
+        conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
+        conn.row_factory = sqlite3.Row
+        pro_module.ensure_shop_profile_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO shop_profile (
+              id, shop_name, phone, email, address, shop_phone, shop_email, shop_address,
+              shop_city, shop_state, shop_zip, external_scheduling_link,
+              labor_rate_default, default_labor_rate, tax_rate_default, tax_rate,
+              shop_supplies_fee, updated_at
+            )
+            VALUES (1, 'Htut Auto Care', '5592223333', 'old@example.com', '742 Cedar Ave',
+                    '5592223333', 'old@example.com', '742 Cedar Ave',
+                    'Fresno', 'CA', '93701', 'https://calendly.com/old',
+                    135, 135, 8.25, 8.25, 12.95, '2026-07-05T06:01:16')
+            """,
+        )
+        conn.commit()
+
+        with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
+            with patch.object(pro_module, "crm_db_conn", return_value=conn):
+                client = TestClient(main.app, base_url="http://localhost")
+                post_response = client.post(
+                    "/pro/shop-settings",
+                    data={
+                        "shop_name": "",
+                        "shop_phone": "",
+                        "shop_email": "",
+                        "shop_address": "",
+                        "shop_city": "",
+                        "shop_state": "",
+                        "shop_zip": "",
+                        "default_labor_rate": "135",
+                        "shop_supplies_fee": "",
+                        "tax_rate": "8.25",
+                        "external_scheduling_link": "",
+                    },
+                    follow_redirects=False,
+                )
+                response = client.get("/pro/shop-settings")
+
+        self.assertEqual(post_response.status_code, 303)
+        self.assertEqual(post_response.headers["location"], "/pro/shop-settings?saved=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('value="5592223333"', response.text)
+        self.assertNotIn('value="old@example.com"', response.text)
+        self.assertNotIn('value="742 Cedar Ave"', response.text)
+        self.assertNotIn('value="https://calendly.com/old"', response.text)
+        self.assertIn('placeholder="(555) 123-4567"', response.text)
+        self.assertIn('placeholder="shop@example.com"', response.text)
+        self.assertIn('placeholder="123 Main St"', response.text)
+        self.assertIn('data-tax-rate-field hidden', response.text)
+        conn.close()
+
     def test_shop_settings_zip_lookup_cases_are_present(self):
         template = (main.BASE_DIR / "templates" / "pro" / "shop_settings.html").read_text(encoding="utf-8")
 

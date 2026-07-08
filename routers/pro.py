@@ -1371,15 +1371,28 @@ def load_shop_profile_context(conn: sqlite3.Connection) -> dict[str, Any]:
 def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[str, Any]:
     ensure_shop_profile_schema(conn)
     current = load_shop_profile_context(conn)
+    field_aliases = {
+        "shop_address": ("shop_address", "street_address"),
+        "shop_city": ("shop_city", "city"),
+        "shop_state": ("shop_state", "state"),
+        "shop_zip": ("shop_zip", "zip_code"),
+    }
     for key in ("shop_name", "shop_phone", "shop_email", "shop_address", "shop_city", "shop_state", "shop_zip"):
-        if key in form:
-            current[key] = clean_shop_phone(form.get(key, "")) if key == "shop_phone" else form.get(key, "")
+        aliases = field_aliases.get(key, (key,))
+        submitted_key = next((alias for alias in aliases if alias in form), None)
+        if submitted_key is None:
+            continue
+        current[key] = clean_shop_phone(form.get(submitted_key, "")) if key == "shop_phone" else form.get(submitted_key, "")
+    for key, legacy_key in (("shop_phone", "phone"), ("shop_email", "email"), ("shop_address", "address")):
+        if key in current and any(alias in form for alias in field_aliases.get(key, (key,))):
+            current[legacy_key] = current[key]
     for key in ("default_labor_rate", "shop_supplies_fee"):
         if key in form:
             current[key] = max(0.0, optional_float(form, key) or 0.0)
     current["tax_rate"] = max(0.0, optional_float(form, "tax_rate") or 0.0) if "use_tax_rate" in form else 0.0
     if "external_scheduling_link" in form or "scheduling_link" in form:
         current["external_scheduling_link"] = form.get("external_scheduling_link", form.get("scheduling_link", ""))
+        current["scheduling_link"] = current["external_scheduling_link"]
     current = normalize_shop_profile_context(current)
     current["updated_at"] = datetime.utcnow().isoformat()
     conn.execute(
