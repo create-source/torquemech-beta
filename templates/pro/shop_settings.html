@@ -18,8 +18,17 @@
 
   .tm-shop-settings-form {
     display: grid;
+    gap: 16px;
+  }
+
+  .tm-shop-settings-grid {
+    display: grid;
     gap: 12px;
-    max-width: 720px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tm-shop-settings-grid--three {
+    grid-template-columns: 1fr .55fr .7fr;
   }
 
   .tm-shop-settings-help,
@@ -91,6 +100,44 @@
   .tm-workflow-steps li {
     list-style: none;
   }
+
+  .tm-money-field,
+  .tm-percent-field {
+    position: relative;
+  }
+
+  .tm-money-field::before,
+  .tm-percent-field::after {
+    color: #64748b;
+    font-weight: 900;
+    position: absolute;
+    top: 36px;
+  }
+
+  .tm-money-field::before {
+    content: "$";
+    left: 12px;
+  }
+
+  .tm-percent-field::after {
+    content: "%";
+    right: 12px;
+  }
+
+  .tm-money-field .tm-input {
+    padding-left: 28px;
+  }
+
+  .tm-percent-field .tm-input {
+    padding-right: 30px;
+  }
+
+  @media (max-width: 760px) {
+    .tm-shop-settings-grid,
+    .tm-shop-settings-grid--three {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -107,6 +154,92 @@
       <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
     </div>
   </div>
+
+  {% if saved %}
+  <div class="tm-shop-settings-saved">Shop settings saved.</div>
+  {% endif %}
+
+  <form class="tm-shop-settings-form" method="post" action="/pro/shop-settings">
+    <section class="tm-shop-settings-panel" aria-label="Shop profile">
+      <h2 style="margin:0 0 12px;">Shop Profile</h2>
+      <div class="tm-shop-settings-grid">
+        <div>
+          <label class="tm-label" for="shop_name">Shop Name</label>
+          <input class="tm-input" id="shop_name" name="shop_name" type="text" value="{{ profile.shop_name or '' }}" maxlength="160" autocomplete="organization">
+        </div>
+        <div>
+          <label class="tm-label" for="shop_phone">Shop Phone</label>
+          <input class="tm-input" id="shop_phone" name="shop_phone" type="tel" value="{{ profile.shop_phone or '' }}" maxlength="80" autocomplete="tel">
+        </div>
+        <div>
+          <label class="tm-label" for="shop_email">Shop Email</label>
+          <input class="tm-input" id="shop_email" name="shop_email" type="email" value="{{ profile.shop_email or '' }}" maxlength="160" autocomplete="email">
+        </div>
+        <div>
+          <label class="tm-label" for="shop_address">Shop Address</label>
+          <input class="tm-input" id="shop_address" name="shop_address" type="text" value="{{ profile.shop_address or '' }}" maxlength="220" autocomplete="street-address">
+        </div>
+      </div>
+      <div class="tm-shop-settings-grid tm-shop-settings-grid--three" style="margin-top:12px;">
+        <div>
+          <label class="tm-label" for="shop_city">City</label>
+          <input class="tm-input" id="shop_city" name="shop_city" type="text" value="{{ profile.shop_city or '' }}" maxlength="120" autocomplete="address-level2">
+        </div>
+        <div>
+          <label class="tm-label" for="shop_state">State</label>
+          <input class="tm-input" id="shop_state" name="shop_state" type="text" value="{{ profile.shop_state or '' }}" maxlength="40" autocomplete="address-level1">
+        </div>
+        <div>
+          <label class="tm-label" for="shop_zip">ZIP Code</label>
+          <input class="tm-input" id="shop_zip" name="shop_zip" type="text" value="{{ profile.shop_zip or '' }}" maxlength="20" autocomplete="postal-code">
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-shop-settings-panel" aria-label="Pricing defaults">
+      <h2 style="margin:0 0 12px;">Pricing Defaults</h2>
+      <div class="tm-shop-settings-grid tm-shop-settings-grid--three">
+        <div class="tm-money-field">
+          <label class="tm-label" for="default_labor_rate">Default Labor Rate</label>
+          <input class="tm-input" id="default_labor_rate" name="default_labor_rate" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.default_labor_rate_input }}">
+        </div>
+        <div class="tm-percent-field">
+          <label class="tm-label" for="tax_rate">Tax Rate</label>
+          <input class="tm-input" id="tax_rate" name="tax_rate" type="number" min="0" step="0.001" inputmode="decimal" value="{{ profile.tax_rate_input }}">
+        </div>
+        <div class="tm-money-field">
+          <label class="tm-label" for="shop_supplies_fee">Shop Supplies / Fees</label>
+          <input class="tm-input" id="shop_supplies_fee" name="shop_supplies_fee" type="number" min="0" step="0.01" inputmode="decimal" value="{{ profile.shop_supplies_fee_input }}">
+        </div>
+      </div>
+      <div class="tm-shop-settings-help" style="margin-top:8px;">
+        These defaults are saved for TorqueMech Pro estimate, repair, invoice, reminder, and booking workflows as they adopt shop-level settings.
+      </div>
+    </section>
+
+    <section class="tm-shop-settings-panel" aria-label="External scheduling fallback">
+      <h2 style="margin:0 0 12px;">External Scheduling Link Fallback</h2>
+      <label class="tm-label" for="external_scheduling_link">External Scheduling Link</label>
+      <input
+        class="tm-input"
+        id="external_scheduling_link"
+        name="external_scheduling_link"
+        type="url"
+        value="{{ profile.external_scheduling_link or '' }}"
+        maxlength="500"
+        placeholder="https://calendly.com/your-shop/service"
+      >
+      <div class="tm-shop-settings-help" style="margin-top:6px;">
+        Optional fallback if you still use Calendly, Google Calendar, or another scheduling service. TorqueMech's built-in booking link is preferred.
+      </div>
+    </section>
+
+    <div class="tm-shop-settings-actions">
+      <button class="tm-btn tm-btn-primary" type="submit">Save Settings</button>
+      <a class="tm-btn tm-btn-secondary" href="/pro/calendar">Shop Calendar</a>
+      <a class="tm-btn tm-btn-secondary" href="/pro/follow-ups">Back to Follow-Ups</a>
+    </div>
+  </form>
 
   <section class="tm-shop-settings-panel" aria-label="TorqueMech booking link">
     <h2 style="margin:0;">TorqueMech Booking Link</h2>
@@ -125,34 +258,6 @@
         <li>Appointment request goes into TorqueMech Calendar</li>
       </ol>
     </details>
-  </section>
-
-  <section class="tm-shop-settings-panel" aria-label="Scheduling settings">
-    <form class="tm-shop-settings-form" method="post" action="/pro/shop-settings">
-      {% if saved %}
-      <div class="tm-shop-settings-saved">Shop settings saved.</div>
-      {% endif %}
-      <div>
-        <label class="tm-label" for="scheduling_link">Scheduling Link</label>
-        <input
-          class="tm-input"
-          id="scheduling_link"
-          name="scheduling_link"
-          type="url"
-          value="{{ profile.scheduling_link or '' }}"
-          maxlength="500"
-          placeholder="https://calendly.com/your-shop/service"
-        >
-        <div class="tm-shop-settings-help" style="margin-top:6px;">
-          External scheduling stays available as a fallback. TorqueMech's built-in booking link is preferred in customer reminders.
-        </div>
-      </div>
-      <div class="tm-shop-settings-actions">
-        <button class="tm-btn tm-btn-primary" type="submit">Save Settings</button>
-        <a class="tm-btn tm-btn-secondary" href="/pro/calendar">Shop Calendar</a>
-        <a class="tm-btn tm-btn-secondary" href="/pro/follow-ups">Back to Follow-Ups</a>
-      </div>
-    </form>
   </section>
 </section>
 

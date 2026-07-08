@@ -23,11 +23,22 @@
   }
   .tm-schedule-toggle { display: flex; gap: 8px; align-items: center; font-weight: 900; }
   .tm-schedule-options { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 12px; }
-  .tm-booking-link { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .tm-booking-link code { overflow-wrap: anywhere; white-space: normal; }
   .tm-closed-list { display: grid; gap: 8px; }
   .tm-closed-item { display: flex; justify-content: space-between; gap: 10px; align-items: center; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 8px; }
   .tm-schedule-saved { color: #115e59; font-weight: 900; }
+  .tm-schedule-note {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    color: #475569;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 12px;
+  }
+  .tm-schedule-note p { margin: 0; }
   .tm-schedule-help {
     border: 1px solid rgba(14, 116, 144, 0.18);
     border-radius: 8px;
@@ -57,7 +68,7 @@
   .tm-schedule-help-list li { list-style: none; }
   @media (max-width: 760px) {
     .tm-schedule-day, .tm-schedule-options { grid-template-columns: 1fr; }
-    .tm-schedule-day .tm-btn, .tm-booking-link .tm-btn { width: 100%; }
+    .tm-schedule-day .tm-btn, .tm-schedule-note .tm-btn { width: 100%; }
     .tm-closed-item { align-items: stretch; flex-direction: column; }
   }
 </style>
@@ -77,13 +88,9 @@
     </div>
   </div>
 
-  <section class="tm-schedule-panel" aria-label="Booking link">
-    <h2 style="margin:0;">Booking Link</h2>
-    <div class="tm-booking-link">
-      <code data-booking-link>{{ profile.booking_link }}</code>
-      <button class="tm-btn tm-btn-secondary" type="button" data-copy-booking-link>Copy Booking Link</button>
-      <span class="tm-schedule-saved" aria-live="polite" data-copy-status></span>
-    </div>
+  <section class="tm-schedule-note" aria-label="Booking schedule note">
+    <p>Customer booking requests use this schedule. To copy or manage your booking link, open Shop Settings.</p>
+    <a class="tm-btn tm-btn-secondary" href="/pro/shop-settings">Open Shop Settings</a>
   </section>
 
   <section class="tm-schedule-panel" aria-label="Weekly availability">
@@ -188,18 +195,4 @@
   </section>
 </section>
 
-<script>
-(() => {
-  const button = document.querySelector("[data-copy-booking-link]");
-  const link = document.querySelector("[data-booking-link]");
-  const status = document.querySelector("[data-copy-status]");
-  button?.addEventListener("click", async () => {
-    const value = link?.textContent?.trim() || "";
-    if (!value) return;
-    await navigator.clipboard?.writeText(value);
-    if (status) status.textContent = "Copied";
-    window.setTimeout(() => { if (status) status.textContent = ""; }, 2200);
-  });
-})();
-</script>
 {% endblock %}

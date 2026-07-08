@@ -136,6 +136,50 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Schedule your service here:\nhttp://127.0.0.1:8125/book/torquemech-shop", message)
         self.assertNotIn("calendly.com", message)
 
+    def test_shop_settings_save_profile_pricing_and_reuse_shop_name(self):
+        conn = self.memory_conn()
+        try:
+            profile = pro_module.save_shop_settings(
+                conn,
+                {
+                    "shop_name": "Dee's Auto Services",
+                    "shop_phone": "555-222-3333",
+                    "shop_email": "service@dees.example",
+                    "shop_address": "123 Main St",
+                    "shop_city": "Fresno",
+                    "shop_state": "CA",
+                    "shop_zip": "93701",
+                    "default_labor_rate": "$135.50",
+                    "tax_rate": "8.250",
+                    "shop_supplies_fee": "12.95",
+                    "external_scheduling_link": "https://calendly.com/dees-auto/service",
+                },
+            )
+            loaded = pro_module.load_shop_profile_context(conn)
+        finally:
+            conn.close()
+
+        self.assertEqual(loaded["shop_name"], "Dee's Auto Services")
+        self.assertEqual(loaded["shop_phone"], "555-222-3333")
+        self.assertEqual(loaded["shop_city"], "Fresno")
+        self.assertEqual(loaded["default_labor_rate"], 135.50)
+        self.assertEqual(loaded["labor_rate_default"], 135.50)
+        self.assertEqual(loaded["tax_rate"], 8.25)
+        self.assertEqual(loaded["tax_rate_default"], 8.25)
+        self.assertEqual(loaded["shop_supplies_fee"], 12.95)
+        self.assertEqual(loaded["external_scheduling_link"], "https://calendly.com/dees-auto/service")
+        self.assertEqual(profile["shop_name"], "Dee's Auto Services")
+
+        message = pro_module.build_maintenance_reminder_message(
+            customer={"first_name": "Natalie"},
+            vehicle={"year": 2008, "make": "TOYOTA", "model": "SEQUOIA"},
+            record={"service_type": "Oil Change", "maintenance_status_key": "overdue"},
+            sender_context=loaded,
+        )
+
+        self.assertIn("Hi Natalie, this is Dee's Auto Services.", message)
+        self.assertIn("Schedule your service here:\nhttps://calendly.com/dees-auto/service", message)
+
     def test_maintenance_reminder_without_links_keeps_reply_fallback(self):
         message = pro_module.build_maintenance_reminder_message(
             customer={"first_name": "Natalie"},

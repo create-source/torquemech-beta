@@ -530,6 +530,15 @@ def format_currency(value: Any) -> str:
         return str(value)
 
 
+def format_decimal_input(value: Any, decimals: int = 2) -> str:
+    if value is None or value == "":
+        return ""
+    try:
+        return f"{float(value):.{decimals}f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def local_now() -> datetime:
     return datetime.now(timezone.utc).astimezone(SHOP_ZONEINFO)
 
@@ -1204,11 +1213,21 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
           phone TEXT,
           email TEXT,
           address TEXT,
+          shop_phone TEXT,
+          shop_email TEXT,
+          shop_address TEXT,
+          shop_city TEXT,
+          shop_state TEXT,
+          shop_zip TEXT,
           website TEXT,
           scheduling_link TEXT,
+          external_scheduling_link TEXT,
           logo_url TEXT,
           labor_rate_default REAL,
           tax_rate_default REAL,
+          default_labor_rate REAL,
+          tax_rate REAL,
+          shop_supplies_fee REAL,
           warranty_note TEXT,
           quote_expiration_days INTEGER,
           custom_footer_note TEXT,
@@ -1220,9 +1239,74 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
         row[1]
         for row in conn.execute("PRAGMA table_info(shop_profile)").fetchall()
     }
-    if "scheduling_link" not in columns:
-        conn.execute("ALTER TABLE shop_profile ADD COLUMN scheduling_link TEXT")
+    for column_name, column_sql in {
+        "shop_name": "shop_name TEXT",
+        "phone": "phone TEXT",
+        "email": "email TEXT",
+        "address": "address TEXT",
+        "shop_phone": "shop_phone TEXT",
+        "shop_email": "shop_email TEXT",
+        "shop_address": "shop_address TEXT",
+        "shop_city": "shop_city TEXT",
+        "shop_state": "shop_state TEXT",
+        "shop_zip": "shop_zip TEXT",
+        "website": "website TEXT",
+        "scheduling_link": "scheduling_link TEXT",
+        "external_scheduling_link": "external_scheduling_link TEXT",
+        "logo_url": "logo_url TEXT",
+        "labor_rate_default": "labor_rate_default REAL",
+        "tax_rate_default": "tax_rate_default REAL",
+        "default_labor_rate": "default_labor_rate REAL",
+        "tax_rate": "tax_rate REAL",
+        "shop_supplies_fee": "shop_supplies_fee REAL",
+        "warranty_note": "warranty_note TEXT",
+        "quote_expiration_days": "quote_expiration_days INTEGER",
+        "custom_footer_note": "custom_footer_note TEXT",
+        "updated_at": "updated_at TEXT",
+    }.items():
+        if column_name not in columns:
+            conn.execute(f"ALTER TABLE shop_profile ADD COLUMN {column_sql}")
     conn.commit()
+
+
+def normalize_shop_profile_context(profile: dict[str, Any] | None) -> dict[str, Any]:
+    normalized = dict(profile or {})
+    normalized["shop_phone"] = str(normalized.get("shop_phone") or normalized.get("phone") or "").strip()
+    normalized["shop_email"] = str(normalized.get("shop_email") or normalized.get("email") or "").strip()
+    normalized["shop_address"] = str(normalized.get("shop_address") or normalized.get("address") or "").strip()
+    normalized["shop_city"] = str(normalized.get("shop_city") or "").strip()
+    normalized["shop_state"] = str(normalized.get("shop_state") or "").strip()
+    normalized["shop_zip"] = str(normalized.get("shop_zip") or "").strip()
+    normalized["phone"] = normalized["shop_phone"]
+    normalized["email"] = normalized["shop_email"]
+    normalized["address"] = normalized["shop_address"]
+    normalized["external_scheduling_link"] = str(
+        normalized.get("external_scheduling_link") or normalized.get("scheduling_link") or ""
+    ).strip()
+    normalized["scheduling_link"] = normalized["external_scheduling_link"]
+    normalized["default_labor_rate"] = normalized.get("default_labor_rate")
+    if normalized["default_labor_rate"] in (None, ""):
+        normalized["default_labor_rate"] = normalized.get("labor_rate_default")
+    if normalized["default_labor_rate"] in (None, ""):
+        normalized["default_labor_rate"] = 90.0
+    normalized["labor_rate_default"] = normalized["default_labor_rate"]
+    normalized["tax_rate"] = normalized.get("tax_rate")
+    if normalized["tax_rate"] in (None, ""):
+        normalized["tax_rate"] = normalized.get("tax_rate_default")
+    if normalized["tax_rate"] in (None, ""):
+        normalized["tax_rate"] = 0.0
+    normalized["tax_rate_default"] = normalized["tax_rate"]
+    if normalized.get("shop_supplies_fee") in (None, ""):
+        normalized["shop_supplies_fee"] = 0.0
+    for key in ("default_labor_rate", "labor_rate_default", "tax_rate", "tax_rate_default", "shop_supplies_fee"):
+        try:
+            normalized[key] = max(0.0, float(normalized.get(key) or 0.0))
+        except (TypeError, ValueError):
+            normalized[key] = 0.0
+    normalized["default_labor_rate_input"] = format_decimal_input(normalized.get("default_labor_rate"))
+    normalized["tax_rate_input"] = format_decimal_input(normalized.get("tax_rate"), 3)
+    normalized["shop_supplies_fee_input"] = format_decimal_input(normalized.get("shop_supplies_fee"))
+    return normalized
 
 
 def load_shop_profile_context(conn: sqlite3.Connection) -> dict[str, Any]:
@@ -1231,36 +1315,72 @@ def load_shop_profile_context(conn: sqlite3.Connection) -> dict[str, Any]:
         row = conn.execute("SELECT * FROM shop_profile WHERE id = 1").fetchone()
     except sqlite3.OperationalError:
         return {}
-    return dict(row) if row else {}
+    return normalize_shop_profile_context(dict(row) if row else {})
 
 
-def save_shop_scheduling_link(conn: sqlite3.Connection, scheduling_link: str) -> dict[str, Any]:
+def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[str, Any]:
     ensure_shop_profile_schema(conn)
     current = load_shop_profile_context(conn)
-    current["scheduling_link"] = str(scheduling_link or "").strip()
+    for key in ("shop_name", "shop_phone", "shop_email", "shop_address", "shop_city", "shop_state", "shop_zip"):
+        if key in form:
+            current[key] = form.get(key, "")
+    for key in ("default_labor_rate", "tax_rate", "shop_supplies_fee"):
+        if key in form:
+            current[key] = max(0.0, optional_float(form, key) or 0.0)
+    if "external_scheduling_link" in form or "scheduling_link" in form:
+        current["external_scheduling_link"] = form.get("external_scheduling_link", form.get("scheduling_link", ""))
+    current = normalize_shop_profile_context(current)
     current["updated_at"] = datetime.utcnow().isoformat()
     conn.execute(
         """
         INSERT INTO shop_profile (
-          id, shop_name, phone, email, address, website, scheduling_link,
-          logo_url, labor_rate_default, tax_rate_default, warranty_note,
+          id, shop_name, phone, email, address, shop_phone, shop_email,
+          shop_address, shop_city, shop_state, shop_zip, website, scheduling_link,
+          external_scheduling_link, logo_url, labor_rate_default, tax_rate_default,
+          default_labor_rate, tax_rate, shop_supplies_fee, warranty_note,
           quote_expiration_days, custom_footer_note, updated_at
         )
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
+          shop_name = excluded.shop_name,
+          phone = excluded.phone,
+          email = excluded.email,
+          address = excluded.address,
+          shop_phone = excluded.shop_phone,
+          shop_email = excluded.shop_email,
+          shop_address = excluded.shop_address,
+          shop_city = excluded.shop_city,
+          shop_state = excluded.shop_state,
+          shop_zip = excluded.shop_zip,
           scheduling_link = excluded.scheduling_link,
+          external_scheduling_link = excluded.external_scheduling_link,
+          labor_rate_default = excluded.labor_rate_default,
+          tax_rate_default = excluded.tax_rate_default,
+          default_labor_rate = excluded.default_labor_rate,
+          tax_rate = excluded.tax_rate,
+          shop_supplies_fee = excluded.shop_supplies_fee,
           updated_at = excluded.updated_at
         """,
         (
             current.get("shop_name") or "",
-            current.get("phone") or "",
-            current.get("email") or "",
-            current.get("address") or "",
+            current.get("shop_phone") or "",
+            current.get("shop_email") or "",
+            current.get("shop_address") or "",
+            current.get("shop_phone") or "",
+            current.get("shop_email") or "",
+            current.get("shop_address") or "",
+            current.get("shop_city") or "",
+            current.get("shop_state") or "",
+            current.get("shop_zip") or "",
             current.get("website") or "",
-            current.get("scheduling_link") or "",
+            current.get("external_scheduling_link") or "",
+            current.get("external_scheduling_link") or "",
             current.get("logo_url") or "",
-            current.get("labor_rate_default") or 90.0,
-            current.get("tax_rate_default") or 0.0,
+            current.get("default_labor_rate") or 0.0,
+            current.get("tax_rate") or 0.0,
+            current.get("default_labor_rate") or 0.0,
+            current.get("tax_rate") or 0.0,
+            current.get("shop_supplies_fee") or 0.0,
             current.get("warranty_note") or "",
             current.get("quote_expiration_days") or 30,
             current.get("custom_footer_note") or "",
@@ -1269,6 +1389,10 @@ def save_shop_scheduling_link(conn: sqlite3.Connection, scheduling_link: str) ->
     )
     conn.commit()
     return current
+
+
+def save_shop_scheduling_link(conn: sqlite3.Connection, scheduling_link: str) -> dict[str, Any]:
+    return save_shop_settings(conn, {"external_scheduling_link": scheduling_link})
 
 
 def build_maintenance_reminder_message(
@@ -8182,7 +8306,7 @@ async def pro_shop_settings_save(request: Request):
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
-        save_shop_scheduling_link(conn, form.get("scheduling_link", ""))
+        save_shop_settings(conn, form)
     finally:
         conn.close()
     return RedirectResponse("/pro/shop-settings?saved=1", status_code=303)
