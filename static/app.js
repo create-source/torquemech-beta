@@ -1558,6 +1558,11 @@
       category: "electrical",
       serviceCode: "battery_replacement",
     },
+    tire_rotation: {
+      label: "Tire Rotation",
+      category: "maintenance",
+      serviceCode: "tire_rotation",
+    },
     alternator: {
       label: "Alternator Replacement",
       category: "electrical",
@@ -2404,6 +2409,8 @@
   let signatureDataUrl = null;
   let editingLineItem = null; // { serviceCode, serviceText }
   let activeEditingLineId = null;
+  let activePricingLineId = null;
+  let pricingControlsDirty = false;
   let isAddingLineItem = false;
   let isGeneratingAllLines = false;
 
@@ -2528,6 +2535,33 @@
 
   function hasOpenLineEdit() {
     return !!(activeEditingLineId && getLineItemById(activeEditingLineId));
+  }
+
+  function getActivePricingLineItem() {
+    return activePricingLineId ? getLineItemById(activePricingLineId) : null;
+  }
+
+  function setActivePricingLine(lineItemId, { loadControls = false, markDirty = false } = {}) {
+    const it = getLineItemById(lineItemId);
+    if (!it) {
+      activePricingLineId = null;
+      pricingControlsDirty = false;
+      return null;
+    }
+    activePricingLineId = it.id;
+    pricingControlsDirty = !!markDirty;
+    if (loadControls) {
+      loadPricingSnapshotIntoControls(it);
+      pricingControlsDirty = !!markDirty;
+    }
+    updateEstimateButtonState();
+    return it;
+  }
+
+  function markPricingControlsDirty() {
+    if (!getActivePricingLineItem()) return;
+    pricingControlsDirty = true;
+    updateEstimateButtonState();
   }
 
   function focusOpenLineEdit() {
@@ -3597,8 +3631,7 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   function syncLivePricingFromInputs() {
-    // Pricing Controls are draft inputs only. Never live-write them into saved quote cards.
-    // Saved cards are updated only when a new line item snapshot is added or an explicit card edit mode is introduced.
+    markPricingControlsDirty();
     refreshQuotePreview();
   }
 
@@ -6079,10 +6112,12 @@ const confidenceEl = document.getElementById("laborConfidence");
         const riskNote = escapeServiceResultHtml(getEstimateRiskNote(it));
         const inspectionFindings = escapeServiceResultHtml(it.inspectionFindings || "");
         const isActiveEdit = activeEditingLineId === lineItemId;
+        const isActivePricing = activePricingLineId === lineItemId;
+        const updateEstimateLabel = isActivePricing && pricingControlsDirty ? "Update Estimate*" : "Update Estimate";
         const isPriced = it.estimate != null;
 
         return `
-          <div class="tm-service-card${isActiveEdit ? " is-editing" : ""}${isPriced ? "" : " is-unpriced"}" data-idx="${idx}" data-line-item-id="${lineItemId}">
+          <div class="tm-service-card${isActiveEdit ? " is-editing" : ""}${isActivePricing ? " is-pricing-selected" : ""}${pricingControlsDirty && isActivePricing ? " is-pricing-dirty" : ""}${isPriced ? "" : " is-unpriced"}" data-idx="${idx}" data-line-item-id="${lineItemId}">
             <div class="tm-service-head">
               <div class="tm-service-head-main">
                 <div class="tm-service-title-row">
@@ -6098,6 +6133,7 @@ const confidenceEl = document.getElementById("laborConfidence");
                     </select>
                   </label>
                   ${isActiveEdit ? `<span class="tm-service-editing-pill">Editing</span>` : ""}
+                  ${isActivePricing && !isActiveEdit ? `<span class="tm-service-editing-pill">Pricing</span>` : ""}
                 </div>
                 <div class="tm-repair-status-summary" data-status="${it.status}">Status: ${escapeServiceResultHtml(statusLabel)}</div>
                 <div class="tm-service-vehicle">${getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle())}</div>
@@ -6145,7 +6181,7 @@ const confidenceEl = document.getElementById("laborConfidence");
               ` : ""}
 
               <button type="button" class="tm-btn tm-btn-secondary tm-service-action-recalc" data-action="estimate" data-line-item-id="${lineItemId}">
-                Recalculate
+                ${updateEstimateLabel}
               </button>
 
               <button type="button" class="tm-btn tm-btn-secondary tm-service-action-edit" data-action="edit-line" data-line-item-id="${lineItemId}">
@@ -6184,6 +6220,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     syncEstimateMeta();
     syncLineItemsToVehicle();
+    refreshQuotePreview();
     lineItemsList.querySelectorAll('[data-action="inspection-findings"]').forEach((input) => {
       input.style.height = "auto";
       input.style.height = `${Math.min(input.scrollHeight, 140)}px`;
@@ -6403,6 +6440,8 @@ if (getEstimateHint) {
 
       try {
         await recalculateLineItemFromSnapshot(it, "line_item_save_changes");
+        activePricingLineId = it.id;
+        pricingControlsDirty = false;
         activeEditingLineId = null;
         readyForNextService = false;
         renderLineItems();
@@ -6480,6 +6519,8 @@ if (getEstimateHint) {
 
     // add the card immediately
     lineItems.push(it);
+    activePricingLineId = it.id;
+    pricingControlsDirty = false;
     renderLineItems();
 
     setStatus("info", `Pricing: ${serviceText}…`);
@@ -6581,6 +6622,8 @@ if (getEstimateHint) {
 
     // Clear selections
     activeEditingLineId = null;
+    activePricingLineId = null;
+    pricingControlsDirty = false;
     setCategoryValue("", "none");
     serviceEl.value = "";
     resetServiceSearch();
@@ -6652,7 +6695,14 @@ if (getEstimateHint) {
       if (activeEditingLineId === it.id) {
         activeEditingLineId = null;
       }
+      if (activePricingLineId === it.id) {
+        activePricingLineId = null;
+        pricingControlsDirty = false;
+      }
       lineItems.splice(idx, 1);
+      if (!activePricingLineId && lineItems.length) {
+        activePricingLineId = lineItems[Math.min(idx, lineItems.length - 1)]?.id || null;
+      }
       if (!lineItems.length) {
         readyForNextService = true;
         editingLineItem = null;
@@ -6670,7 +6720,7 @@ if (getEstimateHint) {
 
     if (action === "edit-line") {
       activeEditingLineId = it.id;
-      loadPricingSnapshotIntoControls(it);
+      setActivePricingLine(it.id, { loadControls: true });
       renderLineItems();
       updateEstimateButtonState();
       document.querySelector(".pricing-controls")?.scrollIntoView({
@@ -6685,6 +6735,10 @@ if (getEstimateHint) {
     // ESTIMATE
     // =========================
     if (action === "estimate") {
+      setActivePricingLine(it.id);
+      Object.assign(it, buildPricingSnapshotFromControls());
+      pricingControlsDirty = false;
+
       if (!(it.vehicleYear && it.vehicleMake && it.vehicleModel)) {
         setStatus("error", "Assigned vehicle is missing year, make, or model.");
         return;
@@ -7031,6 +7085,8 @@ if (getEstimateHint) {
     } catch (_) {}
 
     activeEditingLineId = null;
+    activePricingLineId = null;
+    pricingControlsDirty = false;
 
     estimateState = {
       customer: {

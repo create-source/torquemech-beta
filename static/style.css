@@ -4198,6 +4198,16 @@ h3{
   box-shadow: 0 0 0 3px rgba(37,99,235,.10), 0 10px 24px rgba(15,23,42,.08);
 }
 
+.tm-service-card.is-pricing-selected{
+  border-color: rgba(20,184,166,.34);
+  border-left-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(20,184,166,.10), 0 10px 24px rgba(15,23,42,.08);
+}
+
+.tm-service-card.is-pricing-dirty{
+  border-left-color: #f59e0b;
+}
+
 .tm-service-card.is-newly-added{
   animation: tm-service-card-highlight 1.35s ease-out;
 }
@@ -4235,6 +4245,10 @@ h3{
   border-color: rgba(37,99,235,.24);
   background: rgba(239,246,255,.96);
   color: #1d4ed8;
+}
+
+.tm-service-card.is-pricing-selected:not(.is-editing)::before{
+  content: "Pricing job " counter(quote-job);
 }
 
 .tm-service-card + .tm-service-card{
