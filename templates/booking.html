@@ -114,7 +114,7 @@
       </div>
       <div>
         <label class="tm-label" for="requested_date">Preferred Date</label>
-        <input class="tm-input" id="requested_date" name="requested_date" type="date" value="{{ form.requested_date if form else '' }}" required>
+        <input class="tm-input" id="requested_date" name="requested_date" type="date" data-pro-date-clear="off" data-tm-date-clear="off" value="{{ form.requested_date if form else '' }}" required>
       </div>
       <div>
         <label class="tm-label" for="requested_time">Preferred Time</label>

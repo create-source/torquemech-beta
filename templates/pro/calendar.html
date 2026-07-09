@@ -13,7 +13,7 @@
     text-decoration: none;
   }
 
-  .tm-calendar-shell, .tm-calendar-panel, .tm-calendar-list { display: grid; gap: 16px; }
+  .tm-calendar-shell, .tm-calendar-panel, .tm-calendar-list { display: grid; gap: 12px; }
   .tm-calendar-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
@@ -22,14 +22,15 @@
   }
   .tm-calendar-card {
     display: grid;
-    gap: 10px;
+    gap: 8px;
     border: 1px solid rgba(15, 23, 42, 0.1);
     border-radius: 8px;
     background: #fff;
-    padding: 14px;
+    padding: 12px;
   }
   .tm-calendar-card-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
   .tm-calendar-name { color: #0f172a; font-size: 1.05rem; font-weight: 900; }
+  .tm-calendar-when { color: #475569; font-size: .9rem; font-weight: 700; margin-top: 2px; }
   .tm-calendar-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
   .tm-calendar-field span { color: #64748b; display: block; font-size: .74rem; font-weight: 900; text-transform: uppercase; }
   .tm-calendar-field strong { color: #0f172a; overflow-wrap: anywhere; }
@@ -55,6 +56,14 @@
   .tm-calendar-actions, .tm-calendar-form-grid { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
   .tm-calendar-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tm-calendar-empty { color: #64748b; border: 1px dashed rgba(15, 23, 42, 0.18); border-radius: 8px; padding: 14px; }
+  .tm-calendar-panel > summary {
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 900;
+  }
+  .tm-calendar-panel[open] > summary { margin-bottom: 4px; }
+  .tm-calendar-item[hidden] { display: none; }
+  .tm-calendar-show-more { justify-self: start; }
   @media (max-width: 860px) {
     .tm-calendar-grid, .tm-calendar-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -62,6 +71,8 @@
     .tm-calendar-grid, .tm-calendar-card-head, .tm-calendar-form-grid { grid-template-columns: 1fr; }
     .tm-calendar-card-head { display: grid; }
     .tm-calendar-actions .tm-btn, .tm-calendar-form-grid .tm-btn { width: 100%; }
+    .tm-calendar-panel { padding: 13px; }
+    .tm-calendar-card { gap: 7px; padding: 11px; }
   }
 </style>
 {% endblock %}
@@ -71,7 +82,7 @@
   <div class="tm-calendar-card-head">
     <div>
       <div class="tm-calendar-name">{{ item.customer_name or "Customer" }}</div>
-      <div style="color:#64748b;">{{ item.customer_phone|pro_phone if item.customer_phone else "No phone" }}</div>
+      <div class="tm-calendar-when">{{ item.requested_date|pro_date }} at {{ item.requested_time|pro_time }}</div>
     </div>
     <span class="tm-calendar-status" data-status="{{ item.status }}">{% if item.status == "Requested" %}Pending Request{% else %}{{ item.status }}{% endif %}</span>
   </div>
@@ -80,9 +91,6 @@
     <div class="tm-calendar-field"><span>Email</span><strong>{{ item.customer_email or "Not provided" }}</strong></div>
     <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.vehicle_label or "-" }}</strong></div>
     <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
-    <div class="tm-calendar-field"><span>Requested Date</span><strong>{{ item.requested_date|pro_date }}</strong></div>
-    <div class="tm-calendar-field"><span>Requested Time</span><strong>{{ item.requested_time|pro_time }}</strong></div>
-    <div class="tm-calendar-field"><span>Current Status</span><strong>{% if item.status == "Requested" %}Pending Request{% else %}{{ item.status }}{% endif %}</strong></div>
   </div>
   {% if item.notes %}<div class="tm-calendar-field"><span>Notes</span><strong>{{ item.notes }}</strong></div>{% endif %}
   <div class="tm-calendar-actions">
@@ -119,8 +127,24 @@
 
   {% if notice %}<div class="tm-calendar-notice" role="status">{{ notice }}</div>{% endif %}
 
-  <section class="tm-calendar-panel" aria-label="Add appointment">
-    <h2 style="margin:0;">Add Appointment</h2>
+  <details class="tm-calendar-panel" aria-label="Pending Requests" {% if groups.pending %}open{% endif %}>
+    <summary>Pending Requests ({{ groups.pending|length }})</summary>
+    <div class="tm-calendar-list" data-calendar-list>
+      {% for item in groups.pending %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">No pending booking requests.</div>{% endfor %}
+      {% if groups.pending|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
+    </div>
+  </details>
+
+  <details class="tm-calendar-panel" aria-label="Confirmed Appointments" {% if groups.confirmed and not groups.pending %}open{% endif %}>
+    <summary>Confirmed Appointments ({{ groups.confirmed|length }})</summary>
+    <div class="tm-calendar-list" data-calendar-list>
+      {% for item in groups.confirmed %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">No confirmed appointments yet.</div>{% endfor %}
+      {% if groups.confirmed|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
+    </div>
+  </details>
+
+  <details class="tm-calendar-panel" aria-label="Add Appointment">
+    <summary>Add Appointment</summary>
     {% if saved %}<div style="color:#115e59;font-weight:900;">Appointment saved.</div>{% endif %}
     <form class="tm-calendar-form-grid" method="post" action="/pro/calendar">
       <div><label class="tm-label" for="customer_name">Customer Name</label><input class="tm-input" id="customer_name" name="customer_name" type="text" required></div>
@@ -138,32 +162,32 @@
       <div style="grid-column:1/-1;"><label class="tm-label" for="notes">Notes</label><textarea class="tm-input" id="notes" name="notes" rows="3"></textarea></div>
       <button class="tm-btn tm-btn-primary" type="submit">Add Appointment</button>
     </form>
-  </section>
+  </details>
 
   {% for key, title, empty in [
-    ("pending", "Pending Requests", "No pending booking requests."),
-    ("confirmed", "Confirmed Appointments", "No confirmed appointments yet.")
+    ("handled", "Handled Requests", "No handled booking requests."),
+    ("declined_cancelled", "Declined / Canceled", "No declined or canceled requests.")
   ] %}
-  <section class="tm-calendar-panel" aria-label="{{ title }}">
-    <h2 style="margin:0;">{{ title }}</h2>
-    <div class="tm-calendar-list">
-      {% for item in groups[key] %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">{{ empty }}</div>{% endfor %}
+  <details class="tm-calendar-panel" aria-label="{{ title }}">
+    <summary>{{ title }} ({{ groups[key]|length }})</summary>
+    <div class="tm-calendar-list" data-calendar-list>
+      {% for item in groups[key] %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">{{ empty }}</div>{% endfor %}
+      {% if groups[key]|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
     </div>
-  </section>
+  </details>
   {% endfor %}
-
-  <details class="tm-calendar-panel">
-    <summary style="font-weight:900;cursor:pointer;">Handled Requests</summary>
-    <div class="tm-calendar-list" style="margin-top:12px;">
-      {% for item in groups.handled %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">No handled booking requests.</div>{% endfor %}
-    </div>
-  </details>
-
-  <details class="tm-calendar-panel">
-    <summary style="font-weight:900;cursor:pointer;">Declined / Canceled</summary>
-    <div class="tm-calendar-list" style="margin-top:12px;">
-      {% for item in groups.declined_cancelled %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">No declined or canceled requests.</div>{% endfor %}
-    </div>
-  </details>
 </section>
+{% endblock %}
+
+{% block page_js %}
+<script>
+document.querySelectorAll("[data-show-more]").forEach((button) => {
+  button.addEventListener("click", () => {
+    button.closest("[data-calendar-list]")?.querySelectorAll(".tm-calendar-item[hidden]").forEach((item) => {
+      item.hidden = false;
+    });
+    button.hidden = true;
+  });
+});
+</script>
 {% endblock %}

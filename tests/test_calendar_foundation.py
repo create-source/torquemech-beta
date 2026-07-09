@@ -289,6 +289,19 @@ class CalendarFoundationTests(unittest.TestCase):
                     "status": "Requested",
                 },
             )
+            for index in range(5):
+                pro_module.create_service_appointment(
+                    conn,
+                    {
+                        "customer_name": f"Additional Customer {index + 1}",
+                        "customer_phone": "5555550100",
+                        "vehicle_label": "Test Vehicle",
+                        "service_name": "Test Service",
+                        "requested_date": "2026-07-14",
+                        "requested_time": f"{10 + index}:00",
+                        "status": "Requested",
+                    },
+                )
             with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
@@ -314,6 +327,11 @@ class CalendarFoundationTests(unittest.TestCase):
             sqlite3.Connection.close(conn)
 
         self.assertIn("Pending Request", pending_page.text)
+        self.assertIn("Pending Requests (6)", pending_page.text)
+        self.assertIn('aria-label="Pending Requests" open', pending_page.text)
+        self.assertIn('class="tm-calendar-item" hidden', pending_page.text)
+        self.assertIn('data-show-more>Show More</button>', pending_page.text)
+        self.assertLess(pending_page.text.index("Pending Requests (6)"), pending_page.text.index("Add Appointment"))
         self.assertIn("customer@example.com", pending_page.text)
         self.assertIn("2020 Honda Civic", pending_page.text)
         self.assertEqual(confirm_response.headers["location"], "/pro/calendar?notice=confirmed")
@@ -321,6 +339,17 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Confirmed Appointments", confirmed_page.text)
         self.assertEqual(handled_response.headers["location"], "/pro/calendar?notice=handled")
         self.assertEqual(row["status"], "Handled")
+
+    def test_booking_date_has_one_picker_and_no_custom_clear_button(self):
+        booking_template = (main.BASE_DIR / "templates" / "booking.html").read_text(encoding="utf-8")
+        helper = (main.BASE_DIR / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
+
+        self.assertIn('data-pro-date-clear="off"', booking_template)
+        self.assertIn('data-tm-date-clear="off"', booking_template)
+        self.assertIn('input.dataset.tmDateEnhanced = "1"', helper)
+        self.assertIn('input.closest(".tm-date-input-wrap")', helper)
+        self.assertIn('if (input.dataset.proDateClear !== "off")', helper)
+        self.assertIn('wrapper.dataset.noClear = "1"', helper)
 
     def test_maintenance_reminder_prefers_builtin_booking_link(self):
         message = pro_module.build_maintenance_reminder_message(

@@ -44,8 +44,15 @@
   function bindDateInput(input) {
     if (input.dataset.proDateBound === "1") return;
     input.dataset.proDateBound = "1";
+    input.dataset.tmDateEnhanced = "1";
+    const legacyWrapper = input.closest(".tm-date-input-wrap");
+    if (legacyWrapper) {
+      legacyWrapper.parentNode.insertBefore(input, legacyWrapper);
+      legacyWrapper.remove();
+    }
     const wrapper = document.createElement("span");
     wrapper.className = "tm-date-clear-field";
+    if (input.dataset.proDateClear === "off") wrapper.dataset.noClear = "1";
     input.parentNode.insertBefore(wrapper, input);
     wrapper.appendChild(input);
 
@@ -63,26 +70,28 @@
     });
     wrapper.appendChild(pickerButton);
 
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "tm-date-clear-button";
-    button.setAttribute("aria-label", "Clear date");
-    button.title = "Clear date";
-    button.textContent = "x";
-    const updateClearButton = () => {
-      button.hidden = !String(input.value || "").trim();
-    };
-    button.addEventListener("click", () => {
-      input.value = "";
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-      input.focus();
+    if (input.dataset.proDateClear !== "off") {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "tm-date-clear-button";
+      button.setAttribute("aria-label", "Clear date");
+      button.title = "Clear date";
+      button.textContent = "x";
+      const updateClearButton = () => {
+        button.hidden = !String(input.value || "").trim();
+      };
+      button.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        input.focus();
+        updateClearButton();
+      });
+      input.addEventListener("input", updateClearButton);
+      input.addEventListener("change", updateClearButton);
+      wrapper.appendChild(button);
       updateClearButton();
-    });
-    input.addEventListener("input", updateClearButton);
-    input.addEventListener("change", updateClearButton);
-    wrapper.appendChild(button);
-    updateClearButton();
+    }
   }
 
   function ensureDateClearStyles() {
@@ -95,6 +104,9 @@
         grid-template-columns: minmax(0, 1fr) 42px 42px;
         gap: 8px;
         align-items: center;
+      }
+      .tm-date-clear-field[data-no-clear="1"] {
+        grid-template-columns: minmax(0, 1fr) 42px;
       }
       .tm-date-clear-field > input[type="date"] {
         width: 100%;
