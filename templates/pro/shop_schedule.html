@@ -62,15 +62,11 @@
   .tm-closed-item { display: flex; justify-content: space-between; gap: 10px; align-items: center; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 8px; }
   .tm-schedule-saved { color: #115e59; font-weight: 900; }
   .tm-schedule-note {
-    align-items: center;
     background: #f8fafc;
     border: 1px solid rgba(14, 116, 144, 0.18);
     border-radius: 8px;
     color: #475569;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: space-between;
+    line-height: 1.45;
     padding: 12px;
   }
   .tm-schedule-note p { margin: 0; }
@@ -104,7 +100,7 @@
   @media (max-width: 760px) {
     .tm-schedule-day, .tm-schedule-options { grid-template-columns: 1fr; }
     .tm-schedule-status { justify-self: start; }
-    .tm-schedule-day .tm-btn, .tm-schedule-note .tm-btn { width: 100%; }
+    .tm-schedule-day .tm-btn { width: 100%; }
     .tm-closed-item { align-items: stretch; flex-direction: column; }
   }
 </style>
@@ -125,11 +121,10 @@
   </div>
 
   <section class="tm-schedule-note" aria-label="Booking schedule note">
-    <p>Set the days and times customers can request appointments through your TorqueMech booking link.</p>
-    <a class="tm-btn tm-btn-secondary" href="/pro/shop-settings">Open Shop Settings</a>
+    <p>Booking link and shop contact details are managed in Shop Settings.</p>
   </section>
 
-  <section class="tm-schedule-panel" aria-label="Weekly availability">
+  <section class="tm-schedule-panel" aria-label="Weekly availability" aria-description="Set the days and times customers can request appointments through your TorqueMech booking link.">
     <form class="tm-schedule-form" method="post" action="/pro/shop-schedule">
       {% if saved %}<div class="tm-schedule-saved">Shop schedule saved.</div>{% endif %}
       <div>
