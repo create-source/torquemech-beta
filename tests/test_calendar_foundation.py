@@ -165,8 +165,72 @@ class CalendarFoundationTests(unittest.TestCase):
             sqlite3.Connection.close(conn)
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Please choose a time between 10:00 AM and 12:00 PM.", response.text)
+        self.assertIn("This time is outside the shop&#39;s business hours.", response.text)
         self.assertIsNone(row)
+
+    def test_public_booking_rejects_closed_day_and_conflicting_time(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [
+                    {"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "17:00"},
+                    {"day_of_week": 1, "is_open": False, "start_time": "09:00", "end_time": "17:00"},
+                ],
+                appointment_length_minutes=60,
+                buffer_minutes=15,
+            )
+            pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Existing Customer",
+                    "customer_phone": "5555550100",
+                    "vehicle_label": "Existing Vehicle",
+                    "service_name": "Existing Service",
+                    "requested_date": "2026-07-13",
+                    "requested_time": "10:00",
+                    "status": "Confirmed",
+                },
+            )
+            closed, closed_message = pro_module.is_closed_booking_day(conn, "2026-07-14")
+            available, conflict_message = pro_module.is_booking_time_available(conn, "2026-07-13", "11:00", 60)
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertTrue(closed)
+        self.assertEqual(closed_message, "The shop is closed on this day. Please choose another day.")
+        self.assertFalse(available)
+        self.assertEqual(
+            conflict_message,
+            "This time is not available based on the shop's schedule. Please choose another available time.",
+        )
+
+    def test_public_booking_page_shows_saved_schedule_and_success_copy(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [{"day_of_week": 0, "is_open": True, "start_time": "08:30", "end_time": "16:30"}],
+                appointment_length_minutes=90,
+                buffer_minutes=15,
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                response = TestClient(main.app, base_url="http://localhost").get(
+                    "/book/torquemech-shop?success=1"
+                )
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Available booking hours", response.text)
+        self.assertIn("8:30 AM – 4:30 PM", response.text)
+        self.assertIn("Appointments are 90 minutes, with 15 minutes between bookings.", response.text)
+        self.assertIn("Your appointment request has been sent.", response.text)
 
     def test_maintenance_reminder_prefers_builtin_booking_link(self):
         message = pro_module.build_maintenance_reminder_message(

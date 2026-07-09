@@ -10941,7 +10941,7 @@ def format_pdf_phone(value: Any) -> str:
     if len(raw) == 11 and raw.startswith("1"):
         raw = raw[1:]
     if len(raw) == 10:
-        return f"{raw[:3]}-{raw[3:6]}-{raw[6:]}"
+        return f"({raw[:3]}){raw[3:6]}-{raw[6:]}"
     return str(value or "").strip()
 
 

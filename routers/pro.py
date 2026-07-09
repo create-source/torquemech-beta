@@ -1149,6 +1149,27 @@ def format_time_label(value: Any) -> str:
     return f"{display_hour}:{minute:02d} {suffix}"
 
 
+def public_booking_schedule(conn: sqlite3.Connection) -> dict[str, Any]:
+    availability = load_shop_availability(conn)
+    first_row = availability[0] if availability else {}
+    return {
+        "days": [
+            {
+                "day_of_week": int(row.get("day_of_week") or 0),
+                "day_name": str(row.get("day_name") or ""),
+                "is_open": bool(row.get("is_open")),
+                "start_time": str(row.get("start_time") or "09:00")[:5],
+                "end_time": str(row.get("end_time") or "17:00")[:5],
+                "start_label": format_time_label(row.get("start_time")),
+                "end_label": format_time_label(row.get("end_time")),
+            }
+            for row in availability
+        ],
+        "appointment_length_minutes": int(first_row.get("appointment_length_minutes") or 60),
+        "buffer_minutes": int(first_row.get("buffer_minutes") or 0),
+    }
+
+
 def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str) -> tuple[bool, str]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
@@ -1164,29 +1185,68 @@ def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str) -> tupl
         (parsed_date.isoformat(),),
     ).fetchone()
     if closed_day:
-        return True, str(closed_day["reason"] or "").strip()
+        return True, "The shop is closed on this day. Please choose another day."
     availability = load_shop_availability(conn)
     day_row = next((row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()), None)
     if day_row and not bool(day_row.get("is_open")):
-        return True, "The shop is marked closed that day."
+        return True, "The shop is closed on this day. Please choose another day."
     return False, ""
 
 
-def is_booking_time_available(conn: sqlite3.Connection, requested_date: str, requested_time: str) -> tuple[bool, str]:
+def is_booking_time_available(
+    conn: sqlite3.Connection,
+    requested_date: str,
+    requested_time: str,
+    requested_duration: Any = None,
+) -> tuple[bool, str]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
-        return True, ""
+        return False, "Please choose a valid appointment date."
     raw_time = str(requested_time or "").strip()[:5]
-    if not raw_time:
-        return True, ""
+    try:
+        requested_start = datetime.strptime(raw_time, "%H:%M")
+    except ValueError:
+        return False, "Please choose a valid appointment time."
     availability = load_shop_availability(conn)
     day_row = next((row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()), None)
     if not day_row or not bool(day_row.get("is_open")):
-        return False, "The shop is marked closed that day."
+        return False, "The shop is closed on this day. Please choose another day."
     start_time = str(day_row.get("start_time") or "09:00").strip()[:5]
     end_time = str(day_row.get("end_time") or "17:00").strip()[:5]
-    if raw_time < start_time or raw_time >= end_time:
-        return False, f"Please choose a time between {format_time_label(start_time)} and {format_time_label(end_time)}."
+    duration = int(day_row.get("appointment_length_minutes") or 60)
+    if requested_duration not in (None, ""):
+        supplied_duration = optional_int_value(requested_duration)
+        if supplied_duration not in APPOINTMENT_LENGTH_OPTIONS or supplied_duration != duration:
+            return False, "This appointment length is not available. Please refresh the page and choose another time."
+    try:
+        opening = datetime.strptime(start_time, "%H:%M")
+        closing = datetime.strptime(end_time, "%H:%M")
+    except ValueError:
+        return False, "This time is not available based on the shop's schedule. Please choose another available time."
+    requested_end = requested_start + timedelta(minutes=duration)
+    if requested_start < opening or requested_end > closing:
+        return False, "This time is outside the shop's business hours. Please choose a time during the available schedule."
+
+    buffer_minutes = int(day_row.get("buffer_minutes") or 0)
+    requested_block_start = requested_start - timedelta(minutes=buffer_minutes)
+    requested_block_end = requested_end + timedelta(minutes=buffer_minutes)
+    existing_rows = conn.execute(
+        """
+        SELECT requested_time
+        FROM service_appointments
+        WHERE requested_date = ?
+          AND status IN ('Requested', 'Confirmed')
+        """,
+        (parsed_date.isoformat(),),
+    ).fetchall()
+    for existing in existing_rows:
+        try:
+            existing_start = datetime.strptime(str(existing["requested_time"] or "")[:5], "%H:%M")
+        except ValueError:
+            continue
+        existing_end = existing_start + timedelta(minutes=duration)
+        if requested_block_start < existing_end and requested_block_end > existing_start:
+            return False, "This time is not available based on the shop's schedule. Please choose another available time."
     return True, ""
 
 
@@ -8543,6 +8603,7 @@ def public_booking_page(request: Request, shop_slug: str, success: str = "", war
     conn = crm_db_conn()
     try:
         profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
+        booking_schedule = public_booking_schedule(conn)
     finally:
         conn.close()
     return templates.TemplateResponse(
@@ -8551,6 +8612,7 @@ def public_booking_page(request: Request, shop_slug: str, success: str = "", war
             "request": request,
             "profile": profile,
             "shop_slug": profile["booking_slug"],
+            "booking_schedule": booking_schedule,
             "success": success == "1",
             "warning": warning,
         },
@@ -8564,15 +8626,32 @@ async def public_booking_submit(request: Request, shop_slug: str):
     conn = crm_db_conn()
     try:
         profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
-        closed, closed_reason = is_closed_booking_day(conn, form.get("requested_date", ""))
-        if closed:
-            warning = closed_reason or "The shop is marked closed that day."
+        booking_schedule = public_booking_schedule(conn)
+        required_fields = ("customer_name", "customer_phone", "vehicle_label", "service_name")
+        if any(not str(form.get(field) or "").strip() for field in required_fields):
             return templates.TemplateResponse(
                 "booking.html",
                 {
                     "request": request,
                     "profile": profile,
                     "shop_slug": profile["booking_slug"],
+                    "booking_schedule": booking_schedule,
+                    "success": False,
+                    "warning": "Please complete the required fields and try again.",
+                    "form": form,
+                },
+                status_code=400,
+            )
+        closed, closed_reason = is_closed_booking_day(conn, form.get("requested_date", ""))
+        if closed:
+            warning = closed_reason or "The shop is closed on this day. Please choose another day."
+            return templates.TemplateResponse(
+                "booking.html",
+                {
+                    "request": request,
+                    "profile": profile,
+                    "shop_slug": profile["booking_slug"],
+                    "booking_schedule": booking_schedule,
                     "success": False,
                     "warning": warning,
                     "form": form,
@@ -8583,15 +8662,17 @@ async def public_booking_submit(request: Request, shop_slug: str):
             conn,
             form.get("requested_date", ""),
             form.get("requested_time", ""),
+            form.get("appointment_length_minutes", ""),
         )
         if not available:
-            warning = availability_warning or "Please choose a time during shop availability."
+            warning = availability_warning or "This time is not available based on the shop's schedule. Please choose another available time."
             return templates.TemplateResponse(
                 "booking.html",
                 {
                     "request": request,
                     "profile": profile,
                     "shop_slug": profile["booking_slug"],
+                    "booking_schedule": booking_schedule,
                     "success": False,
                     "warning": warning,
                     "form": form,

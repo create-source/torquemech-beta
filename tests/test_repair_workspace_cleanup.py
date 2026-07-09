@@ -1323,13 +1323,14 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(payload["vehicle"]["mileage"], 177000)
         self.assertIsNone(blank_payload["vehicle"]["mileage"])
 
-    def test_estimator_customer_quote_phone_fields_use_hyphen_mask(self):
+    def test_estimator_customer_quote_phone_fields_use_global_phone_mask(self):
         estimator = (ROOT / "templates" / "estimator.html").read_text(encoding="utf-8")
         app_js = (ROOT / "static" / "app.js").read_text(encoding="utf-8")
 
-        self.assertIn('id="customerPhone" type="tel" placeholder="###-###-####"', estimator)
+        self.assertIn('id="customerPhone" type="tel" placeholder="(***)***-****"', estimator)
         self.assertIn('id="businessPhone" type="tel"', estimator)
         self.assertIn("function formatPhone", app_js)
+        self.assertIn("window.TorqueMechPhone.format(value)", app_js)
         self.assertIn("bindEstimatorPhoneInput(customerPhoneEl)", app_js)
         self.assertIn("bindEstimatorPhoneInput(businessPhoneEl)", app_js)
         self.assertIn("phoneValue(customerPhoneEl)", app_js)
@@ -1339,9 +1340,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(pro_module.format_mileage("177000"), "177,000")
         self.assertEqual(pro_module.optional_int({"mileage": "177,000"}, "mileage"), 177000)
 
-    def test_phone_formats_with_hyphens_and_parses_raw_digits(self):
-        self.assertEqual(pro_module.format_phone("2223334444"), "222-333-4444")
-        self.assertEqual(pro_module.format_phone("1 (222) 333-4444"), "222-333-4444")
+    def test_phone_formats_with_parentheses_and_parses_raw_digits(self):
+        self.assertEqual(pro_module.format_phone("2223334444"), "(222)333-4444")
+        self.assertEqual(pro_module.format_phone("1 (222) 333-4444"), "(222)333-4444")
         self.assertEqual(pro_module.clean_phone("222-333-4444"), "2223334444")
         self.assertEqual(pro_module.clean_phone("1-222-333-4444"), "2223334444")
 
@@ -1476,7 +1477,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("/static/pro_form_helpers.js", finding_edit)
         self.assertIn("/static/pro_form_helpers.js", maintenance_detail)
         self.assertIn("function formatPhone", helper)
-        self.assertIn("return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`", helper)
+        self.assertIn("return `(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`", helper)
         self.assertIn("function formatMileage", helper)
         self.assertIn("normalizeMileageBeforeSubmit", helper)
 
