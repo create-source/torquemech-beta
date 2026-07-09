@@ -63,6 +63,12 @@
     font-weight: 700;
     margin: 6px 0 0;
   }
+  .tm-book-time-helper {
+    color: #475569;
+    font-size: .82rem;
+    line-height: 1.45;
+    margin: 7px 0 0;
+  }
   @media (max-width: 640px) {
     .tm-book-form { grid-template-columns: 1fr; }
     .tm-book-form .tm-btn { width: 100%; }
@@ -90,7 +96,7 @@
       </div>
       {% endfor %}
     </dl>
-    <small>Appointments are {{ booking_schedule.appointment_length_minutes }} minutes{% if booking_schedule.buffer_minutes %}, with {{ booking_schedule.buffer_minutes }} minutes between bookings{% endif %}.</small>
+    <small>Available arrival times use {{ booking_schedule.appointment_length_minutes }}-minute scheduling blocks{% if booking_schedule.buffer_minutes %}, with {{ booking_schedule.buffer_minutes }} minutes between booking windows{% endif %}. This controls booking availability, not repair duration.</small>
   </section>
 
   {% if success %}
@@ -151,11 +157,12 @@
         </div>
       </div>
       <div>
-        <label class="tm-label" for="requested_time">Preferred Time</label>
+        <label class="tm-label" for="requested_time">Preferred Drop-Off / Appointment Time</label>
         <select class="tm-input" id="requested_time" name="requested_time" data-selected-time="{{ form.requested_time if form else '' }}" required disabled>
-          <option value="">Select an available time</option>
+          <option value="">Select an available drop-off time</option>
         </select>
         <p class="tm-book-time-message" data-time-message aria-live="polite"></p>
+        <p class="tm-book-time-helper">This is your preferred drop-off or appointment time. Repair duration depends on the service, inspection, parts availability, and shop schedule.</p>
       </div>
       <div class="tm-book-wide">
         <label class="tm-label" for="notes">Notes</label>
@@ -174,7 +181,7 @@
   const timeMessage = document.querySelector("[data-time-message]");
   const selectedTime = timeInput?.dataset.selectedTime || "";
   const resetTimes = (message = "") => {
-    timeInput.innerHTML = '<option value="">Select an available time</option>';
+    timeInput.innerHTML = '<option value="">Select an available drop-off time</option>';
     timeInput.disabled = true;
     if (timeMessage) timeMessage.textContent = message;
   };

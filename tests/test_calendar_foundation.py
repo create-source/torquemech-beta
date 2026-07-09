@@ -230,7 +230,11 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Available booking hours", response.text)
         self.assertIn("8:30 AM – 4:30 PM", response.text)
-        self.assertIn("Appointments are 90 minutes, with 15 minutes between bookings.", response.text)
+        self.assertIn(
+            "Available arrival times use 90-minute scheduling blocks, with 15 minutes between booking windows.",
+            response.text,
+        )
+        self.assertIn("This controls booking availability, not repair duration.", response.text)
         self.assertIn("Your appointment request has been sent.", response.text)
 
     def test_available_time_dropdown_excludes_pending_and_confirmed_slots(self):
@@ -464,6 +468,9 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Reschedule", calendar_page.text)
         self.assertIn("Cancel Appointment", calendar_page.text)
         self.assertIn("Mark Handled", calendar_page.text)
+        self.assertIn("Copy Confirmation Message", calendar_page.text)
+        self.assertIn("Copy Reschedule Message", calendar_page.text)
+        self.assertIn("Copy Cancellation Message", calendar_page.text)
         self.assertIn({"value": "09:00", "label": "9:00 AM"}, excluded_times["times"])
         self.assertEqual(reschedule_response.headers["location"], "/pro/calendar?notice=rescheduled")
         self.assertTrue(old_slot[0])
@@ -552,6 +559,62 @@ class CalendarFoundationTests(unittest.TestCase):
         contact_copy = neither_response.text.split('class="tm-book-success-contact">', 1)[1].split("</p>", 1)[0]
         self.assertNotIn('href="tel:', contact_copy)
         self.assertNotIn('href="mailto:', contact_copy)
+
+    def test_public_booking_uses_drop_off_time_language(self):
+        template = (main.BASE_DIR / "templates" / "booking.html").read_text(encoding="utf-8")
+        picker_script = (main.BASE_DIR / "static" / "available_date_picker.js").read_text(encoding="utf-8")
+
+        self.assertIn("Preferred Drop-Off / Appointment Time", template)
+        self.assertIn("Select an available drop-off time", template)
+        self.assertIn(
+            "This is your preferred drop-off or appointment time. Repair duration depends on the service, "
+            "inspection, parts availability, and shop schedule.",
+            template,
+        )
+        self.assertIn("Select an available drop-off time", picker_script)
+
+    def test_appointment_customer_copy_messages_include_schedule_and_contact_context(self):
+        messages = pro_module.appointment_customer_messages(
+            {
+                "customer_name": "Natalie King",
+                "service_name": "Brake Inspection",
+                "requested_date": "2026-07-13",
+                "requested_time": "10:00",
+            },
+            {
+                "shop_name": "TorqueMech Auto",
+                "shop_phone": "5592223333",
+                "shop_email": "service@torquemech.test",
+            },
+        )
+
+        for message in messages.values():
+            self.assertIn("Natalie King", message)
+            self.assertIn("TorqueMech Auto", message)
+            self.assertIn("Brake Inspection", message)
+            self.assertIn("07/13/2026", message)
+            self.assertIn("10:00 AM", message)
+            self.assertIn("(559)222-3333", message)
+            self.assertIn("service@torquemech.test", message)
+            self.assertIn(
+                "Repair duration depends on the service, inspection, parts availability, and shop schedule.",
+                message,
+            )
+        self.assertIn("has been confirmed", messages["confirmation_message"])
+        self.assertIn("new drop-off / appointment time", messages["reschedule_message"])
+        self.assertIn("has been canceled", messages["cancellation_message"])
+
+        fallback = pro_module.appointment_customer_messages(
+            {
+                "customer_name": "",
+                "service_name": "",
+                "requested_date": "",
+                "requested_time": "",
+            },
+            {},
+        )
+        self.assertIn("Hi there, this is your mechanic.", fallback["confirmation_message"])
+        self.assertIn("please contact the shop directly.", fallback["confirmation_message"])
 
     def test_booking_date_has_one_picker_and_no_custom_clear_button(self):
         booking_template = (main.BASE_DIR / "templates" / "booking.html").read_text(encoding="utf-8")

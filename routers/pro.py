@@ -1227,7 +1227,7 @@ def is_booking_time_available(
     if requested_duration not in (None, ""):
         supplied_duration = optional_int_value(requested_duration)
         if supplied_duration not in APPOINTMENT_LENGTH_OPTIONS or supplied_duration != duration:
-            return False, "This appointment length is not available. Please refresh the page and choose another time."
+            return False, "The shop's booking interval has changed. Please refresh the page and choose another drop-off time."
     try:
         opening = datetime.strptime(start_time, "%H:%M")
         closing = datetime.strptime(end_time, "%H:%M")
@@ -1491,6 +1491,77 @@ def group_booking_review_appointments(appointments: list[dict[str, Any]]) -> dic
         else:
             grouped["declined_cancelled"].append(appointment)
     return grouped
+
+
+def appointment_customer_messages(
+    appointment: dict[str, Any],
+    sender_context: Any | None = None,
+) -> dict[str, str]:
+    customer_name = str(appointment.get("customer_name") or "").strip() or "there"
+    shop_name = resolve_sender_display_name(sender_context)
+    appointment_date = format_pro_date(appointment.get("requested_date")) or "the scheduled date"
+    appointment_time = format_pro_time(appointment.get("requested_time")) or "the scheduled time"
+    service_name = str(appointment.get("service_name") or "").strip() or "your requested service"
+    phone = format_phone(
+        _context_lookup(sender_context, "shop_phone")
+        or _context_lookup(sender_context, "phone")
+        or ""
+    )
+    email = str(
+        _context_lookup(sender_context, "shop_email")
+        or _context_lookup(sender_context, "email")
+        or ""
+    ).strip()
+    contact_parts = [part for part in (phone, email) if part]
+    contact = " or ".join(contact_parts)
+    reschedule_contact = (
+        f"If you need to reschedule or cancel, please contact us at {contact}."
+        if contact
+        else "If you need to reschedule or cancel, please contact the shop directly."
+    )
+    alternate_contact = (
+        f"If not, contact us at {contact}."
+        if contact
+        else "If not, please contact the shop directly."
+    )
+    booking_contact = (
+        f"please contact us at {contact}."
+        if contact
+        else "please contact the shop directly."
+    )
+    duration_note = (
+        "Repair duration depends on the service, inspection, parts availability, "
+        "and shop schedule."
+    )
+    return {
+        "confirmation_message": (
+            f"Hi {customer_name}, this is {shop_name}. Your appointment request for "
+            f"{service_name} has been confirmed for {appointment_date} at {appointment_time}. "
+            f"This is your drop-off / appointment time. {duration_note} "
+            f"{reschedule_contact}"
+        ),
+        "reschedule_message": (
+            f"Hi {customer_name}, this is {shop_name}. We need to reschedule your appointment "
+            f"for {service_name}. Your new drop-off / appointment time is {appointment_date} "
+            f"at {appointment_time}. Please confirm this works for you. {duration_note} "
+            f"{alternate_contact}"
+        ),
+        "cancellation_message": (
+            f"Hi {customer_name}, this is {shop_name}. Your appointment request for "
+            f"{service_name} on {appointment_date} at {appointment_time} has been canceled. "
+            f"{duration_note} If you would like to book another appointment, "
+            f"{booking_contact}"
+        ),
+    }
+
+
+def attach_appointment_customer_messages(
+    appointments: list[dict[str, Any]],
+    sender_context: Any | None = None,
+) -> list[dict[str, Any]]:
+    for appointment in appointments:
+        appointment.update(appointment_customer_messages(appointment, sender_context))
+    return appointments
 
 
 def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
@@ -8704,7 +8775,11 @@ def pro_shop_schedule_closed_day_delete(closed_day_id: int):
 def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str = ""):
     conn = crm_db_conn()
     try:
-        appointments = load_service_appointments(conn)
+        profile = load_shop_profile_context(conn)
+        appointments = attach_appointment_customer_messages(
+            load_service_appointments(conn),
+            profile,
+        )
     finally:
         conn.close()
     return templates.TemplateResponse(

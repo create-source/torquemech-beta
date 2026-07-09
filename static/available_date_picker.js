@@ -31,7 +31,7 @@
 
     const resetTimes = (message = "") => {
       if (!timeInput) return;
-      timeInput.innerHTML = '<option value="">Select an available time</option>';
+      timeInput.innerHTML = '<option value="">Select an available drop-off time</option>';
       timeInput.disabled = true;
       if (timeMessage) timeMessage.textContent = message;
     };

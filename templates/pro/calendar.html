@@ -63,6 +63,8 @@
     font-weight: 800;
   }
   .tm-calendar-actions, .tm-calendar-form-grid { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+  .tm-calendar-copy-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .tm-calendar-copy-status { color: #0f766e; font-size: .82rem; font-weight: 800; min-height: 1.2em; }
   .tm-calendar-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tm-calendar-reschedule { flex: 1 0 100%; min-width: 0; }
   .tm-calendar-reschedule > summary {
@@ -95,6 +97,7 @@
     .tm-calendar-grid, .tm-calendar-card-head, .tm-calendar-form-grid { grid-template-columns: 1fr; }
     .tm-calendar-card-head { display: grid; }
     .tm-calendar-actions .tm-btn, .tm-calendar-form-grid .tm-btn { width: 100%; }
+    .tm-calendar-copy-row .tm-btn { width: 100%; }
     .tm-calendar-reschedule > summary, .tm-calendar-reschedule-form .tm-btn { width: 100%; }
     .tm-calendar-panel { padding: 13px; }
     .tm-calendar-card { gap: 7px; padding: 11px; }
@@ -157,7 +160,7 @@
             <label class="tm-label" for="reschedule_time_{{ item.id }}">New Time</label>
             <select class="tm-input" id="reschedule_time_{{ item.id }}" name="requested_time"
                     data-selected-time="{{ item.requested_time }}" required disabled>
-              <option value="">Select an available time</option>
+              <option value="">Select an available drop-off time</option>
             </select>
             <p class="tm-book-time-message" id="reschedule_message_{{ item.id }}" aria-live="polite"></p>
           </div>
@@ -174,6 +177,19 @@
     </form>
     {% endif %}
   </div>
+  {% if item.status in ["Requested", "Confirmed"] %}
+  <div class="tm-calendar-copy-row" aria-label="Copy customer messages">
+    <span hidden data-copy-source="confirmation">{{ item.confirmation_message }}</span>
+    <span hidden data-copy-source="reschedule">{{ item.reschedule_message }}</span>
+    <span hidden data-copy-source="cancellation">{{ item.cancellation_message }}</span>
+    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="confirmation">Copy Confirmation Message</button>
+    {% if item.status == "Confirmed" %}
+    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="reschedule">Copy Reschedule Message</button>
+    {% endif %}
+    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="cancellation">Copy Cancellation Message</button>
+    <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
+  </div>
+  {% endif %}
 </article>
 {% endmacro %}
 
@@ -243,7 +259,7 @@
       <div>
         <label class="tm-label" for="pro_requested_time">Time</label>
         <select class="tm-input" id="pro_requested_time" name="requested_time" required disabled>
-          <option value="">Select an available time</option>
+          <option value="">Select an available drop-off time</option>
         </select>
         <p class="tm-book-time-message" data-pro-time-message aria-live="polite"></p>
       </div>
@@ -287,6 +303,36 @@ document.querySelectorAll("[data-confirm-cancel]").forEach((form) => {
   form.addEventListener("submit", (event) => {
     if (!window.confirm("Cancel this appointment? This time will become available for booking.")) {
       event.preventDefault();
+    }
+  });
+});
+async function copyAppointmentText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  return copied;
+}
+document.querySelectorAll("[data-copy-appointment-message]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const card = button.closest(".tm-calendar-card");
+    const kind = button.dataset.copyAppointmentMessage;
+    const message = card?.querySelector(`[data-copy-source="${kind}"]`)?.textContent?.trim() || "";
+    const status = card?.querySelector("[data-copy-status]");
+    try {
+      const copied = message ? await copyAppointmentText(message) : false;
+      if (status) status.textContent = copied ? "Message copied." : "Unable to copy message.";
+    } catch (_) {
+      if (status) status.textContent = "Unable to copy message.";
     }
   });
 });
