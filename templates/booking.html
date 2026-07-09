@@ -29,6 +29,13 @@
     padding: 14px;
     font-weight: 900;
   }
+  .tm-book-success p { margin: 0; }
+  .tm-book-success-contact {
+    margin-top: 8px !important;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .tm-book-success-contact a { color: inherit; }
   .tm-book-warning {
     border: 1px solid rgba(217, 119, 6, 0.28);
     border-radius: 8px;
@@ -87,7 +94,15 @@
   </section>
 
   {% if success %}
-  <section class="tm-book-success" role="status">Your appointment request has been sent. The shop will review it and confirm your appointment.</section>
+  <section class="tm-book-success" role="status">
+    <p>Your appointment request has been sent. The shop will review it and confirm your appointment.</p>
+    <p class="tm-book-success-contact">
+      Need to reschedule or cancel? Please contact the shop directly{% if profile.shop_phone or profile.shop_email %} at
+      {% if profile.shop_phone %}<a href="tel:{{ profile.shop_phone }}">{{ profile.shop_phone|pro_phone }}</a>{% endif %}
+      {% if profile.shop_phone and profile.shop_email %} or {% endif %}
+      {% if profile.shop_email %}<a href="mailto:{{ profile.shop_email }}">{{ profile.shop_email }}</a>{% endif %}{% endif %}.
+    </p>
+  </section>
   {% else %}
   <section class="tm-book-panel" aria-label="Schedule service">
     {% if warning %}<div class="tm-book-warning" role="alert">{{ warning }}</div>{% endif %}
@@ -151,7 +166,7 @@
   </section>
   {% endif %}
 </main>
-<script type="text/plain">
+{#
 (() => {
   const dateInput = document.getElementById("requested_date");
   const timeInput = document.getElementById("requested_time");
@@ -194,7 +209,7 @@
   dateInput?.addEventListener("change", refreshTimes);
   refreshTimes();
 })();
-</script>
+#}
 {% endblock %}
 
 {% block page_js %}

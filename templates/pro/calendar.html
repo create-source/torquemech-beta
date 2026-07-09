@@ -64,6 +64,21 @@
   }
   .tm-calendar-actions, .tm-calendar-form-grid { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
   .tm-calendar-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tm-calendar-reschedule { flex: 1 0 100%; min-width: 0; }
+  .tm-calendar-reschedule > summary {
+    display: inline-flex;
+    list-style: none;
+    cursor: pointer;
+  }
+  .tm-calendar-reschedule > summary::-webkit-details-marker { display: none; }
+  .tm-calendar-reschedule-panel {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+    border-top: 1px solid rgba(15, 23, 42, .1);
+    padding-top: 10px;
+  }
+  .tm-calendar-reschedule-form { display: grid; gap: 10px; max-width: 420px; }
   .tm-calendar-empty { color: #64748b; border: 1px dashed rgba(15, 23, 42, 0.18); border-radius: 8px; padding: 14px; }
   .tm-calendar-panel > summary {
     cursor: pointer;
@@ -80,6 +95,7 @@
     .tm-calendar-grid, .tm-calendar-card-head, .tm-calendar-form-grid { grid-template-columns: 1fr; }
     .tm-calendar-card-head { display: grid; }
     .tm-calendar-actions .tm-btn, .tm-calendar-form-grid .tm-btn { width: 100%; }
+    .tm-calendar-reschedule > summary, .tm-calendar-reschedule-form .tm-btn { width: 100%; }
     .tm-calendar-panel { padding: 13px; }
     .tm-calendar-card { gap: 7px; padding: 11px; }
   }
@@ -111,6 +127,47 @@
     </form>
     {% endfor %}
     {% elif item.status == "Confirmed" %}
+    <details class="tm-calendar-reschedule">
+      <summary class="tm-btn tm-btn-secondary">Reschedule</summary>
+      <div class="tm-calendar-reschedule-panel">
+        <form class="tm-calendar-reschedule-form" method="post" action="/pro/calendar/{{ item.id }}/reschedule">
+          <div class="tm-availability-picker" data-availability-picker data-availability-lazy="true"
+               data-dates-url="/book/torquemech-shop/available-dates?exclude_appointment_id={{ item.id }}"
+               data-times-url="/book/torquemech-shop/available-times?exclude_appointment_id={{ item.id }}"
+               data-time-target="#reschedule_time_{{ item.id }}"
+               data-message-target="#reschedule_message_{{ item.id }}">
+            <label class="tm-label" for="reschedule_date_{{ item.id }}">New Date</label>
+            <input id="reschedule_date_{{ item.id }}" name="requested_date" type="hidden"
+                   data-availability-date value="{{ item.requested_date }}" required>
+            <div class="tm-availability-calendar">
+              <div class="tm-availability-head">
+                <button class="tm-availability-nav" type="button" data-availability-prev aria-label="Previous month">‹</button>
+                <div class="tm-availability-month" data-availability-month aria-live="polite"></div>
+                <button class="tm-availability-nav" type="button" data-availability-next aria-label="Next month">›</button>
+              </div>
+              <div class="tm-availability-weekdays" aria-hidden="true">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+              </div>
+              <div class="tm-availability-days" data-availability-days role="group" aria-label="Available reschedule dates"></div>
+              <div class="tm-availability-legend"><span>Available</span><span class="is-unavailable">Unavailable</span></div>
+            </div>
+            <div class="tm-availability-status" data-availability-status aria-live="polite"></div>
+          </div>
+          <div>
+            <label class="tm-label" for="reschedule_time_{{ item.id }}">New Time</label>
+            <select class="tm-input" id="reschedule_time_{{ item.id }}" name="requested_time"
+                    data-selected-time="{{ item.requested_time }}" required disabled>
+              <option value="">Select an available time</option>
+            </select>
+            <p class="tm-book-time-message" id="reschedule_message_{{ item.id }}" aria-live="polite"></p>
+          </div>
+          <button class="tm-btn tm-btn-primary" type="submit">Save New Time</button>
+        </form>
+      </div>
+    </details>
+    <form method="post" action="/pro/calendar/{{ item.id }}/cancel" data-confirm-cancel>
+      <button class="tm-btn tm-btn-secondary" type="submit">Cancel Appointment</button>
+    </form>
     <form method="post" action="/pro/calendar/{{ item.id }}/status">
       <input type="hidden" name="status" value="Handled">
       <button class="tm-btn tm-btn-secondary" type="submit">Mark Handled</button>
@@ -224,6 +281,13 @@ document.querySelectorAll("[data-show-more]").forEach((button) => {
       item.hidden = false;
     });
     button.hidden = true;
+  });
+});
+document.querySelectorAll("[data-confirm-cancel]").forEach((form) => {
+  form.addEventListener("submit", (event) => {
+    if (!window.confirm("Cancel this appointment? This time will become available for booking.")) {
+      event.preventDefault();
+    }
   });
 });
 </script>

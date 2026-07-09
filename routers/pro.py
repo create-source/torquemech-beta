@@ -1205,6 +1205,7 @@ def is_booking_time_available(
     requested_date: str,
     requested_time: str,
     requested_duration: Any = None,
+    exclude_appointment_id: int | None = None,
 ) -> tuple[bool, str]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
@@ -1239,14 +1240,20 @@ def is_booking_time_available(
     buffer_minutes = int(day_row.get("buffer_minutes") or 0)
     requested_block_start = requested_start - timedelta(minutes=buffer_minutes)
     requested_block_end = requested_end + timedelta(minutes=buffer_minutes)
+    params: list[Any] = [parsed_date.isoformat()]
+    exclusion_sql = ""
+    if exclude_appointment_id is not None:
+        exclusion_sql = " AND id <> ?"
+        params.append(exclude_appointment_id)
     existing_rows = conn.execute(
-        """
-        SELECT requested_time
+        f"""
+        SELECT id, requested_time
         FROM service_appointments
         WHERE requested_date = ?
           AND status IN ('Requested', 'Confirmed')
+          {exclusion_sql}
         """,
-        (parsed_date.isoformat(),),
+        params,
     ).fetchall()
     for existing in existing_rows:
         try:
@@ -1259,7 +1266,11 @@ def is_booking_time_available(
     return True, ""
 
 
-def available_booking_times(conn: sqlite3.Connection, requested_date: str) -> dict[str, Any]:
+def available_booking_times(
+    conn: sqlite3.Connection,
+    requested_date: str,
+    exclude_appointment_id: int | None = None,
+) -> dict[str, Any]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
         return {"state": "invalid", "message": "Please choose a valid appointment date.", "times": []}
@@ -1293,7 +1304,13 @@ def available_booking_times(conn: sqlite3.Connection, requested_date: str) -> di
     times: list[dict[str, str]] = []
     while slot + timedelta(minutes=duration) <= closing:
         raw_time = slot.strftime("%H:%M")
-        available, _ = is_booking_time_available(conn, requested_date, raw_time, duration)
+        available, _ = is_booking_time_available(
+            conn,
+            requested_date,
+            raw_time,
+            duration,
+            exclude_appointment_id,
+        )
         if available:
             times.append({"value": raw_time, "label": format_time_label(raw_time)})
         slot += timedelta(minutes=duration + buffer_minutes)
@@ -1306,7 +1323,11 @@ def available_booking_times(conn: sqlite3.Connection, requested_date: str) -> di
     return {"state": "available", "message": "", "times": times}
 
 
-def booking_availability_for_month(conn: sqlite3.Connection, month: str) -> dict[str, Any]:
+def booking_availability_for_month(
+    conn: sqlite3.Connection,
+    month: str,
+    exclude_appointment_id: int | None = None,
+) -> dict[str, Any]:
     try:
         month_start = datetime.strptime(str(month or ""), "%Y-%m").date().replace(day=1)
     except ValueError:
@@ -1318,7 +1339,7 @@ def booking_availability_for_month(conn: sqlite3.Connection, month: str) -> dict
     days: list[dict[str, Any]] = []
     current = month_start
     while current <= month_end:
-        result = available_booking_times(conn, current.isoformat())
+        result = available_booking_times(conn, current.isoformat(), exclude_appointment_id)
         days.append({"date": current.isoformat(), "available": result["state"] == "available"})
         current += timedelta(days=1)
     return {"month": month_start.strftime("%Y-%m"), "days": days}
@@ -1375,6 +1396,51 @@ def update_service_appointment_status(conn: sqlite3.Connection, appointment_id: 
         WHERE id = ?
         """,
         (status, datetime.utcnow().isoformat(), appointment_id),
+    )
+    conn.commit()
+
+
+def load_service_appointment(conn: sqlite3.Connection, appointment_id: int) -> dict[str, Any] | None:
+    ensure_calendar_schema(conn)
+    row = conn.execute(
+        "SELECT * FROM service_appointments WHERE id = ? LIMIT 1",
+        (appointment_id,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def reschedule_service_appointment(
+    conn: sqlite3.Connection,
+    appointment_id: int,
+    requested_date: str,
+    requested_time: str,
+) -> None:
+    appointment = load_service_appointment(conn, appointment_id)
+    if not appointment or appointment.get("status") != "Confirmed":
+        raise HTTPException(status_code=404, detail="Confirmed appointment not found.")
+    available, warning = is_booking_time_available(
+        conn,
+        requested_date,
+        requested_time,
+        exclude_appointment_id=appointment_id,
+    )
+    generated_times = available_booking_times(conn, requested_date, appointment_id)
+    if available:
+        available = requested_time in {slot["value"] for slot in generated_times.get("times", [])}
+    if not available:
+        raise HTTPException(
+            status_code=400,
+            detail=warning
+            or generated_times.get("message")
+            or "No appointment times are available for this day. Please choose another day.",
+        )
+    conn.execute(
+        """
+        UPDATE service_appointments
+        SET requested_date = ?, requested_time = ?, updated_at = ?
+        WHERE id = ? AND status = 'Confirmed'
+        """,
+        (requested_date, requested_time, datetime.utcnow().isoformat(), appointment_id),
     )
     conn.commit()
 
@@ -8653,6 +8719,8 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 "confirmed": "Appointment confirmed.",
                 "handled": "Booking request marked as handled.",
                 "declined": "Booking request declined.",
+                "rescheduled": "Appointment rescheduled.",
+                "cancelled": "Appointment canceled.",
             }.get(notice, ""),
         },
     )
@@ -8711,21 +8779,67 @@ async def pro_calendar_status_update(request: Request, appointment_id: int):
     return RedirectResponse(f"/pro/calendar{suffix}", status_code=303)
 
 
-@public_router.get("/book/{shop_slug}/available-times", response_class=JSONResponse)
-def public_booking_available_times(shop_slug: str, date: str = ""):
+@router.post("/calendar/{appointment_id}/reschedule")
+async def pro_calendar_reschedule(request: Request, appointment_id: int):
+    form = await read_form_data(request)
     conn = crm_db_conn()
     try:
-        result = available_booking_times(conn, date)
+        try:
+            reschedule_service_appointment(
+                conn,
+                appointment_id,
+                form.get("requested_date", ""),
+                form.get("requested_time", ""),
+            )
+        except HTTPException as exc:
+            return RedirectResponse(
+                f"/pro/calendar?{urlencode({'error': str(exc.detail)})}",
+                status_code=303,
+            )
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/calendar?notice=rescheduled", status_code=303)
+
+
+@router.post("/calendar/{appointment_id}/cancel")
+def pro_calendar_cancel(appointment_id: int):
+    conn = crm_db_conn()
+    try:
+        appointment = load_service_appointment(conn, appointment_id)
+        if not appointment or appointment.get("status") != "Confirmed":
+            return RedirectResponse(
+                f"/pro/calendar?{urlencode({'error': 'Confirmed appointment not found.'})}",
+                status_code=303,
+            )
+        update_service_appointment_status(conn, appointment_id, "Cancelled")
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/calendar?notice=cancelled", status_code=303)
+
+
+@public_router.get("/book/{shop_slug}/available-times", response_class=JSONResponse)
+def public_booking_available_times(
+    shop_slug: str,
+    date: str = "",
+    exclude_appointment_id: int | None = None,
+):
+    conn = crm_db_conn()
+    try:
+        result = available_booking_times(conn, date, exclude_appointment_id)
     finally:
         conn.close()
     return JSONResponse(result)
 
 
 @public_router.get("/book/{shop_slug}/available-dates", response_class=JSONResponse)
-def public_booking_available_dates(shop_slug: str, month: str = ""):
+def public_booking_available_dates(
+    shop_slug: str,
+    month: str = "",
+    exclude_appointment_id: int | None = None,
+):
     conn = crm_db_conn()
     try:
-        result = booking_availability_for_month(conn, month)
+        result = booking_availability_for_month(conn, month, exclude_appointment_id)
     finally:
         conn.close()
     return JSONResponse(result)

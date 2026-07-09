@@ -8,8 +8,14 @@
       ? new Date(parts[0], parts[1] - 1, parts[2])
       : null;
   };
+  const withQuery = (url, key, value) => {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}${key}=${encodeURIComponent(value)}`;
+  };
 
-  document.querySelectorAll("[data-availability-picker]").forEach((picker) => {
+  const initializePicker = (picker) => {
+    if (picker.dataset.availabilityInitialized === "true") return;
+    picker.dataset.availabilityInitialized = "true";
     const input = picker.querySelector("[data-availability-date]");
     const grid = picker.querySelector("[data-availability-days]");
     const heading = picker.querySelector("[data-availability-month]");
@@ -37,7 +43,7 @@
       }
       resetTimes("Checking available times…");
       try {
-        const response = await fetch(`${timesUrl}?date=${encodeURIComponent(input.value)}`);
+        const response = await fetch(withQuery(timesUrl, "date", input.value));
         if (!response.ok) throw new Error("availability");
         const result = await response.json();
         if (result.state !== "available") {
@@ -70,7 +76,7 @@
       grid.setAttribute("aria-busy", "true");
       try {
         if (!cache.has(key)) {
-          const response = await fetch(`${datesUrl}?month=${encodeURIComponent(key)}`);
+          const response = await fetch(withQuery(datesUrl, "month", key));
           if (!response.ok) throw new Error("availability");
           const result = await response.json();
           cache.set(key, new Map(result.days.map((day) => [day.date, day.available])));
@@ -125,5 +131,17 @@
     });
     render();
     if (input?.value) loadTimes();
+  };
+
+  document.querySelectorAll("[data-availability-picker]").forEach((picker) => {
+    if (picker.dataset.availabilityLazy !== "true") {
+      initializePicker(picker);
+      return;
+    }
+    const panel = picker.closest("details");
+    if (panel?.open) initializePicker(picker);
+    panel?.addEventListener("toggle", () => {
+      if (panel.open) initializePicker(picker);
+    });
   });
 })();

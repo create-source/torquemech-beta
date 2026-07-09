@@ -407,6 +407,152 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(handled_response.headers["location"], "/pro/calendar?notice=handled")
         self.assertEqual(row["status"], "Handled")
 
+    def test_confirmed_appointment_can_be_rescheduled_and_cancelled(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [{"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "12:00"}],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+            )
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Confirmed Customer",
+                    "customer_phone": "5555550100",
+                    "service_name": "Brake Service",
+                    "requested_date": "2026-07-13",
+                    "requested_time": "09:00",
+                    "status": "Confirmed",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                pro_module, "shop_today", lambda: pro_module.date(2026, 7, 8)
+            ), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client = TestClient(main.app, base_url="http://localhost")
+                calendar_page = client.get("/pro/calendar")
+                excluded_times = client.get(
+                    f"/book/torquemech-shop/available-times"
+                    f"?date=2026-07-13&exclude_appointment_id={appointment_id}"
+                ).json()
+                reschedule_response = client.post(
+                    f"/pro/calendar/{appointment_id}/reschedule",
+                    data={"requested_date": "2026-07-13", "requested_time": "10:00"},
+                    follow_redirects=False,
+                )
+                old_slot = pro_module.is_booking_time_available(conn, "2026-07-13", "09:00")
+                new_slot = pro_module.is_booking_time_available(conn, "2026-07-13", "10:00")
+                rescheduled_page = client.get("/pro/calendar?notice=rescheduled")
+                cancel_response = client.post(
+                    f"/pro/calendar/{appointment_id}/cancel",
+                    follow_redirects=False,
+                )
+                canceled_slot = pro_module.is_booking_time_available(conn, "2026-07-13", "10:00")
+                canceled_page = client.get("/pro/calendar?notice=cancelled")
+                row = conn.execute(
+                    "SELECT requested_date, requested_time, status FROM service_appointments WHERE id = ?",
+                    (appointment_id,),
+                ).fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertIn("Reschedule", calendar_page.text)
+        self.assertIn("Cancel Appointment", calendar_page.text)
+        self.assertIn("Mark Handled", calendar_page.text)
+        self.assertIn({"value": "09:00", "label": "9:00 AM"}, excluded_times["times"])
+        self.assertEqual(reschedule_response.headers["location"], "/pro/calendar?notice=rescheduled")
+        self.assertTrue(old_slot[0])
+        self.assertFalse(new_slot[0])
+        self.assertIn("Appointment rescheduled.", rescheduled_page.text)
+        self.assertIn("10:00 AM", rescheduled_page.text)
+        self.assertEqual(cancel_response.headers["location"], "/pro/calendar?notice=cancelled")
+        self.assertTrue(canceled_slot[0])
+        self.assertIn("Appointment canceled.", canceled_page.text)
+        self.assertIn("Declined / Canceled (1)", canceled_page.text)
+        self.assertEqual(row["status"], "Cancelled")
+        self.assertEqual(row["requested_time"], "10:00")
+
+    def test_reschedule_rejects_conflicting_slot_server_side(self):
+        conn = self.memory_conn()
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [{"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "12:00"}],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+            )
+            moving_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Moving",
+                    "customer_phone": "5555550100",
+                    "service_name": "Service",
+                    "requested_date": "2026-07-13",
+                    "requested_time": "09:00",
+                    "status": "Confirmed",
+                },
+            )
+            pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Blocking",
+                    "customer_phone": "5555550101",
+                    "service_name": "Service",
+                    "requested_date": "2026-07-13",
+                    "requested_time": "10:00",
+                    "status": "Requested",
+                },
+            )
+            with patch.object(pro_module, "shop_today", lambda: pro_module.date(2026, 7, 8)):
+                with self.assertRaises(Exception):
+                    pro_module.reschedule_service_appointment(
+                        conn, moving_id, "2026-07-13", "10:00"
+                    )
+            row = conn.execute(
+                "SELECT requested_time FROM service_appointments WHERE id = ?",
+                (moving_id,),
+            ).fetchone()
+        finally:
+            conn.close()
+
+        self.assertEqual(row["requested_time"], "09:00")
+
+    def test_public_booking_confirmation_uses_saved_shop_contact_details(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.save_shop_settings(
+                conn,
+                {
+                    "shop_phone": "(555) 123-4567",
+                    "shop_email": "support@shop.com",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client = TestClient(main.app, base_url="http://localhost")
+                both_response = client.get("/book/torquemech-shop?success=1")
+                pro_module.save_shop_settings(conn, {"shop_phone": "", "shop_email": ""})
+                neither_response = client.get("/book/torquemech-shop?success=1")
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertIn("Need to reschedule or cancel? Please contact the shop directly at", both_response.text)
+        self.assertIn("(555)123-4567", both_response.text)
+        self.assertIn("support@shop.com", both_response.text)
+        self.assertIn('href="tel:5551234567"', both_response.text)
+        self.assertIn("Need to reschedule or cancel? Please contact the shop directly.", neither_response.text)
+        contact_copy = neither_response.text.split('class="tm-book-success-contact">', 1)[1].split("</p>", 1)[0]
+        self.assertNotIn('href="tel:', contact_copy)
+        self.assertNotIn('href="mailto:', contact_copy)
+
     def test_booking_date_has_one_picker_and_no_custom_clear_button(self):
         booking_template = (main.BASE_DIR / "templates" / "booking.html").read_text(encoding="utf-8")
         helper = (main.BASE_DIR / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
