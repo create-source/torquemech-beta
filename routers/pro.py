@@ -8984,12 +8984,25 @@ def public_booking_page(request: Request, shop_slug: str, success: str = "", war
 async def public_booking_submit(request: Request, shop_slug: str):
     form = await read_form_data(request)
     warning = ""
+    vehicle_parts = [
+        str(form.get("vehicle_year") or "").strip(),
+        str(form.get("vehicle_make") or "").strip(),
+        str(form.get("vehicle_model") or "").strip(),
+    ]
+    vehicle_label = re.sub(
+        r"\s+",
+        " ",
+        " ".join(part for part in vehicle_parts if part),
+    ).strip() or str(form.get("vehicle_label") or "").strip()
     conn = crm_db_conn()
     try:
         profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
         booking_schedule = public_booking_schedule(conn)
-        required_fields = ("customer_name", "customer_phone", "vehicle_label", "service_name")
-        if any(not str(form.get(field) or "").strip() for field in required_fields):
+        required_fields = ("customer_name", "customer_phone", "service_name")
+        vehicle_fields_missing = not vehicle_label or (
+            any(vehicle_parts) and any(not part for part in vehicle_parts)
+        )
+        if any(not str(form.get(field) or "").strip() for field in required_fields) or vehicle_fields_missing:
             return templates.TemplateResponse(
                 "booking.html",
                 {
@@ -9056,7 +9069,7 @@ async def public_booking_submit(request: Request, shop_slug: str):
                 "customer_name": form.get("customer_name", ""),
                 "customer_phone": form.get("customer_phone", ""),
                 "customer_email": form.get("customer_email", ""),
-                "vehicle_label": form.get("vehicle_label", ""),
+                "vehicle_label": vehicle_label,
                 "service_name": form.get("service_name", ""),
                 "requested_date": form.get("requested_date", ""),
                 "requested_time": form.get("requested_time", ""),

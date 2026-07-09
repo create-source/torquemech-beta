@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Schedule Service | TorqueMech{% endblock %}
+{% block title %}Request Appointment | TorqueMech{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="/static/available_date_picker.css?v={{ static_version('/static/available_date_picker.css') }}">
@@ -8,7 +8,7 @@
   .tm-book-shell {
     display: grid;
     gap: 16px;
-    max-width: 840px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 24px 16px;
   }
@@ -20,7 +20,19 @@
   }
   .tm-book-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .tm-book-wide { grid-column: 1 / -1; }
-  .tm-book-shop { color: #0f766e; font-weight: 900; text-transform: uppercase; }
+  .tm-book-header {
+    display: grid;
+    gap: 8px;
+    border-left: 5px solid #0f766e;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .96);
+    padding: 18px;
+  }
+  .tm-book-header h1 { margin: 0; }
+  .tm-book-shop { color: #0f766e; font-size: .78rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+  .tm-book-description { color: #475569; line-height: 1.55; margin: 0; max-width: 720px; }
+  .tm-book-form-intro { grid-column: 1 / -1; color: #475569; line-height: 1.5; margin: 0 0 2px; }
+  .tm-book-section-title { grid-column: 1 / -1; margin: 5px 0 0; color: #0f172a; font-size: 1rem; }
   .tm-book-success {
     border: 1px solid rgba(14, 116, 144, 0.22);
     border-radius: 8px;
@@ -30,6 +42,7 @@
     font-weight: 900;
   }
   .tm-book-success p { margin: 0; }
+  .tm-book-success-reminder { margin-top: 8px !important; color: #92400e; }
   .tm-book-success-contact {
     margin-top: 8px !important;
     font-weight: 700;
@@ -69,21 +82,46 @@
     line-height: 1.45;
     margin: 7px 0 0;
   }
+  .tm-book-date-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .tm-book-date-clear {
+    border: 0;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #334155;
+    cursor: pointer;
+    min-height: 36px;
+    padding: 6px 11px;
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 900;
+  }
+  .tm-book-date-clear[hidden] { display: none; }
+  .tm-book-next {
+    display: grid;
+    gap: 8px;
+  }
+  .tm-book-next h2 { margin: 0; font-size: 1.1rem; }
+  .tm-book-next ol { display: grid; gap: 6px; margin: 0; padding-left: 22px; color: #475569; line-height: 1.45; }
+  .tm-book-required { color: #64748b; font-size: .78rem; font-weight: 700; }
+  .tm-book-form .tm-input { min-height: 46px; }
+  .tm-book-form textarea.tm-input { min-height: 112px; }
+  .tm-book-submit { min-height: 48px; font-size: 1rem; }
   @media (max-width: 640px) {
     .tm-book-form { grid-template-columns: 1fr; }
     .tm-book-form .tm-btn { width: 100%; }
     .tm-book-hours { grid-template-columns: 1fr; }
-    .tm-book-panel { padding: 16px; }
+    .tm-book-panel, .tm-book-header { padding: 15px; }
+    .tm-book-shell { padding: 14px 10px 24px; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <main class="tm-book-shell">
-  <header>
-    <div class="tm-book-shop">{{ profile.shop_name or "TorqueMech Shop" }}</div>
-    <h1 class="tm-pro-title">Schedule Service</h1>
-    <p class="tm-pro-subtitle">Your appointment request will be sent to the shop for confirmation.</p>
+  <header class="tm-book-header">
+    <div class="tm-book-shop">Appointment Request</div>
+    <h1 class="tm-pro-title">{{ profile.shop_name or "TorqueMech Shop" }}</h1>
+    <p class="tm-book-description">Request an appointment with this repair shop. Your request will be reviewed and confirmed by the shop before it is officially scheduled.</p>
   </header>
 
   <section class="tm-book-panel tm-book-schedule" aria-labelledby="booking-hours-title">
@@ -101,7 +139,8 @@
 
   {% if success %}
   <section class="tm-book-success" role="status">
-    <p>Your appointment request has been sent. The shop will review it and confirm your appointment.</p>
+    <p>Your appointment request has been sent. The shop will review your request and contact you to confirm the final appointment time.</p>
+    <p class="tm-book-success-reminder">This is not a confirmed appointment until the shop approves it.</p>
     <p class="tm-book-success-contact">
       Need to reschedule or cancel? Please contact the shop directly{% if profile.shop_phone or profile.shop_email %} at
       {% if profile.shop_phone %}<a href="tel:{{ profile.shop_phone }}">{{ profile.shop_phone|pro_phone }}</a>{% endif %}
@@ -114,28 +153,43 @@
     {% if warning %}<div class="tm-book-warning" role="alert">{{ warning }}</div>{% endif %}
     <form class="tm-book-form" method="post" action="/book/{{ shop_slug }}">
       <input type="hidden" name="appointment_length_minutes" value="{{ booking_schedule.appointment_length_minutes }}">
+      <p class="tm-book-form-intro">Choose a preferred date and time. The shop will review your request and confirm the final appointment window.</p>
+      <h2 class="tm-book-section-title">Contact information</h2>
       <div>
         <label class="tm-label" for="customer_name">Customer Name</label>
         <input class="tm-input" id="customer_name" name="customer_name" type="text" maxlength="180" value="{{ form.customer_name if form else '' }}" required>
       </div>
       <div>
         <label class="tm-label" for="customer_phone">Phone</label>
-        <input class="tm-input" id="customer_phone" name="customer_phone" type="tel" maxlength="80" value="{{ form.customer_phone if form else '' }}" placeholder="(***)***-****" required>
+        <input class="tm-input" id="customer_phone" name="customer_phone" type="tel" inputmode="tel" maxlength="14" value="{{ form.customer_phone if form else '' }}" placeholder="(***)***-****" autocomplete="tel" data-pro-phone-input required>
       </div>
       <div>
-        <label class="tm-label" for="customer_email">Email</label>
-        <input class="tm-input" id="customer_email" name="customer_email" type="email" maxlength="180" value="{{ form.customer_email if form else '' }}">
+        <label class="tm-label" for="customer_email">Email <span class="tm-book-required">(optional)</span></label>
+        <input class="tm-input" id="customer_email" name="customer_email" type="email" maxlength="180" value="{{ form.customer_email if form else '' }}" autocomplete="email">
+      </div>
+      <h2 class="tm-book-section-title">Vehicle and service</h2>
+      <div>
+        <label class="tm-label" for="vehicle_year">Vehicle Year</label>
+        <input class="tm-input" id="vehicle_year" name="vehicle_year" type="number" inputmode="numeric" min="1900" max="2100" value="{{ form.vehicle_year if form else '' }}" required>
       </div>
       <div>
-        <label class="tm-label" for="vehicle_label">Vehicle Year / Make / Model</label>
-        <input class="tm-input" id="vehicle_label" name="vehicle_label" type="text" maxlength="220" value="{{ form.vehicle_label if form else '' }}" required>
+        <label class="tm-label" for="vehicle_make">Vehicle Make</label>
+        <input class="tm-input" id="vehicle_make" name="vehicle_make" type="text" maxlength="100" value="{{ form.vehicle_make if form else '' }}" required>
       </div>
       <div>
-        <label class="tm-label" for="service_name">Service Needed</label>
+        <label class="tm-label" for="vehicle_model">Vehicle Model</label>
+        <input class="tm-input" id="vehicle_model" name="vehicle_model" type="text" maxlength="120" value="{{ form.vehicle_model if form else '' }}" required>
+      </div>
+      <div>
+        <label class="tm-label" for="service_name">Requested Service</label>
         <input class="tm-input" id="service_name" name="service_name" type="text" maxlength="220" value="{{ form.service_name if form else '' }}" required>
       </div>
+      <h2 class="tm-book-section-title">Preferred appointment window</h2>
       <div class="tm-book-wide">
-        <label class="tm-label" for="requested_date">Preferred Date</label>
+        <div class="tm-book-date-heading">
+          <label class="tm-label" for="requested_date">Preferred Date</label>
+          <button class="tm-book-date-clear" type="button" data-availability-clear aria-label="Clear preferred date" hidden>× Clear</button>
+        </div>
         <div class="tm-availability-picker" data-availability-picker
              data-dates-url="/book/{{ shop_slug }}/available-dates"
              data-times-url="/book/{{ shop_slug }}/available-times"
@@ -165,13 +219,23 @@
         <p class="tm-book-time-helper">This is your preferred drop-off or appointment time. Repair duration depends on the service, inspection, parts availability, and shop schedule.</p>
       </div>
       <div class="tm-book-wide">
-        <label class="tm-label" for="notes">Notes</label>
+        <label class="tm-label" for="notes">Notes or Message to the Shop</label>
         <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1600">{{ form.notes if form else '' }}</textarea>
       </div>
-      <button class="tm-btn tm-btn-primary tm-book-wide" type="submit">Request Appointment</button>
+      <button class="tm-btn tm-btn-primary tm-book-wide tm-book-submit" type="submit">Request Appointment</button>
     </form>
   </section>
   {% endif %}
+
+  <section class="tm-book-panel tm-book-next" aria-labelledby="booking-next-title">
+    <h2 id="booking-next-title">What happens next?</h2>
+    <ol>
+      <li>Customer submits request.</li>
+      <li>Shop reviews the request.</li>
+      <li>Shop confirms, reschedules, or contacts the customer.</li>
+      <li>Customer receives confirmation after the shop approves the request.</li>
+    </ol>
+  </section>
 </main>
 {#
 (() => {

@@ -20,6 +20,8 @@
     const grid = picker.querySelector("[data-availability-days]");
     const heading = picker.querySelector("[data-availability-month]");
     const status = picker.querySelector("[data-availability-status]");
+    const clearButton = picker.closest(".tm-book-wide")?.querySelector("[data-availability-clear]")
+      || picker.querySelector("[data-availability-clear]");
     const timeInput = document.querySelector(picker.dataset.timeTarget || "");
     const timeMessage = document.querySelector(picker.dataset.messageTarget || "");
     const datesUrl = picker.dataset.datesUrl;
@@ -34,6 +36,10 @@
       timeInput.innerHTML = '<option value="">Select an available drop-off time</option>';
       timeInput.disabled = true;
       if (timeMessage) timeMessage.textContent = message;
+    };
+
+    const syncClearButton = () => {
+      if (clearButton) clearButton.hidden = !input?.value;
     };
 
     const loadTimes = async () => {
@@ -107,6 +113,7 @@
               button.setAttribute("aria-pressed", "true");
               status.textContent = `Selected ${button.getAttribute("aria-label").replace(", available", "")}.`;
               input.dispatchEvent(new Event("change", { bubbles: true }));
+              syncClearButton();
               loadTimes();
             });
           }
@@ -129,6 +136,15 @@
       shownMonth = new Date(shownMonth.getFullYear(), shownMonth.getMonth() + 1, 1);
       render();
     });
+    clearButton?.addEventListener("click", () => {
+      input.value = "";
+      grid.querySelectorAll("[aria-pressed='true']").forEach((item) => item.setAttribute("aria-pressed", "false"));
+      status.textContent = "Choose a highlighted available date.";
+      resetTimes();
+      syncClearButton();
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    syncClearButton();
     render();
     if (input?.value) loadTimes();
   };
