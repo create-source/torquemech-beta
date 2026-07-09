@@ -274,6 +274,21 @@
           Use these source links to research parts pricing before entering Parts Cost. Confirm fitment on the vendor site before ordering.
           Confirm year, make, model, engine, and fitment before ordering.
         </p>
+        <div data-estimator-parts-source-groups>
+        {% if estimator_parts_sources[0].part_label %}
+        <div class="tm-estimator-parts-accordion" data-parts-source-accordion>
+          {% for part_label in ["Engine Oil", "Oil Filter", "Drain Plug / Washer"] %}
+          <details class="tm-estimator-parts-disclosure">
+            <summary>{{ part_label }}</summary>
+            <div class="tm-estimator-parts-source-list tm-estimator-parts-source-list--grid">
+              {% for source in estimator_parts_sources if source.part_label == part_label %}
+              <a class="tm-estimator-parts-source-link" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.vendor_label }}</a>
+              {% endfor %}
+            </div>
+          </details>
+          {% endfor %}
+        </div>
+        {% else %}
         {% for source_group in ["Marketplace Search", "Catalog Search"] %}
         <div class="tm-estimator-parts-source-group">
           <div class="tm-estimator-parts-source-group__title">{{ source_group }}</div>
@@ -288,6 +303,8 @@
           </div>
         </div>
         {% endfor %}
+        {% endif %}
+        </div>
       </section>
       {% endif %}
 

@@ -483,6 +483,60 @@
     text-transform: uppercase;
   }
 
+  .tm-parts-source-accordion {
+    display: grid;
+    gap: 8px;
+  }
+
+  .tm-parts-source-disclosure {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .tm-parts-source-disclosure summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    padding: 10px 12px;
+    color: #0f172a;
+    cursor: pointer;
+    font-weight: 900;
+    list-style: none;
+  }
+
+  .tm-parts-source-disclosure summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-parts-source-disclosure summary::after {
+    content: "+";
+    color: #0f766e;
+    font-size: 1.1rem;
+  }
+
+  .tm-parts-source-disclosure[open] summary::after {
+    content: "−";
+  }
+
+  .tm-parts-source-vendors {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 10px;
+  }
+
+  .tm-parts-source-vendors .tm-intel-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    text-align: center;
+  }
+
   .tm-blueprint-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2260,6 +2314,20 @@
             <div class="tm-blueprint-summary-title">Parts Sources</div>
             <div class="tm-blueprint-summary-subtitle">Searches by vehicle + repair. Confirm fitment on the vendor site before ordering.</div>
             <div class="tm-blueprint-summary-note" title="Confirm year, make, model, engine, and fitment before ordering.">Vendor sites may use saved garage filters. Always confirm year, make, model, engine, and fitment before ordering.</div>
+            {% if parts_sources[0].part_label %}
+            <div class="tm-parts-source-accordion" data-parts-source-accordion>
+              {% for part_label in ["Engine Oil", "Oil Filter", "Drain Plug / Washer"] %}
+              <details class="tm-parts-source-disclosure">
+                <summary>{{ part_label }}</summary>
+                <div class="tm-parts-source-vendors">
+                  {% for source in parts_sources if source.part_label == part_label %}
+                  <a class="tm-intel-badge" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.vendor_label }}</a>
+                  {% endfor %}
+                </div>
+              </details>
+              {% endfor %}
+            </div>
+            {% else %}
             {% for source_group in ["Marketplace Search", "Catalog Search"] %}
             <div class="tm-parts-source-group">
               <div class="tm-parts-source-group-title">{{ source_group }}</div>
@@ -2274,6 +2342,7 @@
               </div>
             </div>
             {% endfor %}
+            {% endif %}
           </section>
           {% endif %}
           {% include "pro/partials/parts_tracking.html" %}
@@ -2486,6 +2555,20 @@
           <div class="tm-blueprint-summary-title">Parts Sources</div>
           <div class="tm-blueprint-summary-subtitle">Searches by vehicle + repair. Confirm fitment on the vendor site before ordering.</div>
           <div class="tm-blueprint-summary-note" title="Confirm year, make, model, engine, and fitment before ordering.">Vendor sites may use saved garage filters. Always confirm year, make, model, engine, and fitment before ordering.</div>
+          {% if parts_sources[0].part_label %}
+          <div class="tm-parts-source-accordion" data-parts-source-accordion>
+            {% for part_label in ["Engine Oil", "Oil Filter", "Drain Plug / Washer"] %}
+            <details class="tm-parts-source-disclosure">
+              <summary>{{ part_label }}</summary>
+              <div class="tm-parts-source-vendors">
+                {% for source in parts_sources if source.part_label == part_label %}
+                <a class="tm-intel-badge" href="{{ source.url }}" target="_blank" rel="noopener">{{ source.vendor_label }}</a>
+                {% endfor %}
+              </div>
+            </details>
+            {% endfor %}
+          </div>
+          {% else %}
           {% for source_group in ["Marketplace Search", "Catalog Search"] %}
           <div class="tm-parts-source-group">
             <div class="tm-parts-source-group-title">{{ source_group }}</div>
@@ -2500,6 +2583,7 @@
             </div>
           </div>
           {% endfor %}
+          {% endif %}
         </section>
         {% endif %}
         <div class="tm-repair-work-sections">
@@ -4258,6 +4342,20 @@
         }
       });
     });
+  });
+})();
+</script>
+
+<script>
+(() => {
+  document.querySelectorAll("[data-parts-source-accordion]").forEach((accordion) => {
+    accordion.addEventListener("toggle", (event) => {
+      const opened = event.target;
+      if (!(opened instanceof HTMLDetailsElement) || !opened.open) return;
+      accordion.querySelectorAll("details[open]").forEach((details) => {
+        if (details !== opened) details.open = false;
+      });
+    }, true);
   });
 })();
 </script>

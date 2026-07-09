@@ -3814,12 +3814,13 @@ const confidenceEl = document.getElementById("laborConfidence");
       estimatorPartsSourceRepairEl.textContent = keyword || "Vehicle search";
       estimatorPartsSourceRepairEl.hidden = !keyword;
     }
-    estimatorPartsSourcesEl.querySelectorAll("[data-estimator-parts-source-group]").forEach((groupEl) => {
-      const groupName = groupEl.dataset.estimatorPartsSourceGroup || "";
-      const groupSources = sources.filter((source) => source.search_group === groupName);
-      groupEl.innerHTML = "";
-      groupSources.forEach((source) => {
-        const text = `${source.label || source.source_label || "Source"}${source.note ? `: ${source.note}` : ""}`;
+    const groupsEl = estimatorPartsSourcesEl.querySelector("[data-estimator-parts-source-groups]");
+    if (!groupsEl) return;
+    groupsEl.innerHTML = "";
+    const appendSource = (listEl, source, compact = false) => {
+        const text = compact
+          ? String(source.vendor_label || source.source_label || "Source")
+          : `${source.label || source.source_label || "Source"}${source.note ? `: ${source.note}` : ""}`;
         const url = String(source.url || "").trim();
         const node = document.createElement(url ? "a" : "span");
         node.className = "tm-estimator-parts-source-link";
@@ -3829,10 +3830,55 @@ const confidenceEl = document.getElementById("laborConfidence");
           node.target = "_blank";
           node.rel = "noopener";
         }
-        groupEl.appendChild(node);
+        listEl.appendChild(node);
+    };
+    const partLabels = ["Engine Oil", "Oil Filter", "Drain Plug / Washer"];
+    const hasPartGroups = sources.some((source) => partLabels.includes(source.part_label));
+    if (hasPartGroups) {
+      const accordion = document.createElement("div");
+      accordion.className = "tm-estimator-parts-accordion";
+      accordion.dataset.partsSourceAccordion = "";
+      partLabels.forEach((partLabel) => {
+        const details = document.createElement("details");
+        details.className = "tm-estimator-parts-disclosure";
+        const summary = document.createElement("summary");
+        summary.textContent = partLabel;
+        const list = document.createElement("div");
+        list.className = "tm-estimator-parts-source-list tm-estimator-parts-source-list--grid";
+        sources
+          .filter((source) => source.part_label === partLabel)
+          .forEach((source) => appendSource(list, source, true));
+        details.append(summary, list);
+        accordion.appendChild(details);
       });
+      groupsEl.appendChild(accordion);
+      return;
+    }
+    ["Marketplace Search", "Catalog Search"].forEach((groupName) => {
+      const group = document.createElement("div");
+      group.className = "tm-estimator-parts-source-group";
+      const title = document.createElement("div");
+      title.className = "tm-estimator-parts-source-group__title";
+      title.textContent = groupName;
+      const list = document.createElement("div");
+      list.className = "tm-estimator-parts-source-list";
+      list.dataset.estimatorPartsSourceGroup = groupName;
+      sources
+        .filter((source) => source.search_group === groupName)
+        .forEach((source) => appendSource(list, source));
+      group.append(title, list);
+      groupsEl.appendChild(group);
     });
   }
+
+  estimatorPartsSourcesEl?.addEventListener("toggle", (event) => {
+    const opened = event.target;
+    const accordion = opened?.closest?.("[data-parts-source-accordion]");
+    if (!(opened instanceof HTMLDetailsElement) || !accordion || !opened.open) return;
+    accordion.querySelectorAll("details[open]").forEach((details) => {
+      if (details !== opened) details.open = false;
+    });
+  }, true);
 
   function getEstimatorPartsSourceServiceText() {
     const typedService = String(serviceSearch?.value || "").trim();

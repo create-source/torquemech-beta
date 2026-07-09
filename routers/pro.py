@@ -6928,6 +6928,14 @@ def parts_source_display_label(label: str, url: str) -> str:
     return label
 
 
+def parts_source_vendor_label(label: str) -> str:
+    if label == "OEM/dealer catalog":
+        return "OEM"
+    if label == "O'Reilly":
+        return "O’Reilly"
+    return label
+
+
 def parts_source_search_group(label: str) -> str:
     if label in {"Amazon", "eBay"}:
         return "Marketplace Search"
@@ -6963,6 +6971,19 @@ def repair_workspace_parts_sources(
     for label in DEFAULT_PARTS_SOURCE_LABELS:
         if label not in ordered_labels:
             ordered_labels.append(label)
+    if components[0][0]:
+        preferred_oil_order = [
+            "Amazon",
+            "eBay",
+            "O'Reilly",
+            "AutoZone",
+            "NAPA",
+            "RockAuto",
+            "OEM/dealer catalog",
+            "Google Shopping",
+            "1A Auto",
+        ]
+        ordered_labels = [label for label in preferred_oil_order if label in ordered_labels]
 
     for part_label, keyword in components:
         query = re.sub(r"\s+", " ", f"{vehicle_query} {keyword}").strip()
@@ -6974,6 +6995,7 @@ def repair_workspace_parts_sources(
                     "label": f"{part_label} — {display_label}" if part_label else display_label,
                     "part_label": part_label,
                     "source_label": label,
+                    "vendor_label": parts_source_vendor_label(label),
                     "search_group": parts_source_search_group(label),
                     "note": notes_by_label.get(label, ""),
                     "url": url,

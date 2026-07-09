@@ -1557,6 +1557,60 @@ button:active{
   text-decoration:none;
 }
 
+.tm-estimator-parts-accordion{
+  display:grid;
+  gap:8px;
+}
+
+.tm-estimator-parts-disclosure{
+  overflow:hidden;
+  border:1px solid rgba(15,23,42,.1);
+  border-radius:8px;
+  background:#fff;
+}
+
+.tm-estimator-parts-disclosure summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-height:44px;
+  padding:10px 12px;
+  color:#0f172a;
+  cursor:pointer;
+  font-weight:900;
+  list-style:none;
+}
+
+.tm-estimator-parts-disclosure summary::-webkit-details-marker{
+  display:none;
+}
+
+.tm-estimator-parts-disclosure summary::after{
+  content:"+";
+  color:#0f766e;
+  font-size:1.1rem;
+}
+
+.tm-estimator-parts-disclosure[open] summary::after{
+  content:"−";
+}
+
+.tm-estimator-parts-source-list--grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  border-top:1px solid rgba(15,23,42,.08);
+  padding:10px;
+}
+
+.tm-estimator-parts-source-list--grid .tm-estimator-parts-source-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  text-align:center;
+}
+
 .pricing-controls{
   margin-top: 12px;
   padding: 12px;
