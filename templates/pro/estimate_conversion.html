@@ -125,9 +125,24 @@
     font-weight: 800;
   }
 
+  .tm-convert-requirement {
+    border-left: 4px solid #0f766e;
+    border-radius: 8px;
+    background: #ecfdf5;
+    color: #134e4a;
+    padding: 14px 16px;
+    font-weight: 850;
+  }
+
   @media (max-width: 760px) {
     .tm-convert-grid {
       grid-template-columns: 1fr;
+    }
+
+    .tm-convert-requirement {
+      font-size: 1rem;
+      line-height: 1.45;
+      padding: 16px;
     }
   }
 </style>
@@ -151,6 +166,12 @@
   {% if payload %}
   <form class="tm-convert-shell" method="post" action="/pro/estimate-conversion/create">
     <input type="hidden" name="estimate_payload" value="{{ payload_json|e }}">
+    <div class="tm-convert-requirement">
+      Select or create a customer, then select or create a vehicle before importing services.
+    </div>
+    <div class="tm-convert-error" data-convert-requirement-error role="alert" aria-live="assertive" hidden>
+      Customer and vehicle are required before this estimate can be imported.
+    </div>
 
     <section class="tm-convert-panel" aria-label="Customer">
       <div class="tm-convert-step-head">
@@ -282,6 +303,8 @@
       const preselectedVehicleId = "{{ payload.vehicle_id or '' }}";
       const customerSelect = document.getElementById("customer_id");
       const vehicleSelect = document.getElementById("vehicle_id");
+      const conversionForm = document.querySelector(".tm-convert-shell");
+      const requirementError = document.querySelector("[data-convert-requirement-error]");
       const panels = {
         customer: Array.from(document.querySelectorAll("[data-customer-panel]")),
         vehicle: Array.from(document.querySelectorAll("[data-vehicle-panel]")),
@@ -333,6 +356,23 @@
       document.addEventListener("change", (event) => {
         if (event.target?.name === "customer_mode" || event.target?.name === "vehicle_mode") syncPanels();
         if (event.target === customerSelect) syncVehicles();
+        if (requirementError) requirementError.hidden = true;
+      });
+      conversionForm?.addEventListener("submit", (event) => {
+        const customerMode = selectedRadio("customer_mode");
+        const vehicleMode = customerMode === "new" ? "new" : selectedRadio("vehicle_mode");
+        const hasCustomer = customerMode === "new"
+          ? Boolean(document.getElementById("new_customer_name")?.value.trim())
+          : Boolean(customerSelect?.value);
+        const hasVehicle = vehicleMode === "new"
+          ? ["new_vehicle_year", "new_vehicle_make", "new_vehicle_model"]
+              .some((id) => Boolean(document.getElementById(id)?.value.trim()))
+          : Boolean(vehicleSelect?.value);
+        if (!hasCustomer || !hasVehicle) {
+          event.preventDefault();
+          requirementError.hidden = false;
+          requirementError.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
       });
       syncPanels();
       syncVehicles();

@@ -73,8 +73,9 @@ PARTS_SEARCH_KEYWORDS = {
     "coolant drain refill": "engine coolant",
     "coolant drain and refill": "engine coolant",
     "coolant flush": "engine coolant",
-    "oil change": "engine oil filter",
-    "oil and filter change": "engine oil filter",
+    "oil change": "engine oil",
+    "oil filter change": "engine oil",
+    "oil and filter change": "engine oil",
     "water pump replacement": "water pump",
     "radiator replacement": "radiator",
     "alternator replacement": "alternator",
@@ -6848,6 +6849,17 @@ def build_parts_search_query(vehicle: dict[str, Any] | sqlite3.Row | None, servi
     return re.sub(r"\s+", " ", " ".join(part for part in [*vehicle_parts, keyword] if part)).strip()
 
 
+def parts_search_components(service_title: Any) -> list[tuple[str, str]]:
+    normalized = normalize_parts_service_title(service_title)
+    if normalized in {"oil change", "oil filter change", "oil and filter change"}:
+        return [
+            ("Engine Oil", "engine oil"),
+            ("Oil Filter", "oil filter"),
+            ("Drain Plug / Washer", "oil drain plug washer"),
+        ]
+    return [("", parts_keyword_for_service(service_title))]
+
+
 def repair_record_parts_search_title(record: dict[str, Any] | sqlite3.Row | None, fallback_title: Any = "") -> str:
     custom_keyword = str(record_value(record, "parts_search_term") or "").strip()
     return custom_keyword or str(fallback_title or record_value(record, "repair_name") or "Repair").strip()
@@ -6927,7 +6939,8 @@ def repair_workspace_parts_sources(
     vehicle: dict[str, Any] | sqlite3.Row | None,
     service_title: Any,
 ) -> list[dict[str, str]]:
-    query = build_parts_search_query(vehicle, service_title)
+    vehicle_query = build_parts_search_query(vehicle, "")
+    components = parts_search_components(service_title)
     raw_sources = (blueprint or {}).get("vendor_sources") or (blueprint or {}).get("vendor_links") or []
     if not isinstance(raw_sources, list):
         raw_sources = [raw_sources]
@@ -6951,18 +6964,22 @@ def repair_workspace_parts_sources(
         if label not in ordered_labels:
             ordered_labels.append(label)
 
-    for label in ordered_labels:
-        url = parts_search_url(label, query) if query else ""
-        sources.append(
-            {
-                "label": parts_source_display_label(label, url),
-                "source_label": label,
-                "search_group": parts_source_search_group(label),
-                "note": notes_by_label.get(label, ""),
-                "url": url,
-                "query": query,
-            }
-        )
+    for part_label, keyword in components:
+        query = re.sub(r"\s+", " ", f"{vehicle_query} {keyword}").strip()
+        for label in ordered_labels:
+            url = parts_search_url(label, query) if query else ""
+            display_label = parts_source_display_label(label, url)
+            sources.append(
+                {
+                    "label": f"{part_label} — {display_label}" if part_label else display_label,
+                    "part_label": part_label,
+                    "source_label": label,
+                    "search_group": parts_source_search_group(label),
+                    "note": notes_by_label.get(label, ""),
+                    "url": url,
+                    "query": query,
+                }
+            )
     return sources
 
 
@@ -9175,13 +9192,38 @@ async def pro_estimate_conversion_create(request: Request):
     selected_items = [
         item for item in payload["lineItems"] if int(item["index"]) in selected_indices
     ]
-    if not selected_items:
-        raise HTTPException(status_code=400, detail="Select at least one service to import")
-
     now = datetime.utcnow().isoformat()
     repair_date = local_today().isoformat()
     customer_mode = form.get("customer_mode", "existing")
     vehicle_mode = form.get("vehicle_mode", "existing")
+    customer_missing = (
+        customer_mode not in {"existing", "new"}
+        or (customer_mode == "existing" and not optional_int(form, "customer_id"))
+        or (customer_mode == "new" and not form.get("new_customer_name", "").strip())
+    )
+    vehicle_payload = payload.get("vehicle") or {}
+    vehicle_missing = (
+        vehicle_mode not in {"existing", "new"}
+        or (customer_mode == "existing" and vehicle_mode == "existing" and not optional_int(form, "vehicle_id"))
+        or (
+            vehicle_mode == "new"
+            and not (
+                form.get("new_vehicle_year")
+                or vehicle_payload.get("year")
+                or form.get("new_vehicle_make")
+                or vehicle_payload.get("make")
+                or form.get("new_vehicle_model")
+                or vehicle_payload.get("model")
+            )
+        )
+    )
+    if customer_missing or vehicle_missing:
+        raise HTTPException(
+            status_code=400,
+            detail="Customer and vehicle are required before this estimate can be imported.",
+        )
+    if not selected_items:
+        raise HTTPException(status_code=400, detail="Select at least one service to import")
 
     conn = crm_db_conn()
     try:
@@ -9218,7 +9260,6 @@ async def pro_estimate_conversion_create(request: Request):
                 raise HTTPException(status_code=400, detail="Select a customer")
 
         if vehicle_mode == "new":
-            vehicle_payload = payload.get("vehicle") or {}
             cur = conn.execute(
                 """
                 INSERT INTO customer_vehicles (
