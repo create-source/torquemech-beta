@@ -1507,12 +1507,14 @@ def appointment_customer_messages(
     appointment_date = format_pro_date(appointment.get("requested_date")) or "the scheduled date"
     appointment_time = format_pro_time(appointment.get("requested_time")) or "the scheduled time"
     service_name = str(appointment.get("service_name") or "").strip() or "your requested service"
-    vehicle_label = str(appointment.get("vehicle_label") or "").strip() or "your vehicle"
+    vehicle_label = str(appointment.get("vehicle_label") or "").strip() or "vehicle"
+    vehicle_phrase = vehicle_label if vehicle_label.lower().startswith("your ") else f"your {vehicle_label}"
     phone = format_phone(
         _context_lookup(sender_context, "shop_phone")
         or _context_lookup(sender_context, "phone")
         or ""
     )
+    phone = re.sub(r"^(\(\d{3}\))", r"\1 ", phone)
     email = str(
         _context_lookup(sender_context, "shop_email")
         or _context_lookup(sender_context, "email")
@@ -1520,39 +1522,73 @@ def appointment_customer_messages(
     ).strip()
     contact_parts = [part for part in (phone, email) if part]
     contact = " or ".join(contact_parts)
-    reschedule_contact = (
+    schedule_contact = (
         f"If you need to reschedule or cancel, please contact us at {contact}."
         if contact
         else "If you need to reschedule or cancel, please contact the shop directly."
     )
     duration_note = (
-        "Repair duration depends on the service, inspection, parts availability, "
-        "and shop schedule."
+        "Please note that repair duration may vary depending on the service, inspection findings, "
+        "parts availability, and shop schedule."
     )
     return {
-        "confirmation_message": (
-            f"Hi {customer_name}, this is {shop_name}. Your appointment request for "
-            f"{vehicle_label} regarding {service_name} has been confirmed for {appointment_date} "
-            f"at {appointment_time}. Please contact us if anything changes. Thank you. "
-            f"{duration_note} {reschedule_contact}"
+        "confirmation_message": "\n\n".join(
+            [
+                f"Hi {customer_name}, this is {shop_name}.",
+                (
+                    f"Your appointment request for {vehicle_phrase} regarding {service_name} "
+                    f"has been confirmed for {appointment_date} at {appointment_time}."
+                ),
+                duration_note,
+                schedule_contact,
+                "Thank you.",
+            ]
         ),
-        "reschedule_message": (
-            f"Hi {customer_name}, this is {shop_name}. We need to reschedule your appointment "
-            f"for {vehicle_label} regarding {service_name}. The new drop-off / appointment time is "
-            f"{appointment_date} at {appointment_time}. Please reply or contact us if this does not "
-            f"work for you. {duration_note} {reschedule_contact}"
+        "reschedule_message": "\n\n".join(
+            [
+                f"Hi {customer_name}, this is {shop_name}.",
+                (
+                    f"We need to reschedule your appointment for {vehicle_phrase} regarding "
+                    f"{service_name}. The new drop-off / appointment time is {appointment_date} "
+                    f"at {appointment_time}."
+                ),
+                duration_note,
+                (
+                    f"Please reply or contact us at {contact} if this does not work for you."
+                    if contact
+                    else "Please reply or contact the shop directly if this does not work for you."
+                ),
+            ]
         ),
-        "cancellation_message": (
-            f"Hi {customer_name}, this is {shop_name}. Your appointment for {vehicle_label} "
-            f"regarding {service_name} on {appointment_date} at {appointment_time} has been canceled. "
-            f"Please contact us if you would like to request a new appointment. "
-            f"{duration_note} {reschedule_contact}"
+        "cancellation_message": "\n\n".join(
+            [
+                f"Hi {customer_name}, this is {shop_name}.",
+                (
+                    f"Your appointment for {vehicle_phrase} regarding {service_name} on "
+                    f"{appointment_date} at {appointment_time} has been canceled."
+                ),
+                duration_note,
+                (
+                    f"Please contact us at {contact} if you would like to request a new appointment."
+                    if contact
+                    else "Please contact the shop directly if you would like to request a new appointment."
+                ),
+            ]
         ),
-        "declined_message": (
-            f"Hi {customer_name}, this is {shop_name}. We’re unable to accept your appointment "
-            f"request for {vehicle_label} regarding {service_name} on {appointment_date} at "
-            f"{appointment_time}. Please contact us to choose another available time. "
-            f"{duration_note} {reschedule_contact}"
+        "declined_message": "\n\n".join(
+            [
+                f"Hi {customer_name}, this is {shop_name}.",
+                (
+                    f"We’re unable to accept your appointment request for {vehicle_phrase} regarding "
+                    f"{service_name} on {appointment_date} at {appointment_time}."
+                ),
+                duration_note,
+                (
+                    f"Please contact us at {contact} to choose another available time."
+                    if contact
+                    else "Please contact the shop directly to choose another available time."
+                ),
+            ]
         ),
     }
 

@@ -594,12 +594,14 @@ class CalendarFoundationTests(unittest.TestCase):
             self.assertIn("Brake Inspection", message)
             self.assertIn("07/13/2026", message)
             self.assertIn("10:00 AM", message)
-            self.assertIn("(559)222-3333", message)
+            self.assertIn("(559) 222-3333", message)
             self.assertIn("service@torquemech.test", message)
             self.assertIn(
-                "Repair duration depends on the service, inspection, parts availability, and shop schedule.",
+                "Please note that repair duration may vary depending on the service, inspection findings, "
+                "parts availability, and shop schedule.",
                 message,
             )
+            self.assertIn("\n\n", message)
         self.assertIn("has been confirmed", messages["confirmation_message"])
         self.assertIn("new drop-off / appointment time", messages["reschedule_message"])
         self.assertIn("has been canceled", messages["cancellation_message"])
