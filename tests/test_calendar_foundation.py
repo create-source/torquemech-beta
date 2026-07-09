@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -251,6 +252,19 @@ class CalendarFoundationTests(unittest.TestCase):
 
         self.assertIn("Schedule your service here:\nhttp://127.0.0.1:8125/book/torquemech-shop", message)
         self.assertNotIn("calendly.com", message)
+
+    def test_production_booking_link_is_canonical_https_url(self):
+        expected = "https://torquemech.com/book/torquemech-shop"
+        request = SimpleNamespace(
+            url=SimpleNamespace(hostname="www.torquemech.com"),
+            base_url="http://www.torquemech.com/",
+        )
+        template = (main.BASE_DIR / "templates" / "pro" / "shop_settings.html").read_text(encoding="utf-8")
+
+        self.assertEqual(pro_module.build_shop_booking_link({}, request), expected)
+        self.assertIn('href="{{ profile.booking_link }}" target="_blank"', template)
+        self.assertIn("Send this link to customers so they can request an appointment.", template)
+        self.assertIn(">Open Booking Page</a>", template)
 
     def test_shop_settings_save_profile_pricing_and_reuse_shop_name(self):
         conn = self.memory_conn()

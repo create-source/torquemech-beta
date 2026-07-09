@@ -56,22 +56,48 @@
   }
 
   .tm-shop-booking-link {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .tm-shop-booking-url {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid rgba(15, 23, 42, 0.18);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #0f172a;
+    padding: 11px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  .tm-shop-booking-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
     align-items: center;
-    margin-top: 10px;
-  }
-
-  .tm-shop-booking-link code {
-    overflow-wrap: anywhere;
-    white-space: normal;
   }
 
   .tm-shop-copy-status {
     color: #115e59;
     font-size: 0.9rem;
     font-weight: 900;
+  }
+
+  @media (max-width: 640px) {
+    .tm-shop-booking-actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .tm-shop-booking-actions .tm-btn { width: 100%; }
   }
 
   .tm-workflow-help {
@@ -318,10 +344,14 @@
 
   <section class="tm-shop-settings-panel" aria-label="TorqueMech booking link">
     <h2 style="margin:0;">TorqueMech Booking Link</h2>
+    <p class="tm-shop-settings-help" style="margin:6px 0 0;">Send this link to customers so they can request an appointment.</p>
     <div class="tm-shop-booking-link">
-      <code data-booking-link>{{ profile.booking_link }}</code>
-      <button class="tm-btn tm-btn-secondary" type="button" data-copy-booking-link>Copy Booking Link</button>
-      <span class="tm-shop-copy-status" aria-live="polite" data-copy-status></span>
+      <code class="tm-shop-booking-url" data-booking-link>{{ profile.booking_link }}</code>
+      <div class="tm-shop-booking-actions">
+        <button class="tm-btn tm-btn-primary" type="button" data-copy-booking-link>Copy Booking Link</button>
+        <a class="tm-btn tm-btn-secondary" href="{{ profile.booking_link }}" target="_blank" rel="noopener noreferrer">Open Booking Page</a>
+        <span class="tm-shop-copy-status" aria-live="polite" data-copy-status></span>
+      </div>
     </div>
     <details class="tm-workflow-help">
       <summary>How booking works</summary>
@@ -503,11 +533,29 @@
   const button = document.querySelector("[data-copy-booking-link]");
   const link = document.querySelector("[data-booking-link]");
   const status = document.querySelector("[data-copy-status]");
+  const copyBookingLink = async (value) => {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch (_) {}
+    }
+    const fallback = document.createElement("textarea");
+    fallback.value = value;
+    fallback.setAttribute("readonly", "");
+    fallback.style.position = "fixed";
+    fallback.style.opacity = "0";
+    document.body.appendChild(fallback);
+    fallback.select();
+    const copied = document.execCommand("copy");
+    fallback.remove();
+    return copied;
+  };
   button?.addEventListener("click", async () => {
     const value = link?.textContent?.trim() || "";
     if (!value) return;
-    await navigator.clipboard?.writeText(value);
-    if (status) status.textContent = "Copied";
+    const copied = await copyBookingLink(value);
+    if (status) status.textContent = copied ? "Copied" : "Copy failed. Select the link above.";
     window.setTimeout(() => { if (status) status.textContent = ""; }, 2200);
   });
 })();

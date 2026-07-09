@@ -870,6 +870,9 @@ def shop_booking_slug(profile: dict[str, Any] | None = None) -> str:
 
 def request_base_url(request: Request | None = None) -> str:
     if request is not None:
+        hostname = str(request.url.hostname or "").lower()
+        if hostname == "torquemech.com" or hostname.endswith(".torquemech.com"):
+            return "https://torquemech.com"
         return str(request.base_url).rstrip("/")
     return "http://127.0.0.1:8125"
 
