@@ -233,6 +233,95 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Appointments are 90 minutes, with 15 minutes between bookings.", response.text)
         self.assertIn("Your appointment request has been sent.", response.text)
 
+    def test_available_time_dropdown_excludes_pending_and_confirmed_slots(self):
+        conn = self.memory_conn()
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [
+                    {"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "12:00"},
+                    {"day_of_week": 1, "is_open": False, "start_time": "09:00", "end_time": "12:00"},
+                ],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+            )
+            for requested_time, status in [("09:00", "Requested"), ("10:00", "Confirmed")]:
+                pro_module.create_service_appointment(
+                    conn,
+                    {
+                        "customer_name": "Slot Customer",
+                        "customer_phone": "5555550100",
+                        "vehicle_label": "Test Vehicle",
+                        "service_name": "Test Service",
+                        "requested_date": "2026-07-13",
+                        "requested_time": requested_time,
+                        "status": status,
+                    },
+                )
+            result = pro_module.available_booking_times(conn, "2026-07-13")
+            closed_result = pro_module.available_booking_times(conn, "2026-07-14")
+        finally:
+            conn.close()
+
+        self.assertEqual(result["state"], "available")
+        self.assertEqual(result["times"], [{"value": "11:00", "label": "11:00 AM"}])
+        self.assertEqual(closed_result["state"], "closed")
+        self.assertEqual(
+            closed_result["message"],
+            "The shop is closed on this day. Please choose another day.",
+        )
+
+    def test_calendar_request_status_actions_and_friendly_notices(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Booking Customer",
+                    "customer_phone": "5555550100",
+                    "customer_email": "customer@example.com",
+                    "vehicle_label": "2020 Honda Civic",
+                    "service_name": "Brake Inspection",
+                    "requested_date": "2026-07-13",
+                    "requested_time": "09:00",
+                    "notes": "Please call first",
+                    "status": "Requested",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client = TestClient(main.app, base_url="http://localhost")
+                pending_page = client.get("/pro/calendar")
+                confirm_response = client.post(
+                    f"/pro/calendar/{appointment_id}/status",
+                    data={"status": "Confirmed"},
+                    follow_redirects=False,
+                )
+                confirmed_page = client.get("/pro/calendar?notice=confirmed")
+                handled_response = client.post(
+                    f"/pro/calendar/{appointment_id}/status",
+                    data={"status": "Handled"},
+                    follow_redirects=False,
+                )
+                row = conn.execute(
+                    "SELECT status FROM service_appointments WHERE id = ?",
+                    (appointment_id,),
+                ).fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertIn("Pending Request", pending_page.text)
+        self.assertIn("customer@example.com", pending_page.text)
+        self.assertIn("2020 Honda Civic", pending_page.text)
+        self.assertEqual(confirm_response.headers["location"], "/pro/calendar?notice=confirmed")
+        self.assertIn("Appointment confirmed.", confirmed_page.text)
+        self.assertIn("Confirmed Appointments", confirmed_page.text)
+        self.assertEqual(handled_response.headers["location"], "/pro/calendar?notice=handled")
+        self.assertEqual(row["status"], "Handled")
+
     def test_maintenance_reminder_prefers_builtin_booking_link(self):
         message = pro_module.build_maintenance_reminder_message(
             customer={"first_name": "Natalie"},

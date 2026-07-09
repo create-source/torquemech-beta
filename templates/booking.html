@@ -49,6 +49,12 @@
   .tm-book-hours div { display: flex; justify-content: space-between; gap: 12px; }
   .tm-book-hours dt { font-weight: 800; }
   .tm-book-hours dd { margin: 0; text-align: right; }
+  .tm-book-time-message {
+    color: #92400e;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 6px 0 0;
+  }
   @media (max-width: 640px) {
     .tm-book-form { grid-template-columns: 1fr; }
     .tm-book-form .tm-btn { width: 100%; }
@@ -112,7 +118,10 @@
       </div>
       <div>
         <label class="tm-label" for="requested_time">Preferred Time</label>
-        <input class="tm-input" id="requested_time" name="requested_time" type="time" step="{{ booking_schedule.appointment_length_minutes * 60 }}" value="{{ form.requested_time if form else '' }}" required>
+        <select class="tm-input" id="requested_time" name="requested_time" data-selected-time="{{ form.requested_time if form else '' }}" required disabled>
+          <option value="">Select an available time</option>
+        </select>
+        <p class="tm-book-time-message" data-time-message aria-live="polite"></p>
       </div>
       <div class="tm-book-wide">
         <label class="tm-label" for="notes">Notes</label>
@@ -125,30 +134,46 @@
 </main>
 <script>
 (() => {
-  const schedule = {{ booking_schedule.days | tojson }};
   const dateInput = document.getElementById("requested_date");
   const timeInput = document.getElementById("requested_time");
   const warning = document.querySelector(".tm-book-warning");
-  const messageForSelection = () => {
-    if (!dateInput?.value) return "";
-    const selectedDate = new Date(`${dateInput.value}T12:00:00`);
-    const day = schedule[(selectedDate.getDay() + 6) % 7];
-    if (!day?.is_open) return "The shop is closed on this day. Please choose another day.";
-    if (timeInput?.value && (timeInput.value < day.start_time || timeInput.value >= day.end_time)) {
-      return "This time is outside the shop's business hours. Please choose a time during the available schedule.";
-    }
-    return "";
+  const timeMessage = document.querySelector("[data-time-message]");
+  const selectedTime = timeInput?.dataset.selectedTime || "";
+  const resetTimes = (message = "") => {
+    timeInput.innerHTML = '<option value="">Select an available time</option>';
+    timeInput.disabled = true;
+    if (timeMessage) timeMessage.textContent = message;
   };
-  [dateInput, timeInput].forEach((input) => input?.addEventListener("change", () => {
-    const message = messageForSelection();
-    [dateInput, timeInput].forEach((field) => field?.setCustomValidity(""));
-    if (message) {
-      (timeInput || dateInput).setCustomValidity(message);
-      (timeInput || dateInput).reportValidity();
-    } else if (warning) {
-      warning.hidden = true;
+  const refreshTimes = async () => {
+    if (!dateInput?.value) {
+      resetTimes();
+      return;
     }
-  }));
+    resetTimes("Checking available times…");
+    try {
+      const response = await fetch(`/book/{{ shop_slug }}/available-times?date=${encodeURIComponent(dateInput.value)}`);
+      if (!response.ok) throw new Error("availability");
+      const result = await response.json();
+      if (result.state !== "available") {
+        resetTimes(result.message || "No appointment times are available for this day. Please choose another day.");
+        return;
+      }
+      result.times.forEach((slot) => {
+        const option = document.createElement("option");
+        option.value = slot.value;
+        option.textContent = slot.label;
+        option.selected = slot.value === selectedTime;
+        timeInput.appendChild(option);
+      });
+      timeInput.disabled = false;
+      if (timeMessage) timeMessage.textContent = "";
+      if (warning) warning.hidden = true;
+    } catch (_) {
+      resetTimes("Available times could not be loaded. Please try another day.");
+    }
+  };
+  dateInput?.addEventListener("change", refreshTimes);
+  refreshTimes();
 })();
 </script>
 {% endblock %}

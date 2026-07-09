@@ -200,7 +200,7 @@ REPAIR_COMPLETION_CHECKS = (
     ("customer_concern_resolved", "Customer concern resolved"),
 )
 
-APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Completed", "Cancelled")
+APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Handled", "Declined", "Completed", "Cancelled")
 APPOINTMENT_LENGTH_OPTIONS = (30, 45, 60, 90, 120)
 APPOINTMENT_BUFFER_OPTIONS = (0, 15, 30)
 SHOP_SCHEDULE_DAYS = (
@@ -1253,6 +1253,51 @@ def is_booking_time_available(
     return True, ""
 
 
+def available_booking_times(conn: sqlite3.Connection, requested_date: str) -> dict[str, Any]:
+    parsed_date = parse_date_value(requested_date)
+    if not parsed_date:
+        return {"state": "invalid", "message": "Please choose a valid appointment date.", "times": []}
+    closed, closed_message = is_closed_booking_day(conn, requested_date)
+    if closed:
+        return {"state": "closed", "message": closed_message, "times": []}
+    availability = load_shop_availability(conn)
+    day_row = next(
+        (row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()),
+        None,
+    )
+    if not day_row:
+        return {
+            "state": "closed",
+            "message": "The shop is closed on this day. Please choose another day.",
+            "times": [],
+        }
+    duration = int(day_row.get("appointment_length_minutes") or 60)
+    buffer_minutes = int(day_row.get("buffer_minutes") or 0)
+    try:
+        slot = datetime.strptime(str(day_row.get("start_time") or "09:00")[:5], "%H:%M")
+        closing = datetime.strptime(str(day_row.get("end_time") or "17:00")[:5], "%H:%M")
+    except ValueError:
+        return {
+            "state": "unavailable",
+            "message": "No appointment times are available for this day. Please choose another day.",
+            "times": [],
+        }
+    times: list[dict[str, str]] = []
+    while slot + timedelta(minutes=duration) <= closing:
+        raw_time = slot.strftime("%H:%M")
+        available, _ = is_booking_time_available(conn, requested_date, raw_time, duration)
+        if available:
+            times.append({"value": raw_time, "label": format_time_label(raw_time)})
+        slot += timedelta(minutes=duration + buffer_minutes)
+    if not times:
+        return {
+            "state": "unavailable",
+            "message": "No appointment times are available for this day. Please choose another day.",
+            "times": [],
+        }
+    return {"state": "available", "message": "", "times": times}
+
+
 def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -> int:
     ensure_calendar_schema(conn)
     status = str(data.get("status") or "Requested").strip()
@@ -1338,6 +1383,21 @@ def group_calendar_appointments(appointments: list[dict[str, Any]], today: date 
             grouped["this_week"].append(appointment)
         else:
             grouped["upcoming"].append(appointment)
+    return grouped
+
+
+def group_booking_review_appointments(appointments: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped = {"pending": [], "confirmed": [], "handled": [], "declined_cancelled": []}
+    for appointment in appointments:
+        status = str(appointment.get("status") or "Requested")
+        if status == "Requested":
+            grouped["pending"].append(appointment)
+        elif status == "Confirmed":
+            grouped["confirmed"].append(appointment)
+        elif status in {"Handled", "Completed"}:
+            grouped["handled"].append(appointment)
+        else:
+            grouped["declined_cancelled"].append(appointment)
     return grouped
 
 
@@ -8549,7 +8609,7 @@ def pro_shop_schedule_closed_day_delete(closed_day_id: int):
 
 
 @router.get("/calendar", response_class=HTMLResponse)
-def pro_calendar(request: Request, saved: str = ""):
+def pro_calendar(request: Request, saved: str = "", notice: str = ""):
     conn = crm_db_conn()
     try:
         appointments = load_service_appointments(conn)
@@ -8559,9 +8619,14 @@ def pro_calendar(request: Request, saved: str = ""):
         "pro/calendar.html",
         {
             "request": request,
-            "groups": group_calendar_appointments(appointments),
+            "groups": group_booking_review_appointments(appointments),
             "status_options": APPOINTMENT_STATUS_OPTIONS,
             "saved": saved == "1",
+            "notice": {
+                "confirmed": "Appointment confirmed.",
+                "handled": "Booking request marked as handled.",
+                "declined": "Booking request declined.",
+            }.get(notice, ""),
         },
     )
 
@@ -8593,12 +8658,25 @@ async def pro_calendar_add(request: Request):
 @router.post("/calendar/{appointment_id}/status")
 async def pro_calendar_status_update(request: Request, appointment_id: int):
     form = await read_form_data(request)
+    status = form.get("status", "Requested")
     conn = crm_db_conn()
     try:
-        update_service_appointment_status(conn, appointment_id, form.get("status", "Requested"))
+        update_service_appointment_status(conn, appointment_id, status)
     finally:
         conn.close()
-    return RedirectResponse("/pro/calendar", status_code=303)
+    notice = {"Confirmed": "confirmed", "Handled": "handled", "Declined": "declined"}.get(status, "")
+    suffix = f"?notice={notice}" if notice else ""
+    return RedirectResponse(f"/pro/calendar{suffix}", status_code=303)
+
+
+@public_router.get("/book/{shop_slug}/available-times", response_class=JSONResponse)
+def public_booking_available_times(shop_slug: str, date: str = ""):
+    conn = crm_db_conn()
+    try:
+        result = available_booking_times(conn, date)
+    finally:
+        conn.close()
+    return JSONResponse(result)
 
 
 @public_router.get("/book/{shop_slug}", response_class=HTMLResponse)
@@ -8667,6 +8745,16 @@ async def public_booking_submit(request: Request, shop_slug: str):
             form.get("requested_time", ""),
             form.get("appointment_length_minutes", ""),
         )
+        if available:
+            generated_times = available_booking_times(conn, form.get("requested_date", ""))
+            available = form.get("requested_time", "") in {
+                slot["value"] for slot in generated_times.get("times", [])
+            }
+            if not available:
+                availability_warning = (
+                    "This time is not available based on the shop's schedule. "
+                    "Please choose another available time."
+                )
         if not available:
             warning = availability_warning or "This time is not available based on the shop's schedule. Please choose another available time."
             return templates.TemplateResponse(

@@ -42,6 +42,16 @@
     padding: 5px 9px;
     white-space: nowrap;
   }
+  .tm-calendar-status[data-status="Requested"] { background: #fef3c7; color: #92400e; }
+  .tm-calendar-status[data-status="Confirmed"] { background: #dcfce7; color: #166534; }
+  .tm-calendar-notice {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    background: #f0fdfa;
+    color: #115e59;
+    padding: 11px 13px;
+    font-weight: 900;
+  }
   .tm-calendar-actions, .tm-calendar-form-grid { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
   .tm-calendar-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tm-calendar-empty { color: #64748b; border: 1px dashed rgba(15, 23, 42, 0.18); border-radius: 8px; padding: 14px; }
@@ -63,22 +73,32 @@
       <div class="tm-calendar-name">{{ item.customer_name or "Customer" }}</div>
       <div style="color:#64748b;">{{ item.customer_phone|pro_phone if item.customer_phone else "No phone" }}</div>
     </div>
-    <span class="tm-calendar-status">{{ item.status }}</span>
+    <span class="tm-calendar-status" data-status="{{ item.status }}">{% if item.status == "Requested" %}Pending Request{% else %}{{ item.status }}{% endif %}</span>
   </div>
   <div class="tm-calendar-grid">
+    <div class="tm-calendar-field"><span>Phone</span><strong>{{ item.customer_phone|pro_phone if item.customer_phone else "Not provided" }}</strong></div>
+    <div class="tm-calendar-field"><span>Email</span><strong>{{ item.customer_email or "Not provided" }}</strong></div>
     <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.vehicle_label or "-" }}</strong></div>
     <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
-    <div class="tm-calendar-field"><span>Date / Time</span><strong>{{ item.requested_date|pro_date }} {{ item.requested_time|pro_time }}</strong></div>
-    <div class="tm-calendar-field"><span>Source</span><strong>{{ item.source|replace("_", " ")|title }}</strong></div>
+    <div class="tm-calendar-field"><span>Requested Date</span><strong>{{ item.requested_date|pro_date }}</strong></div>
+    <div class="tm-calendar-field"><span>Requested Time</span><strong>{{ item.requested_time|pro_time }}</strong></div>
+    <div class="tm-calendar-field"><span>Current Status</span><strong>{% if item.status == "Requested" %}Pending Request{% else %}{{ item.status }}{% endif %}</strong></div>
   </div>
-  {% if item.notes %}<div style="color:#475569;">{{ item.notes }}</div>{% endif %}
+  {% if item.notes %}<div class="tm-calendar-field"><span>Notes</span><strong>{{ item.notes }}</strong></div>{% endif %}
   <div class="tm-calendar-actions">
-    {% for status in ["Confirmed", "Completed", "Cancelled"] %}
+    {% if item.status == "Requested" %}
+    {% for status, label, style in [("Confirmed", "Confirm Appointment", "tm-btn-primary"), ("Handled", "Mark Handled", "tm-btn-secondary"), ("Declined", "Decline Request", "tm-btn-secondary")] %}
     <form method="post" action="/pro/calendar/{{ item.id }}/status">
       <input type="hidden" name="status" value="{{ status }}">
-      <button class="tm-btn tm-btn-secondary" type="submit">Mark {{ status }}</button>
+      <button class="tm-btn {{ style }}" type="submit">{{ label }}</button>
     </form>
     {% endfor %}
+    {% elif item.status == "Confirmed" %}
+    <form method="post" action="/pro/calendar/{{ item.id }}/status">
+      <input type="hidden" name="status" value="Handled">
+      <button class="tm-btn tm-btn-secondary" type="submit">Mark Handled</button>
+    </form>
+    {% endif %}
   </div>
 </article>
 {% endmacro %}
@@ -96,6 +116,8 @@
       <a class="tm-btn tm-btn-secondary" href="/pro/follow-ups">Follow-Ups</a>
     </div>
   </div>
+
+  {% if notice %}<div class="tm-calendar-notice" role="status">{{ notice }}</div>{% endif %}
 
   <section class="tm-calendar-panel" aria-label="Add appointment">
     <h2 style="margin:0;">Add Appointment</h2>
@@ -118,19 +140,29 @@
     </form>
   </section>
 
-  {% for key, title in [("today", "Today"), ("this_week", "This Week"), ("upcoming", "Upcoming")] %}
+  {% for key, title, empty in [
+    ("pending", "Pending Requests", "No pending booking requests."),
+    ("confirmed", "Confirmed Appointments", "No confirmed appointments yet.")
+  ] %}
   <section class="tm-calendar-panel" aria-label="{{ title }}">
     <h2 style="margin:0;">{{ title }}</h2>
     <div class="tm-calendar-list">
-      {% for item in groups[key] %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">No appointments in this section.</div>{% endfor %}
+      {% for item in groups[key] %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">{{ empty }}</div>{% endfor %}
     </div>
   </section>
   {% endfor %}
 
   <details class="tm-calendar-panel">
-    <summary style="font-weight:900;cursor:pointer;">Completed / Cancelled</summary>
+    <summary style="font-weight:900;cursor:pointer;">Handled Requests</summary>
     <div class="tm-calendar-list" style="margin-top:12px;">
-      {% for item in groups.completed_cancelled %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">No completed or cancelled appointments.</div>{% endfor %}
+      {% for item in groups.handled %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">No handled booking requests.</div>{% endfor %}
+    </div>
+  </details>
+
+  <details class="tm-calendar-panel">
+    <summary style="font-weight:900;cursor:pointer;">Declined / Canceled</summary>
+    <div class="tm-calendar-list" style="margin-top:12px;">
+      {% for item in groups.declined_cancelled %}{{ appointment_card(item) }}{% else %}<div class="tm-calendar-empty">No declined or canceled requests.</div>{% endfor %}
     </div>
   </details>
 </section>
