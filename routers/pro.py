@@ -201,7 +201,7 @@ REPAIR_COMPLETION_CHECKS = (
     ("customer_concern_resolved", "Customer concern resolved"),
 )
 
-APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Handled", "Declined", "Completed", "Cancelled")
+APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Rescheduled", "Handled", "Declined", "Completed", "Cancelled")
 APPOINTMENT_LENGTH_OPTIONS = (30, 45, 60, 90, 120)
 APPOINTMENT_BUFFER_OPTIONS = (0, 15, 30)
 SHOP_SCHEDULE_DAYS = (
@@ -1251,7 +1251,7 @@ def is_booking_time_available(
         SELECT id, requested_time
         FROM service_appointments
         WHERE requested_date = ?
-          AND status IN ('Requested', 'Confirmed')
+          AND status IN ('Requested', 'Confirmed', 'Rescheduled')
           {exclusion_sql}
         """,
         params,
@@ -1417,7 +1417,7 @@ def reschedule_service_appointment(
     requested_time: str,
 ) -> None:
     appointment = load_service_appointment(conn, appointment_id)
-    if not appointment or appointment.get("status") != "Confirmed":
+    if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
         raise HTTPException(status_code=404, detail="Confirmed appointment not found.")
     available, warning = is_booking_time_available(
         conn,
@@ -1439,9 +1439,13 @@ def reschedule_service_appointment(
         """
         UPDATE service_appointments
         SET requested_date = ?, requested_time = ?, updated_at = ?
-        WHERE id = ? AND status = 'Confirmed'
+        WHERE id = ? AND status IN ('Confirmed', 'Rescheduled')
         """,
         (requested_date, requested_time, datetime.utcnow().isoformat(), appointment_id),
+    )
+    conn.execute(
+        "UPDATE service_appointments SET status = 'Rescheduled' WHERE id = ?",
+        (appointment_id,),
     )
     conn.commit()
 
@@ -1485,7 +1489,7 @@ def group_booking_review_appointments(appointments: list[dict[str, Any]]) -> dic
         status = str(appointment.get("status") or "Requested")
         if status == "Requested":
             grouped["pending"].append(appointment)
-        elif status == "Confirmed":
+        elif status in {"Confirmed", "Rescheduled"}:
             grouped["confirmed"].append(appointment)
         elif status in {"Handled", "Completed"}:
             grouped["handled"].append(appointment)
@@ -1503,6 +1507,7 @@ def appointment_customer_messages(
     appointment_date = format_pro_date(appointment.get("requested_date")) or "the scheduled date"
     appointment_time = format_pro_time(appointment.get("requested_time")) or "the scheduled time"
     service_name = str(appointment.get("service_name") or "").strip() or "your requested service"
+    vehicle_label = str(appointment.get("vehicle_label") or "").strip() or "your vehicle"
     phone = format_phone(
         _context_lookup(sender_context, "shop_phone")
         or _context_lookup(sender_context, "phone")
@@ -1520,16 +1525,6 @@ def appointment_customer_messages(
         if contact
         else "If you need to reschedule or cancel, please contact the shop directly."
     )
-    alternate_contact = (
-        f"If not, contact us at {contact}."
-        if contact
-        else "If not, please contact the shop directly."
-    )
-    booking_contact = (
-        f"please contact us at {contact}."
-        if contact
-        else "please contact the shop directly."
-    )
     duration_note = (
         "Repair duration depends on the service, inspection, parts availability, "
         "and shop schedule."
@@ -1537,21 +1532,27 @@ def appointment_customer_messages(
     return {
         "confirmation_message": (
             f"Hi {customer_name}, this is {shop_name}. Your appointment request for "
-            f"{service_name} has been confirmed for {appointment_date} at {appointment_time}. "
-            f"This is your drop-off / appointment time. {duration_note} "
-            f"{reschedule_contact}"
+            f"{vehicle_label} regarding {service_name} has been confirmed for {appointment_date} "
+            f"at {appointment_time}. Please contact us if anything changes. Thank you. "
+            f"{duration_note} {reschedule_contact}"
         ),
         "reschedule_message": (
             f"Hi {customer_name}, this is {shop_name}. We need to reschedule your appointment "
-            f"for {service_name}. Your new drop-off / appointment time is {appointment_date} "
-            f"at {appointment_time}. Please confirm this works for you. {duration_note} "
-            f"{alternate_contact}"
+            f"for {vehicle_label} regarding {service_name}. The new drop-off / appointment time is "
+            f"{appointment_date} at {appointment_time}. Please reply or contact us if this does not "
+            f"work for you. {duration_note} {reschedule_contact}"
         ),
         "cancellation_message": (
-            f"Hi {customer_name}, this is {shop_name}. Your appointment request for "
-            f"{service_name} on {appointment_date} at {appointment_time} has been canceled. "
-            f"{duration_note} If you would like to book another appointment, "
-            f"{booking_contact}"
+            f"Hi {customer_name}, this is {shop_name}. Your appointment for {vehicle_label} "
+            f"regarding {service_name} on {appointment_date} at {appointment_time} has been canceled. "
+            f"Please contact us if you would like to request a new appointment. "
+            f"{duration_note} {reschedule_contact}"
+        ),
+        "declined_message": (
+            f"Hi {customer_name}, this is {shop_name}. We’re unable to accept your appointment "
+            f"request for {vehicle_label} regarding {service_name} on {appointment_date} at "
+            f"{appointment_time}. Please contact us to choose another available time. "
+            f"{duration_note} {reschedule_contact}"
         ),
     }
 
@@ -8821,6 +8822,22 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
         )
     finally:
         conn.close()
+    preview_config = {
+        "confirmed": ("Confirmed", "Confirmed appointment", "confirmation_message"),
+        "rescheduled": ("Rescheduled", "Appointment rescheduled", "reschedule_message"),
+        "cancelled": ("Cancelled", "Appointment cancelled", "cancellation_message"),
+        "declined": ("Declined", "Request declined", "declined_message"),
+    }
+    action_preview = None
+    if notice in preview_config:
+        target_status, title, message_key = preview_config[notice]
+        matches = [item for item in appointments if item.get("status") == target_status]
+        if matches:
+            appointment = max(matches, key=lambda item: str(item.get("updated_at") or ""))
+            action_preview = {
+                "title": title,
+                "message": appointment.get(message_key, ""),
+            }
     return templates.TemplateResponse(
         "pro/calendar.html",
         {
@@ -8829,6 +8846,7 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             "status_options": APPOINTMENT_STATUS_OPTIONS,
             "saved": saved == "1",
             "error": error,
+            "action_preview": action_preview,
             "notice": {
                 "confirmed": "Appointment confirmed.",
                 "handled": "Booking request marked as handled.",
@@ -8920,7 +8938,7 @@ def pro_calendar_cancel(appointment_id: int):
     conn = crm_db_conn()
     try:
         appointment = load_service_appointment(conn, appointment_id)
-        if not appointment or appointment.get("status") != "Confirmed":
+        if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
             return RedirectResponse(
                 f"/pro/calendar?{urlencode({'error': 'Confirmed appointment not found.'})}",
                 status_code=303,

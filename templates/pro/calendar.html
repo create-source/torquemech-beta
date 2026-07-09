@@ -46,6 +46,9 @@
   }
   .tm-calendar-status[data-status="Requested"] { background: #fef3c7; color: #92400e; }
   .tm-calendar-status[data-status="Confirmed"] { background: #dcfce7; color: #166534; }
+  .tm-calendar-status[data-status="Rescheduled"] { background: #e0e7ff; color: #3730a3; }
+  .tm-calendar-status[data-status="Cancelled"] { background: #f1f5f9; color: #475569; }
+  .tm-calendar-status[data-status="Declined"] { background: #fee2e2; color: #991b1b; }
   .tm-calendar-notice {
     border: 1px solid rgba(14, 116, 144, 0.18);
     border-radius: 8px;
@@ -65,6 +68,23 @@
   .tm-calendar-actions, .tm-calendar-form-grid { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
   .tm-calendar-copy-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .tm-calendar-copy-status { color: #0f766e; font-size: .82rem; font-weight: 800; min-height: 1.2em; }
+  .tm-calendar-message-preview {
+    display: grid;
+    gap: 9px;
+    border: 1px solid rgba(14, 116, 144, .2);
+    border-left: 5px solid #0f766e;
+    border-radius: 8px;
+    background: #f0fdfa;
+    padding: 12px 14px;
+  }
+  .tm-calendar-message-preview strong { color: #115e59; }
+  .tm-calendar-message-preview p {
+    margin: 0;
+    color: #334155;
+    font-size: .9rem;
+    line-height: 1.45;
+  }
+  .tm-calendar-message-preview-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
   .tm-calendar-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tm-calendar-reschedule { flex: 1 0 100%; min-width: 0; }
   .tm-calendar-reschedule > summary {
@@ -99,6 +119,7 @@
     .tm-calendar-actions .tm-btn, .tm-calendar-form-grid .tm-btn { width: 100%; }
     .tm-calendar-copy-row .tm-btn { width: 100%; }
     .tm-calendar-reschedule > summary, .tm-calendar-reschedule-form .tm-btn { width: 100%; }
+    .tm-calendar-message-preview-actions .tm-btn { width: 100%; }
     .tm-calendar-panel { padding: 13px; }
     .tm-calendar-card { gap: 7px; padding: 11px; }
   }
@@ -106,13 +127,13 @@
 {% endblock %}
 
 {% macro appointment_card(item) %}
-<article class="tm-calendar-card">
+<article class="tm-calendar-card" data-message-card>
   <div class="tm-calendar-card-head">
     <div>
       <div class="tm-calendar-name">{{ item.customer_name or "Customer" }}</div>
       <div class="tm-calendar-when">{{ item.requested_date|pro_date }} at {{ item.requested_time|pro_time }}</div>
     </div>
-    <span class="tm-calendar-status" data-status="{{ item.status }}">{% if item.status == "Requested" %}Pending Request{% else %}{{ item.status }}{% endif %}</span>
+    <span class="tm-calendar-status" data-status="{{ item.status }}">{% if item.status == "Requested" %}Pending Request{% elif item.status == "Cancelled" %}Appointment Cancelled{% elif item.status == "Declined" %}Request Declined{% else %}{{ item.status }}{% endif %}</span>
   </div>
   <div class="tm-calendar-grid">
     <div class="tm-calendar-field"><span>Phone</span><strong>{{ item.customer_phone|pro_phone if item.customer_phone else "Not provided" }}</strong></div>
@@ -129,7 +150,7 @@
       <button class="tm-btn {{ style }}" type="submit">{{ label }}</button>
     </form>
     {% endfor %}
-    {% elif item.status == "Confirmed" %}
+    {% elif item.status in ["Confirmed", "Rescheduled"] %}
     <details class="tm-calendar-reschedule">
       <summary class="tm-btn tm-btn-secondary">Reschedule</summary>
       <div class="tm-calendar-reschedule-panel">
@@ -177,13 +198,13 @@
     </form>
     {% endif %}
   </div>
-  {% if item.status in ["Requested", "Confirmed"] %}
+  {% if item.status in ["Requested", "Confirmed", "Rescheduled"] %}
   <div class="tm-calendar-copy-row" aria-label="Copy customer messages">
     <span hidden data-copy-source="confirmation">{{ item.confirmation_message }}</span>
     <span hidden data-copy-source="reschedule">{{ item.reschedule_message }}</span>
     <span hidden data-copy-source="cancellation">{{ item.cancellation_message }}</span>
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="confirmation">Copy Confirmation Message</button>
-    {% if item.status == "Confirmed" %}
+    {% if item.status in ["Confirmed", "Rescheduled"] %}
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="reschedule">Copy Reschedule Message</button>
     {% endif %}
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="cancellation">Copy Cancellation Message</button>
@@ -209,6 +230,17 @@
 
   {% if notice %}<div class="tm-calendar-notice" role="status">{{ notice }}</div>{% endif %}
   {% if error %}<div class="tm-book-warning" role="alert">{{ error }}</div>{% endif %}
+  {% if action_preview %}
+  <section class="tm-calendar-message-preview" data-message-card aria-label="{{ action_preview.title }} customer message">
+    <strong>{{ action_preview.title }}</strong>
+    <p>{{ action_preview.message }}</p>
+    <span hidden data-copy-source="action">{{ action_preview.message }}</span>
+    <div class="tm-calendar-message-preview-actions">
+      <button class="tm-btn tm-btn-primary" type="button" data-copy-appointment-message="action">Copy Message</button>
+      <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
+    </div>
+  </section>
+  {% endif %}
 
   <details class="tm-calendar-panel" aria-label="Pending Requests" {% if groups.pending %}open{% endif %}>
     <summary>Pending Requests ({{ groups.pending|length }})</summary>
@@ -324,7 +356,7 @@ async function copyAppointmentText(value) {
 }
 document.querySelectorAll("[data-copy-appointment-message]").forEach((button) => {
   button.addEventListener("click", async () => {
-    const card = button.closest(".tm-calendar-card");
+    const card = button.closest("[data-message-card]");
     const kind = button.dataset.copyAppointmentMessage;
     const message = card?.querySelector(`[data-copy-source="${kind}"]`)?.textContent?.trim() || "";
     const status = card?.querySelector("[data-copy-status]");
