@@ -115,7 +115,7 @@ class CalendarFoundationTests(unittest.TestCase):
                         "customer_email": "natalie@example.com",
                         "vehicle_label": "2008 Toyota Sequoia",
                         "service_name": "Oil Change",
-                        "requested_date": "2026-07-08",
+                        "requested_date": "2026-07-13",
                         "requested_time": "09:00",
                         "notes": "Morning preferred",
                     },
@@ -269,6 +269,73 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(
             closed_result["message"],
             "The shop is closed on this day. Please choose another day.",
+        )
+
+    def test_month_availability_disables_past_closed_and_fully_booked_days(self):
+        conn = self.memory_conn()
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [
+                    {"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "10:00"},
+                    {"day_of_week": 1, "is_open": False, "start_time": "09:00", "end_time": "10:00"},
+                ],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+            )
+            pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Booked Customer",
+                    "customer_phone": "5555550100",
+                    "service_name": "Service",
+                    "requested_date": "2026-07-13",
+                    "requested_time": "09:00",
+                    "status": "Requested",
+                },
+            )
+            with patch.object(pro_module, "shop_today", lambda: pro_module.date(2026, 7, 8)):
+                result = pro_module.booking_availability_for_month(conn, "2026-07")
+        finally:
+            conn.close()
+
+        availability = {item["date"]: item["available"] for item in result["days"]}
+        self.assertFalse(availability["2026-07-07"])
+        self.assertFalse(availability["2026-07-13"])
+        self.assertFalse(availability["2026-07-14"])
+        self.assertTrue(availability["2026-07-20"])
+
+    def test_booking_last_slot_makes_date_unavailable(self):
+        conn = self.memory_conn()
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [{"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "10:00"}],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+            )
+            with patch.object(pro_module, "shop_today", lambda: pro_module.date(2026, 7, 8)):
+                before = pro_module.available_booking_times(conn, "2026-07-13")
+                pro_module.create_service_appointment(
+                    conn,
+                    {
+                        "customer_name": "Last Slot",
+                        "customer_phone": "5555550100",
+                        "service_name": "Service",
+                        "requested_date": "2026-07-13",
+                        "requested_time": "09:00",
+                        "status": "Confirmed",
+                    },
+                )
+                after = pro_module.available_booking_times(conn, "2026-07-13")
+        finally:
+            conn.close()
+
+        self.assertEqual(before["state"], "available")
+        self.assertEqual(after["state"], "unavailable")
+        self.assertEqual(
+            after["message"],
+            "No appointment times are available for this day. Please choose another day.",
         )
 
     def test_calendar_request_status_actions_and_friendly_notices(self):

@@ -1196,6 +1196,10 @@ def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str) -> tupl
     return False, ""
 
 
+def shop_today() -> date:
+    return datetime.now(SHOP_ZONEINFO).date()
+
+
 def is_booking_time_available(
     conn: sqlite3.Connection,
     requested_date: str,
@@ -1205,6 +1209,8 @@ def is_booking_time_available(
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
         return False, "Please choose a valid appointment date."
+    if parsed_date < shop_today():
+        return False, "Please choose a date that has not passed."
     raw_time = str(requested_time or "").strip()[:5]
     try:
         requested_start = datetime.strptime(raw_time, "%H:%M")
@@ -1257,6 +1263,8 @@ def available_booking_times(conn: sqlite3.Connection, requested_date: str) -> di
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
         return {"state": "invalid", "message": "Please choose a valid appointment date.", "times": []}
+    if parsed_date < shop_today():
+        return {"state": "past", "message": "Please choose a date that has not passed.", "times": []}
     closed, closed_message = is_closed_booking_day(conn, requested_date)
     if closed:
         return {"state": "closed", "message": closed_message, "times": []}
@@ -1296,6 +1304,24 @@ def available_booking_times(conn: sqlite3.Connection, requested_date: str) -> di
             "times": [],
         }
     return {"state": "available", "message": "", "times": times}
+
+
+def booking_availability_for_month(conn: sqlite3.Connection, month: str) -> dict[str, Any]:
+    try:
+        month_start = datetime.strptime(str(month or ""), "%Y-%m").date().replace(day=1)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Please choose a valid month.")
+    if month_start.year < shop_today().year or month_start.year > shop_today().year + 2:
+        raise HTTPException(status_code=400, detail="That month is outside the booking window.")
+    next_month = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
+    month_end = next_month - timedelta(days=1)
+    days: list[dict[str, Any]] = []
+    current = month_start
+    while current <= month_end:
+        result = available_booking_times(conn, current.isoformat())
+        days.append({"date": current.isoformat(), "available": result["state"] == "available"})
+        current += timedelta(days=1)
+    return {"month": month_start.strftime("%Y-%m"), "days": days}
 
 
 def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -> int:
@@ -8609,7 +8635,7 @@ def pro_shop_schedule_closed_day_delete(closed_day_id: int):
 
 
 @router.get("/calendar", response_class=HTMLResponse)
-def pro_calendar(request: Request, saved: str = "", notice: str = ""):
+def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str = ""):
     conn = crm_db_conn()
     try:
         appointments = load_service_appointments(conn)
@@ -8622,6 +8648,7 @@ def pro_calendar(request: Request, saved: str = "", notice: str = ""):
             "groups": group_booking_review_appointments(appointments),
             "status_options": APPOINTMENT_STATUS_OPTIONS,
             "saved": saved == "1",
+            "error": error,
             "notice": {
                 "confirmed": "Appointment confirmed.",
                 "handled": "Booking request marked as handled.",
@@ -8636,6 +8663,21 @@ async def pro_calendar_add(request: Request):
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
+        available, warning = is_booking_time_available(
+            conn,
+            form.get("requested_date", ""),
+            form.get("requested_time", ""),
+        )
+        generated_times = available_booking_times(conn, form.get("requested_date", ""))
+        if available:
+            available = form.get("requested_time", "") in {
+                slot["value"] for slot in generated_times.get("times", [])
+            }
+        if not available:
+            notice = warning or generated_times.get("message") or (
+                "No appointment times are available for this day. Please choose another day."
+            )
+            return RedirectResponse(f"/pro/calendar?{urlencode({'error': notice})}", status_code=303)
         create_service_appointment(
             conn,
             {
@@ -8674,6 +8716,16 @@ def public_booking_available_times(shop_slug: str, date: str = ""):
     conn = crm_db_conn()
     try:
         result = available_booking_times(conn, date)
+    finally:
+        conn.close()
+    return JSONResponse(result)
+
+
+@public_router.get("/book/{shop_slug}/available-dates", response_class=JSONResponse)
+def public_booking_available_dates(shop_slug: str, month: str = ""):
+    conn = crm_db_conn()
+    try:
+        result = booking_availability_for_month(conn, month)
     finally:
         conn.close()
     return JSONResponse(result)
