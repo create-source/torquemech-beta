@@ -1567,7 +1567,6 @@ def appointment_customer_messages(
                     f"Your appointment for {vehicle_phrase} regarding {service_name} on "
                     f"{appointment_date} at {appointment_time} has been canceled."
                 ),
-                duration_note,
                 (
                     f"Please contact us at {contact} if you would like to request a new appointment."
                     if contact
@@ -1580,9 +1579,8 @@ def appointment_customer_messages(
                 f"Hi {customer_name}, this is {shop_name}.",
                 (
                     f"We’re unable to accept your appointment request for {vehicle_phrase} regarding "
-                    f"{service_name} on {appointment_date} at {appointment_time}."
+                    f"{service_name} at the requested time."
                 ),
-                duration_note,
                 (
                     f"Please contact us at {contact} to choose another available time."
                     if contact

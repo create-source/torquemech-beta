@@ -592,16 +592,22 @@ class CalendarFoundationTests(unittest.TestCase):
             self.assertIn("Natalie King", message)
             self.assertIn("TorqueMech Auto", message)
             self.assertIn("Brake Inspection", message)
-            self.assertIn("07/13/2026", message)
-            self.assertIn("10:00 AM", message)
             self.assertIn("(559) 222-3333", message)
             self.assertIn("service@torquemech.test", message)
-            self.assertIn(
-                "Please note that repair duration may vary depending on the service, inspection findings, "
-                "parts availability, and shop schedule.",
-                message,
-            )
             self.assertIn("\n\n", message)
+        duration_note = (
+            "Please note that repair duration may vary depending on the service, inspection findings, "
+            "parts availability, and shop schedule."
+        )
+        for key in ("confirmation_message", "reschedule_message"):
+            self.assertIn("07/13/2026", messages[key])
+            self.assertIn("10:00 AM", messages[key])
+            self.assertIn(duration_note, messages[key])
+        self.assertIn("07/13/2026", messages["cancellation_message"])
+        self.assertIn("10:00 AM", messages["cancellation_message"])
+        self.assertNotIn(duration_note, messages["cancellation_message"])
+        self.assertNotIn(duration_note, messages["declined_message"])
+        self.assertIn("at the requested time", messages["declined_message"])
         self.assertIn("has been confirmed", messages["confirmation_message"])
         self.assertIn("new drop-off / appointment time", messages["reschedule_message"])
         self.assertIn("has been canceled", messages["cancellation_message"])
