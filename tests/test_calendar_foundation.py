@@ -732,6 +732,126 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Hi there, this is your mechanic.", fallback["confirmation_message"])
         self.assertIn("please contact the shop directly.", fallback["confirmation_message"])
 
+    def test_appointment_message_templates_save_reload_replace_and_preserve_text(self):
+        conn = self.memory_conn()
+        templates = {
+            "appointment_confirmation_template": "Hi {customer_name}\n\n{shop_name} confirmed {service} for {vehicle}.",
+            "appointment_cancellation_template": "Cancelled {appointment_date} {appointment_time}\nCall {shop_phone}",
+            "appointment_declined_template": "Hi {customer_name}, {service} is declined. Email {shop_email}",
+            "appointment_rescheduled_template": "New time: {appointment_date} at {appointment_time}\n\n{vehicle}",
+        }
+        try:
+            loaded_defaults = pro_module.load_shop_profile_context(conn)
+            profile = pro_module.save_shop_settings(
+                conn,
+                {
+                    "shop_name": "Htut Auto Care",
+                    "shop_phone": "(559) 222-3333",
+                    "shop_email": "service@htut.example",
+                    **templates,
+                },
+            )
+            loaded = pro_module.load_shop_profile_context(conn)
+            messages = pro_module.appointment_customer_messages(
+                {
+                    "customer_name": "Natalie King",
+                    "vehicle_label": "2020 Honda Civic",
+                    "service_name": "Brake Inspection",
+                    "requested_date": "2026-07-13",
+                    "requested_time": "10:00",
+                },
+                loaded,
+            )
+        finally:
+            conn.close()
+
+        self.assertEqual(loaded_defaults["appointment_confirmation_template"], "")
+        self.assertIn("has been confirmed", loaded_defaults["appointment_confirmation_template_input"])
+        for key, value in templates.items():
+            self.assertEqual(profile[key], value)
+            self.assertEqual(loaded[key], value)
+        self.assertEqual(messages["confirmation_message"], "Hi Natalie King\n\nHtut Auto Care confirmed Brake Inspection for 2020 Honda Civic.")
+        self.assertEqual(messages["reschedule_message"], "New time: 07/13/2026 at 10:00 AM\n\n2020 Honda Civic")
+        self.assertIn("service@htut.example", messages["declined_message"])
+        self.assertIn("(559) 222-3333", messages["cancellation_message"])
+        self.assertIn("\n\n", messages["confirmation_message"])
+
+    def test_appointment_message_templates_clean_missing_values_and_tokens(self):
+        messages = pro_module.appointment_customer_messages(
+            {
+                "customer_name": "",
+                "vehicle_label": "",
+                "service_name": "",
+                "requested_date": "",
+                "requested_time": "",
+            },
+            {
+                "shop_name": "",
+                "appointment_confirmation_template": "Hi {customer_name}, {unknown_token}\nVehicle: {vehicle}\nEmail: {shop_email}",
+                "appointment_cancellation_template": "Cancelled {appointment_date} at {appointment_time}. {shop_phone}",
+            },
+        )
+
+        combined = "\n".join(messages.values())
+        self.assertNotRegex(combined, r"\{[A-Za-z_][A-Za-z0-9_]*\}")
+        self.assertIn("Hi there,", messages["confirmation_message"])
+        self.assertNotIn("{unknown_token}", messages["confirmation_message"])
+        self.assertNotIn("Please note that repair duration", messages["cancellation_message"])
+
+    def test_shop_settings_resets_one_appointment_template_without_changing_others(self):
+        conn = self.memory_conn()
+        defaults = pro_module.appointment_message_default_templates()
+        try:
+            pro_module.save_shop_settings(
+                conn,
+                {
+                    "appointment_confirmation_template": "Custom confirmation {customer_name}",
+                    "appointment_cancellation_template": "Custom cancellation {service}",
+                    "appointment_declined_template": "Custom declined {vehicle}",
+                    "appointment_rescheduled_template": "Custom rescheduled {appointment_time}",
+                },
+            )
+            loaded = pro_module.save_shop_settings(
+                conn,
+                {
+                    "appointment_confirmation_template": defaults["appointment_confirmation_template"],
+                    "appointment_cancellation_template": "Custom cancellation {service}",
+                },
+            )
+        finally:
+            conn.close()
+
+        self.assertEqual(loaded["appointment_confirmation_template"], "")
+        self.assertEqual(loaded["appointment_cancellation_template"], "Custom cancellation {service}")
+        self.assertEqual(loaded["appointment_declined_template"], "Custom declined {vehicle}")
+        self.assertEqual(loaded["appointment_rescheduled_template"], "Custom rescheduled {appointment_time}")
+
+    def test_appointment_message_templates_are_shop_isolated_and_plain_text(self):
+        conn_a = self.memory_conn()
+        conn_b = self.memory_conn()
+        try:
+            pro_module.save_shop_settings(
+                conn_a,
+                {
+                    "shop_name": "Shop A",
+                    "appointment_confirmation_template": "<script>alert(1)</script>\nHi {customer_name}",
+                },
+            )
+            profile_a = pro_module.load_shop_profile_context(conn_a)
+            profile_b = pro_module.load_shop_profile_context(conn_b)
+            message = pro_module.appointment_customer_messages(
+                {"customer_name": "Natalie", "service_name": "Oil Change"},
+                profile_a,
+            )["confirmation_message"]
+        finally:
+            conn_a.close()
+            conn_b.close()
+
+        self.assertIn("<script>alert(1)</script>", profile_a["appointment_confirmation_template"])
+        self.assertIn("<script>alert(1)</script>", message)
+        self.assertEqual(profile_b["appointment_confirmation_template"], "")
+        self.assertNotIn("<script>alert(1)</script>", profile_b["appointment_confirmation_template_input"])
+
     def test_calendar_conversion_links_existing_customer_and_vehicle(self):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
@@ -1182,6 +1302,14 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("initializeZipState();", template)
         self.assertIn("if (zipChanged) {", template)
         self.assertIn("phoneInput.value = digitsOnly(phoneInput.value).slice(0, 10)", template)
+        self.assertIn("Appointment Message Templates", template)
+        self.assertIn('id="appointment_confirmation_template"', template)
+        self.assertIn('id="appointment_cancellation_template"', template)
+        self.assertIn('id="appointment_declined_template"', template)
+        self.assertIn('id="appointment_rescheduled_template"', template)
+        self.assertIn("data-reset-template", template)
+        self.assertIn("data-template-preview", template)
+        self.assertIn('"{" ~ placeholder ~ "}"', template)
 
     def test_shop_schedule_page_uses_foundation_controls_and_helper_text(self):
         template = (main.BASE_DIR / "templates" / "pro" / "shop_schedule.html").read_text(encoding="utf-8")

@@ -92,6 +92,70 @@
     font-weight: 900;
   }
 
+  .tm-message-template-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .tm-message-template-card {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .tm-message-template-head {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .tm-message-template-card textarea {
+    min-height: 132px;
+    resize: vertical;
+    white-space: pre-wrap;
+  }
+
+  .tm-message-placeholder-list {
+    color: #475569;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .tm-message-placeholder-list code {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 0.82rem;
+    padding: 3px 6px;
+  }
+
+  .tm-message-preview {
+    border: 1px solid rgba(14, 116, 144, 0.18);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #334155;
+    display: grid;
+    gap: 5px;
+    padding: 10px;
+  }
+
+  .tm-message-preview strong {
+    color: #0f766e;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+  }
+
+  .tm-message-preview-text {
+    white-space: pre-wrap;
+  }
+
   @media (max-width: 640px) {
     .tm-shop-booking-actions {
       align-items: stretch;
@@ -335,6 +399,68 @@
       </div>
     </section>
 
+    <section class="tm-shop-settings-panel" aria-label="Appointment Message Templates">
+      <h2 style="margin:0 0 8px;">Appointment Message Templates</h2>
+      <div class="tm-shop-settings-help">
+        Customize the copyable customer messages used from Shop Calendar appointment actions. Templates are plain text only.
+      </div>
+      <div class="tm-shop-settings-help" style="margin-top:8px;">Supported placeholders:</div>
+      <div class="tm-message-placeholder-list" aria-label="Supported appointment message placeholders">
+        {% for placeholder in profile.appointment_message_placeholders %}
+        <code>{{ "{" ~ placeholder ~ "}" }}</code>
+        {% endfor %}
+      </div>
+      <div class="tm-message-template-list" style="margin-top:12px;">
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <label class="tm-label" for="appointment_confirmation_template">Appointment Confirmation</label>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_confirmation_template">Reset to Default</button>
+          </div>
+          <textarea class="tm-input" id="appointment_confirmation_template" name="appointment_confirmation_template" data-appointment-template data-default-template="{{ profile.appointment_confirmation_template_default|e }}">{{ profile.appointment_confirmation_template_input }}</textarea>
+          <div class="tm-message-preview">
+            <strong>Preview</strong>
+            <div class="tm-message-preview-text" data-template-preview="appointment_confirmation_template"></div>
+          </div>
+        </div>
+
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <label class="tm-label" for="appointment_cancellation_template">Appointment Cancellation</label>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_cancellation_template">Reset to Default</button>
+          </div>
+          <textarea class="tm-input" id="appointment_cancellation_template" name="appointment_cancellation_template" data-appointment-template data-default-template="{{ profile.appointment_cancellation_template_default|e }}">{{ profile.appointment_cancellation_template_input }}</textarea>
+          <div class="tm-message-preview">
+            <strong>Preview</strong>
+            <div class="tm-message-preview-text" data-template-preview="appointment_cancellation_template"></div>
+          </div>
+        </div>
+
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <label class="tm-label" for="appointment_declined_template">Appointment Declined</label>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_declined_template">Reset to Default</button>
+          </div>
+          <textarea class="tm-input" id="appointment_declined_template" name="appointment_declined_template" data-appointment-template data-default-template="{{ profile.appointment_declined_template_default|e }}">{{ profile.appointment_declined_template_input }}</textarea>
+          <div class="tm-message-preview">
+            <strong>Preview</strong>
+            <div class="tm-message-preview-text" data-template-preview="appointment_declined_template"></div>
+          </div>
+        </div>
+
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <label class="tm-label" for="appointment_rescheduled_template">Appointment Rescheduled</label>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_rescheduled_template">Reset to Default</button>
+          </div>
+          <textarea class="tm-input" id="appointment_rescheduled_template" name="appointment_rescheduled_template" data-appointment-template data-default-template="{{ profile.appointment_rescheduled_template_default|e }}">{{ profile.appointment_rescheduled_template_input }}</textarea>
+          <div class="tm-message-preview">
+            <strong>Preview</strong>
+            <div class="tm-message-preview-text" data-template-preview="appointment_rescheduled_template"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div class="tm-shop-settings-actions">
       <button class="tm-btn tm-btn-primary" type="submit">Save Settings</button>
       <a class="tm-btn tm-btn-secondary" href="/pro/calendar">Shop Calendar</a>
@@ -385,6 +511,45 @@
 
   const digitsOnly = (value) => String(value || "").replace(/\D/g, "");
   const phoneInput = document.querySelector("[data-shop-phone-input]");
+  const appointmentTemplateExample = {
+    customer_name: "Natalie King",
+    shop_name: "TorqueMech Auto",
+    vehicle: "2020 Honda Civic",
+    service: "Brake Inspection",
+    appointment_date: "07/13/2026",
+    appointment_time: "10:00 AM",
+    shop_phone: "(559) 222-3333",
+    shop_email: "service@torquemech.test"
+  };
+
+  function renderAppointmentTemplatePreview(value) {
+    let rendered = String(value || "");
+    Object.entries(appointmentTemplateExample).forEach(([token, replacement]) => {
+      rendered = rendered.split(`{${token}}`).join(replacement);
+    });
+    rendered = rendered.replace(/\{[A-Za-z_][A-Za-z0-9_]*\}/g, "");
+    return rendered.trim();
+  }
+
+  function updateTemplatePreview(textarea) {
+    const preview = document.querySelector(`[data-template-preview="${textarea.id}"]`);
+    if (preview) preview.textContent = renderAppointmentTemplatePreview(textarea.value);
+  }
+
+  document.querySelectorAll("[data-appointment-template]").forEach((textarea) => {
+    textarea.addEventListener("input", () => updateTemplatePreview(textarea));
+    updateTemplatePreview(textarea);
+  });
+
+  document.querySelectorAll("[data-reset-template]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const textarea = document.getElementById(button.dataset.resetTemplate || "");
+      if (!textarea) return;
+      textarea.value = textarea.dataset.defaultTemplate || "";
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      textarea.focus();
+    });
+  });
 
   const stateAliases = {
     alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA",

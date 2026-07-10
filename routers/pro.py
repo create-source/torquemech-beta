@@ -1538,7 +1538,82 @@ def group_booking_review_appointments(
     return grouped
 
 
-def appointment_customer_messages(
+APPOINTMENT_MESSAGE_TEMPLATE_KEYS = {
+    "confirmation_message": "appointment_confirmation_template",
+    "cancellation_message": "appointment_cancellation_template",
+    "declined_message": "appointment_declined_template",
+    "reschedule_message": "appointment_rescheduled_template",
+}
+
+APPOINTMENT_MESSAGE_PLACEHOLDERS = (
+    "customer_name",
+    "shop_name",
+    "vehicle",
+    "service",
+    "appointment_date",
+    "appointment_time",
+    "shop_phone",
+    "shop_email",
+)
+
+
+def appointment_message_default_templates() -> dict[str, str]:
+    duration_note = (
+        "Please note that repair duration may vary depending on the service, inspection findings, "
+        "parts availability, and shop schedule."
+    )
+    return {
+        "appointment_confirmation_template": "\n\n".join(
+            [
+                "Hi {customer_name}, this is {shop_name}.",
+                (
+                    "Your appointment request for your {vehicle} regarding {service} "
+                    "has been confirmed for {appointment_date} at {appointment_time}."
+                ),
+                duration_note,
+                "If you need to reschedule or cancel, please contact us at {shop_phone} or {shop_email}.",
+                "Thank you.",
+            ]
+        ),
+        "appointment_rescheduled_template": "\n\n".join(
+            [
+                "Hi {customer_name}, this is {shop_name}.",
+                (
+                    "We need to reschedule your appointment for your {vehicle} regarding {service}. "
+                    "The new drop-off / appointment time is {appointment_date} at {appointment_time}."
+                ),
+                duration_note,
+                "Please reply or contact us at {shop_phone} or {shop_email} if this does not work for you.",
+            ]
+        ),
+        "appointment_cancellation_template": "\n\n".join(
+            [
+                "Hi {customer_name}, this is {shop_name}.",
+                (
+                    "Your appointment for your {vehicle} regarding {service} on "
+                    "{appointment_date} at {appointment_time} has been cancelled."
+                ),
+                "Please contact us at {shop_phone} or {shop_email} if you would like to request a new appointment.",
+            ]
+        ),
+        "appointment_declined_template": "\n\n".join(
+            [
+                "Hi {customer_name}, this is {shop_name}.",
+                (
+                    "We're unable to accept your appointment request for your {vehicle} regarding "
+                    "{service} on {appointment_date} at {appointment_time}."
+                ),
+                "Please contact us at {shop_phone} or {shop_email} to choose another available time.",
+            ]
+        ),
+    }
+
+
+def normalize_appointment_template(value: Any) -> str:
+    return str(value or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+
+
+def appointment_template_token_values(
     appointment: dict[str, Any],
     sender_context: Any | None = None,
 ) -> dict[str, str]:
@@ -1548,7 +1623,6 @@ def appointment_customer_messages(
     appointment_time = format_pro_time(appointment.get("requested_time")) or "the scheduled time"
     service_name = str(appointment.get("service_name") or "").strip() or "your requested service"
     vehicle_label = appointment_vehicle_label(appointment) or "vehicle"
-    vehicle_phrase = vehicle_label if vehicle_label.lower().startswith("your ") else f"your {vehicle_label}"
     phone = format_phone(
         _context_lookup(sender_context, "shop_phone")
         or _context_lookup(sender_context, "phone")
@@ -1560,6 +1634,57 @@ def appointment_customer_messages(
         or _context_lookup(sender_context, "email")
         or ""
     ).strip()
+    return {
+        "customer_name": customer_name,
+        "shop_name": shop_name,
+        "vehicle": vehicle_label,
+        "service": service_name,
+        "appointment_date": appointment_date,
+        "appointment_time": appointment_time,
+        "shop_phone": phone,
+        "shop_email": email,
+    }
+
+
+def render_appointment_message_template(
+    template: Any,
+    appointment: dict[str, Any],
+    sender_context: Any | None = None,
+) -> str:
+    rendered = normalize_appointment_template(template)
+    values = appointment_template_token_values(appointment, sender_context)
+    for token, value in values.items():
+        rendered = rendered.replace("{" + token + "}", value)
+    rendered = re.sub(r"\{[A-Za-z_][A-Za-z0-9_]*\}", "", rendered)
+    cleaned_lines = []
+    for line in rendered.split("\n"):
+        line = re.sub(r"[ \t]+", " ", line).strip()
+        line = re.sub(r"\s+([.,!?;:])", r"\1", line)
+        line = re.sub(r"\bat\s+\.", ".", line, flags=re.IGNORECASE)
+        line = re.sub(r"\bon\s+\.", ".", line, flags=re.IGNORECASE)
+        line = re.sub(r"\s+or\s+([.,!?;:])", r"\1", line, flags=re.IGNORECASE)
+        line = re.sub(r"\bat\s+or\s+", "at ", line, flags=re.IGNORECASE)
+        line = re.sub(r"\s+or\s*$", "", line, flags=re.IGNORECASE)
+        cleaned_lines.append(line)
+    rendered = "\n".join(cleaned_lines)
+    rendered = re.sub(r"\n{3,}", "\n\n", rendered).strip()
+    return rendered
+
+
+def appointment_customer_messages(
+    appointment: dict[str, Any],
+    sender_context: Any | None = None,
+) -> dict[str, str]:
+    token_values = appointment_template_token_values(appointment, sender_context)
+    customer_name = token_values["customer_name"]
+    shop_name = token_values["shop_name"]
+    appointment_date = token_values["appointment_date"]
+    appointment_time = token_values["appointment_time"]
+    service_name = token_values["service"]
+    vehicle_label = token_values["vehicle"]
+    vehicle_phrase = vehicle_label if vehicle_label.lower().startswith("your ") else f"your {vehicle_label}"
+    phone = token_values["shop_phone"]
+    email = token_values["shop_email"]
     contact_parts = [part for part in (phone, email) if part]
     contact = " or ".join(contact_parts)
     schedule_contact = (
@@ -1571,7 +1696,7 @@ def appointment_customer_messages(
         "Please note that repair duration may vary depending on the service, inspection findings, "
         "parts availability, and shop schedule."
     )
-    return {
+    messages = {
         "confirmation_message": "\n\n".join(
             [
                 f"Hi {customer_name}, this is {shop_name}.",
@@ -1629,6 +1754,11 @@ def appointment_customer_messages(
             ]
         ),
     }
+    for message_key, template_key in APPOINTMENT_MESSAGE_TEMPLATE_KEYS.items():
+        template = normalize_appointment_template(_context_lookup(sender_context, template_key))
+        if template:
+            messages[message_key] = render_appointment_message_template(template, appointment, sender_context)
+    return messages
 
 
 def attach_appointment_customer_messages(
@@ -1973,6 +2103,10 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
           warranty_note TEXT,
           quote_expiration_days INTEGER,
           custom_footer_note TEXT,
+          appointment_confirmation_template TEXT,
+          appointment_cancellation_template TEXT,
+          appointment_declined_template TEXT,
+          appointment_rescheduled_template TEXT,
           updated_at TEXT NOT NULL
         )
         """
@@ -2004,6 +2138,10 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
         "warranty_note": "warranty_note TEXT",
         "quote_expiration_days": "quote_expiration_days INTEGER",
         "custom_footer_note": "custom_footer_note TEXT",
+        "appointment_confirmation_template": "appointment_confirmation_template TEXT",
+        "appointment_cancellation_template": "appointment_cancellation_template TEXT",
+        "appointment_declined_template": "appointment_declined_template TEXT",
+        "appointment_rescheduled_template": "appointment_rescheduled_template TEXT",
         "updated_at": "updated_at TEXT",
     }.items():
         if column_name not in columns:
@@ -2055,6 +2193,13 @@ def normalize_shop_profile_context(profile: dict[str, Any] | None) -> dict[str, 
     normalized["default_labor_rate_input"] = format_decimal_input(normalized.get("default_labor_rate"))
     normalized["tax_rate_input"] = format_decimal_input(normalized.get("tax_rate"), 3)
     normalized["shop_supplies_fee_input"] = format_decimal_input(normalized.get("shop_supplies_fee"))
+    default_templates = appointment_message_default_templates()
+    for key, default_template in default_templates.items():
+        stored_template = normalize_appointment_template(normalized.get(key))
+        normalized[key] = stored_template
+        normalized[f"{key}_input"] = stored_template or default_template
+        normalized[f"{key}_default"] = default_template
+    normalized["appointment_message_placeholders"] = APPOINTMENT_MESSAGE_PLACEHOLDERS
     return normalized
 
 
@@ -2092,6 +2237,12 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
     if "external_scheduling_link" in form or "scheduling_link" in form:
         current["external_scheduling_link"] = form.get("external_scheduling_link", form.get("scheduling_link", ""))
         current["scheduling_link"] = current["external_scheduling_link"]
+    default_templates = appointment_message_default_templates()
+    for key, default_template in default_templates.items():
+        if key not in form:
+            continue
+        submitted = normalize_appointment_template(form.get(key, ""))[:5000]
+        current[key] = "" if submitted == normalize_appointment_template(default_template) else submitted
     current = normalize_shop_profile_context(current)
     current["updated_at"] = datetime.utcnow().isoformat()
     conn.execute(
@@ -2101,9 +2252,11 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
           shop_address, shop_city, shop_state, shop_zip, website, scheduling_link,
           external_scheduling_link, logo_url, labor_rate_default, tax_rate_default,
           default_labor_rate, tax_rate, shop_supplies_fee, warranty_note,
-          quote_expiration_days, custom_footer_note, updated_at
+          quote_expiration_days, custom_footer_note, appointment_confirmation_template,
+          appointment_cancellation_template, appointment_declined_template,
+          appointment_rescheduled_template, updated_at
         )
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           shop_name = excluded.shop_name,
           phone = excluded.phone,
@@ -2122,6 +2275,10 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
           default_labor_rate = excluded.default_labor_rate,
           tax_rate = excluded.tax_rate,
           shop_supplies_fee = excluded.shop_supplies_fee,
+          appointment_confirmation_template = excluded.appointment_confirmation_template,
+          appointment_cancellation_template = excluded.appointment_cancellation_template,
+          appointment_declined_template = excluded.appointment_declined_template,
+          appointment_rescheduled_template = excluded.appointment_rescheduled_template,
           updated_at = excluded.updated_at
         """,
         (
@@ -2147,6 +2304,10 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
             current.get("warranty_note") or "",
             current.get("quote_expiration_days") or 30,
             current.get("custom_footer_note") or "",
+            current.get("appointment_confirmation_template") or "",
+            current.get("appointment_cancellation_template") or "",
+            current.get("appointment_declined_template") or "",
+            current.get("appointment_rescheduled_template") or "",
             current["updated_at"],
         ),
     )
