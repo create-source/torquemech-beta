@@ -15,6 +15,25 @@ class NonClosingConnection(sqlite3.Connection):
         pass
 
 
+class FakeEstimateDir:
+    def mkdir(self, *args, **kwargs):
+        return None
+
+    def __truediv__(self, name):
+        return FakeEstimatePath(name)
+
+
+class FakeEstimatePath:
+    def __init__(self, name):
+        self.name = name
+
+    def write_bytes(self, data):
+        return len(data)
+
+    def resolve(self):
+        return f"C:/fake-estimates/{self.name}"
+
+
 class CalendarFoundationTests(unittest.TestCase):
     def memory_conn(self):
         conn = sqlite3.connect(":memory:")
@@ -688,7 +707,7 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("on 07/13/2026 at 10:00 AM", messages["declined_message"])
         self.assertIn("has been confirmed", messages["confirmation_message"])
         self.assertIn("new drop-off / appointment time", messages["reschedule_message"])
-        self.assertIn("has been canceled", messages["cancellation_message"])
+        self.assertIn("has been cancelled", messages["cancellation_message"])
 
         fallback = pro_module.appointment_customer_messages(
             {
@@ -701,6 +720,207 @@ class CalendarFoundationTests(unittest.TestCase):
         )
         self.assertIn("Hi there, this is your mechanic.", fallback["confirmation_message"])
         self.assertIn("please contact the shop directly.", fallback["confirmation_message"])
+
+    def test_calendar_conversion_links_existing_customer_and_vehicle(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.ensure_customer_status_schema(conn)
+            now = "2026-07-09T12:00:00"
+            customer_id = conn.execute(
+                """
+                INSERT INTO customers (first_name, last_name, phone, email, customer_status, notes, created_at, updated_at)
+                VALUES ('Natalie', 'King', '5552223333', 'natalie@example.com', 'active', '', ?, ?)
+                """,
+                (now, now),
+            ).lastrowid
+            vehicle_id = conn.execute(
+                """
+                INSERT INTO customer_vehicles (customer_id, year, make, model, created_at, updated_at)
+                VALUES (?, 1998, 'Toyota', 'Camry', ?, ?)
+                """,
+                (customer_id, now, now),
+            ).lastrowid
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Natalie King",
+                    "customer_phone": "5552223333",
+                    "customer_email": "natalie@example.com",
+                    "vehicle_label": "1998 Toyota Camry",
+                    "service_name": "Oil Change",
+                    "requested_date": "2026-07-22",
+                    "requested_time": "16:00",
+                    "status": "Confirmed",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client = TestClient(main.app, base_url="http://localhost")
+                response = client.post(
+                    f"/pro/calendar/{appointment_id}/convert",
+                    data={
+                        "customer_mode": "existing",
+                        "customer_id": str(customer_id),
+                        "vehicle_mode": "existing",
+                        "vehicle_id": str(vehicle_id),
+                        "conversion_action": "save",
+                    },
+                    follow_redirects=False,
+                )
+                page = client.get("/pro/calendar?notice=linked")
+                row = conn.execute(
+                    "SELECT customer_id, vehicle_id, status FROM service_appointments WHERE id = ?",
+                    (appointment_id,),
+                ).fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=linked")
+        self.assertEqual(row["customer_id"], customer_id)
+        self.assertEqual(row["vehicle_id"], vehicle_id)
+        self.assertEqual(row["status"], "Confirmed")
+        self.assertIn("Linked to customer", page.text)
+        self.assertIn("Open Customer", page.text)
+        self.assertIn("Create Estimate", page.text)
+        self.assertNotIn("Add to Customer / Start Job", page.text)
+
+    def test_calendar_conversion_creates_new_customer_vehicle_and_estimator_handoff(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.ensure_customer_status_schema(conn)
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Sam Driver",
+                    "customer_phone": "(555) 111-2222",
+                    "customer_email": "sam@example.com",
+                    "vehicle_label": "2008 Toyota Sequoia",
+                    "service_name": "Water Pump Replacement",
+                    "requested_date": "2026-07-23",
+                    "requested_time": "09:00",
+                    "notes": "Coolant leak near front of engine",
+                    "status": "Confirmed",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client = TestClient(main.app, base_url="http://localhost")
+                response = client.post(
+                    f"/pro/calendar/{appointment_id}/convert",
+                    data={
+                        "customer_mode": "new",
+                        "new_customer_name": "Sam Driver",
+                        "new_customer_phone": "(555) 111-2222",
+                        "new_customer_email": "sam@example.com",
+                        "new_vehicle_year": "2008",
+                        "new_vehicle_make": "Toyota",
+                        "new_vehicle_model": "Sequoia",
+                        "conversion_action": "estimate",
+                    },
+                    follow_redirects=False,
+                )
+                appointment = conn.execute(
+                    "SELECT * FROM service_appointments WHERE id = ?",
+                    (appointment_id,),
+                ).fetchone()
+                customers = conn.execute("SELECT * FROM customers").fetchall()
+                vehicles = conn.execute("SELECT * FROM customer_vehicles").fetchall()
+                second_customer_id, second_vehicle_id, _ = pro_module.link_appointment_customer_vehicle(
+                    conn,
+                    appointment_id,
+                    {
+                        "customer_mode": "new",
+                        "new_customer_name": "Sam Driver",
+                        "new_customer_phone": "(555) 111-2222",
+                        "new_customer_email": "sam@example.com",
+                        "new_vehicle_year": "2008",
+                        "new_vehicle_make": "Toyota",
+                        "new_vehicle_model": "Sequoia",
+                    },
+                )
+                customer_count = conn.execute("SELECT COUNT(*) AS count FROM customers").fetchone()["count"]
+                vehicle_count = conn.execute("SELECT COUNT(*) AS count FROM customer_vehicles").fetchone()["count"]
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(len(customers), 1)
+        self.assertEqual(len(vehicles), 1)
+        self.assertEqual(appointment["customer_id"], customers[0]["id"])
+        self.assertEqual(appointment["vehicle_id"], vehicles[0]["id"])
+        self.assertIn("/estimator?", response.headers["location"])
+        self.assertIn("source=appointment", response.headers["location"])
+        self.assertIn(f"appointment_id={appointment_id}", response.headers["location"])
+        self.assertIn(f"customer_id={customers[0]['id']}", response.headers["location"])
+        self.assertIn(f"vehicle_id={vehicles[0]['id']}", response.headers["location"])
+        self.assertIn("service_text=Water+Pump+Replacement", response.headers["location"])
+        self.assertEqual(second_customer_id, customers[0]["id"])
+        self.assertEqual(second_vehicle_id, vehicles[0]["id"])
+        self.assertEqual(customer_count, 1)
+        self.assertEqual(vehicle_count, 1)
+
+    def test_calendar_estimate_save_links_back_to_appointment(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.ensure_customer_status_schema(conn)
+            pro_module.ensure_calendar_schema(conn)
+            now = "2026-07-09T12:00:00"
+            customer_id = conn.execute(
+                """
+                INSERT INTO customers (first_name, last_name, phone, email, customer_status, notes, created_at, updated_at)
+                VALUES ('Sam', 'Driver', '5551112222', 'sam@example.com', 'active', '', ?, ?)
+                """,
+                (now, now),
+            ).lastrowid
+            vehicle_id = conn.execute(
+                """
+                INSERT INTO customer_vehicles (customer_id, year, make, model, created_at, updated_at)
+                VALUES (?, 2008, 'Toyota', 'Sequoia', ?, ?)
+                """,
+                (customer_id, now, now),
+            ).lastrowid
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_id": customer_id,
+                    "vehicle_id": vehicle_id,
+                    "customer_name": "Sam Driver",
+                    "customer_phone": "5551112222",
+                    "vehicle_label": "2008 Toyota Sequoia",
+                    "service_name": "Water Pump Replacement",
+                    "requested_date": "2026-07-23",
+                    "requested_time": "09:00",
+                    "status": "Confirmed",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                pro_module, "ESTIMATE_PDF_DIR", FakeEstimateDir()
+            ):
+                result = pro_module.record_estimate_pdf_document(
+                    pdf_bytes=b"%PDF-1.4 test",
+                    customer_id=customer_id,
+                    vehicle_id=vehicle_id,
+                    customer_name="Sam Driver",
+                    vehicle_label="2008 Toyota Sequoia",
+                    related_title="Water Pump Replacement",
+                    estimate_total=500,
+                    payload={"source": "appointment", "appointment_id": appointment_id},
+                )
+                row = conn.execute(
+                    "SELECT estimate_id FROM service_appointments WHERE id = ?",
+                    (appointment_id,),
+                ).fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(row["estimate_id"], result["id"])
 
     def test_booking_date_has_one_picker_and_no_custom_clear_button(self):
         booking_template = (main.BASE_DIR / "templates" / "booking.html").read_text(encoding="utf-8")

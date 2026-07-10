@@ -1856,6 +1856,17 @@
   function getEstimatorSourceContext() {
     const params = new URLSearchParams(window.location.search);
     const source = String(params.get("source") || "").trim().toLowerCase();
+    if (source === "appointment") {
+      return {
+        source: "appointment",
+        appointmentId: String(params.get("appointment_id") || "").trim(),
+        customerId: String(params.get("customer_id") || "").trim(),
+        customerName: String(params.get("customer_name") || "").trim(),
+        vehicleId: String(params.get("vehicle_id") || "").trim(),
+        problemFound: String(params.get("notes") || "").trim(),
+        recommendedRepair: String(params.get("recommended_repair") || params.get("service_text") || "").trim(),
+      };
+    }
     if (source !== "finding") {
       return { source: "estimator" };
     }
@@ -7820,7 +7831,7 @@ if (getEstimateHint) {
     const findingContext = getEstimatorSourceContext();
     const handoffTrustEl = $("repairGuideHandoffTrust");
 
-    if (!year && !make && !model && !displayModel && !service && !params.get("estimate_payload") && !params.get("estimate_id") && findingContext.source !== "finding") return;
+    if (!year && !make && !model && !displayModel && !service && !serviceText && !params.get("estimate_payload") && !params.get("estimate_id") && findingContext.source === "estimator") return;
 
     function estimateEditDraftFromQuery() {
       const rawPayload = params.get("estimate_payload") || "";
@@ -7926,7 +7937,7 @@ if (getEstimateHint) {
     }
 
     function renderFindingEstimateContext() {
-      if (findingContext.source !== "finding") return;
+      if (!["finding", "appointment"].includes(findingContext.source)) return;
 
       if (customerNameEl && findingContext.customerName) {
         customerNameEl.value = findingContext.customerName;
@@ -7945,7 +7956,9 @@ if (getEstimateHint) {
       findingEstimateContext?.classList.remove("hidden");
 
       if (findingContext.recommendedRepair && notesEl && !notesEl.value.trim()) {
-        notesEl.value = `Recommended Repair: ${findingContext.recommendedRepair}`;
+        notesEl.value = findingContext.source === "appointment"
+          ? [findingContext.problemFound, `Requested Service: ${findingContext.recommendedRepair}`].filter(Boolean).join("\n")
+          : `Recommended Repair: ${findingContext.recommendedRepair}`;
       }
     }
 

@@ -1590,7 +1590,7 @@ def appointment_customer_messages(
                 f"Hi {customer_name}, this is {shop_name}.",
                 (
                     f"Your appointment for {vehicle_phrase} regarding {service_name} on "
-                    f"{appointment_date} at {appointment_time} has been canceled."
+                    f"{appointment_date} at {appointment_time} has been cancelled."
                 ),
                 (
                     f"Please contact us at {contact} if you would like to request a new appointment."
@@ -1623,6 +1623,249 @@ def attach_appointment_customer_messages(
     for appointment in appointments:
         appointment.update(appointment_customer_messages(appointment, sender_context))
     return appointments
+
+
+def parse_appointment_vehicle_label(value: Any) -> dict[str, str]:
+    parts = [part for part in str(value or "").strip().split() if part]
+    if not parts:
+        return {"year": "", "make": "", "model": ""}
+    year = parts[0] if re.fullmatch(r"\d{4}", parts[0]) else ""
+    if year:
+        parts = parts[1:]
+    make = parts[0] if parts else ""
+    model = " ".join(parts[1:]) if len(parts) > 1 else ""
+    return {"year": year, "make": make, "model": model}
+
+
+def appointment_estimator_href(appointment: dict[str, Any]) -> str:
+    vehicle = parse_appointment_vehicle_label(appointment.get("vehicle_label"))
+    params = {
+        "source": "appointment",
+        "appointment_id": appointment.get("id") or "",
+        "customer_id": appointment.get("customer_id") or "",
+        "vehicle_id": appointment.get("vehicle_id") or "",
+        "customer_name": appointment.get("customer_name") or "",
+        "year": vehicle.get("year") or "",
+        "make": vehicle.get("make") or "",
+        "model": vehicle.get("model") or "",
+        "displayModel": vehicle.get("model") or "",
+        "service_text": appointment.get("service_name") or "",
+        "recommended_repair": appointment.get("service_name") or "",
+        "notes": "\n".join(
+            part
+            for part in [
+                f"Source: Appointment #{appointment.get('id')}",
+                (
+                    f"Appointment: {format_pro_date(appointment.get('requested_date'))} "
+                    f"at {format_pro_time(appointment.get('requested_time'))}"
+                ),
+                appointment.get("notes") or "",
+            ]
+            if str(part or "").strip()
+        ),
+    }
+    return f"/estimator?{urlencode({key: value for key, value in params.items() if value not in (None, '')})}"
+
+
+def load_calendar_conversion_context(conn: sqlite3.Connection) -> dict[str, Any]:
+    ensure_customer_status_schema(conn)
+    customers = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM customers
+            WHERE COALESCE(NULLIF(customer_status, ''), 'active') = 'active'
+            ORDER BY updated_at DESC, created_at DESC, id DESC
+            """
+        ).fetchall()
+    ]
+    vehicles_by_customer: dict[str, list[dict[str, Any]]] = {}
+    for row in conn.execute(
+        """
+        SELECT *
+        FROM customer_vehicles
+        ORDER BY updated_at DESC, created_at DESC, id DESC
+        """
+    ).fetchall():
+        vehicle = dict(row)
+        vehicles_by_customer.setdefault(str(vehicle["customer_id"]), []).append(vehicle)
+    return {"customers": customers, "vehicles_by_customer": vehicles_by_customer}
+
+
+def customer_search_label(customer: dict[str, Any]) -> str:
+    return " | ".join(
+        part
+        for part in [
+            customer_display_name(customer),
+            format_phone(customer.get("phone")),
+            customer.get("email") or "",
+        ]
+        if str(part or "").strip()
+    )
+
+
+def vehicle_select_label(vehicle: dict[str, Any]) -> str:
+    label = vehicle_label(vehicle)
+    mileage = vehicle.get("mileage")
+    return f"{label} | {mileage:,} mi" if mileage else label
+
+
+def find_existing_customer_for_appointment(conn: sqlite3.Connection, form: dict[str, str]) -> int | None:
+    phone = clean_phone(form.get("new_customer_phone", ""))
+    email = str(form.get("new_customer_email") or "").strip()
+    if phone:
+        row = conn.execute(
+            "SELECT id FROM customers WHERE phone = ? ORDER BY id ASC LIMIT 1",
+            (phone,),
+        ).fetchone()
+        if row:
+            return int(row["id"])
+    if email:
+        row = conn.execute(
+            """
+            SELECT id
+            FROM customers
+            WHERE LOWER(TRIM(COALESCE(email, ''))) = LOWER(TRIM(?))
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (email,),
+        ).fetchone()
+        if row:
+            return int(row["id"])
+    return None
+
+
+def find_existing_vehicle_for_customer(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    *,
+    year: Any,
+    make: str,
+    model: str,
+) -> int | None:
+    parsed_year = optional_int_value(year)
+    make_key = str(make or "").strip()
+    model_key = str(model or "").strip()
+    if not (parsed_year or make_key or model_key):
+        return None
+    row = conn.execute(
+        """
+        SELECT id
+        FROM customer_vehicles
+        WHERE customer_id = ?
+          AND COALESCE(year, 0) = COALESCE(?, 0)
+          AND LOWER(TRIM(COALESCE(make, ''))) = LOWER(TRIM(?))
+          AND LOWER(TRIM(COALESCE(model, ''))) = LOWER(TRIM(?))
+        ORDER BY id ASC
+        LIMIT 1
+        """,
+        (customer_id, parsed_year, make_key, model_key),
+    ).fetchone()
+    return int(row["id"]) if row else None
+
+
+def link_appointment_customer_vehicle(
+    conn: sqlite3.Connection,
+    appointment_id: int,
+    form: dict[str, str],
+) -> tuple[int, int, dict[str, Any]]:
+    ensure_calendar_schema(conn)
+    ensure_customer_status_schema(conn)
+    appointment = load_service_appointment(conn, appointment_id)
+    if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
+        raise HTTPException(status_code=404, detail="Active confirmed appointment not found.")
+    if optional_int_value(appointment.get("customer_id")) and optional_int_value(appointment.get("vehicle_id")):
+        return int(appointment["customer_id"]), int(appointment["vehicle_id"]), appointment
+
+    customer_mode = form.get("customer_mode", "existing")
+    vehicle_mode = form.get("vehicle_mode", "existing")
+    now = datetime.utcnow().isoformat()
+    if customer_mode == "new":
+        customer_id = find_existing_customer_for_appointment(conn, form)
+        if not customer_id:
+            customer_name = form.get("new_customer_name", "") or appointment.get("customer_name") or ""
+            first_name, last_name = split_customer_name(customer_name)
+            cur = conn.execute(
+                """
+                INSERT INTO customers (
+                  first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
+                """,
+                (
+                    first_name,
+                    last_name,
+                    clean_phone(form.get("new_customer_phone", "") or appointment.get("customer_phone", "")),
+                    form.get("new_customer_email", "") or appointment.get("customer_email", ""),
+                    "Created from appointment conversion.",
+                    now,
+                    now,
+                ),
+            )
+            customer_id = int(cur.lastrowid)
+        vehicle_mode = "new"
+    else:
+        customer_id = optional_int(form, "customer_id") or 0
+        if not conn.execute("SELECT id FROM customers WHERE id = ?", (customer_id,)).fetchone():
+            raise HTTPException(status_code=400, detail="Select a customer.")
+
+    vehicle_bits = parse_appointment_vehicle_label(appointment.get("vehicle_label"))
+    if vehicle_mode == "new":
+        vehicle_year = form.get("new_vehicle_year") or vehicle_bits.get("year") or ""
+        vehicle_make = form.get("new_vehicle_make") or vehicle_bits.get("make") or ""
+        vehicle_model = form.get("new_vehicle_model") or vehicle_bits.get("model") or ""
+        vehicle_id = find_existing_vehicle_for_customer(
+            conn,
+            customer_id,
+            year=vehicle_year,
+            make=vehicle_make,
+            model=vehicle_model,
+        )
+        if not vehicle_id:
+            cur = conn.execute(
+                """
+                INSERT INTO customer_vehicles (
+                  customer_id, year, make, model, engine, vin, license_plate,
+                  mileage, notes, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    customer_id,
+                    optional_int_value(vehicle_year),
+                    vehicle_make,
+                    vehicle_model,
+                    form.get("new_vehicle_engine", ""),
+                    form.get("new_vehicle_vin", ""),
+                    form.get("new_vehicle_license_plate", ""),
+                    optional_int(form, "new_vehicle_mileage"),
+                    "Created from appointment conversion.",
+                    now,
+                    now,
+                ),
+            )
+            vehicle_id = int(cur.lastrowid)
+    else:
+        vehicle_id = optional_int(form, "vehicle_id") or 0
+        if not conn.execute(
+            "SELECT id FROM customer_vehicles WHERE id = ? AND customer_id = ?",
+            (vehicle_id, customer_id),
+        ).fetchone():
+            raise HTTPException(status_code=400, detail="Select a vehicle for this customer.")
+
+    conn.execute(
+        """
+        UPDATE service_appointments
+        SET customer_id = ?, vehicle_id = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (customer_id, vehicle_id, now, appointment_id),
+    )
+    conn.commit()
+    linked = load_service_appointment(conn, appointment_id) or appointment
+    return customer_id, vehicle_id, linked
 
 
 def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
@@ -2242,6 +2485,9 @@ templates.env.filters["pro_time"] = format_pro_time
 templates.env.filters["pro_quantity"] = format_quantity
 templates.env.filters["pro_engine_badge"] = format_engine_badge
 templates.env.filters["service_total"] = service_total_value
+templates.env.globals["customer_search_label"] = customer_search_label
+templates.env.globals["vehicle_select_label"] = vehicle_select_label
+templates.env.globals["parse_appointment_vehicle_label"] = parse_appointment_vehicle_label
 
 
 def parse_date_value(raw: Any) -> date | None:
@@ -2719,6 +2965,25 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customer_vehicles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id INTEGER NOT NULL,
+          year INTEGER,
+          make TEXT,
+          model TEXT,
+          engine TEXT,
+          vin TEXT,
+          license_plate TEXT,
+          mileage INTEGER,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (customer_id) REFERENCES customers(id)
+        )
+        """
+    )
     columns = {row[1] for row in conn.execute("PRAGMA table_info(customers)").fetchall()}
     if "customer_status" not in columns:
         conn.execute("ALTER TABLE customers ADD COLUMN customer_status TEXT NOT NULL DEFAULT 'active'")
@@ -2730,6 +2995,7 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         """
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (customer_status)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_vehicles_customer_id ON customer_vehicles (customer_id)")
     conn.commit()
 
 
@@ -4723,7 +4989,24 @@ def record_estimate_pdf_document(
             ),
         )
         conn.commit()
-        return {"id": int(cur.lastrowid), "pdf_path": str(pdf_path.resolve())}
+        estimate_id = int(cur.lastrowid)
+        appointment_id = optional_int_value((payload or {}).get("appointment_id"))
+        if appointment_id:
+            ensure_calendar_schema(conn)
+            conn.execute(
+                """
+                UPDATE service_appointments
+                SET estimate_id = CASE
+                    WHEN estimate_id IS NULL OR estimate_id = 0 THEN ?
+                    ELSE estimate_id
+                END,
+                    updated_at = ?
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (estimate_id, created_at, appointment_id, parsed_customer_id, parsed_vehicle_id),
+            )
+            conn.commit()
+        return {"id": estimate_id, "pdf_path": str(pdf_path.resolve())}
     finally:
         conn.close()
 
@@ -8879,6 +9162,40 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             load_service_appointments(conn),
             profile,
         )
+        conversion_context = load_calendar_conversion_context(conn)
+        customer_by_id = {
+            int(customer["id"]): customer for customer in conversion_context["customers"]
+        }
+        all_vehicles = [
+            vehicle
+            for vehicles in conversion_context["vehicles_by_customer"].values()
+            for vehicle in vehicles
+        ]
+        vehicle_by_id = {int(vehicle["id"]): vehicle for vehicle in all_vehicles}
+        for appointment in appointments:
+            customer_id = optional_int_value(appointment.get("customer_id"))
+            vehicle_id = optional_int_value(appointment.get("vehicle_id"))
+            estimate_id = optional_int_value(appointment.get("estimate_id"))
+            linked_customer = customer_by_id.get(customer_id or 0)
+            linked_vehicle = vehicle_by_id.get(vehicle_id or 0)
+            appointment["linked_customer_name"] = customer_display_name(linked_customer) if linked_customer else ""
+            appointment["linked_vehicle_label"] = vehicle_label(linked_vehicle) if linked_vehicle else ""
+            appointment["customer_url"] = f"/pro/customers/{customer_id}" if customer_id else ""
+            appointment["vehicle_url"] = (
+                f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
+                if customer_id and vehicle_id
+                else ""
+            )
+            appointment["estimate_url"] = (
+                estimate_document_url(customer_id, vehicle_id, estimate_id)
+                if customer_id and vehicle_id and estimate_id
+                else ""
+            )
+            appointment["create_estimate_url"] = (
+                appointment_estimator_href(appointment)
+                if customer_id and vehicle_id
+                else ""
+            )
     finally:
         conn.close()
     preview_config = {
@@ -8903,6 +9220,8 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             "request": request,
             "groups": group_booking_review_appointments(appointments),
             "status_options": APPOINTMENT_STATUS_OPTIONS,
+            "customers": conversion_context["customers"],
+            "vehicles_by_customer": conversion_context["vehicles_by_customer"],
             "saved": saved == "1",
             "error": error,
             "action_preview": action_preview,
@@ -8912,6 +9231,7 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 "declined": "Booking request declined.",
                 "rescheduled": "Appointment rescheduled.",
                 "cancelled": "Appointment canceled.",
+                "linked": "Appointment linked to customer.",
             }.get(notice, ""),
         },
     )
@@ -9006,6 +9326,32 @@ def pro_calendar_cancel(appointment_id: int):
     finally:
         conn.close()
     return RedirectResponse("/pro/calendar?notice=cancelled", status_code=303)
+
+
+@router.post("/calendar/{appointment_id}/convert")
+async def pro_calendar_convert(request: Request, appointment_id: int):
+    form = await read_form_data(request)
+    action = form.get("conversion_action", "save")
+    conn = crm_db_conn()
+    try:
+        try:
+            customer_id, vehicle_id, appointment = link_appointment_customer_vehicle(
+                conn,
+                appointment_id,
+                form,
+            )
+        except HTTPException as exc:
+            return RedirectResponse(
+                f"/pro/calendar?{urlencode({'error': str(exc.detail)})}",
+                status_code=303,
+            )
+    finally:
+        conn.close()
+    if action == "estimate":
+        appointment["customer_id"] = customer_id
+        appointment["vehicle_id"] = vehicle_id
+        return RedirectResponse(appointment_estimator_href(appointment), status_code=303)
+    return RedirectResponse("/pro/calendar?notice=linked", status_code=303)
 
 
 @public_router.get("/book/{shop_slug}/available-times", response_class=JSONResponse)

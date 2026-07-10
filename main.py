@@ -10802,6 +10802,7 @@ def estimate_pdf_payload(req: Any, *, related_title: str, estimate_total: float)
         "customer_id": estimate_request_source_value(req, "customerId"),
         "vehicle_id": estimate_request_source_value(req, "vehicleId"),
         "finding_id": estimate_request_source_value(req, "findingId"),
+        "appointment_id": estimate_request_source_value(req, "appointmentId"),
         "year": getattr(req, "year", None),
         "make": str(getattr(req, "make", "") or "").strip(),
         "model": str(getattr(req, "model", "") or "").strip(),

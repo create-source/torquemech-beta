@@ -110,6 +110,36 @@
     padding-top: 10px;
   }
   .tm-calendar-reschedule-form { display: grid; gap: 10px; max-width: 420px; }
+  .tm-calendar-convert {
+    flex: 1 0 100%;
+    min-width: 0;
+  }
+  .tm-calendar-convert > summary {
+    display: inline-flex;
+    list-style: none;
+    cursor: pointer;
+  }
+  .tm-calendar-convert > summary::-webkit-details-marker { display: none; }
+  .tm-calendar-convert-panel {
+    display: grid;
+    gap: 12px;
+    margin-top: 10px;
+    border: 1px solid rgba(15, 23, 42, .1);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+  .tm-calendar-convert-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tm-calendar-convert-mode { display: flex; gap: 12px; flex-wrap: wrap; font-weight: 800; color: #334155; }
+  .tm-calendar-linked {
+    display: grid;
+    gap: 8px;
+    border: 1px solid rgba(22, 101, 52, .18);
+    border-radius: 8px;
+    background: #f0fdf4;
+    padding: 10px;
+  }
+  .tm-calendar-linked strong { color: #166534; }
   .tm-calendar-empty { color: #64748b; border: 1px dashed rgba(15, 23, 42, 0.18); border-radius: 8px; padding: 14px; }
   .tm-calendar-panel > summary {
     cursor: pointer;
@@ -128,6 +158,8 @@
     .tm-calendar-actions .tm-btn, .tm-calendar-form-grid .tm-btn { width: 100%; }
     .tm-calendar-copy-row .tm-btn { width: 100%; }
     .tm-calendar-reschedule > summary, .tm-calendar-reschedule-form .tm-btn { width: 100%; }
+    .tm-calendar-convert > summary, .tm-calendar-convert-panel .tm-btn { width: 100%; }
+    .tm-calendar-convert-grid { grid-template-columns: 1fr; }
     .tm-calendar-message-preview-actions .tm-btn { width: 100%; }
     .tm-calendar-panel { padding: 13px; }
     .tm-calendar-card { gap: 7px; padding: 11px; }
@@ -201,6 +233,80 @@
     <form method="post" action="/pro/calendar/{{ item.id }}/cancel" data-confirm-cancel>
       <button class="tm-btn tm-btn-secondary" type="submit">Cancel Appointment</button>
     </form>
+    {% if item.customer_id and item.vehicle_id %}
+    <div class="tm-calendar-linked">
+      <strong>Linked to customer</strong>
+      <div class="tm-calendar-grid">
+        <div class="tm-calendar-field"><span>Customer</span><strong>{{ item.linked_customer_name or item.customer_name }}</strong></div>
+        <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.linked_vehicle_label or item.vehicle_label or "-" }}</strong></div>
+      </div>
+      <div class="tm-calendar-actions">
+        {% if item.customer_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.customer_url }}">Open Customer</a>{% endif %}
+        {% if item.estimate_url %}
+        <a class="tm-btn tm-btn-primary" href="{{ item.estimate_url }}">Open Estimate</a>
+        {% elif item.create_estimate_url %}
+        <a class="tm-btn tm-btn-primary" href="{{ item.create_estimate_url }}">Create Estimate</a>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    {% set vehicle_bits = parse_appointment_vehicle_label(item.vehicle_label) %}
+    <details class="tm-calendar-convert" data-conversion-panel>
+      <summary class="tm-btn tm-btn-primary">Add to Customer / Start Job</summary>
+      <form class="tm-calendar-convert-panel" method="post" action="/pro/calendar/{{ item.id }}/convert">
+        <div class="tm-calendar-convert-mode" aria-label="Customer conversion mode">
+          <label><input type="radio" name="customer_mode" value="existing" checked data-conversion-mode> Existing Customer</label>
+          <label><input type="radio" name="customer_mode" value="new" data-conversion-mode> New Customer</label>
+        </div>
+        <div data-existing-customer-fields>
+          <label class="tm-label" for="customer_filter_{{ item.id }}">Search Customers</label>
+          <input class="tm-input" id="customer_filter_{{ item.id }}" type="search" placeholder="Name, phone, or email" data-customer-filter>
+          <div class="tm-calendar-convert-grid">
+            <div>
+              <label class="tm-label" for="customer_id_{{ item.id }}">Customer</label>
+              <select class="tm-input" id="customer_id_{{ item.id }}" name="customer_id" data-customer-select>
+                <option value="">Select a customer</option>
+                {% for customer in customers %}
+                <option value="{{ customer.id }}" data-search="{{ customer_search_label(customer)|lower }}">{{ customer_search_label(customer) }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="tm-label" for="vehicle_id_{{ item.id }}">Vehicle</label>
+              <select class="tm-input" id="vehicle_id_{{ item.id }}" name="vehicle_id" data-vehicle-select>
+                <option value="">Select a vehicle</option>
+                {% for customer_id, vehicles in vehicles_by_customer.items() %}
+                  {% for vehicle in vehicles %}
+                  <option value="{{ vehicle.id }}" data-customer-id="{{ customer_id }}">{{ vehicle_select_label(vehicle) }}</option>
+                  {% endfor %}
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="tm-calendar-convert-mode" aria-label="Vehicle conversion mode">
+            <label><input type="radio" name="vehicle_mode" value="existing" checked data-vehicle-mode> Use selected vehicle</label>
+            <label><input type="radio" name="vehicle_mode" value="new" data-vehicle-mode> Add new vehicle</label>
+          </div>
+        </div>
+        <div class="tm-calendar-convert-grid" data-new-customer-fields hidden>
+          <div><label class="tm-label" for="new_customer_name_{{ item.id }}">Customer Name</label><input class="tm-input" id="new_customer_name_{{ item.id }}" name="new_customer_name" value="{{ item.customer_name or '' }}"></div>
+          <div><label class="tm-label" for="new_customer_phone_{{ item.id }}">Phone</label><input class="tm-input" id="new_customer_phone_{{ item.id }}" name="new_customer_phone" type="tel" placeholder="(***)***-****" value="{{ item.customer_phone|pro_phone if item.customer_phone else '' }}"></div>
+          <div><label class="tm-label" for="new_customer_email_{{ item.id }}">Email</label><input class="tm-input" id="new_customer_email_{{ item.id }}" name="new_customer_email" type="email" value="{{ item.customer_email or '' }}"></div>
+        </div>
+        <div class="tm-calendar-convert-grid" data-new-vehicle-fields hidden>
+          <div><label class="tm-label" for="new_vehicle_year_{{ item.id }}">Year</label><input class="tm-input" id="new_vehicle_year_{{ item.id }}" name="new_vehicle_year" inputmode="numeric" value="{{ vehicle_bits.year }}"></div>
+          <div><label class="tm-label" for="new_vehicle_make_{{ item.id }}">Make</label><input class="tm-input" id="new_vehicle_make_{{ item.id }}" name="new_vehicle_make" value="{{ vehicle_bits.make }}"></div>
+          <div><label class="tm-label" for="new_vehicle_model_{{ item.id }}">Model</label><input class="tm-input" id="new_vehicle_model_{{ item.id }}" name="new_vehicle_model" value="{{ vehicle_bits.model }}"></div>
+          <div><label class="tm-label" for="new_vehicle_mileage_{{ item.id }}">Mileage</label><input class="tm-input" id="new_vehicle_mileage_{{ item.id }}" name="new_vehicle_mileage" inputmode="numeric"></div>
+        </div>
+        <div class="tm-calendar-field"><span>Appointment Notes</span><strong>{{ item.notes or "No notes provided" }}</strong></div>
+        <div class="tm-calendar-actions">
+          <button class="tm-btn tm-btn-primary" type="submit" name="conversion_action" value="estimate">Create Estimate</button>
+          <button class="tm-btn tm-btn-secondary" type="submit" name="conversion_action" value="save">Save as Upcoming Appointment Only</button>
+        </div>
+      </form>
+    </details>
+    {% endif %}
     {% endif %}
   </div>
   {% if item.status in ["Confirmed", "Rescheduled"] %}
@@ -359,6 +465,48 @@ document.querySelectorAll("[data-confirm-cancel]").forEach((form) => {
       event.preventDefault();
     }
   });
+});
+document.querySelectorAll("[data-conversion-panel]").forEach((panel) => {
+  const customerModes = panel.querySelectorAll("[data-conversion-mode]");
+  const vehicleModes = panel.querySelectorAll("[data-vehicle-mode]");
+  const existingCustomerFields = panel.querySelector("[data-existing-customer-fields]");
+  const newCustomerFields = panel.querySelector("[data-new-customer-fields]");
+  const newVehicleFields = panel.querySelector("[data-new-vehicle-fields]");
+  const customerSelect = panel.querySelector("[data-customer-select]");
+  const vehicleSelect = panel.querySelector("[data-vehicle-select]");
+  const customerFilter = panel.querySelector("[data-customer-filter]");
+
+  function selectedCustomerMode() {
+    return panel.querySelector("[data-conversion-mode]:checked")?.value || "existing";
+  }
+  function selectedVehicleMode() {
+    return panel.querySelector("[data-vehicle-mode]:checked")?.value || "existing";
+  }
+  function syncVehicleOptions() {
+    const customerId = customerSelect?.value || "";
+    vehicleSelect?.querySelectorAll("option[data-customer-id]").forEach((option) => {
+      option.hidden = option.dataset.customerId !== customerId;
+    });
+    if (vehicleSelect?.selectedOptions?.[0]?.hidden) vehicleSelect.value = "";
+  }
+  function syncModes() {
+    const isNewCustomer = selectedCustomerMode() === "new";
+    if (existingCustomerFields) existingCustomerFields.hidden = isNewCustomer;
+    if (newCustomerFields) newCustomerFields.hidden = !isNewCustomer;
+    const addVehicle = isNewCustomer || selectedVehicleMode() === "new";
+    if (newVehicleFields) newVehicleFields.hidden = !addVehicle;
+  }
+  customerModes.forEach((input) => input.addEventListener("change", syncModes));
+  vehicleModes.forEach((input) => input.addEventListener("change", syncModes));
+  customerSelect?.addEventListener("change", syncVehicleOptions);
+  customerFilter?.addEventListener("input", () => {
+    const needle = customerFilter.value.trim().toLowerCase();
+    customerSelect?.querySelectorAll("option[data-search]").forEach((option) => {
+      option.hidden = needle && !option.dataset.search.includes(needle);
+    });
+  });
+  syncVehicleOptions();
+  syncModes();
 });
 async function copyAppointmentText(value) {
   if (navigator.clipboard?.writeText) {
