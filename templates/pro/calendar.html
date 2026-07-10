@@ -15,6 +15,8 @@
   }
 
   .tm-calendar-shell, .tm-calendar-panel, .tm-calendar-list { display: grid; gap: 12px; }
+  .tm-calendar-add { order: 4; }
+  .tm-calendar-history { order: 3; }
   .tm-calendar-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
@@ -29,6 +31,9 @@
     background: #fff;
     padding: 12px;
   }
+  .tm-calendar-card--history { gap: 6px; padding: 10px; }
+  .tm-calendar-card--history .tm-calendar-name { font-size: .98rem; }
+  .tm-calendar-card--history .tm-calendar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tm-calendar-card-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
   .tm-calendar-name { color: #0f172a; font-size: 1.05rem; font-weight: 900; }
   .tm-calendar-when { color: #475569; font-size: .9rem; font-weight: 700; margin-top: 2px; }
@@ -49,6 +54,9 @@
   .tm-calendar-status[data-status="Rescheduled"] { background: #e0e7ff; color: #3730a3; }
   .tm-calendar-status[data-status="Cancelled"] { background: #f1f5f9; color: #475569; }
   .tm-calendar-status[data-status="Declined"] { background: #fee2e2; color: #991b1b; }
+  .tm-calendar-status[data-status="Handled"],
+  .tm-calendar-status[data-status="Completed"],
+  .tm-calendar-status[data-status="Past Appointment"] { background: #f1f5f9; color: #475569; }
   .tm-calendar-notice {
     border: 1px solid rgba(14, 116, 144, 0.18);
     border-radius: 8px;
@@ -134,7 +142,7 @@
       <div class="tm-calendar-name">{{ item.customer_name or "Customer" }}</div>
       <div class="tm-calendar-when">{{ item.requested_date|pro_date }} at {{ item.requested_time|pro_time }}</div>
     </div>
-    <span class="tm-calendar-status" data-status="{{ item.status }}">{% if item.status == "Requested" %}Pending Request{% elif item.status == "Cancelled" %}Appointment Cancelled{% elif item.status == "Declined" %}Request Declined{% else %}{{ item.status }}{% endif %}</span>
+    <span class="tm-calendar-status" data-status="{{ item.status }}">{% if item.status == "Requested" %}Pending Request{% else %}{{ item.status }}{% endif %}</span>
   </div>
   <div class="tm-calendar-grid">
     <div class="tm-calendar-field"><span>Phone</span><strong>{{ item.customer_phone|pro_phone if item.customer_phone else "Not provided" }}</strong></div>
@@ -193,22 +201,40 @@
     <form method="post" action="/pro/calendar/{{ item.id }}/cancel" data-confirm-cancel>
       <button class="tm-btn tm-btn-secondary" type="submit">Cancel Appointment</button>
     </form>
-    <form method="post" action="/pro/calendar/{{ item.id }}/status">
-      <input type="hidden" name="status" value="Handled">
-      <button class="tm-btn tm-btn-secondary" type="submit">Mark Handled</button>
-    </form>
     {% endif %}
   </div>
-  {% if item.status in ["Requested", "Confirmed", "Rescheduled"] %}
+  {% if item.status in ["Confirmed", "Rescheduled"] %}
   <div class="tm-calendar-copy-row" aria-label="Copy customer messages">
     <span hidden data-copy-source="confirmation">{{ item.confirmation_message }}</span>
     <span hidden data-copy-source="reschedule">{{ item.reschedule_message }}</span>
-    <span hidden data-copy-source="cancellation">{{ item.cancellation_message }}</span>
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="confirmation">Copy Confirmation Message</button>
-    {% if item.status in ["Confirmed", "Rescheduled"] %}
+    {% if item.status == "Rescheduled" %}
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="reschedule">Copy Reschedule Message</button>
     {% endif %}
-    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="cancellation">Copy Cancellation Message</button>
+    <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
+  </div>
+  {% endif %}
+</article>
+{% endmacro %}
+
+{% macro history_card(item) %}
+<article class="tm-calendar-card tm-calendar-card--history" data-message-card>
+  <div class="tm-calendar-card-head">
+    <div>
+      <div class="tm-calendar-name">{{ item.customer_name or "Customer" }}</div>
+      <div class="tm-calendar-when">{{ item.requested_date|pro_date }} at {{ item.requested_time|pro_time }}</div>
+    </div>
+    <span class="tm-calendar-status" data-status="{{ item.display_status }}">{{ item.display_status }}</span>
+  </div>
+  <div class="tm-calendar-grid">
+    <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.vehicle_label or "-" }}</strong></div>
+    <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
+  </div>
+  {% if item.status in ["Cancelled", "Declined"] %}
+  {% set message_type = "cancellation" if item.status == "Cancelled" else "declined" %}
+  <div class="tm-calendar-copy-row">
+    <span hidden data-copy-source="{{ message_type }}">{{ item.cancellation_message if item.status == "Cancelled" else item.declined_message }}</span>
+    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="{{ message_type }}">Copy Message</button>
     <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
   </div>
   {% endif %}
@@ -259,7 +285,7 @@
     </div>
   </details>
 
-  <details class="tm-calendar-panel" aria-label="Add Appointment">
+  <details class="tm-calendar-panel tm-calendar-add" aria-label="Add Appointment">
     <summary>Add Appointment</summary>
     {% if saved %}<div style="color:#115e59;font-weight:900;">Appointment saved.</div>{% endif %}
     <form class="tm-calendar-form-grid" method="post" action="/pro/calendar">
@@ -307,18 +333,13 @@
     </form>
   </details>
 
-  {% for key, title, empty in [
-    ("handled", "Handled Requests", "No handled booking requests."),
-    ("declined_cancelled", "Declined / Canceled", "No declined or canceled requests.")
-  ] %}
-  <details class="tm-calendar-panel" aria-label="{{ title }}">
-    <summary>{{ title }} ({{ groups[key]|length }})</summary>
+  <details class="tm-calendar-panel tm-calendar-history" aria-label="Appointment History">
+    <summary>Appointment History ({{ groups.history|length }})</summary>
     <div class="tm-calendar-list" data-calendar-list>
-      {% for item in groups[key] %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">{{ empty }}</div>{% endfor %}
-      {% if groups[key]|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
+      {% for item in groups.history %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ history_card(item) }}</div>{% else %}<div class="tm-calendar-empty">No appointment history yet.</div>{% endfor %}
+      {% if groups.history|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
     </div>
   </details>
-  {% endfor %}
 </section>
 {% endblock %}
 

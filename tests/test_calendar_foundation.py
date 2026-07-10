@@ -405,9 +405,12 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertLess(pending_page.text.index("Pending Requests (6)"), pending_page.text.index("Add Appointment"))
         self.assertIn("customer@example.com", pending_page.text)
         self.assertIn("2020 Honda Civic", pending_page.text)
+        self.assertNotIn("Copy Confirmation Message", pending_page.text)
+        self.assertNotIn("Copy Cancellation Message", pending_page.text)
         self.assertEqual(confirm_response.headers["location"], "/pro/calendar?notice=confirmed")
         self.assertIn("Appointment confirmed.", confirmed_page.text)
         self.assertIn("Confirmed Appointments", confirmed_page.text)
+        self.assertIn("Copy Confirmation Message", confirmed_page.text)
         self.assertEqual(handled_response.headers["location"], "/pro/calendar?notice=handled")
         self.assertEqual(row["status"], "Handled")
 
@@ -467,22 +470,97 @@ class CalendarFoundationTests(unittest.TestCase):
 
         self.assertIn("Reschedule", calendar_page.text)
         self.assertIn("Cancel Appointment", calendar_page.text)
-        self.assertIn("Mark Handled", calendar_page.text)
         self.assertIn("Copy Confirmation Message", calendar_page.text)
-        self.assertIn("Copy Reschedule Message", calendar_page.text)
-        self.assertIn("Copy Cancellation Message", calendar_page.text)
+        self.assertNotIn("Copy Cancellation Message", calendar_page.text)
         self.assertIn({"value": "09:00", "label": "9:00 AM"}, excluded_times["times"])
         self.assertEqual(reschedule_response.headers["location"], "/pro/calendar?notice=rescheduled")
         self.assertTrue(old_slot[0])
         self.assertFalse(new_slot[0])
         self.assertIn("Appointment rescheduled.", rescheduled_page.text)
         self.assertIn("10:00 AM", rescheduled_page.text)
+        self.assertIn("Copy Reschedule Message", rescheduled_page.text)
         self.assertEqual(cancel_response.headers["location"], "/pro/calendar?notice=cancelled")
         self.assertTrue(canceled_slot[0])
         self.assertIn("Appointment canceled.", canceled_page.text)
-        self.assertIn("Declined / Canceled (1)", canceled_page.text)
+        self.assertIn("Appointment History (1)", canceled_page.text)
+        self.assertNotIn('aria-label="Appointment History" open', canceled_page.text)
+        self.assertIn("Copy Message", canceled_page.text)
         self.assertEqual(row["status"], "Cancelled")
         self.assertEqual(row["requested_time"], "10:00")
+
+    def test_declined_request_shows_declined_message_and_history(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Decline Customer",
+                    "customer_phone": "5555550100",
+                    "customer_email": "decline@example.com",
+                    "vehicle_label": "1998 Toyota Camry",
+                    "service_name": "Oil Change",
+                    "requested_date": "2026-07-22",
+                    "requested_time": "16:00",
+                    "status": "Requested",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client = TestClient(main.app, base_url="http://localhost")
+                pending_page = client.get("/pro/calendar")
+                decline_response = client.post(
+                    f"/pro/calendar/{appointment_id}/status",
+                    data={"status": "Declined"},
+                    follow_redirects=False,
+                )
+                declined_page = client.get("/pro/calendar?notice=declined")
+                row = conn.execute(
+                    "SELECT status FROM service_appointments WHERE id = ?",
+                    (appointment_id,),
+                ).fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertIn("Confirm Appointment", pending_page.text)
+        self.assertIn("Decline Request", pending_page.text)
+        self.assertNotIn("Copy Confirmation Message", pending_page.text)
+        self.assertNotIn("Copy Cancellation Message", pending_page.text)
+        self.assertEqual(decline_response.headers["location"], "/pro/calendar?notice=declined")
+        self.assertEqual(row["status"], "Declined")
+        self.assertIn("Request declined", declined_page.text)
+        self.assertIn("Declined", declined_page.text)
+        self.assertIn("Appointment History (1)", declined_page.text)
+        self.assertNotIn('aria-label="Appointment History" open', declined_page.text)
+        self.assertIn("Copy Message", declined_page.text)
+        self.assertIn(
+            "We\u2019re unable to accept your appointment request for your 1998 Toyota Camry "
+            "regarding Oil Change on 07/22/2026 at 4:00 PM.",
+            declined_page.text,
+        )
+        self.assertNotIn("has been canceled", declined_page.text)
+
+    def test_calendar_review_groups_counts_active_and_history_records(self):
+        grouped = pro_module.group_booking_review_appointments(
+            [
+                {"id": 1, "status": "Requested", "requested_date": "2026-07-22", "requested_time": "16:00"},
+                {"id": 2, "status": "Confirmed", "requested_date": "2026-07-13", "requested_time": "09:00"},
+                {"id": 3, "status": "Rescheduled", "requested_date": "2026-07-14", "requested_time": "10:00"},
+                {"id": 4, "status": "Cancelled", "requested_date": "2026-07-15", "requested_time": "11:00"},
+                {"id": 5, "status": "Declined", "requested_date": "2026-07-16", "requested_time": "12:00"},
+                {"id": 6, "status": "Handled", "requested_date": "2026-07-17", "requested_time": "13:00"},
+                {"id": 7, "status": "Confirmed", "requested_date": "2026-07-01", "requested_time": "14:00"},
+            ],
+            pro_module.date(2026, 7, 10),
+        )
+
+        self.assertEqual([item["id"] for item in grouped["pending"]], [1])
+        self.assertEqual([item["id"] for item in grouped["confirmed"]], [2, 3])
+        self.assertEqual(len(grouped["history"]), 4)
+        self.assertIn("Past Appointment", {item.get("display_status") for item in grouped["history"]})
+        self.assertIn("Handled", {item.get("display_status") for item in grouped["history"]})
 
     def test_reschedule_rejects_conflicting_slot_server_side(self):
         conn = self.memory_conn()
@@ -607,7 +685,7 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("10:00 AM", messages["cancellation_message"])
         self.assertNotIn(duration_note, messages["cancellation_message"])
         self.assertNotIn(duration_note, messages["declined_message"])
-        self.assertIn("at the requested time", messages["declined_message"])
+        self.assertIn("on 07/13/2026 at 10:00 AM", messages["declined_message"])
         self.assertIn("has been confirmed", messages["confirmation_message"])
         self.assertIn("new drop-off / appointment time", messages["reschedule_message"])
         self.assertIn("has been canceled", messages["cancellation_message"])

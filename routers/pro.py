@@ -1483,18 +1483,43 @@ def group_calendar_appointments(appointments: list[dict[str, Any]], today: date 
     return grouped
 
 
-def group_booking_review_appointments(appointments: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-    grouped = {"pending": [], "confirmed": [], "handled": [], "declined_cancelled": []}
+def group_booking_review_appointments(
+    appointments: list[dict[str, Any]],
+    today: date | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    today = today or local_today()
+    grouped = {"pending": [], "confirmed": [], "history": []}
     for appointment in appointments:
         status = str(appointment.get("status") or "Requested")
+        requested = parse_date_value(appointment.get("requested_date"))
         if status == "Requested":
             grouped["pending"].append(appointment)
-        elif status in {"Confirmed", "Rescheduled"}:
+        elif status in {"Confirmed", "Rescheduled"} and (not requested or requested >= today):
             grouped["confirmed"].append(appointment)
-        elif status in {"Handled", "Completed"}:
-            grouped["handled"].append(appointment)
         else:
-            grouped["declined_cancelled"].append(appointment)
+            appointment["display_status"] = (
+                "Past Appointment" if status in {"Confirmed", "Rescheduled"} else status
+            )
+            grouped["history"].append(appointment)
+
+    def sort_key(item: dict[str, Any]) -> tuple[str, str, int]:
+        return (
+            str(item.get("requested_date") or ""),
+            str(item.get("requested_time") or ""),
+            int(item.get("id") or 0),
+        )
+
+    grouped["pending"].sort(
+        key=lambda item: (
+            bool(
+                parse_date_value(item.get("requested_date"))
+                and parse_date_value(item.get("requested_date")) < today
+            ),
+            sort_key(item),
+        )
+    )
+    grouped["confirmed"].sort(key=sort_key)
+    grouped["history"].sort(key=sort_key, reverse=True)
     return grouped
 
 
@@ -1579,7 +1604,7 @@ def appointment_customer_messages(
                 f"Hi {customer_name}, this is {shop_name}.",
                 (
                     f"We’re unable to accept your appointment request for {vehicle_phrase} regarding "
-                    f"{service_name} at the requested time."
+                    f"{service_name} on {appointment_date} at {appointment_time}."
                 ),
                 (
                     f"Please contact us at {contact} to choose another available time."
