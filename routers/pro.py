@@ -6964,14 +6964,92 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
     payload["customer_id"] = optional_int({"customer_id": str(payload.get("customerId") or payload.get("customer_id") or source_context.get("customerId") or "")}, "customer_id")
     payload["vehicle_id"] = optional_int({"vehicle_id": str(payload.get("vehicleId") or payload.get("vehicle_id") or source_context.get("vehicleId") or "")}, "vehicle_id")
     payload["finding_id"] = optional_int({"finding_id": str(payload.get("findingId") or payload.get("finding_id") or source_context.get("findingId") or "")}, "finding_id")
+    payload["appointment_id"] = optional_int({"appointment_id": str(payload.get("appointmentId") or payload.get("appointment_id") or source_context.get("appointmentId") or "")}, "appointment_id")
+    payload["estimate_id"] = optional_int({"estimate_id": str(payload.get("estimateId") or payload.get("estimate_id") or source_context.get("estimateId") or "")}, "estimate_id")
     payload["sourceContext"] = {
         "source": payload["source"],
+        "customerId": str(payload["customer_id"] or ""),
+        "vehicleId": str(payload["vehicle_id"] or ""),
+        "findingId": str(payload["finding_id"] or ""),
+        "appointmentId": str(payload["appointment_id"] or ""),
+        "estimateId": str(payload["estimate_id"] or ""),
         "customerName": str(source_context.get("customerName") or "").strip(),
         "problemFound": str(source_context.get("problemFound") or "").strip(),
         "recommendedRepair": str(source_context.get("recommendedRepair") or "").strip(),
     }
     payload["notes"] = str(payload.get("notes") or "").strip()[:1200]
     return payload
+
+
+def estimate_conversion_linked_context(
+    conn: sqlite3.Connection,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    customer_id = optional_int_value(payload.get("customer_id"))
+    vehicle_id = optional_int_value(payload.get("vehicle_id"))
+    context: dict[str, Any] = {
+        "valid": False,
+        "customer": None,
+        "vehicle": None,
+        "customer_label": "",
+        "vehicle_label": "",
+        "warning": "",
+        "existing_repair_url": "",
+    }
+    if not customer_id and not vehicle_id:
+        return context
+    if not customer_id:
+        context["warning"] = "This estimate has a vehicle link but no linked customer. Select or create the customer before importing services."
+        return context
+
+    ensure_customer_status_schema(conn)
+    customer = row_to_dict(conn.execute("SELECT * FROM customers WHERE id = ?", (customer_id,)).fetchone())
+    if not customer:
+        context["warning"] = "The customer linked to this estimate no longer exists. Select or create a replacement before importing services."
+        return context
+    context["customer"] = customer
+    context["customer_label"] = customer_display_name(customer) or customer_name(customer)
+
+    if not vehicle_id:
+        context["warning"] = "This estimate has a linked customer but no linked vehicle. Select or create the vehicle before importing services."
+        return context
+    vehicle = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM customer_vehicles
+            WHERE id = ? AND customer_id = ?
+            """,
+            (vehicle_id, customer_id),
+        ).fetchone()
+    )
+    if not vehicle:
+        context["warning"] = "The linked vehicle is missing or does not belong to the linked customer. Select or create the correct vehicle before importing services."
+        return context
+
+    context["valid"] = True
+    context["vehicle"] = vehicle
+    context["vehicle_label"] = vehicle_reminder_label(vehicle)
+
+    estimate_id = optional_int_value(payload.get("estimate_id"))
+    if estimate_id:
+        ensure_repair_records_schema(conn)
+        repair = conn.execute(
+            """
+            SELECT id
+            FROM repair_records
+            WHERE customer_id = ?
+              AND vehicle_id = ?
+              AND workflow_source_type = 'estimate'
+              AND workflow_source_id = ?
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (customer_id, vehicle_id, estimate_id),
+        ).fetchone()
+        if repair:
+            context["existing_repair_url"] = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair['id']}"
+    return context
 
 
 def optional_payload_float(value: Any) -> float | None:
@@ -9655,6 +9733,7 @@ def pro_estimate_conversion_empty(request: Request):
             "payload_json": "",
             "customers": [],
             "vehicles_by_customer": {},
+            "linked_context": {"valid": False, "warning": "", "existing_repair_url": ""},
             "error": "Start from the Estimator after adding at least one service.",
         },
     )
@@ -9689,6 +9768,7 @@ async def pro_estimate_conversion(request: Request):
         ).fetchall():
             vehicle = dict(row)
             vehicles_by_customer.setdefault(str(vehicle["customer_id"]), []).append(vehicle)
+        linked_context = estimate_conversion_linked_context(conn, payload)
     finally:
         conn.close()
     return templates.TemplateResponse(
@@ -9699,6 +9779,7 @@ async def pro_estimate_conversion(request: Request):
             "payload_json": json.dumps(payload),
             "customers": customers,
             "vehicles_by_customer": vehicles_by_customer,
+            "linked_context": linked_context,
             "error": "",
         },
     )
@@ -9722,32 +9803,7 @@ async def pro_estimate_conversion_create(request: Request):
     repair_date = local_today().isoformat()
     customer_mode = form.get("customer_mode", "existing")
     vehicle_mode = form.get("vehicle_mode", "existing")
-    customer_missing = (
-        customer_mode not in {"existing", "new"}
-        or (customer_mode == "existing" and not optional_int(form, "customer_id"))
-        or (customer_mode == "new" and not form.get("new_customer_name", "").strip())
-    )
     vehicle_payload = payload.get("vehicle") or {}
-    vehicle_missing = (
-        vehicle_mode not in {"existing", "new"}
-        or (customer_mode == "existing" and vehicle_mode == "existing" and not optional_int(form, "vehicle_id"))
-        or (
-            vehicle_mode == "new"
-            and not (
-                form.get("new_vehicle_year")
-                or vehicle_payload.get("year")
-                or form.get("new_vehicle_make")
-                or vehicle_payload.get("make")
-                or form.get("new_vehicle_model")
-                or vehicle_payload.get("model")
-            )
-        )
-    )
-    if customer_missing or vehicle_missing:
-        raise HTTPException(
-            status_code=400,
-            detail="Customer and vehicle are required before this estimate can be imported.",
-        )
     if not selected_items:
         raise HTTPException(status_code=400, detail="Select at least one service to import")
 
@@ -9755,28 +9811,64 @@ async def pro_estimate_conversion_create(request: Request):
     try:
         ensure_customer_status_schema(conn)
         ensure_repair_records_schema(conn)
-        if customer_mode == "new":
-            first_name, last_name = split_customer_name(form.get("new_customer_name", ""))
-            cur = conn.execute(
-                """
-                INSERT INTO customers (
-                  first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
-                )
-                VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
-                """,
-                (
-                    first_name,
-                    last_name,
-                    clean_phone(form.get("new_customer_phone", "")),
-                    form.get("new_customer_email", ""),
-                    "Created from estimator conversion.",
-                    now,
-                    now,
-                ),
-            )
-            customer_id = int(cur.lastrowid)
-            vehicle_mode = "new"
+        linked_context = estimate_conversion_linked_context(conn, payload)
+        use_linked_records = form.get("linked_customer_vehicle_locked") == "1" and linked_context.get("valid")
+        if use_linked_records:
+            customer_mode = "existing"
+            vehicle_mode = "existing"
+            customer_id = int(payload["customer_id"])
+            vehicle_id = int(payload["vehicle_id"])
+            vehicle_mileage = (linked_context.get("vehicle") or {}).get("mileage")
         else:
+            customer_missing = (
+                customer_mode not in {"existing", "new"}
+                or (customer_mode == "existing" and not optional_int(form, "customer_id"))
+                or (customer_mode == "new" and not form.get("new_customer_name", "").strip())
+            )
+            vehicle_missing = (
+                vehicle_mode not in {"existing", "new"}
+                or (customer_mode == "existing" and vehicle_mode == "existing" and not optional_int(form, "vehicle_id"))
+                or (
+                    vehicle_mode == "new"
+                    and not (
+                        form.get("new_vehicle_year")
+                        or vehicle_payload.get("year")
+                        or form.get("new_vehicle_make")
+                        or vehicle_payload.get("make")
+                        or form.get("new_vehicle_model")
+                        or vehicle_payload.get("model")
+                    )
+                )
+            )
+            if customer_missing or vehicle_missing:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Customer and vehicle are required before this estimate can be imported.",
+                )
+        if customer_mode == "new":
+            customer_id = find_existing_customer_for_appointment(conn, form)
+            if not customer_id:
+                first_name, last_name = split_customer_name(form.get("new_customer_name", ""))
+                cur = conn.execute(
+                    """
+                    INSERT INTO customers (
+                      first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
+                    """,
+                    (
+                        first_name,
+                        last_name,
+                        clean_phone(form.get("new_customer_phone", "")),
+                        form.get("new_customer_email", ""),
+                        "Created from estimator conversion.",
+                        now,
+                        now,
+                    ),
+                )
+                customer_id = int(cur.lastrowid)
+            vehicle_mode = "new"
+        elif not use_linked_records:
             customer_id = optional_int(form, "customer_id") or 0
             customer = conn.execute(
                 "SELECT id FROM customers WHERE id = ?",
@@ -9786,31 +9878,42 @@ async def pro_estimate_conversion_create(request: Request):
                 raise HTTPException(status_code=400, detail="Select a customer")
 
         if vehicle_mode == "new":
-            cur = conn.execute(
-                """
-                INSERT INTO customer_vehicles (
-                  customer_id, year, make, model, engine, vin, license_plate,
-                  mileage, notes, created_at, updated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    customer_id,
-                    optional_int(form, "new_vehicle_year") or optional_int({"new_vehicle_year": vehicle_payload.get("year")}, "new_vehicle_year"),
-                    form.get("new_vehicle_make") or vehicle_payload.get("make") or "",
-                    form.get("new_vehicle_model") or vehicle_payload.get("model") or "",
-                    form.get("new_vehicle_engine", ""),
-                    form.get("new_vehicle_vin", ""),
-                    form.get("new_vehicle_license_plate", ""),
-                    optional_int(form, "new_vehicle_mileage"),
-                    "Created from estimator conversion.",
-                    now,
-                    now,
-                ),
+            vehicle_year = form.get("new_vehicle_year") or vehicle_payload.get("year") or ""
+            vehicle_make = form.get("new_vehicle_make") or vehicle_payload.get("make") or ""
+            vehicle_model = form.get("new_vehicle_model") or vehicle_payload.get("model") or ""
+            vehicle_id = find_existing_vehicle_for_customer(
+                conn,
+                customer_id,
+                year=vehicle_year,
+                make=vehicle_make,
+                model=vehicle_model,
             )
-            vehicle_id = int(cur.lastrowid)
+            if not vehicle_id:
+                cur = conn.execute(
+                    """
+                    INSERT INTO customer_vehicles (
+                      customer_id, year, make, model, engine, vin, license_plate,
+                      mileage, notes, created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        customer_id,
+                        optional_int_value(vehicle_year),
+                        vehicle_make,
+                        vehicle_model,
+                        form.get("new_vehicle_engine", ""),
+                        form.get("new_vehicle_vin", ""),
+                        form.get("new_vehicle_license_plate", ""),
+                        optional_int(form, "new_vehicle_mileage"),
+                        "Created from estimator conversion.",
+                        now,
+                        now,
+                    ),
+                )
+                vehicle_id = int(cur.lastrowid)
             vehicle_mileage = optional_int(form, "new_vehicle_mileage")
-        else:
+        elif not use_linked_records:
             vehicle_id = optional_int(form, "vehicle_id") or 0
             vehicle = conn.execute(
                 """
@@ -9825,7 +9928,7 @@ async def pro_estimate_conversion_create(request: Request):
             vehicle_mileage = vehicle["mileage"]
 
         source_type = "finding" if payload.get("source") == "finding" and payload.get("finding_id") else "estimate"
-        source_id = int(payload["finding_id"]) if source_type == "finding" else None
+        source_id = int(payload["finding_id"]) if source_type == "finding" else optional_int_value(payload.get("estimate_id"))
         if source_type == "finding":
             ensure_findings_records_schema(conn)
             finding = conn.execute(
@@ -9840,6 +9943,7 @@ async def pro_estimate_conversion_create(request: Request):
                 raise HTTPException(status_code=400, detail="Finding context does not match selected customer and vehicle")
 
         created_count = 0
+        first_repair_id: int | None = None
         for item in selected_items:
             if source_type == "finding" and source_id is not None:
                 existing = conn.execute(
@@ -9855,6 +9959,20 @@ async def pro_estimate_conversion_create(request: Request):
                     """,
                     (source_id, vehicle_id, item["service_name"], repair_date),
                 ).fetchone()
+            elif source_type == "estimate" and source_id is not None:
+                existing = conn.execute(
+                    """
+                    SELECT id
+                    FROM repair_records
+                    WHERE workflow_source_type = 'estimate'
+                      AND workflow_source_id = ?
+                      AND customer_id = ?
+                      AND vehicle_id = ?
+                      AND LOWER(TRIM(COALESCE(repair_name, ''))) = LOWER(TRIM(?))
+                    LIMIT 1
+                    """,
+                    (source_id, customer_id, vehicle_id, item["service_name"]),
+                ).fetchone()
             else:
                 existing = conn.execute(
                     """
@@ -9868,6 +9986,7 @@ async def pro_estimate_conversion_create(request: Request):
                     (vehicle_id, item["service_name"], repair_date),
                 ).fetchone()
             if existing:
+                first_repair_id = first_repair_id or int(existing["id"])
                 continue
             labor_cost = item["labor_total"]
             if labor_cost is None and item["labor_hours"] is not None and item["labor_rate"] is not None:
@@ -9917,6 +10036,7 @@ async def pro_estimate_conversion_create(request: Request):
                 ),
             )
             repair_id = int(cur.lastrowid)
+            first_repair_id = first_repair_id or repair_id
             if source_type == "finding" and source_id is not None:
                 conn.execute(
                     f"""
@@ -9934,6 +10054,21 @@ async def pro_estimate_conversion_create(request: Request):
                     (repair_id, now, now, *finding_record_where_params(conn, source_id, customer_id, vehicle_id)),
                 )
             created_count += 1
+        appointment_id = optional_int_value(payload.get("appointment_id"))
+        if appointment_id and first_repair_id:
+            ensure_calendar_schema(conn)
+            conn.execute(
+                """
+                UPDATE service_appointments
+                SET repair_id = CASE
+                    WHEN repair_id IS NULL OR repair_id = 0 THEN ?
+                    ELSE repair_id
+                END,
+                    updated_at = ?
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (first_repair_id, now, appointment_id, customer_id, vehicle_id),
+            )
         conn.commit()
     finally:
         conn.close()

@@ -1883,6 +1883,7 @@
       return {
         source: "appointment",
         appointmentId: String(params.get("appointment_id") || "").trim(),
+        estimateId: String(params.get("estimate_id") || "").trim(),
         customerId: String(params.get("customer_id") || "").trim(),
         customerName: String(params.get("customer_name") || "").trim(),
         vehicleId: String(params.get("vehicle_id") || "").trim(),
@@ -1895,6 +1896,8 @@
     }
     return {
       source: "finding",
+      appointmentId: String(params.get("appointment_id") || "").trim(),
+      estimateId: String(params.get("estimate_id") || "").trim(),
       customerId: String(params.get("customer_id") || "").trim(),
       customerName: String(params.get("customer_name") || "").trim(),
       vehicleId: String(params.get("vehicle_id") || "").trim(),
@@ -3521,6 +3524,8 @@ const confidenceEl = document.getElementById("laborConfidence");
       customerId: sourceContext.customerId || "",
       vehicleId: sourceContext.vehicleId || "",
       findingId: sourceContext.findingId || "",
+      appointmentId: sourceContext.appointmentId || "",
+      estimateId: sourceContext.estimateId || "",
       sourceContext,
       notes: (notesEl?.value || "").trim(),
       customer: {
@@ -6996,6 +7001,8 @@ if (getEstimateHint) {
           customerId: sourceContext.customerId || null,
           vehicleId: sourceContext.vehicleId || null,
           findingId: sourceContext.findingId || null,
+          appointmentId: sourceContext.appointmentId || null,
+          estimateId: sourceContext.estimateId || null,
           problemFound: sourceContext.problemFound || null,
           recommendedRepair: sourceContext.recommendedRepair || null,
           sourceContext,

@@ -134,6 +134,42 @@
     font-weight: 850;
   }
 
+  .tm-linked-record-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .tm-linked-record-summary div {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .tm-linked-record-summary span {
+    display: block;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .tm-linked-record-summary strong {
+    display: block;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-linked-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
   @media (max-width: 760px) {
     .tm-convert-grid {
       grid-template-columns: 1fr;
@@ -166,12 +202,54 @@
   {% if payload %}
   <form class="tm-convert-shell" method="post" action="/pro/estimate-conversion/create">
     <input type="hidden" name="estimate_payload" value="{{ payload_json|e }}">
+    {% if linked_context.valid %}
+    <input type="hidden" name="linked_customer_vehicle_locked" value="1" data-linked-lock>
+    <input type="hidden" name="customer_mode" value="existing" data-linked-lock>
+    <input type="hidden" name="customer_id" value="{{ payload.customer_id }}" data-linked-lock>
+    <input type="hidden" name="vehicle_mode" value="existing" data-linked-lock>
+    <input type="hidden" name="vehicle_id" value="{{ payload.vehicle_id }}" data-linked-lock>
+    {% endif %}
     <div class="tm-convert-requirement">
+      {% if linked_context.valid %}
+      Customer and vehicle are already linked from the appointment or estimate. Review/import services below.
+      {% else %}
       Select or create a customer, then select or create a vehicle before importing services.
+      {% endif %}
     </div>
+    {% if linked_context.warning %}
+    <div class="tm-convert-error" role="alert">{{ linked_context.warning }}</div>
+    {% endif %}
     <div class="tm-convert-error" data-convert-requirement-error role="alert" aria-live="assertive" hidden>
       Customer and vehicle are required before this estimate can be imported.
     </div>
+
+    {% if linked_context.valid %}
+    <section class="tm-convert-panel" aria-label="Linked Customer and Vehicle">
+      <div class="tm-convert-step-head">
+        <div>
+          <div class="tm-convert-step-kicker">Linked CRM Records</div>
+          <h2>Customer and Vehicle</h2>
+        </div>
+      </div>
+      <div class="tm-linked-record-summary">
+        <div>
+          <span>Customer</span>
+          <strong>{{ linked_context.customer_label }}</strong>
+        </div>
+        <div>
+          <span>Vehicle</span>
+          <strong>{{ linked_context.vehicle_label }}</strong>
+        </div>
+      </div>
+      <div class="tm-linked-actions">
+        {% if linked_context.existing_repair_url %}
+        <a class="tm-btn tm-btn-primary" href="{{ linked_context.existing_repair_url }}">Open Pro Job</a>
+        {% endif %}
+        <button class="tm-btn tm-btn-secondary" type="button" data-change-linked-records>Change Customer or Vehicle</button>
+      </div>
+    </section>
+    <div data-linked-manual hidden>
+    {% endif %}
 
     <section class="tm-convert-panel" aria-label="Customer">
       <div class="tm-convert-step-head">
@@ -259,10 +337,14 @@
       </div>
     </section>
 
+    {% if linked_context.valid %}
+    </div>
+    {% endif %}
+
     <section class="tm-convert-panel" aria-label="Import Services">
       <div class="tm-convert-step-head">
         <div>
-          <div class="tm-convert-step-kicker">Step 3</div>
+          <div class="tm-convert-step-kicker">{% if linked_context.valid %}Next Step{% else %}Step 3{% endif %}</div>
           <h2>Import Services</h2>
           <p class="tm-pro-subtitle" style="margin:4px 0 0;">Select services to create as repair jobs.</p>
         </div>
@@ -305,10 +387,23 @@
       const vehicleSelect = document.getElementById("vehicle_id");
       const conversionForm = document.querySelector(".tm-convert-shell");
       const requirementError = document.querySelector("[data-convert-requirement-error]");
+      const linkedManual = document.querySelector("[data-linked-manual]");
+      const linkedLocks = Array.from(document.querySelectorAll("[data-linked-lock]"));
+      const changeLinkedButton = document.querySelector("[data-change-linked-records]");
       const panels = {
         customer: Array.from(document.querySelectorAll("[data-customer-panel]")),
         vehicle: Array.from(document.querySelectorAll("[data-vehicle-panel]")),
       };
+      const manualControls = linkedManual
+        ? Array.from(linkedManual.querySelectorAll("input, select, textarea, button"))
+        : [];
+
+      function setManualLinkedMode(isLocked) {
+        if (linkedManual) linkedManual.hidden = isLocked;
+        linkedLocks.forEach((input) => { input.disabled = !isLocked; });
+        manualControls.forEach((input) => { input.disabled = isLocked; });
+        if (changeLinkedButton) changeLinkedButton.hidden = !isLocked;
+      }
 
       function selectedRadio(name) {
         return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
@@ -358,7 +453,14 @@
         if (event.target === customerSelect) syncVehicles();
         if (requirementError) requirementError.hidden = true;
       });
+      changeLinkedButton?.addEventListener("click", () => {
+        setManualLinkedMode(false);
+        syncPanels();
+        syncVehicles();
+        customerSelect?.focus();
+      });
       conversionForm?.addEventListener("submit", (event) => {
+        if (linkedLocks.some((input) => !input.disabled && input.name === "linked_customer_vehicle_locked")) return;
         const customerMode = selectedRadio("customer_mode");
         const vehicleMode = customerMode === "new" ? "new" : selectedRadio("vehicle_mode");
         const hasCustomer = customerMode === "new"
@@ -376,6 +478,7 @@
       });
       syncPanels();
       syncVehicles();
+      setManualLinkedMode(Boolean(linkedManual));
     })();
   </script>
   {% endif %}
