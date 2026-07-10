@@ -166,9 +166,13 @@
       {% endif %}
     </section>
 
-    <section class="tm-invoice-builder-panel" aria-label="Already Invoiced" style="margin-top:16px;">
-      <div class="tm-crm-kicker">Already Invoiced</div>
-      <h2 style="margin:4px 0 0;">Already Invoiced</h2>
+    <details class="tm-invoice-builder-panel" aria-label="Already Invoiced" style="margin-top:16px;">
+      <summary>
+        <span>
+          <span class="tm-crm-kicker">Already Invoiced</span>
+          <strong style="display:block; margin-top:4px;">Already Invoiced ({{ job_groups.already_invoiced|length }})</strong>
+        </span>
+      </summary>
       {% if job_groups.already_invoiced %}
       <div class="tm-invoice-builder-list">
         {% for job in job_groups.already_invoiced %}
@@ -188,7 +192,7 @@
       {% else %}
       <div class="tm-invoice-builder-empty">No repair jobs have been invoiced yet.</div>
       {% endif %}
-    </section>
+    </details>
 
     <div class="tm-invoice-builder-panel" style="margin-top:16px;">
       <button class="tm-btn tm-btn-primary" type="submit">Create Invoice</button>

@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 from app.data.maintenance_library import (
@@ -2241,6 +2242,8 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
     if "external_scheduling_link" in form or "scheduling_link" in form:
         current["external_scheduling_link"] = form.get("external_scheduling_link", form.get("scheduling_link", ""))
         current["scheduling_link"] = current["external_scheduling_link"]
+    if "warranty_note" in form:
+        current["warranty_note"] = str(form.get("warranty_note") or "").strip()
     default_templates = appointment_message_default_templates()
     for key, default_template in default_templates.items():
         if key not in form:
@@ -2279,6 +2282,7 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
           default_labor_rate = excluded.default_labor_rate,
           tax_rate = excluded.tax_rate,
           shop_supplies_fee = excluded.shop_supplies_fee,
+          warranty_note = excluded.warranty_note,
           appointment_confirmation_template = excluded.appointment_confirmation_template,
           appointment_cancellation_template = excluded.appointment_cancellation_template,
           appointment_declined_template = excluded.appointment_declined_template,
@@ -4629,7 +4633,14 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
           vehicle_id INTEGER NOT NULL,
           labor_total REAL NOT NULL DEFAULT 0,
           parts_total REAL NOT NULL DEFAULT 0,
+          shop_supplies_fee REAL NOT NULL DEFAULT 0,
+          tax_rate REAL NOT NULL DEFAULT 0,
+          tax_total REAL NOT NULL DEFAULT 0,
+          discount_total REAL NOT NULL DEFAULT 0,
           grand_total REAL NOT NULL DEFAULT 0,
+          amount_paid REAL NOT NULL DEFAULT 0,
+          payment_status TEXT NOT NULL DEFAULT 'Unpaid',
+          warranty_text TEXT,
           created_at TEXT NOT NULL,
           FOREIGN KEY (repair_record_id) REFERENCES repair_records(id),
           FOREIGN KEY (customer_id) REFERENCES customers(id),
@@ -4654,6 +4665,18 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices (created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice_id ON invoice_items (invoice_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_invoice_items_repair_record_id ON invoice_items (repair_record_id)")
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(invoices)").fetchall()}
+    for column_name, column_sql in {
+        "shop_supplies_fee": "shop_supplies_fee REAL NOT NULL DEFAULT 0",
+        "tax_rate": "tax_rate REAL NOT NULL DEFAULT 0",
+        "tax_total": "tax_total REAL NOT NULL DEFAULT 0",
+        "discount_total": "discount_total REAL NOT NULL DEFAULT 0",
+        "amount_paid": "amount_paid REAL NOT NULL DEFAULT 0",
+        "payment_status": "payment_status TEXT NOT NULL DEFAULT 'Unpaid'",
+        "warranty_text": "warranty_text TEXT",
+    }.items():
+        if column_name not in columns:
+            conn.execute(f"ALTER TABLE invoices ADD COLUMN {column_sql}")
     for invoice in conn.execute("SELECT id, repair_record_id, created_at FROM invoices").fetchall():
         if not invoice["repair_record_id"]:
             continue
@@ -4881,7 +4904,29 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
     record["labor_total"] = round(sum(float(item.get("labor_total") or 0) for item in items), 2)
     record["parts_total"] = round(sum(float(item.get("parts_total") or 0) for item in items), 2)
     record["parts_cost"] = record["parts_total"]
-    record["grand_total"] = round(sum(float(item.get("grand_total") or 0) for item in items), 2)
+    record["service_subtotal"] = round(sum(float(item.get("grand_total") or 0) for item in items), 2)
+    record["shop_supplies_fee"] = round(float(record.get("shop_supplies_fee") or 0), 2)
+    record["tax_rate"] = float(record.get("tax_rate") or 0)
+    record["tax_total"] = round(float(record.get("tax_total") or 0), 2)
+    record["discount_total"] = round(float(record.get("discount_total") or 0), 2)
+    record["amount_paid"] = round(float(record.get("amount_paid") or 0), 2)
+    calculated_grand_total = round(
+        max(record["service_subtotal"] + record["shop_supplies_fee"] - record["discount_total"], 0)
+        + record["tax_total"],
+        2,
+    )
+    stored_grand_total = record.get("grand_total")
+    record["grand_total"] = calculated_grand_total if (
+        record["shop_supplies_fee"] or record["tax_total"] or record["discount_total"]
+    ) else round(float(stored_grand_total if stored_grand_total is not None else record["service_subtotal"]), 2)
+    record["balance_due"] = round(max(record["grand_total"] - record["amount_paid"], 0), 2)
+    payment_status = str(record.get("payment_status") or "").strip()
+    if record["balance_due"] <= 0 and record["grand_total"] > 0:
+        payment_status = "Paid in Full"
+    elif record["amount_paid"] > 0:
+        payment_status = payment_status or "Partially Paid"
+    record["payment_status"] = payment_status or "Unpaid"
+    record["warranty_text"] = str(record.get("warranty_text") or "").strip()
     primary = items[0] if items else {}
     record["repair_name"] = primary.get("service_title") or "Repair"
     record["repair_mileage"] = primary.get("repair_mileage")
@@ -4964,6 +5009,17 @@ def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
             "Invoice cannot be generated until this completed repair has labor or parts totals recorded."
         ]
     return []
+
+
+def repair_completion_validation_errors(form: dict[str, str]) -> list[str]:
+    errors: list[str] = []
+    if optional_int(form, "completion_mileage") is None:
+        errors.append("Completion mileage is required before closing this repair.")
+    if not str(form.get("completion_notes") or "").strip():
+        errors.append("Completion notes are required before closing this repair.")
+    if form.get("final_inspection_passed") != "1":
+        errors.append("Final inspection must be marked passed before closing this repair.")
+    return errors
 
 
 def load_repair_invoice_map(
@@ -5443,28 +5499,45 @@ def create_invoice_for_repairs(
     if not selected_repairs:
         raise HTTPException(status_code=400, detail="Select at least one repair job")
 
+    existing_invoices: list[dict[str, Any]] = []
     for repair in selected_repairs:
         if int(repair.get("customer_id") or customer_id) != customer_id or int(repair.get("vehicle_id") or vehicle_id) != vehicle_id:
             raise HTTPException(status_code=400, detail="Selected repair does not match this customer vehicle")
         existing = load_invoice_for_repair(conn, int(repair["id"]))
         if existing:
-            raise HTTPException(status_code=400, detail="One or more selected repair jobs are already invoiced")
+            existing_invoices.append(existing)
+            continue
         warnings = repair_invoice_warnings(repair)
         if warnings:
             raise HTTPException(status_code=400, detail=warnings[0])
 
+    if existing_invoices:
+        if len(existing_invoices) == len(selected_repairs):
+            invoice_ids = {int(invoice["id"]) for invoice in existing_invoices if invoice.get("id")}
+            if len(invoice_ids) == 1:
+                return load_invoice_record(conn, customer_id, vehicle_id, next(iter(invoice_ids)))
+        raise HTTPException(status_code=400, detail="One or more selected repair jobs are already invoiced. Open the existing final invoice instead.")
+
     totals = [repair_cost_totals(repair) for repair in selected_repairs]
     labor_total = round(sum(float(total["labor_total"] or 0) for total in totals), 2)
     parts_total = round(sum(float(total["parts_total"] or 0) for total in totals), 2)
-    grand_total = round(sum(float(total["grand_total"] or 0) for total in totals), 2)
+    subtotal = round(sum(float(total["grand_total"] or 0) for total in totals), 2)
+    shop_profile = load_shop_profile_context(conn)
+    shop_supplies_fee = round(float(shop_profile.get("shop_supplies_fee") or 0), 2)
+    tax_rate = round(float(shop_profile.get("tax_rate") or 0), 5)
+    discount_total = 0.0
+    taxable_total = max(subtotal + shop_supplies_fee - discount_total, 0)
+    tax_total = round(taxable_total * tax_rate, 2)
+    grand_total = round(taxable_total + tax_total, 2)
     primary_repair = selected_repairs[0]
     cur = conn.execute(
         """
         INSERT INTO invoices (
           invoice_number, repair_record_id, customer_id, vehicle_id,
-          labor_total, parts_total, grand_total, created_at
+          labor_total, parts_total, shop_supplies_fee, tax_rate, tax_total,
+          discount_total, grand_total, amount_paid, payment_status, warranty_text, created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             f"PENDING-{uuid4().hex[:12]}",
@@ -5473,7 +5546,14 @@ def create_invoice_for_repairs(
             vehicle_id,
             labor_total,
             parts_total,
+            shop_supplies_fee,
+            tax_rate,
+            tax_total,
+            discount_total,
             grand_total,
+            0.0,
+            "Unpaid",
+            str(shop_profile.get("warranty_note") or "").strip(),
             now,
         ),
     )
@@ -5498,6 +5578,27 @@ def create_invoice_for_repairs(
         vehicle_id=vehicle_id,
         repairs=selected_repairs,
     )
+    ensure_calendar_schema(conn)
+    conn.execute(
+        """
+        UPDATE service_appointments
+        SET invoice_id = CASE
+              WHEN invoice_id IS NULL OR invoice_id = 0 THEN ?
+              ELSE invoice_id
+            END,
+            updated_at = ?
+        WHERE repair_id IN ({})
+          AND customer_id = ?
+          AND vehicle_id = ?
+        """.format(",".join("?" for _ in selected_repairs)),
+        (
+            invoice_id,
+            now,
+            *[int(repair["id"]) for repair in selected_repairs],
+            customer_id,
+            vehicle_id,
+        ),
+    )
     return load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
 
 
@@ -5516,11 +5617,20 @@ def recalculate_invoice_from_repair(
     if not repairs:
         repairs = [load_repair_record(conn, customer_id, vehicle_id, int(invoice["repair_record_id"]))]
     totals = [repair_cost_totals(repair) for repair in repairs]
+    labor_total = round(sum(float(total["labor_total"] or 0) for total in totals), 2)
+    parts_total = round(sum(float(total["parts_total"] or 0) for total in totals), 2)
+    service_subtotal = round(sum(float(total["grand_total"] or 0) for total in totals), 2)
+    shop_supplies_fee = round(float(invoice.get("shop_supplies_fee") or 0), 2)
+    tax_rate = float(invoice.get("tax_rate") or 0)
+    discount_total = round(float(invoice.get("discount_total") or 0), 2)
+    tax_total = round(max(service_subtotal + shop_supplies_fee - discount_total, 0) * tax_rate, 2)
+    grand_total = round(max(service_subtotal + shop_supplies_fee - discount_total, 0) + tax_total, 2)
     conn.execute(
         """
         UPDATE invoices
         SET labor_total = ?,
             parts_total = ?,
+            tax_total = ?,
             grand_total = ?
         WHERE id = ?
           AND repair_record_id = ?
@@ -5528,9 +5638,10 @@ def recalculate_invoice_from_repair(
           AND vehicle_id = ?
         """,
         (
-            round(sum(float(total["labor_total"] or 0) for total in totals), 2),
-            round(sum(float(total["parts_total"] or 0) for total in totals), 2),
-            round(sum(float(total["grand_total"] or 0) for total in totals), 2),
+            labor_total,
+            parts_total,
+            tax_total,
+            grand_total,
             invoice_id,
             invoice["repair_record_id"],
             customer_id,
@@ -5586,187 +5697,411 @@ def invoice_pdf_options_from_query(query_params: Any) -> dict[str, bool]:
     return options
 
 
+def invoice_payment_summary(invoice: dict[str, Any]) -> dict[str, Any]:
+    total = round(float(invoice.get("grand_total") or 0), 2)
+    paid = round(float(invoice.get("amount_paid") or 0), 2)
+    balance = round(max(total - paid, 0), 2)
+    raw_status = str(invoice.get("payment_status") or "").strip()
+    if balance <= 0 and total > 0:
+        status = "Paid in Full"
+        emphasis = "Paid in Full"
+    elif paid > 0:
+        status = raw_status or "Partially Paid"
+        emphasis = "Balance Due"
+    else:
+        status = raw_status or "Unpaid"
+        emphasis = "Balance Due"
+    return {
+        "total": total,
+        "amount_paid": paid,
+        "balance_due": balance,
+        "payment_status": status,
+        "emphasis_label": emphasis,
+    }
+
+
+def invoice_shop_lines(shop_profile: dict[str, Any] | None, shop_name: str = "") -> list[str]:
+    profile = shop_profile or {}
+    name = str(profile.get("shop_name") or shop_name or "TorqueMech Pro").strip()
+    address_parts = [
+        str(profile.get("shop_address") or profile.get("address") or "").strip(),
+        " ".join(
+            part
+            for part in [
+                str(profile.get("shop_city") or "").strip(),
+                str(profile.get("shop_state") or "").strip(),
+                str(profile.get("shop_zip") or "").strip(),
+            ]
+            if part
+        ),
+    ]
+    contact_parts = [
+        format_phone(profile.get("shop_phone") or profile.get("phone") or ""),
+        str(profile.get("shop_email") or profile.get("email") or "").strip(),
+    ]
+    lines = [name]
+    lines.extend(part for part in address_parts if part)
+    lines.extend(part for part in contact_parts if part)
+    return lines
+
+
+def pdf_money(value: Any) -> str:
+    return format_currency(value) or "$0.00"
+
+
+def pdf_draw_round_rect(
+    c: canvas.Canvas,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    *,
+    fill: tuple[float, float, float] = (1, 1, 1),
+    stroke: tuple[float, float, float] = (0.84, 0.88, 0.92),
+    radius: float = 7,
+) -> None:
+    c.setFillColorRGB(*fill)
+    c.setStrokeColorRGB(*stroke)
+    c.roundRect(x, y, width, height, radius, fill=1, stroke=1)
+    c.setFillGray(0)
+    c.setStrokeGray(0)
+
+
 def build_invoice_pdf_bytes(
     *,
     invoice: dict[str, Any],
     customer: dict[str, Any],
     vehicle: dict[str, Any],
     shop_name: str,
+    shop_profile: dict[str, Any] | None = None,
     display_options: dict[str, bool] | None = None,
 ) -> bytes:
     options = {**INVOICE_PDF_DEFAULT_OPTIONS, **(display_options or {})}
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=letter, pageCompression=0)
     w, h = letter
-    left = 54
-    right = w - 54
-    y = h - 54
-
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(left, y, shop_name or "TorqueMech Pro")
-    c.setFont("Helvetica-Bold", 24)
-    c.drawRightString(right, y, "INVOICE")
-    y -= 28
-    c.setFont("Helvetica", 10)
-    c.drawString(left, y, f"Invoice Number: {invoice.get('invoice_number') or '-'}")
-    c.drawRightString(right, y, f"Created: {format_pro_date(invoice.get('created_at')) or '-'}")
-    y -= 26
-    c.line(left, y, right, y)
-    y -= 24
-
-    def section(title: str) -> None:
-        nonlocal y
-        if y < 120:
-            c.showPage()
-            y = h - 54
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(left, y, title)
-        y -= 16
-
-    def row(label: str, value: Any) -> None:
-        nonlocal y
-        if y < 80:
-            c.showPage()
-            y = h - 54
-        c.setFillColorRGB(0, 0, 0)
-        c.setFont("Helvetica-Bold", 9)
-        c.drawString(left, y, label)
-        c.setFont("Helvetica", 10)
-        c.drawString(left + 120, y, str(value or "-"))
-        y -= 15
-
-    def service_row(label: str, value: Any, *, emphasis: bool = False) -> None:
-        nonlocal y
-        if y < 80:
-            c.showPage()
-            y = h - 54
-        c.setFillColorRGB(0.38, 0.45, 0.55)
-        c.setFont("Helvetica-Bold" if emphasis else "Helvetica", 9)
-        c.drawString(left + 18, y, label)
-        c.setFillColorRGB(0, 0, 0)
-        c.setFont("Helvetica-Bold" if emphasis else "Helvetica", 10)
-        display_value = value if isinstance(value, str) else str(value or "-")
-        c.drawRightString(right, y, display_value)
-        y -= 14 if emphasis else 13
-
-    section("Customer")
-    row("Name", customer_name(customer))
-    row("Phone", format_phone(customer.get("phone")))
-    row("Email", customer.get("email") or "-")
-    y -= 8
-
-    section("Vehicle")
+    c.setTitle(f"Final Invoice {invoice.get('invoice_number') or ''}".strip())
+    left = 42
+    right = w - 42
+    top_y = h - 38
+    bottom = 76
+    page_no = 1
+    payment = invoice_payment_summary(invoice)
+    shop_profile = shop_profile or {}
+    shop_lines = invoice_shop_lines(shop_profile, shop_name)
     vehicle_title = " ".join(str(vehicle.get(key) or "").strip() for key in ("year", "make", "model")).strip()
-    row("Vehicle", vehicle_title or "Vehicle")
-    row("VIN", vehicle.get("vin") or "-")
-    row("Mileage", f"{format_mileage(invoice.get('repair_mileage') or vehicle.get('mileage'))} miles" if (invoice.get("repair_mileage") or vehicle.get("mileage")) is not None else "-")
-    y -= 8
+    repair_ids = [
+        str(item.get("repair_record_id"))
+        for item in invoice.get("items") or []
+        if item.get("repair_record_id")
+    ]
+    pro_job_ref = ", ".join(f"Pro Job #{value}" for value in repair_ids[:4]) or f"Invoice #{invoice.get('id') or '-'}"
+    if len(repair_ids) > 4:
+        pro_job_ref = f"{pro_job_ref}, +{len(repair_ids) - 4} more"
+    work_completed_date = invoice.get("completion_summary_date") or invoice.get("completed_at") or ""
+    starting_mileage = invoice.get("repair_mileage") or vehicle.get("mileage")
+    final_mileage = vehicle.get("mileage") or starting_mileage
+    try:
+        if starting_mileage is not None and final_mileage is not None and float(final_mileage) < float(starting_mileage):
+            starting_mileage, final_mileage = final_mileage, starting_mileage
+    except (TypeError, ValueError):
+        pass
 
-    def notes_block(label: str, value: Any, max_lines: int = 8) -> None:
-        nonlocal y
-        if y < 100:
-            c.showPage()
-            y = h - 54
+    def draw_footer() -> None:
+        c.setStrokeColorRGB(0.86, 0.89, 0.93)
+        c.line(left, 58, right, 58)
+        c.setStrokeGray(0)
+        c.setFont("Helvetica", 7.6)
+        c.setFillColorRGB(0.33, 0.39, 0.47)
+        footer_note = str(shop_profile.get("custom_footer_note") or "").strip()
+        warranty_note = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
+        footer_line = footer_note or warranty_note or "Thank you for choosing TorqueMech. Generated with TorqueMech."
+        c.drawString(left, 43, footer_line[:112])
+        c.drawRightString(right, 43, f"Page {page_no}")
+        c.setFont("Helvetica-Bold", 7.6)
+        c.drawString(left, 29, "Generated with TorqueMech")
+        c.setFillGray(0)
+
+    def draw_header() -> float:
+        c.setFillColorRGB(0.04, 0.12, 0.20)
+        c.rect(0, h - 104, w, 104, fill=1, stroke=0)
+        c.setFillColorRGB(0.08, 0.52, 0.50)
+        c.rect(0, h - 106, w, 3, fill=1, stroke=0)
+        logo_path = STATIC_DIR / "logo.png"
+        if logo_path.exists():
+            try:
+                c.drawImage(ImageReader(str(logo_path)), left, h - 75, width=118, height=28, preserveAspectRatio=True, mask="auto")
+            except Exception:
+                c.setFont("Helvetica-Bold", 18)
+                c.setFillColorRGB(1, 1, 1)
+                c.drawString(left, h - 62, "TorqueMech")
+        else:
+            c.setFont("Helvetica-Bold", 18)
+            c.setFillColorRGB(1, 1, 1)
+            c.drawString(left, h - 62, "TorqueMech")
+        c.setFont("Helvetica-Bold", 8)
+        c.setFillColorRGB(0.70, 0.86, 0.86)
+        c.drawString(left, h - 88, "FINAL CUSTOMER INVOICE")
+        c.setFillColorRGB(1, 1, 1)
+        c.setFont("Helvetica-Bold", 24)
+        c.drawRightString(right, h - 48, "Final Invoice")
+        c.setFont("Helvetica-Bold", 10)
+        c.drawRightString(right, h - 68, str(invoice.get("invoice_number") or "-"))
+        c.setFont("Helvetica", 8.5)
+        c.drawRightString(right, h - 85, f"Payment Status: {payment['payment_status']}")
+
+        c.setFillGray(0)
+        y = h - 128
         c.setFont("Helvetica-Bold", 9)
-        c.drawString(left, y, label)
-        c.setFont("Helvetica", 10)
-        note_y = y
-        for line in pdf_lines(value or "-", 76)[:max_lines]:
-            c.drawString(left + 120, note_y, line)
-            note_y -= 13
-        y = note_y - 10
+        c.setFillColorRGB(0.34, 0.40, 0.48)
+        c.drawString(left, y, "SHOP")
+        c.drawString(left + 270, y, "INVOICE")
+        c.setFillGray(0)
+        y -= 13
+        c.setFont("Helvetica-Bold", 9.5)
+        c.drawString(left, y, shop_lines[0][:48])
+        c.setFont("Helvetica", 8.6)
+        sy = y - 12
+        for line in shop_lines[1:5]:
+            c.drawString(left, sy, line[:62])
+            sy -= 10
+        c.setFont("Helvetica", 8.8)
+        invoice_rows = [
+            ("Invoice Date", format_pro_date(invoice.get("created_at")) or "-"),
+            ("Work Completed", format_pro_date(work_completed_date) or "-"),
+            ("Repair Order", pro_job_ref),
+            ("Invoice Type", "Final customer invoice"),
+        ]
+        iy = y
+        for label, value in invoice_rows:
+            c.setFillColorRGB(0.38, 0.45, 0.55)
+            c.drawString(left + 270, iy, label)
+            c.setFillGray(0)
+            c.drawRightString(right, iy, str(value or "-")[:42])
+            iy -= 12
+        return h - 202
 
-    section("Completed Services")
-    for index, item in enumerate(invoice.get("items") or [], start=1):
-        if y < 150:
-            c.showPage()
-            y = h - 54
-        if index > 1:
-            c.setStrokeColorRGB(0.84, 0.87, 0.91)
-            c.line(left, y, right, y)
-            c.setStrokeColorRGB(0, 0, 0)
-            y -= 14
-        c.setFillColorRGB(0, 0, 0)
-        c.setFont("Helvetica-Bold", 11)
-        title = f"{index}. {item.get('service_title') or 'Repair'}"
-        title_lines = pdf_lines(title, 66)
-        for line in title_lines:
-            c.drawString(left, y, line)
-            y -= 13
-        y -= 5
-        if options["show_labor_hours"]:
-            service_row("Labor Hours", item.get("labor_hours") if item.get("labor_hours") is not None else "-")
-        if options["show_labor_rate"]:
-            service_row("Labor Rate", f"{format_currency(item.get('labor_rate'))}/hr" if item.get("labor_rate") is not None else "-")
-        if options["show_labor_total"]:
-            service_row("Flat Rate / Labor" if item.get("pricing_mode") == "flat" else "Labor", format_currency(item.get("labor_total")) or "$0.00")
-        if options["show_parts_total"]:
-            service_row("Parts", format_currency(item.get("parts_total")) or "$0.00")
-        service_row("Line Total", format_currency(item.get("grand_total")) or "$0.00", emphasis=True)
-        tracked_parts = item.get("tracked_parts") or []
-        if tracked_parts:
-            y -= 2
+    def new_page(*, table: bool = False) -> float:
+        nonlocal page_no
+        draw_footer()
+        c.showPage()
+        page_no += 1
+        y_new = draw_header()
+        if table:
+            y_new = draw_table_heading(y_new, continued=True)
+        return y_new
+
+    def label_value(x: float, y: float, label: str, value: Any, *, width_chars: int = 38) -> None:
+        c.setFont("Helvetica-Bold", 7.5)
+        c.setFillColorRGB(0.38, 0.45, 0.55)
+        c.drawString(x, y, label.upper())
+        c.setFont("Helvetica", 9)
+        c.setFillGray(0)
+        c.drawString(x, y - 12, str(value or "-")[:width_chars])
+
+    def draw_info_cards(y: float) -> float:
+        card_h = 82
+        gap = 12
+        card_w = (right - left - gap) / 2
+        pdf_draw_round_rect(c, left, y - card_h, card_w, card_h, fill=(0.965, 0.985, 0.98), stroke=(0.75, 0.86, 0.85))
+        pdf_draw_round_rect(c, left + card_w + gap, y - card_h, card_w, card_h, fill=(0.985, 0.99, 1), stroke=(0.82, 0.87, 0.94))
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColorRGB(0.05, 0.09, 0.16)
+        c.drawString(left + 14, y - 17, "Bill To")
+        c.drawString(left + card_w + gap + 14, y - 17, "Vehicle")
+        c.setFillGray(0)
+        label_value(left + 14, y - 35, "Customer", customer_name(customer), width_chars=42)
+        label_value(left + 14, y - 61, "Contact", " | ".join(v for v in [format_phone(customer.get("phone")), customer.get("email") or ""] if v) or "-", width_chars=48)
+        vx = left + card_w + gap + 14
+        label_value(vx, y - 35, "Year / Make / Model", vehicle_title or "Vehicle", width_chars=40)
+        label_value(vx, y - 61, "VIN / Plate", " | ".join(v for v in [vehicle.get("vin") or "", vehicle.get("license_plate") or ""] if v) or "-", width_chars=44)
+        return y - card_h - 18
+
+    col = {
+        "desc": left + 10,
+        "qty": left + 250,
+        "hours": left + 300,
+        "labor": left + 375,
+        "parts": left + 440,
+        "fees": left + 485,
+        "total": right - 10,
+    }
+
+    def draw_table_heading(y: float, *, continued: bool = False) -> float:
+        if continued:
             c.setFont("Helvetica-Bold", 9)
-            c.drawString(left + 18, y, "Tracked Parts")
-            y -= 13
-            c.setFont("Helvetica", 9)
-            for part in tracked_parts:
-                if y < 80:
-                    c.showPage()
-                    y = h - 54
-                    c.setFont("Helvetica", 9)
+            c.setFillColorRGB(0.08, 0.52, 0.50)
+            c.drawString(left, y, "Invoice Line Items - continued")
+            c.setFillGray(0)
+            y -= 14
+        c.setFillColorRGB(0.05, 0.09, 0.16)
+        c.roundRect(left, y - 24, right - left, 24, 6, fill=1, stroke=0)
+        c.setFillColorRGB(1, 1, 1)
+        c.setFont("Helvetica-Bold", 7.6)
+        c.drawString(col["desc"], y - 15, "Service / Repair Description")
+        c.drawRightString(col["qty"], y - 15, "Qty")
+        c.drawRightString(col["hours"], y - 15, "Hours")
+        c.drawRightString(col["labor"], y - 15, "Labor")
+        c.drawRightString(col["parts"], y - 15, "Parts")
+        c.drawRightString(col["fees"], y - 15, "Fees/Tax")
+        c.drawRightString(col["total"], y - 15, "Total")
+        c.setFillGray(0)
+        return y - 32
+
+    def draw_line_item(y: float, index: int, item: dict[str, Any]) -> float:
+        title = f"{index}. {item.get('service_title') or 'Repair'}"
+        note = str(item.get("repair_notes") or item.get("completion_notes") or "").strip()
+        tracked_parts = item.get("tracked_parts") or []
+        note_lines = []
+        if note and options.get("show_repair_notes", True):
+            note_lines.extend(pdf_lines(f"Note: {note}", 78)[:2])
+        if tracked_parts:
+            for part in tracked_parts[:3]:
                 qty = part.get("qty_display") or part.get("qty") or 1
-                subtotal = format_currency(part.get("subtotal")) or "$0.00"
-                status = part.get("status") or "Needed"
-                vendor = str(part.get("vendor") or "").strip()
-                part_label = f"{qty} x {part.get('part_name') or 'Part'}"
-                if vendor:
-                    part_label = f"{part_label} from {vendor}"
-                for line in pdf_lines(f"{part_label} | {status} | {subtotal}", 72)[:2]:
-                    c.drawString(left + 30, y, line)
-                    y -= 12
-        y -= 3
-        if options["show_repair_notes"] and item.get("repair_notes"):
-            notes_block("Notes", item.get("repair_notes"))
-        if options["show_final_inspection_notes"]:
-            notes_block("Final Inspection Comments", item.get("final_inspection_notes") or "-")
-        y -= 6
+                note_lines.extend(pdf_lines(f"Additional approved part: {qty} x {part.get('part_name') or 'Part'} ({pdf_money(part.get('subtotal'))})", 78)[:1])
+        title_lines = pdf_lines(title, 42)[:3]
+        row_h = max(34, 15 + len(title_lines) * 10 + len(note_lines) * 9)
+        if y - row_h < bottom:
+            y = new_page(table=True)
+        fill = (0.985, 0.99, 1.0) if index % 2 else (1, 1, 1)
+        c.setFillColorRGB(*fill)
+        c.rect(left, y - row_h, right - left, row_h, fill=1, stroke=0)
+        c.setStrokeColorRGB(0.90, 0.93, 0.96)
+        c.line(left, y - row_h, right, y - row_h)
+        c.setStrokeGray(0)
+        text_y = y - 12
+        c.setFont("Helvetica-Bold", 8.6)
+        c.setFillColorRGB(0.05, 0.09, 0.16)
+        for line in title_lines:
+            c.drawString(col["desc"], text_y, line)
+            text_y -= 10
+        c.setFont("Helvetica", 7.4)
+        c.setFillColorRGB(0.36, 0.42, 0.50)
+        for line in note_lines:
+            c.drawString(col["desc"] + 8, text_y, line)
+            text_y -= 9
+        c.setFillGray(0)
+        c.setFont("Helvetica", 8)
+        qty = item.get("qty") or 1
+        hours = item.get("labor_hours") if item.get("labor_hours") is not None else "-"
+        c.drawRightString(col["qty"], y - 16, str(qty))
+        c.drawRightString(col["hours"], y - 16, str(hours))
+        c.drawRightString(col["labor"], y - 16, pdf_money(item.get("labor_total")))
+        c.drawRightString(col["parts"], y - 16, pdf_money(item.get("parts_total")))
+        c.setFont("Helvetica-Bold", 8.3)
+        c.drawRightString(col["total"], y - 16, pdf_money(item.get("grand_total")))
+        return y - row_h
 
-    if invoice.get("items"):
-        section("Completion Summary")
-        if options["show_completion_date"]:
-            row("Completion Date", format_pro_date(invoice.get("completion_summary_date")) or "-")
-        row("Final Inspection", invoice.get("completion_summary_status") or "Not marked passed")
-
+    y = draw_header()
+    y = draw_info_cards(y)
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(left, y, "Totals")
-    y -= 18
-    totals = []
-    if options["show_labor_hours"]:
-        totals.append(("Labor Hours", invoice.get("labor_hours") if invoice.get("labor_hours") is not None else "-"))
-    if options["show_labor_rate"]:
-        totals.append(("Labor Rate", f"{format_currency(invoice.get('labor_rate'))}/hr" if invoice.get("labor_rate") is not None else "-"))
-    if options["show_labor_total"]:
-        totals.append(("Labor Total", invoice.get("labor_total")))
-    if options["show_parts_total"]:
-        totals.append(("Parts Total", invoice.get("parts_total")))
-    if invoice.get("approved_estimate_total") is not None:
-        totals.append(("Approved Estimate Total", invoice.get("approved_estimate_total")))
-        totals.append(("Final Invoice Total", invoice.get("grand_total")))
-        if invoice.get("estimate_final_difference"):
-            totals.append((invoice.get("estimate_difference_label") or "Difference", invoice.get("estimate_final_difference")))
-    else:
-        totals.append(("Grand Total", invoice.get("grand_total")))
-    for label, value in totals:
-        c.setFont("Helvetica-Bold" if label == "Grand Total" else "Helvetica", 11)
-        c.drawString(left, y, label)
-        display_value = value if isinstance(value, str) else (format_currency(value) or "$0.00")
-        c.drawRightString(right, y, display_value)
-        y -= 17
-
-    c.setFont("Helvetica", 9)
+    c.setFillColorRGB(0.05, 0.09, 0.16)
+    c.drawString(left, y, "Final Approved Work")
+    c.setFont("Helvetica", 8.5)
     c.setFillColorRGB(0.38, 0.45, 0.55)
-    c.drawString(left, 42, "Thank you for choosing TorqueMech Pro.")
+    c.drawRightString(right, y, "Declined or unapproved work is excluded.")
+    c.setFillGray(0)
+    y -= 12
+    y = draw_table_heading(y)
+    for index, item in enumerate(invoice.get("items") or [], start=1):
+        y = draw_line_item(y, index, item)
+
+    totals_h = 190
+    if y - totals_h < bottom:
+        y = new_page()
+    y -= 16
+    totals_w = 240
+    totals_x = right - totals_w
+    pdf_draw_round_rect(c, totals_x, y - totals_h, totals_w, totals_h, fill=(0.94, 0.98, 0.975), stroke=(0.62, 0.78, 0.77))
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColorRGB(0.05, 0.09, 0.16)
+    c.drawString(totals_x + 14, y - 18, "Invoice Totals")
+    ty = y - 38
+    total_rows = [
+        ("Labor Subtotal", invoice.get("labor_total")),
+        ("Parts Subtotal", invoice.get("parts_total")),
+        ("Fees / Shop Supplies", invoice.get("shop_supplies_fee")),
+        ("Tax", invoice.get("tax_total")),
+    ]
+    if invoice.get("discount_total"):
+        total_rows.append(("Discount", -float(invoice.get("discount_total") or 0)))
+    if invoice.get("approved_estimate_total") is not None:
+        total_rows.append(("Approved Estimate Total", invoice.get("approved_estimate_total")))
+        if invoice.get("estimate_final_difference"):
+            total_rows.append((invoice.get("estimate_difference_label") or "Final Difference", invoice.get("estimate_final_difference")))
+    for label, value in total_rows:
+        c.setFont("Helvetica", 8.8)
+        c.setFillColorRGB(0.30, 0.36, 0.44)
+        c.drawString(totals_x + 14, ty, label)
+        c.setFillGray(0)
+        c.drawRightString(right - 14, ty, pdf_money(value))
+        ty -= 16
+    c.setStrokeColorRGB(0.58, 0.73, 0.72)
+    c.line(totals_x + 14, ty + 5, right - 14, ty + 5)
+    c.setStrokeGray(0)
+    c.setFont("Helvetica-Bold", 12.5)
+    c.drawString(totals_x + 14, ty - 10, "Invoice Total")
+    c.drawRightString(right - 14, ty - 10, pdf_money(payment["total"]))
+    c.setFont("Helvetica", 9)
+    c.drawString(totals_x + 14, ty - 30, "Amount Paid")
+    c.drawRightString(right - 14, ty - 30, pdf_money(payment["amount_paid"]))
+    c.setFillColorRGB(0.78, 0.16, 0.16) if payment["balance_due"] > 0 else c.setFillColorRGB(0.05, 0.45, 0.28)
+    c.setFont("Helvetica-Bold", 15)
+    c.drawString(totals_x + 14, ty - 58, payment["emphasis_label"])
+    c.drawRightString(right - 14, ty - 58, pdf_money(payment["balance_due"]) if payment["balance_due"] > 0 else "Paid in Full")
+    c.setFillGray(0)
+
+    meta_x = left
+    meta_w = totals_x - left - 18
+    pdf_draw_round_rect(c, meta_x, y - 104, meta_w, 104, fill=(0.985, 0.99, 1), stroke=(0.82, 0.87, 0.94))
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(meta_x + 14, y - 18, "Completion Information")
+    c.setFont("Helvetica", 8.8)
+    completion_rows = [
+        ("Work Completed", format_pro_date(work_completed_date) or "-"),
+        ("Technician / Representative", str(invoice.get("technician_name") or shop_lines[0] or "-")[:36]),
+        ("Starting Mileage", f"{format_mileage(starting_mileage)} miles" if starting_mileage is not None else "-"),
+        ("Final Mileage", f"{format_mileage(final_mileage)} miles" if final_mileage is not None else "-"),
+    ]
+    cy = y - 36
+    for label, value in completion_rows:
+        c.setFillColorRGB(0.38, 0.45, 0.55)
+        c.drawString(meta_x + 14, cy, label)
+        c.setFillGray(0)
+        c.drawString(meta_x + 138, cy, str(value or "-")[:42])
+        cy -= 14
+
+    notes = str(invoice.get("completion_notes") or invoice.get("repair_notes") or "").strip()
+    warranty = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
+    terms = str(shop_profile.get("custom_footer_note") or "").strip()
+    detail_lines = []
+    if notes:
+        detail_lines.append(("Completion Notes", notes))
+    if warranty:
+        detail_lines.append(("Warranty Statement", warranty))
+    if terms:
+        detail_lines.append(("Payment Terms", terms))
+    if detail_lines:
+        needed = 44 + sum(12 * min(len(pdf_lines(value, 102)), 4) for _, value in detail_lines)
+        if y - totals_h - needed < bottom:
+            y = new_page()
+        else:
+            y -= totals_h + 18
+        pdf_draw_round_rect(c, left, y - needed, right - left, needed, fill=(1, 1, 1), stroke=(0.84, 0.88, 0.92))
+        dy = y - 18
+        for label, value in detail_lines:
+            c.setFont("Helvetica-Bold", 8.7)
+            c.setFillColorRGB(0.05, 0.09, 0.16)
+            c.drawString(left + 14, dy, label)
+            dy -= 12
+            c.setFont("Helvetica", 8.3)
+            c.setFillColorRGB(0.30, 0.36, 0.44)
+            for line in pdf_lines(value, 102)[:4]:
+                c.drawString(left + 24, dy, line)
+                dy -= 11
+            dy -= 4
+        c.setFillGray(0)
+    draw_footer()
     c.save()
     return buf.getvalue()
 
@@ -12527,7 +12862,8 @@ def pro_invoice_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
-        shop_name = load_shop_name(conn)
+        shop_profile = load_shop_profile_context(conn)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
         conn.close()
 
@@ -12539,6 +12875,7 @@ def pro_invoice_detail(
             "vehicle": vehicle,
             "invoice": invoice,
             "shop_name": shop_name,
+            "shop_profile": shop_profile,
         },
     )
 
@@ -12571,7 +12908,8 @@ def pro_invoice_pdf(request: Request, customer_id: int, vehicle_id: int, invoice
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
-        shop_name = load_shop_name(conn)
+        shop_profile = load_shop_profile_context(conn)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
         conn.close()
     content = build_invoice_pdf_bytes(
@@ -12579,6 +12917,7 @@ def pro_invoice_pdf(request: Request, customer_id: int, vehicle_id: int, invoice
         customer=customer,
         vehicle=vehicle,
         shop_name=shop_name,
+        shop_profile=shop_profile,
         display_options=invoice_pdf_options_from_query(request.query_params),
     )
     return Response(
@@ -12855,6 +13194,21 @@ async def pro_repair_completion_update(
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        completion_warnings = repair_completion_validation_errors(form)
+        if completion_warnings:
+            context = completion_detail_context(
+                conn,
+                request=request,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                repair_id=repair_id,
+                completion_warnings=completion_warnings,
+            )
+            return templates.TemplateResponse(
+                "pro/repair_detail.html",
+                context,
+                status_code=400,
+            )
         completion_date = str(form.get("completion_date") or "").strip()
         completion_mileage = optional_int(form, "completion_mileage")
         completed_at = repair.get("completed_at") or (f"{completion_date}T{now.split('T', 1)[1]}" if completion_date else now)
@@ -12875,6 +13229,19 @@ async def pro_repair_completion_update(
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
             (completed_at, completion_mileage, repair_id, customer_id, vehicle_id),
+        )
+        ensure_calendar_schema(conn)
+        conn.execute(
+            """
+            UPDATE service_appointments
+            SET status = 'Completed',
+                updated_at = ?
+            WHERE repair_id = ?
+              AND customer_id = ?
+              AND vehicle_id = ?
+              AND COALESCE(status, '') NOT IN ('Cancelled', 'Completed')
+            """,
+            (now, repair_id, customer_id, vehicle_id),
         )
         refreshed_repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
         upsert_service_history_record(

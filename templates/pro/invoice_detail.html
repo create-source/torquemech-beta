@@ -37,12 +37,17 @@
   .tm-invoice-field {
     display: grid;
     gap: 3px;
+    min-width: 0;
   }
   .tm-invoice-field span {
     color: #64748b;
     font-size: .74rem;
     font-weight: 900;
     text-transform: uppercase;
+  }
+  .tm-invoice-field strong,
+  .tm-invoice-field div {
+    overflow-wrap: anywhere;
   }
   .tm-invoice-notes {
     color: #334155;
@@ -142,6 +147,15 @@
     padding: 14px;
     margin-top: 18px;
   }
+  .tm-invoice-fallback {
+    border: 1px solid rgba(180, 83, 9, 0.22);
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+    font-weight: 800;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
   .tm-invoice-parts-detail {
     border: 1px solid rgba(14, 116, 144, 0.16);
     border-radius: 8px;
@@ -186,26 +200,45 @@
   </div>
 
   <section class="tm-invoice-panel" aria-label="Invoice details">
+    {% if not customer or not vehicle or not invoice %}
+    <div class="tm-invoice-fallback">This invoice is missing a linked customer, vehicle, or invoice record. Reopen it from the vehicle timeline or repair workspace to verify the relationship.</div>
+    {% endif %}
     <header class="tm-invoice-header">
       <div>
         <h2 class="tm-invoice-heading">{{ shop_name or "TorqueMech Pro" }}</h2>
         <div class="tm-invoice-field" style="margin-top:8px;"><span>Invoice Number</span><strong>{{ invoice.invoice_number }}</strong></div>
+        <div class="tm-invoice-field" style="margin-top:8px;"><span>Shop Information</span><strong>{{ shop_profile.shop_name or shop_name or "Shop information not configured" }}</strong></div>
+        {% if shop_profile.shop_phone or shop_profile.shop_email %}
+        <div class="tm-invoice-field" style="margin-top:8px;"><span>Shop Contact</span><strong>{{ shop_profile.shop_phone or "" }}{% if shop_profile.shop_phone and shop_profile.shop_email %} | {% endif %}{{ shop_profile.shop_email or "" }}</strong></div>
+        {% endif %}
       </div>
       <div class="tm-invoice-header-right">
-        <h2 class="tm-invoice-heading">INVOICE</h2>
+        <h2 class="tm-invoice-heading">FINAL INVOICE</h2>
         <div class="tm-invoice-field" style="margin-top:8px;"><span>Created</span><strong>{{ invoice.created_at|pro_date }}</strong></div>
+        <div class="tm-invoice-field" style="margin-top:8px;"><span>Payment Status</span><strong>{{ invoice.payment_status or "Unpaid" }}</strong></div>
       </div>
     </header>
 
     <div class="tm-invoice-grid">
-      <div class="tm-invoice-field"><span>Name</span><strong>{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Customer" }}</strong></div>
+      <div class="tm-invoice-field"><span>Customer</span><strong>{{ (customer.first_name ~ " " ~ customer.last_name)|trim or "Customer unavailable" }}</strong></div>
       <div class="tm-invoice-field"><span>Phone</span><strong>{{ customer.phone|pro_phone if customer.phone else "-" }}</strong></div>
       <div class="tm-invoice-field"><span>Email</span><strong>{{ customer.email or "-" }}</strong></div>
-      <div class="tm-invoice-field"><span>Vehicle</span><strong>{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}</strong></div>
+      <div class="tm-invoice-field"><span>Vehicle Year / Make / Model</span><strong>{{ ((vehicle.year or "") ~ " " ~ (vehicle.make or "") ~ " " ~ (vehicle.model or ""))|trim or "Vehicle unavailable" }}</strong></div>
       <div class="tm-invoice-field"><span>VIN</span><strong>{{ vehicle.vin or "-" }}</strong></div>
       <div class="tm-invoice-field"><span>Mileage</span><strong>{% if invoice.repair_mileage is not none %}{{ invoice.repair_mileage|pro_miles }} miles{% elif vehicle.mileage is not none %}{{ vehicle.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
       <div class="tm-invoice-field"><span>Service Count</span><strong>{{ invoice.service_count }}</strong></div>
+      <div class="tm-invoice-field"><span>Repair Completion Date</span><strong>{{ invoice.completion_summary_date|pro_date if invoice.completion_summary_date else "-" }}</strong></div>
     </div>
+
+    <section class="tm-invoice-summary" aria-label="Workflow Summary">
+      <div class="tm-crm-kicker">Workflow</div>
+      <div class="tm-invoice-grid" style="margin-top:10px;">
+        <div class="tm-invoice-field"><span>Estimate</span><strong>{% if invoice.approved_estimate_total is not none %}{{ invoice.approved_estimate_total|pro_currency }} approved estimate linked{% else %}No linked estimate total{% endif %}</strong></div>
+        <div class="tm-invoice-field"><span>Approved Work</span><strong>{{ invoice.service_count }} completed service{% if invoice.service_count != 1 %}s{% endif %}</strong></div>
+        <div class="tm-invoice-field"><span>Final Invoice</span><strong>{{ invoice.invoice_number }}</strong></div>
+        <div class="tm-invoice-field"><span>Already Invoiced Records</span><strong>This invoice is reused for linked completed repairs.</strong></div>
+      </div>
+    </section>
 
     <section style="margin-top:18px;" aria-label="Completed Services">
       <div class="tm-crm-kicker">Completed Services</div>
@@ -253,6 +286,9 @@
     <div class="tm-invoice-totals" style="margin-top:18px;">
       <div class="tm-invoice-total-row"><span>Labor Total</span><strong>{{ invoice.labor_total|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row"><span>Parts Total</span><strong>{{ invoice.parts_total|pro_currency }}</strong></div>
+      <div class="tm-invoice-total-row"><span>Fees / Shop Supplies</span><strong>{% if invoice.shop_supplies_fee %}{{ invoice.shop_supplies_fee|pro_currency }}{% else %}Not configured{% endif %}</strong></div>
+      <div class="tm-invoice-total-row"><span>Tax</span><strong>{% if invoice.tax_total %}{{ invoice.tax_total|pro_currency }}{% else %}Not configured{% endif %}</strong></div>
+      <div class="tm-invoice-total-row"><span>Discounts</span><strong>{% if invoice.discount_total %}-{{ invoice.discount_total|pro_currency }}{% else %}None{% endif %}</strong></div>
       {% if invoice.approved_estimate_total is not none %}
       <div class="tm-invoice-total-row"><span>Approved Estimate Total</span><strong>{{ invoice.approved_estimate_total|pro_currency }}</strong></div>
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Final Invoice Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
@@ -263,6 +299,14 @@
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Grand Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
       {% endif %}
     </div>
+
+    <section class="tm-invoice-summary" aria-label="Notes and Warranty">
+      <div class="tm-crm-kicker">Notes and Warranty</div>
+      <div class="tm-invoice-grid" style="margin-top:10px;">
+        <div class="tm-invoice-field"><span>Notes</span><div class="tm-invoice-notes">{{ invoice.completion_notes or invoice.repair_notes or "No final notes saved." }}</div></div>
+        <div class="tm-invoice-field"><span>Warranty</span><div class="tm-invoice-notes">{{ invoice.warranty_text or "No warranty text configured." }}</div></div>
+      </div>
+    </section>
   </section>
 
   <section class="tm-invoice-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
