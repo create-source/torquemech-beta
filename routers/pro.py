@@ -1777,6 +1777,7 @@ def vehicle_select_label(vehicle: dict[str, Any]) -> str:
 def find_existing_customer_for_appointment(conn: sqlite3.Connection, form: dict[str, str]) -> int | None:
     phone = clean_phone(form.get("new_customer_phone", ""))
     email = str(form.get("new_customer_email") or "").strip()
+    first_name, last_name = split_customer_name(form.get("new_customer_name", ""))
     if phone:
         row = conn.execute(
             "SELECT id FROM customers WHERE phone = ? ORDER BY id ASC LIMIT 1",
@@ -1794,6 +1795,20 @@ def find_existing_customer_for_appointment(conn: sqlite3.Connection, form: dict[
             LIMIT 1
             """,
             (email,),
+        ).fetchone()
+        if row:
+            return int(row["id"])
+    if first_name:
+        row = conn.execute(
+            """
+            SELECT id
+            FROM customers
+            WHERE LOWER(TRIM(COALESCE(first_name, ''))) = LOWER(TRIM(?))
+              AND LOWER(TRIM(COALESCE(last_name, ''))) = LOWER(TRIM(?))
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (first_name, last_name),
         ).fetchone()
         if row:
             return int(row["id"])
@@ -5123,6 +5138,9 @@ def estimate_document_edit_url(customer_id: int, vehicle_id: int, record: dict[s
     }
     if record.get("finding_id"):
         params["finding_id"] = record.get("finding_id")
+    appointment_id = optional_int_value(payload.get("appointment_id") or payload.get("appointmentId"))
+    if appointment_id:
+        params["appointment_id"] = appointment_id
     for key, param_name in (
         ("problem_found", "problem_found"),
         ("recommended_repair", "recommended_repair"),
@@ -6978,6 +6996,94 @@ def load_estimate_conversion_payload(raw_payload: str) -> dict[str, Any]:
         "recommendedRepair": str(source_context.get("recommendedRepair") or "").strip(),
     }
     payload["notes"] = str(payload.get("notes") or "").strip()[:1200]
+    return payload
+
+
+def sync_estimate_conversion_source_context(payload: dict[str, Any]) -> None:
+    source_context = payload.get("sourceContext") if isinstance(payload.get("sourceContext"), dict) else {}
+    source_context.update(
+        {
+            "source": payload.get("source") or source_context.get("source") or "estimator",
+            "customerId": str(payload.get("customer_id") or ""),
+            "vehicleId": str(payload.get("vehicle_id") or ""),
+            "findingId": str(payload.get("finding_id") or ""),
+            "appointmentId": str(payload.get("appointment_id") or ""),
+            "estimateId": str(payload.get("estimate_id") or ""),
+        }
+    )
+    payload["sourceContext"] = source_context
+    payload["customerId"] = str(payload.get("customer_id") or "")
+    payload["vehicleId"] = str(payload.get("vehicle_id") or "")
+    payload["findingId"] = str(payload.get("finding_id") or "")
+    payload["appointmentId"] = str(payload.get("appointment_id") or "")
+    payload["estimateId"] = str(payload.get("estimate_id") or "")
+
+
+def enrich_estimate_conversion_payload_links(
+    conn: sqlite3.Connection,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    customer_id = optional_int_value(payload.get("customer_id"))
+    vehicle_id = optional_int_value(payload.get("vehicle_id"))
+    appointment_id = optional_int_value(payload.get("appointment_id"))
+    estimate_id = optional_int_value(payload.get("estimate_id"))
+
+    if appointment_id and (not customer_id or not vehicle_id or not estimate_id):
+        ensure_calendar_schema(conn)
+        appointment = load_service_appointment(conn, appointment_id)
+        if appointment:
+            customer_id = customer_id or optional_int_value(appointment.get("customer_id"))
+            vehicle_id = vehicle_id or optional_int_value(appointment.get("vehicle_id"))
+            estimate_id = estimate_id or optional_int_value(appointment.get("estimate_id"))
+            if not payload.get("source") or payload.get("source") == "estimator":
+                payload["source"] = "appointment"
+            vehicle_bits = appointment_vehicle_parts(appointment)
+            if not payload.get("customer", {}).get("name"):
+                payload["customer"]["name"] = str(appointment.get("customer_name") or "").strip()
+            if not payload.get("customer", {}).get("phone"):
+                payload["customer"]["phone"] = str(appointment.get("customer_phone") or "").strip()
+            if not payload.get("vehicle", {}).get("year"):
+                payload["vehicle"]["year"] = vehicle_bits.get("year") or ""
+            if not payload.get("vehicle", {}).get("make"):
+                payload["vehicle"]["make"] = vehicle_bits.get("make") or ""
+            if not payload.get("vehicle", {}).get("model"):
+                payload["vehicle"]["model"] = vehicle_bits.get("model") or ""
+
+    if estimate_id and (not customer_id or not vehicle_id or not payload.get("finding_id")):
+        ensure_repair_estimate_documents_schema(conn)
+        estimate = row_to_dict(
+            conn.execute(
+                """
+                SELECT *
+                FROM repair_estimate_documents
+                WHERE id = ?
+                """,
+                (estimate_id,),
+            ).fetchone()
+        )
+        if estimate:
+            customer_id = customer_id or optional_int_value(estimate.get("customer_id"))
+            vehicle_id = vehicle_id or optional_int_value(estimate.get("vehicle_id"))
+            payload["finding_id"] = payload.get("finding_id") or optional_int_value(estimate.get("finding_id"))
+            saved_payload = estimate_document_payload(estimate)
+            saved_appointment_id = optional_int_value(saved_payload.get("appointment_id") or saved_payload.get("appointmentId"))
+            if saved_appointment_id and not appointment_id:
+                appointment_id = saved_appointment_id
+            if not payload.get("source") or payload.get("source") == "estimator":
+                payload["source"] = saved_payload.get("source") or payload.get("source") or "estimator"
+            if not payload.get("customer", {}).get("name"):
+                payload["customer"]["name"] = str(estimate.get("customer_name") or saved_payload.get("customer_name") or "").strip()
+            if not payload.get("vehicle", {}).get("model"):
+                vehicle_parts = parse_appointment_vehicle_label(estimate.get("vehicle_label"))
+                payload["vehicle"]["year"] = payload["vehicle"].get("year") or vehicle_parts.get("year") or ""
+                payload["vehicle"]["make"] = payload["vehicle"].get("make") or vehicle_parts.get("make") or ""
+                payload["vehicle"]["model"] = payload["vehicle"].get("model") or vehicle_parts.get("model") or ""
+
+    payload["customer_id"] = customer_id
+    payload["vehicle_id"] = vehicle_id
+    payload["appointment_id"] = appointment_id
+    payload["estimate_id"] = estimate_id
+    sync_estimate_conversion_source_context(payload)
     return payload
 
 
@@ -9746,6 +9852,7 @@ async def pro_estimate_conversion(request: Request):
     payload = load_estimate_conversion_payload(payload_json)
     conn = crm_db_conn()
     try:
+        payload = enrich_estimate_conversion_payload_links(conn, payload)
         ensure_customer_status_schema(conn)
         customers = [
             dict(row)
@@ -9809,6 +9916,7 @@ async def pro_estimate_conversion_create(request: Request):
 
     conn = crm_db_conn()
     try:
+        payload = enrich_estimate_conversion_payload_links(conn, payload)
         ensure_customer_status_schema(conn)
         ensure_repair_records_schema(conn)
         linked_context = estimate_conversion_linked_context(conn, payload)

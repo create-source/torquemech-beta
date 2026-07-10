@@ -573,6 +573,41 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertIn("Change Customer or Vehicle", html)
         self.assertIn("data-linked-manual hidden", html)
 
+    def test_estimate_conversion_hydrates_customer_vehicle_from_linked_appointment(self):
+        self.seed_customer_vehicle(first_name="Avery", last_name="Stone", year=2020, make="Toyota", model="Tacoma")
+        pro_module.ensure_calendar_schema(self.conn)
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "customer_name": "Avery Stone",
+                "customer_phone": "555-0101",
+                "vehicle_label": "2020 Toyota Tacoma",
+                "service_name": "Brake Inspection",
+                "requested_date": "2026-07-15",
+                "requested_time": "10:00",
+                "status": "Confirmed",
+            },
+        )
+        payload = self.conversion_payload()
+        payload.update({"source": "appointment", "appointmentId": str(appointment_id)})
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        response = TestClient(app, base_url="http://localhost").post(
+            "/pro/estimate-conversion",
+            data={"estimate_payload": json.dumps(payload)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Customer and vehicle are already linked", response.text)
+        self.assertIn("Avery Stone", response.text)
+        self.assertIn("2020 Toyota Tacoma", response.text)
+        self.assertIn('name="customer_id" value="1"', response.text)
+        self.assertIn('name="vehicle_id" value="1"', response.text)
+        self.assertIn('name="linked_customer_vehicle_locked" value="1"', response.text)
+
     def test_linked_estimate_conversion_creates_job_without_reselecting_records(self):
         self.seed_customer_vehicle()
         pro_module.ensure_calendar_schema(self.conn)
@@ -644,6 +679,80 @@ class EstimatorProConversionTests(unittest.TestCase):
         appointment = dict(self.conn.execute("SELECT * FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone())
         self.assertEqual(appointment["repair_id"], repairs[0]["id"])
 
+    def test_appointment_estimate_context_converts_to_pro_job_and_preserves_links(self):
+        self.seed_customer_vehicle(first_name="Riley", last_name="Cruz", year=2018, make="Subaru", model="Outback")
+        pro_module.ensure_calendar_schema(self.conn)
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "customer_name": "Riley Cruz",
+                "vehicle_label": "2018 Subaru Outback",
+                "service_name": "Wheel Bearing",
+                "requested_date": "2026-07-16",
+                "requested_time": "11:00",
+                "status": "Confirmed",
+            },
+        )
+        pro_module.ensure_repair_estimate_documents_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO repair_estimate_documents (
+              id, customer_id, vehicle_id, estimate_date, customer_name, vehicle_label,
+              related_title, estimate_total, approval_status, pdf_path, payload_json, created_at
+            )
+            VALUES (44, 1, 1, '2026-07-10', 'Riley Cruz', '2018 Subaru Outback',
+                    'Wheel Bearing', 425, 'Prepared estimate', ?, ?, '2026-07-10T12:00:00')
+            """,
+            (
+                "C:/tmp/estimate.pdf",
+                json.dumps({"source": "appointment", "appointment_id": appointment_id}),
+            ),
+        )
+        self.conn.execute(
+            "UPDATE service_appointments SET estimate_id = 44 WHERE id = ?",
+            (appointment_id,),
+        )
+        self.conn.commit()
+        edit_url = pro_module.estimate_document_edit_url(
+            1,
+            1,
+            {
+                "id": 44,
+                "finding_id": None,
+                "payload_json": json.dumps({"source": "appointment", "appointment_id": appointment_id}),
+            },
+        )
+        payload = self.conversion_payload()
+        payload.update({"source": "appointment", "appointmentId": str(appointment_id), "estimateId": "44"})
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        response = TestClient(app, base_url="http://localhost").post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "linked_customer_vehicle_locked": "1",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("/pro/customers/1/vehicles/1?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertIn("appointment_id=", edit_url)
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+        appointment = dict(self.conn.execute("SELECT * FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone())
+        self.assertEqual(repair["customer_id"], 1)
+        self.assertEqual(repair["vehicle_id"], 1)
+        self.assertEqual(repair["workflow_source_type"], "estimate")
+        self.assertEqual(repair["workflow_source_id"], 44)
+        self.assertEqual(appointment["customer_id"], 1)
+        self.assertEqual(appointment["vehicle_id"], 1)
+        self.assertEqual(appointment["estimate_id"], 44)
+        self.assertEqual(appointment["repair_id"], repair["id"])
+
     def test_estimate_conversion_shows_open_pro_job_for_converted_estimate(self):
         self.seed_customer_vehicle()
         pro_module.ensure_repair_records_schema(self.conn)
@@ -697,6 +806,39 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertIn("linked vehicle is missing or does not belong", mismatched_vehicle.text)
         self.assertNotIn('name="linked_customer_vehicle_locked" value="1"', mismatched_vehicle.text)
 
+    def test_estimate_conversion_missing_deleted_appointment_customer_falls_back_to_manual(self):
+        self.seed_customer_vehicle()
+        pro_module.ensure_calendar_schema(self.conn)
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "customer_name": "Samm",
+                "vehicle_label": "2023 Kia Forte Coupe",
+                "service_name": "Brake Inspection",
+                "requested_date": "2026-07-15",
+                "requested_time": "10:00",
+                "status": "Confirmed",
+            },
+        )
+        self.conn.execute("DELETE FROM customers WHERE id = 1")
+        self.conn.commit()
+        payload = self.conversion_payload()
+        payload.update({"source": "appointment", "appointmentId": str(appointment_id)})
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        response = TestClient(app, base_url="http://localhost").post(
+            "/pro/estimate-conversion",
+            data={"estimate_payload": json.dumps(payload)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("linked to this estimate no longer exists", response.text)
+        self.assertNotIn('name="linked_customer_vehicle_locked" value="1"', response.text)
+        self.assertIn("Select or create a customer", response.text)
+
     def test_legacy_estimate_without_ids_keeps_manual_selection_flow(self):
         app = FastAPI()
         app.include_router(pro_module.router)
@@ -739,6 +881,79 @@ class EstimatorProConversionTests(unittest.TestCase):
         vehicle_count = self.conn.execute("SELECT COUNT(*) FROM customer_vehicles").fetchone()[0]
         self.assertEqual(customer_count, 1)
         self.assertEqual(vehicle_count, 1)
+
+    def test_appointment_conversion_new_mode_reuses_matching_customer_vehicle_by_name(self):
+        self.seed_customer_vehicle(first_name="Casey", last_name="Lane", year=2016, make="Honda", model="Accord")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        response = TestClient(app, base_url="http://localhost").post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(self.conversion_payload()),
+                "customer_mode": "new",
+                "new_customer_name": "Casey Lane",
+                "new_customer_phone": "",
+                "new_customer_email": "",
+                "vehicle_mode": "new",
+                "new_vehicle_year": "2016",
+                "new_vehicle_make": "Honda",
+                "new_vehicle_model": "Accord",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("/pro/customers/1/vehicles/1", response.headers["location"])
+        customer_count = self.conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+        vehicle_count = self.conn.execute("SELECT COUNT(*) FROM customer_vehicles").fetchone()[0]
+        self.assertEqual(customer_count, 1)
+        self.assertEqual(vehicle_count, 1)
+
+    def test_manual_customer_vehicle_selection_overrides_linked_payload(self):
+        self.seed_customer_vehicle(customer_id=1, vehicle_id=1, first_name="Linked", last_name="Customer", year=2020, make="Toyota", model="Tacoma")
+        self.seed_customer_vehicle(customer_id=2, vehicle_id=2, first_name="Manual", last_name="Choice", year=2017, make="Ford", model="F-150")
+        pro_module.ensure_calendar_schema(self.conn)
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "customer_name": "Linked Customer",
+                "vehicle_label": "2020 Toyota Tacoma",
+                "service_name": "Brake Inspection",
+                "requested_date": "2026-07-15",
+                "requested_time": "10:00",
+                "status": "Confirmed",
+            },
+        )
+        payload = self.conversion_payload()
+        payload.update({"source": "appointment", "appointmentId": str(appointment_id), "customerId": "1", "vehicleId": "1", "estimateId": "55"})
+
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        response = TestClient(app, base_url="http://localhost").post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "customer_mode": "existing",
+                "customer_id": "2",
+                "vehicle_mode": "existing",
+                "vehicle_id": "2",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("/pro/customers/2/vehicles/2?converted=1&created=1#repair-workspace", response.headers["location"])
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+        appointment = dict(self.conn.execute("SELECT * FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone())
+        self.assertEqual(repair["customer_id"], 2)
+        self.assertEqual(repair["vehicle_id"], 2)
+        self.assertIsNone(appointment["repair_id"])
+        self.assertEqual(appointment["customer_id"], 1)
+        self.assertEqual(appointment["vehicle_id"], 1)
 
     def test_finding_conversion_creates_selected_service_even_when_old_finding_repair_exists(self):
         now = "2026-06-25T12:00:00"
