@@ -1310,6 +1310,25 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("data-reset-template", template)
         self.assertIn("data-template-preview", template)
         self.assertIn('"{" ~ placeholder ~ "}"', template)
+        self.assertLess(template.index("TorqueMech Booking Link"), template.index("Appointment Message Templates"))
+        self.assertLess(template.index("Appointment Message Templates"), template.index("Shop Profile"))
+        self.assertEqual(template.count('class="tm-message-template-details"'), 4)
+        self.assertNotIn('<details class="tm-message-template-details" open', template)
+        self.assertIn('<summary><span>Appointment Confirmation</span><span class="tm-message-chevron"', template)
+        self.assertIn('<summary><span>Appointment Cancellation</span><span class="tm-message-chevron"', template)
+        self.assertIn('<summary><span>Appointment Declined</span><span class="tm-message-chevron"', template)
+        self.assertIn('<summary><span>Appointment Rescheduled</span><span class="tm-message-chevron"', template)
+        for template_id in (
+            "appointment_confirmation_template",
+            "appointment_cancellation_template",
+            "appointment_declined_template",
+            "appointment_rescheduled_template",
+        ):
+            self.assertIn(f'data-reset-template="{template_id}"', template)
+            self.assertIn(f'data-template-preview="{template_id}"', template)
+        self.assertIn(".tm-message-template-details[open] .tm-message-chevron", template)
+        self.assertIn(".tm-message-template-head .tm-btn", template)
+        self.assertIn('textarea.closest("details")?.open', template)
 
     def test_shop_schedule_page_uses_foundation_controls_and_helper_text(self):
         template = (main.BASE_DIR / "templates" / "pro" / "shop_schedule.html").read_text(encoding="utf-8")

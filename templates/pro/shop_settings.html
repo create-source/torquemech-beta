@@ -101,8 +101,6 @@
     border: 1px solid rgba(15, 23, 42, 0.1);
     border-radius: 8px;
     background: #fff;
-    display: grid;
-    gap: 8px;
     padding: 12px;
   }
 
@@ -111,6 +109,46 @@
     display: flex;
     gap: 10px;
     justify-content: space-between;
+  }
+
+  .tm-message-template-details {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .tm-message-template-details > summary {
+    align-items: center;
+    color: #0f172a;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 8px;
+    font-weight: 900;
+    list-style: none;
+    min-height: 38px;
+  }
+
+  .tm-message-template-details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-message-chevron {
+    color: #0f766e;
+    display: inline-grid;
+    font-size: 1.1rem;
+    line-height: 1;
+    place-items: center;
+    transform: rotate(0deg);
+    transition: transform .16s ease;
+  }
+
+  .tm-message-template-details[open] .tm-message-chevron {
+    transform: rotate(90deg);
+  }
+
+  .tm-message-template-body {
+    display: grid;
+    gap: 8px;
+    padding-top: 10px;
   }
 
   .tm-message-template-card textarea {
@@ -162,6 +200,16 @@
       flex-direction: column;
     }
     .tm-shop-booking-actions .tm-btn { width: 100%; }
+    .tm-message-template-head {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .tm-message-template-head .tm-btn {
+      width: 100%;
+    }
+    .tm-message-template-details > summary {
+      width: 100%;
+    }
   }
 
   .tm-workflow-help {
@@ -298,7 +346,112 @@
   <div class="tm-shop-settings-saved">Shop settings saved.</div>
   {% endif %}
 
+  <section class="tm-shop-settings-panel" aria-label="TorqueMech booking link">
+    <h2 style="margin:0;">TorqueMech Booking Link</h2>
+    <p class="tm-shop-settings-help" style="margin:6px 0 0;">Send this link to customers so they can request an appointment.</p>
+    <div class="tm-shop-booking-link">
+      <code class="tm-shop-booking-url" data-booking-link>{{ profile.booking_link }}</code>
+      <div class="tm-shop-booking-actions">
+        <button class="tm-btn tm-btn-primary" type="button" data-copy-booking-link>Copy Booking Link</button>
+        <a class="tm-btn tm-btn-secondary" href="{{ profile.booking_link }}" target="_blank" rel="noopener noreferrer">Open Booking Page</a>
+        <span class="tm-shop-copy-status" aria-live="polite" data-copy-status></span>
+      </div>
+    </div>
+    <details class="tm-workflow-help">
+      <summary>How booking works</summary>
+      <ol class="tm-workflow-steps">
+        <li>Shop Settings</li>
+        <li>Copy TorqueMech Booking Link</li>
+        <li>Send it to customer</li>
+        <li>Customer opens public booking page</li>
+        <li>Appointment request goes into TorqueMech Calendar</li>
+      </ol>
+    </details>
+  </section>
+
   <form class="tm-shop-settings-form" method="post" action="/pro/shop-settings">
+    <section class="tm-shop-settings-panel" aria-label="Appointment Message Templates">
+      <h2 style="margin:0 0 8px;">Appointment Message Templates</h2>
+      <div class="tm-shop-settings-help">
+        Customize the copyable customer messages used from Shop Calendar appointment actions. Templates are plain text only.
+      </div>
+      <div class="tm-shop-settings-help" style="margin-top:8px;">Supported placeholders:</div>
+      <div class="tm-message-placeholder-list" aria-label="Supported appointment message placeholders">
+        {% for placeholder in profile.appointment_message_placeholders %}
+        <code>{{ "{" ~ placeholder ~ "}" }}</code>
+        {% endfor %}
+      </div>
+      <div class="tm-message-template-list" style="margin-top:12px;">
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <details class="tm-message-template-details">
+              <summary><span>Appointment Confirmation</span><span class="tm-message-chevron" aria-hidden="true">&rsaquo;</span></summary>
+              <div class="tm-message-template-body">
+                <div class="tm-shop-settings-help">Use supported placeholders from the list above. The preview below uses example appointment data.</div>
+                <textarea class="tm-input" id="appointment_confirmation_template" name="appointment_confirmation_template" data-appointment-template data-default-template="{{ profile.appointment_confirmation_template_default|e }}">{{ profile.appointment_confirmation_template_input }}</textarea>
+                <div class="tm-message-preview">
+                  <strong>Preview</strong>
+                  <div class="tm-message-preview-text" data-template-preview="appointment_confirmation_template"></div>
+                </div>
+              </div>
+            </details>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_confirmation_template">Reset to Default</button>
+          </div>
+        </div>
+
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <details class="tm-message-template-details">
+              <summary><span>Appointment Cancellation</span><span class="tm-message-chevron" aria-hidden="true">&rsaquo;</span></summary>
+              <div class="tm-message-template-body">
+                <div class="tm-shop-settings-help">Use supported placeholders from the list above. The preview below uses example appointment data.</div>
+                <textarea class="tm-input" id="appointment_cancellation_template" name="appointment_cancellation_template" data-appointment-template data-default-template="{{ profile.appointment_cancellation_template_default|e }}">{{ profile.appointment_cancellation_template_input }}</textarea>
+                <div class="tm-message-preview">
+                  <strong>Preview</strong>
+                  <div class="tm-message-preview-text" data-template-preview="appointment_cancellation_template"></div>
+                </div>
+              </div>
+            </details>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_cancellation_template">Reset to Default</button>
+          </div>
+        </div>
+
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <details class="tm-message-template-details">
+              <summary><span>Appointment Declined</span><span class="tm-message-chevron" aria-hidden="true">&rsaquo;</span></summary>
+              <div class="tm-message-template-body">
+                <div class="tm-shop-settings-help">Use supported placeholders from the list above. The preview below uses example appointment data.</div>
+                <textarea class="tm-input" id="appointment_declined_template" name="appointment_declined_template" data-appointment-template data-default-template="{{ profile.appointment_declined_template_default|e }}">{{ profile.appointment_declined_template_input }}</textarea>
+                <div class="tm-message-preview">
+                  <strong>Preview</strong>
+                  <div class="tm-message-preview-text" data-template-preview="appointment_declined_template"></div>
+                </div>
+              </div>
+            </details>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_declined_template">Reset to Default</button>
+          </div>
+        </div>
+
+        <div class="tm-message-template-card">
+          <div class="tm-message-template-head">
+            <details class="tm-message-template-details">
+              <summary><span>Appointment Rescheduled</span><span class="tm-message-chevron" aria-hidden="true">&rsaquo;</span></summary>
+              <div class="tm-message-template-body">
+                <div class="tm-shop-settings-help">Use supported placeholders from the list above. The preview below uses example appointment data.</div>
+                <textarea class="tm-input" id="appointment_rescheduled_template" name="appointment_rescheduled_template" data-appointment-template data-default-template="{{ profile.appointment_rescheduled_template_default|e }}">{{ profile.appointment_rescheduled_template_input }}</textarea>
+                <div class="tm-message-preview">
+                  <strong>Preview</strong>
+                  <div class="tm-message-preview-text" data-template-preview="appointment_rescheduled_template"></div>
+                </div>
+              </div>
+            </details>
+            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_rescheduled_template">Reset to Default</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="tm-shop-settings-panel" aria-label="Shop profile">
       <h2 style="margin:0 0 12px;">Shop Profile</h2>
       <div class="tm-shop-settings-grid">
@@ -399,68 +552,6 @@
       </div>
     </section>
 
-    <section class="tm-shop-settings-panel" aria-label="Appointment Message Templates">
-      <h2 style="margin:0 0 8px;">Appointment Message Templates</h2>
-      <div class="tm-shop-settings-help">
-        Customize the copyable customer messages used from Shop Calendar appointment actions. Templates are plain text only.
-      </div>
-      <div class="tm-shop-settings-help" style="margin-top:8px;">Supported placeholders:</div>
-      <div class="tm-message-placeholder-list" aria-label="Supported appointment message placeholders">
-        {% for placeholder in profile.appointment_message_placeholders %}
-        <code>{{ "{" ~ placeholder ~ "}" }}</code>
-        {% endfor %}
-      </div>
-      <div class="tm-message-template-list" style="margin-top:12px;">
-        <div class="tm-message-template-card">
-          <div class="tm-message-template-head">
-            <label class="tm-label" for="appointment_confirmation_template">Appointment Confirmation</label>
-            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_confirmation_template">Reset to Default</button>
-          </div>
-          <textarea class="tm-input" id="appointment_confirmation_template" name="appointment_confirmation_template" data-appointment-template data-default-template="{{ profile.appointment_confirmation_template_default|e }}">{{ profile.appointment_confirmation_template_input }}</textarea>
-          <div class="tm-message-preview">
-            <strong>Preview</strong>
-            <div class="tm-message-preview-text" data-template-preview="appointment_confirmation_template"></div>
-          </div>
-        </div>
-
-        <div class="tm-message-template-card">
-          <div class="tm-message-template-head">
-            <label class="tm-label" for="appointment_cancellation_template">Appointment Cancellation</label>
-            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_cancellation_template">Reset to Default</button>
-          </div>
-          <textarea class="tm-input" id="appointment_cancellation_template" name="appointment_cancellation_template" data-appointment-template data-default-template="{{ profile.appointment_cancellation_template_default|e }}">{{ profile.appointment_cancellation_template_input }}</textarea>
-          <div class="tm-message-preview">
-            <strong>Preview</strong>
-            <div class="tm-message-preview-text" data-template-preview="appointment_cancellation_template"></div>
-          </div>
-        </div>
-
-        <div class="tm-message-template-card">
-          <div class="tm-message-template-head">
-            <label class="tm-label" for="appointment_declined_template">Appointment Declined</label>
-            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_declined_template">Reset to Default</button>
-          </div>
-          <textarea class="tm-input" id="appointment_declined_template" name="appointment_declined_template" data-appointment-template data-default-template="{{ profile.appointment_declined_template_default|e }}">{{ profile.appointment_declined_template_input }}</textarea>
-          <div class="tm-message-preview">
-            <strong>Preview</strong>
-            <div class="tm-message-preview-text" data-template-preview="appointment_declined_template"></div>
-          </div>
-        </div>
-
-        <div class="tm-message-template-card">
-          <div class="tm-message-template-head">
-            <label class="tm-label" for="appointment_rescheduled_template">Appointment Rescheduled</label>
-            <button class="tm-btn tm-btn-secondary" type="button" data-reset-template="appointment_rescheduled_template">Reset to Default</button>
-          </div>
-          <textarea class="tm-input" id="appointment_rescheduled_template" name="appointment_rescheduled_template" data-appointment-template data-default-template="{{ profile.appointment_rescheduled_template_default|e }}">{{ profile.appointment_rescheduled_template_input }}</textarea>
-          <div class="tm-message-preview">
-            <strong>Preview</strong>
-            <div class="tm-message-preview-text" data-template-preview="appointment_rescheduled_template"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <div class="tm-shop-settings-actions">
       <button class="tm-btn tm-btn-primary" type="submit">Save Settings</button>
       <a class="tm-btn tm-btn-secondary" href="/pro/calendar">Shop Calendar</a>
@@ -468,28 +559,6 @@
     </div>
   </form>
 
-  <section class="tm-shop-settings-panel" aria-label="TorqueMech booking link">
-    <h2 style="margin:0;">TorqueMech Booking Link</h2>
-    <p class="tm-shop-settings-help" style="margin:6px 0 0;">Send this link to customers so they can request an appointment.</p>
-    <div class="tm-shop-booking-link">
-      <code class="tm-shop-booking-url" data-booking-link>{{ profile.booking_link }}</code>
-      <div class="tm-shop-booking-actions">
-        <button class="tm-btn tm-btn-primary" type="button" data-copy-booking-link>Copy Booking Link</button>
-        <a class="tm-btn tm-btn-secondary" href="{{ profile.booking_link }}" target="_blank" rel="noopener noreferrer">Open Booking Page</a>
-        <span class="tm-shop-copy-status" aria-live="polite" data-copy-status></span>
-      </div>
-    </div>
-    <details class="tm-workflow-help">
-      <summary>How booking works</summary>
-      <ol class="tm-workflow-steps">
-        <li>Shop Settings</li>
-        <li>Copy TorqueMech Booking Link</li>
-        <li>Send it to customer</li>
-        <li>Customer opens public booking page</li>
-        <li>Appointment request goes into TorqueMech Calendar</li>
-      </ol>
-    </details>
-  </section>
 </section>
 
 <script>
@@ -547,7 +616,7 @@
       if (!textarea) return;
       textarea.value = textarea.dataset.defaultTemplate || "";
       textarea.dispatchEvent(new Event("input", { bubbles: true }));
-      textarea.focus();
+      if (textarea.closest("details")?.open) textarea.focus();
     });
   });
 
