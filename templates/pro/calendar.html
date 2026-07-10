@@ -50,6 +50,8 @@
   .tm-calendar-status[data-status="Requested"] { background: #fef3c7; color: #92400e; }
   .tm-calendar-status[data-status="Confirmed"] { background: #dcfce7; color: #166534; }
   .tm-calendar-status[data-status="Rescheduled"] { background: #e0e7ff; color: #3730a3; }
+  .tm-calendar-status[data-status="Converted"],
+  .tm-calendar-status[data-status="Converted to Pro Job"] { background: #ccfbf1; color: #115e59; }
   .tm-calendar-status[data-status="Cancelled"] { background: #f1f5f9; color: #475569; }
   .tm-calendar-status[data-status="Declined"] { background: #fee2e2; color: #991b1b; }
   .tm-calendar-status[data-status="Handled"],
@@ -249,9 +251,14 @@
       </div>
       <div class="tm-calendar-actions">
         {% if item.customer_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.customer_url }}">Open Customer</a>{% endif %}
+        {% if item.repair_url %}
+        <a class="tm-btn tm-btn-primary" href="{{ item.repair_url }}">Open Pro Job</a>
+        {% elif item.repair_link_warning %}
+        <span class="tm-book-warning">{{ item.repair_link_warning }}</span>
+        {% endif %}
         {% if item.estimate_url %}
         <a class="tm-btn tm-btn-primary" href="{{ item.estimate_url }}">Open Estimate</a>
-        {% elif item.create_estimate_url %}
+        {% elif item.create_estimate_url and not item.repair_url %}
         <a class="tm-btn tm-btn-primary" href="{{ item.create_estimate_url }}">Create Estimate</a>
         {% endif %}
       </div>
@@ -351,6 +358,15 @@
     <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.display_vehicle_label or item.vehicle_label or "-" }}</strong></div>
     <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
   </div>
+  {% if item.repair_url or item.repair_link_warning %}
+  <div class="tm-calendar-actions">
+    {% if item.repair_url %}
+    <a class="tm-btn tm-btn-primary" href="{{ item.repair_url }}">Open Pro Job</a>
+    {% else %}
+    <span class="tm-book-warning">{{ item.repair_link_warning }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
   {% if item.status in ["Cancelled", "Declined"] %}
   {% set message_type = "cancellation" if item.status == "Cancelled" else "declined" %}
   <div class="tm-calendar-copy-row">

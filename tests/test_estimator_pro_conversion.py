@@ -955,6 +955,198 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(appointment["customer_id"], 1)
         self.assertEqual(appointment["vehicle_id"], 1)
 
+    def test_complete_appointment_to_pro_job_flow_marks_converted_and_opens_existing_job(self):
+        self.seed_customer_vehicle(first_name="Jamie", last_name="Stone", year=2019, make="Mazda", model="CX-5")
+        pro_module.ensure_calendar_schema(self.conn)
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "estimate_id": 77,
+                "customer_name": "Jamie Stone",
+                "vehicle_label": "2019 Mazda CX-5",
+                "service_name": "Brake Inspection",
+                "requested_date": "2026-07-20",
+                "requested_time": "10:30",
+                "status": "Confirmed",
+            },
+        )
+        payload = self.conversion_payload()
+        payload.update({"source": "appointment", "appointmentId": str(appointment_id), "estimateId": "77"})
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "linked_customer_vehicle_locked": "1",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+        duplicate = client.post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "linked_customer_vehicle_locked": "1",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+        conversion_page = client.post(
+            "/pro/estimate-conversion",
+            data={"estimate_payload": json.dumps(payload)},
+        )
+        calendar = client.get("/pro/calendar")
+
+        repairs = [dict(row) for row in self.conn.execute("SELECT * FROM repair_records").fetchall()]
+        appointment = dict(self.conn.execute("SELECT * FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone())
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("created=1", response.headers["location"])
+        self.assertEqual(duplicate.status_code, 303)
+        self.assertIn("created=0", duplicate.headers["location"])
+        self.assertEqual(len(repairs), 1)
+        self.assertEqual(repairs[0]["workflow_source_type"], "estimate")
+        self.assertEqual(repairs[0]["workflow_source_id"], 77)
+        self.assertEqual(appointment["status"], "Converted")
+        self.assertEqual(appointment["repair_id"], repairs[0]["id"])
+        self.assertIn("Open Pro Job", conversion_page.text)
+        self.assertIn("Converted to Pro Job", calendar.text)
+        self.assertIn(f'href="/pro/customers/1/vehicles/1/repairs/{repairs[0]["id"]}"', calendar.text)
+        self.assertNotIn("Create Estimate", calendar.text)
+
+    def test_cancelled_and_declined_appointments_cannot_convert_to_pro_job(self):
+        self.seed_customer_vehicle()
+        pro_module.ensure_calendar_schema(self.conn)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        for status in ("Cancelled", "Declined"):
+            appointment_id = pro_module.create_service_appointment(
+                self.conn,
+                {
+                    "customer_id": 1,
+                    "vehicle_id": 1,
+                    "customer_name": "Samm",
+                    "vehicle_label": "2023 Kia Forte Coupe",
+                    "service_name": "Brake Inspection",
+                    "requested_date": "2026-07-15",
+                    "requested_time": "10:00",
+                    "status": status,
+                },
+            )
+            payload = self.conversion_payload()
+            payload.update({"source": "appointment", "appointmentId": str(appointment_id), "estimateId": str(200 + appointment_id)})
+            response = client.post(
+                "/pro/estimate-conversion/create",
+                data={
+                    "estimate_payload": json.dumps(payload),
+                    "linked_customer_vehicle_locked": "1",
+                    "service_index": "0",
+                },
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("Only confirmed appointments can be converted", response.text)
+        repair_count = self.conn.execute("SELECT COUNT(*) FROM repair_records").fetchone()[0]
+        self.assertEqual(repair_count, 0)
+
+    def test_repair_completion_updates_service_history_vehicle_timeline_without_duplicates(self):
+        self.seed_customer_vehicle(first_name="Morgan", last_name="Lee", year=2020, make="Toyota", model="RAV4")
+        pro_module.ensure_calendar_schema(self.conn)
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "estimate_id": 88,
+                "customer_name": "Morgan Lee",
+                "vehicle_label": "2020 Toyota RAV4",
+                "service_name": "Oil Change",
+                "requested_date": "2026-07-21",
+                "requested_time": "09:30",
+                "status": "Confirmed",
+            },
+        )
+        payload = self.conversion_payload()
+        payload["lineItems"] = [
+            {
+                "serviceText": "Oil Change",
+                "laborHours": 0.5,
+                "laborRate": 120,
+                "laborTotal": 60,
+                "partsTotal": 45,
+                "grandTotal": 105,
+            }
+        ]
+        payload.update({"source": "appointment", "appointmentId": str(appointment_id), "estimateId": "88"})
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        client.post(
+            "/pro/estimate-conversion/create",
+            data={
+                "estimate_payload": json.dumps(payload),
+                "linked_customer_vehicle_locked": "1",
+                "service_index": "0",
+            },
+            follow_redirects=False,
+        )
+        repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
+
+        for _ in range(2):
+            completion = client.post(
+                f"/pro/customers/1/vehicles/1/repairs/{repair['id']}/completion",
+                data={
+                    "completion_date": "2026-07-22",
+                    "completion_mileage": "90123",
+                    "completion_notes": "Completed from appointment workflow.",
+                    "final_inspection_passed": "1",
+                },
+                follow_redirects=False,
+            )
+            self.assertEqual(completion.status_code, 303)
+
+        history = [dict(row) for row in self.conn.execute("SELECT * FROM service_history_records").fetchall()]
+        refreshed_repair = dict(self.conn.execute("SELECT * FROM repair_records WHERE id = ?", (repair["id"],)).fetchone())
+        timeline = pro_module.build_vehicle_timeline(1, 1, {}, history, [], [], [], [])
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]["customer_id"], 1)
+        self.assertEqual(history[0]["vehicle_id"], 1)
+        self.assertEqual(history[0]["source_type"], "repair")
+        self.assertEqual(history[0]["source_record_id"], repair["id"])
+        self.assertEqual(refreshed_repair["status"], "Completed")
+        self.assertEqual(refreshed_repair["mileage"], 90123)
+        self.assertTrue(any("Oil Change" in str(group) for group in timeline))
+
+    def test_calendar_shows_missing_linked_repair_fallback(self):
+        self.seed_customer_vehicle()
+        pro_module.ensure_calendar_schema(self.conn)
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_id": 1,
+                "vehicle_id": 1,
+                "repair_id": 999,
+                "customer_name": "Samm",
+                "vehicle_label": "2023 Kia Forte Coupe",
+                "service_name": "Brake Inspection",
+                "requested_date": "2026-07-15",
+                "requested_time": "10:00",
+                "status": "Converted",
+            },
+        )
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        response = TestClient(app, base_url="http://localhost").get("/pro/calendar")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Converted to Pro Job", response.text)
+        self.assertIn("The linked Pro Job is unavailable", response.text)
+        self.assertNotIn(f"/pro/calendar/{appointment_id}/convert", response.text)
+
     def test_finding_conversion_creates_selected_service_even_when_old_finding_repair_exists(self):
         now = "2026-06-25T12:00:00"
         self.conn.execute(

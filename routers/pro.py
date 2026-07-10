@@ -201,7 +201,8 @@ REPAIR_COMPLETION_CHECKS = (
     ("customer_concern_resolved", "Customer concern resolved"),
 )
 
-APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Rescheduled", "Handled", "Declined", "Completed", "Cancelled")
+APPOINTMENT_STATUS_OPTIONS = ("Requested", "Confirmed", "Rescheduled", "Converted", "Handled", "Declined", "Completed", "Cancelled")
+CONVERTIBLE_APPOINTMENT_STATUSES = {"Confirmed", "Rescheduled"}
 APPOINTMENT_LENGTH_OPTIONS = (30, 45, 60, 90, 120)
 APPOINTMENT_BUFFER_OPTIONS = (0, 15, 30)
 SHOP_SCHEDULE_DAYS = (
@@ -1257,7 +1258,7 @@ def is_booking_time_available(
         SELECT id, requested_time
         FROM service_appointments
         WHERE requested_date = ?
-          AND status IN ('Requested', 'Confirmed', 'Rescheduled')
+          AND status IN ('Requested', 'Confirmed', 'Rescheduled', 'Converted')
           {exclusion_sql}
         """,
         params,
@@ -1512,9 +1513,12 @@ def group_booking_review_appointments(
         elif status in {"Confirmed", "Rescheduled"} and (not requested or requested >= today):
             grouped["confirmed"].append(appointment)
         else:
-            appointment["display_status"] = (
-                "Past Appointment" if status in {"Confirmed", "Rescheduled"} else status
-            )
+            if status == "Converted":
+                appointment["display_status"] = "Converted to Pro Job"
+            else:
+                appointment["display_status"] = (
+                    "Past Appointment" if status in {"Confirmed", "Rescheduled"} else status
+                )
             grouped["history"].append(appointment)
 
     def sort_key(item: dict[str, Any]) -> tuple[str, str, int]:
@@ -7316,6 +7320,23 @@ def estimate_conversion_linked_context(
         ).fetchone()
         if repair:
             context["existing_repair_url"] = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair['id']}"
+    appointment_id = optional_int_value(payload.get("appointment_id"))
+    if not context["existing_repair_url"] and appointment_id:
+        ensure_calendar_schema(conn)
+        ensure_repair_records_schema(conn)
+        appointment = load_service_appointment(conn, appointment_id)
+        appointment_repair_id = optional_int_value((appointment or {}).get("repair_id"))
+        if appointment_repair_id:
+            repair = conn.execute(
+                """
+                SELECT id
+                FROM repair_records
+                WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                """,
+                (appointment_repair_id, customer_id, vehicle_id),
+            ).fetchone()
+            if repair:
+                context["existing_repair_url"] = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair['id']}"
     return context
 
 
@@ -9581,12 +9602,30 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             for vehicle in vehicles
         ]
         vehicle_by_id = {int(vehicle["id"]): vehicle for vehicle in all_vehicles}
+        repair_by_id: dict[int, dict[str, Any]] = {}
+        repair_ids = [
+            optional_int_value(appointment.get("repair_id"))
+            for appointment in appointments
+            if optional_int_value(appointment.get("repair_id"))
+        ]
+        if repair_ids:
+            ensure_repair_records_schema(conn)
+            placeholders = ", ".join("?" for _ in repair_ids)
+            repair_by_id = {
+                int(row["id"]): dict(row)
+                for row in conn.execute(
+                    f"SELECT id, customer_id, vehicle_id FROM repair_records WHERE id IN ({placeholders})",
+                    repair_ids,
+                ).fetchall()
+            }
         for appointment in appointments:
             customer_id = optional_int_value(appointment.get("customer_id"))
             vehicle_id = optional_int_value(appointment.get("vehicle_id"))
             estimate_id = optional_int_value(appointment.get("estimate_id"))
+            repair_id = optional_int_value(appointment.get("repair_id"))
             linked_customer = customer_by_id.get(customer_id or 0)
             linked_vehicle = vehicle_by_id.get(vehicle_id or 0)
+            linked_repair = repair_by_id.get(repair_id or 0)
             appointment["display_vehicle_label"] = appointment_vehicle_label(appointment)
             appointment["linked_customer_name"] = customer_display_name(linked_customer) if linked_customer else ""
             appointment["linked_vehicle_label"] = vehicle_label(linked_vehicle) if linked_vehicle else ""
@@ -9601,9 +9640,24 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 if customer_id and vehicle_id and estimate_id
                 else ""
             )
+            appointment["repair_url"] = (
+                f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}"
+                if customer_id
+                and vehicle_id
+                and repair_id
+                and linked_repair
+                and optional_int_value(linked_repair.get("customer_id")) == customer_id
+                and optional_int_value(linked_repair.get("vehicle_id")) == vehicle_id
+                else ""
+            )
+            appointment["repair_link_warning"] = (
+                "The linked Pro Job is unavailable. The repair record may have been deleted."
+                if repair_id and not appointment["repair_url"]
+                else ""
+            )
             appointment["create_estimate_url"] = (
                 appointment_estimator_href(appointment)
-                if customer_id and vehicle_id
+                if customer_id and vehicle_id and not appointment["repair_url"] and appointment.get("status") in CONVERTIBLE_APPOINTMENT_STATUSES
                 else ""
             )
     finally:
@@ -10081,6 +10135,41 @@ async def pro_estimate_conversion_create(request: Request):
         ensure_customer_status_schema(conn)
         ensure_repair_records_schema(conn)
         linked_context = estimate_conversion_linked_context(conn, payload)
+        appointment_id = optional_int_value(payload.get("appointment_id"))
+        appointment: dict[str, Any] | None = None
+        existing_appointment_repair_url = ""
+        if appointment_id:
+            ensure_calendar_schema(conn)
+            appointment = load_service_appointment(conn, appointment_id)
+            if not appointment:
+                raise HTTPException(status_code=400, detail="The linked appointment is unavailable. Select the customer and vehicle manually before importing services.")
+            appointment_status = str(appointment.get("status") or "")
+            appointment_repair_id = optional_int_value(appointment.get("repair_id"))
+            if appointment_repair_id:
+                existing_repair = conn.execute(
+                    """
+                    SELECT id, customer_id, vehicle_id
+                    FROM repair_records
+                    WHERE id = ?
+                    """,
+                    (appointment_repair_id,),
+                ).fetchone()
+                if existing_repair:
+                    existing_appointment_repair_url = (
+                        f"/pro/customers/{existing_repair['customer_id']}/vehicles/{existing_repair['vehicle_id']}"
+                        f"?converted=1&created=0#repair-workspace"
+                    )
+                    conn.execute(
+                        "UPDATE service_appointments SET status = 'Converted', updated_at = ? WHERE id = ?",
+                        (now, appointment_id),
+                    )
+                    conn.commit()
+                    return RedirectResponse(existing_appointment_repair_url, status_code=303)
+            if appointment_status not in CONVERTIBLE_APPOINTMENT_STATUSES:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Only confirmed appointments can be converted to a Pro Job.",
+                )
         use_linked_records = form.get("linked_customer_vehicle_locked") == "1" and linked_context.get("valid")
         if use_linked_records:
             customer_mode = "existing"
@@ -10323,7 +10412,6 @@ async def pro_estimate_conversion_create(request: Request):
                     (repair_id, now, now, *finding_record_where_params(conn, source_id, customer_id, vehicle_id)),
                 )
             created_count += 1
-        appointment_id = optional_int_value(payload.get("appointment_id"))
         if appointment_id and first_repair_id:
             ensure_calendar_schema(conn)
             conn.execute(
@@ -10333,6 +10421,7 @@ async def pro_estimate_conversion_create(request: Request):
                     WHEN repair_id IS NULL OR repair_id = 0 THEN ?
                     ELSE repair_id
                 END,
+                    status = 'Converted',
                     updated_at = ?
                 WHERE id = ? AND customer_id = ? AND vehicle_id = ?
                 """,
