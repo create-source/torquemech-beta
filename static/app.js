@@ -947,6 +947,7 @@
     let makes = [];
     let models = [];
     const currentYear = new Date().getFullYear();
+    const yearClearButton = yearSelect.parentElement?.querySelector(".vehicle-year-clear");
     const makeClearButton = makeSearch.parentElement?.querySelector(".vehicle-make-clear");
     const modelClearButton = modelSelect.parentElement?.querySelector(".vehicle-model-clear");
 
@@ -982,6 +983,7 @@
     };
 
     const updateVehicleClearButtons = () => {
+      setInlineClearButton(yearClearButton, Boolean(yearSelect.value));
       setInlineClearButton(makeClearButton, Boolean((makeSearch.value || "").trim() || makeSelect.value));
       setInlineClearButton(modelClearButton, Boolean((modelSearch.value || "").trim() || modelSelect.value));
     };
@@ -994,6 +996,7 @@
       yearSelect.appendChild(option);
     }
     yearSelect.value = vehicle.year;
+    updateVehicleClearButtons();
 
     const hideMakeResults = () => {
       makeResults.style.display = "none";
@@ -1415,6 +1418,26 @@
       updateVehicleClearButtons();
       notifyChange();
       makeSearch.focus({ preventScroll: true });
+    });
+
+    yearClearButton?.addEventListener("click", async () => {
+      vehicle.year = "";
+      vehicle.make = "";
+      vehicle.model = "";
+      vehicle.displayModel = "";
+      yearSelect.value = "";
+      makeSelect.value = "";
+      makeSearch.value = "";
+      modelSelect.value = "";
+      modelSearch.value = "";
+      hideMakeResults();
+      hideModelResults();
+      updateVehicleClearButtons();
+      notifyChange();
+      await populateModels("");
+      updateVehicleClearButtons();
+      notifyChange();
+      yearSelect.focus({ preventScroll: true });
     });
 
     modelClearButton?.addEventListener("click", () => {
@@ -7631,6 +7654,9 @@ if (getEstimateHint) {
           <div class="tm-year-field">
             <label>Year</label>
             <select class="vehicle-year" data-vehicle-id="${vehicle.id}"></select>
+            <button type="button" class="tm-input-clear-btn vehicle-year-clear" data-vehicle-id="${vehicle.id}" aria-label="Clear year" hidden>
+              &times;
+            </button>
           </div>
 
           <div class="tm-inline-clear-field">

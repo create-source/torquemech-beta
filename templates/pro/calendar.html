@@ -75,6 +75,15 @@
   }
   .tm-calendar-actions, .tm-calendar-form-grid { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
   .tm-calendar-copy-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .tm-calendar-message-editor {
+    display: grid;
+    gap: 8px;
+    flex: 1 0 100%;
+  }
+  .tm-calendar-message-editor textarea {
+    min-height: 112px;
+    resize: vertical;
+  }
   .tm-calendar-copy-status { color: #0f766e; font-size: .82rem; font-weight: 800; min-height: 1.2em; }
   .tm-calendar-message-preview {
     display: grid;
@@ -179,7 +188,7 @@
   <div class="tm-calendar-grid">
     <div class="tm-calendar-field"><span>Phone</span><strong>{{ item.customer_phone|pro_phone if item.customer_phone else "Not provided" }}</strong></div>
     <div class="tm-calendar-field"><span>Email</span><strong>{{ item.customer_email or "Not provided" }}</strong></div>
-    <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.vehicle_label or "-" }}</strong></div>
+    <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.display_vehicle_label or item.vehicle_label or "-" }}</strong></div>
     <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
   </div>
   {% if item.notes %}<div class="tm-calendar-field"><span>Notes</span><strong>{{ item.notes }}</strong></div>{% endif %}
@@ -238,7 +247,7 @@
       <strong>Linked to customer</strong>
       <div class="tm-calendar-grid">
         <div class="tm-calendar-field"><span>Customer</span><strong>{{ item.linked_customer_name or item.customer_name }}</strong></div>
-        <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.linked_vehicle_label or item.vehicle_label or "-" }}</strong></div>
+        <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.linked_vehicle_label or item.display_vehicle_label or item.vehicle_label or "-" }}</strong></div>
       </div>
       <div class="tm-calendar-actions">
         {% if item.customer_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.customer_url }}">Open Customer</a>{% endif %}
@@ -250,7 +259,7 @@
       </div>
     </div>
     {% else %}
-    {% set vehicle_bits = parse_appointment_vehicle_label(item.vehicle_label) %}
+    {% set vehicle_bits = appointment_vehicle_parts(item) %}
     <details class="tm-calendar-convert" data-conversion-panel>
       <summary class="tm-btn tm-btn-primary">Add to Customer / Start Job</summary>
       <form class="tm-calendar-convert-panel" method="post" action="/pro/calendar/{{ item.id }}/convert">
@@ -294,10 +303,10 @@
           <div><label class="tm-label" for="new_customer_email_{{ item.id }}">Email</label><input class="tm-input" id="new_customer_email_{{ item.id }}" name="new_customer_email" type="email" value="{{ item.customer_email or '' }}"></div>
         </div>
         <div class="tm-calendar-convert-grid" data-new-vehicle-fields hidden>
-          <div><label class="tm-label" for="new_vehicle_year_{{ item.id }}">Year</label><input class="tm-input" id="new_vehicle_year_{{ item.id }}" name="new_vehicle_year" inputmode="numeric" value="{{ vehicle_bits.year }}"></div>
-          <div><label class="tm-label" for="new_vehicle_make_{{ item.id }}">Make</label><input class="tm-input" id="new_vehicle_make_{{ item.id }}" name="new_vehicle_make" value="{{ vehicle_bits.make }}"></div>
-          <div><label class="tm-label" for="new_vehicle_model_{{ item.id }}">Model</label><input class="tm-input" id="new_vehicle_model_{{ item.id }}" name="new_vehicle_model" value="{{ vehicle_bits.model }}"></div>
-          <div><label class="tm-label" for="new_vehicle_mileage_{{ item.id }}">Mileage</label><input class="tm-input" id="new_vehicle_mileage_{{ item.id }}" name="new_vehicle_mileage" inputmode="numeric"></div>
+          <div><label class="tm-label" for="new_vehicle_year_{{ item.id }}">Year</label><span class="tm-clearable-field"><input class="tm-input" id="new_vehicle_year_{{ item.id }}" name="new_vehicle_year" inputmode="numeric" value="{{ vehicle_bits.year }}" data-appointment-clearable></span></div>
+          <div><label class="tm-label" for="new_vehicle_make_{{ item.id }}">Make</label><span class="tm-clearable-field"><input class="tm-input" id="new_vehicle_make_{{ item.id }}" name="new_vehicle_make" value="{{ vehicle_bits.make }}" data-appointment-clearable data-clear-dependent="#new_vehicle_model_{{ item.id }}"></span></div>
+          <div><label class="tm-label" for="new_vehicle_model_{{ item.id }}">Model</label><span class="tm-clearable-field"><input class="tm-input" id="new_vehicle_model_{{ item.id }}" name="new_vehicle_model" value="{{ vehicle_bits.model }}" data-appointment-clearable></span></div>
+          <div><label class="tm-label" for="new_vehicle_mileage_{{ item.id }}">Mileage</label><span class="tm-clearable-field"><input class="tm-input" id="new_vehicle_mileage_{{ item.id }}" name="new_vehicle_mileage" inputmode="numeric" data-pro-mileage-input data-appointment-clearable></span></div>
         </div>
         <div class="tm-calendar-field"><span>Appointment Notes</span><strong>{{ item.notes or "No notes provided" }}</strong></div>
         <div class="tm-calendar-actions">
@@ -311,11 +320,19 @@
   </div>
   {% if item.status in ["Confirmed", "Rescheduled"] %}
   <div class="tm-calendar-copy-row" aria-label="Copy customer messages">
-    <span hidden data-copy-source="confirmation">{{ item.confirmation_message }}</span>
-    <span hidden data-copy-source="reschedule">{{ item.reschedule_message }}</span>
+    <details class="tm-calendar-message-editor">
+      <summary class="tm-btn tm-btn-secondary">Edit Confirmation Message</summary>
+      <textarea class="tm-input" data-copy-source="confirmation" data-default-message="{{ item.confirmation_message|e }}">{{ item.confirmation_message }}</textarea>
+    </details>
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="confirmation">Copy Confirmation Message</button>
+    <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="confirmation">Reset to Default</button>
     {% if item.status == "Rescheduled" %}
+    <details class="tm-calendar-message-editor">
+      <summary class="tm-btn tm-btn-secondary">Edit Reschedule Message</summary>
+      <textarea class="tm-input" data-copy-source="reschedule" data-default-message="{{ item.reschedule_message|e }}">{{ item.reschedule_message }}</textarea>
+    </details>
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="reschedule">Copy Reschedule Message</button>
+    <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="reschedule">Reset to Default</button>
     {% endif %}
     <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
   </div>
@@ -333,14 +350,19 @@
     <span class="tm-calendar-status" data-status="{{ item.display_status }}">{{ item.display_status }}</span>
   </div>
   <div class="tm-calendar-grid">
-    <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.vehicle_label or "-" }}</strong></div>
+    <div class="tm-calendar-field"><span>Vehicle</span><strong>{{ item.display_vehicle_label or item.vehicle_label or "-" }}</strong></div>
     <div class="tm-calendar-field"><span>Service</span><strong>{{ item.service_name or "-" }}</strong></div>
   </div>
   {% if item.status in ["Cancelled", "Declined"] %}
   {% set message_type = "cancellation" if item.status == "Cancelled" else "declined" %}
   <div class="tm-calendar-copy-row">
-    <span hidden data-copy-source="{{ message_type }}">{{ item.cancellation_message if item.status == "Cancelled" else item.declined_message }}</span>
+    {% set default_message = item.cancellation_message if item.status == "Cancelled" else item.declined_message %}
+    <details class="tm-calendar-message-editor">
+      <summary class="tm-btn tm-btn-secondary">Edit Message</summary>
+      <textarea class="tm-input" data-copy-source="{{ message_type }}" data-default-message="{{ default_message|e }}">{{ default_message }}</textarea>
+    </details>
     <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="{{ message_type }}">Copy Message</button>
+    <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="{{ message_type }}">Reset to Default</button>
     <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
   </div>
   {% endif %}
@@ -366,10 +388,10 @@
   {% if action_preview %}
   <section class="tm-calendar-message-preview" data-message-card aria-label="{{ action_preview.title }} customer message">
     <strong>{{ action_preview.title }}</strong>
-    <p>{{ action_preview.message }}</p>
-    <span hidden data-copy-source="action">{{ action_preview.message }}</span>
+    <textarea class="tm-input" data-copy-source="action" data-default-message="{{ action_preview.message|e }}">{{ action_preview.message }}</textarea>
     <div class="tm-calendar-message-preview-actions">
       <button class="tm-btn tm-btn-primary" type="button" data-copy-appointment-message="action">Copy Message</button>
+      <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="action">Reset to Default</button>
       <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
     </div>
   </section>
@@ -508,6 +530,38 @@ document.querySelectorAll("[data-conversion-panel]").forEach((panel) => {
   syncVehicleOptions();
   syncModes();
 });
+document.querySelectorAll("[data-appointment-clearable]").forEach((input) => {
+  const wrapper = input.closest(".tm-clearable-field") || input.parentElement;
+  if (!wrapper || wrapper.querySelector(".tm-input-clear-btn")) return;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "tm-input-clear-btn";
+  button.setAttribute("aria-label", `Clear ${input.name || input.id || "field"}`);
+  button.innerHTML = "&times;";
+  wrapper.appendChild(button);
+  const update = () => {
+    button.hidden = !String(input.value || "").trim();
+  };
+  button.addEventListener("click", () => {
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    const dependentSelector = input.dataset.clearDependent;
+    if (dependentSelector) {
+      const dependent = document.querySelector(dependentSelector);
+      if (dependent) {
+        dependent.value = "";
+        dependent.dispatchEvent(new Event("input", { bubbles: true }));
+        dependent.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+    update();
+    input.focus({ preventScroll: true });
+  });
+  input.addEventListener("input", update);
+  input.addEventListener("change", update);
+  update();
+});
 async function copyAppointmentText(value) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -528,7 +582,8 @@ document.querySelectorAll("[data-copy-appointment-message]").forEach((button) =>
   button.addEventListener("click", async () => {
     const card = button.closest("[data-message-card]");
     const kind = button.dataset.copyAppointmentMessage;
-    const message = card?.querySelector(`[data-copy-source="${kind}"]`)?.textContent?.trim() || "";
+    const source = card?.querySelector(`[data-copy-source="${kind}"]`);
+    const message = "value" in (source || {}) ? source.value.trim() : source?.textContent?.trim() || "";
     const status = card?.querySelector("[data-copy-status]");
     try {
       const copied = message ? await copyAppointmentText(message) : false;
@@ -536,6 +591,18 @@ document.querySelectorAll("[data-copy-appointment-message]").forEach((button) =>
     } catch (_) {
       if (status) status.textContent = "Unable to copy message.";
     }
+  });
+});
+document.querySelectorAll("[data-reset-appointment-message]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const card = button.closest("[data-message-card]");
+    const kind = button.dataset.resetAppointmentMessage;
+    const source = card?.querySelector(`[data-copy-source="${kind}"]`);
+    if (!source || !("value" in source)) return;
+    source.value = source.dataset.defaultMessage || "";
+    source.dispatchEvent(new Event("input", { bubbles: true }));
+    const status = card?.querySelector("[data-copy-status]");
+    if (status) status.textContent = "Default restored.";
   });
 });
 </script>

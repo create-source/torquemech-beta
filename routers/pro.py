@@ -963,6 +963,9 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
           customer_phone TEXT NOT NULL,
           customer_email TEXT,
           vehicle_label TEXT,
+          vehicle_year TEXT,
+          vehicle_make TEXT,
+          vehicle_model TEXT,
           service_name TEXT NOT NULL,
           requested_date TEXT NOT NULL,
           requested_time TEXT NOT NULL,
@@ -985,6 +988,9 @@ def ensure_calendar_schema(conn: sqlite3.Connection) -> None:
         "customer_phone": "customer_phone TEXT",
         "customer_email": "customer_email TEXT",
         "vehicle_label": "vehicle_label TEXT",
+        "vehicle_year": "vehicle_year TEXT",
+        "vehicle_make": "vehicle_make TEXT",
+        "vehicle_model": "vehicle_model TEXT",
         "service_name": "service_name TEXT",
         "requested_date": "requested_date TEXT",
         "requested_time": "requested_time TEXT",
@@ -1352,15 +1358,21 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -
     if status not in APPOINTMENT_STATUS_OPTIONS:
         status = "Requested"
     source = str(data.get("source") or "customer_booking").strip() or "customer_booking"
+    vehicle_year = str(data.get("vehicle_year") or "").strip()
+    vehicle_make = str(data.get("vehicle_make") or "").strip()
+    vehicle_model = str(data.get("vehicle_model") or "").strip()
+    vehicle_label_value = str(data.get("vehicle_label") or "").strip()
+    if not vehicle_label_value:
+        vehicle_label_value = " ".join(part for part in [vehicle_year, vehicle_make, vehicle_model] if part)
     now = datetime.utcnow().isoformat()
     cur = conn.execute(
         """
         INSERT INTO service_appointments (
           shop_id, customer_id, vehicle_id, estimate_id, repair_id, invoice_id, customer_name, customer_phone,
-          customer_email, vehicle_label, service_name, requested_date,
+          customer_email, vehicle_label, vehicle_year, vehicle_make, vehicle_model, service_name, requested_date,
           requested_time, notes, source, status, created_at, updated_at
         )
-        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             optional_int_value(data.get("customer_id")),
@@ -1371,7 +1383,10 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -
             str(data.get("customer_name") or "").strip(),
             str(data.get("customer_phone") or "").strip(),
             str(data.get("customer_email") or "").strip(),
-            str(data.get("vehicle_label") or "").strip(),
+            vehicle_label_value,
+            vehicle_year,
+            vehicle_make,
+            vehicle_model,
             str(data.get("service_name") or "").strip(),
             str(data.get("requested_date") or "").strip(),
             str(data.get("requested_time") or "").strip(),
@@ -1532,7 +1547,7 @@ def appointment_customer_messages(
     appointment_date = format_pro_date(appointment.get("requested_date")) or "the scheduled date"
     appointment_time = format_pro_time(appointment.get("requested_time")) or "the scheduled time"
     service_name = str(appointment.get("service_name") or "").strip() or "your requested service"
-    vehicle_label = str(appointment.get("vehicle_label") or "").strip() or "vehicle"
+    vehicle_label = appointment_vehicle_label(appointment) or "vehicle"
     vehicle_phrase = vehicle_label if vehicle_label.lower().startswith("your ") else f"your {vehicle_label}"
     phone = format_phone(
         _context_lookup(sender_context, "shop_phone")
@@ -1625,8 +1640,51 @@ def attach_appointment_customer_messages(
     return appointments
 
 
+VEHICLE_BODY_STYLE_ONLY_TERMS = {
+    "coupe",
+    "sedan",
+    "hatchback",
+    "wagon",
+    "convertible",
+    "suv",
+    "truck",
+    "van",
+    "minivan",
+}
+
+
+def appointment_vehicle_parts(appointment: dict[str, Any] | None) -> dict[str, str]:
+    appointment = appointment or {}
+    structured = {
+        "year": str(appointment.get("vehicle_year") or "").strip(),
+        "make": str(appointment.get("vehicle_make") or "").strip(),
+        "model": str(appointment.get("vehicle_model") or "").strip(),
+    }
+    if any(structured.values()):
+        return structured
+    return parse_appointment_vehicle_label(appointment.get("vehicle_label"))
+
+
+def appointment_vehicle_label(appointment: dict[str, Any] | None) -> str:
+    appointment = appointment or {}
+    parts = appointment_vehicle_parts(appointment)
+    label = " ".join(part for part in [parts["year"], parts["make"], parts["model"]] if part).strip()
+    return label or str(appointment.get("vehicle_label") or "").strip()
+
+
 def parse_appointment_vehicle_label(value: Any) -> dict[str, str]:
-    parts = [part for part in str(value or "").strip().split() if part]
+    raw = str(value or "").strip()
+    if "/" in raw:
+        slash_parts = [part.strip() for part in raw.split("/") if part.strip()]
+        if slash_parts and re.fullmatch(r"\d{4}", slash_parts[0]):
+            year = slash_parts[0]
+            make = slash_parts[1] if len(slash_parts) > 1 else ""
+            model = " ".join(slash_parts[2:]) if len(slash_parts) > 2 else ""
+            if model.lower() in VEHICLE_BODY_STYLE_ONLY_TERMS:
+                model = ""
+            return {"year": year, "make": make, "model": model}
+        return {"year": "", "make": "", "model": ""}
+    parts = [part for part in raw.split() if part]
     if not parts:
         return {"year": "", "make": "", "model": ""}
     year = parts[0] if re.fullmatch(r"\d{4}", parts[0]) else ""
@@ -1638,7 +1696,15 @@ def parse_appointment_vehicle_label(value: Any) -> dict[str, str]:
 
 
 def appointment_estimator_href(appointment: dict[str, Any]) -> str:
-    vehicle = parse_appointment_vehicle_label(appointment.get("vehicle_label"))
+    vehicle = appointment_vehicle_parts(appointment)
+    appointment_when = " ".join(
+        part
+        for part in [
+            format_pro_date(appointment.get("requested_date")),
+            f"at {format_pro_time(appointment.get('requested_time'))}" if format_pro_time(appointment.get("requested_time")) else "",
+        ]
+        if part
+    ).strip()
     params = {
         "source": "appointment",
         "appointment_id": appointment.get("id") or "",
@@ -1655,10 +1721,7 @@ def appointment_estimator_href(appointment: dict[str, Any]) -> str:
             part
             for part in [
                 f"Source: Appointment #{appointment.get('id')}",
-                (
-                    f"Appointment: {format_pro_date(appointment.get('requested_date'))} "
-                    f"at {format_pro_time(appointment.get('requested_time'))}"
-                ),
+                f"Appointment: {appointment_when}" if appointment_when else "",
                 appointment.get("notes") or "",
             ]
             if str(part or "").strip()
@@ -1811,7 +1874,7 @@ def link_appointment_customer_vehicle(
         if not conn.execute("SELECT id FROM customers WHERE id = ?", (customer_id,)).fetchone():
             raise HTTPException(status_code=400, detail="Select a customer.")
 
-    vehicle_bits = parse_appointment_vehicle_label(appointment.get("vehicle_label"))
+    vehicle_bits = appointment_vehicle_parts(appointment)
     if vehicle_mode == "new":
         vehicle_year = form.get("new_vehicle_year") or vehicle_bits.get("year") or ""
         vehicle_make = form.get("new_vehicle_make") or vehicle_bits.get("make") or ""
@@ -2488,6 +2551,7 @@ templates.env.filters["service_total"] = service_total_value
 templates.env.globals["customer_search_label"] = customer_search_label
 templates.env.globals["vehicle_select_label"] = vehicle_select_label
 templates.env.globals["parse_appointment_vehicle_label"] = parse_appointment_vehicle_label
+templates.env.globals["appointment_vehicle_parts"] = appointment_vehicle_parts
 
 
 def parse_date_value(raw: Any) -> date | None:
@@ -9178,6 +9242,7 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             estimate_id = optional_int_value(appointment.get("estimate_id"))
             linked_customer = customer_by_id.get(customer_id or 0)
             linked_vehicle = vehicle_by_id.get(vehicle_id or 0)
+            appointment["display_vehicle_label"] = appointment_vehicle_label(appointment)
             appointment["linked_customer_name"] = customer_display_name(linked_customer) if linked_customer else ""
             appointment["linked_vehicle_label"] = vehicle_label(linked_vehicle) if linked_vehicle else ""
             appointment["customer_url"] = f"/pro/customers/{customer_id}" if customer_id else ""
@@ -9493,6 +9558,9 @@ async def public_booking_submit(request: Request, shop_slug: str):
                 "customer_phone": form.get("customer_phone", ""),
                 "customer_email": form.get("customer_email", ""),
                 "vehicle_label": vehicle_label,
+                "vehicle_year": vehicle_parts[0],
+                "vehicle_make": vehicle_parts[1],
+                "vehicle_model": vehicle_parts[2],
                 "service_name": form.get("service_name", ""),
                 "requested_date": form.get("requested_date", ""),
                 "requested_time": form.get("requested_time", ""),

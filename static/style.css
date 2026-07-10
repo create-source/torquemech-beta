@@ -1238,6 +1238,7 @@ button:active{
 
 .tm-year-field{
   min-width:0;
+  position:relative;
 }
 
 .tm-clearable-field{
@@ -1259,6 +1260,7 @@ button:active{
 
 .tm-inline-clear-field select,
 .tm-inline-clear-field input,
+.tm-year-field select,
 .tm-service-field-shell .service-search{
   width:100%;
   padding-right:46px;
@@ -1266,6 +1268,7 @@ button:active{
 
 .tm-inline-clear-field > select,
 .tm-inline-clear-field > input,
+.tm-year-field > select,
 .tm-service-field-shell > .service-search{
   padding-right:46px !important;
 }
@@ -1295,6 +1298,10 @@ button:active{
 }
 
 .tm-inline-clear-field > .tm-input-clear-btn{
+  top:52px;
+}
+
+.tm-year-field > .tm-input-clear-btn{
   top:52px;
 }
 

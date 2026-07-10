@@ -922,6 +922,103 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(row["estimate_id"], result["id"])
 
+    def test_public_booking_stores_structured_appointment_vehicle_fields(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            pro_module.save_shop_availability(
+                conn,
+                [{"day_of_week": 2, "is_open": True, "start_time": "09:00", "end_time": "17:00"}],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                pro_module, "shop_today", lambda: pro_module.date(2026, 7, 8)
+            ), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client = TestClient(main.app, base_url="http://localhost")
+                response = client.post(
+                    "/book/torquemech-shop",
+                    data={
+                        "customer_name": "Casey Coupe",
+                        "customer_phone": "5552224444",
+                        "customer_email": "casey@example.com",
+                        "vehicle_year": "2023",
+                        "vehicle_make": "Kia",
+                        "vehicle_model": "Forte Coupe",
+                        "service_name": "Brake Inspection",
+                        "requested_date": "2026-07-22",
+                        "requested_time": "09:00",
+                        "appointment_length_minutes": "60",
+                    },
+                    follow_redirects=False,
+                )
+                row = conn.execute("SELECT * FROM service_appointments").fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(row["vehicle_year"], "2023")
+        self.assertEqual(row["vehicle_make"], "Kia")
+        self.assertEqual(row["vehicle_model"], "Forte Coupe")
+        self.assertEqual(row["vehicle_label"], "2023 Kia Forte Coupe")
+
+    def test_appointment_vehicle_parts_prefers_structured_and_conservative_legacy_parse(self):
+        structured = pro_module.appointment_vehicle_parts(
+            {
+                "vehicle_label": "2023/Kia/Coupe",
+                "vehicle_year": "2023",
+                "vehicle_make": "Kia",
+                "vehicle_model": "Forte Coupe",
+            }
+        )
+        malformed = pro_module.appointment_vehicle_parts({"vehicle_label": "2023/Kia/Coupe"})
+        reliable_slash = pro_module.appointment_vehicle_parts({"vehicle_label": "2023/Kia/Forte Coupe"})
+
+        self.assertEqual(structured, {"year": "2023", "make": "Kia", "model": "Forte Coupe"})
+        self.assertEqual(malformed, {"year": "2023", "make": "Kia", "model": ""})
+        self.assertEqual(reliable_slash, {"year": "2023", "make": "Kia", "model": "Forte Coupe"})
+        self.assertEqual(
+            pro_module.appointment_estimator_href(
+                {
+                    "id": 7,
+                    "customer_id": 1,
+                    "vehicle_id": 2,
+                    "vehicle_year": "2023",
+                    "vehicle_make": "Kia",
+                    "vehicle_model": "Forte Coupe",
+                    "service_name": "Brake Inspection",
+                }
+            ),
+            "/estimator?source=appointment&appointment_id=7&customer_id=1&vehicle_id=2&year=2023&make=Kia&model=Forte+Coupe&displayModel=Forte+Coupe&service_text=Brake+Inspection&recommended_repair=Brake+Inspection&notes=Source%3A+Appointment+%237",
+        )
+
+    def test_calendar_conversion_controls_messages_and_clear_behavior_are_rendered(self):
+        template = (main.BASE_DIR / "templates" / "pro" / "calendar.html").read_text(encoding="utf-8")
+        app_js = (main.BASE_DIR / "static" / "app.js").read_text(encoding="utf-8")
+        helper = (main.BASE_DIR / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
+
+        for field_id in ("new_vehicle_year_", "new_vehicle_make_", "new_vehicle_model_", "new_vehicle_mileage_"):
+            self.assertIn(field_id, template)
+        self.assertIn("data-appointment-clearable", template)
+        self.assertIn("data-clear-dependent=\"#new_vehicle_model_", template)
+        self.assertIn("data-pro-mileage-input data-appointment-clearable", template)
+        self.assertIn("data-copy-source=\"confirmation\"", template)
+        self.assertIn("data-copy-source=\"reschedule\"", template)
+        self.assertIn("data-reset-appointment-message", template)
+        self.assertIn('"value" in (source || {}) ? source.value.trim()', template)
+        self.assertIn("source.value = source.dataset.defaultMessage", template)
+        self.assertIn("button.innerHTML = \"&times;\"", template)
+        self.assertIn("dependent.value = \"\"", template)
+        self.assertIn("const yearClearButton", app_js)
+        self.assertIn("vehicle-year-clear", app_js)
+        self.assertIn("vehicle.make = \"\";", app_js)
+        self.assertIn("vehicle.model = \"\";", app_js)
+        self.assertIn("input.value = digitsOnly(input.value);", helper)
+        self.assertIn("return Number(digits).toLocaleString();", helper)
+
     def test_booking_date_has_one_picker_and_no_custom_clear_button(self):
         booking_template = (main.BASE_DIR / "templates" / "booking.html").read_text(encoding="utf-8")
         helper = (main.BASE_DIR / "static" / "pro_form_helpers.js").read_text(encoding="utf-8")
