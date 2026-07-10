@@ -15,8 +15,6 @@
   }
 
   .tm-calendar-shell, .tm-calendar-panel, .tm-calendar-list { display: grid; gap: 12px; }
-  .tm-calendar-add { order: 4; }
-  .tm-calendar-history { order: 3; }
   .tm-calendar-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
@@ -378,7 +376,7 @@
       <p class="tm-pro-subtitle">Manage requested and scheduled service appointments.</p>
     </div>
     <div class="tm-pro-actions">
-      <a class="tm-btn tm-btn-secondary" href="/pro/shop-schedule">Shop Schedule</a>
+      <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
       <a class="tm-btn tm-btn-secondary" href="/pro/follow-ups">Follow-Ups</a>
     </div>
   </div>
@@ -397,22 +395,6 @@
   </section>
   {% endif %}
 
-  <details class="tm-calendar-panel" aria-label="Pending Requests" {% if groups.pending %}open{% endif %}>
-    <summary>Pending Requests ({{ groups.pending|length }})</summary>
-    <div class="tm-calendar-list" data-calendar-list>
-      {% for item in groups.pending %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">No pending booking requests.</div>{% endfor %}
-      {% if groups.pending|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
-    </div>
-  </details>
-
-  <details class="tm-calendar-panel" aria-label="Confirmed Appointments" {% if groups.confirmed and not groups.pending %}open{% endif %}>
-    <summary>Confirmed Appointments ({{ groups.confirmed|length }})</summary>
-    <div class="tm-calendar-list" data-calendar-list>
-      {% for item in groups.confirmed %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">No confirmed appointments yet.</div>{% endfor %}
-      {% if groups.confirmed|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
-    </div>
-  </details>
-
   <details class="tm-calendar-panel tm-calendar-add" aria-label="Add Appointment">
     <summary>Add Appointment</summary>
     {% if saved %}<div style="color:#115e59;font-weight:900;">Appointment saved.</div>{% endif %}
@@ -430,9 +412,9 @@
           <input id="pro_requested_date" name="requested_date" type="hidden" data-availability-date required>
           <div class="tm-availability-calendar">
             <div class="tm-availability-head">
-              <button class="tm-availability-nav" type="button" data-availability-prev aria-label="Previous month">‹</button>
+              <button class="tm-availability-nav" type="button" data-availability-prev aria-label="Previous month">&lsaquo;</button>
               <div class="tm-availability-month" data-availability-month aria-live="polite"></div>
-              <button class="tm-availability-nav" type="button" data-availability-next aria-label="Next month">›</button>
+              <button class="tm-availability-nav" type="button" data-availability-next aria-label="Next month">&rsaquo;</button>
             </div>
             <div class="tm-availability-weekdays" aria-hidden="true">
               <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
@@ -459,6 +441,22 @@
       <div style="grid-column:1/-1;"><label class="tm-label" for="notes">Notes</label><textarea class="tm-input" id="notes" name="notes" rows="3"></textarea></div>
       <button class="tm-btn tm-btn-primary" type="submit">Add Appointment</button>
     </form>
+  </details>
+
+  <details class="tm-calendar-panel" aria-label="Pending Requests" {% if groups.pending %}open{% endif %}>
+    <summary>Pending Requests ({{ groups.pending|length }})</summary>
+    <div class="tm-calendar-list" data-calendar-list>
+      {% for item in groups.pending %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">No pending booking requests.</div>{% endfor %}
+      {% if groups.pending|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
+    </div>
+  </details>
+
+  <details class="tm-calendar-panel" aria-label="Confirmed Appointments" {% if groups.confirmed and not groups.pending %}open{% endif %}>
+    <summary>Confirmed Appointments ({{ groups.confirmed|length }})</summary>
+    <div class="tm-calendar-list" data-calendar-list>
+      {% for item in groups.confirmed %}<div class="tm-calendar-item" {% if loop.index > 5 %}hidden{% endif %}>{{ appointment_card(item) }}</div>{% else %}<div class="tm-calendar-empty">No confirmed appointments yet.</div>{% endfor %}
+      {% if groups.confirmed|length > 5 %}<button class="tm-btn tm-btn-secondary tm-calendar-show-more" type="button" data-show-more>Show More</button>{% endif %}
+    </div>
   </details>
 
   <details class="tm-calendar-panel tm-calendar-history" aria-label="Appointment History">
