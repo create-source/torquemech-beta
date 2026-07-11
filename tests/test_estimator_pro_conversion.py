@@ -252,6 +252,34 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(findings_count, 0)
         self.assertEqual(history_count, 0)
 
+    def test_conversion_does_not_require_customer_pdf_download(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        form_data = {
+            "estimate_payload": json.dumps(self.conversion_payload()),
+            "customer_mode": "new",
+            "new_customer_name": "Mike Johnson",
+            "new_customer_phone": "555-222-1111",
+            "new_customer_email": "mike@test.com",
+            "vehicle_mode": "new",
+            "new_vehicle_year": "2016",
+            "new_vehicle_make": "Honda",
+            "new_vehicle_model": "Accord",
+            "new_vehicle_mileage": "120,000",
+            "service_index": "0",
+        }
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            data=form_data,
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM repair_records").fetchone()[0], 1)
+
     def test_conversion_preserves_custom_service_parts_search_term(self):
         app = FastAPI()
         app.include_router(pro_module.router)
@@ -377,7 +405,21 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(repair["total_cost"], 174)
         self.assertEqual(repair["approved_estimate_total"], 174)
 
-        self.conn.execute("UPDATE repair_records SET status = 'Completed' WHERE id = ?", (repair["id"],))
+        pro_module.upsert_repair_completion(
+            self.conn,
+            repair_record_id=repair["id"],
+            form={
+                "completion_date": "2026-06-25",
+                "completion_mileage": "120000",
+                "final_inspection_passed": "1",
+            },
+            completed_at="2026-06-25T12:00:00",
+            now="2026-06-25T12:00:00",
+        )
+        self.conn.execute(
+            "UPDATE repair_records SET status = 'Completed', completed_at = ? WHERE id = ?",
+            ("2026-06-25T12:00:00", repair["id"]),
+        )
         loaded_repair = pro_module.load_repair_record(self.conn, 1, 1, repair["id"])
         self.assertEqual(loaded_repair["labor_total"], 75)
         self.assertEqual(loaded_repair["parts_total"], 99)

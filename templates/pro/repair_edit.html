@@ -63,7 +63,8 @@
       <textarea class="tm-input" id="notes" name="notes" rows="5" maxlength="1600">{{ repair.notes or "" }}</textarea>
     </div>
     <div style="margin-top:12px;">
-      <label class="tm-label" for="completion_notes">Completion Notes</label>
+      <label class="tm-label" for="completion_notes">Completion Notes (Optional)</label>
+      <div class="tm-field-helper">Optional notes for the final invoice.</div>
       <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400">{{ completion.completion_notes or "" }}</textarea>
     </div>
     <div style="margin-top:12px;">

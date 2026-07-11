@@ -332,9 +332,9 @@
       </section>
 
       <section class="tm-completion-section" aria-label="Completion Notes">
-        <h3 class="tm-completion-title">Completion Notes</h3>
-        <label class="tm-label" for="completion_notes">Final technician notes, test results, measurements, or anything the customer should know. Required.</label>
-        <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400" placeholder="Completion notes are required before closing this repair.">{{ completion.completion_notes or "" }}</textarea>
+        <h3 class="tm-completion-title">Completion Notes (Optional)</h3>
+        <label class="tm-label" for="completion_notes">Optional final technician notes, test results, measurements, or anything the customer should know.</label>
+        <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400" placeholder="Optional notes for the final invoice.">{{ completion.completion_notes or "" }}</textarea>
       </section>
 
       <section class="tm-completion-section" aria-label="Final Inspection">

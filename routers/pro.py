@@ -4845,6 +4845,7 @@ def load_invoice_item_records(
               rr.workflow_source_type,
               rr.workflow_source_id,
               rc.completed_at AS completion_completed_at,
+              rc.completion_date,
               rc.completion_mileage,
               rc.completion_notes,
               rc.final_inspection_passed,
@@ -4949,9 +4950,9 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
     record["final_inspection_notes"] = primary.get("final_inspection_notes") or ""
     completed_dates = sorted(
         {
-            str(item.get("completed_at") or "").strip()[:10]
+            (str(item.get("completion_date") or "").strip() or str(item.get("completed_at") or "").strip()[:10])
             for item in items
-            if str(item.get("completed_at") or "").strip()
+            if str(item.get("completion_date") or item.get("completed_at") or "").strip()
         }
     )
     inspections = {item.get("final_inspection_status") or "Not marked passed" for item in items}
@@ -5012,11 +5013,6 @@ def invoice_estimate_summary(conn: sqlite3.Connection, invoice_id: int, *, final
 
 def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
     if not repair_is_formally_completed(repair):
-        missing = repair.get("completion_missing_requirements") or repair_completion_missing_requirements(
-            repair.get("completion") if isinstance(repair.get("completion"), dict) else None
-        )
-        if "completion notes" in missing:
-            return ["Final invoice can only include completed repair work. Completion notes are required."]
         return ["Final invoice can only include completed repair work. Formal completion is required."]
     return []
 
@@ -5036,10 +5032,10 @@ def invoice_completion_warnings(invoice: dict[str, Any]) -> list[str]:
 
 def repair_completion_validation_errors(form: dict[str, str]) -> list[str]:
     errors: list[str] = []
+    if not str(form.get("completion_date") or "").strip():
+        errors.append("Completion date is required before closing this repair.")
     if optional_int(form, "completion_mileage") is None:
         errors.append("Completion mileage is required before closing this repair.")
-    if not str(form.get("completion_notes") or "").strip():
-        errors.append("Completion notes are required before closing this repair.")
     if form.get("final_inspection_passed") != "1":
         errors.append("Final inspection must be marked passed before closing this repair.")
     return errors
@@ -5050,10 +5046,10 @@ def repair_completion_missing_requirements(completion: dict[str, Any] | None) ->
     missing: list[str] = []
     if not str(completion.get("completed_at") or "").strip():
         missing.append("formal completion action")
+    if not str(completion.get("completion_date") or "").strip():
+        missing.append("completion date")
     if completion.get("completion_mileage") is None:
         missing.append("completion mileage")
-    if not str(completion.get("completion_notes") or "").strip():
-        missing.append("completion notes")
     if int(completion.get("final_inspection_passed") or 0) != 1:
         missing.append("final inspection")
     return missing
@@ -5163,6 +5159,7 @@ def load_invoice_builder_jobs(
         """
         SELECT rr.*,
                rc.completed_at AS completion_completed_at,
+               rc.completion_date,
                rc.completion_mileage,
                rc.completion_notes,
                rc.final_inspection_passed,
@@ -5182,6 +5179,7 @@ def load_invoice_builder_jobs(
         repair = dict(row)
         repair["completion"] = {
             "completed_at": repair.get("completion_completed_at"),
+            "completion_date": repair.get("completion_date"),
             "completion_mileage": repair.get("completion_mileage"),
             "completion_notes": repair.get("completion_notes"),
             "final_inspection_passed": repair.get("final_inspection_passed"),
@@ -5831,6 +5829,15 @@ def pdf_money(value: Any) -> str:
     return format_currency(value) or "$0.00"
 
 
+def invoice_payment_terms_text(shop_profile: dict[str, Any] | None) -> str:
+    profile = shop_profile or {}
+    terms = str(profile.get("custom_footer_note") or profile.get("payment_terms") or "").strip()
+    legacy_terms = "Thank you" + ", come again"
+    if terms == legacy_terms:
+        return ""
+    return terms
+
+
 def pdf_draw_round_rect(
     c: canvas.Canvas,
     x: float,
@@ -5888,6 +5895,27 @@ def build_invoice_pdf_bytes(
             starting_mileage, final_mileage = final_mileage, starting_mileage
     except (TypeError, ValueError):
         pass
+    line_columns = [
+        {"key": "qty", "label": "Qty", "width": 34},
+    ]
+    if options.get("show_labor_hours"):
+        line_columns.append({"key": "hours", "label": "Hours", "width": 48})
+    if options.get("show_labor_rate"):
+        line_columns.append({"key": "rate", "label": "Rate", "width": 58})
+    if options.get("show_labor_total"):
+        line_columns.append({"key": "labor", "label": "Labor", "width": 64})
+    if options.get("show_parts_total"):
+        line_columns.append({"key": "parts", "label": "Parts", "width": 64})
+    line_columns.append({"key": "total", "label": "Total", "width": 70})
+    current_right = right - 10
+    col: dict[str, float] = {}
+    for column in reversed(line_columns):
+        col[column["key"]] = current_right
+        current_right -= float(column["width"])
+    col["desc"] = left + 10
+    desc_right = current_right - 8
+    desc_width = max(desc_right - col["desc"], 180)
+    desc_chars = max(32, int(desc_width / 5.1))
 
     def draw_footer() -> None:
         c.setStrokeColorRGB(0.86, 0.89, 0.93)
@@ -5946,10 +5974,11 @@ def build_invoice_pdf_bytes(
         c.setFont("Helvetica", 8.8)
         invoice_rows = [
             ("Invoice Date", format_pro_date(invoice.get("created_at")) or "-"),
-            ("Work Completed", format_pro_date(work_completed_date) or "-"),
             ("Repair Order", pro_job_ref),
             ("Invoice Type", "Final customer invoice"),
         ]
+        if options.get("show_completion_date"):
+            invoice_rows.insert(1, ("Work Completed", format_pro_date(work_completed_date) or "-"))
         iy = y
         for label, value in invoice_rows:
             c.setFillColorRGB(0.38, 0.45, 0.55)
@@ -5995,16 +6024,6 @@ def build_invoice_pdf_bytes(
         label_value(vx, y - 61, "VIN / Plate", " | ".join(v for v in [vehicle.get("vin") or "", vehicle.get("license_plate") or ""] if v) or "-", width_chars=44)
         return y - card_h - 18
 
-    col = {
-        "desc": left + 10,
-        "qty": left + 250,
-        "hours": left + 300,
-        "labor": left + 375,
-        "parts": left + 440,
-        "fees": left + 485,
-        "total": right - 10,
-    }
-
     def draw_table_heading(y: float, *, continued: bool = False) -> float:
         if continued:
             c.setFont("Helvetica-Bold", 9)
@@ -6017,27 +6036,23 @@ def build_invoice_pdf_bytes(
         c.setFillColorRGB(1, 1, 1)
         c.setFont("Helvetica-Bold", 7.6)
         c.drawString(col["desc"], y - 15, "Service / Repair Description")
-        c.drawRightString(col["qty"], y - 15, "Qty")
-        c.drawRightString(col["hours"], y - 15, "Hours")
-        c.drawRightString(col["labor"], y - 15, "Labor")
-        c.drawRightString(col["parts"], y - 15, "Parts")
-        c.drawRightString(col["fees"], y - 15, "Fees/Tax")
-        c.drawRightString(col["total"], y - 15, "Total")
+        for column in line_columns:
+            c.drawRightString(col[column["key"]], y - 15, column["label"])
         c.setFillGray(0)
         return y - 32
 
     def draw_line_item(y: float, index: int, item: dict[str, Any]) -> float:
         title = f"{index}. {item.get('service_title') or 'Repair'}"
-        note = str(item.get("repair_notes") or item.get("completion_notes") or "").strip()
+        note = str(item.get("completion_notes") or item.get("repair_notes") or "").strip()
         tracked_parts = item.get("tracked_parts") or []
         note_lines = []
         if note and options.get("show_repair_notes", True):
-            note_lines.extend(pdf_lines(f"Note: {note}", 78)[:2])
+            note_lines.extend(pdf_lines(f"Note: {note}", desc_chars + 14)[:2])
         if tracked_parts:
             for part in tracked_parts[:3]:
                 qty = part.get("qty_display") or part.get("qty") or 1
-                note_lines.extend(pdf_lines(f"Additional approved part: {qty} x {part.get('part_name') or 'Part'} ({pdf_money(part.get('subtotal'))})", 78)[:1])
-        title_lines = pdf_lines(title, 42)[:3]
+                note_lines.extend(pdf_lines(f"Additional approved part: {qty} x {part.get('part_name') or 'Part'} ({pdf_money(part.get('subtotal'))})", desc_chars + 14)[:1])
+        title_lines = pdf_lines(title, desc_chars)[:3]
         row_h = max(34, 15 + len(title_lines) * 10 + len(note_lines) * 9)
         if y - row_h < bottom:
             y = new_page(table=True)
@@ -6063,9 +6078,14 @@ def build_invoice_pdf_bytes(
         qty = item.get("qty") or 1
         hours = item.get("labor_hours") if item.get("labor_hours") is not None else "-"
         c.drawRightString(col["qty"], y - 16, str(qty))
-        c.drawRightString(col["hours"], y - 16, str(hours))
-        c.drawRightString(col["labor"], y - 16, pdf_money(item.get("labor_total")))
-        c.drawRightString(col["parts"], y - 16, pdf_money(item.get("parts_total")))
+        if options.get("show_labor_hours"):
+            c.drawRightString(col["hours"], y - 16, str(hours))
+        if options.get("show_labor_rate"):
+            c.drawRightString(col["rate"], y - 16, pdf_money(item.get("labor_rate")))
+        if options.get("show_labor_total"):
+            c.drawRightString(col["labor"], y - 16, pdf_money(item.get("labor_total")))
+        if options.get("show_parts_total"):
+            c.drawRightString(col["parts"], y - 16, pdf_money(item.get("parts_total")))
         c.setFont("Helvetica-Bold", 8.3)
         c.drawRightString(col["total"], y - 16, pdf_money(item.get("grand_total")))
         return y - row_h
@@ -6095,12 +6115,15 @@ def build_invoice_pdf_bytes(
     c.setFillColorRGB(0.05, 0.09, 0.16)
     c.drawString(totals_x + 14, y - 18, "Invoice Totals")
     ty = y - 38
-    total_rows = [
-        ("Labor Subtotal", invoice.get("labor_total")),
-        ("Parts Subtotal", invoice.get("parts_total")),
+    total_rows = []
+    if options.get("show_labor_total"):
+        total_rows.append(("Labor Subtotal", invoice.get("labor_total")))
+    if options.get("show_parts_total"):
+        total_rows.append(("Parts Subtotal", invoice.get("parts_total")))
+    total_rows.extend([
         ("Fees / Shop Supplies", invoice.get("shop_supplies_fee")),
         ("Tax", invoice.get("tax_total")),
-    ]
+    ])
     if invoice.get("discount_total"):
         total_rows.append(("Discount", -float(invoice.get("discount_total") or 0)))
     if invoice.get("approved_estimate_total") is not None:
@@ -6136,11 +6159,12 @@ def build_invoice_pdf_bytes(
     c.drawString(meta_x + 14, y - 18, "Completion Information")
     c.setFont("Helvetica", 8.8)
     completion_rows = [
-        ("Work Completed", format_pro_date(work_completed_date) or "-"),
         ("Technician / Representative", str(invoice.get("technician_name") or shop_lines[0] or "-")[:36]),
         ("Starting Mileage", f"{format_mileage(starting_mileage)} miles" if starting_mileage is not None else "-"),
         ("Final Mileage", f"{format_mileage(final_mileage)} miles" if final_mileage is not None else "-"),
     ]
+    if options.get("show_completion_date"):
+        completion_rows.insert(0, ("Work Completed", format_pro_date(work_completed_date) or "-"))
     cy = y - 36
     for label, value in completion_rows:
         c.setFillColorRGB(0.38, 0.45, 0.55)
@@ -6149,12 +6173,17 @@ def build_invoice_pdf_bytes(
         c.drawString(meta_x + 138, cy, str(value or "-")[:42])
         cy -= 14
 
-    notes = str(invoice.get("completion_notes") or invoice.get("repair_notes") or "").strip()
+    completion_note_text = str(invoice.get("completion_notes") or "").strip()
+    repair_note_text = str(invoice.get("repair_notes") or "").strip()
+    notes = completion_note_text or repair_note_text
+    final_inspection_notes = str(invoice.get("final_inspection_notes") or "").strip()
     warranty = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
-    terms = str(shop_profile.get("custom_footer_note") or shop_profile.get("payment_terms") or "").strip()
+    terms = invoice_payment_terms_text(shop_profile)
     detail_lines = []
-    if notes:
-        detail_lines.append(("Completion Notes", notes))
+    if notes and options.get("show_repair_notes", True):
+        detail_lines.append(("Completion Notes" if completion_note_text else "Repair Notes", notes))
+    if final_inspection_notes and options.get("show_final_inspection_notes"):
+        detail_lines.append(("Final Inspection Comments", final_inspection_notes))
     if warranty:
         detail_lines.append(("Warranty Statement", warranty))
     if terms:

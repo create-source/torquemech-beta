@@ -494,6 +494,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     "parts_cost": 220,
                     "completion": {
                         "completed_at": "2026-06-24T12:00:00",
+                        "completion_date": "2026-06-24",
                         "completion_mileage": 120000,
                         "completion_notes": "Completed.",
                         "final_inspection_passed": 1,
@@ -553,6 +554,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "is_invoiced": False,
                 "completion": {
                     "completed_at": "2026-06-24T12:00:00",
+                    "completion_date": "2026-06-24",
                     "completion_mileage": 120000,
                     "completion_notes": "Completed.",
                     "final_inspection_passed": 1,
@@ -573,6 +575,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "invoice_url": "/pro/customers/1/vehicles/1/invoices/3",
                 "completion": {
                     "completed_at": "2026-06-24T12:00:00",
+                    "completion_date": "2026-06-24",
                     "completion_mileage": 120000,
                     "completion_notes": "Completed.",
                     "final_inspection_passed": 1,
