@@ -783,6 +783,31 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertNotIn(b"Status: Recommended", pdf)
         self.assertNotIn(b"No payment is collected", pdf)
 
+    def test_final_invoice_pdf_footer_and_payment_terms_wording(self):
+        self.insert_repair(85, "Oil Leak Diagnosis", 1.0, 120, 0)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 85)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:00:00",
+        )
+
+        default_pdf = self.final_invoice_pdf(invoice)
+        self.assertIn(b"Payment Terms", default_pdf)
+        self.assertIn(b"Due upon receipt.", default_pdf)
+        self.assertIn(b"Generated with TorqueMech", default_pdf)
+        self.assertEqual(default_pdf.count(b"Generated with TorqueMech"), 1)
+        self.assertNotIn(b"Thank you", default_pdf)
+        self.assertNotIn(b"Thank you, come again", default_pdf)
+        self.assertNotIn(b"Due upon receipt. Generated with TorqueMech", default_pdf)
+
+        configured_pdf = self.final_invoice_pdf(invoice, {"custom_footer_note": "Payment required before vehicle release."})
+        self.assertIn(b"Payment required before vehicle release.", configured_pdf)
+        self.assertNotIn(b"Due upon receipt.", configured_pdf)
+        self.assertEqual(configured_pdf.count(b"Generated with TorqueMech"), 1)
+
     def test_final_invoice_pdf_accounting_totals_and_payment_statuses(self):
         pro_module.save_shop_settings(
             self.conn,

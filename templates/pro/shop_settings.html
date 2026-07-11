@@ -523,6 +523,11 @@
       <div class="tm-shop-settings-help" style="margin-top:8px;">
         These defaults are saved for TorqueMech Pro estimate, repair, invoice, reminder, and booking workflows as they adopt shop-level settings.
       </div>
+      <div style="margin-top:12px;">
+        <label class="tm-label" for="custom_footer_note">Payment Terms</label>
+        <input class="tm-input" id="custom_footer_note" name="custom_footer_note" type="text" value="{{ profile.custom_footer_note or '' }}" maxlength="500" placeholder="Due upon receipt.">
+        <div class="tm-shop-settings-help" style="margin-top:6px;">Examples: Due upon receipt, Due within 7 days, or Payment required before vehicle release.</div>
+      </div>
     </section>
 
     <section class="tm-shop-settings-panel" aria-label="Shop schedule">

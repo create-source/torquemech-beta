@@ -2198,6 +2198,7 @@ def normalize_shop_profile_context(profile: dict[str, Any] | None) -> dict[str, 
     normalized["default_labor_rate_input"] = format_decimal_input(normalized.get("default_labor_rate"))
     normalized["tax_rate_input"] = format_decimal_input(normalized.get("tax_rate"), 3)
     normalized["shop_supplies_fee_input"] = format_decimal_input(normalized.get("shop_supplies_fee"))
+    normalized["custom_footer_note"] = str(normalized.get("custom_footer_note") or "").strip()
     default_templates = appointment_message_default_templates()
     for key, default_template in default_templates.items():
         stored_template = normalize_appointment_template(normalized.get(key))
@@ -2244,6 +2245,8 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
         current["scheduling_link"] = current["external_scheduling_link"]
     if "warranty_note" in form:
         current["warranty_note"] = str(form.get("warranty_note") or "").strip()
+    if "custom_footer_note" in form:
+        current["custom_footer_note"] = str(form.get("custom_footer_note") or "").strip()
     default_templates = appointment_message_default_templates()
     for key, default_template in default_templates.items():
         if key not in form:
@@ -2283,6 +2286,7 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
           tax_rate = excluded.tax_rate,
           shop_supplies_fee = excluded.shop_supplies_fee,
           warranty_note = excluded.warranty_note,
+          custom_footer_note = excluded.custom_footer_note,
           appointment_confirmation_template = excluded.appointment_confirmation_template,
           appointment_cancellation_template = excluded.appointment_cancellation_template,
           appointment_declined_template = excluded.appointment_declined_template,
@@ -5811,15 +5815,11 @@ def build_invoice_pdf_bytes(
         c.setStrokeColorRGB(0.86, 0.89, 0.93)
         c.line(left, 58, right, 58)
         c.setStrokeGray(0)
-        c.setFont("Helvetica", 7.6)
-        c.setFillColorRGB(0.33, 0.39, 0.47)
-        footer_note = str(shop_profile.get("custom_footer_note") or "").strip()
-        warranty_note = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
-        footer_line = footer_note or warranty_note or "Thank you for choosing TorqueMech. Generated with TorqueMech."
-        c.drawString(left, 43, footer_line[:112])
-        c.drawRightString(right, 43, f"Page {page_no}")
         c.setFont("Helvetica-Bold", 7.6)
-        c.drawString(left, 29, "Generated with TorqueMech")
+        c.setFillColorRGB(0.33, 0.39, 0.47)
+        c.drawString(left, 43, "Generated with TorqueMech")
+        c.setFont("Helvetica", 7.6)
+        c.drawRightString(right, 43, f"Page {page_no}")
         c.setFillGray(0)
 
     def draw_header() -> float:
@@ -6073,33 +6073,48 @@ def build_invoice_pdf_bytes(
 
     notes = str(invoice.get("completion_notes") or invoice.get("repair_notes") or "").strip()
     warranty = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
-    terms = str(shop_profile.get("custom_footer_note") or "").strip()
+    terms = str(shop_profile.get("custom_footer_note") or shop_profile.get("payment_terms") or "").strip() or "Due upon receipt."
     detail_lines = []
     if notes:
         detail_lines.append(("Completion Notes", notes))
     if warranty:
         detail_lines.append(("Warranty Statement", warranty))
-    if terms:
-        detail_lines.append(("Payment Terms", terms))
+    detail_lines.append(("Payment Terms", terms))
     if detail_lines:
-        needed = 44 + sum(12 * min(len(pdf_lines(value, 102)), 4) for _, value in detail_lines)
-        if y - totals_h - needed < bottom:
+        wrapped_details = [
+            (label, pdf_lines(value, 98)[:6] or ["-"])
+            for label, value in detail_lines
+        ]
+        pad_top = 12
+        pad_bottom = 12
+        label_gap = 10
+        line_gap = 10
+        section_gap = 5
+        needed = pad_top + pad_bottom
+        for _, lines in wrapped_details:
+            needed += label_gap + len(lines) * line_gap + section_gap
+        needed -= section_gap
+        y_after_totals = y - totals_h - 18
+        if y_after_totals - needed < bottom:
             y = new_page()
         else:
-            y -= totals_h + 18
+            y = y_after_totals
+        if y - needed < bottom:
+            y = new_page()
         pdf_draw_round_rect(c, left, y - needed, right - left, needed, fill=(1, 1, 1), stroke=(0.84, 0.88, 0.92))
-        dy = y - 18
-        for label, value in detail_lines:
+        dy = y - pad_top
+        value_x = left + 24
+        for label, lines in wrapped_details:
             c.setFont("Helvetica-Bold", 8.7)
             c.setFillColorRGB(0.05, 0.09, 0.16)
             c.drawString(left + 14, dy, label)
-            dy -= 12
+            dy -= label_gap
             c.setFont("Helvetica", 8.3)
             c.setFillColorRGB(0.30, 0.36, 0.44)
-            for line in pdf_lines(value, 102)[:4]:
-                c.drawString(left + 24, dy, line)
-                dy -= 11
-            dy -= 4
+            for line in lines:
+                c.drawString(value_x, dy, line)
+                dy -= line_gap
+            dy -= section_gap
         c.setFillGray(0)
     draw_footer()
     c.save()
