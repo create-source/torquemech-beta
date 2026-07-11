@@ -107,6 +107,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
     def insert_repair(self, repair_id, name, labor_hours, labor_rate, parts, source="estimate", status="Completed", notes=None):
         now = "2026-06-25T12:00:00"
         labor_total = round(labor_hours * labor_rate, 2)
+        pro_module.ensure_repair_completion_schema(self.conn)
         self.conn.execute(
             """
             INSERT INTO repair_records (
@@ -135,9 +136,9 @@ class MultiServiceInvoiceTests(unittest.TestCase):
             """
             INSERT INTO repair_completions (
               repair_record_id, completion_notes, final_inspection_passed, final_inspection_notes,
-              after_repair_photo_paths, completed_at, created_at, updated_at
+              completion_date, completion_mileage, after_repair_photo_paths, completed_at, created_at, updated_at
             )
-            VALUES (?, 'Done', 1, 'Final check passed', '[]', ?, ?, ?)
+            VALUES (?, 'Done', 1, 'Final check passed', '2026-06-25', 150000, '[]', ?, ?, ?)
             """,
             (repair_id, now, now, now),
         )
@@ -675,6 +676,8 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(completion["completion_date"], "")
 
         repairs = [dict(row) for row in self.conn.execute("SELECT * FROM repair_records").fetchall()]
+        for repair_record in repairs:
+            pro_module.attach_completion_status_to_repair(self.conn, repair_record)
         findings = [dict(row) for row in self.conn.execute("SELECT * FROM findings_records").fetchall()]
         repair_work_items = pro_module.build_repair_work_items({"id": 1, "mileage": 151250}, findings, [], repairs)
         groups = pro_module.build_repair_workspace_groups({"id": 1}, repair_work_items, repairs)
@@ -772,6 +775,153 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn("formally completed", detail_response.text)
         self.assertEqual(pdf_response.status_code, 400)
         self.assertIn("formally completed", pdf_response.text)
+
+    def test_missing_completion_information_is_not_ready_for_invoice(self):
+        self.insert_repair(172, "Stale Completed Starter Repair", 1.0, 120, 80)
+        self.conn.execute(
+            "UPDATE repair_completions SET completion_notes = '' WHERE repair_record_id = 172"
+        )
+        self.conn.commit()
+
+        groups = pro_module.load_invoice_builder_jobs(self.conn, 1, 1)
+
+        self.assertNotIn(172, [job["id"] for job in groups["ready"]])
+        self.assertIn(172, [job["id"] for job in groups["approved"]])
+
+    def test_invoice_builder_categories_are_mutually_exclusive(self):
+        self.insert_repair(173, "Ready Brake Repair", 1.0, 120, 80)
+        self.insert_repair(174, "Missing Notes Repair", 1.0, 120, 80)
+        self.conn.execute(
+            "UPDATE repair_completions SET completion_notes = '' WHERE repair_record_id = 174"
+        )
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 173)
+        pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T13:00:00",
+        )
+        self.conn.commit()
+
+        groups = pro_module.load_invoice_builder_jobs(self.conn, 1, 1)
+        category_ids = {
+            name: {job["id"] for job in jobs}
+            for name, jobs in groups.items()
+        }
+
+        self.assertTrue(category_ids["already_invoiced"].isdisjoint(category_ids["ready"]))
+        self.assertTrue(category_ids["already_invoiced"].isdisjoint(category_ids["approved"]))
+        self.assertTrue(category_ids["ready"].isdisjoint(category_ids["approved"]))
+        self.assertIn(173, category_ids["already_invoiced"])
+        self.assertIn(174, category_ids["approved"])
+
+    def test_completed_zero_dollar_repair_can_open_invoice_builder(self):
+        self.insert_repair(175, "Warranty Inspection", 0, 0, 0)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.get("/pro/customers/1/vehicles/1/invoices/new?repair_record_id=175")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Warranty Inspection", response.text)
+        self.assertIn('name="repair_record_id" value="175" checked', response.text)
+        self.assertIn("Add labor, parts, or an invoice adjustment before finalizing this invoice.", response.text)
+
+    def test_zero_dollar_invoice_requires_no_charge_reason_to_finalize(self):
+        self.insert_repair(176, "Courtesy Inspection", 0, 0, 0)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={"repair_record_id": "176"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Add labor, parts, or an invoice adjustment before finalizing this invoice.", response.text)
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"], 0)
+
+    def test_builder_labor_allows_zero_dollar_repair_to_finalize(self):
+        self.insert_repair(177, "Courtesy Repair With Labor", 0, 0, 0)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={
+                "repair_record_id": "177",
+                "labor_hours_177": "1.5",
+                "labor_rate_177": "120",
+                "parts_cost_177": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/customers/1/vehicles/1/invoices/1")
+        invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
+        self.assertEqual(invoice["labor_total"], 180)
+        self.assertEqual(invoice["grand_total"], 180)
+
+    def test_no_charge_reason_allows_zero_dollar_invoice(self):
+        self.insert_repair(178, "Warranty Courtesy Repair", 0, 0, 0)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={
+                "repair_record_id": "178",
+                "no_charge_reason": "Warranty repair.",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
+        self.assertEqual(invoice["grand_total"], 0)
+        self.assertEqual(invoice["payment_status"], "No Charge")
+        self.assertEqual(invoice["no_charge_reason"], "Warranty repair.")
+
+    def test_completion_status_consistent_across_pages_and_routes(self):
+        self.insert_repair(179, "Stale Completed Alternator Repair", 1.0, 120, 80)
+        self.conn.execute(
+            "UPDATE repair_completions SET completion_notes = '' WHERE repair_record_id = 179"
+        )
+        self.conn.execute(
+            """
+            INSERT INTO invoices (
+              id, invoice_number, repair_record_id, customer_id, vehicle_id,
+              labor_total, parts_total, grand_total, created_at
+            )
+            VALUES (79, 'TM-INV-0079', 179, 1, 1, 120, 80, 200, '2026-06-25T15:00:00')
+            """
+        )
+        self.conn.execute(
+            "INSERT INTO invoice_items (invoice_id, repair_record_id, created_at) VALUES (79, 179, '2026-06-25T15:00:00')"
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        repair_detail = client.get("/pro/customers/1/vehicles/1/repairs/179")
+        builder_groups = pro_module.load_invoice_builder_jobs(self.conn, 1, 1)
+        invoice_detail = client.get("/pro/customers/1/vehicles/1/invoices/79")
+        invoice_pdf = client.get("/pro/customers/1/vehicles/1/invoices/79/pdf")
+
+        self.assertEqual(repair_detail.status_code, 200)
+        self.assertIn("<span>Completion Status</span><strong>Not Completed</strong>", repair_detail.text)
+        self.assertIn(179, [job["id"] for job in builder_groups["already_invoiced"]])
+        self.assertEqual(invoice_detail.status_code, 400)
+        self.assertEqual(invoice_pdf.status_code, 400)
+        self.assertIn("formally completed", invoice_detail.text)
 
     def test_final_invoice_uses_stable_configured_totals_and_warranty(self):
         pro_module.save_shop_settings(

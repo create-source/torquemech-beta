@@ -349,7 +349,7 @@ def repair_workspace_status_label(value: Any) -> str:
 
 
 def repair_workspace_display_status(item: dict[str, Any]) -> tuple[str, str]:
-    if item.get("repair_work_status") == "completed" or item.get("record_status") == "Completed":
+    if item.get("is_formally_completed") or item.get("repair_work_status") == "completed" or item.get("record_status") == "Completed":
         return "completed", "Completed"
     checklist = item.get("checklist_summary") if isinstance(item.get("checklist_summary"), dict) else {}
     if (
@@ -4678,6 +4678,7 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
         "amount_paid": "amount_paid REAL NOT NULL DEFAULT 0",
         "payment_status": "payment_status TEXT NOT NULL DEFAULT 'Unpaid'",
         "warranty_text": "warranty_text TEXT",
+        "no_charge_reason": "no_charge_reason TEXT",
     }.items():
         if column_name not in columns:
             conn.execute(f"ALTER TABLE invoices ADD COLUMN {column_sql}")
@@ -4843,6 +4844,8 @@ def load_invoice_item_records(
               rr.completed_at,
               rr.workflow_source_type,
               rr.workflow_source_id,
+              rc.completed_at AS completion_completed_at,
+              rc.completion_mileage,
               rc.completion_notes,
               rc.final_inspection_passed,
               rc.final_inspection_notes,
@@ -4866,6 +4869,8 @@ def load_invoice_item_records(
     )
     attach_repair_job_parts(items, parts_map, id_key="repair_record_id")
     for item in items:
+        if item.get("completion_completed_at"):
+            item["completed_at"] = item.get("completion_completed_at")
         totals = repair_cost_totals(item)
         item["parts_total"] = totals["parts_total"]
         item["grand_total"] = totals["grand_total"]
@@ -4931,6 +4936,7 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
         payment_status = payment_status or "Partially Paid"
     record["payment_status"] = payment_status or "Unpaid"
     record["warranty_text"] = str(record.get("warranty_text") or "").strip()
+    record["no_charge_reason"] = str(record.get("no_charge_reason") or "").strip()
     primary = items[0] if items else {}
     record["repair_name"] = primary.get("service_title") or "Repair"
     record["repair_mileage"] = primary.get("repair_mileage")
@@ -5005,13 +5011,13 @@ def invoice_estimate_summary(conn: sqlite3.Connection, invoice_id: int, *, final
 
 
 def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
-    if (repair.get("status") or "") != "Completed":
-        return ["Final invoice can only include completed repair work."]
-    totals = repair_cost_totals(repair)
-    if totals["grand_total"] <= 0:
-        return [
-            "Invoice cannot be generated until this completed repair has labor or parts totals recorded."
-        ]
+    if not repair_is_formally_completed(repair):
+        missing = repair.get("completion_missing_requirements") or repair_completion_missing_requirements(
+            repair.get("completion") if isinstance(repair.get("completion"), dict) else None
+        )
+        if "completion notes" in missing:
+            return ["Final invoice can only include completed repair work. Completion notes are required."]
+        return ["Final invoice can only include completed repair work. Formal completion is required."]
     return []
 
 
@@ -5019,7 +5025,9 @@ def invoice_completion_warnings(invoice: dict[str, Any]) -> list[str]:
     incomplete = [
         item
         for item in invoice.get("items") or []
-        if (item.get("repair_status") or item.get("status") or "") != "Completed"
+        if not repair_is_formally_completed(
+            {"status": item.get("repair_status") or item.get("status"), "completion": item}
+        )
     ]
     if incomplete:
         return ["Final invoice cannot be opened until all linked repair work is formally completed."]
@@ -5035,6 +5043,39 @@ def repair_completion_validation_errors(form: dict[str, str]) -> list[str]:
     if form.get("final_inspection_passed") != "1":
         errors.append("Final inspection must be marked passed before closing this repair.")
     return errors
+
+
+def repair_completion_missing_requirements(completion: dict[str, Any] | None) -> list[str]:
+    completion = completion or {}
+    missing: list[str] = []
+    if not str(completion.get("completed_at") or "").strip():
+        missing.append("formal completion action")
+    if completion.get("completion_mileage") is None:
+        missing.append("completion mileage")
+    if not str(completion.get("completion_notes") or "").strip():
+        missing.append("completion notes")
+    if int(completion.get("final_inspection_passed") or 0) != 1:
+        missing.append("final inspection")
+    return missing
+
+
+def repair_is_formally_completed(repair: dict[str, Any], completion: dict[str, Any] | None = None) -> bool:
+    if (repair.get("status") or "") != "Completed":
+        return False
+    if completion is None:
+        completion = repair.get("completion") if isinstance(repair.get("completion"), dict) else None
+    return not repair_completion_missing_requirements(completion)
+
+
+def attach_completion_status_to_repair(conn: sqlite3.Connection, repair: dict[str, Any]) -> dict[str, Any]:
+    repair_id = int(repair.get("id") or repair.get("repair_record_id") or 0)
+    completion = repair.get("completion") if isinstance(repair.get("completion"), dict) else None
+    if repair_id and completion is None:
+        completion = load_repair_completion(conn, repair_id)
+        repair["completion"] = completion
+    repair["is_formally_completed"] = repair_is_formally_completed(repair, completion)
+    repair["completion_missing_requirements"] = repair_completion_missing_requirements(completion)
+    return repair
 
 
 def load_repair_invoice_map(
@@ -5104,7 +5145,7 @@ def annotate_repairs_with_invoice_status(
 def invoice_builder_status_group(repair: dict[str, Any]) -> str:
     if repair.get("is_invoiced"):
         return "already_invoiced"
-    if (repair.get("status") or "") == "Completed":
+    if repair.get("is_formally_completed"):
         return "ready"
     return "approved"
 
@@ -5115,23 +5156,39 @@ def load_invoice_builder_jobs(
     vehicle_id: int,
 ) -> dict[str, list[dict[str, Any]]]:
     ensure_repair_records_schema(conn)
+    ensure_repair_completion_schema(conn)
     invoice_map = load_repair_invoice_map(conn, customer_id, vehicle_id)
     jobs: list[dict[str, Any]] = []
     for row in conn.execute(
         """
-        SELECT *
-        FROM repair_records
-        WHERE customer_id = ?
-          AND vehicle_id = ?
-          AND COALESCE(status, '') NOT IN ('Declined', 'Deleted', 'Denied')
+        SELECT rr.*,
+               rc.completed_at AS completion_completed_at,
+               rc.completion_mileage,
+               rc.completion_notes,
+               rc.final_inspection_passed,
+               rc.final_inspection_notes
+        FROM repair_records rr
+        LEFT JOIN repair_completions rc ON rc.repair_record_id = rr.id
+        WHERE rr.customer_id = ?
+          AND rr.vehicle_id = ?
+          AND COALESCE(rr.status, '') NOT IN ('Declined', 'Deleted', 'Denied')
         ORDER BY
-          CASE status WHEN 'Completed' THEN 0 WHEN 'Open' THEN 1 ELSE 2 END,
-          repair_date DESC,
-          id DESC
+          CASE rr.status WHEN 'Completed' THEN 0 WHEN 'Open' THEN 1 ELSE 2 END,
+          rr.repair_date DESC,
+          rr.id DESC
         """,
         (customer_id, vehicle_id),
     ).fetchall():
         repair = dict(row)
+        repair["completion"] = {
+            "completed_at": repair.get("completion_completed_at"),
+            "completion_mileage": repair.get("completion_mileage"),
+            "completion_notes": repair.get("completion_notes"),
+            "final_inspection_passed": repair.get("final_inspection_passed"),
+            "final_inspection_notes": repair.get("final_inspection_notes"),
+        }
+        repair["is_formally_completed"] = repair_is_formally_completed(repair, repair["completion"])
+        repair["completion_missing_requirements"] = repair_completion_missing_requirements(repair["completion"])
         totals = repair_cost_totals(repair)
         repair["labor_total"] = totals["labor_total"]
         repair["parts_total"] = totals["parts_total"]
@@ -5139,7 +5196,7 @@ def load_invoice_builder_jobs(
         repair["labor_rate"] = totals["labor_rate"]
         repair["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
         repair["source_label"] = repair_workspace_source_label(repair)
-        repair["status_label"] = "Ready for Invoice" if repair.get("status") == "Completed" else repair_workspace_status_label("ready")
+        repair["status_label"] = "Ready for Invoice" if repair.get("is_formally_completed") else repair_workspace_status_label("ready")
         jobs.append(repair)
     annotate_repairs_with_invoice_status(jobs, invoice_map)
     grouped = {"ready": [], "approved": [], "already_invoiced": []}
@@ -5508,6 +5565,7 @@ def create_invoice_for_repairs(
     customer_id: int,
     vehicle_id: int,
     now: str,
+    invoice_options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     ensure_invoices_schema(conn)
     selected_repairs = [repair for repair in repairs if repair.get("id")]
@@ -5516,6 +5574,7 @@ def create_invoice_for_repairs(
 
     existing_invoices: list[dict[str, Any]] = []
     for repair in selected_repairs:
+        attach_completion_status_to_repair(conn, repair)
         if int(repair.get("customer_id") or customer_id) != customer_id or int(repair.get("vehicle_id") or vehicle_id) != vehicle_id:
             raise HTTPException(status_code=400, detail="Selected repair does not match this customer vehicle")
         existing = load_invoice_for_repair(conn, int(repair["id"]))
@@ -5537,22 +5596,29 @@ def create_invoice_for_repairs(
     labor_total = round(sum(float(total["labor_total"] or 0) for total in totals), 2)
     parts_total = round(sum(float(total["parts_total"] or 0) for total in totals), 2)
     subtotal = round(sum(float(total["grand_total"] or 0) for total in totals), 2)
+    invoice_options = invoice_options or {}
     shop_profile = load_shop_profile_context(conn)
-    shop_supplies_fee = round(float(shop_profile.get("shop_supplies_fee") or 0), 2)
-    tax_rate = round(float(shop_profile.get("tax_rate") or 0), 5)
-    discount_total = 0.0
+    shop_supplies_fee = round(float(invoice_options.get("shop_supplies_fee", shop_profile.get("shop_supplies_fee") or 0) or 0), 2)
+    tax_rate = round(float(invoice_options.get("tax_rate", shop_profile.get("tax_rate") or 0) or 0), 5)
+    discount_total = round(float(invoice_options.get("discount_total") or 0), 2)
     taxable_total = max(subtotal + shop_supplies_fee - discount_total, 0)
     tax_total = round(taxable_total * tax_rate, 2)
     grand_total = round(taxable_total + tax_total, 2)
+    no_charge_reason = str(invoice_options.get("no_charge_reason") or "").strip()
+    if grand_total <= 0 and not no_charge_reason:
+        raise HTTPException(
+            status_code=400,
+            detail="Add labor, parts, or an invoice adjustment before finalizing this invoice.",
+        )
     primary_repair = selected_repairs[0]
     cur = conn.execute(
         """
         INSERT INTO invoices (
           invoice_number, repair_record_id, customer_id, vehicle_id,
           labor_total, parts_total, shop_supplies_fee, tax_rate, tax_total,
-          discount_total, grand_total, amount_paid, payment_status, warranty_text, created_at
+          discount_total, grand_total, amount_paid, payment_status, warranty_text, no_charge_reason, created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             f"PENDING-{uuid4().hex[:12]}",
@@ -5567,8 +5633,9 @@ def create_invoice_for_repairs(
             discount_total,
             grand_total,
             0.0,
-            "Unpaid",
+            "No Charge" if grand_total <= 0 and no_charge_reason else "Unpaid",
             str(shop_profile.get("warranty_note") or "").strip(),
+            no_charge_reason,
             now,
         ),
     )
@@ -8178,6 +8245,7 @@ def repair_workspace_item_from_repair_record(
     blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
     source_action = repair_workspace_source_action(record)
     repair_record_url = f"/pro/customers/{record['customer_id']}/vehicles/{record['vehicle_id']}/repairs/{repair_id}"
+    is_formally_completed = repair_is_formally_completed(record)
     item = {
         "source_type": "repair",
         "source_id": repair_id,
@@ -8190,9 +8258,10 @@ def repair_workspace_item_from_repair_record(
         "source_action_label": source_action["label"],
         "source_action_url": source_action["url"] or repair_record_url,
         "original_finding": "",
-        "repair_work_status": "ready",
-        "repair_work_status_label": status_label or repair_workspace_status_label("ready"),
-        "record_status": record.get("status") or "Open",
+        "repair_work_status": "completed" if is_formally_completed else "ready",
+        "repair_work_status_label": status_label or ("Completed" if is_formally_completed else repair_workspace_status_label("ready")),
+        "record_status": "Completed" if is_formally_completed else (record.get("status") if (record.get("status") or "") != "Completed" else "Open"),
+        "is_formally_completed": is_formally_completed,
         "workflow_source_type": record.get("workflow_source_type") or "",
         "linked_repair_record_id": repair_id,
         "repair_record_created_at": record.get("created_at") or "",
@@ -8239,7 +8308,7 @@ def build_repair_workspace_groups(
     invoiced: list[dict[str, Any]] = []
     recently_completed: list[dict[str, Any]] = []
     for record in repair_records:
-        if (record.get("status") or "") != "Completed":
+        if not repair_is_formally_completed(record):
             continue
         item = repair_workspace_item_from_repair_record(
             record,
@@ -8305,17 +8374,19 @@ def build_repair_work_items(
     for record in findings_records:
         if (record.get("status") or "") not in {"Approved", "Completed"}:
             continue
-        if (record.get("linked_repair_status") or "") == "Completed":
+        linked_repair_id = int(record.get("linked_repair_record_id") or 0)
+        linked_repair = repairs_by_id.get(linked_repair_id, {}) if linked_repair_id else {}
+        if linked_repair and repair_is_formally_completed(linked_repair):
             continue
-        status = record.get("repair_work_status") or ("completed" if record.get("status") == "Completed" else "ready")
+        status = record.get("repair_work_status") or "ready"
         try:
             status = normalize_repair_work_status(status)
         except HTTPException:
             status = "ready"
-        if status == "completed" or (record.get("status") or "") == "Completed":
-            continue
-        if record.get("linked_repair_record_id"):
-            linked_repair_ids.add(int(record.get("linked_repair_record_id") or 0))
+        if status == "completed" and not repair_is_formally_completed(linked_repair):
+            status = "ready"
+        if linked_repair_id:
+            linked_repair_ids.add(linked_repair_id)
         title = repair_work_title_from_finding(record)
         detail = record.get("finding") or record.get("labor_reason") or record.get("recommendation") or ""
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
@@ -8390,7 +8461,6 @@ def build_repair_work_items(
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
         if item.get("linked_repair_record_id"):
-            linked_repair = repairs_by_id.get(int(item.get("linked_repair_record_id") or 0), {})
             item["tracked_parts"] = linked_repair.get("tracked_parts") or []
             item["tracked_parts_total"] = linked_repair.get("tracked_parts_total") or 0
             item["tracked_parts_count"] = linked_repair.get("tracked_parts_count") or 0
@@ -8400,15 +8470,19 @@ def build_repair_work_items(
     for record in approval_records:
         if normalize_approval_decision(record.get("customer_decision")) != "approved":
             continue
+        linked_repair_id = int(record.get("linked_repair_record_id") or 0)
+        linked_repair = repairs_by_id.get(linked_repair_id, {}) if linked_repair_id else {}
+        if linked_repair and repair_is_formally_completed(linked_repair):
+            continue
         status = record.get("repair_work_status") or "ready"
         try:
             status = normalize_repair_work_status(status)
         except HTTPException:
             status = "ready"
-        if status == "completed":
-            continue
-        if record.get("linked_repair_record_id"):
-            linked_repair_ids.add(int(record.get("linked_repair_record_id") or 0))
+        if status == "completed" and not repair_is_formally_completed(linked_repair):
+            status = "ready"
+        if linked_repair_id:
+            linked_repair_ids.add(linked_repair_id)
         title = repair_work_title_from_approval(record)
         detail = record.get("finding_description") or record.get("recommended_repair") or ""
         blueprint = get_repair_blueprint_for_work_item(title, detail, vehicle)
@@ -8467,7 +8541,6 @@ def build_repair_work_items(
             item["blueprint"] = blueprint
             item["blueprint_summary"] = blueprint_summary(blueprint)
         if item.get("linked_repair_record_id"):
-            linked_repair = repairs_by_id.get(int(item.get("linked_repair_record_id") or 0), {})
             item["tracked_parts"] = linked_repair.get("tracked_parts") or []
             item["tracked_parts_total"] = linked_repair.get("tracked_parts_total") or 0
             item["tracked_parts_count"] = linked_repair.get("tracked_parts_count") or 0
@@ -8478,7 +8551,7 @@ def build_repair_work_items(
         repair_id = int(record.get("id") or 0)
         if not repair_id or repair_id in linked_repair_ids:
             continue
-        if (record.get("status") or "") == "Completed":
+        if repair_is_formally_completed(record):
             continue
         items.append(repair_workspace_item_from_repair_record(record, vehicle))
     status_rank = {"ready": 1, "in_progress": 2, "waiting_parts": 3, "completed": 4}
@@ -8507,7 +8580,7 @@ def build_completed_repair_work_items(
 
     items: list[dict[str, Any]] = []
     for record in repair_records:
-        if (record.get("status") or "") != "Completed":
+        if not repair_is_formally_completed(record):
             continue
         totals = repair_cost_totals(record)
         completion = record.get("completion") if isinstance(record.get("completion"), dict) else {}
@@ -11076,6 +11149,7 @@ def pro_customer_vehicle_detail(
                 completion = load_repair_completion(conn, int(repair_record.get("id") or 0))
                 repair_record["completion"] = completion
                 repair_record["after_repair_photo_urls"] = completion.get("after_repair_photo_urls") or []
+            attach_completion_status_to_repair(conn, repair_record)
         findings_records = [
             dict(row)
             for row in conn.execute(
@@ -11201,7 +11275,7 @@ def pro_customer_vehicle_detail(
         linked_repair_record_ids.update(
             int(record.get("id") or 0)
             for record in repair_records
-            if record.get("id") and (record.get("status") or "") != "Completed"
+            if record.get("id") and not repair_is_formally_completed(record)
         )
         checklist_summaries = {
             repair_record_id: repair_checklist_summary(conn, repair_record_id)
@@ -12672,10 +12746,13 @@ def pro_repair_record_detail(
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
         invoice = load_invoice_for_repair(conn, repair_id)
         repair_execution_status = repair_execution_status_context(conn, repair, customer_id, vehicle_id)
-        invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
         checklist_items = load_repair_checklist_items(conn, repair_id)
         checklist_progress = repair_checklist_progress(checklist_items)
         completion = load_repair_completion(conn, repair_id)
+        repair["completion"] = completion
+        repair["is_formally_completed"] = repair_is_formally_completed(repair, completion)
+        repair["completion_missing_requirements"] = repair_completion_missing_requirements(completion)
+        invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
         completion_progress = repair_completion_progress(completion)
         source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
         seed_repair_intelligence(conn)
@@ -12782,6 +12859,7 @@ async def pro_invoice_generate(request: Request, customer_id: int, vehicle_id: i
     try:
         load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        attach_completion_status_to_repair(conn, repair)
         warnings = repair_invoice_warnings(repair)
         if warnings:
             context = completion_detail_context(
@@ -12848,6 +12926,7 @@ def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int, rep
 async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int):
     raw_body = (await request.body()).decode("utf-8", errors="replace")
     parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
     selected_ids = [
         int(value)
         for value in parsed.get("repair_record_id", [])
@@ -12861,6 +12940,60 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
             load_repair_record(conn, customer_id, vehicle_id, repair_id)
             for repair_id in selected_ids
         ]
+        for repair in repairs:
+            repair_id = int(repair.get("id") or 0)
+            labor_hours = optional_float(form, f"labor_hours_{repair_id}")
+            labor_rate = optional_float(form, f"labor_rate_{repair_id}")
+            parts_cost = optional_float(form, f"parts_cost_{repair_id}")
+            updates: dict[str, Any] = {}
+            if labor_hours is not None:
+                updates["labor_hours"] = max(labor_hours, 0)
+            if labor_rate is not None:
+                updates["labor_rate"] = max(labor_rate, 0)
+            if parts_cost is not None:
+                updates["parts_cost"] = max(parts_cost, 0)
+            if updates:
+                effective_hours = updates.get("labor_hours", repair.get("labor_hours") or 0)
+                effective_rate = updates.get("labor_rate", repair.get("labor_rate") or 0)
+                effective_parts = updates.get("parts_cost", repair.get("parts_cost") or 0)
+                labor_total = round(float(effective_hours or 0) * float(effective_rate or 0), 2)
+                total_cost = round(labor_total + float(effective_parts or 0), 2)
+                conn.execute(
+                    """
+                    UPDATE repair_records
+                    SET labor_hours = ?,
+                        labor_rate = ?,
+                        parts_cost = ?,
+                        labor_cost = ?,
+                        total_cost = ?
+                    WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+                    """,
+                    (
+                        effective_hours,
+                        effective_rate,
+                        effective_parts,
+                        labor_total,
+                        total_cost,
+                        repair_id,
+                        customer_id,
+                        vehicle_id,
+                    ),
+                )
+                repair.update(
+                    {
+                        "labor_hours": effective_hours,
+                        "labor_rate": effective_rate,
+                        "parts_cost": effective_parts,
+                        "labor_cost": labor_total,
+                        "total_cost": total_cost,
+                    }
+                )
+        invoice_options = {
+            "shop_supplies_fee": max(optional_float(form, "shop_supplies_fee") or 0, 0),
+            "discount_total": max(optional_float(form, "discount_total") or 0, 0),
+            "tax_rate": max(optional_float(form, "tax_rate") or 0, 0),
+            "no_charge_reason": str(form.get("no_charge_reason") or "").strip(),
+        }
         try:
             invoice = create_invoice_for_repairs(
                 conn,
@@ -12868,6 +13001,7 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
                 customer_id=customer_id,
                 vehicle_id=vehicle_id,
                 now=now,
+                invoice_options=invoice_options,
             )
         except HTTPException as exc:
             job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
@@ -13024,10 +13158,13 @@ def completion_detail_context(
     repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
     invoice = load_invoice_for_repair(conn, repair_id)
     repair_execution_status = repair_execution_status_context(conn, repair, customer_id, vehicle_id)
-    invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
     checklist_items = load_repair_checklist_items(conn, repair_id)
     checklist_progress = repair_checklist_progress(checklist_items)
     completion = load_repair_completion(conn, repair_id)
+    repair["completion"] = completion
+    repair["is_formally_completed"] = repair_is_formally_completed(repair, completion)
+    repair["completion_missing_requirements"] = repair_completion_missing_requirements(completion)
+    invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
     completion_progress = repair_completion_progress(completion)
     source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
     seed_repair_intelligence(conn)

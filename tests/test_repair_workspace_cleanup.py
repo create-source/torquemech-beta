@@ -492,7 +492,13 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                     "labor_hours": 1.5,
                     "labor_rate": 120,
                     "parts_cost": 220,
-                    "completion": {"after_repair_photo_urls": ["/static/uploads/after.jpg"]},
+                    "completion": {
+                        "completed_at": "2026-06-24T12:00:00",
+                        "completion_mileage": 120000,
+                        "completion_notes": "Completed.",
+                        "final_inspection_passed": 1,
+                        "after_repair_photo_urls": ["/static/uploads/after.jpg"],
+                    },
                 },
                 {
                     "id": 31,
@@ -545,6 +551,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "labor_rate": 120,
                 "parts_cost": 180,
                 "is_invoiced": False,
+                "completion": {
+                    "completed_at": "2026-06-24T12:00:00",
+                    "completion_mileage": 120000,
+                    "completion_notes": "Completed.",
+                    "final_inspection_passed": 1,
+                },
             },
             {
                 "id": 22,
@@ -559,6 +571,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
                 "is_invoiced": True,
                 "invoice_number": "TM-INV-1003",
                 "invoice_url": "/pro/customers/1/vehicles/1/invoices/3",
+                "completion": {
+                    "completed_at": "2026-06-24T12:00:00",
+                    "completion_mileage": 120000,
+                    "completion_notes": "Completed.",
+                    "final_inspection_passed": 1,
+                },
             },
         ]
 
@@ -1163,7 +1181,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('{% if selected_repair_ids %}', invoice_builder)
         self.assertIn('{% if job.id in selected_repair_ids %}checked{% endif %}', invoice_builder)
         self.assertIn('{% else %}checked{% endif %}', invoice_builder)
-        self.assertIn("Create Invoice", invoice_builder)
+        self.assertIn("Generate Final Invoice", invoice_builder)
         self.assertIn("Already Invoiced", invoice_builder)
 
     def test_invoice_number_helper_uses_tm_sequence(self):

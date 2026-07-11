@@ -194,7 +194,7 @@
   </div>
 
   <section class="tm-repair-panel" aria-label="Repair record">
-    {% set stored_repair_status = (repair.status or "Open")|lower|replace(" ", "_") %}
+    {% set stored_repair_status = "completed" if repair.is_formally_completed else ((repair.status or "Open")|lower|replace(" ", "_")) %}
     {% set execution_status = repair_execution_status.status if repair_execution_status else "" %}
     {% set ready_to_complete = repair.status != "Completed" and checklist_progress.total and checklist_progress.completed == checklist_progress.total %}
     {% set repair_status_display = "Completed" if stored_repair_status == "completed" else ("Ready to Complete" if ready_to_complete else ("In Progress" if execution_status in ["in_progress", "waiting_parts"] else ("Approved" if execution_status == "ready" else "Open"))) %}
@@ -217,8 +217,8 @@
       <div class="tm-repair-field"><span>Grand Total</span><strong>{{ repair.grand_total|pro_currency }}</strong></div>
       <div class="tm-repair-field"><span>Maintenance Tracking Status</span><strong>{{ "Tracked" if repair.track_as_maintenance else "Not Tracked" }}</strong></div>
       <div class="tm-repair-field"><span>Source</span><strong>{{ repair.workflow_source_type|title if repair.workflow_source_type else "Manual" }}</strong></div>
-      <div class="tm-repair-field"><span>Invoice Status</span><strong>{% if invoice %}Invoiced{% elif repair.status == "Completed" %}Ready for Invoice{% else %}Not Ready{% endif %}</strong></div>
-      <div class="tm-repair-field"><span>Completion Status</span><strong>{% if repair.status == "Completed" %}Completed{% else %}Not Completed{% endif %}</strong></div>
+      <div class="tm-repair-field"><span>Invoice Status</span><strong>{% if invoice %}Invoiced{% elif repair.is_formally_completed %}Ready for Invoice{% else %}Not Ready{% endif %}</strong></div>
+      <div class="tm-repair-field"><span>Completion Status</span><strong>{% if repair.is_formally_completed %}Completed{% else %}Not Completed{% endif %}</strong></div>
       <div class="tm-repair-field">
         <span>Status</span>
         <strong><span class="tm-status-chip tm-status-chip--{{ repair_status_class }}">{{ repair_status_display }}</span></strong>
@@ -253,7 +253,7 @@
       {% else %}
       <span class="tm-status-chip">Not Invoiced</span>
       {% endif %}
-      {% if repair.status == "Completed" %}
+      {% if repair.is_formally_completed %}
       <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">View in Vehicle Timeline</a>
       {% endif %}
     </div>
@@ -273,7 +273,7 @@
         {{ repair_execution_status.status_label }}
       </span>
     </div>
-    {% if repair.status == "Completed" %}
+    {% if repair.is_formally_completed %}
     <div class="tm-history-empty" style="margin-top:16px;">This repair is completed. Status is now managed by the completed repair record.</div>
     {% else %}
     <form class="tm-execution-status-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/workflow-status">
@@ -296,13 +296,13 @@
       <div>
         <div class="tm-crm-kicker">Repair Completion</div>
         <h2 style="margin:4px 0 0;">Repair Completion</h2>
-        {% if repair.status == "Completed" and repair.completed_at %}
+        {% if repair.is_formally_completed and repair.completed_at %}
         <div style="color:#64748b; margin-top:6px;">Completed {{ repair.completed_at|pro_datetime }}</div>
         {% endif %}
       </div>
     </div>
 
-    {% if repair.status == "Completed" %}
+    {% if repair.is_formally_completed %}
     <div class="tm-history-empty" style="margin-top:16px;">
       This repair is completed. Completion details are shown as history, and active checklist/completion controls are closed.
       <div class="tm-repair-actions">
@@ -319,7 +319,7 @@
             <input class="tm-input" id="completion_date" name="completion_date" type="date" value="{{ completion.completion_date or '' }}">
           </div>
           <div>
-            <label class="tm-label" for="completion_mileage">Completion Mileage</label>
+            <label class="tm-label" for="completion_mileage">Completion Mileage (required)</label>
             <input class="tm-input" id="completion_mileage" name="completion_mileage" type="text" inputmode="numeric" value="{% if completion.completion_mileage is not none %}{{ completion.completion_mileage|pro_miles }}{% elif repair.mileage is not none %}{{ repair.mileage|pro_miles }}{% elif vehicle.mileage is not none %}{{ vehicle.mileage|pro_miles }}{% endif %}" data-pro-mileage-input>
           </div>
         </div>
@@ -327,23 +327,23 @@
 
       <section class="tm-completion-section" aria-label="Technician Notes">
         <h3 class="tm-completion-title">Technician Notes</h3>
-        <label class="tm-label" for="technician_notes">Internal notes from the technician who completed the work.</label>
+        <label class="tm-label" for="technician_notes">Internal notes from the technician who completed the work. Optional.</label>
         <textarea class="tm-input" id="technician_notes" name="technician_notes" rows="4" maxlength="1600">{{ completion.technician_notes or "" }}</textarea>
       </section>
 
       <section class="tm-completion-section" aria-label="Completion Notes">
         <h3 class="tm-completion-title">Completion Notes</h3>
-        <label class="tm-label" for="completion_notes">Final technician notes, test results, measurements, or anything the customer should know.</label>
-        <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400" placeholder="Completion notes are recommended before closing this repair.">{{ completion.completion_notes or "" }}</textarea>
+        <label class="tm-label" for="completion_notes">Final technician notes, test results, measurements, or anything the customer should know. Required.</label>
+        <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400" placeholder="Completion notes are required before closing this repair.">{{ completion.completion_notes or "" }}</textarea>
       </section>
 
       <section class="tm-completion-section" aria-label="Final Inspection">
         <h3 class="tm-completion-title">Final Inspection</h3>
         <label class="tm-completion-check" for="final_inspection_passed">
           <input id="final_inspection_passed" name="final_inspection_passed" type="checkbox" value="1" {% if completion.final_inspection_passed %}checked{% endif %}>
-          <span>Passed</span>
+          <span>Passed (required)</span>
         </label>
-        <label class="tm-label" for="final_inspection_notes">Final Inspection Comments</label>
+        <label class="tm-label" for="final_inspection_notes">Final Inspection Comments (optional)</label>
         <textarea class="tm-input" id="final_inspection_notes" name="final_inspection_notes" rows="4" maxlength="1600">{{ completion.final_inspection_notes or "" }}</textarea>
       </section>
 
@@ -387,7 +387,7 @@
 
       <div class="tm-completion-actions">
         <button class="tm-btn tm-btn-primary" type="submit">Mark Repair Completed</button>
-        {% if repair.status == "Completed" %}
+        {% if repair.is_formally_completed %}
         <span class="tm-status-chip tm-status-chip--completed">Completed</span>
         {% endif %}
       </div>
