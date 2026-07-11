@@ -513,6 +513,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(invoice["invoice_number"], "TM-INV-0008")
 
     def test_repair_completion_redirects_to_repair_workspace(self):
+        self.insert_repair(29, "Completed Alignment", 0.8, 100, 0)
         self.insert_repair(30, "Water Pump Replacement", 2.0, 120, 180)
         self.conn.execute("UPDATE repair_records SET status = 'Open', completed_at = NULL WHERE id = 30")
         self.conn.commit()
@@ -534,13 +535,21 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertEqual(response.headers["location"], "/pro/customers/1/vehicles/1#repair-workspace")
+        self.assertEqual(response.headers["location"], "/pro/customers/1/vehicles/1/invoices/new?repair_record_id=30")
         completion = pro_module.load_repair_completion(self.conn, 30)
         repair = pro_module.load_repair_record(self.conn, 1, 1, 30)
         self.assertEqual(completion["completion_date"], "")
         self.assertEqual(completion["completion_mileage"], 151000)
         self.assertEqual(repair["mileage"], 151000)
         self.assertEqual(repair["status"], "Completed")
+
+        builder = client.get(response.headers["location"])
+        self.assertEqual(builder.status_code, 200)
+        self.assertIn('name="repair_record_id" value="30" checked', builder.text)
+        self.assertIn('name="repair_record_id" value="29" >', builder.text)
+        self.assertIn("Water Pump Replacement", builder.text)
+        self.assertIn("Labor Hours: 2.0", builder.text)
+        self.assertIn("Parts: $180.00", builder.text)
 
     def test_repair_completion_validates_required_fields(self):
         self.insert_repair(31, "Brake Fluid Flush", 1.0, 120, 20, status="Open")
@@ -565,6 +574,8 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn("Final inspection must be marked passed", response.text)
         repair = pro_module.load_repair_record(self.conn, 1, 1, 31)
         self.assertEqual(repair["status"], "Open")
+        invoice_count = self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"]
+        self.assertEqual(invoice_count, 0)
 
     def test_repair_completion_updates_linked_appointment_service_history_and_timeline(self):
         pro_module.ensure_calendar_schema(self.conn)
@@ -656,7 +667,10 @@ class MultiServiceInvoiceTests(unittest.TestCase):
             follow_redirects=False,
         )
         self.assertEqual(completion_response.status_code, 303)
-        self.assertEqual(completion_response.headers["location"], "/pro/customers/1/vehicles/1#repair-workspace")
+        self.assertEqual(
+            completion_response.headers["location"],
+            f"/pro/customers/1/vehicles/1/invoices/new?repair_record_id={repair['id']}",
+        )
         completion = pro_module.load_repair_completion(self.conn, repair["id"])
         self.assertEqual(completion["completion_date"], "")
 
@@ -714,6 +728,50 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(invoice_count, 1)
         builder = client.get("/pro/customers/1/vehicles/1/invoices/new")
         self.assertIn("Open Final Invoice", builder.text.replace("View Invoice", "Open Final Invoice"))
+
+    def test_incomplete_repairs_cannot_create_or_open_final_invoice(self):
+        self.insert_repair(72, "Incomplete Starter Repair", 1.0, 120, 80, status="Open")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        create_response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={"repair_record_id": "72"},
+            follow_redirects=False,
+        )
+        self.assertEqual(create_response.status_code, 400)
+        self.assertIn("Final invoice can only include completed repair work.", create_response.text)
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"], 0)
+
+        shortcut_response = client.post(
+            "/pro/customers/1/vehicles/1/repairs/72/invoice",
+            follow_redirects=False,
+        )
+        self.assertEqual(shortcut_response.status_code, 400)
+        self.assertIn("Final invoice can only include completed repair work.", shortcut_response.text)
+
+        self.conn.execute(
+            """
+            INSERT INTO invoices (
+              id, invoice_number, repair_record_id, customer_id, vehicle_id,
+              labor_total, parts_total, grand_total, created_at
+            )
+            VALUES (72, 'TM-INV-0072', 72, 1, 1, 120, 80, 200, '2026-06-25T15:00:00')
+            """
+        )
+        self.conn.execute(
+            "INSERT INTO invoice_items (invoice_id, repair_record_id, created_at) VALUES (72, 72, '2026-06-25T15:00:00')"
+        )
+        self.conn.commit()
+
+        detail_response = client.get("/pro/customers/1/vehicles/1/invoices/72")
+        pdf_response = client.get("/pro/customers/1/vehicles/1/invoices/72/pdf")
+
+        self.assertEqual(detail_response.status_code, 400)
+        self.assertIn("formally completed", detail_response.text)
+        self.assertEqual(pdf_response.status_code, 400)
+        self.assertIn("formally completed", pdf_response.text)
 
     def test_final_invoice_uses_stable_configured_totals_and_warranty(self):
         pro_module.save_shop_settings(
@@ -795,8 +853,8 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         )
 
         default_pdf = self.final_invoice_pdf(invoice)
-        self.assertIn(b"Payment Terms", default_pdf)
-        self.assertIn(b"Due upon receipt.", default_pdf)
+        self.assertNotIn(b"Payment Terms", default_pdf)
+        self.assertNotIn(b"Due upon receipt.", default_pdf)
         self.assertIn(b"Generated with TorqueMech", default_pdf)
         self.assertEqual(default_pdf.count(b"Generated with TorqueMech"), 1)
         self.assertNotIn(b"Thank you", default_pdf)
@@ -804,9 +862,13 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertNotIn(b"Due upon receipt. Generated with TorqueMech", default_pdf)
 
         configured_pdf = self.final_invoice_pdf(invoice, {"custom_footer_note": "Payment required before vehicle release."})
+        self.assertIn(b"Payment Terms", configured_pdf)
         self.assertIn(b"Payment required before vehicle release.", configured_pdf)
         self.assertNotIn(b"Due upon receipt.", configured_pdf)
         self.assertEqual(configured_pdf.count(b"Generated with TorqueMech"), 1)
+
+        seven_day_pdf = self.final_invoice_pdf(invoice, {"custom_footer_note": "Due within 7 days"})
+        self.assertIn(b"Due within 7 days", seven_day_pdf)
 
     def test_final_invoice_pdf_accounting_totals_and_payment_statuses(self):
         pro_module.save_shop_settings(

@@ -1159,7 +1159,10 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
         self.assertIn("Ready for Invoice", invoice_builder)
         self.assertIn('{% for job in job_groups.ready %}', invoice_builder)
-        self.assertIn('type="checkbox" name="repair_record_id" value="{{ job.id }}" checked', invoice_builder)
+        self.assertIn('type="checkbox" name="repair_record_id" value="{{ job.id }}"', invoice_builder)
+        self.assertIn('{% if selected_repair_ids %}', invoice_builder)
+        self.assertIn('{% if job.id in selected_repair_ids %}checked{% endif %}', invoice_builder)
+        self.assertIn('{% else %}checked{% endif %}', invoice_builder)
         self.assertIn("Create Invoice", invoice_builder)
         self.assertIn("Already Invoiced", invoice_builder)
 

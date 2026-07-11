@@ -5015,6 +5015,17 @@ def repair_invoice_warnings(repair: dict[str, Any]) -> list[str]:
     return []
 
 
+def invoice_completion_warnings(invoice: dict[str, Any]) -> list[str]:
+    incomplete = [
+        item
+        for item in invoice.get("items") or []
+        if (item.get("repair_status") or item.get("status") or "") != "Completed"
+    ]
+    if incomplete:
+        return ["Final invoice cannot be opened until all linked repair work is formally completed."]
+    return []
+
+
 def repair_completion_validation_errors(form: dict[str, str]) -> list[str]:
     errors: list[str] = []
     if optional_int(form, "completion_mileage") is None:
@@ -6073,13 +6084,14 @@ def build_invoice_pdf_bytes(
 
     notes = str(invoice.get("completion_notes") or invoice.get("repair_notes") or "").strip()
     warranty = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
-    terms = str(shop_profile.get("custom_footer_note") or shop_profile.get("payment_terms") or "").strip() or "Due upon receipt."
+    terms = str(shop_profile.get("custom_footer_note") or shop_profile.get("payment_terms") or "").strip()
     detail_lines = []
     if notes:
         detail_lines.append(("Completion Notes", notes))
     if warranty:
         detail_lines.append(("Warranty Statement", warranty))
-    detail_lines.append(("Payment Terms", terms))
+    if terms:
+        detail_lines.append(("Payment Terms", terms))
     if detail_lines:
         wrapped_details = [
             (label, pdf_lines(value, 98)[:6] or ["-"])
@@ -12771,7 +12783,7 @@ async def pro_invoice_generate(request: Request, customer_id: int, vehicle_id: i
         load_customer_vehicle(conn, customer_id, vehicle_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
         warnings = repair_invoice_warnings(repair)
-        if warnings and not load_invoice_for_repair(conn, repair_id):
+        if warnings:
             context = completion_detail_context(
                 conn,
                 request=request,
@@ -12803,11 +12815,19 @@ async def pro_invoice_generate(request: Request, customer_id: int, vehicle_id: i
 
 
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/new", response_class=HTMLResponse)
-def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int):
+def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int, repair_record_id: int | None = None):
     conn = crm_db_conn()
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
+        selected_repair_ids: set[int] = set()
+        if repair_record_id:
+            selected = next(
+                (job for job in job_groups["ready"] if int(job.get("id") or 0) == repair_record_id),
+                None,
+            )
+            if selected:
+                selected_repair_ids.add(repair_record_id)
     finally:
         conn.close()
     return templates.TemplateResponse(
@@ -12817,6 +12837,8 @@ def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int):
             "customer": customer,
             "vehicle": vehicle,
             "job_groups": job_groups,
+            "selected_repair_ids": selected_repair_ids,
+            "prefilled_repair_id": repair_record_id,
             "error": "",
         },
     )
@@ -12856,6 +12878,8 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
                     "customer": customer,
                     "vehicle": vehicle,
                     "job_groups": job_groups,
+                    "selected_repair_ids": set(selected_ids),
+                    "prefilled_repair_id": None,
                     "error": str(exc.detail),
                 },
                 status_code=400,
@@ -12877,6 +12901,9 @@ def pro_invoice_detail(
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        completion_warnings = invoice_completion_warnings(invoice)
+        if completion_warnings:
+            raise HTTPException(status_code=400, detail=completion_warnings[0])
         shop_profile = load_shop_profile_context(conn)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
@@ -12923,6 +12950,9 @@ def pro_invoice_pdf(request: Request, customer_id: int, vehicle_id: int, invoice
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
         invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        completion_warnings = invoice_completion_warnings(invoice)
+        if completion_warnings:
+            raise HTTPException(status_code=400, detail=completion_warnings[0])
         shop_profile = load_shop_profile_context(conn)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
@@ -13297,7 +13327,7 @@ async def pro_repair_completion_update(
     finally:
         conn.close()
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#repair-workspace",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/new?repair_record_id={repair_id}",
         status_code=303,
     )
 

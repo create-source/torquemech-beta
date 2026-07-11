@@ -108,11 +108,12 @@
     <section class="tm-invoice-builder-panel" aria-label="Select Repair Jobs">
       <div class="tm-crm-kicker">Select Repair Jobs</div>
       <h2 style="margin:4px 0 0;">Ready for Invoice</h2>
+      <p style="margin:6px 0 0; color:#64748b; font-weight:800;">Final Invoices can only be created after repair completion is saved.</p>
       {% if job_groups.ready %}
       <div class="tm-invoice-builder-list">
         {% for job in job_groups.ready %}
         <label class="tm-invoice-builder-job">
-          <input type="checkbox" name="repair_record_id" value="{{ job.id }}" checked>
+          <input type="checkbox" name="repair_record_id" value="{{ job.id }}" {% if selected_repair_ids %}{% if job.id in selected_repair_ids %}checked{% endif %}{% else %}checked{% endif %}>
           <span>
             <span class="tm-invoice-builder-title">{{ job.repair_name or "Repair" }}</span>
             <span class="tm-invoice-builder-meta">
@@ -139,6 +140,7 @@
     <section class="tm-invoice-builder-panel" aria-label="Approved but not completed" style="margin-top:16px;">
       <div class="tm-crm-kicker">Approved But Not Completed</div>
       <h2 style="margin:4px 0 0;">Approved but not completed</h2>
+      <p style="margin:6px 0 0; color:#991b1b; font-weight:900;">Complete the repair workspace first. These jobs cannot be invoiced yet.</p>
       {% if job_groups.approved %}
       <div class="tm-invoice-builder-list">
         {% for job in job_groups.approved %}
