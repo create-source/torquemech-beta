@@ -1,0 +1,201 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Invoice {{ invoice.invoice_number }} | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-invoice-edit-panel {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-left: 5px solid #0e7490;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 18px;
+    max-width: 980px;
+  }
+  .tm-invoice-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .tm-invoice-edit-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .tm-invoice-edit-service {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    padding: 14px;
+  }
+  .tm-invoice-edit-service h3 {
+    margin: 0 0 10px;
+    color: #0f172a;
+  }
+  .tm-invoice-edit-money {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .tm-invoice-edit-note {
+    color: #64748b;
+    font-weight: 800;
+    margin: 6px 0 0;
+  }
+  .tm-invoice-edit-warning {
+    border: 1px solid rgba(217, 119, 6, 0.28);
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+    font-weight: 900;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+  .tm-invoice-edit-locked {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 14px;
+    color: #334155;
+  }
+  .tm-invoice-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  @media (max-width: 760px) {
+    .tm-invoice-edit-grid,
+    .tm-invoice-edit-money { grid-template-columns: 1fr; }
+    .tm-invoice-edit-actions .tm-btn { width: 100%; justify-content: center; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell">
+  <div class="tm-pro-pagehead">
+    <div>
+      <div class="tm-pro-eyebrow">Internal Pro Area</div>
+      <h1 class="tm-pro-title">Edit Invoice {{ invoice.invoice_number }}</h1>
+      <p class="tm-pro-subtitle">Invoice number and completed repair links are preserved.</p>
+    </div>
+    <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">Back to Invoice</a>
+  </div>
+
+  <section class="tm-invoice-edit-panel" aria-label="Edit Invoice">
+    {% if error %}
+    <div class="tm-invoice-edit-warning">{{ error }}</div>
+    {% endif %}
+
+    {% if locked %}
+    <div class="tm-invoice-edit-locked">
+      <div class="tm-crm-kicker">Paid Invoice Locked</div>
+      <h2 style="margin:4px 0 0;">Direct financial editing is locked</h2>
+      <p style="margin:8px 0 0;">Paid invoices cannot be silently rewritten. Keep the original paid totals intact and use a documented follow-up action.</p>
+      <div class="tm-invoice-edit-actions" style="justify-content:flex-start;">
+        <button class="tm-btn tm-btn-secondary" type="button" disabled>Adjustment</button>
+        <button class="tm-btn tm-btn-secondary" type="button" disabled>Refund</button>
+        <button class="tm-btn tm-btn-secondary" type="button" disabled>Void Invoice</button>
+      </div>
+    </div>
+    {% else %}
+    {% if total_change_warning %}
+    <div class="tm-invoice-edit-warning">
+      Saving these changes alters the invoice total from {{ total_change_warning.previous_total|pro_currency }} to {{ total_change_warning.revised_total|pro_currency }}. Confirm to save the revised total.
+    </div>
+    {% endif %}
+
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/edit">
+      {% if total_change_warning %}
+      <input type="hidden" name="confirm_total_change" value="1">
+      {% endif %}
+
+      <div class="tm-crm-kicker">Completed Services</div>
+      <h2 style="margin:4px 0 0;">Invoice Line Amounts</h2>
+      <p class="tm-invoice-edit-note">These edits apply to the invoice only. Linked completed repair records stay unchanged.</p>
+      <div class="tm-invoice-edit-list">
+        {% for item in invoice["items"] %}
+        {% set labor_key = "item_labor_total_" ~ item.invoice_item_id %}
+        {% set parts_key = "item_parts_total_" ~ item.invoice_item_id %}
+        {% set notes_key = "item_repair_notes_" ~ item.invoice_item_id %}
+        <article class="tm-invoice-edit-service">
+          <h3>{{ loop.index }}. {{ item.service_title }}</h3>
+          <div class="tm-invoice-edit-money">
+            <div>
+              <label class="tm-label" for="{{ labor_key }}">Labor Amount</label>
+              <input class="tm-input" id="{{ labor_key }}" name="{{ labor_key }}" type="number" min="0" step="0.01" inputmode="decimal" value="{{ form_values.get(labor_key, '%.2f'|format(item.labor_total or 0)) }}">
+            </div>
+            <div>
+              <label class="tm-label" for="{{ parts_key }}">Parts Amount</label>
+              <input class="tm-input" id="{{ parts_key }}" name="{{ parts_key }}" type="number" min="0" step="0.01" inputmode="decimal" value="{{ form_values.get(parts_key, '%.2f'|format(item.parts_total or 0)) }}">
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <label class="tm-label" for="{{ notes_key }}">Customer-Facing Repair Notes</label>
+            <textarea class="tm-input" id="{{ notes_key }}" name="{{ notes_key }}" rows="3" maxlength="1200">{{ form_values.get(notes_key, item.repair_notes or "") }}</textarea>
+          </div>
+          <p class="tm-invoice-edit-note">Linked repair #{{ item.repair_record_id }} remains attached.</p>
+        </article>
+        {% endfor %}
+      </div>
+
+      <section style="margin-top:18px;" aria-label="Invoice Totals">
+        <div class="tm-crm-kicker">Invoice Totals</div>
+        <div class="tm-invoice-edit-grid" style="margin-top:10px;">
+          <div>
+            <label class="tm-label" for="shop_supplies_fee">Fees / Shop Supplies</label>
+            <input class="tm-input" id="shop_supplies_fee" name="shop_supplies_fee" type="number" min="0" step="0.01" inputmode="decimal" value="{{ form_values.get('shop_supplies_fee', '%.2f'|format(invoice.shop_supplies_fee or 0)) }}">
+          </div>
+          <div>
+            <label class="tm-label" for="tax_total">Tax</label>
+            <input class="tm-input" id="tax_total" name="tax_total" type="number" min="0" step="0.01" inputmode="decimal" value="{{ form_values.get('tax_total', '%.2f'|format(invoice.tax_total or 0)) }}">
+          </div>
+          <div>
+            <label class="tm-label" for="discount_total">Discounts</label>
+            <input class="tm-input" id="discount_total" name="discount_total" type="number" min="0" step="0.01" inputmode="decimal" value="{{ form_values.get('discount_total', '%.2f'|format(invoice.discount_total or 0)) }}">
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top:18px;" aria-label="Notes and Terms">
+        <div class="tm-crm-kicker">Notes and Terms</div>
+        <div class="tm-invoice-edit-grid" style="margin-top:10px;">
+          <div>
+            <label class="tm-label" for="warranty_text">Warranty Statement</label>
+            <textarea class="tm-input" id="warranty_text" name="warranty_text" rows="4" maxlength="1000">{{ form_values.get('warranty_text', invoice.warranty_text or "") }}</textarea>
+          </div>
+          <div>
+            <label class="tm-label" for="payment_terms">Payment Terms</label>
+            <textarea class="tm-input" id="payment_terms" name="payment_terms" rows="4" maxlength="1000">{{ form_values.get('payment_terms', invoice.payment_terms or "") }}</textarea>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top:18px;" aria-label="PDF Display Options">
+        <div class="tm-crm-kicker">Customer PDF Details</div>
+        <div class="tm-invoice-options">
+          {% for key, label in [
+            ("show_completion_date", "Show completion date"),
+            ("show_labor_hours", "Show labor hours"),
+            ("show_labor_rate", "Show labor rate"),
+            ("show_labor_total", "Show labor total"),
+            ("show_parts_total", "Show parts total"),
+            ("show_repair_notes", "Show repair notes"),
+            ("show_final_inspection_notes", "Show final inspection comments")
+          ] %}
+          <label class="tm-invoice-option"><input type="checkbox" name="{{ key }}" value="1" {% if (form_values and form_values.get(key) == "1") or ((not form_values) and invoice.pdf_display_options.get(key)) %}checked{% endif %}><span>{{ label }}</span></label>
+          {% endfor %}
+        </div>
+      </section>
+
+      <div class="tm-invoice-edit-actions">
+        <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">Cancel</a>
+        <button class="tm-btn tm-btn-primary" type="submit">{% if total_change_warning %}Confirm and Save Invoice{% else %}Save Invoice{% endif %}</button>
+      </div>
+    </form>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

@@ -193,11 +193,22 @@
     </div>
     <div class="tm-invoice-actions">
       <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">Back to Vehicle Timeline</a>
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/edit">Edit Invoice</a>
       <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/recalculate">
-        <button class="tm-btn tm-btn-secondary" type="submit">Recalculate Invoice</button>
+        <button class="tm-btn tm-btn-secondary" type="submit">Refresh from Repair Records</button>
       </form>
     </div>
   </div>
+
+  {% if refresh_warning %}
+  <section class="tm-invoice-panel" aria-label="Refresh Confirmation" style="margin-bottom:16px;">
+    <div class="tm-invoice-fallback">{{ refresh_warning }}</div>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/recalculate">
+      <input type="hidden" name="confirm_refresh" value="1">
+      <button class="tm-btn tm-btn-primary" type="submit">Confirm Refresh from Repair Records</button>
+    </form>
+  </section>
+  {% endif %}
 
   <section class="tm-invoice-panel" aria-label="Invoice details">
     {% if not customer or not vehicle or not invoice %}
@@ -298,6 +309,8 @@
       {% else %}
       <div class="tm-invoice-total-row tm-invoice-total-row--grand"><span>Grand Total</span><strong>{{ invoice.grand_total|pro_currency }}</strong></div>
       {% endif %}
+      <div class="tm-invoice-total-row"><span>Amount Paid</span><strong>{{ invoice.amount_paid|pro_currency }}</strong></div>
+      <div class="tm-invoice-total-row"><span>Balance Due</span><strong>{{ invoice.balance_due|pro_currency }}</strong></div>
     </div>
 
     <section class="tm-invoice-summary" aria-label="Notes and Warranty">
@@ -305,6 +318,7 @@
       <div class="tm-invoice-grid" style="margin-top:10px;">
         <div class="tm-invoice-field"><span>Notes</span><div class="tm-invoice-notes">{{ invoice.completion_notes or invoice.repair_notes or "No final notes saved." }}</div></div>
         <div class="tm-invoice-field"><span>Warranty</span><div class="tm-invoice-notes">{{ invoice.warranty_text or "No warranty text configured." }}</div></div>
+        <div class="tm-invoice-field"><span>Payment Terms</span><div class="tm-invoice-notes">{{ invoice.payment_terms or "No payment terms configured." }}</div></div>
       </div>
     </section>
   </section>
@@ -314,13 +328,13 @@
     <h2 style="margin:4px 0 0;">Customer PDF Details</h2>
     <form method="get" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">
       <div class="tm-invoice-options">
-        <label class="tm-invoice-option"><input type="checkbox" name="show_completion_date" value="1" checked><span>Show completion date</span></label>
-        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_hours" value="1"><span>Show labor hours</span></label>
-        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_rate" value="1"><span>Show labor rate</span></label>
-        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_total" value="1" checked><span>Show labor total</span></label>
-        <label class="tm-invoice-option"><input type="checkbox" name="show_parts_total" value="1" checked><span>Show parts total</span></label>
-        <label class="tm-invoice-option"><input type="checkbox" name="show_repair_notes" value="1" checked><span>Show repair notes</span></label>
-        <label class="tm-invoice-option"><input type="checkbox" name="show_final_inspection_notes" value="1"><span>Show final inspection comments</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_completion_date" value="1" {% if invoice.pdf_display_options.show_completion_date %}checked{% endif %}><span>Show completion date</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_hours" value="1" {% if invoice.pdf_display_options.show_labor_hours %}checked{% endif %}><span>Show labor hours</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_rate" value="1" {% if invoice.pdf_display_options.show_labor_rate %}checked{% endif %}><span>Show labor rate</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_labor_total" value="1" {% if invoice.pdf_display_options.show_labor_total %}checked{% endif %}><span>Show labor total</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_parts_total" value="1" {% if invoice.pdf_display_options.show_parts_total %}checked{% endif %}><span>Show parts total</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_repair_notes" value="1" {% if invoice.pdf_display_options.show_repair_notes %}checked{% endif %}><span>Show repair notes</span></label>
+        <label class="tm-invoice-option"><input type="checkbox" name="show_final_inspection_notes" value="1" {% if invoice.pdf_display_options.show_final_inspection_notes %}checked{% endif %}><span>Show final inspection comments</span></label>
       </div>
       <div class="tm-invoice-actions" style="margin-top:14px;">
         <button class="tm-btn tm-btn-primary" type="submit">Download PDF</button>

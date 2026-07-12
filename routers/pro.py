@@ -4645,6 +4645,8 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
           amount_paid REAL NOT NULL DEFAULT 0,
           payment_status TEXT NOT NULL DEFAULT 'Unpaid',
           warranty_text TEXT,
+          payment_terms TEXT,
+          pdf_display_options_json TEXT,
           created_at TEXT NOT NULL,
           FOREIGN KEY (repair_record_id) REFERENCES repair_records(id),
           FOREIGN KEY (customer_id) REFERENCES customers(id),
@@ -4658,6 +4660,9 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           invoice_id INTEGER NOT NULL,
           repair_record_id INTEGER NOT NULL UNIQUE,
+          labor_total_override REAL,
+          parts_total_override REAL,
+          repair_notes_override TEXT,
           created_at TEXT NOT NULL,
           FOREIGN KEY (invoice_id) REFERENCES invoices(id),
           FOREIGN KEY (repair_record_id) REFERENCES repair_records(id)
@@ -4678,10 +4683,20 @@ def ensure_invoices_schema(conn: sqlite3.Connection) -> None:
         "amount_paid": "amount_paid REAL NOT NULL DEFAULT 0",
         "payment_status": "payment_status TEXT NOT NULL DEFAULT 'Unpaid'",
         "warranty_text": "warranty_text TEXT",
+        "payment_terms": "payment_terms TEXT",
+        "pdf_display_options_json": "pdf_display_options_json TEXT",
         "no_charge_reason": "no_charge_reason TEXT",
     }.items():
         if column_name not in columns:
             conn.execute(f"ALTER TABLE invoices ADD COLUMN {column_sql}")
+    item_columns = {row[1] for row in conn.execute("PRAGMA table_info(invoice_items)").fetchall()}
+    for column_name, column_sql in {
+        "labor_total_override": "labor_total_override REAL",
+        "parts_total_override": "parts_total_override REAL",
+        "repair_notes_override": "repair_notes_override TEXT",
+    }.items():
+        if column_name not in item_columns:
+            conn.execute(f"ALTER TABLE invoice_items ADD COLUMN {column_sql}")
     for invoice in conn.execute("SELECT id, repair_record_id, created_at FROM invoices").fetchall():
         if not invoice["repair_record_id"]:
             continue
@@ -4793,8 +4808,16 @@ def invoice_item_display_record(record: dict[str, Any]) -> dict[str, Any]:
     item = dict(record)
     totals = repair_cost_totals(item)
     item["service_title"] = clean_service_quantity_title(item.get("repair_name") or "Repair")
-    item["labor_total"] = totals["labor_total"]
-    item["parts_total"] = totals["parts_total"]
+    item["repair_labor_total"] = totals["labor_total"]
+    item["repair_parts_total"] = totals["parts_total"]
+    item["labor_total"] = round(
+        float(item.get("labor_total_override") if item.get("labor_total_override") is not None else totals["labor_total"] or 0),
+        2,
+    )
+    item["parts_total"] = round(
+        float(item.get("parts_total_override") if item.get("parts_total_override") is not None else totals["parts_total"] or 0),
+        2,
+    )
     item["grand_total"] = totals["grand_total"]
     item["labor_rate"] = totals["labor_rate"]
     item["labor_rate_is_legacy"] = totals["labor_rate_is_legacy"]
@@ -4805,7 +4828,7 @@ def invoice_item_display_record(record: dict[str, Any]) -> dict[str, Any]:
     source_finding = str(item.get("source_finding") or "").strip()
     source_recommendation = str(item.get("source_recommendation") or "").strip()
     item["repair_notes"] = clean_invoice_repair_notes(
-        item.get("repair_notes") or item.get("notes") or item.get("completion_notes") or "",
+        item.get("repair_notes_override") or item.get("repair_notes") or item.get("notes") or item.get("completion_notes") or "",
         service_title=item["service_title"],
         source_recommendation=source_recommendation,
     )
@@ -4828,6 +4851,9 @@ def load_invoice_item_records(
             SELECT
               ii.id AS invoice_item_id,
               ii.invoice_id,
+              ii.labor_total_override,
+              ii.parts_total_override,
+              ii.repair_notes_override,
               rr.id AS repair_record_id,
               rr.repair_name,
               rr.repair_date,
@@ -4873,8 +4899,13 @@ def load_invoice_item_records(
         if item.get("completion_completed_at"):
             item["completed_at"] = item.get("completion_completed_at")
         totals = repair_cost_totals(item)
-        item["parts_total"] = totals["parts_total"]
-        item["grand_total"] = totals["grand_total"]
+        item["repair_labor_total"] = totals["labor_total"]
+        item["repair_parts_total"] = totals["parts_total"]
+        if item.get("labor_total_override") is None:
+            item["labor_total"] = totals["labor_total"]
+        if item.get("parts_total_override") is None:
+            item["parts_total"] = totals["parts_total"]
+        item["grand_total"] = round(float(item.get("labor_total") or 0) + float(item.get("parts_total") or 0), 2)
     return items
 
 
@@ -4937,6 +4968,9 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
         payment_status = payment_status or "Partially Paid"
     record["payment_status"] = payment_status or "Unpaid"
     record["warranty_text"] = str(record.get("warranty_text") or "").strip()
+    record["payment_terms"] = invoice_payment_terms_text(record)
+    record["pdf_display_options"] = invoice_pdf_options_from_json(record.get("pdf_display_options_json"))
+    record["has_manual_adjustments"] = invoice_has_manual_adjustments(record)
     record["no_charge_reason"] = str(record.get("no_charge_reason") or "").strip()
     primary = items[0] if items else {}
     record["repair_name"] = primary.get("service_title") or "Repair"
@@ -4961,6 +4995,32 @@ def invoice_display_record(invoice: dict[str, Any]) -> dict[str, Any]:
         inspections.pop() if len(inspections) == 1 else ("Mixed" if inspections else "Not marked passed")
     )
     return record
+
+
+def invoice_pdf_options_from_json(raw_options: Any) -> dict[str, bool]:
+    options = dict(INVOICE_PDF_DEFAULT_OPTIONS)
+    try:
+        parsed = json.loads(str(raw_options or "{}"))
+    except (TypeError, ValueError):
+        parsed = {}
+    if isinstance(parsed, dict):
+        for key in options:
+            if key in parsed:
+                options[key] = bool(parsed[key])
+    return options
+
+
+def invoice_has_manual_adjustments(invoice: dict[str, Any]) -> bool:
+    if str(invoice.get("payment_terms") or "").strip():
+        return True
+    if str(invoice.get("pdf_display_options_json") or "").strip():
+        return True
+    for item in invoice.get("items") or []:
+        if item.get("labor_total_override") is not None or item.get("parts_total_override") is not None:
+            return True
+        if str(item.get("repair_notes_override") or "").strip():
+            return True
+    return False
 
 
 def invoice_estimate_summary(conn: sqlite3.Connection, invoice_id: int, *, final_total: Any = None) -> dict[str, Any]:
@@ -5688,8 +5748,20 @@ def recalculate_invoice_from_repair(
     invoice_id: int,
     customer_id: int,
     vehicle_id: int,
+    clear_item_overrides: bool = False,
 ) -> dict[str, Any]:
     invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+    if clear_item_overrides:
+        conn.execute(
+            """
+            UPDATE invoice_items
+            SET labor_total_override = NULL,
+                parts_total_override = NULL
+            WHERE invoice_id = ?
+            """,
+            (invoice_id,),
+        )
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
     repairs = [
         load_repair_record(conn, customer_id, vehicle_id, int(item["repair_record_id"]))
         for item in invoice.get("items", [])
@@ -5711,7 +5783,8 @@ def recalculate_invoice_from_repair(
         SET labor_total = ?,
             parts_total = ?,
             tax_total = ?,
-            grand_total = ?
+            grand_total = ?,
+            payment_status = ?
         WHERE id = ?
           AND repair_record_id = ?
           AND customer_id = ?
@@ -5722,6 +5795,7 @@ def recalculate_invoice_from_repair(
             parts_total,
             tax_total,
             grand_total,
+            invoice_payment_status_for_totals(grand_total, invoice.get("amount_paid"), invoice.get("payment_status")),
             invoice_id,
             invoice["repair_record_id"],
             customer_id,
@@ -5729,6 +5803,135 @@ def recalculate_invoice_from_repair(
         ),
     )
     return load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+
+
+def invoice_payment_status_for_totals(grand_total: Any, amount_paid: Any, current_status: Any = "") -> str:
+    total = round(float(grand_total or 0), 2)
+    paid = round(float(amount_paid or 0), 2)
+    status = str(current_status or "").strip()
+    if total <= 0:
+        return "No Charge" if status == "No Charge" else (status or "Unpaid")
+    if paid >= total:
+        return "Paid in Full"
+    if paid > 0:
+        return "Partially Paid"
+    return "Unpaid"
+
+
+def invoice_financial_edit_locked(invoice: dict[str, Any]) -> bool:
+    return round(float(invoice.get("amount_paid") or 0), 2) > 0 or str(invoice.get("payment_status") or "").strip() in {
+        "Paid in Full",
+        "Partially Paid",
+    }
+
+
+def invoice_edit_pdf_options_from_form(form: dict[str, str]) -> dict[str, bool]:
+    return {
+        key: form.get(key) == "1"
+        for key in INVOICE_PDF_DEFAULT_OPTIONS
+    }
+
+
+def invoice_edit_totals_from_form(invoice: dict[str, Any], form: dict[str, str]) -> dict[str, Any]:
+    items: list[dict[str, Any]] = []
+    for item in invoice.get("items") or []:
+        item_id = int(item.get("invoice_item_id") or 0)
+        labor = optional_float(form, f"item_labor_total_{item_id}")
+        parts = optional_float(form, f"item_parts_total_{item_id}")
+        items.append(
+            {
+                "invoice_item_id": item_id,
+                "repair_record_id": int(item.get("repair_record_id") or 0),
+                "labor_total": round(max(labor if labor is not None else float(item.get("labor_total") or 0), 0), 2),
+                "parts_total": round(max(parts if parts is not None else float(item.get("parts_total") or 0), 0), 2),
+                "repair_notes": str(form.get(f"item_repair_notes_{item_id}") or "").strip(),
+            }
+        )
+    labor_total = round(sum(item["labor_total"] for item in items), 2)
+    parts_total = round(sum(item["parts_total"] for item in items), 2)
+    service_subtotal = round(labor_total + parts_total, 2)
+    shop_supplies_fee = round(max(optional_float(form, "shop_supplies_fee") or 0, 0), 2)
+    discount_total = round(max(optional_float(form, "discount_total") or 0, 0), 2)
+    tax_total = round(max(optional_float(form, "tax_total") or 0, 0), 2)
+    grand_total = round(max(service_subtotal + shop_supplies_fee + tax_total - discount_total, 0), 2)
+    return {
+        "items": items,
+        "labor_total": labor_total,
+        "parts_total": parts_total,
+        "shop_supplies_fee": shop_supplies_fee,
+        "discount_total": discount_total,
+        "tax_total": tax_total,
+        "grand_total": grand_total,
+    }
+
+
+def update_invoice_from_edit(
+    conn: sqlite3.Connection,
+    *,
+    invoice: dict[str, Any],
+    form: dict[str, str],
+) -> dict[str, Any]:
+    totals = invoice_edit_totals_from_form(invoice, form)
+    invoice_id = int(invoice["id"])
+    known_item_ids = {int(item.get("invoice_item_id") or 0) for item in invoice.get("items") or []}
+    for item in totals["items"]:
+        if item["invoice_item_id"] not in known_item_ids or not item["repair_record_id"]:
+            raise HTTPException(status_code=400, detail="Invoice line item link is invalid.")
+        conn.execute(
+            """
+            UPDATE invoice_items
+            SET labor_total_override = ?,
+                parts_total_override = ?,
+                repair_notes_override = ?
+            WHERE id = ?
+              AND invoice_id = ?
+              AND repair_record_id = ?
+            """,
+            (
+                item["labor_total"],
+                item["parts_total"],
+                item["repair_notes"],
+                item["invoice_item_id"],
+                invoice_id,
+                item["repair_record_id"],
+            ),
+        )
+    pdf_options = invoice_edit_pdf_options_from_form(form)
+    grand_total = totals["grand_total"]
+    conn.execute(
+        """
+        UPDATE invoices
+        SET labor_total = ?,
+            parts_total = ?,
+            shop_supplies_fee = ?,
+            tax_total = ?,
+            discount_total = ?,
+            grand_total = ?,
+            payment_status = ?,
+            warranty_text = ?,
+            payment_terms = ?,
+            pdf_display_options_json = ?
+        WHERE id = ?
+          AND customer_id = ?
+          AND vehicle_id = ?
+        """,
+        (
+            totals["labor_total"],
+            totals["parts_total"],
+            totals["shop_supplies_fee"],
+            totals["tax_total"],
+            totals["discount_total"],
+            grand_total,
+            invoice_payment_status_for_totals(grand_total, invoice.get("amount_paid"), invoice.get("payment_status")),
+            str(form.get("warranty_text") or "").strip(),
+            str(form.get("payment_terms") or "").strip(),
+            json.dumps(pdf_options, sort_keys=True),
+            invoice_id,
+            int(invoice["customer_id"]),
+            int(invoice["vehicle_id"]),
+        ),
+    )
+    return load_invoice_record(conn, int(invoice["customer_id"]), int(invoice["vehicle_id"]), invoice_id)
 
 
 def pdf_lines(text: Any, max_chars: int = 92) -> list[str]:
@@ -5831,7 +6034,7 @@ def pdf_money(value: Any) -> str:
 
 def invoice_payment_terms_text(shop_profile: dict[str, Any] | None) -> str:
     profile = shop_profile or {}
-    terms = str(profile.get("custom_footer_note") or profile.get("payment_terms") or "").strip()
+    terms = str(profile.get("payment_terms") or profile.get("custom_footer_note") or "").strip()
     legacy_terms = "Thank you" + ", come again"
     if terms == legacy_terms:
         return ""
@@ -6043,7 +6246,7 @@ def build_invoice_pdf_bytes(
 
     def draw_line_item(y: float, index: int, item: dict[str, Any]) -> float:
         title = f"{index}. {item.get('service_title') or 'Repair'}"
-        note = str(item.get("completion_notes") or item.get("repair_notes") or "").strip()
+        note = str(item.get("repair_notes") or item.get("completion_notes") or "").strip()
         tracked_parts = item.get("tracked_parts") or []
         note_lines = []
         if note and options.get("show_repair_notes", True):
@@ -6178,7 +6381,7 @@ def build_invoice_pdf_bytes(
     notes = completion_note_text or repair_note_text
     final_inspection_notes = str(invoice.get("final_inspection_notes") or "").strip()
     warranty = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
-    terms = invoice_payment_terms_text(shop_profile)
+    terms = invoice_payment_terms_text(invoice) or invoice_payment_terms_text(shop_profile)
     detail_lines = []
     if notes and options.get("show_repair_notes", True):
         detail_lines.append(("Completion Notes" if completion_note_text else "Repair Notes", notes))
@@ -13081,22 +13284,138 @@ def pro_invoice_detail(
             "invoice": invoice,
             "shop_name": shop_name,
             "shop_profile": shop_profile,
+            "refresh_warning": "",
         },
+    )
+
+
+@router.get("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/edit", response_class=HTMLResponse)
+def pro_invoice_edit(request: Request, customer_id: int, vehicle_id: int, invoice_id: int):
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        completion_warnings = invoice_completion_warnings(invoice)
+        if completion_warnings:
+            raise HTTPException(status_code=400, detail=completion_warnings[0])
+        shop_profile = load_shop_profile_context(conn)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "pro/invoice_edit.html",
+        {
+            "request": request,
+            "customer": customer,
+            "vehicle": vehicle,
+            "invoice": invoice,
+            "shop_name": shop_name,
+            "shop_profile": shop_profile,
+            "locked": invoice_financial_edit_locked(invoice),
+            "total_change_warning": None,
+            "form_values": {},
+            "error": "",
+        },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/edit", response_class=HTMLResponse)
+async def pro_invoice_update(request: Request, customer_id: int, vehicle_id: int, invoice_id: int):
+    form = await read_form_data(request)
+    conn = crm_db_conn()
+    try:
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        completion_warnings = invoice_completion_warnings(invoice)
+        if completion_warnings:
+            raise HTTPException(status_code=400, detail=completion_warnings[0])
+        shop_profile = load_shop_profile_context(conn)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+        locked = invoice_financial_edit_locked(invoice)
+        if locked:
+            return templates.TemplateResponse(
+                "pro/invoice_edit.html",
+                {
+                    "request": request,
+                    "customer": customer,
+                    "vehicle": vehicle,
+                    "invoice": invoice,
+                    "shop_name": shop_name,
+                    "shop_profile": shop_profile,
+                    "locked": True,
+                    "total_change_warning": None,
+                    "form_values": form,
+                    "error": "Paid invoices cannot be silently rewritten. Use an adjustment, refund, or void action instead.",
+                },
+                status_code=400,
+            )
+        edited_totals = invoice_edit_totals_from_form(invoice, form)
+        previous_total = round(float(invoice.get("grand_total") or 0), 2)
+        revised_total = round(float(edited_totals["grand_total"] or 0), 2)
+        if previous_total != revised_total and form.get("confirm_total_change") != "1":
+            return templates.TemplateResponse(
+                "pro/invoice_edit.html",
+                {
+                    "request": request,
+                    "customer": customer,
+                    "vehicle": vehicle,
+                    "invoice": invoice,
+                    "shop_name": shop_name,
+                    "shop_profile": shop_profile,
+                    "locked": False,
+                    "total_change_warning": {
+                        "previous_total": previous_total,
+                        "revised_total": revised_total,
+                    },
+                    "form_values": form,
+                    "error": "",
+                },
+                status_code=409,
+            )
+        update_invoice_from_edit(conn, invoice=invoice, form=form)
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}",
+        status_code=303,
     )
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/recalculate")
 async def pro_invoice_recalculate(
-    customer_id: int, vehicle_id: int, invoice_id: int
+    request: Request, customer_id: int, vehicle_id: int, invoice_id: int
 ):
+    form = await read_form_data(request)
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        if invoice.get("has_manual_adjustments") and form.get("confirm_refresh") != "1":
+            completion_warnings = invoice_completion_warnings(invoice)
+            if completion_warnings:
+                raise HTTPException(status_code=400, detail=completion_warnings[0])
+            shop_profile = load_shop_profile_context(conn)
+            shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+            return templates.TemplateResponse(
+                "pro/invoice_detail.html",
+                {
+                    "request": request,
+                    "customer": customer,
+                    "vehicle": vehicle,
+                    "invoice": invoice,
+                    "shop_name": shop_name,
+                    "shop_profile": shop_profile,
+                    "refresh_warning": "This invoice has manual invoice edits. Confirm before refreshing linked repair totals from completed repair records.",
+                },
+                status_code=409,
+            )
         recalculate_invoice_from_repair(
             conn,
             invoice_id=invoice_id,
             customer_id=customer_id,
             vehicle_id=vehicle_id,
+            clear_item_overrides=True,
         )
         conn.commit()
     finally:
@@ -13126,7 +13445,11 @@ def pro_invoice_pdf(request: Request, customer_id: int, vehicle_id: int, invoice
         vehicle=vehicle,
         shop_name=shop_name,
         shop_profile=shop_profile,
-        display_options=invoice_pdf_options_from_query(request.query_params),
+        display_options=(
+            invoice_pdf_options_from_query(request.query_params)
+            if request.query_params
+            else invoice.get("pdf_display_options") or INVOICE_PDF_DEFAULT_OPTIONS
+        ),
     )
     return Response(
         content,

@@ -1121,6 +1121,181 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn(b"Hours", route_with_hours.content)
         self.assertIn(b"2.75", route_with_hours.content)
 
+    def test_unpaid_invoice_edit_preserves_number_links_and_updates_pdf(self):
+        self.insert_repair(87, "Invoice Editable Repair", 1.0, 120, 80, notes="Original repair note.")
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 87)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:00:00",
+        )
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        item = loaded["items"][0]
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        edit_url = f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}/edit"
+        form = {
+            f"item_labor_total_{item['invoice_item_id']}": "300",
+            f"item_parts_total_{item['invoice_item_id']}": "40",
+            f"item_repair_notes_{item['invoice_item_id']}": "Customer-facing edited note.",
+            "shop_supplies_fee": "12",
+            "tax_total": "6",
+            "discount_total": "8",
+            "warranty_text": "Edited warranty statement.",
+            "payment_terms": "Due before release.",
+            "show_completion_date": "1",
+            "show_labor_hours": "1",
+            "show_labor_rate": "1",
+            "show_labor_total": "1",
+            "show_parts_total": "1",
+            "show_repair_notes": "1",
+        }
+
+        warning = client.post(edit_url, data=form)
+
+        self.assertEqual(warning.status_code, 409)
+        self.assertIn("$200.00", warning.text)
+        self.assertIn("$350.00", warning.text)
+        unchanged = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        self.assertEqual(unchanged["grand_total"], 200)
+
+        saved = client.post(edit_url, data={**form, "confirm_total_change": "1"}, follow_redirects=False)
+
+        self.assertEqual(saved.status_code, 303)
+        self.assertEqual(saved.headers["location"], f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}")
+        edited = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        self.assertEqual(edited["invoice_number"], invoice["invoice_number"])
+        self.assertEqual(edited["labor_total"], 300)
+        self.assertEqual(edited["parts_total"], 40)
+        self.assertEqual(edited["shop_supplies_fee"], 12)
+        self.assertEqual(edited["tax_total"], 6)
+        self.assertEqual(edited["discount_total"], 8)
+        self.assertEqual(edited["grand_total"], 350)
+        self.assertEqual(edited["amount_paid"], 0)
+        self.assertEqual(edited["balance_due"], 350)
+        self.assertEqual(edited["payment_terms"], "Due before release.")
+        self.assertEqual(edited["items"][0]["repair_record_id"], 87)
+        self.assertEqual(edited["items"][0]["repair_notes"], "Customer-facing edited note.")
+        repair_after = pro_module.load_repair_record(self.conn, 1, 1, 87)
+        self.assertEqual(repair_after["labor_cost"], 120)
+        self.assertEqual(repair_after["parts_cost"], 80)
+        link_count = self.conn.execute(
+            "SELECT COUNT(*) AS count FROM invoice_items WHERE invoice_id = ? AND repair_record_id = 87",
+            (invoice["id"],),
+        ).fetchone()["count"]
+        self.assertEqual(link_count, 1)
+
+        pdf = client.get(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}/pdf")
+        self.assertEqual(pdf.status_code, 200)
+        self.assertIn(b"$350.00", pdf.content)
+        self.assertIn(b"Customer-facing edited note.", pdf.content)
+        self.assertIn(b"Edited warranty statement.", pdf.content)
+        self.assertIn(b"Due before release.", pdf.content)
+        self.assertIn(b"Hours", pdf.content)
+        self.assertIn(b"Rate", pdf.content)
+
+    def test_paid_invoice_rejects_direct_financial_edits(self):
+        self.insert_repair(88, "Paid Invoice Repair", 1.0, 120, 80)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 88)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:00:00",
+        )
+        self.conn.execute(
+            "UPDATE invoices SET amount_paid = grand_total, payment_status = 'Paid in Full' WHERE id = ?",
+            (invoice["id"],),
+        )
+        self.conn.commit()
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        item = loaded["items"][0]
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        edit_page = client.get(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}/edit")
+        response = client.post(
+            f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}/edit",
+            data={
+                f"item_labor_total_{item['invoice_item_id']}": "500",
+                f"item_parts_total_{item['invoice_item_id']}": "10",
+                "shop_supplies_fee": "0",
+                "tax_total": "0",
+                "discount_total": "0",
+            },
+        )
+
+        self.assertEqual(edit_page.status_code, 200)
+        self.assertIn("Paid Invoice Locked", edit_page.text)
+        self.assertIn("Adjustment", edit_page.text)
+        self.assertIn("Refund", edit_page.text)
+        self.assertIn("Void Invoice", edit_page.text)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Paid invoices cannot be silently rewritten", response.text)
+        unchanged = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        self.assertEqual(unchanged["grand_total"], 200)
+        self.assertEqual(unchanged["amount_paid"], 200)
+
+    def test_refresh_from_repair_records_does_not_silently_overwrite_manual_adjustments(self):
+        self.insert_repair(89, "Refresh Protected Repair", 1.0, 120, 80)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 89)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:00:00",
+        )
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        item = loaded["items"][0]
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        edit_url = f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}/edit"
+        edit_form = {
+            f"item_labor_total_{item['invoice_item_id']}": "300",
+            f"item_parts_total_{item['invoice_item_id']}": "80",
+            f"item_repair_notes_{item['invoice_item_id']}": "Manual invoice note.",
+            "shop_supplies_fee": "0",
+            "tax_total": "0",
+            "discount_total": "0",
+            "warranty_text": "",
+            "payment_terms": "",
+            "show_completion_date": "1",
+            "show_labor_total": "1",
+            "show_parts_total": "1",
+            "show_repair_notes": "1",
+            "confirm_total_change": "1",
+        }
+        self.assertEqual(client.post(edit_url, data=edit_form, follow_redirects=False).status_code, 303)
+
+        refresh = client.post(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}/recalculate")
+
+        self.assertEqual(refresh.status_code, 409)
+        self.assertIn("manual invoice edits", refresh.text)
+        still_manual = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        self.assertEqual(still_manual["labor_total"], 300)
+        self.assertEqual(still_manual["grand_total"], 380)
+
+        confirmed = client.post(
+            f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}/recalculate",
+            data={"confirm_refresh": "1"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(confirmed.status_code, 303)
+        refreshed = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        self.assertEqual(refreshed["invoice_number"], invoice["invoice_number"])
+        self.assertEqual(refreshed["labor_total"], 120)
+        self.assertEqual(refreshed["parts_total"], 80)
+        self.assertEqual(refreshed["grand_total"], 200)
+        self.assertEqual(refreshed["items"][0]["repair_record_id"], 89)
+
     def test_final_invoice_pdf_accounting_totals_and_payment_statuses(self):
         pro_module.save_shop_settings(
             self.conn,
