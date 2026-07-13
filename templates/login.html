@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block title %}Log In | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  body { background:#09111d; }
+  .tm-auth-page { display:grid; place-items:center; min-height:calc(100vh - 170px); padding:34px 0; }
+  .tm-auth-panel { width:min(100%, 460px); border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; color:#e5edf7; padding:24px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
+  .tm-auth-panel h1 { color:#f8fafc; font-size:2rem; letter-spacing:0; }
+  .tm-auth-panel p { color:#a9b6c8; }
+  .tm-auth-field { display:grid; gap:6px; margin-top:14px; }
+  .tm-auth-field label { color:#dbe6f4; font-weight:800; }
+  .tm-auth-field input { width:100%; border:1px solid rgba(255,255,255,.16); border-radius:8px; background:#0b1220; color:#f8fafc; padding:11px 12px; }
+  .tm-auth-error { color:#fb923c; font-size:.9rem; font-weight:800; margin-top:10px; }
+  .tm-auth-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:20px; }
+  .tm-auth-primary { border:0; border-radius:8px; background:#f97316; color:#111827; cursor:pointer; font-weight:900; padding:12px 16px; }
+  .tm-auth-link { color:#fdba74; font-weight:900; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-auth-page">
+  <form class="tm-auth-panel" method="post" action="/login" novalidate>
+    <h1>Log in</h1>
+    <p>Open your TorqueMech Pro workspace.</p>
+    {% if errors.form %}<div class="tm-auth-error">{{ errors.form }}</div>{% endif %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="tm-auth-field">
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" value="{{ values.email or '' }}" autocomplete="email" required>
+      {% if errors.email %}<span class="tm-auth-error">{{ errors.email }}</span>{% endif %}
+    </div>
+    <div class="tm-auth-field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      {% if errors.password %}<span class="tm-auth-error">{{ errors.password }}</span>{% endif %}
+    </div>
+    <div class="tm-auth-actions">
+      <button class="tm-auth-primary" type="submit">Log In</button>
+      <a class="tm-auth-link" href="/signup">Sign Up</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Bootstrap | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  body { background:#09111d; }
+  .tm-auth-page { display:grid; place-items:center; min-height:calc(100vh - 170px); padding:34px 0; }
+  .tm-auth-panel { width:min(100%, 560px); border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; color:#e5edf7; padding:24px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
+  .tm-auth-panel h1 { color:#f8fafc; font-size:2rem; letter-spacing:0; }
+  .tm-auth-panel p { color:#a9b6c8; }
+  .tm-auth-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .tm-auth-field { display:grid; gap:6px; margin-top:14px; }
+  .tm-auth-field label { color:#dbe6f4; font-weight:800; }
+  .tm-auth-field input { width:100%; border:1px solid rgba(255,255,255,.16); border-radius:8px; background:#0b1220; color:#f8fafc; padding:11px 12px; }
+  .tm-auth-error { color:#fb923c; font-size:.9rem; font-weight:800; }
+  .tm-auth-check { display:flex; gap:10px; align-items:flex-start; margin-top:16px; color:#cbd5e1; font-weight:700; }
+  .tm-auth-check input { margin-top:4px; }
+  .tm-auth-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:20px; }
+  .tm-auth-primary { border:0; border-radius:8px; background:#f97316; color:#111827; cursor:pointer; font-weight:900; padding:12px 16px; }
+  .tm-auth-link { color:#fdba74; font-weight:900; }
+  @media (max-width: 680px) { .tm-auth-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-auth-page">
+  <form class="tm-auth-panel" method="post" action="/admin/bootstrap" novalidate>
+    <h1>Initial owner setup</h1>
+    <p>Create the first TorqueMech owner account.</p>
+    {% if errors.form %}<div class="tm-auth-error">{{ errors.form }}</div>{% endif %}
+    {% if not bootstrap_configured %}
+      <div class="tm-auth-error">Initial account setup is not enabled. Ask the site owner to configure setup access before creating the first account.</div>
+    {% endif %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="tm-auth-field">
+      <label for="bootstrap_token">Setup token</label>
+      <input id="bootstrap_token" name="bootstrap_token" type="password" autocomplete="one-time-code" required>
+      {% if errors.bootstrap_token %}<span class="tm-auth-error">{{ errors.bootstrap_token }}</span>{% endif %}
+    </div>
+    <div class="tm-auth-grid">
+      <div class="tm-auth-field">
+        <label for="first_name">First name</label>
+        <input id="first_name" name="first_name" value="{{ values.first_name or '' }}" autocomplete="given-name" required>
+        {% if errors.first_name %}<span class="tm-auth-error">{{ errors.first_name }}</span>{% endif %}
+      </div>
+      <div class="tm-auth-field">
+        <label for="last_name">Last name</label>
+        <input id="last_name" name="last_name" value="{{ values.last_name or '' }}" autocomplete="family-name" required>
+        {% if errors.last_name %}<span class="tm-auth-error">{{ errors.last_name }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="tm-auth-field">
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" value="{{ values.email or '' }}" autocomplete="email" required>
+      {% if errors.email %}<span class="tm-auth-error">{{ errors.email }}</span>{% endif %}
+    </div>
+    <div class="tm-auth-grid">
+      <div class="tm-auth-field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" required>
+        {% if errors.password %}<span class="tm-auth-error">{{ errors.password }}</span>{% endif %}
+      </div>
+      <div class="tm-auth-field">
+        <label for="confirm_password">Confirm password</label>
+        <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+        {% if errors.confirm_password %}<span class="tm-auth-error">{{ errors.confirm_password }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="tm-auth-field">
+      <label for="shop_name">Shop name</label>
+      <input id="shop_name" name="shop_name" value="{{ values.shop_name or '' }}" autocomplete="organization" required>
+      {% if errors.shop_name %}<span class="tm-auth-error">{{ errors.shop_name }}</span>{% endif %}
+    </div>
+    <label class="tm-auth-check">
+      <input type="checkbox" name="terms" value="1" {% if values.terms %}checked{% endif %}>
+      <span>I agree to the <a class="tm-auth-link" href="/terms">Terms of Service</a> and <a class="tm-auth-link" href="/privacy">Privacy Policy</a>.</span>
+    </label>
+    {% if errors.terms %}<span class="tm-auth-error">{{ errors.terms }}</span>{% endif %}
+    <div class="tm-auth-actions">
+      <button class="tm-auth-primary" type="submit">Create Owner Account</button>
+      <a class="tm-auth-link" href="/login">Log In</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
