@@ -168,6 +168,58 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn(messages[0]["verification_url"], messages[0]["body"])
         self.assertTrue(messages[0]["token"])
 
+    def test_signup_sends_verification_email_by_smtp_transport(self):
+        smtp_calls = []
+
+        class FakeSMTP:
+            def __init__(self, server, port, timeout=None):
+                smtp_calls.append(("connect", server, port, timeout))
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                smtp_calls.append(("close",))
+
+            def starttls(self):
+                smtp_calls.append(("starttls",))
+
+            def login(self, username, password):
+                smtp_calls.append(("login", username, password))
+
+            def send_message(self, message, from_addr=None, to_addrs=None):
+                smtp_calls.append(("send_message", message, from_addr, to_addrs))
+
+        with patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "smtp"}), \
+            patch.object(main, "SMTP_SERVER", "smtp.example.test"), \
+            patch.object(main, "SMTP_PORT", 2525), \
+            patch.object(main, "SMTP_USER", "smtp-user"), \
+            patch.object(main, "SMTP_PASS", "smtp-pass"), \
+            patch.object(main, "FEEDBACK_EMAIL", "mailer@updates.torquemech.com"), \
+            patch.object(main.smtplib, "SMTP", FakeSMTP):
+            client = self.client()
+            self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+            self.logout(client)
+            response = self.signup(client, email="user@example.com", shop_name="Beta Shop")
+
+        send_call = next(call for call in smtp_calls if call[0] == "send_message")
+        message = send_call[1]
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/check-email")
+        self.assertFalse(self.outbox_path.exists())
+        self.assertIn(("connect", "smtp.example.test", 2525, 10), smtp_calls)
+        self.assertIn(("starttls",), smtp_calls)
+        self.assertIn(("login", "smtp-user", "smtp-pass"), smtp_calls)
+        self.assertEqual(message["From"], "TorqueMech <no-reply@updates.torquemech.com>")
+        self.assertEqual(message["Sender"], "mailer@updates.torquemech.com")
+        self.assertEqual(message["To"], "user@example.com")
+        self.assertEqual(message["Subject"], "Verify your TorqueMech account")
+        self.assertEqual(send_call[2], "mailer@updates.torquemech.com")
+        self.assertEqual(send_call[3], ["user@example.com"])
+        self.assertIn("/verify-email?token=", message.get_payload())
+        self.assertNotEqual(message["From"], "smtp-user")
+
     def test_valid_verification_token_verifies_account_and_clears_fields(self):
         client = self.client()
         self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")

@@ -1871,8 +1871,6 @@ def verification_url_for_token(request: Request, token: str) -> str:
 
 
 def send_verification_email_local(request: Request, *, email: str, token: str, user_id: int) -> None:
-    if not local_email_transport_enabled():
-        return
     verification_url = verification_url_for_token(request, token)
     outbox_path = verification_outbox_path()
     outbox_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1892,6 +1890,49 @@ def send_verification_email_local(request: Request, *, email: str, token: str, u
     }
     with outbox_path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(message, sort_keys=True) + "\n")
+
+
+def smtp_email_transport_enabled() -> bool:
+    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    return transport == "smtp"
+
+
+def verification_email_body(verification_url: str) -> str:
+    return (
+        "Verify your TorqueMech account before continuing to your Pro workspace.\n\n"
+        f"{verification_url}\n"
+    )
+
+
+def send_verification_email_smtp(request: Request, *, email: str, token: str) -> None:
+    if not (SMTP_SERVER and SMTP_PORT and SMTP_USER and SMTP_PASS and FEEDBACK_EMAIL):
+        logging.error("VERIFICATION_EMAIL_SMTP_NOT_CONFIGURED")
+        return
+
+    verification_url = verification_url_for_token(request, token)
+    msg = MIMEText(verification_email_body(verification_url))
+    msg["Subject"] = "Verify your TorqueMech account"
+    msg["From"] = "TorqueMech <no-reply@updates.torquemech.com>"
+    msg["To"] = email
+    msg["Sender"] = FEEDBACK_EMAIL
+    msg["Reply-To"] = FEEDBACK_EMAIL
+
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.send_message(msg, from_addr=FEEDBACK_EMAIL, to_addrs=[email])
+    except Exception:
+        logging.exception("VERIFICATION_EMAIL_SMTP_FAILED to=%s server=%s port=%s", email, SMTP_SERVER, SMTP_PORT)
+
+
+def send_verification_email(request: Request, *, email: str, token: str, user_id: int) -> None:
+    if local_email_transport_enabled():
+        send_verification_email_local(request, email=email, token=token, user_id=user_id)
+    elif smtp_email_transport_enabled():
+        send_verification_email_smtp(request, email=email, token=token)
+    else:
+        logging.error("VERIFICATION_EMAIL_TRANSPORT_UNSUPPORTED transport=%s", os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
 
 
 def parse_verification_expiry(raw: Any) -> datetime | None:
@@ -2052,7 +2093,7 @@ async def signup_submit(request: Request):
             user_id = int(cur.lastrowid)
             create_shop_profile_for_user(conn, user_id, values["shop_name"])
             conn.commit()
-            send_verification_email_local(request, email=values["email"], token=_verification_token, user_id=user_id)
+            send_verification_email(request, email=values["email"], token=_verification_token, user_id=user_id)
         except sqlite3.IntegrityError:
             conn.rollback()
             errors["email"] = "An account with this email already exists."
