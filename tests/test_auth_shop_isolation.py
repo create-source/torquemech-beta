@@ -243,6 +243,139 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("smtp-user", log_output)
         self.assertNotIn("/verify-email?token=", log_output)
 
+    def test_signup_sends_verification_email_by_resend_transport(self):
+        resend_calls = []
+
+        class FakeEmails:
+            @staticmethod
+            def send(payload):
+                resend_calls.append(payload)
+                return {"id": "email_resend_123"}
+
+        class FakeResend:
+            api_key = ""
+            Emails = FakeEmails
+
+        with self.assertLogs("uvicorn.error", level="INFO") as captured_logs, \
+            patch.dict(
+                "os.environ",
+                {
+                    "TORQUEMECH_EMAIL_TRANSPORT": "resend",
+                    "RESEND_API_KEY": "re_secret_test_key",
+                },
+            ), \
+            patch.object(main, "FEEDBACK_EMAIL", "TorqueMech <verify@updates.torquemech.com>"), \
+            patch.object(main, "resend", FakeResend):
+            client = self.client()
+            self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+            self.logout(client)
+            response = self.signup(client, email="user@example.com", shop_name="Beta Shop")
+
+        log_output = "\n".join(captured_logs.output)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/check-email")
+        self.assertFalse(self.outbox_path.exists())
+        self.assertEqual(FakeResend.api_key, "re_secret_test_key")
+        self.assertEqual(len(resend_calls), 1)
+        payload = resend_calls[0]
+        self.assertEqual(payload["from"], "TorqueMech <verify@updates.torquemech.com>")
+        self.assertEqual(payload["to"], ["user@example.com"])
+        self.assertEqual(payload["subject"], "Verify your TorqueMech account")
+        self.assertIn("/verify-email?token=", payload["html"])
+        self.assertIn("/verify-email?token=", payload["text"])
+        self.assertIn("VERIFICATION_EMAIL_TRANSPORT_SELECTED transport=resend", log_output)
+        self.assertIn("VERIFICATION_EMAIL_DELIVERY_ENTERED transport=resend", log_output)
+        self.assertIn("VERIFICATION_EMAIL_RESEND_ACCEPTED", log_output)
+        self.assertIn("resend_email_id=email_resend_123", log_output)
+        self.assertNotIn("re_secret_test_key", log_output)
+        self.assertNotIn("/verify-email?token=", log_output)
+
+    def test_resend_transport_missing_api_key_returns_controlled_failure(self):
+        class FakeEmails:
+            @staticmethod
+            def send(payload):
+                raise AssertionError("Resend should not be called without an API key")
+
+        class FakeResend:
+            api_key = ""
+            Emails = FakeEmails
+
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        original_token = self.latest_verification_token()
+        self.conn.execute(
+            "UPDATE users SET verification_email_last_sent_at = '2026-01-01T00:00:00' WHERE email = 'user@example.com'"
+        )
+        self.conn.commit()
+        page = client.get("/check-email")
+
+        with self.assertLogs("uvicorn.error", level="INFO") as captured_logs, \
+            patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "resend", "RESEND_API_KEY": ""}), \
+            patch.object(main, "FEEDBACK_EMAIL", "verify@updates.torquemech.com"), \
+            patch.object(main, "resend", FakeResend):
+            response = client.post(
+                "/check-email/resend",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+        log_output = "\n".join(captured_logs.output)
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("could not send a verification email", response.text)
+        self.assertEqual(main.verification_token_hash(original_token), user["verification_token_hash"])
+        self.assertIn("VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=api_key", log_output)
+        self.assertNotIn("/verify-email?token=", log_output)
+
+    def test_resend_transport_api_failure_returns_controlled_failure(self):
+        class FakeEmails:
+            @staticmethod
+            def send(payload):
+                raise RuntimeError("resend api unavailable")
+
+        class FakeResend:
+            api_key = ""
+            Emails = FakeEmails
+
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        original_token = self.latest_verification_token()
+        self.conn.execute(
+            "UPDATE users SET verification_email_last_sent_at = '2026-01-01T00:00:00' WHERE email = 'user@example.com'"
+        )
+        self.conn.commit()
+        page = client.get("/check-email")
+
+        with self.assertLogs("uvicorn.error", level="INFO") as captured_logs, \
+            patch.dict(
+                "os.environ",
+                {
+                    "TORQUEMECH_EMAIL_TRANSPORT": "resend",
+                    "RESEND_API_KEY": "re_secret_test_key",
+                },
+            ), \
+            patch.object(main, "FEEDBACK_EMAIL", "verify@updates.torquemech.com"), \
+            patch.object(main, "resend", FakeResend):
+            response = client.post(
+                "/check-email/resend",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+        log_output = "\n".join(captured_logs.output)
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("could not send a verification email", response.text)
+        self.assertEqual(main.verification_token_hash(original_token), user["verification_token_hash"])
+        self.assertIn("VERIFICATION_EMAIL_RESEND_EXCEPTION sender=verify@updates.torquemech.com recipient=user@example.com", log_output)
+        self.assertIn("RuntimeError: resend api unavailable", log_output)
+        self.assertNotIn("re_secret_test_key", log_output)
+        self.assertNotIn("/verify-email?token=", log_output)
+
     def test_verification_email_contains_one_clean_clickable_url(self):
         client = self.client()
         self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
@@ -473,7 +606,7 @@ class AuthShopIsolationTests(unittest.TestCase):
             )
         user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
 
-        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.status_code, 503)
         self.assertIn("could not send a verification email", response.text)
         self.assertNotIn("A fresh verification email has been sent.", response.text)
         self.assertEqual(len(self.outbox_messages()), 1)
@@ -526,7 +659,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
         log_output = "\n".join(captured_logs.output)
 
-        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.status_code, 503)
         self.assertIn("We could not send a verification email right now. Please try again.", response.text)
         self.assertNotIn("A fresh verification email has been sent.", response.text)
         self.assertIn("VERIFICATION_EMAIL_SMTP_REFUSED", log_output)

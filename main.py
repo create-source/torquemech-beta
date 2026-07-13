@@ -94,6 +94,11 @@ from fastapi.responses import JSONResponse
 import smtplib
 from email.mime.text import MIMEText
 
+try:
+    import resend
+except ImportError:
+    resend = None
+
 from dotenv import load_dotenv
 import os
 
@@ -143,7 +148,9 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 FEEDBACK_EMAIL = os.getenv("FEEDBACK_EMAIL")
+RESEND_API_KEY_ENV = "RESEND_API_KEY"
 VERIFICATION_EMAIL_RESEND_COOLDOWN_SECONDS = 60
+VERIFICATION_EMAIL_SUBJECT = "Verify your TorqueMech account"
 
 def service_slug_exists(service_slug: str) -> bool:
     catalog = load_services_catalog()
@@ -1890,7 +1897,7 @@ def send_verification_email_local(request: Request, *, email: str, token: str, u
         "created_at": now,
         "transport": "local",
         "to": email,
-        "subject": "Verify your TorqueMech account",
+        "subject": VERIFICATION_EMAIL_SUBJECT,
         "verification_url": verification_url,
         "token": token,
         "user_id": user_id,
@@ -1912,6 +1919,19 @@ def send_verification_email_local(request: Request, *, email: str, token: str, u
 def smtp_email_transport_enabled() -> bool:
     transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
     return transport == "smtp"
+
+
+def resend_email_transport_enabled() -> bool:
+    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    return transport == "resend"
+
+
+def verification_email_text_body(verification_url: str) -> str:
+    clean_url = str(verification_url or "").strip()
+    return (
+        "Verify your TorqueMech account before continuing to your Pro workspace.\n\n"
+        f"{clean_url}\n"
+    )
 
 
 def verification_email_body(verification_url: str) -> str:
@@ -1945,7 +1965,7 @@ def send_verification_email_smtp(request: Request, *, email: str, token: str) ->
 
     verification_url = verification_url_for_token(request, token)
     msg = MIMEText(verification_email_body(verification_url), "html", "utf-8")
-    msg["Subject"] = "Verify your TorqueMech account"
+    msg["Subject"] = VERIFICATION_EMAIL_SUBJECT
     msg["From"] = "TorqueMech <no-reply@updates.torquemech.com>"
     msg["To"] = email
     msg["Sender"] = FEEDBACK_EMAIL
@@ -2034,13 +2054,77 @@ def send_verification_email_smtp(request: Request, *, email: str, token: str) ->
         return False
 
 
+def resend_email_id(response: Any) -> str:
+    if isinstance(response, dict):
+        return str(response.get("id") or "")
+    return str(getattr(response, "id", "") or "")
+
+
+def send_verification_email_resend(request: Request, *, email: str, token: str) -> bool:
+    sender = str(FEEDBACK_EMAIL or "").strip()
+    api_key = (os.getenv(RESEND_API_KEY_ENV) or "").strip()
+    verification_email_logger.info(
+        "VERIFICATION_EMAIL_DELIVERY_ENTERED transport=resend sender=%s recipient=%s",
+        sender,
+        email,
+    )
+    if not sender:
+        verification_email_logger.error(
+            "VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=sender recipient=%s",
+            email,
+        )
+        return False
+    if not api_key:
+        verification_email_logger.error(
+            "VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=api_key sender=%s recipient=%s",
+            sender,
+            email,
+        )
+        return False
+    if resend is None:
+        verification_email_logger.error(
+            "VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=package sender=%s recipient=%s",
+            sender,
+            email,
+        )
+        return False
+
+    verification_url = verification_url_for_token(request, token)
+    try:
+        resend.api_key = api_key
+        response = resend.Emails.send(
+            {
+                "from": sender,
+                "to": [email],
+                "subject": VERIFICATION_EMAIL_SUBJECT,
+                "html": verification_email_body(verification_url),
+                "text": verification_email_text_body(verification_url),
+            }
+        )
+        email_id = resend_email_id(response)
+        verification_email_logger.info(
+            "VERIFICATION_EMAIL_RESEND_ACCEPTED sender=%s recipient=%s resend_email_id=%s",
+            sender,
+            email,
+            email_id,
+        )
+        return True
+    except Exception:
+        verification_email_logger.exception(
+            "VERIFICATION_EMAIL_RESEND_EXCEPTION sender=%s recipient=%s",
+            sender,
+            email,
+        )
+        return False
+
+
 def send_verification_email(request: Request, *, email: str, token: str, user_id: int) -> bool:
     transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
-    sender = FEEDBACK_EMAIL if transport == "smtp" else "local-outbox"
+    sender = FEEDBACK_EMAIL if transport in {"smtp", "resend"} else "local-outbox"
     verification_email_logger.info(
         "VERIFICATION_EMAIL_TRANSPORT_SELECTED transport=%s host=%s port=%s sender=%s recipient=%s user_id=%s",
         transport,
-        SMTP_SERVER if transport == "smtp" else "local",
+        SMTP_SERVER if transport == "smtp" else ("resend" if transport == "resend" else "local"),
         SMTP_PORT if transport == "smtp" else "",
         sender,
         email,
@@ -2050,6 +2134,8 @@ def send_verification_email(request: Request, *, email: str, token: str, user_id
         return send_verification_email_local(request, email=email, token=token, user_id=user_id)
     if smtp_email_transport_enabled():
         return send_verification_email_smtp(request, email=email, token=token)
+    if resend_email_transport_enabled():
+        return send_verification_email_resend(request, email=email, token=token)
     verification_email_logger.error("VERIFICATION_EMAIL_TRANSPORT_UNSUPPORTED transport=%s", transport)
     return False
 
@@ -2493,7 +2579,7 @@ async def resend_verification_email(request: Request):
                     message="We could not send a verification email right now. Please try again.",
                     user=user,
                 ),
-                status_code=502,
+                status_code=503,
             )
         now = datetime.utcnow().isoformat()
         conn.execute(
