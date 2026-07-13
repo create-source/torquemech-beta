@@ -343,7 +343,13 @@
   </div>
 
   {% if saved %}
-  <div class="tm-shop-settings-saved">Shop settings saved.</div>
+    <div class="tm-shop-settings-saved">Shop settings saved.</div>
+  {% endif %}
+  {% if first_setup_notice %}
+    <div class="tm-shop-settings-saved">Your TorqueMech account is ready. Complete your shop profile to get started.</div>
+  {% endif %}
+  {% if email_verified_notice %}
+    <div class="tm-shop-settings-saved">Your email has been verified. Complete your shop profile to get started.</div>
   {% endif %}
 
   <section class="tm-shop-settings-panel" aria-label="TorqueMech booking link">

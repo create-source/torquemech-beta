@@ -1,4 +1,5 @@
 import os
+import json
 import sqlite3
 import unittest
 from types import SimpleNamespace
@@ -8,6 +9,60 @@ from fastapi.testclient import TestClient
 
 import main
 from routers import pro as pro_module
+
+
+def auth_session_client(conn, base_url="http://localhost", email="owner@example.com"):
+    pro_module.ensure_auth_schema(conn)
+    pro_module.ensure_shop_profile_schema(conn)
+    now = "2026-07-12T00:00:00"
+    conn.execute(
+        """
+        INSERT INTO users (email, password_hash, first_name, last_name, is_active, created_at, updated_at)
+        VALUES (?, ?, 'Test', 'Owner', 1, ?, ?)
+        """,
+        (email, pro_module.hash_password("correct-password"), now, now),
+    )
+    user_id = int(conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()["id"])
+    user_columns = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+    for column in ("email_verified", "is_verified", "verified"):
+        if column in user_columns:
+            conn.execute(f"UPDATE users SET {column} = 1 WHERE id = ?", (user_id,))
+    for column in ("email_verified_at", "verified_at"):
+        if column in user_columns:
+            conn.execute(f"UPDATE users SET {column} = ? WHERE id = ?", (now, user_id))
+    shop_id = pro_module.bootstrap_existing_shop_to_user(conn, user_id, "Test Shop")
+    session_id = f"test-session-{user_id}"
+    conn.execute(
+        """
+        INSERT INTO auth_sessions (session_id, data_json, created_at, updated_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (session_id, json.dumps({pro_module.AUTH_SESSION_USER_KEY: user_id}), now, now),
+    )
+    conn.commit()
+    client = TestClient(main.app, base_url=base_url)
+    client.cookies.set(main.SESSION_COOKIE_NAME, session_id)
+    return client, user_id, shop_id
+
+
+def assign_shop_scope(conn, shop_id):
+    for table in (
+        "shop_availability",
+        "shop_closed_days",
+        "service_appointments",
+        "customers",
+        "customer_vehicles",
+    ):
+        exists = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (table,),
+        ).fetchone()
+        if not exists:
+            continue
+        columns = {row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+        if "shop_id" in columns:
+            conn.execute(f"UPDATE {table} SET shop_id = ? WHERE shop_id IS NULL", (shop_id,))
+    conn.commit()
 
 
 class NonClosingConnection(sqlite3.Connection):
@@ -393,11 +448,14 @@ class CalendarFoundationTests(unittest.TestCase):
                         "status": "Requested",
                     },
                 )
-            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
             ):
-                client = TestClient(main.app, base_url="http://localhost")
+                client, _, shop_id = auth_session_client(conn)
+                assign_shop_scope(conn, shop_id)
                 pending_page = client.get("/pro/calendar")
                 confirm_response = client.post(
                     f"/pro/calendar/{appointment_id}/status",
@@ -410,6 +468,8 @@ class CalendarFoundationTests(unittest.TestCase):
                     data={"status": "Handled"},
                     follow_redirects=False,
                 )
+                second_client, _, _ = auth_session_client(conn, email="second-owner@example.com")
+                second_calendar_page = second_client.get("/pro/calendar")
                 row = conn.execute(
                     "SELECT status FROM service_appointments WHERE id = ?",
                     (appointment_id,),
@@ -441,6 +501,8 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Appointment confirmed.", confirmed_page.text)
         self.assertIn("Confirmed Appointments", confirmed_page.text)
         self.assertIn("Copy Confirmation Message", confirmed_page.text)
+        self.assertNotIn("customer@example.com", second_calendar_page.text)
+        self.assertNotIn("Pending Requests (6)", second_calendar_page.text)
         self.assertEqual(handled_response.headers["location"], "/pro/calendar?notice=handled")
         self.assertEqual(row["status"], "Handled")
 
@@ -466,12 +528,15 @@ class CalendarFoundationTests(unittest.TestCase):
                 },
             )
             with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ), patch.object(
                 pro_module, "shop_today", lambda: pro_module.date(2026, 7, 8)
             ), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
             ):
-                client = TestClient(main.app, base_url="http://localhost")
+                client, _, shop_id = auth_session_client(conn)
+                assign_shop_scope(conn, shop_id)
                 calendar_page = client.get("/pro/calendar")
                 excluded_times = client.get(
                     f"/book/torquemech-shop/available-times"
@@ -535,11 +600,14 @@ class CalendarFoundationTests(unittest.TestCase):
                     "status": "Requested",
                 },
             )
-            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
             ):
-                client = TestClient(main.app, base_url="http://localhost")
+                client, _, shop_id = auth_session_client(conn)
+                assign_shop_scope(conn, shop_id)
                 pending_page = client.get("/pro/calendar")
                 decline_response = client.post(
                     f"/pro/calendar/{appointment_id}/status",
@@ -885,11 +953,14 @@ class CalendarFoundationTests(unittest.TestCase):
                     "status": "Confirmed",
                 },
             )
-            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
             ):
-                client = TestClient(main.app, base_url="http://localhost")
+                client, _, shop_id = auth_session_client(conn)
+                assign_shop_scope(conn, shop_id)
                 response = client.post(
                     f"/pro/calendar/{appointment_id}/convert",
                     data={
@@ -937,11 +1008,14 @@ class CalendarFoundationTests(unittest.TestCase):
                     "status": "Confirmed",
                 },
             )
-            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
             ):
-                client = TestClient(main.app, base_url="http://localhost")
+                client, _, shop_id = auth_session_client(conn)
+                assign_shop_scope(conn, shop_id)
                 response = client.post(
                     f"/pro/calendar/{appointment_id}/convert",
                     data={
@@ -984,6 +1058,8 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(len(vehicles), 1)
         self.assertEqual(appointment["customer_id"], customers[0]["id"])
         self.assertEqual(appointment["vehicle_id"], vehicles[0]["id"])
+        self.assertEqual(customers[0]["shop_id"], shop_id)
+        self.assertEqual(vehicles[0]["shop_id"], shop_id)
         self.assertIn("/estimator?", response.headers["location"])
         self.assertIn("source=appointment", response.headers["location"])
         self.assertIn(f"appointment_id={appointment_id}", response.headers["location"])
@@ -1348,8 +1424,10 @@ class CalendarFoundationTests(unittest.TestCase):
         conn.row_factory = sqlite3.Row
         try:
             with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
-                with patch.object(pro_module, "crm_db_conn", return_value=conn):
-                    client = TestClient(main.app, base_url="http://localhost")
+                with patch.object(pro_module, "crm_db_conn", return_value=conn), patch.object(
+                    main, "app_db_conn", lambda row_factory=False: conn
+                ):
+                    client, _, _ = auth_session_client(conn)
                     post_response = client.post(
                         "/pro/shop-schedule",
                         data={
@@ -1411,8 +1489,11 @@ class CalendarFoundationTests(unittest.TestCase):
         conn.commit()
 
         with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
-            with patch.object(pro_module, "crm_db_conn", return_value=conn):
-                response = TestClient(main.app, base_url="http://localhost").get("/pro/shop-settings")
+            with patch.object(pro_module, "crm_db_conn", return_value=conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ):
+                client, _, _ = auth_session_client(conn)
+                response = client.get("/pro/shop-settings")
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('value="Flow Test Autoeedddd"', response.text)
@@ -1447,8 +1528,10 @@ class CalendarFoundationTests(unittest.TestCase):
         conn.commit()
 
         with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
-            with patch.object(pro_module, "crm_db_conn", return_value=conn):
-                client = TestClient(main.app, base_url="http://localhost")
+            with patch.object(pro_module, "crm_db_conn", return_value=conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ):
+                client, _, _ = auth_session_client(conn)
                 post_response = client.post(
                     "/pro/shop-settings",
                     data={
@@ -1504,8 +1587,11 @@ class CalendarFoundationTests(unittest.TestCase):
         conn.commit()
 
         with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
-            with patch.object(pro_module, "crm_db_conn", return_value=conn):
-                blank_response = TestClient(main.app, base_url="http://localhost").get("/pro/shop-settings")
+            with patch.object(pro_module, "crm_db_conn", return_value=conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ):
+                client, _, _ = auth_session_client(conn)
+                blank_response = client.get("/pro/shop-settings")
 
         self.assertEqual(blank_response.status_code, 200)
         self.assertIn('data-tax-rate-field hidden', blank_response.text)
@@ -1514,8 +1600,10 @@ class CalendarFoundationTests(unittest.TestCase):
         conn.execute("UPDATE shop_profile SET tax_rate_default = 8.25, tax_rate = 8.25 WHERE id = 1")
         conn.commit()
         with patch.dict(os.environ, {"PRO_ENABLED": "true"}):
-            with patch.object(pro_module, "crm_db_conn", return_value=conn):
-                taxable_response = TestClient(main.app, base_url="http://localhost").get("/pro/shop-settings")
+            with patch.object(pro_module, "crm_db_conn", return_value=conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ):
+                taxable_response = client.get("/pro/shop-settings")
 
         self.assertEqual(taxable_response.status_code, 200)
         self.assertIn('id="use_tax_rate" name="use_tax_rate" type="checkbox" value="1" checked', taxable_response.text)

@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %}Email Verified | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  body { background:#09111d; }
+  .tm-verify-page { display:grid; place-items:center; min-height:calc(100vh - 170px); padding:34px 0; }
+  .tm-verify-panel { width:min(100%, 540px); border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; color:#e5edf7; padding:26px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
+  .tm-verify-kicker { color:#fdba74; font-size:.82rem; font-weight:900; letter-spacing:.08em; margin:0 0 10px; text-transform:uppercase; }
+  .tm-verify-panel h1 { color:#f8fafc; font-size:2rem; letter-spacing:0; line-height:1.15; margin:0; }
+  .tm-verify-panel p { color:#a9b6c8; line-height:1.6; margin:14px 0 0; }
+  .tm-verify-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:22px; }
+  .tm-verify-primary { border:0; border-radius:8px; background:#f97316; color:#111827; display:inline-flex; align-items:center; justify-content:center; font-weight:900; min-height:44px; padding:12px 16px; text-decoration:none; }
+  .tm-verify-logout { border:0; background:transparent; color:#fdba74; cursor:pointer; font-weight:900; padding:10px 0; }
+  @media (max-width: 560px) {
+    .tm-verify-panel { padding:22px; }
+    .tm-verify-panel h1 { font-size:1.7rem; }
+    .tm-verify-actions { align-items:stretch; flex-direction:column; }
+    .tm-verify-primary, .tm-verify-logout { width:100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-verify-page">
+  <div class="tm-verify-panel" role="status">
+    <p class="tm-verify-kicker">TorqueMech Pro</p>
+    <h1>Your email has been verified</h1>
+    <p><strong>Welcome to TorqueMech!</strong></p>
+    <p>Your email has been verified successfully.</p>
+    <p>Now let's set up your shop so you can start creating estimates, managing customers, scheduling appointments, and generating professional invoices.</p>
+    <div class="tm-verify-actions">
+      <a class="tm-verify-primary" href="/pro/shop-settings">Set Up Your Shop</a>
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="tm-verify-logout" type="submit">Log Out</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

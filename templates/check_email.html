@@ -11,6 +11,11 @@
   .tm-auth-panel p { color:#a9b6c8; }
   .tm-auth-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:20px; }
   .tm-auth-primary { border:0; border-radius:8px; background:#f97316; color:#111827; cursor:pointer; font-weight:900; padding:12px 16px; }
+  .tm-auth-secondary { border:1px solid rgba(255,255,255,.18); border-radius:8px; background:#0b1220; color:#f8fafc; cursor:pointer; font-weight:900; padding:12px 16px; }
+  .tm-auth-secondary:disabled { cursor:not-allowed; opacity:.55; }
+  .tm-auth-message { border-radius:8px; margin-top:16px; padding:11px 12px; font-weight:800; }
+  .tm-auth-message--success { background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
+  .tm-auth-message--error { background:rgba(251,146,60,.12); color:#fed7aa; border:1px solid rgba(251,146,60,.28); }
 </style>
 {% endblock %}
 
@@ -19,10 +24,53 @@
   <div class="tm-auth-panel">
     <h1>Check your email</h1>
     <p>Your TorqueMech account must be verified before you can continue to your Pro workspace.</p>
+    {% if message %}
+      <div class="tm-auth-message tm-auth-message--{{ status }}" role="status">{{ message }}</div>
+    {% endif %}
+    <form class="tm-auth-actions" method="post" action="/check-email/resend" data-resend-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="tm-auth-secondary" type="submit" data-resend-button data-cooldown-remaining="{{ cooldown_remaining|default(0) }}" {% if not resend_available %}disabled{% endif %}>
+        <span data-resend-label>Resend verification email</span>
+        <span data-resend-countdown {% if not cooldown_remaining or cooldown_remaining <= 0 %}hidden{% endif %}>({{ cooldown_remaining }}s)</span>
+      </button>
+    </form>
     <form class="tm-auth-actions" method="post" action="/logout">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <button class="tm-auth-primary" type="submit">Log Out</button>
     </form>
   </div>
 </section>
+<script>
+  (() => {
+    const button = document.querySelector("[data-resend-button]");
+    const countdown = document.querySelector("[data-resend-countdown]");
+    if (!button || !countdown) return;
+
+    let remaining = Number.parseInt(button.dataset.cooldownRemaining || "0", 10);
+    if (!Number.isFinite(remaining) || remaining < 0) remaining = 0;
+
+    const render = () => {
+      if (remaining > 0) {
+        button.disabled = true;
+        countdown.hidden = false;
+        countdown.textContent = `(${remaining}s)`;
+      } else {
+        button.disabled = false;
+        countdown.hidden = true;
+        countdown.textContent = "";
+      }
+    };
+
+    render();
+    if (remaining <= 0) return;
+
+    const timer = window.setInterval(() => {
+      remaining -= 1;
+      render();
+      if (remaining <= 0) {
+        window.clearInterval(timer);
+      }
+    }, 1000);
+  })();
+</script>
 {% endblock %}

@@ -3,8 +3,10 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import html
 import io
 import json
+import math
 import re
 import sqlite3
 import tempfile
@@ -141,6 +143,7 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 FEEDBACK_EMAIL = os.getenv("FEEDBACK_EMAIL")
+VERIFICATION_EMAIL_RESEND_COOLDOWN_SECONDS = 60
 
 def service_slug_exists(service_slug: str) -> bool:
     catalog = load_services_catalog()
@@ -165,6 +168,8 @@ logging.basicConfig(
 pro_gate_logger = logging.getLogger("torquemech.pro_gate")
 pro_gate_logger.setLevel(logging.WARNING)
 uvicorn_error_logger = logging.getLogger("uvicorn.error")
+verification_email_logger = uvicorn_error_logger
+verification_email_logger.setLevel(logging.INFO)
 
 # ===============================
 # Request ID (adds X-Request-ID)
@@ -1867,10 +1872,16 @@ def local_email_transport_enabled() -> bool:
 
 
 def verification_url_for_token(request: Request, token: str) -> str:
-    return f"{str(request.base_url).rstrip('/')}/verify-email?{urlencode({'token': token})}"
+    clean_token = str(token or "").strip()
+    return f"{str(request.base_url).rstrip('/')}/verify-email?{urlencode({'token': clean_token})}"
 
 
-def send_verification_email_local(request: Request, *, email: str, token: str, user_id: int) -> None:
+def send_verification_email_local(request: Request, *, email: str, token: str, user_id: int) -> bool:
+    verification_email_logger.info(
+        "VERIFICATION_EMAIL_DELIVERY_ENTERED transport=local sender=local-outbox recipient=%s user_id=%s",
+        email,
+        user_id,
+    )
     verification_url = verification_url_for_token(request, token)
     outbox_path = verification_outbox_path()
     outbox_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1890,6 +1901,12 @@ def send_verification_email_local(request: Request, *, email: str, token: str, u
     }
     with outbox_path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(message, sort_keys=True) + "\n")
+    verification_email_logger.info(
+        "VERIFICATION_EMAIL_LOCAL_ACCEPTED sender=local-outbox recipient=%s outbox=%s",
+        email,
+        outbox_path,
+    )
+    return True
 
 
 def smtp_email_transport_enabled() -> bool:
@@ -1898,19 +1915,36 @@ def smtp_email_transport_enabled() -> bool:
 
 
 def verification_email_body(verification_url: str) -> str:
+    clean_url = str(verification_url or "").strip()
+    escaped_url = html.escape(clean_url, quote=True)
     return (
-        "Verify your TorqueMech account before continuing to your Pro workspace.\n\n"
-        f"{verification_url}\n"
+        "<!doctype html><html><body>"
+        "<p>Verify your TorqueMech account before continuing to your Pro workspace.</p>"
+        f'<p><a href="{escaped_url}">Verify your email address</a></p>'
+        "</body></html>"
     )
 
 
-def send_verification_email_smtp(request: Request, *, email: str, token: str) -> None:
+def send_verification_email_smtp(request: Request, *, email: str, token: str) -> bool:
+    verification_email_logger.info(
+        "VERIFICATION_EMAIL_DELIVERY_ENTERED transport=smtp host=%s port=%s sender=%s recipient=%s",
+        SMTP_SERVER,
+        SMTP_PORT,
+        FEEDBACK_EMAIL,
+        email,
+    )
     if not (SMTP_SERVER and SMTP_PORT and SMTP_USER and SMTP_PASS and FEEDBACK_EMAIL):
-        logging.error("VERIFICATION_EMAIL_SMTP_NOT_CONFIGURED")
-        return
+        verification_email_logger.error(
+            "VERIFICATION_EMAIL_SMTP_NOT_CONFIGURED host=%s port=%s sender=%s recipient=%s",
+            SMTP_SERVER,
+            SMTP_PORT,
+            FEEDBACK_EMAIL,
+            email,
+        )
+        return False
 
     verification_url = verification_url_for_token(request, token)
-    msg = MIMEText(verification_email_body(verification_url))
+    msg = MIMEText(verification_email_body(verification_url), "html", "utf-8")
     msg["Subject"] = "Verify your TorqueMech account"
     msg["From"] = "TorqueMech <no-reply@updates.torquemech.com>"
     msg["To"] = email
@@ -1918,21 +1952,128 @@ def send_verification_email_smtp(request: Request, *, email: str, token: str) ->
     msg["Reply-To"] = FEEDBACK_EMAIL
 
     try:
+        verification_email_logger.info(
+            "VERIFICATION_EMAIL_SMTP_CONNECTING host=%s port=%s sender=%s recipient=%s",
+            SMTP_SERVER,
+            SMTP_PORT,
+            FEEDBACK_EMAIL,
+            email,
+        )
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
+            verification_email_logger.info(
+                "VERIFICATION_EMAIL_SMTP_CONNECTED host=%s port=%s sender=%s recipient=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+            )
+            verification_email_logger.info(
+                "VERIFICATION_EMAIL_SMTP_STARTTLS_START host=%s port=%s sender=%s recipient=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+            )
             server.starttls()
+            verification_email_logger.info(
+                "VERIFICATION_EMAIL_SMTP_STARTTLS_OK host=%s port=%s sender=%s recipient=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+            )
+            verification_email_logger.info(
+                "VERIFICATION_EMAIL_SMTP_AUTH_START host=%s port=%s sender=%s recipient=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+            )
             server.login(SMTP_USER, SMTP_PASS)
-            server.send_message(msg, from_addr=FEEDBACK_EMAIL, to_addrs=[email])
+            verification_email_logger.info(
+                "VERIFICATION_EMAIL_SMTP_AUTH_OK host=%s port=%s sender=%s recipient=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+            )
+            verification_email_logger.info(
+                "VERIFICATION_EMAIL_SMTP_SEND_START host=%s port=%s sender=%s recipient=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+            )
+            refused = server.send_message(msg, from_addr=FEEDBACK_EMAIL, to_addrs=[email])
+        if refused:
+            verification_email_logger.error(
+                "VERIFICATION_EMAIL_SMTP_REFUSED host=%s port=%s sender=%s recipient=%s refused=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+                refused,
+            )
+            return False
+        verification_email_logger.info(
+            "VERIFICATION_EMAIL_SMTP_ACCEPTED host=%s port=%s sender=%s recipient=%s",
+            SMTP_SERVER,
+            SMTP_PORT,
+            FEEDBACK_EMAIL,
+            email,
+        )
+        return True
     except Exception:
-        logging.exception("VERIFICATION_EMAIL_SMTP_FAILED to=%s server=%s port=%s", email, SMTP_SERVER, SMTP_PORT)
+        verification_email_logger.exception(
+            "VERIFICATION_EMAIL_SMTP_EXCEPTION host=%s port=%s sender=%s recipient=%s",
+            SMTP_SERVER,
+            SMTP_PORT,
+            FEEDBACK_EMAIL,
+            email,
+        )
+        return False
 
 
-def send_verification_email(request: Request, *, email: str, token: str, user_id: int) -> None:
+def send_verification_email(request: Request, *, email: str, token: str, user_id: int) -> bool:
+    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    sender = FEEDBACK_EMAIL if transport == "smtp" else "local-outbox"
+    verification_email_logger.info(
+        "VERIFICATION_EMAIL_TRANSPORT_SELECTED transport=%s host=%s port=%s sender=%s recipient=%s user_id=%s",
+        transport,
+        SMTP_SERVER if transport == "smtp" else "local",
+        SMTP_PORT if transport == "smtp" else "",
+        sender,
+        email,
+        user_id,
+    )
     if local_email_transport_enabled():
-        send_verification_email_local(request, email=email, token=token, user_id=user_id)
-    elif smtp_email_transport_enabled():
-        send_verification_email_smtp(request, email=email, token=token)
-    else:
-        logging.error("VERIFICATION_EMAIL_TRANSPORT_UNSUPPORTED transport=%s", os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
+        return send_verification_email_local(request, email=email, token=token, user_id=user_id)
+    if smtp_email_transport_enabled():
+        return send_verification_email_smtp(request, email=email, token=token)
+    verification_email_logger.error("VERIFICATION_EMAIL_TRANSPORT_UNSUPPORTED transport=%s", transport)
+    return False
+
+
+def verification_resend_cooldown_remaining(user: dict[str, Any] | None) -> int:
+    last_sent_at = parse_verification_expiry((user or {}).get("verification_email_last_sent_at"))
+    if not last_sent_at:
+        return 0
+    elapsed = (datetime.utcnow() - last_sent_at).total_seconds()
+    return max(0, int(math.ceil(VERIFICATION_EMAIL_RESEND_COOLDOWN_SECONDS - elapsed)))
+
+
+def check_email_context(request: Request, *, status: str = "", message: str = "", user: dict[str, Any] | None = None) -> dict[str, Any]:
+    if user is None:
+        user = getattr(request.state, "current_user", None)
+    cooldown_remaining = verification_resend_cooldown_remaining(user)
+    return {
+        "request": request,
+        "csrf_token": csrf_token(request),
+        "status": status,
+        "message": message,
+        "cooldown_remaining": cooldown_remaining,
+        "resend_available": bool(user and not user_email_verified(user) and cooldown_remaining <= 0),
+    }
 
 
 def parse_verification_expiry(raw: Any) -> datetime | None:
@@ -2075,9 +2216,9 @@ async def signup_submit(request: Request):
                 INSERT INTO users (
                   email, password_hash, first_name, last_name, is_active,
                   email_verified_at, verification_token_hash, verification_token_expires_at,
-                  created_at, updated_at
+                  verification_email_last_sent_at, created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, 1, NULL, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, 1, NULL, ?, ?, ?, ?, ?)
                 """,
                 (
                     values["email"],
@@ -2086,6 +2227,7 @@ async def signup_submit(request: Request):
                     values["last_name"],
                     token_hash,
                     token_expires_at,
+                    now,
                     now,
                     now,
                 ),
@@ -2280,18 +2422,106 @@ def verify_email(request: Request, token: str = ""):
         login_session(request, int(user["id"]))
     finally:
         conn.close()
-    return RedirectResponse("/pro/shop-settings?notice=email_verified", status_code=303)
-
-
-@app.get("/check-email", response_class=HTMLResponse)
-def check_email_page(request: Request):
     return templates.TemplateResponse(
-        "check_email.html",
+        "verify_email_success.html",
         {
             "request": request,
             "csrf_token": csrf_token(request),
         },
     )
+
+
+@app.get("/check-email", response_class=HTMLResponse)
+def check_email_page(request: Request):
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        if user_email_verified(user):
+            return RedirectResponse("/pro/dashboard", status_code=303)
+        return templates.TemplateResponse("check_email.html", check_email_context(request, user=user))
+    finally:
+        conn.close()
+
+
+@app.post("/check-email/resend", response_class=HTMLResponse)
+async def resend_verification_email(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        if user_email_verified(user):
+            return RedirectResponse("/pro/dashboard", status_code=303)
+        if not validate_csrf(request, form):
+            return templates.TemplateResponse(
+                "check_email.html",
+                check_email_context(
+                    request,
+                    status="error",
+                    message="Please refresh the page and try again.",
+                    user=user,
+                ),
+                status_code=400,
+            )
+        cooldown_remaining = verification_resend_cooldown_remaining(user)
+        if cooldown_remaining > 0:
+            return templates.TemplateResponse(
+                "check_email.html",
+                check_email_context(
+                    request,
+                    status="error",
+                    message=f"Please wait {cooldown_remaining} seconds before requesting another verification email.",
+                    user=user,
+                ),
+                status_code=429,
+            )
+        token, token_hash, token_expires_at = new_verification_token_record()
+        delivered = send_verification_email(request, email=str(user["email"]), token=token, user_id=int(user["id"]))
+        if not delivered:
+            return templates.TemplateResponse(
+                "check_email.html",
+                check_email_context(
+                    request,
+                    status="error",
+                    message="We could not send a verification email right now. Please try again.",
+                    user=user,
+                ),
+                status_code=502,
+            )
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            """
+            UPDATE users
+            SET verification_token_hash = ?,
+                verification_token_expires_at = ?,
+                verification_email_last_sent_at = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND email_verified_at IS NULL
+              AND is_active = 1
+            """,
+            (token_hash, token_expires_at, now, now, int(user["id"])),
+        )
+        conn.commit()
+        updated_user = current_user(conn, request) or user
+        return templates.TemplateResponse(
+            "check_email.html",
+            check_email_context(
+                request,
+                status="success",
+                message="A fresh verification email has been sent.",
+                user=updated_user,
+            ),
+        )
+    finally:
+        conn.close()
 
 
 @app.get("/login", response_class=HTMLResponse)

@@ -345,6 +345,7 @@ def ensure_auth_schema(conn: sqlite3.Connection) -> None:
         "email_verified_at": "email_verified_at TEXT",
         "verification_token_hash": "verification_token_hash TEXT",
         "verification_token_expires_at": "verification_token_expires_at TEXT",
+        "verification_email_last_sent_at": "verification_email_last_sent_at TEXT",
         "created_at": "created_at TEXT",
         "updated_at": "updated_at TEXT",
     }.items():

@@ -27,6 +27,10 @@ def csrf_from(html: str) -> str:
     return match.group(1)
 
 
+def verification_urls_from_text(text: str) -> list[str]:
+    return re.findall(r"https?://[^\s\"'<>]+/verify-email\?token=[^\s\"'<>]+", text)
+
+
 class AuthShopIsolationTests(unittest.TestCase):
     def setUp(self):
         self.conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
@@ -190,7 +194,8 @@ class AuthShopIsolationTests(unittest.TestCase):
             def send_message(self, message, from_addr=None, to_addrs=None):
                 smtp_calls.append(("send_message", message, from_addr, to_addrs))
 
-        with patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "smtp"}), \
+        with self.assertLogs("uvicorn.error", level="INFO") as captured_logs, \
+            patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "smtp"}), \
             patch.object(main, "SMTP_SERVER", "smtp.example.test"), \
             patch.object(main, "SMTP_PORT", 2525), \
             patch.object(main, "SMTP_USER", "smtp-user"), \
@@ -204,6 +209,7 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         send_call = next(call for call in smtp_calls if call[0] == "send_message")
         message = send_call[1]
+        log_output = "\n".join(captured_logs.output)
 
         self.assertEqual(response.status_code, 303)
         self.assertEqual(response.headers["location"], "/check-email")
@@ -217,8 +223,91 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(message["Subject"], "Verify your TorqueMech account")
         self.assertEqual(send_call[2], "mailer@updates.torquemech.com")
         self.assertEqual(send_call[3], ["user@example.com"])
-        self.assertIn("/verify-email?token=", message.get_payload())
+        smtp_body = message.get_payload(decode=True).decode(message.get_content_charset() or "utf-8")
+        self.assertIn("/verify-email?token=", smtp_body)
         self.assertNotEqual(message["From"], "smtp-user")
+        self.assertIn("VERIFICATION_EMAIL_TRANSPORT_SELECTED transport=smtp", log_output)
+        self.assertIn("host=smtp.example.test port=2525", log_output)
+        self.assertIn("sender=mailer@updates.torquemech.com", log_output)
+        self.assertIn("recipient=user@example.com", log_output)
+        self.assertIn("VERIFICATION_EMAIL_DELIVERY_ENTERED transport=smtp", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_CONNECTING", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_CONNECTED", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_STARTTLS_START", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_STARTTLS_OK", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_AUTH_START", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_AUTH_OK", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_SEND_START", log_output)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_ACCEPTED", log_output)
+        self.assertNotIn("smtp-pass", log_output)
+        self.assertNotIn("smtp-user", log_output)
+        self.assertNotIn("/verify-email?token=", log_output)
+
+    def test_verification_email_contains_one_clean_clickable_url(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        padded_token = "  clean-token-123  "
+        token_hash = main.verification_token_hash("clean-token-123")
+        expires_at = "2099-01-01T00:00:00"
+
+        with patch.object(main, "new_verification_token_record", return_value=(padded_token, token_hash, expires_at)):
+            self.signup(client, email="user@example.com", shop_name="Beta Shop")
+
+        message = self.outbox_messages()[0]
+        body = message["body"]
+        urls = verification_urls_from_text(body)
+        self.assertEqual(len(urls), 1)
+        parsed = urlparse(urls[0])
+        token_values = parse_qs(parsed.query).get("token", [])
+
+        self.assertEqual(urls[0], message["verification_url"])
+        self.assertEqual(parsed.path, "/verify-email")
+        self.assertEqual(token_values, ["clean-token-123"])
+        self.assertNotIn("%20", urls[0])
+        self.assertNotIn(" token=", urls[0])
+        self.assertNotIn("clean-token-123+", urls[0])
+
+    def test_smtp_delivery_exception_is_logged_without_secrets(self):
+        class FailingSMTP:
+            def __init__(self, server, port, timeout=None):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                pass
+
+            def starttls(self):
+                pass
+
+            def login(self, username, password):
+                pass
+
+            def send_message(self, message, from_addr=None, to_addrs=None):
+                raise main.smtplib.SMTPException("mailbox temporarily unavailable")
+
+        with self.assertLogs("uvicorn.error", level="INFO") as captured_logs, \
+            patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "smtp"}), \
+            patch.object(main, "SMTP_SERVER", "smtp.example.test"), \
+            patch.object(main, "SMTP_PORT", 2525), \
+            patch.object(main, "SMTP_USER", "smtp-user"), \
+            patch.object(main, "SMTP_PASS", "smtp-pass"), \
+            patch.object(main, "FEEDBACK_EMAIL", "mailer@updates.torquemech.com"), \
+            patch.object(main.smtplib, "SMTP", FailingSMTP):
+            client = self.client()
+            self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+            self.logout(client)
+            response = self.signup(client, email="user@example.com", shop_name="Beta Shop")
+
+        log_output = "\n".join(captured_logs.output)
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_EXCEPTION host=smtp.example.test port=2525 sender=mailer@updates.torquemech.com recipient=user@example.com", log_output)
+        self.assertIn("SMTPException: mailbox temporarily unavailable", log_output)
+        self.assertNotIn("smtp-pass", log_output)
+        self.assertNotIn("smtp-user", log_output)
+        self.assertNotIn("/verify-email?token=", log_output)
 
     def test_valid_verification_token_verifies_account_and_clears_fields(self):
         client = self.client()
@@ -229,15 +318,16 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         response = client.get(f"/verify-email?token={token}", follow_redirects=False)
         user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
-        settings = client.get("/pro/shop-settings?notice=email_verified")
 
-        self.assertEqual(response.status_code, 303)
-        self.assertEqual(response.headers["location"], "/pro/shop-settings?notice=email_verified")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Your email has been verified", response.text)
+        self.assertIn("Your TorqueMech account is ready. Complete your shop profile to finish setting up your Pro workspace.", response.text)
+        self.assertIn('href="/pro/shop-settings"', response.text)
+        self.assertIn("Set Up Your Shop", response.text)
+        self.assertIn("Log Out", response.text)
         self.assertIsNotNone(user["email_verified_at"])
         self.assertIsNone(user["verification_token_hash"])
         self.assertIsNone(user["verification_token_expires_at"])
-        self.assertEqual(settings.status_code, 200)
-        self.assertIn("Your email has been verified. Complete your shop profile to get started.", settings.text)
 
     def test_invalid_verification_token_fails(self):
         client = self.client()
@@ -283,7 +373,8 @@ class AuthShopIsolationTests(unittest.TestCase):
         second = client.get(f"/verify-email?token={token}")
         user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
 
-        self.assertEqual(first.status_code, 303)
+        self.assertEqual(first.status_code, 200)
+        self.assertIn("Your email has been verified", first.text)
         self.assertEqual(second.status_code, 400)
         self.assertIn("Verification link invalid", second.text)
         self.assertIsNotNone(user["email_verified_at"])
@@ -307,6 +398,153 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(logout.status_code, 303)
         self.assertEqual(logout.headers["location"], "/")
 
+    def test_resend_verification_email_generates_fresh_token_for_current_unverified_user(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        original_token = self.latest_verification_token()
+        self.conn.execute(
+            "UPDATE users SET verification_email_last_sent_at = '2026-01-01T00:00:00' WHERE email = 'user@example.com'"
+        )
+        self.conn.commit()
+        page = client.get("/check-email")
+
+        response = client.post(
+            "/check-email/resend",
+            data={"csrf_token": csrf_from(page.text)},
+            follow_redirects=False,
+        )
+        messages = self.outbox_messages()
+        fresh_token = self.latest_verification_token()
+        old_verify = client.get(f"/verify-email?token={original_token}")
+        fresh_verify = client.get(f"/verify-email?token={fresh_token}", follow_redirects=False)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("A fresh verification email has been sent.", response.text)
+        self.assertIn('data-cooldown-remaining="60"', response.text)
+        self.assertIn("window.setInterval", response.text)
+        self.assertEqual(len(messages), 2)
+        self.assertEqual(messages[-1]["to"], "user@example.com")
+        self.assertNotEqual(original_token, fresh_token)
+        self.assertEqual(old_verify.status_code, 400)
+        self.assertEqual(fresh_verify.status_code, 200)
+        self.assertIn("Your email has been verified", fresh_verify.text)
+        self.assertIn('href="/pro/shop-settings"', fresh_verify.text)
+
+    def test_resend_verification_email_uses_cooldown(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        page = client.get("/check-email")
+
+        response = client.post(
+            "/check-email/resend",
+            data={"csrf_token": csrf_from(page.text)},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertIn("Please wait", response.text)
+        self.assertIn('data-resend-button', response.text)
+        self.assertIn('data-resend-countdown', response.text)
+        self.assertIn("remaining -= 1", response.text)
+        self.assertIn("button.disabled = false", response.text)
+        self.assertEqual(len(self.outbox_messages()), 1)
+
+    def test_resend_verification_email_failure_does_not_replace_existing_token(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        original_token = self.latest_verification_token()
+        self.conn.execute(
+            "UPDATE users SET verification_email_last_sent_at = '2026-01-01T00:00:00' WHERE email = 'user@example.com'"
+        )
+        self.conn.commit()
+        page = client.get("/check-email")
+
+        with patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "unsupported"}):
+            response = client.post(
+                "/check-email/resend",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("could not send a verification email", response.text)
+        self.assertNotIn("A fresh verification email has been sent.", response.text)
+        self.assertEqual(len(self.outbox_messages()), 1)
+        self.assertEqual(main.verification_token_hash(original_token), user["verification_token_hash"])
+
+    def test_resend_verification_email_refused_by_smtp_shows_failure_not_success(self):
+        class RefusingSMTP:
+            def __init__(self, server, port, timeout=None):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                pass
+
+            def starttls(self):
+                pass
+
+            def login(self, username, password):
+                pass
+
+            def send_message(self, message, from_addr=None, to_addrs=None):
+                return {"user@example.com": (550, b"mailbox unavailable")}
+
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        original_token = self.latest_verification_token()
+        self.conn.execute(
+            "UPDATE users SET verification_email_last_sent_at = '2026-01-01T00:00:00' WHERE email = 'user@example.com'"
+        )
+        self.conn.commit()
+        page = client.get("/check-email")
+
+        with self.assertLogs("uvicorn.error", level="INFO") as captured_logs, \
+            patch.dict("os.environ", {"TORQUEMECH_EMAIL_TRANSPORT": "smtp"}), \
+            patch.object(main, "SMTP_SERVER", "smtp.example.test"), \
+            patch.object(main, "SMTP_PORT", 2525), \
+            patch.object(main, "SMTP_USER", "smtp-user"), \
+            patch.object(main, "SMTP_PASS", "smtp-pass"), \
+            patch.object(main, "FEEDBACK_EMAIL", "mailer@updates.torquemech.com"), \
+            patch.object(main.smtplib, "SMTP", RefusingSMTP):
+            response = client.post(
+                "/check-email/resend",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+        log_output = "\n".join(captured_logs.output)
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("We could not send a verification email right now. Please try again.", response.text)
+        self.assertNotIn("A fresh verification email has been sent.", response.text)
+        self.assertIn("VERIFICATION_EMAIL_SMTP_REFUSED", log_output)
+        self.assertIn("recipient=user@example.com", log_output)
+        self.assertNotIn("smtp-pass", log_output)
+        self.assertNotIn("/verify-email?token=", log_output)
+        self.assertEqual(main.verification_token_hash(original_token), user["verification_token_hash"])
+
+    def test_resend_verification_email_requires_current_signed_in_unverified_user(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+
+        response = client.post("/check-email/resend", data={"csrf_token": "anything"}, follow_redirects=False)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login")
+
     def test_token_is_never_shown_on_normal_signup(self):
         client = self.client()
         first_page = client.get("/signup")
@@ -323,6 +561,86 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Create your Pro Solo account", normal_page.text)
         self.assertNotIn("Setup token", normal_page.text)
         self.assertNotIn("bootstrap_token", normal_page.text)
+
+    def test_signup_password_fields_have_accessible_show_hide_controls(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+
+        page = client.get("/signup")
+
+        self.assertIn('id="password" name="password" type="password"', page.text)
+        self.assertIn('id="confirm_password" name="confirm_password" type="password"', page.text)
+        self.assertIn('aria-label="Show password"', page.text)
+        self.assertIn('aria-pressed="false"', page.text)
+        self.assertIn('aria-controls="password"', page.text)
+        self.assertIn('aria-label="Show confirm password"', page.text)
+        self.assertIn('aria-controls="confirm_password"', page.text)
+        self.assertIn('data-password-toggle="password"', page.text)
+        self.assertIn('data-password-toggle="confirm_password"', page.text)
+        self.assertIn('class="tm-eye"', page.text)
+        self.assertIn('class="tm-eye-off"', page.text)
+        self.assertIn('viewBox="0 0 24 24"', page.text)
+        self.assertNotIn('>Show</button>', page.text)
+        self.assertNotIn('>Hide</button>', page.text)
+
+    def test_signup_password_validation_targets_password_and_confirm_separately(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        page = client.get("/signup")
+
+        mismatch = client.post(
+            "/signup",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "first_name": "Ada",
+                "last_name": "Lovelace",
+                "email": "user@example.com",
+                "password": "Password1234",
+                "confirm_password": "Different1234",
+                "shop_name": "Beta Shop",
+                "terms": "1",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(mismatch.status_code, 400)
+        self.assertIn('id="password_error" data-password-error hidden></span>', mismatch.text)
+        self.assertIn("Passwords must match.", mismatch.text)
+
+        valid_page = client.get("/signup")
+        valid = client.post(
+            "/signup",
+            data={
+                "csrf_token": csrf_from(valid_page.text),
+                "first_name": "Ada",
+                "last_name": "Lovelace",
+                "email": "user@example.com",
+                "password": "Password1234",
+                "confirm_password": "Password1234",
+                "shop_name": "Beta Shop",
+                "terms": "1",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(valid.status_code, 303)
+        self.assertEqual(valid.headers["location"], "/check-email")
+
+    def test_signup_page_clears_password_length_message_client_side(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+
+        page = client.get("/signup")
+
+        self.assertIn('id="password_error"', page.text)
+        self.assertIn('data-password-error', page.text)
+        self.assertIn('passwordInput?.addEventListener("input", validateSignupPasswords)', page.text)
+        self.assertIn('password.length < 8 ? "Password must be at least 8 characters." : ""', page.text)
+        self.assertIn('setFieldError(passwordError', page.text)
+        self.assertIn('setFieldError(\n      confirmPasswordError', page.text)
 
     def test_first_signup_blocked_without_configured_bootstrap_token(self):
         with patch.dict("os.environ", {"TORQUEMECH_BOOTSTRAP_TOKEN": ""}):
@@ -714,8 +1032,9 @@ class EmailVerificationTokenPersistenceTests(unittest.TestCase):
         verify_response = self.client().get(verification_url, follow_redirects=False)
         user_after = self.fallback_user()
 
-        self.assertEqual(verify_response.status_code, 303)
-        self.assertEqual(verify_response.headers["location"], "/pro/shop-settings?notice=email_verified")
+        self.assertEqual(verify_response.status_code, 200)
+        self.assertIn("Your email has been verified", verify_response.text)
+        self.assertIn('href="/pro/shop-settings"', verify_response.text)
         self.assertIsNotNone(user_after["email_verified_at"])
         self.assertIsNone(user_after["verification_token_hash"])
         self.assertIsNone(user_after["verification_token_expires_at"])

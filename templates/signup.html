@@ -13,12 +13,21 @@
   .tm-auth-field { display:grid; gap:6px; margin-top:14px; }
   .tm-auth-field label { color:#dbe6f4; font-weight:800; }
   .tm-auth-field input { width:100%; border:1px solid rgba(255,255,255,.16); border-radius:8px; background:#0b1220; color:#f8fafc; padding:11px 12px; }
+  .tm-password-control { position:relative; }
+  .tm-password-control input { padding-right:48px; }
+  .tm-password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:32px; height:32px; border:0; border-radius:8px; background:transparent; color:#cbd5e1; cursor:pointer; padding:0; }
+  .tm-password-toggle:hover, .tm-password-toggle:focus-visible { background:rgba(255,255,255,.08); color:#f8fafc; outline:none; }
+  .tm-password-toggle svg { width:20px; height:20px; }
+  .tm-password-toggle .tm-eye-off { display:none; }
+  .tm-password-toggle[aria-pressed="true"] .tm-eye { display:none; }
+  .tm-password-toggle[aria-pressed="true"] .tm-eye-off { display:block; }
   .tm-auth-error { color:#fb923c; font-size:.9rem; font-weight:800; }
   .tm-auth-check { display:flex; gap:10px; align-items:flex-start; margin-top:16px; color:#cbd5e1; font-weight:700; }
   .tm-auth-check input { margin-top:4px; }
   .tm-auth-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:20px; }
   .tm-auth-primary { border:0; border-radius:8px; background:#f97316; color:#111827; cursor:pointer; font-weight:900; padding:12px 16px; }
   .tm-auth-link { color:#fdba74; font-weight:900; }
+  .tm-auth-error[hidden] { display:none; }
   @media (max-width: 680px) { .tm-auth-grid { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
@@ -59,13 +68,41 @@
     <div class="tm-auth-grid">
       <div class="tm-auth-field">
         <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="new-password" required>
-        {% if errors.password %}<span class="tm-auth-error">{{ errors.password }}</span>{% endif %}
+        <div class="tm-password-control">
+          <input id="password" name="password" type="password" autocomplete="new-password" required>
+          <button class="tm-password-toggle" type="button" aria-label="Show password" aria-controls="password" aria-pressed="false" data-password-toggle="password">
+            <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 3l18 18"></path>
+              <path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path>
+              <path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path>
+              <path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path>
+            </svg>
+          </button>
+        </div>
+        <span class="tm-auth-error" id="password_error" data-password-error {% if not errors.password %}hidden{% endif %}>{{ errors.password or '' }}</span>
       </div>
       <div class="tm-auth-field">
         <label for="confirm_password">Confirm password</label>
-        <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
-        {% if errors.confirm_password %}<span class="tm-auth-error">{{ errors.confirm_password }}</span>{% endif %}
+        <div class="tm-password-control">
+          <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+          <button class="tm-password-toggle" type="button" aria-label="Show confirm password" aria-controls="confirm_password" aria-pressed="false" data-password-toggle="confirm_password">
+            <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 3l18 18"></path>
+              <path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path>
+              <path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path>
+              <path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path>
+            </svg>
+          </button>
+        </div>
+        <span class="tm-auth-error" id="confirm_password_error" data-confirm-password-error {% if not errors.confirm_password %}hidden{% endif %}>{{ errors.confirm_password or '' }}</span>
       </div>
     </div>
     <div class="tm-auth-field">
@@ -85,4 +122,42 @@
   </form>
   {% endif %}
 </section>
+<script>
+  const passwordInput = document.getElementById("password");
+  const confirmPasswordInput = document.getElementById("confirm_password");
+  const passwordError = document.querySelector("[data-password-error]");
+  const confirmPasswordError = document.querySelector("[data-confirm-password-error]");
+
+  const setFieldError = (node, message) => {
+    if (!node) return;
+    node.textContent = message || "";
+    node.hidden = !message;
+  };
+
+  const validateSignupPasswords = () => {
+    const password = passwordInput ? passwordInput.value : "";
+    const confirmation = confirmPasswordInput ? confirmPasswordInput.value : "";
+    setFieldError(passwordError, password && password.length < 8 ? "Password must be at least 8 characters." : "");
+    setFieldError(
+      confirmPasswordError,
+      confirmation && password !== confirmation ? "Passwords must match." : ""
+    );
+  };
+
+  passwordInput?.addEventListener("input", validateSignupPasswords);
+  confirmPasswordInput?.addEventListener("input", validateSignupPasswords);
+  validateSignupPasswords();
+
+  document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const input = document.getElementById(button.dataset.passwordToggle);
+      if (!input) return;
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      const label = isHidden ? "Hide" : "Show";
+      button.setAttribute("aria-pressed", String(isHidden));
+      button.setAttribute("aria-label", `${label} ${input.id === "confirm_password" ? "confirm password" : "password"}`);
+    });
+  });
+</script>
 {% endblock %}

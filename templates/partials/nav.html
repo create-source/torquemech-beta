@@ -26,6 +26,20 @@
       </a>
 
       <div class="tm-menu__divider"></div>
+      {% if request.state.current_user %}
+        <div class="tm-menu__item" aria-label="Account">
+          <span>{{ request.state.current_shop.shop_name or 'TorqueMech Pro' }}</span>
+        </div>
+        <form method="post" action="/logout" style="margin:0;">
+          <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+          <button class="tm-menu__item" type="submit" style="width:100%; border:0; background:transparent; text-align:left; cursor:pointer;">Log Out</button>
+        </form>
+      {% else %}
+        <a class="tm-menu__item" href="/login">Log In</a>
+        <a class="tm-menu__item" href="/signup">Sign Up</a>
+      {% endif %}
+
+      <div class="tm-menu__divider"></div>
       <button class="tm-menu__disclosure" id="resourcesMenuBtn" type="button" aria-expanded="false" aria-controls="resourcesMenuPanel">
         <span>Resources</span>
         <span class="tm-menu__chevron" aria-hidden="true">&#9662;</span>
