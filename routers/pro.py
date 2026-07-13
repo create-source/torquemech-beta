@@ -1,5 +1,9 @@
 import io
+import base64
+import hashlib
+import hmac
 import logging
+import os
 import re
 import sqlite3
 import json
@@ -38,6 +42,7 @@ STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate
 DB_PATH = str((STATE_DIR / "app.db").resolve())
 LOCAL_FALLBACK_DB_PATH = str((STATE_DIR / "dev_runtime_app.db").resolve())
 USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
+LOCAL_DB_MARKER_PATH = STATE_DIR / "active_app_db_path.txt"
 logger = logging.getLogger(__name__)
 
 VISUAL_REFERENCE_IMAGE_TYPES = {
@@ -65,6 +70,10 @@ DEFAULT_PARTS_SOURCE_LABELS = [
     "1A Auto",
 ]
 DEFAULT_SHOP_TIMEZONE = "America/Los_Angeles"
+AUTH_SESSION_USER_KEY = "user_id"
+AUTH_SESSION_CSRF_KEY = "csrf_token"
+AUTH_SESSION_BOOTSTRAP_KEY = "bootstrap_verified"
+PASSWORD_HASH_ITERATIONS = 390000
 try:
     SHOP_ZONEINFO = ZoneInfo(DEFAULT_SHOP_TIMEZONE)
 except ZoneInfoNotFoundError:
@@ -229,8 +238,28 @@ REPAIR_JOB_PART_STATUS_OPTIONS = (
 REPAIR_JOB_PART_EXCLUDED_TOTAL_STATUSES = {"Returned", "Not Needed"}
 
 
+def mark_local_fallback_db_active() -> None:
+    if not USE_LOCAL_SQLITE_COMPAT:
+        return
+    try:
+        LOCAL_DB_MARKER_PATH.write_text(LOCAL_FALLBACK_DB_PATH, encoding="utf-8")
+    except OSError:
+        logger.exception("LOCAL_DB_MARKER_WRITE_FAILED")
+
+
+def active_app_db_path() -> str:
+    if USE_LOCAL_SQLITE_COMPAT:
+        try:
+            marked_path = LOCAL_DB_MARKER_PATH.read_text(encoding="utf-8").strip()
+        except OSError:
+            marked_path = ""
+        if marked_path == LOCAL_FALLBACK_DB_PATH:
+            return LOCAL_FALLBACK_DB_PATH
+    return DB_PATH
+
+
 def crm_db_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(active_app_db_path())
     if USE_LOCAL_SQLITE_COMPAT:
         try:
             conn.execute("PRAGMA journal_mode=MEMORY")
@@ -243,6 +272,7 @@ def crm_db_conn() -> sqlite3.Connection:
             except sqlite3.OperationalError as fallback_exc:
                 logger.warning("Using local fallback Pro DB after PRAGMA failure: %s", fallback_exc)
                 conn.close()
+                mark_local_fallback_db_active()
                 conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
                 conn.execute("PRAGMA journal_mode=TRUNCATE")
                 conn.execute("PRAGMA synchronous=NORMAL")
@@ -258,6 +288,155 @@ async def read_form_data(request: Request) -> dict[str, str]:
 
 def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
     return dict(row) if row else None
+
+
+def normalize_email(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def hash_password(password: str) -> str:
+    salt = os.urandom(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        str(password or "").encode("utf-8"),
+        salt,
+        PASSWORD_HASH_ITERATIONS,
+    )
+    return "pbkdf2_sha256${}${}${}".format(
+        PASSWORD_HASH_ITERATIONS,
+        base64.b64encode(salt).decode("ascii"),
+        base64.b64encode(digest).decode("ascii"),
+    )
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    try:
+        algorithm, iterations_text, salt_text, digest_text = str(password_hash or "").split("$", 3)
+        if algorithm != "pbkdf2_sha256":
+            return False
+        iterations = int(iterations_text)
+        salt = base64.b64decode(salt_text.encode("ascii"))
+        expected = base64.b64decode(digest_text.encode("ascii"))
+    except Exception:
+        return False
+    actual = hashlib.pbkdf2_hmac("sha256", str(password or "").encode("utf-8"), salt, iterations)
+    return hmac.compare_digest(actual, expected)
+
+
+def ensure_auth_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT NOT NULL UNIQUE,
+          password_hash TEXT NOT NULL,
+          first_name TEXT,
+          last_name TEXT,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    for column_name, column_sql in {
+        "first_name": "first_name TEXT",
+        "last_name": "last_name TEXT",
+        "is_active": "is_active INTEGER NOT NULL DEFAULT 1",
+        "email_verified_at": "email_verified_at TEXT",
+        "verification_token_hash": "verification_token_hash TEXT",
+        "verification_token_expires_at": "verification_token_expires_at TEXT",
+        "created_at": "created_at TEXT",
+        "updated_at": "updated_at TEXT",
+    }.items():
+        add_column_if_missing(conn, "users", column_name, column_sql)
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users (email)")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS auth_sessions (
+          session_id TEXT PRIMARY KEY,
+          data_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.commit()
+
+
+def verification_token_hash(token: str) -> str:
+    return hashlib.sha256(str(token or "").encode("utf-8")).hexdigest()
+
+
+def user_email_verified(user: dict[str, Any] | None) -> bool:
+    return bool(str((user or {}).get("email_verified_at") or "").strip())
+
+
+def load_user_by_email(conn: sqlite3.Connection, email: str) -> dict[str, Any] | None:
+    ensure_auth_schema(conn)
+    row = conn.execute(
+        "SELECT * FROM users WHERE email = ? LIMIT 1",
+        (normalize_email(email),),
+    ).fetchone()
+    return row_to_dict(row)
+
+
+def load_user_by_id(conn: sqlite3.Connection, user_id: int | None) -> dict[str, Any] | None:
+    if not user_id:
+        return None
+    ensure_auth_schema(conn)
+    row = conn.execute("SELECT * FROM users WHERE id = ? AND is_active = 1", (user_id,)).fetchone()
+    return row_to_dict(row)
+
+
+def csrf_token(request: Request) -> str:
+    token = request.session.get(AUTH_SESSION_CSRF_KEY)
+    if not token:
+        token = base64.urlsafe_b64encode(os.urandom(24)).decode("ascii").rstrip("=")
+        request.session[AUTH_SESSION_CSRF_KEY] = token
+    return str(token)
+
+
+def validate_csrf(request: Request, form: dict[str, str]) -> bool:
+    expected = str(request.session.get(AUTH_SESSION_CSRF_KEY) or "")
+    submitted = str(form.get("csrf_token") or "")
+    return bool(expected and submitted and hmac.compare_digest(expected, submitted))
+
+
+def login_session(request: Request, user_id: int) -> None:
+    request.session.clear()
+    request.session[AUTH_SESSION_USER_KEY] = int(user_id)
+    request.scope["rotate_session_id"] = True
+    csrf_token(request)
+
+
+def logout_session(request: Request) -> None:
+    request.session.clear()
+
+
+def current_user_id(request: Request) -> int | None:
+    try:
+        session_data = request.scope.get("session") if hasattr(request, "scope") else None
+        if not isinstance(session_data, dict):
+            return None
+        user_id = int(session_data.get(AUTH_SESSION_USER_KEY) or 0)
+    except (TypeError, ValueError):
+        return None
+    return user_id or None
+
+
+def current_user(conn: sqlite3.Connection, request: Request) -> dict[str, Any] | None:
+    return load_user_by_id(conn, current_user_id(request))
+
+
+def safe_next_url(value: str | None) -> str:
+    target = str(value or "").strip()
+    if not target.startswith("/"):
+        return ""
+    if target.startswith("//") or "\\" in target:
+        return ""
+    if target.startswith(("/login", "/signup", "/logout")):
+        return ""
+    return target
 
 
 def optional_int(form: dict[str, str], name: str) -> int | None:
@@ -884,6 +1063,17 @@ def build_shop_booking_link(profile: dict[str, Any] | None = None, request: Requ
     return f"{request_base_url(request)}/book/{shop_booking_slug(profile)}"
 
 
+def shop_id_for_booking_slug(conn: sqlite3.Connection, shop_slug: str) -> int | None:
+    ensure_shop_profile_schema(conn)
+    requested = str(shop_slug or "").strip().lower()
+    rows = conn.execute("SELECT * FROM shop_profile ORDER BY id ASC").fetchall()
+    for row in rows:
+        profile = normalize_shop_profile_context(dict(row))
+        if shop_booking_slug(profile) == requested:
+            return int(row["id"])
+    return first_shop_id(conn)
+
+
 def attach_shop_booking_context(
     profile: dict[str, Any] | None,
     request: Request | None = None,
@@ -1028,17 +1218,25 @@ def default_shop_availability_rows() -> list[dict[str, Any]]:
     ]
 
 
-def load_shop_availability(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+def shop_scope_where(shop_id: int | None, column: str = "shop_id") -> tuple[str, list[Any]]:
+    if shop_id is None:
+        return f"({column} IS NULL OR {column} = 1)", []
+    return f"{column} = ?", [shop_id]
+
+
+def load_shop_availability(conn: sqlite3.Connection, shop_id: int | None = None) -> list[dict[str, Any]]:
     ensure_calendar_schema(conn)
+    where_sql, params = shop_scope_where(shop_id)
     rows = [
         dict(row)
         for row in conn.execute(
-            """
+            f"""
             SELECT *
             FROM shop_availability
-            WHERE shop_id IS NULL OR shop_id = 1
+            WHERE {where_sql}
             ORDER BY day_of_week ASC, id ASC
-            """
+            """,
+            params,
         ).fetchall()
     ]
     by_day: dict[int, dict[str, Any]] = {}
@@ -1064,6 +1262,7 @@ def save_shop_availability(
     *,
     appointment_length_minutes: int = 60,
     buffer_minutes: int = 0,
+    shop_id: int | None = None,
 ) -> None:
     ensure_calendar_schema(conn)
     appointment_length_minutes = appointment_length_minutes if appointment_length_minutes in APPOINTMENT_LENGTH_OPTIONS else 60
@@ -1077,14 +1276,14 @@ def save_shop_availability(
         start_time = str(item.get("start_time") or "09:00").strip()[:5] or "09:00"
         end_time = str(item.get("end_time") or "17:00").strip()[:5] or "17:00"
         existing = conn.execute(
-            """
+            f"""
             SELECT id
             FROM shop_availability
-            WHERE (shop_id IS NULL OR shop_id = 1) AND day_of_week = ?
+            WHERE {shop_scope_where(shop_id)[0]} AND day_of_week = ?
             ORDER BY id ASC
             LIMIT 1
             """,
-            (day_index,),
+            [*shop_scope_where(shop_id)[1], day_index],
         ).fetchone()
         if existing:
             conn.execute(
@@ -1103,29 +1302,31 @@ def save_shop_availability(
                   shop_id, day_of_week, is_open, start_time, end_time,
                   appointment_length_minutes, buffer_minutes, created_at, updated_at
                 )
-                VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (day_index, is_open, start_time, end_time, appointment_length_minutes, buffer_minutes, now, now),
+                (shop_id, day_index, is_open, start_time, end_time, appointment_length_minutes, buffer_minutes, now, now),
             )
     conn.commit()
 
 
-def load_closed_days(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+def load_closed_days(conn: sqlite3.Connection, shop_id: int | None = None) -> list[dict[str, Any]]:
     ensure_calendar_schema(conn)
+    where_sql, params = shop_scope_where(shop_id)
     return [
         dict(row)
         for row in conn.execute(
-            """
+            f"""
             SELECT *
             FROM shop_closed_days
-            WHERE shop_id IS NULL OR shop_id = 1
+            WHERE {where_sql}
             ORDER BY closed_date ASC, id ASC
-            """
+            """,
+            params,
         ).fetchall()
     ]
 
 
-def create_closed_day(conn: sqlite3.Connection, closed_date: str, reason: str = "") -> int | None:
+def create_closed_day(conn: sqlite3.Connection, closed_date: str, reason: str = "", shop_id: int | None = None) -> int | None:
     parsed_date = parse_date_value(closed_date)
     if not parsed_date:
         return None
@@ -1134,17 +1335,18 @@ def create_closed_day(conn: sqlite3.Connection, closed_date: str, reason: str = 
     cur = conn.execute(
         """
         INSERT INTO shop_closed_days (shop_id, closed_date, reason, created_at)
-        VALUES (NULL, ?, ?, ?)
+        VALUES (?, ?, ?, ?)
         """,
-        (parsed_date.isoformat(), str(reason or "").strip(), now),
+        (shop_id, parsed_date.isoformat(), str(reason or "").strip(), now),
     )
     conn.commit()
     return int(cur.lastrowid)
 
 
-def delete_closed_day(conn: sqlite3.Connection, closed_day_id: int) -> None:
+def delete_closed_day(conn: sqlite3.Connection, closed_day_id: int, shop_id: int | None = None) -> None:
     ensure_calendar_schema(conn)
-    conn.execute("DELETE FROM shop_closed_days WHERE id = ?", (closed_day_id,))
+    where_sql, params = shop_scope_where(shop_id)
+    conn.execute(f"DELETE FROM shop_closed_days WHERE id = ? AND {where_sql}", [closed_day_id, *params])
     conn.commit()
 
 
@@ -1161,8 +1363,8 @@ def format_time_label(value: Any) -> str:
     return f"{display_hour}:{minute:02d} {suffix}"
 
 
-def public_booking_schedule(conn: sqlite3.Connection) -> dict[str, Any]:
-    availability = load_shop_availability(conn)
+def public_booking_schedule(conn: sqlite3.Connection, shop_id: int | None = None) -> dict[str, Any]:
+    availability = load_shop_availability(conn, shop_id=shop_id)
     first_row = availability[0] if availability else {}
     return {
         "days": [
@@ -1182,23 +1384,24 @@ def public_booking_schedule(conn: sqlite3.Connection) -> dict[str, Any]:
     }
 
 
-def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str) -> tuple[bool, str]:
+def is_closed_booking_day(conn: sqlite3.Connection, requested_date: str, shop_id: int | None = None) -> tuple[bool, str]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
         return False, ""
     ensure_calendar_schema(conn)
+    where_sql, params = shop_scope_where(shop_id)
     closed_day = conn.execute(
-        """
+        f"""
         SELECT reason
         FROM shop_closed_days
-        WHERE (shop_id IS NULL OR shop_id = 1) AND closed_date = ?
+        WHERE {where_sql} AND closed_date = ?
         LIMIT 1
         """,
-        (parsed_date.isoformat(),),
+        [*params, parsed_date.isoformat()],
     ).fetchone()
     if closed_day:
         return True, "The shop is closed on this day. Please choose another day."
-    availability = load_shop_availability(conn)
+    availability = load_shop_availability(conn, shop_id=shop_id)
     day_row = next((row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()), None)
     if day_row and not bool(day_row.get("is_open")):
         return True, "The shop is closed on this day. Please choose another day."
@@ -1215,6 +1418,7 @@ def is_booking_time_available(
     requested_time: str,
     requested_duration: Any = None,
     exclude_appointment_id: int | None = None,
+    shop_id: int | None = None,
 ) -> tuple[bool, str]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
@@ -1226,7 +1430,7 @@ def is_booking_time_available(
         requested_start = datetime.strptime(raw_time, "%H:%M")
     except ValueError:
         return False, "Please choose a valid appointment time."
-    availability = load_shop_availability(conn)
+    availability = load_shop_availability(conn, shop_id=shop_id)
     day_row = next((row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()), None)
     if not day_row or not bool(day_row.get("is_open")):
         return False, "The shop is closed on this day. Please choose another day."
@@ -1249,7 +1453,8 @@ def is_booking_time_available(
     buffer_minutes = int(day_row.get("buffer_minutes") or 0)
     requested_block_start = requested_start - timedelta(minutes=buffer_minutes)
     requested_block_end = requested_end + timedelta(minutes=buffer_minutes)
-    params: list[Any] = [parsed_date.isoformat()]
+    where_sql, params = shop_scope_where(shop_id)
+    params = [*params, parsed_date.isoformat()]
     exclusion_sql = ""
     if exclude_appointment_id is not None:
         exclusion_sql = " AND id <> ?"
@@ -1258,7 +1463,8 @@ def is_booking_time_available(
         f"""
         SELECT id, requested_time
         FROM service_appointments
-        WHERE requested_date = ?
+        WHERE {where_sql}
+          AND requested_date = ?
           AND status IN ('Requested', 'Confirmed', 'Rescheduled', 'Converted')
           {exclusion_sql}
         """,
@@ -1279,16 +1485,17 @@ def available_booking_times(
     conn: sqlite3.Connection,
     requested_date: str,
     exclude_appointment_id: int | None = None,
+    shop_id: int | None = None,
 ) -> dict[str, Any]:
     parsed_date = parse_date_value(requested_date)
     if not parsed_date:
         return {"state": "invalid", "message": "Please choose a valid appointment date.", "times": []}
     if parsed_date < shop_today():
         return {"state": "past", "message": "Please choose a date that has not passed.", "times": []}
-    closed, closed_message = is_closed_booking_day(conn, requested_date)
+    closed, closed_message = is_closed_booking_day(conn, requested_date, shop_id=shop_id)
     if closed:
         return {"state": "closed", "message": closed_message, "times": []}
-    availability = load_shop_availability(conn)
+    availability = load_shop_availability(conn, shop_id=shop_id)
     day_row = next(
         (row for row in availability if int(row.get("day_of_week") or 0) == parsed_date.weekday()),
         None,
@@ -1319,6 +1526,7 @@ def available_booking_times(
             raw_time,
             duration,
             exclude_appointment_id,
+            shop_id=shop_id,
         )
         if available:
             times.append({"value": raw_time, "label": format_time_label(raw_time)})
@@ -1336,6 +1544,7 @@ def booking_availability_for_month(
     conn: sqlite3.Connection,
     month: str,
     exclude_appointment_id: int | None = None,
+    shop_id: int | None = None,
 ) -> dict[str, Any]:
     try:
         month_start = datetime.strptime(str(month or ""), "%Y-%m").date().replace(day=1)
@@ -1348,14 +1557,16 @@ def booking_availability_for_month(
     days: list[dict[str, Any]] = []
     current = month_start
     while current <= month_end:
-        result = available_booking_times(conn, current.isoformat(), exclude_appointment_id)
+        result = available_booking_times(conn, current.isoformat(), exclude_appointment_id, shop_id=shop_id)
         days.append({"date": current.isoformat(), "available": result["state"] == "available"})
         current += timedelta(days=1)
     return {"month": month_start.strftime("%Y-%m"), "days": days}
 
 
-def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -> int:
+def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any], shop_id: int | None = None) -> int:
     ensure_calendar_schema(conn)
+    if shop_id is None:
+        shop_id = optional_int_value(data.get("shop_id"))
     status = str(data.get("status") or "Requested").strip()
     if status not in APPOINTMENT_STATUS_OPTIONS:
         status = "Requested"
@@ -1374,9 +1585,10 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -
           customer_email, vehicle_label, vehicle_year, vehicle_make, vehicle_model, service_name, requested_date,
           requested_time, notes, source, status, created_at, updated_at
         )
-        VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
+            shop_id,
             optional_int_value(data.get("customer_id")),
             optional_int_value(data.get("vehicle_id")),
             optional_int_value(data.get("estimate_id")),
@@ -1403,26 +1615,30 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any]) -
     return int(cur.lastrowid)
 
 
-def update_service_appointment_status(conn: sqlite3.Connection, appointment_id: int, status: str) -> None:
+def update_service_appointment_status(conn: sqlite3.Connection, appointment_id: int, status: str, shop_id: int | None = None) -> None:
     if status not in APPOINTMENT_STATUS_OPTIONS:
         raise HTTPException(status_code=400, detail="Invalid appointment status")
     ensure_calendar_schema(conn)
-    conn.execute(
-        """
+    where_sql, params = shop_scope_where(shop_id)
+    cur = conn.execute(
+        f"""
         UPDATE service_appointments
         SET status = ?, updated_at = ?
-        WHERE id = ?
+        WHERE id = ? AND {where_sql}
         """,
-        (status, datetime.utcnow().isoformat(), appointment_id),
+        [status, datetime.utcnow().isoformat(), appointment_id, *params],
     )
+    if cur.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Appointment not found")
     conn.commit()
 
 
-def load_service_appointment(conn: sqlite3.Connection, appointment_id: int) -> dict[str, Any] | None:
+def load_service_appointment(conn: sqlite3.Connection, appointment_id: int, shop_id: int | None = None) -> dict[str, Any] | None:
     ensure_calendar_schema(conn)
+    where_sql, params = shop_scope_where(shop_id)
     row = conn.execute(
-        "SELECT * FROM service_appointments WHERE id = ? LIMIT 1",
-        (appointment_id,),
+        f"SELECT * FROM service_appointments WHERE id = ? AND {where_sql} LIMIT 1",
+        [appointment_id, *params],
     ).fetchone()
     return dict(row) if row else None
 
@@ -1432,8 +1648,9 @@ def reschedule_service_appointment(
     appointment_id: int,
     requested_date: str,
     requested_time: str,
+    shop_id: int | None = None,
 ) -> None:
-    appointment = load_service_appointment(conn, appointment_id)
+    appointment = load_service_appointment(conn, appointment_id, shop_id=shop_id)
     if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
         raise HTTPException(status_code=404, detail="Confirmed appointment not found.")
     available, warning = is_booking_time_available(
@@ -1441,8 +1658,9 @@ def reschedule_service_appointment(
         requested_date,
         requested_time,
         exclude_appointment_id=appointment_id,
+        shop_id=shop_id,
     )
-    generated_times = available_booking_times(conn, requested_date, appointment_id)
+    generated_times = available_booking_times(conn, requested_date, appointment_id, shop_id=shop_id)
     if available:
         available = requested_time in {slot["value"] for slot in generated_times.get("times", [])}
     if not available:
@@ -1452,31 +1670,35 @@ def reschedule_service_appointment(
             or generated_times.get("message")
             or "No appointment times are available for this day. Please choose another day.",
         )
+    where_sql, params = shop_scope_where(shop_id)
     conn.execute(
-        """
+        f"""
         UPDATE service_appointments
         SET requested_date = ?, requested_time = ?, updated_at = ?
-        WHERE id = ? AND status IN ('Confirmed', 'Rescheduled')
+        WHERE id = ? AND {where_sql} AND status IN ('Confirmed', 'Rescheduled')
         """,
-        (requested_date, requested_time, datetime.utcnow().isoformat(), appointment_id),
+        [requested_date, requested_time, datetime.utcnow().isoformat(), appointment_id, *params],
     )
     conn.execute(
-        "UPDATE service_appointments SET status = 'Rescheduled' WHERE id = ?",
-        (appointment_id,),
+        f"UPDATE service_appointments SET status = 'Rescheduled' WHERE id = ? AND {where_sql}",
+        [appointment_id, *params],
     )
     conn.commit()
 
 
-def load_service_appointments(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+def load_service_appointments(conn: sqlite3.Connection, shop_id: int | None = None) -> list[dict[str, Any]]:
     ensure_calendar_schema(conn)
+    where_sql, params = shop_scope_where(shop_id)
     return [
         dict(row)
         for row in conn.execute(
-            """
+            f"""
             SELECT *
             FROM service_appointments
+            WHERE {where_sql}
             ORDER BY requested_date ASC, requested_time ASC, id ASC
-            """
+            """,
+            params,
         ).fetchall()
     ]
 
@@ -1865,26 +2087,40 @@ def appointment_estimator_href(appointment: dict[str, Any]) -> str:
     return f"/estimator?{urlencode({key: value for key, value in params.items() if value not in (None, '')})}"
 
 
-def load_calendar_conversion_context(conn: sqlite3.Connection) -> dict[str, Any]:
+def load_calendar_conversion_context(conn: sqlite3.Connection, shop_id: int | None = None) -> dict[str, Any]:
     ensure_customer_status_schema(conn)
+    customer_shop_clause = ""
+    customer_params: list[Any] = []
+    if shop_id is not None:
+        customer_shop_clause = "AND (shop_id = ? OR shop_id IS NULL)"
+        customer_params.append(shop_id)
     customers = [
         dict(row)
         for row in conn.execute(
-            """
+            f"""
             SELECT *
             FROM customers
             WHERE COALESCE(NULLIF(customer_status, ''), 'active') = 'active'
+              {customer_shop_clause}
             ORDER BY updated_at DESC, created_at DESC, id DESC
-            """
+            """,
+            customer_params,
         ).fetchall()
     ]
     vehicles_by_customer: dict[str, list[dict[str, Any]]] = {}
+    vehicle_shop_clause = ""
+    vehicle_params: list[Any] = []
+    if shop_id is not None:
+        vehicle_shop_clause = "WHERE shop_id = ? OR shop_id IS NULL"
+        vehicle_params.append(shop_id)
     for row in conn.execute(
-        """
+        f"""
         SELECT *
         FROM customer_vehicles
+        {vehicle_shop_clause}
         ORDER BY updated_at DESC, created_at DESC, id DESC
-        """
+        """,
+        vehicle_params,
     ).fetchall():
         vehicle = dict(row)
         vehicles_by_customer.setdefault(str(vehicle["customer_id"]), []).append(vehicle)
@@ -1983,10 +2219,11 @@ def link_appointment_customer_vehicle(
     conn: sqlite3.Connection,
     appointment_id: int,
     form: dict[str, str],
+    shop_id: int | None = None,
 ) -> tuple[int, int, dict[str, Any]]:
     ensure_calendar_schema(conn)
     ensure_customer_status_schema(conn)
-    appointment = load_service_appointment(conn, appointment_id)
+    appointment = load_service_appointment(conn, appointment_id, shop_id=shop_id)
     if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
         raise HTTPException(status_code=404, detail="Active confirmed appointment not found.")
     if optional_int_value(appointment.get("customer_id")) and optional_int_value(appointment.get("vehicle_id")):
@@ -2018,10 +2255,13 @@ def link_appointment_customer_vehicle(
                 ),
             )
             customer_id = int(cur.lastrowid)
+            if shop_id is not None:
+                conn.execute("UPDATE customers SET shop_id = ? WHERE id = ?", (shop_id, customer_id))
         vehicle_mode = "new"
     else:
         customer_id = optional_int(form, "customer_id") or 0
-        if not conn.execute("SELECT id FROM customers WHERE id = ?", (customer_id,)).fetchone():
+        customer_scope, customer_scope_params = shop_scope_where(shop_id)
+        if not conn.execute(f"SELECT id FROM customers WHERE id = ? AND {customer_scope}", [customer_id, *customer_scope_params]).fetchone():
             raise HTTPException(status_code=400, detail="Select a customer.")
 
     vehicle_bits = appointment_vehicle_parts(appointment)
@@ -2060,11 +2300,14 @@ def link_appointment_customer_vehicle(
                 ),
             )
             vehicle_id = int(cur.lastrowid)
+            if shop_id is not None:
+                conn.execute("UPDATE customer_vehicles SET shop_id = ? WHERE id = ?", (shop_id, vehicle_id))
     else:
         vehicle_id = optional_int(form, "vehicle_id") or 0
+        vehicle_scope, vehicle_scope_params = shop_scope_where(shop_id)
         if not conn.execute(
-            "SELECT id FROM customer_vehicles WHERE id = ? AND customer_id = ?",
-            (vehicle_id, customer_id),
+            f"SELECT id FROM customer_vehicles WHERE id = ? AND customer_id = ? AND {vehicle_scope}",
+            [vehicle_id, customer_id, *vehicle_scope_params],
         ).fetchone():
             raise HTTPException(status_code=400, detail="Select a vehicle for this customer.")
 
@@ -2077,15 +2320,49 @@ def link_appointment_customer_vehicle(
         (customer_id, vehicle_id, now, appointment_id),
     )
     conn.commit()
-    linked = load_service_appointment(conn, appointment_id) or appointment
+    linked = load_service_appointment(conn, appointment_id, shop_id=shop_id) or appointment
     return customer_id, vehicle_id, linked
 
 
-def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
+SHOP_PROFILE_COLUMNS = (
+    "id",
+    "owner_user_id",
+    "shop_name",
+    "phone",
+    "email",
+    "address",
+    "shop_phone",
+    "shop_email",
+    "shop_address",
+    "shop_city",
+    "shop_state",
+    "shop_zip",
+    "website",
+    "scheduling_link",
+    "external_scheduling_link",
+    "logo_url",
+    "labor_rate_default",
+    "tax_rate_default",
+    "default_labor_rate",
+    "tax_rate",
+    "shop_supplies_fee",
+    "warranty_note",
+    "quote_expiration_days",
+    "custom_footer_note",
+    "appointment_confirmation_template",
+    "appointment_cancellation_template",
+    "appointment_declined_template",
+    "appointment_rescheduled_template",
+    "updated_at",
+)
+
+
+def create_shop_profile_table(conn: sqlite3.Connection, table_name: str = "shop_profile") -> None:
     conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS shop_profile (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
+        f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          owner_user_id INTEGER UNIQUE,
           shop_name TEXT,
           phone TEXT,
           email TEXT,
@@ -2116,11 +2393,36 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+
+
+def migrate_shop_profile_primary_key_if_needed(conn: sqlite3.Connection) -> None:
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'shop_profile'"
+    ).fetchone()
+    table_sql = str(row["sql"] if row and isinstance(row, sqlite3.Row) else row[0] if row else "")
+    if "CHECK (id = 1)" not in table_sql and "CHECK(id = 1)" not in table_sql:
+        return
+    existing_columns = [row[1] for row in conn.execute("PRAGMA table_info(shop_profile)").fetchall()]
+    conn.execute("ALTER TABLE shop_profile RENAME TO shop_profile_single_shop")
+    create_shop_profile_table(conn)
+    copy_columns = [column for column in SHOP_PROFILE_COLUMNS if column in existing_columns and column != "owner_user_id"]
+    if copy_columns:
+        columns_sql = ", ".join(copy_columns)
+        conn.execute(
+            f"INSERT INTO shop_profile ({columns_sql}) SELECT {columns_sql} FROM shop_profile_single_shop"
+        )
+    conn.execute("DROP TABLE shop_profile_single_shop")
+
+
+def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
+    create_shop_profile_table(conn)
+    migrate_shop_profile_primary_key_if_needed(conn)
     columns = {
         row[1]
         for row in conn.execute("PRAGMA table_info(shop_profile)").fetchall()
     }
     for column_name, column_sql in {
+        "owner_user_id": "owner_user_id INTEGER",
         "shop_name": "shop_name TEXT",
         "phone": "phone TEXT",
         "email": "email TEXT",
@@ -2151,6 +2453,7 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
     }.items():
         if column_name not in columns:
             conn.execute(f"ALTER TABLE shop_profile ADD COLUMN {column_sql}")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_profile_owner_user_id ON shop_profile (owner_user_id)")
     conn.commit()
 
 
@@ -2209,18 +2512,119 @@ def normalize_shop_profile_context(profile: dict[str, Any] | None) -> dict[str, 
     return normalized
 
 
-def load_shop_profile_context(conn: sqlite3.Connection) -> dict[str, Any]:
+def first_shop_id(conn: sqlite3.Connection) -> int | None:
+    ensure_shop_profile_schema(conn)
+    row = conn.execute("SELECT id FROM shop_profile ORDER BY id ASC LIMIT 1").fetchone()
+    return int(row["id"]) if row else None
+
+
+def create_shop_profile_for_user(conn: sqlite3.Connection, user_id: int, shop_name: str = "") -> int:
+    ensure_shop_profile_schema(conn)
+    existing = conn.execute(
+        "SELECT id FROM shop_profile WHERE owner_user_id = ? LIMIT 1",
+        (user_id,),
+    ).fetchone()
+    if existing:
+        return int(existing["id"])
+    now = datetime.utcnow().isoformat()
+    cur = conn.execute(
+        """
+        INSERT INTO shop_profile (
+          owner_user_id, shop_name, phone, email, address, shop_phone, shop_email,
+          shop_address, shop_city, shop_state, shop_zip, labor_rate_default,
+          tax_rate_default, default_labor_rate, tax_rate, shop_supplies_fee,
+          quote_expiration_days, updated_at
+        )
+        VALUES (?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
+        """,
+        (user_id, str(shop_name or "").strip(), now),
+    )
+    return int(cur.lastrowid)
+
+
+def bootstrap_existing_shop_to_user(conn: sqlite3.Connection, user_id: int, shop_name: str = "") -> int:
+    owned = conn.execute(
+        "SELECT id FROM shop_profile WHERE owner_user_id = ? LIMIT 1",
+        (user_id,),
+    ).fetchone()
+    if owned:
+        return int(owned["id"])
+    unowned = conn.execute(
+        "SELECT id FROM shop_profile WHERE owner_user_id IS NULL ORDER BY id ASC LIMIT 1"
+    ).fetchone()
+    now = datetime.utcnow().isoformat()
+    if unowned:
+        conn.execute(
+            """
+            UPDATE shop_profile
+            SET owner_user_id = ?,
+                shop_name = COALESCE(NULLIF(TRIM(shop_name), ''), ?),
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (user_id, str(shop_name or "").strip(), now, int(unowned["id"])),
+        )
+        return int(unowned["id"])
+    now = datetime.utcnow().isoformat()
+    cur = conn.execute(
+        """
+        INSERT INTO shop_profile (
+          owner_user_id, shop_name, phone, email, address, shop_phone, shop_email,
+          shop_address, shop_city, shop_state, shop_zip, labor_rate_default,
+          tax_rate_default, default_labor_rate, tax_rate, shop_supplies_fee,
+          quote_expiration_days, updated_at
+        )
+        VALUES (?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
+        """,
+        (user_id, str(shop_name or "").strip(), now),
+    )
+    return int(cur.lastrowid)
+
+
+def current_shop_id(conn: sqlite3.Connection, request: Request | None = None) -> int | None:
+    ensure_shop_profile_schema(conn)
+    if request is not None:
+        user_id = current_user_id(request)
+        if user_id:
+            row = conn.execute(
+                "SELECT id FROM shop_profile WHERE owner_user_id = ? LIMIT 1",
+                (user_id,),
+            ).fetchone()
+            if row:
+                return int(row["id"])
+    return first_shop_id(conn)
+
+
+def current_shop_context(conn: sqlite3.Connection, request: Request | None = None) -> dict[str, Any]:
+    return load_shop_profile_context(conn, shop_id=current_shop_id(conn, request))
+
+
+def load_shop_profile_context(
+    conn: sqlite3.Connection,
+    shop_id: int | None = None,
+    owner_user_id: int | None = None,
+) -> dict[str, Any]:
     try:
         ensure_shop_profile_schema(conn)
-        row = conn.execute("SELECT * FROM shop_profile WHERE id = 1").fetchone()
+        if owner_user_id:
+            row = conn.execute(
+                "SELECT * FROM shop_profile WHERE owner_user_id = ? LIMIT 1",
+                (owner_user_id,),
+            ).fetchone()
+        elif shop_id:
+            row = conn.execute("SELECT * FROM shop_profile WHERE id = ? LIMIT 1", (shop_id,)).fetchone()
+        else:
+            row = conn.execute("SELECT * FROM shop_profile ORDER BY id ASC LIMIT 1").fetchone()
     except sqlite3.OperationalError:
         return {}
     return normalize_shop_profile_context(dict(row) if row else {})
 
 
-def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[str, Any]:
+def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: int | None = None) -> dict[str, Any]:
     ensure_shop_profile_schema(conn)
-    current = load_shop_profile_context(conn)
+    shop_id = shop_id or first_shop_id(conn)
+    current = load_shop_profile_context(conn, shop_id=shop_id)
+    current["id"] = shop_id
     field_aliases = {
         "shop_address": ("shop_address", "street_address"),
         "shop_city": ("shop_city", "city"),
@@ -2258,7 +2662,7 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
     conn.execute(
         """
         INSERT INTO shop_profile (
-          id, shop_name, phone, email, address, shop_phone, shop_email,
+          id, owner_user_id, shop_name, phone, email, address, shop_phone, shop_email,
           shop_address, shop_city, shop_state, shop_zip, website, scheduling_link,
           external_scheduling_link, logo_url, labor_rate_default, tax_rate_default,
           default_labor_rate, tax_rate, shop_supplies_fee, warranty_note,
@@ -2266,8 +2670,9 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
           appointment_cancellation_template, appointment_declined_template,
           appointment_rescheduled_template, updated_at
         )
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
+          owner_user_id = excluded.owner_user_id,
           shop_name = excluded.shop_name,
           phone = excluded.phone,
           email = excluded.email,
@@ -2294,6 +2699,8 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str]) -> dict[s
           updated_at = excluded.updated_at
         """,
         (
+            current.get("id"),
+            current.get("owner_user_id"),
             current.get("shop_name") or "",
             current.get("shop_phone") or "",
             current.get("shop_email") or "",
@@ -3237,8 +3644,13 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         """
     )
     columns = {row[1] for row in conn.execute("PRAGMA table_info(customers)").fetchall()}
+    if "shop_id" not in columns:
+        conn.execute("ALTER TABLE customers ADD COLUMN shop_id INTEGER")
     if "customer_status" not in columns:
         conn.execute("ALTER TABLE customers ADD COLUMN customer_status TEXT NOT NULL DEFAULT 'active'")
+    vehicle_columns = {row[1] for row in conn.execute("PRAGMA table_info(customer_vehicles)").fetchall()}
+    if "shop_id" not in vehicle_columns:
+        conn.execute("ALTER TABLE customer_vehicles ADD COLUMN shop_id INTEGER")
     conn.execute(
         """
         UPDATE customers
@@ -3246,6 +3658,8 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         WHERE customer_status IS NULL OR TRIM(customer_status) = ''
         """
     )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_shop_id ON customers (shop_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_vehicles_shop_id ON customer_vehicles (shop_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (customer_status)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_vehicles_customer_id ON customer_vehicles (customer_id)")
     conn.commit()
@@ -10144,10 +10558,11 @@ def pro_follow_ups(request: Request):
 
 
 @router.get("/shop-settings", response_class=HTMLResponse)
-def pro_shop_settings(request: Request, saved: str = ""):
+def pro_shop_settings(request: Request, saved: str = "", notice: str = ""):
     conn = crm_db_conn()
     try:
-        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
+        shop_id = current_shop_id(conn, request)
+        profile = attach_shop_booking_context(load_shop_profile_context(conn, shop_id=shop_id), request)
     finally:
         conn.close()
 
@@ -10157,6 +10572,8 @@ def pro_shop_settings(request: Request, saved: str = ""):
             "request": request,
             "profile": profile,
             "saved": saved == "1",
+            "first_setup_notice": notice == "first_setup",
+            "email_verified_notice": notice == "email_verified",
         },
     )
 
@@ -10166,7 +10583,7 @@ async def pro_shop_settings_save(request: Request):
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
-        save_shop_settings(conn, form)
+        save_shop_settings(conn, form, shop_id=current_shop_id(conn, request))
     finally:
         conn.close()
     return RedirectResponse("/pro/shop-settings?saved=1", status_code=303)
@@ -10176,9 +10593,10 @@ async def pro_shop_settings_save(request: Request):
 def pro_shop_schedule(request: Request, saved: str = "", closed_saved: str = ""):
     conn = crm_db_conn()
     try:
-        availability = load_shop_availability(conn)
-        closed_days = load_closed_days(conn)
-        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
+        shop_id = current_shop_id(conn, request)
+        availability = load_shop_availability(conn, shop_id=shop_id)
+        closed_days = load_closed_days(conn, shop_id=shop_id)
+        profile = attach_shop_booking_context(load_shop_profile_context(conn, shop_id=shop_id), request)
     finally:
         conn.close()
     appointment_length = int(availability[0].get("appointment_length_minutes") or 60) if availability else 60
@@ -10218,11 +10636,13 @@ async def pro_shop_schedule_save(request: Request):
         )
     conn = crm_db_conn()
     try:
+        shop_id = current_shop_id(conn, request)
         save_shop_availability(
             conn,
             availability,
             appointment_length_minutes=appointment_length,
             buffer_minutes=buffer_minutes,
+            shop_id=shop_id,
         )
     finally:
         conn.close()
@@ -10234,17 +10654,17 @@ async def pro_shop_schedule_closed_day_add(request: Request):
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
-        create_closed_day(conn, form.get("closed_date", ""), form.get("reason", ""))
+        create_closed_day(conn, form.get("closed_date", ""), form.get("reason", ""), shop_id=current_shop_id(conn, request))
     finally:
         conn.close()
     return RedirectResponse("/pro/shop-schedule?closed_saved=1", status_code=303)
 
 
 @router.post("/shop-schedule/closed-days/{closed_day_id}/delete")
-def pro_shop_schedule_closed_day_delete(closed_day_id: int):
+def pro_shop_schedule_closed_day_delete(request: Request, closed_day_id: int):
     conn = crm_db_conn()
     try:
-        delete_closed_day(conn, closed_day_id)
+        delete_closed_day(conn, closed_day_id, shop_id=current_shop_id(conn, request))
     finally:
         conn.close()
     return RedirectResponse("/pro/shop-schedule", status_code=303)
@@ -10254,12 +10674,13 @@ def pro_shop_schedule_closed_day_delete(closed_day_id: int):
 def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str = ""):
     conn = crm_db_conn()
     try:
-        profile = load_shop_profile_context(conn)
+        shop_id = current_shop_id(conn, request)
+        profile = load_shop_profile_context(conn, shop_id=shop_id)
         appointments = attach_appointment_customer_messages(
-            load_service_appointments(conn),
+            load_service_appointments(conn, shop_id=shop_id),
             profile,
         )
-        conversion_context = load_calendar_conversion_context(conn)
+        conversion_context = load_calendar_conversion_context(conn, shop_id=shop_id)
         customer_by_id = {
             int(customer["id"]): customer for customer in conversion_context["customers"]
         }
@@ -10373,12 +10794,14 @@ async def pro_calendar_add(request: Request):
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
+        shop_id = current_shop_id(conn, request)
         available, warning = is_booking_time_available(
             conn,
             form.get("requested_date", ""),
             form.get("requested_time", ""),
+            shop_id=shop_id,
         )
-        generated_times = available_booking_times(conn, form.get("requested_date", ""))
+        generated_times = available_booking_times(conn, form.get("requested_date", ""), shop_id=shop_id)
         if available:
             available = form.get("requested_time", "") in {
                 slot["value"] for slot in generated_times.get("times", [])
@@ -10401,6 +10824,7 @@ async def pro_calendar_add(request: Request):
                 "status": form.get("status", "Requested"),
                 "source": "manual",
             },
+            shop_id=shop_id,
         )
     finally:
         conn.close()
@@ -10413,7 +10837,7 @@ async def pro_calendar_status_update(request: Request, appointment_id: int):
     status = form.get("status", "Requested")
     conn = crm_db_conn()
     try:
-        update_service_appointment_status(conn, appointment_id, status)
+        update_service_appointment_status(conn, appointment_id, status, shop_id=current_shop_id(conn, request))
     finally:
         conn.close()
     notice = {"Confirmed": "confirmed", "Handled": "handled", "Declined": "declined"}.get(status, "")
@@ -10432,6 +10856,7 @@ async def pro_calendar_reschedule(request: Request, appointment_id: int):
                 appointment_id,
                 form.get("requested_date", ""),
                 form.get("requested_time", ""),
+                shop_id=current_shop_id(conn, request),
             )
         except HTTPException as exc:
             return RedirectResponse(
@@ -10444,16 +10869,17 @@ async def pro_calendar_reschedule(request: Request, appointment_id: int):
 
 
 @router.post("/calendar/{appointment_id}/cancel")
-def pro_calendar_cancel(appointment_id: int):
+def pro_calendar_cancel(request: Request, appointment_id: int):
     conn = crm_db_conn()
     try:
-        appointment = load_service_appointment(conn, appointment_id)
+        shop_id = current_shop_id(conn, request)
+        appointment = load_service_appointment(conn, appointment_id, shop_id=shop_id)
         if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
             return RedirectResponse(
                 f"/pro/calendar?{urlencode({'error': 'Confirmed appointment not found.'})}",
                 status_code=303,
             )
-        update_service_appointment_status(conn, appointment_id, "Cancelled")
+        update_service_appointment_status(conn, appointment_id, "Cancelled", shop_id=shop_id)
     finally:
         conn.close()
     return RedirectResponse("/pro/calendar?notice=cancelled", status_code=303)
@@ -10470,6 +10896,7 @@ async def pro_calendar_convert(request: Request, appointment_id: int):
                 conn,
                 appointment_id,
                 form,
+                shop_id=current_shop_id(conn, request),
             )
         except HTTPException as exc:
             return RedirectResponse(
@@ -10493,7 +10920,8 @@ def public_booking_available_times(
 ):
     conn = crm_db_conn()
     try:
-        result = available_booking_times(conn, date, exclude_appointment_id)
+        shop_id = shop_id_for_booking_slug(conn, shop_slug)
+        result = available_booking_times(conn, date, exclude_appointment_id, shop_id=shop_id)
     finally:
         conn.close()
     return JSONResponse(result)
@@ -10507,7 +10935,8 @@ def public_booking_available_dates(
 ):
     conn = crm_db_conn()
     try:
-        result = booking_availability_for_month(conn, month, exclude_appointment_id)
+        shop_id = shop_id_for_booking_slug(conn, shop_slug)
+        result = booking_availability_for_month(conn, month, exclude_appointment_id, shop_id=shop_id)
     finally:
         conn.close()
     return JSONResponse(result)
@@ -10517,8 +10946,9 @@ def public_booking_available_dates(
 def public_booking_page(request: Request, shop_slug: str, success: str = "", warning: str = ""):
     conn = crm_db_conn()
     try:
-        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
-        booking_schedule = public_booking_schedule(conn)
+        shop_id = shop_id_for_booking_slug(conn, shop_slug)
+        profile = attach_shop_booking_context(load_shop_profile_context(conn, shop_id=shop_id), request)
+        booking_schedule = public_booking_schedule(conn, shop_id=shop_id)
     finally:
         conn.close()
     return templates.TemplateResponse(
@@ -10550,8 +10980,9 @@ async def public_booking_submit(request: Request, shop_slug: str):
     ).strip() or str(form.get("vehicle_label") or "").strip()
     conn = crm_db_conn()
     try:
-        profile = attach_shop_booking_context(load_shop_profile_context(conn), request)
-        booking_schedule = public_booking_schedule(conn)
+        shop_id = shop_id_for_booking_slug(conn, shop_slug)
+        profile = attach_shop_booking_context(load_shop_profile_context(conn, shop_id=shop_id), request)
+        booking_schedule = public_booking_schedule(conn, shop_id=shop_id)
         required_fields = ("customer_name", "customer_phone", "service_name")
         vehicle_fields_missing = not vehicle_label or (
             any(vehicle_parts) and any(not part for part in vehicle_parts)
@@ -10570,7 +11001,7 @@ async def public_booking_submit(request: Request, shop_slug: str):
                 },
                 status_code=400,
             )
-        closed, closed_reason = is_closed_booking_day(conn, form.get("requested_date", ""))
+        closed, closed_reason = is_closed_booking_day(conn, form.get("requested_date", ""), shop_id=shop_id)
         if closed:
             warning = closed_reason or "The shop is closed on this day. Please choose another day."
             return templates.TemplateResponse(
@@ -10591,9 +11022,10 @@ async def public_booking_submit(request: Request, shop_slug: str):
             form.get("requested_date", ""),
             form.get("requested_time", ""),
             form.get("appointment_length_minutes", ""),
+            shop_id=shop_id,
         )
         if available:
-            generated_times = available_booking_times(conn, form.get("requested_date", ""))
+            generated_times = available_booking_times(conn, form.get("requested_date", ""), shop_id=shop_id)
             available = form.get("requested_time", "") in {
                 slot["value"] for slot in generated_times.get("times", [])
             }
@@ -10634,6 +11066,7 @@ async def public_booking_submit(request: Request, shop_slug: str):
                 "source": "customer_booking",
                 "status": "Requested",
             },
+            shop_id=shop_id,
         )
     finally:
         conn.close()

@@ -27,13 +27,33 @@ from fastapi import (
 
 from routers.knowledge import router as knowledge_router
 from routers.pro import (
+    AUTH_SESSION_USER_KEY,
+    AUTH_SESSION_BOOTSTRAP_KEY,
+    bootstrap_existing_shop_to_user,
+    create_shop_profile_for_user,
+    csrf_token,
+    current_shop_context,
+    current_user,
+    ensure_auth_schema,
+    ensure_shop_profile_schema,
+    hash_password,
+    load_user_by_email,
+    login_session,
+    logout_session,
+    normalize_email,
     public_router as booking_router,
     record_estimate_pdf_document,
     repair_workspace_parts_sources,
     router as pro_router,
+    safe_next_url,
+    validate_csrf,
+    verification_token_hash,
+    verify_password,
+    user_email_verified,
 )
 
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import (
     FileResponse,
     HTMLResponse,
@@ -167,7 +187,86 @@ for _h in logging.getLogger().handlers:
 # App Setup
 # ============================================================
 
+SESSION_COOKIE_NAME = "tm_session"
+BOOTSTRAP_TOKEN_ENV = "TORQUEMECH_BOOTSTRAP_TOKEN"
+
+
+def load_server_session_data(session_id: str) -> dict[str, Any]:
+    if not session_id:
+        return {}
+    try:
+        conn = app_db_conn(row_factory=True)
+        try:
+            ensure_auth_schema(conn)
+            row = conn.execute(
+                "SELECT data_json FROM auth_sessions WHERE session_id = ?",
+                (session_id,),
+            ).fetchone()
+            if not row:
+                return {}
+            loaded = json.loads(row["data_json"] or "{}")
+            return loaded if isinstance(loaded, dict) else {}
+        finally:
+            conn.close()
+    except Exception:
+        logging.exception("SESSION_LOAD_FAILED")
+        return {}
+
+
+class SQLiteSessionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        session_id = request.cookies.get(SESSION_COOKIE_NAME, "")
+        session_data = load_server_session_data(session_id)
+        if session_id and not session_data:
+            session_id = ""
+        request.scope["session"] = session_data
+        response = await call_next(request)
+        try:
+            updated_session = dict(request.scope.get("session") or {})
+            rotate_session = bool(request.scope.pop("rotate_session_id", False))
+            conn = app_db_conn(row_factory=True)
+            try:
+                ensure_auth_schema(conn)
+                if updated_session:
+                    old_session_id = session_id
+                    if rotate_session:
+                        session_id = ""
+                    if not session_id:
+                        session_id = base64.urlsafe_b64encode(os.urandom(32)).decode("ascii").rstrip("=")
+                    now = datetime.utcnow().isoformat()
+                    conn.execute(
+                        """
+                        INSERT INTO auth_sessions (session_id, data_json, created_at, updated_at)
+                        VALUES (?, ?, ?, ?)
+                        ON CONFLICT(session_id) DO UPDATE SET
+                          data_json = excluded.data_json,
+                          updated_at = excluded.updated_at
+                        """,
+                        (session_id, json.dumps(updated_session), now, now),
+                    )
+                    if rotate_session and old_session_id and old_session_id != session_id:
+                        conn.execute("DELETE FROM auth_sessions WHERE session_id = ?", (old_session_id,))
+                    conn.commit()
+                    response.set_cookie(
+                        SESSION_COOKIE_NAME,
+                        session_id,
+                        httponly=True,
+                        secure=request.url.scheme == "https",
+                        samesite="lax",
+                    )
+                elif session_id:
+                    conn.execute("DELETE FROM auth_sessions WHERE session_id = ?", (session_id,))
+                    conn.commit()
+                    response.delete_cookie(SESSION_COOKIE_NAME)
+            finally:
+                conn.close()
+        except Exception:
+            logging.exception("SESSION_SAVE_FAILED")
+        return response
+
+
 app = FastAPI()
+app.add_middleware(SQLiteSessionMiddleware)
 
 DEFAULT_SHOP_TIMEZONE = "America/Los_Angeles"
 try:
@@ -376,6 +475,7 @@ STATE_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = str((STATE_DIR / "app.db").resolve())
 LOCAL_FALLBACK_DB_PATH = str((STATE_DIR / "dev_runtime_app.db").resolve())
 USE_LOCAL_SQLITE_COMPAT = not Path("/data").exists()
+LOCAL_DB_MARKER_PATH = STATE_DIR / "active_app_db_path.txt"
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 REPAIR_GUIDE_TORQUE_SPECS_PATH = DATA_DIR / "torque_specs" / "brakes.json"
@@ -428,8 +528,28 @@ def load_repair_guide_torque_specs() -> Dict[str, Any]:
     return data
 
 
+def mark_local_fallback_db_active() -> None:
+    if not USE_LOCAL_SQLITE_COMPAT:
+        return
+    try:
+        LOCAL_DB_MARKER_PATH.write_text(LOCAL_FALLBACK_DB_PATH, encoding="utf-8")
+    except OSError:
+        logging.exception("LOCAL_DB_MARKER_WRITE_FAILED")
+
+
+def active_app_db_path() -> str:
+    if USE_LOCAL_SQLITE_COMPAT:
+        try:
+            marked_path = LOCAL_DB_MARKER_PATH.read_text(encoding="utf-8").strip()
+        except OSError:
+            marked_path = ""
+        if marked_path == LOCAL_FALLBACK_DB_PATH:
+            return LOCAL_FALLBACK_DB_PATH
+    return DB_PATH
+
+
 def app_db_conn(*, row_factory: bool = False) -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(active_app_db_path())
     if USE_LOCAL_SQLITE_COMPAT:
         # OneDrive-backed local workspaces can fail on default rollback-journal commits.
         try:
@@ -443,6 +563,7 @@ def app_db_conn(*, row_factory: bool = False) -> sqlite3.Connection:
             except sqlite3.OperationalError as fallback_exc:
                 logging.warning("Using local fallback app DB after PRAGMA failure: %s", fallback_exc)
                 conn.close()
+                mark_local_fallback_db_active()
                 conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
                 conn.execute("PRAGMA journal_mode=TRUNCATE")
                 conn.execute("PRAGMA synchronous=NORMAL")
@@ -1539,10 +1660,53 @@ async def add_request_id_middleware(request: Request, call_next):
 
 
 @app.middleware("http")
+async def auth_context_middleware(request: Request, call_next):
+    request.state.current_user = None
+    request.state.current_shop = {}
+    try:
+        conn = app_db_conn(row_factory=True)
+        try:
+            user = current_user(conn, request)
+            request.state.current_user = user
+            request.state.current_shop = current_shop_context(conn, request) if user else {}
+        finally:
+            conn.close()
+    except Exception:
+        logging.exception("AUTH_CONTEXT_LOAD_FAILED")
+    return await call_next(request)
+
+
+@app.middleware("http")
 async def pro_private_access_middleware(request: Request, call_next):
     path = request.url.path
     if path != "/pro" and not path.startswith("/pro/"):
         return await call_next(request)
+
+    async def continue_if_authenticated():
+        try:
+            conn = app_db_conn(row_factory=True)
+            try:
+                ensure_auth_schema(conn)
+                user_count = conn.execute("SELECT COUNT(*) AS count FROM users").fetchone()["count"]
+                session_data = request.scope.get("session")
+                if not isinstance(session_data, dict):
+                    session_data = load_server_session_data(request.cookies.get(SESSION_COOKIE_NAME, ""))
+                    request.scope["session"] = session_data
+                user = current_user(conn, request) if session_data.get(AUTH_SESSION_USER_KEY) else None
+            finally:
+                conn.close()
+            if int(user_count or 0) == 0:
+                return await call_next(request)
+        except Exception:
+            logging.exception("AUTH_BOOTSTRAP_CHECK_FAILED")
+            user = None
+        if user and user_email_verified(user):
+            return await call_next(request)
+        if user:
+            return RedirectResponse("/check-email", status_code=303)
+        return_to = safe_next_url(str(request.url.path) + (f"?{request.url.query}" if request.url.query else ""))
+        suffix = f"?{urlencode({'next': return_to})}" if return_to else ""
+        return RedirectResponse(f"/login{suffix}", status_code=303)
 
     access_state = pro_request_access_state(request)
     qa_key = access_state["qa_key"]
@@ -1560,7 +1724,7 @@ async def pro_private_access_middleware(request: Request, call_next):
             qa_cookie_valid=qa_cookie_valid,
             access_allowed=True,
         )
-        return await call_next(request)
+        return await continue_if_authenticated()
 
     if qa_cookie_valid or qa_key_matched:
         log_pro_qa_gate(
@@ -1571,7 +1735,7 @@ async def pro_private_access_middleware(request: Request, call_next):
             qa_cookie_valid=qa_cookie_valid,
             access_allowed=True,
         )
-        response = await call_next(request)
+        response = await continue_if_authenticated()
         if qa_key_matched:
             response.set_cookie(
                 PRO_QA_ACCESS_COOKIE,
@@ -1594,7 +1758,7 @@ async def pro_private_access_middleware(request: Request, call_next):
                 qa_cookie_valid=qa_cookie_valid,
                 access_allowed=True,
             )
-            return await call_next(request)
+            return await continue_if_authenticated()
         if request.method.upper() == "POST":
             raw_body = (await request.body()).decode("utf-8", errors="replace")
             parsed = parse_qs(raw_body, keep_blank_values=True)
@@ -1656,7 +1820,502 @@ async def pro_private_access_middleware(request: Request, call_next):
         qa_cookie_valid=qa_cookie_valid,
         access_allowed=True,
     )
-    return await call_next(request)
+    return await continue_if_authenticated()
+
+
+def auth_form_values(form: dict[str, str]) -> dict[str, str]:
+    return {
+        "first_name": str(form.get("first_name") or "").strip(),
+        "last_name": str(form.get("last_name") or "").strip(),
+        "email": normalize_email(form.get("email")),
+        "shop_name": str(form.get("shop_name") or "").strip(),
+    }
+
+
+def configured_bootstrap_token() -> str:
+    return (os.getenv(BOOTSTRAP_TOKEN_ENV) or "").strip()
+
+
+def user_count(conn) -> int:
+    ensure_auth_schema(conn)
+    row = conn.execute("SELECT COUNT(*) AS count FROM users").fetchone()
+    return int(row["count"] if row else 0)
+
+
+def bootstrap_token_is_valid(submitted_token: str) -> bool:
+    expected = configured_bootstrap_token()
+    submitted = str(submitted_token or "").strip()
+    if not expected or not submitted:
+        return False
+    return hmac.compare_digest(submitted, expected)
+
+
+def new_verification_token_record() -> tuple[str, str, str]:
+    token = base64.urlsafe_b64encode(os.urandom(32)).decode("ascii").rstrip("=")
+    expires_at = (datetime.utcnow() + timedelta(hours=24)).isoformat()
+    return token, verification_token_hash(token), expires_at
+
+
+def verification_outbox_path() -> Path:
+    configured = (os.getenv("TORQUEMECH_DEV_EMAIL_OUTBOX") or "").strip()
+    return Path(configured) if configured else STATE_DIR / "email_outbox.jsonl"
+
+
+def local_email_transport_enabled() -> bool:
+    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    return transport in {"local", "test"}
+
+
+def verification_url_for_token(request: Request, token: str) -> str:
+    return f"{str(request.base_url).rstrip('/')}/verify-email?{urlencode({'token': token})}"
+
+
+def send_verification_email_local(request: Request, *, email: str, token: str, user_id: int) -> None:
+    if not local_email_transport_enabled():
+        return
+    verification_url = verification_url_for_token(request, token)
+    outbox_path = verification_outbox_path()
+    outbox_path.parent.mkdir(parents=True, exist_ok=True)
+    now = datetime.utcnow().isoformat()
+    message = {
+        "created_at": now,
+        "transport": "local",
+        "to": email,
+        "subject": "Verify your TorqueMech account",
+        "verification_url": verification_url,
+        "token": token,
+        "user_id": user_id,
+        "body": (
+            "Verify your TorqueMech account before continuing to your Pro workspace.\n\n"
+            f"{verification_url}\n"
+        ),
+    }
+    with outbox_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(message, sort_keys=True) + "\n")
+
+
+def parse_verification_expiry(raw: Any) -> datetime | None:
+    try:
+        value = str(raw or "").strip()
+        if not value:
+            return None
+        return datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def find_user_for_verification_token(conn: sqlite3.Connection, token: str) -> dict[str, Any] | None:
+    submitted_hash = verification_token_hash(token)
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE verification_token_hash IS NOT NULL
+          AND TRIM(verification_token_hash) != ''
+          AND email_verified_at IS NULL
+        """
+    ).fetchall()
+    for row in rows:
+        user = dict(row)
+        stored_hash = str(user.get("verification_token_hash") or "")
+        if hmac.compare_digest(stored_hash, submitted_hash):
+            expires_at = parse_verification_expiry(user.get("verification_token_expires_at"))
+            if not expires_at or expires_at < datetime.utcnow():
+                return None
+            return user
+    return None
+
+
+def local_fallback_verification_conn(token: str) -> tuple[sqlite3.Connection, dict[str, Any]] | None:
+    if not USE_LOCAL_SQLITE_COMPAT:
+        return None
+    fallback_path = Path(LOCAL_FALLBACK_DB_PATH)
+    if active_app_db_path() == LOCAL_FALLBACK_DB_PATH or not fallback_path.exists():
+        return None
+    conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        ensure_auth_schema(conn)
+        user = find_user_for_verification_token(conn, token)
+        if user:
+            mark_local_fallback_db_active()
+            return conn, user
+    except Exception:
+        logging.exception("LOCAL_FALLBACK_VERIFICATION_LOOKUP_FAILED")
+    conn.close()
+    return None
+
+
+def has_bootstrap_session(request: Request) -> bool:
+    return bool(request.session.get(AUTH_SESSION_BOOTSTRAP_KEY))
+
+
+def mark_bootstrap_session(request: Request) -> None:
+    request.session[AUTH_SESSION_BOOTSTRAP_KEY] = True
+
+
+def clear_bootstrap_session(request: Request) -> None:
+    request.session.pop(AUTH_SESSION_BOOTSTRAP_KEY, None)
+
+
+@app.get("/signup", response_class=HTMLResponse)
+def signup_page(request: Request):
+    conn = app_db_conn(row_factory=True)
+    try:
+        first_signup = user_count(conn) == 0
+    finally:
+        conn.close()
+    clear_bootstrap_session(request)
+    return templates.TemplateResponse(
+        "signup.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token(request),
+            "values": {},
+            "errors": {},
+            "setup_incomplete": first_signup,
+        },
+    )
+
+
+@app.post("/signup", response_class=HTMLResponse)
+async def signup_submit(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    values = auth_form_values(form)
+    errors: dict[str, str] = {}
+    if not validate_csrf(request, form):
+        errors["form"] = "Please refresh the page and try again."
+    for key, label in (
+        ("first_name", "First name"),
+        ("last_name", "Last name"),
+        ("email", "Email address"),
+        ("shop_name", "Shop name"),
+    ):
+        if not values.get(key):
+            errors[key] = f"{label} is required."
+    password = form.get("password", "")
+    confirm_password = form.get("confirm_password", "")
+    if len(password) < 8:
+        errors["password"] = "Password must be at least 8 characters."
+    if password != confirm_password:
+        errors["confirm_password"] = "Passwords must match."
+    if form.get("terms") != "1":
+        errors["terms"] = "You must agree before creating an account."
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        ensure_shop_profile_schema(conn)
+        first_signup = user_count(conn) == 0
+        if first_signup:
+            errors["form"] = "TorqueMech setup is not yet complete."
+        if values.get("email") and load_user_by_email(conn, values["email"]):
+            errors["email"] = "An account with this email already exists."
+        if errors:
+            return templates.TemplateResponse(
+                "signup.html",
+                {
+                    "request": request,
+                    "csrf_token": csrf_token(request),
+                    "values": values,
+                    "errors": errors,
+                    "setup_incomplete": first_signup,
+                },
+                status_code=400,
+            )
+        now = datetime.utcnow().isoformat()
+        _verification_token, token_hash, token_expires_at = new_verification_token_record()
+        try:
+            conn.execute("BEGIN")
+            cur = conn.execute(
+                """
+                INSERT INTO users (
+                  email, password_hash, first_name, last_name, is_active,
+                  email_verified_at, verification_token_hash, verification_token_expires_at,
+                  created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, 1, NULL, ?, ?, ?, ?)
+                """,
+                (
+                    values["email"],
+                    hash_password(password),
+                    values["first_name"],
+                    values["last_name"],
+                    token_hash,
+                    token_expires_at,
+                    now,
+                    now,
+                ),
+            )
+            user_id = int(cur.lastrowid)
+            create_shop_profile_for_user(conn, user_id, values["shop_name"])
+            conn.commit()
+            send_verification_email_local(request, email=values["email"], token=_verification_token, user_id=user_id)
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            errors["email"] = "An account with this email already exists."
+            return templates.TemplateResponse(
+                "signup.html",
+                {
+                    "request": request,
+                    "csrf_token": csrf_token(request),
+                    "values": values,
+                    "errors": errors,
+                    "setup_incomplete": first_signup,
+                },
+                status_code=400,
+            )
+        login_session(request, user_id)
+        clear_bootstrap_session(request)
+    finally:
+        conn.close()
+    return RedirectResponse("/check-email", status_code=303)
+
+
+@app.get("/admin/bootstrap", response_class=HTMLResponse, include_in_schema=False)
+def admin_bootstrap_page(request: Request):
+    conn = app_db_conn(row_factory=True)
+    try:
+        if user_count(conn) > 0:
+            raise HTTPException(status_code=404)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "admin_bootstrap.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token(request),
+            "values": {},
+            "errors": {},
+            "bootstrap_configured": bool(configured_bootstrap_token()),
+        },
+    )
+
+
+@app.post("/admin/bootstrap", response_class=HTMLResponse, include_in_schema=False)
+async def admin_bootstrap_submit(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    values = auth_form_values(form)
+    errors: dict[str, str] = {}
+    if not validate_csrf(request, form):
+        errors["form"] = "Please refresh the page and try again."
+    for key, label in (
+        ("first_name", "First name"),
+        ("last_name", "Last name"),
+        ("email", "Email address"),
+        ("shop_name", "Shop name"),
+    ):
+        if not values.get(key):
+            errors[key] = f"{label} is required."
+    password = form.get("password", "")
+    confirm_password = form.get("confirm_password", "")
+    if len(password) < 8:
+        errors["password"] = "Password must be at least 8 characters."
+    if password != confirm_password:
+        errors["confirm_password"] = "Passwords must match."
+    if form.get("terms") != "1":
+        errors["terms"] = "You must agree before creating an account."
+    bootstrap_configured = bool(configured_bootstrap_token())
+    if not bootstrap_configured:
+        errors["bootstrap_token"] = "Initial account setup is not enabled. Ask the site owner to configure setup access before creating the first account."
+    elif not bootstrap_token_is_valid(form.get("bootstrap_token", "")):
+        errors["bootstrap_token"] = "Setup token is invalid."
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        ensure_shop_profile_schema(conn)
+        if user_count(conn) > 0:
+            raise HTTPException(status_code=404)
+        if values.get("email") and load_user_by_email(conn, values["email"]):
+            errors["email"] = "An account with this email already exists."
+        if errors:
+            return templates.TemplateResponse(
+                "admin_bootstrap.html",
+                {
+                    "request": request,
+                    "csrf_token": csrf_token(request),
+                    "values": values,
+                    "errors": errors,
+                    "bootstrap_configured": bootstrap_configured,
+                },
+                status_code=400,
+            )
+        now = datetime.utcnow().isoformat()
+        try:
+            conn.execute("BEGIN")
+            if user_count(conn) > 0:
+                conn.rollback()
+                raise HTTPException(status_code=404)
+            cur = conn.execute(
+                """
+                INSERT INTO users (
+                  email, password_hash, first_name, last_name, is_active,
+                  email_verified_at, verification_token_hash, verification_token_expires_at,
+                  created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, 1, ?, NULL, NULL, ?, ?)
+                """,
+                (
+                    values["email"],
+                    hash_password(password),
+                    values["first_name"],
+                    values["last_name"],
+                    now,
+                    now,
+                    now,
+                ),
+            )
+            user_id = int(cur.lastrowid)
+            bootstrap_existing_shop_to_user(conn, user_id, values["shop_name"])
+            conn.commit()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            errors["email"] = "An account with this email already exists."
+            return templates.TemplateResponse(
+                "admin_bootstrap.html",
+                {
+                    "request": request,
+                    "csrf_token": csrf_token(request),
+                    "values": values,
+                    "errors": errors,
+                    "bootstrap_configured": bootstrap_configured,
+                },
+                status_code=400,
+            )
+        login_session(request, user_id)
+        clear_bootstrap_session(request)
+    finally:
+        conn.close()
+    return RedirectResponse(
+        "/pro/shop-settings?notice=first_setup",
+        status_code=303,
+    )
+
+
+@app.get("/verify-email", response_class=HTMLResponse)
+def verify_email(request: Request, token: str = ""):
+    submitted = str(token or "").strip()
+    if not submitted:
+        return templates.TemplateResponse(
+            "verify_email_error.html",
+            {"request": request},
+            status_code=400,
+        )
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = find_user_for_verification_token(conn, submitted)
+        if not user:
+            fallback_match = local_fallback_verification_conn(submitted)
+            if fallback_match:
+                conn.close()
+                conn, user = fallback_match
+        if not user:
+            return templates.TemplateResponse(
+                "verify_email_error.html",
+                {"request": request},
+                status_code=400,
+            )
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            """
+            UPDATE users
+            SET email_verified_at = ?,
+                verification_token_hash = NULL,
+                verification_token_expires_at = NULL,
+                updated_at = ?
+            WHERE id = ?
+              AND email_verified_at IS NULL
+              AND verification_token_hash IS NOT NULL
+            """,
+            (now, now, int(user["id"])),
+        )
+        conn.commit()
+        login_session(request, int(user["id"]))
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/shop-settings?notice=email_verified", status_code=303)
+
+
+@app.get("/check-email", response_class=HTMLResponse)
+def check_email_page(request: Request):
+    return templates.TemplateResponse(
+        "check_email.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token(request),
+        },
+    )
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request, next: str = ""):
+    return templates.TemplateResponse(
+        "login.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token(request),
+            "next": safe_next_url(next),
+            "values": {},
+            "errors": {},
+        },
+    )
+
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_submit(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    next_url = safe_next_url(form.get("next"))
+    errors: dict[str, str] = {}
+    email = normalize_email(form.get("email"))
+    password = form.get("password", "")
+    if not validate_csrf(request, form):
+        errors["form"] = "Please refresh the page and try again."
+    if not email:
+        errors["email"] = "Email address is required."
+    if not password:
+        errors["password"] = "Password is required."
+    conn = app_db_conn(row_factory=True)
+    try:
+        user = load_user_by_email(conn, email) if email else None
+        if not errors and (not user or not user.get("is_active") or not verify_password(password, user.get("password_hash", ""))):
+            errors["form"] = "Email or password is incorrect."
+        if errors:
+            return templates.TemplateResponse(
+                "login.html",
+                {
+                    "request": request,
+                    "csrf_token": csrf_token(request),
+                    "next": next_url,
+                    "values": {"email": email},
+                    "errors": errors,
+                },
+                status_code=400,
+            )
+        login_session(request, int(user["id"]))
+    finally:
+        conn.close()
+    return RedirectResponse(next_url or "/pro/dashboard", status_code=303)
+
+
+@app.post("/logout")
+async def logout_submit(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    if not validate_csrf(request, form):
+        return RedirectResponse("/", status_code=303)
+    logout_session(request)
+    response = RedirectResponse("/", status_code=303)
+    response.delete_cookie(SESSION_COOKIE_NAME)
+    return response
 
 
 @app.exception_handler(Exception)
@@ -2474,6 +3133,12 @@ def startup_checks() -> None:
     init_metrics_db()
     init_shop_profile_db()
     init_pro_crm_schema_db()
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        ensure_shop_profile_schema(conn)
+    finally:
+        conn.close()
     init_obd_db()
     obd_seed_from_json_if_empty() 
     _ = load_services_catalog()
