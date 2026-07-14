@@ -7548,6 +7548,17 @@ def vehicle_finding_activity_payload(
             (customer_id, vehicle_id),
         ).fetchall()
     ]
+    maintenance_records = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM maintenance_records
+            WHERE customer_id = ? AND vehicle_id = ?
+            """,
+            (customer_id, vehicle_id),
+        ).fetchall()
+    ]
     invoice_records = load_vehicle_invoice_records(conn, customer_id, vehicle_id)
     estimate_document_records = load_vehicle_estimate_documents(conn, customer_id, vehicle_id)
     findings_records = [
@@ -7582,6 +7593,7 @@ def vehicle_finding_activity_payload(
         load_vehicle_repair_checklist_events(conn, customer_id, vehicle_id),
         load_vehicle_repair_completion_events(conn, customer_id, vehicle_id),
         estimate_document_records,
+        maintenance_records,
     )
     vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     finding_history_count = len(finding_history_records)
@@ -9314,6 +9326,7 @@ def build_vehicle_timeline(
     repair_checklist_events: list[dict[str, Any]] | None = None,
     repair_completion_events: list[dict[str, Any]] | None = None,
     estimate_document_records: list[dict[str, Any]] | None = None,
+    maintenance_records: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     groups: dict[str, dict[str, Any]] = {
         "findings": {"key": "findings", "title": "Findings", "records": []},
@@ -9372,6 +9385,11 @@ def build_vehicle_timeline(
             repair_ids.append(int(fallback_repair_id))
         for repair_id in repair_ids:
             invoice_by_repair_id[repair_id] = invoice_record
+    maintenance_by_id = {
+        int(record.get("id") or 0): record
+        for record in maintenance_records or []
+        if record.get("id")
+    }
 
     for record in service_history_records:
         source_type = record.get("source_type") or ""
@@ -9406,6 +9424,14 @@ def build_vehicle_timeline(
                 },
             )
         else:
+            if source_type == "maintenance":
+                maintenance_id = int(record.get("source_record_id") or 0)
+                maintenance_record = maintenance_by_id.get(maintenance_id)
+                if not maintenance_record:
+                    continue
+                maintenance_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{maintenance_record['id']}"
+            else:
+                maintenance_url = "#vehicle-timeline"
             add_record(
                 "maintenance",
                 {
@@ -9414,11 +9440,8 @@ def build_vehicle_timeline(
                     "created_at": record.get("created_at") or "",
                     "service_name": clean_service_quantity_title(record.get("service_name") or "Service"),
                     "mileage": record.get("mileage"),
-                    "url": (
-                        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/maintenance/{record.get('source_record_id')}"
-                        if source_type == "maintenance"
-                        else "#vehicle-timeline"
-                    ),
+                    "maintenance_record_id": maintenance_record["id"] if source_type == "maintenance" else None,
+                    "url": maintenance_url,
                 },
             )
 
@@ -11971,6 +11994,7 @@ def pro_customer_vehicle_detail(
         repair_checklist_events,
         repair_completion_events,
         estimate_document_records,
+        maintenance_records,
     )
     vehicle_timeline_total = sum(int(group.get("count") or 0) for group in vehicle_timeline)
     today = date.today()
@@ -14532,7 +14556,15 @@ def pro_maintenance_record_detail(
             ).fetchone()
         )
         if not maintenance:
-            raise HTTPException(status_code=404, detail="Maintenance record not found")
+            return templates.TemplateResponse(
+                "pro/maintenance_not_found.html",
+                {
+                    "request": request,
+                    "customer": customer,
+                    "vehicle": vehicle,
+                },
+                status_code=404,
+            )
     finally:
         conn.close()
 

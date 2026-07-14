@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}Maintenance Record Not Found | TorqueMech CRM{% endblock %}
+
+{% block page_css %}
+<style>
+  body { background:#09111d; }
+  .tm-maintenance-error-page { display:grid; place-items:center; min-height:calc(100vh - 170px); padding:34px 0; }
+  .tm-maintenance-error-panel { width:min(100%, 560px); border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; color:#e5edf7; padding:24px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
+  .tm-maintenance-error-panel h1 { margin:0; color:#f8fafc; font-size:2rem; letter-spacing:0; }
+  .tm-maintenance-error-panel p { color:#a9b6c8; }
+  .tm-maintenance-error-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:20px; }
+  .tm-maintenance-error-primary { border:0; border-radius:8px; background:#f97316; color:#111827; cursor:pointer; font-weight:900; padding:12px 16px; text-decoration:none; }
+  @media (max-width: 680px) { .tm-maintenance-error-panel { padding:18px; } .tm-maintenance-error-actions > * { width:100%; justify-content:center; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-maintenance-error-page">
+  <div class="tm-maintenance-error-panel" role="alert">
+    <h1>Maintenance record not found</h1>
+    <p>This maintenance record may have been removed or may not belong to this vehicle.</p>
+    <div class="tm-maintenance-error-actions">
+      <a class="tm-maintenance-error-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">Back to Vehicle</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

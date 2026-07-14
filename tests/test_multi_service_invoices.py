@@ -188,6 +188,36 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         )
         self.conn.commit()
 
+    def insert_maintenance_record(self, maintenance_id, customer_id=1, vehicle_id=1, service_type="Oil Change"):
+        now = "2026-06-25T12:00:00"
+        pro_module.ensure_maintenance_records_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO maintenance_records (
+              id, customer_id, vehicle_id, service_type, date_performed,
+              mileage_performed, interval_miles, interval_months, due_mileage,
+              due_date, notes, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, '2026-06-25', 150000, 5000, 6, 155000, '2026-12-25', 'Completed service.', ?, ?)
+            """,
+            (maintenance_id, customer_id, vehicle_id, service_type, now, now),
+        )
+        self.conn.commit()
+
+    def insert_maintenance_history_record(self, history_id, source_record_id, customer_id=1, vehicle_id=1, service_name="Oil Change"):
+        pro_module.ensure_service_history_records_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT OR IGNORE INTO service_history_records (
+              id, customer_id, vehicle_id, source_type, source_record_id,
+              service_name, service_date, mileage, notes, created_at
+            )
+            VALUES (?, ?, ?, 'maintenance', ?, ?, '2026-06-25', 150000, 'Completed service.', '2026-06-25T12:00:00')
+            """,
+            (history_id, customer_id, vehicle_id, source_record_id, service_name),
+        )
+        self.conn.commit()
+
     def final_invoice_pdf(self, invoice, shop_profile=None, display_options=None):
         loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
         customer = pro_module.row_to_dict(
@@ -839,6 +869,76 @@ class MultiServiceInvoiceTests(unittest.TestCase):
 
         self.assertEqual(wrong_invoice.status_code, 404)
         self.assertEqual(wrong_repair.status_code, 404)
+
+    def test_maintenance_timeline_target_uses_persisted_maintenance_record_id(self):
+        self.insert_maintenance_record(17, service_type="Oil Change")
+        self.insert_maintenance_history_record(117, 17, service_name="Oil Change")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn("Maintenance Services (1)", vehicle_detail.text)
+        self.assertIn("Oil Change", vehicle_detail.text)
+        self.assertIn('data-timeline-href="/pro/customers/1/vehicles/1/maintenance/17"', vehicle_detail.text)
+        self.assertNotIn('data-timeline-href="/pro/customers/1/vehicles/1/maintenance/117"', vehicle_detail.text)
+
+    def test_maintenance_timeline_target_opens_correct_maintenance_record(self):
+        self.insert_maintenance_record(18, service_type="Oil Change")
+        self.insert_maintenance_history_record(118, 18, service_name="Oil Change")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        detail = client.get("/pro/customers/1/vehicles/1/maintenance/18")
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn("Oil Change", detail.text)
+        self.assertIn("Back to Vehicle", detail.text)
+
+    def test_missing_maintenance_record_is_omitted_from_timeline_and_count(self):
+        self.insert_maintenance_history_record(119, 999, service_name="Oil Change")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn("(0 entries)", vehicle_detail.text)
+        self.assertNotIn("Maintenance Services (1)", vehicle_detail.text)
+        self.assertNotIn('data-timeline-href="/pro/customers/1/vehicles/1/maintenance/999"', vehicle_detail.text)
+
+    def test_cross_vehicle_maintenance_access_is_blocked(self):
+        self.seed_second_customer_vehicle()
+        self.insert_maintenance_record(19, customer_id=2, vehicle_id=2, service_type="Oil Change")
+        self.insert_maintenance_history_record(120, 19, customer_id=2, vehicle_id=2, service_name="Oil Change")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        wrong_detail = client.get("/pro/customers/1/vehicles/1/maintenance/19")
+
+        self.assertEqual(wrong_detail.status_code, 404)
+        self.assertIn("Maintenance record not found", wrong_detail.text)
+        self.assertIn("Back to Vehicle", wrong_detail.text)
+        self.assertNotIn('{"detail"', wrong_detail.text)
+
+    def test_missing_maintenance_detail_returns_styled_error_page(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        missing = client.get("/pro/customers/1/vehicles/1/maintenance/999")
+
+        self.assertEqual(missing.status_code, 404)
+        self.assertIn("<title>Maintenance Record Not Found | TorqueMech CRM</title>", missing.text)
+        self.assertIn("Maintenance record not found", missing.text)
+        self.assertIn("Back to Vehicle", missing.text)
+        self.assertIn("/pro/customers/1/vehicles/1#vehicle-timeline", missing.text)
+        self.assertNotIn('{"detail"', missing.text)
 
     def test_duplicate_invoice_actions_reuse_existing_invoice(self):
         self.insert_repair(70, "Water Pump Replacement", 2.0, 120, 180)
