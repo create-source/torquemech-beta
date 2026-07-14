@@ -2,6 +2,7 @@ import json
 import re
 import sqlite3
 import unittest
+import html
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
@@ -1333,7 +1334,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(current.status_code, 400)
         self.assertIn("Enter a different email address.", current.text)
         self.assertEqual(duplicate.status_code, 400)
-        self.assertIn(main.EMAIL_CHANGE_DUPLICATE_MESSAGE, duplicate.text)
+        self.assertIn(main.EMAIL_CHANGE_DUPLICATE_MESSAGE, html.unescape(duplicate.text))
 
     def test_change_email_remains_unchanged_until_correct_verification_then_login_switches(self):
         client = self.client()
@@ -1364,12 +1365,43 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(before["email"], "owner@example.com")
         self.assertEqual(before["pending_email"], "new-owner@example.com")
         self.assertEqual(verify.status_code, 200)
-        self.assertIn("Your email address has been changed", verify.text)
+        self.assertIn("✓ Email Address Updated", verify.text)
+        self.assertIn("Your sign-in email has been successfully changed.", verify.text)
+        self.assertIn("New sign-in email:", verify.text)
+        self.assertIn("new-owner@example.com", verify.text)
+        self.assertIn("Continue to Dashboard", verify.text)
+        self.assertIn("Sign In", verify.text)
         self.assertIsNotNone(after["email_verified_at"])
         self.assertIsNone(after["pending_email"])
         self.assertIsNone(after["pending_email_token_hash"])
         self.assertEqual(old_login.status_code, 400)
         self.assertEqual(new_login.status_code, 303)
+
+    def test_change_email_second_verification_click_shows_already_used(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+        client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "new-owner@example.com",
+                "confirm_new_email": "new-owner@example.com",
+            },
+            follow_redirects=False,
+        )
+        token = self.latest_verification_token_for("new-owner@example.com")
+
+        first_click = client.get(f"/verify-email?token={token}", follow_redirects=False)
+        second_click = client.get(f"/verify-email?token={token}", follow_redirects=False)
+
+        self.assertEqual(first_click.status_code, 200)
+        self.assertIn("✓ Email Address Updated", first_click.text)
+        self.assertEqual(second_click.status_code, 200)
+        self.assertIn("This verification link has already been used. Your email address has already been updated.", second_click.text)
+        self.assertIn("Go to Account Settings", second_click.text)
 
     def test_change_email_expired_or_invalid_token_is_rejected(self):
         client = self.client()
@@ -1395,7 +1427,11 @@ class AuthShopIsolationTests(unittest.TestCase):
         user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
 
         self.assertEqual(expired.status_code, 400)
+        self.assertIn("This verification link has expired. Return to Account Settings and request a new verification email.", expired.text)
+        self.assertIn("Go to Account Settings", expired.text)
         self.assertEqual(invalid.status_code, 400)
+        self.assertIn("Verification link invalid", invalid.text)
+        self.assertIn("This verification link is invalid or malformed.", invalid.text)
         self.assertEqual(user["pending_email"], "new-owner@example.com")
 
     def test_pending_email_change_can_be_resent_and_canceled(self):

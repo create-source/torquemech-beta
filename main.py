@@ -155,7 +155,7 @@ PASSWORD_RESET_EMAIL_SUBJECT = "Reset your TorqueMech password"
 PASSWORD_RESET_CONFIRMATION_MESSAGE = "If an account exists for this email, we’ve sent password reset instructions."
 PASSWORD_RESET_REQUEST_COOLDOWN_SECONDS = 60
 PASSWORD_RESET_TOKEN_EXPIRY_MINUTES = 30
-EMAIL_CHANGE_DUPLICATE_MESSAGE = "We could not use that email address. Please choose a different email."
+EMAIL_CHANGE_DUPLICATE_MESSAGE = "This email address is unavailable. If it's one of your existing accounts, sign in to that account or use Forgot Password to regain access."
 
 def service_slug_exists(service_slug: str) -> bool:
     catalog = load_services_catalog()
@@ -2564,6 +2564,30 @@ def find_user_for_pending_email_token(conn: sqlite3.Connection, token: str) -> d
     return None
 
 
+def pending_email_token_result(conn: sqlite3.Connection, token: str) -> tuple[str, dict[str, Any] | None]:
+    submitted_hash = verification_token_hash(token)
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE pending_email_token_hash IS NOT NULL
+           OR pending_email_used_token_hash IS NOT NULL
+        """
+    ).fetchall()
+    for row in rows:
+        user = dict(row)
+        active_hash = str(user.get("pending_email_token_hash") or "")
+        used_hash = str(user.get("pending_email_used_token_hash") or "")
+        if used_hash and hmac.compare_digest(used_hash, submitted_hash):
+            return "used", user
+        if active_hash and hmac.compare_digest(active_hash, submitted_hash):
+            expires_at = parse_verification_expiry(user.get("pending_email_token_expires_at"))
+            if not expires_at or expires_at < datetime.utcnow():
+                return "expired", user
+            return "valid", user
+    return "invalid", None
+
+
 def delete_auth_sessions_for_user(conn: sqlite3.Connection, user_id: int) -> None:
     rows = conn.execute("SELECT session_id, data_json FROM auth_sessions").fetchall()
     for row in rows:
@@ -2918,8 +2942,32 @@ def verify_email(request: Request, token: str = ""):
                 conn.close()
                 conn, user = fallback_match
         if not user:
-            pending_user = find_user_for_pending_email_token(conn, submitted)
-            if pending_user:
+            pending_status, pending_user = pending_email_token_result(conn, submitted)
+            if pending_status == "used":
+                return templates.TemplateResponse(
+                    "verify_email_error.html",
+                    {
+                        "request": request,
+                        "title": "Email address already updated",
+                        "message": "This verification link has already been used. Your email address has already been updated.",
+                        "action_href": "/account/settings" if current_user(conn, request) else "/login",
+                        "action_label": "Go to Account Settings" if current_user(conn, request) else "Log In",
+                    },
+                    status_code=200,
+                )
+            if pending_status == "expired":
+                return templates.TemplateResponse(
+                    "verify_email_error.html",
+                    {
+                        "request": request,
+                        "title": "Verification link expired",
+                        "message": "This verification link has expired. Return to Account Settings and request a new verification email.",
+                        "action_href": "/account/settings" if current_user(conn, request) else "/login",
+                        "action_label": "Go to Account Settings" if current_user(conn, request) else "Log In",
+                    },
+                    status_code=400,
+                )
+            if pending_status == "valid" and pending_user:
                 pending_email = normalize_email(pending_user.get("pending_email"))
                 duplicate_user = load_user_by_email(conn, pending_email) if pending_email else None
                 if duplicate_user and int(duplicate_user["id"]) != int(pending_user["id"]):
@@ -2939,13 +2987,14 @@ def verify_email(request: Request, token: str = ""):
                         pending_email_token_expires_at = NULL,
                         pending_email_requested_at = NULL,
                         pending_email_last_sent_at = NULL,
+                        pending_email_used_token_hash = ?,
                         updated_at = ?
                     WHERE id = ?
                       AND pending_email = ?
                       AND pending_email_token_hash IS NOT NULL
                       AND is_active = 1
                     """,
-                    (pending_email, now, now, int(pending_user["id"]), pending_email),
+                    (pending_email, now, submitted_hash := verification_token_hash(submitted), now, int(pending_user["id"]), pending_email),
                 )
                 conn.commit()
                 login_session(request, int(pending_user["id"]))
@@ -2954,13 +3003,15 @@ def verify_email(request: Request, token: str = ""):
                     {
                         "request": request,
                         "csrf_token": csrf_token(request),
-                        "title": "Your email address has been changed",
+                        "title": "✓ Email Address Updated",
                         "kicker": "Security & Login",
-                        "intro": "Your new email address is verified and ready to use.",
-                        "body": "Future sign-ins must use your new email address. Your password, shop, profile, and account data were not changed.",
-                        "primary_href": "/account/settings",
-                        "primary_label": "Continue",
-                        "show_logout": True,
+                        "intro": "Your sign-in email has been successfully changed.",
+                        "body": "New sign-in email:",
+                        "detail_value": pending_email,
+                        "primary_href": "/pro/dashboard",
+                        "primary_label": "Continue to Dashboard",
+                        "show_sign_in": True,
+                        "show_logout": False,
                     },
                 )
         if not user:
