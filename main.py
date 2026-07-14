@@ -151,6 +151,10 @@ FEEDBACK_EMAIL = os.getenv("FEEDBACK_EMAIL")
 RESEND_API_KEY_ENV = "RESEND_API_KEY"
 VERIFICATION_EMAIL_RESEND_COOLDOWN_SECONDS = 60
 VERIFICATION_EMAIL_SUBJECT = "Verify your TorqueMech account"
+PASSWORD_RESET_EMAIL_SUBJECT = "Reset your TorqueMech password"
+PASSWORD_RESET_CONFIRMATION_MESSAGE = "If an account exists for this email, we’ve sent password reset instructions."
+PASSWORD_RESET_REQUEST_COOLDOWN_SECONDS = 60
+PASSWORD_RESET_TOKEN_EXPIRY_MINUTES = 30
 
 def service_slug_exists(service_slug: str) -> bool:
     catalog = load_services_catalog()
@@ -1868,6 +1872,36 @@ def new_verification_token_record() -> tuple[str, str, str]:
     return token, verification_token_hash(token), expires_at
 
 
+def password_reset_token_hash(token: str) -> str:
+    return hashlib.sha256(str(token or "").encode("utf-8")).hexdigest()
+
+
+def new_password_reset_token_record() -> tuple[str, str, str]:
+    token = base64.urlsafe_b64encode(os.urandom(32)).decode("ascii").rstrip("=")
+    expires_at = (datetime.utcnow() + timedelta(minutes=PASSWORD_RESET_TOKEN_EXPIRY_MINUTES)).isoformat()
+    return token, password_reset_token_hash(token), expires_at
+
+
+def ensure_password_reset_schema(conn: sqlite3.Connection) -> None:
+    ensure_auth_schema(conn)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          token_hash TEXT NOT NULL UNIQUE,
+          expires_at TEXT NOT NULL,
+          used_at TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens (user_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens (token_hash)")
+    conn.commit()
+
+
 def verification_outbox_path() -> Path:
     configured = (os.getenv("TORQUEMECH_DEV_EMAIL_OUTBOX") or "").strip()
     return Path(configured) if configured else STATE_DIR / "email_outbox.jsonl"
@@ -1881,6 +1915,43 @@ def local_email_transport_enabled() -> bool:
 def verification_url_for_token(request: Request, token: str) -> str:
     clean_token = str(token or "").strip()
     return f"{str(request.base_url).rstrip('/')}/verify-email?{urlencode({'token': clean_token})}"
+
+
+def password_reset_base_url(request: Request) -> str:
+    host = str(request.url.hostname or "").lower()
+    if host in {"localhost", "127.0.0.1", "::1", "testserver"}:
+        return str(request.base_url).rstrip("/")
+    return "https://torquemech.com"
+
+
+def password_reset_url_for_token(request: Request, token: str) -> str:
+    clean_token = str(token or "").strip()
+    return f"{password_reset_base_url(request)}/reset-password?{urlencode({'token': clean_token})}"
+
+
+def password_reset_email_text_body(reset_url: str) -> str:
+    clean_url = str(reset_url or "").strip()
+    return (
+        "Reset your TorqueMech password\n\n"
+        "We received a request to reset the password for your TorqueMech account. "
+        "Use the link below to choose a new password.\n\n"
+        f"{clean_url}\n\n"
+        "This link expires in 30 minutes. If you did not request this reset, you can ignore this email."
+    )
+
+
+def password_reset_email_body(reset_url: str) -> str:
+    clean_url = str(reset_url or "").strip()
+    escaped_url = html.escape(clean_url, quote=True)
+    return (
+        "<!doctype html><html><body>"
+        "<h1>Reset your TorqueMech password</h1>"
+        "<p>We received a request to reset the password for your TorqueMech account.</p>"
+        f'<p><a href="{escaped_url}">Reset Password</a></p>'
+        "<p>This link expires in 30 minutes.</p>"
+        "<p>If you did not request this reset, you can ignore this email.</p>"
+        "</body></html>"
+    )
 
 
 def send_verification_email_local(request: Request, *, email: str, token: str, user_id: int) -> bool:
@@ -2140,6 +2211,168 @@ def send_verification_email(request: Request, *, email: str, token: str, user_id
     return False
 
 
+def send_password_reset_email_local(request: Request, *, email: str, token: str, user_id: int) -> bool:
+    verification_email_logger.info(
+        "PASSWORD_RESET_EMAIL_DELIVERY_ENTERED transport=local sender=local-outbox recipient=%s user_id=%s",
+        email,
+        user_id,
+    )
+    reset_url = password_reset_url_for_token(request, token)
+    outbox_path = verification_outbox_path()
+    outbox_path.parent.mkdir(parents=True, exist_ok=True)
+    now = datetime.utcnow().isoformat()
+    message = {
+        "created_at": now,
+        "transport": "local",
+        "to": email,
+        "subject": PASSWORD_RESET_EMAIL_SUBJECT,
+        "reset_url": reset_url,
+        "token": token,
+        "user_id": user_id,
+        "body": password_reset_email_text_body(reset_url),
+    }
+    with outbox_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(message, sort_keys=True) + "\n")
+    verification_email_logger.info(
+        "PASSWORD_RESET_EMAIL_LOCAL_ACCEPTED sender=local-outbox recipient=%s outbox=%s",
+        email,
+        outbox_path,
+    )
+    return True
+
+
+def send_password_reset_email_smtp(request: Request, *, email: str, token: str) -> bool:
+    verification_email_logger.info(
+        "PASSWORD_RESET_EMAIL_DELIVERY_ENTERED transport=smtp host=%s port=%s sender=%s recipient=%s",
+        SMTP_SERVER,
+        SMTP_PORT,
+        FEEDBACK_EMAIL,
+        email,
+    )
+    if not (SMTP_SERVER and SMTP_PORT and SMTP_USER and SMTP_PASS and FEEDBACK_EMAIL):
+        verification_email_logger.error(
+            "PASSWORD_RESET_EMAIL_SMTP_NOT_CONFIGURED host=%s port=%s sender=%s recipient=%s",
+            SMTP_SERVER,
+            SMTP_PORT,
+            FEEDBACK_EMAIL,
+            email,
+        )
+        return False
+    reset_url = password_reset_url_for_token(request, token)
+    msg = MIMEText(password_reset_email_body(reset_url), "html", "utf-8")
+    msg["Subject"] = PASSWORD_RESET_EMAIL_SUBJECT
+    msg["From"] = "TorqueMech <no-reply@updates.torquemech.com>"
+    msg["To"] = email
+    msg["Sender"] = FEEDBACK_EMAIL
+    msg["Reply-To"] = FEEDBACK_EMAIL
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            refused = server.send_message(msg, from_addr=FEEDBACK_EMAIL, to_addrs=[email])
+        if refused:
+            verification_email_logger.error(
+                "PASSWORD_RESET_EMAIL_SMTP_REFUSED host=%s port=%s sender=%s recipient=%s refused=%s",
+                SMTP_SERVER,
+                SMTP_PORT,
+                FEEDBACK_EMAIL,
+                email,
+                refused,
+            )
+            return False
+        verification_email_logger.info(
+            "PASSWORD_RESET_EMAIL_SMTP_ACCEPTED host=%s port=%s sender=%s recipient=%s",
+            SMTP_SERVER,
+            SMTP_PORT,
+            FEEDBACK_EMAIL,
+            email,
+        )
+        return True
+    except Exception:
+        verification_email_logger.exception(
+            "PASSWORD_RESET_EMAIL_SMTP_EXCEPTION host=%s port=%s sender=%s recipient=%s",
+            SMTP_SERVER,
+            SMTP_PORT,
+            FEEDBACK_EMAIL,
+            email,
+        )
+        return False
+
+
+def send_password_reset_email_resend(request: Request, *, email: str, token: str) -> bool:
+    sender = str(FEEDBACK_EMAIL or "").strip()
+    api_key = (os.getenv(RESEND_API_KEY_ENV) or "").strip()
+    verification_email_logger.info(
+        "PASSWORD_RESET_EMAIL_DELIVERY_ENTERED transport=resend sender=%s recipient=%s",
+        sender,
+        email,
+    )
+    if not sender:
+        verification_email_logger.error("PASSWORD_RESET_EMAIL_RESEND_NOT_CONFIGURED missing=sender recipient=%s", email)
+        return False
+    if not api_key:
+        verification_email_logger.error(
+            "PASSWORD_RESET_EMAIL_RESEND_NOT_CONFIGURED missing=api_key sender=%s recipient=%s",
+            sender,
+            email,
+        )
+        return False
+    if resend is None:
+        verification_email_logger.error(
+            "PASSWORD_RESET_EMAIL_RESEND_NOT_CONFIGURED missing=package sender=%s recipient=%s",
+            sender,
+            email,
+        )
+        return False
+    reset_url = password_reset_url_for_token(request, token)
+    try:
+        resend.api_key = api_key
+        response = resend.Emails.send(
+            {
+                "from": sender,
+                "to": [email],
+                "subject": PASSWORD_RESET_EMAIL_SUBJECT,
+                "html": password_reset_email_body(reset_url),
+                "text": password_reset_email_text_body(reset_url),
+            }
+        )
+        email_id = resend_email_id(response)
+        verification_email_logger.info(
+            "PASSWORD_RESET_EMAIL_RESEND_ACCEPTED sender=%s recipient=%s resend_email_id=%s",
+            sender,
+            email,
+            email_id,
+        )
+        return True
+    except Exception:
+        verification_email_logger.exception(
+            "PASSWORD_RESET_EMAIL_RESEND_EXCEPTION sender=%s recipient=%s",
+            sender,
+            email,
+        )
+        return False
+
+
+def send_password_reset_email(request: Request, *, email: str, token: str, user_id: int) -> bool:
+    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    sender = FEEDBACK_EMAIL if transport in {"smtp", "resend"} else "local-outbox"
+    verification_email_logger.info(
+        "PASSWORD_RESET_EMAIL_TRANSPORT_SELECTED transport=%s sender=%s recipient=%s user_id=%s",
+        transport,
+        sender,
+        email,
+        user_id,
+    )
+    if local_email_transport_enabled():
+        return send_password_reset_email_local(request, email=email, token=token, user_id=user_id)
+    if smtp_email_transport_enabled():
+        return send_password_reset_email_smtp(request, email=email, token=token)
+    if resend_email_transport_enabled():
+        return send_password_reset_email_resend(request, email=email, token=token)
+    verification_email_logger.error("PASSWORD_RESET_EMAIL_TRANSPORT_UNSUPPORTED transport=%s", transport)
+    return False
+
+
 def verification_resend_cooldown_remaining(user: dict[str, Any] | None) -> int:
     last_sent_at = parse_verification_expiry((user or {}).get("verification_email_last_sent_at"))
     if not last_sent_at:
@@ -2192,6 +2425,52 @@ def find_user_for_verification_token(conn: sqlite3.Connection, token: str) -> di
                 return None
             return user
     return None
+
+
+def password_reset_request_recent(conn: sqlite3.Connection, user_id: int) -> bool:
+    row = conn.execute(
+        """
+        SELECT created_at
+        FROM password_reset_tokens
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+        """,
+        (user_id,),
+    ).fetchone()
+    created_at = parse_verification_expiry(row["created_at"] if row else None)
+    if not created_at:
+        return False
+    elapsed = (datetime.utcnow() - created_at).total_seconds()
+    return elapsed < PASSWORD_RESET_REQUEST_COOLDOWN_SECONDS
+
+
+def find_valid_password_reset_token(conn: sqlite3.Connection, token: str) -> dict[str, Any] | None:
+    submitted_hash = password_reset_token_hash(token)
+    row = conn.execute(
+        """
+        SELECT prt.*, users.email, users.is_active
+        FROM password_reset_tokens prt
+        JOIN users ON users.id = prt.user_id
+        WHERE prt.token_hash = ?
+        LIMIT 1
+        """,
+        (submitted_hash,),
+    ).fetchone()
+    if not row:
+        return None
+    record = dict(row)
+    stored_hash = str(record.get("token_hash") or "")
+    expires_at = parse_verification_expiry(record.get("expires_at"))
+    if (
+        not hmac.compare_digest(stored_hash, submitted_hash)
+        or record.get("used_at")
+        or not expires_at
+        or expires_at <= datetime.utcnow()
+        or not record.get("is_active")
+    ):
+        return None
+    return record
 
 
 def local_fallback_verification_conn(token: str) -> tuple[sqlite3.Connection, dict[str, Any]] | None:
@@ -2611,7 +2890,7 @@ async def resend_verification_email(request: Request):
 
 
 @app.get("/login", response_class=HTMLResponse)
-def login_page(request: Request, next: str = ""):
+def login_page(request: Request, next: str = "", reset: str = ""):
     return templates.TemplateResponse(
         "login.html",
         {
@@ -2620,8 +2899,191 @@ def login_page(request: Request, next: str = ""):
             "next": safe_next_url(next),
             "values": {},
             "errors": {},
+            "message": "Your password has been reset. You can now sign in." if reset == "success" else "",
         },
     )
+
+
+@app.get("/forgot-password", response_class=HTMLResponse)
+def forgot_password_page(request: Request):
+    return templates.TemplateResponse(
+        "forgot_password.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token(request),
+            "values": {},
+            "errors": {},
+            "message": "",
+        },
+    )
+
+
+@app.post("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_submit(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    email = normalize_email(form.get("email"))
+    errors: dict[str, str] = {}
+    if not validate_csrf(request, form):
+        errors["form"] = "Please refresh the page and try again."
+    if not email:
+        errors["email"] = "Email address is required."
+    if errors:
+        return templates.TemplateResponse(
+            "forgot_password.html",
+            {
+                "request": request,
+                "csrf_token": csrf_token(request),
+                "values": {"email": email},
+                "errors": errors,
+                "message": "",
+            },
+            status_code=400,
+        )
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_password_reset_schema(conn)
+        user = load_user_by_email(conn, email) if email else None
+        if user and user.get("is_active") and not password_reset_request_recent(conn, int(user["id"])):
+            token, token_hash, expires_at = new_password_reset_token_record()
+            now = datetime.utcnow().isoformat()
+            try:
+                conn.execute("BEGIN")
+                conn.execute(
+                    """
+                    UPDATE password_reset_tokens
+                    SET used_at = ?
+                    WHERE user_id = ?
+                      AND used_at IS NULL
+                    """,
+                    (now, int(user["id"])),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, used_at, created_at)
+                    VALUES (?, ?, ?, NULL, ?)
+                    """,
+                    (int(user["id"]), token_hash, expires_at, now),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            delivered = send_password_reset_email(request, email=str(user["email"]), token=token, user_id=int(user["id"]))
+            if not delivered:
+                verification_email_logger.error(
+                    "PASSWORD_RESET_EMAIL_DELIVERY_FAILED recipient=%s user_id=%s",
+                    user["email"],
+                    user["id"],
+                )
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse(
+        "forgot_password.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token(request),
+            "values": {"email": email},
+            "errors": {},
+            "message": PASSWORD_RESET_CONFIRMATION_MESSAGE,
+        },
+    )
+
+
+@app.get("/reset-password", response_class=HTMLResponse)
+def reset_password_page(request: Request, token: str = ""):
+    submitted = str(token or "").strip()
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_password_reset_schema(conn)
+        reset_record = find_valid_password_reset_token(conn, submitted) if submitted else None
+    finally:
+        conn.close()
+    if not reset_record:
+        return templates.TemplateResponse(
+            "reset_password_invalid.html",
+            {"request": request},
+            status_code=400,
+        )
+    return templates.TemplateResponse(
+        "reset_password.html",
+        {
+            "request": request,
+            "csrf_token": csrf_token(request),
+            "token": submitted,
+            "errors": {},
+        },
+    )
+
+
+@app.post("/reset-password", response_class=HTMLResponse)
+async def reset_password_submit(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    submitted = str(form.get("token") or "").strip()
+    password = form.get("password", "")
+    confirm_password = form.get("confirm_password", "")
+    errors: dict[str, str] = {}
+    if not validate_csrf(request, form):
+        errors["form"] = "Please refresh the page and try again."
+    if len(password) < 8:
+        errors["password"] = "Password must be at least 8 characters."
+    if password != confirm_password:
+        errors["confirm_password"] = "Passwords must match."
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_password_reset_schema(conn)
+        reset_record = find_valid_password_reset_token(conn, submitted) if submitted else None
+        if not reset_record:
+            return templates.TemplateResponse(
+                "reset_password_invalid.html",
+                {"request": request},
+                status_code=400,
+            )
+        if errors:
+            return templates.TemplateResponse(
+                "reset_password.html",
+                {
+                    "request": request,
+                    "csrf_token": csrf_token(request),
+                    "token": submitted,
+                    "errors": errors,
+                },
+                status_code=400,
+            )
+        now = datetime.utcnow().isoformat()
+        conn.execute("BEGIN")
+        conn.execute(
+            """
+            UPDATE users
+            SET password_hash = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND is_active = 1
+            """,
+            (hash_password(password), now, int(reset_record["user_id"])),
+        )
+        conn.execute(
+            """
+            UPDATE password_reset_tokens
+            SET used_at = ?
+            WHERE user_id = ?
+              AND used_at IS NULL
+            """,
+            (now, int(reset_record["user_id"])),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return RedirectResponse("/login?reset=success", status_code=303)
 
 
 @app.post("/login", response_class=HTMLResponse)
@@ -2653,6 +3115,7 @@ async def login_submit(request: Request):
                     "next": next_url,
                     "values": {"email": email},
                     "errors": errors,
+                    "message": "",
                 },
                 status_code=400,
             )
@@ -3493,6 +3956,7 @@ def startup_checks() -> None:
     conn = app_db_conn(row_factory=True)
     try:
         ensure_auth_schema(conn)
+        ensure_password_reset_schema(conn)
         ensure_shop_profile_schema(conn)
     finally:
         conn.close()

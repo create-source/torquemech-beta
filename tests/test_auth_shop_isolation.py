@@ -119,6 +119,21 @@ class AuthShopIsolationTests(unittest.TestCase):
         parsed = urlparse(messages[-1]["verification_url"])
         return parse_qs(parsed.query)["token"][0]
 
+    def latest_reset_token(self):
+        messages = [message for message in self.outbox_messages() if message.get("reset_url")]
+        if not messages:
+            raise AssertionError("password reset outbox is empty")
+        parsed = urlparse(messages[-1]["reset_url"])
+        return parse_qs(parsed.query)["token"][0]
+
+    def request_password_reset(self, client, email="owner@example.com"):
+        page = client.get("/forgot-password")
+        return client.post(
+            "/forgot-password",
+            data={"csrf_token": csrf_from(page.text), "email": email},
+            follow_redirects=False,
+        )
+
     def logout(self, client):
         page = client.get("/pro/shop-settings")
         token = csrf_from(page.text)
@@ -932,6 +947,161 @@ class AuthShopIsolationTests(unittest.TestCase):
         logged_out = self.logout(client)
         self.assertEqual(logged_out.status_code, 303)
         self.assertEqual(logged_out.headers["location"], "/")
+
+    def test_forgot_password_page_loads(self):
+        client = self.client()
+
+        response = client.get("/forgot-password")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Reset your password", response.text)
+        self.assertIn("Send reset link", response.text)
+        self.assertIn("Back to sign in", response.text)
+
+    def test_known_email_password_reset_request_shows_generic_confirmation(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+
+        response = self.request_password_reset(client, "owner@example.com")
+        token = self.latest_reset_token()
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+        reset_row = self.conn.execute("SELECT * FROM password_reset_tokens WHERE user_id = ?", (user["id"],)).fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("If an account exists for this email, we’ve sent password reset instructions.", response.text)
+        self.assertEqual(main.password_reset_token_hash(token), reset_row["token_hash"])
+        self.assertNotIn(token, reset_row["token_hash"])
+
+    def test_unknown_email_password_reset_request_shows_same_generic_confirmation(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+
+        known = self.request_password_reset(client, "owner@example.com")
+        unknown = self.request_password_reset(client, "missing@example.com")
+
+        self.assertEqual(known.status_code, 200)
+        self.assertEqual(unknown.status_code, 200)
+        self.assertIn("If an account exists for this email, we’ve sent password reset instructions.", known.text)
+        self.assertIn("If an account exists for this email, we’ve sent password reset instructions.", unknown.text)
+
+    def test_valid_password_reset_token_opens_form(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+        self.request_password_reset(client)
+        token = self.latest_reset_token()
+
+        response = client.get(f"/reset-password?token={token}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("New password", response.text)
+        self.assertIn("Confirm new password", response.text)
+        self.assertIn("Reset password", response.text)
+        self.assertIn('data-password-toggle="password"', response.text)
+        self.assertIn('data-password-toggle="confirm_password"', response.text)
+
+    def test_expired_password_reset_token_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+        self.request_password_reset(client)
+        token = self.latest_reset_token()
+        self.conn.execute("UPDATE password_reset_tokens SET expires_at = '2026-01-01T00:00:00'")
+        self.conn.commit()
+
+        response = client.get(f"/reset-password?token={token}")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Reset link invalid", response.text)
+        self.assertIn("Request another reset email", response.text)
+
+    def test_invalid_password_reset_token_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+
+        response = client.get("/reset-password?token=wrong-token")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Reset link invalid", response.text)
+
+    def test_password_reset_mismatch_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+        self.request_password_reset(client)
+        token = self.latest_reset_token()
+        page = client.get(f"/reset-password?token={token}")
+
+        response = client.post(
+            "/reset-password",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "token": token,
+                "password": "new-password",
+                "confirm_password": "different-password",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Passwords must match.", response.text)
+
+    def test_successful_password_reset_allows_new_password_and_rejects_old_password(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+        self.request_password_reset(client)
+        token = self.latest_reset_token()
+        page = client.get(f"/reset-password?token={token}")
+
+        response = client.post(
+            "/reset-password",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "token": token,
+                "password": "new-correct-password",
+                "confirm_password": "new-correct-password",
+            },
+            follow_redirects=False,
+        )
+        success_page = client.get(response.headers["location"])
+        old_login = self.login(client, password="correct-password")
+        new_login = self.login(client, password="new-correct-password")
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login?reset=success")
+        self.assertIn("Your password has been reset. You can now sign in.", success_page.text)
+        self.assertEqual(old_login.status_code, 400)
+        self.assertIn("Email or password is incorrect.", old_login.text)
+        self.assertEqual(new_login.status_code, 303)
+        self.assertEqual(new_login.headers["location"], "/pro/dashboard")
+
+    def test_used_password_reset_token_cannot_be_reused(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+        self.request_password_reset(client)
+        token = self.latest_reset_token()
+        page = client.get(f"/reset-password?token={token}")
+        first = client.post(
+            "/reset-password",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "token": token,
+                "password": "new-correct-password",
+                "confirm_password": "new-correct-password",
+            },
+            follow_redirects=False,
+        )
+
+        second = client.get(f"/reset-password?token={token}")
+
+        self.assertEqual(first.status_code, 303)
+        self.assertEqual(second.status_code, 400)
+        self.assertIn("Reset link invalid", second.text)
 
     def test_safe_return_url_rejects_external_redirect(self):
         client = self.client()
