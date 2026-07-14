@@ -6,14 +6,23 @@
 <style>
   body { background:#09111d; }
   .tm-account-page { display:grid; place-items:center; min-height:calc(100vh - 170px); padding:34px 0; }
-  .tm-account-panel { width:min(100%, 620px); border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; color:#e5edf7; padding:24px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
-  .tm-account-panel h1 { margin:0; color:#f8fafc; font-size:2rem; letter-spacing:0; }
-  .tm-account-panel h2 { margin:24px 0 0; color:#f8fafc; font-size:1.25rem; letter-spacing:0; }
-  .tm-account-panel p { color:#a9b6c8; }
-  .tm-account-readonly { margin-top:14px; padding:12px; border:1px solid rgba(255,255,255,.14); border-radius:8px; background:#0b1220; color:#f8fafc; font-weight:800; overflow-wrap:anywhere; }
+  .tm-account-shell { width:min(100%, 760px); color:#e5edf7; }
+  .tm-account-header { margin-bottom:18px; }
+  .tm-account-header h1 { margin:0; color:#f8fafc; font-size:2rem; letter-spacing:0; }
+  .tm-account-header p { color:#a9b6c8; margin:8px 0 0; }
+  .tm-account-section { border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; padding:24px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
+  .tm-account-section + .tm-account-section { margin-top:18px; }
+  .tm-account-section h2 { margin:0; color:#f8fafc; font-size:1.25rem; letter-spacing:0; }
+  .tm-account-section p { color:#a9b6c8; }
+  .tm-account-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .tm-account-readonly { margin-top:6px; padding:12px; border:1px solid rgba(255,255,255,.14); border-radius:8px; background:#0b1220; color:#f8fafc; font-weight:800; overflow-wrap:anywhere; min-height:44px; }
   .tm-account-field { display:grid; gap:6px; margin-top:14px; }
-  .tm-account-field label { color:#dbe6f4; font-weight:800; }
+  .tm-account-field label, .tm-account-label { color:#dbe6f4; font-weight:800; }
   .tm-account-field input { width:100%; border:1px solid rgba(255,255,255,.16); border-radius:8px; background:#0b1220; color:#f8fafc; padding:11px 12px; }
+  .tm-account-meta { display:grid; gap:12px; margin-top:14px; }
+  .tm-account-status { display:inline-flex; width:max-content; align-items:center; min-height:32px; padding:6px 10px; border-radius:8px; font-weight:900; }
+  .tm-account-status.is-verified { background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
+  .tm-account-status.is-unverified { background:rgba(249,115,22,.14); color:#fdba74; border:1px solid rgba(249,115,22,.3); }
   .tm-password-control { position:relative; }
   .tm-password-control input { padding-right:48px; }
   .tm-password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:32px; height:32px; border:0; border-radius:8px; background:transparent; color:#cbd5e1; cursor:pointer; padding:0; }
@@ -24,101 +33,151 @@
   .tm-password-toggle[aria-pressed="true"] .tm-eye-off { display:block; }
   .tm-account-error { color:#fb923c; font-size:.9rem; font-weight:800; }
   .tm-account-error[hidden] { display:none; }
-  .tm-account-message { border-radius:8px; margin-top:16px; padding:11px 12px; font-weight:800; background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
+  .tm-account-message { border-radius:8px; margin:0 0 16px; padding:11px 12px; font-weight:800; background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
   .tm-account-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:20px; }
-  .tm-account-primary { border:0; border-radius:8px; background:#f97316; color:#111827; cursor:pointer; font-weight:900; padding:12px 16px; }
+  .tm-account-primary, .tm-account-secondary { border:0; border-radius:8px; cursor:pointer; font-weight:900; padding:12px 16px; }
+  .tm-account-primary { background:#f97316; color:#111827; }
+  .tm-account-secondary { display:inline-flex; align-items:center; justify-content:center; background:#1f2937; color:#f8fafc; border:1px solid rgba(255,255,255,.14); text-decoration:none; }
+  .tm-account-secondary:hover, .tm-account-secondary:focus-visible { border-color:rgba(249,115,22,.7); color:#fdba74; outline:none; }
   .tm-account-link { color:#fdba74; font-weight:900; }
   @media (max-width: 680px) {
-    .tm-account-panel { padding:18px; }
-    .tm-account-actions > * { width:100%; }
+    .tm-account-section { padding:18px; }
+    .tm-account-grid { grid-template-columns:1fr; gap:0; }
+    .tm-account-actions > * { width:100%; text-align:center; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="tm-account-page">
-  <form class="tm-account-panel" method="post" action="/account/settings" novalidate>
-    <h1>Account Settings</h1>
-    <p>Manage the sign-in details for your TorqueMech account.</p>
+  <div class="tm-account-shell">
+    <div class="tm-account-header">
+      <h1>Account Settings</h1>
+      <p>Manage the profile and sign-in details for your TorqueMech account.</p>
+      <div class="tm-account-actions">
+        <a class="tm-account-secondary" href="{{ back_url }}">Back</a>
+      </div>
+    </div>
     {% if message %}<div class="tm-account-message" role="status">{{ message }}</div>{% endif %}
     {% if errors.form %}<div class="tm-account-error">{{ errors.form }}</div>{% endif %}
 
-    <div class="tm-account-field">
-      <label for="account_email">Signed-in email address</label>
-      <div class="tm-account-readonly" id="account_email">{{ user.email }}</div>
-    </div>
+    <form class="tm-account-section" method="post" action="/account/settings" novalidate>
+      <h2>Profile Information</h2>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="back_url" value="{{ back_url }}">
+      <input type="hidden" name="action" value="save_profile">
 
-    <h2>Change Password</h2>
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <input type="hidden" name="back_url" value="{{ back_url }}">
-
-    <div class="tm-account-field">
-      <label for="current_password">Current Password</label>
-      <div class="tm-password-control">
-        <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
-        <button class="tm-password-toggle" type="button" aria-label="Show current password" aria-controls="current_password" aria-pressed="false" data-password-toggle="current_password">
-          <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-          <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 3l18 18"></path>
-            <path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path>
-            <path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path>
-            <path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path>
-          </svg>
-        </button>
+      <div class="tm-account-grid">
+        <div class="tm-account-field">
+          <label for="full_name">Full name</label>
+          <input id="full_name" name="full_name" type="text" autocomplete="name" value="{{ profile_values.full_name }}">
+        </div>
+        <div class="tm-account-field">
+          <label for="profile_phone">Phone number</label>
+          <input id="profile_phone" name="phone" type="tel" inputmode="numeric" maxlength="14" autocomplete="tel" value="{{ profile_values.phone }}" placeholder="(555) 222-3333" data-account-phone-input>
+          {% if errors.phone %}<span class="tm-account-error">{{ errors.phone }}</span>{% endif %}
+        </div>
       </div>
-      {% if errors.current_password %}<span class="tm-account-error">{{ errors.current_password }}</span>{% endif %}
-    </div>
 
-    <div class="tm-account-field">
-      <label for="new_password">New Password</label>
-      <div class="tm-password-control">
-        <input id="new_password" name="new_password" type="password" autocomplete="new-password" required>
-        <button class="tm-password-toggle" type="button" aria-label="Show new password" aria-controls="new_password" aria-pressed="false" data-password-toggle="new_password">
-          <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-          <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 3l18 18"></path>
-            <path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path>
-            <path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path>
-            <path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path>
-          </svg>
-        </button>
+      <div class="tm-account-field">
+        <span class="tm-account-label">Account created</span>
+        <div class="tm-account-readonly">{{ account_created }}</div>
       </div>
-      <span class="tm-account-error" id="new_password_error" data-new-password-error {% if not errors.new_password %}hidden{% endif %}>{{ errors.new_password or '' }}</span>
-    </div>
 
-    <div class="tm-account-field">
-      <label for="confirm_new_password">Confirm New Password</label>
-      <div class="tm-password-control">
-        <input id="confirm_new_password" name="confirm_new_password" type="password" autocomplete="new-password" required>
-        <button class="tm-password-toggle" type="button" aria-label="Show confirm new password" aria-controls="confirm_new_password" aria-pressed="false" data-password-toggle="confirm_new_password">
-          <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-          <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 3l18 18"></path>
-            <path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path>
-            <path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path>
-            <path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path>
-          </svg>
-        </button>
+      <div class="tm-account-actions">
+        <button class="tm-account-primary" type="submit">Save Profile</button>
       </div>
-      <span class="tm-account-error" id="confirm_new_password_error" data-confirm-new-password-error {% if not errors.confirm_new_password %}hidden{% endif %}>{{ errors.confirm_new_password or '' }}</span>
-    </div>
+    </form>
 
-    <div class="tm-account-actions">
-      <button class="tm-account-primary" type="submit">Change Password</button>
-      <a class="tm-account-link" href="{{ back_url }}">Back</a>
-    </div>
-  </form>
+    <section class="tm-account-section">
+      <h2>Security &amp; Login</h2>
+      <div class="tm-account-meta">
+        <div>
+          <span class="tm-account-label">Sign-in email address</span>
+          <div class="tm-account-readonly">{{ user.email }}</div>
+        </div>
+        <div>
+          <span class="tm-account-label">Email verification status</span>
+          {% if email_verified %}
+            <div class="tm-account-status is-verified">Verified</div>
+          {% else %}
+            <div class="tm-account-status is-unverified">Not verified</div>
+          {% endif %}
+        </div>
+      </div>
+      {% if errors.verification %}<div class="tm-account-error" style="margin-top:12px;">{{ errors.verification }}</div>{% endif %}
+      {% if not email_verified %}
+      <form method="post" action="/account/settings/resend-verification" class="tm-account-actions">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="back_url" value="{{ back_url }}">
+        <button class="tm-account-secondary" type="submit" {% if not verification_resend_available %}disabled{% endif %}>Resend Verification Email</button>
+      </form>
+      {% endif %}
+
+      <form method="post" action="/account/settings" novalidate>
+        <h2 style="margin-top:24px;">Change Password</h2>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="back_url" value="{{ back_url }}">
+        <input type="hidden" name="action" value="change_password">
+
+        <div class="tm-account-field">
+          <label for="current_password">Current Password</label>
+          <div class="tm-password-control">
+            <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+            <button class="tm-password-toggle" type="button" aria-label="Show current password" aria-controls="current_password" aria-pressed="false" data-password-toggle="current_password">
+              <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path><path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path><path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path></svg>
+            </button>
+          </div>
+          {% if errors.current_password %}<span class="tm-account-error">{{ errors.current_password }}</span>{% endif %}
+        </div>
+
+        <div class="tm-account-field">
+          <label for="new_password">New Password</label>
+          <div class="tm-password-control">
+            <input id="new_password" name="new_password" type="password" autocomplete="new-password" required>
+            <button class="tm-password-toggle" type="button" aria-label="Show new password" aria-controls="new_password" aria-pressed="false" data-password-toggle="new_password">
+              <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path><path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path><path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path></svg>
+            </button>
+          </div>
+          <span class="tm-account-error" id="new_password_error" data-new-password-error {% if not errors.new_password %}hidden{% endif %}>{{ errors.new_password or '' }}</span>
+        </div>
+
+        <div class="tm-account-field">
+          <label for="confirm_new_password">Confirm New Password</label>
+          <div class="tm-password-control">
+            <input id="confirm_new_password" name="confirm_new_password" type="password" autocomplete="new-password" required>
+            <button class="tm-password-toggle" type="button" aria-label="Show confirm new password" aria-controls="confirm_new_password" aria-pressed="false" data-password-toggle="confirm_new_password">
+              <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path><path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path><path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path></svg>
+            </button>
+          </div>
+          <span class="tm-account-error" id="confirm_new_password_error" data-confirm-new-password-error {% if not errors.confirm_new_password %}hidden{% endif %}>{{ errors.confirm_new_password or '' }}</span>
+        </div>
+
+        <div class="tm-account-actions">
+          <button class="tm-account-primary" type="submit">Change Password</button>
+        </div>
+      </form>
+    </section>
+  </div>
 </section>
 <script>
+  const accountPhoneInput = document.querySelector("[data-account-phone-input]");
+  const digitsOnly = (value) => String(value || "").replace(/\D/g, "");
+  const formatAccountPhone = (value) => {
+    let digits = digitsOnly(value);
+    if (digits.length === 11 && digits.startsWith("1")) digits = digits.slice(1);
+    digits = digits.slice(0, 10);
+    if (digits.length <= 3) return digits ? `(${digits}` : "";
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+  accountPhoneInput?.addEventListener("input", () => {
+    accountPhoneInput.value = formatAccountPhone(accountPhoneInput.value);
+  });
+
   const newPasswordInput = document.getElementById("new_password");
   const confirmNewPasswordInput = document.getElementById("confirm_new_password");
   const newPasswordError = document.querySelector("[data-new-password-error]");
@@ -134,10 +193,7 @@
     const password = newPasswordInput ? newPasswordInput.value : "";
     const confirmation = confirmNewPasswordInput ? confirmNewPasswordInput.value : "";
     setFieldError(newPasswordError, password && password.length < 8 ? "Password must be at least 8 characters." : "");
-    setFieldError(
-      confirmNewPasswordError,
-      confirmation && password !== confirmation ? "Passwords must match." : ""
-    );
+    setFieldError(confirmNewPasswordError, confirmation && password !== confirmation ? "Passwords must match." : "");
   };
 
   newPasswordInput?.addEventListener("input", validateChangePasswords);

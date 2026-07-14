@@ -970,6 +970,186 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn('data-password-toggle="new_password"', response.text)
         self.assertIn('data-password-toggle="confirm_new_password"', response.text)
 
+    def test_account_settings_account_created_date_displays(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.conn.execute(
+            "UPDATE users SET created_at = '2026-07-13T09:30:00' WHERE email = 'owner@example.com'"
+        )
+        self.conn.commit()
+
+        response = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Account created", response.text)
+        self.assertIn("July 13, 2026", response.text)
+
+    def test_account_settings_missing_account_created_date_displays_not_available(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.conn.execute("UPDATE users SET created_at = '' WHERE email = 'owner@example.com'")
+        self.conn.commit()
+
+        response = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Account created", response.text)
+        self.assertIn("Not available", response.text)
+
+    def test_account_settings_sign_in_email_is_not_duplicated(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+
+        response = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.text.count("owner@example.com"), 1)
+
+    def test_account_settings_profile_values_load_correctly(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.conn.execute(
+            "UPDATE users SET first_name = 'Grace', last_name = 'Hopper', phone = '5552223333' WHERE email = 'owner@example.com'"
+        )
+        self.conn.commit()
+
+        response = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('value="Grace Hopper"', response.text)
+        self.assertIn('value="(555) 222-3333"', response.text)
+        self.assertIn("Profile Information", response.text)
+        self.assertIn("Security &amp; Login", response.text)
+
+    def test_account_settings_profile_save_updates_current_user(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "save_profile",
+                "full_name": "  Grace Brewster Hopper  ",
+                "phone": "5552223333",
+            },
+            follow_redirects=False,
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Your profile has been updated.", response.text)
+        self.assertEqual(user["first_name"], "Grace")
+        self.assertEqual(user["last_name"], "Brewster Hopper")
+        self.assertEqual(user["phone"], "(555) 222-3333")
+
+    def test_account_settings_phone_validation_preserves_entered_value(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "save_profile",
+                "full_name": "Grace Hopper",
+                "phone": "555-12",
+            },
+            follow_redirects=False,
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Enter a 10-digit US phone number.", response.text)
+        self.assertIn('value="555-12"', response.text)
+        self.assertNotEqual(user["phone"], "555-12")
+
+    def test_account_settings_profile_save_ignores_submitted_user_identity(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="one@example.com", shop_name="Alpha Shop")
+        self.logout(client_one)
+        client_two = self.client()
+        self.signup(client_two, email="two@example.com", shop_name="Beta Shop")
+        self.verify_user("two@example.com")
+        user_one = self.conn.execute("SELECT * FROM users WHERE email = 'one@example.com'").fetchone()
+        page = client_two.get("/account/settings")
+
+        response = client_two.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "save_profile",
+                "user_id": str(user_one["id"]),
+                "email": "one@example.com",
+                "full_name": "Beta Owner",
+                "phone": "5553334444",
+            },
+            follow_redirects=False,
+        )
+        first_user = self.conn.execute("SELECT * FROM users WHERE email = 'one@example.com'").fetchone()
+        second_user = self.conn.execute("SELECT * FROM users WHERE email = 'two@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(first_user["first_name"], "Ada")
+        self.assertEqual(first_user["last_name"], "Lovelace")
+        self.assertEqual(first_user["phone"], None)
+        self.assertEqual(second_user["first_name"], "Beta")
+        self.assertEqual(second_user["last_name"], "Owner")
+        self.assertEqual(second_user["phone"], "(555) 333-4444")
+
+    def test_account_settings_verified_email_displays_verified(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+
+        response = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Verified", response.text)
+        self.assertNotIn("Resend Verification Email", response.text)
+
+    def test_account_settings_unverified_email_displays_not_verified(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+
+        response = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Not verified", response.text)
+        self.assertIn("Resend Verification Email", response.text)
+
+    def test_account_settings_resend_verification_creates_new_request(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="owner@example.com", shop_name="Alpha Shop")
+        self.logout(client)
+        self.signup(client, email="user@example.com", shop_name="Beta Shop")
+        original_token = self.latest_verification_token()
+        self.conn.execute(
+            "UPDATE users SET verification_email_last_sent_at = '2026-01-01T00:00:00' WHERE email = 'user@example.com'"
+        )
+        self.conn.commit()
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings/resend-verification",
+            data={"csrf_token": csrf_from(page.text)},
+            follow_redirects=False,
+        )
+        messages = self.outbox_messages()
+        fresh_token = self.latest_verification_token()
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'user@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("A fresh verification email has been sent.", response.text)
+        self.assertEqual(len(messages), 2)
+        self.assertEqual(messages[-1]["to"], "user@example.com")
+        self.assertNotEqual(original_token, fresh_token)
+        self.assertEqual(main.verification_token_hash(fresh_token), user["verification_token_hash"])
+        self.assertIsNone(user["email_verified_at"])
+
     def test_change_password_wrong_current_password_is_rejected(self):
         client = self.client()
         self.bootstrap_owner(client)

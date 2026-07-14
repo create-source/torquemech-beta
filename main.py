@@ -1854,6 +1854,55 @@ def password_rules_error(password: str) -> str:
     return ""
 
 
+def account_full_name(user: dict[str, Any] | None) -> str:
+    first_name = str((user or {}).get("first_name") or "").strip()
+    last_name = str((user or {}).get("last_name") or "").strip()
+    return " ".join(part for part in (first_name, last_name) if part).strip()
+
+
+def split_account_full_name(full_name: str) -> tuple[str, str]:
+    clean_name = re.sub(r"\s+", " ", str(full_name or "").strip())
+    if not clean_name:
+        return "", ""
+    first_name, sep, last_name = clean_name.partition(" ")
+    return first_name, last_name if sep else ""
+
+
+def account_phone_digits(value: Any) -> str:
+    raw = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(raw) == 11 and raw.startswith("1"):
+        raw = raw[1:]
+    return raw
+
+
+def format_account_phone(value: Any) -> str:
+    digits = account_phone_digits(value)
+    if len(digits) == 10:
+        return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+    return str(value or "").strip()
+
+
+def validate_account_phone(value: Any) -> tuple[str, str]:
+    submitted = str(value or "").strip()
+    if not submitted:
+        return "", ""
+    digits = account_phone_digits(submitted)
+    if len(digits) != 10:
+        return submitted, "Enter a 10-digit US phone number."
+    return format_account_phone(digits), ""
+
+
+def format_account_created_at(user: dict[str, Any] | None) -> str:
+    raw = str((user or {}).get("created_at") or "").strip()
+    if not raw:
+        return "Not available"
+    try:
+        created_at = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return "Not available"
+    return f"{created_at.strftime('%B')} {created_at.day}, {created_at.year}"
+
+
 def account_settings_context(
     request: Request,
     *,
@@ -1861,7 +1910,13 @@ def account_settings_context(
     errors: dict[str, str] | None = None,
     message: str = "",
     back_url: str = "",
+    profile_values: dict[str, str] | None = None,
 ) -> dict[str, Any]:
+    values = profile_values or {
+        "full_name": account_full_name(user),
+        "phone": format_account_phone((user or {}).get("phone")),
+    }
+    cooldown_remaining = verification_resend_cooldown_remaining(user)
     return {
         "request": request,
         "csrf_token": csrf_token(request),
@@ -1869,6 +1924,11 @@ def account_settings_context(
         "errors": errors or {},
         "message": message,
         "back_url": safe_next_url(back_url) or "/pro/dashboard",
+        "profile_values": values,
+        "account_created": format_account_created_at(user),
+        "email_verified": user_email_verified(user),
+        "verification_cooldown_remaining": cooldown_remaining,
+        "verification_resend_available": bool(not user_email_verified(user) and cooldown_remaining <= 0),
     }
 
 
@@ -3137,10 +3197,72 @@ async def account_settings_submit(request: Request):
     parsed = parse_qs(raw_body, keep_blank_values=True)
     form = {key: values[0].strip() for key, values in parsed.items()}
     errors: dict[str, str] = {}
+    action = form.get("action", "change_password")
+    back_url = safe_next_url(form.get("back_url")) or "/pro/dashboard"
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login?next=%2Faccount%2Fsettings", status_code=303)
+        request.state.current_user = user
+        request.state.current_shop = current_shop_context(conn, request)
+
+        if action == "save_profile":
+            full_name = re.sub(r"\s+", " ", form.get("full_name", "").strip())
+            phone_value, phone_error = validate_account_phone(form.get("phone", ""))
+            profile_values = {"full_name": full_name, "phone": phone_value}
+            if not validate_csrf(request, form):
+                errors["form"] = "Please refresh the page and try again."
+            if phone_error:
+                errors["phone"] = phone_error
+            if errors:
+                return templates.TemplateResponse(
+                    "account_settings.html",
+                    account_settings_context(
+                        request,
+                        user=user,
+                        errors=errors,
+                        back_url=back_url,
+                        profile_values=profile_values,
+                    ),
+                    status_code=400,
+                )
+
+            first_name, last_name = split_account_full_name(full_name)
+            now = datetime.utcnow().isoformat()
+            conn.execute(
+                """
+                UPDATE users
+                SET first_name = ?,
+                    last_name = ?,
+                    phone = ?,
+                    updated_at = ?
+                WHERE id = ?
+                  AND is_active = 1
+                """,
+                (first_name, last_name, phone_value, now, int(user["id"])),
+            )
+            conn.commit()
+            updated_user = current_user(conn, request) or user
+            request.state.current_user = updated_user
+            request.state.current_shop = current_shop_context(conn, request)
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(
+                    request,
+                    user=updated_user,
+                    message="Your profile has been updated.",
+                    back_url=back_url,
+                ),
+            )
+    finally:
+        conn.close()
+
     current_password = form.get("current_password", "")
     new_password = form.get("new_password", "")
     confirm_new_password = form.get("confirm_new_password", "")
-    back_url = safe_next_url(form.get("back_url")) or "/pro/dashboard"
 
     if not validate_csrf(request, form):
         errors["form"] = "Please refresh the page and try again."
@@ -3194,6 +3316,92 @@ async def account_settings_submit(request: Request):
                 request,
                 user=updated_user,
                 message="Your password has been changed.",
+                back_url=back_url,
+            ),
+        )
+    finally:
+        conn.close()
+
+
+@app.post("/account/settings/resend-verification", response_class=HTMLResponse)
+async def account_settings_resend_verification(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    back_url = safe_next_url(form.get("back_url")) or "/pro/dashboard"
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login?next=%2Faccount%2Fsettings", status_code=303)
+        request.state.current_user = user
+        request.state.current_shop = current_shop_context(conn, request)
+        if user_email_verified(user):
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(request, user=user, back_url=back_url),
+            )
+        if not validate_csrf(request, form):
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(
+                    request,
+                    user=user,
+                    errors={"form": "Please refresh the page and try again."},
+                    back_url=back_url,
+                ),
+                status_code=400,
+            )
+        cooldown_remaining = verification_resend_cooldown_remaining(user)
+        if cooldown_remaining > 0:
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(
+                    request,
+                    user=user,
+                    errors={"verification": f"Please wait {cooldown_remaining} seconds before requesting another verification email."},
+                    back_url=back_url,
+                ),
+                status_code=429,
+            )
+        token, token_hash, token_expires_at = new_verification_token_record()
+        delivered = send_verification_email(request, email=str(user["email"]), token=token, user_id=int(user["id"]))
+        if not delivered:
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(
+                    request,
+                    user=user,
+                    errors={"verification": "We could not send a verification email right now. Please try again."},
+                    back_url=back_url,
+                ),
+                status_code=503,
+            )
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            """
+            UPDATE users
+            SET verification_token_hash = ?,
+                verification_token_expires_at = ?,
+                verification_email_last_sent_at = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND email_verified_at IS NULL
+              AND is_active = 1
+            """,
+            (token_hash, token_expires_at, now, now, int(user["id"])),
+        )
+        conn.commit()
+        updated_user = current_user(conn, request) or user
+        request.state.current_user = updated_user
+        request.state.current_shop = current_shop_context(conn, request)
+        return templates.TemplateResponse(
+            "account_settings.html",
+            account_settings_context(
+                request,
+                user=updated_user,
+                message="A fresh verification email has been sent.",
                 back_url=back_url,
             ),
         )

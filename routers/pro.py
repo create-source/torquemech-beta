@@ -341,6 +341,7 @@ def ensure_auth_schema(conn: sqlite3.Connection) -> None:
     for column_name, column_sql in {
         "first_name": "first_name TEXT",
         "last_name": "last_name TEXT",
+        "phone": "phone TEXT",
         "is_active": "is_active INTEGER NOT NULL DEFAULT 1",
         "email_verified_at": "email_verified_at TEXT",
         "verification_token_hash": "verification_token_hash TEXT",
