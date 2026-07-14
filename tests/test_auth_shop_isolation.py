@@ -948,6 +948,135 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(logged_out.status_code, 303)
         self.assertEqual(logged_out.headers["location"], "/")
 
+    def test_account_settings_unauthenticated_access_is_blocked(self):
+        client = self.client()
+
+        response = client.get("/account/settings", follow_redirects=False)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login?next=%2Faccount%2Fsettings")
+
+    def test_account_settings_page_shows_email_and_nav_link(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+
+        response = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Account Settings", response.text)
+        self.assertIn("owner@example.com", response.text)
+        self.assertIn('href="/account/settings">Account Settings</a>', response.text)
+        self.assertIn('data-password-toggle="current_password"', response.text)
+        self.assertIn('data-password-toggle="new_password"', response.text)
+        self.assertIn('data-password-toggle="confirm_new_password"', response.text)
+
+    def test_change_password_wrong_current_password_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "current_password": "wrong-password",
+                "new_password": "new-correct-password",
+                "confirm_new_password": "new-correct-password",
+            },
+            follow_redirects=False,
+        )
+        unchanged_login = self.login(client, password="correct-password")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Current password is incorrect.", response.text)
+        self.assertEqual(unchanged_login.status_code, 303)
+
+    def test_change_password_confirmation_mismatch_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "current_password": "correct-password",
+                "new_password": "new-correct-password",
+                "confirm_new_password": "different-password",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Passwords must match.", response.text)
+
+    def test_change_password_same_password_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "current_password": "correct-password",
+                "new_password": "correct-password",
+                "confirm_new_password": "correct-password",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("New password must be different from your current password.", response.text)
+
+    def test_change_password_success_keeps_user_signed_in(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "current_password": "correct-password",
+                "new_password": "new-correct-password",
+                "confirm_new_password": "new-correct-password",
+            },
+            follow_redirects=False,
+        )
+        dashboard = client.get("/pro/dashboard")
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Your password has been changed.", response.text)
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertNotEqual(user["password_hash"], "new-correct-password")
+        self.assertTrue(pro_module.verify_password("new-correct-password", user["password_hash"]))
+
+    def test_changed_password_rejects_old_password_and_accepts_new_password(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+        client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "current_password": "correct-password",
+                "new_password": "new-correct-password",
+                "confirm_new_password": "new-correct-password",
+            },
+            follow_redirects=False,
+        )
+        self.logout(client)
+
+        old_login = self.login(client, password="correct-password")
+        new_login = self.login(client, password="new-correct-password")
+
+        self.assertEqual(old_login.status_code, 400)
+        self.assertIn("Email or password is incorrect.", old_login.text)
+        self.assertEqual(new_login.status_code, 303)
+        self.assertEqual(new_login.headers["location"], "/pro/dashboard")
+
     def test_forgot_password_page_loads(self):
         client = self.client()
 

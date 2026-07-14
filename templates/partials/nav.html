@@ -30,6 +30,7 @@
         <div class="tm-menu__item" aria-label="Account">
           <span>{{ request.state.current_shop.shop_name or 'TorqueMech Pro' }}</span>
         </div>
+        <a class="tm-menu__item" href="/account/settings">Account Settings</a>
         <form method="post" action="/logout" style="margin:0;">
           <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
           <button class="tm-menu__item" type="submit" style="width:100%; border:0; background:transparent; text-align:left; cursor:pointer;">Log Out</button>

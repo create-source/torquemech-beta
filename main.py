@@ -1848,6 +1848,30 @@ def auth_form_values(form: dict[str, str]) -> dict[str, str]:
     }
 
 
+def password_rules_error(password: str) -> str:
+    if len(str(password or "")) < 8:
+        return "Password must be at least 8 characters."
+    return ""
+
+
+def account_settings_context(
+    request: Request,
+    *,
+    user: dict[str, Any],
+    errors: dict[str, str] | None = None,
+    message: str = "",
+    back_url: str = "",
+) -> dict[str, Any]:
+    return {
+        "request": request,
+        "csrf_token": csrf_token(request),
+        "user": user,
+        "errors": errors or {},
+        "message": message,
+        "back_url": safe_next_url(back_url) or "/pro/dashboard",
+    }
+
+
 def configured_bootstrap_token() -> str:
     return (os.getenv(BOOTSTRAP_TOKEN_ENV) or "").strip()
 
@@ -2544,8 +2568,9 @@ async def signup_submit(request: Request):
             errors[key] = f"{label} is required."
     password = form.get("password", "")
     confirm_password = form.get("confirm_password", "")
-    if len(password) < 8:
-        errors["password"] = "Password must be at least 8 characters."
+    password_error = password_rules_error(password)
+    if password_error:
+        errors["password"] = password_error
     if password != confirm_password:
         errors["confirm_password"] = "Passwords must match."
     if form.get("terms") != "1":
@@ -2661,8 +2686,9 @@ async def admin_bootstrap_submit(request: Request):
             errors[key] = f"{label} is required."
     password = form.get("password", "")
     confirm_password = form.get("confirm_password", "")
-    if len(password) < 8:
-        errors["password"] = "Password must be at least 8 characters."
+    password_error = password_rules_error(password)
+    if password_error:
+        errors["password"] = password_error
     if password != confirm_password:
         errors["confirm_password"] = "Passwords must match."
     if form.get("terms") != "1":
@@ -3030,8 +3056,9 @@ async def reset_password_submit(request: Request):
     errors: dict[str, str] = {}
     if not validate_csrf(request, form):
         errors["form"] = "Please refresh the page and try again."
-    if len(password) < 8:
-        errors["password"] = "Password must be at least 8 characters."
+    password_error = password_rules_error(password)
+    if password_error:
+        errors["password"] = password_error
     if password != confirm_password:
         errors["confirm_password"] = "Passwords must match."
 
@@ -3084,6 +3111,94 @@ async def reset_password_submit(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/login?reset=success", status_code=303)
+
+
+@app.get("/account/settings", response_class=HTMLResponse)
+def account_settings_page(request: Request, next: str = ""):
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login?next=%2Faccount%2Fsettings", status_code=303)
+        request.state.current_user = user
+        request.state.current_shop = current_shop_context(conn, request)
+        return templates.TemplateResponse(
+            "account_settings.html",
+            account_settings_context(request, user=user, back_url=next),
+        )
+    finally:
+        conn.close()
+
+
+@app.post("/account/settings", response_class=HTMLResponse)
+async def account_settings_submit(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    parsed = parse_qs(raw_body, keep_blank_values=True)
+    form = {key: values[0].strip() for key, values in parsed.items()}
+    errors: dict[str, str] = {}
+    current_password = form.get("current_password", "")
+    new_password = form.get("new_password", "")
+    confirm_new_password = form.get("confirm_new_password", "")
+    back_url = safe_next_url(form.get("back_url")) or "/pro/dashboard"
+
+    if not validate_csrf(request, form):
+        errors["form"] = "Please refresh the page and try again."
+    if not current_password:
+        errors["current_password"] = "Current password is required."
+    password_error = password_rules_error(new_password)
+    if password_error:
+        errors["new_password"] = password_error
+    if new_password != confirm_new_password:
+        errors["confirm_new_password"] = "Passwords must match."
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login?next=%2Faccount%2Fsettings", status_code=303)
+        request.state.current_user = user
+        request.state.current_shop = current_shop_context(conn, request)
+        password_hash = str(user.get("password_hash") or "")
+        current_password_valid = bool(current_password and verify_password(current_password, password_hash))
+        if current_password and not current_password_valid:
+            errors["current_password"] = "Current password is incorrect."
+        if current_password_valid and new_password and verify_password(new_password, password_hash):
+            errors["new_password"] = "New password must be different from your current password."
+        if errors:
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(request, user=user, errors=errors, back_url=back_url),
+                status_code=400,
+            )
+
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            """
+            UPDATE users
+            SET password_hash = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND is_active = 1
+            """,
+            (hash_password(new_password), now, int(user["id"])),
+        )
+        conn.commit()
+        updated_user = current_user(conn, request) or user
+        request.state.current_user = updated_user
+        request.state.current_shop = current_shop_context(conn, request)
+        return templates.TemplateResponse(
+            "account_settings.html",
+            account_settings_context(
+                request,
+                user=updated_user,
+                message="Your password has been changed.",
+                back_url=back_url,
+            ),
+        )
+    finally:
+        conn.close()
 
 
 @app.post("/login", response_class=HTMLResponse)
