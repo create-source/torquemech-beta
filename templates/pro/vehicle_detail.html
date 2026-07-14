@@ -2265,26 +2265,13 @@
     {% set recently_completed_items = repair_workspace_groups.recently_completed|list %}
     {% set recently_completed_count = repair_workspace_groups.recently_completed_count|default(recently_completed_items|length, true) %}
     {% set ready_invoice_items = repair_workspace_groups.ready_for_invoice|list %}
-    {% set invoiced_repair_items = repair_workspace_groups.invoiced|list %}
+    
     {% set workspace_sections = [
       {"key": "open", "title": "Open Repairs", "items": open_repair_items, "empty": "No active repairs yet. Create one from a finding, estimate, or manual repair.", "collapsible": false, "default_open": true},
       {"key": "approved", "title": "Approved Repairs", "items": approved_repair_items, "empty": "No approved repairs waiting to start.", "collapsible": false, "default_open": true},
       {"key": "in_progress", "title": "In Progress Repairs", "items": in_progress_repair_items, "empty": "No repairs currently in progress.", "collapsible": true, "default_open": in_progress_repair_items|length > 0},
       {"key": "ready_to_complete", "title": "Ready to Complete", "items": ready_to_complete_items, "empty": "No repairs ready to complete.", "collapsible": true, "default_open": ready_to_complete_items|length > 0}
     ] %}
-
-    <section class="tm-workspace-subsection" aria-label="Active repair jobs">
-      <div class="tm-crm-kicker">Active Work Board</div>
-      <h3 style="margin:4px 0 0;">Active Repair Jobs</h3>
-      {% if ready_invoice_items %}
-      <div class="tm-repair-card-actions" style="margin-top:10px;">
-        <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/new">Create Final Invoice</a>
-      </div>
-      {% endif %}
-      {% if not active_repair_work_items %}
-      <div class="tm-history-empty" style="margin-top:12px;">No active repairs yet. Create one from a finding, estimate, or manual repair.</div>
-      {% endif %}
-    </section>
 
     {% for section in workspace_sections %}
     {% if section["collapsible"] %}
@@ -2397,7 +2384,9 @@
         {% endfor %}
       </div>
       {% else %}
-      <div class="tm-history-empty" style="margin-top:12px;">{{ section["empty"] }}</div>
+        {% if section["collapsible"] %}
+        <div class="tm-history-empty" style="margin-top:12px;">{{ section["empty"] }}</div>
+        {% endif %}
       {% endif %}
     {% if section["collapsible"] %}
     </details>
@@ -2430,10 +2419,11 @@
           <div class="tm-repair-card-actions">
             {% if item.is_invoiced and item.invoice_url %}
             <a class="tm-btn tm-btn-secondary" href="{{ item.invoice_url }}">Open Final Invoice</a>
-            {% else %}
-            <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}">View Completed Repair</a>
             {% endif %}
-            <a class="tm-btn tm-btn-secondary" href="#vehicle-timeline">View in Vehicle Timeline</a>
+
+            {% if item.repair_record_url %}
+            <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}">View Repair Record</a>
+            {% endif %}  
           </div>
         </article>
         {% endfor %}
@@ -2443,62 +2433,11 @@
       {% endif %}
     </details>
 
-    <details class="tm-workspace-subsection tm-workspace-subsection--collapsible" aria-label="Already Invoiced" data-workspace-section="already_invoiced" style="margin-top:18px;">
-      <summary class="tm-workspace-section-summary">
-        <span>
-          <span class="tm-crm-kicker">Already Invoiced</span>
-          <strong style="display:block; margin-top:4px;">Already Invoiced <span class="tm-workspace-section-count">({{ invoiced_repair_items|length }})</span></strong>
-        </span>
-      </summary>
-      {% if invoiced_repair_items %}
-      <div class="tm-repair-work-list">
-        {% for item in invoiced_repair_items %}
-        <article class="tm-repair-work-item tm-repair-work-item--completed">
-          <div class="tm-repair-card-head">
-            <div>
-              <h3 class="tm-repair-card-title">{{ item.title }}</h3>
-              <div class="tm-repair-card-meta">
-                <span class="tm-repair-status-chip tm-repair-status-chip--completed">Status Invoiced</span>
-                <span class="tm-repair-source-chip">{{ item.source_label }}</span>
-                {% if item.invoice_url %}<a class="tm-repair-status-chip" href="{{ item.invoice_url }}">Invoice {{ item.invoice_number }}</a>{% endif %}
-              </div>
-            </div>
-          </div>
-          {% if item.detail %}<div style="color:#475569;">{{ item.detail }}</div>{% endif %}
-          {% if item.has_pricing %}
-          <div class="tm-repair-price-grid" aria-label="Repair pricing for {{ item.title }}">
-            <div><span>Labor</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
-            <div><span>Parts</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
-            <div><span>Total</span><strong>{{ item.grand_total|pro_currency }}</strong></div>
-          </div>
-          {% endif %}
-          <div class="tm-repair-card-actions">
-            {% if item.invoice_url %}<a class="tm-btn tm-btn-primary" href="{{ item.invoice_url }}">View Invoice</a>{% endif %}
-            <a class="tm-btn tm-btn-secondary" href="{{ item.repair_record_url }}">Open Repair</a>
-            <a class="tm-btn tm-btn-secondary" href="#vehicle-timeline">View in Vehicle Timeline</a>
-          </div>
-        </article>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="tm-history-empty" style="margin-top:12px;">No repair jobs have been invoiced yet.</div>
-      {% endif %}
-    </details>
-
     {% if false %}
     {% set active_repair_work_items = repair_workspace_groups.active|list %}
     {% set ready_invoice_items = repair_workspace_groups.ready_for_invoice|list %}
     {% set invoiced_repair_items = repair_workspace_groups.invoiced|list %}
-    <section class="tm-workspace-subsection" aria-label="Active repair jobs">
-      <div class="tm-crm-kicker">Active Repair Jobs</div>
-      <h3 style="margin:4px 0 0;">Active Repair Jobs</h3>
-      <div class="tm-repair-card-actions" style="margin-top:10px;">
-        <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/new">Create Final Invoice</a>
-      </div>
-      {% if not ready_invoice_items %}
-      <div class="tm-history-empty" style="margin-top:12px;">Complete repair jobs before creating a final invoice.</div>
-      {% endif %}
-    </section>
+    
     {% if active_repair_work_items %}
     <div class="tm-repair-work-list">
       {% for item in active_repair_work_items %}
@@ -2997,10 +2936,23 @@
     {% endif %}
     {% endif %}
 
-    <section class="tm-workspace-subsection" id="recommendations-findings" aria-label="Additional findings and recommended work" style="margin-top:18px;">
-      <div class="tm-crm-kicker">Additional Findings / Recommended Work</div>
-      <h3 style="margin:4px 0 0;">Additional Findings / Recommended Work</h3>
-      <p class="tm-pro-subtitle" style="margin:4px 0 0;">Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.</p>
+    </div>
+  </details> 
+<details class="tm-crm-panel"
+         id="recommendations-findings"
+         aria-label="Additional findings and recommended work"
+         style="margin-top:16px;">
+      <summary class="tm-workspace-summary">
+        <span class="tm-workspace-summary-title">
+          <span>Additional Findings / Recommended Work</span>
+          <strong>Additional Findings / Recommended Work</strong>
+        </span>
+      </summary>
+
+      <div class="tm-workspace-panel-body">
+        <p class="tm-pro-subtitle" style="margin:0;">
+          Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.
+        </p>
 
       <div class="tm-findings-status-groups" aria-label="Expandable additional finding status groups">
         {% for group in [
@@ -3200,11 +3152,8 @@
           </footer>
         </aside>
       </div>
-    </section>
-
     </div>
   </details>
-
   <details class="tm-crm-panel" id="maintenance" aria-label="Maintenance" style="margin-top:16px;">
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
@@ -3382,7 +3331,7 @@
       </details>
     </div>
   </details>
-
+  
   {% set timeline_total = vehicle_timeline_total|default(0, true) %}
   {% if not timeline_total and vehicle_timeline %}
     {% set timeline_counter = namespace(total=0) %}

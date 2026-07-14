@@ -44,9 +44,57 @@
       </label>
     </div>
     <div class="tm-repair-row" style="margin-top:12px;">
-      <div><label class="tm-label" for="repair_date">Repair Date</label><input class="tm-input" id="repair_date" name="repair_date" type="date" value="{{ repair.repair_date or '' }}"></div>
-      <div><label class="tm-label" for="mileage">Mileage</label><input class="tm-input" id="mileage" name="mileage" type="text" inputmode="numeric" value="{{ repair.mileage|pro_miles if repair.mileage is not none else '' }}" data-pro-mileage-input></div>
+      <div>
+        <label class="tm-label" for="repair_date">Repair Date</label>
+        <input
+          class="tm-input"
+          id="repair_date"
+          name="repair_date"
+          type="date"
+          value="{{ repair.repair_date or '' }}"
+        >
+      </div>
+      <div>
+        <label class="tm-label" for="mileage">Mileage</label>
+        <input
+          class="tm-input"
+          id="mileage"
+          name="mileage"
+          type="text"
+          inputmode="numeric"
+          value="{{ repair.mileage|pro_miles if repair.mileage is not none else '' }}"
+          data-pro-mileage-input
+        >
+      </div>
     </div>
+
+    {% if completion and completion.completed_at %}
+    <div class="tm-repair-row" style="margin-top:12px;">
+      <div>
+        <label class="tm-label" for="completion_date">Completion Date</label>
+        <input
+          class="tm-input"
+          id="completion_date"
+          name="completion_date"
+          type="date"
+          value="{{ completion.completion_date or '' }}"
+        >
+        <div class="tm-field-helper">Date the repair work was formally completed.</div>
+      </div>
+      <div>
+        <label class="tm-label" for="completion_mileage">Completion Mileage</label>
+        <input
+          class="tm-input"
+          id="completion_mileage"
+          name="completion_mileage"
+          type="text"
+          inputmode="numeric"
+          value="{{ completion.completion_mileage|pro_miles if completion.completion_mileage is not none else '' }}"
+          data-pro-mileage-input
+        >
+      </div>
+    </div>
+    {% endif %}
     <div class="tm-repair-row" style="margin-top:12px;">
       <div><label class="tm-label" for="labor_hours">Labor Hours</label><input class="tm-input" id="labor_hours" name="labor_hours" type="number" min="0" step="0.1" value="{{ repair.labor_hours if repair.labor_hours is not none else '' }}" data-labor-hours></div>
       <div><label class="tm-label" for="labor_rate">Labor Rate</label><input class="tm-input" id="labor_rate" name="labor_rate" type="text" inputmode="decimal" value="{{ '%.2f'|format(repair.labor_rate) if repair.labor_rate is not none else '' }}" data-labor-rate></div>
