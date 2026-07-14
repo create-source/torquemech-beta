@@ -236,25 +236,32 @@
     </details>
 
     <div class="tm-invoice-builder-panel" style="margin-top:16px;">
-      <div class="tm-crm-kicker">Invoice Adjustments</div>
-      <div class="tm-invoice-builder-fields">
-        <div>
-          <label class="tm-label" for="shop_supplies_fee">Fees / Shop Supplies</label>
-          <input class="tm-input" id="shop_supplies_fee" name="shop_supplies_fee" type="text" inputmode="decimal" value="">
+      <details aria-label="Invoice Adjustments">
+        <summary>
+          <span>
+            <span class="tm-crm-kicker">Invoice Adjustments</span>
+            <strong style="display:block; margin-top:4px;">Invoice Adjustments</strong>
+          </span>
+        </summary>
+        <div class="tm-invoice-builder-fields">
+          <div>
+            <label class="tm-label" for="shop_supplies_fee">Fees / Shop Supplies</label>
+            <input class="tm-input" id="shop_supplies_fee" name="shop_supplies_fee" type="text" inputmode="decimal" value="">
+          </div>
+          <div>
+            <label class="tm-label" for="discount_total">Discount</label>
+            <input class="tm-input" id="discount_total" name="discount_total" type="text" inputmode="decimal" value="">
+          </div>
+          <div>
+            <label class="tm-label" for="tax_rate">Tax Rate</label>
+            <input class="tm-input" id="tax_rate" name="tax_rate" type="text" inputmode="decimal" value="">
+          </div>
         </div>
-        <div>
-          <label class="tm-label" for="discount_total">Discount</label>
-          <input class="tm-input" id="discount_total" name="discount_total" type="text" inputmode="decimal" value="">
+        <div style="margin-top:12px;">
+          <label class="tm-label" for="no_charge_reason">No Charge / Warranty / Courtesy Repair Reason</label>
+          <textarea class="tm-input" id="no_charge_reason" name="no_charge_reason" rows="3" maxlength="800"></textarea>
         </div>
-        <div>
-          <label class="tm-label" for="tax_rate">Tax Rate</label>
-          <input class="tm-input" id="tax_rate" name="tax_rate" type="text" inputmode="decimal" value="">
-        </div>
-      </div>
-      <div style="margin-top:12px;">
-        <label class="tm-label" for="no_charge_reason">No Charge / Warranty / Courtesy Repair Reason</label>
-        <textarea class="tm-input" id="no_charge_reason" name="no_charge_reason" rows="3" maxlength="800"></textarea>
-      </div>
+      </details>
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Generate Final Invoice</button>
     </div>
   </form>

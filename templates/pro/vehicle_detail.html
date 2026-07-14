@@ -3154,11 +3154,11 @@
       </div>
     </div>
   </details>
-  <details class="tm-crm-panel" id="maintenance" aria-label="Maintenance" style="margin-top:16px;">
+  <details class="tm-crm-panel" id="maintenance" aria-label="Maintenance tracking" style="margin-top:16px;">
     <summary class="tm-workspace-summary">
       <span class="tm-workspace-summary-title">
-        <span>Maintenance Records / Smart Reminders</span>
-        <strong>Maintenance</strong>
+        <span>Tracked Maintenance / Smart Reminders</span>
+        <strong>Maintenance Tracking</strong>
       </span>
     </summary>
     <div class="tm-workspace-panel-body">
@@ -3168,12 +3168,12 @@
       </div>
       {% endif %}
       {% if maintenance_records %}
-      <div class="tm-maintenance-cards" aria-label="Maintenance records">
+      <div class="tm-maintenance-cards" aria-label="Tracked maintenance records">
         {% for record in maintenance_records %}
         <article class="tm-maintenance-card">
           <div class="tm-maintenance-card-head">
             <div>
-              <div class="tm-crm-kicker">Maintenance Record</div>
+              <div class="tm-crm-kicker">Tracked Maintenance</div>
               <h3 class="tm-repair-card-title">{{ record.service_type or "Maintenance service" }}</h3>
             </div>
             <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ record.id }}">Review</a>
@@ -3286,49 +3286,10 @@
       </div>
       {% else %}
       <div class="tm-history-empty" style="margin-top:12px;">
-        No maintenance records saved for this vehicle yet.
+        No repairs are currently marked for maintenance tracking. Open a Repair Record and enable “Track as Maintenance Item.”
       </div>
       {% endif %}
 
-      <details class="tm-crm-disclosure" style="margin-top:12px;">
-        <summary>+ Add Maintenance</summary>
-        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance" style="margin-top:12px;" data-maintenance-defaults="add">
-          <div>
-            <label class="tm-label" for="maintenance_service_type">Service type</label>
-            <input class="tm-input" id="maintenance_service_type" name="service_type" type="text" maxlength="180" list="maintenance-service-options" required>
-            <datalist id="maintenance-service-options">
-              {% for option in maintenance_service_options %}
-              <option value="{{ option.name }}"></option>
-              {% endfor %}
-            </datalist>
-          </div>
-          <div class="tm-crm-row" style="margin-top:12px;">
-            <div>
-              <label class="tm-label" for="maintenance_date_performed">Completed date</label>
-              <input class="tm-input" id="maintenance_date_performed" name="date_performed" type="date">
-            </div>
-            <div>
-              <label class="tm-label" for="maintenance_mileage_performed">Completed mileage</label>
-              <input class="tm-input" id="maintenance_mileage_performed" name="mileage_performed" type="text" inputmode="numeric" data-pro-mileage-input>
-            </div>
-          </div>
-          <div class="tm-crm-row" style="margin-top:12px;">
-            <div>
-              <label class="tm-label" for="maintenance_interval_miles">Interval miles</label>
-              <input class="tm-input" id="maintenance_interval_miles" name="interval_miles" type="text" inputmode="numeric" data-pro-mileage-input>
-            </div>
-            <div>
-              <label class="tm-label" for="maintenance_interval_months">Interval months</label>
-              <input class="tm-input" id="maintenance_interval_months" name="interval_months" type="number" min="0" step="1">
-            </div>
-          </div>
-          <div style="margin-top:12px;">
-            <label class="tm-label" for="maintenance_notes">Notes</label>
-            <textarea class="tm-input" id="maintenance_notes" name="notes" rows="4" maxlength="1600"></textarea>
-          </div>
-          <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Maintenance</button>
-        </form>
-      </details>
     </div>
   </details>
   
