@@ -26,6 +26,252 @@
   .tm-auth-link { color:#fdba74; font-weight:900; }
   .tm-auth-message { border-radius:8px; margin-top:16px; padding:11px 12px; font-weight:800; background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
   .tm-auth-help { margin-top:8px; }
+
+  /* TORQUEMECH AUTH VISUAL POLISH */
+  .tm-nav {
+    background: rgba(8, 17, 30, .96);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    backdrop-filter: blur(14px);
+  }
+
+  .tm-menuBtn {
+    background: #111c2d;
+    color: #f8fafc;
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: none;
+  }
+
+  .tm-menuBtn:hover,
+  .tm-menuBtn:focus-visible {
+    background: #17243a;
+    border-color: rgba(249,115,22,.55);
+  }
+
+  .tm-brand__torque {
+    color: #f8fafc;
+  }
+
+  .tm-brand__mech {
+    color: #f97316;
+  }
+
+  .tm-auth-page {
+    min-height: calc(100svh - 128px);
+    padding: 46px 0;
+  }
+
+  .tm-auth-panel {
+    border: 1px solid rgba(148,163,184,.22);
+    border-radius: 16px;
+    background:
+      linear-gradient(
+        145deg,
+        rgba(17,28,45,.98),
+        rgba(13,23,39,.98)
+      );
+    padding: 30px;
+    box-shadow:
+      0 26px 70px rgba(0,0,0,.38),
+      inset 0 1px 0 rgba(255,255,255,.035);
+  }
+
+  .tm-auth-panel h1 {
+    margin: 0 0 8px;
+    font-size: clamp(2rem, 6vw, 2.5rem);
+    line-height: 1.05;
+  }
+
+  .tm-auth-panel p {
+    margin: 0 0 22px;
+    line-height: 1.55;
+  }
+
+  .tm-auth-field {
+    gap: 8px;
+    margin-top: 17px;
+  }
+
+  .tm-auth-field input {
+    min-height: 50px;
+    border: 1px solid rgba(148,163,184,.26);
+    border-radius: 10px;
+    background: #091424;
+    color: #f8fafc;
+    caret-color: #f97316;
+    transition:
+      border-color .18s ease,
+      box-shadow .18s ease,
+      background .18s ease;
+  }
+
+  .tm-auth-field input:hover {
+    border-color: rgba(148,163,184,.42);
+  }
+
+  .tm-auth-field input:focus {
+    outline: none;
+    background: #0b1829;
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249,115,22,.16);
+  }
+
+  .tm-auth-primary {
+    min-height: 46px;
+    border-radius: 10px;
+    background: #f97316;
+    color: #101827;
+    padding: 12px 20px;
+    box-shadow: 0 10px 24px rgba(249,115,22,.20);
+    transition:
+      transform .18s ease,
+      background .18s ease,
+      box-shadow .18s ease;
+  }
+
+  .tm-auth-primary:hover {
+    background: #fb8a2b;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(249,115,22,.26);
+  }
+
+  .tm-auth-link {
+    color: #fb923c;
+  }
+
+  .tm-auth-link:hover {
+    color: #fdba74;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .tm-footer {
+    margin-top: 0;
+    background: #08111e;
+    color: #a9b6c8;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+
+  .tm-footer-links a,
+  .tm-footer-support {
+    color: #a9b6c8;
+  }
+
+  .tm-footer-links a:hover,
+  .tm-support-email {
+    color: #fb923c;
+  }
+
+  @media (max-width: 600px) {
+    .tm-auth-page {
+      min-height: calc(100svh - 122px);
+      padding: 20px 0 28px;
+      align-items: start;
+    }
+
+    .tm-auth-panel {
+      width: 100%;
+      padding: 24px 20px;
+      border-radius: 14px;
+      margin-top: 155px;
+    }
+
+    .tm-auth-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .tm-auth-primary {
+      width: 100%;
+    }
+
+    .tm-auth-actions .tm-auth-link {
+      text-align: center;
+    }
+
+    .tm-footer-inner {
+      align-items: flex-start;
+    }
+
+    .tm-footer-right {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+  /* FINAL LOGIN FIELD FIX */
+  .tm-auth-field input,
+  .tm-auth-field input:hover,
+  .tm-auth-field input:focus,
+  .tm-auth-field input:-webkit-autofill,
+  .tm-auth-field input:-webkit-autofill:hover,
+  .tm-auth-field input:-webkit-autofill:focus {
+    width: 100%;
+    height: 50px;
+    min-height: 50px;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    caret-color: #f97316 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px;
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+  }
+
+  .tm-auth-field input:focus {
+    border-color: #f97316 !important;
+    outline: none !important;
+    box-shadow:
+      0 0 0 3px rgba(249,115,22,.18),
+      0 0 0 1000px #ffffff inset !important;
+  }
+
+  .tm-password-control {
+    position: relative !important;
+    display: block;
+  }
+
+  .tm-password-control input {
+    padding-right: 52px !important;
+  }
+
+  .tm-password-toggle {
+    position: absolute !important;
+    top: 50% !important;
+    right: 5px !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+
+    width: 40px !important;
+    height: 40px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #64748b !important;
+  }
+
+  .tm-password-toggle:hover,
+  .tm-password-toggle:focus-visible {
+    background: #f1f5f9 !important;
+    color: #f97316 !important;
+    outline: none !important;
+  }
+
+  .tm-password-toggle svg {
+    width: 20px !important;
+    height: 20px !important;
+    display: block;
+  }
 </style>
 {% endblock %}
 
