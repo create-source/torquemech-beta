@@ -1046,6 +1046,10 @@
     text-decoration: none;
   }
 
+  .tm-timeline-item[data-timeline-href] {
+    cursor: pointer;
+  }
+
   .tm-timeline-item::before {
     content: "";
     position: absolute;
@@ -1114,9 +1118,18 @@
     margin-bottom: 0;
   }
 
-  .tm-timeline-item:hover .tm-timeline-content {
+  .tm-timeline-item:hover .tm-timeline-content,
+  .tm-timeline-item:focus-visible .tm-timeline-content {
     border-color: rgba(14, 116, 144, 0.48);
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
+  }
+
+  .tm-timeline-item:focus-visible {
+    outline: none;
+  }
+
+  .tm-timeline-item:focus-visible .tm-timeline-content {
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.22), 0 10px 22px rgba(15, 23, 42, 0.07);
   }
 
   .tm-timeline-meta {
@@ -3399,7 +3412,7 @@
             {% if group.records %}
             <div class="tm-vehicle-timeline">
               {% for item in group.records %}
-              <article class="tm-timeline-item" data-timeline-item>
+              <article class="tm-timeline-item" data-timeline-item data-timeline-href="{{ item.target_url or item.url }}" role="link" tabindex="0" aria-label="Open {{ group.title }}: {{ item.service_name }}">
                 <span class="tm-timeline-dot tm-timeline-dot--{{ item.record_type_key }}" aria-hidden="true"></span>
                 <div class="tm-timeline-content">
                   <div class="tm-timeline-meta">
@@ -3832,6 +3845,32 @@
     return (records || []).reduce((total, group) => total + Number(group.count || group.records?.length || 0), 0);
   }
 
+  function timelinePrimaryHref(groupKey, item) {
+    if ((groupKey || "") === "repaired" && item?.invoice_url) return item.invoice_url;
+    return item?.target_url || item?.url || "";
+  }
+
+  function activateTimelineCard(card) {
+    const href = card?.dataset?.timelineHref || "";
+    if (!href) return;
+    window.location.href = href;
+  }
+
+  document.addEventListener("click", (event) => {
+    const card = event.target?.closest?.("[data-timeline-item][data-timeline-href]");
+    if (!card) return;
+    if (event.target?.closest?.("a, button, input, select, textarea, summary, label")) return;
+    activateTimelineCard(card);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const card = event.target?.closest?.("[data-timeline-item][data-timeline-href]");
+    if (!card || event.target !== card) return;
+    event.preventDefault();
+    activateTimelineCard(card);
+  });
+
   function applyVehicleTimelineCollapse(section) {
     const items = Array.from(section?.querySelectorAll("[data-timeline-item]") || []);
     const countEl = section?.querySelector("[data-timeline-count]");
@@ -3877,6 +3916,13 @@
           const link = document.createElement("article");
           link.className = "tm-timeline-item";
           link.dataset.timelineItem = "";
+          const primaryHref = timelinePrimaryHref(group.key || "", item);
+          if (primaryHref) {
+            link.dataset.timelineHref = primaryHref;
+            link.setAttribute("role", "link");
+            link.tabIndex = 0;
+            link.setAttribute("aria-label", `Open ${group.title || "History"}: ${item.service_name || "History event"}`);
+          }
 
           const dot = document.createElement("span");
           dot.className = `tm-timeline-dot tm-timeline-dot--${item.record_type_key || group.key || ""}`;

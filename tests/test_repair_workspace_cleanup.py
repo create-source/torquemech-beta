@@ -757,7 +757,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(repaired["records"][0]["tracked_parts_total"], 225)
         self.assertEqual(repaired["records"][0]["tracked_parts"][0]["part_name"], "Alternator")
         self.assertEqual(repaired["records"][0]["url"], "/pro/customers/1/vehicles/1/repairs/30")
-        self.assertEqual(repaired["records"][0]["action_label"], "Open Repair Record")
+        self.assertEqual(repaired["records"][0]["target_url"], "/pro/customers/1/vehicles/1/invoices/9")
+        self.assertEqual(repaired["records"][0]["action_label"], "Open Final Invoice")
 
     def test_completion_event_timeline_fallback_includes_repair_details(self):
         timeline = pro_module.build_vehicle_timeline(
@@ -942,12 +943,14 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(estimate["total"], 825)
         self.assertEqual(estimate["approval_status"], "Signed customer approval")
         self.assertEqual(estimate["url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
+        self.assertEqual(estimate["target_url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
         self.assertIn("/estimator?", estimate["edit_url"])
         self.assertIn("estimate_id=12", estimate["edit_url"])
         self.assertEqual(estimate["action_label"], "Open Estimate PDF")
         self.assertEqual(estimate["invoice_number"], "TM-INV-1009")
         invoice = groups["invoices"]["records"][0]
         self.assertIn("Final Invoice TM-INV-1009", invoice["service_name"])
+        self.assertEqual(invoice["target_url"], "/pro/customers/1/vehicles/1/invoices/9")
         self.assertEqual(invoice["action_label"], "Open Final Invoice")
 
     def test_photo_stage_labels_are_present(self):

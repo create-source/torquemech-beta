@@ -104,6 +104,24 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         )
         self.conn.commit()
 
+    def seed_second_customer_vehicle(self):
+        now = "2026-06-25T12:00:00"
+        self.conn.execute(
+            """
+            INSERT INTO customers (id, first_name, last_name, phone, email, created_at, updated_at)
+            VALUES (2, 'Morgan', 'Shop', '555-0200', 'morgan@test.com', ?, ?)
+            """,
+            (now, now),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO customer_vehicles (id, customer_id, year, make, model, mileage, created_at, updated_at)
+            VALUES (2, 2, 2012, 'Honda', 'Accord', 120000, ?, ?)
+            """,
+            (now, now),
+        )
+        self.conn.commit()
+
     def insert_repair(self, repair_id, name, labor_hours, labor_rate, parts, source="estimate", status="Completed", notes=None):
         now = "2026-06-25T12:00:00"
         labor_total = round(labor_hours * labor_rate, 2)
@@ -139,6 +157,32 @@ class MultiServiceInvoiceTests(unittest.TestCase):
               completion_date, completion_mileage, after_repair_photo_paths, completed_at, created_at, updated_at
             )
             VALUES (?, 'Done', 1, 'Final check passed', '2026-06-25', 150000, '[]', ?, ?, ?)
+            """,
+            (repair_id, now, now, now),
+        )
+        self.conn.commit()
+
+    def insert_repair_for_customer_vehicle(self, repair_id, customer_id, vehicle_id, name):
+        now = "2026-06-25T12:00:00"
+        pro_module.ensure_repair_completion_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO repair_records (
+              id, vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+              workflow_source_type, status, completed_at, notes, created_at
+            )
+            VALUES (?, ?, ?, ?, '2026-06-25', 120000, 1.0, 100, 50, 100, 150, 'estimate', 'Completed', ?, '', ?)
+            """,
+            (repair_id, vehicle_id, customer_id, name, now, now),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO repair_completions (
+              repair_record_id, completion_notes, final_inspection_passed, final_inspection_notes,
+              completion_date, completion_mileage, after_repair_photo_paths, completed_at, created_at, updated_at
+            )
+            VALUES (?, 'Done', 1, 'Final check passed', '2026-06-25', 120000, '[]', ?, ?, ?)
             """,
             (repair_id, now, now, now),
         )
@@ -716,6 +760,85 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn("Front Brake Pads Replacement", vehicle_detail.text)
         self.assertIn("Invoice TM-INV-0001", vehicle_detail.text)
         self.assertIn("Open Final Invoice", vehicle_detail.text)
+
+    def test_invoice_timeline_entry_opens_saved_invoice_detail(self):
+        self.insert_repair(80, "Alternator Replacement", 1.5, 120, 220)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 80)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T12:30:00",
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+        invoice_detail = client.get(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}")
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn(
+            f'data-timeline-href="/pro/customers/1/vehicles/1/invoices/{invoice["id"]}"',
+            vehicle_detail.text,
+        )
+        self.assertIn('role="link"', vehicle_detail.text)
+        self.assertIn('tabindex="0"', vehicle_detail.text)
+        self.assertEqual(invoice_detail.status_code, 200)
+        self.assertIn(f"Invoice {invoice['invoice_number']}", invoice_detail.text)
+
+    def test_completed_repair_timeline_entry_prefers_associated_invoice(self):
+        self.insert_repair(81, "Water Pump Replacement", 2.0, 125, 180)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 81)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T12:30:00",
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+        invoice_count_before = self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"]
+        clicked_target = client.get(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}")
+        invoice_count_after = self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"]
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertGreaterEqual(
+            vehicle_detail.text.count(f'data-timeline-href="/pro/customers/1/vehicles/1/invoices/{invoice["id"]}"'),
+            2,
+        )
+        self.assertIn("Open Final Invoice", vehicle_detail.text)
+        self.assertEqual(clicked_target.status_code, 200)
+        self.assertEqual(invoice_count_after, invoice_count_before)
+
+    def test_records_for_another_customer_vehicle_cannot_be_opened_by_url_change(self):
+        self.seed_second_customer_vehicle()
+        self.insert_repair_for_customer_vehicle(82, 2, 2, "Starter Replacement")
+        repair = pro_module.load_repair_record(self.conn, 2, 2, 82)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=2,
+            vehicle_id=2,
+            now="2026-06-25T12:30:00",
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        wrong_invoice = client.get(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}")
+        wrong_repair = client.get("/pro/customers/1/vehicles/1/repairs/82")
+
+        self.assertEqual(wrong_invoice.status_code, 404)
+        self.assertEqual(wrong_repair.status_code, 404)
 
     def test_duplicate_invoice_actions_reuse_existing_invoice(self):
         self.insert_repair(70, "Water Pump Replacement", 2.0, 120, 180)

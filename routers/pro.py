@@ -9328,6 +9328,11 @@ def build_vehicle_timeline(
         record["record_type_key"] = group_key
         groups[group_key]["records"].append(record)
 
+    def timeline_record_target(group_key: str, record: dict[str, Any]) -> str:
+        if group_key == "repaired" and record.get("invoice_url"):
+            return str(record.get("invoice_url") or "")
+        return str(record.get("url") or "")
+
     def sort_records(records: list[dict[str, Any]]) -> None:
         def sortable_id(value: Any) -> int:
             try:
@@ -9397,7 +9402,7 @@ def build_vehicle_timeline(
                     "tracked_parts_total": completion_event.get("tracked_parts_total") or 0,
                     "tracked_parts_count": completion_event.get("tracked_parts_count") or 0,
                     "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
-                    "action_label": "Open Repair Record",
+                    "action_label": "Open Final Invoice" if invoice_record.get("id") else "Open Repair Record",
                 },
             )
         else:
@@ -9541,7 +9546,7 @@ def build_vehicle_timeline(
                 "created_at": record.get("created_at") or "",
                 "service_name": f"Customer Decision: {record.get('decision_status') or 'Decision'}",
                 "mileage": None,
-                "url": "#recommendations-findings",
+                "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{record.get('finding_id')}",
             },
         )
 
@@ -9603,7 +9608,7 @@ def build_vehicle_timeline(
                 "tracked_parts_total": record.get("tracked_parts_total") or 0,
                 "tracked_parts_count": record.get("tracked_parts_count") or 0,
                 "url": f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{record.get('repair_record_id')}",
-                "action_label": "Open Repair Record",
+                "action_label": "Open Final Invoice" if invoice_record.get("id") else "Open Repair Record",
             },
         )
         if str(record.get("override_reason") or "").strip():
@@ -9621,6 +9626,8 @@ def build_vehicle_timeline(
 
     for group in groups.values():
         sort_records(group["records"])
+        for record in group["records"]:
+            record["target_url"] = timeline_record_target(str(group.get("key") or ""), record)
         group["count"] = len(group["records"])
     return [
         groups["findings"],
