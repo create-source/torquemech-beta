@@ -23,6 +23,11 @@
   .tm-account-status { display:inline-flex; width:max-content; align-items:center; min-height:32px; padding:6px 10px; border-radius:8px; font-weight:900; }
   .tm-account-status.is-verified { background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
   .tm-account-status.is-unverified { background:rgba(249,115,22,.14); color:#fdba74; border:1px solid rgba(249,115,22,.3); }
+  .tm-account-status.is-pending { background:rgba(59,130,246,.14); color:#bfdbfe; border:1px solid rgba(59,130,246,.32); }
+  .tm-security-card { border:1px solid rgba(255,255,255,.1); border-radius:8px; margin-top:22px; padding:18px; background:#0b1220; }
+  .tm-security-card h3 { color:#f8fafc; font-size:1.08rem; letter-spacing:0; margin:0; }
+  .tm-security-card p { margin:8px 0 0; }
+  .tm-security-card.is-danger { border-color:rgba(239,68,68,.35); background:rgba(127,29,29,.16); }
   .tm-password-control { position:relative; }
   .tm-password-control input { padding-right:48px; }
   .tm-password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:32px; height:32px; border:0; border-radius:8px; background:transparent; color:#cbd5e1; cursor:pointer; padding:0; }
@@ -38,6 +43,7 @@
   .tm-account-primary, .tm-account-secondary { border:0; border-radius:8px; cursor:pointer; font-weight:900; padding:12px 16px; }
   .tm-account-primary { background:#f97316; color:#111827; }
   .tm-account-secondary { display:inline-flex; align-items:center; justify-content:center; background:#1f2937; color:#f8fafc; border:1px solid rgba(255,255,255,.14); text-decoration:none; }
+  .tm-account-danger { border:0; border-radius:8px; cursor:pointer; font-weight:900; padding:12px 16px; background:#ef4444; color:#fff; }
   .tm-account-secondary:hover, .tm-account-secondary:focus-visible { border-color:rgba(249,115,22,.7); color:#fdba74; outline:none; }
   .tm-account-link { color:#fdba74; font-weight:900; }
   @media (max-width: 680px) {
@@ -104,6 +110,10 @@
             <div class="tm-account-status is-unverified">Not verified</div>
           {% endif %}
         </div>
+        <div>
+          <span class="tm-account-label">Password last changed</span>
+          <div class="tm-account-readonly">{{ password_changed }}</div>
+        </div>
       </div>
       {% if errors.verification %}<div class="tm-account-error" style="margin-top:12px;">{{ errors.verification }}</div>{% endif %}
       {% if not email_verified %}
@@ -113,6 +123,77 @@
         <button class="tm-account-secondary" type="submit" {% if not verification_resend_available %}disabled{% endif %}>Resend Verification Email</button>
       </form>
       {% endif %}
+
+      {% if has_pending_email_change %}
+      <div class="tm-security-card">
+        <h3>Pending Email Change</h3>
+        <div class="tm-account-meta">
+          <div>
+            <span class="tm-account-label">Current sign-in email</span>
+            <div class="tm-account-readonly">{{ user.email }}</div>
+          </div>
+          <div>
+            <span class="tm-account-label">Pending email address</span>
+            <div class="tm-account-readonly">{{ pending_email }}</div>
+          </div>
+          <div>
+            <span class="tm-account-label">Status</span>
+            <div class="tm-account-status is-pending">Awaiting verification</div>
+          </div>
+        </div>
+        {% if errors.email_change %}<div class="tm-account-error" style="margin-top:12px;">{{ errors.email_change }}</div>{% endif %}
+        <div class="tm-account-actions">
+          <form method="post" action="/account/settings">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="back_url" value="{{ back_url }}">
+            <input type="hidden" name="action" value="resend_email_change">
+            <button class="tm-account-secondary" type="submit">Resend Change-Verification Email</button>
+          </form>
+          <form method="post" action="/account/settings">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="back_url" value="{{ back_url }}">
+            <input type="hidden" name="action" value="cancel_email_change">
+            <button class="tm-account-danger" type="submit">Cancel Email Change</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      <form class="tm-security-card" method="post" action="/account/settings" novalidate>
+        <h3>Change Email Address</h3>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="back_url" value="{{ back_url }}">
+        <input type="hidden" name="action" value="change_email">
+
+        <div class="tm-account-field">
+          <label for="email_current_password">Current Password</label>
+          <div class="tm-password-control">
+            <input id="email_current_password" name="email_current_password" type="password" autocomplete="current-password" required>
+            <button class="tm-password-toggle" type="button" aria-label="Show email current password" aria-controls="email_current_password" aria-pressed="false" data-password-toggle="email_current_password">
+              <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path><path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path><path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path></svg>
+            </button>
+          </div>
+          {% if errors.email_current_password %}<span class="tm-account-error">{{ errors.email_current_password }}</span>{% endif %}
+        </div>
+
+        <div class="tm-account-grid">
+          <div class="tm-account-field">
+            <label for="new_email">New Email Address</label>
+            <input id="new_email" name="new_email" type="email" autocomplete="email" value="{{ email_change_values.new_email }}" required>
+            {% if errors.new_email %}<span class="tm-account-error">{{ errors.new_email }}</span>{% endif %}
+          </div>
+          <div class="tm-account-field">
+            <label for="confirm_new_email">Confirm New Email Address</label>
+            <input id="confirm_new_email" name="confirm_new_email" type="email" autocomplete="email" value="{{ email_change_values.confirm_new_email }}" required>
+            {% if errors.confirm_new_email %}<span class="tm-account-error">{{ errors.confirm_new_email }}</span>{% endif %}
+          </div>
+        </div>
+
+        <div class="tm-account-actions">
+          <button class="tm-account-primary" type="submit">Send Verification Link</button>
+        </div>
+      </form>
 
       <form method="post" action="/account/settings" novalidate>
         <h2 style="margin-top:24px;">Change Password</h2>
@@ -158,6 +239,28 @@
 
         <div class="tm-account-actions">
           <button class="tm-account-primary" type="submit">Change Password</button>
+        </div>
+      </form>
+
+      <form class="tm-security-card is-danger" method="post" action="/account/settings" novalidate>
+        <h3>Sign Out All Devices</h3>
+        <p>This signs out every browser session for this account, including this one.</p>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="back_url" value="{{ back_url }}">
+        <input type="hidden" name="action" value="sign_out_all">
+        <div class="tm-account-field">
+          <label for="signout_current_password">Current Password</label>
+          <div class="tm-password-control">
+            <input id="signout_current_password" name="signout_current_password" type="password" autocomplete="current-password" required>
+            <button class="tm-password-toggle" type="button" aria-label="Show sign out current password" aria-controls="signout_current_password" aria-pressed="false" data-password-toggle="signout_current_password">
+              <svg class="tm-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <svg class="tm-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6A3 3 0 0 0 13.4 13.4"></path><path d="M9.9 4.4A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-3 4.2"></path><path d="M6.5 6.7C3.7 8.7 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.2-.9"></path></svg>
+            </button>
+          </div>
+          {% if errors.signout_current_password %}<span class="tm-account-error">{{ errors.signout_current_password }}</span>{% endif %}
+        </div>
+        <div class="tm-account-actions">
+          <button class="tm-account-danger" type="submit">Sign Out All Devices</button>
         </div>
       </form>
     </section>

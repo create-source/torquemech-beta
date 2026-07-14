@@ -126,6 +126,13 @@ class AuthShopIsolationTests(unittest.TestCase):
         parsed = urlparse(messages[-1]["reset_url"])
         return parse_qs(parsed.query)["token"][0]
 
+    def latest_verification_token_for(self, email):
+        messages = [message for message in self.outbox_messages() if message.get("to") == email]
+        if not messages:
+            raise AssertionError(f"verification outbox is empty for {email}")
+        parsed = urlparse(messages[-1]["verification_url"])
+        return parse_qs(parsed.query)["token"][0]
+
     def request_password_reset(self, client, email="owner@example.com"):
         page = client.get("/forgot-password")
         return client.post(
@@ -1256,6 +1263,280 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Email or password is incorrect.", old_login.text)
         self.assertEqual(new_login.status_code, 303)
         self.assertEqual(new_login.headers["location"], "/pro/dashboard")
+
+    def test_change_email_wrong_current_password_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "wrong-password",
+                "new_email": "new-owner@example.com",
+                "confirm_new_email": "new-owner@example.com",
+            },
+            follow_redirects=False,
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Current password is incorrect.", response.text)
+        self.assertIn('value="new-owner@example.com"', response.text)
+        self.assertIsNone(user["pending_email"])
+
+    def test_change_email_mismatch_current_and_duplicate_are_rejected(self):
+        owner = self.client()
+        self.bootstrap_owner(owner)
+        other = self.client()
+        self.signup(other, email="used@example.com", shop_name="Beta Shop")
+        page = owner.get("/account/settings")
+
+        mismatch = owner.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "new-owner@example.com",
+                "confirm_new_email": "different@example.com",
+            },
+            follow_redirects=False,
+        )
+        current = owner.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "owner@example.com",
+                "confirm_new_email": "owner@example.com",
+            },
+            follow_redirects=False,
+        )
+        duplicate = owner.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "used@example.com",
+                "confirm_new_email": "used@example.com",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(mismatch.status_code, 400)
+        self.assertIn("Email addresses must match.", mismatch.text)
+        self.assertEqual(current.status_code, 400)
+        self.assertIn("Enter a different email address.", current.text)
+        self.assertEqual(duplicate.status_code, 400)
+        self.assertIn(main.EMAIL_CHANGE_DUPLICATE_MESSAGE, duplicate.text)
+
+    def test_change_email_remains_unchanged_until_correct_verification_then_login_switches(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "new-owner@example.com",
+                "confirm_new_email": "new-owner@example.com",
+            },
+            follow_redirects=False,
+        )
+        before = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+        token = self.latest_verification_token_for("new-owner@example.com")
+        verify = client.get(f"/verify-email?token={token}", follow_redirects=False)
+        after = self.conn.execute("SELECT * FROM users WHERE email = 'new-owner@example.com'").fetchone()
+        self.logout(client)
+        old_login = self.login(client, email="owner@example.com", password="correct-password")
+        new_login = self.login(client, email="new-owner@example.com", password="correct-password")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Check your new email address to complete the change.", response.text)
+        self.assertEqual(before["email"], "owner@example.com")
+        self.assertEqual(before["pending_email"], "new-owner@example.com")
+        self.assertEqual(verify.status_code, 200)
+        self.assertIn("Your email address has been changed", verify.text)
+        self.assertIsNotNone(after["email_verified_at"])
+        self.assertIsNone(after["pending_email"])
+        self.assertIsNone(after["pending_email_token_hash"])
+        self.assertEqual(old_login.status_code, 400)
+        self.assertEqual(new_login.status_code, 303)
+
+    def test_change_email_expired_or_invalid_token_is_rejected(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+        client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "new-owner@example.com",
+                "confirm_new_email": "new-owner@example.com",
+            },
+            follow_redirects=False,
+        )
+        token = self.latest_verification_token_for("new-owner@example.com")
+        self.conn.execute("UPDATE users SET pending_email_token_expires_at = '2026-01-01T00:00:00'")
+        self.conn.commit()
+
+        expired = client.get(f"/verify-email?token={token}", follow_redirects=False)
+        invalid = client.get("/verify-email?token=not-a-real-token", follow_redirects=False)
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(expired.status_code, 400)
+        self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(user["pending_email"], "new-owner@example.com")
+
+    def test_pending_email_change_can_be_resent_and_canceled(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+        client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "new-owner@example.com",
+                "confirm_new_email": "new-owner@example.com",
+            },
+            follow_redirects=False,
+        )
+        first_token = self.latest_verification_token_for("new-owner@example.com")
+        page = client.get("/account/settings")
+
+        resend = client.post(
+            "/account/settings",
+            data={"csrf_token": csrf_from(page.text), "action": "resend_email_change"},
+            follow_redirects=False,
+        )
+        second_token = self.latest_verification_token_for("new-owner@example.com")
+        cancel_page = client.get("/account/settings")
+        cancel = client.post(
+            "/account/settings",
+            data={"csrf_token": csrf_from(cancel_page.text), "action": "cancel_email_change"},
+            follow_redirects=False,
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(resend.status_code, 200)
+        self.assertIn("A fresh change-verification email has been sent.", resend.text)
+        self.assertNotEqual(first_token, second_token)
+        self.assertEqual(cancel.status_code, 200)
+        self.assertIn("Pending email change canceled.", cancel.text)
+        self.assertIsNone(user["pending_email"])
+        self.assertEqual(user["email"], "owner@example.com")
+
+    def test_password_last_changed_updates_after_signed_in_password_change(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "current_password": "correct-password",
+                "new_password": "new-correct-password",
+                "confirm_new_password": "new-correct-password",
+            },
+            follow_redirects=False,
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(user["password_changed_at"])
+        self.assertNotIn("Not available", response.text)
+
+    def test_password_last_changed_updates_after_forgot_password_reset(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        self.logout(client)
+        self.request_password_reset(client)
+        token = self.latest_reset_token()
+        page = client.get(f"/reset-password?token={token}")
+
+        response = client.post(
+            "/reset-password",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "token": token,
+                "password": "new-correct-password",
+                "confirm_password": "new-correct-password",
+            },
+            follow_redirects=False,
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIsNotNone(user["password_changed_at"])
+
+    def test_sign_out_all_devices_invalidates_older_sessions(self):
+        first = self.client()
+        self.bootstrap_owner(first)
+        second = self.client()
+        self.login(second, email="owner@example.com", password="correct-password")
+        page = first.get("/account/settings")
+
+        response = first.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "sign_out_all",
+                "signout_current_password": "correct-password",
+            },
+            follow_redirects=False,
+        )
+        login_page = first.get(response.headers["location"])
+        old_session_dashboard = second.get("/pro/dashboard", follow_redirects=False)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login?signed_out_all=1")
+        self.assertIn("You have been signed out of all devices.", login_page.text)
+        self.assertEqual(old_session_dashboard.status_code, 303)
+        self.assertIn("/login", old_session_dashboard.headers["location"])
+
+    def test_email_change_preserves_cross_account_shop_isolation(self):
+        first = self.client()
+        self.bootstrap_owner(first, email="one@example.com", shop_name="Alpha Shop")
+        second = self.client()
+        self.signup(second, email="two@example.com", shop_name="Beta Shop")
+        self.verify_user("two@example.com")
+        page = first.get("/account/settings")
+        first.post(
+            "/account/settings",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "action": "change_email",
+                "email_current_password": "correct-password",
+                "new_email": "one-new@example.com",
+                "confirm_new_email": "one-new@example.com",
+            },
+            follow_redirects=False,
+        )
+        token = self.latest_verification_token_for("one-new@example.com")
+        first.get(f"/verify-email?token={token}")
+
+        first_settings = first.get("/pro/shop-settings")
+        second_settings = second.get("/pro/shop-settings")
+
+        self.assertEqual(first_settings.status_code, 200)
+        self.assertIn("Alpha Shop", first_settings.text)
+        self.assertNotIn("Beta Shop", first_settings.text)
+        self.assertEqual(second_settings.status_code, 200)
+        self.assertIn("Beta Shop", second_settings.text)
+        self.assertNotIn("Alpha Shop", second_settings.text)
 
     def test_forgot_password_page_loads(self):
         client = self.client()

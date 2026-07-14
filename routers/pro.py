@@ -347,6 +347,13 @@ def ensure_auth_schema(conn: sqlite3.Connection) -> None:
         "verification_token_hash": "verification_token_hash TEXT",
         "verification_token_expires_at": "verification_token_expires_at TEXT",
         "verification_email_last_sent_at": "verification_email_last_sent_at TEXT",
+        "pending_email": "pending_email TEXT",
+        "pending_email_token_hash": "pending_email_token_hash TEXT",
+        "pending_email_token_expires_at": "pending_email_token_expires_at TEXT",
+        "pending_email_requested_at": "pending_email_requested_at TEXT",
+        "pending_email_last_sent_at": "pending_email_last_sent_at TEXT",
+        "password_changed_at": "password_changed_at TEXT",
+        "session_version": "session_version INTEGER NOT NULL DEFAULT 0",
         "created_at": "created_at TEXT",
         "updated_at": "updated_at TEXT",
     }.items():

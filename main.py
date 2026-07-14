@@ -155,6 +155,7 @@ PASSWORD_RESET_EMAIL_SUBJECT = "Reset your TorqueMech password"
 PASSWORD_RESET_CONFIRMATION_MESSAGE = "If an account exists for this email, we’ve sent password reset instructions."
 PASSWORD_RESET_REQUEST_COOLDOWN_SECONDS = 60
 PASSWORD_RESET_TOKEN_EXPIRY_MINUTES = 30
+EMAIL_CHANGE_DUPLICATE_MESSAGE = "We could not use that email address. Please choose a different email."
 
 def service_slug_exists(service_slug: str) -> bool:
     catalog = load_services_catalog()
@@ -1854,6 +1855,15 @@ def password_rules_error(password: str) -> str:
     return ""
 
 
+def email_format_error(email: str) -> str:
+    clean = normalize_email(email)
+    if not clean:
+        return "Email address is required."
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", clean):
+        return "Enter a valid email address."
+    return ""
+
+
 def account_full_name(user: dict[str, Any] | None) -> str:
     first_name = str((user or {}).get("first_name") or "").strip()
     last_name = str((user or {}).get("last_name") or "").strip()
@@ -1903,6 +1913,17 @@ def format_account_created_at(user: dict[str, Any] | None) -> str:
     return f"{created_at.strftime('%B')} {created_at.day}, {created_at.year}"
 
 
+def format_friendly_datetime(raw: Any) -> str:
+    value = str(raw or "").strip()
+    if not value:
+        return "Not available"
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return "Not available"
+    return f"{parsed.strftime('%B')} {parsed.day}, {parsed.year} at {parsed.strftime('%I:%M %p').lstrip('0')}"
+
+
 def account_settings_context(
     request: Request,
     *,
@@ -1911,11 +1932,13 @@ def account_settings_context(
     message: str = "",
     back_url: str = "",
     profile_values: dict[str, str] | None = None,
+    email_change_values: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     values = profile_values or {
         "full_name": account_full_name(user),
         "phone": format_account_phone((user or {}).get("phone")),
     }
+    pending_email = normalize_email((user or {}).get("pending_email"))
     cooldown_remaining = verification_resend_cooldown_remaining(user)
     return {
         "request": request,
@@ -1925,8 +1948,15 @@ def account_settings_context(
         "message": message,
         "back_url": safe_next_url(back_url) or "/pro/dashboard",
         "profile_values": values,
+        "email_change_values": email_change_values or {
+            "new_email": "",
+            "confirm_new_email": "",
+        },
         "account_created": format_account_created_at(user),
+        "password_changed": format_friendly_datetime((user or {}).get("password_changed_at")),
         "email_verified": user_email_verified(user),
+        "pending_email": pending_email,
+        "has_pending_email_change": bool(pending_email),
         "verification_cooldown_remaining": cooldown_remaining,
         "verification_resend_available": bool(not user_email_verified(user) and cooldown_remaining <= 0),
     }
@@ -2511,6 +2541,44 @@ def find_user_for_verification_token(conn: sqlite3.Connection, token: str) -> di
     return None
 
 
+def find_user_for_pending_email_token(conn: sqlite3.Connection, token: str) -> dict[str, Any] | None:
+    submitted_hash = verification_token_hash(token)
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE pending_email_token_hash IS NOT NULL
+          AND TRIM(pending_email_token_hash) != ''
+          AND pending_email IS NOT NULL
+          AND TRIM(pending_email) != ''
+        """
+    ).fetchall()
+    for row in rows:
+        user = dict(row)
+        stored_hash = str(user.get("pending_email_token_hash") or "")
+        if hmac.compare_digest(stored_hash, submitted_hash):
+            expires_at = parse_verification_expiry(user.get("pending_email_token_expires_at"))
+            if not expires_at or expires_at < datetime.utcnow():
+                return None
+            return user
+    return None
+
+
+def delete_auth_sessions_for_user(conn: sqlite3.Connection, user_id: int) -> None:
+    rows = conn.execute("SELECT session_id, data_json FROM auth_sessions").fetchall()
+    for row in rows:
+        try:
+            data = json.loads(row["data_json"] or "{}")
+        except (TypeError, ValueError, json.JSONDecodeError):
+            continue
+        try:
+            session_user_id = int(data.get(AUTH_SESSION_USER_KEY) or 0)
+        except (TypeError, ValueError):
+            session_user_id = 0
+        if session_user_id == int(user_id):
+            conn.execute("DELETE FROM auth_sessions WHERE session_id = ?", (row["session_id"],))
+
+
 def password_reset_request_recent(conn: sqlite3.Connection, user_id: int) -> bool:
     row = conn.execute(
         """
@@ -2850,6 +2918,52 @@ def verify_email(request: Request, token: str = ""):
                 conn.close()
                 conn, user = fallback_match
         if not user:
+            pending_user = find_user_for_pending_email_token(conn, submitted)
+            if pending_user:
+                pending_email = normalize_email(pending_user.get("pending_email"))
+                duplicate_user = load_user_by_email(conn, pending_email) if pending_email else None
+                if duplicate_user and int(duplicate_user["id"]) != int(pending_user["id"]):
+                    return templates.TemplateResponse(
+                        "verify_email_error.html",
+                        {"request": request},
+                        status_code=400,
+                    )
+                now = datetime.utcnow().isoformat()
+                conn.execute(
+                    """
+                    UPDATE users
+                    SET email = ?,
+                        email_verified_at = ?,
+                        pending_email = NULL,
+                        pending_email_token_hash = NULL,
+                        pending_email_token_expires_at = NULL,
+                        pending_email_requested_at = NULL,
+                        pending_email_last_sent_at = NULL,
+                        updated_at = ?
+                    WHERE id = ?
+                      AND pending_email = ?
+                      AND pending_email_token_hash IS NOT NULL
+                      AND is_active = 1
+                    """,
+                    (pending_email, now, now, int(pending_user["id"]), pending_email),
+                )
+                conn.commit()
+                login_session(request, int(pending_user["id"]))
+                return templates.TemplateResponse(
+                    "verify_email_success.html",
+                    {
+                        "request": request,
+                        "csrf_token": csrf_token(request),
+                        "title": "Your email address has been changed",
+                        "kicker": "Security & Login",
+                        "intro": "Your new email address is verified and ready to use.",
+                        "body": "Future sign-ins must use your new email address. Your password, shop, profile, and account data were not changed.",
+                        "primary_href": "/account/settings",
+                        "primary_label": "Continue",
+                        "show_logout": True,
+                    },
+                )
+        if not user:
             return templates.TemplateResponse(
                 "verify_email_error.html",
                 {"request": request},
@@ -2976,7 +3090,12 @@ async def resend_verification_email(request: Request):
 
 
 @app.get("/login", response_class=HTMLResponse)
-def login_page(request: Request, next: str = "", reset: str = ""):
+def login_page(request: Request, next: str = "", reset: str = "", signed_out_all: str = ""):
+    message = ""
+    if reset == "success":
+        message = "Your password has been reset. You can now sign in."
+    elif signed_out_all == "1":
+        message = "You have been signed out of all devices."
     return templates.TemplateResponse(
         "login.html",
         {
@@ -2985,7 +3104,7 @@ def login_page(request: Request, next: str = "", reset: str = ""):
             "next": safe_next_url(next),
             "values": {},
             "errors": {},
-            "message": "Your password has been reset. You can now sign in." if reset == "success" else "",
+            "message": message,
         },
     )
 
@@ -3149,11 +3268,12 @@ async def reset_password_submit(request: Request):
             """
             UPDATE users
             SET password_hash = ?,
+                password_changed_at = ?,
                 updated_at = ?
             WHERE id = ?
               AND is_active = 1
             """,
-            (hash_password(password), now, int(reset_record["user_id"])),
+            (hash_password(password), now, now, int(reset_record["user_id"])),
         )
         conn.execute(
             """
@@ -3257,6 +3377,202 @@ async def account_settings_submit(request: Request):
                     back_url=back_url,
                 ),
             )
+
+        if action == "change_email":
+            current_password = form.get("email_current_password", "")
+            new_email = normalize_email(form.get("new_email"))
+            confirm_new_email = normalize_email(form.get("confirm_new_email"))
+            email_change_values = {"new_email": new_email, "confirm_new_email": confirm_new_email}
+            if not validate_csrf(request, form):
+                errors["form"] = "Please refresh the page and try again."
+            if not current_password:
+                errors["email_current_password"] = "Current password is required."
+            email_error = email_format_error(new_email)
+            if email_error:
+                errors["new_email"] = email_error
+            if new_email != confirm_new_email:
+                errors["confirm_new_email"] = "Email addresses must match."
+            current_email = normalize_email(user.get("email"))
+            if new_email and new_email == current_email:
+                errors["new_email"] = "Enter a different email address."
+            password_hash = str(user.get("password_hash") or "")
+            if current_password and not verify_password(current_password, password_hash):
+                errors["email_current_password"] = "Current password is incorrect."
+            duplicate_user = load_user_by_email(conn, new_email) if new_email else None
+            if duplicate_user and int(duplicate_user["id"]) != int(user["id"]):
+                errors["new_email"] = EMAIL_CHANGE_DUPLICATE_MESSAGE
+            if errors:
+                return templates.TemplateResponse(
+                    "account_settings.html",
+                    account_settings_context(
+                        request,
+                        user=user,
+                        errors=errors,
+                        back_url=back_url,
+                        email_change_values=email_change_values,
+                    ),
+                    status_code=400,
+                )
+            token, token_hash, token_expires_at = new_verification_token_record()
+            delivered = send_verification_email(request, email=new_email, token=token, user_id=int(user["id"]))
+            if not delivered:
+                return templates.TemplateResponse(
+                    "account_settings.html",
+                    account_settings_context(
+                        request,
+                        user=user,
+                        errors={"new_email": "We could not send a verification email right now. Please try again."},
+                        back_url=back_url,
+                        email_change_values=email_change_values,
+                    ),
+                    status_code=503,
+                )
+            now = datetime.utcnow().isoformat()
+            conn.execute(
+                """
+                UPDATE users
+                SET pending_email = ?,
+                    pending_email_token_hash = ?,
+                    pending_email_token_expires_at = ?,
+                    pending_email_requested_at = ?,
+                    pending_email_last_sent_at = ?,
+                    updated_at = ?
+                WHERE id = ?
+                  AND is_active = 1
+                """,
+                (new_email, token_hash, token_expires_at, now, now, now, int(user["id"])),
+            )
+            conn.commit()
+            updated_user = current_user(conn, request) or user
+            request.state.current_user = updated_user
+            request.state.current_shop = current_shop_context(conn, request)
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(
+                    request,
+                    user=updated_user,
+                    message="Check your new email address to complete the change.",
+                    back_url=back_url,
+                ),
+            )
+
+        if action == "resend_email_change":
+            if not validate_csrf(request, form):
+                errors["form"] = "Please refresh the page and try again."
+            pending_email = normalize_email(user.get("pending_email"))
+            if not pending_email:
+                errors["email_change"] = "There is no pending email change to resend."
+            if errors:
+                return templates.TemplateResponse(
+                    "account_settings.html",
+                    account_settings_context(request, user=user, errors=errors, back_url=back_url),
+                    status_code=400,
+                )
+            token, token_hash, token_expires_at = new_verification_token_record()
+            delivered = send_verification_email(request, email=pending_email, token=token, user_id=int(user["id"]))
+            if not delivered:
+                return templates.TemplateResponse(
+                    "account_settings.html",
+                    account_settings_context(
+                        request,
+                        user=user,
+                        errors={"email_change": "We could not send a verification email right now. Please try again."},
+                        back_url=back_url,
+                    ),
+                    status_code=503,
+                )
+            now = datetime.utcnow().isoformat()
+            conn.execute(
+                """
+                UPDATE users
+                SET pending_email_token_hash = ?,
+                    pending_email_token_expires_at = ?,
+                    pending_email_last_sent_at = ?,
+                    updated_at = ?
+                WHERE id = ?
+                  AND pending_email = ?
+                  AND is_active = 1
+                """,
+                (token_hash, token_expires_at, now, now, int(user["id"]), pending_email),
+            )
+            conn.commit()
+            updated_user = current_user(conn, request) or user
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(
+                    request,
+                    user=updated_user,
+                    message="A fresh change-verification email has been sent.",
+                    back_url=back_url,
+                ),
+            )
+
+        if action == "cancel_email_change":
+            if not validate_csrf(request, form):
+                errors["form"] = "Please refresh the page and try again."
+                return templates.TemplateResponse(
+                    "account_settings.html",
+                    account_settings_context(request, user=user, errors=errors, back_url=back_url),
+                    status_code=400,
+                )
+            now = datetime.utcnow().isoformat()
+            conn.execute(
+                """
+                UPDATE users
+                SET pending_email = NULL,
+                    pending_email_token_hash = NULL,
+                    pending_email_token_expires_at = NULL,
+                    pending_email_requested_at = NULL,
+                    pending_email_last_sent_at = NULL,
+                    updated_at = ?
+                WHERE id = ?
+                  AND is_active = 1
+                """,
+                (now, int(user["id"])),
+            )
+            conn.commit()
+            updated_user = current_user(conn, request) or user
+            return templates.TemplateResponse(
+                "account_settings.html",
+                account_settings_context(
+                    request,
+                    user=updated_user,
+                    message="Pending email change canceled.",
+                    back_url=back_url,
+                ),
+            )
+
+        if action == "sign_out_all":
+            current_password = form.get("signout_current_password", "")
+            if not validate_csrf(request, form):
+                errors["form"] = "Please refresh the page and try again."
+            if not current_password:
+                errors["signout_current_password"] = "Current password is required."
+            elif not verify_password(current_password, str(user.get("password_hash") or "")):
+                errors["signout_current_password"] = "Current password is incorrect."
+            if errors:
+                return templates.TemplateResponse(
+                    "account_settings.html",
+                    account_settings_context(request, user=user, errors=errors, back_url=back_url),
+                    status_code=400,
+                )
+            now = datetime.utcnow().isoformat()
+            conn.execute(
+                """
+                UPDATE users
+                SET session_version = COALESCE(session_version, 0) + 1,
+                    updated_at = ?
+                WHERE id = ?
+                  AND is_active = 1
+                """,
+                (now, int(user["id"])),
+            )
+            delete_auth_sessions_for_user(conn, int(user["id"]))
+            conn.commit()
+            logout_session(request)
+            response = RedirectResponse("/login?signed_out_all=1", status_code=303)
+            response.delete_cookie(SESSION_COOKIE_NAME)
+            return response
     finally:
         conn.close()
 
@@ -3300,11 +3616,12 @@ async def account_settings_submit(request: Request):
             """
             UPDATE users
             SET password_hash = ?,
+                password_changed_at = ?,
                 updated_at = ?
             WHERE id = ?
               AND is_active = 1
             """,
-            (hash_password(new_password), now, int(user["id"])),
+            (hash_password(new_password), now, now, int(user["id"])),
         )
         conn.commit()
         updated_user = current_user(conn, request) or user
