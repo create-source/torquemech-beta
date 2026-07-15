@@ -839,16 +839,14 @@
     transform: translateY(-1px);
   }
 
-  .tm-quick-link:first-child,
-  .tm-quick-link:nth-child(3) {
+  .tm-quick-link[data-tour-target="pro-create-estimate"] {
     border-color: #f97316;
     background: #f97316;
     color: #111827;
     box-shadow: 0 10px 24px rgba(249,115,22,.18);
   }
 
-  .tm-quick-link:first-child:hover,
-  .tm-quick-link:nth-child(3):hover {
+  .tm-quick-link[data-tour-target="pro-create-estimate"]:hover {
     background: #fb8a2b;
     color: #111827;
   }
@@ -1084,11 +1082,13 @@
     <p class="tm-quick-actions__note">The main moves for starting or continuing shop work.</p>
     <div class="tm-quick-grid">
       {% for action in dashboard.quick_actions %}
+      {% if action.label != 'Add Customer' %}
       <a
         class="tm-quick-link"
         href="{{ action.href }}"
-        {% if action.label == 'Add Customer' %}data-tour-target="pro-add-customer"{% elif action.label == 'Create Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
+        {% if action.label == 'Create Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
       >{{ action.label }}</a>
+      {% endif %}
       {% endfor %}
     </div>
   </section>
