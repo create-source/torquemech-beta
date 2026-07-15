@@ -2291,7 +2291,8 @@
       <div class="tm-repair-work-list">
         {% for item in section["items"] %}
         {% set parts_sources = item.parts_sources or [] %}
-        <article class="tm-repair-work-item tm-repair-work-item--{{ item.workspace_status_key }}">
+        {% set repair_record_id = item.linked_repair_record_id or item.repair_record_id or item.id or 0 %}
+        <article class="tm-repair-work-item tm-repair-work-item--{{ item.workspace_status_key }}" data-repair-id="{{ repair_record_id }}" {% if repair_record_id in converted_repair_ids %}data-new-repair="true"{% endif %}>
           <div class="tm-repair-card-head">
             <div>
               <h3 class="tm-repair-card-title">{{ item.title }}</h3>
@@ -2941,7 +2942,8 @@
 <details class="tm-crm-panel"
          id="recommendations-findings"
          aria-label="Additional findings and recommended work"
-         style="margin-top:16px;">
+         style="margin-top:16px;"
+         {% if finding_added_success %}open{% endif %}>
       <summary class="tm-workspace-summary">
         <span class="tm-workspace-summary-title">
           <span>Additional Findings / Recommended Work</span>
@@ -2950,6 +2952,11 @@
       </summary>
 
       <div class="tm-workspace-panel-body">
+        {% if finding_added_success %}
+        <div class="tm-history-empty" style="margin-bottom:12px; border-style:solid; background:#ecfdf5; color:#065f46;" role="status">
+          Finding added.
+        </div>
+        {% endif %}
         <p class="tm-pro-subtitle" style="margin:0;">
           Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.
         </p>
@@ -2960,7 +2967,7 @@
           {"label": "Approved Recommended Work", "statuses": ["Approved"], "count": findings_summary.approved, "empty": "No approved recommended work."},
           {"label": "Declined / Deferred", "statuses": ["Declined", "Deferred"], "count": findings_summary.declined, "empty": "No declined or deferred findings."}
         ] %}
-        <details class="tm-history-summary-card tm-findings-status-card" data-finding-status-group="{{ group.label }}" {% if group.label == "Open" and group.count %}open{% endif %}>
+        <details class="tm-history-summary-card tm-findings-status-card" data-finding-status-group="{{ group.label }}" {% if (new_finding_status and new_finding_status in group.statuses) or (group.label == "Open" and group.count) %}open{% endif %}>
           <summary>
             <span>{{ group.label }}</span>
             <strong>{{ group.count }}</strong>
@@ -2970,7 +2977,7 @@
           <div class="tm-findings-list">
             {% for item in findings_records %}
             {% if item.status in group.statuses %}
-            <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}">
+            <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" id="finding-{{ item.id }}" data-finding-id="{{ item.id }}" {% if new_finding_id and item.id == new_finding_id %}data-new-finding="true"{% endif %}>
               <div class="tm-history-head">
                 <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
                 <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
@@ -2984,6 +2991,9 @@
                 {% if item.mileage is not none %}
                 <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                 {% endif %}
+                <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}{{ item.estimate_document_status or "Prepared" }}{% else %}None{% endif %}</span>
+                <span class="tm-crm-chip">Pro Job: {% if item.linked_repair_record_id %}Created{% else %}Not Created{% endif %}</span>
+                {% if new_finding_id and item.id == new_finding_id %}<span class="tm-crm-chip">New</span>{% endif %}
               </div>
               {% if item.request_type == "labor" %}
               <div style="color:#475569;"><strong>Problem Found:</strong> {{ item.finding or "No problem recorded." }}</div>
@@ -3008,16 +3018,30 @@
               </section>
               {% endif %}
               <div class="tm-finding-estimate" data-finding-estimate>
-                {% if item.estimate_document_url and item.linked_repair_record_id %}
+                {% if item.status == "Approved" and item.linked_repair_record_id %}
                 <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
-                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
+                {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>{% endif %}
+                {% elif item.status == "Approved" %}
+                <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
+                  <input type="hidden" name="workflow_source_type" value="finding">
+                  <input type="hidden" name="workflow_source_id" value="{{ item.id }}">
+                  <input type="hidden" name="return_to" value="repair_detail">
+                  <input type="hidden" name="repair_name" value="{{ item.labor_description or item.recommendation or item.finding or 'Finding' }}">
+                  <input type="hidden" name="repair_date" value="{{ item.finding_date or '' }}">
+                  <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
+                  <input type="hidden" name="labor_hours" value="{% if item.labor_hours is not none %}{{ item.labor_hours }}{% endif %}">
+                  <input type="hidden" name="labor_rate" value="{% if item.labor_rate is not none %}{{ item.labor_rate }}{% endif %}">
+                  <input type="hidden" name="parts_cost" value="{% if item.parts_cost is not none %}{{ item.parts_cost }}{% endif %}">
+                  <input type="hidden" name="labor_cost" value="{% if item.labor_amount is not none %}{{ item.labor_amount }}{% endif %}">
+                  <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
+                  <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
+                </form>
+                {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate</a>{% endif %}
                 {% elif item.estimate_document_url %}
-                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_url }}">Open Estimate</a>
+                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate / Continue Quote</a>
+                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
                 {% else %}
                 <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
-                {% if item.linked_repair_record_id %}
-                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
-                {% endif %}
                 {% endif %}
               </div>
               <details class="tm-crm-disclosure tm-finding-estimate">
@@ -3037,22 +3061,6 @@
                 </form>
               </details>
               <div class="tm-repair-action-row">
-                {% if item.status == "Approved" and not item.linked_repair_record_id %}
-                <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
-                  <input type="hidden" name="workflow_source_type" value="finding">
-                  <input type="hidden" name="workflow_source_id" value="{{ item.id }}">
-                  <input type="hidden" name="return_to" value="repair_detail">
-                  <input type="hidden" name="repair_name" value="{{ item.labor_description or item.recommendation or item.finding or 'Finding' }}">
-                  <input type="hidden" name="repair_date" value="{{ item.finding_date or '' }}">
-                  <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
-                  <input type="hidden" name="labor_hours" value="{% if item.labor_hours is not none %}{{ item.labor_hours }}{% endif %}">
-                  <input type="hidden" name="labor_rate" value="{% if item.labor_rate is not none %}{{ item.labor_rate }}{% endif %}">
-                  <input type="hidden" name="parts_cost" value="{% if item.parts_cost is not none %}{{ item.parts_cost }}{% endif %}">
-                  <input type="hidden" name="labor_cost" value="{% if item.labor_amount is not none %}{{ item.labor_amount }}{% endif %}">
-                  <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
-                  <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
-                </form>
-                {% endif %}
                 <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit Finding</a>
               </div>
             </article>
@@ -3080,7 +3088,7 @@
             {% if findings_records %}
             <div class="tm-findings-list">
               {% for item in findings_records %}
-              <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" data-finding-card data-finding-id="{{ item.id }}" data-finding-status="{{ item.status }}" data-finding-severity="{{ item.severity }}" data-finding-date="{{ item.finding_date or '' }}">
+              <article class="tm-finding-card tm-finding-card--{{ item.severity|lower }}" data-finding-card data-finding-id="{{ item.id }}" data-finding-status="{{ item.status }}" data-finding-severity="{{ item.severity }}" data-finding-date="{{ item.finding_date or '' }}" {% if new_finding_id and item.id == new_finding_id %}data-new-finding="true"{% endif %}>
                 <div class="tm-history-head">
                   <div class="tm-history-title">{% if item.request_type == "labor" %}Labor Request{% else %}{{ item.finding or "Finding" }}{% endif %}</div>
                   <div class="tm-history-date">{{ item.finding_date|pro_date if item.finding_date else "No date" }}</div>
@@ -3094,6 +3102,9 @@
                   {% if item.mileage is not none %}
                   <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                   {% endif %}
+                  <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}{{ item.estimate_document_status or "Prepared" }}{% else %}None{% endif %}</span>
+                  <span class="tm-crm-chip">Pro Job: {% if item.linked_repair_record_id %}Created{% else %}Not Created{% endif %}</span>
+                  {% if new_finding_id and item.id == new_finding_id %}<span class="tm-crm-chip">New</span>{% endif %}
                 </div>
                 {% if item.request_type == "labor" %}
                 <div style="color:#475569;"><strong>Description:</strong> {{ item.labor_description or "No labor description recorded." }}</div>
@@ -3106,16 +3117,30 @@
                 <div style="color:#475569;"><strong>Recommended Repair:</strong> {{ item.recommendation or "No recommended repair recorded." }}</div>
                 {% endif %}
                 <div class="tm-finding-estimate" data-finding-estimate>
-                  {% if item.estimate_document_url and item.linked_repair_record_id %}
+                  {% if item.status == "Approved" and item.linked_repair_record_id %}
                   <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
-                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
+                  {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>{% endif %}
+                  {% elif item.status == "Approved" %}
+                  <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
+                    <input type="hidden" name="workflow_source_type" value="finding">
+                    <input type="hidden" name="workflow_source_id" value="{{ item.id }}">
+                    <input type="hidden" name="return_to" value="repair_detail">
+                    <input type="hidden" name="repair_name" value="{{ item.labor_description or item.recommendation or item.finding or 'Finding' }}">
+                    <input type="hidden" name="repair_date" value="{{ item.finding_date or '' }}">
+                    <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
+                    <input type="hidden" name="labor_hours" value="{% if item.labor_hours is not none %}{{ item.labor_hours }}{% endif %}">
+                    <input type="hidden" name="labor_rate" value="{% if item.labor_rate is not none %}{{ item.labor_rate }}{% endif %}">
+                    <input type="hidden" name="parts_cost" value="{% if item.parts_cost is not none %}{{ item.parts_cost }}{% endif %}">
+                    <input type="hidden" name="labor_cost" value="{% if item.labor_amount is not none %}{{ item.labor_amount }}{% endif %}">
+                    <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
+                    <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
+                  </form>
+                  {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate</a>{% endif %}
                   {% elif item.estimate_document_url %}
-                  <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_url }}">Open Estimate</a>
+                  <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate / Continue Quote</a>
+                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
                   {% else %}
                   <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
-                  {% if item.linked_repair_record_id %}
-                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
-                  {% endif %}
                   {% endif %}
                 </div>
                 <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
@@ -3170,15 +3195,21 @@
       {% if maintenance_records %}
       <div class="tm-maintenance-cards" aria-label="Tracked maintenance records">
         {% for record in maintenance_records %}
-        <article class="tm-maintenance-card">
-          <div class="tm-maintenance-card-head">
+        <details class="tm-maintenance-card" data-maintenance-record>
+          <summary class="tm-maintenance-card-head">
             <div>
               <div class="tm-crm-kicker">Tracked Maintenance</div>
               <h3 class="tm-repair-card-title">{{ record.service_type or "Maintenance service" }}</h3>
+              <div class="tm-repair-card-meta">
+                <span class="tm-maintenance-status-chip tm-maintenance-status-chip--{{ record.maintenance_status_key }}">{{ record.maintenance_status }}</span>
+                {% if record.next_due_mileage is not none %}<span class="tm-repair-status-chip">Next {{ record.next_due_mileage|pro_miles }} miles</span>{% endif %}
+                {% if record.next_due_date %}<span class="tm-repair-status-chip">Due {{ record.next_due_date|pro_date }}</span>{% endif %}
+              </div>
             </div>
+          </summary>
+          <div class="tm-repair-card-actions">
             <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/maintenance/{{ record.id }}">Review</a>
           </div>
-          <span class="tm-maintenance-status-chip tm-maintenance-status-chip--{{ record.maintenance_status_key }}">{{ record.maintenance_status }}</span>
           <div class="tm-maintenance-fields">
             <div class="tm-maintenance-field">
               <span>Completed date</span>
@@ -3281,7 +3312,7 @@
           {% if record.notes %}
           <div style="color:#475569;">{{ record.notes }}</div>
           {% endif %}
-        </article>
+        </details>
         {% endfor %}
       </div>
       {% else %}
@@ -3570,6 +3601,35 @@
     const label = card.querySelector("span")?.textContent?.trim();
     return [label, card.querySelector("strong")];
   }));
+  const newFindingCard = document.querySelector('#recommendations-findings [data-new-finding="true"]');
+  if (newFindingCard) {
+    newFindingCard.style.outline = "2px solid rgba(22, 163, 74, .45)";
+    newFindingCard.style.outlineOffset = "3px";
+    window.requestAnimationFrame(() => {
+      newFindingCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    window.setTimeout(() => {
+      newFindingCard.style.outline = "";
+      newFindingCard.style.outlineOffset = "";
+    }, 4200);
+  }
+
+  const newRepairCards = Array.from(document.querySelectorAll('#repair-workspace [data-new-repair="true"]'));
+  if (newRepairCards.length) {
+    newRepairCards.forEach((card) => {
+      card.style.outline = "2px solid rgba(22, 163, 74, .45)";
+      card.style.outlineOffset = "3px";
+    });
+    window.requestAnimationFrame(() => {
+      newRepairCards[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    window.setTimeout(() => {
+      newRepairCards.forEach((card) => {
+        card.style.outline = "";
+        card.style.outlineOffset = "";
+      });
+    }, 4200);
+  }
 
   function updateSummary(oldStatus, newStatus) {
     if (oldStatus === newStatus) return;

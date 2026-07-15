@@ -16,6 +16,13 @@
   .tm-repair-field { display:grid; gap:3px; }
   .tm-repair-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
   .tm-repair-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .tm-switch-control { display:inline-flex; align-items:center; gap:10px; cursor:pointer; color:#334155; font-weight:800; }
+  .tm-switch-control input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+  .tm-switch-track { width:46px; height:26px; border-radius:999px; background:#e2e8f0; border:1px solid #cbd5e1; position:relative; flex:0 0 auto; transition:background .18s ease, border-color .18s ease; }
+  .tm-switch-track::after { content:""; position:absolute; width:20px; height:20px; border-radius:999px; background:#fff; top:2px; left:2px; box-shadow:0 1px 3px rgba(15,23,42,.25); transition:transform .18s ease; }
+  .tm-switch-control input:checked + .tm-switch-track { border-color:#0f766e; background:#0f766e; }
+  .tm-switch-control input:checked + .tm-switch-track::after { transform:translateX(20px); }
+  .tm-switch-control input:focus-visible + .tm-switch-track { outline:3px solid rgba(37,99,235,.3); outline-offset:2px; }
   .tm-checklist-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-left: 5px solid #0f766e;
@@ -160,6 +167,16 @@
     font-weight:800;
     margin-top:14px;
   }
+  .tm-repair-success {
+    border:1px solid rgba(22,163,74,.25);
+    border-radius:8px;
+    background:#ecfdf5;
+    color:#065f46;
+    padding:12px;
+    font-weight:800;
+    margin-top:14px;
+  }
+  .tm-maintenance-toggle-status { color:#64748b; font-size:.84rem; font-weight:800; }
   .tm-completion-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
   .tm-execution-status-form {
     display: grid;
@@ -224,10 +241,19 @@
         <strong><span class="tm-status-chip tm-status-chip--{{ repair_status_class }}">{{ repair_status_display }}</span></strong>
       </div>
       <div class="tm-repair-field"><span>Completion Date</span><strong>{{ completion.completion_date|pro_date if completion.completion_date else "-" }}</strong></div>
-      <div class="tm-repair-field"><span>Completion Mileage</span><strong>{% if completion.completion_mileage is not none %}{{ completion.completion_mileage|pro_miles }} miles{% elif repair.mileage is not none %}{{ repair.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
+      <div class="tm-repair-field"><span>Completion Mileage</span><strong>{% if completion.completion_mileage is not none %}{{ completion.completion_mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
       <div class="tm-repair-field"><span>Final Inspection</span><strong>{% if completion.final_inspection_passed %}Passed{% else %}Not marked passed{% endif %}</strong></div>
     </div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Notes</span><strong>{{ repair.notes or "-" }}</strong></div>
+    <form class="tm-repair-actions" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/maintenance-tracking" style="margin-top:14px;" data-maintenance-toggle-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="tm-switch-control" for="repair_detail_track_as_maintenance">
+        <input id="repair_detail_track_as_maintenance" name="track_as_maintenance" type="checkbox" value="1" role="switch" {% if repair.track_as_maintenance %}checked{% endif %} data-maintenance-toggle>
+        <span class="tm-switch-track" aria-hidden="true"></span>
+        <span>Track as Maintenance Item</span>
+      </label>
+      <span class="tm-maintenance-toggle-status" aria-live="polite" data-maintenance-toggle-status></span>
+    </form>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Technician Notes</span><strong>{{ completion.technician_notes or "-" }}</strong></div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Completion Notes</span><strong>{{ completion.completion_notes or "-" }}</strong></div>
     <div class="tm-repair-field" style="margin-top:14px;"><span>Final Inspection Comments</span><strong>{{ completion.final_inspection_notes or "-" }}</strong></div>
@@ -245,11 +271,18 @@
       {% endfor %}
     </div>
     {% endif %}
+    {% if repair_saved_success %}
+    <div class="tm-repair-success">
+      Repair record saved. {% if invoice %}Final invoice is already available.{% else %}Continue to invoice when you are ready.{% endif %}
+    </div>
+    {% endif %}
     <div class="tm-repair-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/edit">Edit Repair Record</a>
       {% if invoice %}
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">View Invoice</a>
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}">Open Final Invoice</a>
       <span class="tm-status-chip">Invoiced: {{ invoice.invoice_number }}</span>
+      {% elif repair.is_formally_completed %}
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/new?repair_record_id={{ repair.id }}">Create Final Invoice / Continue to Invoice</a>
       {% else %}
       <span class="tm-status-chip">Not Invoiced</span>
       {% endif %}
@@ -399,4 +432,47 @@
 
 {% block page_js %}
 <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
+<script>
+  (() => {
+    document.querySelectorAll("[data-maintenance-toggle-form]").forEach((form) => {
+      const toggle = form.querySelector("[data-maintenance-toggle]");
+      const status = form.querySelector("[data-maintenance-toggle-status]");
+      const csrf = form.querySelector('input[name="csrf_token"]')?.value || "";
+      if (!toggle) return;
+      let lastChecked = toggle.checked;
+      const setStatus = (message) => {
+        if (status) status.textContent = message;
+      };
+      toggle.addEventListener("change", async () => {
+        const nextChecked = toggle.checked;
+        toggle.disabled = true;
+        setStatus("Saving...");
+        const body = new URLSearchParams();
+        body.set("csrf_token", csrf);
+        if (nextChecked) body.set("track_as_maintenance", "1");
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "X-Requested-With": "XMLHttpRequest",
+            },
+            body,
+          });
+          if (!response.ok) throw new Error("Maintenance tracking save failed");
+          lastChecked = nextChecked;
+          setStatus("Saved");
+          window.setTimeout(() => {
+            if (status?.textContent === "Saved") setStatus("");
+          }, 1800);
+        } catch (error) {
+          toggle.checked = lastChecked;
+          setStatus("Failed");
+        } finally {
+          toggle.disabled = false;
+        }
+      });
+    });
+  })();
+</script>
 {% endblock %}

@@ -69,6 +69,9 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('button.id = "convertToProJobBtn";', app_js)
         self.assertIn('button.textContent = convertToProJobMount.dataset.readyLabel || "Convert to Pro Job";', app_js)
         self.assertIn("button.addEventListener(\"click\", handleConvertToProJob);", app_js)
+        self.assertIn("customerQuoteReadyForProJob", app_js)
+        self.assertIn("function validateCustomerQuoteReview()", app_js)
+        self.assertIn("prepareReviewedEstimateBtn?.addEventListener", app_js)
 
     def test_estimator_quantity_controls_and_line_item_display_are_present(self):
         response = TestClient(main.app, base_url="http://localhost").get("/estimator")

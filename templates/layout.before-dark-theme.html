@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2ZCQZQDDZ2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-2ZCQZQDDZ2');
+  </script>
+  
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+
+  <title>{% block title %}TorqueMech — Repair Estimates, Repair Guides & Repair Intelligence{% endblock %}</title>
+
+  <meta name="description" content="{{ meta_description or 'TorqueMech provides customer-ready repair estimates, mechanic-focused repair guides, vehicle-code context, and repair workflow intelligence.' }}" />
+
+  <meta property="og:title" content="TorqueMech | Simple Shop Workflow">
+  <meta property="og:description" content="{{ meta_description or 'TorqueMech provides customer-ready repair estimates, mechanic-focused repair guides, vehicle-code context, and repair workflow intelligence.' }}">
+  <meta property="og:image" content="https://torquemech.com/static/torquemech-social-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://torquemech.com/">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TorqueMech | Simple Shop Workflow">
+  <meta name="twitter:description" content="{{ meta_description or 'TorqueMech provides customer-ready repair estimates, mechanic-focused repair guides, vehicle-code context, and repair workflow intelligence.' }}">
+  <meta name="twitter:image" content="https://torquemech.com/static/torquemech-social-preview.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/static/android-chrome-512x512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+
+  <link rel="stylesheet" href="/static/style.css?v={{ static_version('/static/style.css') }}">
+  <script src="/static/app.js?v={{ static_version('/static/app.js') }}" defer></script>
+
+  <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "wj2d9fedvw");
+      window.tmTrackClarity = function(eventName, data){
+          try {
+              if (typeof window.clarity === "function") {
+                  window.clarity("event", eventName, data || {});
+              }
+          } catch (_) {}
+      };
+  </script>
+  {% block page_css %}{% endblock %}
+</head>
+
+<body>
+  {% include "partials/nav.html" %}
+
+  <main class="tm-container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="tm-footer">
+    <div class="tm-container tm-footer-inner">
+
+      <div class="tm-footer-left">
+        <span class="tm-footer-brand">© 2026 TorqueMech</span>
+      </div>
+
+      <div class="tm-footer-links">
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/disclaimer">Disclaimer</a>
+      </div>
+
+      <div class="tm-footer-right">
+        <span class="tm-footer-support">
+          Support:
+          <a href="mailto:support@torquemech.com" class="tm-support-email">support@torquemech.com</a>
+        </span>
+
+        <button id="feedbackBtn" type="button" class="tm-btn tm-btn-ghost">
+          Feedback
+        </button>
+      </div>
+
+    </div>
+  </footer>
+
+  <script src="/static/nav.js?v={{ static_version('/static/nav.js') }}"></script>
+  <script src="/static/feedback.js?v={{ static_version('/static/feedback.js') }}"></script>
+  <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
+  {% block page_js %}{% endblock %}
+
+  <div id="feedbackModal" class="tm-modal" hidden>
+    <div class="tm-modal__overlay" data-close="1"></div>
+
+    <div class="tm-modal__panel" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+      <div class="tm-modal__head">
+        <h2 id="fbTitle">Help Improve Repair Intelligence</h2>
+        <button type="button" class="tm-iconBtn" id="feedbackCloseBtn" aria-label="Close">✕</button>
+      </div>
+
+      <p class="tm-muted" style="margin:0 0 10px;">
+        Tell us where the repair path needs work: missing services, unclear estimates, pricing confusion, OBD code gaps, repair guide gaps, trust concerns, or feature friction.
+      </p>
+
+      <form id="feedbackForm">
+        <div class="tm-grid2">
+          <div>
+            <label class="tm-label">Name (optional)</label>
+            <input class="input" type="text" id="fbName" maxlength="80" autocomplete="name">
+          </div>
+          <div>
+            <label class="tm-label">Email (optional)</label>
+            <input class="input" type="email" id="fbEmail" maxlength="120" autocomplete="email">
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label class="tm-label">Message *</label>
+          <textarea class="input" id="fbMessage" rows="5" required maxlength="2000"
+            placeholder="Example: I searched P0300 and expected a clearer misfire path, or this estimate felt unclear because..."></textarea>
+        </div>
+
+        <div class="tm-row tm-modal-actions">
+          <span id="fbStatus" class="tm-muted"></span>
+          <div class="tm-modal-btns">
+            <button type="button" class="btn btn-secondary" data-close="1">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="fbSubmitBtn">Send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="feedbackReminder" class="tm-feedback-reminder" hidden aria-live="polite">
+    <button type="button" class="tm-feedback-reminder__close" id="feedbackReminderClose" aria-label="Dismiss feedback reminder">✕</button>
+    <p class="tm-feedback-reminder__title">Help improve TorqueMech repair intelligence</p>
+    <p class="tm-feedback-reminder__text">Tell us what was missing, unclear, or hard to trust so we can improve estimates, OBD paths, and repair guides.</p>
+    <div class="tm-feedback-reminder__actions">
+      <button type="button" class="tm-btn tm-btn-primary" id="feedbackReminderSend">Send Feedback</button>
+      <button type="button" class="tm-btn tm-btn-ghost" id="feedbackReminderLater">Maybe later</button>
+    </div>
+  </div>
+</body>
+</html>

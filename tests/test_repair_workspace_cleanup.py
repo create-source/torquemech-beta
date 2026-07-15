@@ -621,15 +621,23 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         )
         self.assertEqual(
             pro_module.repair_workspace_primary_action(no_estimate_with_repair, "approved"),
-            {"label": "Create Estimate", "url": "/estimator?source=finding&finding_id=10", "kind": "link"},
+            {"label": "Open Repair / Track Parts", "url": "/pro/customers/1/vehicles/1/repairs/30", "kind": "repair"},
         )
         self.assertEqual(
             pro_module.repair_workspace_primary_action(open_estimate, "open"),
-            {"label": "Open Estimate", "url": "/pro/customers/1/vehicles/1/estimates/12/pdf", "kind": "link"},
+            {"label": "Review Estimate / Continue Quote", "url": "/pro/customers/1/vehicles/1/estimates/12/pdf", "kind": "link"},
+        )
+        self.assertEqual(
+            pro_module.repair_workspace_primary_action(no_estimate, "approved"),
+            {"label": "Create Repair Job", "url": "/pro/customers/1/vehicles/1/findings/10", "kind": "repair"},
         )
         self.assertEqual(
             pro_module.repair_workspace_primary_action(open_estimate, "approved")["label"],
-            "Open Repair / Track Parts",
+            "Create Repair Job",
+        )
+        self.assertNotEqual(
+            pro_module.repair_workspace_primary_action(open_estimate, "approved")["label"],
+            "Create Estimate",
         )
         self.assertEqual(
             pro_module.repair_workspace_primary_action(completed_invoice, "completed"),
@@ -667,7 +675,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(items[0]["estimate_document_url"], "/pro/customers/1/vehicles/1/estimates/12/pdf")
         self.assertEqual(items[0]["estimate_badge"], "Estimate PDF")
         pro_module.enrich_repair_workspace_item(items[0])
-        self.assertEqual(items[0]["primary_action_label"], "Open Repair / Track Parts")
+        self.assertEqual(items[0]["primary_action_label"], "Create Repair Job")
         self.assertEqual(items[0]["primary_action_kind"], "repair")
         self.assertNotEqual(items[0]["primary_action_label"], "Create Estimate")
 
@@ -1172,7 +1180,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(groups["open"][0]["workspace_status_label"], "Open")
         self.assertEqual(groups["open"][0]["primary_action_label"], "Open Repair / Track Parts")
         self.assertEqual(groups["approved"][0]["workspace_status_label"], "Approved")
-        self.assertEqual(groups["approved"][0]["primary_action_label"], "Create Estimate")
+        self.assertEqual(groups["approved"][0]["primary_action_label"], "Open Repair / Track Parts")
         self.assertEqual(groups["in_progress"][0]["workspace_status_label"], "In Progress")
         self.assertEqual(groups["in_progress"][0]["primary_action_label"], "Continue Repair / Track Parts")
         self.assertEqual(groups["ready_to_complete"][0]["workspace_status_label"], "Ready to Complete")
@@ -1736,6 +1744,86 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("navigator.clipboard?.writeText", vehicle_detail)
         self.assertNotIn("Mark as Sent", vehicle_detail)
         self.assertNotIn("Snooze 7 Days", vehicle_detail)
+
+    def test_repair_detail_template_has_direct_maintenance_tracking_toggle(self):
+        repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn("/maintenance-tracking", repair_detail)
+        self.assertIn('name="csrf_token"', repair_detail)
+        self.assertIn('id="repair_detail_track_as_maintenance"', repair_detail)
+        self.assertIn('role="switch"', repair_detail)
+        self.assertIn("{% if repair.track_as_maintenance %}checked{% endif %}", repair_detail)
+        self.assertIn("Track as Maintenance Item", repair_detail)
+        self.assertIn("Update Maintenance Tracking", repair_detail)
+        self.assertNotIn("Disable Maintenance Tracking", repair_detail)
+        self.assertIn('data-maintenance-toggle-form', repair_detail)
+        self.assertIn('"X-Requested-With": "XMLHttpRequest"', repair_detail)
+        self.assertIn('toggle.checked = lastChecked', repair_detail)
+
+    def test_repair_edit_maintenance_toggle_auto_saves_without_repair_form(self):
+        repair_edit = (ROOT / "templates" / "pro" / "repair_edit.html").read_text(encoding="utf-8")
+
+        self.assertIn('data-maintenance-url="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ repair.id }}/maintenance-tracking"', repair_edit)
+        self.assertIn('"X-Requested-With": "XMLHttpRequest"', repair_edit)
+        self.assertIn('setStatus("Saving...")', repair_edit)
+        self.assertIn('setStatus("Saved")', repair_edit)
+        self.assertIn('setStatus("Failed")', repair_edit)
+        self.assertIn('toggle.checked = lastChecked', repair_edit)
+
+    def test_vehicle_finding_cards_show_estimate_repair_state_and_redirect_state(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn("Finding added.", vehicle_detail)
+        self.assertIn("finding_added_success", vehicle_detail)
+        self.assertIn('data-new-finding="true"', vehicle_detail)
+        self.assertIn("Estimate:", vehicle_detail)
+        self.assertIn("Pro Job:", vehicle_detail)
+        self.assertIn("Review Estimate / Continue Quote", vehicle_detail)
+
+    def test_finding_cards_use_approved_repair_job_action_matrix(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn('{% if item.status == "Approved" and item.linked_repair_record_id %}', vehicle_detail)
+        self.assertIn('{% elif item.status == "Approved" %}', vehicle_detail)
+        self.assertIn('<button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>', vehicle_detail)
+        self.assertIn('value="finding"', vehicle_detail)
+        self.assertIn('name="workflow_source_id" value="{{ item.id }}"', vehicle_detail)
+        self.assertIn("Review Estimate", vehicle_detail)
+
+    def test_estimator_parts_sources_wait_for_service_specific_selection(self):
+        estimator = (ROOT / "templates" / "estimator.html").read_text(encoding="utf-8")
+        app_js = (ROOT / "static" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('id="estimatorPartsSources"', estimator)
+        self.assertIn("hidden data-service-specific-parts-sources", estimator)
+        self.assertIn("function hasServiceSpecificPartsSourceSelection()", app_js)
+        self.assertIn("estimatorPartsSourcesEl.hidden = true", app_js)
+        self.assertIn("if (!hasServiceSpecificPartsSourceSelection())", app_js)
+
+    def test_estimator_parts_sources_refresh_from_selected_and_custom_service(self):
+        app_js = (ROOT / "static" / "app.js").read_text(encoding="utf-8")
+        refresh_body = app_js.split("async function refreshEstimatorPartsSources()", 1)[1].split("function scheduleEstimatorPartsSourcesRefresh", 1)[0]
+
+        self.assertIn('params.set("year"', refresh_body)
+        self.assertIn('params.set("make"', refresh_body)
+        self.assertIn('params.set("model"', refresh_body)
+        self.assertIn('params.set("engine"', refresh_body)
+        self.assertIn('params.set("service_name", selectedService)', refresh_body)
+        self.assertNotIn('params.set("problem_found"', refresh_body)
+        self.assertNotIn('params.set("recommended_repair"', refresh_body)
+        self.assertIn("customServiceNameEl?.addEventListener", app_js)
+        self.assertIn("serviceEl?.addEventListener(\"change\"", app_js)
+
+    def test_vehicle_maintenance_records_are_collapsed_disclosures(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn('<details class="tm-crm-panel" id="maintenance"', vehicle_detail)
+        self.assertIn('<details class="tm-maintenance-card" data-maintenance-record>', vehicle_detail)
+        self.assertIn('<summary class="tm-maintenance-card-head">', vehicle_detail)
+        self.assertNotIn('<details class="tm-maintenance-card" data-maintenance-record open>', vehicle_detail)
+        self.assertIn("Next {{ record.next_due_mileage|pro_miles }} miles", vehicle_detail)
+        self.assertIn("{{ record.next_due_date|pro_date }}", vehicle_detail)
+        self.assertIn("data-maintenance-reminder-toggle", vehicle_detail)
 
     def test_follow_up_maintenance_uses_latest_record_per_vehicle_service(self):
         records = [

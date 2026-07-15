@@ -158,6 +158,12 @@
   .tm-calendar-panel[open] > summary { margin-bottom: 4px; }
   .tm-calendar-item[hidden] { display: none; }
   .tm-calendar-show-more { justify-self: start; }
+  .tm-booking-link-panel { display: grid; gap: 10px; }
+  .tm-booking-link-panel h2 { margin: 0; color: #0f172a; }
+  .tm-booking-link-panel p { margin: 0; color: #64748b; }
+  .tm-booking-link-actions { display: grid; gap: 8px; }
+  .tm-booking-link-actions .tm-btn { width: 100%; justify-content: center; }
+  .tm-booking-link-status { color: #0f766e; font-size: .84rem; font-weight: 800; min-height: 1.2em; }
   @media (max-width: 860px) {
     .tm-calendar-grid, .tm-calendar-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -411,6 +417,24 @@
   </section>
   {% endif %}
 
+  <section class="tm-calendar-panel tm-booking-link-panel" aria-label="TorqueMech Booking Link">
+    <div>
+      <div class="tm-crm-kicker">Public Booking</div>
+      <h2>TorqueMech Booking Link</h2>
+      <p>Send this link to customers so they can request an appointment.</p>
+    </div>
+    <input class="tm-input" type="text" readonly value="" data-booking-link-value aria-label="TorqueMech public booking link">
+    <div class="tm-booking-link-actions">
+      <button class="tm-btn tm-btn-primary" type="button" data-copy-booking-link>Copy Booking Link</button>
+      <a class="tm-btn tm-btn-secondary" href="/book/torquemech" target="_blank" rel="noopener">Open Booking Page</a>
+    </div>
+    <details>
+      <summary>How booking works</summary>
+      <p style="margin-top:10px;">Customers submit a booking request. Review it under Pending Requests, then confirm, reschedule, decline, or connect it to a customer and vehicle.</p>
+    </details>
+    <span class="tm-booking-link-status" data-booking-link-status aria-live="polite"></span>
+  </section>
+
   <details class="tm-calendar-panel tm-calendar-add" aria-label="Add Appointment">
     <summary>Add Appointment</summary>
     {% if saved %}<div style="color:#115e59;font-weight:900;">Appointment saved.</div>{% endif %}
@@ -487,6 +511,31 @@
 
 {% block page_js %}
 <script>
+(() => {
+  const input = document.querySelector("[data-booking-link-value]");
+  const copyButton = document.querySelector("[data-copy-booking-link]");
+  const status = document.querySelector("[data-booking-link-status]");
+  if (!input) return;
+
+  const bookingUrl = `${window.location.origin}/book/torquemech`;
+  input.value = bookingUrl;
+
+  copyButton?.addEventListener("click", async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(bookingUrl);
+      } else {
+        input.focus();
+        input.select();
+        document.execCommand("copy");
+      }
+      if (status) status.textContent = "Booking link copied.";
+    } catch (_) {
+      if (status) status.textContent = "Unable to copy booking link.";
+    }
+  });
+})();
+
 document.querySelectorAll("[data-show-more]").forEach((button) => {
   button.addEventListener("click", () => {
     button.closest("[data-calendar-list]")?.querySelectorAll(".tm-calendar-item[hidden]").forEach((item) => {

@@ -9,7 +9,7 @@ import sqlite3
 import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs, quote, urlencode
 from uuid import uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -27,6 +27,7 @@ from app.data.maintenance_library import (
     MAINTENANCE_SERVICE_OPTIONS,
     maintenance_defaults_for,
     normalize_maintenance_service_type,
+    resolve_maintenance_service,
 )
 from app.data.repair_blueprints import (
     blueprint_summary,
@@ -412,6 +413,13 @@ def validate_csrf(request: Request, form: dict[str, str]) -> bool:
     return bool(expected and submitted and hmac.compare_digest(expected, submitted))
 
 
+def optional_csrf_token(request: Request) -> str:
+    try:
+        return csrf_token(request)
+    except AssertionError:
+        return ""
+
+
 def login_session(request: Request, user_id: int) -> None:
     request.session.clear()
     request.session[AUTH_SESSION_USER_KEY] = int(user_id)
@@ -564,23 +572,21 @@ def repair_workspace_primary_action(item: dict[str, Any], status_key: str) -> di
         if invoice_url:
             return {"label": "Open Final Invoice", "url": invoice_url, "kind": "link"}
         return {"label": "View Completed Repair", "url": repair_url or source_url, "kind": "link"}
-    if estimate_url and status_key in {"approved", "in_progress", "ready_to_complete"}:
-        return {"label": "Open Repair / Track Parts", "url": repair_url or source_url, "kind": "repair"}
-    if estimate_url and item.get("source_label") == "Source: Finding":
-        return {"label": "Open Estimate", "url": estimate_url, "kind": "link"}
-    if (
-        item.get("source_label") == "Source: Finding"
-        and item.get("source_type") == "finding"
-    ):
-        return {"label": "Create Estimate", "url": create_estimate_url, "kind": "link"}
     if status_key == "ready_to_complete":
         return {"label": "Mark Completed", "url": f"{repair_url}#repair-completion" if repair_url else source_url, "kind": "link"}
     if status_key == "in_progress":
         return {"label": "Continue Repair / Track Parts", "url": repair_url or source_url, "kind": "link"}
     if item.get("source_type") == "repair" or item.get("linked_repair_record_id"):
-        return {"label": "Open Repair / Track Parts", "url": repair_url or source_url, "kind": "link"}
+        return {"label": "Open Repair / Track Parts", "url": repair_url or source_url, "kind": "repair"}
     if status_key == "approved":
-        return {"label": "Start Repair", "url": repair_url or source_url, "kind": "repair"}
+        return {"label": "Create Repair Job", "url": repair_url or source_url, "kind": "repair"}
+    if estimate_url and item.get("source_label") == "Source: Finding":
+        return {"label": "Review Estimate / Continue Quote", "url": estimate_url, "kind": "link"}
+    if (
+        item.get("source_label") == "Source: Finding"
+        and item.get("source_type") == "finding"
+    ):
+        return {"label": "Create Estimate", "url": create_estimate_url, "kind": "link"}
     return {"label": "Review Repair", "url": repair_url or source_url, "kind": "link"}
 
 
@@ -4617,6 +4623,7 @@ def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
           interval_months INTEGER,
           due_mileage INTEGER,
           due_date TEXT,
+          source_repair_record_id INTEGER,
           notes TEXT,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
@@ -4628,6 +4635,8 @@ def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_mileage INTEGER")
     if "due_date" not in columns:
         conn.execute("ALTER TABLE maintenance_records ADD COLUMN due_date TEXT")
+    if "source_repair_record_id" not in columns:
+        conn.execute("ALTER TABLE maintenance_records ADD COLUMN source_repair_record_id INTEGER")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_maintenance_records_vehicle_date "
         "ON maintenance_records (vehicle_id, date_performed)"
@@ -4638,6 +4647,10 @@ def ensure_maintenance_records_schema(conn: sqlite3.Connection) -> None:
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_mileage ON maintenance_records (due_mileage)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_maintenance_records_due_date ON maintenance_records (due_date)")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_maintenance_records_source_repair "
+        "ON maintenance_records (source_repair_record_id)"
+    )
     conn.commit()
 
 
@@ -5987,10 +6000,12 @@ def attach_estimate_documents_to_findings(
         if not estimate_doc:
             record["estimate_document_id"] = None
             record["estimate_document_url"] = ""
+            record["estimate_document_edit_url"] = ""
             record["estimate_document_status"] = ""
             continue
         record["estimate_document_id"] = estimate_doc.get("id")
         record["estimate_document_url"] = estimate_document_url(customer_id, vehicle_id, estimate_doc.get("id"))
+        record["estimate_document_edit_url"] = estimate_document_edit_url(customer_id, vehicle_id, estimate_doc)
         record["estimate_document_status"] = estimate_doc.get("approval_status") or ""
         record["estimate_total"] = estimate_doc.get("estimate_total")
 
@@ -8037,13 +8052,37 @@ def upsert_maintenance_from_repair(
     *,
     customer_id: int,
     vehicle_id: int,
+    repair_record_id: int | None = None,
     service_type: str,
     date_performed: str,
     mileage_performed: int | None,
     notes: str,
     now: str,
 ) -> int:
-    normalized = normalize_maintenance_service_type(service_type)
+    ensure_maintenance_records_schema(conn)
+    resolved_service = resolve_maintenance_service(service_type)
+    canonical_service_type = (
+        resolved_service.get("label")
+        if resolved_service
+        else (str(service_type or "").strip() or "Maintenance")
+    )
+    normalized = normalize_maintenance_service_type(canonical_service_type)
+    existing = None
+    if repair_record_id:
+        existing = row_to_dict(
+            conn.execute(
+                """
+                SELECT *
+                FROM maintenance_records
+                WHERE customer_id = ?
+                  AND vehicle_id = ?
+                  AND source_repair_record_id = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (customer_id, vehicle_id, repair_record_id),
+            ).fetchone()
+        )
     existing = next(
         (
             dict(row)
@@ -8059,8 +8098,8 @@ def upsert_maintenance_from_repair(
             if normalize_maintenance_service_type(row["service_type"]) == normalized
         ),
         None,
-    )
-    defaults = maintenance_defaults_for(service_type)
+    ) if not existing else existing
+    defaults = maintenance_defaults_for(canonical_service_type)
     interval_miles = defaults.get("interval_miles")
     interval_months = defaults.get("interval_months")
     due_mileage = calculated_due_mileage(mileage_performed, interval_miles)
@@ -8069,12 +8108,14 @@ def upsert_maintenance_from_repair(
         conn.execute(
             """
             UPDATE maintenance_records
-            SET date_performed = ?, mileage_performed = ?, interval_miles = ?,
+            SET service_type = ?, date_performed = ?, mileage_performed = ?, interval_miles = ?,
                 interval_months = ?, due_mileage = ?, due_date = ?, notes = ?,
+                source_repair_record_id = COALESCE(source_repair_record_id, ?),
                 updated_at = ?
             WHERE id = ?
             """,
             (
+                canonical_service_type,
                 date_performed,
                 mileage_performed,
                 interval_miles,
@@ -8082,6 +8123,7 @@ def upsert_maintenance_from_repair(
                 due_mileage,
                 due_date,
                 notes,
+                repair_record_id,
                 now,
                 existing["id"],
             ),
@@ -8093,26 +8135,60 @@ def upsert_maintenance_from_repair(
         INSERT INTO maintenance_records (
           customer_id, vehicle_id, service_type, date_performed,
           mileage_performed, interval_miles, interval_months,
-          due_mileage, due_date, notes, created_at, updated_at
+          due_mileage, due_date, source_repair_record_id, notes, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             customer_id,
             vehicle_id,
-            service_type,
+            canonical_service_type,
             date_performed,
             mileage_performed,
             interval_miles,
             interval_months,
             due_mileage,
             due_date,
+            repair_record_id,
             notes,
             now,
             now,
         ),
     )
     return int(cur.lastrowid)
+
+
+def maintenance_completion_values_for_repair(
+    conn: sqlite3.Connection, repair: dict[str, Any]
+) -> tuple[str, int | None]:
+    repair_id = int(repair.get("id") or repair.get("repair_record_id") or 0)
+    completion = repair.get("completion") if isinstance(repair.get("completion"), dict) else None
+    if repair_id and completion is None:
+        completion = load_repair_completion(conn, repair_id)
+    if not repair_is_formally_completed(repair, completion):
+        return "", None
+    completion_date = str((completion or {}).get("completion_date") or "").strip()
+    completion_mileage = (completion or {}).get("completion_mileage")
+    return completion_date, optional_int_value(completion_mileage)
+
+
+def delete_maintenance_for_repair(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    repair_record_id: int,
+) -> None:
+    ensure_maintenance_records_schema(conn)
+    conn.execute(
+        """
+        DELETE FROM maintenance_records
+        WHERE customer_id = ?
+          AND vehicle_id = ?
+          AND source_repair_record_id = ?
+        """,
+        (customer_id, vehicle_id, repair_record_id),
+    )
 
 
 def normalize_customer_status(value: str) -> str:
@@ -11442,6 +11518,8 @@ async def pro_estimate_conversion_create(request: Request):
 
         created_count = 0
         first_repair_id: int | None = None
+        created_repair_ids: list[int] = []
+        existing_repair_ids: list[int] = []
         for item in selected_items:
             if source_type == "finding" and source_id is not None:
                 existing = conn.execute(
@@ -11450,12 +11528,11 @@ async def pro_estimate_conversion_create(request: Request):
                     FROM repair_records
                     WHERE workflow_source_type = 'finding'
                       AND workflow_source_id = ?
+                      AND customer_id = ?
                       AND vehicle_id = ?
-                      AND LOWER(TRIM(COALESCE(repair_name, ''))) = LOWER(TRIM(?))
-                      AND repair_date = ?
                     LIMIT 1
                     """,
-                    (source_id, vehicle_id, item["service_name"], repair_date),
+                    (source_id, customer_id, vehicle_id),
                 ).fetchone()
             elif source_type == "estimate" and source_id is not None:
                 existing = conn.execute(
@@ -11484,7 +11561,9 @@ async def pro_estimate_conversion_create(request: Request):
                     (vehicle_id, item["service_name"], repair_date),
                 ).fetchone()
             if existing:
-                first_repair_id = first_repair_id or int(existing["id"])
+                existing_id = int(existing["id"])
+                first_repair_id = first_repair_id or existing_id
+                existing_repair_ids.append(existing_id)
                 continue
             labor_cost = item["labor_total"]
             if labor_cost is None and item["labor_hours"] is not None and item["labor_rate"] is not None:
@@ -11535,6 +11614,7 @@ async def pro_estimate_conversion_create(request: Request):
             )
             repair_id = int(cur.lastrowid)
             first_repair_id = first_repair_id or repair_id
+            created_repair_ids.append(repair_id)
             if source_type == "finding" and source_id is not None:
                 conn.execute(
                     f"""
@@ -11571,8 +11651,27 @@ async def pro_estimate_conversion_create(request: Request):
     finally:
         conn.close()
 
+    unique_created_repair_ids = list(dict.fromkeys(created_repair_ids))
+    unique_existing_repair_ids = list(dict.fromkeys(existing_repair_ids))
+    if len(unique_created_repair_ids) == 1:
+        return RedirectResponse(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{unique_created_repair_ids[0]}?converted=1&created=1",
+            status_code=303,
+        )
+    if created_count == 0 and len(unique_existing_repair_ids) == 1:
+        return RedirectResponse(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{unique_existing_repair_ids[0]}?converted=1&created=0",
+            status_code=303,
+        )
+    query = urlencode(
+        {
+            "converted": "1",
+            "created": created_count,
+            "repair_ids": ",".join(str(repair_id) for repair_id in unique_created_repair_ids),
+        }
+    )
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}?converted=1&created={created_count}#repair-workspace",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}?{query}#repair-workspace",
         status_code=303,
     )
 
@@ -11772,7 +11871,16 @@ def pro_customer_vehicle_detail(
     vehicle_id: int,
     converted: str = "",
     created: int = 0,
+    finding_added: str = "",
+    finding_id: int = 0,
+    finding_status: str = "",
+    repair_ids: str = "",
 ):
+    converted_repair_ids = {
+        int(value)
+        for value in str(repair_ids or "").split(",")
+        if value.strip().isdigit()
+    }
     conn = crm_db_conn()
     try:
         customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
@@ -12079,6 +12187,10 @@ def pro_customer_vehicle_detail(
             "maintenance_service_aliases": MAINTENANCE_SERVICE_ALIASES,
             "estimate_conversion_success": converted == "1",
             "estimate_conversion_created": created,
+            "converted_repair_ids": converted_repair_ids,
+            "finding_added_success": finding_added == "1",
+            "new_finding_id": finding_id,
+            "new_finding_status": finding_status,
         },
     )
 
@@ -12231,8 +12343,11 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
         conn.commit()
     finally:
         conn.close()
+    status_group = quote(status, safe="")
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
+        f"?finding_added=1&finding_id={int(cur.lastrowid)}&finding_status={status_group}"
+        "#recommendations-findings",
         status_code=303,
     )
 
@@ -13399,13 +13514,23 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
                 (repair_id, now, now, workflow_source_id, customer_id, vehicle_id),
             )
         if update_maintenance:
+            maintenance_date_performed, maintenance_mileage_performed = maintenance_completion_values_for_repair(
+                conn,
+                {
+                    "id": repair_id,
+                    "status": "Open",
+                    "repair_name": repair_name,
+                    "completion": None,
+                },
+            )
             upsert_maintenance_from_repair(
                 conn,
                 customer_id=customer_id,
                 vehicle_id=vehicle_id,
+                repair_record_id=repair_id,
                 service_type=repair_name,
-                date_performed=repair_date,
-                mileage_performed=mileage,
+                date_performed=maintenance_date_performed,
+                mileage_performed=maintenance_mileage_performed,
                 notes=notes,
                 now=now,
             )
@@ -13444,7 +13569,11 @@ async def pro_repair_record_create(request: Request, customer_id: int, vehicle_i
     response_class=HTMLResponse,
 )
 def pro_repair_record_detail(
-    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+    request: Request,
+    customer_id: int,
+    vehicle_id: int,
+    repair_id: int,
+    saved: str = "",
 ):
     conn = crm_db_conn()
     try:
@@ -13500,7 +13629,67 @@ def pro_repair_record_detail(
             "completion_warnings": [],
             "repair_intelligence_records": repair_intelligence_records,
             "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
+            "csrf_token": optional_csrf_token(request),
+            "repair_saved_success": saved == "1",
         },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}/maintenance-tracking")
+async def pro_repair_maintenance_tracking_update(
+    request: Request, customer_id: int, vehicle_id: int, repair_id: int
+):
+    form = await read_form_data(request)
+    try:
+        if not validate_csrf(request, form):
+            raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    except AssertionError:
+        pass
+    track_as_maintenance = form.get("track_as_maintenance") == "1"
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        load_customer_vehicle(conn, customer_id, vehicle_id)
+        repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        conn.execute(
+            """
+            UPDATE repair_records
+            SET track_as_maintenance = ?
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (1 if track_as_maintenance else 0, repair_id, customer_id, vehicle_id),
+        )
+        if track_as_maintenance:
+            maintenance_date_performed, maintenance_mileage_performed = maintenance_completion_values_for_repair(
+                conn,
+                repair,
+            )
+            upsert_maintenance_from_repair(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                repair_record_id=repair_id,
+                service_type=repair.get("repair_name") or "Repair",
+                date_performed=maintenance_date_performed,
+                mileage_performed=maintenance_mileage_performed,
+                notes=repair.get("notes") or "",
+                now=now,
+            )
+        else:
+            delete_maintenance_for_repair(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                repair_record_id=repair_id,
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JSONResponse({"ok": True, "track_as_maintenance": track_as_maintenance})
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
+        status_code=303,
     )
 
 
@@ -14023,6 +14212,8 @@ def completion_detail_context(
         "completion_warnings": completion_warnings or [],
         "repair_intelligence_records": repair_intelligence_records,
         "repair_job_part_status_options": REPAIR_JOB_PART_STATUS_OPTIONS,
+        "csrf_token": optional_csrf_token(request),
+        "repair_saved_success": False,
     }
 
 
@@ -14273,9 +14464,10 @@ async def pro_repair_completion_update(
                 conn,
                 customer_id=customer_id,
                 vehicle_id=vehicle_id,
+                repair_record_id=repair_id,
                 service_type=refreshed_repair.get("repair_name") or "Repair",
                 date_performed=posted_completion.get("completion_date") or completed_at[:10],
-                mileage_performed=refreshed_repair.get("mileage"),
+                mileage_performed=optional_int_value(posted_completion.get("completion_mileage")),
                 notes=posted_completion.get("completion_notes") or posted_completion.get("technician_notes") or refreshed_repair.get("notes") or "",
                 now=now,
             )
@@ -14478,6 +14670,7 @@ def pro_repair_record_edit(
             "vehicle": vehicle,
             "repair": repair,
             "completion": completion,
+            "csrf_token": optional_csrf_token(request),
         },
     )
 
@@ -14490,7 +14683,8 @@ async def pro_repair_record_update(
     parts_cost = optional_float(form, "parts_cost")
     labor_hours = optional_float(form, "labor_hours")
     labor_rate = optional_float(form, "labor_rate")
-    track_as_maintenance = form.get("also_update_maintenance_tracking") == "1"
+    now = datetime.utcnow().isoformat()
+    is_formally_completed = False
 
     conn = crm_db_conn()
     try:
@@ -14508,7 +14702,7 @@ async def pro_repair_record_update(
             UPDATE repair_records
             SET repair_name = ?, repair_date = ?, mileage = ?, labor_hours = ?,
                 labor_rate = ?, parts_cost = ?, labor_cost = ?, total_cost = ?,
-                track_as_maintenance = ?, notes = ?
+                notes = ?
             WHERE id = ? AND customer_id = ? AND vehicle_id = ?
             """,
             (
@@ -14520,7 +14714,6 @@ async def pro_repair_record_update(
                 parts_cost,
                 labor_cost,
                 total_cost,
-                1 if track_as_maintenance else 0,
                 form.get("notes", ""),
                 repair_id,
                 customer_id,
@@ -14535,13 +14728,33 @@ async def pro_repair_record_update(
             repair_record_id=repair_id,
             form=form,
             completed_at=existing_completion.get("completed_at") or None,
-            now=datetime.utcnow().isoformat(),
+            now=now,
         )
+        refreshed_repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
+        if refreshed_repair.get("track_as_maintenance"):
+            maintenance_date_performed, maintenance_mileage_performed = maintenance_completion_values_for_repair(
+                conn,
+                refreshed_repair,
+            )
+            upsert_maintenance_from_repair(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                repair_record_id=repair_id,
+                service_type=refreshed_repair.get("repair_name") or "Repair",
+                date_performed=maintenance_date_performed,
+                mileage_performed=maintenance_mileage_performed,
+                notes=refreshed_repair.get("notes") or "",
+                now=now,
+            )
+        refreshed_completion = load_repair_completion(conn, repair_id)
+        refreshed_repair["completion"] = refreshed_completion
+        is_formally_completed = repair_is_formally_completed(refreshed_repair, refreshed_completion)
         conn.commit()
     finally:
         conn.close()
     return RedirectResponse(
-        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#vehicle-timeline",
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}?saved={'1' if is_formally_completed else '0'}",
         status_code=303,
     )
 

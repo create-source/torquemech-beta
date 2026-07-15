@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import unittest
+from urllib.parse import urlencode
 from unittest.mock import patch
 
 from fastapi import FastAPI
@@ -226,9 +227,15 @@ class EstimatorProConversionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(
+            response.headers["location"],
+            "/pro/customers/1/vehicles/1/repairs/1?converted=1&created=1",
+        )
         self.assertEqual(duplicate_response.status_code, 303)
-        self.assertIn("?converted=1&created=0#repair-workspace", duplicate_response.headers["location"])
+        self.assertEqual(
+            duplicate_response.headers["location"],
+            "/pro/customers/1/vehicles/1/repairs/1?converted=1&created=0",
+        )
 
         conn = self.conn
         repairs = [dict(row) for row in conn.execute("SELECT * FROM repair_records").fetchall()]
@@ -251,6 +258,45 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertNotIn("Source: Estimator Quote", repair["notes"])
         self.assertEqual(findings_count, 0)
         self.assertEqual(history_count, 0)
+
+    def test_multiple_created_repairs_redirect_to_repair_workspace(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        payload = self.conversion_payload()
+        payload["lineItems"].append(
+            {
+                "serviceText": "Oil & Filter Change",
+                "laborHours": 0.5,
+                "laborRate": 120,
+                "laborTotal": 60,
+                "partsTotal": 45,
+                "grandTotal": 105,
+            }
+        )
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            content=urlencode(
+                {
+                    "estimate_payload": json.dumps(payload),
+                    "customer_mode": "new",
+                    "new_customer_name": "Mike Johnson",
+                    "vehicle_mode": "new",
+                    "new_vehicle_year": "2016",
+                    "new_vehicle_make": "Honda",
+                    "new_vehicle_model": "Accord",
+                    "service_index": ["0", "1"],
+                },
+                doseq=True,
+            ),
+            headers={"content-type": "application/x-www-form-urlencoded"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("/pro/customers/1/vehicles/1?converted=1&created=2", response.headers["location"])
+        self.assertIn("repair_ids=1%2C2#repair-workspace", response.headers["location"])
 
     def test_conversion_does_not_require_customer_pdf_download(self):
         app = FastAPI()
@@ -1189,7 +1235,7 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertIn("The linked Pro Job is unavailable", response.text)
         self.assertNotIn(f"/pro/calendar/{appointment_id}/convert", response.text)
 
-    def test_finding_conversion_creates_selected_service_even_when_old_finding_repair_exists(self):
+    def test_finding_conversion_reuses_existing_repair_for_same_finding(self):
         now = "2026-06-25T12:00:00"
         self.conn.execute(
             """
@@ -1262,26 +1308,187 @@ class EstimatorProConversionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(response.headers["location"], "/pro/customers/1/vehicles/1/repairs/99?converted=1&created=0")
         repairs = [
             dict(row)
             for row in self.conn.execute("SELECT * FROM repair_records ORDER BY id ASC").fetchall()
         ]
-        self.assertEqual([repair["repair_name"] for repair in repairs], ["tire", "Coolant Reservoir Replacement"])
-        converted = repairs[1]
-        self.assertEqual(converted["workflow_source_type"], "finding")
-        self.assertEqual(converted["workflow_source_id"], 1)
-        self.assertEqual(converted["labor_hours"], 2.5)
-        self.assertEqual(converted["labor_rate"], 90)
-        self.assertEqual(converted["labor_cost"], 225)
-        self.assertEqual(converted["parts_cost"], 0)
-        self.assertEqual(converted["total_cost"], 225)
+        self.assertEqual(len(repairs), 1)
+        self.assertEqual(repairs[0]["id"], 99)
+        self.assertEqual(repairs[0]["workflow_source_type"], "finding")
+        self.assertEqual(repairs[0]["workflow_source_id"], 1)
 
         vehicle_detail = client.get("/pro/customers/1/vehicles/1")
         self.assertEqual(vehicle_detail.status_code, 200)
-        self.assertIn("Coolant Reservoir Replacement", vehicle_detail.text)
+        self.assertIn("Open Repair", vehicle_detail.text)
         self.assertIn("Parts Sources", vehicle_detail.text)
         self.assertIn("Parts Tracking", vehicle_detail.text)
+
+    def test_finding_create_redirect_carries_open_panel_state(self):
+        self.seed_customer_vehicle(first_name="Natalie", last_name="Htut", year=2008, make="Toyota", model="Sequoia")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/findings",
+            data={
+                "request_type": "finding",
+                "finding": "Oil seep at filter housing",
+                "recommendation": "Oil change and inspect housing",
+                "severity": "Medium",
+                "status": "Open",
+                "mileage": "150000",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("?finding_added=1", response.headers["location"])
+        self.assertIn("finding_id=1", response.headers["location"])
+        self.assertIn("finding_status=Open#recommendations-findings", response.headers["location"])
+
+    def test_repair_detail_maintenance_tracking_toggle_is_idempotent(self):
+        self.seed_customer_vehicle(first_name="Natalie", last_name="Htut", year=2008, make="Toyota", model="Sequoia")
+        pro_module.ensure_repair_records_schema(self.conn)
+        now = "2026-06-25T12:00:00"
+        self.conn.execute(
+            """
+            INSERT INTO repair_records (
+              id, vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+              track_as_maintenance, status, notes, created_at
+            )
+            VALUES (7, 1, 1, 'Oil Change', '2026-06-25', 150000,
+                    0.5, 100, 40, 50, 90, 0, 'Open', 'Synthetic oil', ?)
+            """,
+            (now,),
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        for _ in range(2):
+            response = client.post(
+                "/pro/customers/1/vehicles/1/repairs/7/maintenance-tracking",
+                data={"track_as_maintenance": "1"},
+                follow_redirects=False,
+            )
+            self.assertEqual(response.status_code, 303)
+
+        repair = dict(self.conn.execute("SELECT * FROM repair_records WHERE id = 7").fetchone())
+        self.assertEqual(repair["track_as_maintenance"], 1)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) FROM maintenance_records WHERE source_repair_record_id = 7"
+            ).fetchone()[0],
+            1,
+        )
+        maintenance_record = dict(
+            self.conn.execute(
+                "SELECT * FROM maintenance_records WHERE source_repair_record_id = 7"
+            ).fetchone()
+        )
+        self.assertEqual(maintenance_record["service_type"], "Oil Change")
+        self.assertEqual(maintenance_record["interval_miles"], 5000)
+        self.assertEqual(maintenance_record["interval_months"], 6)
+        self.assertIsNone(maintenance_record["mileage_performed"])
+        self.assertEqual(maintenance_record["date_performed"], "")
+        self.assertIsNone(maintenance_record["due_mileage"])
+        self.assertEqual(maintenance_record["due_date"], "")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/repairs/7/maintenance-tracking",
+            data={},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        repair = dict(self.conn.execute("SELECT * FROM repair_records WHERE id = 7").fetchone())
+        self.assertEqual(repair["track_as_maintenance"], 0)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) FROM maintenance_records WHERE source_repair_record_id = 7"
+            ).fetchone()[0],
+            0,
+        )
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/repairs/7/maintenance-tracking",
+            data={"track_as_maintenance": "1"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) FROM maintenance_records WHERE source_repair_record_id = 7"
+            ).fetchone()[0],
+            1,
+        )
+
+    def test_completed_tracked_repair_syncs_maintenance_due_values(self):
+        self.seed_customer_vehicle(first_name="Natalie", last_name="Htut", year=2008, make="Toyota", model="Sequoia")
+        pro_module.ensure_repair_records_schema(self.conn)
+        now = "2026-06-25T12:00:00"
+        self.conn.execute(
+            """
+            INSERT INTO repair_records (
+              id, vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+              track_as_maintenance, status, notes, created_at
+            )
+            VALUES (8, 1, 1, 'Oil & Filter Change', '2026-06-25', 150000,
+                    0.5, 100, 40, 50, 90, 1, 'Open', 'Synthetic oil', ?)
+            """,
+            (now,),
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        enable = client.post(
+            "/pro/customers/1/vehicles/1/repairs/8/maintenance-tracking",
+            data={"track_as_maintenance": "1"},
+            follow_redirects=False,
+        )
+        self.assertEqual(enable.status_code, 303)
+        pending_record = dict(
+            self.conn.execute(
+                "SELECT * FROM maintenance_records WHERE source_repair_record_id = 8"
+            ).fetchone()
+        )
+        self.assertEqual(pending_record["interval_miles"], 5000)
+        self.assertIsNone(pending_record["mileage_performed"])
+        self.assertEqual(pending_record["date_performed"], "")
+
+        complete = client.post(
+            "/pro/customers/1/vehicles/1/repairs/8/completion",
+            data={
+                "completion_date": "2026-07-01",
+                "completion_mileage": "151000",
+                "completion_notes": "Completed.",
+                "final_inspection_passed": "1",
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(complete.status_code, 303)
+        completed_record = dict(
+            self.conn.execute(
+                "SELECT * FROM maintenance_records WHERE source_repair_record_id = 8"
+            ).fetchone()
+        )
+        self.assertEqual(completed_record["service_type"], "Oil Change")
+        self.assertEqual(completed_record["date_performed"], "2026-07-01")
+        self.assertEqual(completed_record["mileage_performed"], 151000)
+        self.assertEqual(completed_record["due_mileage"], 156000)
+        self.assertEqual(completed_record["due_date"], "2027-01-01")
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) FROM maintenance_records WHERE source_repair_record_id = 8"
+            ).fetchone()[0],
+            1,
+        )
 
     def test_finding_estimator_href_carries_encoded_context(self):
         href = pro_module.build_finding_estimator_href(

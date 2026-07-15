@@ -1695,6 +1695,10 @@
     return getCustomPartsSearchTerm() || getCustomServiceName();
   }
 
+  function hasServiceSpecificPartsSourceSelection() {
+    return isCustomServiceMode() ? Boolean(getCustomServiceName()) : Boolean(serviceEl?.value);
+  }
+
   function syncCustomServiceMode() {
     const customMode = isCustomServiceMode();
     customServiceFields?.classList.toggle("hidden", !customMode);
@@ -1787,6 +1791,7 @@
   const confirmBackdrop = $("confirmBackdrop");
   const confirmCloseBtn = $("confirmCloseBtn");
   const confirmAddBtn = $("confirmAddBtn");
+  const prepareReviewedEstimateBtn = $("prepareReviewedEstimateBtn");
   const copyQuoteBtn = $("copyQuoteBtn");
   const emailQuoteBtn = $("emailQuoteBtn");
   const quotePreviewEl = $("quotePreview");
@@ -2435,12 +2440,17 @@
   let lastEstimate = null; // { req, res }
   let serviceMeta = null;
   let signatureDataUrl = null;
+  let customerQuoteReadyForProJob = false;
   let editingLineItem = null; // { serviceCode, serviceText }
   let activeEditingLineId = null;
   let activePricingLineId = null;
   let pricingControlsDirty = false;
   let isAddingLineItem = false;
   let isGeneratingAllLines = false;
+
+  function invalidateCustomerQuoteReview() {
+    customerQuoteReadyForProJob = false;
+  }
 
   function normalizeQuantity(value) {
     const parsed = Number.parseInt(String(value ?? "").replace(/[^\d]/g, ""), 10);
@@ -2686,6 +2696,12 @@
   function handleConvertToProJob() {
     if (!lineItems.length) {
       setStatus("error", "Add at least one service before converting to a Pro job.");
+      return;
+    }
+    if (!customerQuoteReadyForProJob) {
+      if (openConfirm()) {
+        setConfirmMessage("info", "Review the customer quote and choose signature or no signature before converting to a Pro Job.");
+      }
       return;
     }
     if (!convertToProJobForm || !convertToProJobPayload) return;
@@ -3920,17 +3936,19 @@ const confidenceEl = document.getElementById("laborConfidence");
   }, true);
 
   function getEstimatorPartsSourceServiceText() {
-    const typedService = String(serviceSearch?.value || "").trim();
     const customPartsSearch = getActivePartsSearchTerm();
     if (customPartsSearch) return customPartsSearch;
     const selectedService = getSelectedServiceDisplayName();
     if (selectedService) return selectedService;
-    if (!isCustomServiceMode() && typedService) return typedService;
     return "";
   }
 
   async function refreshEstimatorPartsSources() {
     if (!estimatorPartsSourcesEl) return;
+    if (!hasServiceSpecificPartsSourceSelection()) {
+      estimatorPartsSourcesEl.hidden = true;
+      return;
+    }
     const sourceContext = getEstimatorSourceContext();
     const activeVehicle = getActiveVehicle() || {};
     const selectedService = getEstimatorPartsSourceServiceText();
@@ -3940,8 +3958,6 @@ const confidenceEl = document.getElementById("laborConfidence");
     params.set("model", getVehicleDisplayModel(activeVehicle) || String(activeVehicle.model || ""));
     params.set("engine", String(activeVehicle.engine || ""));
     if (selectedService) params.set("service_name", selectedService);
-    if (sourceContext.recommendedRepair) params.set("recommended_repair", sourceContext.recommendedRepair);
-    if (sourceContext.problemFound) params.set("problem_found", sourceContext.problemFound);
     try {
       renderEstimatorPartsSources(await apiJSON(`/api/parts-sources?${params.toString()}`));
     } catch (error) {
@@ -6161,6 +6177,7 @@ const confidenceEl = document.getElementById("laborConfidence");
 
   // ----- Line Items UI (Service cards) -----
   function renderLineItems() {
+    invalidateCustomerQuoteReview();
     renderEstimateTotalBar();
     if (!lineItemsWrap || !lineItemsList) return;
 
@@ -6906,6 +6923,54 @@ if (getEstimateHint) {
 
   let isGeneratingCustomerPdf = false;
 
+  function validateCustomerQuoteReview() {
+    if (!lineItems.length) {
+      setConfirmMessage("error", "Add at least one quoted service before preparing the customer quote.");
+      return false;
+    }
+    const missing = lineItems.some(it => it.estimate == null);
+    if (missing) {
+      setConfirmMessage("error", "Some quoted services are missing prices. Review pricing before preparing the customer quote.");
+      return false;
+    }
+    const wantSig = getWantSig();
+    if (wantSig === "yes") {
+      try {
+        if (!sigCanvas || canvasIsBlank()) {
+          refreshApprovalStatus();
+          setConfirmMessage("error", "Signature is selected, but the signature box is empty. Ask the customer to sign, or choose the no-signature PDF option.");
+          return false;
+        }
+        signatureDataUrl = sigCanvas.toDataURL("image/png");
+        refreshApprovalStatus();
+      } catch (err) {
+        console.warn("Signature validation failed", err);
+        setConfirmMessage("error", "Signature could not be read. Please clear the box and have the customer sign again.");
+        return false;
+      }
+    } else {
+      signatureDataUrl = null;
+      if (customerAgreesChk) customerAgreesChk.checked = true;
+      refreshApprovalStatus();
+    }
+    return true;
+  }
+
+  function markCustomerQuoteReadyForProJob() {
+    clearConfirmMessage();
+    if (!validateCustomerQuoteReview()) return false;
+    customerQuoteReadyForProJob = true;
+    const finalizedDraft = saveCurrentDraft({ quiet: true });
+    if (!finalizedDraft) {
+      hideEstimateSavedBlock();
+    }
+    showProJobHandoffActions();
+    setStatus("ok", "Reviewed estimate ready for Pro Job conversion.");
+    setConfirmMessage("ok", "Reviewed estimate ready. Convert to Pro Job is available.");
+    closeConfirm(true);
+    return true;
+  }
+
   // Confirm Add = finalize signature and generate PDF
   async function handleGenerateCustomerPdf(e) {
     e?.preventDefault();
@@ -6922,41 +6987,7 @@ if (getEstimateHint) {
         return;
       }
 
-      const wantSig = getWantSig();
-
-      // Signature required?
-      if (wantSig === "yes") {
-        try {
-          if (!sigCanvas || canvasIsBlank()) {
-            refreshApprovalStatus();
-            setConfirmMessage("error", "Signature is selected, but the signature box is empty. Ask the customer to sign, or choose the no-signature PDF option.");
-            return;
-          }
-
-          // Export signature directly from the live canvas with transparent background
-          signatureDataUrl = sigCanvas.toDataURL("image/png");
-          refreshApprovalStatus();
-        } catch (err) {
-          console.warn("Signature validation failed", err);
-          setConfirmMessage("error", "Signature could not be read. Please clear the box and have the customer sign again.");
-          return;
-        }
-      } 
-      
-      else {
-        signatureDataUrl = null;
-      }
-
-      // Multi-line PDF uses lineItems; no need to call /estimate here.
-      if (!lineItems.length) {
-        setConfirmMessage("error", "Add at least one quoted service before generating the PDF.");
-        return;
-      }
-      const missing = lineItems.some(it => it.estimate == null);
-      if (missing) {
-        setConfirmMessage("error", "Some quoted services are missing prices. Review pricing before generating the PDF.");
-        return;
-      }
+      if (!validateCustomerQuoteReview()) return;
       const pdfLineItems = lineItems.map((it) => ({
         serviceCode: it.serviceCode,
         serviceText: it.serviceText,
@@ -7050,6 +7081,7 @@ if (getEstimateHint) {
       a.remove();
 
       setStatus("ok", "Customer PDF ready.");
+      customerQuoteReadyForProJob = true;
       const finalizedDraft = saveCurrentDraft({ quiet: true });
       if (!finalizedDraft) {
         hideEstimateSavedBlock();
@@ -7092,6 +7124,11 @@ if (getEstimateHint) {
     const trigger = e.target?.closest?.("#confirmAddBtn");
     if (!trigger) return;
     handleGenerateCustomerPdf(e);
+  });
+
+  prepareReviewedEstimateBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    markCustomerQuoteReadyForProJob();
   });
 
   pairedSuggestionsList?.addEventListener("click", async (e) => {

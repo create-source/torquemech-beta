@@ -636,6 +636,112 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(invoice_response.status_code, 303)
         self.assertEqual(invoice_response.headers["location"], "/pro/customers/1/vehicles/1/invoices/1")
 
+    def test_incomplete_repair_save_redirects_to_repair_detail(self):
+        self.insert_repair(90, "Brake Inspection", 1.0, 120, 20, status="Open")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/repairs/90",
+            data={
+                "repair_name": "Brake Inspection",
+                "repair_date": "2026-06-25",
+                "mileage": "150000",
+                "labor_hours": "1.0",
+                "labor_rate": "120",
+                "parts_cost": "20",
+                "notes": "Still inspecting.",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/customers/1/vehicles/1/repairs/90?saved=0")
+
+    def test_completed_repair_save_returns_to_detail_with_invoice_action_and_preselection(self):
+        self.insert_repair(91, "Water Pump Replacement", 2.0, 120, 180)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/repairs/91",
+            data={
+                "repair_name": "Water Pump Replacement",
+                "repair_date": "2026-06-25",
+                "mileage": "150000",
+                "labor_hours": "2.0",
+                "labor_rate": "120",
+                "parts_cost": "180",
+                "notes": "Ready for invoice.",
+                "completion_date": "2026-06-25",
+                "completion_mileage": "150000",
+                "completion_notes": "Done.",
+                "final_inspection_passed": "1",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/customers/1/vehicles/1/repairs/91?saved=1")
+        detail = client.get(response.headers["location"])
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn("Repair record saved.", detail.text)
+        self.assertIn("Create Final Invoice / Continue to Invoice", detail.text)
+        self.assertIn("/pro/customers/1/vehicles/1/invoices/new?repair_record_id=91", detail.text)
+
+        builder = client.get("/pro/customers/1/vehicles/1/invoices/new?repair_record_id=91")
+        self.assertEqual(builder.status_code, 200)
+        self.assertIn('name="repair_record_id" value="91" checked', builder.text)
+
+    def test_already_invoiced_repair_detail_shows_open_final_invoice(self):
+        self.insert_repair(92, "Alternator Replacement", 1.5, 120, 220)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 92)
+        invoice = pro_module.create_invoice_for_repair(
+            self.conn,
+            repair=repair,
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T13:00:00",
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        detail = client.get("/pro/customers/1/vehicles/1/repairs/92?saved=1")
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn("Open Final Invoice", detail.text)
+        self.assertIn(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}", detail.text)
+        self.assertNotIn("Create Final Invoice / Continue to Invoice", detail.text)
+
+    def test_maintenance_toggle_ajax_saves_without_repair_form_submission(self):
+        self.insert_repair(93, "Oil & Filter Change", 0.5, 100, 40, status="Open")
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/repairs/93/maintenance-tracking",
+            data={"track_as_maintenance": "1"},
+            headers={"x-requested-with": "XMLHttpRequest"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["track_as_maintenance"], True)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 93)
+        self.assertEqual(repair["repair_name"], "Oil & Filter Change")
+        self.assertEqual(repair["track_as_maintenance"], 1)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) FROM maintenance_records WHERE source_repair_record_id = 93"
+            ).fetchone()[0],
+            1,
+        )
+
     def test_repair_completion_validates_required_fields(self):
         self.insert_repair(31, "Brake Fluid Flush", 1.0, 120, 20, status="Open")
         app = FastAPI()
