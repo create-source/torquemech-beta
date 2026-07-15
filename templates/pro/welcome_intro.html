@@ -1091,8 +1091,14 @@
         <span>Torque</span><span>Mech</span>
       </a>
       <nav class="tm-pro-header-actions" aria-label="TorqueMech">
-        <button class="tm-pro-landing-link" type="button" aria-disabled="true" title="Sign in is coming soon">Sign In</button>
-        <a class="tm-pro-landing-btn" href="/pro/dashboard">Sign Up</a>
+        {% if request.state.current_user %}
+          {% set greeting_name = request.state.current_user.first_name or request.state.current_shop.shop_name or 'there' %}
+          <span class="tm-pro-landing-link">Hello, {{ greeting_name }}</span>
+          <a class="tm-pro-landing-btn" href="/pro/dashboard">Command Center</a>
+        {% else %}
+          <a class="tm-pro-landing-link" href="/login">Sign In</a>
+          <a class="tm-pro-landing-btn" href="/signup">Sign Up</a>
+        {% endif %}
       </nav>
     </div>
   </header>
@@ -1103,7 +1109,11 @@
       <h1>Turn on a simpler shop workflow.</h1>
       <p>Create estimates, manage repairs, send customer-ready PDFs, and keep every vehicle&rsquo;s history organized &mdash; without complicated shop software.</p>
       <div class="tm-pro-hero-actions">
-        <a class="tm-pro-landing-btn" href="/pro/dashboard">Get Started</a>
+        {% if request.state.current_user %}
+          <a class="tm-pro-landing-btn" href="/pro/dashboard">Open Command Center</a>
+        {% else %}
+          <a class="tm-pro-landing-btn" href="/signup">Get Started</a>
+        {% endif %}
         <a class="tm-pro-landing-btn tm-pro-landing-btn--secondary" href="#how-it-works">See How It Works</a>
       </div>
     </div>
@@ -1235,9 +1245,14 @@
     <section class="tm-pro-landing-section" style="padding-bottom:44px;" aria-label="Start TorqueMech">
       <div class="tm-pro-final-cta">
         <div>
-          <h2>Ready to start?</h2>
+          <h2>{% if request.state.current_user %}Ready to get back to work?{% else %}Ready to start?{% endif %}</h2>
           <p>Open TorqueMech and move from estimate to repair history in one organized workflow.</p>
         </div>
+        {% if request.state.current_user %}
+          <a class="tm-pro-landing-btn" href="/pro/dashboard">Open Command Center</a>
+        {% else %}
+          <a class="tm-pro-landing-btn" href="/signup">Create Account</a>
+        {% endif %}
       </div>
     </section>
   </div>
