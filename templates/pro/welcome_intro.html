@@ -1094,7 +1094,10 @@
         {% if request.state.current_user %}
           {% set greeting_name = request.state.current_user.first_name or request.state.current_shop.shop_name or 'there' %}
           <span class="tm-pro-landing-link">Hello, {{ greeting_name }}</span>
-          <a class="tm-pro-landing-btn" href="/pro/dashboard">Command Center</a>
+          <form method="post" action="/logout" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+            <button class="tm-pro-landing-link" type="submit" style="cursor:pointer;">Log Out</button>
+          </form>
         {% else %}
           <a class="tm-pro-landing-link" href="/login">Sign In</a>
           <a class="tm-pro-landing-btn" href="/signup">Sign Up</a>
