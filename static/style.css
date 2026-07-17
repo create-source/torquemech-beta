@@ -10320,3 +10320,177 @@ body.tm-estimator-page .tm-estimate-action-panel__heading{
   background: linear-gradient(180deg, #ff914d 0%, #ff7417 100%);
   box-shadow: 0 12px 26px rgba(255, 116, 23, 0.32);
 }
+
+/* =========================================================
+   LIGHT-SURFACE CONTRAST REPAIR
+   ========================================================= */
+
+.diag-workflow-card,
+.tm-card .tm-workflow-entry-card:first-child,
+.tm-crm-toolbar,
+.tm-crm-add,
+.tm-crm-card,
+.tm-crm-empty,
+.tm-calendar-panel,
+.tm-calendar-card,
+.tm-calendar-convert-panel,
+.tm-calendar-linked,
+.tm-calendar-message-preview,
+.tm-calendar-empty,
+.tm-shop-settings-panel,
+.tm-message-template-card,
+.tm-message-preview,
+.tm-workflow-help{
+  color: #0f172a !important;
+}
+
+.diag-workflow-card h3,
+.diag-workflow-card strong,
+.tm-card .tm-workflow-entry-card:first-child strong,
+.tm-crm-toolbar h1,
+.tm-crm-toolbar h2,
+.tm-crm-toolbar h3,
+.tm-crm-add h1,
+.tm-crm-add h2,
+.tm-crm-add h3,
+.tm-crm-add summary,
+.tm-crm-add .tm-label,
+.tm-crm-card .tm-crm-name,
+.tm-crm-card strong,
+.tm-calendar-panel h1,
+.tm-calendar-panel h2,
+.tm-calendar-panel h3,
+.tm-calendar-panel > summary,
+.tm-calendar-card strong,
+.tm-calendar-name,
+.tm-calendar-field strong,
+.tm-booking-link-panel h2,
+.tm-calendar-convert-mode,
+.tm-calendar-convert-mode label,
+.tm-calendar-linked strong,
+.tm-shop-settings-panel h1,
+.tm-shop-settings-panel h2,
+.tm-shop-settings-panel h3,
+.tm-shop-settings-panel .tm-label,
+.tm-message-template-details > summary,
+.tm-message-preview-text,
+.tm-message-placeholder-list code,
+.tm-tax-toggle,
+.tm-affix-input__symbol,
+.tm-shop-booking-url{
+  color: #0f172a !important;
+}
+
+.diag-workflow-card p,
+.diag-workflow-card .tm-muted,
+.tm-card .tm-workflow-entry-card:first-child .tm-muted,
+.tm-crm-toolbar .tm-muted,
+.tm-crm-toolbar .tm-crm-count,
+.tm-crm-add .tm-muted,
+.tm-crm-add .tm-hint,
+.tm-crm-add .tm-field-helper,
+.tm-crm-card .tm-crm-meta,
+.tm-crm-empty,
+.tm-calendar-panel p,
+.tm-calendar-panel .tm-muted,
+.tm-calendar-panel .tm-label,
+.tm-calendar-panel .tm-hint,
+.tm-calendar-panel .tm-field-helper,
+.tm-calendar-when,
+.tm-calendar-field span,
+.tm-calendar-empty,
+.tm-calendar-message-preview p,
+.tm-book-time-message,
+.tm-shop-settings-help,
+.tm-workflow-steps,
+.tm-message-placeholder-list,
+.tm-message-preview,
+.tm-message-preview-text{
+  color: #475569 !important;
+}
+
+.tm-calendar-copy-status,
+.tm-booking-link-status,
+.tm-shop-copy-status,
+.tm-workflow-help summary,
+.tm-message-preview strong{
+  color: #0f766e !important;
+}
+
+.diag-workflow-card input:not([type="checkbox"]):not([type="radio"]),
+.diag-workflow-card select,
+.diag-workflow-card textarea,
+.tm-crm-toolbar input:not([type="checkbox"]):not([type="radio"]),
+.tm-crm-toolbar select,
+.tm-crm-toolbar textarea,
+.tm-crm-add input:not([type="checkbox"]):not([type="radio"]),
+.tm-crm-add select,
+.tm-crm-add textarea,
+.tm-calendar-panel input:not([type="checkbox"]):not([type="radio"]),
+.tm-calendar-panel select,
+.tm-calendar-panel textarea,
+.tm-shop-settings-panel input:not([type="checkbox"]):not([type="radio"]),
+.tm-shop-settings-panel select,
+.tm-shop-settings-panel textarea,
+.tm-message-template-card textarea{
+  border-color: rgba(15, 23, 42, .18);
+  background: #f8fafc !important;
+  color: #111827 !important;
+}
+
+.diag-workflow-card input::placeholder,
+.diag-workflow-card textarea::placeholder,
+.tm-crm-toolbar input::placeholder,
+.tm-crm-toolbar textarea::placeholder,
+.tm-crm-add input::placeholder,
+.tm-crm-add textarea::placeholder,
+.tm-calendar-panel input::placeholder,
+.tm-calendar-panel textarea::placeholder,
+.tm-shop-settings-panel input::placeholder,
+.tm-shop-settings-panel textarea::placeholder,
+.tm-message-template-card textarea::placeholder{
+  color: #64748b;
+  opacity: 1;
+}
+
+.tm-crm-toolbar input:disabled,
+.tm-crm-toolbar select:disabled,
+.tm-crm-toolbar textarea:disabled,
+.tm-crm-toolbar button:disabled,
+.tm-crm-add input:disabled,
+.tm-crm-add select:disabled,
+.tm-crm-add textarea:disabled,
+.tm-crm-add button:disabled,
+.tm-calendar-panel input:disabled,
+.tm-calendar-panel select:disabled,
+.tm-calendar-panel textarea:disabled,
+.tm-calendar-panel button:disabled,
+.tm-shop-settings-panel input:disabled,
+.tm-shop-settings-panel select:disabled,
+.tm-shop-settings-panel textarea:disabled,
+.tm-shop-settings-panel button:disabled{
+  border-color: #cbd5e1;
+  background: #e5e7eb;
+  color: #64748b;
+  opacity: 1;
+}
+
+.tm-crm-toolbar .tm-btn-secondary,
+.tm-crm-add .tm-btn-secondary,
+.tm-calendar-panel .tm-btn-secondary,
+.tm-shop-settings-panel .tm-btn-secondary,
+.tm-message-template-card .tm-btn-secondary{
+  border-color: rgba(15, 23, 42, .16);
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.tm-crm-toolbar .tm-btn-secondary:hover,
+.tm-crm-add .tm-btn-secondary:hover,
+.tm-calendar-panel .tm-btn-secondary:hover,
+.tm-shop-settings-panel .tm-btn-secondary:hover,
+.tm-message-template-card .tm-btn-secondary:hover{
+  border-color: rgba(15, 118, 110, .34);
+  background: #f8fafc;
+  color: #0f766e;
+}
