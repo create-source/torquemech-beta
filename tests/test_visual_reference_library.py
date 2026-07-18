@@ -191,6 +191,62 @@ class VisualReferenceLibraryTests(unittest.TestCase):
         self.assertEqual(alternator["torque_spec"], "42 Nm")
         self.assertEqual(alternator["fastener_size"], "E12")
 
+    def test_repeated_seed_uses_canonical_parent_ids_without_orphan_children(self):
+        conn = self.open_temp_db()
+        seed_visual_references(conn)
+
+        initial_counts = {
+            table: conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in [
+                "visual_reference_records",
+                "visual_reference_images",
+                "visual_reference_specs",
+                "visual_reference_oem_parts",
+                "visual_reference_hotspots",
+            ]
+        }
+        self.assertEqual(initial_counts["visual_reference_records"], 3)
+        self.assertEqual(initial_counts["visual_reference_images"], 5)
+        self.assertEqual(initial_counts["visual_reference_specs"], 7)
+        self.assertEqual(initial_counts["visual_reference_oem_parts"], 6)
+        self.assertEqual(initial_counts["visual_reference_hotspots"], 4)
+
+        seed_visual_references(conn)
+
+        repeated_counts = {
+            table: conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in initial_counts
+        }
+        self.assertEqual(repeated_counts, initial_counts)
+        self.assertEqual(
+            conn.execute("SELECT COUNT(*) FROM visual_reference_records").fetchone()[0],
+            3,
+        )
+        for table in [
+            "visual_reference_images",
+            "visual_reference_specs",
+            "visual_reference_oem_parts",
+            "visual_reference_hotspots",
+        ]:
+            orphan_count = conn.execute(
+                f"""
+                SELECT COUNT(*)
+                FROM {table}
+                WHERE visual_reference_id NOT IN (
+                    SELECT id FROM visual_reference_records
+                )
+                """
+            ).fetchone()[0]
+            self.assertEqual(orphan_count, 0, table)
+
+        records = load_visual_references_for_vehicle(
+            conn,
+            {"year": 2001, "make": "Mercedes-Benz", "model": "E320"},
+        )
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["service_type"], "alternator_replacement")
+        self.assertGreaterEqual(len(records[0]["hotspots"]), 4)
+
     def test_multipart_upload_parser_reads_fields_and_file(self):
         boundary = "tm-test-boundary"
         body = (

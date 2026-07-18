@@ -114,6 +114,7 @@ from fastapi.responses import HTMLResponse
 
 from app.data.labor_profiles import build_labor_breakdown, get_service_labor_profile
 
+from db import connect_app_db, using_postgres
 from repair_paths import REPAIR_PATHS
 
 from pathlib import Path
@@ -566,27 +567,7 @@ def active_app_db_path() -> str:
 
 
 def app_db_conn(*, row_factory: bool = False) -> sqlite3.Connection:
-    conn = sqlite3.connect(active_app_db_path())
-    if USE_LOCAL_SQLITE_COMPAT:
-        # OneDrive-backed local workspaces can fail on default rollback-journal commits.
-        try:
-            conn.execute("PRAGMA journal_mode=MEMORY")
-            conn.execute("PRAGMA synchronous=NORMAL")
-        except sqlite3.OperationalError as exc:
-            logging.warning("Falling back to TRUNCATE journal mode for app DB: %s", exc)
-            try:
-                conn.execute("PRAGMA journal_mode=TRUNCATE")
-                conn.execute("PRAGMA synchronous=NORMAL")
-            except sqlite3.OperationalError as fallback_exc:
-                logging.warning("Using local fallback app DB after PRAGMA failure: %s", fallback_exc)
-                conn.close()
-                mark_local_fallback_db_active()
-                conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
-                conn.execute("PRAGMA journal_mode=TRUNCATE")
-                conn.execute("PRAGMA synchronous=NORMAL")
-    if row_factory:
-        conn.row_factory = sqlite3.Row
-    return conn
+    return connect_app_db(row_factory=row_factory)
 
 
 DEFAULT_SHOP_PROFILE: Dict[str, Any] = {
@@ -4640,17 +4621,18 @@ def startup_checks() -> None:
             "Missing required files:\n" + "\n".join(str(p) for p in missing)
         )
 
-    init_db()
-    init_metrics_db()
-    init_shop_profile_db()
-    init_pro_crm_schema_db()
-    conn = app_db_conn(row_factory=True)
-    try:
-        ensure_auth_schema(conn)
-        ensure_password_reset_schema(conn)
-        ensure_shop_profile_schema(conn)
-    finally:
-        conn.close()
+    if not using_postgres():
+        init_db()
+        init_metrics_db()
+        init_shop_profile_db()
+        init_pro_crm_schema_db()
+        conn = app_db_conn(row_factory=True)
+        try:
+            ensure_auth_schema(conn)
+            ensure_password_reset_schema(conn)
+            ensure_shop_profile_schema(conn)
+        finally:
+            conn.close()
     init_obd_db()
     obd_seed_from_json_if_empty() 
     _ = load_services_catalog()

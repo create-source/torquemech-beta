@@ -33,6 +33,7 @@ from app.data.repair_blueprints import (
     blueprint_summary,
     get_repair_blueprint_for_work_item,
 )
+from db import connect_app_db
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -260,25 +261,7 @@ def active_app_db_path() -> str:
 
 
 def crm_db_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(active_app_db_path())
-    if USE_LOCAL_SQLITE_COMPAT:
-        try:
-            conn.execute("PRAGMA journal_mode=MEMORY")
-            conn.execute("PRAGMA synchronous=NORMAL")
-        except sqlite3.OperationalError as exc:
-            logger.warning("Falling back to TRUNCATE journal mode for Pro DB: %s", exc)
-            try:
-                conn.execute("PRAGMA journal_mode=TRUNCATE")
-                conn.execute("PRAGMA synchronous=NORMAL")
-            except sqlite3.OperationalError as fallback_exc:
-                logger.warning("Using local fallback Pro DB after PRAGMA failure: %s", fallback_exc)
-                conn.close()
-                mark_local_fallback_db_active()
-                conn = sqlite3.connect(LOCAL_FALLBACK_DB_PATH)
-                conn.execute("PRAGMA journal_mode=TRUNCATE")
-                conn.execute("PRAGMA synchronous=NORMAL")
-    conn.row_factory = sqlite3.Row
-    return conn
+    return connect_app_db(row_factory=True)
 
 
 async def read_form_data(request: Request) -> dict[str, str]:
@@ -356,6 +339,13 @@ def ensure_auth_schema(conn: sqlite3.Connection) -> None:
         "pending_email_used_token_hash": "pending_email_used_token_hash TEXT",
         "password_changed_at": "password_changed_at TEXT",
         "session_version": "session_version INTEGER NOT NULL DEFAULT 0",
+        "trial_started_at": "trial_started_at TEXT",
+        "trial_ends_at": "trial_ends_at TEXT",
+        "subscription_status": "subscription_status TEXT",
+        "stripe_customer_id": "stripe_customer_id TEXT",
+        "stripe_subscription_id": "stripe_subscription_id TEXT",
+        "subscription_current_period_end": "subscription_current_period_end TEXT",
+        "subscription_cancel_at_period_end": "subscription_cancel_at_period_end INTEGER",
         "created_at": "created_at TEXT",
         "updated_at": "updated_at TEXT",
     }.items():
@@ -4084,7 +4074,15 @@ def seed_visual_references(conn: sqlite3.Connection) -> None:
         service_type = normalize_visual_reference_service(record.get("service_type"))
         if not vehicle_identifier or not service_type:
             continue
-        cur = conn.execute(
+        existing_parent = conn.execute(
+            """
+            SELECT id
+            FROM visual_reference_records
+            WHERE vehicle_identifier = ? AND service_type = ?
+            """,
+            (vehicle_identifier, service_type),
+        ).fetchone()
+        conn.execute(
             """
             INSERT OR IGNORE INTO visual_reference_records (
               vehicle_identifier, service_type, title, quick_reference, created_at
@@ -4099,8 +4097,18 @@ def seed_visual_references(conn: sqlite3.Connection) -> None:
                 str(record.get("created_at") or now).strip() or now,
             ),
         )
-        visual_reference_id = cur.lastrowid
-        if not visual_reference_id:
+        parent = conn.execute(
+            """
+            SELECT id
+            FROM visual_reference_records
+            WHERE vehicle_identifier = ? AND service_type = ?
+            """,
+            (vehicle_identifier, service_type),
+        ).fetchone()
+        if not parent:
+            continue
+        visual_reference_id = int(parent["id"] if isinstance(parent, sqlite3.Row) else parent[0])
+        if existing_parent:
             continue
         for image in record.get("images") or []:
             image_type = str(image.get("image_type") or "").strip()
@@ -5720,10 +5728,17 @@ def load_vehicle_invoice_records(
             SELECT
               i.*,
               COALESCE(first_rr.repair_name, rr.repair_name, 'Invoice') AS repair_name,
-              GROUP_CONCAT(ii.repair_record_id) AS repair_record_ids,
-              COUNT(ii.id) AS service_count
+              ii_summary.repair_record_ids,
+              COALESCE(ii_summary.service_count, 0) AS service_count
             FROM invoices i
-            LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
+            LEFT JOIN (
+              SELECT
+                invoice_id,
+                GROUP_CONCAT(repair_record_id) AS repair_record_ids,
+                COUNT(id) AS service_count
+              FROM invoice_items
+              GROUP BY invoice_id
+            ) ii_summary ON ii_summary.invoice_id = i.id
             LEFT JOIN repair_records first_rr ON first_rr.id = (
               SELECT repair_record_id
               FROM invoice_items
@@ -5734,7 +5749,6 @@ def load_vehicle_invoice_records(
             LEFT JOIN repair_records rr ON rr.id = i.repair_record_id
             WHERE i.customer_id = ?
               AND i.vehicle_id = ?
-            GROUP BY i.id
             ORDER BY i.created_at DESC, i.id DESC
             """,
             (customer_id, vehicle_id),
