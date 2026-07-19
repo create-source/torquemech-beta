@@ -1,14 +1,19 @@
 import os
 import json
 import sqlite3
+import shutil
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
+from uuid import uuid4
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 import main
 from routers import pro as pro_module
+
+WORKSPACE_TMP = Path(__file__).resolve().parent.parent / "tmp"
 
 
 def auth_session_client(conn, base_url="http://localhost", email="owner@example.com"):
@@ -90,6 +95,12 @@ class FakeEstimatePath:
 
 
 class CalendarFoundationTests(unittest.TestCase):
+    def make_workspace_temp(self) -> Path:
+        root = WORKSPACE_TMP / "calendar_tests" / uuid4().hex
+        root.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(shutil.rmtree, root, True)
+        return root
+
     def memory_conn(self):
         conn = sqlite3.connect(":memory:")
         conn.row_factory = sqlite3.Row
@@ -1106,8 +1117,9 @@ class CalendarFoundationTests(unittest.TestCase):
                     "status": "Confirmed",
                 },
             )
+            storage_paths = SimpleNamespace(estimate_pdfs_dir=self.make_workspace_temp())
             with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
-                pro_module, "ESTIMATE_PDF_DIR", FakeEstimateDir()
+                pro_module, "ensure_storage_directories", lambda: storage_paths
             ):
                 result = pro_module.record_estimate_pdf_document(
                     pdf_bytes=b"%PDF-1.4 test",

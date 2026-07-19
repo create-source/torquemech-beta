@@ -33,6 +33,13 @@ from app.data.repair_blueprints import (
     blueprint_summary,
     get_repair_blueprint_for_work_item,
 )
+from app.storage import (
+    configured_storage_paths,
+    ensure_storage_directories,
+    resolve_storage_child,
+    safe_upload_suffix,
+    visual_reference_upload_url,
+)
 from db import connect_app_db
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -54,12 +61,9 @@ VISUAL_REFERENCE_IMAGE_TYPES = {
     "connector_view",
     "reference_image",
 }
-VISUAL_REFERENCE_UPLOAD_DIR = STATIC_DIR / "visual-references" / "uploads"
-VISUAL_REFERENCE_UPLOAD_URL_PREFIX = "/static/visual-references/uploads"
 VISUAL_REFERENCE_ALLOWED_UPLOAD_EXTENSIONS = {".gif", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
 PHOTO_UPLOAD_ALLOWED_EXTENSIONS = {".jpeg", ".jpg", ".png", ".webp"}
 PHOTO_UPLOAD_MAX_FILES = 5
-ESTIMATE_PDF_DIR = STATE_DIR / "estimate_pdfs"
 DEFAULT_PARTS_SOURCE_LABELS = [
     "O'Reilly",
     "AutoZone",
@@ -4003,15 +4007,14 @@ def save_visual_reference_upload(
     filename = str(upload.get("filename") or "").strip()
     if not content or not filename:
         return ""
-    suffix = Path(filename).suffix.lower()
+    suffix = safe_upload_suffix(filename)
     if suffix not in (allowed_extensions or VISUAL_REFERENCE_ALLOWED_UPLOAD_EXTENSIONS):
         raise HTTPException(status_code=400, detail="Unsupported image upload type")
-    VISUAL_REFERENCE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    storage = ensure_storage_directories()
     stored_name = f"{uuid4().hex}{suffix}"
-    target = (VISUAL_REFERENCE_UPLOAD_DIR / stored_name).resolve()
-    target.relative_to(VISUAL_REFERENCE_UPLOAD_DIR.resolve())
+    target = resolve_storage_child(storage.visual_reference_uploads_dir, stored_name)
     target.write_bytes(content)
-    return f"{VISUAL_REFERENCE_UPLOAD_URL_PREFIX}/{stored_name}"
+    return visual_reference_upload_url(stored_name)
 
 
 def normalize_upload_list(upload_or_uploads: Any) -> list[dict[str, Any]]:
@@ -5833,9 +5836,9 @@ def record_estimate_pdf_document(
     except (TypeError, ValueError):
         parsed_total = None
 
-    ESTIMATE_PDF_DIR.mkdir(parents=True, exist_ok=True)
+    storage = ensure_storage_directories()
     file_name = f"repair-estimate-{uuid4().hex}.pdf"
-    pdf_path = ESTIMATE_PDF_DIR / file_name
+    pdf_path = resolve_storage_child(storage.estimate_pdfs_dir, file_name)
     pdf_path.write_bytes(pdf_bytes)
 
     conn = crm_db_conn()
@@ -14155,9 +14158,10 @@ def pro_estimate_document_pdf(customer_id: int, vehicle_id: int, estimate_id: in
     finally:
         conn.close()
 
+    storage = configured_storage_paths()
     pdf_path = Path(record.get("pdf_path") or "").resolve()
     try:
-        pdf_path.relative_to(ESTIMATE_PDF_DIR.resolve())
+        pdf_path.relative_to(storage.estimate_pdfs_dir.resolve())
     except ValueError:
         raise HTTPException(status_code=404, detail="Estimate PDF not found")
     if not pdf_path.exists() or not pdf_path.is_file():

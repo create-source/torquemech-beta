@@ -113,6 +113,7 @@ from pathlib import Path
 from fastapi.responses import HTMLResponse
 
 from app.data.labor_profiles import build_labor_breakdown, get_service_labor_profile
+from app.storage import configured_storage_paths, resolve_storage_child
 
 from db import connect_app_db, using_postgres
 from repair_paths import REPAIR_PATHS
@@ -1643,6 +1644,15 @@ app.include_router(pro_router)
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse(STATIC_DIR / "favicon.ico")
+
+@app.get("/static/visual-references/uploads/{filename:path}", include_in_schema=False)
+async def visual_reference_upload_file(filename: str):
+    storage = configured_storage_paths()
+    upload_path = resolve_storage_child(storage.visual_reference_uploads_dir, filename)
+    if not upload_path.exists() or not upload_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(upload_path)
+
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.middleware("http")
