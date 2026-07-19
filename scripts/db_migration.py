@@ -105,10 +105,17 @@ def ordered_table_rows(sqlite_conn: sqlite3.Connection, rows: list[sqlite3.Row])
     dependencies: dict[str, set[str]] = {}
     for table_name in by_name:
         deps = set()
-        for fk in sqlite_conn.execute(f"PRAGMA foreign_key_list({quote_sqlite_identifier(table_name)})").fetchall():
+        for fk in sqlite_conn.execute(
+            f"PRAGMA foreign_key_list({quote_sqlite_identifier(table_name)})"
+        ).fetchall():
             referenced_table = fk["table"] if isinstance(fk, sqlite3.Row) else fk[2]
+
+            if referenced_table == "discrepancy_approvals_old":
+                referenced_table = "discrepancy_approvals"
+
             if referenced_table in by_name and referenced_table != table_name:
                 deps.add(referenced_table)
+
         dependencies[table_name] = deps
 
     while remaining:
