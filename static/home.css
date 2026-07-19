@@ -1800,3 +1800,124 @@ body.dark .tm-homeTrustCues span,
     font-size: .84rem;
   }
 }
+
+
+/* =========================================================
+   Foundation 14.0 — TorqueMech Dark / Orange Homepage Theme
+   ========================================================= */
+body {background: radial-gradient(circle at 76% 4%, rgba(249,115,22,.13), transparent 24rem), linear-gradient(180deg,#0b1120 0%,#101827 52%,#0b1120 100%); color:#f8fafc;}
+.tm-homeHero__inner,.tm-homeToolCard,.tm-homeFeatureCard,.tm-homeSystemCard{background:radial-gradient(circle at 88% 4%,rgba(249,115,22,.08),transparent 16rem),linear-gradient(180deg,rgba(17,24,39,.98),rgba(11,17,32,.98));border-color:rgba(255,255,255,.11);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 38px rgba(0,0,0,.24);}
+.tm-homeHero__inner::before,.tm-homeToolCard::before,.tm-homeFeatureCard::before,.tm-homeSystemCard::before{background:linear-gradient(180deg,#f97316,#fb923c);}
+.tm-panelBar{border-bottom-color:rgba(255,255,255,.09);}
+.tm-panelLabel,.tm-homeHero__lead,.tm-homeHero__guideNote,.tm-homeTrustCues span,.tm-homeSection__head p,.tm-homeToolCard p,.tm-homeFeatureCard__header p,.tm-homeKnowledgeItem span,.tm-homeSystemCard p,.tm-homeQuote__author{color:#cbd5e1;}
+.tm-homeHero__title,.tm-homeSection__head h2,.tm-homeToolCard h3,.tm-homeFeatureCard__header h2,.tm-homeKnowledgeItem strong,.tm-homeSystemCard span,.tm-homeQuote__text{color:#f8fafc;}
+.tm-homeHero__eyebrow,.tm-homeFeatureCard__eyebrow,.tm-homeSystemCard small{border:1px solid rgba(249,115,22,.28);background:rgba(249,115,22,.11);color:#fed7aa;}
+.tm-homeHero__actions .tm-btn-primary,#quick-find .tm-quick-find__button{border-color:rgba(249,115,22,.62);background:#f97316;color:#111827;box-shadow:0 14px 28px rgba(249,115,22,.20);}
+.tm-homeHero__actions .tm-btn-primary:hover,.tm-homeHero__actions .tm-btn-primary:focus-visible,#quick-find .tm-quick-find__button:hover,#quick-find .tm-quick-find__button:focus-visible{background:#fb923c;border-color:#fb923c;}
+.tm-homeHero__actions .tm-btn-secondary{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#f8fafc;}
+.tm-homeHero__actions .tm-btn-secondary:hover,.tm-homeHero__actions .tm-btn-secondary:focus-visible{border-color:rgba(249,115,22,.38);background:rgba(249,115,22,.09);color:#fed7aa;}
+.tm-homeToolCard__icon{border-color:rgba(249,115,22,.24);background:linear-gradient(180deg,#1f2937,#0b1120);color:#fdba74;}
+.tm-homeKnowledgeItem,.tm-homeSection__link{border-color:rgba(255,255,255,.10);background:rgba(255,255,255,.045);color:#f8fafc;}
+.tm-homeKnowledgeItem:hover,.tm-homeSection__link:hover,.tm-homeToolCard:hover,.tm-homeSystemCard:hover{border-color:rgba(249,115,22,.30);}
+.tm-homeSystemCard__chips em{border-color:rgba(255,255,255,.10);background:rgba(255,255,255,.045);color:#cbd5e1;}
+.tm-homeSystemCard::after{color:rgba(255,255,255,.46);}
+.tm-homeShortcut{border-color:rgba(249,115,22,.25);background:rgba(249,115,22,.08);color:#fed7aa;box-shadow:none;}
+.tm-homeShortcut:hover,.tm-homeShortcut:focus-visible{border-color:rgba(249,115,22,.48);background:rgba(249,115,22,.15);color:#ffedd5;}
+#quick-find .tm-card{border-color:rgba(255,255,255,.11);background:radial-gradient(circle at 86% 0%,rgba(249,115,22,.08),transparent 15rem),linear-gradient(180deg,rgba(17,24,39,.98),rgba(11,17,32,.98));box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 38px rgba(0,0,0,.22);}
+#quick-find .tm-quick-find__title{color:#f8fafc;}
+#quick-find .tm-quick-find__copy,#quick-find .tm-quick-find__hint,#quick-find .tm-quick-find__empty{color:#cbd5e1;}
+#quick-find .quick-find-input-wrap input{border-color:#cbd5e1;background:#e8edf3;color:#0f172a;-webkit-text-fill-color:#0f172a;caret-color:#0f172a;box-shadow:inset 0 1px 2px rgba(15,23,42,.06),0 8px 18px rgba(0,0,0,.14);}
+#quick-find .quick-find-input-wrap input::placeholder{color:#64748b;-webkit-text-fill-color:#64748b;opacity:1;}
+.tm-footer{border-top-color:rgba(255,255,255,.09);background:#0b1120;color:#cbd5e1;}
+.tm-footer a,.tm-footer-brand,.tm-footer-support{color:#94a3b8;}
+.tm-footer a:hover,.tm-footer-support a{color:#fed7aa;}
+
+/* Mobile repair: homepage cards and unwanted hero accent */
+.tm-homeExplore{
+  padding: 22px 0 8px;
+}
+
+.tm-homeExplore__head{
+  margin-bottom: 12px;
+}
+
+.tm-homeExplore__head h2{
+  margin: 6px 0 0;
+  color: #f7f8fc;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  line-height: 1.08;
+}
+
+.tm-homeExplore__grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.tm-homeExplore__card{
+  display: flex;
+  min-width: 0;
+  min-height: 138px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #30394b;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #181d2b 0%, #141a29 100%);
+  color: #f7f8fc;
+  box-shadow: none;
+}
+
+.tm-homeExplore__card:hover,
+.tm-homeExplore__card:focus-visible{
+  border-color: rgba(255,116,23,.46);
+  background: linear-gradient(180deg, #202838 0%, #181d2b 100%);
+  color: #f7f8fc;
+}
+
+.tm-homeExplore__label{
+  color: #8fb7ff;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.tm-homeExplore__card strong{
+  color: #f7f8fc;
+  font-size: 1.02rem;
+  line-height: 1.2;
+}
+
+.tm-homeExplore__card span:last-child{
+  color: #b9c2d3;
+  line-height: 1.48;
+}
+
+@media (max-width: 700px){
+  .tm-homeHero__inner::before,
+  .tm-homeToolCard::before,
+  .tm-homeFeatureCard::before,
+  .tm-homeSystemCard::before{
+    display: none;
+  }
+
+  .tm-homeExplore{
+    padding: 20px 0 8px;
+  }
+
+  .tm-homeExplore__grid{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .tm-homeExplore__card{
+    display: flex;
+    min-height: 0;
+    width: 100%;
+    padding: 15px;
+    overflow: visible;
+  }
+}

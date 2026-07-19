@@ -1,10 +1,12 @@
 {% extends "layout.html" %}
 {% set title = "TorqueMech — Professional Repair Estimator" %}
 
+{% block body_class %}tm-estimator-page{% endblock %}
+
 {% block page_css %}{% endblock %}
 
 {% block content %}
-
+<div class="tm-guided-estimator">
     <header class="tm-estimator-header" data-tour-target="estimator-welcome">
       <div>
         <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% else %}Mechanic estimator{% endif %}</div>
@@ -15,13 +17,13 @@
     </header>
 
     {% if not shared_id %}
-    <div class="tm-card tm-estimator-quickstart">
-      <div class="tm-estimator-quickstart__title">Fast quote path</div>
-      <div class="tm-estimator-quickstart__steps" aria-label="Estimator workflow">
-        <span>Vehicle</span>
-        <span>Service</span>
-        <span>Price</span>
-        <span>Quote</span>
+    <div class="tm-card tm-estimator-quickstart" aria-label="Estimator process guide">
+      <div class="tm-estimator-quickstart__title">Quote process</div>
+      <div class="tm-estimator-quickstart__steps" aria-label="Select vehicle, add service, enter pricing, create quote">
+        <span><b>1</b> Select vehicle</span>
+        <span><b>2</b> Add service</span>
+        <span><b>3</b> Enter pricing</span>
+        <span><b>4</b> Create quote</span>
       </div>
     </div>
     {% endif %}
@@ -106,9 +108,6 @@
 
         <div class="tm-vehicle-cta-group">
           <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Quote</button>
-          <button id="addVehicleBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
-            Select Vehicle
-          </button>
         </div>
       </div>
 
@@ -211,12 +210,12 @@
         <span class="tm-quick-quotes__chevron" aria-hidden="true">▾</span>
       </summary>
       <div class="tm-quick-quotes__list">
-        <button type="button" class="tm-quick-quote" data-quick-quote="oil_change" data-quick-add="true">Oil Change</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="brake_pads" data-quick-add="true">Brake Pads</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="battery" data-quick-add="true">Battery</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="tire_rotation" data-quick-add="true">Tire Rotation</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="spark_plugs" data-quick-add="true">Spark Plugs</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="diagnostic" data-quick-add="true">Diagnostic</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="oil_change">Oil Change</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="brake_pads">Brake Pads</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="battery">Battery</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="tire_rotation">Tire Rotation</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="spark_plugs">Spark Plugs</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="diagnostic">Diagnostic</button>
       </div>
     </details>
 
@@ -403,6 +402,7 @@
       <div class="tm-estimate-action-panel">
       <div class="tm-estimate-action-panel__copy">
         <div class="tm-estimate-action-panel__label">Current task</div>
+        <div class="tm-estimate-action-panel__heading">Add another repair or create the quote</div>
         <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
           Select vehicle, service, and pricing.
         </div>
@@ -492,6 +492,18 @@
         </div>
         <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--saved">Review estimate details before sharing.</div>
         <div id="estimateSavedLinkText" class="tm-hint tm-saved-link-text"></div>
+        {% if pro_handoff_available and not shared_id %}
+        <div id="proJobHandoffActions" class="tm-pro-job-handoff" aria-label="Pro job handoff" hidden>
+          <div>
+            <div class="tm-pro-job-handoff__title">Convert to Pro Job</div>
+            <div class="tm-pro-job-handoff__copy">Create active repair jobs from this estimate.</div>
+          </div>
+          <form id="convertToProJobForm" method="post" action="/pro/estimate-conversion" hidden>
+            <input id="convertToProJobPayload" type="hidden" name="estimate_payload" value="">
+          </form>
+          <div id="convertToProJobMount" data-ready-label="Convert to Pro Job"></div>
+        </div>
+        {% endif %}
       </div>
 
     </div>
@@ -508,15 +520,6 @@
         </button>
         <div id="customerQuoteFinalHint" class="tm-quote-trust-microcopy">Includes services, pricing, notes, and total.</div>
       </div>
-
-      {% if pro_handoff_available and not shared_id %}
-      <div id="proJobHandoffActions" class="actions estimator-final-actions" aria-label="Pro job handoff" hidden>
-        <form id="convertToProJobForm" method="post" action="/pro/estimate-conversion" hidden>
-          <input id="convertToProJobPayload" type="hidden" name="estimate_payload" value="">
-        </form>
-        <div id="convertToProJobMount" data-ready-label="Convert to Pro Job"></div>
-      </div>
-      {% endif %}
 
     </section>
 
@@ -680,5 +683,5 @@
       <div id="confirmMsg" class="status" data-kind="info" role="status" aria-live="polite"></div>
     </div>
   </div>
-
-  {% endblock %}
+</div>
+{% endblock %}

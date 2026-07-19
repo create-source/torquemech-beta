@@ -1,13 +1,20 @@
 <section class="tm-section">
   <div class="tm-card tm-quick-find" data-quick-find>
     <div class="tm-eyebrow">TorqueMech Quick Find</div>
-    <h2 class="tm-quick-find__title">Search Codes, Costs, Symptoms, and Guides</h2>
+
+    <h2 class="tm-quick-find__title">
+      Search Codes, Costs, Symptoms, and Guides
+    </h2>
+
     <p class="tm-muted tm-quick-find__copy">
       Start from an OBD code, symptom, or repair term and move toward the diagnostic path before choosing parts.
     </p>
 
     <form class="tm-quick-find__form" action="#" method="get" novalidate>
-      <label class="tm-quick-find__label" for="tmQuickFindInput">Quick Find</label>
+      <label class="tm-quick-find__label" for="tmQuickFindInput">
+        Quick Find
+      </label>
+
       <div class="tm-quick-find__controls">
         <div class="quick-find-input-wrap">
           <input
@@ -18,6 +25,7 @@
             autocomplete="off"
             spellcheck="false"
           />
+
           <button
             type="button"
             class="quick-find-clear"
@@ -27,16 +35,53 @@
             &times;
           </button>
         </div>
-        <button class="tm-btn tm-btn-primary tm-quick-find__button" type="submit">Find Repair Path</button>
+
+        <button
+          class="tm-btn tm-btn-primary tm-quick-find__button"
+          type="submit"
+        >
+          Find Repair Path
+        </button>
       </div>
     </form>
 
     <p class="tm-quick-find__hint">
       Matches OBD codes, repair cost guides, symptom pages, and repair guides for faster diagnosis-to-estimate flow.
     </p>
-    <p class="tm-quick-find__empty tm-muted" data-quick-find-empty hidden>No matching pages found yet. Try a shorter term or an exact code.</p>
 
-    <div class="tm-quick-find__results" data-quick-find-results hidden></div>
-    <script type="application/json" data-quick-find-index>{{ quick_find_items | tojson }}</script>
+    <div class="tm-quick-find__popular" aria-label="Popular OBD codes">
+      <span class="tm-quick-find__popular-label">
+        Popular OBD Codes
+      </span>
+
+      <div class="tm-quick-find__code-list">
+        <a href="/obd/p0300" class="tm-quick-find__code">P0300</a>
+        <a href="/obd/p0301" class="tm-quick-find__code">P0301</a>
+        <a href="/obd/p0171" class="tm-quick-find__code">P0171</a>
+        <a href="/obd/p0174" class="tm-quick-find__code">P0174</a>
+        <a href="/obd/p0420" class="tm-quick-find__code">P0420</a>
+        <a href="/obd/p0455" class="tm-quick-find__code">P0455</a>
+        <a href="/obd/p0456" class="tm-quick-find__code">P0456</a>
+        <a href="/obd/p0128" class="tm-quick-find__code">P0128</a>
+      </div>
+    </div>
+
+    <p
+      class="tm-quick-find__empty tm-muted"
+      data-quick-find-empty
+      hidden
+    >
+      No matching pages found yet. Try a shorter term or an exact code.
+    </p>
+
+    <div
+      class="tm-quick-find__results"
+      data-quick-find-results
+      hidden
+    ></div>
+
+    <script type="application/json" data-quick-find-index>
+      {{ quick_find_items | tojson }}
+    </script>
   </div>
 </section>

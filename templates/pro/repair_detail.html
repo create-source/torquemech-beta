@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+﻿{% extends "layout.html" %}
 
 {% block title %}Repair Record | TorqueMech CRM{% endblock %}
 
@@ -185,22 +185,206 @@
     align-items: end;
     margin-top: 16px;
   }
+    /* Repair Detail: light work cards inside the dark Pro shell */
+    .tm-pro-shell--repair-detail .tm-repair-panel,
+    .tm-pro-shell--repair-detail .tm-checklist-panel,
+    .tm-pro-shell--repair-detail .tm-completion-panel,
+    .tm-pro-shell--repair-detail .tm-checklist-item {
+      border-color: rgba(15, 23, 42, .12);
+      background: #f8fafc;
+      color: #0f172a;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-panel {
+      border-left-color: #8b5cf6;
+    }
+
+    .tm-pro-shell--repair-detail .tm-checklist-panel {
+      border-left-color: #0f766e;
+    }
+
+    .tm-pro-shell--repair-detail .tm-completion-panel {
+      border-left-color: #2563eb;
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-panel h2,
+    .tm-pro-shell--repair-detail .tm-repair-panel h3,
+    .tm-pro-shell--repair-detail .tm-checklist-panel h2,
+    .tm-pro-shell--repair-detail .tm-checklist-panel h3,
+    .tm-pro-shell--repair-detail .tm-completion-panel h2,
+    .tm-pro-shell--repair-detail .tm-completion-panel h3,
+    .tm-pro-shell--repair-detail .tm-repair-field strong,
+    .tm-pro-shell--repair-detail .tm-completion-status strong,
+    .tm-pro-shell--repair-detail .tm-checklist-progress strong,
+    .tm-pro-shell--repair-detail .tm-checklist-title,
+    .tm-pro-shell--repair-detail .tm-completion-title {
+      color: #0f172a !important;
+      opacity: 1 !important;
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-field > span,
+    .tm-pro-shell--repair-detail .tm-label,
+    .tm-pro-shell--repair-detail .tm-maintenance-toggle-status,
+    .tm-pro-shell--repair-detail .tm-checklist-meta,
+    .tm-pro-shell--repair-detail .tm-checklist-note,
+    .tm-pro-shell--repair-detail .tm-photo-stage span,
+    .tm-pro-shell--repair-detail [style*="color:#64748b"] {
+      color: #526174 !important;
+      opacity: 1 !important;
+    }
+
+    .tm-pro-shell--repair-detail .tm-switch-control {
+      color: #334155;
+    }
+
+    .tm-pro-shell--repair-detail .tm-input {
+      border-color: #cbd5e1;
+      background: #e8edf3;
+      color: #0f172a;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-stage,
+    .tm-pro-shell--repair-detail .tm-completion-check {
+      border-color: rgba(15, 23, 42, .12);
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-stage strong,
+    .tm-pro-shell--repair-detail .tm-completion-check span {
+      color: #0f172a !important;
+    }
+
+    .tm-pro-shell--repair-detail .tm-completion-bar,
+    .tm-pro-shell--repair-detail .tm-checklist-bar {
+      background: #e2e8f0;
+    }
+
+    .tm-pro-shell--repair-detail .tm-completion-warning,
+    .tm-pro-shell--repair-detail .tm-invoice-warning {
+      border-color: rgba(217, 119, 6, .28);
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-success {
+      border-color: rgba(22, 163, 74, .25);
+      background: #ecfdf5;
+      color: #065f46;
+    }
+
+    /* Plain section eyebrow labels */
+    .tm-pro-shell--repair-detail .tm-crm-kicker {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      margin: 0 0 6px;
+      padding: 0;
+      border: 0 !important;
+      border-radius: 0;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: #0e7490 !important;
+      font-size: .74rem;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .tm-pro-shell--repair-detail .tm-completion-head h2 {
+      margin: 0 !important;
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-field {
+      min-width: 0;
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-field strong {
+      overflow-wrap: anywhere;
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-upload-button {
+      color: #ffffff;
+    }
+
+    /* Make maintenance tracking more visible */
+    .tm-pro-shell--repair-detail .tm-switch-control {
+      width: fit-content;
+      max-width: 100%;
+      min-height: 48px;
+      margin-top: 4px;
+      padding: 10px 12px;
+      border: 1px solid rgba(14, 116, 144, .22);
+      border-radius: 10px;
+      background: #ecfeff;
+      color: #0f172a !important;
+    }
+
+    .tm-pro-shell--repair-detail .tm-switch-control > span:last-child {
+      color: #0f172a !important;
+      font-weight: 900;
+    }
+
+    /* Add separation before Parts Tracking */
+    .tm-pro-shell--repair-detail .tm-repair-panel + * {
+      margin-top: 22px;
+    }
   @media (max-width:760px) {
+    .tm-pro-shell--repair-detail .tm-switch-control {
+        width: 100%;
+      }
+
+      .tm-pro-shell--repair-detail .tm-repair-panel + * {
+        margin-top: 18px;
+      }
+    .tm-pro-shell--repair-detail {
+      width: 100%;
+      min-width: 0;
+      padding-top: 18px;
+      overflow-x: clip;
+    }
+
+    .tm-pro-shell--repair-detail .tm-pro-pagehead {
+      min-width: 0;
+      padding-top: 8px;
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-panel,
+    .tm-pro-shell--repair-detail .tm-checklist-panel,
+    .tm-pro-shell--repair-detail .tm-completion-panel {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      border-left-width: 4px;
+    }
     .tm-repair-grid,
     .tm-checklist-add,
     .tm-checklist-edit-grid,
     .tm-completion-checks,
     .tm-execution-status-form { grid-template-columns:1fr; }
     .tm-checklist-toggle button { width:56px; height:56px; }
-    .tm-completion-panel { padding:14px; }
+    .tm-repair-panel,
+    .tm-checklist-panel,
+    .tm-completion-panel { padding:13px; }
     .tm-completion-check { min-height:58px; }
     .tm-completion-actions .tm-btn { width:100%; justify-content:center; }
+    .tm-repair-actions .tm-btn,
+    .tm-execution-status-form .tm-btn { width:100%; justify-content:center; }
+    .tm-repair-field { gap:2px; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-shell">
+<section class="tm-pro-shell tm-pro-shell--repair-detail">
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>

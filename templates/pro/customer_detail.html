@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+﻿{% extends "layout.html" %}
 
 {% block title %}Customer Detail | TorqueMech CRM{% endblock %}
 
@@ -11,9 +11,10 @@
 
   .tm-crm-customer-card,
   .tm-crm-panel {
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.22);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.94);
+    background: #0f1b2d;
+    color: #f8fafc;
     padding: 18px;
   }
 
@@ -22,7 +23,7 @@
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 16px;
     align-items: start;
-    border-left: 5px solid #0e7490;
+    border-left: none;
   }
 
   .tm-crm-contact {
@@ -33,18 +34,18 @@
   }
 
   .tm-crm-chip {
-    border: 1px solid rgba(14, 116, 144, 0.22);
+    border: 1px solid rgba(148, 163, 184, 0.28);
     border-radius: 999px;
-    background: #ecfeff;
-    color: #155e75;
+    background: #405067;
+    color: #f8fafc;
     font-weight: 800;
     padding: 6px 10px;
   }
 
   .tm-crm-chip--inactive {
-    background: #f1f5f9;
-    border-color: rgba(100, 116, 139, 0.24);
-    color: #475569;
+    background: #334155;
+    border-color: rgba(148, 163, 184, 0.28);
+    color: #cbd5e1;
   }
 
   .tm-crm-customer-actions {
@@ -54,10 +55,9 @@
   }
 
   .tm-crm-notes {
-    color: #475569;
+    color: #cbd5e1;
     margin-top: 12px;
   }
-
   .tm-crm-section-head {
     display: flex;
     justify-content: space-between;
@@ -76,17 +76,108 @@
     gap: 12px;
   }
 
+  /* Customer profile â€” decorative vehicle card */
   .tm-crm-vehicle {
+    position: relative;
     display: grid;
-    gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    border-left: 5px solid #334155;
-    border-radius: 8px;
-    padding: 16px;
-    background: #fff;
-    color: inherit;
+    gap: 8px;
+    min-height: 100px;
+    padding: 18px 18px 18px 70px;
+
+    border: 1px solid rgba(96, 165, 250, 0.22);
+    border-radius: 14px;
+
+    background:
+      radial-gradient(
+        circle at 12% 18%,
+        rgba(59, 130, 246, 0.12),
+        transparent 34%
+      ),
+      linear-gradient(
+        145deg,
+        #16253b 0%,
+        #132136 58%,
+        #101d30 100%
+      );
+
+    color: #f8fafc;
     text-decoration: none;
-    min-height: 136px;
+
+    box-shadow:
+      0 12px 26px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    overflow: hidden;
+    transition:
+      transform 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  /* Small decorative vehicle badge */
+  .tm-crm-vehicle::before {
+    content: "ðŸš—";
+    position: absolute;
+    top: 18px;
+    left: 16px;
+
+    display: grid;
+    place-items: center;
+
+    width: 40px;
+    height: 40px;
+
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 12px;
+
+    background: rgba(59, 130, 246, 0.10);
+    font-size: 20px;
+
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 8px 18px rgba(0, 0, 0, 0.14);
+  }
+
+  .tm-crm-vehicle[data-vehicle-type="truck"]::before,
+  .tm-crm-vehicle[data-vehicle-type="pickup"]::before {
+    content: "ðŸ›»";
+  }
+
+  .tm-crm-vehicle[data-vehicle-type="suv"]::before {
+    content: "ðŸš™";
+  }
+
+  .tm-crm-vehicle[data-vehicle-type="van"]::before {
+    content: "ðŸš";
+  }
+
+  /* Subtle decorative glow */
+  .tm-crm-vehicle::after {
+    content: "";
+    position: absolute;
+    right: -35px;
+    bottom: -45px;
+
+    width: 120px;
+    height: 120px;
+
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.07);
+    pointer-events: none;
+  }
+
+  .tm-crm-vehicle:hover,
+  .tm-crm-vehicle:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(96, 165, 250, 0.42);
+
+    box-shadow:
+      0 16px 34px rgba(0, 0, 0, 0.24),
+      0 0 0 3px rgba(59, 130, 246, 0.08);
+  }
+
+  .tm-crm-vehicle:focus-visible {
+    outline: none;
   }
 
   .tm-crm-vehicle:hover {
@@ -102,17 +193,38 @@
   }
 
   .tm-crm-meta {
-    color: #64748b;
+    color: #cbd5e1;
     font-size: 0.92rem;
   }
 
   .tm-crm-kicker {
-    color: #0f766e;
+    display: inline-block !important;
+    width: auto !important;
+    max-width: max-content !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #fb923c !important;
     font-size: 0.78rem;
     font-weight: 900;
     text-transform: uppercase;
   }
 
+  .tm-crm-kicker::before,
+  .tm-crm-kicker::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+  }
+
+  .tm-crm-customer-card .tm-crm-kicker,
+  .tm-crm-panel .tm-crm-kicker {
+    background: transparent !important;
+    width: auto !important;
+  }
   .tm-crm-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -122,7 +234,7 @@
   .tm-crm-disclosure summary {
     cursor: pointer;
     font-weight: 900;
-    color: #0f172a;
+    color: #f8fafc;
   }
 
   .tm-crm-disclosure[open] summary {
@@ -165,6 +277,338 @@
 
     .tm-crm-customer-actions {
       justify-items: start;
+    }
+  }
+
+  .tm-pro-shell {
+    min-height: calc(100vh - 250px);
+  }
+
+  /* =========================================================
+   CUSTOMER DETAIL â€” POLISHED DARK WORKSPACE
+   ========================================================= */
+
+  /* Main page spacing */
+  .tm-crm-workspace {
+    gap: 14px !important;
+  }
+
+  /* Customer profile and Vehicle Workspace */
+  .tm-crm-customer-card,
+  .tm-crm-panel {
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    border-radius: 12px !important;
+    background:
+      linear-gradient(145deg, #101c2d 0%, #0b1625 100%) !important;
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+  }
+
+  /* Customer card gets a restrained orange highlight */
+  .tm-crm-customer-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tm-crm-customer-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    height: 3px;
+    border-radius: 0 0 999px 999px;
+    background: linear-gradient(
+      90deg,
+      #f97316 0%,
+      #fb923c 48%,
+      transparent 100%
+    );
+  }
+
+  /* Customer information chips */
+  .tm-crm-contact {
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
+
+  .tm-crm-chip {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px !important;
+    border: 1px solid rgba(148, 163, 184, 0.3) !important;
+    background:
+      linear-gradient(180deg, #243247 0%, #1b293c 100%) !important;
+    color: #f8fafc !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  /* Active status receives a subtle success treatment */
+  .tm-crm-contact .tm-crm-chip:last-child:not(.tm-crm-chip--inactive) {
+    border-color: rgba(34, 197, 94, 0.28) !important;
+    background: rgba(34, 197, 94, 0.12) !important;
+    color: #bbf7d0 !important;
+  }
+
+  /* Customer notes */
+  .tm-crm-notes {
+    margin-top: 12px !important;
+    padding: 10px 12px;
+    border: 1px dashed rgba(148, 163, 184, 0.24);
+    border-radius: 9px;
+    background: rgba(15, 28, 47, 0.68);
+    color: #d5dfec !important;
+    line-height: 1.45;
+  }
+
+  /* Customer action area */
+  .tm-crm-customer-actions {
+    gap: 10px !important;
+  }
+
+  .tm-crm-customer-actions .tm-btn {
+    min-height: 42px;
+  }
+
+  /* Deactivate stays secondary, but more intentional */
+  .tm-crm-customer-actions .tm-btn-secondary {
+    border-color: rgba(148, 163, 184, 0.34) !important;
+    background:
+      linear-gradient(180deg, #172332 0%, #101925 100%) !important;
+    color: #f8fafc !important;
+    box-shadow: none !important;
+  }
+
+  .tm-crm-customer-actions .tm-btn-secondary:hover {
+    border-color: rgba(249, 115, 22, 0.55) !important;
+    background:
+      linear-gradient(180deg, #263243 0%, #182332 100%) !important;
+  }
+
+  /* Edit Customer accordion */
+  .tm-crm-customer-card .tm-crm-disclosure {
+    width: 100%;
+    padding: 0;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 10px;
+    background: #111b29;
+    overflow: hidden;
+  }
+
+  .tm-crm-customer-card .tm-crm-disclosure > summary {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 11px 13px;
+    background:
+      linear-gradient(180deg, #1b2737 0%, #162231 100%);
+    color: #ffffff !important;
+    list-style: none;
+  }
+
+  .tm-crm-customer-card .tm-crm-disclosure > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-crm-customer-card .tm-crm-disclosure > summary::before {
+    content: "+";
+    display: inline-grid;
+    place-items: center;
+    width: 23px;
+    height: 23px;
+    margin-right: 8px;
+    border-radius: 7px;
+    background: rgba(249, 115, 22, 0.14);
+    color: #fb923c;
+    font-weight: 900;
+  }
+
+  .tm-crm-customer-card .tm-crm-disclosure[open] > summary::before {
+    content: "âˆ’";
+  }
+
+  .tm-crm-customer-card .tm-crm-disclosure[open] > summary {
+    margin-bottom: 0 !important;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .tm-crm-customer-card .tm-crm-disclosure > form {
+    padding: 14px;
+  }
+
+  /* Edit Customer fields */
+  .tm-crm-customer-card .tm-input {
+    min-height: 48px;
+    border: 1px solid #bac5d1 !important;
+    border-radius: 10px !important;
+    background:
+      linear-gradient(180deg, #f4f7fa 0%, #e4eaf1 100%) !important;
+    color: #0f172a !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 3px 8px rgba(0, 0, 0, 0.07) !important;
+  }
+
+  .tm-crm-customer-card .tm-input:hover {
+    border-color: rgba(96, 165, 250, 0.7) !important;
+  }
+
+  .tm-crm-customer-card .tm-input:focus {
+    border-color: #60a5fa !important;
+    box-shadow:
+      0 0 0 4px rgba(96, 165, 250, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .tm-crm-customer-card .tm-label {
+    color: #dbe7f5 !important;
+    font-weight: 850 !important;
+  }
+
+  /* Save Customer */
+  .tm-crm-customer-card .tm-btn-primary {
+    min-height: 46px;
+    border-color: #fb923c !important;
+    background:
+      linear-gradient(180deg, #fb923c 0%, #f97316 100%) !important;
+    color: #111827 !important;
+    box-shadow:
+      0 10px 22px rgba(249, 115, 22, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+  }
+
+  /* Vehicle Workspace heading */
+  .tm-crm-panel .tm-crm-section-head {
+    margin-bottom: 14px !important;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .tm-crm-panel .tm-crm-section-head h2 {
+    color: #ffffff !important;
+    font-size: 1.35rem;
+  }
+
+  /* Add Vehicle disclosure */
+  .tm-crm-panel .tm-crm-disclosure > summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    color: #f8fafc !important;
+  }
+
+  .tm-crm-panel .tm-crm-disclosure > summary::before {
+    content: "+";
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-right: 7px;
+    border-radius: 7px;
+    background: rgba(45, 212, 191, 0.1);
+    color: #2dd4bf;
+    font-weight: 900;
+  }
+
+  .tm-crm-panel .tm-crm-disclosure[open] > summary::before {
+    content: "âˆ’";
+  }
+
+  /* Vehicle cards */
+  .tm-crm-vehicle-grid {
+    gap: 12px !important;
+  }
+
+  .tm-crm-vehicle {
+    min-height: 108px !important;
+    padding: 17px 18px 17px 64px !important;
+    border: 1px solid rgba(96, 165, 250, 0.26) !important;
+    border-radius: 13px !important;
+    background:
+      radial-gradient(
+        circle at 92% 85%,
+        rgba(59, 130, 246, 0.12),
+        transparent 34%
+      ),
+      linear-gradient(
+        145deg,
+        #192a42 0%,
+        #132238 58%,
+        #101d30 100%
+      ) !important;
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  }
+
+  /* Vehicle icon block */
+  .tm-crm-vehicle::before {
+    content: "ðŸš—";
+    position: absolute;
+    left: 15px;
+    top: 17px;
+    display: inline-grid;
+    place-items: center;
+    width: 37px;
+    height: 37px;
+    border: 1px solid rgba(96, 165, 250, 0.32);
+    border-radius: 10px;
+    background:
+      linear-gradient(145deg, #213b60 0%, #172d4b 100%);
+    font-size: 1rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .tm-crm-vehicle:hover,
+  .tm-crm-vehicle:focus-visible {
+    border-color: rgba(249, 115, 22, 0.62) !important;
+    box-shadow:
+      0 14px 30px rgba(0, 0, 0, 0.2),
+      0 0 0 3px rgba(249, 115, 22, 0.08) !important;
+    transform: translateY(-2px);
+    outline: none;
+  }
+
+  .tm-crm-vehicle-title {
+    color: #ffffff !important;
+    font-size: 1.03rem !important;
+  }
+
+  .tm-crm-vehicle .tm-crm-meta {
+    color: #a9c8f5 !important;
+  }
+
+  /* Mobile */
+  @media (max-width: 760px) {
+    .tm-crm-customer-card,
+    .tm-crm-panel {
+      padding: 14px !important;
+    }
+
+    .tm-crm-customer-actions,
+    .tm-crm-customer-actions form,
+    .tm-crm-customer-actions .tm-btn {
+      width: 100%;
+    }
+
+    .tm-crm-customer-card .tm-crm-disclosure > form {
+      padding: 12px;
+    }
+
+    .tm-crm-customer-card .tm-btn-primary {
+      width: 100%;
+    }
+
+    .tm-crm-vehicle {
+      min-height: 100px !important;
+      padding: 16px 14px 16px 62px !important;
+    }
+
+    .tm-crm-vehicle::before {
+      left: 14px;
+      top: 16px;
     }
   }
 </style>
@@ -319,7 +763,11 @@
       {% if vehicles %}
       <div class="tm-crm-vehicle-grid">
         {% for vehicle in vehicles %}
-        <a class="tm-crm-vehicle" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}">
+        <a
+          class="tm-crm-vehicle"
+          href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}"
+          data-vehicle-type="{% if 'F-150' in (vehicle.model or '')|upper %}truck{% else %}car{% endif %}"
+        >
           <div>
             <div class="tm-crm-vehicle-title">
               {{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}

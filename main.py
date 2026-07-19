@@ -4528,6 +4528,18 @@ def admin_obd_requests(request: Request, key: str | None = None):
         },
     )
 
+@app.get("/pro-preview", response_class=HTMLResponse, include_in_schema=False)
+def pro_home_preview(request: Request):
+    return templates.TemplateResponse(
+        "pro_home_preview.html",
+        {"request": request},
+    )
+
+
+@app.get("/about", response_class=HTMLResponse)
+def about(request: Request):
+    return templates.TemplateResponse("about.html", {"request": request})
+
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
@@ -7539,9 +7551,17 @@ def home(request: Request):
     metric_incr("page_home")
     return templates.TemplateResponse(
         "home.html",
+        {"request": request},
+    )
+
+
+@app.get("/quick-find", response_class=HTMLResponse)
+def quick_find_page(request: Request):
+    return templates.TemplateResponse(
+        "quick_find_page.html",
         {
             "request": request,
-            "quick_find_items": build_quick_find_items(),
+            "quick_find_items": [],
         },
     )
 
@@ -12209,7 +12229,7 @@ def pdf_draw_header(c, w, h, *, title="Repair Estimate", left=50, right=50, top=
         c.drawString(left, y, f"Prepared {local_now().strftime('%Y-%m-%d %H:%M')}")
         y -= 8
 
-    c.setStrokeColorRGB(0.08, 0.57, 0.54)
+    c.setStrokeColorRGB(0.16, 0.39, 0.72)
     c.setLineWidth(1.8)
     c.line(left, y, w - right, y)
     c.setStrokeColorRGB(0.86, 0.91, 0.92)
@@ -13285,7 +13305,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         c.setStrokeGray(0)
 
         c.setFont("Helvetica-Bold", 8)
-        c.setFillColorRGB(0.07, 0.44, 0.42)
+        c.setFillColorRGB(0.12, 0.32, 0.62)
         c.drawString(card_x + 14, card_top - 18, "PREPARED BY")
         c.drawString(divider_x + 18, card_top - 18, "VEHICLE")
 
@@ -13344,9 +13364,9 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         service_count = len(req.lineItems or [])
         service_count_label = f"{service_count} quoted service{'s' if service_count != 1 else ''}"
         min_service_row_height = 92 if service_count == 1 else 68
-        c.setFillColorRGB(0.94, 0.975, 0.972)
+        c.setFillColorRGB(0.94, 0.965, 0.99)
         c.roundRect(LEFT, y - 28, X_TOTAL - LEFT, 35, 7, fill=1, stroke=0)
-        c.setStrokeColorRGB(0.80, 0.90, 0.88)
+        c.setStrokeColorRGB(0.72, 0.82, 0.95)
         c.roundRect(LEFT, y - 28, X_TOTAL - LEFT, 35, 7, fill=0, stroke=1)
         c.setStrokeGray(0)
         c.setFillGray(0)
@@ -13436,7 +13456,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             row_bottom = row_top - row_height
             c.setFillColorRGB(0.996, 0.998, 0.998)
             c.roundRect(LEFT, row_bottom, X_TOTAL - LEFT, row_height, 7, fill=1, stroke=0)
-            c.setStrokeColorRGB(0.84, 0.89, 0.89)
+            c.setStrokeColorRGB(0.80, 0.86, 0.95)
             c.roundRect(LEFT, row_bottom, X_TOTAL - LEFT, row_height, 7, fill=0, stroke=1)
             c.setStrokeGray(0)
             c.setFillGray(0)
@@ -13471,7 +13491,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             y -= 3
 
             if risk_note_lines:
-                c.setStrokeColorRGB(0.80, 0.90, 0.88)
+                c.setStrokeColorRGB(0.70, 0.82, 0.96)
                 c.setLineWidth(1)
                 c.line(row_detail_x + 2, y + 2, row_detail_x + 2, y - 9 - (len(risk_note_lines) * 9))
                 c.setStrokeGray(0)
@@ -13547,13 +13567,13 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
 
         # Grand total
         totals_box_h = 74
-        c.setFillColorRGB(0.94, 0.975, 0.972)
+        c.setFillColorRGB(0.94, 0.965, 0.99)
         c.roundRect(LEFT, y - totals_box_h + 12, X_TOTAL - LEFT, totals_box_h, 8, fill=1, stroke=0)
-        c.setStrokeColorRGB(0.75, 0.87, 0.85)
+        c.setStrokeColorRGB(0.70, 0.81, 0.95)
         c.roundRect(LEFT, y - totals_box_h + 12, X_TOTAL - LEFT, totals_box_h, 8, fill=0, stroke=1)
         c.setStrokeGray(0)
         c.setFont("Helvetica-Bold", 8.5)
-        c.setFillColorRGB(0.06, 0.45, 0.42)
+        c.setFillColorRGB(0.12, 0.32, 0.62)
         c.drawString(LEFT + 16, y - 3, "ESTIMATE SUMMARY")
         c.setFillColorRGB(0.05, 0.08, 0.13)
         c.setFont("Helvetica-Bold", 13)

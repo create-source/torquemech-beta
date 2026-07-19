@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+﻿{% extends "layout.html" %}
 
 {% block title %}Create Final Invoice | TorqueMech CRM{% endblock %}
 
@@ -79,39 +79,196 @@
   .tm-invoice-builder-fields .tm-input {
     width: 100%;
   }
-  @media (max-width: 760px) {
-    .tm-invoice-builder-panel {
-      padding: 14px;
+
+    /* Create Final Invoice page */
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel {
+      color: #0f172a;
     }
-    .tm-invoice-builder-job {
-      grid-template-columns: 1fr;
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel h2,
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel h3,
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel strong,
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel summary {
+      color: #0f172a !important;
     }
-    .tm-invoice-builder-job input {
-      margin-top: 0;
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel p,
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel div,
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel span {
+      text-shadow: none;
     }
-    .tm-invoice-builder-fields {
-      grid-template-columns: 1fr;
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel > h2 {
+      opacity: 1 !important;
+      visibility: visible !important;
     }
-    .tm-invoice-builder-meta .tm-btn,
-    .tm-invoice-builder-panel > .tm-btn {
-      width: 100%;
-      justify-content: center;
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel > p {
+      color: #475569 !important;
     }
-  }
-  .tm-invoice-builder-error {
-    border: 1px solid rgba(185, 28, 28, 0.22);
-    border-radius: 8px;
-    background: #fef2f2;
-    color: #991b1b;
-    font-weight: 900;
-    padding: 12px;
-    max-width: 980px;
-  }
+
+    .tm-pro-shell--invoice-builder
+    .tm-invoice-builder-panel[aria-label="Approved but not completed"] > p {
+      color: #991b1b !important;
+    }
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel .tm-crm-kicker {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      margin: 0 0 6px;
+      padding: 0;
+      border: 0 !important;
+      border-radius: 0;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: #0e7490 !important;
+      font-size: .74rem;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      line-height: 1.2;
+    }
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel summary {
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .tm-pro-shell--invoice-builder
+    .tm-invoice-builder-panel summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .tm-pro-shell--invoice-builder
+    details.tm-invoice-builder-panel > summary,
+    .tm-pro-shell--invoice-builder
+    .tm-invoice-builder-panel > details > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+    }
+
+    .tm-pro-shell--invoice-builder
+    details.tm-invoice-builder-panel > summary::after,
+    .tm-pro-shell--invoice-builder
+    .tm-invoice-builder-panel > details > summary::after {
+      content: "+";
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border: 1px solid rgba(14, 116, 144, .2);
+      border-radius: 999px;
+      background: #ecfeff;
+      color: #0e7490;
+      font-weight: 900;
+    }
+
+    .tm-pro-shell--invoice-builder
+    details.tm-invoice-builder-panel[open] > summary::after,
+    .tm-pro-shell--invoice-builder
+    .tm-invoice-builder-panel > details[open] > summary::after {
+      content: "âˆ’";
+    }
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-empty {
+      color: #475569;
+    }
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-job {
+      color: #0f172a;
+    }
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-job label,
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-fields .tm-label {
+      color: #334155;
+    }
+
+    .tm-pro-shell--invoice-builder .tm-invoice-builder-panel .tm-btn-primary {
+      color: #111827;
+    }
+    .tm-invoice-builder-error {
+      border: 1px solid rgba(185, 28, 28, 0.22);
+      border-radius: 8px;
+      background: #fef2f2;
+      color: #991b1b;
+      font-weight: 900;
+      padding: 12px;
+      max-width: 980px;
+    }
+    @media (max-width: 760px) {
+      .tm-pro-shell--invoice-builder {
+        width: 100%;
+        min-width: 0;
+        padding-top: 18px;
+        overflow-x: clip;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-pro-pagehead {
+        min-width: 0;
+        padding-top: 8px;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-panel {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 14px;
+        border-left-width: 1px;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-job {
+        grid-template-columns: 1fr;
+        min-width: 0;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-job input {
+        margin-top: 0;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-meta,
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-money {
+        min-width: 0;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-meta span,
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-money span {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-meta .tm-btn,
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-panel > .tm-btn {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+      }
+
+      .tm-pro-shell--invoice-builder
+      .tm-invoice-builder-panel:last-child > .tm-btn-primary {
+        width: 100%;
+      }
+    }
+
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-shell">
+<section class="tm-pro-shell tm-pro-shell--invoice-builder">
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
@@ -127,8 +284,8 @@
 
   <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices">
     <section class="tm-invoice-builder-panel" aria-label="Select Repair Jobs">
-      <div class="tm-crm-kicker">Select Repair Jobs</div>
-      <h2 style="margin:4px 0 0;">Ready for Invoice</h2>
+      <div class="tm-crm-kicker">Repair Jobs</div>
+      <h2>Ready for Invoice</h2>
       <p style="margin:6px 0 0; color:#64748b; font-weight:800;">Final Invoices can only be created after repair completion is saved.</p>
       {% if job_groups.ready %}
       <div class="tm-invoice-builder-list">
@@ -177,8 +334,8 @@
     </section>
 
     <section class="tm-invoice-builder-panel" aria-label="Approved but not completed" style="margin-top:16px;">
-      <div class="tm-crm-kicker">Approved But Not Completed</div>
-      <h2 style="margin:4px 0 0;">Approved but not completed</h2>
+      <div class="tm-crm-kicker">Not Ready</div>
+      <h2>Approved but not completed</h2>
       <p style="margin:6px 0 0; color:#991b1b; font-weight:900;">Complete the repair workspace first. These jobs cannot be invoiced yet.</p>
       {% if job_groups.approved %}
       <div class="tm-invoice-builder-list">
@@ -210,8 +367,8 @@
     <details class="tm-invoice-builder-panel" aria-label="Already Invoiced" style="margin-top:16px;">
       <summary>
         <span>
-          <span class="tm-crm-kicker">Already Invoiced</span>
-          <strong style="display:block; margin-top:4px;">Already Invoiced ({{ job_groups.already_invoiced|length }})</strong>
+          <span class="tm-crm-kicker">Invoice History</span>
+          <strong style="display:block;">Already Invoiced ({{ job_groups.already_invoiced|length }})</strong>
         </span>
       </summary>
       {% if job_groups.already_invoiced %}
@@ -239,8 +396,8 @@
       <details aria-label="Invoice Adjustments">
         <summary>
           <span>
-            <span class="tm-crm-kicker">Invoice Adjustments</span>
-            <strong style="display:block; margin-top:4px;">Invoice Adjustments</strong>
+            <span class="tm-crm-kicker">Optional</span>
+            <strong style="display:block;">Invoice Adjustments</strong>
           </span>
         </summary>
         <div class="tm-invoice-builder-fields">

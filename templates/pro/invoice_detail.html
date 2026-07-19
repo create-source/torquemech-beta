@@ -171,20 +171,210 @@
   .tm-invoice-parts-detail li + li {
     margin-top: 6px;
   }
-  @media (max-width: 760px) {
-    .tm-invoice-grid,
-    .tm-invoice-options,
-    .tm-invoice-service-money { grid-template-columns: 1fr; }
-    .tm-invoice-header { display: grid; }
-    .tm-invoice-header-right { text-align: left; }
-    .tm-invoice-totals { max-width: none; margin-left: 0; }
-    .tm-invoice-actions .tm-btn { width: 100%; justify-content: center; }
+  .tm-pro-shell--invoice-detail .tm-invoice-paper {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: rgba(148, 163, 184, .36);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, .18);
   }
+  .tm-pro-shell--invoice-detail .tm-invoice-paper h2,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper h3,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-heading,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper strong,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper div,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper li {
+    color: #0f172a !important;
+  }
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-crm-kicker,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-field span,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-total-row span,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-service-money span {
+    color: #526174 !important;
+  }
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-summary,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-service-money div,
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-parts-detail {
+    border-color: rgba(148, 163, 184, .28);
+    background: #f8fafc;
+  }
+  .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-invoice-service {
+    border-color: rgba(148, 163, 184, .32);
+    background: #ffffff;
+  }
+  .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel {
+    border-color: rgba(148, 163, 184, .24);
+    background: linear-gradient(145deg, #111c2d, #0b1728);
+    color: #d7e1ee;
+  }
+  .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel h2 {
+    color: #f8fafc !important;
+  }
+  .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel .tm-crm-kicker {
+    color: #99f6e4 !important;
+  }
+  .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel .tm-invoice-option {
+    border-color: rgba(148, 163, 184, .24);
+    background: rgba(15, 28, 47, .78);
+    color: #d7e1ee;
+  }
+
+    /* Final Invoice page-only section labels */
+    .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-crm-kicker,
+    .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel .tm-crm-kicker {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      margin: 0 0 6px;
+      padding: 0;
+      border: 0 !important;
+      border-radius: 0;
+      background: transparent !important;
+      box-shadow: none;
+      font-size: .76rem;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .tm-pro-shell--invoice-detail .tm-invoice-paper .tm-crm-kicker {
+      color: #0e7490 !important;
+    }
+
+    .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel .tm-crm-kicker {
+      color: #99f6e4 !important;
+    }
+
+    .tm-pro-shell--invoice-detail .tm-invoice-paper section[aria-label="Completed Services"] > h2,
+    .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel > h2 {
+      margin: 0;
+    }
+
+    .tm-pro-shell--invoice-detail .tm-invoice-summary {
+      overflow: hidden;
+    }
+
+    .tm-pro-shell--invoice-detail .tm-invoice-panel {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .tm-pro-shell--invoice-detail .tm-invoice-paper,
+    .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel {
+      max-width: 920px;
+    }
+    @media (max-width: 760px) {
+      .tm-pro-shell--invoice-detail {
+        width: 100%;
+        min-width: 0;
+        padding-top: 14px;
+        overflow-x: clip;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-pro-pagehead {
+        min-width: 0;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-grid,
+      .tm-pro-shell--invoice-detail .tm-invoice-options,
+      .tm-pro-shell--invoice-detail .tm-invoice-service-money {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-header {
+        display: grid;
+        gap: 16px;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-header-right {
+        text-align: left;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-totals {
+        max-width: none;
+        margin-left: 0;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-actions {
+        width: 100%;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-actions .tm-btn,
+      .tm-pro-shell--invoice-detail .tm-invoice-actions form,
+      .tm-pro-shell--invoice-detail .tm-invoice-actions button {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-panel {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 13px;
+        border-left-width: 1px;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-heading {
+        font-size: 1.45rem;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-service {
+        min-width: 0;
+        padding: 14px;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-field,
+      .tm-pro-shell--invoice-detail .tm-invoice-field strong,
+      .tm-pro-shell--invoice-detail .tm-invoice-field div,
+      .tm-pro-shell--invoice-detail .tm-invoice-total-row span,
+      .tm-pro-shell--invoice-detail .tm-invoice-total-row strong {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-total-row {
+        align-items: flex-start;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-total-row span {
+        flex: 1 1 auto;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-total-row strong {
+        flex: 0 1 auto;
+        text-align: right;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel {
+        padding-top: 16px;
+      }
+    }
+
+      @media (max-width: 520px) {
+        .tm-pro-shell--invoice-detail {
+          padding-top: 20px;
+        }
+
+        .tm-pro-shell--invoice-detail .tm-invoice-panel {
+          padding: 12px;
+        }
+
+        .tm-pro-shell--invoice-detail .tm-invoice-summary,
+        .tm-pro-shell--invoice-detail .tm-invoice-service,
+        .tm-pro-shell--invoice-detail .tm-invoice-parts-detail {
+          padding: 12px;
+        }
+
+        .tm-pro-shell--invoice-detail .tm-invoice-total-row {
+          gap: 8px;
+        }
+      }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-shell">
+<section class="tm-pro-shell tm-pro-shell--invoice-detail">
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
@@ -210,7 +400,7 @@
   </section>
   {% endif %}
 
-  <section class="tm-invoice-panel" aria-label="Invoice details">
+  <section class="tm-invoice-panel tm-invoice-paper" aria-label="Invoice details">
     {% if not customer or not vehicle or not invoice %}
     <div class="tm-invoice-fallback">This invoice is missing a linked customer, vehicle, or invoice record. Reopen it from the vehicle timeline or repair workspace to verify the relationship.</div>
     {% endif %}
@@ -252,8 +442,8 @@
     </section>
 
     <section style="margin-top:18px;" aria-label="Completed Services">
-      <div class="tm-crm-kicker">Completed Services</div>
-      <h2 style="margin:4px 0 0;">Completed Services</h2>
+      <div class="tm-crm-kicker">Completed Work</div>
+      <h2 style="margin:0;">Completed Services</h2>
       <div class="tm-invoice-service-list">
         {% for item in invoice["items"] %}
         <article class="tm-invoice-service">
@@ -323,9 +513,9 @@
     </section>
   </section>
 
-  <section class="tm-invoice-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
-    <div class="tm-crm-kicker">Customer PDF Details</div>
-    <h2 style="margin:4px 0 0;">Customer PDF Details</h2>
+  <section class="tm-invoice-panel tm-invoice-pdf-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
+    <div class="tm-crm-kicker">PDF Options</div>
+    <h2 style="margin:0;">Customer PDF Details</h2>
     <form method="get" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">
       <div class="tm-invoice-options">
         <label class="tm-invoice-option"><input type="checkbox" name="show_completion_date" value="1" {% if invoice.pdf_display_options.show_completion_date %}checked{% endif %}><span>Show completion date</span></label>

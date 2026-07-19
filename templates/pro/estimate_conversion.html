@@ -170,22 +170,180 @@
     margin-top: 12px;
   }
 
+  /* Estimate Conversion: light work cards inside dark Pro shell */
+  .tm-pro-shell--estimate-conversion .tm-convert-panel {
+    border-color: rgba(15, 23, 42, .12);
+    background: #f8fafc;
+    color: #0f172a;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-step-head h2 {
+    color: #0f172a !important;
+    opacity: 1 !important;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-step-kicker {
+    color: #0e7490 !important;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-panel .tm-pro-subtitle {
+    color: #526174 !important;
+    opacity: 1 !important;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-linked-record-summary div {
+    border-color: rgba(15, 23, 42, .12);
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: none;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-linked-record-summary span {
+    color: #526174 !important;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-linked-record-summary strong {
+    color: #0f172a !important;
+    opacity: 1 !important;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-requirement {
+    border-color: rgba(45, 212, 191, .38);
+    background: rgba(20, 184, 166, .14);
+    color: #ccfbf1;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-choice {
+    border-color: rgba(148, 163, 184, .24);
+    background: rgba(15, 28, 47, .82);
+    color: #f8fafc;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-choice--selected {
+    border-color: rgba(45, 212, 191, .62);
+    background: rgba(20, 184, 166, .18);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, .16);
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-service {
+    border-color: rgba(148, 163, 184, .42);
+    background: #e8edf3;
+    color: #0f172a;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-service {
+    color: #0f172a;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-service-title,
+  .tm-pro-shell--estimate-conversion .tm-convert-money-grid strong {
+    color: #0f172a !important;
+    opacity: 1 !important;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-money-grid span {
+    color: #526174 !important;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-service input[type="checkbox"] {
+    flex: 0 0 auto;
+    margin-top: 3px;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-linked-actions .tm-btn-secondary {
+    color: #ffffff;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-input {
+    border-color: rgba(148, 163, 184, .46);
+    background: #e8edf3;
+    color: #0f172a;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, .18);
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-panel:last-child {
+    border-color: rgba(249, 115, 22, .28);
+    background: #f8fafc;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-convert-panel:last-child {
+    display: flex;
+    align-items: center;
+  }
+
+  .tm-pro-shell--estimate-conversion
+  .tm-convert-panel:last-child .tm-btn-primary {
+    min-height: 52px;
+    padding-inline: 22px;
+    font-weight: 900;
+  }
+
   @media (max-width: 760px) {
+    .tm-pro-shell--estimate-conversion {
+      width: 100%;
+      min-width: 0;
+      padding-top: 18px;
+      overflow-x: clip;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-pro-pagehead {
+      min-width: 0;
+      padding-top: 8px;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-convert-panel,
+    .tm-pro-shell--estimate-conversion .tm-convert-service,
+    .tm-pro-shell--estimate-conversion .tm-linked-record-summary div {
+      min-width: 0;
+      max-width: 100%;
+    }
+
     .tm-convert-grid {
       grid-template-columns: 1fr;
     }
 
     .tm-convert-requirement {
-      font-size: 1rem;
-      line-height: 1.45;
-      padding: 16px;
+      font-size: .94rem;
+      line-height: 1.4;
+      padding: 13px;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-convert-panel {
+      padding: 13px;
+    }
+
+    .tm-convert-step-head {
+      display: grid;
+      gap: 8px;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-btn {
+      width: 100%;
+      justify-content: center;
+    }
+    .tm-pro-shell--estimate-conversion
+    .tm-convert-panel:last-child .tm-btn-primary {
+      width: 100%;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-convert-service {
+      padding: 13px;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-convert-money-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-shell">
+<section class="tm-pro-shell tm-pro-shell--estimate-conversion">
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>

@@ -1,5 +1,213 @@
 {% extends "layout.html" %}
 
+
+{% block page_css %}
+<style>
+  .tm-repair-guide-category {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .tm-repair-guide-category > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 64px;
+    padding: 16px 18px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--tm-text);
+    background: linear-gradient(180deg, var(--tm-surface) 0%, var(--tm-surface-3) 100%);
+  }
+
+  .tm-repair-guide-category > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tm-repair-guide-category__heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .tm-repair-guide-category__heading h2 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  .tm-repair-guide-category__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    min-height: 26px;
+    padding: 3px 9px;
+    border: 1px solid rgba(96, 165, 250, 0.22);
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.10);
+    color: var(--tm-blue-light);
+    font-size: 0.76rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .tm-repair-guide-category__chevron {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--tm-border);
+    border-radius: 10px;
+    background: var(--tm-surface-2);
+    color: var(--tm-text);
+    font-size: 1rem;
+    font-weight: 900;
+    transition: transform 0.18s ease, background 0.18s ease;
+  }
+
+  .tm-repair-guide-category[open] > summary {
+    border-bottom: 1px solid var(--tm-border);
+  }
+
+  .tm-repair-guide-category[open] .tm-repair-guide-category__chevron {
+    transform: rotate(90deg);
+    background: rgba(96, 165, 250, 0.12);
+  }
+
+  .tm-repair-guide-category__content {
+    padding: 16px;
+  }
+
+  .tm-repair-guide-category .tm-guide-grid {
+    margin-top: 0;
+  }
+
+  @media (max-width: 640px) {
+    .tm-repair-guide-category > summary {
+      min-height: 58px;
+      padding: 14px;
+    }
+
+    .tm-repair-guide-category__heading {
+      gap: 9px;
+    }
+
+    .tm-repair-guide-category__heading h2 {
+      font-size: 1.15rem;
+    }
+
+    .tm-repair-guide-category__content {
+      padding: 12px;
+    }
+
+    .tm-repair-guide-category .tm-guide-grid {
+      gap: 10px;
+    }
+
+    .tm-repair-guide-category .tm-guide-card {
+      padding: 14px;
+      border-radius: 14px;
+    }
+  }
+
+  /* Continue Workflow cards — keep text readable in dark theme */
+  .tm-workflow-entry-card,
+  .tm-workflow-entry-card:first-child {
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    background: linear-gradient(
+      180deg,
+      #101d30 0%,
+      #0c1829 100%
+    ) !important;
+    color: #f8fafc !important;
+    box-shadow: none !important;
+  }
+
+  .tm-workflow-entry-card strong {
+    color: #ffffff !important;
+  }
+
+  .tm-workflow-entry-card .tm-muted {
+    color: #aebdd0 !important;
+  }
+
+  .tm-workflow-entry-card:hover,
+  .tm-workflow-entry-card:focus-visible {
+    border-color: rgba(96, 165, 250, 0.42) !important;
+    background: #132238 !important;
+  }
+
+  /* Compact spacing between repair-guide categories */
+  .tm-repair-guide-group.tm-section {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
+  .tm-repair-guide-group + .tm-repair-guide-group {
+    margin-top: 0;
+  }
+
+  @media (max-width: 640px) {
+    .tm-repair-guide-group.tm-section {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .tm-repair-guide-category > summary {
+      min-height: 54px;
+      padding: 12px 13px;
+    }
+  }
+
+  /* Repair Guides — override global light-card rule */
+  [data-guide-browse-section] .tm-workflow-entry-card:first-child,
+  [data-guide-browse-section] .tm-workflow-entry-card:first-child strong {
+    color: #ffffff !important;
+  }
+
+  [data-guide-browse-section] .tm-workflow-entry-card:first-child .tm-muted {
+    color: #aebdd0 !important;
+  }
+
+  [data-guide-browse-section] .tm-workflow-entry-card:first-child {
+    background: linear-gradient(
+      180deg,
+      #101d30 0%,
+      #0c1829 100%
+    ) !important;
+  }
+
+  /* Repair Guides — slightly tighter mobile typography */
+  @media (max-width: 640px) {
+    [data-guide-browse-section] h2 {
+      font-size: 1.35rem;
+    }
+
+    .tm-workflow-entry-card strong {
+      font-size: 0.95rem;
+    }
+
+    .tm-workflow-entry-card .tm-muted {
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .tm-repair-guide-category__heading h2 {
+      font-size: 1.02rem;
+    }
+
+    .tm-repair-guide-category__count {
+      min-height: 23px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="tm-section">
   <div class="tm-card">
@@ -64,35 +272,45 @@
 
 {% for group in guide_groups %}
 <section class="tm-section tm-repair-guide-group" data-guide-group>
-  <div class="tm-card">
-    <h2>{{ group.name }}</h2>
+  <details class="tm-card tm-repair-guide-category">
+    <summary>
+      <div class="tm-repair-guide-category__heading">
+        <h2>{{ group.name }}</h2>
+        <span class="tm-repair-guide-category__count">
+          {{ group.guides|length }} guide{% if group.guides|length != 1 %}s{% endif %}
+        </span>
+      </div>
+      <span class="tm-repair-guide-category__chevron" aria-hidden="true">&rsaquo;</span>
+    </summary>
 
-    <div class="tm-guide-grid">
-      {% for guide in group.guides %}
-      <a
-        class="tm-guide-card"
-        href="/repair-guides/{{ guide.slug }}"
-        data-guide-card
-        data-title="{{ guide.title|default('', true)|e }}"
-        data-keywords="{{ ([guide.slug|default('', true)|replace('-', ' '), group.name|default('', true), guide.subcategory|default('', true), guide.service_name|default('', true), guide.service_code|default('', true)|replace('_', ' ')] + guide.keywords + guide.search_terms + guide.tags + guide.related_systems + guide.related_obd_codes)|join(' ')|e }}"
-        data-symptoms="{{ (guide.symptoms + guide.related_symptoms)|join(' ')|e }}"
-        data-related="{{ guide.recommended_repairs|join(' ')|e }}"
-        data-summary="{{ guide.summary|default('', true)|e }}"
-      >
-        {% if guide.difficulty %}
-        <div class="tm-difficulty-badge">{{ guide.difficulty }}</div>
-        {% endif %}
-        <h3>{{ guide.title }}</h3>
-        {% if guide.summary %}
-        <p class="tm-muted">{{ guide.summary }}</p>
-        {% else %}
-        <p class="tm-muted">Open repair guide</p>
-        {% endif %}
-        <div class="tm-guide-card__footer">Open repair path &rarr;</div>
-      </a>
-      {% endfor %}
+    <div class="tm-repair-guide-category__content">
+      <div class="tm-guide-grid">
+        {% for guide in group.guides %}
+        <a
+          class="tm-guide-card"
+          href="/repair-guides/{{ guide.slug }}"
+          data-guide-card
+          data-title="{{ guide.title|default('', true)|e }}"
+          data-keywords="{{ ([guide.slug|default('', true)|replace('-', ' '), group.name|default('', true), guide.subcategory|default('', true), guide.service_name|default('', true), guide.service_code|default('', true)|replace('_', ' ')] + guide.keywords + guide.search_terms + guide.tags + guide.related_systems + guide.related_obd_codes)|join(' ')|e }}"
+          data-symptoms="{{ (guide.symptoms + guide.related_symptoms)|join(' ')|e }}"
+          data-related="{{ guide.recommended_repairs|join(' ')|e }}"
+          data-summary="{{ guide.summary|default('', true)|e }}"
+        >
+          {% if guide.difficulty %}
+          <div class="tm-difficulty-badge">{{ guide.difficulty }}</div>
+          {% endif %}
+          <h3>{{ guide.title }}</h3>
+          {% if guide.summary %}
+          <p class="tm-muted">{{ guide.summary }}</p>
+          {% else %}
+          <p class="tm-muted">Open repair guide</p>
+          {% endif %}
+          <div class="tm-guide-card__footer">Open repair path &rarr;</div>
+        </a>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </details>
 </section>
 {% endfor %}
 

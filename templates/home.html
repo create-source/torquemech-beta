@@ -28,7 +28,6 @@
 
     <div class="tm-homeHero__actions">
       <a href="/estimator" class="tm-btn tm-btn-primary">Start Guided Estimate</a>
-      <a href="#quick-find" class="tm-btn tm-btn-secondary">Search Code or Symptom</a>
     </div>
     <p class="tm-homeHero__guideNote">New here? We&apos;ll walk you through your first estimate.</p>
 
@@ -40,22 +39,28 @@
   </div>
 </section>
 
-<div id="quick-find">
-  {% include "partials/quick_find.html" %}
-</div>
 
-<section class="tm-homeSection tm-homeSection--compactStart">
-  <div class="tm-homeSection__head">
-    <h2>Popular Starting Points</h2>
+<section class="tm-homeExplore" aria-labelledby="tm-homeExplore-title">
+  <div class="tm-homeExplore__head">
+    <div class="tm-eyebrow">Explore TorqueMech</div>
+    <h2 id="tm-homeExplore-title">Start with the tool that matches the job.</h2>
   </div>
 
-  <div class="tm-homeShortcutRow" aria-label="Popular starting points">
-    <a class="tm-homeShortcut" href="/obd/p0300">P0300</a>
-    <a class="tm-homeShortcut" href="/symptoms/rough-idle">Rough Idle</a>
-    <a class="tm-homeShortcut" href="/symptoms/brake-noise">Brake Noise</a>
-    <a class="tm-homeShortcut" href="/cost/spark-plug-replacement">Spark Plugs</a>
+  <div class="tm-homeExplore__grid">
+    <a class="tm-homeExplore__card" href="/diagnostics">
+      <span class="tm-homeExplore__label">Quick Find</span>
+      <strong>Search codes, symptoms, and costs</strong>
+      <span>Move from the problem toward the repair path before choosing parts.</span>
+    </a>
+
+    <a class="tm-homeExplore__card" href="/repair-guides">
+      <span class="tm-homeExplore__label">Repair Guides</span>
+      <strong>Review the repair before starting</strong>
+      <span>See checks, repair steps, labor context, and related work.</span>
+    </a>
   </div>
 </section>
+
 {% endblock %}
 
-{% block page_js %}<script src="/static/quick_find.js?v=5"></script><script src="/static/home.js?v=3"></script>{% endblock %}
+{% block page_js %}<script src="/static/home.js?v=3"></script>{% endblock %}

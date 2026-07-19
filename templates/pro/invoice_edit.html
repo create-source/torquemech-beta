@@ -65,6 +65,44 @@
     gap: 10px;
     margin-top: 16px;
   }
+    /* Edit Invoice page */
+    .tm-pro-shell--invoice-edit .tm-invoice-edit-panel {
+      color: #0f172a;
+    }
+
+    .tm-pro-shell--invoice-edit .tm-invoice-edit-panel .tm-crm-kicker {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      margin: 0 0 6px;
+      padding: 0;
+      border: 0 !important;
+      border-radius: 0;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: #0e7490 !important;
+      font-size: .74rem;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .tm-pro-shell--invoice-edit .tm-invoice-edit-panel h2,
+    .tm-pro-shell--invoice-edit .tm-invoice-edit-panel h3,
+    .tm-pro-shell--invoice-edit .tm-invoice-edit-panel strong {
+      color: #0f172a;
+    }
+
+    .tm-pro-shell--invoice-edit .tm-invoice-edit-panel .tm-label {
+      color: #334155;
+    }
+
+    .tm-pro-shell--invoice-edit .tm-invoice-options .tm-invoice-option {
+      border-color: rgba(15, 23, 42, .12);
+      background: #f8fafc;
+      color: #334155;
+    }
   @media (max-width: 760px) {
     .tm-invoice-edit-grid,
     .tm-invoice-edit-money { grid-template-columns: 1fr; }
@@ -74,7 +112,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-shell">
+<section class="tm-pro-shell tm-pro-shell--invoice-edit">
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>

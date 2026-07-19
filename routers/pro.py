@@ -10085,7 +10085,7 @@ def load_customer_vehicle(
 @router.get("", response_class=HTMLResponse)
 def pro_welcome(request: Request):
     return templates.TemplateResponse(
-        "pro/welcome_intro.html",
+        "pro_home_preview.html",
         {
             "request": request,
         },

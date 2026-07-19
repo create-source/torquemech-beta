@@ -16,7 +16,7 @@
   
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
+  <meta name="color-scheme" content="dark" />
 
   <title>{% block title %}TorqueMech — Repair Estimates, Repair Guides & Repair Intelligence{% endblock %}</title>
 
@@ -67,7 +67,7 @@
   {% block page_css %}{% endblock %}
 </head>
 
-<body>
+<body class="{% block body_class %}{% endblock %}">
   {% include "partials/nav.html" %}
 
   <main class="tm-container">

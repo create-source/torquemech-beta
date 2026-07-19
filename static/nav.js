@@ -34,10 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
     menu.hidden = true;
     backdrop.hidden = true;
     btn.setAttribute("aria-expanded", "false");
+    collapseResources();
   }
 
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
+
     if (menu.hidden) {
       openMenu();
     } else {
@@ -47,8 +49,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   backdrop.addEventListener("click", closeMenu);
 
+  menu.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeMenu);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (menu.hidden) return;
+    if (menu.contains(e.target) || btn.contains(e.target)) return;
+
+    closeMenu();
+  });
+
   if (resourcesBtn && resourcesPanel) {
     collapseResources();
+
     resourcesBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       toggleResources();

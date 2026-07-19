@@ -1522,7 +1522,6 @@
   const laborBreakdownContent = $("laborBreakdownContent");
   const laborBreakdownChevron = $("laborBreakdownChevron");
   const vehiclesContainer = $("vehiclesContainer");
-  const addVehicleBtn = $("addVehicleBtn");
 
   function setLaborBreakdownExpanded(expanded) {
     if (!laborBreakdownToggle || !laborBreakdownContent) return;
@@ -3144,6 +3143,46 @@
   flatRatePriceEl?.addEventListener("input", syncLivePricingFromInputs);
   travelFeeEl?.addEventListener("input", syncLivePricingFromInputs);
 
+  function installQuantityFocusBehavior(inputEl) {
+    if (!inputEl) return;
+
+    const selectCurrentValue = () => {
+      if (!inputEl.value) return;
+
+      try {
+        inputEl.select();
+      } catch (_) {}
+
+      try {
+        inputEl.setSelectionRange(0, String(inputEl.value).length);
+      } catch (_) {}
+    };
+
+    inputEl.addEventListener("focus", () => {
+      selectCurrentValue();
+      window.requestAnimationFrame?.(selectCurrentValue);
+    });
+
+    inputEl.addEventListener("click", () => {
+      selectCurrentValue();
+    });
+
+    inputEl.addEventListener("touchend", () => {
+      window.setTimeout(selectCurrentValue, 0);
+    });
+
+    inputEl.addEventListener("blur", () => {
+      const quantity = Number.parseInt(inputEl.value, 10);
+
+      if (!Number.isFinite(quantity) || quantity < 1) {
+        inputEl.value = "1";
+      }
+
+      updateQuantityPricingPreview();
+      syncLivePricingFromInputs();
+    });
+  }
+
   function installPricingNumberFocusBehavior(inputEl, fallbackValue = "0") {
     if (!inputEl) return;
 
@@ -3247,6 +3286,8 @@
       replaceOnNextEntry = false;
     }, true);
   }
+
+  installQuantityFocusBehavior(serviceQuantityEl);
 
   installPricingNumberFocusBehavior(laborHoursEl, "0");
   installPricingNumberFocusBehavior(partsPriceEl, "0");
@@ -5449,7 +5490,7 @@ const confidenceEl = document.getElementById("laborConfidence");
       await loadServices(shortcut.category);
     }
 
-    applyServiceSelection(shortcut.serviceCode);
+    applyServiceSelection(shortcut.serviceCode, shortcut.label);
     await loadServiceMeta(shortcut.serviceCode);
     readyForNextService = true;
     hidePairedSuggestions();
@@ -5567,8 +5608,22 @@ const confidenceEl = document.getElementById("laborConfidence");
     updateServiceClearButton();
   }
 
-  function applyServiceSelection(serviceCode) {
+  function ensureServiceOption(serviceCode, fallbackLabel = "") {
     if (!serviceEl) return;
+    if (!serviceCode) return;
+    const exists = Array.from(serviceEl.options || []).some((option) => option.value === serviceCode);
+    if (exists) return;
+
+    const knownOption = [...serviceOptions, ...allServiceOptions].find((option) => option.code === serviceCode);
+    const opt = document.createElement("option");
+    opt.value = serviceCode;
+    opt.textContent = knownOption?.name || fallbackLabel || serviceCode;
+    serviceEl.appendChild(opt);
+  }
+
+  function applyServiceSelection(serviceCode, fallbackLabel = "") {
+    if (!serviceEl) return;
+    ensureServiceOption(serviceCode, fallbackLabel);
     serviceEl.value = serviceCode;
     syncServiceSearchFromSelect();
     hideServiceResults();
@@ -5916,7 +5971,10 @@ const confidenceEl = document.getElementById("laborConfidence");
   });
   customerPhoneEl?.addEventListener("input", refreshQuotePreview);
   customerAgreesChk?.addEventListener("change", refreshApprovalStatus);
-  notesEl?.addEventListener("input", refreshQuotePreview);
+  notesEl?.addEventListener("input", () => {
+    refreshQuotePreview();
+    syncClearQuoteState();
+  });
   pdfShowGeneratedDateChk?.addEventListener("change", refreshQuotePreview);
   pdfShowHourlyRateChk?.addEventListener("change", () => {
     renderLineItems();
@@ -6437,8 +6495,49 @@ const confidenceEl = document.getElementById("laborConfidence");
     updateServiceClearButton();
   }
 
+  function syncClearQuoteState() {
+    if (!clearBtn) return;
+
+    const activeVehicle = getActiveVehicle() || {};
+
+    const hasVehicleData = Boolean(
+      activeVehicle.year ||
+      activeVehicle.make ||
+      activeVehicle.model
+    );
+
+    const hasVin = Boolean((vinEl?.value || "").trim());
+
+    const hasService = Boolean(
+      (serviceEl?.value || "").trim() ||
+      getCustomServiceName()
+    );
+
+    const hasPricing = Boolean(
+      Number(laborHoursEl?.value || 0) > 0 ||
+      Number(partsPriceEl?.value || 0) > 0 ||
+      Number(flatRatePriceEl?.value || 0) > 0 ||
+      Number(travelFeeEl?.value || 0) > 0
+    );
+
+    const hasNotes = Boolean((notesEl?.value || "").trim());
+    const hasJobs = lineItems.length > 0;
+
+    const isActive =
+      hasVehicleData ||
+      hasVin ||
+      hasService ||
+      hasPricing ||
+      hasNotes ||
+      hasJobs;
+
+    clearBtn.disabled = !isActive;
+    clearBtn.classList.toggle("is-active", isActive);
+  }
   function updateEstimateButtonState() {
     if (!estimateBtn) return;
+
+    syncClearQuoteState();
 
     const activeVehicle = getActiveVehicle() || {};
     const hasBasics = !!(activeVehicle.year && activeVehicle.make && activeVehicle.model);
@@ -7302,6 +7401,7 @@ if (getEstimateHint) {
 
     refreshQuotePreview();
     updateEstimateButtonState();
+    syncClearQuoteState();
     void refreshEstimatorPartsSources();
     setStatus("info", "Cleared. Start a new estimate.");
   });
@@ -7311,6 +7411,8 @@ if (getEstimateHint) {
     vinPanel?.classList.toggle("hidden");
     vinToggle.classList.toggle("expanded");
   });
+
+  vinEl?.addEventListener("input", syncClearQuoteState);
 
   // ---- VIN decode ----
   vinLookupBtn?.addEventListener("click", async () => {
@@ -7610,10 +7712,6 @@ if (getEstimateHint) {
       setConfirmMessage("info", "Review the shared quote, then generate the customer PDF.");
     }
   });
-  addVehicleBtn?.addEventListener("click", () => {
-    addVehicleCard();
-  });
-
   customerNameEl?.addEventListener("input", () => {
     syncEstimateMeta();
   });
@@ -7632,20 +7730,6 @@ if (getEstimateHint) {
     el?.addEventListener("input", persistMechanicPreferencesFromControls);
     el?.addEventListener("blur", persistMechanicPreferencesFromControls);
   });
-
-  function addVehicleCard() {
-    const activeVehicleId = estimateState.activeVehicleId || estimateState.vehicles[0]?.id || "";
-    const activeYearSelect = activeVehicleId
-      ? document.querySelector(`.vehicle-year[data-vehicle-id="${activeVehicleId}"]`)
-      : document.querySelector(".vehicle-year");
-
-    if (activeYearSelect instanceof HTMLElement) {
-      activeYearSelect.scrollIntoView({ behavior: "smooth", block: "center" });
-      activeYearSelect.focus();
-    }
-
-    setStatus("info", "This quote uses one vehicle. Update the vehicle details below.");
-  }
 
   function removeVehicleCard(vehicleId) {
     if (estimateState.vehicles.length === 1) return;

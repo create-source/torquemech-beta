@@ -1,4 +1,4 @@
-/* ==========================================================
+﻿/* ==========================================================
    TorqueMech Design Tokens
    Permanent dark product foundation with compatibility aliases.
    ========================================================== */
@@ -33,7 +33,9 @@
   --tm-field-bg: #e8edf3;
   --tm-field-text: #0f172a;
   --tm-field-placeholder: #64748b;
-  --tm-field-border: rgba(15, 23, 42, 0.18);
+  --tm-field-border: #cbd5e1;
+  --tm-field-disabled-bg: #aeb7c3;
+  --tm-field-disabled-text: #526174;
 
   --tm-radius-sm: 8px;
   --tm-radius-md: 12px;
@@ -1375,7 +1377,7 @@ body.dark .tm-hero,
 }
 
 .tm-estimator-parts-disclosure[open] summary::after{
-  content:"−";
+  content:"âˆ’";
 }
 
 .tm-estimator-parts-source-list--grid{
@@ -10077,6 +10079,50 @@ body.tm-estimator-page .tm-estimate-action-panel__heading{
   line-height: 1.25;
 }
 
+body.tm-estimator-page .tm-pro-job-handoff{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(249, 115, 22, .38);
+  border-radius: 8px;
+  background: rgba(249, 115, 22, .12);
+}
+
+body.tm-estimator-page .tm-pro-job-handoff[hidden]{
+  display: none;
+}
+
+body.tm-estimator-page .tm-pro-job-handoff__title{
+  color: #f8fafc !important;
+  font-size: .98rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+body.tm-estimator-page .tm-pro-job-handoff__copy{
+  margin-top: 3px;
+  color: #b9c8dc !important;
+  font-size: .88rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+body.tm-estimator-page #convertToProJobMount{
+  display: flex;
+  justify-content: flex-end;
+}
+
+body.tm-estimator-page #convertToProJobBtn{
+  min-height: 42px;
+  border-color: rgba(249, 115, 22, .60) !important;
+  background: #f97316 !important;
+  color: #111827 !important;
+  box-shadow: 0 12px 24px rgba(249, 115, 22, .18) !important;
+}
+
 @media (max-width: 700px){
   body.tm-estimator-page .tm-estimator-quickstart__steps span:not(:last-child)::after{
     display: none;
@@ -10259,6 +10305,16 @@ body.tm-estimator-page .tm-estimate-action-panel__heading{
     padding-inline: 14px;
   }
 
+  body.tm-estimator-page .tm-pro-job-handoff{
+    grid-template-columns: 1fr;
+    padding: 11px;
+  }
+
+  body.tm-estimator-page #convertToProJobMount,
+  body.tm-estimator-page #convertToProJobBtn{
+    width: 100%;
+  }
+
   body.tm-estimator-page .tm-estimate-action-panel__button:disabled{
     border-color: rgba(148,163,184,.28) !important;
     background: rgba(51,65,85,.86) !important;
@@ -10376,8 +10432,7 @@ body.tm-estimator-page .tm-estimate-action-panel__heading{
 .tm-message-preview-text,
 .tm-message-placeholder-list code,
 .tm-tax-toggle,
-.tm-affix-input__symbol,
-.tm-shop-booking-url{
+.tm-affix-input__symbol{
   color: #0f172a !important;
 }
 
@@ -10493,4 +10548,2238 @@ body.tm-estimator-page .tm-estimate-action-panel__heading{
   border-color: rgba(15, 118, 110, .34);
   background: #f8fafc;
   color: #0f766e;
+}
+
+/* =========================================================
+   PRO CALENDAR DARK SURFACE
+   ========================================================= */
+
+.tm-calendar-shell{
+  --tm-calendar-panel: #111c2d;
+  --tm-calendar-panel-2: #0d1828;
+  --tm-calendar-card: #0b1728;
+  --tm-calendar-card-2: #132136;
+  --tm-calendar-border: rgba(148, 163, 184, .20);
+  --tm-calendar-border-strong: rgba(249, 115, 22, .38);
+  --tm-calendar-heading: #f8fafc;
+  --tm-calendar-text: #cbd5e1;
+  --tm-calendar-muted: #a9b6c8;
+  --tm-calendar-helper: #8fa1b7;
+}
+
+.tm-calendar-shell .tm-calendar-panel,
+.tm-calendar-shell .tm-calendar-card,
+.tm-calendar-shell .tm-calendar-convert-panel,
+.tm-calendar-shell .tm-calendar-linked,
+.tm-calendar-shell .tm-calendar-message-preview,
+.tm-calendar-shell .tm-calendar-empty{
+  border-color: var(--tm-calendar-border) !important;
+  background:
+    linear-gradient(
+      145deg,
+      var(--tm-calendar-panel),
+      var(--tm-calendar-panel-2)
+    ) !important;
+  color: var(--tm-calendar-text) !important;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, .22),
+    inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+
+.tm-calendar-shell .tm-calendar-card,
+.tm-calendar-shell .tm-calendar-convert-panel,
+.tm-calendar-shell .tm-calendar-linked,
+.tm-calendar-shell .tm-calendar-empty{
+  background:
+    linear-gradient(
+      145deg,
+      var(--tm-calendar-card-2),
+      var(--tm-calendar-card)
+    ) !important;
+  box-shadow: none;
+}
+
+.tm-calendar-shell .tm-calendar-panel > summary,
+.tm-calendar-shell .tm-calendar-panel h1,
+.tm-calendar-shell .tm-calendar-panel h2,
+.tm-calendar-shell .tm-calendar-panel h3,
+.tm-calendar-shell .tm-booking-link-panel h2,
+.tm-calendar-shell .tm-calendar-name,
+.tm-calendar-shell .tm-calendar-card strong,
+.tm-calendar-shell .tm-calendar-field strong,
+.tm-calendar-shell .tm-calendar-linked strong,
+.tm-calendar-shell .tm-calendar-message-preview strong,
+.tm-calendar-shell .tm-calendar-convert-mode,
+.tm-calendar-shell .tm-calendar-convert-mode label{
+  color: var(--tm-calendar-heading) !important;
+}
+
+.tm-calendar-shell .tm-calendar-panel p,
+.tm-calendar-shell .tm-calendar-message-preview p,
+.tm-calendar-shell .tm-calendar-when,
+.tm-calendar-shell .tm-calendar-field span,
+.tm-calendar-shell .tm-calendar-panel .tm-label,
+.tm-calendar-shell .tm-calendar-panel .tm-muted,
+.tm-calendar-shell .tm-calendar-panel .tm-hint,
+.tm-calendar-shell .tm-calendar-panel .tm-field-helper,
+.tm-calendar-shell .tm-calendar-empty,
+.tm-calendar-shell .tm-book-time-message,
+.tm-calendar-shell .tm-availability-status,
+.tm-calendar-shell .tm-availability-legend{
+  color: var(--tm-calendar-muted) !important;
+}
+
+.tm-calendar-shell .tm-crm-kicker,
+.tm-calendar-shell .tm-calendar-field span,
+.tm-calendar-shell .tm-calendar-panel .tm-label{
+  color: #d8e2ef !important;
+}
+
+.tm-calendar-shell .tm-calendar-panel details:not(.tm-calendar-reschedule):not(.tm-calendar-convert):not(.tm-calendar-message-editor),
+.tm-calendar-shell .tm-calendar-reschedule-panel{
+  border-color: rgba(148, 163, 184, .16) !important;
+  background: rgba(8, 17, 30, .40);
+  color: var(--tm-calendar-text);
+}
+
+.tm-calendar-shell .tm-booking-link-panel details{
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-radius: 8px;
+  padding: 11px 12px;
+}
+
+.tm-calendar-shell .tm-booking-link-panel details > summary,
+.tm-calendar-shell .tm-calendar-message-editor > summary,
+.tm-calendar-shell .tm-calendar-reschedule > summary,
+.tm-calendar-shell .tm-calendar-convert > summary{
+  color: var(--tm-calendar-heading) !important;
+}
+
+.tm-calendar-shell .tm-calendar-panel input:not([type="checkbox"]):not([type="radio"]),
+.tm-calendar-shell .tm-calendar-panel select,
+.tm-calendar-shell .tm-calendar-panel textarea,
+.tm-calendar-shell .tm-calendar-message-preview textarea{
+  border-color: rgba(148, 163, 184, .28) !important;
+  background: #17253a !important;
+  color: #f8fafc !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+
+.tm-calendar-shell .tm-calendar-panel input:not([type="checkbox"]):not([type="radio"]):focus,
+.tm-calendar-shell .tm-calendar-panel select:focus,
+.tm-calendar-shell .tm-calendar-panel textarea:focus,
+.tm-calendar-shell .tm-calendar-message-preview textarea:focus,
+.tm-calendar-shell .tm-calendar-panel input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+.tm-calendar-shell .tm-calendar-panel select:focus-visible,
+.tm-calendar-shell .tm-calendar-panel textarea:focus-visible,
+.tm-calendar-shell .tm-calendar-message-preview textarea:focus-visible{
+  border-color: #fb923c !important;
+  outline: 3px solid rgba(249, 115, 22, .22);
+  background: #1b2b43 !important;
+}
+
+.tm-calendar-shell .tm-calendar-panel input::placeholder,
+.tm-calendar-shell .tm-calendar-panel textarea::placeholder,
+.tm-calendar-shell .tm-calendar-message-preview textarea::placeholder{
+  color: var(--tm-calendar-helper) !important;
+  opacity: 1;
+}
+
+.tm-calendar-shell .tm-calendar-panel input:disabled,
+.tm-calendar-shell .tm-calendar-panel select:disabled,
+.tm-calendar-shell .tm-calendar-panel textarea:disabled,
+.tm-calendar-shell .tm-calendar-panel button:disabled{
+  border-color: rgba(148, 163, 184, .18) !important;
+  background: #101a2a !important;
+  color: #7f91a8 !important;
+  opacity: 1;
+}
+
+.tm-calendar-shell .tm-btn-secondary{
+  border-color: rgba(148, 163, 184, .22) !important;
+  background: #111c2d !important;
+  color: #f8fafc !important;
+  box-shadow: none;
+}
+
+.tm-calendar-shell .tm-btn-secondary:hover,
+.tm-calendar-shell .tm-btn-secondary:focus-visible{
+  border-color: var(--tm-calendar-border-strong) !important;
+  background: #18263b !important;
+  color: #ffffff !important;
+}
+
+.tm-calendar-shell .tm-btn-primary{
+  background: #f97316;
+  border-color: rgba(249, 115, 22, .58);
+  color: #111827;
+}
+
+.tm-calendar-shell .tm-btn-primary:hover,
+.tm-calendar-shell .tm-btn-primary:focus-visible{
+  background: #fb923c;
+  border-color: #fb923c;
+  color: #111827;
+}
+
+.tm-calendar-shell .tm-calendar-message-preview{
+  border-left-color: #0f766e !important;
+}
+
+.tm-calendar-shell .tm-calendar-copy-status,
+.tm-calendar-shell .tm-booking-link-status{
+  color: #5eead4 !important;
+}
+
+.tm-calendar-shell .tm-calendar-status[data-status="Requested"]{
+  background: rgba(249, 115, 22, .16);
+  color: #fed7aa;
+}
+
+.tm-calendar-shell .tm-calendar-status[data-status="Confirmed"],
+.tm-calendar-shell .tm-calendar-status[data-status="Converted"],
+.tm-calendar-shell .tm-calendar-status[data-status="Converted to Pro Job"]{
+  background: rgba(20, 184, 166, .16);
+  color: #99f6e4;
+}
+
+.tm-calendar-shell .tm-calendar-status[data-status="Rescheduled"]{
+  background: rgba(96, 165, 250, .16);
+  color: #bfdbfe;
+}
+
+.tm-calendar-shell .tm-calendar-status[data-status="Cancelled"],
+.tm-calendar-shell .tm-calendar-status[data-status="Handled"],
+.tm-calendar-shell .tm-calendar-status[data-status="Completed"],
+.tm-calendar-shell .tm-calendar-status[data-status="Past Appointment"]{
+  background: rgba(148, 163, 184, .14);
+  color: #cbd5e1;
+}
+
+.tm-calendar-shell .tm-calendar-status[data-status="Declined"]{
+  background: rgba(248, 113, 113, .16);
+  color: #fecaca;
+}
+
+.tm-calendar-shell .tm-calendar-notice{
+  border-color: rgba(20, 184, 166, .28);
+  background: rgba(20, 184, 166, .12);
+  color: #99f6e4;
+}
+
+.tm-calendar-shell .tm-book-warning{
+  border-color: rgba(249, 115, 22, .36);
+  background: rgba(249, 115, 22, .12);
+  color: #fed7aa;
+}
+
+.tm-calendar-shell .tm-availability-calendar{
+  border-color: rgba(148, 163, 184, .24) !important;
+  background: #0b1728 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+
+.tm-calendar-shell .tm-availability-month{
+  color: var(--tm-calendar-heading) !important;
+}
+
+.tm-calendar-shell .tm-availability-nav{
+  border-color: rgba(148, 163, 184, .22) !important;
+  background: #111c2d !important;
+  color: #f8fafc !important;
+}
+
+.tm-calendar-shell .tm-availability-nav:hover,
+.tm-calendar-shell .tm-availability-nav:focus-visible{
+  border-color: rgba(249, 115, 22, .45) !important;
+  background: #18263b !important;
+  outline: 3px solid rgba(249, 115, 22, .18);
+}
+
+.tm-calendar-shell .tm-availability-weekdays span{
+  color: #d8e2ef !important;
+}
+
+.tm-calendar-shell .tm-availability-day{
+  border-color: rgba(45, 212, 191, .38);
+  background: rgba(20, 184, 166, .12);
+  color: #ccfbf1;
+}
+
+.tm-calendar-shell .tm-availability-day:hover,
+.tm-calendar-shell .tm-availability-day:focus-visible{
+  border-color: #5eead4;
+  outline: 3px solid rgba(45, 212, 191, .20);
+}
+
+.tm-calendar-shell .tm-availability-day[aria-pressed="true"]{
+  border-color: #fb923c;
+  background: #f97316;
+  color: #111827;
+}
+
+.tm-calendar-shell .tm-availability-day:disabled{
+  border-color: rgba(148, 163, 184, .10);
+  background: #101a2a;
+  color: #73859c;
+}
+
+.tm-calendar-shell .tm-availability-legend span::before{
+  background: rgba(45, 212, 191, .50);
+}
+
+.tm-calendar-shell .tm-availability-legend .is-unavailable::before{
+  background: #334155;
+}
+
+.tm-calendar-shell .tm-calendar-panel > summary:focus-visible,
+.tm-calendar-shell .tm-booking-link-panel details > summary:focus-visible,
+.tm-calendar-shell .tm-calendar-message-editor > summary:focus-visible,
+.tm-calendar-shell .tm-calendar-reschedule > summary:focus-visible,
+.tm-calendar-shell .tm-calendar-convert > summary:focus-visible{
+  outline: 3px solid rgba(249, 115, 22, .22);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   PRO CALENDAR CLEAN FORM CONTROLS
+   Light fields with dark readable text.
+   ========================================================= */
+
+/* Main calendar form fields */
+.tm-calendar-shell .tm-calendar-panel input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.tm-calendar-shell .tm-calendar-panel select,
+.tm-calendar-shell .tm-calendar-panel textarea,
+.tm-calendar-shell .tm-calendar-message-preview textarea {
+  background: #e8edf3 !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .06) !important;
+  opacity: 1 !important;
+}
+
+/* Hover and focus */
+.tm-calendar-shell .tm-calendar-panel input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):hover,
+.tm-calendar-shell .tm-calendar-panel select:hover,
+.tm-calendar-shell .tm-calendar-panel textarea:hover,
+.tm-calendar-shell .tm-calendar-message-preview textarea:hover {
+  border-color: #94a3b8 !important;
+}
+
+.tm-calendar-shell .tm-calendar-panel input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus,
+.tm-calendar-shell .tm-calendar-panel select:focus,
+.tm-calendar-shell .tm-calendar-panel textarea:focus,
+.tm-calendar-shell .tm-calendar-message-preview textarea:focus {
+  background: #ffffff !important;
+  border-color: #60a5fa !important;
+  outline: none !important;
+  box-shadow:
+    0 0 0 3px rgba(96, 165, 250, .20),
+    inset 0 1px 2px rgba(15, 23, 42, .05) !important;
+}
+
+/* Placeholder text */
+.tm-calendar-shell .tm-calendar-panel input::placeholder,
+.tm-calendar-shell .tm-calendar-panel textarea::placeholder,
+.tm-calendar-shell .tm-calendar-message-preview textarea::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 1 !important;
+}
+
+/* Dropdown options */
+.tm-calendar-shell .tm-calendar-panel select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Disabled controls, including Time before a date is selected */
+.tm-calendar-shell .tm-calendar-panel input:disabled,
+.tm-calendar-shell .tm-calendar-panel select:disabled,
+.tm-calendar-shell .tm-calendar-panel textarea:disabled {
+  background: #aeb7c3 !important;
+  color: #526174 !important;
+  -webkit-text-fill-color: #526174 !important;
+  border-color: #94a3b8 !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
+/* Read-only booking link */
+.tm-calendar-shell .tm-calendar-panel input[readonly] {
+  background: #e8edf3 !important;
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+  opacity: 1 !important;
+}
+
+/* Browser autofill */
+.tm-calendar-shell .tm-calendar-panel input:-webkit-autofill,
+.tm-calendar-shell .tm-calendar-panel input:-webkit-autofill:hover,
+.tm-calendar-shell .tm-calendar-panel input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #0f172a !important;
+  box-shadow: 0 0 0 1000px #e8edf3 inset !important;
+  caret-color: #0f172a !important;
+}
+
+/* Calendar dates: available teal, unavailable white */
+.tm-calendar-shell .tm-availability-day:not(:disabled) {
+  background: #0c2a37 !important;
+  color: #ccfbf1 !important;
+  border-color: #185a5e !important;
+}
+
+.tm-calendar-shell .tm-availability-day:disabled {
+  background: #ffffff !important;
+  color: #64748b !important;
+  border-color: #d5dee9 !important;
+  opacity: 1 !important;
+}
+
+.tm-calendar-shell .tm-availability-day[aria-pressed="true"] {
+  background: #f97316 !important;
+  color: #111827 !important;
+  border-color: #fb923c !important;
+}
+
+/* Top navigation buttons */
+.tm-calendar-shell .tm-pro-pagehead .tm-pro-actions .tm-btn {
+  background: #132238 !important;
+  color: #ffffff !important;
+  border-color: #334761 !important;
+  box-shadow: none !important;
+}
+
+.tm-calendar-shell .tm-pro-pagehead .tm-pro-actions .tm-btn:hover,
+.tm-calendar-shell .tm-pro-pagehead .tm-pro-actions .tm-btn:focus-visible {
+  background: #1a2d47 !important;
+  border-color: #5f7897 !important;
+}
+
+/* =========================================================
+   APP DARK SURFACE UNIFICATION
+   Calendar-approved visual system applied across app surfaces.
+   ========================================================= */
+
+:root{
+  --tm-app-panel: #101b2f;
+  --tm-app-panel-deep: #0b1728;
+  --tm-app-panel-inner: #111c2d;
+  --tm-app-panel-inner-2: #17263d;
+  --tm-app-border: rgba(148, 163, 184, .22);
+  --tm-app-border-strong: rgba(148, 163, 184, .32);
+  --tm-app-heading: #f8fafc;
+  --tm-app-text: #d7e1ee;
+  --tm-app-muted: #aebdd0;
+  --tm-app-helper: #8fa1b7;
+}
+
+body{
+  background:
+    radial-gradient(circle at 12% 0%, rgba(59, 130, 246, .13), transparent 30rem),
+    linear-gradient(180deg, #071221 0%, #050e1b 100%) !important;
+  color: var(--tm-app-text);
+}
+
+main.tm-container,
+.tm-container{
+  background: transparent !important;
+}
+
+.tm-hero,
+.tm-card,
+.card,
+.tm-panel,
+.tm-linked-card,
+.tm-section-card,
+.tm-auth-panel,
+.tm-account-section,
+.tm-book-header,
+.tm-book-panel,
+.tm-pro-pagehead,
+.tm-pro-panel,
+.tm-pro-workflow,
+.tm-pro-workflow-step,
+.tm-pro-landing-header,
+.tm-pro-workflow-stage,
+.tm-pro-workflow-card,
+.tm-pro-product-card,
+.tm-pro-step-card,
+.tm-pro-final-cta,
+.tm-pro-welcome,
+.tm-quick-actions,
+.tm-dashboard-section,
+.tm-crm-toolbar,
+.tm-crm-add,
+.tm-crm-card,
+.tm-crm-panel,
+.tm-crm-empty,
+.tm-crm-vehicle-summary,
+.tm-shop-settings-panel,
+.tm-schedule-panel,
+.tm-message-template-card,
+.tm-message-preview,
+.tm-workflow-help,
+.diag-workflow-card,
+.tm-workflow-entry-card,
+.tm-intel-card,
+.tm-intel-row,
+.tm-intel-dashboard,
+.tm-parts-source-disclosure,
+.tm-parts-source-group,
+.tm-parts-intelligence-group,
+.tm-guide-card,
+.tm-repair-guide-item,
+.tm-repair-guide-search,
+.tm-repair-card,
+.tm-repair-intel-panel,
+.tm-repair-relation-group,
+.tm-blueprint-hero-card,
+.tm-blueprint-action-panel,
+.tm-service-card,
+.tm-service-meta span,
+.tm-service-estimate,
+.tm-estimate-total-bar,
+.tm-vehicle-context-note,
+.tm-workflow-context-note,
+.tm-quote-note,
+.tm-quick-quotes,
+.vin-section,
+.tm-homeHero__inner,
+.tm-homeToolCard,
+.tm-homeFeatureCard,
+.tm-homeSystemCard,
+.tm-homeKnowledgeItem,
+.tm-homeExplore__card,
+.tm-homeShortcut,
+.tm-quick-find,
+.tm-quick-find__result,
+.tm-shared-quote-card,
+.tm-shared-total-card,
+.tm-shared-snapshot-item,
+.tm-final-help,
+.estimator-final-actions,
+.tm-estimate-action-panel,
+.tm-empty,
+.empty-state,
+.modal,
+.tm-modal,
+table{
+  border-color: var(--tm-app-border) !important;
+  background:
+    linear-gradient(
+      145deg,
+      var(--tm-app-panel-inner),
+      var(--tm-app-panel-deep)
+    ) !important;
+  color: var(--tm-app-text) !important;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, .22),
+    inset 0 1px 0 rgba(255, 255, 255, .03) !important;
+}
+
+.tm-card .tm-card,
+.tm-panel .tm-card,
+.tm-crm-panel .tm-card,
+.tm-crm-panel .tm-crm-row,
+.tm-crm-disclosure,
+.tm-work-group,
+.tm-pro-card,
+.tm-pro-carousel-shell,
+.tm-pro-carousel-slide,
+.tm-dashboard-empty,
+.tm-calendar-shell .tm-calendar-card,
+.tm-calendar-shell .tm-calendar-convert-panel,
+.tm-calendar-shell .tm-calendar-linked,
+.tm-calendar-shell .tm-calendar-empty,
+.tm-book-hours,
+.tm-book-success,
+.tm-book-warning,
+.tm-account-readonly,
+.tm-account-status,
+.tm-crm-chip,
+.tm-crm-row,
+.tm-intel-badge,
+.tm-intel-flow-strip,
+.tm-homeSystemCard__chips em,
+.tm-homeTrustCues span,
+.tm-quick-find__code,
+.tm-quick-find__popular,
+tbody tr,
+thead th{
+  border-color: rgba(148, 163, 184, .18) !important;
+  background: rgba(15, 28, 47, .78) !important;
+  color: var(--tm-app-text) !important;
+  box-shadow: none !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+.tm-page-title,
+.tm-auth-panel h1,
+.tm-account-header h1,
+.tm-account-section h2,
+.tm-book-header h1,
+.tm-book-section-title,
+.tm-book-next h2,
+.tm-card h1,
+.tm-card h2,
+.tm-card h3,
+.card h1,
+.card h2,
+.card h3,
+.tm-pro-title,
+.tm-pro-welcome h2,
+.tm-dashboard-section h2,
+.tm-quick-actions h2,
+.tm-crm-name,
+.tm-crm-card strong,
+.tm-crm-panel summary,
+.tm-crm-panel h2,
+.tm-shop-settings-panel h1,
+.tm-shop-settings-panel h2,
+.tm-message-template-details > summary,
+.tm-message-preview-text,
+.tm-homeHero__title,
+.tm-homeSection__head h2,
+.tm-homeToolCard h3,
+.tm-homeFeatureCard__header h2,
+.tm-homeKnowledgeItem strong,
+.tm-homeSystemCard span,
+.tm-homeExplore__card strong,
+.tm-guide-card h3,
+.tm-guide-card__footer,
+.tm-quick-find__title,
+.tm-quick-find__result-title,
+.tm-shared-total-value,
+.tm-shared-quote-title,
+.estimator-final-heading{
+  color: var(--tm-app-heading) !important;
+}
+
+p,
+li,
+label,
+.tm-muted,
+.tm-subtle,
+.tm-pageLead,
+.tm-subtitle,
+.tm-lead,
+.tm-auth-panel p,
+.tm-account-header p,
+.tm-account-section p,
+.tm-book-description,
+.tm-book-form-intro,
+.tm-book-next ol,
+.tm-book-required,
+.tm-book-time-message,
+.tm-book-time-helper,
+.tm-crm-meta,
+.tm-crm-count,
+.tm-crm-empty,
+.tm-pro-subtitle,
+.tm-dashboard-section-note,
+.tm-quick-actions__note,
+.tm-shop-settings-help,
+.tm-workflow-steps,
+.tm-message-placeholder-list,
+.tm-message-preview,
+.tm-message-preview-text,
+.tm-homeHero__lead,
+.tm-homeHero__note,
+.tm-homeTrustCues span,
+.tm-homeSection__head p,
+.tm-homeToolCard p,
+.tm-homeFeatureCard__header p,
+.tm-homeKnowledgeItem span,
+.tm-homeSystemCard p,
+.tm-homeExplore__card span:last-child,
+.tm-guide-card p,
+.tm-quick-find__copy,
+.tm-quick-find__hint,
+.tm-quick-find__empty,
+.tm-quick-find__result-subtitle,
+.tm-shared-quote-subtitle,
+.tm-shared-total-label,
+.tm-shared-snapshot-item span,
+.estimator-final-hint,
+.tm-final-help__steps{
+  color: var(--tm-app-muted) !important;
+}
+
+.tm-eyebrow,
+.tm-panelLabel,
+.tm-crm-kicker,
+.tm-section-kicker,
+.tm-book-shop,
+.tm-shared-quote-kicker,
+.tm-homeHero__eyebrow,
+.tm-homeFeatureCard__eyebrow,
+.tm-homeSystemCard small,
+.tm-homeExplore__label,
+.tm-estimate-action-panel__label{
+  border-color: rgba(249, 115, 22, .28) !important;
+  background: rgba(249, 115, 22, .11) !important;
+  color: #fed7aa !important;
+}
+
+.tm-btn-primary,
+.btn-primary,
+.tm-auth-primary,
+.tm-account-primary,
+.tm-book-submit,
+.tm-quick-find__button{
+  border-color: rgba(249, 115, 22, .58) !important;
+  background: #f97316 !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  box-shadow: 0 12px 24px rgba(249, 115, 22, .22) !important;
+}
+
+.tm-btn-primary:hover,
+.tm-btn-primary:focus-visible,
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.tm-auth-primary:hover,
+.tm-auth-primary:focus-visible,
+.tm-account-primary:hover,
+.tm-account-primary:focus-visible,
+.tm-book-submit:hover,
+.tm-book-submit:focus-visible,
+.tm-quick-find__button:hover,
+.tm-quick-find__button:focus-visible{
+  border-color: #fb923c !important;
+  background: #fb923c !important;
+  color: #111827 !important;
+}
+
+.tm-btn-secondary,
+.btn-secondary,
+.tm-btn-ghost,
+.tm-account-secondary,
+.tm-auth-link,
+.tm-book-date-clear,
+.tm-homeHero__actions .tm-btn-secondary,
+.tm-homeSection__link{
+  border-color: var(--tm-app-border-strong) !important;
+  background: #111c2d !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+.tm-btn-secondary:hover,
+.tm-btn-secondary:focus-visible,
+.btn-secondary:hover,
+.btn-secondary:focus-visible,
+.tm-btn-ghost:hover,
+.tm-btn-ghost:focus-visible,
+.tm-account-secondary:hover,
+.tm-account-secondary:focus-visible,
+.tm-book-date-clear:hover,
+.tm-book-date-clear:focus-visible,
+.tm-homeHero__actions .tm-btn-secondary:hover,
+.tm-homeHero__actions .tm-btn-secondary:focus-visible,
+.tm-homeSection__link:hover,
+.tm-homeSection__link:focus-visible{
+  border-color: rgba(249, 115, 22, .42) !important;
+  background: #18263b !important;
+  color: #ffffff !important;
+}
+
+.tm-btn-danger,
+.btn-danger,
+.tm-account-danger{
+  background: #ef4444 !important;
+  border-color: rgba(248, 113, 113, .55) !important;
+  color: #ffffff !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="color"]):not([type="range"]),
+select,
+textarea,
+.tm-input{
+  background: #e8edf3 !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .06) !important;
+  opacity: 1 !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="color"]):not([type="range"]):hover,
+select:hover,
+textarea:hover,
+.tm-input:hover{
+  border-color: #94a3b8 !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="color"]):not([type="range"]):focus,
+select:focus,
+textarea:focus,
+.tm-input:focus{
+  background: #ffffff !important;
+  border-color: #60a5fa !important;
+  outline: none !important;
+  box-shadow:
+    0 0 0 3px rgba(96, 165, 250, .20),
+    inset 0 1px 2px rgba(15, 23, 42, .05) !important;
+}
+
+input::placeholder,
+textarea::placeholder,
+.tm-input::placeholder{
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 1 !important;
+}
+
+select option{
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):disabled,
+select:disabled,
+textarea:disabled,
+.tm-input:disabled,
+button:disabled{
+  opacity: 1 !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="color"]):not([type="range"]):disabled,
+select:disabled,
+textarea:disabled,
+.tm-input:disabled{
+  background: #aeb7c3 !important;
+  color: #526174 !important;
+  -webkit-text-fill-color: #526174 !important;
+  border-color: #94a3b8 !important;
+  cursor: not-allowed;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus{
+  -webkit-text-fill-color: #0f172a !important;
+  box-shadow: 0 0 0 1000px #e8edf3 inset !important;
+  caret-color: #0f172a !important;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+.signature-pad,
+canvas{
+  box-shadow: none;
+}
+
+.tm-calendar-shell .tm-availability-calendar{
+  border-color: var(--tm-app-border) !important;
+  background: #0b1728 !important;
+  color: var(--tm-app-text) !important;
+}
+
+.tm-calendar-shell .tm-availability-month{
+  color: var(--tm-app-heading) !important;
+}
+
+.tm-calendar-shell .tm-availability-nav{
+  border-color: var(--tm-app-border-strong) !important;
+  background: #111c2d !important;
+  color: #f8fafc !important;
+}
+
+.tm-calendar-shell .tm-availability-weekdays span,
+.tm-calendar-shell .tm-availability-legend,
+.tm-calendar-shell .tm-availability-status{
+  color: var(--tm-app-muted) !important;
+}
+
+.tm-calendar-shell .tm-availability-day{
+  box-shadow: none;
+}
+
+.tm-calendar-shell .tm-availability-day:not(:disabled){
+  background: #0c2a37 !important;
+  color: #ccfbf1 !important;
+  border-color: #185a5e !important;
+}
+
+.tm-calendar-shell .tm-availability-day:disabled{
+  background: #ffffff !important;
+  color: #64748b !important;
+  border-color: #d5dee9 !important;
+  opacity: 1 !important;
+}
+
+.tm-calendar-shell .tm-calendar-panel .tm-availability-day:disabled{
+  background: #ffffff !important;
+  color: #64748b !important;
+  border-color: #d5dee9 !important;
+  opacity: 1 !important;
+}
+
+.tm-calendar-shell .tm-availability-day[aria-pressed="true"]{
+  background: #f97316 !important;
+  color: #111827 !important;
+  border-color: #fb923c !important;
+}
+
+.tm-calendar-shell .tm-calendar-panel,
+.tm-calendar-shell .tm-calendar-card,
+.tm-calendar-shell .tm-calendar-convert-panel,
+.tm-calendar-shell .tm-calendar-linked,
+.tm-calendar-shell .tm-calendar-message-preview,
+.tm-calendar-shell .tm-calendar-empty{
+  border-color: var(--tm-calendar-border) !important;
+}
+
+/* =========================================================
+   INNER DIAGNOSTIC / REPAIR DETAIL DARK READABILITY
+   Scoped away from the Repair Guides index.
+   ========================================================= */
+
+.tm-intel-page .tm-card,
+.tm-intel-page .tm-linked-card,
+.tm-intel-page .tm-summary-card,
+.tm-intel-page .tm-blueprint-hero-card,
+.tm-intel-page .tm-blueprint-action-panel,
+.tm-intel-page .tm-blueprint-summary,
+.tm-intel-page .tm-blueprint-hero-metrics > div,
+.tm-intel-page .tm-blueprint-stat-grid > div,
+.tm-intel-page .tm-blueprint-vehicle-details,
+.tm-intel-page .tm-blueprint-context-details,
+.tm-intel-page .tm-blueprint-step-card,
+.tm-intel-page .tm-blueprint-intel-card,
+.tm-intel-page .tm-blueprint-context-grid article,
+.tm-intel-page .tm-tool-group-grid--compact > div,
+.tm-intel-page .tm-symptom-confidence-row,
+.tm-intel-page .tm-symptom-cluster,
+.tm-intel-page .tm-verify-first-list div,
+.tm-intel-page .tm-repair-relation-group,
+.tm-intel-page .tm-recommendation-priority-group,
+.tm-intel-page .tm-list:not(.tm-list-numbered) li,
+.tm-intel-page .tm-list-numbered > li,
+.tm-intel-page .tm-vehicle-context-note,
+.tm-intel-page .tm-workflow-context-note,
+.tm-intel-page .vehicle-card,
+.tm-intel-page .obd-related-code-chip,
+.tm-intel-page .obd-cost-guide-mini,
+.tm-intel-page .tm-workflow-check-chip,
+.tm-intel-page .tm-repair-intel-panel,
+.tm-intel-page .tm-access-action-card,
+.tm-intel-page .tm-trigger-card,
+.tm-intel-page .tm-priority-chip,
+.tm-intel-page .tm-repair-visual,
+.tm-intel-page .repair-diagram,
+.tm-intel-page .repair-step-image,
+.tm-diagnostics-page .tm-card,
+.tm-diagnostics-page .tm-linked-card,
+.tm-diagnostics-page .tm-workflow-entry-card,
+.tm-diagnostics-page .tm-list:not(.tm-list-numbered) li,
+.tm-diagnostics-page .tm-list-numbered > li,
+.tm-diagnostics-page .diag-workflow-card,
+.tm-diagnostics-page .diag-system-chip,
+.tm-diagnostics-page .diag-obd-tile{
+  border-color: rgba(148, 163, 184, .22) !important;
+  background: linear-gradient(145deg, #111c2d, #0b1728) !important;
+  color: #d7e1ee !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, .20),
+    inset 0 1px 0 rgba(255, 255, 255, .03) !important;
+}
+
+.tm-intel-page .tm-blueprint-hero-card{
+  border-color: rgba(20, 184, 166, .30) !important;
+}
+
+.tm-intel-page h1,
+.tm-intel-page h2,
+.tm-intel-page h3,
+.tm-intel-page h4,
+.tm-intel-page .tm-page-title,
+.tm-intel-page .tm-card h2,
+.tm-intel-page .tm-card h3,
+.tm-intel-page .tm-linked-card h3,
+.tm-intel-page .tm-blueprint-summary,
+.tm-intel-page .tm-blueprint-hero-metrics strong,
+.tm-intel-page .tm-blueprint-stat-grid strong,
+.tm-intel-page .tm-blueprint-step-card strong,
+.tm-intel-page .tm-blueprint-intel-card h3,
+.tm-intel-page .tm-blueprint-context-grid h3,
+.tm-intel-page .tm-tool-group-grid--compact strong,
+.tm-intel-page .tm-symptom-confidence-row span,
+.tm-intel-page .tm-symptom-cluster span,
+.tm-intel-page .tm-relation-row strong,
+.tm-intel-page .tm-recommendation-row strong,
+.tm-intel-page .obd-related-code-chip__code,
+.tm-intel-page .obd-cost-guide-mini__title,
+.tm-intel-page .obd-repair-row__title,
+.tm-intel-page .tm-workflow-check-chip strong,
+.tm-intel-page .tm-repair-intel-panel h3,
+.tm-intel-page .tm-access-action-card strong,
+.tm-intel-page .tm-trigger-card strong,
+.tm-diagnostics-page h1,
+.tm-diagnostics-page h2,
+.tm-diagnostics-page h3,
+.tm-diagnostics-page h4,
+.tm-diagnostics-page .tm-page-title,
+.tm-diagnostics-page .tm-card h2,
+.tm-diagnostics-page .tm-card h3,
+.tm-diagnostics-page .tm-linked-card h3,
+.tm-diagnostics-page .tm-workflow-entry-card strong,
+.tm-diagnostics-page .tm-card .tm-workflow-entry-card:first-child strong,
+.tm-diagnostics-page .diag-workflow-card h3,
+.tm-diagnostics-page .diag-workflow-card strong,
+.tm-diagnostics-page .diag-system-chip strong,
+.tm-diagnostics-page .diag-obd-tile__code{
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+.tm-intel-page p,
+.tm-intel-page li,
+.tm-intel-page .tm-muted,
+.tm-intel-page .tm-section-note,
+.tm-intel-page .tm-blueprint-section-head p,
+.tm-intel-page .tm-blueprint-hero-metrics span,
+.tm-intel-page .tm-blueprint-stat-grid span,
+.tm-intel-page .tm-blueprint-context-details summary strong,
+.tm-intel-page .tm-blueprint-vehicle-details summary strong,
+.tm-intel-page .tm-context-mini-title,
+.tm-intel-page .tm-relation-row em,
+.tm-intel-page .tm-recommendation-row em,
+.tm-intel-page .obd-related-code-chip__label,
+.tm-intel-page .obd-related-code-chip__footer,
+.tm-intel-page .obd-cost-guide-mini__desc,
+.tm-intel-page .obd-repair-row__desc,
+.tm-intel-page .tm-workflow-check-chip span,
+.tm-intel-page .tm-repair-caption,
+.tm-intel-page .tm-access-action-card span,
+.tm-intel-page .tm-trigger-card span,
+.tm-diagnostics-page p,
+.tm-diagnostics-page li,
+.tm-diagnostics-page .tm-muted,
+.tm-diagnostics-page .tm-section-note,
+.tm-diagnostics-page .tm-workflow-entry-card .tm-muted,
+.tm-diagnostics-page .tm-card .tm-workflow-entry-card:first-child .tm-muted,
+.tm-diagnostics-page .tm-workflow-entry-card p,
+.tm-diagnostics-page .diag-workflow-card p,
+.tm-diagnostics-page .diag-workflow-card .tm-muted,
+.tm-diagnostics-page .diag-system-chip .tm-muted,
+.tm-diagnostics-page .diag-obd-tile__desc,
+.tm-diagnostics-page .diag-obd-tile__footer{
+  color: #aebdd0 !important;
+  -webkit-text-fill-color: #aebdd0 !important;
+}
+
+.tm-intel-page .tm-eyebrow,
+.tm-intel-page .tm-blueprint-action-kicker,
+.tm-intel-page .tm-blueprint-difficulty-badge,
+.tm-intel-page .tm-blueprint-chip,
+.tm-intel-page .tm-confidence-cues span,
+.tm-intel-page .tm-diagnostic-path-links a,
+.tm-intel-page .tm-diagnostic-path-links span,
+.tm-intel-page .tm-intel-flow-strip span,
+.tm-intel-page .tm-linked-card a,
+.tm-intel-page .tm-relation-row a,
+.tm-intel-page .tm-recommendation-row a,
+.tm-intel-page .tm-estimate-bundle-list a,
+.tm-intel-page .tm-estimate-bundle-list span,
+.tm-intel-page .tm-blueprint-mini-actions a,
+.tm-intel-page .tm-symptom-cluster strong,
+.tm-intel-page .tm-verify-first-list div,
+.tm-intel-page .obd-cause-link,
+.tm-diagnostics-page .tm-eyebrow,
+.tm-diagnostics-page .tm-confidence-cues span,
+.tm-diagnostics-page .tm-linked-card a,
+.tm-diagnostics-page .tm-workflow-entry-card__action,
+.tm-diagnostics-page .diag-workflow-links a{
+  border-color: rgba(45, 212, 191, .30) !important;
+  background: rgba(20, 184, 166, .14) !important;
+  color: #99f6e4 !important;
+  -webkit-text-fill-color: #99f6e4 !important;
+  box-shadow: none !important;
+}
+
+.tm-intel-page .tm-blueprint-difficulty-badge--moderate,
+.tm-intel-page .tm-symptom-confidence-row--possible-match strong{
+  border-color: rgba(96, 165, 250, .28) !important;
+  background: rgba(96, 165, 250, .14) !important;
+  color: #bfdbfe !important;
+  -webkit-text-fill-color: #bfdbfe !important;
+}
+
+.tm-intel-page .tm-blueprint-difficulty-badge--advanced,
+.tm-intel-page .tm-recommendation-priority-group--bundle h4{
+  border-color: rgba(249, 115, 22, .34) !important;
+  background: rgba(249, 115, 22, .14) !important;
+  color: #fed7aa !important;
+  -webkit-text-fill-color: #fed7aa !important;
+}
+
+.tm-intel-page .tm-next-action-strip span,
+.tm-intel-page .tm-estimate-bundle-list,
+.tm-intel-page .tm-estimate-reasoning-list span,
+.tm-intel-page .tm-blueprint-vehicle-details summary::after,
+.tm-intel-page .tm-blueprint-context-details summary::after,
+.tm-intel-page .tm-priority-chip strong,
+.tm-intel-page .tm-recommendation-priority-group h4,
+.tm-intel-page .tm-symptom-confidence-row strong{
+  border-color: rgba(148, 163, 184, .18) !important;
+  background: rgba(15, 28, 47, .78) !important;
+  color: #d7e1ee !important;
+  -webkit-text-fill-color: #d7e1ee !important;
+  box-shadow: none !important;
+}
+
+.tm-intel-page .tm-blueprint-section-head,
+.tm-intel-page .tm-blueprint-context-details[open] summary,
+.tm-intel-page .obd-detail-subsection + .obd-detail-subsection,
+.tm-intel-page .obd-repair-row,
+.tm-intel-page .tm-relation-row,
+.tm-intel-page .tm-recommendation-row{
+  border-color: rgba(148, 163, 184, .18) !important;
+}
+
+.tm-intel-page .tm-btn-primary{
+  background: #f97316 !important;
+  border-color: rgba(249, 115, 22, .58) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+@media (max-width: 640px){
+  .tm-intel-page .tm-section{
+    padding: 8px 0;
+  }
+
+  .tm-intel-page .tm-card,
+  .tm-intel-page .tm-linked-card,
+  .tm-intel-page .tm-blueprint-step-card,
+  .tm-intel-page .tm-blueprint-intel-card,
+  .tm-intel-page .tm-blueprint-context-grid article,
+  .tm-diagnostics-page .tm-card,
+  .tm-diagnostics-page .tm-linked-card,
+  .tm-diagnostics-page .tm-workflow-entry-card,
+  .tm-diagnostics-page .diag-workflow-card,
+  .tm-diagnostics-page .diag-system-chip,
+  .tm-diagnostics-page .diag-obd-tile{
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .tm-intel-page .tm-page-title{
+    font-size: clamp(1.85rem, 8vw, 2.35rem) !important;
+    letter-spacing: 0 !important;
+  }
+
+  .tm-intel-page h2{
+    font-size: 1.08rem !important;
+    letter-spacing: 0 !important;
+  }
+
+  .tm-intel-page h3,
+  .tm-diagnostics-page h3,
+  .tm-diagnostics-page .diag-workflow-card h3{
+    font-size: .96rem !important;
+  }
+
+  .tm-intel-page p,
+  .tm-intel-page li,
+  .tm-diagnostics-page p,
+  .tm-diagnostics-page li,
+  .tm-diagnostics-page .diag-workflow-card p{
+    font-size: .92rem;
+    line-height: 1.45;
+  }
+}
+
+/* =========================================================
+   ADD CUSTOMER FORM â€” TEXT CONTRAST FIX
+   ========================================================= */
+
+#add-customer {
+  color: #f8fafc !important;
+}
+
+#add-customer summary,
+#add-customer h1,
+#add-customer h2,
+#add-customer h3,
+#add-customer legend {
+  color: #f8fafc !important;
+}
+
+#add-customer label {
+  color: #cbd5e1 !important;
+}
+
+#add-customer input,
+#add-customer select,
+#add-customer textarea {
+  background: #e8edf3 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+#add-customer input::placeholder,
+#add-customer textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+/* =========================================================
+   STICKY FOOTER â€” KEEP FOOTER AT PAGE BOTTOM
+   ========================================================= */
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body > main,
+body > .tm-page,
+body > .tm-app-shell {
+  flex: 1 0 auto;
+}
+
+body > footer,
+.tm-site-footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+/* =========================================================
+   CUSTOMER LIST â€” EXACT DARK CARD TEXT FIX
+   ========================================================= */
+
+.tm-crm-cards .tm-crm-card {
+  background: #0f1b2d !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #f8fafc !important;
+}
+
+.tm-crm-cards .tm-crm-card .tm-crm-name {
+  color: #f8fafc !important;
+  opacity: 1 !important;
+}
+
+.tm-crm-cards .tm-crm-card .tm-crm-phone {
+  color: #cbd5e1 !important;
+  opacity: 1 !important;
+}
+
+.tm-crm-cards .tm-crm-card .tm-crm-meta {
+  color: #cbd5e1 !important;
+  opacity: 1 !important;
+}
+
+.tm-crm-toolbar .tm-crm-count {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.tm-crm-cards .tm-crm-card .tm-crm-badge {
+  background: #dff4ff !important;
+  color: #075985 !important;
+  opacity: 1 !important;
+}
+
+/* Customer profile â€” remove vehicle card teal accent */
+.tm-customer-vehicle-card,
+.tm-customer-vehicle-card::before,
+.tm-customer-vehicle-card::after,
+.vehicle-card,
+.vehicle-card::before,
+.vehicle-card::after {
+    border-left: none !important;
+    box-shadow: none !important;
+}
+
+.tm-customer-vehicle-card::before,
+.tm-customer-vehicle-card::after,
+.vehicle-card::before,
+.vehicle-card::after {
+    display: none !important;
+    content: none !important;
+}
+
+@media (max-width: 520px) {
+  .tm-crm-vehicle {
+    padding: 16px 14px 16px 64px;
+    min-height: 126px;
+  }
+
+  .tm-crm-vehicle::before {
+    top: 16px;
+    left: 14px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+}
+/* =========================================================
+   CUSTOMER LIST â€” POLISHED DARK WORKSPACE
+   ========================================================= */
+
+.tm-pro-shell .tm-crm-shell {
+  display: grid;
+  gap: 14px;
+}
+
+/* Search/filter panel */
+.tm-pro-shell .tm-crm-toolbar {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, #101c2d 0%, #0b1625 100%);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Search field */
+.tm-pro-shell .tm-crm-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.tm-pro-shell .tm-crm-search .tm-input {
+  min-height: 48px;
+  border: 1px solid #bcc7d3 !important;
+  border-radius: 11px !important;
+  background:
+    linear-gradient(180deg, #f4f7fa 0%, #e4eaf1 100%) !important;
+  color: #0f172a !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 3px 8px rgba(0, 0, 0, 0.07);
+}
+
+.tm-pro-shell .tm-crm-search .tm-input:focus {
+  border-color: #60a5fa !important;
+  box-shadow:
+    0 0 0 4px rgba(96, 165, 250, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Search button */
+.tm-pro-shell .tm-crm-search .tm-btn-primary {
+  min-width: 112px;
+  border-color: #fb923c !important;
+  background:
+    linear-gradient(180deg, #fb923c 0%, #f97316 100%) !important;
+  color: #111827 !important;
+  box-shadow:
+    0 10px 22px rgba(249, 115, 22, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Filter pills */
+.tm-pro-shell .tm-crm-filter {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tm-pro-shell .tm-crm-filter-link {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, #f8fafc 0%, #e8edf3 100%);
+  color: #1e293b !important;
+  font-weight: 900;
+}
+
+.tm-pro-shell .tm-crm-filter-link--active {
+  border-color: rgba(45, 212, 191, 0.42);
+  background:
+    linear-gradient(180deg, #15998f 0%, #0f766e 100%);
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.22);
+}
+
+.tm-pro-shell .tm-crm-count {
+  margin-top: 10px !important;
+  color: #9fb2ca !important;
+  font-weight: 850;
+}
+
+/* Customer list */
+.tm-pro-shell .tm-crm-cards {
+  display: grid;
+  gap: 11px;
+}
+
+/* Customer cards */
+.tm-pro-shell .tm-crm-cards .tm-crm-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 10px;
+  padding: 15px 16px 15px 19px;
+  border: 1px solid rgba(96, 165, 250, 0.24) !important;
+
+  border-radius: 11px;
+  background:
+    radial-gradient(
+      circle at 94% 85%,
+      rgba(59, 130, 246, 0.09),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #17263b 0%,
+      #111f33 60%,
+      #0f1b2d 100%
+    ) !important;
+  box-shadow:
+    0 9px 22px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.tm-pro-shell .tm-crm-cards .tm-crm-card:hover,
+.tm-pro-shell .tm-crm-cards .tm-crm-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(249, 115, 22, 0.62) !important;
+
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(249, 115, 22, 0.08);
+  outline: none;
+}
+
+.tm-pro-shell .tm-crm-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tm-pro-shell .tm-crm-cards .tm-crm-name {
+  color: #ffffff !important;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.tm-pro-shell .tm-crm-cards .tm-crm-phone {
+  margin-top: 3px;
+  color: #dbe7f5 !important;
+  font-weight: 850;
+}
+
+.tm-pro-shell .tm-crm-cards .tm-crm-meta {
+  color: #b9c8dc !important;
+  line-height: 1.35;
+}
+
+/* Vehicle count badge */
+.tm-pro-shell .tm-crm-cards .tm-crm-badge {
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border: 1px solid rgba(6, 182, 212, 0.26);
+  border-radius: 999px;
+  background: #cffafe !important;
+  color: #0e7490 !important;
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.tm-pro-shell .tm-crm-cards .tm-crm-badge--inactive {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* Empty state */
+.tm-pro-shell .tm-crm-empty {
+  padding: 18px;
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+  border-radius: 11px;
+  background:
+    linear-gradient(145deg, #172230 0%, #121c29 100%);
+  color: #cbd5e1;
+  text-align: center;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .tm-pro-shell .tm-crm-toolbar {
+    padding: 13px;
+  }
+
+  .tm-pro-shell .tm-crm-search {
+    grid-template-columns: 1fr;
+  }
+
+  .tm-pro-shell .tm-crm-search .tm-btn {
+    width: 100%;
+  }
+
+  .tm-pro-shell .tm-crm-card__top {
+    align-items: flex-start;
+  }
+
+  .tm-pro-shell .tm-crm-cards .tm-crm-card {
+    padding: 14px 13px 14px 16px;
+  }
+}
+
+/* CUSTOMER LIST â€” REMOVE SIDE ACCENT LINES */
+
+.tm-pro-shell .tm-crm-cards .tm-crm-card {
+  border-left: 1px solid rgba(96, 165, 250, 0.24) !important;
+  padding-left: 16px !important;
+}
+
+.tm-pro-shell .tm-crm-cards .tm-crm-card:hover,
+.tm-pro-shell .tm-crm-cards .tm-crm-card:focus-visible {
+  border-left-color: rgba(249, 115, 22, 0.62) !important;
+}
+
+/* =========================================================
+   FEEDBACK MODAL â€” FINAL MOBILE LAYOUT FIX
+   ========================================================= */
+
+#feedbackModal {
+  display: grid;
+  place-items: center !important;
+  align-content: center !important;
+  padding: 14px !important;
+}
+
+#feedbackModal[hidden] {
+  display: none !important;
+}
+
+#feedbackModal .tm-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 8, 18, 0.82) !important;
+  backdrop-filter: blur(5px);
+}
+
+#feedbackModal .tm-modal__panel {
+  position: relative;
+  z-index: 1;
+
+  /* Critical reset */
+  place-self: center !important;
+  align-self: center !important;
+  justify-self: center !important;
+  display: block !important;
+  width: min(520px, 100%) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 28px) !important;
+  margin: 0 !important;
+
+  padding: 20px !important;
+  overflow-y: auto;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  border-radius: 16px !important;
+  background:
+    radial-gradient(
+      circle at 94% 4%,
+      rgba(249, 115, 22, 0.11),
+      transparent 180px
+    ),
+    linear-gradient(
+      145deg,
+      #111e31 0%,
+      #0b1626 100%
+    ) !important;
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Heading and close button */
+#feedbackModal .tm-modal__head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  align-items: start !important;
+  gap: 12px;
+  margin: 0 0 14px !important;
+  padding: 0 0 13px !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+#feedbackModal .tm-modal__head h2 {
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 1.45rem !important;
+  line-height: 1.08 !important;
+}
+
+#feedbackModal #feedbackCloseBtn {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  display: grid !important;
+  place-items: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.32) !important;
+  border-radius: 10px !important;
+  background: #1b2737 !important;
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  line-height: 1 !important;
+}
+
+#feedbackModal #feedbackCloseBtn:hover,
+#feedbackModal #feedbackCloseBtn:focus-visible {
+  border-color: #f97316 !important;
+  background: #273446 !important;
+  color: #fb923c !important;
+  outline: none;
+}
+
+/* Intro text */
+#feedbackModal .tm-modal__panel > .tm-muted {
+  margin: 0 0 15px !important;
+  color: #b8c6d8 !important;
+  font-size: 0.91rem;
+  line-height: 1.45;
+}
+
+/* Form */
+#feedbackModal #feedbackForm {
+  display: grid !important;
+  gap: 13px !important;
+}
+
+#feedbackModal .tm-grid2 {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px !important;
+}
+
+#feedbackModal #feedbackForm > div[style] {
+  margin-top: 0 !important;
+}
+
+#feedbackModal .tm-label {
+  display: block;
+  margin: 0 0 6px !important;
+  color: #dbe7f5 !important;
+  font-size: 0.78rem !important;
+  font-weight: 850 !important;
+}
+
+/* Fields */
+#feedbackModal .input {
+  width: 100% !important;
+  min-height: 45px !important;
+  padding: 10px 12px !important;
+  border: 1px solid #bcc7d3 !important;
+  border-radius: 9px !important;
+  background:
+    linear-gradient(
+      180deg,
+      #f7f9fc 0%,
+      #e7edf4 100%
+    ) !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  font-size: 16px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 3px 8px rgba(0, 0, 0, 0.07) !important;
+}
+
+#feedbackModal textarea.input {
+  min-height: 116px !important;
+  height: 116px !important;
+  max-height: 190px;
+  resize: vertical;
+  line-height: 1.42;
+}
+
+#feedbackModal .input::placeholder {
+  color: #718096 !important;
+  -webkit-text-fill-color: #718096 !important;
+  opacity: 1 !important;
+}
+
+#feedbackModal .input:focus {
+  border-color: #60a5fa !important;
+  box-shadow:
+    0 0 0 4px rgba(96, 165, 250, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  outline: none;
+}
+
+/* Actions */
+#feedbackModal .tm-modal-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center !important;
+  gap: 10px;
+  margin: 2px 0 0 !important;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+#feedbackModal #fbStatus:empty {
+  display: none;
+}
+
+#feedbackModal .tm-modal-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#feedbackModal .tm-modal-btns .btn {
+  min-height: 42px !important;
+  padding: 9px 16px !important;
+  border-radius: 9px !important;
+  font-weight: 900;
+}
+
+#feedbackModal .btn-secondary {
+  border: 1px solid rgba(148, 163, 184, 0.34) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #1b2839 0%,
+      #121d2c 100%
+    ) !important;
+  color: #ffffff !important;
+}
+
+#feedbackModal #fbSubmitBtn {
+  border: 1px solid #fb923c !important;
+  background:
+    linear-gradient(
+      180deg,
+      #fb923c 0%,
+      #f97316 100%
+    ) !important;
+  color: #111827 !important;
+  box-shadow: 0 9px 20px rgba(249, 115, 22, 0.24) !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  #feedbackModal {
+    place-items: center !important;
+    align-content: center !important;
+    padding: 10px !important;
+  }
+
+  #feedbackModal .tm-modal__panel {
+    place-self: center !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 20px) !important;
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  #feedbackModal .tm-modal__head {
+    grid-template-columns: minmax(0, 1fr) 38px;
+    margin-bottom: 12px !important;
+    padding-bottom: 11px !important;
+  }
+
+  #feedbackModal .tm-modal__head h2 {
+    font-size: 1.28rem !important;
+  }
+
+  #feedbackModal #feedbackCloseBtn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+  }
+
+  #feedbackModal .tm-grid2 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  #feedbackModal textarea.input {
+    min-height: 105px !important;
+    height: 105px !important;
+  }
+
+  #feedbackModal .tm-modal-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  #feedbackModal .tm-modal-btns {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  #feedbackModal .tm-modal-btns .btn {
+    width: 100%;
+    min-height: 44px !important;
+  }
+}
+
+/* ==========================================================
+   Estimator confirmation summary â€” dark theme repair
+   ========================================================== */
+
+.tm-confirm-modal .tm-confirm-services-wrap{
+  padding: 14px;
+  border: 1px solid rgba(96, 165, 250, 0.24);
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(21, 31, 49, 0.98) 0%,
+      rgba(11, 23, 40, 0.98) 100%
+    );
+  box-shadow: none;
+}
+
+.tm-confirm-modal .tm-confirm-services-wrap > div:first-child{
+  margin-bottom: 10px;
+  color: var(--tm-text-muted);
+}
+
+.tm-confirm-modal #confirmServicesList{
+  color: var(--tm-text-soft);
+}
+
+.tm-confirm-modal .tm-confirm-services-list{
+  gap: 12px;
+}
+
+.tm-confirm-modal .tm-confirm-total-band{
+  align-items: center;
+  padding: 13px 14px;
+  border: 1px solid rgba(249, 115, 22, 0.34);
+  background: rgba(249, 115, 22, 0.10);
+}
+
+.tm-confirm-modal .tm-confirm-total-band span{
+  color: var(--tm-orange-light);
+}
+
+.tm-confirm-modal .tm-confirm-total-band strong{
+  color: var(--tm-text);
+}
+
+.tm-confirm-modal .tm-confirm-service-row{
+  padding: 2px 0 14px;
+  border-bottom-color: var(--tm-border);
+}
+
+.tm-confirm-modal .tm-confirm-service-name,
+.tm-confirm-modal .tm-confirm-service-total strong{
+  color: var(--tm-text);
+}
+
+.tm-confirm-modal .tm-confirm-service-vehicle,
+.tm-confirm-modal .tm-confirm-service-note,
+.tm-confirm-modal .tm-confirm-service-total span{
+  color: var(--tm-text-muted);
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown span{
+  border-color: var(--tm-border);
+  background: var(--tm-surface-2);
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown span[data-kind="labor"]{
+  border-color: rgba(34, 197, 94, 0.24);
+  background: rgba(34, 197, 94, 0.09);
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown span[data-kind="parts"]{
+  border-color: rgba(96, 165, 250, 0.24);
+  background: rgba(96, 165, 250, 0.09);
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown span[data-kind="travel"]{
+  border-color: rgba(168, 85, 247, 0.24);
+  background: rgba(168, 85, 247, 0.09);
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown span.is-empty{
+  border-style: dashed;
+  background: rgba(148, 163, 184, 0.07);
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown strong{
+  color: var(--tm-text-muted);
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown em{
+  color: var(--tm-text);
+}
+
+.tm-confirm-modal .tm-confirm-service-total{
+  border-color: rgba(249, 115, 22, 0.28);
+  background: rgba(249, 115, 22, 0.09);
+}
+
+/* Keep the summary readable and compact on phones. */
+@media (max-width: 700px){
+  .tm-confirm-modal .tm-confirm-services-wrap{
+    padding: 12px;
+  }
+
+  .tm-confirm-modal .tm-confirm-total-band{
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .tm-confirm-modal .tm-confirm-service-breakdown{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tm-confirm-modal .tm-confirm-service-breakdown span{
+    min-width: 0;
+    padding: 7px;
+  }
+
+  .tm-confirm-modal .tm-confirm-service-breakdown em{
+    overflow-wrap: anywhere;
+  }
+
+  .tm-confirm-modal .tm-confirm-service-total{
+    width: 100%;
+    padding: 10px;
+  }
+}
+
+/* ==========================================================
+   Customer review modal â€” lively repair summary card
+   Keep this at the very bottom of style.css
+   ========================================================== */
+
+.tm-confirm-modal .tm-confirm-services-wrap{
+  padding: 14px;
+  border: 1px solid rgba(96, 165, 250, .22);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(59, 130, 246, .12), transparent 190px),
+    linear-gradient(180deg, #111d31 0%, #0b1728 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .035),
+    0 14px 28px rgba(0, 0, 0, .18);
+}
+
+.tm-confirm-modal .tm-confirm-services-wrap > div:first-child{
+  margin: 0 0 12px;
+  color: #aebdd0;
+  font-size: .72rem;
+  font-weight: 950;
+  letter-spacing: .065em;
+  text-transform: uppercase;
+}
+
+/* Top estimate summary */
+.tm-confirm-modal .tm-confirm-total-band{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 13px 14px;
+  border: 1px solid rgba(249, 115, 22, .40);
+  border-radius: 13px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(249, 115, 22, .18) 0%,
+      rgba(249, 115, 22, .07) 100%
+    );
+  box-shadow: inset 4px 0 0 #f97316;
+}
+
+.tm-confirm-modal .tm-confirm-total-band span{
+  color: #fb923c;
+  font-size: .68rem;
+  font-weight: 950;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.tm-confirm-modal .tm-confirm-total-band strong{
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+/* Individual repair card */
+.tm-confirm-modal .tm-confirm-service-row{
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 15px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-left: 4px solid #3b82f6;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(21, 31, 49, .98) 0%,
+      rgba(12, 25, 43, .98) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .035),
+    0 9px 22px rgba(0, 0, 0, .16);
+}
+
+.tm-confirm-modal .tm-confirm-service-row::after{
+  content: "";
+  position: absolute;
+  top: -32px;
+  right: -28px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, .08);
+  pointer-events: none;
+}
+
+/* Repair title */
+.tm-confirm-modal .tm-confirm-service-name{
+  position: relative;
+  z-index: 1;
+  margin: 0 0 7px;
+  padding-right: 8px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.28;
+  letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+
+/* Status and vehicle become compact pills */
+.tm-confirm-modal .tm-confirm-service-status{
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 25px;
+  margin: 0 7px 8px 0;
+  padding: 4px 9px;
+  border: 1px solid rgba(34, 197, 94, .30);
+  border-radius: 999px;
+  background: rgba(34, 197, 94, .12);
+  color: #bbf7d0;
+  font-size: .66rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.tm-confirm-modal .tm-confirm-service-vehicle{
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 25px;
+  margin: 0 0 8px;
+  padding: 4px 9px;
+  border: 1px solid rgba(96, 165, 250, .25);
+  border-radius: 999px;
+  background: rgba(59, 130, 246, .10);
+  color: #dbeafe;
+  font-size: .72rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Compact pricing chips */
+.tm-confirm-modal .tm-confirm-service-breakdown{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 4px 0 0;
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown span{
+  display: grid;
+  gap: 3px;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(96, 165, 250, .24);
+  border-radius: 9px;
+  background: rgba(59, 130, 246, .09);
+}
+
+.tm-confirm-modal
+.tm-confirm-service-breakdown
+span[data-kind="quantity"]{
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown strong{
+  color: #93a8c2;
+  font-size: .60rem;
+  font-weight: 950;
+  letter-spacing: .045em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tm-confirm-modal .tm-confirm-service-breakdown em{
+  color: #ffffff;
+  font-size: .9rem;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
+}
+
+/* Risk note becomes its own readable callout */
+.tm-confirm-modal .tm-confirm-service-note{
+  position: relative;
+  margin: 13px 0 0;
+  padding: 10px 11px 10px 13px;
+  border: 1px solid rgba(245, 158, 11, .18);
+  border-left: 3px solid rgba(245, 158, 11, .78);
+  border-radius: 10px;
+  background: rgba(245, 158, 11, .07);
+  color: #d7e1ee;
+  font-size: .78rem;
+  font-weight: 650;
+  line-height: 1.48;
+}
+
+/* Estimate total row */
+.tm-confirm-modal .tm-confirm-service-total{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid rgba(249, 115, 22, .30);
+  border-radius: 10px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(249, 115, 22, .12) 0%,
+      rgba(249, 115, 22, .05) 100%
+    );
+  text-align: left;
+}
+
+.tm-confirm-modal .tm-confirm-service-total span{
+  color: #cbd5e1;
+  font-size: .65rem;
+  font-weight: 950;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.tm-confirm-modal .tm-confirm-service-total strong{
+  color: #ffffff;
+  font-size: 1.12rem;
+  font-weight: 950;
+}
+
+/* Bottom grand total */
+.tm-confirm-modal .tm-confirm-grand-total{
+  margin-top: 13px;
+  padding: 14px 2px 2px;
+  border-top: 1px solid rgba(148, 163, 184, .18);
+  color: #ffffff;
+  font-size: .98rem;
+}
+
+.tm-confirm-modal .tm-confirm-grand-total strong{
+  color: #fb923c;
+  font-size: 1.28rem;
+  font-weight: 950;
+}
+
+/* Phone refinement */
+@media (max-width: 700px){
+  .tm-confirm-modal .tm-confirm-services-wrap{
+    padding: 12px;
+  }
+
+  .tm-confirm-modal .tm-confirm-total-band{
+    margin-bottom: 12px;
+    padding: 12px;
+  }
+
+  .tm-confirm-modal .tm-confirm-service-row{
+    padding: 13px 12px;
+  }
+
+  .tm-confirm-modal .tm-confirm-service-name{
+    font-size: .96rem;
+  }
+
+  .tm-confirm-modal .tm-confirm-service-note{
+    font-size: .77rem;
+    line-height: 1.46;
+  }
+
+  .tm-confirm-modal
+  .tm-confirm-service-breakdown
+  span[data-kind="quantity"]{
+    width: 56px;
+    min-width: 56px;
+    max-width: 56px;
+  }
+}
+
+/* Remove redundant total at top of customer review */
+.tm-confirm-modal .tm-confirm-total-band{
+  display: none !important;
+}
+
+.tm-confirm-modal .tm-confirm-services-wrap > div:first-child{
+  margin-bottom: 10px;
 }

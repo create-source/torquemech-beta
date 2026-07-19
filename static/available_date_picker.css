@@ -7,10 +7,11 @@
   width: 100%;
   max-width: 390px;
   overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, .14);
+  border: 1px solid rgba(148, 163, 184, .24);
   border-radius: 12px;
-  background: #fff;
+  background: #0b1728;
   padding: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
 }
 .tm-availability-head {
   display: grid;
@@ -20,20 +21,26 @@
   margin-bottom: 8px;
 }
 .tm-availability-month {
-  color: #0f172a;
+  color: #f8fafc;
   font-weight: 900;
   text-align: center;
 }
 .tm-availability-nav {
   width: 44px;
   height: 44px;
-  border: 1px solid rgba(15, 23, 42, .14);
+  border: 1px solid rgba(148, 163, 184, .22);
   border-radius: 9px;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #111c2d;
+  color: #f8fafc;
   cursor: pointer;
   font-size: 1.3rem;
   font-weight: 900;
+}
+.tm-availability-nav:hover,
+.tm-availability-nav:focus-visible {
+  border-color: rgba(249, 115, 22, .45);
+  background: #18263b;
+  outline: 3px solid rgba(249, 115, 22, .18);
 }
 .tm-availability-weekdays,
 .tm-availability-days {
@@ -42,7 +49,7 @@
   gap: 4px;
 }
 .tm-availability-weekdays span {
-  color: #64748b;
+  color: #d8e2ef;
   font-size: .72rem;
   font-weight: 900;
   padding: 4px 0;
@@ -51,10 +58,10 @@
 .tm-availability-day {
   aspect-ratio: 1;
   min-width: 0;
-  border: 1px solid #99f6e4;
+  border: 1px solid #185a5e;
   border-radius: 8px;
-  background: #f0fdfa;
-  color: #115e59;
+  background: #0c2a37;
+  color: #ccfbf1;
   cursor: pointer;
   font: inherit;
   font-weight: 900;
@@ -62,19 +69,20 @@
 }
 .tm-availability-day:hover,
 .tm-availability-day:focus-visible {
-  border-color: #0f766e;
-  outline: 3px solid rgba(13, 148, 136, .18);
+  border-color: #5eead4;
+  outline: 3px solid rgba(45, 212, 191, .20);
 }
 .tm-availability-day[aria-pressed="true"] {
-  border-color: #0f766e;
-  background: #0f766e;
-  color: #fff;
+  border-color: #fb923c;
+  background: #f97316;
+  color: #111827;
 }
 .tm-availability-day:disabled {
-  border-color: transparent;
-  background: #f1f5f9;
-  color: #94a3b8;
+  border-color: #d5dee9;
+  background: #ffffff;
+  color: #64748b;
   cursor: not-allowed;
+  opacity: 1;
   text-decoration: line-through;
 }
 .tm-availability-day.is-outside {
@@ -84,7 +92,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  color: #475569;
+  color: #aebdd0;
   font-size: .78rem;
   font-weight: 700;
   margin-top: 9px;
@@ -95,13 +103,13 @@
   height: 10px;
   margin-right: 5px;
   border-radius: 3px;
-  background: #ccfbf1;
+  background: rgba(45, 212, 191, .50);
   content: "";
 }
-.tm-availability-legend .is-unavailable::before { background: #e2e8f0; }
+.tm-availability-legend .is-unavailable::before { background: #ffffff; }
 .tm-availability-status {
   min-height: 1.25em;
-  color: #64748b;
+  color: #aebdd0;
   font-size: .84rem;
   font-weight: 700;
 }
