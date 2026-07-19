@@ -27,10 +27,10 @@ ACCOUNT_COLUMNS = {
 }
 
 VISUAL_REFERENCE_CHILD_TABLES = {
-    "visual_reference_images": (200, 5, 195),
-    "visual_reference_specs": (280, 7, 273),
-    "visual_reference_oem_parts": (240, 6, 234),
-    "visual_reference_hotspots": (160, 4, 156),
+    "visual_reference_images": (220, 5, 215),
+    "visual_reference_specs": (308, 7, 301),
+    "visual_reference_oem_parts": (264, 6, 258),
+    "visual_reference_hotspots": (176, 4, 172),
 }
 
 
