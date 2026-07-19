@@ -315,6 +315,68 @@
       color: #ffffff;
     }
 
+    .tm-pro-shell--repair-detail .tm-photo-source-menu {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-source-menu[hidden] {
+      display: none !important;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-source-option {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid rgba(15, 118, 110, 0.24);
+      border-radius: 9px;
+      background: #ffffff;
+      color: #0f172a;
+      text-align: left;
+      box-shadow: none;
+      cursor: pointer;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-source-option:hover,
+    .tm-pro-shell--repair-detail .tm-photo-source-option:focus-visible {
+      border-color: #0f766e;
+      background: #f0fdfa;
+      outline: 3px solid rgba(15, 118, 110, 0.14);
+      outline-offset: 1px;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-source-option > span:first-child {
+      font-size: 1.25rem;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-source-option > span:last-child {
+      display: grid;
+      gap: 2px;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-source-option strong {
+      color: #0f172a !important;
+      font-size: 0.86rem;
+      line-height: 1.15;
+    }
+
+    .tm-pro-shell--repair-detail .tm-photo-source-option small {
+      color: #64748b;
+      font-size: 0.72rem;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 520px) {
+      .tm-pro-shell--repair-detail .tm-photo-source-menu {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* Make maintenance tracking more visible */
     .tm-pro-shell--repair-detail .tm-switch-control {
       width: fit-content;
@@ -578,15 +640,51 @@
       </section>
       {% endif %}
 
-      <section class="tm-completion-section tm-photo-stage" aria-label="After / Completion Photos">
+      <section class="tm-completion-section tm-photo-stage" aria-label="After / Completion Photos" data-photo-picker>
         <strong>After / Completion Photos</strong>
-        <label class="tm-label" for="after_repair_photos">Upload photos showing the completed repair or proof of work.</label>
-        <input class="tm-photo-input-hidden" id="after_repair_photos" name="after_repair_photos" type="file" accept="image/*" capture="environment" multiple data-pro-photo-input>
-        <label class="tm-photo-upload-button" for="after_repair_photos">Add Photos</label>
-        <span class="tm-photo-helper">Tap Add Photos to choose Camera or Photo Library.</span>
+        <span class="tm-label">Upload photos showing the completed repair or proof of work.</span>
+
+        <input
+          class="tm-photo-input-hidden"
+          id="after_repair_camera"
+          name="after_repair_photos"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          data-photo-source="camera"
+        >
+        <input
+          class="tm-photo-input-hidden"
+          id="after_repair_library"
+          name="after_repair_photos"
+          type="file"
+          accept="image/*"
+          multiple
+          data-photo-source="library"
+        >
+
+        <button
+          class="tm-photo-upload-button"
+          type="button"
+          aria-expanded="false"
+          aria-controls="after_repair_photo_actions"
+          data-photo-menu-toggle
+        >Add Photos</button>
+
+        <div class="tm-photo-source-menu" id="after_repair_photo_actions" data-photo-source-menu hidden>
+          <button class="tm-photo-source-option" type="button" data-photo-open="after_repair_camera">
+            <span aria-hidden="true">📷</span>
+            <span><strong>Take Photo</strong><small>Open the rear camera</small></span>
+          </button>
+          <button class="tm-photo-source-option" type="button" data-photo-open="after_repair_library">
+            <span aria-hidden="true">🖼️</span>
+            <span><strong>Photo Library</strong><small>Choose up to 5 existing photos</small></span>
+          </button>
+        </div>
+
         <span class="tm-photo-privacy">Photos are optional and only saved when you attach them to this repair record.</span>
         <span class="tm-photo-helper">Up to 5 photos.</span>
-        <span class="tm-photo-selected-count" data-photo-selected-count="after_repair_photos">No photos selected</span>
+        <span class="tm-photo-selected-count" data-photo-selected-count>No photos selected</span>
         {% if completion.after_repair_photo_urls %}
         <strong>Uploaded After Photos</strong>
         <div class="tm-photo-list" aria-label="Uploaded after repair photos">
@@ -656,6 +754,74 @@
           toggle.disabled = false;
         }
       });
+    });
+  })();
+
+  (() => {
+    const MAX_PHOTOS = 5;
+
+    const updateCount = (picker) => {
+      const output = picker.querySelector("[data-photo-selected-count]");
+      if (!output) return;
+      const input = picker.querySelector('input[type="file"][data-photo-source][data-active-source="1"]');
+      const count = input?.files?.length || 0;
+      output.textContent = count
+        ? `${count} photo${count === 1 ? "" : "s"} selected`
+        : "No photos selected";
+    };
+
+    document.addEventListener("click", (event) => {
+      const toggle = event.target.closest("[data-photo-menu-toggle]");
+      if (toggle) {
+        const picker = toggle.closest("[data-photo-picker]");
+        const menu = picker?.querySelector("[data-photo-source-menu]");
+        if (!menu) return;
+        const opening = menu.hidden;
+        menu.hidden = !opening;
+        toggle.setAttribute("aria-expanded", opening ? "true" : "false");
+        return;
+      }
+
+      const option = event.target.closest("[data-photo-open]");
+      if (option) {
+        const picker = option.closest("[data-photo-picker]");
+        const input = document.getElementById(option.dataset.photoOpen);
+        picker?.querySelector("[data-photo-source-menu]")?.setAttribute("hidden", "");
+        picker?.querySelector("[data-photo-menu-toggle]")?.setAttribute("aria-expanded", "false");
+        input?.click();
+        return;
+      }
+
+      document.querySelectorAll("[data-photo-source-menu]:not([hidden])").forEach((menu) => {
+        const picker = menu.closest("[data-photo-picker]");
+        if (picker?.contains(event.target)) return;
+        menu.hidden = true;
+        picker?.querySelector("[data-photo-menu-toggle]")?.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    document.addEventListener("change", (event) => {
+      const input = event.target.closest('input[type="file"][data-photo-source]');
+      if (!input) return;
+
+      const picker = input.closest("[data-photo-picker]");
+      if (!picker) return;
+
+      if ((input.files?.length || 0) > MAX_PHOTOS) {
+        input.value = "";
+        window.alert(`Choose no more than ${MAX_PHOTOS} photos.`);
+      }
+
+      picker.querySelectorAll('input[type="file"][data-photo-source]').forEach((other) => {
+        if (other === input) {
+          other.dataset.activeSource = "1";
+        } else {
+          other.value = "";
+          delete other.dataset.activeSource;
+        }
+      });
+
+      updateCount(picker);
     });
   })();
 </script>
