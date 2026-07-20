@@ -1,3 +1,4 @@
+import json
 import sqlite3
 import unittest
 from unittest.mock import patch
@@ -519,6 +520,59 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         workspace_end = vehicle_detail.text.index('id="recommendations-findings"')
         workspace_html = vehicle_detail.text[workspace_start:workspace_end]
         self.assertNotIn("Create Final Invoice", workspace_html)
+
+    def test_vehicle_detail_renders_vehicle_photos_gallery(self):
+        pro_module.ensure_findings_records_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, vehicle_id, customer_id, finding, recommendation, severity, status,
+              mileage, finding_date, before_inspection_photo_paths, created_at
+            )
+            VALUES (
+              77, 1, 1, 'Coolant leak at water pump', 'Replace water pump',
+              'High', 'Open', 150000, '2026-06-20',
+              ?, '2026-06-20T10:00:00'
+            )
+            """,
+            (json.dumps(["/static/visual-references/uploads/before-coolant.jpg"]),),
+        )
+        self.insert_repair(88, "Water Pump Replacement", 2.5, 120, 180)
+        self.conn.execute(
+            """
+            UPDATE repair_completions
+            SET after_repair_photo_paths = ?
+            WHERE repair_record_id = 88
+            """,
+            (json.dumps(["/static/visual-references/uploads/after-water-pump.jpg"]),),
+        )
+        self.conn.commit()
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn('id="vehicle-photos"', vehicle_detail.text)
+        self.assertIn("Vehicle Photos", vehicle_detail.text)
+        self.assertIn("Finding / Inspection", vehicle_detail.text)
+        self.assertIn("After Repair / Completion", vehicle_detail.text)
+        self.assertIn("/static/visual-references/uploads/before-coolant.jpg", vehicle_detail.text)
+        self.assertIn("/static/visual-references/uploads/after-water-pump.jpg", vehicle_detail.text)
+        self.assertIn("Coolant leak at water pump", vehicle_detail.text)
+        self.assertIn("Water Pump Replacement", vehicle_detail.text)
+        self.assertIn("View Full Size", vehicle_detail.text)
+
+    def test_vehicle_detail_vehicle_photos_empty_state(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn("No photos have been added for this vehicle yet.", vehicle_detail.text)
 
     def test_old_single_job_invoice_still_loads_as_one_service(self):
         self.insert_repair(20, "Alternator Replacement", 1.5, 120, 220)

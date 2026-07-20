@@ -450,6 +450,65 @@
     background: #fff;
   }
 
+  .tm-vehicle-photo-groups {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .tm-vehicle-photo-group {
+    display: grid;
+    gap: 10px;
+  }
+
+  .tm-vehicle-photo-group h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.96rem;
+  }
+
+  .tm-vehicle-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .tm-vehicle-photo-card {
+    display: grid;
+    gap: 9px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px;
+  }
+
+  .tm-vehicle-photo-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .tm-vehicle-photo-meta {
+    display: grid;
+    gap: 5px;
+  }
+
+  .tm-vehicle-photo-meta strong {
+    color: #0f172a;
+    font-size: 0.94rem;
+    line-height: 1.25;
+  }
+
+  .tm-vehicle-photo-meta span {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+
   .tm-blueprint-summary-card {
     display: grid;
     gap: 10px;
@@ -2288,6 +2347,25 @@
   .tm-pro-shell--vehicle .tm-history-empty {
     background: #132136 !important;
     border-color: rgba(148, 163, 184, 0.22) !important;
+  }
+
+  .tm-pro-shell--vehicle .tm-vehicle-photo-card {
+    border-color: rgba(148, 163, 184, 0.22) !important;
+    background:
+      linear-gradient(180deg, #182332 0%, #121c29 100%) !important;
+  }
+
+  .tm-pro-shell--vehicle .tm-vehicle-photo-card img {
+    border-color: rgba(148, 163, 184, 0.26) !important;
+    background: #0f172a !important;
+  }
+
+  .tm-pro-shell--vehicle .tm-vehicle-photo-meta strong {
+    color: #f8fafc !important;
+  }
+
+  .tm-pro-shell--vehicle .tm-vehicle-photo-meta span {
+    color: #cbd5e1 !important;
   }
 
   /* Keep fields light with dark typed text */
@@ -4427,7 +4505,11 @@
               <div class="tm-finding-estimate" data-finding-estimate>
                 {% if item.status == "Approved" and item.linked_repair_record_id %}
                 <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
-                {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>{% endif %}
+                {% if item.estimate_document_url %}
+                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>
+                {% else %}
+                <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                {% endif %}
                 {% elif item.status == "Approved" %}
                 <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
                   <input type="hidden" name="workflow_source_type" value="finding">
@@ -4526,7 +4608,11 @@
                 <div class="tm-finding-estimate" data-finding-estimate>
                   {% if item.status == "Approved" and item.linked_repair_record_id %}
                   <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
-                  {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>{% endif %}
+                  {% if item.estimate_document_url %}
+                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>
+                  {% else %}
+                  <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                  {% endif %}
                   {% elif item.status == "Approved" %}
                   <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
                     <input type="hidden" name="workflow_source_type" value="finding">
@@ -4731,6 +4817,48 @@
     </div>
   </details>
   
+  <details class="tm-crm-panel" id="vehicle-photos" aria-label="Vehicle photos" style="margin-top:16px;">
+    <summary class="tm-workspace-summary">
+      <span class="tm-workspace-summary-title">
+        <span>Vehicle Photos</span>
+        <strong>Vehicle Photos <span class="tm-timeline-count">({{ vehicle_photo_count|default(0, true) }} {% if vehicle_photo_count|default(0, true) == 1 %}photo{% else %}photos{% endif %})</span></strong>
+      </span>
+    </summary>
+    <div class="tm-workspace-panel-body">
+      {% if vehicle_photo_count|default(0, true) %}
+      <div class="tm-vehicle-photo-groups">
+        {% for group in vehicle_photo_groups %}
+        {% if group.photos %}
+        <section class="tm-vehicle-photo-group" aria-label="{{ group.title }} photos">
+          <h3>{{ group.title }} <span class="tm-timeline-count">({{ group.photos|length }})</span></h3>
+          <div class="tm-vehicle-photo-grid">
+            {% for photo in group.photos %}
+            <article class="tm-vehicle-photo-card">
+              <a href="{{ photo.url }}" target="_blank" rel="noopener" aria-label="View full-size {{ photo.photo_type }} photo for {{ photo.related_name }}">
+                <img src="{{ photo.url }}" alt="{{ photo.photo_type }} photo for {{ photo.related_name }}">
+              </a>
+              <div class="tm-vehicle-photo-meta">
+                <strong>{{ photo.related_name }}</strong>
+                <span>{{ photo.photo_type }}</span>
+                <span>{% if photo.record_date %}{{ photo.record_date|pro_date }}{% elif photo.created_at %}{{ photo.created_at|pro_date }}{% else %}Date not recorded{% endif %}</span>
+              </div>
+              <div class="tm-repair-card-actions">
+                <a class="tm-btn tm-btn-secondary" href="{{ photo.url }}" target="_blank" rel="noopener">View Full Size</a>
+                {% if photo.source_url %}<a class="tm-btn tm-btn-secondary" href="{{ photo.source_url }}">Open Source</a>{% endif %}
+              </div>
+            </article>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tm-history-empty" style="margin-top:12px;">No photos have been added for this vehicle yet.</div>
+      {% endif %}
+    </div>
+  </details>
+
   {% set timeline_total = vehicle_timeline_total|default(0, true) %}
   {% if not timeline_total and vehicle_timeline %}
     {% set timeline_counter = namespace(total=0) %}

@@ -4063,6 +4063,135 @@ def attach_finding_photo_urls(record: dict[str, Any]) -> dict[str, Any]:
     return record
 
 
+VEHICLE_PHOTO_GROUP_DEFINITIONS = [
+    {
+        "key": "finding_inspection",
+        "title": "Finding / Inspection",
+        "empty": "No finding or inspection photos for this vehicle yet.",
+    },
+    {
+        "key": "after_repair",
+        "title": "After Repair / Completion",
+        "empty": "No after repair or completion photos for this vehicle yet.",
+    },
+]
+
+
+def vehicle_photo_record(
+    *,
+    group_key: str,
+    url: str,
+    related_name: str,
+    photo_type: str,
+    record_date: Any = "",
+    created_at: Any = "",
+    source_url: str = "",
+) -> dict[str, Any] | None:
+    photo_url = str(url or "").strip()
+    if not photo_url:
+        return None
+    return {
+        "group_key": group_key,
+        "url": photo_url,
+        "related_name": str(related_name or "").strip() or "Vehicle photo",
+        "photo_type": photo_type,
+        "record_date": str(record_date or "").strip(),
+        "created_at": str(created_at or "").strip(),
+        "source_url": str(source_url or "").strip(),
+    }
+
+
+def build_vehicle_photo_groups(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+) -> list[dict[str, Any]]:
+    ensure_findings_records_schema(conn)
+    ensure_repair_records_schema(conn)
+    ensure_repair_completion_schema(conn)
+    groups = [
+        {**definition, "photos": []}
+        for definition in VEHICLE_PHOTO_GROUP_DEFINITIONS
+    ]
+    groups_by_key = {group["key"]: group for group in groups}
+
+    finding_rows = conn.execute(
+        """
+        SELECT *
+        FROM findings_records
+        WHERE customer_id = ? AND vehicle_id = ?
+        ORDER BY finding_date DESC, created_at DESC, id DESC
+        """,
+        (customer_id, vehicle_id),
+    ).fetchall()
+    for row in finding_rows:
+        finding = dict(row)
+        related_name = (
+            finding.get("labor_description")
+            or finding.get("finding")
+            or finding.get("recommendation")
+            or "Finding"
+        )
+        for photo_url in parse_stored_photo_paths(finding.get("before_inspection_photo_paths")):
+            photo = vehicle_photo_record(
+                group_key="finding_inspection",
+                url=photo_url,
+                related_name=related_name,
+                photo_type="Before / Inspection",
+                record_date=finding.get("finding_date") or "",
+                created_at=finding.get("created_at") or "",
+                source_url=f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding.get('id')}",
+            )
+            if photo:
+                groups_by_key["finding_inspection"]["photos"].append(photo)
+
+    completion_rows = conn.execute(
+        """
+        SELECT rc.*,
+               rr.repair_name,
+               rr.repair_date,
+               rr.created_at AS repair_created_at
+        FROM repair_completions rc
+        JOIN repair_records rr
+          ON rr.id = rc.repair_record_id
+        WHERE rr.customer_id = ? AND rr.vehicle_id = ?
+        ORDER BY
+          COALESCE(NULLIF(rc.completion_date, ''), NULLIF(rc.completed_at, ''), NULLIF(rr.repair_date, ''), rc.created_at) DESC,
+          rc.id DESC
+        """,
+        (customer_id, vehicle_id),
+    ).fetchall()
+    for row in completion_rows:
+        completion = dict(row)
+        related_name = completion.get("repair_name") or "Repair"
+        record_date = (
+            completion.get("completion_date")
+            or completion.get("completed_at")
+            or completion.get("repair_date")
+            or ""
+        )
+        created_at = completion.get("completed_at") or completion.get("created_at") or completion.get("repair_created_at") or ""
+        for photo_url in parse_stored_photo_paths(completion.get("after_repair_photo_paths")):
+            photo = vehicle_photo_record(
+                group_key="after_repair",
+                url=photo_url,
+                related_name=related_name,
+                photo_type="After Repair / Completion",
+                record_date=record_date,
+                created_at=created_at,
+                source_url=f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{completion.get('repair_record_id')}",
+            )
+            if photo:
+                groups_by_key["after_repair"]["photos"].append(photo)
+
+    return groups
+
+
+def count_vehicle_photos(photo_groups: list[dict[str, Any]]) -> int:
+    return sum(len(group.get("photos") or []) for group in photo_groups)
+
+
 def seed_visual_references(conn: sqlite3.Connection) -> None:
     ensure_visual_reference_schema(conn)
     if not VISUAL_REFERENCE_SEED_PATH.exists():
@@ -11987,7 +12116,7 @@ def pro_customer_vehicle_detail(
                 FROM findings_records fr
                 LEFT JOIN repair_records rr
                   ON rr.id = fr.linked_repair_record_id
-                WHERE fr.vehicle_id = ?
+                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
                 ORDER BY
                   CASE fr.status
                     WHEN 'Approved' THEN 1
@@ -12007,7 +12136,7 @@ def pro_customer_vehicle_detail(
                   fr.finding_date DESC,
                   fr.id DESC
                 """,
-                (vehicle_id,),
+                (customer_id, vehicle_id),
             ).fetchall()
         ]
         for record in findings_records:
@@ -12077,6 +12206,11 @@ def pro_customer_vehicle_detail(
         repair_completion_events = load_vehicle_repair_completion_events(conn, customer_id, vehicle_id)
         invoice_records = load_vehicle_invoice_records(conn, customer_id, vehicle_id)
         estimate_document_records = load_vehicle_estimate_documents(conn, customer_id, vehicle_id)
+        vehicle_photo_groups = build_vehicle_photo_groups(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        )
         attach_estimate_documents_to_findings(
             findings_records,
             estimate_document_records,
@@ -12182,6 +12316,8 @@ def pro_customer_vehicle_detail(
             "approval_summary": approval_summary,
             "repair_work_items": repair_work_items,
             "repair_workspace_groups": repair_workspace_groups,
+            "vehicle_photo_groups": vehicle_photo_groups,
+            "vehicle_photo_count": count_vehicle_photos(vehicle_photo_groups),
             "visual_reference_records": visual_reference_records,
             "repair_intelligence_records": repair_intelligence_records,
             "repair_work_status_options": [

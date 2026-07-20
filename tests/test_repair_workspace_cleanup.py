@@ -966,21 +966,24 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         repair_detail = (ROOT / "templates" / "pro" / "repair_detail.html").read_text(encoding="utf-8")
 
         self.assertIn("Before / Inspection Photos", vehicle_detail)
-        self.assertIn('id="before_inspection_photos"', vehicle_detail)
+        self.assertIn('id="before_inspection_camera"', vehicle_detail)
+        self.assertIn('id="before_inspection_library"', vehicle_detail)
         self.assertIn('type="file"', vehicle_detail)
         self.assertIn('accept="image/*"', vehicle_detail)
         self.assertIn('capture="environment"', vehicle_detail)
         self.assertIn('class="tm-photo-input-hidden"', vehicle_detail)
         self.assertIn("Add Photos", vehicle_detail)
         self.assertNotIn("Add Before Photos", vehicle_detail)
-        self.assertIn("Tap Add Photos to choose Camera or Photo Library.", vehicle_detail)
+        self.assertIn("Take Photo", vehicle_detail)
+        self.assertIn("Photo Library", vehicle_detail)
         self.assertIn("Photos are optional and only saved when you attach them to this repair record.", vehicle_detail)
         self.assertIn("Up to 5 photos.", vehicle_detail)
         self.assertIn("No photos selected", vehicle_detail)
         self.assertIn("Upload photos of the original problem before repair.", vehicle_detail)
         self.assertIn("After / Completion Photos", repair_detail)
         self.assertIn("Before / Inspection Photos", repair_detail)
-        self.assertIn('id="after_repair_photos"', repair_detail)
+        self.assertIn('id="after_repair_camera"', repair_detail)
+        self.assertIn('id="after_repair_library"', repair_detail)
         self.assertIn('name="after_repair_photos"', repair_detail)
         self.assertIn('type="file"', repair_detail)
         self.assertIn('accept="image/*"', repair_detail)
@@ -988,7 +991,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('class="tm-photo-input-hidden"', repair_detail)
         self.assertIn("Add Photos", repair_detail)
         self.assertNotIn("Add Completion Photos", repair_detail)
-        self.assertIn("Tap Add Photos to choose Camera or Photo Library.", repair_detail)
+        self.assertIn("Take Photo", repair_detail)
+        self.assertIn("Photo Library", repair_detail)
         self.assertIn("Photos are optional and only saved when you attach them to this repair record.", repair_detail)
         self.assertIn("Up to 5 photos.", repair_detail)
         self.assertIn("No photos selected", repair_detail)
@@ -1070,18 +1074,23 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
     def test_vehicle_detail_keeps_add_finding_action_outside_repair_workspace(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
-        vehicle_card_idx = vehicle_detail.index('id="vehicle-information"')
-        add_finding_idx = vehicle_detail.index('aria-label="Add finding or recommended work"')
-        workspace_idx = vehicle_detail.index('id="repair-workspace"')
-        timeline_idx = vehicle_detail.index('id="vehicle-timeline"')
-        findings_idx = vehicle_detail.index('id="recommendations-findings"')
+        content = vehicle_detail.split("{% block content %}", 1)[1]
+        vehicle_card_idx = content.index('id="vehicle-information"')
+        add_finding_idx = content.index('aria-label="Add finding or recommended work"')
+        workspace_idx = content.index('id="repair-workspace"')
+        findings_idx = content.index('id="recommendations-findings"')
+        photos_idx = content.index('id="vehicle-photos"')
+        timeline_idx = content.index('id="vehicle-timeline"')
 
         self.assertLess(vehicle_card_idx, add_finding_idx)
         self.assertLess(add_finding_idx, workspace_idx)
-        self.assertLess(workspace_idx, timeline_idx)
         self.assertLess(workspace_idx, findings_idx)
-        self.assertLess(findings_idx, timeline_idx)
-        self.assertIn("Active Repair Jobs", vehicle_detail)
+        self.assertLess(findings_idx, photos_idx)
+        self.assertLess(photos_idx, timeline_idx)
+        workspace_markup = content[workspace_idx:findings_idx]
+        self.assertNotIn('aria-label="Add finding or recommended work"', workspace_markup)
+        self.assertNotIn('id="vehicle-photos"', workspace_markup)
+        self.assertIn("Repair Workspace", vehicle_detail)
         self.assertIn("Open Repairs", vehicle_detail)
         self.assertIn("Approved Repairs", vehicle_detail)
         self.assertIn("In Progress Repairs", vehicle_detail)
@@ -1092,11 +1101,10 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("No repairs currently in progress.", vehicle_detail)
         self.assertIn("Ready for Invoice", vehicle_detail)
         self.assertIn("Invoiced Jobs", vehicle_detail)
-        self.assertIn("Create Final Invoice", vehicle_detail)
         self.assertIn("{% if ready_invoice_items %}", vehicle_detail)
-        self.assertIn("Complete repair jobs before creating a final invoice.", vehicle_detail)
+        self.assertIn("No completed repair jobs are ready for invoice.", vehicle_detail)
+        self.assertIn("View Repair Record", vehicle_detail)
         self.assertIn("View Invoice", vehicle_detail)
-        self.assertIn("View in Vehicle Timeline", vehicle_detail)
         self.assertIn("Not Invoiced", vehicle_detail)
         self.assertIn("Invoiced: {{ item.invoice_number }}", vehicle_detail)
         self.assertIn("Additional Findings / Recommended Work", vehicle_detail)
@@ -1197,6 +1205,108 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('{% else %}checked{% endif %}', invoice_builder)
         self.assertIn("Generate Final Invoice", invoice_builder)
         self.assertIn("Already Invoiced", invoice_builder)
+        self.assertIn('content: "\\2212";', invoice_builder)
+        self.assertNotIn('content: "' + chr(0x00E2), invoice_builder)
+
+    def test_vehicle_photo_groups_collect_vehicle_photos_and_isolate_ownership(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        pro_module.ensure_findings_records_schema(conn)
+        pro_module.ensure_repair_records_schema(conn)
+        pro_module.ensure_repair_completion_schema(conn)
+        now = "2026-06-24T12:00:00"
+        conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, vehicle_id, customer_id, finding, recommendation, severity, status,
+              before_inspection_photo_paths, finding_date, created_at
+            )
+            VALUES (10, 1, 1, 'Brake fluid leak', 'Replace hose', 'High', 'Open', ?, '2026-06-24', ?)
+            """,
+            (json.dumps(["/static/uploads/before-owned.jpg"]), now),
+        )
+        conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, vehicle_id, customer_id, finding, recommendation, severity, status,
+              before_inspection_photo_paths, finding_date, created_at
+            )
+            VALUES (11, 1, 2, 'Other customer leak', 'Do not show', 'High', 'Open', ?, '2026-06-24', ?)
+            """,
+            (json.dumps(["/static/uploads/before-other-customer.jpg"]), now),
+        )
+        conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, vehicle_id, customer_id, finding, recommendation, severity, status,
+              before_inspection_photo_paths, finding_date, created_at
+            )
+            VALUES (12, 2, 1, 'Other vehicle leak', 'Do not show', 'High', 'Open', ?, '2026-06-24', ?)
+            """,
+            (json.dumps(["/static/uploads/before-other-vehicle.jpg"]), now),
+        )
+        conn.execute(
+            """
+            INSERT INTO repair_records (
+              id, vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+              workflow_source_type, status, completed_at, notes, created_at
+            )
+            VALUES (20, 1, 1, 'Brake Hose Replacement', '2026-06-24', 120000, 1, 120, 40, 120, 160, 'finding', 'Completed', ?, '', ?)
+            """,
+            (now, now),
+        )
+        conn.execute(
+            """
+            INSERT INTO repair_records (
+              id, vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+              workflow_source_type, status, completed_at, notes, created_at
+            )
+            VALUES (21, 1, 2, 'Other Customer Repair', '2026-06-24', 120000, 1, 120, 40, 120, 160, 'finding', 'Completed', ?, '', ?)
+            """,
+            (now, now),
+        )
+        pro_module.upsert_repair_completion(
+            conn,
+            repair_record_id=20,
+            form={"completion_date": "2026-06-24"},
+            completed_at=now,
+            now=now,
+            after_repair_photo_paths=["/static/uploads/after-owned.jpg"],
+        )
+        pro_module.upsert_repair_completion(
+            conn,
+            repair_record_id=21,
+            form={"completion_date": "2026-06-24"},
+            completed_at=now,
+            now=now,
+            after_repair_photo_paths=["/static/uploads/after-other-customer.jpg"],
+        )
+
+        groups = pro_module.build_vehicle_photo_groups(conn, customer_id=1, vehicle_id=1)
+        urls = [
+            photo["url"]
+            for group in groups
+            for photo in group["photos"]
+        ]
+
+        self.assertEqual(pro_module.count_vehicle_photos(groups), 2)
+        self.assertIn("/static/uploads/before-owned.jpg", urls)
+        self.assertIn("/static/uploads/after-owned.jpg", urls)
+        self.assertNotIn("/static/uploads/before-other-customer.jpg", urls)
+        self.assertNotIn("/static/uploads/before-other-vehicle.jpg", urls)
+        self.assertNotIn("/static/uploads/after-other-customer.jpg", urls)
+
+    def test_vehicle_detail_template_has_vehicle_photos_gallery(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn('id="vehicle-photos"', vehicle_detail)
+        self.assertIn("vehicle_photo_groups", vehicle_detail)
+        self.assertIn("No photos have been added for this vehicle yet.", vehicle_detail)
+        self.assertIn("View Full Size", vehicle_detail)
+        self.assertIn("tm-vehicle-photo-grid", vehicle_detail)
 
     def test_invoice_number_helper_uses_tm_sequence(self):
         self.assertEqual(pro_module.invoice_number_for(1, "2026-06-25T12:30:00"), "TM-INV-0001")
@@ -1467,26 +1577,30 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
 
     def test_repair_workspace_collapsible_sections_and_track_parts_actions_render(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        content = vehicle_detail.split("{% block content %}", 1)[1]
         pro_py = (ROOT / "routers" / "pro.py").read_text(encoding="utf-8")
+
+        def details_tag_for(marker):
+            marker_idx = content.index(marker)
+            tag_start = content.rfind("<details", 0, marker_idx)
+            tag_end = content.find(">", marker_idx)
+            self.assertNotEqual(tag_start, -1)
+            self.assertNotEqual(tag_end, -1)
+            return content[tag_start:tag_end + 1]
 
         self.assertIn('"key": "in_progress"', vehicle_detail)
         self.assertIn('"key": "ready_to_complete"', vehicle_detail)
         self.assertIn('data-workspace-section="recently_completed"', vehicle_detail)
-        self.assertIn('data-workspace-section="already_invoiced"', vehicle_detail)
         self.assertIn("tm-workspace-section-summary", vehicle_detail)
         self.assertIn('Recently Completed <span class="tm-workspace-section-count">({{ recently_completed_count }})</span>', vehicle_detail)
-        self.assertIn('Already Invoiced <span class="tm-workspace-section-count">({{ invoiced_repair_items|length }})</span>', vehicle_detail)
+        self.assertIn("Invoiced Jobs", vehicle_detail)
+        self.assertIn("{% set invoiced_repair_items = repair_workspace_groups.invoiced|list %}", vehicle_detail)
         self.assertIn("No recently completed repairs.", vehicle_detail)
         self.assertIn("No repair jobs have been invoiced yet.", vehicle_detail)
         self.assertIn("View Invoice", vehicle_detail)
         self.assertIn("Open Repair / Track Parts", pro_py)
         self.assertIn("Continue Repair / Track Parts", pro_py)
-        recent_section_start = vehicle_detail.index('data-workspace-section="recently_completed"')
-        recent_section_open_window = vehicle_detail[recent_section_start - 140:recent_section_start + 140]
-        self.assertNotIn(" open", recent_section_open_window)
-        invoiced_section_start = vehicle_detail.index('data-workspace-section="already_invoiced"')
-        invoiced_section_open_window = vehicle_detail[invoiced_section_start - 140:invoiced_section_start + 140]
-        self.assertNotIn(" open", invoiced_section_open_window)
+        self.assertNotIn(" open", details_tag_for('data-workspace-section="recently_completed"'))
 
     def test_pro_customer_and_vehicle_forms_use_shared_input_formatters(self):
         customers = (ROOT / "templates" / "pro" / "customers.html").read_text(encoding="utf-8")
@@ -1754,9 +1868,9 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('role="switch"', repair_detail)
         self.assertIn("{% if repair.track_as_maintenance %}checked{% endif %}", repair_detail)
         self.assertIn("Track as Maintenance Item", repair_detail)
-        self.assertIn("Update Maintenance Tracking", repair_detail)
         self.assertNotIn("Disable Maintenance Tracking", repair_detail)
         self.assertIn('data-maintenance-toggle-form', repair_detail)
+        self.assertIn('data-maintenance-toggle-status', repair_detail)
         self.assertIn('"X-Requested-With": "XMLHttpRequest"', repair_detail)
         self.assertIn('toggle.checked = lastChecked', repair_detail)
 
@@ -1981,12 +2095,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         finding_edit = (ROOT / "templates" / "pro" / "finding_edit.html").read_text(encoding="utf-8")
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
 
-        self.assertIn('id="completion_date" name="completion_date" type="date"', repair_detail)
-        self.assertIn('id="date_performed" name="date_performed" type="date"', maintenance_detail)
-        self.assertIn('id="due_date" name="due_date" type="date"', maintenance_detail)
-        self.assertIn('id="repair_date" name="repair_date" type="date"', repair_edit)
-        self.assertIn('id="finding_date" name="finding_date" type="date"', finding_edit)
-        self.assertIn('name="repair_date" type="date"', vehicle_detail)
+        self.assertRegex(repair_detail, r'id="completion_date"[\s\S]{0,160}name="completion_date"[\s\S]{0,160}type="date"')
+        self.assertRegex(maintenance_detail, r'id="date_performed"[\s\S]{0,160}name="date_performed"[\s\S]{0,160}type="date"')
+        self.assertRegex(maintenance_detail, r'id="due_date"[\s\S]{0,160}name="due_date"[\s\S]{0,160}type="date"')
+        self.assertRegex(repair_edit, r'id="repair_date"[\s\S]{0,160}name="repair_date"[\s\S]{0,160}type="date"')
+        self.assertRegex(finding_edit, r'id="finding_date"[\s\S]{0,160}name="finding_date"[\s\S]{0,160}type="date"')
+        self.assertRegex(vehicle_detail, r'name="repair_date"[\s\S]{0,160}type="date"')
         self.assertIn("tm-date-picker-button", helper)
         self.assertIn("tm-date-clear-button", helper)
         self.assertIn("input.showPicker", helper)
