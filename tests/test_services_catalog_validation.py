@@ -94,6 +94,54 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         self.assertEqual(result.services_with_search_metadata, 0)
         self.assertEqual(result.services_without_search_metadata, 1)
 
+    def test_allowlisted_location_variant_does_not_warn(self):
+        catalog = minimal_catalog()
+        catalog["categories"][0]["services"] = [
+            {
+                "code": "front_brake_pads_replacement",
+                "name": "Front Brake Pads Replacement",
+                "labor_hours_min": 1.0,
+                "labor_hours_max": 2.0,
+                "summary": "Replaces front brake pads.",
+            },
+            {
+                "code": "rear_brake_pads_replacement",
+                "name": "Rear Brake Pads Replacement",
+                "labor_hours_min": 1.0,
+                "labor_hours_max": 2.0,
+                "summary": "Replaces rear brake pads.",
+            },
+        ]
+
+        result = validate_catalog_data(catalog)
+
+        self.assertEqual(result.errors, [])
+        self.assertFalse(any("suspicious duplicate concept `brake pads`" in issue.message for issue in result.warnings))
+
+    def test_unreviewed_duplicate_concept_still_warns(self):
+        catalog = minimal_catalog()
+        catalog["categories"][0]["services"] = [
+            {
+                "code": "water_pump_replacement",
+                "name": "Water Pump Replacement",
+                "labor_hours_min": 1.0,
+                "labor_hours_max": 3.0,
+                "summary": "Replaces the water pump.",
+            },
+            {
+                "code": "water_pump_diagnosis",
+                "name": "Water Pump Diagnosis",
+                "labor_hours_min": 0.8,
+                "labor_hours_max": 1.5,
+                "summary": "Checks water pump concerns.",
+            },
+        ]
+
+        result = validate_catalog_data(catalog)
+
+        self.assertEqual(result.errors, [])
+        self.assertTrue(any("suspicious duplicate concept `water pump`" in issue.message for issue in result.warnings))
+
 
 if __name__ == "__main__":
     unittest.main()

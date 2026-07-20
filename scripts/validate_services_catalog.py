@@ -14,6 +14,22 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG_PATH = ROOT_DIR / "services_catalog.json"
 CODE_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
 SEARCH_METADATA_FIELDS = ("aliases", "keywords", "summary", "symptoms")
+REVIEWED_DUPLICATE_CONCEPT_ALLOWLIST: dict[frozenset[str], str] = {
+    frozenset(("alternator_diagnosis", "alternator_replacement")): "diagnosis versus repair",
+    frozenset(("battery_replacement", "battery_test")): "test versus replacement",
+    frozenset(("front_brake_pads_replacement", "rear_brake_pads_replacement")): "legitimate location variant",
+    frozenset(("front_brake_pads_and_rotors_replacement", "rear_brake_pads_and_rotors_replacement")): "legitimate location variant",
+    frozenset(("front_brake_rotors_replacement", "rear_brake_rotors_replacement")): "legitimate location variant",
+    frozenset(("bumper_cover_replacement_front", "bumper_cover_replacement_rear")): "legitimate location variant",
+    frozenset(("front_diff_service_fluid_inspect", "rear_diff_service_fluid_inspect")): "legitimate location variant",
+    frozenset(("front_differential_replacement", "rear_differential_replacement")): "legitimate location variant",
+    frozenset(("oxygen_sensor_replacement_upstream", "oxygen_sensor_replacement_downstream")): "legitimate location variant",
+    frozenset(("upper_radiator_hose_replacement", "lower_radiator_hose_replacement")): "legitimate location variant",
+    frozenset(("starter_diagnosis", "starter_replacement")): "diagnosis versus repair",
+    frozenset(("throttle_body_replacement", "throttle_body_service")): "service versus replacement",
+    frozenset(("transmission_diagnostic", "transmission_replacement")): "diagnosis versus repair",
+    frozenset(("wheel_bearing_replacement_front", "wheel_bearing_replacement_rear")): "legitimate location variant",
+}
 
 
 @dataclass
@@ -153,7 +169,7 @@ def validate_catalog_data(catalog: Any) -> ValidationResult:
     category_keys: Counter[str] = Counter()
     service_codes: Counter[str] = Counter()
     normalized_names: defaultdict[str, list[str]] = defaultdict(list)
-    concept_names: defaultdict[str, list[str]] = defaultdict(list)
+    concept_services: defaultdict[str, list[tuple[str, str]]] = defaultdict(list)
     canonical_names: dict[str, str] = {}
     alias_map: defaultdict[str, list[str]] = defaultdict(list)
 
@@ -206,7 +222,7 @@ def validate_catalog_data(catalog: Any) -> ValidationResult:
                 canonical_names[normalized] = location
                 concept = concept_key(name)
                 if concept:
-                    concept_names[concept].append(f"{name} ({code or location})")
+                    concept_services[concept].append((code, name))
 
             labor_min = validate_labor_number(result, service, "labor_hours_min", location)
             labor_max = validate_labor_number(result, service, "labor_hours_max", location)
@@ -259,12 +275,16 @@ def validate_catalog_data(catalog: Any) -> ValidationResult:
                 )
             )
 
-    for concept, names in sorted(concept_names.items()):
-        unique_names = sorted(set(names))
-        if concept and len(unique_names) > 1:
+    for concept, service_items in sorted(concept_services.items()):
+        unique_items = sorted(set(service_items))
+        unique_codes = frozenset(code for code, _name in unique_items if code)
+        if unique_codes in REVIEWED_DUPLICATE_CONCEPT_ALLOWLIST:
+            continue
+        if concept and len(unique_items) > 1:
+            formatted_items = [f"{name} ({code})" for code, name in unique_items]
             result.warnings.append(
                 ValidationIssue(
-                    f"suspicious duplicate concept `{concept}` appears as: {', '.join(unique_names[:6])}"
+                    f"suspicious duplicate concept `{concept}` appears as: {', '.join(formatted_items[:6])}"
                 )
             )
 

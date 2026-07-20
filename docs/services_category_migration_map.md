@@ -1,0 +1,82 @@
+# Services Category Migration Map
+
+This document maps the current `services_catalog.json` categories to the proposed bumper-to-bumper taxonomy. It is a planning document only; no live category keys or service assignments are changed in Phase 3.1 Batch 3.
+
+## Proposed Future Taxonomy
+
+- Maintenance & Inspections
+- Engine Mechanical
+- Engine Performance & Diagnostics
+- Cooling System
+- Fuel System
+- Exhaust & Emissions
+- Transmission
+- Drivetrain & Differentials
+- Steering
+- Suspension
+- Brakes
+- Wheels, Tires & Alignment
+- Starting & Charging
+- Electrical & Wiring
+- Lighting
+- HVAC
+- Glass, Mirrors & Wipers
+- Interior & Accessories
+- Body & Exterior
+- Restraint & Safety Systems
+- ADAS & Safety Electronics
+- Hybrid & EV
+
+## Current Category Mapping
+
+| Current key | Current display name | Count | Future destination categories | Likely movement | Examples that remain | Examples that move | Compatibility considerations |
+| --- | --- | ---: | --- | --- | --- | --- | --- |
+| `maintenance` | Maintenance | 28 | Maintenance & Inspections; Wheels, Tires & Alignment; Starting & Charging; Cooling System; Transmission; Drivetrain & Differentials; Electrical & Wiring | About 12 remain; about 16 move | `oil_and_filter_change`, `synthetic_oil_change`, `engine_air_filter_replacement`, `pre_purchase_inspection` if later added here | `tire_rotation`, `tire_balance`, `mount_and_balance_per_tire`, `battery_test`, `charging_system_test`, `coolant_flush`, `transmission_fluid_service_drain_and_fill` | Keep `maintenance` category alias during transition because users expect broad maintenance browsing. |
+| `engine` | Engine | 42 | Engine Mechanical; Engine Performance & Diagnostics; Cooling System; Fuel System | About 24 mechanical; about 18 performance/diagnostic/sensor move | `valve_cover_gasket_replacement`, `head_gasket_replacement`, `timing_belt_replacement`, `rear_main_seal_replacement` | `misfire_diagnosis`, `mass_air_flow_sensor_replacement`, `map_sensor_replacement`, `coolant_temperature_sensor_replacement` | Existing engine service codes should stay stable even if category ownership splits. |
+| `cooling` | Cooling System | 24 | Cooling System; HVAC | About 23 remain; 1 may move or alias | `radiator_replacement`, `water_pump_replacement`, `thermostat_replacement`, `cooling_system_pressure_test` | `heater_control_valve_replacement_if_applicable` may map to HVAC or remain dual-owned | Heater-control-valve cleanup requires legacy-code compatibility. |
+| `brakes` | Brakes | 29 | Brakes; ADAS & Safety Electronics; Electrical & Wiring | About 25 remain; about 4 may move or dual-map | `front_brake_pads_replacement`, `brake_caliper_replacement_each`, `brake_fluid_flush` | `abs_diagnosis`, `abs_module_diagnosis`, `abs_wheel_speed_sensor_replacement` | ABS may need dual surfacing under Brakes and ADAS/Safety during transition. |
+| `suspension` | Suspension & Steering | 24 | Suspension; Steering; Wheels, Tires & Alignment | About 10 suspension; about 7 steering; about 4 alignment/wheel-end; remaining specialty estimates | `front_struts_replacement_pair`, `control_arm_replacement_each`, `sway_bar_link_replacement` | `steering_rack_replacement`, `power_steering_pump_replacement`, `wheel_alignment_4_wheel`, `wheel_bearing_replacement_front` | Current combined category should remain as a legacy alias until users learn split navigation. |
+| `drivetrain` | Drivetrain (FWD / RWD / AWD / 4WD) | 24 | Drivetrain & Differentials; Wheels, Tires & Alignment; Transmission | About 20 remain; about 4 may move | `cv_axle_replacement_each`, `front_differential_replacement`, `transfer_case_replacement` | `wheel_hub_assembly_replacement_each` may move to Wheels/Tires/Alignment; clutch-adjacent items stay in Transmission if added later | AWD/4WD language should stay searchable across drivetrain and differential taxonomy. |
+| `transmission` | Transmission | 23 | Transmission; Drivetrain & Differentials | About 22 remain; about 1 may dual-map | `transmission_diagnostic`, `transmission_fluid_service`, `clutch_replacement_manual`, `torque_converter_replacement_if_applicable` | `transmission_mount_replacement` may also relate to drivetrain/powertrain mounts | Keep diagnostic and replacement services separate. |
+| `ac_heat` | A/C & Heating | 22 | HVAC; Cooling System; Electrical & Wiring | About 20 remain; about 2 may dual-map | `a_c_performance_check`, `a_c_compressor_replacement`, `blower_motor_replacement`, `heater_core_replacement` | `heater_control_valve_replacement`, `cooling_blend_door_calibration_if_applicable` may need dual mapping | HVAC should become canonical label, while `ac_heat` remains a legacy key. |
+| `electrical` | Electrical | 28 | Starting & Charging; Electrical & Wiring; Lighting; Interior & Accessories | About 9 starting/charging; about 8 wiring/electrical; about 7 lighting; about 4 interior/accessory | `electrical_diagnostic`, `wiring_repair`, `connector_repair`, `fuse_replacement` | `starter_replacement`, `alternator_replacement`, `battery_replacement`, `headlight_bulb_replacement`, `door_lock_actuator_replacement` | This category needs careful split aliases because many links point to electrical services. |
+| `fuel` | Fuel System | 23 | Fuel System; Engine Performance & Diagnostics; Exhaust & Emissions | About 18 remain; about 5 diagnostic/emissions dual-map | `fuel_pump_replacement_in_tank`, `fuel_pressure_test`, `fuel_line_repair_replacement` | `fuel_trim_diagnosis`, `evap_system_diagnosis`, `throttle_body_service` | EVAP and fuel-trim services should remain searchable from both fuel and emissions/performance contexts. |
+| `exhaust` | Exhaust & Emissions | 23 | Exhaust & Emissions; Engine Performance & Diagnostics; Fuel System | About 20 remain; about 3 may dual-map | `catalytic_converter_replacement`, `muffler_replacement`, `evap_purge_valve_replacement`, `oxygen_sensor_replacement_upstream` | `check_engine_light_diagnosis`, `o2_sensor_diagnosis`, `egr_diagnosis_if_applicable` may dual-map to diagnostics | Keep emissions and exhaust together for now; future OBD flows may point into diagnostics. |
+| `body_paint` | Body / Paint (Bumper-to-Bumper) | 24 | Body & Exterior; Glass, Mirrors & Wipers; Interior & Accessories; Lighting | About 13 body/exterior; about 5 glass/mirror/wiper; about 4 interior; about 2 lighting/detailing | `bumper_cover_replacement_front`, `fender_replacement`, `paint_refinish_single_panel_base_clear` | `side_mirror_replacement`, `door_glass_replacement`, `window_regulator_replacement`, `headlight_restoration` | Body/Paint is broad and should remain browseable while the future taxonomy fills gaps. |
+| `diagnostics` | Diagnostics | 14 | Engine Performance & Diagnostics; Electrical & Wiring; Maintenance & Inspections; ADAS & Safety Electronics | About 8 general diagnostics; about 3 electrical; about 3 inspection/verification | `obd_ii_scan_and_code_read`, `driveability_diagnosis`, `no_start_diagnosis` | `electrical_diagnosis`, `pre_purchase_inspection`, `road_test_pre_post_repair` | Generic diagnostics should probably become cross-category search results rather than a single destination category. |
+
+## Backwards-Compatible Migration Strategy
+
+Future category splitting should be incremental and reversible.
+
+Principles:
+
+- Service codes remain stable and continue to identify the service.
+- Category changes must not alter saved service identity.
+- Old category keys can temporarily map to multiple new categories.
+- Legacy category aliases should be supported during transition.
+- Migration should be additive first, then cleanup later.
+- Historical estimates, repair records, and invoice records should continue displaying the originally saved service code/name.
+
+Recommended phases:
+
+1. Add taxonomy metadata only. Add future category labels or tags to services while leaving current `category` ownership unchanged.
+2. Add read-side compatibility. Allow old category keys to resolve to grouped new destinations without changing existing API contracts.
+3. Update frontend browse/search gradually. Search can show future taxonomy labels while service codes remain unchanged.
+4. Migrate content links. Repair guides, symptom pages, and hubs can update links only after legacy code resolution exists.
+5. Review analytics and saved-record behavior. Confirm old links and historical records continue to resolve.
+6. Only then consider live category-key changes, with tests for old and new category access.
+
+## Compatibility Considerations By Surface
+
+- Saved estimates: keep stored `serviceCode` and display text intact.
+- Repair guides: links using `/estimator?service=...` must keep resolving.
+- API consumers: preserve `/api/service/{service_code}` lookup by stable code.
+- Frontend service selection: support legacy category aliases while users transition.
+- Existing links/bookmarks: service-code prefill should not depend on the current category key.
+- Historical repair and invoice records: do not rewrite stored records for taxonomy changes.
+- Search metadata: aliases can mention future category terms before category ownership changes.
+
+## Initial Expansion Targets
+
+The current taxonomy has no live categories for Restraint & Safety Systems, ADAS & Safety Electronics, or Hybrid & EV. Those should be introduced only after the compatibility layer and standards for new category keys are finalized.
