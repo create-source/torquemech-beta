@@ -1549,6 +1549,10 @@
   let serviceCategories = [];
   let allServiceOptions = [];
   let allServiceOptionsVehicleKey = "";
+  const serviceCategoryCache = new Map();
+  const serviceCategoryRequests = new Map();
+  let allServiceOptionsRequest = null;
+  let loadServicesRequestId = 0;
   let serviceSearch = null;
   let serviceResults = null;
   const SERVICE_SEARCH_PLACEHOLDER = "Search services or symptoms...";
@@ -5016,37 +5020,52 @@ const confidenceEl = document.getElementById("laborConfidence");
       return allServiceOptions;
     }
 
-    if (!serviceCategories.length) {
-      serviceCategories = await apiJSON("/api/categories");
+    if (allServiceOptionsRequest?.cacheKey === cacheKey) {
+      return allServiceOptionsRequest.promise;
     }
 
-    const groupedServices = await Promise.all(
-      serviceCategories.map(async (category) => {
-        try {
-          const categoryKey = category.key || "";
-          const categoryName = category.name || categoryKey;
-          const services = filterServicesForActiveVehicle(
-            await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`),
-            { query }
-          );
-          return services.map((service) => mapServiceSearchOption(service, categoryKey, categoryName));
-        } catch {
-          return [];
-        }
-      })
-    );
+    const promise = (async () => {
+      if (!serviceCategories.length) {
+        serviceCategories = await apiJSON("/api/categories");
+      }
 
-    const seenCodes = new Set();
-    allServiceOptions = groupedServices
-      .flat()
-      .filter((service) => {
-        const serviceKey = service.code || service.name;
-        if (!serviceKey || seenCodes.has(serviceKey)) return false;
-        seenCodes.add(serviceKey);
-        return true;
-      });
-    allServiceOptionsVehicleKey = cacheKey;
-    return allServiceOptions;
+      const groupedServices = await Promise.all(
+        serviceCategories.map(async (category) => {
+          try {
+            const categoryKey = category.key || "";
+            const categoryName = category.name || categoryKey;
+            const services = filterServicesForActiveVehicle(
+              await getServicesForCategory(categoryKey),
+              { query }
+            );
+            return services.map((service) => mapServiceSearchOption(service, categoryKey, categoryName));
+          } catch {
+            return [];
+          }
+        })
+      );
+
+      const seenCodes = new Set();
+      allServiceOptions = groupedServices
+        .flat()
+        .filter((service) => {
+          const serviceKey = service.code || service.name;
+          if (!serviceKey || seenCodes.has(serviceKey)) return false;
+          seenCodes.add(serviceKey);
+          return true;
+        });
+      allServiceOptionsVehicleKey = cacheKey;
+      return allServiceOptions;
+    })();
+
+    allServiceOptionsRequest = { cacheKey, promise };
+    try {
+      return await promise;
+    } finally {
+      if (allServiceOptionsRequest?.promise === promise) {
+        allServiceOptionsRequest = null;
+      }
+    }
   }
 
   function getServiceSearchCluster(query) {
@@ -5713,22 +5732,51 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
   }
 
+  async function getServicesForCategory(categoryKey) {
+    const key = String(categoryKey || "").trim();
+    if (!key) return [];
+
+    if (serviceCategoryCache.has(key)) {
+      return serviceCategoryCache.get(key);
+    }
+
+    if (serviceCategoryRequests.has(key)) {
+      return serviceCategoryRequests.get(key);
+    }
+
+    const request = apiJSON(`/api/services/${encodeURIComponent(key)}`)
+      .then((services) => {
+        const normalized = Array.isArray(services) ? services : [];
+        serviceCategoryCache.set(key, normalized);
+        return normalized;
+      })
+      .finally(() => {
+        serviceCategoryRequests.delete(key);
+      });
+
+    serviceCategoryRequests.set(key, request);
+    return request;
+  }
+
   async function loadServices(categoryKey) {
     if (!serviceEl) return;
 
-    resetServiceSearch();
-    serviceEl.innerHTML = `<option value="">Select service…</option>`;
+    const requestId = ++loadServicesRequestId;
+    resetServiceSearch({ placeholder: categoryKey ? "Loading services..." : SERVICE_SEARCH_PLACEHOLDER, disabled: false });
+    serviceEl.innerHTML = `<option value="">${categoryKey ? "Loading services…" : "Select service…"}</option>`;
     serviceMeta = null;
     laborHoursTouched = false;
     renderSelectedServiceContext();
 
     if (!categoryKey) return;
 
-    const svcs = filterServicesForActiveVehicle(
-      await apiJSON(`/api/services/${encodeURIComponent(categoryKey)}`)
-    );
+    const rawServices = await getServicesForCategory(categoryKey);
+    if (requestId !== loadServicesRequestId || categoryEl?.value !== categoryKey) return;
+
+    const svcs = filterServicesForActiveVehicle(rawServices);
     const categoryName = categoryEl?.options[categoryEl.selectedIndex]?.textContent || "";
     serviceOptions = svcs.map((s) => mapServiceSearchOption(s, categoryKey, categoryName));
+    serviceEl.innerHTML = `<option value="">Select service…</option>`;
     for (const s of svcs) {
       const opt = document.createElement("option");
       opt.value = s.code || "";
@@ -7858,7 +7906,9 @@ if (getEstimateHint) {
           vehicle.displayModel = displayModel || model;
           syncEstimateMeta();
           window.estimateState = estimateState;
-          void loadServices(categoryEl?.value || "");
+          if (categoryEl?.value) {
+            void loadServices(categoryEl.value);
+          }
           updateEstimateButtonState();
           renderSharedEstimateSnapshot();
           refreshQuotePreview();
