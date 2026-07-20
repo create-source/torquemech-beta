@@ -29,6 +29,22 @@ REVIEWED_DUPLICATE_CONCEPT_ALLOWLIST: dict[frozenset[str], str] = {
     frozenset(("throttle_body_replacement", "throttle_body_service")): "service versus replacement",
     frozenset(("transmission_diagnostic", "transmission_replacement")): "diagnosis versus repair",
     frozenset(("wheel_bearing_replacement_front", "wheel_bearing_replacement_rear")): "legitimate location variant",
+    frozenset(("airbag_control_module_diagnostic", "airbag_control_module_replacement")): "diagnosis versus repair",
+    frozenset(("occupant_classification_sensor_diagnostic", "occupant_classification_sensor_replacement")): "diagnosis versus repair",
+    frozenset(("front_radar_calibration", "rear_radar_calibration")): "legitimate location variant",
+    frozenset(("rear_view_camera_diagnostic", "rear_view_camera_replacement")): "diagnosis versus repair",
+    frozenset(("high_voltage_battery_diagnostic", "high_voltage_battery_replacement")): "diagnosis versus repair",
+    frozenset(("hybrid_battery_cooling_fan_service", "hybrid_battery_cooling_fan_replacement")): "service versus replacement",
+    frozenset(("inverter_diagnostic", "inverter_replacement")): "diagnosis versus repair",
+    frozenset(("dc_dc_converter_diagnostic", "dc_dc_converter_replacement")): "diagnosis versus repair",
+    frozenset(("onboard_charger_diagnostic", "onboard_charger_replacement")): "diagnosis versus repair",
+    frozenset(("charge_port_diagnostic", "charge_port_replacement")): "diagnosis versus repair",
+    frozenset(("electric_drive_motor_diagnostic", "electric_drive_motor_replacement")): "diagnosis versus repair",
+    frozenset(("battery_heater_diagnostic", "battery_heater_replacement")): "diagnosis versus repair",
+    frozenset(("high_voltage_contactor_diagnostic", "high_voltage_contactor_replacement")): "diagnosis versus repair",
+    frozenset(("high_voltage_cable_inspection", "high_voltage_cable_replacement")): "inspection versus replacement",
+    frozenset(("hybrid_transaxle_service", "hybrid_transaxle_replacement")): "service versus replacement",
+    frozenset(("heat_pump_hvac_diagnostic", "heat_pump_hvac_service")): "diagnosis versus service",
 }
 
 

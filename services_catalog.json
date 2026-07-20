@@ -8422,6 +8422,2288 @@
           ]
         }
       ]
+    },
+    {
+      "key": "restraint_safety",
+      "name": "Restraint & Safety Systems",
+      "description": "SRS, airbags, seat belts, crash sensors, occupant detection, and post-collision restraint inspections.",
+      "services": [
+        {
+          "code": "srs_airbag_diagnostic",
+          "name": "SRS / Airbag Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "airbag / Airbag Diagnostic",
+            "SRS / Airbag troubleshooting",
+            "SRS / Airbag check"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Diagnostic"
+          ],
+          "summary": "Checks srs / airbag concerns with scan equipment and restraint-system safety procedures before repair decisions are made.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "airbag_warning_light_diagnostic",
+          "name": "Airbag Warning-Light Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Airbag Warning-Light troubleshooting",
+            "Airbag Warning-Light check"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Warning",
+            "Light",
+            "Diagnostic"
+          ],
+          "summary": "Checks airbag warning-light concerns with scan equipment and restraint-system safety procedures before repair decisions are made.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "airbag_control_module_diagnostic",
+          "name": "Airbag Control Module Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Airbag Control Module troubleshooting",
+            "Airbag Control Module check"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Control",
+            "Module",
+            "Diagnostic"
+          ],
+          "summary": "Checks airbag control module concerns with scan equipment and restraint-system safety procedures before repair decisions are made.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "airbag_control_module_replacement",
+          "name": "Airbag Control Module Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.5,
+          "aliases": [
+            "Airbag Control Module R&R",
+            "Airbag Control Module repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Control",
+            "Module",
+            "Replacement"
+          ],
+          "summary": "Replaces the airbag control module when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "driver_airbag_replacement",
+          "name": "Driver Airbag Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Driver Airbag R&R",
+            "Driver Airbag repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Driver",
+            "Replacement"
+          ],
+          "summary": "Replaces the driver airbag when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "passenger_airbag_replacement",
+          "name": "Passenger Airbag Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 5.0,
+          "aliases": [
+            "Passenger Airbag R&R",
+            "Passenger Airbag repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Passenger",
+            "Replacement"
+          ],
+          "summary": "Replaces the passenger airbag when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "side_airbag_replacement",
+          "name": "Side Airbag Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.5,
+          "aliases": [
+            "Side Airbag R&R",
+            "Side Airbag repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Side",
+            "Replacement"
+          ],
+          "summary": "Replaces the side airbag when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "curtain_airbag_replacement",
+          "name": "Curtain Airbag Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "aliases": [
+            "Curtain Airbag R&R",
+            "Curtain Airbag repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Curtain",
+            "Replacement"
+          ],
+          "summary": "Replaces the curtain airbag when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "front_crash_sensor_replacement",
+          "name": "Front Crash Sensor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Front Crash Sensor R&R",
+            "Front Crash Sensor repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Front",
+            "Crash",
+            "Sensor",
+            "Replacement"
+          ],
+          "summary": "Replaces the front crash sensor when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "side_impact_sensor_replacement",
+          "name": "Side-Impact Sensor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Side-Impact Sensor R&R",
+            "Side-Impact Sensor repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Side",
+            "Impact",
+            "Sensor",
+            "Replacement"
+          ],
+          "summary": "Replaces the side-impact sensor when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "occupant_classification_sensor_diagnostic",
+          "name": "Occupant Classification Sensor Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Occupant Classification Sensor troubleshooting",
+            "Occupant Classification Sensor check"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Occupant",
+            "Classification",
+            "Sensor",
+            "Diagnostic"
+          ],
+          "summary": "Checks occupant classification sensor concerns with scan equipment and restraint-system safety procedures before repair decisions are made.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "occupant_classification_sensor_replacement",
+          "name": "Occupant Classification Sensor Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 5.0,
+          "aliases": [
+            "Occupant Classification Sensor R&R",
+            "Occupant Classification Sensor repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Occupant",
+            "Classification",
+            "Sensor",
+            "Replacement"
+          ],
+          "summary": "Replaces the occupant classification sensor when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "passenger_seat_occupancy_sensor_calibration",
+          "name": "Passenger-Seat Occupancy Sensor Calibration",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Passenger-Seat Occupancy Sensor aiming",
+            "Passenger-Seat Occupancy Sensor relearn"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Passenger",
+            "Seat",
+            "Occupancy",
+            "Sensor"
+          ],
+          "summary": "Performs passenger-seat occupancy sensor calibration when required by manufacturer restraint-system procedures after repair or seat work.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "seat_belt_buckle_replacement",
+          "name": "Seat-Belt Buckle Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Seat-Belt Buckle R&R",
+            "Seat-Belt Buckle repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Seat",
+            "Belt",
+            "Buckle",
+            "Replacement"
+          ],
+          "summary": "Replaces the seat-belt buckle when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "seat_belt_retractor_replacement",
+          "name": "Seat-Belt Retractor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Seat-Belt Retractor R&R",
+            "Seat-Belt Retractor repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Seat",
+            "Belt",
+            "Retractor",
+            "Replacement"
+          ],
+          "summary": "Replaces the seat-belt retractor when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "seat_belt_pretensioner_replacement",
+          "name": "Seat-Belt Pretensioner Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Seat-Belt Pretensioner R&R",
+            "Seat-Belt Pretensioner repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Seat",
+            "Belt",
+            "Pretensioner",
+            "Replacement"
+          ],
+          "summary": "Replaces the seat-belt pretensioner when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "seat_belt_warning_system_diagnostic",
+          "name": "Seat-Belt Warning-System Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Seat-Belt Warning-System troubleshooting",
+            "Seat-Belt Warning-System check"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Seat",
+            "Belt",
+            "Warning",
+            "System"
+          ],
+          "summary": "Checks seat-belt warning-system concerns with scan equipment and restraint-system safety procedures before repair decisions are made.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "clock_spring_replacement",
+          "name": "Clock Spring Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Clock Spring R&R",
+            "Clock Spring repair"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Clock",
+            "Spring",
+            "Replacement"
+          ],
+          "summary": "Replaces the clock spring when a fault, deployment, or damage is confirmed, using proper restraint-system safety procedures.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "post_collision_srs_inspection",
+          "name": "Post-Collision SRS Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Post-Collision airbag Inspection",
+            "Post-Collision SRS check"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "Post",
+            "Collision",
+            "Inspection"
+          ],
+          "summary": "Checks post-collision srs concerns with scan equipment and restraint-system safety procedures before repair decisions are made.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        },
+        {
+          "code": "srs_system_scan_and_code_clearing",
+          "name": "SRS System Scan and Code Clearing",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "airbag System Scan and Code Clearing",
+            "SRS System and code scan",
+            "SRS System and module scan"
+          ],
+          "keywords": [
+            "SRS",
+            "airbag",
+            "restraint",
+            "seat belt",
+            "crash sensor",
+            "occupant safety",
+            "System",
+            "Scan",
+            "and",
+            "Code"
+          ],
+          "summary": "Scans SRS faults and clears codes only where legally and technically appropriate after required faults have been corrected.",
+          "symptoms": [
+            "airbag warning light",
+            "SRS light on",
+            "post-collision inspection",
+            "restraint fault message"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "adas_safety",
+      "name": "ADAS & Safety Electronics",
+      "description": "Advanced driver-assistance diagnostics, calibrations, scans, cameras, radar, and safety electronics.",
+      "services": [
+        {
+          "code": "adas_system_diagnostic",
+          "name": "ADAS System Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "driver assistance System Diagnostic",
+            "ADAS System troubleshooting",
+            "ADAS System check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "System",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses adas system concerns while keeping replacement and calibration services separate.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "forward_facing_camera_calibration",
+          "name": "Forward-Facing Camera Calibration",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Forward-Facing Camera aiming",
+            "Forward-Facing Camera relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Forward",
+            "Facing"
+          ],
+          "summary": "Calibrates the forward-facing camera where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "windshield_camera_calibration",
+          "name": "Windshield Camera Calibration",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Windshield Camera aiming",
+            "Windshield Camera relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Windshield"
+          ],
+          "summary": "Calibrates the windshield camera where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "front_radar_calibration",
+          "name": "Front Radar Calibration",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Front Radar aiming",
+            "Front Radar relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Front"
+          ],
+          "summary": "Calibrates the front radar where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "rear_radar_calibration",
+          "name": "Rear Radar Calibration",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Rear Radar aiming",
+            "Rear Radar relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Rear"
+          ],
+          "summary": "Calibrates the rear radar where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "blind_spot_monitoring_diagnostic",
+          "name": "Blind-Spot Monitoring Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Blind-Spot Monitoring troubleshooting",
+            "Blind-Spot Monitoring check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Blind",
+            "Spot",
+            "Monitoring",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses blind-spot monitoring concerns while keeping replacement and calibration services separate.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "blind_spot_radar_sensor_replacement",
+          "name": "Blind-Spot Radar Sensor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Blind-Spot Radar Sensor R&R",
+            "Blind-Spot Radar Sensor repair"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Blind",
+            "Spot",
+            "Sensor",
+            "Replacement"
+          ],
+          "summary": "Replaces the blind-spot radar sensor when confirmed faulty or damaged, with calibration or setup where required.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "lane_departure_lane_keep_assist_diagnostic",
+          "name": "Lane-Departure / Lane-Keep Assist Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Lane-Departure / Lane-Keep Assist troubleshooting",
+            "Lane-Departure / Lane-Keep Assist check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Lane",
+            "Departure",
+            "Keep",
+            "Assist"
+          ],
+          "summary": "Diagnoses lane-departure / lane-keep assist concerns while keeping replacement and calibration services separate.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "adaptive_cruise_control_diagnostic",
+          "name": "Adaptive Cruise Control Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Adaptive Cruise Control troubleshooting",
+            "Adaptive Cruise Control check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Adaptive",
+            "Cruise",
+            "Control",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses adaptive cruise control concerns while keeping replacement and calibration services separate.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "parking_assist_diagnostic",
+          "name": "Parking-Assist Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Parking-Assist troubleshooting",
+            "Parking-Assist check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Parking",
+            "Assist",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses parking-assist concerns while keeping replacement and calibration services separate.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "parking_sensor_replacement",
+          "name": "Parking Sensor Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Parking Sensor R&R",
+            "Parking Sensor repair"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Parking",
+            "Sensor",
+            "Replacement"
+          ],
+          "summary": "Replaces the parking sensor when confirmed faulty or damaged, with calibration or setup where required.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "surround_view_camera_calibration",
+          "name": "Surround-View Camera Calibration",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Surround-View Camera aiming",
+            "Surround-View Camera relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Surround",
+            "View"
+          ],
+          "summary": "Calibrates the surround-view camera where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "rear_view_camera_diagnostic",
+          "name": "Rear-View Camera Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Rear-View Camera troubleshooting",
+            "Rear-View Camera check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Rear",
+            "View",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses rear-view camera concerns while keeping replacement and calibration services separate.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "rear_view_camera_replacement",
+          "name": "Rear-View Camera Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Rear-View Camera R&R",
+            "Rear-View Camera repair"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Rear",
+            "View",
+            "Replacement"
+          ],
+          "summary": "Replaces the rear-view camera when confirmed faulty or damaged, with calibration or setup where required.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "driver_monitoring_camera_diagnostic",
+          "name": "Driver-Monitoring Camera Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Driver-Monitoring Camera troubleshooting",
+            "Driver-Monitoring Camera check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Driver",
+            "Monitoring",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses driver-monitoring camera concerns while keeping replacement and calibration services separate.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "steering_angle_sensor_calibration",
+          "name": "Steering-Angle Sensor Calibration",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Steering-Angle Sensor aiming",
+            "Steering-Angle Sensor relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Steering",
+            "Angle",
+            "Sensor"
+          ],
+          "summary": "Calibrates the steering-angle sensor where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "yaw_rate_sensor_calibration",
+          "name": "Yaw-Rate Sensor Calibration",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Yaw-Rate Sensor aiming",
+            "Yaw-Rate Sensor relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Yaw",
+            "Rate",
+            "Sensor"
+          ],
+          "summary": "Calibrates the yaw-rate sensor where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "ride_height_sensor_calibration_adas",
+          "name": "Ride-Height Sensor Calibration for ADAS",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "ride height sensor calibration adas",
+            "Ride-Height Sensor Calibration for driver assistance",
+            "Ride-Height Sensor for ADAS aiming",
+            "Ride-Height Sensor for ADAS relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Ride",
+            "Height",
+            "Sensor",
+            "for"
+          ],
+          "summary": "Calibrates the ride-height sensor for adas where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "post_alignment_adas_calibration",
+          "name": "Post-Alignment ADAS Calibration",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Post-Alignment driver assistance Calibration",
+            "Post-Alignment ADAS aiming",
+            "Post-Alignment ADAS relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Post",
+            "Alignment"
+          ],
+          "summary": "Calibrates the post-alignment adas where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "post_windshield_replacement_adas_calibration",
+          "name": "Post-Windshield-Replacement ADAS Calibration",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Post-Windshield-Replacement driver assistance Calibration",
+            "Post-Windshield- ADAS aiming",
+            "Post-Windshield- ADAS relearn"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Post",
+            "Windshield",
+            "Replacement"
+          ],
+          "summary": "Calibrates the post-windshield- adas where equipped, with procedures varying by manufacturer and required equipment.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "post_collision_adas_inspection",
+          "name": "Post-Collision ADAS Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Post-Collision driver assistance Inspection",
+            "Post-Collision ADAS check"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Post",
+            "Collision",
+            "Inspection"
+          ],
+          "summary": "Inspects post-collision adas status after damage or repairs before calibration or replacement is approved.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "adas_pre_scan",
+          "name": "ADAS Pre-Scan",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "driver assistance Pre-Scan",
+            "ADAS Pre code scan",
+            "ADAS Pre module scan"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Pre",
+            "Scan"
+          ],
+          "summary": "Performs an adas pre to document safety-electronics faults and verify whether further procedures are required.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        },
+        {
+          "code": "adas_post_scan",
+          "name": "ADAS Post-Scan",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "driver assistance Post-Scan",
+            "ADAS Post code scan",
+            "ADAS Post module scan"
+          ],
+          "keywords": [
+            "ADAS",
+            "driver assistance",
+            "safety electronics",
+            "camera",
+            "radar",
+            "calibration",
+            "Post",
+            "Scan"
+          ],
+          "summary": "Performs an adas post to document safety-electronics faults and verify whether further procedures are required.",
+          "symptoms": [
+            "ADAS warning light",
+            "driver assist unavailable",
+            "after collision or glass work",
+            "calibration required"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "hybrid_ev",
+      "name": "Hybrid & EV",
+      "description": "Hybrid and electric-vehicle diagnostics, high-voltage safety inspections, battery, charging, drive, and thermal-management services.",
+      "services": [
+        {
+          "code": "hybrid_ev_system_diagnostic",
+          "name": "Hybrid/EV System Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Hybrid/EV System troubleshooting",
+            "Hybrid/EV System check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "System",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses hybrid/ev system concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_safety_inspection",
+          "name": "High-Voltage Safety Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "HV Safety Inspection",
+            "High-Voltage Safety check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Safety",
+            "Inspection"
+          ],
+          "summary": "Inspects the high-voltage safety using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_battery_state_of_health_test",
+          "name": "High-Voltage Battery State-of-Health Test",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "HV Battery State-of-Health Test",
+            "High-Voltage Battery State-of-Health maintenance",
+            "High-Voltage Battery State-of-Health procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Battery",
+            "State",
+            "of"
+          ],
+          "summary": "Tests the high-voltage battery state-of-health where supported by scan tools and manufacturer high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_battery_diagnostic",
+          "name": "High-Voltage Battery Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "HV Battery Diagnostic",
+            "High-Voltage Battery troubleshooting",
+            "High-Voltage Battery check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Battery",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses high-voltage battery concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_battery_replacement",
+          "name": "High-Voltage Battery Replacement",
+          "labor_hours_min": 6.0,
+          "labor_hours_max": 14.0,
+          "aliases": [
+            "HV Battery Replacement",
+            "High-Voltage Battery R&R",
+            "High-Voltage Battery repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Battery",
+            "Replacement"
+          ],
+          "summary": "Replaces the high-voltage battery when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "hybrid_battery_cooling_fan_service",
+          "name": "Hybrid Battery Cooling-Fan Service",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Hybrid Battery Cooling-Fan maintenance",
+            "Hybrid Battery Cooling-Fan procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Battery",
+            "Cooling",
+            "Fan",
+            "Service"
+          ],
+          "summary": "Performs hybrid battery cooling-fan service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "hybrid_battery_cooling_fan_replacement",
+          "name": "Hybrid Battery Cooling-Fan Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Hybrid Battery Cooling-Fan R&R",
+            "Hybrid Battery Cooling-Fan repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Battery",
+            "Cooling",
+            "Fan",
+            "Replacement"
+          ],
+          "summary": "Replaces the hybrid battery cooling-fan when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_battery_cooling_system_service",
+          "name": "High-Voltage Battery Cooling-System Service",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "HV Battery Cooling-System Service",
+            "High-Voltage Battery Cooling-System maintenance",
+            "High-Voltage Battery Cooling-System procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Battery",
+            "Cooling",
+            "System"
+          ],
+          "summary": "Performs high-voltage battery cooling-system service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "inverter_diagnostic",
+          "name": "Inverter Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Inverter troubleshooting",
+            "Inverter check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Inverter",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses inverter concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "inverter_replacement",
+          "name": "Inverter Replacement",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 8.0,
+          "aliases": [
+            "Inverter R&R",
+            "Inverter repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Inverter",
+            "Replacement"
+          ],
+          "summary": "Replaces the inverter when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "inverter_coolant_service",
+          "name": "Inverter Coolant Service",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Inverter Coolant maintenance",
+            "Inverter Coolant procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Inverter",
+            "Coolant",
+            "Service"
+          ],
+          "summary": "Performs inverter coolant service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "dc_dc_converter_diagnostic",
+          "name": "DC-DC Converter Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "DC-DC Converter troubleshooting",
+            "DC-DC Converter check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "DC",
+            "Converter",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses dc-dc converter concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "dc_dc_converter_replacement",
+          "name": "DC-DC Converter Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "aliases": [
+            "DC-DC Converter R&R",
+            "DC-DC Converter repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "DC",
+            "Converter",
+            "Replacement"
+          ],
+          "summary": "Replaces the dc-dc converter when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "onboard_charger_diagnostic",
+          "name": "Onboard Charger Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Onboard Charger troubleshooting",
+            "Onboard Charger check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Onboard",
+            "Charger",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses onboard charger concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "onboard_charger_replacement",
+          "name": "Onboard Charger Replacement",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 8.0,
+          "aliases": [
+            "Onboard Charger R&R",
+            "Onboard Charger repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Onboard",
+            "Charger",
+            "Replacement"
+          ],
+          "summary": "Replaces the onboard charger when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "charge_port_diagnostic",
+          "name": "Charge-Port Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Charge-Port troubleshooting",
+            "Charge-Port check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Charge",
+            "Port",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses charge-port concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "charge_port_replacement",
+          "name": "Charge-Port Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 5.0,
+          "aliases": [
+            "Charge-Port R&R",
+            "Charge-Port repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Charge",
+            "Port",
+            "Replacement"
+          ],
+          "summary": "Replaces the charge-port when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "ev_charging_system_diagnostic",
+          "name": "EV Charging-System Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "EV Charging-System troubleshooting",
+            "EV Charging-System check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Charging",
+            "System",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses ev charging-system concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_isolation_test",
+          "name": "High-Voltage Isolation Test",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "HV Isolation Test",
+            "High-Voltage Isolation maintenance",
+            "High-Voltage Isolation procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Isolation",
+            "Test"
+          ],
+          "summary": "Tests the high-voltage isolation where supported by scan tools and manufacturer high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_interlock_loop_diagnostic",
+          "name": "High-Voltage Interlock-Loop Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "HV Interlock-Loop Diagnostic",
+            "High-Voltage Interlock-Loop troubleshooting",
+            "High-Voltage Interlock-Loop check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Interlock",
+            "Loop",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses high-voltage interlock-loop concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "electric_drive_motor_diagnostic",
+          "name": "Electric Drive-Motor Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Electric Drive-Motor troubleshooting",
+            "Electric Drive-Motor check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Electric",
+            "Drive",
+            "Motor",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses electric drive-motor concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "electric_drive_motor_replacement",
+          "name": "Electric Drive-Motor Replacement",
+          "labor_hours_min": 5.0,
+          "labor_hours_max": 14.0,
+          "aliases": [
+            "Electric Drive-Motor R&R",
+            "Electric Drive-Motor repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Electric",
+            "Drive",
+            "Motor",
+            "Replacement"
+          ],
+          "summary": "Replaces the electric drive-motor when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "reduction_gear_fluid_service",
+          "name": "Reduction-Gear Fluid Service",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Reduction-Gear Fluid maintenance",
+            "Reduction-Gear Fluid procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Reduction",
+            "Gear",
+            "Fluid",
+            "Service"
+          ],
+          "summary": "Performs reduction-gear fluid service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "regenerative_braking_diagnostic",
+          "name": "Regenerative-Braking Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Regenerative-Braking troubleshooting",
+            "Regenerative-Braking check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Regenerative",
+            "Braking",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses regenerative-braking concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "ev_brake_service_mode_setup",
+          "name": "EV Brake-Service Mode Setup",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "EV Brake- Mode maintenance",
+            "EV Brake- Mode procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Brake",
+            "Service",
+            "Mode",
+            "Setup"
+          ],
+          "summary": "Performs ev brake- mode service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "battery_coolant_service",
+          "name": "Battery Coolant Service",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Battery Coolant maintenance",
+            "Battery Coolant procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Battery",
+            "Coolant",
+            "Service"
+          ],
+          "summary": "Performs battery coolant service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "battery_heater_diagnostic",
+          "name": "Battery Heater Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Battery Heater troubleshooting",
+            "Battery Heater check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Battery",
+            "Heater",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses battery heater concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "battery_heater_replacement",
+          "name": "Battery Heater Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "aliases": [
+            "Battery Heater R&R",
+            "Battery Heater repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Battery",
+            "Heater",
+            "Replacement"
+          ],
+          "summary": "Replaces the battery heater when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_contactor_diagnostic",
+          "name": "High-Voltage Contactor Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "HV Contactor Diagnostic",
+            "High-Voltage Contactor troubleshooting",
+            "High-Voltage Contactor check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Contactor",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses high-voltage contactor concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_contactor_replacement",
+          "name": "High-Voltage Contactor Replacement",
+          "labor_hours_min": 3.0,
+          "labor_hours_max": 8.0,
+          "aliases": [
+            "HV Contactor Replacement",
+            "High-Voltage Contactor R&R",
+            "High-Voltage Contactor repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Contactor",
+            "Replacement"
+          ],
+          "summary": "Replaces the high-voltage contactor when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_cable_inspection",
+          "name": "High-Voltage Cable Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "HV Cable Inspection",
+            "High-Voltage Cable check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Cable",
+            "Inspection"
+          ],
+          "summary": "Inspects the high-voltage cable using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "high_voltage_cable_replacement",
+          "name": "High-Voltage Cable Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 7.0,
+          "aliases": [
+            "HV Cable Replacement",
+            "High-Voltage Cable R&R",
+            "High-Voltage Cable repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "High",
+            "Voltage",
+            "Cable",
+            "Replacement"
+          ],
+          "summary": "Replaces the high-voltage cable when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "hybrid_transaxle_service",
+          "name": "Hybrid Transaxle Service",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Hybrid Transaxle maintenance",
+            "Hybrid Transaxle procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Transaxle",
+            "Service"
+          ],
+          "summary": "Performs hybrid transaxle service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "hybrid_transaxle_replacement",
+          "name": "Hybrid Transaxle Replacement",
+          "labor_hours_min": 5.0,
+          "labor_hours_max": 14.0,
+          "aliases": [
+            "Hybrid Transaxle R&R",
+            "Hybrid Transaxle repair"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Transaxle",
+            "Replacement"
+          ],
+          "summary": "Replaces the hybrid transaxle when confirmed faulty, using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "ev_thermal_management_diagnostic",
+          "name": "EV Thermal-Management Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "EV Thermal-Management troubleshooting",
+            "EV Thermal-Management check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Thermal",
+            "Management",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses ev thermal-management concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "heat_pump_hvac_diagnostic",
+          "name": "Heat-Pump HVAC Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Heat-Pump HVAC troubleshooting",
+            "Heat-Pump HVAC check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Heat",
+            "Pump",
+            "HVAC",
+            "Diagnostic"
+          ],
+          "summary": "Diagnoses heat-pump hvac concerns using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "heat_pump_hvac_service",
+          "name": "Heat-Pump HVAC Service",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Heat-Pump HVAC maintenance",
+            "Heat-Pump HVAC procedure"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Heat",
+            "Pump",
+            "HVAC",
+            "Service"
+          ],
+          "summary": "Performs heat-pump hvac service where equipped, following manufacturer procedures and high-voltage safety precautions when required.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        },
+        {
+          "code": "ev_pre_purchase_inspection",
+          "name": "EV Pre-Purchase Inspection",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "EV Pre-Purchase check"
+          ],
+          "keywords": [
+            "hybrid",
+            "EV",
+            "high voltage",
+            "trained personnel",
+            "electrified powertrain",
+            "Pre",
+            "Purchase",
+            "Inspection"
+          ],
+          "summary": "Inspects the ev pre-purchase using trained personnel and appropriate high-voltage safety procedures.",
+          "symptoms": [
+            "hybrid or EV warning light",
+            "reduced power",
+            "vehicle will not ready",
+            "charging or range concern"
+          ]
+        }
+      ]
     }
   ]
 }

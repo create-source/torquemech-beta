@@ -6,6 +6,13 @@ from pathlib import Path
 from scripts.validate_services_catalog import DEFAULT_CATALOG_PATH, validate_catalog_data
 
 
+NEW_BATCH_4_CATEGORY_KEYS = {
+    "restraint_safety",
+    "adas_safety",
+    "hybrid_ev",
+}
+
+
 def minimal_catalog():
     return {
         "version": "test",
@@ -34,8 +41,8 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         result = validate_catalog_data(catalog)
 
         self.assertEqual(result.errors, [])
-        self.assertEqual(result.categories, 13)
-        self.assertEqual(result.services, 328)
+        self.assertEqual(result.categories, 16)
+        self.assertEqual(result.services, 409)
 
     def test_duplicate_service_code_fails(self):
         catalog = minimal_catalog()
@@ -141,6 +148,42 @@ class ServicesCatalogValidationTests(unittest.TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertTrue(any("suspicious duplicate concept `water pump`" in issue.message for issue in result.warnings))
+
+    def test_batch_4_categories_exist_and_have_services(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        categories = {category["key"]: category for category in catalog["categories"]}
+
+        self.assertTrue(NEW_BATCH_4_CATEGORY_KEYS.issubset(categories))
+        self.assertEqual(len(categories["restraint_safety"]["services"]), 20)
+        self.assertEqual(len(categories["adas_safety"]["services"]), 23)
+        self.assertEqual(len(categories["hybrid_ev"]["services"]), 38)
+
+    def test_batch_4_services_have_required_search_metadata(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+
+        for category in catalog["categories"]:
+            if category["key"] not in NEW_BATCH_4_CATEGORY_KEYS:
+                continue
+            for service in category["services"]:
+                with self.subTest(service=service["code"]):
+                    self.assertIsInstance(service.get("aliases"), list)
+                    self.assertTrue(service["aliases"])
+                    self.assertIsInstance(service.get("keywords"), list)
+                    self.assertTrue(service["keywords"])
+                    self.assertIsInstance(service.get("symptoms"), list)
+                    self.assertTrue(service["symptoms"])
+                    self.assertIsInstance(service.get("summary"), str)
+                    self.assertTrue(service["summary"].strip())
+
+    def test_live_catalog_service_codes_are_globally_unique(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        codes = [
+            service["code"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        ]
+
+        self.assertEqual(len(codes), len(set(codes)))
 
 
 if __name__ == "__main__":
