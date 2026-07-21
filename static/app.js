@@ -1809,6 +1809,7 @@
   const pdfShowRiskNotesChk = $("pdfShowRiskNotesChk");
   const pdfShowInspectionFindingsChk = $("pdfShowInspectionFindingsChk");
   const pdfShowLaborBreakdownChk = $("pdfShowLaborBreakdownChk");
+  const pdfIncludeServiceEducationChk = $("pdfIncludeServiceEducationChk");
   const quoteIdentityNudge = $("quoteIdentityNudge");
 
   // Customer
@@ -2226,6 +2227,7 @@
       showRiskNotes: pdfShowRiskNotesChk ? !!pdfShowRiskNotesChk.checked : true,
       showInspectionFindings: pdfShowInspectionFindingsChk ? !!pdfShowInspectionFindingsChk.checked : true,
       showDetailedLaborBreakdown: pdfShowLaborBreakdownChk ? !!pdfShowLaborBreakdownChk.checked : false,
+      includeServiceEducation: pdfIncludeServiceEducationChk ? !!pdfIncludeServiceEducationChk.checked : false,
     };
   }
 
@@ -7197,6 +7199,7 @@ if (getEstimateHint) {
           showRiskNotes: outputOptions.showRiskNotes,
           showInspectionFindings: outputOptions.showInspectionFindings,
           showDetailedLaborBreakdown: outputOptions.showDetailedLaborBreakdown,
+          includeServiceEducation: outputOptions.includeServiceEducation,
           lineItems: pdfLineItems,
         }),
       });

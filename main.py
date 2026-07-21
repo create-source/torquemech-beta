@@ -12890,7 +12890,23 @@ class MultiPDFRequest(BaseModel):
     showRiskNotes: bool = True
     showInspectionFindings: bool = True
     showDetailedLaborBreakdown: bool = False
+    includeServiceEducation: bool = False
     lineItems: List[LineItemPDF]
+
+def estimate_service_education(service_code: str = "") -> Dict[str, Any]:
+    service = find_service_by_code(service_code) or {}
+    summary = str(service.get("summary") or "").strip()
+    symptoms_raw = service.get("symptoms") or []
+    symptoms = [
+        str(item).strip()
+        for item in symptoms_raw
+        if str(item or "").strip()
+    ][:3]
+    return {
+        "summary": summary,
+        "symptoms": symptoms,
+    }
+
 
 GENERIC_ESTIMATE_RISK_NOTE = (
     "Additional diagnostics or related system inspection may be required if access, "
@@ -13407,6 +13423,18 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 findings_text = (it.inspectionFindings or "").strip()[:240]
                 findings_lines = wrap_text(findings_text, max_chars=72) if findings_text else []
 
+            education_summary_lines = []
+            education_symptom_lines = []
+            if req.includeServiceEducation:
+                education = estimate_service_education(it.serviceCode)
+                education_summary = str(education.get("summary") or "").strip()
+                if education_summary:
+                    education_summary_lines = wrap_text(education_summary, max_chars=72)[:4]
+                education_symptoms = education.get("symptoms") or []
+                if education_symptoms:
+                    symptom_text = "Common reasons this service may be recommended: " + ", ".join(education_symptoms) + "."
+                    education_symptom_lines = wrap_text(symptom_text, max_chars=72)[:3]
+
             labor_breakdown_steps = []
             if req.showDetailedLaborBreakdown:
                 lb = build_labor_breakdown(
@@ -13444,6 +13472,8 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                 content_space += 15 + (len(risk_note_lines) * 9)
             if findings_lines:
                 content_space += 16 + (len(findings_lines) * 9)
+            if education_summary_lines or education_symptom_lines:
+                content_space += 16 + ((len(education_summary_lines) + len(education_symptom_lines)) * 9) + 4
             if labor_breakdown_steps:
                 breakdown_line_count = 0
                 for step in labor_breakdown_steps:
@@ -13533,6 +13563,30 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
                     y -= 9
                 c.setFillGray(0)
                 y -= 2
+
+            if education_summary_lines or education_symptom_lines:
+                c.setStrokeColorRGB(0.72, 0.86, 0.78)
+                c.setLineWidth(1)
+                education_line_count = len(education_summary_lines) + len(education_symptom_lines)
+                c.line(row_detail_x + 2, y + 2, row_detail_x + 2, y - 9 - (education_line_count * 9))
+                c.setStrokeGray(0)
+                c.setFillGray(0.30)
+                c.setFont("Helvetica-Bold", 8)
+                c.drawString(row_detail_x + 10, y, "Service education")
+                y -= 9
+                c.setFillGray(0.25)
+                c.setFont("Helvetica", 8.4)
+                for education_line in education_summary_lines:
+                    c.drawString(row_detail_x + 16, y, education_line)
+                    y -= 9
+                if education_summary_lines and education_symptom_lines:
+                    y -= 2
+                c.setFont("Helvetica-Oblique", 8.2)
+                for symptom_line in education_symptom_lines:
+                    c.drawString(row_detail_x + 16, y, symptom_line)
+                    y -= 9
+                c.setFillGray(0)
+                y -= 3
 
             if labor_breakdown_steps:
                 c.setFillGray(0.35)
