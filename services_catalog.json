@@ -1838,6 +1838,151 @@
           "meta": "timing chain startup rattle rattling timing chain chain tensioner engine timing",
           "cost_guide_href": "",
           "cost_guide_status": "placeholder"
+        },
+        {
+          "code": "glow_plug_diagnostic",
+          "name": "Glow-Plug Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Glow-Plug Diagnostic",
+            "Glow Plug Diagnostic Service"
+          ],
+          "keywords": [
+            "engine",
+            "diesel",
+            "glow plug",
+            "glow",
+            "plug",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses diesel glow-plug, harness, relay, module, or control faults before repair recommendations.",
+          "symptoms": [
+            "hard start cold diesel",
+            "glow plug light on",
+            "diesel white smoke on startup"
+          ]
+        },
+        {
+          "code": "glow_plug_replacement_each",
+          "name": "Glow-Plug Replacement (each)",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Glow-Plug Replacement (each)",
+            "Glow Plug Replacement each Service"
+          ],
+          "keywords": [
+            "engine",
+            "diesel",
+            "glow plug",
+            "glow",
+            "plug",
+            "replacement",
+            "each"
+          ],
+          "summary": "Replaces an accessible diesel glow plug and verifies basic cold-start aid operation where supported.",
+          "symptoms": [
+            "failed glow plug",
+            "diesel hard start",
+            "glow plug code"
+          ]
+        },
+        {
+          "code": "glow_plug_control_module_replacement",
+          "name": "Glow-Plug Control Module Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Glow-Plug Control Module Replacement",
+            "Glow Plug Control Module Replacement Service"
+          ],
+          "keywords": [
+            "engine",
+            "diesel",
+            "glow plug module",
+            "glow",
+            "plug",
+            "control",
+            "module",
+            "replacement"
+          ],
+          "summary": "Replaces a diesel glow-plug control module after diagnosis confirms module failure.",
+          "symptoms": [
+            "glow plug module fault",
+            "diesel preheat warning",
+            "multiple glow plug codes"
+          ]
+        },
+        {
+          "code": "turbocharger_diagnostic",
+          "name": "Turbocharger Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Turbocharger Diagnostic",
+            "Turbocharger Diagnostic Service"
+          ],
+          "keywords": [
+            "engine",
+            "turbo",
+            "turbocharger",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses turbocharger boost, actuator, wastegate, oiling, noise, or control concerns before repair recommendations.",
+          "symptoms": [
+            "low boost",
+            "turbo noise",
+            "underboost code"
+          ]
+        },
+        {
+          "code": "turbocharger_replacement_estimate",
+          "name": "Turbocharger Replacement Estimate",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Turbocharger Replacement Estimate",
+            "Turbocharger Replacement Estimate Service"
+          ],
+          "keywords": [
+            "engine",
+            "turbo",
+            "estimate",
+            "turbocharger",
+            "replacement"
+          ],
+          "summary": "Inspects turbocharger replacement needs and prepares an estimate or referral when repair scope exceeds general service.",
+          "symptoms": [
+            "turbo failed",
+            "turbo oil leak",
+            "turbo replacement needed"
+          ]
+        },
+        {
+          "code": "charge_air_cooler_inspection",
+          "name": "Charge-Air Cooler / Intercooler Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Charge-Air Cooler / Intercooler Inspection",
+            "Charge Air Cooler Intercooler Inspection Service"
+          ],
+          "keywords": [
+            "engine",
+            "turbo",
+            "intercooler",
+            "charge",
+            "air",
+            "cooler",
+            "inspection"
+          ],
+          "summary": "Inspects charge-air cooler, intercooler piping, boots, clamps, oil contamination, and visible boost leaks.",
+          "symptoms": [
+            "intercooler leak",
+            "boost pipe loose",
+            "oil in charge pipe"
+          ]
         }
       ]
     },
@@ -2456,6 +2601,103 @@
             "engine overheating",
             "coolant leak",
             "temperature warning"
+          ]
+        },
+        {
+          "code": "engine_oil_cooler_leak_diagnosis",
+          "name": "Engine Oil-Cooler Leak Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Engine Oil-Cooler Leak Diagnosis",
+            "Engine Oil Cooler Leak Diagnosis Service"
+          ],
+          "keywords": [
+            "cooling",
+            "oil cooler",
+            "engine",
+            "oil",
+            "cooler",
+            "leak",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses engine oil-cooler external leaks or suspected oil/coolant cross-contamination.",
+          "symptoms": [
+            "oil cooler leak",
+            "oil in coolant",
+            "coolant in oil concern"
+          ]
+        },
+        {
+          "code": "engine_oil_cooler_replacement",
+          "name": "Engine Oil-Cooler Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Engine Oil-Cooler Replacement",
+            "Engine Oil Cooler Replacement Service"
+          ],
+          "keywords": [
+            "cooling",
+            "oil cooler",
+            "engine",
+            "oil",
+            "cooler",
+            "replacement"
+          ],
+          "summary": "Replaces an engine oil cooler or oil-cooler assembly and verifies leak-free operation.",
+          "symptoms": [
+            "oil cooler leaking",
+            "failed oil cooler",
+            "oil cooler seals failed"
+          ]
+        },
+        {
+          "code": "egr_cooler_diagnostic_diesel",
+          "name": "EGR Cooler Diagnostic (Diesel)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "EGR Cooler Diagnostic (Diesel)",
+            "EGR Cooler Diagnostic Diesel Service"
+          ],
+          "keywords": [
+            "cooling",
+            "diesel",
+            "egr cooler",
+            "egr",
+            "cooler",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses diesel EGR cooler leaks, restriction, coolant loss, or exhaust gas contamination symptoms.",
+          "symptoms": [
+            "diesel egr cooler leak",
+            "coolant loss diesel",
+            "white smoke diesel"
+          ]
+        },
+        {
+          "code": "egr_cooler_replacement_diesel",
+          "name": "EGR Cooler Replacement (Diesel)",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "aliases": [
+            "EGR Cooler Replacement (Diesel)",
+            "EGR Cooler Replacement Diesel Service"
+          ],
+          "keywords": [
+            "cooling",
+            "diesel",
+            "egr cooler",
+            "egr",
+            "cooler",
+            "replacement"
+          ],
+          "summary": "Replaces a diesel EGR cooler after diagnosis confirms leakage, restriction, or failure.",
+          "symptoms": [
+            "egr cooler failed",
+            "diesel coolant loss",
+            "egr cooler replacement"
           ]
         }
       ]
@@ -3753,6 +3995,98 @@
             "clunking over bumps",
             "steering wander",
             "uneven tire wear"
+          ]
+        },
+        {
+          "code": "air_suspension_diagnostic",
+          "name": "Air-Suspension Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Air-Suspension Diagnostic",
+            "Air Suspension Diagnostic Service"
+          ],
+          "keywords": [
+            "suspension",
+            "air suspension",
+            "air",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses air-suspension compressor, springs, valves, height sensors, leaks, or control faults.",
+          "symptoms": [
+            "vehicle sagging",
+            "air suspension warning",
+            "compressor runs often"
+          ]
+        },
+        {
+          "code": "air_spring_leak_inspection",
+          "name": "Air-Spring Leak Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Air-Spring Leak Inspection",
+            "Air Spring Leak Inspection Service"
+          ],
+          "keywords": [
+            "suspension",
+            "air suspension",
+            "air",
+            "spring",
+            "leak",
+            "inspection"
+          ],
+          "summary": "Inspects air springs, lines, fittings, and valve blocks for visible or testable air leaks.",
+          "symptoms": [
+            "air spring leak",
+            "corner drops overnight",
+            "suspension air leak"
+          ]
+        },
+        {
+          "code": "electronic_suspension_diagnostic",
+          "name": "Electronic Suspension Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Electronic Suspension Diagnostic",
+            "Electronic Suspension Diagnostic Service"
+          ],
+          "keywords": [
+            "suspension",
+            "electronic suspension",
+            "electronic",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses adaptive damper, ride-control module, sensor, wiring, or suspension mode faults.",
+          "symptoms": [
+            "adaptive suspension warning",
+            "ride control fault",
+            "suspension mode not working"
+          ]
+        },
+        {
+          "code": "ride_height_sensor_diagnostic",
+          "name": "Ride-Height Sensor Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Ride-Height Sensor Diagnostic",
+            "Ride Height Sensor Diagnostic Service"
+          ],
+          "keywords": [
+            "suspension",
+            "ride height",
+            "ride",
+            "height",
+            "sensor",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses ride-height sensor, linkage, calibration, or wiring faults outside ADAS-only calibration work.",
+          "symptoms": [
+            "ride height sensor code",
+            "vehicle height reading wrong",
+            "suspension level warning"
           ]
         }
       ]
@@ -6226,6 +6560,100 @@
             "new key fob",
             "keyless entry issue"
           ]
+        },
+        {
+          "code": "battery_drain_diagnostic",
+          "name": "Battery-Drain Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Battery-Drain Diagnostic",
+            "Battery Drain Diagnostic Service"
+          ],
+          "keywords": [
+            "electrical",
+            "battery drain",
+            "battery",
+            "drain",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses battery drain concerns and separates battery, charging, parasitic draw, module wake-up, or customer-use causes.",
+          "symptoms": [
+            "battery goes dead overnight",
+            "battery drain",
+            "dead battery after sitting"
+          ]
+        },
+        {
+          "code": "voltage_drop_testing",
+          "name": "Voltage-Drop Testing",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Voltage-Drop Testing",
+            "Voltage Drop Testing Service"
+          ],
+          "keywords": [
+            "electrical",
+            "voltage drop",
+            "voltage",
+            "drop",
+            "testing"
+          ],
+          "summary": "Performs voltage-drop testing on power, ground, charging, starting, or load circuits to locate excessive resistance.",
+          "symptoms": [
+            "voltage drop concern",
+            "high resistance circuit",
+            "dim lights under load"
+          ]
+        },
+        {
+          "code": "can_bus_network_diagnostic",
+          "name": "CAN-Bus Network Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "CAN-Bus Network Diagnostic",
+            "CAN Bus Network Diagnostic Service"
+          ],
+          "keywords": [
+            "electrical",
+            "network",
+            "can bus",
+            "can",
+            "bus",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses CAN-bus, LIN, gateway, terminating resistance, wiring, or module communication faults.",
+          "symptoms": [
+            "can bus codes",
+            "network fault",
+            "modules offline"
+          ]
+        },
+        {
+          "code": "module_software_update_if_supported",
+          "name": "Module Software Update (If Supported)",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Module Software Update (If Supported)",
+            "Module Software Update If Supported Service"
+          ],
+          "keywords": [
+            "electrical",
+            "module",
+            "software",
+            "update",
+            "if",
+            "supported"
+          ],
+          "summary": "Performs supported module software update or calibration file installation when service information requires it.",
+          "symptoms": [
+            "software update needed",
+            "module update available",
+            "calibration update"
+          ]
         }
       ]
     },
@@ -7416,6 +7844,107 @@
             "fuel smell",
             "EVAP code",
             "failed emissions readiness"
+          ]
+        },
+        {
+          "code": "dpf_forced_regeneration_if_supported",
+          "name": "DPF Forced Regeneration (If Supported)",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "DPF Forced Regeneration (If Supported)",
+            "DPF Forced Regeneration If Supported Service"
+          ],
+          "keywords": [
+            "exhaust",
+            "diesel",
+            "dpf",
+            "forced",
+            "regeneration",
+            "if",
+            "supported"
+          ],
+          "summary": "Performs a scan-tool commanded diesel particulate filter regeneration when safe conditions and vehicle support allow.",
+          "symptoms": [
+            "dpf full warning",
+            "regen needed",
+            "diesel particulate filter soot load"
+          ]
+        },
+        {
+          "code": "dpf_differential_pressure_sensor_diagnostic",
+          "name": "DPF Differential-Pressure Sensor Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "DPF Differential-Pressure Sensor Diagnostic",
+            "DPF Differential Pressure Sensor Diagnostic Service"
+          ],
+          "keywords": [
+            "exhaust",
+            "diesel",
+            "dpf sensor",
+            "dpf",
+            "differential",
+            "pressure",
+            "sensor",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses DPF differential-pressure sensor, hose, wiring, or soot-load plausibility concerns.",
+          "symptoms": [
+            "dpf pressure code",
+            "dpf sensor fault",
+            "regen will not complete"
+          ]
+        },
+        {
+          "code": "dpf_temperature_sensor_diagnostic",
+          "name": "DPF Temperature-Sensor Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "DPF Temperature-Sensor Diagnostic",
+            "DPF Temperature Sensor Diagnostic Service"
+          ],
+          "keywords": [
+            "exhaust",
+            "diesel",
+            "dpf sensor",
+            "dpf",
+            "temperature",
+            "sensor",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses diesel exhaust temperature sensor faults that affect DPF regeneration or emissions operation.",
+          "symptoms": [
+            "exhaust temperature sensor code",
+            "dpf temp sensor fault",
+            "regen temperature issue"
+          ]
+        },
+        {
+          "code": "diesel_particulate_filter_replacement_estimate",
+          "name": "Diesel Particulate Filter Replacement Estimate",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Diesel Particulate Filter Replacement Estimate",
+            "Diesel Particulate Filter Replacement Estimate Service"
+          ],
+          "keywords": [
+            "exhaust",
+            "diesel",
+            "dpf estimate",
+            "particulate",
+            "filter",
+            "replacement",
+            "estimate"
+          ],
+          "summary": "Inspects DPF replacement needs and prepares an estimate or referral for replacement when service is not appropriate.",
+          "symptoms": [
+            "dpf replacement needed",
+            "cracked dpf",
+            "dpf melted"
           ]
         }
       ]
@@ -14277,6 +14806,80 @@
             "structural corrosion",
             "rust hole in rocker"
           ]
+        },
+        {
+          "code": "trailer_hitch_inspection",
+          "name": "Trailer-Hitch Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Trailer-Hitch Inspection",
+            "Trailer Hitch Inspection Service"
+          ],
+          "keywords": [
+            "body exterior",
+            "truck",
+            "trailer hitch",
+            "trailer",
+            "hitch",
+            "inspection"
+          ],
+          "summary": "Inspects trailer hitch receiver, mounting hardware, corrosion, visible damage, and safety concerns.",
+          "symptoms": [
+            "trailer hitch loose",
+            "hitch rust concern",
+            "tow hitch inspection"
+          ]
+        },
+        {
+          "code": "trailer_hitch_installation_estimate",
+          "name": "Trailer-Hitch Installation Estimate",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Trailer-Hitch Installation Estimate",
+            "Trailer Hitch Installation Estimate Service"
+          ],
+          "keywords": [
+            "body exterior",
+            "truck",
+            "trailer hitch",
+            "trailer",
+            "hitch",
+            "installation",
+            "estimate"
+          ],
+          "summary": "Inspects trailer hitch installation requirements and prepares an estimate for bolt-on light-duty hitch installation.",
+          "symptoms": [
+            "install trailer hitch",
+            "tow hitch estimate",
+            "receiver hitch needed"
+          ]
+        },
+        {
+          "code": "pickup_bed_cover_inspection",
+          "name": "Pickup Bed-Cover Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Pickup Bed-Cover Inspection",
+            "Pickup Bed Cover Inspection Service"
+          ],
+          "keywords": [
+            "body exterior",
+            "truck",
+            "tonneau",
+            "pickup",
+            "bed",
+            "cover",
+            "inspection"
+          ],
+          "summary": "Inspects pickup bed cover, tonneau hardware, seals, drains, and visible mounting concerns.",
+          "symptoms": [
+            "tonneau cover leaking",
+            "bed cover loose",
+            "pickup bed cover inspection"
+          ]
         }
       ]
     },
@@ -19249,6 +19852,31 @@
             "verify repair across systems",
             "post repair scan needed",
             "make sure warnings are gone"
+          ]
+        },
+        {
+          "code": "trailer_brake_controller_diagnostic",
+          "name": "Trailer-Brake Controller Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Trailer-Brake Controller Diagnostic",
+            "Trailer Brake Controller Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics inspections",
+            "truck",
+            "trailer brake",
+            "trailer",
+            "brake",
+            "controller",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses trailer-brake controller operation, trailer brake output, connector signals, and basic tow electrical concerns.",
+          "symptoms": [
+            "trailer brakes not working",
+            "brake controller fault",
+            "no trailer brake output"
           ]
         }
       ]

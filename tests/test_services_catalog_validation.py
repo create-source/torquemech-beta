@@ -34,6 +34,35 @@ NEW_BATCH_9_CATEGORY_KEYS = {
     "specialty_diagnostics_inspections",
 }
 
+NEW_BATCH_10_GAP_FILL_SERVICE_CODES = {
+    "glow_plug_diagnostic",
+    "glow_plug_replacement_each",
+    "glow_plug_control_module_replacement",
+    "turbocharger_diagnostic",
+    "turbocharger_replacement_estimate",
+    "charge_air_cooler_inspection",
+    "engine_oil_cooler_leak_diagnosis",
+    "engine_oil_cooler_replacement",
+    "egr_cooler_diagnostic_diesel",
+    "egr_cooler_replacement_diesel",
+    "dpf_forced_regeneration_if_supported",
+    "dpf_differential_pressure_sensor_diagnostic",
+    "dpf_temperature_sensor_diagnostic",
+    "diesel_particulate_filter_replacement_estimate",
+    "air_suspension_diagnostic",
+    "air_spring_leak_inspection",
+    "electronic_suspension_diagnostic",
+    "ride_height_sensor_diagnostic",
+    "battery_drain_diagnostic",
+    "voltage_drop_testing",
+    "can_bus_network_diagnostic",
+    "module_software_update_if_supported",
+    "trailer_hitch_inspection",
+    "trailer_hitch_installation_estimate",
+    "pickup_bed_cover_inspection",
+    "trailer_brake_controller_diagnostic",
+}
+
 NEW_BATCH_9_SPECIALTY_DIAGNOSTICS_INSPECTIONS_SERVICE_CODES = {
     "comprehensive_vehicle_inspection",
     "post_purchase_inspection",
@@ -350,6 +379,12 @@ PRE_BATCH_9_SERVICE_CODES_PATH = (
     / "services_catalog_phase31_batch8_baseline_codes.json"
 )
 
+PRE_BATCH_10_SERVICE_CODES_PATH = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "services_catalog_phase31_batch9_baseline_codes.json"
+)
+
 
 def minimal_catalog():
     return {
@@ -380,7 +415,7 @@ class ServicesCatalogValidationTests(unittest.TestCase):
 
         self.assertEqual(result.errors, [])
         self.assertEqual(result.categories, 23)
-        self.assertEqual(result.services, 762)
+        self.assertEqual(result.services, 788)
         self.assertEqual(len(result.warnings), 2)
 
     def test_duplicate_service_code_fails(self):
@@ -574,10 +609,10 @@ class ServicesCatalogValidationTests(unittest.TestCase):
 
         self.assertTrue(NEW_BATCH_6_CATEGORY_KEYS.issubset(categories))
         self.assertEqual(categories["body_exterior"]["name"], "Body & Exterior")
-        self.assertEqual(len(categories["body_exterior"]["services"]), 57)
+        self.assertEqual(len(categories["body_exterior"]["services"]), 60)
 
         current_codes = {service["code"] for service in categories["body_exterior"]["services"]}
-        self.assertEqual(current_codes, NEW_BATCH_6_BODY_EXTERIOR_SERVICE_CODES)
+        self.assertTrue(NEW_BATCH_6_BODY_EXTERIOR_SERVICE_CODES.issubset(current_codes))
 
     def test_batch_6_body_exterior_services_have_complete_search_metadata(self):
         catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
@@ -753,10 +788,10 @@ class ServicesCatalogValidationTests(unittest.TestCase):
 
         self.assertTrue(NEW_BATCH_9_CATEGORY_KEYS.issubset(categories))
         self.assertEqual(categories["specialty_diagnostics_inspections"]["name"], "Specialty Diagnostics & General Inspections")
-        self.assertEqual(len(categories["specialty_diagnostics_inspections"]["services"]), 43)
+        self.assertEqual(len(categories["specialty_diagnostics_inspections"]["services"]), 44)
 
         current_codes = {service["code"] for service in categories["specialty_diagnostics_inspections"]["services"]}
-        self.assertEqual(current_codes, NEW_BATCH_9_SPECIALTY_DIAGNOSTICS_INSPECTIONS_SERVICE_CODES)
+        self.assertTrue(NEW_BATCH_9_SPECIALTY_DIAGNOSTICS_INSPECTIONS_SERVICE_CODES.issubset(current_codes))
 
     def test_batch_9_specialty_diagnostics_inspections_services_have_complete_search_metadata(self):
         catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
@@ -812,6 +847,76 @@ class ServicesCatalogValidationTests(unittest.TestCase):
 
         self.assertEqual(len(pre_batch_codes), 719)
         self.assertTrue(pre_batch_codes.issubset(current_codes))
+
+    def test_batch_10_gap_fill_services_exist_in_expected_categories(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        service_categories = {
+            service["code"]: category["key"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        }
+        expected_categories = {
+            "glow_plug_diagnostic": "engine",
+            "glow_plug_replacement_each": "engine",
+            "glow_plug_control_module_replacement": "engine",
+            "turbocharger_diagnostic": "engine",
+            "turbocharger_replacement_estimate": "engine",
+            "charge_air_cooler_inspection": "engine",
+            "engine_oil_cooler_leak_diagnosis": "cooling",
+            "engine_oil_cooler_replacement": "cooling",
+            "egr_cooler_diagnostic_diesel": "cooling",
+            "egr_cooler_replacement_diesel": "cooling",
+            "dpf_forced_regeneration_if_supported": "exhaust",
+            "dpf_differential_pressure_sensor_diagnostic": "exhaust",
+            "dpf_temperature_sensor_diagnostic": "exhaust",
+            "diesel_particulate_filter_replacement_estimate": "exhaust",
+            "air_suspension_diagnostic": "suspension",
+            "air_spring_leak_inspection": "suspension",
+            "electronic_suspension_diagnostic": "suspension",
+            "ride_height_sensor_diagnostic": "suspension",
+            "battery_drain_diagnostic": "electrical",
+            "voltage_drop_testing": "electrical",
+            "can_bus_network_diagnostic": "electrical",
+            "module_software_update_if_supported": "electrical",
+            "trailer_hitch_inspection": "body_exterior",
+            "trailer_hitch_installation_estimate": "body_exterior",
+            "pickup_bed_cover_inspection": "body_exterior",
+            "trailer_brake_controller_diagnostic": "specialty_diagnostics_inspections",
+        }
+
+        self.assertEqual(set(expected_categories), NEW_BATCH_10_GAP_FILL_SERVICE_CODES)
+        for code, category_key in expected_categories.items():
+            with self.subTest(service=code):
+                self.assertEqual(service_categories.get(code), category_key)
+
+    def test_pre_batch_10_service_codes_remain_present(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        current_codes = {
+            service["code"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        }
+        pre_batch_codes = set(json.loads(PRE_BATCH_10_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
+
+        self.assertEqual(len(pre_batch_codes), 762)
+        self.assertTrue(pre_batch_codes.issubset(current_codes))
+
+    def test_catalog_freeze_launch_readiness_invariants(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        result = validate_catalog_data(catalog)
+        categories = catalog["categories"]
+        all_services = [service for category in categories for service in category.get("services", [])]
+        category_keys = [category["key"] for category in categories]
+        service_codes = [service["code"] for service in all_services]
+        normalized_names = [normalize_name(service["name"]) for service in all_services]
+
+        self.assertEqual(result.errors, [])
+        self.assertEqual(result.categories, 23)
+        self.assertEqual(result.services, 788)
+        self.assertEqual(len(category_keys), len(set(category_keys)))
+        self.assertEqual(len(service_codes), len(set(service_codes)))
+        self.assertEqual(len(normalized_names), len(set(normalized_names)))
+        self.assertEqual(result.services_without_search_metadata, 0)
 
 
 if __name__ == "__main__":
