@@ -3523,6 +3523,111 @@
       display: block;
     }
   }
+
+  /* Photo-access confirmation */
+  .tm-photo-access-modal[hidden] {
+    display: none !important;
+  }
+
+  .tm-photo-access-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+  }
+
+  .tm-photo-access-backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgba(3, 10, 20, 0.78);
+    backdrop-filter: blur(4px);
+  }
+
+  .tm-photo-access-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(460px, 100%);
+    padding: 26px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 16px;
+    background: linear-gradient(145deg, #132136 0%, #0d1828 100%);
+    color: #f8fafc;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+  }
+
+  .tm-photo-access-dialog h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.35rem;
+  }
+
+  .tm-photo-access-dialog p {
+    margin: 10px 0 0;
+    color: #cbd5e1;
+    line-height: 1.5;
+  }
+
+  .tm-photo-access-dialog .tm-photo-access-privacy {
+    color: #94a3b8;
+    font-size: 0.86rem;
+  }
+
+  .tm-photo-access-icon {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    margin-bottom: 14px;
+    border-radius: 14px;
+    background: rgba(249, 115, 22, 0.14);
+    font-size: 1.55rem;
+  }
+
+  .tm-photo-access-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 1.5rem;
+    box-shadow: none;
+  }
+
+  .tm-photo-access-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  body.tm-photo-access-open {
+    overflow: hidden;
+  }
+
+  @media (max-width: 520px) {
+    .tm-photo-access-dialog {
+      padding: 22px 18px 18px;
+    }
+
+    .tm-photo-access-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .tm-photo-access-actions .tm-btn {
+      width: 100%;
+    }
+  }
+
 </style>
 {% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
@@ -4974,6 +5079,47 @@
   </details>
 </section>
 
+
+<div
+  class="tm-photo-access-modal"
+  id="photoAccessModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="photoAccessTitle"
+  aria-describedby="photoAccessDescription"
+  hidden
+>
+  <button
+    class="tm-photo-access-backdrop"
+    type="button"
+    aria-label="Cancel photo access"
+    data-photo-access-cancel
+  ></button>
+
+  <div class="tm-photo-access-dialog">
+    <button
+      class="tm-photo-access-close"
+      type="button"
+      aria-label="Close photo access confirmation"
+      data-photo-access-cancel
+    >&times;</button>
+
+    <div class="tm-photo-access-icon" aria-hidden="true">📷</div>
+    <h2 id="photoAccessTitle">Allow Photo Access?</h2>
+    <p id="photoAccessDescription">
+      TorqueMech needs permission to open your camera or photo library so you can attach inspection photos to this finding.
+    </p>
+    <p class="tm-photo-access-privacy">
+      Photos are only saved after you select them and submit the finding.
+    </p>
+
+    <div class="tm-photo-access-actions">
+      <button class="tm-btn tm-btn-secondary" type="button" data-photo-access-cancel>Cancel</button>
+      <button class="tm-btn tm-btn-primary" id="continuePhotoAccessBtn" type="button">Continue</button>
+    </div>
+  </div>
+</div>
+
 <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
 <script>
 (() => {
@@ -5972,6 +6118,48 @@
 <script>
 (() => {
   const MAX_PHOTOS = 5;
+  const photoAccessModal = document.getElementById("photoAccessModal");
+  const continuePhotoAccessBtn = document.getElementById("continuePhotoAccessBtn");
+  let pendingPhotoInput = null;
+  let photoAccessReturnFocus = null;
+
+  function openPhotoAccessModal(input, trigger) {
+    if (!photoAccessModal || !continuePhotoAccessBtn || !input) return;
+    pendingPhotoInput = input;
+    photoAccessReturnFocus = trigger || document.activeElement;
+    photoAccessModal.hidden = false;
+    document.body.classList.add("tm-photo-access-open");
+    window.requestAnimationFrame(() => continuePhotoAccessBtn.focus());
+  }
+
+  function closePhotoAccessModal() {
+    if (!photoAccessModal) return;
+    photoAccessModal.hidden = true;
+    document.body.classList.remove("tm-photo-access-open");
+    pendingPhotoInput = null;
+    if (photoAccessReturnFocus?.focus) photoAccessReturnFocus.focus();
+    photoAccessReturnFocus = null;
+  }
+
+  continuePhotoAccessBtn?.addEventListener("click", () => {
+    const input = pendingPhotoInput;
+    if (!photoAccessModal) return;
+    photoAccessModal.hidden = true;
+    document.body.classList.remove("tm-photo-access-open");
+    pendingPhotoInput = null;
+    photoAccessReturnFocus = null;
+    input?.click();
+  });
+
+  photoAccessModal?.querySelectorAll("[data-photo-access-cancel]").forEach((button) => {
+    button.addEventListener("click", closePhotoAccessModal);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && photoAccessModal && !photoAccessModal.hidden) {
+      closePhotoAccessModal();
+    }
+  });
 
   function selectedFiles(picker) {
     return Array.from(
@@ -6010,7 +6198,10 @@
 
       if (menu) menu.hidden = true;
       if (toggleButton) toggleButton.setAttribute("aria-expanded", "false");
-      input?.click();
+
+      if (input) {
+        openPhotoAccessModal(input, sourceButton);
+      }
       return;
     }
 

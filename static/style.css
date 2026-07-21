@@ -12783,3 +12783,124 @@ span[data-kind="quantity"]{
 .tm-confirm-modal .tm-confirm-services-wrap > div:first-child{
   margin-bottom: 10px;
 }
+
+/* TorqueMech photo access confirmation */
+body.tm-photo-access-open {
+  overflow: hidden;
+}
+
+.tm-photo-access-modal[hidden] {
+  display: none !important;
+}
+
+.tm-photo-access-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.tm-photo-access-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(2, 10, 18, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.tm-photo-access-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(460px, 100%);
+  padding: 28px;
+  border: 1px solid var(--tm-border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--tm-surface) 0%, var(--tm-surface-3) 100%);
+  color: var(--tm-text-soft);
+  box-shadow: var(--tm-shadow-lg);
+  text-align: center;
+}
+
+.tm-photo-access-dialog h2 {
+  margin: 12px 0 10px;
+  color: var(--tm-text);
+  font-size: 1.45rem;
+}
+
+.tm-photo-access-dialog p {
+  margin: 0;
+  color: var(--tm-text-muted);
+  line-height: 1.55;
+}
+
+.tm-photo-access-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto;
+  border-radius: 16px;
+  background: rgba(249, 115, 22, 0.15);
+  font-size: 28px;
+}
+
+.tm-photo-access-privacy {
+  margin-top: 10px !important;
+  font-size: 0.84rem;
+}
+
+.tm-photo-access-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--tm-text-muted);
+  font-size: 28px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.tm-photo-access-close:hover,
+.tm-photo-access-close:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--tm-text);
+}
+
+.tm-photo-access-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+@media (max-width: 520px) {
+  .tm-photo-access-modal {
+    place-items: end center;
+    padding: 10px;
+  }
+
+  .tm-photo-access-dialog {
+    padding: 26px 18px 18px;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .tm-photo-access-actions {
+    flex-direction: column-reverse;
+  }
+
+  .tm-photo-access-actions .tm-btn {
+    width: 100%;
+  }
+}

@@ -710,6 +710,41 @@
     {% endif %}
   </section>
 </section>
+
+<div
+  class="tm-photo-access-modal"
+  data-photo-access-modal
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="photoAccessTitle"
+  aria-describedby="photoAccessDescription"
+  hidden
+>
+  <button
+    class="tm-photo-access-backdrop"
+    type="button"
+    aria-label="Cancel photo access"
+    data-photo-access-cancel
+  ></button>
+  <div class="tm-photo-access-dialog" role="document">
+    <button
+      class="tm-photo-access-close"
+      type="button"
+      aria-label="Close photo access confirmation"
+      data-photo-access-cancel
+    >&times;</button>
+    <div class="tm-photo-access-icon" aria-hidden="true">📷</div>
+    <h2 id="photoAccessTitle">Allow Photo Access?</h2>
+    <p id="photoAccessDescription">
+      TorqueMech needs permission to open your camera or photo library so you can attach repair photos to this service record.
+    </p>
+    <p class="tm-photo-access-privacy">Photos are only added after you capture or select them.</p>
+    <div class="tm-photo-access-actions">
+      <button class="tm-btn tm-btn-secondary" type="button" data-photo-access-cancel>Cancel</button>
+      <button class="tm-btn tm-btn-primary" type="button" data-photo-access-continue>Continue</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block page_js %}
@@ -786,9 +821,16 @@
       if (option) {
         const picker = option.closest("[data-photo-picker]");
         const input = document.getElementById(option.dataset.photoOpen);
+        const modal = document.querySelector("[data-photo-access-modal]");
         picker?.querySelector("[data-photo-source-menu]")?.setAttribute("hidden", "");
         picker?.querySelector("[data-photo-menu-toggle]")?.setAttribute("aria-expanded", "false");
-        input?.click();
+        if (!input || !modal) return;
+        modal.dataset.pendingPhotoInput = input.id;
+        modal.hidden = false;
+        document.body.classList.add("tm-photo-access-open");
+        window.requestAnimationFrame(() => {
+          modal.querySelector("[data-photo-access-continue]")?.focus();
+        });
         return;
       }
 
@@ -798,6 +840,37 @@
         menu.hidden = true;
         picker?.querySelector("[data-photo-menu-toggle]")?.setAttribute("aria-expanded", "false");
       });
+    });
+
+    const closePhotoAccessModal = () => {
+      const modal = document.querySelector("[data-photo-access-modal]");
+      if (!modal) return;
+      modal.hidden = true;
+      delete modal.dataset.pendingPhotoInput;
+      document.body.classList.remove("tm-photo-access-open");
+    };
+
+    document.addEventListener("click", (event) => {
+      const cancel = event.target.closest("[data-photo-access-cancel]");
+      if (cancel) {
+        closePhotoAccessModal();
+        return;
+      }
+
+      const continueButton = event.target.closest("[data-photo-access-continue]");
+      if (!continueButton) return;
+      const modal = continueButton.closest("[data-photo-access-modal]");
+      const inputId = modal?.dataset.pendingPhotoInput || "";
+      const input = inputId ? document.getElementById(inputId) : null;
+      closePhotoAccessModal();
+      input?.click();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const modal = document.querySelector("[data-photo-access-modal]");
+      if (event.key === "Escape" && modal && !modal.hidden) {
+        closePhotoAccessModal();
+      }
     });
 
     document.addEventListener("change", (event) => {
