@@ -12913,6 +12913,1372 @@
           ]
         }
       ]
+    },
+    {
+      "key": "body_exterior",
+      "name": "Body & Exterior",
+      "description": "Body-panel, exterior trim, closure alignment, bumper hardware, and corrosion inspection services added as live Phase 3.1 Batch 6 coverage.",
+      "services": [
+        {
+          "code": "front_bumper_reinforcement_replacement",
+          "name": "Front Bumper Reinforcement Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Front Bumper Reinforcement Replacement",
+            "Front Bumper Reinforcement Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "front",
+            "bumper",
+            "reinforcement",
+            "replacement"
+          ],
+          "summary": "Replaces a bolt-on front bumper reinforcement or impact bar after confirming no structural-frame repair is required.",
+          "symptoms": [
+            "front bumper reinforcement bent",
+            "front bumper impact bar damaged",
+            "bumper cover will not align"
+          ]
+        },
+        {
+          "code": "rear_bumper_reinforcement_replacement",
+          "name": "Rear Bumper Reinforcement Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Rear Bumper Reinforcement Replacement",
+            "Rear Bumper Reinforcement Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "rear",
+            "bumper",
+            "reinforcement",
+            "replacement"
+          ],
+          "summary": "Replaces a bolt-on rear bumper reinforcement or impact bar after confirming no structural-frame repair is required.",
+          "symptoms": [
+            "rear bumper reinforcement bent",
+            "rear bumper impact bar damaged",
+            "rear bumper cover will not align"
+          ]
+        },
+        {
+          "code": "front_bumper_bracket_retainer_replacement",
+          "name": "Front Bumper Bracket / Retainer Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Front Bumper Bracket / Retainer Replacement",
+            "Front Bumper Bracket Retainer Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "front",
+            "bumper",
+            "bracket",
+            "retainer",
+            "replacement"
+          ],
+          "summary": "Replaces damaged front bumper cover brackets, side retainers, clips, or mounting hardware.",
+          "symptoms": [
+            "front bumper cover loose",
+            "front fascia gap",
+            "bumper clip broken"
+          ]
+        },
+        {
+          "code": "rear_bumper_bracket_retainer_replacement",
+          "name": "Rear Bumper Bracket / Retainer Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Rear Bumper Bracket / Retainer Replacement",
+            "Rear Bumper Bracket Retainer Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "rear",
+            "bumper",
+            "bracket",
+            "retainer",
+            "replacement"
+          ],
+          "summary": "Replaces damaged rear bumper cover brackets, side retainers, clips, or mounting hardware.",
+          "symptoms": [
+            "rear bumper cover loose",
+            "rear fascia gap",
+            "rear bumper clip broken"
+          ]
+        },
+        {
+          "code": "bumper_energy_absorber_replacement",
+          "name": "Bumper Energy Absorber Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "aliases": [
+            "Bumper Energy Absorber Replacement",
+            "Bumper Energy Absorber Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "bumper",
+            "energy",
+            "absorber",
+            "replacement"
+          ],
+          "summary": "Replaces the foam or plastic bumper energy absorber behind the bumper cover when accessible as a bolt-on service.",
+          "symptoms": [
+            "bumper absorber crushed",
+            "bumper cover does not fit",
+            "impact absorber damaged"
+          ]
+        },
+        {
+          "code": "bumper_guide_hardware_replacement",
+          "name": "Bumper Guide / Hardware Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Bumper Guide / Hardware Replacement",
+            "Bumper Guide Hardware Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "bumper",
+            "guide",
+            "hardware",
+            "replacement"
+          ],
+          "summary": "Replaces bumper guides, slides, clips, fasteners, or related hardware that secure bumper cover alignment.",
+          "symptoms": [
+            "bumper guide broken",
+            "bumper cover sagging",
+            "missing bumper fasteners"
+          ]
+        },
+        {
+          "code": "front_lower_valance_panel_replacement",
+          "name": "Front Lower Valance Panel Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Front Lower Valance Panel Replacement",
+            "Front Lower Valance Panel Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "front",
+            "lower",
+            "valance",
+            "panel",
+            "replacement"
+          ],
+          "summary": "Replaces a bolt-on lower valance, air dam, or lower bumper trim panel.",
+          "symptoms": [
+            "front valance cracked",
+            "lower bumper trim loose",
+            "air dam dragging"
+          ]
+        },
+        {
+          "code": "air_deflector_splash_shield_replacement",
+          "name": "Air Deflector / Splash Shield Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Air Deflector / Splash Shield Replacement",
+            "Air Deflector Splash Shield Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "air",
+            "deflector",
+            "splash",
+            "shield",
+            "replacement"
+          ],
+          "summary": "Replaces exterior air deflectors, closeout panels, splash shields, or related retainers.",
+          "symptoms": [
+            "splash shield dragging",
+            "undertray loose",
+            "air deflector missing"
+          ]
+        },
+        {
+          "code": "grille_assembly_replacement",
+          "name": "Grille Assembly Replacement",
+          "labor_hours_min": 0.7,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Grille Assembly Replacement",
+            "Grille Assembly Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "grille",
+            "assembly",
+            "replacement"
+          ],
+          "summary": "Replaces a front grille assembly and transfers serviceable trim or emblem components when required.",
+          "symptoms": [
+            "grille cracked",
+            "front grille loose",
+            "grille clips broken"
+          ]
+        },
+        {
+          "code": "active_grille_shutter_assembly_replacement",
+          "name": "Active Grille Shutter Assembly Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Active Grille Shutter Assembly Replacement",
+            "Active Grille Shutter Assembly Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "active",
+            "grille",
+            "shutter",
+            "assembly",
+            "replacement"
+          ],
+          "summary": "Replaces an active grille shutter assembly and verifies basic mechanical operation after installation.",
+          "symptoms": [
+            "active grille shutter stuck",
+            "grille shutter broken",
+            "front shutter warning"
+          ]
+        },
+        {
+          "code": "fender_liner_replacement",
+          "name": "Fender Liner Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Fender Liner Replacement",
+            "Fender Liner Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "fender",
+            "liner",
+            "replacement"
+          ],
+          "summary": "Replaces a damaged fender liner or wheelhouse splash liner and related retainers.",
+          "symptoms": [
+            "fender liner rubbing tire",
+            "inner fender liner loose",
+            "wheel well liner missing"
+          ]
+        },
+        {
+          "code": "quarter_panel_damage_referral_estimate",
+          "name": "Quarter-Panel Damage Referral Estimate",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Quarter-Panel Damage Referral Estimate",
+            "Quarter Panel Damage Referral Estimate Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "quarter",
+            "panel",
+            "damage",
+            "referral",
+            "estimate"
+          ],
+          "summary": "Inspects quarter-panel damage and prepares a referral estimate when welded structural or refinishing work is likely required.",
+          "symptoms": [
+            "quarter panel dented",
+            "quarter panel rusted",
+            "quarter panel damage estimate"
+          ]
+        },
+        {
+          "code": "rocker_panel_damage_referral_estimate",
+          "name": "Rocker-Panel Damage Referral Estimate",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Rocker-Panel Damage Referral Estimate",
+            "Rocker Panel Damage Referral Estimate Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "rocker",
+            "panel",
+            "damage",
+            "referral",
+            "estimate"
+          ],
+          "summary": "Inspects rocker-panel damage and prepares a referral estimate when welded structural or refinishing work is likely required.",
+          "symptoms": [
+            "rocker panel rusted",
+            "rocker panel crushed",
+            "rocker panel damage estimate"
+          ]
+        },
+        {
+          "code": "body_panel_gap_inspection",
+          "name": "Body-Panel Gap Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Body-Panel Gap Inspection",
+            "Body Panel Gap Inspection Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "panel",
+            "gap",
+            "inspection"
+          ],
+          "summary": "Inspects exterior body-panel gaps and identifies loose hardware, prior damage, or body-shop referral needs.",
+          "symptoms": [
+            "uneven panel gaps",
+            "body panel misaligned",
+            "panel gap concern"
+          ]
+        },
+        {
+          "code": "minor_body_panel_alignment",
+          "name": "Minor Body-Panel Alignment",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Minor Body-Panel Alignment",
+            "Minor Body Panel Alignment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "minor",
+            "panel",
+            "alignment"
+          ],
+          "summary": "Performs minor adjustment of bolt-on exterior panels when no structural repair or refinishing is required.",
+          "symptoms": [
+            "body panel gap uneven",
+            "panel rubs when opening",
+            "minor panel misalignment"
+          ]
+        },
+        {
+          "code": "underbody_shield_replacement",
+          "name": "Underbody Shield Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Underbody Shield Replacement",
+            "Underbody Shield Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "underbody",
+            "shield",
+            "replacement"
+          ],
+          "summary": "Replaces underbody shields, belly pans, closeout panels, or related fasteners.",
+          "symptoms": [
+            "underbody shield dragging",
+            "belly pan missing",
+            "under cover loose"
+          ]
+        },
+        {
+          "code": "exterior_panel_hardware_replacement",
+          "name": "Exterior Panel Hardware Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Exterior Panel Hardware Replacement",
+            "Exterior Panel Hardware Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "panel",
+            "hardware",
+            "replacement"
+          ],
+          "summary": "Replaces missing or damaged exterior panel clips, bolts, retainers, or attachment hardware.",
+          "symptoms": [
+            "missing body clips",
+            "exterior trim loose",
+            "panel fasteners missing"
+          ]
+        },
+        {
+          "code": "door_shell_inspection_replacement_estimate",
+          "name": "Door Shell Inspection / Replacement Estimate",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Door Shell Inspection / Replacement Estimate",
+            "Door Shell Inspection Replacement Estimate Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "door",
+            "shell",
+            "inspection",
+            "replacement",
+            "estimate"
+          ],
+          "summary": "Inspects door-shell damage and prepares a replacement or referral estimate without implying paint or structural body repair.",
+          "symptoms": [
+            "door shell damaged",
+            "door skin creased",
+            "door replacement estimate"
+          ]
+        },
+        {
+          "code": "door_alignment",
+          "name": "Door Alignment",
+          "labor_hours_min": 0.7,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Door Alignment",
+            "Door Alignment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "door",
+            "alignment"
+          ],
+          "summary": "Adjusts bolt-on door position and verifies closing, sealing, and striker engagement.",
+          "symptoms": [
+            "door hard to close",
+            "door gap uneven",
+            "wind noise at door"
+          ]
+        },
+        {
+          "code": "door_hinge_replacement",
+          "name": "Door Hinge Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Door Hinge Replacement",
+            "Door Hinge Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "door",
+            "hinge",
+            "replacement"
+          ],
+          "summary": "Replaces worn or damaged bolt-on door hinges and aligns the door afterward.",
+          "symptoms": [
+            "door sagging",
+            "door hinge loose",
+            "door drops when opened"
+          ]
+        },
+        {
+          "code": "door_check_strap_replacement",
+          "name": "Door Check Strap Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Door Check Strap Replacement",
+            "Door Check Strap Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "door",
+            "check",
+            "strap",
+            "replacement"
+          ],
+          "summary": "Replaces a worn or broken door check strap, check link, or door stay.",
+          "symptoms": [
+            "door pops when opening",
+            "door will not stay open",
+            "door check broken"
+          ]
+        },
+        {
+          "code": "door_striker_adjustment",
+          "name": "Door Striker Adjustment",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Door Striker Adjustment",
+            "Door Striker Adjustment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "door",
+            "striker",
+            "adjustment"
+          ],
+          "summary": "Adjusts a door striker to improve latch engagement, closing effort, or panel fit.",
+          "symptoms": [
+            "door hard to latch",
+            "door rattles",
+            "door ajar warning"
+          ]
+        },
+        {
+          "code": "door_weatherstrip_replacement",
+          "name": "Door Weatherstrip Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Door Weatherstrip Replacement",
+            "Door Weatherstrip Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "door",
+            "weatherstrip",
+            "replacement"
+          ],
+          "summary": "Replaces door weatherstripping or perimeter seals and checks for obvious fitment issues.",
+          "symptoms": [
+            "water leak at door",
+            "wind noise at door",
+            "door seal torn"
+          ]
+        },
+        {
+          "code": "exterior_door_molding_trim_replacement",
+          "name": "Exterior Door Molding / Trim Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Exterior Door Molding / Trim Replacement",
+            "Exterior Door Molding Trim Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "door",
+            "molding",
+            "trim",
+            "replacement"
+          ],
+          "summary": "Replaces exterior door moldings, belt trim, cladding, or related clips.",
+          "symptoms": [
+            "door molding loose",
+            "side trim missing",
+            "door cladding damaged"
+          ]
+        },
+        {
+          "code": "hood_replacement_referral_estimate",
+          "name": "Hood Replacement Referral Estimate",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Hood Replacement Referral Estimate",
+            "Hood Replacement Referral Estimate Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hood",
+            "replacement",
+            "referral",
+            "estimate"
+          ],
+          "summary": "Inspects hood damage and prepares a replacement or referral estimate when refinishing or collision work may be required.",
+          "symptoms": [
+            "hood bent",
+            "hood damaged",
+            "hood replacement estimate"
+          ]
+        },
+        {
+          "code": "hood_alignment",
+          "name": "Hood Alignment",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Hood Alignment",
+            "Hood Alignment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hood",
+            "alignment"
+          ],
+          "summary": "Adjusts hood position, latch fit, and bump stops when no structural repair is required.",
+          "symptoms": [
+            "hood gap uneven",
+            "hood hard to close",
+            "hood sits high"
+          ]
+        },
+        {
+          "code": "hood_hinge_replacement",
+          "name": "Hood Hinge Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Hood Hinge Replacement",
+            "Hood Hinge Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hood",
+            "hinge",
+            "replacement"
+          ],
+          "summary": "Replaces worn or damaged bolt-on hood hinges and aligns the hood afterward.",
+          "symptoms": [
+            "hood hinge bent",
+            "hood will not align",
+            "hood binding"
+          ]
+        },
+        {
+          "code": "hood_release_cable_replacement",
+          "name": "Hood Release Cable Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Hood Release Cable Replacement",
+            "Hood Release Cable Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hood",
+            "release",
+            "cable",
+            "replacement"
+          ],
+          "summary": "Replaces a seized, stretched, or broken hood release cable and verifies latch release operation.",
+          "symptoms": [
+            "hood will not open",
+            "hood release handle loose",
+            "hood cable broken"
+          ]
+        },
+        {
+          "code": "hood_insulation_pad_replacement",
+          "name": "Hood Insulation Pad Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Hood Insulation Pad Replacement",
+            "Hood Insulation Pad Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hood",
+            "insulation",
+            "pad",
+            "replacement"
+          ],
+          "summary": "Replaces a missing, damaged, or sagging hood insulation pad and retainers.",
+          "symptoms": [
+            "hood insulation falling",
+            "hood pad missing",
+            "hood liner torn"
+          ]
+        },
+        {
+          "code": "hood_lift_support_strut_replacement",
+          "name": "Hood Lift Support / Strut Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Hood Lift Support / Strut Replacement",
+            "Hood Lift Support Strut Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hood",
+            "lift",
+            "support",
+            "strut",
+            "replacement"
+          ],
+          "summary": "Replaces weak hood lift supports or struts and verifies the hood stays open safely.",
+          "symptoms": [
+            "hood will not stay open",
+            "hood struts weak",
+            "hood falls down"
+          ]
+        },
+        {
+          "code": "hood_bump_stop_seal_adjustment",
+          "name": "Hood Bump Stop / Seal Adjustment",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Hood Bump Stop / Seal Adjustment",
+            "Hood Bump Stop Seal Adjustment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hood",
+            "bump",
+            "stop",
+            "seal",
+            "adjustment"
+          ],
+          "summary": "Adjusts or replaces hood bump stops and simple seals to correct minor fit, rattle, or sealing concerns.",
+          "symptoms": [
+            "hood rattle",
+            "hood sits uneven",
+            "hood seal loose"
+          ]
+        },
+        {
+          "code": "trunk_lid_alignment",
+          "name": "Trunk Lid Alignment",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Trunk Lid Alignment",
+            "Trunk Lid Alignment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "trunk",
+            "lid",
+            "alignment"
+          ],
+          "summary": "Adjusts trunk lid position, latch fit, and bump stops when no structural repair is required.",
+          "symptoms": [
+            "trunk gap uneven",
+            "trunk hard to close",
+            "decklid sits high"
+          ]
+        },
+        {
+          "code": "trunk_release_cable_actuator_service",
+          "name": "Trunk Release Cable / Actuator Service",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Trunk Release Cable / Actuator Service",
+            "Trunk Release Cable Actuator Service Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "trunk",
+            "release",
+            "cable",
+            "actuator",
+            "service"
+          ],
+          "summary": "Services or replaces accessible trunk release cables, switches, or actuators after basic diagnosis.",
+          "symptoms": [
+            "trunk release inoperative",
+            "trunk will not open",
+            "decklid release button not working"
+          ]
+        },
+        {
+          "code": "liftgate_hatch_alignment",
+          "name": "Liftgate / Hatch Alignment",
+          "labor_hours_min": 0.7,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Liftgate / Hatch Alignment",
+            "Liftgate Hatch Alignment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "liftgate",
+            "hatch",
+            "alignment"
+          ],
+          "summary": "Adjusts liftgate or hatch position and verifies latch engagement and seal contact.",
+          "symptoms": [
+            "liftgate gap uneven",
+            "hatch hard to close",
+            "liftgate wind noise"
+          ]
+        },
+        {
+          "code": "liftgate_latch_lock_actuator_inspection",
+          "name": "Liftgate Latch / Lock Actuator Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Liftgate Latch / Lock Actuator Inspection",
+            "Liftgate Latch Lock Actuator Inspection Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "liftgate",
+            "latch",
+            "lock",
+            "actuator",
+            "inspection"
+          ],
+          "summary": "Inspects liftgate latch, lock actuator, wiring access, and linkage before recommending replacement.",
+          "symptoms": [
+            "liftgate will not latch",
+            "hatch will not unlock",
+            "liftgate ajar warning"
+          ]
+        },
+        {
+          "code": "liftgate_power_actuator_inspection",
+          "name": "Liftgate Power Actuator Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Liftgate Power Actuator Inspection",
+            "Liftgate Power Actuator Inspection Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "liftgate",
+            "power",
+            "actuator",
+            "inspection"
+          ],
+          "summary": "Inspects power-liftgate actuators, struts, spindles, and mounting hardware before repair recommendations.",
+          "symptoms": [
+            "power liftgate weak",
+            "power hatch binds",
+            "liftgate actuator noisy"
+          ]
+        },
+        {
+          "code": "hatch_lift_support_strut_replacement",
+          "name": "Hatch Lift Support / Strut Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Hatch Lift Support / Strut Replacement",
+            "Hatch Lift Support Strut Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "hatch",
+            "lift",
+            "support",
+            "strut",
+            "replacement"
+          ],
+          "summary": "Replaces weak hatch, trunk, or liftgate lift supports and verifies the panel stays open safely.",
+          "symptoms": [
+            "hatch will not stay open",
+            "liftgate struts weak",
+            "trunk lid falls down"
+          ]
+        },
+        {
+          "code": "tailgate_handle_replacement",
+          "name": "Tailgate Handle Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Tailgate Handle Replacement",
+            "Tailgate Handle Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "tailgate",
+            "handle",
+            "replacement"
+          ],
+          "summary": "Replaces an exterior tailgate handle and verifies latch release operation.",
+          "symptoms": [
+            "tailgate handle broken",
+            "tailgate will not open",
+            "tailgate handle loose"
+          ]
+        },
+        {
+          "code": "tailgate_latch_adjustment",
+          "name": "Tailgate Latch Adjustment",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Tailgate Latch Adjustment",
+            "Tailgate Latch Adjustment Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "tailgate",
+            "latch",
+            "adjustment"
+          ],
+          "summary": "Adjusts tailgate latch or striker engagement when replacement or structural repair is not required.",
+          "symptoms": [
+            "tailgate hard to close",
+            "tailgate rattles",
+            "tailgate will not latch"
+          ]
+        },
+        {
+          "code": "tailgate_cable_replacement_pair",
+          "name": "Tailgate Cable Replacement (pair)",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Tailgate Cable Replacement (pair)",
+            "Tailgate Cable Replacement pair Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "tailgate",
+            "cable",
+            "replacement",
+            "pair"
+          ],
+          "summary": "Replaces pickup tailgate support cables as a pair and verifies proper support when lowered.",
+          "symptoms": [
+            "tailgate cable broken",
+            "tailgate hangs crooked",
+            "tailgate support strap failed"
+          ]
+        },
+        {
+          "code": "tailgate_hinge_assist_service",
+          "name": "Tailgate Hinge / Assist Service",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Tailgate Hinge / Assist Service",
+            "Tailgate Hinge Assist Service Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "tailgate",
+            "hinge",
+            "assist",
+            "service"
+          ],
+          "summary": "Services or replaces bolt-on tailgate hinges, assist dampers, or related hardware.",
+          "symptoms": [
+            "tailgate hinge binding",
+            "tailgate assist failed",
+            "tailgate hard to lift"
+          ]
+        },
+        {
+          "code": "trunk_hatch_tailgate_weatherstrip_replacement",
+          "name": "Trunk / Hatch / Tailgate Weatherstrip Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Trunk / Hatch / Tailgate Weatherstrip Replacement",
+            "Trunk Hatch Tailgate Weatherstrip Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "trunk",
+            "hatch",
+            "tailgate",
+            "weatherstrip",
+            "replacement"
+          ],
+          "summary": "Replaces trunk, hatch, liftgate, or tailgate weatherstripping and checks for obvious fitment issues.",
+          "symptoms": [
+            "water leak in trunk",
+            "hatch seal torn",
+            "tailgate weatherstrip loose"
+          ]
+        },
+        {
+          "code": "exterior_molding_cladding_replacement",
+          "name": "Exterior Molding / Cladding Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.8,
+          "aliases": [
+            "Exterior Molding / Cladding Replacement",
+            "Exterior Molding Cladding Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "molding",
+            "cladding",
+            "replacement"
+          ],
+          "summary": "Replaces exterior moldings, lower cladding, or related retainers without paint refinishing.",
+          "symptoms": [
+            "side molding loose",
+            "cladding damaged",
+            "exterior trim missing"
+          ]
+        },
+        {
+          "code": "wheel_opening_trim_replacement",
+          "name": "Wheel-Opening Trim Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Wheel-Opening Trim Replacement",
+            "Wheel Opening Trim Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "wheel",
+            "opening",
+            "trim",
+            "replacement"
+          ],
+          "summary": "Replaces wheel-opening trim, fender flares, arch moldings, or related clips.",
+          "symptoms": [
+            "wheel arch trim loose",
+            "fender flare cracked",
+            "wheel opening molding missing"
+          ]
+        },
+        {
+          "code": "emblem_badge_replacement",
+          "name": "Emblem / Badge Replacement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Emblem / Badge Replacement",
+            "Emblem Badge Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "emblem",
+            "badge",
+            "replacement"
+          ],
+          "summary": "Replaces exterior emblems, badges, or nameplates using appropriate adhesive or retainers.",
+          "symptoms": [
+            "emblem missing",
+            "badge loose",
+            "nameplate damaged"
+          ]
+        },
+        {
+          "code": "spoiler_replacement",
+          "name": "Spoiler Replacement",
+          "labor_hours_min": 0.7,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Spoiler Replacement",
+            "Spoiler Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "spoiler",
+            "replacement"
+          ],
+          "summary": "Replaces a bolt-on exterior spoiler and transfers accessible lamps or trim only when separately serviced.",
+          "symptoms": [
+            "spoiler loose",
+            "spoiler cracked",
+            "rear wing damaged"
+          ]
+        },
+        {
+          "code": "roof_rack_rail_crossbar_service",
+          "name": "Roof Rack / Rail / Crossbar Service",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Roof Rack / Rail / Crossbar Service",
+            "Roof Rack Rail Crossbar Service Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "roof",
+            "rack",
+            "rail",
+            "crossbar",
+            "service"
+          ],
+          "summary": "Installs, adjusts, or replaces bolt-on roof rack rails, crossbars, covers, or mounting hardware.",
+          "symptoms": [
+            "roof rack loose",
+            "crossbar missing",
+            "roof rail cover broken"
+          ]
+        },
+        {
+          "code": "license_plate_bracket_replacement",
+          "name": "License Plate Bracket Replacement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "License Plate Bracket Replacement",
+            "License Plate Bracket Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "license",
+            "plate",
+            "bracket",
+            "replacement"
+          ],
+          "summary": "Replaces a front or rear license plate bracket, mount, or related hardware.",
+          "symptoms": [
+            "license plate bracket broken",
+            "plate mount missing",
+            "tag bracket loose"
+          ]
+        },
+        {
+          "code": "mud_flap_installation_replacement",
+          "name": "Mud Flap Installation / Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Mud Flap Installation / Replacement",
+            "Mud Flap Installation Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "mud",
+            "flap",
+            "installation",
+            "replacement"
+          ],
+          "summary": "Installs or replaces mud flaps, splash guards, or related mounting hardware.",
+          "symptoms": [
+            "mud flap missing",
+            "splash guard loose",
+            "mud flap cracked"
+          ]
+        },
+        {
+          "code": "running_board_side_step_service",
+          "name": "Running Board / Side Step Service",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Running Board / Side Step Service",
+            "Running Board Side Step Service Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "running",
+            "board",
+            "side",
+            "step",
+            "service"
+          ],
+          "summary": "Installs, adjusts, or replaces bolt-on running boards, side steps, brackets, or covers.",
+          "symptoms": [
+            "running board loose",
+            "side step damaged",
+            "step bracket rusted"
+          ]
+        },
+        {
+          "code": "tow_hook_cover_access_panel_replacement",
+          "name": "Tow-Hook Cover / Exterior Access Panel Replacement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Tow-Hook Cover / Exterior Access Panel Replacement",
+            "Tow Hook Cover Exterior Access Panel Replacement Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "tow",
+            "hook",
+            "cover",
+            "access",
+            "panel",
+            "replacement"
+          ],
+          "summary": "Replaces tow-hook covers, bumper access doors, jack-point covers, or similar exterior access panels.",
+          "symptoms": [
+            "tow hook cover missing",
+            "bumper access panel loose",
+            "trim cover broken"
+          ]
+        },
+        {
+          "code": "rust_corrosion_inspection",
+          "name": "Rust / Corrosion Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Rust / Corrosion Inspection",
+            "Rust Corrosion Inspection Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "rust",
+            "corrosion",
+            "inspection"
+          ],
+          "summary": "Inspects visible rust or corrosion and identifies whether mechanical service, treatment estimate, or body-shop referral is appropriate.",
+          "symptoms": [
+            "rust visible",
+            "corrosion concern",
+            "body rust inspection"
+          ]
+        },
+        {
+          "code": "surface_rust_treatment_estimate",
+          "name": "Surface-Rust Treatment Estimate",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Surface-Rust Treatment Estimate",
+            "Surface Rust Treatment Estimate Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "surface",
+            "rust",
+            "treatment",
+            "estimate"
+          ],
+          "summary": "Estimates limited surface-rust treatment when the concern does not require welding, refinishing, or structural repair.",
+          "symptoms": [
+            "surface rust forming",
+            "minor rust spots",
+            "rust treatment estimate"
+          ]
+        },
+        {
+          "code": "underbody_corrosion_inspection",
+          "name": "Underbody Corrosion Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Underbody Corrosion Inspection",
+            "Underbody Corrosion Inspection Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "underbody",
+            "corrosion",
+            "inspection"
+          ],
+          "summary": "Inspects underbody corrosion on shields, fasteners, brackets, and visible structural areas for service or referral recommendations.",
+          "symptoms": [
+            "underbody rust",
+            "rust underneath vehicle",
+            "corroded underside"
+          ]
+        },
+        {
+          "code": "body_drain_cleaning",
+          "name": "Body Drain Cleaning",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Body Drain Cleaning",
+            "Body Drain Cleaning Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "drain",
+            "cleaning"
+          ],
+          "summary": "Cleans accessible body drains in doors, rockers, hatch openings, or sunroof-adjacent body channels when appropriate.",
+          "symptoms": [
+            "water trapped in door",
+            "body drain clogged",
+            "water sloshing in rocker"
+          ]
+        },
+        {
+          "code": "seam_sealer_inspection",
+          "name": "Seam-Sealer Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Seam-Sealer Inspection",
+            "Seam Sealer Inspection Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "seam",
+            "sealer",
+            "inspection"
+          ],
+          "summary": "Inspects visible seam sealer for cracks, gaps, or corrosion concerns and recommends referral when repair is beyond mechanical scope.",
+          "symptoms": [
+            "seam sealer cracked",
+            "water leak at body seam",
+            "rust at seam"
+          ]
+        },
+        {
+          "code": "structural_rust_referral_estimate",
+          "name": "Structural Rust Referral Estimate",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Structural Rust Referral Estimate",
+            "Structural Rust Referral Estimate Service"
+          ],
+          "keywords": [
+            "body",
+            "exterior",
+            "structural",
+            "rust",
+            "referral",
+            "estimate"
+          ],
+          "summary": "Documents suspected structural rust and prepares a referral estimate instead of quoting welding, frame repair, or structural body work.",
+          "symptoms": [
+            "frame rust concern",
+            "structural corrosion",
+            "rust hole in rocker"
+          ]
+        }
+      ]
     }
   ]
 }

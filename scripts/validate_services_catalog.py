@@ -21,6 +21,8 @@ REVIEWED_DUPLICATE_CONCEPT_ALLOWLIST: dict[frozenset[str], str] = {
     frozenset(("front_brake_pads_and_rotors_replacement", "rear_brake_pads_and_rotors_replacement")): "legitimate location variant",
     frozenset(("front_brake_rotors_replacement", "rear_brake_rotors_replacement")): "legitimate location variant",
     frozenset(("bumper_cover_replacement_front", "bumper_cover_replacement_rear")): "legitimate location variant",
+    frozenset(("front_bumper_reinforcement_replacement", "rear_bumper_reinforcement_replacement")): "legitimate location variant",
+    frozenset(("front_bumper_bracket_retainer_replacement", "rear_bumper_bracket_retainer_replacement")): "legitimate location variant",
     frozenset(("front_diff_service_fluid_inspect", "rear_diff_service_fluid_inspect")): "legitimate location variant",
     frozenset(("front_differential_replacement", "rear_differential_replacement")): "legitimate location variant",
     frozenset(("oxygen_sensor_replacement_upstream", "oxygen_sensor_replacement_downstream")): "legitimate location variant",
