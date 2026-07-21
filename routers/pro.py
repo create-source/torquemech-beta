@@ -6871,6 +6871,12 @@ def build_invoice_pdf_bytes(
             y_new = draw_table_heading(y_new, continued=True)
         return y_new
 
+    def ensure_space(required_height: float) -> None:
+        nonlocal y
+
+        if y - required_height < bottom:
+            y = new_page()
+
     def label_value(x: float, y: float, label: str, value: Any, *, width_chars: int = 38) -> None:
         c.setFont("Helvetica-Bold", 7.5)
         c.setFillColorRGB(0.38, 0.45, 0.55)
@@ -7196,7 +7202,7 @@ def build_invoice_pdf_bytes(
                             y -= 11
 
                 y -= 12
-                
+
     draw_footer()
     c.save()
     return buf.getvalue()
