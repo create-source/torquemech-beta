@@ -7128,16 +7128,15 @@ def build_invoice_pdf_bytes(
             page_no += 1
 
             c.setFont("Helvetica-Bold", 16)
-            c.drawString(left, top, "AFTER-SERVICE CARE INSTRUCTIONS")
+            c.drawString(left, top_y, "AFTER-SERVICE CARE INSTRUCTIONS")
 
             c.setFont("Helvetica", 8.5)
             c.drawRightString(
                 right,
-                top,
+                top_y,
                 f"Invoice {invoice.get('invoice_number') or ''}"
             )
-
-            y = top - 28
+            y = top_y - 36
             y -= 8
             
             for aftercare in aftercare_sections:
