@@ -10,7 +10,23 @@
         "the engine oil is dirty or degraded"
       ],
       "delay_risk": "Delaying this service can allow contaminated or degraded oil to circulate through the engine, increasing wear and the risk of sludge buildup.",
-      "customer_note": "The correct oil type, viscosity, filter, and service interval depend on the vehicle manufacturer’s requirements and operating conditions."
+      "customer_note": "The correct oil type, viscosity, filter, and service interval depend on the vehicle manufacturer’s requirements and operating conditions.",
+      "aftercare": {
+        "title": "After Your Oil & Filter Change",
+        "what_to_expect": "The engine should operate normally after service. A small amount of residual oil near the filter or drain area may be cleaned during service and should not continue dripping.",
+        "care_tips": [
+          "Check the oil level periodically on level ground using the manufacturer’s procedure.",
+          "Follow the next oil-change interval recommended for the vehicle and driving conditions.",
+          "Watch for fresh oil spots under the vehicle.",
+          "Use the correct oil specification and viscosity for future top-offs."
+        ],
+        "contact_shop_if": [
+          "the oil-pressure warning light appears",
+          "fresh oil is leaking under the vehicle",
+          "the engine develops new ticking or knocking noises",
+          "the oil level drops noticeably soon after service"
+        ]
+      }
     },
     "front_brake_pads_replacement": {
       "title": "Understanding Your Front Brake Pad Service",
@@ -21,7 +37,23 @@
         "braking performance or pedal feel has changed"
       ],
       "delay_risk": "Continuing to drive with worn brake pads may increase stopping distance and can damage the brake rotors or other braking components.",
-      "customer_note": "Final repair needs depend on inspection of the pads, rotors, calipers, hardware, and related braking components."
+      "customer_note": "Final repair needs depend on inspection of the pads, rotors, calipers, hardware, and related braking components.",
+      "aftercare": {
+        "title": "Caring for Your New Front Brake Pads",
+        "what_to_expect": "New brake pads may require a short break-in period. Braking may feel slightly different while the pads and rotors establish an even contact surface.",
+        "care_tips": [
+          "Avoid repeated hard braking during the initial break-in period unless required for safety.",
+          "Allow extra following distance while becoming familiar with the brake pedal feel.",
+          "Follow any break-in instructions provided by the shop or brake-part manufacturer.",
+          "Have the brakes inspected if noise or vibration does not improve."
+        ],
+        "contact_shop_if": [
+          "the brake pedal feels unusually soft or continues sinking",
+          "the vehicle pulls strongly while braking",
+          "a brake warning light appears",
+          "grinding, severe vibration, smoke, or a burning odor develops"
+        ]
+      }
     },
     "battery_replacement": {
       "title": "Understanding Your Battery Replacement",
@@ -32,7 +64,23 @@
         "the vehicle has repeated low-voltage or no-start concerns"
       ],
       "delay_risk": "A weak battery may eventually leave the vehicle unable to start and can place additional strain on the charging and starting systems.",
-      "customer_note": "Battery replacement should be based on battery testing and inspection of the terminals, cables, grounds, and charging system."
+      "customer_note": "Battery replacement should be based on battery testing and inspection of the terminals, cables, grounds, and charging system.",
+      "aftercare": {
+        "title": "After Your Battery Replacement",
+        "what_to_expect": "The vehicle should start normally after replacement. Some vehicles may need to relearn idle, clock, radio, window, or other electronic settings.",
+        "care_tips": [
+          "Keep the battery terminals clean and securely fastened.",
+          "Avoid leaving lights or accessories on while the engine is off.",
+          "Drive the vehicle long enough for the charging system to replenish the battery after repeated short trips.",
+          "Have the charging system tested if starting becomes slow again."
+        ],
+        "contact_shop_if": [
+          "the engine cranks slowly or will not start",
+          "the battery or charging warning light appears",
+          "electrical systems flicker or reset repeatedly",
+          "corrosion or swelling develops around the battery"
+        ]
+      }
     },
     "alternator_replacement": {
       "title": "Understanding Your Alternator Replacement",
@@ -43,7 +91,23 @@
         "lights dim or electrical systems weaken while driving"
       ],
       "delay_risk": "A failing alternator may allow the battery to discharge while driving, which can cause the engine to stall or prevent the vehicle from restarting.",
-      "customer_note": "The battery, drive belt, tensioner, wiring, grounds, and charging output should be checked before alternator replacement is confirmed."
+      "customer_note": "The battery, drive belt, tensioner, wiring, grounds, and charging output should be checked before alternator replacement is confirmed.",
+      "aftercare": {
+        "title": "After Your Alternator Replacement",
+        "what_to_expect": "Charging voltage and electrical operation should return to normal after replacement. The battery may still require charging or testing if it was deeply discharged.",
+        "care_tips": [
+          "Watch the instrument panel for a battery or charging warning light.",
+          "Avoid unnecessary electrical loads if the vehicle shows any charging concern.",
+          "Keep battery terminals and charging-system connections clean and tight.",
+          "Have the battery tested if it was repeatedly discharged before the alternator repair."
+        ],
+        "contact_shop_if": [
+          "the battery or charging warning light returns",
+          "headlights dim or electrical systems weaken while driving",
+          "the engine stalls or the vehicle will not restart",
+          "a burning smell, belt noise, or unusual alternator noise develops"
+        ]
+      }
     },
     "spark_plug_replacement_4_cyl": {
       "title": "Understanding Your Spark Plug Service",
@@ -54,7 +118,23 @@
         "fuel economy or acceleration has declined"
       ],
       "delay_risk": "Worn or fouled spark plugs can contribute to misfires, reduced fuel economy, hard starting, and possible catalytic-converter damage.",
-      "customer_note": "Misfires can also be caused by ignition coils, fuel injectors, vacuum leaks, compression problems, or other faults, so diagnosis may still be required."
+      "customer_note": "Misfires can also be caused by ignition coils, fuel injectors, vacuum leaks, compression problems, or other faults, so diagnosis may still be required.",
+      "aftercare": {
+        "title": "After Your Spark Plug Replacement",
+        "what_to_expect": "The engine should start, idle, and accelerate smoothly after service. Fuel economy improvements may take several drive cycles to become noticeable.",
+        "care_tips": [
+          "Use the fuel grade recommended by the vehicle manufacturer.",
+          "Address any returning misfire warning light promptly.",
+          "Keep future ignition-service intervals based on the manufacturer’s schedule.",
+          "Avoid ignoring rough running, hard starting, or reduced acceleration."
+        ],
+        "contact_shop_if": [
+          "the check-engine light flashes",
+          "the engine misfires, shakes, or loses power",
+          "hard starting or poor acceleration continues",
+          "fuel odor or unusual exhaust smoke appears"
+        ]
+      }
     },
     "thermostat_replacement": {
       "title": "Understanding Your Thermostat Replacement",
@@ -65,7 +145,23 @@
         "the coolant temperature is outside the expected range"
       ],
       "delay_risk": "A thermostat that is stuck open can reduce heater performance and efficiency, while one that is stuck closed can cause overheating and engine damage.",
-      "customer_note": "Cooling-system concerns may also involve coolant level, air pockets, the water pump, radiator, cooling fans, sensors, or leaks."
+      "customer_note": "Cooling-system concerns may also involve coolant level, air pockets, the water pump, radiator, cooling fans, sensors, or leaks.",
+      "aftercare": {
+        "title": "After Your Thermostat Replacement",
+        "what_to_expect": "The engine should reach and maintain normal operating temperature. Cabin heat and temperature-gauge behavior may become more consistent.",
+        "care_tips": [
+          "Check the coolant level only when the engine is completely cool.",
+          "Watch the temperature gauge during the first several drives.",
+          "Use only the correct coolant type for future top-offs.",
+          "Look for fresh coolant near the thermostat housing or under the vehicle."
+        ],
+        "contact_shop_if": [
+          "the engine temperature rises above normal",
+          "the coolant level drops",
+          "steam, coolant odor, or visible leakage appears",
+          "the heater suddenly blows cold while the engine is hot"
+        ]
+      }
     },
     "water_pump_replacement": {
       "title": "Understanding Your Water Pump Replacement",
@@ -76,7 +172,23 @@
         "the pump bearing is noisy or has excessive play"
       ],
       "delay_risk": "A failing water pump can cause rapid coolant loss or loss of circulation, which may lead to severe engine overheating.",
-      "customer_note": "The entire cooling system should be inspected because leaks, thermostat faults, radiator restrictions, cooling-fan problems, and air pockets can create similar symptoms."
+      "customer_note": "The entire cooling system should be inspected because leaks, thermostat faults, radiator restrictions, cooling-fan problems, and air pockets can create similar symptoms.",
+      "aftercare": {
+        "title": "After Your Water Pump Replacement",
+        "what_to_expect": "Coolant circulation should return to normal after repair. Minor trapped air may work through the cooling system, but overheating or continued coolant loss is not normal.",
+        "care_tips": [
+          "Check the coolant level when the engine is fully cool.",
+          "Monitor the temperature gauge during the first several trips.",
+          "Inspect the parking area for fresh coolant spots.",
+          "Use the manufacturer-specified coolant for any future top-off."
+        ],
+        "contact_shop_if": [
+          "the engine overheats or the temperature gauge rises",
+          "coolant continues to leak or the level drops",
+          "a grinding, whining, or belt noise develops",
+          "steam or a strong coolant odor appears"
+        ]
+      }
     },
     "radiator_replacement": {
       "title": "Understanding Your Radiator Replacement",
@@ -87,7 +199,23 @@
         "coolant flow through the radiator is restricted"
       ],
       "delay_risk": "A leaking or restricted radiator can cause coolant loss and overheating, which may result in major engine damage.",
-      "customer_note": "Radiator replacement should be confirmed by inspection and cooling-system testing because thermostats, pumps, fans, hoses, and engine concerns can produce similar symptoms."
+      "customer_note": "Radiator replacement should be confirmed by inspection and cooling-system testing because thermostats, pumps, fans, hoses, and engine concerns can produce similar symptoms.",
+      "aftercare": {
+        "title": "After Your Radiator Replacement",
+        "what_to_expect": "The cooling system should maintain normal engine temperature without visible leakage. Any remaining air in the system should be removed during service.",
+        "care_tips": [
+          "Monitor the coolant level only when the engine is completely cool.",
+          "Watch the temperature gauge during the first several drives.",
+          "Check beneath the vehicle for fresh coolant.",
+          "Keep the radiator and grille area free of heavy debris that can block airflow."
+        ],
+        "contact_shop_if": [
+          "the engine overheats",
+          "coolant leaks or the level drops",
+          "steam or a sweet coolant odor appears",
+          "the cooling fans do not operate when the engine becomes hot"
+        ]
+      }
     },
     "tire_rotation": {
       "title": "Understanding Your Tire Rotation",
@@ -98,7 +226,23 @@
         "uneven tread wear is beginning to develop"
       ],
       "delay_risk": "Skipping rotations can shorten tire life and may allow uneven wear patterns to become more severe.",
-      "customer_note": "Rotation does not correct alignment, suspension, inflation, balancing, or tire-damage concerns. Those conditions require separate inspection."
+      "customer_note": "Rotation does not correct alignment, suspension, inflation, balancing, or tire-damage concerns. Those conditions require separate inspection.",
+      "aftercare": {
+        "title": "After Your Tire Rotation",
+        "what_to_expect": "The vehicle may feel slightly different because the tires are now in different positions. Ride and steering should remain stable without new vibration.",
+        "care_tips": [
+          "Check and adjust tire pressure when the tires are cold.",
+          "Recheck wheel-lug torque if the shop or vehicle manufacturer recommends it.",
+          "Continue rotating tires at the recommended interval.",
+          "Have alignment or suspension inspected if uneven wear continues."
+        ],
+        "contact_shop_if": [
+          "new vibration or steering pull appears",
+          "a tire-pressure warning light remains on",
+          "a wheel or tire makes a new noise",
+          "uneven wear continues or becomes more severe"
+        ]
+      }
     },
     "cabin_air_filter_replacement": {
       "title": "Understanding Your Cabin Air Filter Replacement",
@@ -109,7 +253,23 @@
         "the maintenance interval is due"
       ],
       "delay_risk": "A heavily restricted filter can reduce heating and air-conditioning airflow and may contribute to unpleasant odors inside the vehicle.",
-      "customer_note": "Weak airflow or odors can also be caused by blower, evaporator, duct, drain, or HVAC-system concerns."
+      "customer_note": "Weak airflow or odors can also be caused by blower, evaporator, duct, drain, or HVAC-system concerns.",
+      "aftercare": {
+        "title": "After Your Cabin Air Filter Replacement",
+        "what_to_expect": "Vent airflow and cabin air quality may improve after replacement. Existing odors may take time to clear if another HVAC source is present.",
+        "care_tips": [
+          "Replace the cabin filter at the recommended interval or sooner in dusty conditions.",
+          "Keep leaves and debris away from the exterior air-intake area.",
+          "Use recirculation mode appropriately during heavy dust or smoke.",
+          "Address water leaks or persistent odors promptly."
+        ],
+        "contact_shop_if": [
+          "airflow remains weak",
+          "a musty or burning odor continues",
+          "water enters the passenger compartment",
+          "the blower makes new or unusual noises"
+        ]
+      }
     }
   }
 }

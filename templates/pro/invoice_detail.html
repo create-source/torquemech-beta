@@ -171,6 +171,30 @@
   .tm-invoice-parts-detail li + li {
     margin-top: 6px;
   }
+  .tm-invoice-option--education {
+    align-items: start;
+    border-color: rgba(249, 115, 22, .48) !important;
+    border-left: 4px solid #f97316 !important;
+    background: rgba(249, 115, 22, .10) !important;
+  }
+
+  .tm-invoice-option--education > span {
+    display: grid;
+    gap: 3px;
+  }
+
+  .tm-invoice-option--education strong {
+    color: inherit;
+    font-size: .86rem;
+    font-weight: 900;
+  }
+
+  .tm-invoice-option--education small {
+    color: #aebdd0;
+    font-size: .72rem;
+    font-weight: 650;
+    line-height: 1.35;
+  }
   .tm-pro-shell--invoice-detail .tm-invoice-paper {
     background: #ffffff;
     color: #0f172a;
@@ -507,7 +531,12 @@
       <div class="tm-crm-kicker">Notes and Warranty</div>
       <div class="tm-invoice-grid" style="margin-top:10px;">
         <div class="tm-invoice-field"><span>Notes</span><div class="tm-invoice-notes">{{ invoice.completion_notes or invoice.repair_notes or "No final notes saved." }}</div></div>
-        <div class="tm-invoice-field"><span>Warranty</span><div class="tm-invoice-notes">{{ invoice.warranty_text or "No warranty text configured." }}</div></div>
+        {% if invoice.warranty_text %}
+      <div class="tm-invoice-field">
+        <span>Warranty</span>
+        <div class="tm-invoice-notes">{{ invoice.warranty_text }}</div>
+      </div>
+      {% endif %}
         <div class="tm-invoice-field"><span>Payment Terms</span><div class="tm-invoice-notes">{{ invoice.payment_terms or "No payment terms configured." }}</div></div>
       </div>
     </section>
@@ -525,6 +554,15 @@
         <label class="tm-invoice-option"><input type="checkbox" name="show_parts_total" value="1" {% if invoice.pdf_display_options.show_parts_total %}checked{% endif %}><span>Show parts total</span></label>
         <label class="tm-invoice-option"><input type="checkbox" name="show_repair_notes" value="1" {% if invoice.pdf_display_options.show_repair_notes %}checked{% endif %}><span>Show repair notes</span></label>
         <label class="tm-invoice-option"><input type="checkbox" name="show_final_inspection_notes" value="1" {% if invoice.pdf_display_options.show_final_inspection_notes %}checked{% endif %}><span>Show final inspection comments</span></label>
+        <label class="tm-invoice-option tm-invoice-option--education">
+          <input type="checkbox"
+                name="include_after_service_education"
+                value="1">
+          <span>
+            <strong>Include after-service care instructions</strong>
+            <small>Adds customer-friendly maintenance guidance for completed services.</small>
+          </span>
+        </label>
       </div>
       <div class="tm-invoice-actions" style="margin-top:14px;">
         <button class="tm-btn tm-btn-primary" type="submit">Download PDF</button>

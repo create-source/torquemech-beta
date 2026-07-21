@@ -47,6 +47,7 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 VISUAL_REFERENCE_SEED_PATH = BASE_DIR / "data" / "visual_reference_seed.json"
 REPAIR_INTELLIGENCE_SEED_PATH = BASE_DIR / "data" / "repair_intelligence_seed.json"
+SERVICE_EDUCATION_PATH = BASE_DIR / "data" / "service_education.json"
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 DB_PATH = str((STATE_DIR / "app.db").resolve())
 LOCAL_FALLBACK_DB_PATH = str((STATE_DIR / "dev_runtime_app.db").resolve())
@@ -6284,7 +6285,7 @@ def create_invoice_for_repairs(
             grand_total,
             0.0,
             "No Charge" if grand_total <= 0 and no_charge_reason else "Unpaid",
-            str(shop_profile.get("warranty_note") or "").strip(),
+            "",
             no_charge_reason,
             now,
         ),
@@ -6557,6 +6558,7 @@ INVOICE_PDF_DEFAULT_OPTIONS = {
     "show_parts_total": True,
     "show_repair_notes": True,
     "show_final_inspection_notes": False,
+    "include_after_service_education": False,
 }
 
 
@@ -6650,6 +6652,61 @@ def pdf_draw_round_rect(
     c.setFillGray(0)
     c.setStrokeGray(0)
 
+def load_service_education_records() -> dict[str, dict[str, Any]]:
+    if not SERVICE_EDUCATION_PATH.exists():
+        return {}
+
+    try:
+        payload = json.loads(
+            SERVICE_EDUCATION_PATH.read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError):
+        logger.exception("SERVICE_EDUCATION_LOAD_FAILED")
+        return {}
+
+    services = payload.get("services")
+    return services if isinstance(services, dict) else {}
+
+
+def normalize_invoice_service_name(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    text = text.replace("&", " and ")
+    text = re.sub(r"[^a-z0-9]+", "_", text)
+    return re.sub(r"_+", "_", text).strip("_")
+
+
+def invoice_service_education_match(
+    service_name: Any,
+    records: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    normalized = normalize_invoice_service_name(service_name)
+
+    aliases = {
+        "oil_change": "oil_and_filter_change",
+        "oil_filter_change": "oil_and_filter_change",
+        "oil_and_filter_change": "oil_and_filter_change",
+        "front_brake_pad_replacement": "front_brake_pads_replacement",
+        "front_brake_pads_replacement": "front_brake_pads_replacement",
+        "battery_replacement": "battery_replacement",
+        "alternator_replacement": "alternator_replacement",
+        "spark_plug_replacement": "spark_plug_replacement_4_cyl",
+        "spark_plugs_replacement": "spark_plug_replacement_4_cyl",
+        "spark_plug_replacement_4_cyl": "spark_plug_replacement_4_cyl",
+        "thermostat_replacement": "thermostat_replacement",
+        "water_pump_replacement": "water_pump_replacement",
+        "radiator_replacement": "radiator_replacement",
+        "tire_rotation": "tire_rotation",
+        "cabin_air_filter_replacement": "cabin_air_filter_replacement",
+    }
+
+    service_code = aliases.get(normalized, normalized)
+    record = records.get(service_code)
+
+    if not isinstance(record, dict):
+        return {}
+
+    aftercare = record.get("aftercare")
+    return aftercare if isinstance(aftercare, dict) else {}
 
 def build_invoice_pdf_bytes(
     *,
@@ -6972,7 +7029,7 @@ def build_invoice_pdf_bytes(
     repair_note_text = str(invoice.get("repair_notes") or "").strip()
     notes = completion_note_text or repair_note_text
     final_inspection_notes = str(invoice.get("final_inspection_notes") or "").strip()
-    warranty = str(invoice.get("warranty_text") or shop_profile.get("warranty_note") or "").strip()
+    warranty = str(invoice.get("warranty_text") or "").strip()
     terms = invoice_payment_terms_text(invoice) or invoice_payment_terms_text(shop_profile)
     detail_lines = []
     if notes and options.get("show_repair_notes", True):
@@ -7019,6 +7076,105 @@ def build_invoice_pdf_bytes(
                 dy -= line_gap
             dy -= section_gap
         c.setFillGray(0)
+    
+    if options.get("include_after_service_education"):
+        education_records = load_service_education_records()
+        aftercare_sections = []
+
+        for item in invoice.get("items") or []:
+            service_title = (
+                item.get("service_title")
+                or item.get("repair_name")
+                or ""
+            )
+            aftercare = invoice_service_education_match(
+                service_title,
+                education_records,
+            )
+
+            if aftercare:
+                aftercare_sections.append(aftercare)
+
+        if aftercare_sections:
+            ensure_space(72)
+            y -= 10
+
+            c.setFont("Helvetica-Bold", 12)
+            c.drawString(left, y, "After-Service Care Instructions")
+            y -= 18
+
+            for aftercare in aftercare_sections:
+                title = str(
+                    aftercare.get("title")
+                    or "After-Service Care"
+                ).strip()
+
+                what_to_expect = str(
+                    aftercare.get("what_to_expect")
+                    or ""
+                ).strip()
+
+                care_tips = [
+                    str(value).strip()
+                    for value in aftercare.get("care_tips") or []
+                    if str(value).strip()
+                ]
+
+                contact_shop_if = [
+                    str(value).strip()
+                    for value in aftercare.get("contact_shop_if") or []
+                    if str(value).strip()
+                ]
+
+                ensure_space(80)
+
+                c.setFont("Helvetica-Bold", 10)
+                c.drawString(left, y, title)
+                y -= 14
+
+                if what_to_expect:
+                    c.setFont("Helvetica", 8.5)
+                    for line in wrap_text(what_to_expect, max_chars=92):
+                        ensure_space(12)
+                        c.drawString(left + 8, y, line)
+                        y -= 11
+                    y -= 4
+
+                if care_tips:
+                    ensure_space(24)
+                    c.setFont("Helvetica-Bold", 8.5)
+                    c.drawString(left + 8, y, "Care tips")
+                    y -= 12
+
+                    c.setFont("Helvetica", 8.5)
+                    for tip in care_tips:
+                        for index, line in enumerate(
+                            wrap_text(tip, max_chars=86)
+                        ):
+                            ensure_space(12)
+                            prefix = "• " if index == 0 else "  "
+                            c.drawString(left + 16, y, prefix + line)
+                            y -= 11
+                    y -= 4
+
+                if contact_shop_if:
+                    ensure_space(24)
+                    c.setFont("Helvetica-Bold", 8.5)
+                    c.drawString(left + 8, y, "Contact the shop if")
+                    y -= 12
+
+                    c.setFont("Helvetica", 8.5)
+                    for warning in contact_shop_if:
+                        sentence = warning[:1].upper() + warning[1:]
+                        for index, line in enumerate(
+                            wrap_text(sentence, max_chars=86)
+                        ):
+                            ensure_space(12)
+                            prefix = "• " if index == 0 else "  "
+                            c.drawString(left + 16, y, prefix + line)
+                            y -= 11
+
+                y -= 12
     draw_footer()
     c.save()
     return buf.getvalue()
