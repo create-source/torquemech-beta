@@ -16758,6 +16758,1458 @@
           ]
         }
       ]
+    },
+    {
+      "key": "fluids_filters_preventive",
+      "name": "Fluids, Filters & Preventive Maintenance",
+      "description": "Fluid checks, filter inspections, maintenance interval reviews, lubrication, belt and hose inspections, diesel fluid services, and preventive-maintenance services added as live Phase 3.1 Batch 8 coverage.",
+      "services": [
+        {
+          "code": "minor_scheduled_maintenance_inspection",
+          "name": "Minor Scheduled-Maintenance Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Minor Scheduled-Maintenance Inspection",
+            "Minor Scheduled Maintenance Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "scheduled maintenance",
+            "minor",
+            "scheduled",
+            "maintenance",
+            "inspection"
+          ],
+          "summary": "Performs a minor scheduled-maintenance inspection focused on fluids, filters, lights, tires, belts, hoses, and visible leaks.",
+          "symptoms": [
+            "maintenance due",
+            "service reminder on",
+            "minor service interval due"
+          ]
+        },
+        {
+          "code": "major_scheduled_maintenance_inspection",
+          "name": "Major Scheduled-Maintenance Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Major Scheduled-Maintenance Inspection",
+            "Major Scheduled Maintenance Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "scheduled maintenance",
+            "major",
+            "scheduled",
+            "maintenance",
+            "inspection"
+          ],
+          "summary": "Performs a deeper scheduled-maintenance inspection and documents fluid, filter, belt, hose, ignition, brake, and chassis maintenance needs.",
+          "symptoms": [
+            "major service due",
+            "high mileage service due",
+            "maintenance records unknown"
+          ]
+        },
+        {
+          "code": "factory_maintenance_schedule_review",
+          "name": "Factory Maintenance-Schedule Review",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Factory Maintenance-Schedule Review",
+            "Factory Maintenance Schedule Review Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "schedule",
+            "factory",
+            "maintenance",
+            "review"
+          ],
+          "summary": "Reviews mileage, time, usage, and service history against the factory maintenance schedule to identify due services.",
+          "symptoms": [
+            "maintenance schedule question",
+            "what service is due",
+            "service history review"
+          ]
+        },
+        {
+          "code": "severe_service_maintenance_inspection",
+          "name": "Severe-Service Maintenance Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Severe-Service Maintenance Inspection",
+            "Severe Service Maintenance Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "severe service",
+            "severe",
+            "service",
+            "maintenance",
+            "inspection"
+          ],
+          "summary": "Inspects for severe-service maintenance needs related to towing, short trips, dusty use, extreme temperatures, or fleet duty.",
+          "symptoms": [
+            "severe service interval",
+            "towing maintenance",
+            "fleet maintenance check"
+          ]
+        },
+        {
+          "code": "seasonal_preventive_maintenance_inspection",
+          "name": "Seasonal Preventive-Maintenance Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Seasonal Preventive-Maintenance Inspection",
+            "Seasonal Preventive Maintenance Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "seasonal",
+            "preventive",
+            "maintenance",
+            "inspection"
+          ],
+          "summary": "Checks seasonal maintenance items including coolant protection, battery condition, tire pressure, wipers, washer fluid, and visible leaks.",
+          "symptoms": [
+            "winter maintenance check",
+            "summer road trip check",
+            "seasonal service due"
+          ]
+        },
+        {
+          "code": "pre_trip_fluid_filter_inspection",
+          "name": "Pre-Trip Fluid / Filter Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Pre-Trip Fluid / Filter Inspection",
+            "Pre Trip Fluid Filter Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "pre trip",
+            "pre",
+            "trip",
+            "fluid",
+            "filter",
+            "inspection"
+          ],
+          "summary": "Checks key fluids, filters, belts, hoses, tire pressures, and visible leaks before a trip.",
+          "symptoms": [
+            "road trip inspection",
+            "pre trip maintenance",
+            "travel checkup"
+          ]
+        },
+        {
+          "code": "maintenance_reminder_reset",
+          "name": "Maintenance Reminder Reset",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Maintenance Reminder Reset",
+            "Maintenance Reminder Reset Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "reminder",
+            "maintenance",
+            "reset"
+          ],
+          "summary": "Resets a maintenance reminder after applicable service has been completed and documented.",
+          "symptoms": [
+            "maintenance light on after service",
+            "oil life reset needed",
+            "service reminder reset"
+          ]
+        },
+        {
+          "code": "fluid_filter_maintenance_bundle",
+          "name": "Fluid / Filter Maintenance Bundle",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Fluid / Filter Maintenance Bundle",
+            "Fluid Filter Maintenance Bundle Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "bundle",
+            "fluid",
+            "filter",
+            "maintenance"
+          ],
+          "summary": "Performs a bundled fluid and filter maintenance visit using customer-approved services without changing individual service-code identity.",
+          "symptoms": [
+            "multiple maintenance items due",
+            "fluid and filter service",
+            "catch up maintenance"
+          ]
+        },
+        {
+          "code": "maintenance_record_update",
+          "name": "Maintenance Record Update",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Maintenance Record Update",
+            "Maintenance Record Update Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "records",
+            "maintenance",
+            "record",
+            "update"
+          ],
+          "summary": "Documents completed preventive-maintenance services and next due items for shop and customer records.",
+          "symptoms": [
+            "maintenance records needed",
+            "service log update",
+            "next service due"
+          ]
+        },
+        {
+          "code": "underhood_fluid_level_check",
+          "name": "Underhood Fluid-Level Check",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Underhood Fluid-Level Check",
+            "Underhood Fluid Level Check Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "fluid level",
+            "underhood",
+            "fluid",
+            "level",
+            "check"
+          ],
+          "summary": "Checks accessible underhood fluid levels and notes abnormal level, color, odor, or leak concerns.",
+          "symptoms": [
+            "fluid levels need checked",
+            "maintenance check",
+            "possible low fluid"
+          ]
+        },
+        {
+          "code": "underhood_fluid_top_off",
+          "name": "Underhood Fluid Top-Off",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Underhood Fluid Top-Off",
+            "Underhood Fluid Top Off Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "top off",
+            "underhood",
+            "fluid",
+            "top",
+            "off"
+          ],
+          "summary": "Tops off accessible underhood fluids with compatible fluid when no leak diagnosis or repair is included.",
+          "symptoms": [
+            "top off fluids",
+            "low washer or coolant",
+            "fluid top off needed"
+          ]
+        },
+        {
+          "code": "fluid_condition_inspection",
+          "name": "Fluid Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Fluid Condition Inspection",
+            "Fluid Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "condition",
+            "fluid",
+            "inspection"
+          ],
+          "summary": "Inspects visible fluid condition for contamination, discoloration, burnt odor, metal debris, or water intrusion.",
+          "symptoms": [
+            "dirty fluid concern",
+            "fluid contamination",
+            "burnt fluid smell"
+          ]
+        },
+        {
+          "code": "fluid_contamination_inspection",
+          "name": "Fluid Contamination Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Fluid Contamination Inspection",
+            "Fluid Contamination Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "contamination",
+            "fluid",
+            "inspection"
+          ],
+          "summary": "Inspects suspected fluid cross-contamination and recommends system-specific diagnosis or repair when needed.",
+          "symptoms": [
+            "milky fluid",
+            "oil in coolant",
+            "contaminated fluid"
+          ]
+        },
+        {
+          "code": "engine_oil_level_check_top_off",
+          "name": "Engine Oil Level Check / Top-Off",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Engine Oil Level Check / Top-Off",
+            "Engine Oil Level Check Top Off Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "engine oil",
+            "engine",
+            "oil",
+            "level",
+            "check",
+            "top",
+            "off"
+          ],
+          "summary": "Checks engine oil level and tops off with compatible oil when appropriate.",
+          "symptoms": [
+            "low oil level",
+            "oil top off needed",
+            "check engine oil level"
+          ]
+        },
+        {
+          "code": "engine_oil_consumption_monitoring",
+          "name": "Engine Oil Consumption Monitoring",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Engine Oil Consumption Monitoring",
+            "Engine Oil Consumption Monitoring Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "engine oil",
+            "engine",
+            "oil",
+            "consumption",
+            "monitoring"
+          ],
+          "summary": "Documents oil level, mileage, leak evidence, and owner observations to monitor suspected oil consumption.",
+          "symptoms": [
+            "burning oil",
+            "oil level drops",
+            "oil consumption concern"
+          ]
+        },
+        {
+          "code": "engine_oil_analysis_sample_collection",
+          "name": "Engine Oil Analysis Sample Collection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Engine Oil Analysis Sample Collection",
+            "Engine Oil Analysis Sample Collection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "oil analysis",
+            "engine",
+            "oil",
+            "analysis",
+            "sample",
+            "collection"
+          ],
+          "summary": "Collects an engine oil sample for outside laboratory analysis when requested by the customer or fleet.",
+          "symptoms": [
+            "oil analysis sample",
+            "fleet oil testing",
+            "engine wear monitoring"
+          ]
+        },
+        {
+          "code": "washer_fluid_top_off",
+          "name": "Washer Fluid Top-Off",
+          "labor_hours_min": 0.1,
+          "labor_hours_max": 0.3,
+          "aliases": [
+            "Washer Fluid Top-Off",
+            "Washer Fluid Top Off Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "washer fluid",
+            "washer",
+            "fluid",
+            "top",
+            "off"
+          ],
+          "summary": "Tops off windshield washer fluid and notes obvious washer reservoir or leak concerns.",
+          "symptoms": [
+            "washer fluid low",
+            "low washer warning",
+            "top off washer fluid"
+          ]
+        },
+        {
+          "code": "battery_electrolyte_level_check",
+          "name": "Battery Electrolyte-Level Check",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Battery Electrolyte-Level Check",
+            "Battery Electrolyte Level Check Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "battery",
+            "electrolyte",
+            "level",
+            "check"
+          ],
+          "summary": "Checks electrolyte level on serviceable flooded batteries and recommends battery service or replacement when appropriate.",
+          "symptoms": [
+            "serviceable battery check",
+            "battery fluid low",
+            "flooded battery maintenance"
+          ]
+        },
+        {
+          "code": "coolant_freeze_point_test",
+          "name": "Coolant Freeze-Point Test",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Coolant Freeze-Point Test",
+            "Coolant Freeze Point Test Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "coolant",
+            "freeze",
+            "point",
+            "test"
+          ],
+          "summary": "Tests coolant freeze protection and documents whether coolant concentration is appropriate.",
+          "symptoms": [
+            "coolant freeze protection",
+            "winter coolant check",
+            "antifreeze test"
+          ]
+        },
+        {
+          "code": "coolant_ph_condition_test",
+          "name": "Coolant pH / Condition Test",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Coolant pH / Condition Test",
+            "Coolant pH Condition Test Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "coolant",
+            "ph",
+            "condition",
+            "test"
+          ],
+          "summary": "Tests coolant condition indicators such as pH, contamination, or additive depletion when supported by shop test supplies.",
+          "symptoms": [
+            "coolant condition concern",
+            "old coolant",
+            "coolant test needed"
+          ]
+        },
+        {
+          "code": "brake_fluid_moisture_test",
+          "name": "Brake Fluid Moisture Test",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Brake Fluid Moisture Test",
+            "Brake Fluid Moisture Test Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "brake fluid",
+            "brake",
+            "fluid",
+            "moisture",
+            "test"
+          ],
+          "summary": "Tests brake fluid moisture content and recommends flush service when readings exceed shop or manufacturer guidance.",
+          "symptoms": [
+            "brake fluid moisture",
+            "brake fluid test",
+            "brake fluid service due"
+          ]
+        },
+        {
+          "code": "power_steering_fluid_condition_inspection",
+          "name": "Power-Steering Fluid Condition Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Power-Steering Fluid Condition Inspection",
+            "Power Steering Fluid Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "power steering",
+            "power",
+            "steering",
+            "fluid",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects power-steering fluid level and condition before recommending service or leak diagnosis.",
+          "symptoms": [
+            "power steering fluid dirty",
+            "power steering fluid low",
+            "steering fluid check"
+          ]
+        },
+        {
+          "code": "transmission_fluid_condition_inspection",
+          "name": "Transmission Fluid Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Transmission Fluid Condition Inspection",
+            "Transmission Fluid Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "transmission fluid",
+            "transmission",
+            "fluid",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects accessible transmission fluid level and condition where the vehicle design allows.",
+          "symptoms": [
+            "transmission fluid check",
+            "burnt transmission fluid",
+            "transmission service question"
+          ]
+        },
+        {
+          "code": "differential_fluid_condition_inspection",
+          "name": "Differential Fluid Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Differential Fluid Condition Inspection",
+            "Differential Fluid Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "differential fluid",
+            "differential",
+            "fluid",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects differential fluid level and condition where access plugs allow without disassembly.",
+          "symptoms": [
+            "differential fluid check",
+            "gear oil condition",
+            "diff service question"
+          ]
+        },
+        {
+          "code": "transfer_case_fluid_condition_inspection",
+          "name": "Transfer-Case Fluid Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Transfer-Case Fluid Condition Inspection",
+            "Transfer Case Fluid Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "transfer case fluid",
+            "transfer",
+            "case",
+            "fluid",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects transfer-case fluid level and condition where access plugs allow without disassembly.",
+          "symptoms": [
+            "transfer case fluid check",
+            "transfer case service question",
+            "4wd fluid condition"
+          ]
+        },
+        {
+          "code": "clutch_fluid_condition_inspection",
+          "name": "Clutch Fluid Condition Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Clutch Fluid Condition Inspection",
+            "Clutch Fluid Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "clutch fluid",
+            "clutch",
+            "fluid",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects hydraulic clutch fluid level and condition before recommending service or leak diagnosis.",
+          "symptoms": [
+            "clutch fluid dirty",
+            "clutch fluid low",
+            "manual clutch fluid check"
+          ]
+        },
+        {
+          "code": "hybrid_ev_coolant_condition_inspection",
+          "name": "Hybrid / EV Coolant Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Hybrid / EV Coolant Condition Inspection",
+            "Hybrid EV Coolant Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "hybrid",
+            "ev",
+            "coolant",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects hybrid or EV cooling-system fluid condition where safe low-voltage procedures and access allow.",
+          "symptoms": [
+            "hybrid coolant check",
+            "ev coolant condition",
+            "inverter coolant concern"
+          ]
+        },
+        {
+          "code": "diesel_exhaust_fluid_quality_test",
+          "name": "Diesel Exhaust Fluid Quality Test",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Diesel Exhaust Fluid Quality Test",
+            "Diesel Exhaust Fluid Quality Test Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "diesel",
+            "def",
+            "exhaust",
+            "fluid",
+            "quality",
+            "test"
+          ],
+          "summary": "Tests diesel exhaust fluid quality or concentration before recommending DEF service or emissions diagnosis.",
+          "symptoms": [
+            "def quality warning",
+            "diesel exhaust fluid concern",
+            "def contamination"
+          ]
+        },
+        {
+          "code": "engine_air_filter_inspection",
+          "name": "Engine Air Filter Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Engine Air Filter Inspection",
+            "Engine Air Filter Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "air filter",
+            "engine",
+            "air",
+            "filter",
+            "inspection"
+          ],
+          "summary": "Inspects engine air filter condition and air-box sealing before recommending replacement.",
+          "symptoms": [
+            "dirty engine air filter",
+            "air filter check",
+            "maintenance inspection"
+          ]
+        },
+        {
+          "code": "cabin_air_filter_inspection",
+          "name": "Cabin Air Filter Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Cabin Air Filter Inspection",
+            "Cabin Air Filter Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "cabin filter",
+            "cabin",
+            "air",
+            "filter",
+            "inspection"
+          ],
+          "summary": "Inspects cabin air filter condition and fitment before recommending replacement.",
+          "symptoms": [
+            "cabin filter check",
+            "weak airflow",
+            "dusty cabin air"
+          ]
+        },
+        {
+          "code": "fuel_filter_condition_inspection",
+          "name": "Fuel Filter Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Fuel Filter Condition Inspection",
+            "Fuel Filter Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "fuel filter",
+            "fuel",
+            "filter",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects serviceable fuel filter condition, restrictions, water indication, or maintenance interval before replacement recommendations.",
+          "symptoms": [
+            "fuel filter service due",
+            "fuel restriction concern",
+            "diesel filter check"
+          ]
+        },
+        {
+          "code": "diesel_fuel_water_separator_drain",
+          "name": "Diesel Fuel Water-Separator Drain",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Diesel Fuel Water-Separator Drain",
+            "Diesel Fuel Water Separator Drain Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "diesel",
+            "fuel filter",
+            "fuel",
+            "water",
+            "separator",
+            "drain"
+          ],
+          "summary": "Drains water from a diesel fuel water separator when equipped and accessible.",
+          "symptoms": [
+            "water in fuel warning",
+            "diesel water separator",
+            "drain fuel filter"
+          ]
+        },
+        {
+          "code": "diesel_fuel_water_separator_filter_service",
+          "name": "Diesel Fuel Water-Separator Filter Service",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Diesel Fuel Water-Separator Filter Service",
+            "Diesel Fuel Water Separator Filter Service Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "diesel",
+            "fuel filter",
+            "fuel",
+            "water",
+            "separator",
+            "filter",
+            "service"
+          ],
+          "summary": "Services a diesel fuel water-separator filter assembly and primes the system when required.",
+          "symptoms": [
+            "diesel fuel filter service",
+            "water separator filter due",
+            "hard start after fuel filter"
+          ]
+        },
+        {
+          "code": "crankcase_breather_filter_replacement",
+          "name": "Crankcase Breather Filter Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Crankcase Breather Filter Replacement",
+            "Crankcase Breather Filter Replacement Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "breather filter",
+            "crankcase",
+            "breather",
+            "filter",
+            "replacement"
+          ],
+          "summary": "Replaces a serviceable crankcase breather filter where equipped.",
+          "symptoms": [
+            "crankcase filter due",
+            "breather filter restricted",
+            "pcv filter service"
+          ]
+        },
+        {
+          "code": "hybrid_battery_air_filter_replacement",
+          "name": "Hybrid Battery Air-Filter Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Hybrid Battery Air-Filter Replacement",
+            "Hybrid Battery Air Filter Replacement Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "hybrid",
+            "battery filter",
+            "battery",
+            "air",
+            "filter",
+            "replacement"
+          ],
+          "summary": "Replaces a hybrid battery cooling air filter where equipped and accessible.",
+          "symptoms": [
+            "hybrid battery filter due",
+            "battery cooling filter dirty",
+            "hybrid battery fan noise"
+          ]
+        },
+        {
+          "code": "hvac_fresh_air_screen_cleaning",
+          "name": "HVAC Fresh-Air Screen Cleaning",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "HVAC Fresh-Air Screen Cleaning",
+            "HVAC Fresh Air Screen Cleaning Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "hvac",
+            "fresh",
+            "air",
+            "screen",
+            "cleaning"
+          ],
+          "summary": "Cleans accessible HVAC fresh-air intake screens and debris traps that affect airflow or odor.",
+          "symptoms": [
+            "leaves in cowl",
+            "hvac intake debris",
+            "musty smell from vents"
+          ]
+        },
+        {
+          "code": "engine_air_box_cleaning",
+          "name": "Engine Air-Box Cleaning",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Engine Air-Box Cleaning",
+            "Engine Air Box Cleaning Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "air filter",
+            "engine",
+            "air",
+            "box",
+            "cleaning"
+          ],
+          "summary": "Cleans debris from the engine air-box and verifies filter seating during air-filter service.",
+          "symptoms": [
+            "debris in air box",
+            "air filter not sealing",
+            "rodent debris in air box"
+          ]
+        },
+        {
+          "code": "chassis_lubrication_service",
+          "name": "Chassis Lubrication Service",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Chassis Lubrication Service",
+            "Chassis Lubrication Service Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "lubrication",
+            "chassis",
+            "service"
+          ],
+          "summary": "Lubricates serviceable chassis grease fittings and notes components without greaseable joints.",
+          "symptoms": [
+            "chassis grease service",
+            "squeaky suspension",
+            "lubrication maintenance"
+          ]
+        },
+        {
+          "code": "door_hood_hatch_lubrication_service",
+          "name": "Door / Hood / Hatch Lubrication Service",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Door / Hood / Hatch Lubrication Service",
+            "Door Hood Hatch Lubrication Service Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "lubrication",
+            "door",
+            "hood",
+            "hatch",
+            "service"
+          ],
+          "summary": "Lubricates accessible door, hood, hatch, and latch pivot points as preventive maintenance.",
+          "symptoms": [
+            "door squeak",
+            "hood latch stiff",
+            "hatch latch sticky"
+          ]
+        },
+        {
+          "code": "weatherstrip_conditioning_service",
+          "name": "Weatherstrip Conditioning Service",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Weatherstrip Conditioning Service",
+            "Weatherstrip Conditioning Service Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "weatherstrip",
+            "conditioning",
+            "service"
+          ],
+          "summary": "Cleans and conditions accessible weatherstrips to reduce sticking, noise, or minor sealing concerns.",
+          "symptoms": [
+            "door seals sticking",
+            "weatherstrip dry",
+            "winter door seal maintenance"
+          ]
+        },
+        {
+          "code": "battery_terminal_protectant_service",
+          "name": "Battery Terminal Protectant Service",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Battery Terminal Protectant Service",
+            "Battery Terminal Protectant Service Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "battery",
+            "terminal",
+            "protectant",
+            "service"
+          ],
+          "summary": "Applies battery terminal protectant after cleaning or inspection when terminals are serviceable.",
+          "symptoms": [
+            "battery corrosion prevention",
+            "terminal protectant",
+            "battery maintenance"
+          ]
+        },
+        {
+          "code": "rubber_hose_conditioning_inspection",
+          "name": "Rubber Hose Conditioning Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Rubber Hose Conditioning Inspection",
+            "Rubber Hose Conditioning Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "hose",
+            "rubber",
+            "conditioning",
+            "inspection"
+          ],
+          "summary": "Inspects accessible rubber hoses for cracking, swelling, softness, abrasion, and clamp concerns.",
+          "symptoms": [
+            "old hoses",
+            "hose cracking",
+            "preventive hose inspection"
+          ]
+        },
+        {
+          "code": "underbody_fastener_lubrication_inspection",
+          "name": "Underbody Fastener Lubrication Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Underbody Fastener Lubrication Inspection",
+            "Underbody Fastener Lubrication Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "lubrication",
+            "underbody",
+            "fastener",
+            "inspection"
+          ],
+          "summary": "Inspects and lubricates selected serviceable underbody fasteners or adjusters as preventive maintenance where appropriate.",
+          "symptoms": [
+            "rusty adjusters",
+            "prevent seized fasteners",
+            "underbody maintenance"
+          ]
+        },
+        {
+          "code": "serpentine_belt_condition_inspection",
+          "name": "Serpentine Belt Condition Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Serpentine Belt Condition Inspection",
+            "Serpentine Belt Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "belt",
+            "serpentine",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects serpentine belt wear, cracking, glazing, contamination, and routing before replacement recommendations.",
+          "symptoms": [
+            "serpentine belt check",
+            "belt cracking",
+            "belt squeal"
+          ]
+        },
+        {
+          "code": "belt_tensioner_pulley_inspection",
+          "name": "Belt Tensioner / Pulley Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Belt Tensioner / Pulley Inspection",
+            "Belt Tensioner Pulley Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "belt",
+            "tensioner",
+            "pulley",
+            "inspection"
+          ],
+          "summary": "Inspects belt tensioner movement, pulley noise, alignment, and visible wear.",
+          "symptoms": [
+            "belt tensioner check",
+            "pulley noise",
+            "belt tracking concern"
+          ]
+        },
+        {
+          "code": "timing_belt_interval_inspection",
+          "name": "Timing Belt Interval Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Timing Belt Interval Inspection",
+            "Timing Belt Interval Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "timing belt",
+            "timing",
+            "belt",
+            "interval",
+            "inspection"
+          ],
+          "summary": "Reviews timing-belt age, mileage, service history, and accessible condition indicators before replacement recommendations.",
+          "symptoms": [
+            "timing belt due",
+            "timing belt age unknown",
+            "interference engine maintenance"
+          ]
+        },
+        {
+          "code": "coolant_hose_condition_inspection",
+          "name": "Coolant Hose Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Coolant Hose Condition Inspection",
+            "Coolant Hose Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "coolant hose",
+            "coolant",
+            "hose",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects coolant hoses, clamps, softness, swelling, seepage, abrasion, and age-related deterioration.",
+          "symptoms": [
+            "coolant hose check",
+            "old radiator hose",
+            "hose soft or swollen"
+          ]
+        },
+        {
+          "code": "vacuum_hose_condition_inspection",
+          "name": "Vacuum Hose Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Vacuum Hose Condition Inspection",
+            "Vacuum Hose Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "vacuum hose",
+            "vacuum",
+            "hose",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects accessible vacuum hoses for cracking, collapse, loose connections, or age-related leaks.",
+          "symptoms": [
+            "vacuum hose cracked",
+            "old vacuum lines",
+            "rough idle hose concern"
+          ]
+        },
+        {
+          "code": "fuel_line_preventive_inspection",
+          "name": "Fuel-Line Preventive Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Fuel-Line Preventive Inspection",
+            "Fuel Line Preventive Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "fuel line",
+            "fuel",
+            "line",
+            "preventive",
+            "inspection"
+          ],
+          "summary": "Inspects accessible fuel lines, clamps, corrosion, abrasion, and seepage as preventive maintenance.",
+          "symptoms": [
+            "fuel line corrosion",
+            "old fuel hoses",
+            "fuel smell inspection"
+          ]
+        },
+        {
+          "code": "brake_line_corrosion_inspection",
+          "name": "Brake-Line Corrosion Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Brake-Line Corrosion Inspection",
+            "Brake Line Corrosion Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "brake line",
+            "brake",
+            "line",
+            "corrosion",
+            "inspection"
+          ],
+          "summary": "Inspects visible brake lines for corrosion, seepage, abrasion, and routing concerns.",
+          "symptoms": [
+            "rusty brake lines",
+            "brake line corrosion",
+            "preventive brake inspection"
+          ]
+        },
+        {
+          "code": "pcv_system_preventive_inspection",
+          "name": "PCV System Preventive Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "PCV System Preventive Inspection",
+            "PCV System Preventive Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "pcv",
+            "system",
+            "preventive",
+            "inspection"
+          ],
+          "summary": "Inspects PCV valve, hoses, separator, and visible sludge concerns before service recommendations.",
+          "symptoms": [
+            "pcv maintenance",
+            "sludge concern",
+            "crankcase ventilation inspection"
+          ]
+        },
+        {
+          "code": "diesel_exhaust_fluid_top_off",
+          "name": "Diesel Exhaust Fluid Top-Off",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Diesel Exhaust Fluid Top-Off",
+            "Diesel Exhaust Fluid Top Off Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "diesel",
+            "def",
+            "exhaust",
+            "fluid",
+            "top",
+            "off"
+          ],
+          "summary": "Tops off diesel exhaust fluid with compatible DEF and notes warning messages or contamination concerns.",
+          "symptoms": [
+            "def low warning",
+            "diesel exhaust fluid low",
+            "top off def"
+          ]
+        },
+        {
+          "code": "diesel_coolant_additive_test",
+          "name": "Diesel Coolant Additive Test",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Diesel Coolant Additive Test",
+            "Diesel Coolant Additive Test Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "diesel",
+            "coolant",
+            "additive",
+            "test"
+          ],
+          "summary": "Tests supplemental coolant additive condition on applicable diesel cooling systems.",
+          "symptoms": [
+            "diesel coolant additive",
+            "sca test",
+            "coolant additive maintenance"
+          ]
+        },
+        {
+          "code": "diesel_coolant_additive_service",
+          "name": "Diesel Coolant Additive Service",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Diesel Coolant Additive Service",
+            "Diesel Coolant Additive Service Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "diesel",
+            "coolant",
+            "additive",
+            "service"
+          ],
+          "summary": "Services supplemental coolant additive on applicable diesel cooling systems when test results indicate it is needed.",
+          "symptoms": [
+            "add coolant additive",
+            "diesel coolant service",
+            "sca service due"
+          ]
+        },
+        {
+          "code": "awd_coupling_fluid_condition_inspection",
+          "name": "AWD Coupling Fluid Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "AWD Coupling Fluid Condition Inspection",
+            "AWD Coupling Fluid Condition Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "awd fluid",
+            "awd",
+            "coupling",
+            "fluid",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects serviceable AWD coupling or clutch fluid condition where access allows without disassembly.",
+          "symptoms": [
+            "awd fluid check",
+            "coupling fluid service question",
+            "awd maintenance"
+          ]
+        },
+        {
+          "code": "convertible_top_hydraulic_fluid_inspection",
+          "name": "Convertible-Top Hydraulic Fluid Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Convertible-Top Hydraulic Fluid Inspection",
+            "Convertible Top Hydraulic Fluid Inspection Service"
+          ],
+          "keywords": [
+            "fluids",
+            "filters",
+            "preventive maintenance",
+            "convertible top",
+            "convertible",
+            "top",
+            "hydraulic",
+            "fluid",
+            "inspection"
+          ],
+          "summary": "Inspects convertible-top hydraulic fluid level and visible leaks where equipped and safely accessible.",
+          "symptoms": [
+            "convertible top fluid low",
+            "top hydraulic leak",
+            "convertible top slow"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -17,6 +17,9 @@ SEARCH_METADATA_FIELDS = ("aliases", "keywords", "summary", "symptoms")
 REVIEWED_DUPLICATE_CONCEPT_ALLOWLIST: dict[frozenset[str], str] = {
     frozenset(("alternator_diagnosis", "alternator_replacement")): "diagnosis versus repair",
     frozenset(("battery_replacement", "battery_test")): "test versus replacement",
+    frozenset(("cabin_air_filter_inspection", "cabin_air_filter_replacement")): "inspection versus replacement",
+    frozenset(("diesel_coolant_additive_service", "diesel_coolant_additive_test")): "test versus service",
+    frozenset(("engine_air_filter_inspection", "engine_air_filter_replacement")): "inspection versus replacement",
     frozenset(("front_brake_pads_replacement", "rear_brake_pads_replacement")): "legitimate location variant",
     frozenset(("front_brake_pads_and_rotors_replacement", "rear_brake_pads_and_rotors_replacement")): "legitimate location variant",
     frozenset(("front_brake_rotors_replacement", "rear_brake_rotors_replacement")): "legitimate location variant",

@@ -26,6 +26,69 @@ NEW_BATCH_7_CATEGORY_KEYS = {
     "wheels_tires_alignment",
 }
 
+NEW_BATCH_8_CATEGORY_KEYS = {
+    "fluids_filters_preventive",
+}
+
+NEW_BATCH_8_FLUIDS_FILTERS_PREVENTIVE_SERVICE_CODES = {
+    "minor_scheduled_maintenance_inspection",
+    "major_scheduled_maintenance_inspection",
+    "factory_maintenance_schedule_review",
+    "severe_service_maintenance_inspection",
+    "seasonal_preventive_maintenance_inspection",
+    "pre_trip_fluid_filter_inspection",
+    "maintenance_reminder_reset",
+    "fluid_filter_maintenance_bundle",
+    "maintenance_record_update",
+    "underhood_fluid_level_check",
+    "underhood_fluid_top_off",
+    "fluid_condition_inspection",
+    "fluid_contamination_inspection",
+    "engine_oil_level_check_top_off",
+    "engine_oil_consumption_monitoring",
+    "engine_oil_analysis_sample_collection",
+    "washer_fluid_top_off",
+    "battery_electrolyte_level_check",
+    "coolant_freeze_point_test",
+    "coolant_ph_condition_test",
+    "brake_fluid_moisture_test",
+    "power_steering_fluid_condition_inspection",
+    "transmission_fluid_condition_inspection",
+    "differential_fluid_condition_inspection",
+    "transfer_case_fluid_condition_inspection",
+    "clutch_fluid_condition_inspection",
+    "hybrid_ev_coolant_condition_inspection",
+    "diesel_exhaust_fluid_quality_test",
+    "engine_air_filter_inspection",
+    "cabin_air_filter_inspection",
+    "fuel_filter_condition_inspection",
+    "diesel_fuel_water_separator_drain",
+    "diesel_fuel_water_separator_filter_service",
+    "crankcase_breather_filter_replacement",
+    "hybrid_battery_air_filter_replacement",
+    "hvac_fresh_air_screen_cleaning",
+    "engine_air_box_cleaning",
+    "chassis_lubrication_service",
+    "door_hood_hatch_lubrication_service",
+    "weatherstrip_conditioning_service",
+    "battery_terminal_protectant_service",
+    "rubber_hose_conditioning_inspection",
+    "underbody_fastener_lubrication_inspection",
+    "serpentine_belt_condition_inspection",
+    "belt_tensioner_pulley_inspection",
+    "timing_belt_interval_inspection",
+    "coolant_hose_condition_inspection",
+    "vacuum_hose_condition_inspection",
+    "fuel_line_preventive_inspection",
+    "brake_line_corrosion_inspection",
+    "pcv_system_preventive_inspection",
+    "diesel_exhaust_fluid_top_off",
+    "diesel_coolant_additive_test",
+    "diesel_coolant_additive_service",
+    "awd_coupling_fluid_condition_inspection",
+    "convertible_top_hydraulic_fluid_inspection",
+}
+
 NEW_BATCH_7_WHEELS_TIRES_ALIGNMENT_SERVICE_CODES = {
     "tire_condition_inspection",
     "tire_pressure_check_adjustment",
@@ -225,6 +288,12 @@ PRE_BATCH_7_SERVICE_CODES_PATH = (
     / "services_catalog_phase31_batch6_baseline_codes.json"
 )
 
+PRE_BATCH_8_SERVICE_CODES_PATH = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "services_catalog_phase31_batch7_baseline_codes.json"
+)
+
 
 def minimal_catalog():
     return {
@@ -254,8 +323,8 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         result = validate_catalog_data(catalog)
 
         self.assertEqual(result.errors, [])
-        self.assertEqual(result.categories, 21)
-        self.assertEqual(result.services, 663)
+        self.assertEqual(result.categories, 22)
+        self.assertEqual(result.services, 719)
         self.assertEqual(len(result.warnings), 2)
 
     def test_duplicate_service_code_fails(self):
@@ -557,6 +626,69 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         pre_batch_codes = set(json.loads(PRE_BATCH_7_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
 
         self.assertEqual(len(pre_batch_codes), 564)
+        self.assertTrue(pre_batch_codes.issubset(current_codes))
+
+    def test_batch_8_fluids_filters_preventive_category_exists_and_has_services(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        categories = {category["key"]: category for category in catalog["categories"]}
+
+        self.assertTrue(NEW_BATCH_8_CATEGORY_KEYS.issubset(categories))
+        self.assertEqual(categories["fluids_filters_preventive"]["name"], "Fluids, Filters & Preventive Maintenance")
+        self.assertEqual(len(categories["fluids_filters_preventive"]["services"]), 56)
+
+        current_codes = {service["code"] for service in categories["fluids_filters_preventive"]["services"]}
+        self.assertEqual(current_codes, NEW_BATCH_8_FLUIDS_FILTERS_PREVENTIVE_SERVICE_CODES)
+
+    def test_batch_8_fluids_filters_preventive_services_have_complete_search_metadata(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        preventive = next(category for category in catalog["categories"] if category["key"] == "fluids_filters_preventive")
+
+        for service in preventive["services"]:
+            with self.subTest(service=service["code"]):
+                self.assertIsInstance(service.get("aliases"), list)
+                self.assertTrue(service["aliases"])
+                self.assertIsInstance(service.get("keywords"), list)
+                self.assertTrue(service["keywords"])
+                self.assertIsInstance(service.get("symptoms"), list)
+                self.assertTrue(service["symptoms"])
+                self.assertIsInstance(service.get("summary"), str)
+                self.assertTrue(service["summary"].strip())
+
+    def test_batch_8_fluids_filters_preventive_has_no_duplicate_names(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        preventive = next(category for category in catalog["categories"] if category["key"] == "fluids_filters_preventive")
+        normalized_names = [normalize_name(service["name"]) for service in preventive["services"]]
+
+        duplicate_names = {name for name in normalized_names if normalized_names.count(name) > 1}
+
+        self.assertEqual(duplicate_names, set())
+
+    def test_batch_8_representative_services_remain_in_expected_category(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        preventive = next(category for category in catalog["categories"] if category["key"] == "fluids_filters_preventive")
+        services = {service["code"]: service for service in preventive["services"]}
+
+        for code in (
+            "minor_scheduled_maintenance_inspection",
+            "engine_oil_level_check_top_off",
+            "brake_fluid_moisture_test",
+            "engine_air_filter_inspection",
+            "serpentine_belt_condition_inspection",
+            "diesel_exhaust_fluid_top_off",
+        ):
+            with self.subTest(service=code):
+                self.assertIn(code, services)
+
+    def test_pre_batch_8_service_codes_remain_present(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        current_codes = {
+            service["code"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        }
+        pre_batch_codes = set(json.loads(PRE_BATCH_8_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
+
+        self.assertEqual(len(pre_batch_codes), 663)
         self.assertTrue(pre_batch_codes.issubset(current_codes))
 
 
