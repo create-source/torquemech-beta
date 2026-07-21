@@ -45,6 +45,22 @@ REVIEWED_DUPLICATE_CONCEPT_ALLOWLIST: dict[frozenset[str], str] = {
     frozenset(("high_voltage_cable_inspection", "high_voltage_cable_replacement")): "inspection versus replacement",
     frozenset(("hybrid_transaxle_service", "hybrid_transaxle_replacement")): "service versus replacement",
     frozenset(("heat_pump_hvac_diagnostic", "heat_pump_hvac_service")): "diagnosis versus service",
+    frozenset(("front_wiper_motor_replacement", "rear_wiper_motor_replacement")): "legitimate location variant",
+    frozenset(("front_wiper_arm_replacement_each", "rear_wiper_arm_replacement")): "legitimate location variant",
+    frozenset(("rain_sensor_diagnostic", "rain_sensor_replacement", "rain_sensor_calibration")): "diagnosis versus repair versus calibration",
+    frozenset(("window_regulator_diagnostic", "window_regulator_replacement")): "diagnosis versus repair",
+    frozenset(("auto_dimming_mirror_diagnostic", "auto_dimming_mirror_replacement")): "diagnosis versus repair",
+    frozenset(("adaptive_headlamp_diagnostic", "adaptive_headlamp_calibration")): "diagnosis versus calibration",
+    frozenset(("daytime_running_light_diagnostic", "daytime_running_light_replacement")): "diagnosis versus repair",
+    frozenset(("automatic_headlamp_sensor_diagnostic", "automatic_headlamp_sensor_replacement")): "diagnosis versus repair",
+    frozenset(("instrument_cluster_diagnostic", "instrument_cluster_replacement")): "diagnosis versus repair",
+    frozenset(("amplifier_diagnostic", "amplifier_replacement")): "diagnosis versus repair",
+    frozenset(("speaker_diagnostic", "speaker_replacement_each")): "diagnosis versus per-component repair",
+    frozenset(("usb_port_diagnostic", "usb_port_replacement")): "diagnosis versus repair",
+    frozenset(("12_volt_power_outlet_diagnostic", "12_volt_power_outlet_replacement")): "diagnosis versus repair",
+    frozenset(("wireless_charging_pad_diagnostic", "wireless_charging_pad_replacement")): "diagnosis versus repair",
+    frozenset(("horn_diagnostic", "horn_replacement")): "diagnosis versus repair",
+    frozenset(("door_lock_actuator_diagnostic", "door_lock_actuator_replacement")): "diagnosis versus repair",
 }
 
 

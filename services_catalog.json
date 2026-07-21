@@ -7974,7 +7974,7 @@
         },
         {
           "code": "rust_removal_treatment_medium_area_1_4_sq_ft",
-          "name": "Rust Removal + Treatment (Medium Area 1–4 sq ft)",
+          "name": "Rust Removal + Treatment (Medium Area 1\u20134 sq ft)",
           "labor_hours_min": 2.0,
           "labor_hours_max": 12.0,
           "aliases": [
@@ -8003,7 +8003,7 @@
         },
         {
           "code": "rust_removal_treatment_large_area_4_10_sq_ft",
-          "name": "Rust Removal + Treatment (Large Area 4–10 sq ft)",
+          "name": "Rust Removal + Treatment (Large Area 4\u201310 sq ft)",
           "labor_hours_min": 2.0,
           "labor_hours_max": 12.0,
           "aliases": [
@@ -10701,6 +10701,2215 @@
             "reduced power",
             "vehicle will not ready",
             "charging or range concern"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "glass_mirrors_wipers",
+      "name": "Glass, Mirrors & Wipers",
+      "description": "Glass, mirror, washer, wiper, window, and related sensor services added as live Phase 3.1 coverage.",
+      "services": [
+        {
+          "code": "wiper_system_diagnostic",
+          "name": "Wiper System Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Wiper System Check",
+            "Wiper System Diagnostic"
+          ],
+          "keywords": [
+            "wiper",
+            "system",
+            "diagnostic",
+            "wiper switch",
+            "wiper relay"
+          ],
+          "summary": "Diagnoses windshield or rear wiper system faults before repair recommendations are made.",
+          "symptoms": [
+            "wipers not working",
+            "wipers park incorrectly",
+            "intermittent wipers inoperative"
+          ]
+        },
+        {
+          "code": "front_wiper_motor_replacement",
+          "name": "Front Wiper Motor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Front Wiper Motor Replacement",
+            "Front Wiper Motor Service"
+          ],
+          "keywords": [
+            "front",
+            "wiper",
+            "motor",
+            "replacement",
+            "windshield wipers"
+          ],
+          "summary": "Replaces the front windshield wiper motor and verifies proper park and speed operation.",
+          "symptoms": [
+            "front wipers inoperative",
+            "wipers stop mid-sweep",
+            "wiper motor noisy"
+          ]
+        },
+        {
+          "code": "rear_wiper_motor_replacement",
+          "name": "Rear Wiper Motor Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Rear Wiper Motor Replacement",
+            "Rear Wiper Motor Service"
+          ],
+          "keywords": [
+            "rear",
+            "wiper",
+            "motor",
+            "replacement",
+            "back glass wiper"
+          ],
+          "summary": "Replaces the rear wiper motor on vehicles equipped with a rear wiper system.",
+          "symptoms": [
+            "rear wiper inoperative",
+            "rear wiper stuck",
+            "rear wiper motor noisy"
+          ]
+        },
+        {
+          "code": "wiper_transmission_linkage_replacement",
+          "name": "Wiper Transmission / Linkage Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Wiper Transmission / Linkage Replacement",
+            "Wiper Transmission / Linkage Service"
+          ],
+          "keywords": [
+            "wiper",
+            "transmission",
+            "linkage",
+            "replacement",
+            "wiper pivots"
+          ],
+          "summary": "Replaces the wiper linkage or transmission assembly that transfers motor movement to the wiper arms.",
+          "symptoms": [
+            "wiper arms do not move",
+            "one wiper arm stopped",
+            "wipers clunk under cowl"
+          ]
+        },
+        {
+          "code": "front_wiper_arm_replacement_each",
+          "name": "Front Wiper Arm Replacement (each)",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Front Wiper Arm Replacement (each)",
+            "Front Wiper Arm Service (each)"
+          ],
+          "keywords": [
+            "front",
+            "wiper",
+            "arm",
+            "replacement",
+            "windshield wiper arm"
+          ],
+          "summary": "Replaces one front windshield wiper arm and sets its parked position.",
+          "symptoms": [
+            "wiper arm stripped",
+            "wiper arm bent",
+            "wiper misses windshield"
+          ]
+        },
+        {
+          "code": "rear_wiper_arm_replacement",
+          "name": "Rear Wiper Arm Replacement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Rear Wiper Arm Replacement",
+            "Rear Wiper Arm Service"
+          ],
+          "keywords": [
+            "rear",
+            "wiper",
+            "arm",
+            "replacement",
+            "back glass wiper"
+          ],
+          "summary": "Replaces the rear wiper arm and confirms wipe pattern on the rear glass.",
+          "symptoms": [
+            "rear wiper arm broken",
+            "rear wiper does not contact glass",
+            "rear wiper arm stripped"
+          ]
+        },
+        {
+          "code": "windshield_washer_pump_replacement",
+          "name": "Windshield-Washer Pump Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Windshield-Washer Pump Replacement",
+            "Windshield-Washer Pump Service"
+          ],
+          "keywords": [
+            "windshield",
+            "washer",
+            "pump",
+            "replacement",
+            "washer fluid",
+            "no spray"
+          ],
+          "summary": "Replaces the windshield-washer pump and verifies fluid spray at the front washer nozzles.",
+          "symptoms": [
+            "washer fluid not spraying",
+            "washer pump silent",
+            "weak washer spray"
+          ]
+        },
+        {
+          "code": "rear_washer_pump_replacement",
+          "name": "Rear Washer Pump Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Rear Washer Pump Replacement",
+            "Rear Washer Pump Service"
+          ],
+          "keywords": [
+            "rear",
+            "washer",
+            "pump",
+            "replacement",
+            "back glass washer"
+          ],
+          "summary": "Replaces a separate rear washer pump where the vehicle uses one for the rear glass.",
+          "symptoms": [
+            "rear washer not spraying",
+            "rear washer pump silent",
+            "rear glass washer weak"
+          ]
+        },
+        {
+          "code": "washer_reservoir_replacement",
+          "name": "Washer Reservoir Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Washer Reservoir Replacement",
+            "Washer Reservoir Service"
+          ],
+          "keywords": [
+            "washer",
+            "reservoir",
+            "replacement",
+            "washer bottle"
+          ],
+          "summary": "Replaces the washer-fluid reservoir and checks for leaks after refilling.",
+          "symptoms": [
+            "washer fluid leaks",
+            "washer reservoir cracked",
+            "low washer fluid returns"
+          ]
+        },
+        {
+          "code": "washer_nozzle_replacement",
+          "name": "Washer Nozzle Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Washer Nozzle Replacement",
+            "Washer Nozzle Service"
+          ],
+          "keywords": [
+            "washer",
+            "nozzle",
+            "replacement",
+            "washer jet"
+          ],
+          "summary": "Replaces clogged or damaged washer nozzles and verifies spray aim.",
+          "symptoms": [
+            "washer spray misdirected",
+            "washer nozzle clogged",
+            "washer fluid sprays poorly"
+          ]
+        },
+        {
+          "code": "washer_hose_line_repair",
+          "name": "Washer Hose / Line Repair",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Washer Hose / Line Repair"
+          ],
+          "keywords": [
+            "washer",
+            "hose",
+            "line",
+            "repair",
+            "washer line"
+          ],
+          "summary": "Repairs or replaces damaged washer hose sections and checks washer-fluid delivery.",
+          "symptoms": [
+            "washer fluid leaks under hood",
+            "washer spray weak",
+            "washer hose disconnected"
+          ]
+        },
+        {
+          "code": "rain_sensor_diagnostic",
+          "name": "Rain-Sensor Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Rain-Sensor Check",
+            "Rain-Sensor Diagnostic"
+          ],
+          "keywords": [
+            "rain",
+            "sensor",
+            "diagnostic",
+            "automatic wipers"
+          ],
+          "summary": "Diagnoses automatic rain-sensing wiper concerns using vehicle-specific testing procedures.",
+          "symptoms": [
+            "automatic wipers not working",
+            "wipers run unexpectedly",
+            "rain sensor fault"
+          ]
+        },
+        {
+          "code": "rain_sensor_replacement",
+          "name": "Rain-Sensor Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Rain-Sensor Replacement",
+            "Rain-Sensor Service"
+          ],
+          "keywords": [
+            "rain",
+            "sensor",
+            "replacement",
+            "automatic wipers"
+          ],
+          "summary": "Replaces the rain sensor and verifies automatic wiper operation after installation.",
+          "symptoms": [
+            "rain sensor damaged",
+            "automatic wipers inoperative",
+            "rain sensor fault"
+          ]
+        },
+        {
+          "code": "rain_sensor_calibration",
+          "name": "Rain-Sensor Calibration",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Rain-Sensor Calibration"
+          ],
+          "keywords": [
+            "rain",
+            "sensor",
+            "calibration",
+            "automatic wipers"
+          ],
+          "summary": "Calibrates or initializes the rain sensor when required after glass, sensor, or module work.",
+          "symptoms": [
+            "automatic wipers inaccurate",
+            "rain sensor replaced",
+            "windshield replaced"
+          ]
+        },
+        {
+          "code": "rear_window_back_glass_replacement",
+          "name": "Rear Window / Back-Glass Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Rear Window / Back-Glass Replacement",
+            "Rear Window / Back-Glass Service"
+          ],
+          "keywords": [
+            "rear",
+            "window",
+            "back",
+            "glass",
+            "replacement",
+            "auto glass"
+          ],
+          "summary": "Replaces the rear window or back glass; camera or sensor calibration may be separately required when equipped.",
+          "symptoms": [
+            "rear glass cracked",
+            "back glass shattered",
+            "rear window leaking"
+          ]
+        },
+        {
+          "code": "quarter_glass_replacement",
+          "name": "Quarter-Glass Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Quarter-Glass Replacement",
+            "Quarter-Glass Service"
+          ],
+          "keywords": [
+            "quarter",
+            "glass",
+            "replacement",
+            "auto glass"
+          ],
+          "summary": "Replaces fixed quarter glass and checks sealing after installation.",
+          "symptoms": [
+            "quarter glass broken",
+            "side fixed glass cracked",
+            "quarter window leak"
+          ]
+        },
+        {
+          "code": "vent_glass_replacement",
+          "name": "Vent-Glass Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Vent-Glass Replacement",
+            "Vent-Glass Service"
+          ],
+          "keywords": [
+            "vent",
+            "glass",
+            "replacement",
+            "auto glass"
+          ],
+          "summary": "Replaces vent glass or small fixed door glass and verifies fit and sealing.",
+          "symptoms": [
+            "vent glass broken",
+            "small side glass cracked",
+            "wind noise at vent glass"
+          ]
+        },
+        {
+          "code": "window_regulator_diagnostic",
+          "name": "Window-Regulator Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Window-Regulator Check",
+            "Window-Regulator Diagnostic"
+          ],
+          "keywords": [
+            "window",
+            "regulator",
+            "diagnostic",
+            "power window"
+          ],
+          "summary": "Diagnoses window regulator, motor, switch, or wiring concerns before repair.",
+          "symptoms": [
+            "window stuck",
+            "window falls into door",
+            "window moves slowly"
+          ]
+        },
+        {
+          "code": "power_window_motor_replacement",
+          "name": "Power-Window Motor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Power-Window Motor Replacement",
+            "Power-Window Motor Service"
+          ],
+          "keywords": [
+            "power",
+            "window",
+            "motor",
+            "replacement",
+            "door glass motor"
+          ],
+          "summary": "Replaces the power-window motor and verifies window travel and limits.",
+          "symptoms": [
+            "window will not move",
+            "window motor clicks",
+            "window moves slowly"
+          ]
+        },
+        {
+          "code": "power_window_initialization_relearn",
+          "name": "Power-Window Initialization / Relearn",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Power-Window Initialization / Relearn"
+          ],
+          "keywords": [
+            "power",
+            "window",
+            "initialization",
+            "relearn",
+            "pinch protection"
+          ],
+          "summary": "Initializes or relearns power-window limits after battery, regulator, motor, or module work.",
+          "symptoms": [
+            "auto up not working",
+            "window bounce back",
+            "window needs relearn"
+          ]
+        },
+        {
+          "code": "manual_window_regulator_replacement",
+          "name": "Manual Window-Regulator Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Manual Window-Regulator Replacement",
+            "Manual Window-Regulator Service"
+          ],
+          "keywords": [
+            "manual",
+            "window",
+            "regulator",
+            "replacement",
+            "crank window"
+          ],
+          "summary": "Replaces a manual window regulator and verifies smooth hand-crank operation.",
+          "symptoms": [
+            "manual window stuck",
+            "window crank slips",
+            "window falls into door"
+          ]
+        },
+        {
+          "code": "exterior_mirror_diagnostic",
+          "name": "Exterior Mirror Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Exterior Mirror Check",
+            "Exterior Mirror Diagnostic"
+          ],
+          "keywords": [
+            "exterior",
+            "mirror",
+            "diagnostic",
+            "side mirror"
+          ],
+          "summary": "Diagnoses exterior mirror adjustment, heating, folding, signal, or wiring concerns.",
+          "symptoms": [
+            "power mirror not moving",
+            "mirror heater inoperative",
+            "mirror signal not working"
+          ]
+        },
+        {
+          "code": "heated_mirror_diagnostic",
+          "name": "Heated-Mirror Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Heated-Mirror Check",
+            "Heated-Mirror Diagnostic"
+          ],
+          "keywords": [
+            "heated",
+            "mirror",
+            "diagnostic",
+            "mirror defroster"
+          ],
+          "summary": "Diagnoses heated exterior mirror circuits and glass heating performance.",
+          "symptoms": [
+            "mirror does not defrost",
+            "heated mirror not working",
+            "mirror glass stays fogged"
+          ]
+        },
+        {
+          "code": "auto_dimming_mirror_diagnostic",
+          "name": "Auto-Dimming Mirror Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Auto-Dimming Mirror Check",
+            "Auto-Dimming Mirror Diagnostic"
+          ],
+          "keywords": [
+            "auto",
+            "dimming",
+            "mirror",
+            "diagnostic",
+            "electrochromic mirror"
+          ],
+          "summary": "Diagnoses auto-dimming mirror operation, power, and sensor inputs.",
+          "symptoms": [
+            "mirror will not dim",
+            "mirror too dark",
+            "auto dimming mirror fault"
+          ]
+        },
+        {
+          "code": "auto_dimming_mirror_replacement",
+          "name": "Auto-Dimming Mirror Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Auto-Dimming Mirror Replacement",
+            "Auto-Dimming Mirror Service"
+          ],
+          "keywords": [
+            "auto",
+            "dimming",
+            "mirror",
+            "replacement",
+            "electrochromic mirror"
+          ],
+          "summary": "Replaces an auto-dimming mirror and verifies power and dimming operation.",
+          "symptoms": [
+            "auto dimming mirror damaged",
+            "mirror will not dim",
+            "mirror leaking fluid"
+          ]
+        },
+        {
+          "code": "power_folding_mirror_diagnostic",
+          "name": "Power-Folding Mirror Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Power-Folding Mirror Check",
+            "Power-Folding Mirror Diagnostic"
+          ],
+          "keywords": [
+            "power",
+            "folding",
+            "mirror",
+            "diagnostic",
+            "side mirror"
+          ],
+          "summary": "Diagnoses power-folding mirror motor, switch, module, or wiring concerns.",
+          "symptoms": [
+            "mirror will not fold",
+            "folding mirror clicks",
+            "mirror folds unevenly"
+          ]
+        },
+        {
+          "code": "power_folding_mirror_motor_replacement",
+          "name": "Power-Folding Mirror Motor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Power-Folding Mirror Motor Replacement",
+            "Power-Folding Mirror Motor Service"
+          ],
+          "keywords": [
+            "power",
+            "folding",
+            "mirror",
+            "motor",
+            "replacement",
+            "side mirror"
+          ],
+          "summary": "Replaces the power-folding mirror motor or serviced subassembly where available.",
+          "symptoms": [
+            "mirror folding motor failed",
+            "mirror will not fold",
+            "folding mirror noisy"
+          ]
+        },
+        {
+          "code": "rear_view_mirror_replacement",
+          "name": "Rear-View Mirror Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Rear-View Mirror Replacement",
+            "Rear-View Mirror Service"
+          ],
+          "keywords": [
+            "rear",
+            "view",
+            "mirror",
+            "replacement",
+            "inside mirror"
+          ],
+          "summary": "Replaces the interior rear-view mirror and verifies secure mounting.",
+          "symptoms": [
+            "rear view mirror loose",
+            "inside mirror broken",
+            "mirror fell off windshield"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "lighting",
+      "name": "Lighting",
+      "description": "Exterior and interior lighting diagnostics, repairs, replacement, aiming, and calibration services.",
+      "services": [
+        {
+          "code": "exterior_lighting_diagnostic",
+          "name": "Exterior-Lighting Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Exterior-Lighting Check",
+            "Exterior-Lighting Diagnostic"
+          ],
+          "keywords": [
+            "exterior",
+            "lighting",
+            "diagnostic",
+            "headlights",
+            "tail lights"
+          ],
+          "summary": "Diagnoses exterior lighting faults, including bulbs, sockets, modules, wiring, and controls.",
+          "symptoms": [
+            "exterior lights not working",
+            "lights flicker",
+            "lamp warning message"
+          ]
+        },
+        {
+          "code": "interior_lighting_diagnostic",
+          "name": "Interior-Lighting Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Interior-Lighting Check",
+            "Interior-Lighting Diagnostic"
+          ],
+          "keywords": [
+            "interior",
+            "lighting",
+            "diagnostic",
+            "courtesy lights"
+          ],
+          "summary": "Diagnoses interior lighting faults, including switches, dimming, wiring, and control modules.",
+          "symptoms": [
+            "interior lights stay on",
+            "dome light not working",
+            "cabin lights flicker"
+          ]
+        },
+        {
+          "code": "hid_ballast_replacement",
+          "name": "HID Ballast Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "HID Ballast Replacement",
+            "HID Ballast Service"
+          ],
+          "keywords": [
+            "hid",
+            "ballast",
+            "replacement",
+            "xenon",
+            "headlight"
+          ],
+          "summary": "Replaces a failed HID headlamp ballast and verifies lamp operation.",
+          "symptoms": [
+            "HID headlight out",
+            "headlight flickers",
+            "xenon lamp will not ignite"
+          ]
+        },
+        {
+          "code": "led_headlamp_module_replacement",
+          "name": "LED Headlamp Module Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "LED Headlamp Module Replacement",
+            "LED Headlamp Module Service"
+          ],
+          "keywords": [
+            "led",
+            "headlamp",
+            "module",
+            "replacement",
+            "driver module"
+          ],
+          "summary": "Replaces a serviceable LED headlamp module or driver and confirms proper lighting operation.",
+          "symptoms": [
+            "LED headlight out",
+            "headlamp module fault",
+            "headlight warning message"
+          ]
+        },
+        {
+          "code": "adaptive_headlamp_diagnostic",
+          "name": "Adaptive Headlamp Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Adaptive Headlamp Check",
+            "Adaptive Headlamp Diagnostic"
+          ],
+          "keywords": [
+            "adaptive",
+            "headlamp",
+            "diagnostic",
+            "AFS"
+          ],
+          "summary": "Diagnoses adaptive headlamp leveling, swivel, module, sensor, or wiring concerns.",
+          "symptoms": [
+            "adaptive headlight warning",
+            "headlights do not swivel",
+            "AFS fault"
+          ]
+        },
+        {
+          "code": "adaptive_headlamp_calibration",
+          "name": "Adaptive Headlamp Calibration",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Adaptive Headlamp Calibration"
+          ],
+          "keywords": [
+            "adaptive",
+            "headlamp",
+            "calibration",
+            "manufacturer procedure"
+          ],
+          "summary": "Calibrates adaptive headlamps following manufacturer procedures where applicable.",
+          "symptoms": [
+            "adaptive headlamp repaired",
+            "AFS calibration required",
+            "headlamp aim warning"
+          ]
+        },
+        {
+          "code": "daytime_running_light_diagnostic",
+          "name": "Daytime-Running-Light Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Daytime-Running-Light Check",
+            "Daytime-Running-Light Diagnostic"
+          ],
+          "keywords": [
+            "daytime",
+            "running",
+            "light",
+            "diagnostic",
+            "DRL"
+          ],
+          "summary": "Diagnoses daytime-running-light circuit, module, bulb, or LED faults.",
+          "symptoms": [
+            "DRL not working",
+            "daytime running light warning",
+            "running light flickers"
+          ]
+        },
+        {
+          "code": "daytime_running_light_replacement",
+          "name": "Daytime-Running-Light Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Daytime-Running-Light Replacement",
+            "Daytime-Running-Light Service"
+          ],
+          "keywords": [
+            "daytime",
+            "running",
+            "light",
+            "replacement",
+            "DRL"
+          ],
+          "summary": "Replaces a serviceable daytime-running-light bulb, module, or lamp unit where equipped.",
+          "symptoms": [
+            "DRL out",
+            "daytime running light failed",
+            "running light damaged"
+          ]
+        },
+        {
+          "code": "fog_lamp_assembly_replacement",
+          "name": "Fog-Lamp Assembly Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Fog-Lamp Assembly Replacement",
+            "Fog-Lamp Assembly Service"
+          ],
+          "keywords": [
+            "fog",
+            "lamp",
+            "assembly",
+            "replacement",
+            "fog light"
+          ],
+          "summary": "Replaces a damaged or failed fog-lamp assembly and verifies operation.",
+          "symptoms": [
+            "fog lamp cracked",
+            "fog light out",
+            "fog light housing damaged"
+          ]
+        },
+        {
+          "code": "brake_light_diagnostic",
+          "name": "Brake-Light Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Brake-Light Check",
+            "Brake-Light Diagnostic"
+          ],
+          "keywords": [
+            "brake",
+            "light",
+            "diagnostic",
+            "stop lamp"
+          ],
+          "summary": "Diagnoses brake-light faults including bulbs, sockets, switch input, wiring, and modules.",
+          "symptoms": [
+            "brake lights not working",
+            "brake lights stay on",
+            "stop lamp warning"
+          ]
+        },
+        {
+          "code": "brake_light_switch_replacement",
+          "name": "Brake-Light Switch Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Brake-Light Switch Replacement",
+            "Brake-Light Switch Service"
+          ],
+          "keywords": [
+            "brake",
+            "light",
+            "switch",
+            "replacement",
+            "stop lamp switch"
+          ],
+          "summary": "Replaces the brake-light switch and verifies stop lamp and related interlock operation.",
+          "symptoms": [
+            "brake lights stay on",
+            "brake lights not working",
+            "cannot shift out of park"
+          ]
+        },
+        {
+          "code": "turn_signal_diagnostic",
+          "name": "Turn-Signal Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Turn-Signal Check",
+            "Turn-Signal Diagnostic"
+          ],
+          "keywords": [
+            "turn",
+            "signal",
+            "diagnostic",
+            "blinker"
+          ],
+          "summary": "Diagnoses turn-signal faults including bulbs, sockets, switch, flasher, wiring, and modules.",
+          "symptoms": [
+            "turn signal not working",
+            "blinker flashes fast",
+            "signal indicator stuck"
+          ]
+        },
+        {
+          "code": "turn_signal_switch_replacement",
+          "name": "Turn-Signal Switch Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Turn-Signal Switch Replacement",
+            "Turn-Signal Switch Service"
+          ],
+          "keywords": [
+            "turn",
+            "signal",
+            "switch",
+            "replacement",
+            "combination switch"
+          ],
+          "summary": "Replaces the turn-signal or multifunction switch and verifies signal and related stalk functions.",
+          "symptoms": [
+            "turn signal switch broken",
+            "signals will not cancel",
+            "turn signals inoperative"
+          ]
+        },
+        {
+          "code": "hazard_light_diagnostic",
+          "name": "Hazard-Light Diagnostic",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Hazard-Light Check",
+            "Hazard-Light Diagnostic"
+          ],
+          "keywords": [
+            "hazard",
+            "light",
+            "diagnostic",
+            "emergency flasher"
+          ],
+          "summary": "Diagnoses hazard-light switch, flasher, module, wiring, or lamp concerns.",
+          "symptoms": [
+            "hazards not working",
+            "hazards stay on",
+            "emergency flashers fail"
+          ]
+        },
+        {
+          "code": "side_marker_lamp_replacement",
+          "name": "Side-Marker Lamp Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Side-Marker Lamp Replacement",
+            "Side-Marker Lamp Service"
+          ],
+          "keywords": [
+            "side",
+            "marker",
+            "lamp",
+            "replacement",
+            "marker light"
+          ],
+          "summary": "Replaces a side-marker lamp, socket, or small assembly where serviceable.",
+          "symptoms": [
+            "side marker out",
+            "marker light cracked",
+            "parking light warning"
+          ]
+        },
+        {
+          "code": "license_plate_lamp_replacement",
+          "name": "License-Plate Lamp Replacement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "License-Plate Lamp Replacement",
+            "License-Plate Lamp Service"
+          ],
+          "keywords": [
+            "license",
+            "plate",
+            "lamp",
+            "replacement",
+            "tag light"
+          ],
+          "summary": "Replaces a license-plate lamp bulb, socket, or small assembly where serviceable.",
+          "symptoms": [
+            "license plate light out",
+            "tag light warning",
+            "plate light broken"
+          ]
+        },
+        {
+          "code": "reverse_light_diagnostic",
+          "name": "Reverse-Light Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Reverse-Light Check",
+            "Reverse-Light Diagnostic"
+          ],
+          "keywords": [
+            "reverse",
+            "light",
+            "diagnostic",
+            "backup light"
+          ],
+          "summary": "Diagnoses reverse-light faults including bulbs, switch input, wiring, and modules.",
+          "symptoms": [
+            "reverse lights not working",
+            "backup lights stay on",
+            "reverse lamp warning"
+          ]
+        },
+        {
+          "code": "reverse_light_switch_replacement",
+          "name": "Reverse-Light Switch Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Reverse-Light Switch Replacement",
+            "Reverse-Light Switch Service"
+          ],
+          "keywords": [
+            "reverse",
+            "light",
+            "switch",
+            "replacement",
+            "backup light switch"
+          ],
+          "summary": "Replaces the reverse-light switch where applicable and verifies backup lamp operation.",
+          "symptoms": [
+            "reverse lights inoperative",
+            "backup lights do not turn on",
+            "reverse switch fault"
+          ]
+        },
+        {
+          "code": "interior_dome_light_repair",
+          "name": "Interior Dome-Light Repair",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Interior Dome-Light Repair"
+          ],
+          "keywords": [
+            "interior",
+            "dome",
+            "light",
+            "repair",
+            "cabin light"
+          ],
+          "summary": "Repairs dome-light, courtesy-light, socket, switch, or wiring faults within a limited service scope.",
+          "symptoms": [
+            "dome light not working",
+            "interior light stays on",
+            "courtesy light flickers"
+          ]
+        },
+        {
+          "code": "instrument_panel_illumination_diagnostic",
+          "name": "Instrument-Panel Illumination Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Instrument-Panel Illumination Check",
+            "Instrument-Panel Illumination Diagnostic"
+          ],
+          "keywords": [
+            "instrument",
+            "panel",
+            "illumination",
+            "diagnostic",
+            "dash illumination"
+          ],
+          "summary": "Diagnoses instrument-panel illumination and dimmer-control concerns.",
+          "symptoms": [
+            "dash lights out",
+            "instrument lights flicker",
+            "panel dimmer not working"
+          ]
+        },
+        {
+          "code": "ambient_lighting_diagnostic",
+          "name": "Ambient-Lighting Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Ambient-Lighting Check",
+            "Ambient-Lighting Diagnostic"
+          ],
+          "keywords": [
+            "ambient",
+            "lighting",
+            "diagnostic",
+            "accent lights"
+          ],
+          "summary": "Diagnoses factory ambient-lighting module, LED, wiring, or control concerns.",
+          "symptoms": [
+            "ambient lighting not working",
+            "interior accent lights flicker",
+            "ambient light warning"
+          ]
+        },
+        {
+          "code": "trailer_lighting_diagnostic",
+          "name": "Trailer-Lighting Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Trailer-Lighting Check",
+            "Trailer-Lighting Diagnostic"
+          ],
+          "keywords": [
+            "trailer",
+            "lighting",
+            "diagnostic",
+            "tow wiring"
+          ],
+          "summary": "Diagnoses vehicle-side trailer-lighting and connector faults.",
+          "symptoms": [
+            "trailer lights not working",
+            "trailer brake lights out",
+            "tow connector fault"
+          ]
+        },
+        {
+          "code": "trailer_wiring_repair",
+          "name": "Trailer-Wiring Repair",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Trailer-Wiring Repair"
+          ],
+          "keywords": [
+            "trailer",
+            "wiring",
+            "repair",
+            "tow harness"
+          ],
+          "summary": "Repairs vehicle-side trailer-lighting wiring or connector faults within an approved repair scope.",
+          "symptoms": [
+            "trailer lights intermittent",
+            "tow connector damaged",
+            "trailer wiring corroded"
+          ]
+        },
+        {
+          "code": "headlamp_aiming",
+          "name": "Headlamp Aiming",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Headlamp Aiming"
+          ],
+          "keywords": [
+            "headlamp",
+            "aiming",
+            "headlight aim"
+          ],
+          "summary": "Aims headlamps using appropriate equipment and manufacturer procedures where applicable.",
+          "symptoms": [
+            "headlights aimed too low",
+            "headlights aimed too high",
+            "poor night visibility"
+          ]
+        },
+        {
+          "code": "automatic_headlamp_sensor_diagnostic",
+          "name": "Automatic-Headlamp Sensor Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Automatic-Headlamp Sensor Check",
+            "Automatic-Headlamp Sensor Diagnostic"
+          ],
+          "keywords": [
+            "automatic",
+            "headlamp",
+            "sensor",
+            "diagnostic",
+            "light sensor"
+          ],
+          "summary": "Diagnoses automatic-headlamp sensor input, wiring, or module concerns.",
+          "symptoms": [
+            "automatic headlights not working",
+            "headlights stay on",
+            "auto lights turn on late"
+          ]
+        },
+        {
+          "code": "automatic_headlamp_sensor_replacement",
+          "name": "Automatic-Headlamp Sensor Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Automatic-Headlamp Sensor Replacement",
+            "Automatic-Headlamp Sensor Service"
+          ],
+          "keywords": [
+            "automatic",
+            "headlamp",
+            "sensor",
+            "replacement",
+            "light sensor"
+          ],
+          "summary": "Replaces the automatic-headlamp light sensor and verifies automatic lighting operation.",
+          "symptoms": [
+            "auto headlight sensor failed",
+            "automatic headlights inoperative",
+            "headlights stay on"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "interior_accessories",
+      "name": "Interior & Accessories",
+      "description": "Interior electrical, infotainment, seating, access, roof, trim, and authorized security accessory services.",
+      "services": [
+        {
+          "code": "interior_electrical_diagnostic",
+          "name": "Interior Electrical Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Interior Electrical Check",
+            "Interior Electrical Diagnostic"
+          ],
+          "keywords": [
+            "interior",
+            "electrical",
+            "diagnostic",
+            "cabin wiring"
+          ],
+          "summary": "Diagnoses interior electrical and accessory concerns before component replacement.",
+          "symptoms": [
+            "interior accessory not working",
+            "multiple cabin electrical faults",
+            "interior fuse keeps blowing"
+          ]
+        },
+        {
+          "code": "instrument_cluster_diagnostic",
+          "name": "Instrument-Cluster Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Instrument-Cluster Check",
+            "Instrument-Cluster Diagnostic"
+          ],
+          "keywords": [
+            "instrument",
+            "cluster",
+            "diagnostic",
+            "gauge cluster"
+          ],
+          "summary": "Diagnoses instrument-cluster display, gauge, warning-light, communication, or power concerns.",
+          "symptoms": [
+            "gauges not working",
+            "cluster blank",
+            "warning lights inaccurate"
+          ]
+        },
+        {
+          "code": "instrument_cluster_replacement",
+          "name": "Instrument-Cluster Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Instrument-Cluster Replacement",
+            "Instrument-Cluster Service"
+          ],
+          "keywords": [
+            "instrument",
+            "cluster",
+            "replacement",
+            "gauge cluster"
+          ],
+          "summary": "Replaces the instrument cluster and verifies display and gauge operation.",
+          "symptoms": [
+            "cluster failed",
+            "gauges inoperative",
+            "cluster display damaged"
+          ]
+        },
+        {
+          "code": "instrument_cluster_programming",
+          "name": "Instrument-Cluster Programming",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Instrument-Cluster Programming"
+          ],
+          "keywords": [
+            "instrument",
+            "cluster",
+            "programming",
+            "authorized service"
+          ],
+          "summary": "Programs or configures an instrument cluster where applicable using authorized service procedures.",
+          "symptoms": [
+            "cluster replaced",
+            "cluster configuration needed",
+            "module programming required"
+          ]
+        },
+        {
+          "code": "infotainment_system_diagnostic",
+          "name": "Infotainment-System Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Infotainment-System Check",
+            "Infotainment-System Diagnostic"
+          ],
+          "keywords": [
+            "infotainment",
+            "system",
+            "diagnostic",
+            "touchscreen"
+          ],
+          "summary": "Diagnoses infotainment, display, radio, navigation, Bluetooth, or related communication concerns.",
+          "symptoms": [
+            "radio screen blank",
+            "Bluetooth not working",
+            "infotainment reboots"
+          ]
+        },
+        {
+          "code": "radio_head_unit_replacement",
+          "name": "Radio / Head-Unit Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Radio / Head-Unit Replacement",
+            "Radio / Head-Unit Service"
+          ],
+          "keywords": [
+            "radio",
+            "head",
+            "unit",
+            "replacement",
+            "stereo"
+          ],
+          "summary": "Replaces a radio or infotainment head unit and verifies basic audio and display operation.",
+          "symptoms": [
+            "radio not working",
+            "touchscreen failed",
+            "head unit damaged"
+          ]
+        },
+        {
+          "code": "amplifier_diagnostic",
+          "name": "Amplifier Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Amplifier Check",
+            "Amplifier Diagnostic"
+          ],
+          "keywords": [
+            "amplifier",
+            "diagnostic",
+            "audio amp"
+          ],
+          "summary": "Diagnoses factory audio amplifier power, signal, communication, or output faults.",
+          "symptoms": [
+            "no sound",
+            "speakers cut out",
+            "amplifier fault"
+          ]
+        },
+        {
+          "code": "amplifier_replacement",
+          "name": "Amplifier Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Amplifier Replacement",
+            "Amplifier Service"
+          ],
+          "keywords": [
+            "amplifier",
+            "replacement",
+            "audio amp"
+          ],
+          "summary": "Replaces a factory audio amplifier and verifies audio output.",
+          "symptoms": [
+            "amplifier failed",
+            "no sound from speakers",
+            "audio amp damaged"
+          ]
+        },
+        {
+          "code": "speaker_diagnostic",
+          "name": "Speaker Diagnostic",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Speaker Check",
+            "Speaker Diagnostic"
+          ],
+          "keywords": [
+            "speaker",
+            "diagnostic",
+            "sound system"
+          ],
+          "summary": "Diagnoses speaker, wiring, and audio-channel concerns before replacement.",
+          "symptoms": [
+            "speaker crackles",
+            "speaker no sound",
+            "audio channel out"
+          ]
+        },
+        {
+          "code": "speaker_replacement_each",
+          "name": "Speaker Replacement (each)",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Speaker Replacement (each)",
+            "Speaker Service (each)"
+          ],
+          "keywords": [
+            "speaker",
+            "replacement",
+            "door speaker"
+          ],
+          "summary": "Replaces one speaker and verifies audio output from that location.",
+          "symptoms": [
+            "speaker blown",
+            "speaker rattles",
+            "no sound from one speaker"
+          ]
+        },
+        {
+          "code": "usb_port_diagnostic",
+          "name": "USB Port Diagnostic",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "USB Port Check",
+            "USB Port Diagnostic"
+          ],
+          "keywords": [
+            "usb",
+            "port",
+            "diagnostic",
+            "data port"
+          ],
+          "summary": "Diagnoses USB charging or data-port power, communication, or connection concerns.",
+          "symptoms": [
+            "USB port not charging",
+            "phone will not connect",
+            "USB port loose"
+          ]
+        },
+        {
+          "code": "usb_port_replacement",
+          "name": "USB Port Replacement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "USB Port Replacement",
+            "USB Port Service"
+          ],
+          "keywords": [
+            "usb",
+            "port",
+            "replacement",
+            "data port"
+          ],
+          "summary": "Replaces a damaged or failed USB port and verifies charging or data operation where supported.",
+          "symptoms": [
+            "USB port broken",
+            "USB port not charging",
+            "phone disconnects"
+          ]
+        },
+        {
+          "code": "12_volt_power_outlet_diagnostic",
+          "name": "12-Volt Power-Outlet Diagnostic",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "12-Volt Power-Outlet Check",
+            "12-Volt Power-Outlet Diagnostic"
+          ],
+          "keywords": [
+            "12",
+            "volt",
+            "power",
+            "outlet",
+            "diagnostic",
+            "accessory socket"
+          ],
+          "summary": "Diagnoses 12-volt power-outlet fuse, socket, wiring, or power supply faults.",
+          "symptoms": [
+            "power outlet dead",
+            "12 volt socket not working",
+            "accessory plug no power"
+          ]
+        },
+        {
+          "code": "12_volt_power_outlet_replacement",
+          "name": "12-Volt Power-Outlet Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "12-Volt Power-Outlet Replacement",
+            "12-Volt Power-Outlet Service"
+          ],
+          "keywords": [
+            "12",
+            "volt",
+            "power",
+            "outlet",
+            "replacement",
+            "accessory socket"
+          ],
+          "summary": "Replaces a 12-volt power outlet or socket and verifies accessory power.",
+          "symptoms": [
+            "power outlet damaged",
+            "12 volt socket loose",
+            "accessory socket failed"
+          ]
+        },
+        {
+          "code": "wireless_charging_pad_diagnostic",
+          "name": "Wireless-Charging-Pad Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Wireless-Charging-Pad Check",
+            "Wireless-Charging-Pad Diagnostic"
+          ],
+          "keywords": [
+            "wireless",
+            "charging",
+            "pad",
+            "diagnostic",
+            "Qi charger"
+          ],
+          "summary": "Diagnoses wireless charging pad power, communication, or module concerns.",
+          "symptoms": [
+            "wireless charger not working",
+            "phone will not charge",
+            "charging pad overheats"
+          ]
+        },
+        {
+          "code": "wireless_charging_pad_replacement",
+          "name": "Wireless-Charging-Pad Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.8,
+          "aliases": [
+            "Wireless-Charging-Pad Replacement",
+            "Wireless-Charging-Pad Service"
+          ],
+          "keywords": [
+            "wireless",
+            "charging",
+            "pad",
+            "replacement",
+            "Qi charger"
+          ],
+          "summary": "Replaces a wireless charging pad or module and verifies charging operation.",
+          "symptoms": [
+            "wireless charger failed",
+            "charging pad damaged",
+            "phone will not charge"
+          ]
+        },
+        {
+          "code": "horn_diagnostic",
+          "name": "Horn Diagnostic",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Horn Check",
+            "Horn Diagnostic"
+          ],
+          "keywords": [
+            "horn",
+            "diagnostic",
+            "horn relay"
+          ],
+          "summary": "Diagnoses horn switch, relay, wiring, fuse, or horn assembly concerns.",
+          "symptoms": [
+            "horn not working",
+            "horn stays on",
+            "horn weak"
+          ]
+        },
+        {
+          "code": "power_seat_diagnostic",
+          "name": "Power-Seat Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Power-Seat Check",
+            "Power-Seat Diagnostic"
+          ],
+          "keywords": [
+            "power",
+            "seat",
+            "diagnostic",
+            "seat track"
+          ],
+          "summary": "Diagnoses power-seat motors, switches, wiring, memory inputs, or track concerns.",
+          "symptoms": [
+            "power seat not moving",
+            "seat stuck",
+            "seat moves one direction only"
+          ]
+        },
+        {
+          "code": "power_seat_motor_replacement",
+          "name": "Power-Seat Motor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Power-Seat Motor Replacement",
+            "Power-Seat Motor Service"
+          ],
+          "keywords": [
+            "power",
+            "seat",
+            "motor",
+            "replacement",
+            "seat track"
+          ],
+          "summary": "Replaces a failed power-seat motor and verifies seat travel.",
+          "symptoms": [
+            "seat motor failed",
+            "power seat will not move",
+            "seat clicks but does not move"
+          ]
+        },
+        {
+          "code": "power_seat_switch_replacement",
+          "name": "Power-Seat Switch Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Power-Seat Switch Replacement",
+            "Power-Seat Switch Service"
+          ],
+          "keywords": [
+            "power",
+            "seat",
+            "switch",
+            "replacement",
+            "seat control"
+          ],
+          "summary": "Replaces a power-seat switch and verifies commanded seat movement.",
+          "symptoms": [
+            "seat switch broken",
+            "seat moves intermittently",
+            "power seat control failed"
+          ]
+        },
+        {
+          "code": "heated_seat_diagnostic",
+          "name": "Heated-Seat Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Heated-Seat Check",
+            "Heated-Seat Diagnostic"
+          ],
+          "keywords": [
+            "heated",
+            "seat",
+            "diagnostic",
+            "seat heater"
+          ],
+          "summary": "Diagnoses heated-seat element, switch, module, wiring, or temperature concerns.",
+          "symptoms": [
+            "heated seat not working",
+            "seat heater too hot",
+            "heated seat shuts off"
+          ]
+        },
+        {
+          "code": "heated_seat_element_replacement",
+          "name": "Heated-Seat Element Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Heated-Seat Element Replacement",
+            "Heated-Seat Element Service"
+          ],
+          "keywords": [
+            "heated",
+            "seat",
+            "element",
+            "replacement",
+            "seat cushion"
+          ],
+          "summary": "Replaces a heated-seat element in the cushion or backrest and verifies heating operation.",
+          "symptoms": [
+            "seat heater element failed",
+            "heated seat cold",
+            "seat heater hot spot"
+          ]
+        },
+        {
+          "code": "ventilated_seat_diagnostic",
+          "name": "Ventilated-Seat Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Ventilated-Seat Check",
+            "Ventilated-Seat Diagnostic"
+          ],
+          "keywords": [
+            "ventilated",
+            "seat",
+            "diagnostic",
+            "cooled seat"
+          ],
+          "summary": "Diagnoses ventilated-seat fan, module, ducting, switch, or wiring concerns.",
+          "symptoms": [
+            "ventilated seat not working",
+            "seat fan noisy",
+            "cooled seat weak"
+          ]
+        },
+        {
+          "code": "ventilated_seat_fan_replacement",
+          "name": "Ventilated-Seat Fan Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Ventilated-Seat Fan Replacement",
+            "Ventilated-Seat Fan Service"
+          ],
+          "keywords": [
+            "ventilated",
+            "seat",
+            "fan",
+            "replacement",
+            "cooled seat"
+          ],
+          "summary": "Replaces a ventilated-seat fan or blower and verifies airflow.",
+          "symptoms": [
+            "seat fan failed",
+            "ventilated seat noisy",
+            "cooled seat no airflow"
+          ]
+        },
+        {
+          "code": "seat_memory_system_diagnostic",
+          "name": "Seat-Memory-System Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Seat-Memory-System Check",
+            "Seat-Memory-System Diagnostic"
+          ],
+          "keywords": [
+            "seat",
+            "memory",
+            "system",
+            "diagnostic",
+            "memory seat"
+          ],
+          "summary": "Diagnoses seat-memory switches, module, position sensors, or communication concerns.",
+          "symptoms": [
+            "seat memory not working",
+            "seat forgets position",
+            "memory buttons inoperative"
+          ]
+        },
+        {
+          "code": "door_lock_actuator_diagnostic",
+          "name": "Door-Lock Actuator Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Door-Lock Actuator Check",
+            "Door-Lock Actuator Diagnostic"
+          ],
+          "keywords": [
+            "door",
+            "lock",
+            "actuator",
+            "diagnostic",
+            "central locking"
+          ],
+          "summary": "Diagnoses door-lock actuator, switch, wiring, or module concerns before replacement.",
+          "symptoms": [
+            "power door lock not working",
+            "door lock clicks",
+            "one door will not lock"
+          ]
+        },
+        {
+          "code": "door_latch_replacement",
+          "name": "Door-Latch Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Door-Latch Replacement",
+            "Door-Latch Service"
+          ],
+          "keywords": [
+            "door",
+            "latch",
+            "replacement",
+            "latch assembly"
+          ],
+          "summary": "Replaces a door-latch assembly and verifies latch, lock, and handle operation.",
+          "symptoms": [
+            "door will not latch",
+            "door stuck closed",
+            "door ajar warning"
+          ]
+        },
+        {
+          "code": "power_liftgate_diagnostic",
+          "name": "Power-Liftgate Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Power-Liftgate Check",
+            "Power-Liftgate Diagnostic"
+          ],
+          "keywords": [
+            "power",
+            "liftgate",
+            "diagnostic",
+            "power hatch"
+          ],
+          "summary": "Diagnoses power-liftgate motor, spindle, switch, sensor, module, or wiring concerns.",
+          "symptoms": [
+            "power liftgate not working",
+            "liftgate opens halfway",
+            "power hatch beeps"
+          ]
+        },
+        {
+          "code": "power_liftgate_motor_spindle_replacement",
+          "name": "Power-Liftgate Motor / Spindle Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.5,
+          "aliases": [
+            "Power-Liftgate Motor / Spindle Replacement",
+            "Power-Liftgate Motor / Spindle Service"
+          ],
+          "keywords": [
+            "power",
+            "liftgate",
+            "motor",
+            "spindle",
+            "replacement",
+            "power hatch"
+          ],
+          "summary": "Replaces a power-liftgate motor or spindle assembly and verifies powered open and close operation.",
+          "symptoms": [
+            "liftgate spindle failed",
+            "power liftgate noisy",
+            "power hatch will not move"
+          ]
+        },
+        {
+          "code": "keyless_entry_diagnostic",
+          "name": "Keyless-Entry Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Keyless-Entry Check",
+            "Keyless-Entry Diagnostic"
+          ],
+          "keywords": [
+            "keyless",
+            "entry",
+            "diagnostic",
+            "authorized service"
+          ],
+          "summary": "Diagnoses authorized keyless-entry system concerns without bypassing vehicle security systems.",
+          "symptoms": [
+            "remote unlock not working",
+            "keyless entry intermittent",
+            "vehicle does not recognize remote"
+          ]
+        },
+        {
+          "code": "remote_start_diagnostic",
+          "name": "Remote-Start Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Remote-Start Check",
+            "Remote-Start Diagnostic"
+          ],
+          "keywords": [
+            "remote",
+            "start",
+            "diagnostic",
+            "authorized service"
+          ],
+          "summary": "Diagnoses authorized remote-start concerns using approved service information and security procedures.",
+          "symptoms": [
+            "remote start not working",
+            "remote start shuts off",
+            "remote start disabled"
+          ]
+        },
+        {
+          "code": "immobilizer_diagnostic",
+          "name": "Immobilizer Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Immobilizer Check",
+            "Immobilizer Diagnostic"
+          ],
+          "keywords": [
+            "immobilizer",
+            "diagnostic",
+            "authorized service"
+          ],
+          "summary": "Diagnoses authorized immobilizer and anti-theft faults using approved owner or shop service procedures.",
+          "symptoms": [
+            "security light flashing",
+            "vehicle starts then stalls",
+            "key not recognized"
+          ]
+        },
+        {
+          "code": "key_programming",
+          "name": "Key Programming",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Key Programming"
+          ],
+          "keywords": [
+            "key",
+            "programming",
+            "authorized service"
+          ],
+          "summary": "Programs or registers vehicle keys only through authorized owner or shop procedures.",
+          "symptoms": [
+            "new key needs programming",
+            "key not recognized",
+            "replacement key setup"
+          ]
+        },
+        {
+          "code": "push_button_start_diagnostic",
+          "name": "Push-Button-Start Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Push-Button-Start Check",
+            "Push-Button-Start Diagnostic"
+          ],
+          "keywords": [
+            "push",
+            "button",
+            "start",
+            "diagnostic",
+            "smart key"
+          ],
+          "summary": "Diagnoses push-button-start switch, antenna, authorization, brake input, or module concerns.",
+          "symptoms": [
+            "push button start not working",
+            "vehicle will not ready",
+            "key not detected"
+          ]
+        },
+        {
+          "code": "sunroof_diagnostic",
+          "name": "Sunroof Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Sunroof Check",
+            "Sunroof Diagnostic"
+          ],
+          "keywords": [
+            "sunroof",
+            "diagnostic",
+            "moonroof"
+          ],
+          "summary": "Diagnoses sunroof movement, electrical, sealing, drain, or track concerns.",
+          "symptoms": [
+            "sunroof stuck",
+            "sunroof leaks",
+            "sunroof wind noise"
+          ]
+        },
+        {
+          "code": "sunroof_motor_replacement",
+          "name": "Sunroof Motor Replacement",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Sunroof Motor Replacement",
+            "Sunroof Motor Service"
+          ],
+          "keywords": [
+            "sunroof",
+            "motor",
+            "replacement",
+            "moonroof"
+          ],
+          "summary": "Replaces the sunroof motor and verifies open, close, and tilt operation.",
+          "symptoms": [
+            "sunroof motor failed",
+            "sunroof will not move",
+            "sunroof clicks"
+          ]
+        },
+        {
+          "code": "sunroof_track_cable_repair",
+          "name": "Sunroof Track / Cable Repair",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "aliases": [
+            "Sunroof Track / Cable Repair"
+          ],
+          "keywords": [
+            "sunroof",
+            "track",
+            "cable",
+            "repair",
+            "moonroof track"
+          ],
+          "summary": "Repairs sunroof track or cable faults and verifies smooth panel travel.",
+          "symptoms": [
+            "sunroof binds",
+            "sunroof off track",
+            "sunroof closes unevenly"
+          ]
+        },
+        {
+          "code": "sunroof_drain_service",
+          "name": "Sunroof Drain Service",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Sunroof Drain Service"
+          ],
+          "keywords": [
+            "sunroof",
+            "drain",
+            "service",
+            "moonroof drain"
+          ],
+          "summary": "Clears and verifies sunroof drain operation to address water leaks where equipped.",
+          "symptoms": [
+            "water leak from headliner",
+            "wet floor after rain",
+            "sunroof drain clogged"
+          ]
+        },
+        {
+          "code": "convertible_top_diagnostic",
+          "name": "Convertible-Top Diagnostic",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Convertible-Top Check",
+            "Convertible-Top Diagnostic"
+          ],
+          "keywords": [
+            "convertible",
+            "top",
+            "diagnostic",
+            "soft top"
+          ],
+          "summary": "Diagnoses convertible-top electrical, hydraulic, latch, switch, or frame concerns.",
+          "symptoms": [
+            "convertible top not moving",
+            "soft top stuck",
+            "top warning message"
+          ]
+        },
+        {
+          "code": "convertible_top_motor_replacement",
+          "name": "Convertible-Top Motor Replacement",
+          "labor_hours_min": 1.5,
+          "labor_hours_max": 4.0,
+          "aliases": [
+            "Convertible-Top Motor Replacement",
+            "Convertible-Top Motor Service"
+          ],
+          "keywords": [
+            "convertible",
+            "top",
+            "motor",
+            "replacement",
+            "soft top"
+          ],
+          "summary": "Replaces a convertible-top motor or pump assembly and verifies top operation.",
+          "symptoms": [
+            "convertible top motor failed",
+            "soft top will not move",
+            "top pump noisy"
+          ]
+        },
+        {
+          "code": "interior_trim_repair",
+          "name": "Interior Trim Repair",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Interior Trim Repair"
+          ],
+          "keywords": [
+            "interior",
+            "trim",
+            "repair",
+            "cabin trim"
+          ],
+          "summary": "Repairs loose, damaged, or noisy interior trim within a limited service scope.",
+          "symptoms": [
+            "interior trim loose",
+            "trim panel rattles",
+            "interior panel broken"
+          ]
+        },
+        {
+          "code": "headliner_replacement",
+          "name": "Headliner Replacement",
+          "labor_hours_min": 2.0,
+          "labor_hours_max": 6.0,
+          "aliases": [
+            "Headliner Replacement",
+            "Headliner Service"
+          ],
+          "keywords": [
+            "headliner",
+            "replacement",
+            "roof liner"
+          ],
+          "summary": "Replaces a sagging or damaged headliner and reinstalls related interior trim.",
+          "symptoms": [
+            "headliner sagging",
+            "roof liner falling",
+            "headliner stained"
+          ]
+        },
+        {
+          "code": "center_console_repair",
+          "name": "Center-Console Repair",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Center-Console Repair"
+          ],
+          "keywords": [
+            "center",
+            "console",
+            "repair",
+            "armrest"
+          ],
+          "summary": "Repairs center-console, lid, latch, hinge, or trim concerns within a limited service scope.",
+          "symptoms": [
+            "console lid broken",
+            "center console loose",
+            "armrest latch failed"
+          ]
+        },
+        {
+          "code": "glove_box_latch_replacement",
+          "name": "Glove-Box Latch Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Glove-Box Latch Replacement",
+            "Glove-Box Latch Service"
+          ],
+          "keywords": [
+            "glove",
+            "box",
+            "latch",
+            "replacement",
+            "glove compartment"
+          ],
+          "summary": "Replaces a glove-box latch and verifies proper opening and closing.",
+          "symptoms": [
+            "glove box will not open",
+            "glove box will not stay closed",
+            "glove box latch broken"
           ]
         }
       ]

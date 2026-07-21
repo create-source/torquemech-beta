@@ -12,6 +12,37 @@ NEW_BATCH_4_CATEGORY_KEYS = {
     "hybrid_ev",
 }
 
+NEW_BATCH_5_CATEGORY_KEYS = {
+    "glass_mirrors_wipers",
+    "lighting",
+    "interior_accessories",
+}
+
+PRE_BATCH_5_CATEGORY_KEYS = {
+    "maintenance",
+    "engine",
+    "cooling",
+    "brakes",
+    "suspension",
+    "drivetrain",
+    "transmission",
+    "ac_heat",
+    "electrical",
+    "fuel",
+    "exhaust",
+    "body_paint",
+    "diagnostics",
+    "restraint_safety",
+    "adas_safety",
+    "hybrid_ev",
+}
+
+PRE_BATCH_5_SERVICE_CODES_PATH = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "services_catalog_phase31_batch4_codes.json"
+)
+
 
 def minimal_catalog():
     return {
@@ -41,8 +72,9 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         result = validate_catalog_data(catalog)
 
         self.assertEqual(result.errors, [])
-        self.assertEqual(result.categories, 16)
-        self.assertEqual(result.services, 409)
+        self.assertEqual(result.categories, 19)
+        self.assertEqual(result.services, 507)
+        self.assertEqual(len(result.warnings), 2)
 
     def test_duplicate_service_code_fails(self):
         catalog = minimal_catalog()
@@ -184,6 +216,50 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         ]
 
         self.assertEqual(len(codes), len(set(codes)))
+
+    def test_batch_5_categories_exist_and_have_services(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        categories = {category["key"]: category for category in catalog["categories"]}
+
+        self.assertTrue(NEW_BATCH_5_CATEGORY_KEYS.issubset(categories))
+        self.assertEqual(len(categories["glass_mirrors_wipers"]["services"]), 28)
+        self.assertEqual(len(categories["lighting"]["services"]), 26)
+        self.assertEqual(len(categories["interior_accessories"]["services"]), 44)
+
+    def test_batch_5_services_have_complete_search_metadata(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+
+        for category in catalog["categories"]:
+            if category["key"] not in NEW_BATCH_5_CATEGORY_KEYS:
+                continue
+            for service in category["services"]:
+                with self.subTest(service=service["code"]):
+                    self.assertIsInstance(service.get("aliases"), list)
+                    self.assertTrue(service["aliases"])
+                    self.assertIsInstance(service.get("keywords"), list)
+                    self.assertTrue(service["keywords"])
+                    self.assertIsInstance(service.get("symptoms"), list)
+                    self.assertTrue(service["symptoms"])
+                    self.assertIsInstance(service.get("summary"), str)
+                    self.assertTrue(service["summary"].strip())
+
+    def test_pre_batch_5_service_codes_remain_present(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        current_codes = {
+            service["code"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        }
+        pre_batch_codes = set(json.loads(PRE_BATCH_5_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
+
+        self.assertEqual(len(pre_batch_codes), 409)
+        self.assertTrue(pre_batch_codes.issubset(current_codes))
+
+    def test_pre_batch_5_category_keys_remain_present(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        current_category_keys = {category["key"] for category in catalog["categories"]}
+
+        self.assertTrue(PRE_BATCH_5_CATEGORY_KEYS.issubset(current_category_keys))
 
 
 if __name__ == "__main__":
