@@ -6651,6 +6651,27 @@ def pdf_draw_round_rect(
     c.roundRect(x, y, width, height, radius, fill=1, stroke=1)
     c.setFillGray(0)
     c.setStrokeGray(0)
+def wrap_text(value: Any, max_chars: int = 88) -> list[str]:
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if not text:
+        return []
+
+    words = text.split()
+    lines: list[str] = []
+    current: list[str] = []
+
+    for word in words:
+        candidate = " ".join([*current, word])
+        if current and len(candidate) > max_chars:
+            lines.append(" ".join(current))
+            current = [word]
+        else:
+            current.append(word)
+
+    if current:
+        lines.append(" ".join(current))
+
+    return lines
 
 def load_service_education_records() -> dict[str, dict[str, Any]]:
     if not SERVICE_EDUCATION_PATH.exists():
@@ -7175,6 +7196,7 @@ def build_invoice_pdf_bytes(
                             y -= 11
 
                 y -= 12
+                
     draw_footer()
     c.save()
     return buf.getvalue()
