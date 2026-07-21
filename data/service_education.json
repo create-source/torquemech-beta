@@ -1,0 +1,115 @@
+{
+  "version": "1.0.0",
+  "services": {
+    "oil_and_filter_change": {
+      "title": "Understanding Your Oil & Filter Change",
+      "summary": "Engine oil lubricates and protects internal engine components, while the oil filter removes contaminants from the circulating oil.",
+      "symptoms": [
+        "the oil-change interval is due",
+        "the maintenance reminder is displayed",
+        "the engine oil is dirty or degraded"
+      ],
+      "delay_risk": "Delaying this service can allow contaminated or degraded oil to circulate through the engine, increasing wear and the risk of sludge buildup.",
+      "customer_note": "The correct oil type, viscosity, filter, and service interval depend on the vehicle manufacturer’s requirements and operating conditions."
+    },
+    "front_brake_pads_replacement": {
+      "title": "Understanding Your Front Brake Pad Service",
+      "summary": "Brake pads press against the brake rotors to create the friction needed to slow and stop the vehicle.",
+      "symptoms": [
+        "the brake pads are worn below a safe thickness",
+        "squealing or grinding is present",
+        "braking performance or pedal feel has changed"
+      ],
+      "delay_risk": "Continuing to drive with worn brake pads may increase stopping distance and can damage the brake rotors or other braking components.",
+      "customer_note": "Final repair needs depend on inspection of the pads, rotors, calipers, hardware, and related braking components."
+    },
+    "battery_replacement": {
+      "title": "Understanding Your Battery Replacement",
+      "summary": "The vehicle battery stores electrical energy for starting the engine and supports electrical systems when additional power is needed.",
+      "symptoms": [
+        "the engine cranks slowly",
+        "the battery fails a load or capacity test",
+        "the vehicle has repeated low-voltage or no-start concerns"
+      ],
+      "delay_risk": "A weak battery may eventually leave the vehicle unable to start and can place additional strain on the charging and starting systems.",
+      "customer_note": "Battery replacement should be based on battery testing and inspection of the terminals, cables, grounds, and charging system."
+    },
+    "alternator_replacement": {
+      "title": "Understanding Your Alternator Replacement",
+      "summary": "The alternator supplies electrical power while the engine is running and recharges the vehicle battery.",
+      "symptoms": [
+        "the battery or charging warning light is on",
+        "charging voltage is below specification",
+        "lights dim or electrical systems weaken while driving"
+      ],
+      "delay_risk": "A failing alternator may allow the battery to discharge while driving, which can cause the engine to stall or prevent the vehicle from restarting.",
+      "customer_note": "The battery, drive belt, tensioner, wiring, grounds, and charging output should be checked before alternator replacement is confirmed."
+    },
+    "spark_plug_replacement_4_cyl": {
+      "title": "Understanding Your Spark Plug Service",
+      "summary": "Spark plugs ignite the air-and-fuel mixture inside the engine cylinders so the engine can run smoothly and efficiently.",
+      "symptoms": [
+        "the manufacturer’s replacement interval is due",
+        "the engine has a misfire or rough idle",
+        "fuel economy or acceleration has declined"
+      ],
+      "delay_risk": "Worn or fouled spark plugs can contribute to misfires, reduced fuel economy, hard starting, and possible catalytic-converter damage.",
+      "customer_note": "Misfires can also be caused by ignition coils, fuel injectors, vacuum leaks, compression problems, or other faults, so diagnosis may still be required."
+    },
+    "thermostat_replacement": {
+      "title": "Understanding Your Thermostat Replacement",
+      "summary": "The thermostat regulates coolant flow so the engine reaches and maintains its proper operating temperature.",
+      "symptoms": [
+        "the engine takes too long to warm up",
+        "the engine overheats",
+        "the coolant temperature is outside the expected range"
+      ],
+      "delay_risk": "A thermostat that is stuck open can reduce heater performance and efficiency, while one that is stuck closed can cause overheating and engine damage.",
+      "customer_note": "Cooling-system concerns may also involve coolant level, air pockets, the water pump, radiator, cooling fans, sensors, or leaks."
+    },
+    "water_pump_replacement": {
+      "title": "Understanding Your Water Pump Replacement",
+      "summary": "The water pump circulates coolant through the engine, radiator, and related cooling-system components.",
+      "symptoms": [
+        "coolant is leaking near the water pump",
+        "the engine is overheating",
+        "the pump bearing is noisy or has excessive play"
+      ],
+      "delay_risk": "A failing water pump can cause rapid coolant loss or loss of circulation, which may lead to severe engine overheating.",
+      "customer_note": "The entire cooling system should be inspected because leaks, thermostat faults, radiator restrictions, cooling-fan problems, and air pockets can create similar symptoms."
+    },
+    "radiator_replacement": {
+      "title": "Understanding Your Radiator Replacement",
+      "summary": "The radiator removes heat from the engine coolant before the coolant returns to the engine.",
+      "symptoms": [
+        "the radiator is leaking",
+        "the engine overheats",
+        "coolant flow through the radiator is restricted"
+      ],
+      "delay_risk": "A leaking or restricted radiator can cause coolant loss and overheating, which may result in major engine damage.",
+      "customer_note": "Radiator replacement should be confirmed by inspection and cooling-system testing because thermostats, pumps, fans, hoses, and engine concerns can produce similar symptoms."
+    },
+    "tire_rotation": {
+      "title": "Understanding Your Tire Rotation",
+      "summary": "Tire rotation changes the position of the tires to help distribute tread wear more evenly.",
+      "symptoms": [
+        "the scheduled rotation interval is due",
+        "front and rear tires are wearing at different rates",
+        "uneven tread wear is beginning to develop"
+      ],
+      "delay_risk": "Skipping rotations can shorten tire life and may allow uneven wear patterns to become more severe.",
+      "customer_note": "Rotation does not correct alignment, suspension, inflation, balancing, or tire-damage concerns. Those conditions require separate inspection."
+    },
+    "cabin_air_filter_replacement": {
+      "title": "Understanding Your Cabin Air Filter Replacement",
+      "summary": "The cabin air filter helps remove dust, pollen, and other airborne particles from the air entering the passenger compartment.",
+      "symptoms": [
+        "airflow from the vents is weak",
+        "a musty odor is present",
+        "the maintenance interval is due"
+      ],
+      "delay_risk": "A heavily restricted filter can reduce heating and air-conditioning airflow and may contribute to unpleasant odors inside the vehicle.",
+      "customer_note": "Weak airflow or odors can also be caused by blower, evaporator, duct, drain, or HVAC-system concerns."
+    }
+  }
+}

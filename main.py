@@ -488,6 +488,7 @@ BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 SERVICES_CATALOG_PATH = BASE_DIR / "services_catalog.json"
+SERVICE_EDUCATION_PATH = BASE_DIR / "data" / "service_education.json"
 
 STATE_DIR = Path("/data") if Path("/data").exists() else BASE_DIR / ".localstate"
 STATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -12893,18 +12894,64 @@ class MultiPDFRequest(BaseModel):
     includeServiceEducation: bool = False
     lineItems: List[LineItemPDF]
 
+def load_service_education_catalog() -> Dict[str, Any]:
+    if not SERVICE_EDUCATION_PATH.exists():
+        return {}
+
+    try:
+        payload = json.loads(
+            SERVICE_EDUCATION_PATH.read_text(encoding="utf-8-sig")
+        )
+    except (OSError, json.JSONDecodeError):
+        logging.exception("SERVICE_EDUCATION_LOAD_FAILED")
+        return {}
+
+    services = payload.get("services") if isinstance(payload, dict) else None
+    return services if isinstance(services, dict) else {}
+
+
 def estimate_service_education(service_code: str = "") -> Dict[str, Any]:
-    service = find_service_by_code(service_code) or {}
+    normalized_code = str(service_code or "").strip()
+    if not normalized_code:
+        return {}
+
+    structured = load_service_education_catalog().get(normalized_code)
+    if isinstance(structured, dict):
+        symptoms = [
+            str(item).strip()
+            for item in (structured.get("symptoms") or [])
+            if str(item or "").strip()
+        ][:3]
+        education = {
+            "title": str(structured.get("title") or "").strip(),
+            "summary": str(structured.get("summary") or "").strip(),
+            "symptoms": symptoms,
+            "delay_risk": str(structured.get("delay_risk") or "").strip(),
+            "customer_note": str(structured.get("customer_note") or "").strip(),
+        }
+        if any(
+            education.get(key)
+            for key in ("title", "summary", "symptoms", "delay_risk", "customer_note")
+        ):
+            return education
+
+    service = find_service_by_code(normalized_code) or {}
     summary = str(service.get("summary") or "").strip()
-    symptoms_raw = service.get("symptoms") or []
     symptoms = [
         str(item).strip()
-        for item in symptoms_raw
+        for item in (service.get("symptoms") or [])
         if str(item or "").strip()
     ][:3]
+
+    if not summary and not symptoms:
+        return {}
+
     return {
+        "title": "",
         "summary": summary,
         "symptoms": symptoms,
+        "delay_risk": "",
+        "customer_note": "",
     }
 
 
