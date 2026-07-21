@@ -12904,3 +12904,10 @@ body.tm-photo-access-open {
     width: 100%;
   }
 }
+
+/* Estimator signature validation message */
+.tm-signature-panel #confirmMsg.status{
+  width: 100%;
+  min-height: auto;
+  margin-top: 10px;
+}
