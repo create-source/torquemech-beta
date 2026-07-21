@@ -7123,13 +7123,23 @@ def build_invoice_pdf_bytes(
                 aftercare_sections.append(aftercare)
 
         if aftercare_sections:
-            ensure_space(72)
-            y -= 10
+            draw_footer()
+            c.showPage()
+            page_no += 1
 
-            c.setFont("Helvetica-Bold", 12)
-            c.drawString(left, y, "After-Service Care Instructions")
-            y -= 18
+            c.setFont("Helvetica-Bold", 16)
+            c.drawString(left, top, "AFTER-SERVICE CARE INSTRUCTIONS")
 
+            c.setFont("Helvetica", 8.5)
+            c.drawRightString(
+                right,
+                top,
+                f"Invoice {invoice.get('invoice_number') or ''}"
+            )
+
+            y = top - 28
+            y -= 8
+            
             for aftercare in aftercare_sections:
                 title = str(
                     aftercare.get("title")
@@ -7203,7 +7213,7 @@ def build_invoice_pdf_bytes(
 
                 y -= 12
 
-    draw_footer()
+    
     c.save()
     return buf.getvalue()
 
