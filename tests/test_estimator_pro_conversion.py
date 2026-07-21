@@ -486,6 +486,142 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(loaded_invoice["approved_estimate_total"], 174)
         self.assertEqual(loaded_invoice["estimate_final_difference"], 0)
 
+    def test_phase32_representative_catalog_services_flow_from_estimate_to_invoice(self):
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+        payload = self.conversion_payload()
+        payload["lineItems"] = [
+            {
+                "serviceText": "Post-Windshield-Replacement ADAS Calibration",
+                "pricingMode": "flat",
+                "flatRatePrice": 240,
+                "laborHours": 0,
+                "laborRate": 0,
+                "laborTotal": 240,
+                "partsTotal": 0,
+                "grandTotal": 240,
+            },
+            {
+                "serviceText": "Tire Replacement (set of four)",
+                "laborHours": 2.0,
+                "laborRate": 150,
+                "laborTotal": 300,
+                "partsTotal": 480,
+                "grandTotal": 780,
+            },
+            {
+                "serviceText": "EGR Cooler Replacement (Diesel)",
+                "laborHours": 3.2,
+                "laborRate": 155,
+                "laborTotal": 496,
+                "partsTotal": 620,
+                "grandTotal": 1116,
+            },
+            {
+                "serviceText": "High-Voltage Battery State-of-Health Test",
+                "laborHours": 1.0,
+                "laborRate": 170,
+                "laborTotal": 170,
+                "partsTotal": 0,
+                "grandTotal": 170,
+            },
+            {
+                "serviceText": "Trailer-Hitch Installation Estimate",
+                "laborHours": 1.0,
+                "laborRate": 145,
+                "laborTotal": 145,
+                "partsTotal": 0,
+                "grandTotal": 145,
+            },
+            {
+                "serviceText": "Advanced Diagnostic Labor Extension",
+                "laborHours": 1.5,
+                "laborRate": 160,
+                "laborTotal": 240,
+                "partsTotal": 0,
+                "grandTotal": 240,
+            },
+        ]
+
+        response = client.post(
+            "/pro/estimate-conversion/create",
+            content=urlencode(
+                {
+                    "estimate_payload": json.dumps(payload),
+                    "customer_mode": "new",
+                    "new_customer_name": "Phase Thirtytwo",
+                    "new_customer_phone": "555-3232",
+                    "vehicle_mode": "new",
+                    "new_vehicle_year": "2024",
+                    "new_vehicle_make": "Ford",
+                    "new_vehicle_model": "F-150 Hybrid",
+                    "new_vehicle_mileage": "42,500",
+                    "service_index": ["0", "1", "2", "3", "4", "5"],
+                },
+                doseq=True,
+            ),
+            headers={"content-type": "application/x-www-form-urlencoded"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("/pro/customers/1/vehicles/1?converted=1&created=6", response.headers["location"])
+        repairs = [dict(row) for row in self.conn.execute("SELECT * FROM repair_records ORDER BY id").fetchall()]
+        self.assertEqual([repair["repair_name"] for repair in repairs], [item["serviceText"] for item in payload["lineItems"]])
+        self.assertEqual(repairs[0]["pricing_mode"], "flat")
+        self.assertEqual(repairs[0]["labor_cost"], 240)
+        self.assertEqual(repairs[1]["labor_hours"], 2.0)
+        self.assertEqual(repairs[1]["parts_cost"], 480)
+
+        for repair in repairs:
+            completion = client.post(
+                f"/pro/customers/1/vehicles/1/repairs/{repair['id']}/completion",
+                data={
+                    "completion_date": "2026-07-22",
+                    "completion_mileage": "42,750",
+                    "completion_notes": f"Completed {repair['repair_name']}.",
+                    "final_inspection_passed": "1",
+                    "final_inspection_notes": "Final check passed.",
+                },
+                follow_redirects=False,
+            )
+            self.assertEqual(completion.status_code, 303)
+
+        history_names = [
+            row["service_name"]
+            for row in self.conn.execute("SELECT service_name FROM service_history_records ORDER BY id").fetchall()
+        ]
+        self.assertEqual(history_names, [item["serviceText"] for item in payload["lineItems"]])
+
+        vehicle_detail = client.get("/pro/customers/1/vehicles/1")
+        self.assertEqual(vehicle_detail.status_code, 200)
+        self.assertIn("Completed Repairs", vehicle_detail.text)
+        for item in payload["lineItems"]:
+            self.assertIn(item["serviceText"], vehicle_detail.text)
+
+        invoice_response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            content=urlencode({"repair_record_id": [str(repair["id"]) for repair in repairs]}, doseq=True),
+            headers={"content-type": "application/x-www-form-urlencoded"},
+            follow_redirects=False,
+        )
+        self.assertEqual(invoice_response.status_code, 303)
+        self.assertEqual(invoice_response.headers["location"], "/pro/customers/1/vehicles/1/invoices/1")
+
+        invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
+        self.assertEqual(invoice["service_count"], 6)
+        self.assertEqual(invoice["labor_total"], 1591)
+        self.assertEqual(invoice["parts_total"], 1100)
+        self.assertEqual(invoice["grand_total"], 2691)
+        self.assertEqual([item["service_title"] for item in invoice["items"]], [item["serviceText"] for item in payload["lineItems"]])
+
+        invoice_detail = client.get("/pro/customers/1/vehicles/1/invoices/1")
+        self.assertEqual(invoice_detail.status_code, 200)
+        self.assertIn("Invoice TM-INV-0001", invoice_detail.text)
+        self.assertIn("Post-Windshield-Replacement ADAS Calibration", invoice_detail.text)
+        self.assertIn("$2,691.00", invoice_detail.text)
+
     def test_quantity_labor_per_item_conversion_calculates_final_totals(self):
         app = FastAPI()
         app.include_router(pro_module.router)

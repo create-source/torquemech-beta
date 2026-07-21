@@ -385,6 +385,12 @@ PRE_BATCH_10_SERVICE_CODES_PATH = (
     / "services_catalog_phase31_batch9_baseline_codes.json"
 )
 
+PHASE32_FROZEN_SERVICE_CODES_PATH = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "services_catalog_phase32_frozen_codes.json"
+)
+
 
 def minimal_catalog():
     return {
@@ -917,6 +923,19 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         self.assertEqual(len(service_codes), len(set(service_codes)))
         self.assertEqual(len(normalized_names), len(set(normalized_names)))
         self.assertEqual(result.services_without_search_metadata, 0)
+
+    def test_phase32_frozen_catalog_service_codes_remain_exactly_unchanged(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        frozen_codes = json.loads(PHASE32_FROZEN_SERVICE_CODES_PATH.read_text(encoding="utf-8"))
+        current_codes = [
+            service["code"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        ]
+
+        self.assertEqual(len(frozen_codes), 788)
+        self.assertEqual(len(set(frozen_codes)), 788)
+        self.assertEqual(current_codes, frozen_codes)
 
 
 if __name__ == "__main__":
