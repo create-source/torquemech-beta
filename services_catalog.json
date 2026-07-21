@@ -14279,6 +14279,2485 @@
           ]
         }
       ]
+    },
+    {
+      "key": "wheels_tires_alignment",
+      "name": "Wheels, Tires & Alignment",
+      "description": "Wheel, tire, TPMS, vibration, spare, hardware, fitment, and alignment services added as live Phase 3.1 Batch 7 coverage.",
+      "services": [
+        {
+          "code": "tire_condition_inspection",
+          "name": "Tire Condition Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Tire Condition Inspection",
+            "Tire Condition Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tire inspection",
+            "tire",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Inspects tire tread, sidewalls, age, inflation condition, visible damage, and wear concerns.",
+          "symptoms": [
+            "tire damage concern",
+            "uneven tire wear",
+            "tires need inspection"
+          ]
+        },
+        {
+          "code": "tire_pressure_check_adjustment",
+          "name": "Tire Pressure Check / Adjustment",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Tire Pressure Check / Adjustment",
+            "Tire Pressure Check Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "pressure",
+            "tire",
+            "check",
+            "adjustment"
+          ],
+          "summary": "Checks and adjusts tire pressures to vehicle placard specification when tires are cold or conditions allow.",
+          "symptoms": [
+            "low tire pressure",
+            "tpms light after temperature change",
+            "tires look low"
+          ]
+        },
+        {
+          "code": "tire_rotation_with_balance",
+          "name": "Tire Rotation with Balance",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Tire Rotation with Balance",
+            "Tire Rotation with Balance Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "rotation",
+            "balance",
+            "tire",
+            "with"
+          ],
+          "summary": "Rotates tires and balances wheel-and-tire assemblies during the same visit.",
+          "symptoms": [
+            "tire rotation due",
+            "minor vibration after rotation",
+            "uneven tire wear"
+          ]
+        },
+        {
+          "code": "four_wheel_tire_balance",
+          "name": "Four-Wheel Tire Balance",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Four-Wheel Tire Balance",
+            "Four Wheel Tire Balance Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "balance",
+            "four",
+            "wheel",
+            "tire"
+          ],
+          "summary": "Balances all four mounted wheel-and-tire assemblies and verifies wheel weight placement.",
+          "symptoms": [
+            "vehicle vibrates at speed",
+            "new tires installed",
+            "wheel weights missing"
+          ]
+        },
+        {
+          "code": "tire_tread_depth_measurement",
+          "name": "Tire Tread-Depth Measurement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Tire Tread-Depth Measurement",
+            "Tire Tread Depth Measurement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tread depth",
+            "tire",
+            "tread",
+            "depth",
+            "measurement"
+          ],
+          "summary": "Measures and records tire tread depth across each tire to support maintenance or replacement recommendations.",
+          "symptoms": [
+            "tread depth concern",
+            "tires near wear bars",
+            "pre-trip tire check"
+          ]
+        },
+        {
+          "code": "tire_wear_pattern_diagnosis",
+          "name": "Tire Wear-Pattern Diagnosis",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Tire Wear-Pattern Diagnosis",
+            "Tire Wear Pattern Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wear pattern",
+            "tire",
+            "wear",
+            "pattern",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses tire wear patterns and identifies likely pressure, rotation, alignment, or suspension contributors.",
+          "symptoms": [
+            "cupped tires",
+            "inside edge wear",
+            "feathered tire wear"
+          ]
+        },
+        {
+          "code": "tire_age_sidewall_inspection",
+          "name": "Tire Age / Sidewall Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Tire Age / Sidewall Inspection",
+            "Tire Age Sidewall Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "sidewall",
+            "tire",
+            "age",
+            "inspection"
+          ],
+          "summary": "Inspects DOT age, weather cracking, bulges, cuts, and sidewall condition before service recommendations.",
+          "symptoms": [
+            "old tires",
+            "sidewall cracking",
+            "tire bulge"
+          ]
+        },
+        {
+          "code": "tire_replacement_each",
+          "name": "Tire Replacement (each)",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Tire Replacement (each)",
+            "Tire Replacement each Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "replacement",
+            "tire",
+            "each"
+          ],
+          "summary": "Replaces one tire, including demount, mount, balance, and basic leak check where equipment is available.",
+          "symptoms": [
+            "single tire damaged",
+            "one tire worn out",
+            "tire replacement needed"
+          ]
+        },
+        {
+          "code": "tire_replacement_pair",
+          "name": "Tire Replacement (pair)",
+          "labor_hours_min": 0.9,
+          "labor_hours_max": 1.8,
+          "aliases": [
+            "Tire Replacement (pair)",
+            "Tire Replacement pair Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "replacement",
+            "pair",
+            "tire"
+          ],
+          "summary": "Replaces a pair of tires, including demount, mount, balance, and basic leak checks where equipment is available.",
+          "symptoms": [
+            "two tires worn out",
+            "front tires need replacement",
+            "rear tires need replacement"
+          ]
+        },
+        {
+          "code": "tire_replacement_set_four",
+          "name": "Tire Replacement (set of four)",
+          "labor_hours_min": 1.6,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Tire Replacement (set of four)",
+            "Tire Replacement set of four Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "replacement",
+            "set",
+            "tire",
+            "of",
+            "four"
+          ],
+          "summary": "Replaces a set of four tires, including demount, mount, balance, and basic leak checks where equipment is available.",
+          "symptoms": [
+            "all tires worn out",
+            "new tire set needed",
+            "seasonal tire set installation"
+          ]
+        },
+        {
+          "code": "seasonal_tire_changeover",
+          "name": "Seasonal Tire Changeover",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Seasonal Tire Changeover",
+            "Seasonal Tire Changeover Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "seasonal",
+            "tire",
+            "changeover"
+          ],
+          "summary": "Changes seasonal tires or wheel-and-tire assemblies and checks pressure after installation.",
+          "symptoms": [
+            "winter tires installation",
+            "summer tires installation",
+            "seasonal tire swap"
+          ]
+        },
+        {
+          "code": "directional_tire_correction",
+          "name": "Directional Tire Correction",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Directional Tire Correction",
+            "Directional Tire Correction Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "directional",
+            "tire",
+            "correction"
+          ],
+          "summary": "Corrects directional tire placement when tires are mounted or installed in the wrong rolling direction.",
+          "symptoms": [
+            "directional tire backwards",
+            "tire rotation incorrect",
+            "tire arrow wrong direction"
+          ]
+        },
+        {
+          "code": "tire_bead_leak_diagnosis",
+          "name": "Tire Bead-Leak Diagnosis",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Tire Bead-Leak Diagnosis",
+            "Tire Bead Leak Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "bead leak",
+            "tire",
+            "bead",
+            "leak",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses air loss at the tire bead, wheel flange, valve stem, or visible tire damage before repair recommendations.",
+          "symptoms": [
+            "slow leak at bead",
+            "tire loses air overnight",
+            "soap bubbles at rim"
+          ]
+        },
+        {
+          "code": "tire_bead_reseal",
+          "name": "Tire Bead Reseal",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Tire Bead Reseal",
+            "Tire Bead Reseal Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "bead",
+            "tire",
+            "reseal"
+          ],
+          "summary": "Demounts and reseals the tire bead when the tire and wheel are safe and serviceable.",
+          "symptoms": [
+            "bead leak confirmed",
+            "corrosion at bead seat",
+            "tire leaking at rim"
+          ]
+        },
+        {
+          "code": "tubeless_tire_valve_stem_replacement",
+          "name": "Tubeless Tire Valve-Stem Replacement",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Tubeless Tire Valve-Stem Replacement",
+            "Tubeless Tire Valve Stem Replacement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "valve stem",
+            "tubeless",
+            "tire",
+            "valve",
+            "stem",
+            "replacement"
+          ],
+          "summary": "Replaces a leaking tubeless snap-in valve stem when no TPMS sensor service is required.",
+          "symptoms": [
+            "valve stem leaking",
+            "cracked rubber valve stem",
+            "air leak at valve"
+          ]
+        },
+        {
+          "code": "tire_disposal_service",
+          "name": "Tire Disposal Service",
+          "labor_hours_min": 0.1,
+          "labor_hours_max": 0.3,
+          "aliases": [
+            "Tire Disposal Service",
+            "Tire Disposal Service Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "disposal",
+            "tire",
+            "service"
+          ],
+          "summary": "Applies tire disposal handling for removed tires where shop policy and local rules require it.",
+          "symptoms": [
+            "old tires removed",
+            "scrap tire disposal",
+            "tire recycling needed"
+          ]
+        },
+        {
+          "code": "flat_tire_inspection",
+          "name": "Flat-Tire Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Flat-Tire Inspection",
+            "Flat Tire Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "flat",
+            "tire",
+            "inspection"
+          ],
+          "summary": "Inspects a flat tire and wheel to determine whether replacement, safe repair, or referral is appropriate.",
+          "symptoms": [
+            "flat tire",
+            "tire will not hold air",
+            "drove on flat tire"
+          ]
+        },
+        {
+          "code": "slow_tire_leak_diagnosis",
+          "name": "Slow Tire Leak Diagnosis",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Slow Tire Leak Diagnosis",
+            "Slow Tire Leak Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "leak",
+            "slow",
+            "tire",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses slow air loss from punctures, bead leaks, valve stems, wheel damage, or temperature-related pressure changes.",
+          "symptoms": [
+            "slow tire leak",
+            "low tire every week",
+            "tpms light keeps returning"
+          ]
+        },
+        {
+          "code": "tire_sidewall_damage_inspection",
+          "name": "Tire Sidewall-Damage Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Tire Sidewall-Damage Inspection",
+            "Tire Sidewall Damage Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "sidewall",
+            "tire",
+            "damage",
+            "inspection"
+          ],
+          "summary": "Inspects sidewall damage and documents replacement or referral needs without implying unsafe sidewall repair.",
+          "symptoms": [
+            "sidewall cut",
+            "tire bubble",
+            "sidewall damage"
+          ]
+        },
+        {
+          "code": "tire_road_hazard_inspection",
+          "name": "Tire Road-Hazard Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Tire Road-Hazard Inspection",
+            "Tire Road Hazard Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "road hazard",
+            "tire",
+            "road",
+            "hazard",
+            "inspection"
+          ],
+          "summary": "Inspects tire and wheel damage after a pothole, curb impact, nail, or road debris event.",
+          "symptoms": [
+            "hit pothole",
+            "road hazard damage",
+            "tire impact damage"
+          ]
+        },
+        {
+          "code": "tire_repairability_inspection",
+          "name": "Tire Repairability Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Tire Repairability Inspection",
+            "Tire Repairability Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "repairability",
+            "tire",
+            "inspection"
+          ],
+          "summary": "Determines whether tire damage is within a safe repairable area and recommends replacement when it is not.",
+          "symptoms": [
+            "nail near shoulder",
+            "puncture near sidewall",
+            "tire repair question"
+          ]
+        },
+        {
+          "code": "tire_demount_internal_inspection",
+          "name": "Tire Demount / Internal Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Tire Demount / Internal Inspection",
+            "Tire Demount Internal Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "internal inspection",
+            "tire",
+            "demount",
+            "internal",
+            "inspection"
+          ],
+          "summary": "Demounts a tire for internal inspection when hidden liner, run-flat, or impact damage is suspected.",
+          "symptoms": [
+            "tire driven flat",
+            "possible internal tire damage",
+            "run flat tire inspection"
+          ]
+        },
+        {
+          "code": "tire_sealant_kit_inspection",
+          "name": "Tire Emergency Inflator / Sealant Kit Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Tire Emergency Inflator / Sealant Kit Inspection",
+            "Tire Emergency Inflator Sealant Kit Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "sealant",
+            "tire",
+            "emergency",
+            "inflator",
+            "kit",
+            "inspection"
+          ],
+          "summary": "Inspects the emergency inflator, sealant kit, expiration date, and related tire-service limitations.",
+          "symptoms": [
+            "inflator kit missing",
+            "sealant kit expired",
+            "no spare tire kit"
+          ]
+        },
+        {
+          "code": "tire_vibration_diagnosis",
+          "name": "Tire Vibration Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Tire Vibration Diagnosis",
+            "Tire Vibration Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "vibration",
+            "tire",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses tire-related vibration concerns and separates tire, wheel, balance, and suspension contributors.",
+          "symptoms": [
+            "tire vibration",
+            "shake after new tires",
+            "vehicle vibration"
+          ]
+        },
+        {
+          "code": "highway_speed_vibration_diagnosis",
+          "name": "Highway-Speed Vibration Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Highway-Speed Vibration Diagnosis",
+            "Highway Speed Vibration Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "vibration",
+            "highway",
+            "speed",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses vibration that occurs mainly at highway speeds using road test and wheel-and-tire checks.",
+          "symptoms": [
+            "vibration at highway speed",
+            "steering wheel shake at 65",
+            "seat vibration at speed"
+          ]
+        },
+        {
+          "code": "wheel_tire_imbalance_diagnosis",
+          "name": "Wheel-and-Tire Imbalance Diagnosis",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Wheel-and-Tire Imbalance Diagnosis",
+            "Wheel and Tire Imbalance Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "imbalance",
+            "wheel",
+            "and",
+            "tire",
+            "diagnosis"
+          ],
+          "summary": "Checks for wheel-and-tire imbalance, missing weights, tire defects, or wheel damage before balance recommendations.",
+          "symptoms": [
+            "wheel imbalance",
+            "missing wheel weights",
+            "vibration after tire service"
+          ]
+        },
+        {
+          "code": "radial_force_variation_diagnosis",
+          "name": "Radial Force Variation Diagnosis",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "aliases": [
+            "Radial Force Variation Diagnosis",
+            "Radial Force Variation Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "radial force",
+            "radial",
+            "force",
+            "variation",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses suspected radial force variation or stiff-spot tire concerns where road-force equipment is available.",
+          "symptoms": [
+            "road force variation",
+            "tire stiff spot",
+            "vibration despite balance"
+          ]
+        },
+        {
+          "code": "tire_conicity_pull_diagnosis",
+          "name": "Tire Conicity / Pull Diagnosis",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Tire Conicity / Pull Diagnosis",
+            "Tire Conicity Pull Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "pull",
+            "tire",
+            "conicity",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses tire-caused pull or drift by inspecting wear, placement, conicity, and tire construction concerns.",
+          "symptoms": [
+            "vehicle pulls after tires",
+            "tire conicity",
+            "drift follows tire rotation"
+          ]
+        },
+        {
+          "code": "tire_flat_spot_diagnosis",
+          "name": "Tire Flat-Spot Diagnosis",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Tire Flat-Spot Diagnosis",
+            "Tire Flat Spot Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "flat spot",
+            "tire",
+            "flat",
+            "spot",
+            "diagnosis"
+          ],
+          "summary": "Inspects suspected flat-spotted tires after storage, hard braking, or long parking periods.",
+          "symptoms": [
+            "thump after sitting",
+            "flat spotted tire",
+            "temporary tire vibration"
+          ]
+        },
+        {
+          "code": "wheel_tire_runout_measurement",
+          "name": "Wheel-and-Tire Runout Measurement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Wheel-and-Tire Runout Measurement",
+            "Wheel and Tire Runout Measurement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "runout",
+            "wheel",
+            "and",
+            "tire",
+            "measurement"
+          ],
+          "summary": "Measures wheel-and-tire radial or lateral runout to identify tire, wheel, or mounting concerns.",
+          "symptoms": [
+            "wheel runout concern",
+            "tire hop",
+            "vibration not fixed by balance"
+          ]
+        },
+        {
+          "code": "match_mounting_tire_wheel_indexing",
+          "name": "Match Mounting / Tire-to-Wheel Indexing",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Match Mounting / Tire-to-Wheel Indexing",
+            "Match Mounting Tire to Wheel Indexing Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "match mounting",
+            "match",
+            "mounting",
+            "tire",
+            "to",
+            "wheel",
+            "indexing"
+          ],
+          "summary": "Indexes tire position on the wheel to reduce runout or radial-force variation when equipment and tire condition allow.",
+          "symptoms": [
+            "road force balance recommendation",
+            "match mounting needed",
+            "tire high spot"
+          ]
+        },
+        {
+          "code": "tire_noise_diagnosis",
+          "name": "Tire Noise Diagnosis",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Tire Noise Diagnosis",
+            "Tire Noise Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "noise",
+            "tire",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses tire growl, hum, cupping, feathering, or pattern noise and separates tire noise from wheel bearing concerns.",
+          "symptoms": [
+            "tire humming noise",
+            "cupped tire noise",
+            "road noise after tire rotation"
+          ]
+        },
+        {
+          "code": "tpms_system_diagnosis",
+          "name": "TPMS System Diagnosis",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "TPMS System Diagnosis",
+            "TPMS System Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms",
+            "system",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses direct or indirect tire-pressure monitoring system faults before sensor, relearn, or calibration recommendations.",
+          "symptoms": [
+            "tpms not reading",
+            "tire pressure system fault",
+            "tpms message"
+          ]
+        },
+        {
+          "code": "tpms_warning_light_diagnosis",
+          "name": "TPMS Warning-Light Diagnosis",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "TPMS Warning-Light Diagnosis",
+            "TPMS Warning Light Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms",
+            "warning",
+            "light",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses TPMS warning-light causes including low pressure, failed sensors, registration issues, or indirect calibration needs.",
+          "symptoms": [
+            "tpms light on",
+            "low tire light flashing",
+            "tire pressure warning"
+          ]
+        },
+        {
+          "code": "tpms_sensor_replacement_set",
+          "name": "TPMS Sensor Replacement (set)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "TPMS Sensor Replacement (set)",
+            "TPMS Sensor Replacement set Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms",
+            "sensor",
+            "replacement",
+            "set"
+          ],
+          "summary": "Replaces a set of TPMS sensors and prepares the vehicle for programming or relearn as required.",
+          "symptoms": [
+            "multiple tpms sensors failed",
+            "tpms sensors aged out",
+            "new wheel set needs sensors"
+          ]
+        },
+        {
+          "code": "tpms_sensor_service_kit_replacement",
+          "name": "TPMS Sensor Service-Kit Replacement",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "TPMS Sensor Service-Kit Replacement",
+            "TPMS Sensor Service Kit Replacement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms",
+            "sensor",
+            "service",
+            "kit",
+            "replacement"
+          ],
+          "summary": "Replaces TPMS sensor seals, caps, cores, nuts, or service-kit hardware during tire service.",
+          "symptoms": [
+            "tpms seal leaking",
+            "tpms nut corroded",
+            "tpms service kit needed"
+          ]
+        },
+        {
+          "code": "tpms_valve_stem_service",
+          "name": "TPMS Valve-Stem Service",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "TPMS Valve-Stem Service",
+            "TPMS Valve Stem Service Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms",
+            "valve",
+            "stem",
+            "service"
+          ],
+          "summary": "Services TPMS valve stems or related sealing hardware when the sensor is otherwise reusable.",
+          "symptoms": [
+            "tpms valve leaking",
+            "tpms stem corroded",
+            "air leak at tpms valve"
+          ]
+        },
+        {
+          "code": "tpms_sensor_programming",
+          "name": "TPMS Sensor Programming",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "TPMS Sensor Programming",
+            "TPMS Sensor Programming Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms programming",
+            "tpms",
+            "sensor",
+            "programming"
+          ],
+          "summary": "Programs compatible TPMS sensors to the vehicle or wheel position when supported by available equipment.",
+          "symptoms": [
+            "new tpms sensor not programmed",
+            "tpms ids need programming",
+            "universal sensor setup"
+          ]
+        },
+        {
+          "code": "indirect_tpms_calibration",
+          "name": "Indirect TPMS Calibration",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Indirect TPMS Calibration",
+            "Indirect TPMS Calibration Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms calibration",
+            "indirect",
+            "tpms",
+            "calibration"
+          ],
+          "summary": "Performs indirect TPMS calibration or initialization after tire pressure correction, tire replacement, or rotation.",
+          "symptoms": [
+            "indirect tpms reset needed",
+            "tpms calibration message",
+            "low tire light after rotation"
+          ]
+        },
+        {
+          "code": "tpms_sensor_battery_failure_diagnosis",
+          "name": "TPMS Sensor Battery-Failure Diagnosis",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "TPMS Sensor Battery-Failure Diagnosis",
+            "TPMS Sensor Battery Failure Diagnosis Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms battery",
+            "tpms",
+            "sensor",
+            "battery",
+            "failure",
+            "diagnosis"
+          ],
+          "summary": "Diagnoses TPMS sensor battery failure or low sensor signal before sensor replacement recommendations.",
+          "symptoms": [
+            "tpms sensor battery dead",
+            "tpms sensor no signal",
+            "intermittent tpms sensor"
+          ]
+        },
+        {
+          "code": "spare_tire_tpms_sensor_inspection",
+          "name": "Spare-Tire TPMS Sensor Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Spare-Tire TPMS Sensor Inspection",
+            "Spare Tire TPMS Sensor Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "tpms spare",
+            "spare",
+            "tire",
+            "tpms",
+            "sensor",
+            "inspection"
+          ],
+          "summary": "Inspects spare-tire TPMS sensor presence, pressure, and communication where the vehicle monitors the spare.",
+          "symptoms": [
+            "spare tire tpms warning",
+            "spare tire low pressure",
+            "tpms includes spare"
+          ]
+        },
+        {
+          "code": "wheel_inspection",
+          "name": "Wheel Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Wheel Inspection",
+            "Wheel Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel",
+            "inspection"
+          ],
+          "summary": "Inspects wheels for visible bends, cracks, corrosion, bead-seat concerns, and fitment issues.",
+          "symptoms": [
+            "wheel damage",
+            "rim concern",
+            "wheel inspection needed"
+          ]
+        },
+        {
+          "code": "bent_wheel_inspection",
+          "name": "Bent-Wheel Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Bent-Wheel Inspection",
+            "Bent Wheel Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel",
+            "bent",
+            "inspection"
+          ],
+          "summary": "Inspects suspected bent wheels and recommends measurement, replacement, or wheel repair referral when appropriate.",
+          "symptoms": [
+            "bent rim",
+            "wheel bent from pothole",
+            "vibration after impact"
+          ]
+        },
+        {
+          "code": "cracked_wheel_inspection",
+          "name": "Cracked-Wheel Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Cracked-Wheel Inspection",
+            "Cracked Wheel Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel",
+            "cracked",
+            "inspection"
+          ],
+          "summary": "Inspects suspected cracked wheels and recommends replacement or wheel repair referral instead of unsafe repair assumptions.",
+          "symptoms": [
+            "cracked rim",
+            "wheel leaking from crack",
+            "impact crack"
+          ]
+        },
+        {
+          "code": "wheel_replacement_each",
+          "name": "Wheel Replacement (each)",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Wheel Replacement (each)",
+            "Wheel Replacement each Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel replacement",
+            "wheel",
+            "replacement",
+            "each"
+          ],
+          "summary": "Replaces one wheel and transfers the tire, TPMS sensor, and hardware when serviceable and equipment is available.",
+          "symptoms": [
+            "wheel damaged",
+            "rim replacement needed",
+            "bent wheel replacement"
+          ]
+        },
+        {
+          "code": "wheel_refinishing_referral_estimate",
+          "name": "Wheel Refinishing Referral Estimate",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Wheel Refinishing Referral Estimate",
+            "Wheel Refinishing Referral Estimate Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel referral",
+            "wheel",
+            "refinishing",
+            "referral",
+            "estimate"
+          ],
+          "summary": "Inspects cosmetic wheel finish damage and prepares referral guidance for refinishing outside mechanical scope.",
+          "symptoms": [
+            "wheel finish damage",
+            "curb rash estimate",
+            "wheel paint peeling"
+          ]
+        },
+        {
+          "code": "wheel_repair_referral_estimate",
+          "name": "Wheel Repair Referral Estimate",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Wheel Repair Referral Estimate",
+            "Wheel Repair Referral Estimate Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel referral",
+            "wheel",
+            "repair",
+            "referral",
+            "estimate"
+          ],
+          "summary": "Inspects wheel damage and prepares referral guidance for specialized wheel repair or replacement.",
+          "symptoms": [
+            "bent wheel repair estimate",
+            "cracked wheel referral",
+            "wheel shop referral"
+          ]
+        },
+        {
+          "code": "wheel_runout_measurement",
+          "name": "Wheel Runout Measurement",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Wheel Runout Measurement",
+            "Wheel Runout Measurement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "runout",
+            "wheel",
+            "measurement"
+          ],
+          "summary": "Measures wheel radial or lateral runout to support vibration, impact, or balance diagnostics.",
+          "symptoms": [
+            "wheel runout",
+            "bent wheel vibration",
+            "rim wobble"
+          ]
+        },
+        {
+          "code": "wheel_stud_replacement_axle_set",
+          "name": "Wheel Stud Replacement (axle set)",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Wheel Stud Replacement (axle set)",
+            "Wheel Stud Replacement axle set Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "stud",
+            "wheel",
+            "replacement",
+            "axle",
+            "set"
+          ],
+          "summary": "Replaces multiple wheel studs on one axle when access and hub design allow in-place service.",
+          "symptoms": [
+            "multiple wheel studs damaged",
+            "lug studs stripped on axle",
+            "wheel stud set needed"
+          ]
+        },
+        {
+          "code": "lug_nut_replacement_each",
+          "name": "Lug-Nut Replacement (each)",
+          "labor_hours_min": 0.1,
+          "labor_hours_max": 0.3,
+          "aliases": [
+            "Lug-Nut Replacement (each)",
+            "Lug Nut Replacement each Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "lug nut",
+            "lug",
+            "nut",
+            "replacement",
+            "each"
+          ],
+          "summary": "Replaces an individual damaged, missing, swollen, or incorrect lug nut.",
+          "symptoms": [
+            "missing lug nut",
+            "one lug nut damaged",
+            "wrong lug nut"
+          ]
+        },
+        {
+          "code": "swollen_lug_nut_replacement",
+          "name": "Swollen Lug-Nut Replacement",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Swollen Lug-Nut Replacement",
+            "Swollen Lug Nut Replacement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "lug nut",
+            "swollen",
+            "lug",
+            "nut",
+            "replacement"
+          ],
+          "summary": "Replaces swollen capped lug nuts that prevent proper socket engagement or torque verification.",
+          "symptoms": [
+            "swollen lug nuts",
+            "socket will not fit lug nut",
+            "capped lug nuts damaged"
+          ]
+        },
+        {
+          "code": "wheel_lock_removal",
+          "name": "Wheel-Lock Removal",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Wheel-Lock Removal",
+            "Wheel Lock Removal Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel lock",
+            "wheel",
+            "lock",
+            "removal"
+          ],
+          "summary": "Removes wheel locks when the key is damaged or missing, using non-destructive methods where possible.",
+          "symptoms": [
+            "wheel lock key missing",
+            "locking lug nut stuck",
+            "cannot remove wheel lock"
+          ]
+        },
+        {
+          "code": "wheel_lock_key_replacement_referral",
+          "name": "Wheel-Lock Key Replacement Guidance / Referral",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Wheel-Lock Key Replacement Guidance / Referral",
+            "Wheel Lock Key Replacement Guidance Referral Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel lock",
+            "wheel",
+            "lock",
+            "key",
+            "replacement",
+            "guidance",
+            "referral"
+          ],
+          "summary": "Identifies wheel-lock key needs and provides replacement guidance or referral when the matching key must be sourced.",
+          "symptoms": [
+            "lost wheel lock key",
+            "need locking lug key",
+            "wheel lock pattern unknown"
+          ]
+        },
+        {
+          "code": "lug_thread_repair_inspection",
+          "name": "Lug-Thread Repair Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Lug-Thread Repair Inspection",
+            "Lug Thread Repair Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "thread",
+            "lug",
+            "repair",
+            "inspection"
+          ],
+          "summary": "Inspects lug nut, stud, and hub threads before recommending safe thread repair, stud replacement, or hub service.",
+          "symptoms": [
+            "cross threaded lug",
+            "lug nut will not tighten",
+            "damaged wheel threads"
+          ]
+        },
+        {
+          "code": "hub_centric_ring_inspection_installation",
+          "name": "Hub-Centric Ring Inspection / Installation",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Hub-Centric Ring Inspection / Installation",
+            "Hub Centric Ring Inspection Installation Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "hub ring",
+            "hub",
+            "centric",
+            "ring",
+            "inspection",
+            "installation"
+          ],
+          "summary": "Inspects or installs hub-centric rings for aftermarket wheels when fitment is appropriate.",
+          "symptoms": [
+            "aftermarket wheel vibration",
+            "hub rings missing",
+            "wheel not hub centric"
+          ]
+        },
+        {
+          "code": "wheel_spacer_inspection",
+          "name": "Wheel Spacer Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Wheel Spacer Inspection",
+            "Wheel Spacer Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "spacer",
+            "wheel",
+            "inspection"
+          ],
+          "summary": "Inspects wheel spacers for fitment, hardware engagement, corrosion, and safety concerns.",
+          "symptoms": [
+            "wheel spacers installed",
+            "spacer vibration",
+            "wheel spacer concern"
+          ]
+        },
+        {
+          "code": "wheel_spacer_removal",
+          "name": "Wheel Spacer Removal",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Wheel Spacer Removal",
+            "Wheel Spacer Removal Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "spacer",
+            "wheel",
+            "removal"
+          ],
+          "summary": "Removes wheel spacers and verifies wheel fitment, stud engagement, and torque afterward.",
+          "symptoms": [
+            "remove wheel spacers",
+            "spacer rubbing",
+            "wheel spacer unsafe"
+          ]
+        },
+        {
+          "code": "aftermarket_wheel_fitment_inspection",
+          "name": "Aftermarket Wheel Fitment Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Aftermarket Wheel Fitment Inspection",
+            "Aftermarket Wheel Fitment Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "fitment",
+            "aftermarket",
+            "wheel",
+            "inspection"
+          ],
+          "summary": "Inspects aftermarket wheel fitment, lug seat style, bore fit, clearance, and hardware compatibility.",
+          "symptoms": [
+            "aftermarket wheels installed",
+            "wheel fitment concern",
+            "wrong lug seat"
+          ]
+        },
+        {
+          "code": "wheel_offset_clearance_inspection",
+          "name": "Wheel Offset / Clearance Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Wheel Offset / Clearance Inspection",
+            "Wheel Offset Clearance Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "offset",
+            "wheel",
+            "clearance",
+            "inspection"
+          ],
+          "summary": "Inspects wheel offset, brake clearance, suspension clearance, fender clearance, and rubbing concerns.",
+          "symptoms": [
+            "wheel rubbing",
+            "offset concern",
+            "new wheels do not clear brakes"
+          ]
+        },
+        {
+          "code": "wheel_torque_verification",
+          "name": "Wheel Torque Verification",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Wheel Torque Verification",
+            "Wheel Torque Verification Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "torque",
+            "wheel",
+            "verification"
+          ],
+          "summary": "Verifies wheel fastener torque with appropriate pattern and specification after service or customer concern.",
+          "symptoms": [
+            "check lug torque",
+            "wheel torque concern",
+            "loose wheel concern"
+          ]
+        },
+        {
+          "code": "wheel_retorque_after_service",
+          "name": "Wheel Retorque After Service",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.5,
+          "aliases": [
+            "Wheel Retorque After Service",
+            "Wheel Retorque After Service Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "retorque",
+            "wheel",
+            "after",
+            "service"
+          ],
+          "summary": "Retorques wheel fasteners after prior wheel removal or tire service according to shop policy.",
+          "symptoms": [
+            "wheel retorque due",
+            "retorque after tire service",
+            "lug nut recheck"
+          ]
+        },
+        {
+          "code": "spare_wheel_inspection",
+          "name": "Spare-Wheel Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Spare-Wheel Inspection",
+            "Spare Wheel Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "spare",
+            "wheel",
+            "inspection"
+          ],
+          "summary": "Inspects spare wheel condition, corrosion, damage, and mounting compatibility.",
+          "symptoms": [
+            "spare wheel rusty",
+            "spare rim damaged",
+            "spare wheel check"
+          ]
+        },
+        {
+          "code": "spare_tire_installation",
+          "name": "Spare-Tire Installation",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Spare-Tire Installation",
+            "Spare Tire Installation Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "spare",
+            "tire",
+            "installation"
+          ],
+          "summary": "Installs the spare tire or compact spare and verifies basic fitment, pressure, and temporary-use limitations.",
+          "symptoms": [
+            "flat tire spare install",
+            "install compact spare",
+            "roadside spare installed"
+          ]
+        },
+        {
+          "code": "compact_spare_inspection",
+          "name": "Compact-Spare Inspection",
+          "labor_hours_min": 0.2,
+          "labor_hours_max": 0.6,
+          "aliases": [
+            "Compact-Spare Inspection",
+            "Compact Spare Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "spare",
+            "compact",
+            "inspection"
+          ],
+          "summary": "Inspects compact-spare condition, pressure, age, and temporary-use labeling.",
+          "symptoms": [
+            "compact spare low",
+            "donut spare old",
+            "temporary spare inspection"
+          ]
+        },
+        {
+          "code": "spare_tire_hoist_inspection",
+          "name": "Spare-Tire Hoist Inspection",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Spare-Tire Hoist Inspection",
+            "Spare Tire Hoist Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "spare hoist",
+            "spare",
+            "tire",
+            "hoist",
+            "inspection"
+          ],
+          "summary": "Inspects spare-tire hoist cable, latch, crank operation, and corrosion before service recommendations.",
+          "symptoms": [
+            "spare tire stuck under vehicle",
+            "spare hoist seized",
+            "cannot lower spare tire"
+          ]
+        },
+        {
+          "code": "spare_tire_hoist_service_replacement",
+          "name": "Spare-Tire Hoist Service / Replacement",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Spare-Tire Hoist Service / Replacement",
+            "Spare Tire Hoist Service Replacement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "spare hoist",
+            "spare",
+            "tire",
+            "hoist",
+            "service",
+            "replacement"
+          ],
+          "summary": "Services or replaces a spare-tire hoist assembly when access and corrosion condition allow mechanical repair.",
+          "symptoms": [
+            "spare tire hoist broken",
+            "spare cable failed",
+            "spare tire carrier seized"
+          ]
+        },
+        {
+          "code": "wheel_alignment_inspection",
+          "name": "Wheel-Alignment Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Wheel-Alignment Inspection",
+            "Wheel Alignment Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wheel",
+            "inspection"
+          ],
+          "summary": "Inspects tire wear, steering wheel position, ride height, and visible suspension condition before alignment recommendations.",
+          "symptoms": [
+            "alignment check needed",
+            "uneven tire wear",
+            "vehicle pulls"
+          ]
+        },
+        {
+          "code": "front_end_alignment",
+          "name": "Front-End Alignment",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 1.8,
+          "aliases": [
+            "Front-End Alignment",
+            "Front End Alignment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "front",
+            "end"
+          ],
+          "summary": "Performs front-end alignment adjustments on vehicles where rear alignment is not adjustable or not required.",
+          "symptoms": [
+            "front alignment needed",
+            "steering wheel off center",
+            "front tires wearing"
+          ]
+        },
+        {
+          "code": "alignment_measurement_only",
+          "name": "Alignment Measurement Only",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Alignment Measurement Only",
+            "Alignment Measurement Only Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "measurement",
+            "only"
+          ],
+          "summary": "Measures alignment angles and provides readings without performing adjustment.",
+          "symptoms": [
+            "alignment printout needed",
+            "check alignment only",
+            "before repair alignment measurement"
+          ]
+        },
+        {
+          "code": "toe_adjustment",
+          "name": "Toe Adjustment",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Toe Adjustment",
+            "Toe Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "toe",
+            "adjustment"
+          ],
+          "summary": "Adjusts toe angle where accessible and within normal service limits.",
+          "symptoms": [
+            "toe out of specification",
+            "feathered tire wear",
+            "alignment toe adjustment"
+          ]
+        },
+        {
+          "code": "front_toe_adjustment",
+          "name": "Front Toe Adjustment",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Front Toe Adjustment",
+            "Front Toe Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "toe",
+            "front",
+            "adjustment"
+          ],
+          "summary": "Adjusts front toe and centers the steering wheel when required.",
+          "symptoms": [
+            "front toe out",
+            "steering wheel off center",
+            "front tire feathering"
+          ]
+        },
+        {
+          "code": "rear_toe_adjustment",
+          "name": "Rear Toe Adjustment",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.3,
+          "aliases": [
+            "Rear Toe Adjustment",
+            "Rear Toe Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "toe",
+            "rear",
+            "adjustment"
+          ],
+          "summary": "Adjusts rear toe where the rear suspension design provides an adjustment.",
+          "symptoms": [
+            "rear toe out",
+            "rear tire feathering",
+            "thrust angle concern"
+          ]
+        },
+        {
+          "code": "camber_adjustment",
+          "name": "Camber Adjustment",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Camber Adjustment",
+            "Camber Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "camber",
+            "adjustment"
+          ],
+          "summary": "Adjusts camber where factory or installed adjustment hardware allows.",
+          "symptoms": [
+            "camber out of specification",
+            "inside edge tire wear",
+            "alignment camber adjustment"
+          ]
+        },
+        {
+          "code": "front_camber_adjustment",
+          "name": "Front Camber Adjustment",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Front Camber Adjustment",
+            "Front Camber Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "camber",
+            "front",
+            "adjustment"
+          ],
+          "summary": "Adjusts front camber where the suspension design or installed hardware allows.",
+          "symptoms": [
+            "front camber out",
+            "front inside tire wear",
+            "front camber pull"
+          ]
+        },
+        {
+          "code": "rear_camber_adjustment",
+          "name": "Rear Camber Adjustment",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Rear Camber Adjustment",
+            "Rear Camber Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "camber",
+            "rear",
+            "adjustment"
+          ],
+          "summary": "Adjusts rear camber where the suspension design or installed hardware allows.",
+          "symptoms": [
+            "rear camber out",
+            "rear inside tire wear",
+            "rear camber adjustment"
+          ]
+        },
+        {
+          "code": "caster_adjustment",
+          "name": "Caster Adjustment",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Caster Adjustment",
+            "Caster Adjustment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "caster",
+            "adjustment"
+          ],
+          "summary": "Adjusts caster where factory or installed adjustment hardware allows.",
+          "symptoms": [
+            "caster out of specification",
+            "vehicle pull from caster",
+            "alignment caster adjustment"
+          ]
+        },
+        {
+          "code": "thrust_angle_correction",
+          "name": "Thrust-Angle Correction",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Thrust-Angle Correction",
+            "Thrust Angle Correction Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "thrust",
+            "angle",
+            "correction"
+          ],
+          "summary": "Corrects thrust angle through available rear toe or axle alignment adjustments when possible.",
+          "symptoms": [
+            "dog tracking",
+            "thrust angle out",
+            "vehicle tracks crooked"
+          ]
+        },
+        {
+          "code": "steering_wheel_centering",
+          "name": "Steering-Wheel Centering",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Steering-Wheel Centering",
+            "Steering Wheel Centering Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "steering wheel",
+            "steering",
+            "wheel",
+            "centering"
+          ],
+          "summary": "Centers the steering wheel as part of alignment adjustment when steering and suspension condition allow.",
+          "symptoms": [
+            "steering wheel crooked",
+            "off center steering wheel",
+            "wheel not straight after alignment"
+          ]
+        },
+        {
+          "code": "alignment_after_suspension_repair",
+          "name": "Alignment After Suspension Repair",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Alignment After Suspension Repair",
+            "Alignment After Suspension Repair Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "after",
+            "suspension",
+            "repair"
+          ],
+          "summary": "Performs or verifies alignment after suspension component replacement or adjustment.",
+          "symptoms": [
+            "alignment after struts",
+            "alignment after control arm",
+            "suspension repair alignment"
+          ]
+        },
+        {
+          "code": "alignment_after_steering_repair",
+          "name": "Alignment After Steering Repair",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Alignment After Steering Repair",
+            "Alignment After Steering Repair Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "after",
+            "steering",
+            "repair"
+          ],
+          "summary": "Performs or verifies alignment after steering component replacement or adjustment.",
+          "symptoms": [
+            "alignment after tie rod",
+            "alignment after steering rack",
+            "steering repair alignment"
+          ]
+        },
+        {
+          "code": "alignment_after_tire_replacement",
+          "name": "Alignment After Tire Replacement",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Alignment After Tire Replacement",
+            "Alignment After Tire Replacement Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "after",
+            "tire",
+            "replacement"
+          ],
+          "summary": "Performs or verifies alignment after tire replacement when wear pattern or customer concern indicates need.",
+          "symptoms": [
+            "new tires alignment",
+            "protect new tires",
+            "alignment after tire install"
+          ]
+        },
+        {
+          "code": "post_collision_alignment_inspection",
+          "name": "Post-Collision Alignment Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Post-Collision Alignment Inspection",
+            "Post Collision Alignment Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "collision",
+            "post",
+            "inspection"
+          ],
+          "summary": "Inspects alignment readings after collision or impact and recommends mechanical repair or body-shop referral when needed.",
+          "symptoms": [
+            "alignment after collision",
+            "hit curb alignment check",
+            "post impact alignment"
+          ]
+        },
+        {
+          "code": "alignment_vehicle_pull_diagnosis",
+          "name": "Alignment Diagnostic for Vehicle Pull",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Alignment Diagnostic for Vehicle Pull",
+            "Alignment Diagnostic for Vehicle Pull Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "pull",
+            "diagnostic",
+            "for",
+            "vehicle"
+          ],
+          "summary": "Diagnoses vehicle pull concerns and separates tire, brake, steering, suspension, and alignment contributors.",
+          "symptoms": [
+            "vehicle pulls left",
+            "vehicle pulls right",
+            "pull after alignment"
+          ]
+        },
+        {
+          "code": "alignment_uneven_tire_wear_diagnosis",
+          "name": "Alignment Diagnostic for Uneven Tire Wear",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Alignment Diagnostic for Uneven Tire Wear",
+            "Alignment Diagnostic for Uneven Tire Wear Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wear",
+            "diagnostic",
+            "for",
+            "uneven",
+            "tire"
+          ],
+          "summary": "Diagnoses uneven tire wear related to alignment angles, tire condition, pressure, or suspension wear.",
+          "symptoms": [
+            "uneven tire wear",
+            "inside tire wear",
+            "outside tire wear"
+          ]
+        },
+        {
+          "code": "alignment_off_center_steering_wheel_diagnosis",
+          "name": "Alignment Diagnostic for Off-Center Steering Wheel",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Alignment Diagnostic for Off-Center Steering Wheel",
+            "Alignment Diagnostic for Off Center Steering Wheel Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "steering wheel",
+            "diagnostic",
+            "for",
+            "off",
+            "center",
+            "steering",
+            "wheel"
+          ],
+          "summary": "Diagnoses off-center steering wheel concerns after service, impact, or prior alignment work.",
+          "symptoms": [
+            "steering wheel off center",
+            "crooked steering wheel",
+            "alignment wheel not straight"
+          ]
+        },
+        {
+          "code": "alignment_steering_wander_diagnosis",
+          "name": "Alignment Diagnostic for Steering Wander",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Alignment Diagnostic for Steering Wander",
+            "Alignment Diagnostic for Steering Wander Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "wander",
+            "diagnostic",
+            "for",
+            "steering"
+          ],
+          "summary": "Diagnoses steering wander and identifies alignment, tire, steering, suspension, or road-crown contributors.",
+          "symptoms": [
+            "steering wander",
+            "vehicle wanders",
+            "poor straight line tracking"
+          ]
+        },
+        {
+          "code": "alignment_dog_tracking_thrust_angle_diagnosis",
+          "name": "Alignment Diagnostic for Dog-Tracking / Thrust-Angle Concern",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Alignment Diagnostic for Dog-Tracking / Thrust-Angle Concern",
+            "Alignment Diagnostic for Dog Tracking Thrust Angle Concern Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "thrust",
+            "diagnostic",
+            "for",
+            "dog",
+            "tracking",
+            "angle",
+            "concern"
+          ],
+          "summary": "Diagnoses dog-tracking or thrust-angle concerns using alignment readings and visible chassis inspection.",
+          "symptoms": [
+            "dog tracking concern",
+            "rear axle not tracking",
+            "vehicle drives sideways"
+          ]
+        },
+        {
+          "code": "ride_height_check_before_alignment",
+          "name": "Ride-Height Check Before Alignment",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Ride-Height Check Before Alignment",
+            "Ride Height Check Before Alignment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "ride height",
+            "ride",
+            "height",
+            "check",
+            "before"
+          ],
+          "summary": "Checks ride height before alignment to identify sagging, lifted, lowered, or overloaded vehicle conditions.",
+          "symptoms": [
+            "ride height concern",
+            "alignment cannot be set",
+            "vehicle sits low"
+          ]
+        },
+        {
+          "code": "alignment_adjustment_limited_inspection",
+          "name": "Alignment Adjustment-Limited Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Alignment Adjustment-Limited Inspection",
+            "Alignment Adjustment Limited Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "adjustment",
+            "limited",
+            "inspection"
+          ],
+          "summary": "Inspects alignment adjustability limits and identifies damaged, missing, seized, or non-adjustable components.",
+          "symptoms": [
+            "alignment cannot adjust",
+            "adjustment maxed out",
+            "alignment out of range"
+          ]
+        },
+        {
+          "code": "seized_alignment_adjuster_inspection",
+          "name": "Seized Alignment Adjuster Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Seized Alignment Adjuster Inspection",
+            "Seized Alignment Adjuster Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "adjuster",
+            "seized",
+            "inspection"
+          ],
+          "summary": "Inspects seized cam bolts, sleeves, eccentrics, or turnbuckles before quoting repair or replacement.",
+          "symptoms": [
+            "seized cam bolt",
+            "alignment bolt frozen",
+            "cannot adjust alignment"
+          ]
+        },
+        {
+          "code": "alignment_hardware_replacement_estimate",
+          "name": "Alignment Hardware Replacement Estimate",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Alignment Hardware Replacement Estimate",
+            "Alignment Hardware Replacement Estimate Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "hardware",
+            "replacement",
+            "estimate"
+          ],
+          "summary": "Estimates replacement of alignment hardware such as cam bolts, eccentrics, sleeves, or adjuster kits where appropriate.",
+          "symptoms": [
+            "alignment hardware rusted",
+            "cam bolt replacement estimate",
+            "alignment kit needed"
+          ]
+        },
+        {
+          "code": "steering_angle_sensor_calibration_after_alignment",
+          "name": "Steering-Angle Sensor Calibration After Alignment",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Steering-Angle Sensor Calibration After Alignment",
+            "Steering Angle Sensor Calibration After Alignment Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "steering angle",
+            "steering",
+            "angle",
+            "sensor",
+            "calibration",
+            "after"
+          ],
+          "summary": "Performs steering-angle sensor calibration after alignment when supported and required by the vehicle.",
+          "symptoms": [
+            "steering angle calibration needed",
+            "stability light after alignment",
+            "sas calibration"
+          ]
+        },
+        {
+          "code": "electronic_power_steering_center_calibration",
+          "name": "Electronic Power-Steering Center Calibration",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Electronic Power-Steering Center Calibration",
+            "Electronic Power Steering Center Calibration Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "eps",
+            "electronic",
+            "power",
+            "steering",
+            "center",
+            "calibration"
+          ],
+          "summary": "Performs electronic power-steering center or zero-point calibration where supported after alignment or steering work.",
+          "symptoms": [
+            "eps center calibration",
+            "steering assist calibration",
+            "power steering center point"
+          ]
+        },
+        {
+          "code": "adas_alignment_prerequisite_inspection",
+          "name": "ADAS Alignment Prerequisite Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "ADAS Alignment Prerequisite Inspection",
+            "ADAS Alignment Prerequisite Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "adas",
+            "prerequisite",
+            "inspection"
+          ],
+          "summary": "Verifies tire, ride-height, steering, and alignment prerequisites before ADAS calibration is attempted.",
+          "symptoms": [
+            "adas calibration prerequisite",
+            "alignment needed before adas",
+            "camera calibration prep"
+          ]
+        },
+        {
+          "code": "alignment_verification_before_adas_calibration",
+          "name": "Alignment Verification Before ADAS Calibration",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Alignment Verification Before ADAS Calibration",
+            "Alignment Verification Before ADAS Calibration Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "adas",
+            "verification",
+            "before",
+            "calibration"
+          ],
+          "summary": "Verifies alignment status before ADAS calibration without performing the ADAS calibration procedure itself.",
+          "symptoms": [
+            "verify alignment for adas",
+            "adas calibration alignment check",
+            "pre calibration alignment"
+          ]
+        },
+        {
+          "code": "modified_suspension_alignment_inspection",
+          "name": "Modified Suspension Alignment Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Modified Suspension Alignment Inspection",
+            "Modified Suspension Alignment Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "modified",
+            "suspension",
+            "inspection"
+          ],
+          "summary": "Inspects modified suspension alignment feasibility, hardware, tire clearance, and adjustment limits.",
+          "symptoms": [
+            "modified suspension alignment",
+            "aftermarket suspension alignment",
+            "alignment with suspension kit"
+          ]
+        },
+        {
+          "code": "lowered_vehicle_alignment_inspection",
+          "name": "Lowered Vehicle Alignment Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Lowered Vehicle Alignment Inspection",
+            "Lowered Vehicle Alignment Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "lowered",
+            "vehicle",
+            "inspection"
+          ],
+          "summary": "Inspects lowered vehicle alignment feasibility, tire wear risk, clearance, and adjustment range.",
+          "symptoms": [
+            "lowered car alignment",
+            "camber after lowering",
+            "lowered vehicle tire wear"
+          ]
+        },
+        {
+          "code": "lifted_vehicle_alignment_inspection",
+          "name": "Lifted Vehicle Alignment Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Lifted Vehicle Alignment Inspection",
+            "Lifted Vehicle Alignment Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "lifted",
+            "vehicle",
+            "inspection"
+          ],
+          "summary": "Inspects lifted vehicle alignment feasibility, steering geometry, tire clearance, and adjustment range.",
+          "symptoms": [
+            "lifted truck alignment",
+            "alignment after lift kit",
+            "oversized tires after lift"
+          ]
+        },
+        {
+          "code": "oversized_tire_fitment_inspection",
+          "name": "Oversized Tire Fitment Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Oversized Tire Fitment Inspection",
+            "Oversized Tire Fitment Inspection Service"
+          ],
+          "keywords": [
+            "wheels",
+            "tires",
+            "alignment",
+            "oversized",
+            "tire",
+            "fitment",
+            "inspection"
+          ],
+          "summary": "Inspects oversized tire clearance, rubbing, wheel offset, speedometer concerns, and alignment implications.",
+          "symptoms": [
+            "oversized tire rubbing",
+            "larger tire fitment",
+            "tire clearance concern"
+          ]
+        }
+      ]
     }
   ]
 }

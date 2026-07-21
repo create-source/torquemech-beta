@@ -22,6 +22,112 @@ NEW_BATCH_6_CATEGORY_KEYS = {
     "body_exterior",
 }
 
+NEW_BATCH_7_CATEGORY_KEYS = {
+    "wheels_tires_alignment",
+}
+
+NEW_BATCH_7_WHEELS_TIRES_ALIGNMENT_SERVICE_CODES = {
+    "tire_condition_inspection",
+    "tire_pressure_check_adjustment",
+    "tire_rotation_with_balance",
+    "four_wheel_tire_balance",
+    "tire_tread_depth_measurement",
+    "tire_wear_pattern_diagnosis",
+    "tire_age_sidewall_inspection",
+    "tire_replacement_each",
+    "tire_replacement_pair",
+    "tire_replacement_set_four",
+    "seasonal_tire_changeover",
+    "directional_tire_correction",
+    "tire_bead_leak_diagnosis",
+    "tire_bead_reseal",
+    "tubeless_tire_valve_stem_replacement",
+    "tire_disposal_service",
+    "flat_tire_inspection",
+    "slow_tire_leak_diagnosis",
+    "tire_sidewall_damage_inspection",
+    "tire_road_hazard_inspection",
+    "tire_repairability_inspection",
+    "tire_demount_internal_inspection",
+    "tire_sealant_kit_inspection",
+    "tire_vibration_diagnosis",
+    "highway_speed_vibration_diagnosis",
+    "wheel_tire_imbalance_diagnosis",
+    "radial_force_variation_diagnosis",
+    "tire_conicity_pull_diagnosis",
+    "tire_flat_spot_diagnosis",
+    "wheel_tire_runout_measurement",
+    "match_mounting_tire_wheel_indexing",
+    "tire_noise_diagnosis",
+    "tpms_system_diagnosis",
+    "tpms_warning_light_diagnosis",
+    "tpms_sensor_replacement_set",
+    "tpms_sensor_service_kit_replacement",
+    "tpms_valve_stem_service",
+    "tpms_sensor_programming",
+    "indirect_tpms_calibration",
+    "tpms_sensor_battery_failure_diagnosis",
+    "spare_tire_tpms_sensor_inspection",
+    "wheel_inspection",
+    "bent_wheel_inspection",
+    "cracked_wheel_inspection",
+    "wheel_replacement_each",
+    "wheel_refinishing_referral_estimate",
+    "wheel_repair_referral_estimate",
+    "wheel_runout_measurement",
+    "wheel_stud_replacement_axle_set",
+    "lug_nut_replacement_each",
+    "swollen_lug_nut_replacement",
+    "wheel_lock_removal",
+    "wheel_lock_key_replacement_referral",
+    "lug_thread_repair_inspection",
+    "hub_centric_ring_inspection_installation",
+    "wheel_spacer_inspection",
+    "wheel_spacer_removal",
+    "aftermarket_wheel_fitment_inspection",
+    "wheel_offset_clearance_inspection",
+    "wheel_torque_verification",
+    "wheel_retorque_after_service",
+    "spare_wheel_inspection",
+    "spare_tire_installation",
+    "compact_spare_inspection",
+    "spare_tire_hoist_inspection",
+    "spare_tire_hoist_service_replacement",
+    "wheel_alignment_inspection",
+    "front_end_alignment",
+    "alignment_measurement_only",
+    "toe_adjustment",
+    "front_toe_adjustment",
+    "rear_toe_adjustment",
+    "camber_adjustment",
+    "front_camber_adjustment",
+    "rear_camber_adjustment",
+    "caster_adjustment",
+    "thrust_angle_correction",
+    "steering_wheel_centering",
+    "alignment_after_suspension_repair",
+    "alignment_after_steering_repair",
+    "alignment_after_tire_replacement",
+    "post_collision_alignment_inspection",
+    "alignment_vehicle_pull_diagnosis",
+    "alignment_uneven_tire_wear_diagnosis",
+    "alignment_off_center_steering_wheel_diagnosis",
+    "alignment_steering_wander_diagnosis",
+    "alignment_dog_tracking_thrust_angle_diagnosis",
+    "ride_height_check_before_alignment",
+    "alignment_adjustment_limited_inspection",
+    "seized_alignment_adjuster_inspection",
+    "alignment_hardware_replacement_estimate",
+    "steering_angle_sensor_calibration_after_alignment",
+    "electronic_power_steering_center_calibration",
+    "adas_alignment_prerequisite_inspection",
+    "alignment_verification_before_adas_calibration",
+    "modified_suspension_alignment_inspection",
+    "lowered_vehicle_alignment_inspection",
+    "lifted_vehicle_alignment_inspection",
+    "oversized_tire_fitment_inspection",
+}
+
 NEW_BATCH_6_BODY_EXTERIOR_SERVICE_CODES = {
     "front_bumper_reinforcement_replacement",
     "rear_bumper_reinforcement_replacement",
@@ -113,6 +219,12 @@ PRE_BATCH_6_SERVICE_CODES_PATH = (
     / "services_catalog_phase31_batch5_baseline_codes.json"
 )
 
+PRE_BATCH_7_SERVICE_CODES_PATH = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "services_catalog_phase31_batch6_baseline_codes.json"
+)
+
 
 def minimal_catalog():
     return {
@@ -142,8 +254,8 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         result = validate_catalog_data(catalog)
 
         self.assertEqual(result.errors, [])
-        self.assertEqual(result.categories, 20)
-        self.assertEqual(result.services, 564)
+        self.assertEqual(result.categories, 21)
+        self.assertEqual(result.services, 663)
         self.assertEqual(len(result.warnings), 2)
 
     def test_duplicate_service_code_fails(self):
@@ -383,6 +495,68 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         pre_batch_codes = set(json.loads(PRE_BATCH_6_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
 
         self.assertEqual(len(pre_batch_codes), 507)
+        self.assertTrue(pre_batch_codes.issubset(current_codes))
+
+    def test_batch_7_wheels_tires_alignment_category_exists_and_has_services(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        categories = {category["key"]: category for category in catalog["categories"]}
+
+        self.assertTrue(NEW_BATCH_7_CATEGORY_KEYS.issubset(categories))
+        self.assertEqual(categories["wheels_tires_alignment"]["name"], "Wheels, Tires & Alignment")
+        self.assertEqual(len(categories["wheels_tires_alignment"]["services"]), 99)
+
+        current_codes = {service["code"] for service in categories["wheels_tires_alignment"]["services"]}
+        self.assertEqual(current_codes, NEW_BATCH_7_WHEELS_TIRES_ALIGNMENT_SERVICE_CODES)
+
+    def test_batch_7_wheels_tires_alignment_services_have_complete_search_metadata(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        wheels = next(category for category in catalog["categories"] if category["key"] == "wheels_tires_alignment")
+
+        for service in wheels["services"]:
+            with self.subTest(service=service["code"]):
+                self.assertIsInstance(service.get("aliases"), list)
+                self.assertTrue(service["aliases"])
+                self.assertIsInstance(service.get("keywords"), list)
+                self.assertTrue(service["keywords"])
+                self.assertIsInstance(service.get("symptoms"), list)
+                self.assertTrue(service["symptoms"])
+                self.assertIsInstance(service.get("summary"), str)
+                self.assertTrue(service["summary"].strip())
+
+    def test_batch_7_wheels_tires_alignment_has_no_duplicate_names(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        wheels = next(category for category in catalog["categories"] if category["key"] == "wheels_tires_alignment")
+        normalized_names = [normalize_name(service["name"]) for service in wheels["services"]]
+
+        duplicate_names = {name for name in normalized_names if normalized_names.count(name) > 1}
+
+        self.assertEqual(duplicate_names, set())
+
+    def test_batch_7_representative_services_remain_in_expected_category(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        wheels = next(category for category in catalog["categories"] if category["key"] == "wheels_tires_alignment")
+        services = {service["code"]: service for service in wheels["services"]}
+
+        for code in (
+            "tire_condition_inspection",
+            "tpms_warning_light_diagnosis",
+            "wheel_lock_removal",
+            "alignment_vehicle_pull_diagnosis",
+            "adas_alignment_prerequisite_inspection",
+        ):
+            with self.subTest(service=code):
+                self.assertIn(code, services)
+
+    def test_pre_batch_7_service_codes_remain_present(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        current_codes = {
+            service["code"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        }
+        pre_batch_codes = set(json.loads(PRE_BATCH_7_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
+
+        self.assertEqual(len(pre_batch_codes), 564)
         self.assertTrue(pre_batch_codes.issubset(current_codes))
 
 
