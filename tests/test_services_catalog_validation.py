@@ -30,6 +30,56 @@ NEW_BATCH_8_CATEGORY_KEYS = {
     "fluids_filters_preventive",
 }
 
+NEW_BATCH_9_CATEGORY_KEYS = {
+    "specialty_diagnostics_inspections",
+}
+
+NEW_BATCH_9_SPECIALTY_DIAGNOSTICS_INSPECTIONS_SERVICE_CODES = {
+    "comprehensive_vehicle_inspection",
+    "post_purchase_inspection",
+    "general_safety_inspection",
+    "reliability_inspection",
+    "used_vehicle_baseline_inspection",
+    "high_mileage_vehicle_inspection",
+    "fleet_vehicle_condition_inspection",
+    "neglected_maintenance_recovery_inspection",
+    "owner_concern_verification_inspection",
+    "previous_repair_quality_inspection",
+    "second_opinion_inspection",
+    "diagnostic_consultation_review",
+    "advanced_road_test_diagnostic",
+    "cold_start_operability_diagnostic",
+    "hot_soak_operability_diagnostic",
+    "multi_system_warning_light_diagnostic",
+    "intermittent_warning_message_diagnostic",
+    "multiple_symptom_diagnostic",
+    "limp_mode_diagnostic",
+    "reduced_power_multi_system_diagnostic",
+    "odor_source_diagnostic",
+    "smoke_source_diagnostic",
+    "rattle_squeak_buzz_diagnostic",
+    "general_leak_source_tracing",
+    "water_intrusion_diagnostic",
+    "wind_noise_diagnostic",
+    "dust_intrusion_diagnostic",
+    "post_accident_general_inspection",
+    "curb_impact_general_inspection",
+    "pothole_impact_general_inspection",
+    "underbody_impact_inspection",
+    "road_debris_impact_inspection",
+    "flood_exposure_inspection",
+    "advanced_diagnostic_labor_extension",
+    "limited_diagnostic_teardown_inspection",
+    "scan_data_analysis",
+    "freeze_frame_data_analysis",
+    "technical_service_bulletin_research",
+    "oscilloscope_waveform_testing",
+    "sensor_reference_signal_testing",
+    "vehicle_network_communication_diagnostic",
+    "module_configuration_verification",
+    "post_repair_multi_system_verification",
+}
+
 NEW_BATCH_8_FLUIDS_FILTERS_PREVENTIVE_SERVICE_CODES = {
     "minor_scheduled_maintenance_inspection",
     "major_scheduled_maintenance_inspection",
@@ -294,6 +344,12 @@ PRE_BATCH_8_SERVICE_CODES_PATH = (
     / "services_catalog_phase31_batch7_baseline_codes.json"
 )
 
+PRE_BATCH_9_SERVICE_CODES_PATH = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "services_catalog_phase31_batch8_baseline_codes.json"
+)
+
 
 def minimal_catalog():
     return {
@@ -323,8 +379,8 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         result = validate_catalog_data(catalog)
 
         self.assertEqual(result.errors, [])
-        self.assertEqual(result.categories, 22)
-        self.assertEqual(result.services, 719)
+        self.assertEqual(result.categories, 23)
+        self.assertEqual(result.services, 762)
         self.assertEqual(len(result.warnings), 2)
 
     def test_duplicate_service_code_fails(self):
@@ -689,6 +745,72 @@ class ServicesCatalogValidationTests(unittest.TestCase):
         pre_batch_codes = set(json.loads(PRE_BATCH_8_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
 
         self.assertEqual(len(pre_batch_codes), 663)
+        self.assertTrue(pre_batch_codes.issubset(current_codes))
+
+    def test_batch_9_specialty_diagnostics_inspections_category_exists_and_has_services(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        categories = {category["key"]: category for category in catalog["categories"]}
+
+        self.assertTrue(NEW_BATCH_9_CATEGORY_KEYS.issubset(categories))
+        self.assertEqual(categories["specialty_diagnostics_inspections"]["name"], "Specialty Diagnostics & General Inspections")
+        self.assertEqual(len(categories["specialty_diagnostics_inspections"]["services"]), 43)
+
+        current_codes = {service["code"] for service in categories["specialty_diagnostics_inspections"]["services"]}
+        self.assertEqual(current_codes, NEW_BATCH_9_SPECIALTY_DIAGNOSTICS_INSPECTIONS_SERVICE_CODES)
+
+    def test_batch_9_specialty_diagnostics_inspections_services_have_complete_search_metadata(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        diagnostics = next(category for category in catalog["categories"] if category["key"] == "specialty_diagnostics_inspections")
+
+        for service in diagnostics["services"]:
+            with self.subTest(service=service["code"]):
+                self.assertIsInstance(service.get("aliases"), list)
+                self.assertTrue(service["aliases"])
+                self.assertIsInstance(service.get("keywords"), list)
+                self.assertTrue(service["keywords"])
+                self.assertIsInstance(service.get("symptoms"), list)
+                self.assertTrue(service["symptoms"])
+                self.assertIsInstance(service.get("summary"), str)
+                self.assertTrue(service["summary"].strip())
+
+    def test_batch_9_specialty_diagnostics_inspections_has_no_duplicate_or_near_duplicate_names(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        diagnostics = next(category for category in catalog["categories"] if category["key"] == "specialty_diagnostics_inspections")
+        normalized_names = [normalize_name(service["name"]) for service in diagnostics["services"]]
+        concepts = [concept_key(service["name"]) for service in diagnostics["services"]]
+
+        duplicate_names = {name for name in normalized_names if normalized_names.count(name) > 1}
+        duplicate_concepts = {concept for concept in concepts if concepts.count(concept) > 1}
+
+        self.assertEqual(duplicate_names, set())
+        self.assertEqual(duplicate_concepts, set())
+
+    def test_batch_9_representative_services_remain_in_expected_category(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        diagnostics = next(category for category in catalog["categories"] if category["key"] == "specialty_diagnostics_inspections")
+        services = {service["code"]: service for service in diagnostics["services"]}
+
+        for code in (
+            "comprehensive_vehicle_inspection",
+            "multi_system_warning_light_diagnostic",
+            "water_intrusion_diagnostic",
+            "pothole_impact_general_inspection",
+            "advanced_diagnostic_labor_extension",
+            "vehicle_network_communication_diagnostic",
+        ):
+            with self.subTest(service=code):
+                self.assertIn(code, services)
+
+    def test_pre_batch_9_service_codes_remain_present(self):
+        catalog = json.loads(Path(DEFAULT_CATALOG_PATH).read_text(encoding="utf-8"))
+        current_codes = {
+            service["code"]
+            for category in catalog["categories"]
+            for service in category.get("services", [])
+        }
+        pre_batch_codes = set(json.loads(PRE_BATCH_9_SERVICE_CODES_PATH.read_text(encoding="utf-8")))
+
+        self.assertEqual(len(pre_batch_codes), 719)
         self.assertTrue(pre_batch_codes.issubset(current_codes))
 
 

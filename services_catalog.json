@@ -18210,6 +18210,1048 @@
           ]
         }
       ]
+    },
+    {
+      "key": "specialty_diagnostics_inspections",
+      "name": "Specialty Diagnostics & General Inspections",
+      "description": "Cross-system specialty diagnostics, general inspections, condition verification, impact and intrusion checks, and advanced diagnostic testing services added as live Phase 3.1 Batch 9 coverage.",
+      "services": [
+        {
+          "code": "comprehensive_vehicle_inspection",
+          "name": "Comprehensive Vehicle Inspection",
+          "labor_hours_min": 1.0,
+          "labor_hours_max": 2.5,
+          "aliases": [
+            "Comprehensive Vehicle Inspection",
+            "Comprehensive Vehicle Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "inspection",
+            "comprehensive",
+            "vehicle"
+          ],
+          "summary": "Performs a broad bumper-to-bumper vehicle condition inspection and documents visible safety, maintenance, leak, wear, and drivability concerns.",
+          "symptoms": [
+            "overall vehicle condition unknown",
+            "complete vehicle check requested",
+            "used vehicle inspection needed"
+          ]
+        },
+        {
+          "code": "post_purchase_inspection",
+          "name": "Post-Purchase Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Post-Purchase Inspection",
+            "Post Purchase Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "inspection",
+            "post",
+            "purchase"
+          ],
+          "summary": "Inspects a recently purchased vehicle to document immediate safety, maintenance, and reliability concerns.",
+          "symptoms": [
+            "just bought vehicle",
+            "post purchase check",
+            "used car needs inspection"
+          ]
+        },
+        {
+          "code": "general_safety_inspection",
+          "name": "General Safety Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "General Safety Inspection",
+            "General Safety Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "safety",
+            "general",
+            "inspection"
+          ],
+          "summary": "Inspects visible safety-related items across major systems without replacing parts or performing state-specific inspection certification.",
+          "symptoms": [
+            "safety check requested",
+            "vehicle safety concern",
+            "before lending car inspection"
+          ]
+        },
+        {
+          "code": "reliability_inspection",
+          "name": "Reliability Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Reliability Inspection",
+            "Reliability Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "reliability",
+            "inspection"
+          ],
+          "summary": "Inspects common reliability risks across fluids, belts, hoses, tires, leaks, charging, starting, and visible mechanical systems.",
+          "symptoms": [
+            "reliability concern",
+            "want dependable vehicle",
+            "vehicle has many miles"
+          ]
+        },
+        {
+          "code": "used_vehicle_baseline_inspection",
+          "name": "Used-Vehicle Baseline Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Used-Vehicle Baseline Inspection",
+            "Used Vehicle Baseline Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "used vehicle",
+            "used",
+            "vehicle",
+            "baseline",
+            "inspection"
+          ],
+          "summary": "Creates a baseline condition report for a used vehicle with unknown or incomplete service history.",
+          "symptoms": [
+            "unknown service history",
+            "baseline inspection needed",
+            "used vehicle maintenance plan"
+          ]
+        },
+        {
+          "code": "high_mileage_vehicle_inspection",
+          "name": "High-Mileage Vehicle Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "High-Mileage Vehicle Inspection",
+            "High Mileage Vehicle Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "high mileage",
+            "high",
+            "mileage",
+            "vehicle",
+            "inspection"
+          ],
+          "summary": "Inspects high-mileage vehicle wear patterns and prioritizes safety, leak, maintenance, and reliability concerns.",
+          "symptoms": [
+            "high mileage inspection",
+            "old vehicle checkup",
+            "vehicle over 100k miles"
+          ]
+        },
+        {
+          "code": "fleet_vehicle_condition_inspection",
+          "name": "Fleet Vehicle Condition Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Fleet Vehicle Condition Inspection",
+            "Fleet Vehicle Condition Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "fleet",
+            "vehicle",
+            "condition",
+            "inspection"
+          ],
+          "summary": "Performs a general fleet vehicle condition inspection and documents visible maintenance, safety, and uptime risks.",
+          "symptoms": [
+            "fleet inspection",
+            "work vehicle check",
+            "vehicle condition report"
+          ]
+        },
+        {
+          "code": "neglected_maintenance_recovery_inspection",
+          "name": "Neglected-Maintenance Recovery Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Neglected-Maintenance Recovery Inspection",
+            "Neglected Maintenance Recovery Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "maintenance",
+            "neglected",
+            "recovery",
+            "inspection"
+          ],
+          "summary": "Inspects a vehicle with overdue or unknown maintenance and prioritizes catch-up service recommendations.",
+          "symptoms": [
+            "overdue maintenance",
+            "maintenance neglected",
+            "catch up service needed"
+          ]
+        },
+        {
+          "code": "owner_concern_verification_inspection",
+          "name": "Owner-Concern Verification Inspection",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Owner-Concern Verification Inspection",
+            "Owner Concern Verification Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "verification",
+            "owner",
+            "concern",
+            "inspection"
+          ],
+          "summary": "Verifies and documents a customer-reported concern before deeper diagnosis or repair recommendations are made.",
+          "symptoms": [
+            "customer concern verification",
+            "cannot describe problem",
+            "verify complaint"
+          ]
+        },
+        {
+          "code": "previous_repair_quality_inspection",
+          "name": "Previous Repair Quality Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Previous Repair Quality Inspection",
+            "Previous Repair Quality Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "second opinion",
+            "previous",
+            "repair",
+            "quality",
+            "inspection"
+          ],
+          "summary": "Inspects a prior repair area for workmanship, loose items, leaks, fitment, or unresolved symptoms without warranty adjudication.",
+          "symptoms": [
+            "problem after repair",
+            "second look after repair",
+            "repair quality concern"
+          ]
+        },
+        {
+          "code": "second_opinion_inspection",
+          "name": "Second-Opinion Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Second-Opinion Inspection",
+            "Second Opinion Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "second opinion",
+            "second",
+            "opinion",
+            "inspection"
+          ],
+          "summary": "Provides an independent inspection of a concern, estimate, or prior diagnosis before the customer authorizes repair.",
+          "symptoms": [
+            "second opinion requested",
+            "verify another estimate",
+            "diagnosis confirmation needed"
+          ]
+        },
+        {
+          "code": "diagnostic_consultation_review",
+          "name": "Diagnostic Consultation / Review",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Diagnostic Consultation / Review",
+            "Diagnostic Consultation Review Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "consultation",
+            "diagnostic",
+            "review"
+          ],
+          "summary": "Reviews symptoms, scan results, service history, photos, or prior notes to plan appropriate diagnostic next steps.",
+          "symptoms": [
+            "diagnostic review needed",
+            "customer has scan report",
+            "prior diagnosis review"
+          ]
+        },
+        {
+          "code": "advanced_road_test_diagnostic",
+          "name": "Advanced Road-Test Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Advanced Road-Test Diagnostic",
+            "Advanced Road Test Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "road test",
+            "advanced",
+            "road",
+            "test",
+            "diagnostic"
+          ],
+          "summary": "Performs an extended road test to duplicate, isolate, and document concerns that do not appear during a basic road test.",
+          "symptoms": [
+            "problem only while driving",
+            "cannot duplicate concern",
+            "extended road test needed"
+          ]
+        },
+        {
+          "code": "cold_start_operability_diagnostic",
+          "name": "Cold-Start Operability Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Cold-Start Operability Diagnostic",
+            "Cold Start Operability Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "cold start",
+            "cold",
+            "start",
+            "operability",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses symptoms that occur primarily after an overnight soak or cold start without assuming a single system cause.",
+          "symptoms": [
+            "cold start problem",
+            "rough only when cold",
+            "noise on first start"
+          ]
+        },
+        {
+          "code": "hot_soak_operability_diagnostic",
+          "name": "Hot-Soak Operability Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Hot-Soak Operability Diagnostic",
+            "Hot Soak Operability Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "hot soak",
+            "hot",
+            "soak",
+            "operability",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses symptoms that occur after the vehicle is hot, parked briefly, or restarted after heat soak.",
+          "symptoms": [
+            "hot restart problem",
+            "acts up when hot",
+            "hard start after sitting hot"
+          ]
+        },
+        {
+          "code": "multi_system_warning_light_diagnostic",
+          "name": "Multi-System Warning-Light Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Multi-System Warning-Light Diagnostic",
+            "Multi System Warning Light Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "warning light",
+            "multi",
+            "system",
+            "warning",
+            "light",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses multiple warning lights or messages that may involve shared power, ground, network, sensor, or module causes.",
+          "symptoms": [
+            "multiple warning lights",
+            "several dash lights on",
+            "many system warnings"
+          ]
+        },
+        {
+          "code": "intermittent_warning_message_diagnostic",
+          "name": "Intermittent Warning-Message Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Intermittent Warning-Message Diagnostic",
+            "Intermittent Warning Message Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "warning message",
+            "intermittent",
+            "warning",
+            "message",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses intermittent cluster or infotainment warning messages using history, scan data, road testing, and condition notes.",
+          "symptoms": [
+            "warning comes and goes",
+            "message appears intermittently",
+            "dash warning random"
+          ]
+        },
+        {
+          "code": "multiple_symptom_diagnostic",
+          "name": "Multiple-Symptom Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Multiple-Symptom Diagnostic",
+            "Multiple Symptom Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "multiple symptoms",
+            "multiple",
+            "symptom",
+            "diagnostic"
+          ],
+          "summary": "Evaluates multiple customer symptoms together to identify common causes, priority concerns, or separate diagnostic paths.",
+          "symptoms": [
+            "multiple symptoms",
+            "many things wrong",
+            "several concerns at once"
+          ]
+        },
+        {
+          "code": "limp_mode_diagnostic",
+          "name": "Limp-Mode Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Limp-Mode Diagnostic",
+            "Limp Mode Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "limp mode",
+            "limp",
+            "mode",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses reduced-operation or fail-safe mode concerns without assuming a specific engine, transmission, or hybrid system cause.",
+          "symptoms": [
+            "limp mode",
+            "failsafe mode",
+            "vehicle stuck in reduced operation"
+          ]
+        },
+        {
+          "code": "reduced_power_multi_system_diagnostic",
+          "name": "Reduced-Power Multi-System Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Reduced-Power Multi-System Diagnostic",
+            "Reduced Power Multi System Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "power loss",
+            "reduced",
+            "power",
+            "multi",
+            "system",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses reduced power where the cause may involve engine, transmission, exhaust, fuel, electrical, or control systems.",
+          "symptoms": [
+            "reduced power warning",
+            "vehicle lacks power",
+            "power loss with warnings"
+          ]
+        },
+        {
+          "code": "odor_source_diagnostic",
+          "name": "Odor Source Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Odor Source Diagnostic",
+            "Odor Source Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "odor",
+            "source",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses unusual odors and separates fluid leaks, exhaust, HVAC, electrical, brake, tire, or contamination sources.",
+          "symptoms": [
+            "burning smell",
+            "fuel odor",
+            "sweet smell in vehicle"
+          ]
+        },
+        {
+          "code": "smoke_source_diagnostic",
+          "name": "Smoke Source Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Smoke Source Diagnostic",
+            "Smoke Source Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "smoke",
+            "source",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses visible smoke or vapor source and separates fluid leaks, exhaust smoke, coolant steam, oil smoke, or electrical smoke concerns.",
+          "symptoms": [
+            "smoke from vehicle",
+            "steam under hood",
+            "burning oil smoke"
+          ]
+        },
+        {
+          "code": "rattle_squeak_buzz_diagnostic",
+          "name": "Rattle / Squeak / Buzz Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Rattle / Squeak / Buzz Diagnostic",
+            "Rattle Squeak Buzz Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "noise",
+            "rattle",
+            "squeak",
+            "buzz",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses rattles, squeaks, buzzes, or resonance concerns across body, interior, exhaust, suspension, and accessory areas.",
+          "symptoms": [
+            "rattle noise",
+            "squeak over bumps",
+            "buzzing sound"
+          ]
+        },
+        {
+          "code": "general_leak_source_tracing",
+          "name": "General Leak-Source Tracing",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "General Leak-Source Tracing",
+            "General Leak Source Tracing Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "leak",
+            "general",
+            "source",
+            "tracing"
+          ],
+          "summary": "Traces leak evidence when the fluid or source is unclear and routes repair recommendations to the affected system.",
+          "symptoms": [
+            "unknown leak",
+            "fluid dripping from vehicle",
+            "leak source unclear"
+          ]
+        },
+        {
+          "code": "water_intrusion_diagnostic",
+          "name": "Water-Intrusion Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Water-Intrusion Diagnostic",
+            "Water Intrusion Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "water",
+            "intrusion",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses water entry into the cabin, trunk, hatch area, or body cavities using inspection and controlled water testing where appropriate.",
+          "symptoms": [
+            "water leak inside car",
+            "wet carpet",
+            "water in trunk"
+          ]
+        },
+        {
+          "code": "wind_noise_diagnostic",
+          "name": "Wind-Noise Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Wind-Noise Diagnostic",
+            "Wind Noise Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "wind noise",
+            "wind",
+            "noise",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses wind noise sources around doors, glass, mirrors, roof openings, trim, or body panels.",
+          "symptoms": [
+            "wind noise at speed",
+            "air noise near door",
+            "whistle while driving"
+          ]
+        },
+        {
+          "code": "dust_intrusion_diagnostic",
+          "name": "Dust-Intrusion Diagnostic",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Dust-Intrusion Diagnostic",
+            "Dust Intrusion Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "dust",
+            "intrusion",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses dust entry into the cabin or cargo area through seals, body openings, vents, or missing plugs.",
+          "symptoms": [
+            "dust inside vehicle",
+            "dust coming through vents",
+            "cargo area dusty"
+          ]
+        },
+        {
+          "code": "post_accident_general_inspection",
+          "name": "Post-Accident General Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Post-Accident General Inspection",
+            "Post Accident General Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "accident",
+            "post",
+            "general",
+            "inspection"
+          ],
+          "summary": "Inspects visible mechanical, electrical, fluid, tire, alignment, underbody, and safety concerns after an accident without estimating collision repair.",
+          "symptoms": [
+            "after accident inspection",
+            "vehicle hit recently",
+            "post crash mechanical check"
+          ]
+        },
+        {
+          "code": "curb_impact_general_inspection",
+          "name": "Curb-Impact General Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Curb-Impact General Inspection",
+            "Curb Impact General Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "impact",
+            "curb",
+            "general",
+            "inspection"
+          ],
+          "summary": "Inspects visible tire, wheel, suspension, steering, underbody, and alignment-related concerns after a curb impact.",
+          "symptoms": [
+            "hit curb",
+            "curb impact inspection",
+            "wheel hit curb"
+          ]
+        },
+        {
+          "code": "pothole_impact_general_inspection",
+          "name": "Pothole-Impact General Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Pothole-Impact General Inspection",
+            "Pothole Impact General Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "impact",
+            "pothole",
+            "general",
+            "inspection"
+          ],
+          "summary": "Inspects visible tire, wheel, suspension, steering, underbody, and alignment-related concerns after a pothole impact.",
+          "symptoms": [
+            "hit pothole",
+            "pothole damage check",
+            "impact after pothole"
+          ]
+        },
+        {
+          "code": "underbody_impact_inspection",
+          "name": "Underbody Impact Inspection",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Underbody Impact Inspection",
+            "Underbody Impact Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "underbody",
+            "impact",
+            "inspection"
+          ],
+          "summary": "Inspects underbody shields, exhaust, fluid lines, suspension mounts, leaks, and visible damage after an underside impact.",
+          "symptoms": [
+            "hit something underneath",
+            "underbody damage",
+            "scraping under car"
+          ]
+        },
+        {
+          "code": "road_debris_impact_inspection",
+          "name": "Road-Debris Impact Inspection",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Road-Debris Impact Inspection",
+            "Road Debris Impact Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "road debris",
+            "road",
+            "debris",
+            "impact",
+            "inspection"
+          ],
+          "summary": "Inspects visible damage after road debris contact and identifies affected systems for follow-up diagnosis or repair.",
+          "symptoms": [
+            "ran over debris",
+            "object hit under vehicle",
+            "debris impact damage"
+          ]
+        },
+        {
+          "code": "flood_exposure_inspection",
+          "name": "Flood-Exposure Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Flood-Exposure Inspection",
+            "Flood Exposure Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "flood",
+            "exposure",
+            "inspection"
+          ],
+          "summary": "Inspects visible signs of flood or water exposure and recommends safety, electrical, interior, and corrosion follow-up where needed.",
+          "symptoms": [
+            "vehicle was flooded",
+            "drove through water",
+            "water exposure concern"
+          ]
+        },
+        {
+          "code": "advanced_diagnostic_labor_extension",
+          "name": "Advanced Diagnostic Labor Extension",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Advanced Diagnostic Labor Extension",
+            "Advanced Diagnostic Labor Extension Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "diagnostic labor",
+            "advanced",
+            "diagnostic",
+            "labor",
+            "extension"
+          ],
+          "summary": "Adds authorized diagnostic time when initial checks show that deeper testing is required before a responsible recommendation can be made.",
+          "symptoms": [
+            "more diagnostic time needed",
+            "advanced testing needed",
+            "diagnosis not complete"
+          ]
+        },
+        {
+          "code": "limited_diagnostic_teardown_inspection",
+          "name": "Limited Diagnostic Teardown Inspection",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 3.0,
+          "aliases": [
+            "Limited Diagnostic Teardown Inspection",
+            "Limited Diagnostic Teardown Inspection Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "teardown",
+            "limited",
+            "diagnostic",
+            "inspection"
+          ],
+          "summary": "Performs limited customer-authorized disassembly for inspection when a concern cannot be confirmed externally.",
+          "symptoms": [
+            "teardown inspection needed",
+            "hidden damage inspection",
+            "cannot inspect without disassembly"
+          ]
+        },
+        {
+          "code": "scan_data_analysis",
+          "name": "Scan-Data Analysis",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Scan-Data Analysis",
+            "Scan Data Analysis Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "scan data",
+            "scan",
+            "data",
+            "analysis"
+          ],
+          "summary": "Analyzes scan-tool data, live data, monitor status, and module information to support a diagnostic path.",
+          "symptoms": [
+            "live data review",
+            "scan data confusing",
+            "module data analysis"
+          ]
+        },
+        {
+          "code": "freeze_frame_data_analysis",
+          "name": "Freeze-Frame Data Analysis",
+          "labor_hours_min": 0.4,
+          "labor_hours_max": 1.0,
+          "aliases": [
+            "Freeze-Frame Data Analysis",
+            "Freeze Frame Data Analysis Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "scan data",
+            "freeze",
+            "frame",
+            "data",
+            "analysis"
+          ],
+          "summary": "Reviews freeze-frame and failure-record data to understand the conditions present when a fault set.",
+          "symptoms": [
+            "freeze frame review",
+            "code set conditions",
+            "failure record analysis"
+          ]
+        },
+        {
+          "code": "technical_service_bulletin_research",
+          "name": "Technical Service Bulletin Research",
+          "labor_hours_min": 0.3,
+          "labor_hours_max": 0.8,
+          "aliases": [
+            "Technical Service Bulletin Research",
+            "Technical Service Bulletin Research Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "research",
+            "technical",
+            "service",
+            "bulletin"
+          ],
+          "summary": "Researches applicable service bulletins, pattern failures, and service information before repair recommendations.",
+          "symptoms": [
+            "tsb check requested",
+            "known issue research",
+            "service bulletin review"
+          ]
+        },
+        {
+          "code": "oscilloscope_waveform_testing",
+          "name": "Oscilloscope Waveform Testing",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Oscilloscope Waveform Testing",
+            "Oscilloscope Waveform Testing Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "scope",
+            "oscilloscope",
+            "waveform",
+            "testing"
+          ],
+          "summary": "Uses lab-scope waveform testing for sensors, actuators, communication, ignition, charging, or control signals as part of diagnosis.",
+          "symptoms": [
+            "scope testing needed",
+            "waveform analysis",
+            "signal drops out"
+          ]
+        },
+        {
+          "code": "sensor_reference_signal_testing",
+          "name": "Sensor Reference-Signal Testing",
+          "labor_hours_min": 0.6,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Sensor Reference-Signal Testing",
+            "Sensor Reference Signal Testing Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "sensor",
+            "reference",
+            "signal",
+            "testing"
+          ],
+          "summary": "Tests shared sensor reference, ground, and signal circuits where multiple systems may be affected.",
+          "symptoms": [
+            "5 volt reference problem",
+            "sensor reference fault",
+            "multiple sensor codes"
+          ]
+        },
+        {
+          "code": "vehicle_network_communication_diagnostic",
+          "name": "Vehicle Network-Communication Diagnostic",
+          "labor_hours_min": 0.8,
+          "labor_hours_max": 2.0,
+          "aliases": [
+            "Vehicle Network-Communication Diagnostic",
+            "Vehicle Network Communication Diagnostic Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "network",
+            "vehicle",
+            "communication",
+            "diagnostic"
+          ],
+          "summary": "Diagnoses communication bus, module wake-up, gateway, or network faults that affect multiple vehicle systems.",
+          "symptoms": [
+            "network communication codes",
+            "modules not communicating",
+            "u codes multiple modules"
+          ]
+        },
+        {
+          "code": "module_configuration_verification",
+          "name": "Module Configuration Verification",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.5,
+          "aliases": [
+            "Module Configuration Verification",
+            "Module Configuration Verification Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "module",
+            "configuration",
+            "verification"
+          ],
+          "summary": "Verifies module configuration, coding, variant settings, or learned values after replacement, programming, or unexplained system behavior.",
+          "symptoms": [
+            "module configuration concern",
+            "coding verification",
+            "wrong vehicle options"
+          ]
+        },
+        {
+          "code": "post_repair_multi_system_verification",
+          "name": "Post-Repair Multi-System Verification",
+          "labor_hours_min": 0.5,
+          "labor_hours_max": 1.2,
+          "aliases": [
+            "Post-Repair Multi-System Verification",
+            "Post Repair Multi System Verification Service"
+          ],
+          "keywords": [
+            "specialty diagnostics",
+            "general inspection",
+            "verification",
+            "post",
+            "repair",
+            "multi",
+            "system"
+          ],
+          "summary": "Performs a post-repair scan, road test, and system check across affected modules to verify repairs and identify remaining concerns.",
+          "symptoms": [
+            "verify repair across systems",
+            "post repair scan needed",
+            "make sure warnings are gone"
+          ]
+        }
+      ]
     }
   ]
 }
