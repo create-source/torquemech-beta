@@ -49,6 +49,7 @@ from routers.pro import (
     repair_workspace_parts_sources,
     router as pro_router,
     safe_next_url,
+    load_shop_subscription,
     shop_subscription_access_context,
     validate_csrf,
     verification_token_hash,
@@ -1698,6 +1699,8 @@ async def pro_private_access_middleware(request: Request, call_next):
     path = request.url.path
     if path != "/pro" and not path.startswith("/pro/"):
         return await call_next(request)
+    if path == "/pro/billing/webhook":
+        return await call_next(request)
 
     async def continue_if_authenticated():
         try:
@@ -1940,6 +1943,16 @@ def account_settings_context(
     }
     pending_email = normalize_email((user or {}).get("pending_email"))
     cooldown_remaining = verification_resend_cooldown_remaining(user)
+    current_shop = getattr(request.state, "current_shop", {}) or {}
+    shop_id = int(current_shop.get("id") or 0) if isinstance(current_shop, dict) else 0
+    subscription = None
+    subscription_access = getattr(request.state, "subscription_access", {}) or {}
+    if shop_id:
+        conn = app_db_conn(row_factory=True)
+        try:
+            subscription = load_shop_subscription(conn, shop_id)
+        finally:
+            conn.close()
     return {
         "request": request,
         "csrf_token": csrf_token(request),
@@ -1959,6 +1972,9 @@ def account_settings_context(
         "has_pending_email_change": bool(pending_email),
         "verification_cooldown_remaining": cooldown_remaining,
         "verification_resend_available": bool(not user_email_verified(user) and cooldown_remaining <= 0),
+        "current_shop": current_shop,
+        "billing_subscription": subscription or {},
+        "billing_access": subscription_access,
     }
 
 

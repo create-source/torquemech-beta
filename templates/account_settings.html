@@ -96,6 +96,39 @@
     </form>
 
     <section class="tm-account-section">
+      <h2>Billing &amp; Subscription</h2>
+      <p>Manage the subscription for {{ current_shop.shop_name or "your shop" }}.</p>
+      <div class="tm-account-meta">
+        <div>
+          <span class="tm-account-label">Plan</span>
+          <div class="tm-account-readonly">{{ billing_access.plan_name or "TorqueMech Pro Solo" }}</div>
+        </div>
+        <div>
+          <span class="tm-account-label">Billing status</span>
+          <div class="tm-account-readonly">{{ billing_subscription.status or billing_access.status or "Not subscribed" }}</div>
+        </div>
+        {% if billing_subscription.current_period_ends_at %}
+        <div>
+          <span class="tm-account-label">Current billing period ends</span>
+          <div class="tm-account-readonly">{{ billing_subscription.current_period_ends_at }}</div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="tm-account-actions">
+        {% if not billing_subscription.stripe_subscription_id %}
+        <form method="post" action="/pro/billing/checkout">
+          <button class="tm-account-primary" type="submit">Subscribe</button>
+        </form>
+        {% endif %}
+        {% if billing_subscription.stripe_customer_id %}
+        <form method="post" action="/pro/billing/portal">
+          <button class="tm-account-secondary" type="submit">Manage Billing</button>
+        </form>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="tm-account-section">
       <h2>Security &amp; Login</h2>
       <div class="tm-account-meta">
         <div>

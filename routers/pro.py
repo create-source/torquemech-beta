@@ -41,6 +41,15 @@ from app.storage import (
     safe_upload_suffix,
     visual_reference_upload_url,
 )
+from app.billing import (
+    BillingConfigurationError,
+    BillingCustomerRequiredError,
+    BillingSignatureError,
+    StripeBillingConfig,
+    StripeBillingService,
+    handle_webhook_event,
+    verify_webhook_payload,
+)
 from db import connect_app_db
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11444,6 +11453,114 @@ async def pro_shop_settings_save(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/pro/shop-settings?saved=1", status_code=303)
+
+
+def billing_base_url(request: Request) -> str:
+    return str(request.base_url).rstrip("/")
+
+
+def billing_error_response(message: str, status_code: int = 503) -> HTMLResponse:
+    return HTMLResponse(
+        "<!doctype html><html><body>"
+        "<h1>Billing is unavailable</h1>"
+        f"<p>{message}</p>"
+        '<p><a href="/account/settings">Return to Account Settings</a></p>'
+        "</body></html>",
+        status_code=status_code,
+    )
+
+
+@router.post("/billing/checkout")
+def pro_billing_checkout(request: Request):
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        user = current_user(conn, request) or {}
+        base_url = billing_base_url(request)
+        try:
+            session = StripeBillingService().create_checkout_session(
+                conn,
+                shop_id=shop_id,
+                shop_email=str(user.get("email") or ""),
+                success_url=f"{base_url}/pro/billing/checkout/success",
+                cancel_url=f"{base_url}/pro/billing/checkout/cancel",
+            )
+            conn.commit()
+        except BillingConfigurationError as exc:
+            return billing_error_response(str(exc))
+    finally:
+        conn.close()
+    checkout_url = str(session.get("url") or "").strip()
+    if not checkout_url:
+        return billing_error_response("Stripe did not return a Checkout URL. Please try again.", status_code=502)
+    return RedirectResponse(checkout_url, status_code=303)
+
+
+@router.post("/billing/portal")
+def pro_billing_portal(request: Request):
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        try:
+            session = StripeBillingService().create_customer_portal_session(
+                conn,
+                shop_id=shop_id,
+                return_url=f"{billing_base_url(request)}/account/settings",
+            )
+        except BillingCustomerRequiredError as exc:
+            return billing_error_response(str(exc), status_code=400)
+        except BillingConfigurationError as exc:
+            return billing_error_response(str(exc))
+    finally:
+        conn.close()
+    portal_url = str(session.get("url") or "").strip()
+    if not portal_url:
+        return billing_error_response("Stripe did not return a Customer Portal URL. Please try again.", status_code=502)
+    return RedirectResponse(portal_url, status_code=303)
+
+
+@router.get("/billing/checkout/success", response_class=HTMLResponse)
+def pro_billing_checkout_success():
+    return HTMLResponse(
+        "<!doctype html><html><body>"
+        "<h1>Subscription checkout complete</h1>"
+        "<p>Your billing status will update as soon as Stripe confirms the subscription.</p>"
+        '<p><a href="/pro/dashboard">Return to Dashboard</a></p>'
+        "</body></html>"
+    )
+
+
+@router.get("/billing/checkout/cancel", response_class=HTMLResponse)
+def pro_billing_checkout_cancel():
+    return HTMLResponse(
+        "<!doctype html><html><body>"
+        "<h1>Checkout canceled</h1>"
+        "<p>No subscription changes were made.</p>"
+        '<p><a href="/account/settings">Return to Account Settings</a></p>'
+        "</body></html>"
+    )
+
+
+@router.post("/billing/webhook")
+async def pro_billing_webhook(request: Request):
+    raw_body = await request.body()
+    signature = request.headers.get("stripe-signature", "")
+    try:
+        event = verify_webhook_payload(
+            raw_body,
+            signature,
+            webhook_secret=StripeBillingConfig.from_env().webhook_secret,
+        )
+    except BillingConfigurationError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=503)
+    except BillingSignatureError:
+        return JSONResponse({"error": "Invalid Stripe webhook signature."}, status_code=400)
+    conn = crm_db_conn()
+    try:
+        result = handle_webhook_event(conn, event)
+    finally:
+        conn.close()
+    return JSONResponse({"received": True, **result})
 
 
 @router.get("/shop-schedule", response_class=HTMLResponse)
