@@ -12962,4 +12962,5 @@ body.tm-photo-access-open {
 .tm-confirm-options-grid .tm-service-education-option:has(input:checked) {
   border-color: #fb923c;
   background: rgba(249, 115, 22, 0.09);
+  box-shadow: none;
 }
