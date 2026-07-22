@@ -1885,6 +1885,37 @@
   bindEstimatorPhoneInput(customerPhoneEl);
   bindEstimatorPhoneInput(businessPhoneEl);
 
+  function resolveIncomingServiceCode(value) {
+    const normalized = String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+    const aliases = {
+      brake_pad_replacement: "front_brake_pads_replacement",
+      brake_pads_replacement: "front_brake_pads_replacement",
+      front_brake_pad_replacement: "front_brake_pads_replacement",
+      front_brake_pads_replacement: "front_brake_pads_replacement",
+
+      rear_brake_pad_replacement: "rear_brake_pads_replacement",
+      rear_brake_pads_replacement: "rear_brake_pads_replacement",
+
+      oil_change: "oil_and_filter_change",
+      oil_filter_change: "oil_and_filter_change",
+      battery_replacement: "battery_replacement",
+      alternator_replacement: "alternator_replacement",
+      thermostat_replacement: "thermostat_replacement",
+      water_pump_replacement: "water_pump_replacement",
+      radiator_replacement: "radiator_replacement",
+      tire_rotation: "tire_rotation",
+      cabin_air_filter_replacement: "cabin_air_filter_replacement",
+    };
+
+    return aliases[normalized] || "";
+  }
+
   function getEstimatorSourceContext() {
     const params = new URLSearchParams(window.location.search);
     const source = String(params.get("source") || "").trim().toLowerCase();
@@ -8006,6 +8037,19 @@ if (getEstimateHint) {
       populateYears();
       await loadMakes();
       await loadCategories();
+
+      const preloadServiceCatalog = () => {
+        ensureAllServiceOptions("").catch((error) => {
+          console.warn("Service catalog preload failed:", error);
+        });
+      };
+
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(preloadServiceCatalog, { timeout: 1200 });
+      } else {
+        window.setTimeout(preloadServiceCatalog, 250);
+      }
+
       await applyObdFromQuery();
       await renderVehicles();
       renderActiveVehicleBanner();
@@ -8032,10 +8076,15 @@ if (getEstimateHint) {
     const make = params.get("make");
     const model = params.get("model");
     const displayModel = params.get("displayModel") || params.get("display_model");
-    const service = params.get("service");
     const serviceText = params.get("service_text");
     const source = params.get("source") || "";
     const findingContext = getEstimatorSourceContext();
+
+    const service =
+      params.get("service") ||
+      resolveIncomingServiceCode(
+        serviceText || findingContext.recommendedRepair
+      );
     const handoffTrustEl = $("repairGuideHandoffTrust");
 
     if (!year && !make && !model && !displayModel && !service && !serviceText && !params.get("estimate_payload") && !params.get("estimate_id") && findingContext.source === "estimator") return;
