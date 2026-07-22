@@ -12912,59 +12912,54 @@ body.tm-photo-access-open {
   margin-top: 10px;
 }
 
-/* Highlighted customer PDF education option */
+/* Customer PDF service education option */
 .tm-confirm-options-grid .tm-service-education-option {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 12px 13px;
 
-  border: 1px solid rgba(249, 115, 22, 0.78);
-  border-left: 4px solid #f97316;
-  border-radius: 9px;
+  border: 1px solid rgba(249, 115, 22, 0.72);
+  border-radius: 8px;
+  background: rgba(249, 115, 22, 0.06);
 
-  background: rgba(249, 115, 22, 0.08);
-  padding: 13px 12px;
-
-  box-shadow:
-    0 0 0 1px rgba(249, 115, 22, 0.05),
-    0 7px 18px rgba(0, 0, 0, 0.12);
+  color: #f8fafc;
+  cursor: pointer;
+  box-shadow: none;
 }
 
-.tm-service-education-option > span {
+.tm-confirm-options-grid .tm-service-education-option > span {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
-.tm-service-education-option strong {
+.tm-confirm-options-grid .tm-service-education-option strong {
   color: #f8fafc;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 850;
   line-height: 1.25;
 }
 
-.tm-service-education-option small {
-  color: #b9c5d6;
+.tm-confirm-options-grid .tm-service-education-option small {
+  color: #c4cfdd;
   font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.35;
+  font-weight: 650;
+  line-height: 1.3;
 }
 
-.tm-service-education-option input {
-  margin-top: 2px;
-  accent-color: #f97316;
+.tm-confirm-options-grid .tm-service-education-option input {
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: #0e7490;
 }
 
-.tm-service-education-option:hover {
+.tm-confirm-options-grid .tm-service-education-option:hover,
+.tm-confirm-options-grid .tm-service-education-option:has(input:checked) {
   border-color: #fb923c;
-  background: rgba(249, 115, 22, 0.12);
-}
-
-.tm-service-education-option:has(input:checked) {
-  border-color: #fb923c;
-  background: rgba(249, 115, 22, 0.18);
-
-  box-shadow:
-    0 0 0 2px rgba(249, 115, 22, 0.12),
-    0 8px 20px rgba(0, 0, 0, 0.14);
+  background: rgba(249, 115, 22, 0.09);
 }
