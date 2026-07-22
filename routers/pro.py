@@ -1056,82 +1056,9 @@ def slugify_shop_name(value: Any) -> str:
     return slug or "torquemech-shop"
 
 
-def unique_shop_booking_slug(
-    conn: sqlite3.Connection,
-    shop_name: Any,
-    *,
-    exclude_shop_id: int | None = None,
-) -> str:
-    base_slug = slugify_shop_name(shop_name)
-    candidate = base_slug
-    suffix = 2
-    while True:
-        params: list[Any] = [candidate]
-        exclude_sql = ""
-        if exclude_shop_id is not None:
-            exclude_sql = " AND id <> ?"
-            params.append(exclude_shop_id)
-        existing = conn.execute(
-            f"""
-            SELECT id
-            FROM shop_profile
-            WHERE LOWER(TRIM(COALESCE(booking_slug, ''))) = LOWER(TRIM(?))
-              {exclude_sql}
-            LIMIT 1
-            """,
-            params,
-        ).fetchone()
-        if not existing:
-            return candidate
-        candidate = f"{base_slug}-{suffix}"
-        suffix += 1
-
-
-def ensure_shop_booking_slugs(conn: sqlite3.Connection) -> None:
-    rows = conn.execute(
-        """
-        SELECT id, shop_name, booking_slug
-        FROM shop_profile
-        ORDER BY id ASC
-        """
-    ).fetchall()
-    for row in rows:
-        shop_id = int(row["id"])
-        existing_slug = slugify_shop_name(row["booking_slug"]) if str(row["booking_slug"] or "").strip() else ""
-        if existing_slug:
-            duplicate = conn.execute(
-                """
-                SELECT id
-                FROM shop_profile
-                WHERE LOWER(TRIM(COALESCE(booking_slug, ''))) = LOWER(TRIM(?))
-                  AND id <> ?
-                LIMIT 1
-                """,
-                (existing_slug, shop_id),
-            ).fetchone()
-            if not duplicate:
-                if existing_slug != str(row["booking_slug"] or "").strip():
-                    conn.execute(
-                        "UPDATE shop_profile SET booking_slug = ? WHERE id = ?",
-                        (existing_slug, shop_id),
-                    )
-                continue
-
-        generated_slug = unique_shop_booking_slug(
-            conn,
-            row["shop_name"] or f"shop-{shop_id}",
-            exclude_shop_id=shop_id,
-        )
-        conn.execute(
-            "UPDATE shop_profile SET booking_slug = ? WHERE id = ?",
-            (generated_slug, shop_id),
-        )
-
-
 def shop_booking_slug(profile: dict[str, Any] | None = None) -> str:
     profile = profile or {}
-    stored_slug = str(profile.get("booking_slug") or "").strip().lower()
-    return slugify_shop_name(stored_slug) if stored_slug else ""
+    return slugify_shop_name(profile.get("shop_slug") or profile.get("shop_name") or "torquemech-shop")
 
 
 def request_base_url(request: Request | None = None) -> str:
@@ -1144,25 +1071,18 @@ def request_base_url(request: Request | None = None) -> str:
 
 
 def build_shop_booking_link(profile: dict[str, Any] | None = None, request: Request | None = None) -> str:
-    slug = shop_booking_slug(profile)
-    return f"{request_base_url(request)}/book/{slug}" if slug else ""
+    return f"{request_base_url(request)}/book/{shop_booking_slug(profile)}"
 
 
-def shop_id_for_booking_slug(conn: sqlite3.Connection, shop_slug: str) -> int:
+def shop_id_for_booking_slug(conn: sqlite3.Connection, shop_slug: str) -> int | None:
     ensure_shop_profile_schema(conn)
-    requested = slugify_shop_name(shop_slug)
-    row = conn.execute(
-        """
-        SELECT id
-        FROM shop_profile
-        WHERE LOWER(TRIM(COALESCE(booking_slug, ''))) = LOWER(TRIM(?))
-        LIMIT 1
-        """,
-        (requested,),
-    ).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Booking page not found.")
-    return int(row["id"])
+    requested = str(shop_slug or "").strip().lower()
+    rows = conn.execute("SELECT * FROM shop_profile ORDER BY id ASC").fetchall()
+    for row in rows:
+        profile = normalize_shop_profile_context(dict(row))
+        if shop_booking_slug(profile) == requested:
+            return int(row["id"])
+    return first_shop_id(conn)
 
 
 def attach_shop_booking_context(
@@ -2419,7 +2339,6 @@ SHOP_PROFILE_COLUMNS = (
     "id",
     "owner_user_id",
     "shop_name",
-    "booking_slug",
     "phone",
     "email",
     "address",
@@ -2456,7 +2375,6 @@ def create_shop_profile_table(conn: sqlite3.Connection, table_name: str = "shop_
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           owner_user_id INTEGER UNIQUE,
           shop_name TEXT,
-          booking_slug TEXT,
           phone TEXT,
           email TEXT,
           address TEXT,
@@ -2517,7 +2435,6 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
     for column_name, column_sql in {
         "owner_user_id": "owner_user_id INTEGER",
         "shop_name": "shop_name TEXT",
-        "booking_slug": "booking_slug TEXT",
         "phone": "phone TEXT",
         "email": "email TEXT",
         "address": "address TEXT",
@@ -2547,15 +2464,7 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
     }.items():
         if column_name not in columns:
             conn.execute(f"ALTER TABLE shop_profile ADD COLUMN {column_sql}")
-    ensure_shop_booking_slugs(conn)
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_profile_owner_user_id ON shop_profile (owner_user_id)")
-    conn.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_profile_booking_slug_unique
-        ON shop_profile (LOWER(booking_slug))
-        WHERE booking_slug IS NOT NULL AND TRIM(booking_slug) != ''
-        """
-    )
     conn.commit()
 
 
@@ -2564,7 +2473,6 @@ def normalize_shop_profile_context(profile: dict[str, Any] | None) -> dict[str, 
     raw_shop_name = str(normalized.get("shop_name") or "").strip()
     is_demo_profile = bool(raw_shop_name) and not scrub_demo_shop_name(raw_shop_name)
     normalized["shop_name"] = "" if is_demo_profile else raw_shop_name
-    normalized["booking_slug"] = shop_booking_slug(normalized)
     legacy_phone = normalized.get("phone")
     legacy_email = scrub_demo_shop_email(normalized.get("email"))
     legacy_address = scrub_demo_shop_address(normalized.get("address"))
@@ -2630,19 +2538,17 @@ def create_shop_profile_for_user(conn: sqlite3.Connection, user_id: int, shop_na
     if existing:
         return int(existing["id"])
     now = datetime.utcnow().isoformat()
-    clean_shop_name = str(shop_name or "").strip()
-    booking_slug = unique_shop_booking_slug(conn, clean_shop_name or f"shop-{user_id}")
     cur = conn.execute(
         """
         INSERT INTO shop_profile (
-          owner_user_id, shop_name, booking_slug, phone, email, address, shop_phone, shop_email,
+          owner_user_id, shop_name, phone, email, address, shop_phone, shop_email,
           shop_address, shop_city, shop_state, shop_zip, labor_rate_default,
           tax_rate_default, default_labor_rate, tax_rate, shop_supplies_fee,
           quote_expiration_days, updated_at
         )
-        VALUES (?, ?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
+        VALUES (?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
         """,
-        (user_id, clean_shop_name, booking_slug, now),
+        (user_id, str(shop_name or "").strip(), now),
     )
     return int(cur.lastrowid)
 
@@ -2669,38 +2575,19 @@ def bootstrap_existing_shop_to_user(conn: sqlite3.Connection, user_id: int, shop
             """,
             (user_id, str(shop_name or "").strip(), now, int(unowned["id"])),
         )
-        claimed_id = int(unowned["id"])
-        claimed = conn.execute(
-            "SELECT shop_name, booking_slug FROM shop_profile WHERE id = ?",
-            (claimed_id,),
-        ).fetchone()
-        if claimed and not str(claimed["booking_slug"] or "").strip():
-            conn.execute(
-                "UPDATE shop_profile SET booking_slug = ? WHERE id = ?",
-                (
-                    unique_shop_booking_slug(
-                        conn,
-                        claimed["shop_name"] or shop_name or f"shop-{claimed_id}",
-                        exclude_shop_id=claimed_id,
-                    ),
-                    claimed_id,
-                ),
-            )
-        return claimed_id
+        return int(unowned["id"])
     now = datetime.utcnow().isoformat()
-    clean_shop_name = str(shop_name or "").strip()
-    booking_slug = unique_shop_booking_slug(conn, clean_shop_name or f"shop-{user_id}")
     cur = conn.execute(
         """
         INSERT INTO shop_profile (
-          owner_user_id, shop_name, booking_slug, phone, email, address, shop_phone, shop_email,
+          owner_user_id, shop_name, phone, email, address, shop_phone, shop_email,
           shop_address, shop_city, shop_state, shop_zip, labor_rate_default,
           tax_rate_default, default_labor_rate, tax_rate, shop_supplies_fee,
           quote_expiration_days, updated_at
         )
-        VALUES (?, ?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
+        VALUES (?, ?, '', '', '', '', '', '', '', '', '', 90, 0, 90, 0, 0, 30, ?)
         """,
-        (user_id, clean_shop_name, booking_slug, now),
+        (user_id, str(shop_name or "").strip(), now),
     )
     return int(cur.lastrowid)
 
@@ -2793,7 +2680,7 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: 
     conn.execute(
         """
         INSERT INTO shop_profile (
-          id, owner_user_id, shop_name, booking_slug, phone, email, address, shop_phone, shop_email,
+          id, owner_user_id, shop_name, phone, email, address, shop_phone, shop_email,
           shop_address, shop_city, shop_state, shop_zip, website, scheduling_link,
           external_scheduling_link, logo_url, labor_rate_default, tax_rate_default,
           default_labor_rate, tax_rate, shop_supplies_fee, warranty_note,
@@ -2801,11 +2688,10 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: 
           appointment_cancellation_template, appointment_declined_template,
           appointment_rescheduled_template, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           owner_user_id = excluded.owner_user_id,
           shop_name = excluded.shop_name,
-          booking_slug = COALESCE(NULLIF(shop_profile.booking_slug, ''), excluded.booking_slug),
           phone = excluded.phone,
           email = excluded.email,
           address = excluded.address,
@@ -2834,11 +2720,6 @@ def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: 
             current.get("id"),
             current.get("owner_user_id"),
             current.get("shop_name") or "",
-            current.get("booking_slug") or unique_shop_booking_slug(
-                conn,
-                current.get("shop_name") or f"shop-{current.get('id') or 'new'}",
-                exclude_shop_id=optional_int_value(current.get("id")),
-            ),
             current.get("shop_phone") or "",
             current.get("shop_email") or "",
             current.get("shop_address") or "",
