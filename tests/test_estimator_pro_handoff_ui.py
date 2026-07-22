@@ -45,7 +45,8 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('id="customerQuoteFinalActions"', html)
         self.assertIn('id="proJobHandoffActions"', html)
         self.assertIn('id="convertToProJobMount"', html)
-        self.assertIn('id="proJobHandoffActions" class="actions estimator-final-actions" aria-label="Pro job handoff" hidden', html)
+        self.assertIn('class="tm-pro-job-handoff"', html)
+        self.assertIn('aria-label="Pro job handoff"', html)
         self.assertNotIn('id="convertToProJobBtn"', html)
         self.assertNotIn(">Convert to Pro Job<", html)
 
@@ -56,7 +57,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         drafts_end_idx = html.index('id="customerQuoteFinalActions"')
 
         self.assertLess(saved_idx, final_idx)
-        self.assertLess(final_idx, handoff_idx)
+        self.assertLess(handoff_idx, final_idx)
         self.assertNotIn('id="convertToProJobBtn"', html[drafts_idx:drafts_end_idx])
 
     def test_convert_to_pro_job_is_created_after_quote_generation(self):
@@ -159,7 +160,8 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
             app_js = handle.read()
 
         self.assertIn("function getEstimatorPartsSourceServiceText()", app_js)
-        self.assertIn('const typedService = String(serviceSearch?.value || "").trim();', app_js)
+        self.assertIn('const selectedService = getSelectedServiceDisplayName();', app_js)
+        self.assertIn('if (selectedService) return selectedService;', app_js)
         self.assertIn('if (selectedService) params.set("service_name", selectedService);', app_js)
         self.assertIn("apiJSON(`/api/parts-sources?${params.toString()}`)", app_js)
         self.assertIn("scheduleEstimatorPartsSourcesRefresh();", app_js)

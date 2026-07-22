@@ -323,7 +323,10 @@ class EstimatorProConversionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(
+            response.headers["location"],
+            "/pro/customers/1/vehicles/1/repairs/1?converted=1&created=1",
+        )
         self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM repair_records").fetchone()[0], 1)
 
     def test_conversion_preserves_custom_service_parts_search_term(self):
@@ -758,7 +761,10 @@ class EstimatorProConversionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(
+            response.headers["location"],
+            "/pro/customers/1/vehicles/1/repairs/1?converted=1&created=1",
+        )
 
         repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
         finding = dict(self.conn.execute("SELECT * FROM findings_records WHERE id = 1").fetchone())
@@ -891,7 +897,10 @@ class EstimatorProConversionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("/pro/customers/1/vehicles/1?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(
+            response.headers["location"],
+            "/pro/customers/1/vehicles/1/repairs/1?converted=1&created=1",
+        )
         self.assertEqual(duplicate.status_code, 303)
         self.assertIn("created=0", duplicate.headers["location"])
         repairs = [dict(row) for row in self.conn.execute("SELECT * FROM repair_records").fetchall()]
@@ -964,7 +973,10 @@ class EstimatorProConversionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("/pro/customers/1/vehicles/1?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(
+            response.headers["location"],
+            "/pro/customers/1/vehicles/1/repairs/1?converted=1&created=1",
+        )
         self.assertIn("appointment_id=", edit_url)
         repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
         appointment = dict(self.conn.execute("SELECT * FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone())
@@ -1001,7 +1013,7 @@ class EstimatorProConversionTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('href="/pro/customers/1/vehicles/1/repairs/9"', response.text)
-        self.assertIn("Open Pro Job", response.text)
+        self.assertIn("Open Repair Order", response.text)
 
     def test_estimate_conversion_missing_link_fallbacks_do_not_match_by_name(self):
         self.seed_customer_vehicle(customer_id=2, vehicle_id=2, first_name="Samm")
@@ -1170,7 +1182,10 @@ class EstimatorProConversionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("/pro/customers/2/vehicles/2?converted=1&created=1#repair-workspace", response.headers["location"])
+        self.assertEqual(
+            response.headers["location"],
+            "/pro/customers/2/vehicles/2/repairs/1?converted=1&created=1",
+        )
         repair = dict(self.conn.execute("SELECT * FROM repair_records").fetchone())
         appointment = dict(self.conn.execute("SELECT * FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone())
         self.assertEqual(repair["customer_id"], 2)
@@ -1237,7 +1252,7 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.assertEqual(repairs[0]["workflow_source_id"], 77)
         self.assertEqual(appointment["status"], "Converted")
         self.assertEqual(appointment["repair_id"], repairs[0]["id"])
-        self.assertIn("Open Pro Job", conversion_page.text)
+        self.assertIn("Open Repair Order", conversion_page.text)
         self.assertIn("Converted to Pro Job", calendar.text)
         self.assertIn(f'href="/pro/customers/1/vehicles/1/repairs/{repairs[0]["id"]}"', calendar.text)
         self.assertNotIn("Create Estimate", calendar.text)

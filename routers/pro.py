@@ -3,6 +3,7 @@ import base64
 import hashlib
 import hmac
 import logging
+import math
 import os
 import re
 import sqlite3
@@ -80,6 +81,9 @@ DEFAULT_SHOP_TIMEZONE = "America/Los_Angeles"
 AUTH_SESSION_USER_KEY = "user_id"
 AUTH_SESSION_CSRF_KEY = "csrf_token"
 AUTH_SESSION_BOOTSTRAP_KEY = "bootstrap_verified"
+PRO_SOLO_PLAN_CODE = "pro_solo"
+PRO_SOLO_PLAN_NAME = "TorqueMech Pro Solo"
+PRO_SOLO_TRIAL_DAYS = 14
 PASSWORD_HASH_ITERATIONS = 390000
 try:
     SHOP_ZONEINFO = ZoneInfo(DEFAULT_SHOP_TIMEZONE)
@@ -2749,6 +2753,233 @@ def load_shop_profile_context(
     except sqlite3.OperationalError:
         return {}
     return normalize_shop_profile_context(dict(row) if row else {})
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def utc_now_iso() -> str:
+    return utc_now().isoformat()
+
+
+def parse_utc_datetime(value: Any) -> datetime | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def create_shop_subscription_table(conn: sqlite3.Connection, table_name: str = "shop_subscriptions") -> None:
+    conn.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL UNIQUE,
+          plan_code TEXT NOT NULL DEFAULT '{PRO_SOLO_PLAN_CODE}',
+          status TEXT NOT NULL,
+          trial_started_at TEXT,
+          trial_ends_at TEXT,
+          current_period_started_at TEXT,
+          current_period_ends_at TEXT,
+          canceled_at TEXT,
+          access_grace_ends_at TEXT,
+          stripe_customer_id TEXT,
+          stripe_subscription_id TEXT,
+          stripe_price_id TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (shop_id) REFERENCES shop_profile(id)
+        )
+        """
+    )
+
+
+def ensure_shop_subscription_schema(conn: sqlite3.Connection) -> None:
+    create_shop_subscription_table(conn)
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_subscriptions_shop_id ON shop_subscriptions (shop_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_subscriptions_status ON shop_subscriptions (status)")
+    conn.commit()
+
+
+def load_shop_subscription(conn: sqlite3.Connection, shop_id: int | None) -> dict[str, Any] | None:
+    if not shop_id:
+        return None
+    try:
+        row = conn.execute(
+            "SELECT * FROM shop_subscriptions WHERE shop_id = ? LIMIT 1",
+            (shop_id,),
+        ).fetchone()
+    except Exception as exc:
+        message = str(exc).lower()
+        if isinstance(exc, sqlite3.OperationalError) or "shop_subscriptions" in message:
+            return None
+        raise
+    return dict(row) if row else None
+
+
+def create_or_ensure_shop_subscription(
+    conn: sqlite3.Connection,
+    shop_id: int,
+    *,
+    now: datetime | None = None,
+    status: str = "trialing",
+) -> dict[str, Any]:
+    existing = load_shop_subscription(conn, shop_id)
+    if existing:
+        return existing
+    current = (now or utc_now()).astimezone(timezone.utc)
+    created_at = current.isoformat()
+    trial_ends_at = (current + timedelta(days=PRO_SOLO_TRIAL_DAYS)).isoformat() if status == "trialing" else None
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO shop_subscriptions (
+          shop_id, plan_code, status, trial_started_at, trial_ends_at,
+          current_period_started_at, current_period_ends_at, canceled_at,
+          access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
+          stripe_price_id, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?)
+        """,
+        (
+            shop_id,
+            PRO_SOLO_PLAN_CODE,
+            status,
+            created_at if status == "trialing" else None,
+            trial_ends_at,
+            created_at,
+            created_at,
+        ),
+    )
+    return load_shop_subscription(conn, shop_id) or {
+        "shop_id": shop_id,
+        "plan_code": PRO_SOLO_PLAN_CODE,
+        "status": status,
+        "trial_started_at": created_at if status == "trialing" else None,
+        "trial_ends_at": trial_ends_at,
+        "created_at": created_at,
+        "updated_at": created_at,
+    }
+
+
+def trial_days_remaining(subscription: dict[str, Any] | None, now: datetime | None = None) -> int:
+    if not subscription:
+        return 0
+    ends_at = parse_utc_datetime(subscription.get("trial_ends_at"))
+    if not ends_at:
+        return 0
+    current = (now or utc_now()).astimezone(timezone.utc)
+    seconds = (ends_at - current).total_seconds()
+    if seconds <= 0:
+        return 0
+    return max(1, math.ceil(seconds / 86400))
+
+
+def resolve_shop_access(
+    subscription: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
+    shop_id: int | None = None,
+) -> dict[str, Any]:
+    current = (now or utc_now()).astimezone(timezone.utc)
+    if not shop_id:
+        return {
+            "status": "none",
+            "plan_code": PRO_SOLO_PLAN_CODE,
+            "plan_name": PRO_SOLO_PLAN_NAME,
+            "can_view": False,
+            "can_write": False,
+            "can_manage_billing": False,
+            "trial_days_remaining": 0,
+            "trial_ends_at": None,
+            "access_ends_at": None,
+            "reason": "no_shop",
+        }
+    if not subscription:
+        return {
+            "status": "development",
+            "plan_code": PRO_SOLO_PLAN_CODE,
+            "plan_name": PRO_SOLO_PLAN_NAME,
+            "can_view": True,
+            "can_write": True,
+            "can_manage_billing": True,
+            "trial_days_remaining": 0,
+            "trial_ends_at": None,
+            "access_ends_at": None,
+            "reason": "development_access",
+        }
+
+    status = str(subscription.get("status") or "").strip().lower() or "unknown"
+    trial_ends_at = parse_utc_datetime(subscription.get("trial_ends_at"))
+    current_period_ends_at = parse_utc_datetime(subscription.get("current_period_ends_at"))
+    access_grace_ends_at = parse_utc_datetime(subscription.get("access_grace_ends_at"))
+    can_write = False
+    reason = "inactive"
+    access_ends_at = None
+
+    if status == "development":
+        can_write = True
+        reason = "development_access"
+    elif status == "trialing":
+        can_write = bool(trial_ends_at and trial_ends_at > current)
+        reason = "trial_active" if can_write else "trial_expired"
+        access_ends_at = trial_ends_at
+    elif status == "active":
+        can_write = not current_period_ends_at or current_period_ends_at > current
+        reason = "subscription_active" if can_write else "subscription_period_ended"
+        access_ends_at = current_period_ends_at
+    elif status == "canceled":
+        can_write = bool(current_period_ends_at and current_period_ends_at > current)
+        reason = "canceled_period_active" if can_write else "canceled_period_ended"
+        access_ends_at = current_period_ends_at
+    elif status == "past_due":
+        can_write = bool(access_grace_ends_at and access_grace_ends_at > current)
+        reason = "past_due_grace" if can_write else "past_due_grace_expired"
+        access_ends_at = access_grace_ends_at
+    elif status in {"expired", "unpaid", "incomplete"}:
+        reason = status
+
+    can_view = True
+    access_ends_iso = access_ends_at.isoformat() if access_ends_at else None
+    return {
+        "status": status,
+        "plan_code": str(subscription.get("plan_code") or PRO_SOLO_PLAN_CODE),
+        "plan_name": PRO_SOLO_PLAN_NAME,
+        "can_view": can_view,
+        "can_write": can_write,
+        "can_manage_billing": can_view,
+        "trial_days_remaining": trial_days_remaining(subscription, current),
+        "trial_ends_at": trial_ends_at.isoformat() if trial_ends_at else None,
+        "access_ends_at": access_ends_iso,
+        "reason": reason,
+    }
+
+
+def shop_subscription_access_context(
+    conn: sqlite3.Connection,
+    shop_id: int | None,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    return resolve_shop_access(load_shop_subscription(conn, shop_id), now=now, shop_id=shop_id)
+
+
+def shop_can_view(access: dict[str, Any] | None) -> bool:
+    return bool((access or {}).get("can_view"))
+
+
+def shop_can_write(access: dict[str, Any] | None) -> bool:
+    return bool((access or {}).get("can_write"))
+
+
+def shop_can_manage_billing(access: dict[str, Any] | None) -> bool:
+    return bool((access or {}).get("can_manage_billing"))
 
 
 def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: int | None = None) -> dict[str, Any]:
@@ -6380,6 +6611,10 @@ def create_invoice_for_repairs(
             status_code=400,
             detail="Add labor, parts, or an invoice adjustment before finalizing this invoice.",
         )
+    warranty_text = str(
+        invoice_options.get("warranty_text", shop_profile.get("warranty_note") or "")
+        or ""
+    ).strip()
     primary_repair = selected_repairs[0]
     cur = conn.execute(
         """
@@ -6404,7 +6639,7 @@ def create_invoice_for_repairs(
             grand_total,
             0.0,
             "No Charge" if grand_total <= 0 and no_charge_reason else "Unpaid",
-            "",
+            warranty_text,
             no_charge_reason,
             now,
         ),
@@ -7331,7 +7566,7 @@ def build_invoice_pdf_bytes(
 
                 y -= 12
 
-    
+    draw_footer()
     c.save()
     return buf.getvalue()
 

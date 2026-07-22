@@ -3,6 +3,7 @@ import json
 import sqlite3
 import shutil
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
@@ -16,7 +17,7 @@ from routers import pro as pro_module
 WORKSPACE_TMP = Path(__file__).resolve().parent.parent / "tmp"
 
 
-def auth_session_client(conn, base_url="http://localhost", email="owner@example.com"):
+def auth_session_client(conn, base_url="http://localhost", email="owner@example.com", booking_slug="torquemech-shop"):
     pro_module.ensure_auth_schema(conn)
     pro_module.ensure_shop_profile_schema(conn)
     now = "2026-07-12T00:00:00"
@@ -36,6 +37,11 @@ def auth_session_client(conn, base_url="http://localhost", email="owner@example.
         if column in user_columns:
             conn.execute(f"UPDATE users SET {column} = ? WHERE id = ?", (now, user_id))
     shop_id = pro_module.bootstrap_existing_shop_to_user(conn, user_id, "Test Shop")
+    if booking_slug:
+        conn.execute(
+            "UPDATE shop_profile SET booking_slug = ? WHERE id = ?",
+            (booking_slug, shop_id),
+        )
     session_id = f"test-session-{user_id}"
     conn.execute(
         """
@@ -48,6 +54,32 @@ def auth_session_client(conn, base_url="http://localhost", email="owner@example.
     client = TestClient(main.app, base_url=base_url)
     client.cookies.set(main.SESSION_COOKIE_NAME, session_id)
     return client, user_id, shop_id
+
+
+def future_weekday(target_weekday: int, *, min_days: int = 14) -> str:
+    candidate = pro_module.shop_today() + timedelta(days=min_days)
+    offset = (target_weekday - candidate.weekday()) % 7
+    if offset == 0:
+        offset = 7
+    return (candidate + timedelta(days=offset)).isoformat()
+
+
+def ensure_test_booking_shop(conn, *, booking_slug: str = "torquemech-shop", shop_name: str = "TorqueMech Shop") -> int:
+    pro_module.ensure_shop_profile_schema(conn)
+    pro_module.ensure_calendar_schema(conn)
+    conn.execute(
+        """
+        INSERT INTO shop_profile (id, shop_name, booking_slug, updated_at)
+        VALUES (1, ?, ?, '2026-07-22T12:00:00')
+        ON CONFLICT(id) DO UPDATE SET
+          shop_name = excluded.shop_name,
+          booking_slug = excluded.booking_slug,
+          updated_at = excluded.updated_at
+        """,
+        (shop_name, booking_slug),
+    )
+    conn.commit()
+    return 1
 
 
 def assign_shop_scope(conn, shop_id):
@@ -186,6 +218,8 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            ensure_test_booking_shop(conn)
+            requested_date = future_weekday(0)
             with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
                     os.environ,
                     {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
@@ -200,7 +234,7 @@ class CalendarFoundationTests(unittest.TestCase):
                         "customer_email": "natalie@example.com",
                         "vehicle_label": "2008 Toyota Sequoia",
                         "service_name": "Oil Change",
-                        "requested_date": "2026-07-13",
+                        "requested_date": requested_date,
                         "requested_time": "09:00",
                         "notes": "Morning preferred",
                     },
@@ -219,6 +253,8 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            ensure_test_booking_shop(conn)
+            requested_date = future_weekday(0)
             pro_module.save_shop_availability(
                 conn,
                 [
@@ -226,6 +262,7 @@ class CalendarFoundationTests(unittest.TestCase):
                 ],
                 appointment_length_minutes=60,
                 buffer_minutes=0,
+                shop_id=1,
             )
             with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
                     os.environ,
@@ -240,7 +277,7 @@ class CalendarFoundationTests(unittest.TestCase):
                         "customer_email": "natalie@example.com",
                         "vehicle_label": "2008 Toyota Sequoia",
                         "service_name": "Oil Change",
-                        "requested_date": "2026-07-13",
+                        "requested_date": requested_date,
                         "requested_time": "09:30",
                         "notes": "",
                     },
@@ -258,6 +295,8 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            booked_date = future_weekday(0)
+            closed_date = future_weekday(1)
             pro_module.save_shop_availability(
                 conn,
                 [
@@ -274,13 +313,13 @@ class CalendarFoundationTests(unittest.TestCase):
                     "customer_phone": "5555550100",
                     "vehicle_label": "Existing Vehicle",
                     "service_name": "Existing Service",
-                    "requested_date": "2026-07-13",
+                    "requested_date": booked_date,
                     "requested_time": "10:00",
                     "status": "Confirmed",
                 },
             )
-            closed, closed_message = pro_module.is_closed_booking_day(conn, "2026-07-14")
-            available, conflict_message = pro_module.is_booking_time_available(conn, "2026-07-13", "11:00", 60)
+            closed, closed_message = pro_module.is_closed_booking_day(conn, closed_date)
+            available, conflict_message = pro_module.is_booking_time_available(conn, booked_date, "11:00", 60)
         finally:
             sqlite3.Connection.close(conn)
 
@@ -296,11 +335,13 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            ensure_test_booking_shop(conn)
             pro_module.save_shop_availability(
                 conn,
                 [{"day_of_week": 0, "is_open": True, "start_time": "08:30", "end_time": "16:30"}],
                 appointment_length_minutes=90,
                 buffer_minutes=15,
+                shop_id=1,
             )
             with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
                     os.environ,
@@ -326,6 +367,8 @@ class CalendarFoundationTests(unittest.TestCase):
     def test_available_time_dropdown_excludes_pending_and_confirmed_slots(self):
         conn = self.memory_conn()
         try:
+            booked_date = future_weekday(0)
+            closed_date = future_weekday(1)
             pro_module.save_shop_availability(
                 conn,
                 [
@@ -343,13 +386,13 @@ class CalendarFoundationTests(unittest.TestCase):
                         "customer_phone": "5555550100",
                         "vehicle_label": "Test Vehicle",
                         "service_name": "Test Service",
-                        "requested_date": "2026-07-13",
+                        "requested_date": booked_date,
                         "requested_time": requested_time,
                         "status": status,
                     },
                 )
-            result = pro_module.available_booking_times(conn, "2026-07-13")
-            closed_result = pro_module.available_booking_times(conn, "2026-07-14")
+            result = pro_module.available_booking_times(conn, booked_date)
+            closed_result = pro_module.available_booking_times(conn, closed_date)
         finally:
             conn.close()
 
@@ -432,6 +475,8 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            requested_date = future_weekday(0)
+            overflow_date = future_weekday(1)
             appointment_id = pro_module.create_service_appointment(
                 conn,
                 {
@@ -440,7 +485,7 @@ class CalendarFoundationTests(unittest.TestCase):
                     "customer_email": "customer@example.com",
                     "vehicle_label": "2020 Honda Civic",
                     "service_name": "Brake Inspection",
-                    "requested_date": "2026-07-13",
+                    "requested_date": requested_date,
                     "requested_time": "09:00",
                     "notes": "Please call first",
                     "status": "Requested",
@@ -454,7 +499,7 @@ class CalendarFoundationTests(unittest.TestCase):
                         "customer_phone": "5555550100",
                         "vehicle_label": "Test Vehicle",
                         "service_name": "Test Service",
-                        "requested_date": "2026-07-14",
+                        "requested_date": overflow_date,
                         "requested_time": f"{10 + index}:00",
                         "status": "Requested",
                     },
@@ -479,7 +524,7 @@ class CalendarFoundationTests(unittest.TestCase):
                     data={"status": "Handled"},
                     follow_redirects=False,
                 )
-                second_client, _, _ = auth_session_client(conn, email="second-owner@example.com")
+                second_client, _, _ = auth_session_client(conn, email="second-owner@example.com", booking_slug="")
                 second_calendar_page = second_client.get("/pro/calendar")
                 row = conn.execute(
                     "SELECT status FROM service_appointments WHERE id = ?",
@@ -521,6 +566,7 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            requested_date = future_weekday(0)
             pro_module.save_shop_availability(
                 conn,
                 [{"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "12:00"}],
@@ -533,7 +579,7 @@ class CalendarFoundationTests(unittest.TestCase):
                     "customer_name": "Confirmed Customer",
                     "customer_phone": "5555550100",
                     "service_name": "Brake Service",
-                    "requested_date": "2026-07-13",
+                    "requested_date": requested_date,
                     "requested_time": "09:00",
                     "status": "Confirmed",
                 },
@@ -551,21 +597,21 @@ class CalendarFoundationTests(unittest.TestCase):
                 calendar_page = client.get("/pro/calendar")
                 excluded_times = client.get(
                     f"/book/torquemech-shop/available-times"
-                    f"?date=2026-07-13&exclude_appointment_id={appointment_id}"
+                    f"?date={requested_date}&exclude_appointment_id={appointment_id}"
                 ).json()
                 reschedule_response = client.post(
                     f"/pro/calendar/{appointment_id}/reschedule",
-                    data={"requested_date": "2026-07-13", "requested_time": "10:00"},
+                    data={"requested_date": requested_date, "requested_time": "10:00"},
                     follow_redirects=False,
                 )
-                old_slot = pro_module.is_booking_time_available(conn, "2026-07-13", "09:00")
-                new_slot = pro_module.is_booking_time_available(conn, "2026-07-13", "10:00")
+                old_slot = pro_module.is_booking_time_available(conn, requested_date, "09:00")
+                new_slot = pro_module.is_booking_time_available(conn, requested_date, "10:00")
                 rescheduled_page = client.get("/pro/calendar?notice=rescheduled")
                 cancel_response = client.post(
                     f"/pro/calendar/{appointment_id}/cancel",
                     follow_redirects=False,
                 )
-                canceled_slot = pro_module.is_booking_time_available(conn, "2026-07-13", "10:00")
+                canceled_slot = pro_module.is_booking_time_available(conn, requested_date, "10:00")
                 canceled_page = client.get("/pro/calendar?notice=cancelled")
                 row = conn.execute(
                     "SELECT requested_date, requested_time, status FROM service_appointments WHERE id = ?",
@@ -720,6 +766,7 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            ensure_test_booking_shop(conn)
             pro_module.save_shop_settings(
                 conn,
                 {
@@ -1145,15 +1192,16 @@ class CalendarFoundationTests(unittest.TestCase):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         try:
+            ensure_test_booking_shop(conn)
+            requested_date = future_weekday(2)
             pro_module.save_shop_availability(
                 conn,
                 [{"day_of_week": 2, "is_open": True, "start_time": "09:00", "end_time": "17:00"}],
                 appointment_length_minutes=60,
                 buffer_minutes=0,
+                shop_id=1,
             )
-            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
-                pro_module, "shop_today", lambda: pro_module.date(2026, 7, 8)
-            ), patch.dict(
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
             ):
@@ -1168,7 +1216,7 @@ class CalendarFoundationTests(unittest.TestCase):
                         "vehicle_make": "Kia",
                         "vehicle_model": "Forte Coupe",
                         "service_name": "Brake Inspection",
-                        "requested_date": "2026-07-22",
+                        "requested_date": requested_date,
                         "requested_time": "09:00",
                         "appointment_length_minutes": "60",
                     },
@@ -1277,7 +1325,7 @@ class CalendarFoundationTests(unittest.TestCase):
         )
         template = (main.BASE_DIR / "templates" / "pro" / "shop_settings.html").read_text(encoding="utf-8")
 
-        self.assertEqual(pro_module.build_shop_booking_link({}, request), expected)
+        self.assertEqual(pro_module.build_shop_booking_link({"booking_slug": "torquemech-shop"}, request), expected)
         self.assertIn('href="{{ profile.booking_link }}" target="_blank"', template)
         self.assertIn("Send this link to customers so they can request an appointment.", template)
         self.assertIn(">Open Booking Page</a>", template)

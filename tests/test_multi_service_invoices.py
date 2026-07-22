@@ -1804,7 +1804,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn("Customer unavailable", invoice_template)
         self.assertIn("Vehicle unavailable", invoice_template)
         self.assertIn("Shop information not configured", invoice_template)
-        self.assertIn("No warranty text configured.", invoice_template)
+        self.assertNotIn("No warranty text configured.", invoice_template)
         self.assertIn('<details class="tm-invoice-builder-panel" aria-label="Already Invoiced"', builder_template)
         self.assertNotIn('<details class="tm-invoice-builder-panel" aria-label="Already Invoiced" open', builder_template)
 

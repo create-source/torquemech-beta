@@ -1,6 +1,11 @@
 import os
 import sqlite3
 import unittest
+from argparse import Namespace
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
+from unittest.mock import patch
 
 from db import PostgresCompatConnection, normalize_database_url
 from scripts import db_migration
@@ -10,6 +15,9 @@ from scripts.db_migration import (
     sqlite_table_names,
     visual_reference_child_counts,
 )
+
+
+TEST_TMP_DIR = Path(__file__).resolve().parent.parent / "tmp"
 
 
 class DatabasePortabilityTests(unittest.TestCase):
@@ -212,6 +220,90 @@ class DatabasePortabilityTests(unittest.TestCase):
         finally:
             db_migration.VISUAL_REFERENCE_CHILD_TABLES["visual_reference_hotspots"] = original_expected
             conn.close()
+
+    def test_local_subscriptions_schema_command_creates_only_expected_objects(self):
+        TEST_TMP_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_path = TEST_TMP_DIR / "test_local_subscriptions_schema_create.db"
+        sqlite_path.unlink(missing_ok=True)
+        self.addCleanup(lambda: sqlite_path.unlink(missing_ok=True))
+        with patch.dict(os.environ, {}, clear=True), patch.object(
+            db_migration.db,
+            "active_app_db_path",
+            return_value=str(sqlite_path),
+        ):
+            output = StringIO()
+            with redirect_stdout(output):
+                db_migration.apply_subscriptions_schema_local(Namespace())
+
+        conn = sqlite3.connect(sqlite_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT type, name
+                FROM sqlite_master
+                WHERE name NOT LIKE 'sqlite_%'
+                ORDER BY type, name
+                """
+            ).fetchall()
+        finally:
+            conn.close()
+
+        self.assertIn(str(sqlite_path.resolve()), output.getvalue())
+        self.assertEqual(
+            rows,
+            [
+                ("index", "idx_shop_subscriptions_shop_id"),
+                ("index", "idx_shop_subscriptions_status"),
+                ("table", "shop_subscriptions"),
+            ],
+        )
+
+    def test_local_subscriptions_schema_command_is_idempotent(self):
+        TEST_TMP_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_path = TEST_TMP_DIR / "test_local_subscriptions_schema_idempotent.db"
+        sqlite_path.unlink(missing_ok=True)
+        self.addCleanup(lambda: sqlite_path.unlink(missing_ok=True))
+        with patch.dict(os.environ, {}, clear=True), patch.object(
+            db_migration.db,
+            "active_app_db_path",
+            return_value=str(sqlite_path),
+        ):
+            db_migration.apply_subscriptions_schema_local(Namespace())
+            db_migration.apply_subscriptions_schema_local(Namespace())
+
+        conn = sqlite3.connect(sqlite_path)
+        try:
+            count = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM sqlite_master
+                WHERE name IN (
+                  'shop_subscriptions',
+                  'idx_shop_subscriptions_shop_id',
+                  'idx_shop_subscriptions_status'
+                )
+                """
+            ).fetchone()[0]
+        finally:
+            conn.close()
+
+        self.assertEqual(count, 3)
+
+    def test_local_subscriptions_schema_command_refuses_when_database_url_is_set(self):
+        TEST_TMP_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_path = TEST_TMP_DIR / "test_local_subscriptions_schema_refusal.db"
+        sqlite_path.unlink(missing_ok=True)
+        self.addCleanup(lambda: sqlite_path.unlink(missing_ok=True))
+        with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///local.db"}, clear=True), patch.object(
+            db_migration.db,
+            "active_app_db_path",
+            return_value=str(sqlite_path),
+        ):
+            with self.assertRaises(SystemExit) as raised:
+                db_migration.apply_subscriptions_schema_local(Namespace())
+
+        self.assertIn("DATABASE_URL is set", str(raised.exception))
+        self.assertFalse(sqlite_path.exists())
 
 
 if __name__ == "__main__":

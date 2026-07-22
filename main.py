@@ -32,6 +32,7 @@ from routers.pro import (
     AUTH_SESSION_USER_KEY,
     AUTH_SESSION_BOOTSTRAP_KEY,
     bootstrap_existing_shop_to_user,
+    create_or_ensure_shop_subscription,
     create_shop_profile_for_user,
     csrf_token,
     current_shop_context,
@@ -48,6 +49,7 @@ from routers.pro import (
     repair_workspace_parts_sources,
     router as pro_router,
     safe_next_url,
+    shop_subscription_access_context,
     validate_csrf,
     verification_token_hash,
     verify_password,
@@ -1672,12 +1674,18 @@ async def add_request_id_middleware(request: Request, call_next):
 async def auth_context_middleware(request: Request, call_next):
     request.state.current_user = None
     request.state.current_shop = {}
+    request.state.subscription_access = {}
     try:
         conn = app_db_conn(row_factory=True)
         try:
             user = current_user(conn, request)
             request.state.current_user = user
-            request.state.current_shop = current_shop_context(conn, request) if user else {}
+            if user:
+                request.state.current_shop = current_shop_context(conn, request)
+                request.state.subscription_access = shop_subscription_access_context(
+                    conn,
+                    int(request.state.current_shop.get("id") or 0) or None,
+                )
         finally:
             conn.close()
     except Exception:
@@ -3026,6 +3034,14 @@ def verify_email(request: Request, token: str = ""):
             """,
             (now, now, int(user["id"])),
         )
+        shop_row = conn.execute(
+            "SELECT id FROM shop_profile WHERE owner_user_id = ? LIMIT 1",
+            (int(user["id"]),),
+        ).fetchone()
+        shop_id = int(shop_row["id"]) if shop_row else None
+        if shop_id is None:
+            shop_id = create_shop_profile_for_user(conn, int(user["id"]))
+        create_or_ensure_shop_subscription(conn, int(shop_id))
         conn.commit()
         login_session(request, int(user["id"]))
     finally:

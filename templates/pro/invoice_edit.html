@@ -221,7 +221,7 @@
             ("show_labor_total", "Show labor total"),
             ("show_parts_total", "Show parts total"),
             ("show_repair_notes", "Show repair notes"),
-            ("show_final_inspection_notes", "Show final inspection comments")
+            ("show_final_inspection_notes", "Show final inspection comments"),
             ("include_after_service_education", "Include after-service care instructions")
           ] %}
           <label class="tm-invoice-option"><input type="checkbox" name="{{ key }}" value="1" {% if (form_values and form_values.get(key) == "1") or ((not form_values) and invoice.pdf_display_options.get(key)) %}checked{% endif %}><span>{{ label }}</span></label>

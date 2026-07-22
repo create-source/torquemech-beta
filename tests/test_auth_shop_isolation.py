@@ -3,6 +3,7 @@ import re
 import sqlite3
 import unittest
 import html
+from datetime import timedelta
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
@@ -10,6 +11,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 import main
+import db
 from routers import pro as pro_module
 
 
@@ -30,6 +32,14 @@ def csrf_from(html: str) -> str:
 
 def verification_urls_from_text(text: str) -> list[str]:
     return re.findall(r"https?://[^\s\"'<>]+/verify-email\?token=[^\s\"'<>]+", text)
+
+
+def future_weekday(target_weekday: int, *, min_days: int = 14) -> str:
+    candidate = pro_module.shop_today() + timedelta(days=min_days)
+    offset = (target_weekday - candidate.weekday()) % 7
+    if offset == 0:
+        offset = 7
+    return (candidate + timedelta(days=offset)).isoformat()
 
 
 class AuthShopIsolationTests(unittest.TestCase):
@@ -63,6 +73,8 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.addCleanup(self.env_patch.stop)
         pro_module.ensure_auth_schema(self.conn)
         pro_module.ensure_shop_profile_schema(self.conn)
+        pro_module.ensure_shop_subscription_schema(self.conn)
+        pro_module.ensure_calendar_schema(self.conn)
 
     def client(self):
         return TestClient(main.app, base_url="http://localhost")
@@ -1794,6 +1806,7 @@ class AuthShopIsolationTests(unittest.TestCase):
     def test_shop_settings_and_calendar_are_isolated(self):
         client_one = self.client()
         self.bootstrap_owner(client_one, email="one@example.com", shop_name="Alpha Shop")
+        requested_date = future_weekday(0)
         client_one.post(
             "/pro/shop-settings",
             data={"shop_name": "Alpha Updated", "default_labor_rate": "125"},
@@ -1806,7 +1819,7 @@ class AuthShopIsolationTests(unittest.TestCase):
                 "customer_phone": "5551112222",
                 "vehicle_label": "2010 Honda Accord",
                 "service_name": "Brake Inspection",
-                "requested_date": "2026-07-13",
+                "requested_date": requested_date,
                 "requested_time": "09:00",
                 "status": "Requested",
             },
@@ -1878,10 +1891,23 @@ class EmailVerificationTokenPersistenceTests(unittest.TestCase):
             patch.object(pro_module, "LOCAL_FALLBACK_DB_PATH", str(self.fallback_db)),
             patch.object(pro_module, "LOCAL_DB_MARKER_PATH", self.marker_path),
             patch.object(pro_module, "USE_LOCAL_SQLITE_COMPAT", True),
+            patch.object(db, "DB_PATH", str(self.primary_db)),
+            patch.object(db, "LOCAL_FALLBACK_DB_PATH", str(self.fallback_db)),
+            patch.object(db, "LOCAL_DB_MARKER_PATH", self.marker_path),
+            patch.object(db, "USE_LOCAL_SQLITE_COMPAT", True),
         ]
         for patcher in self.patches:
             patcher.start()
             self.addCleanup(patcher.stop)
+        for db_path in (self.primary_db, self.fallback_db):
+            conn = sqlite3.connect(db_path)
+            conn.row_factory = sqlite3.Row
+            try:
+                pro_module.ensure_auth_schema(conn)
+                pro_module.ensure_shop_profile_schema(conn)
+                pro_module.ensure_shop_subscription_schema(conn)
+            finally:
+                conn.close()
 
     def client(self):
         return TestClient(main.app, base_url="http://localhost")
