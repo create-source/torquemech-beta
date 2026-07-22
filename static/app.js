@@ -1553,6 +1553,8 @@
   const serviceCategoryRequests = new Map();
   let allServiceOptionsRequest = null;
   let loadServicesRequestId = 0;
+  let serviceCatalogSearchTimer = null;
+  let serviceCatalogSearchRequestId = 0;
   let serviceSearch = null;
   let serviceResults = null;
   const SERVICE_SEARCH_PLACEHOLDER = "Search services or symptoms...";
@@ -5594,12 +5596,28 @@ const confidenceEl = document.getElementById("laborConfidence");
     const searchOptions =
       shouldSearchAllServices && allServiceOptions.length ? allServiceOptions : serviceOptions;
     const seenServiceCodes = new Set();
+    const seenServiceNames = new Set();
     const filtered = searchOptions
       .filter((service) => {
         if (!serviceMatchesSearch(service, normalizedQuery)) return false;
-        const serviceKey = service.code || service.name;
-        if (seenServiceCodes.has(serviceKey)) return false;
-        seenServiceCodes.add(serviceKey);
+
+        // Treat legacy aliases as the same service as their current catalog code.
+        // This prevents entries such as the generic Brake Pad Replacement alias
+        // from appearing beside Front Brake Pads Replacement.
+        const canonicalCode = resolveIncomingServiceCode(service.code) || service.code || service.name;
+        const displayName = cleanCustomerFacingServiceLabel(
+          service.code,
+          service.name || service.code || "Service",
+          getActiveVehicle()
+        );
+        const normalizedName = normalizeServiceSearch(displayName);
+
+        if (seenServiceCodes.has(canonicalCode) || seenServiceNames.has(normalizedName)) {
+          return false;
+        }
+
+        seenServiceCodes.add(canonicalCode);
+        seenServiceNames.add(normalizedName);
         return true;
       })
       .slice(0, 8);
@@ -7618,18 +7636,42 @@ if (getEstimateHint) {
     }
   });
 
-  serviceSearch?.addEventListener("input", async () => {
+  function scheduleFullServiceCatalogSearch(searchValue, delayMs = 180) {
+    clearTimeout(serviceCatalogSearchTimer);
+    const requestId = ++serviceCatalogSearchRequestId;
+    const normalizedValue = String(searchValue || "").trim();
+
+    if (normalizedValue.length < 2 || hasManualCategoryFilter()) return;
+
+    serviceCatalogSearchTimer = setTimeout(async () => {
+      try {
+        await ensureAllServiceOptions(normalizedValue);
+
+        // Ignore a completed request when the user has already typed something else.
+        if (requestId !== serviceCatalogSearchRequestId) return;
+        if (serviceSearch?.value.trim() !== normalizedValue) return;
+
+        renderServiceResults(normalizedValue);
+      } catch (error) {
+        console.warn("Full service catalog search failed", error);
+      }
+    }, delayMs);
+  }
+
+  serviceSearch?.addEventListener("input", () => {
     if (!serviceEl) return;
 
     const searchValue = serviceSearch.value.trim();
     updateServiceClearButton();
 
     clearTimeout(searchDebounceTimer);
+    clearTimeout(serviceCatalogSearchTimer);
+    serviceCatalogSearchRequestId += 1;
 
     if (searchValue.length >= 2) {
       searchDebounceTimer = setTimeout(() => {
         trackClarity("search_submit", { query: searchValue });
-      }, 500); // 500ms delay
+      }, 500);
     }
 
     serviceEl.value = "";
@@ -7641,24 +7683,23 @@ if (getEstimateHint) {
       serviceOptions = [];
     }
 
-    if (!hasManualCategoryFilter()) {
-      await ensureAllServiceOptions(serviceSearch.value);
-    }
+    // Show anything already cached immediately, then expand to all 788 services
+    // only after the user pauses typing.
+    renderServiceResults(searchValue);
+    scheduleFullServiceCatalogSearch(searchValue);
 
-    renderServiceResults(serviceSearch.value);
-    await loadServiceMeta("");
+    void loadServiceMeta("");
     updateServiceClearButton();
     updateEstimateButtonState();
     scheduleEstimatorPartsSourcesRefresh();
   });
 
-  serviceSearch?.addEventListener("focus", async () => {
-    if (serviceSearch.value.trim()) {
-      if (!hasManualCategoryFilter()) {
-        await ensureAllServiceOptions(serviceSearch.value);
-      }
-      renderServiceResults(serviceSearch.value);
-    }
+  serviceSearch?.addEventListener("focus", () => {
+    const searchValue = serviceSearch.value.trim();
+    if (!searchValue) return;
+
+    renderServiceResults(searchValue);
+    scheduleFullServiceCatalogSearch(searchValue, 0);
   });
 
   serviceSearch?.addEventListener("blur", () => {
