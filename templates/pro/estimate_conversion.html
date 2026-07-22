@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Convert Estimate to Pro Job | TorqueMech{% endblock %}
+{% block title %}Create Repair Order | TorqueMech{% endblock %}
 
 {% block page_css %}
 <style>
@@ -283,6 +283,31 @@
     font-weight: 900;
   }
 
+
+  .tm-pro-shell--estimate-conversion .tm-pro-pagehead {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-pro-pagehead > div {
+    min-width: 0;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-pro-title {
+    max-width: 18ch;
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3.15rem);
+    line-height: 1.02;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .tm-pro-shell--estimate-conversion .tm-pro-subtitle {
+    max-width: 62ch;
+    margin-top: 8px;
+    line-height: 1.45;
+  }
+
   @media (max-width: 760px) {
     .tm-pro-shell--estimate-conversion {
       width: 100%;
@@ -294,6 +319,18 @@
     .tm-pro-shell--estimate-conversion .tm-pro-pagehead {
       min-width: 0;
       padding-top: 8px;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-pro-title {
+      max-width: none;
+      font-size: clamp(1.75rem, 8vw, 2.25rem);
+      line-height: 1.05;
+    }
+
+    .tm-pro-shell--estimate-conversion .tm-pro-subtitle {
+      margin-top: 7px;
+      font-size: .92rem;
+      line-height: 1.4;
     }
 
     .tm-pro-shell--estimate-conversion .tm-convert-panel,
@@ -347,8 +384,8 @@
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
-      <h1 class="tm-pro-title">Convert Estimate to Pro Job</h1>
-      <p class="tm-pro-subtitle">Turn this estimate into active repair jobs for a customer vehicle.</p>
+      <h1 class="tm-pro-title">Create Repair Order</h1>
+      <p class="tm-pro-subtitle">Review the approved estimate and create active repair jobs for this customer vehicle.</p>
     </div>
     <a class="tm-btn tm-btn-secondary" href="/estimator">Back to Estimator</a>
   </div>
@@ -401,7 +438,7 @@
       </div>
       <div class="tm-linked-actions">
         {% if linked_context.existing_repair_url %}
-        <a class="tm-btn tm-btn-primary" href="{{ linked_context.existing_repair_url }}">Open Pro Job</a>
+        <a class="tm-btn tm-btn-primary" href="{{ linked_context.existing_repair_url }}">Open Repair Order</a>
         {% endif %}
         <button class="tm-btn tm-btn-secondary" type="button" data-change-linked-records>Change Customer or Vehicle</button>
       </div>
@@ -503,8 +540,8 @@
       <div class="tm-convert-step-head">
         <div>
           <div class="tm-convert-step-kicker">{% if linked_context.valid %}Next Step{% else %}Step 3{% endif %}</div>
-          <h2>Import Services</h2>
-          <p class="tm-pro-subtitle" style="margin:4px 0 0;">Select services to create as repair jobs.</p>
+          <h2>Approved Services</h2>
+          <p class="tm-pro-subtitle" style="margin:4px 0 0;">Select the approved services that should become active repair jobs.</p>
         </div>
       </div>
       <div class="tm-convert-services">

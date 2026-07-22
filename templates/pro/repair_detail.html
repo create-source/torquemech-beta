@@ -150,6 +150,96 @@
     margin:0;
     accent-color:#2563eb;
   }
+  .tm-final-inspection-card {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #f59e0b;
+    border-left-width: 6px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #fff7ed 0%, #fffbeb 100%);
+    box-shadow: 0 10px 24px rgba(217, 119, 6, .14);
+    transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+  }
+  .tm-final-inspection-card.is-passed {
+    border-color: #16a34a;
+    background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 100%);
+    box-shadow: 0 10px 24px rgba(22, 163, 74, .12);
+  }
+  .tm-final-inspection-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .tm-final-inspection-head .tm-completion-title {
+    font-size: 1.12rem;
+  }
+  .tm-final-inspection-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #451a03;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+  }
+  .tm-final-inspection-card.is-passed .tm-final-inspection-badge {
+    background: #16a34a;
+    color: #ffffff;
+  }
+  .tm-final-inspection-copy {
+    margin: 0;
+    color: #78350f;
+    font-size: .88rem;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+  .tm-final-inspection-card.is-passed .tm-final-inspection-copy {
+    color: #166534;
+  }
+  .tm-final-inspection-card .tm-completion-check {
+    min-height: 64px;
+    border: 2px solid rgba(217, 119, 6, .34);
+    font-size: 1rem;
+  }
+  .tm-final-inspection-card.is-passed .tm-completion-check {
+    border-color: rgba(22, 163, 74, .36);
+    background: #ffffff;
+  }
+  .tm-final-inspection-message {
+    margin: 0;
+    color: #92400e;
+    font-size: .82rem;
+    font-weight: 850;
+  }
+  .tm-final-inspection-card.is-passed .tm-final-inspection-message {
+    color: #166534;
+  }
+  .tm-completion-submit-wrap {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+  }
+  .tm-completion-submit-wrap .tm-btn {
+    width: 100%;
+  }
+  .tm-completion-submit-hint {
+    margin: 0;
+    color: #92400e;
+    font-size: .82rem;
+    font-weight: 800;
+    text-align: center;
+  }
+  .tm-completion-submit-wrap.is-ready .tm-completion-submit-hint {
+    color: #166534;
+  }
+
   .tm-completion-warning {
     border:1px solid rgba(217,119,6,.28);
     border-radius:8px;
@@ -616,12 +706,23 @@
         <textarea class="tm-input" id="completion_notes" name="completion_notes" rows="5" maxlength="2400" placeholder="Optional notes for the final invoice.">{{ completion.completion_notes or "" }}</textarea>
       </section>
 
-      <section class="tm-completion-section" aria-label="Final Inspection">
-        <h3 class="tm-completion-title">Final Inspection</h3>
+      <section class="tm-completion-section tm-final-inspection-card{% if completion.final_inspection_passed %} is-passed{% endif %}" aria-label="Final Inspection" data-final-inspection-card>
+        <div class="tm-final-inspection-head">
+          <div>
+            <h3 class="tm-completion-title">Final Inspection Required</h3>
+            <p class="tm-final-inspection-copy">Confirm the completed repair passed final inspection before creating the final invoice.</p>
+          </div>
+          <span class="tm-final-inspection-badge" data-final-inspection-badge>
+            {% if completion.final_inspection_passed %}Inspection Passed{% else %}Required before invoice{% endif %}
+          </span>
+        </div>
         <label class="tm-completion-check" for="final_inspection_passed">
           <input id="final_inspection_passed" name="final_inspection_passed" type="checkbox" value="1" {% if completion.final_inspection_passed %}checked{% endif %}>
-          <span>Passed (required)</span>
+          <span>I confirm this repair passed final inspection</span>
         </label>
+        <p class="tm-final-inspection-message" data-final-inspection-message aria-live="polite">
+          {% if completion.final_inspection_passed %}Final inspection is complete. You may mark the repair completed.{% else %}This required confirmation unlocks repair completion and final invoicing.{% endif %}
+        </p>
         <label class="tm-label" for="final_inspection_notes">Final Inspection Comments (optional)</label>
         <textarea class="tm-input" id="final_inspection_notes" name="final_inspection_notes" rows="4" maxlength="1600">{{ completion.final_inspection_notes or "" }}</textarea>
       </section>
@@ -701,7 +802,10 @@
       </section>
 
       <div class="tm-completion-actions">
-        <button class="tm-btn tm-btn-primary" type="submit">Mark Repair Completed</button>
+        <div class="tm-completion-submit-wrap" data-completion-submit-wrap>
+          <button class="tm-btn tm-btn-primary" type="submit" data-completion-submit>Complete Final Inspection to Continue</button>
+          <p class="tm-completion-submit-hint" data-completion-submit-hint>Final Inspection must be passed before the repair can be completed and invoiced.</p>
+        </div>
         {% if repair.is_formally_completed %}
         <span class="tm-status-chip tm-status-chip--completed">Completed</span>
         {% endif %}
@@ -897,5 +1001,47 @@
       updateCount(picker);
     });
   })();
+
+  (() => {
+    const form = document.querySelector(".tm-completion-form");
+    const inspection = document.getElementById("final_inspection_passed");
+    const card = document.querySelector("[data-final-inspection-card]");
+    const badge = document.querySelector("[data-final-inspection-badge]");
+    const message = document.querySelector("[data-final-inspection-message]");
+    const submit = document.querySelector("[data-completion-submit]");
+    const submitWrap = document.querySelector("[data-completion-submit-wrap]");
+    const submitHint = document.querySelector("[data-completion-submit-hint]");
+    if (!form || !inspection || !submit) return;
+
+    const syncFinalInspection = () => {
+      const passed = inspection.checked;
+      card?.classList.toggle("is-passed", passed);
+      submitWrap?.classList.toggle("is-ready", passed);
+      submit.disabled = !passed;
+      submit.textContent = passed ? "Mark Repair Completed" : "Complete Final Inspection to Continue";
+      if (badge) badge.textContent = passed ? "Inspection Passed" : "Required before invoice";
+      if (message) {
+        message.textContent = passed
+          ? "Final inspection is complete. You may mark the repair completed."
+          : "This required confirmation unlocks repair completion and final invoicing.";
+      }
+      if (submitHint) {
+        submitHint.textContent = passed
+          ? "Ready to complete the repair and continue to the final invoice."
+          : "Final Inspection must be passed before the repair can be completed and invoiced.";
+      }
+    };
+
+    inspection.addEventListener("change", syncFinalInspection);
+    form.addEventListener("submit", (event) => {
+      if (inspection.checked) return;
+      event.preventDefault();
+      syncFinalInspection();
+      card?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => inspection.focus({ preventScroll: true }), 350);
+    });
+    syncFinalInspection();
+  })();
+
 </script>
 {% endblock %}

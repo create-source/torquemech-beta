@@ -211,8 +211,8 @@
             selectors: ["[data-tour-target-pro-approval]", "[data-finding-status-form]", ".tm-approval-list", ".tm-findings-status-card"],
           },
           {
-            title: "Convert to Pro Job",
-            body: "Once the customer approves, convert the estimate into a live repair job. Nothing gets entered twice.",
+            title: "Create Repair Order",
+            body: "Once the customer approves, create a repair order and move the approved services into active repair jobs. Nothing gets entered twice.",
             selectors: ["#convertToProJobMount", "#convertToProJobForm", ".tm-repair-work-convert"],
           },
           {
@@ -774,7 +774,7 @@
         if (findTarget(["#convertToProJobMount", "#convertToProJobForm"])) {
           showHelperTip({
             id: "convert-to-pro-job",
-            text: "This creates a repair job and preserves your estimate.",
+            text: "This creates a repair order and preserves the approved estimate.",
             selectors: ["#convertToProJobMount", "#convertToProJobForm"],
           });
         }
@@ -791,7 +791,7 @@
         if (findTarget([".tm-repair-work-convert", "#convertToProJobMount"])) {
           showHelperTip({
             id: "convert-to-pro-job-pro",
-            text: "This creates a repair job and preserves your estimate.",
+            text: "This creates a repair order and preserves the approved estimate.",
             selectors: [".tm-repair-work-convert", "#convertToProJobMount"],
           });
         }

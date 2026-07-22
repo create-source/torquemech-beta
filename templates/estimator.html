@@ -495,13 +495,13 @@
         {% if pro_handoff_available and not shared_id %}
         <div id="proJobHandoffActions" class="tm-pro-job-handoff" aria-label="Pro job handoff" hidden>
           <div>
-            <div class="tm-pro-job-handoff__title">Convert to Pro Job</div>
-            <div class="tm-pro-job-handoff__copy">Create active repair jobs from this estimate.</div>
+            <div class="tm-pro-job-handoff__title">Create Repair Order</div>
+            <div class="tm-pro-job-handoff__copy">Move the approved estimate into the repair workflow.</div>
           </div>
           <form id="convertToProJobForm" method="post" action="/pro/estimate-conversion" hidden>
             <input id="convertToProJobPayload" type="hidden" name="estimate_payload" value="">
           </form>
-          <div id="convertToProJobMount" data-ready-label="Convert to Pro Job"></div>
+          <div id="convertToProJobMount" data-ready-label="Create Repair Order"></div>
         </div>
         {% endif %}
       </div>
@@ -621,7 +621,8 @@
             <span>Show labor guide details</span>
           </label>
           <label class="tm-confirm-check tm-service-education-option">
-            <input type="checkbox" id="pdfIncludeServiceEducationChk" />
+            <input type="checkbox" id="pdfIncludeServiceEducationChk">
+
             <span>
               <strong>Include service education</strong>
               <small>Adds a customer-friendly explanation of the recommended repair.</small>
