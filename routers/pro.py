@@ -10155,7 +10155,7 @@ def dashboard_card(
     }
 
 
-def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
+def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = None) -> dict[str, Any]:
     today = local_today()
     ensure_customer_status_schema(conn)
     ensure_repair_records_schema(conn)
@@ -10164,6 +10164,21 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
     ensure_maintenance_records_schema(conn)
     ensure_invoices_schema(conn)
     ensure_repair_estimate_documents_schema(conn)
+    ensure_calendar_schema(conn)
+
+    appointment_scope_sql, appointment_scope_params = shop_scope_where(shop_id)
+    pending_appointment_count = int(
+        conn.execute(
+            f"""
+            SELECT COUNT(*) AS count
+            FROM service_appointments
+            WHERE {appointment_scope_sql}
+              AND status = 'Requested'
+            """,
+            appointment_scope_params,
+        ).fetchone()["count"]
+        or 0
+    )
 
     active_customers_clause = "COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'"
     repair_counts = {
@@ -10325,6 +10340,19 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
 
     sections = [
         {
+            "title": "Appointment Requests",
+            "empty": "No new appointment requests are waiting.",
+            "cards": [
+                dashboard_card(
+                    "New Appointment Requests",
+                    pending_appointment_count,
+                    "Customers waiting for the shop to confirm, decline, or reschedule.",
+                    "/pro/calendar",
+                    "Review Requests",
+                ),
+            ],
+        },
+        {
             "title": "Active Work",
             "empty": "No active repairs need attention right now.",
             "cards": [
@@ -10363,20 +10391,32 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection) -> dict[str, Any]:
             ],
         },
     ]
-    active_work_total = sum(card["count"] for card in sections[0]["cards"])
-    estimate_approval_total = sum(card["count"] for card in sections[1]["cards"])
-    invoice_total = sum(card["count"] for card in sections[2]["cards"])
-    maintenance_total = sum(card["count"] for card in sections[3]["cards"])
-    attention_total = active_work_total + estimate_approval_total + invoice_total + maintenance_total
+    appointment_total = sum(card["count"] for card in sections[0]["cards"])
+    active_work_total = sum(card["count"] for card in sections[1]["cards"])
+    estimate_approval_total = sum(card["count"] for card in sections[2]["cards"])
+    invoice_total = sum(card["count"] for card in sections[3]["cards"])
+    maintenance_total = sum(card["count"] for card in sections[4]["cards"])
+    attention_total = (
+        appointment_total
+        + active_work_total
+        + estimate_approval_total
+        + invoice_total
+        + maintenance_total
+    )
 
     return {
         "sections": sections,
         "attention_total": attention_total,
+        "pending_appointment_count": pending_appointment_count,
         "quick_actions": [
             {"label": "Add Customer", "href": "/pro/customers?mode=add#add-customer"},
             {"label": "View Customers", "href": "/pro/customers"},
             {"label": "Create Estimate", "href": "/estimator"},
-            {"label": "Shop Calendar", "href": "/pro/calendar"},
+            {
+                "label": "Shop Calendar",
+                "href": "/pro/calendar",
+                "pending_count": pending_appointment_count,
+            },
             {"label": "Shop Settings", "href": "/pro/shop-settings"},
             {"label": "View Active Jobs", "href": "/pro/customers#customer-list"},
         ],
@@ -10421,7 +10461,8 @@ def pro_welcome(request: Request):
 def pro_dashboard(request: Request):
     conn = crm_db_conn()
     try:
-        dashboard = build_pro_dashboard_summary(conn)
+        shop_id = current_shop_id(conn, request)
+        dashboard = build_pro_dashboard_summary(conn, shop_id=shop_id)
     finally:
         conn.close()
 

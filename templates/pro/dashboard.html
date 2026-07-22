@@ -1549,6 +1549,78 @@
     width: 100%;
   }
 
+
+  /* Pending appointment notification */
+  .tm-quick-link--appointments-pending {
+    justify-content: space-between !important;
+    gap: 12px;
+    border-color: rgba(249, 115, 22, 0.82) !important;
+    background:
+      linear-gradient(180deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.10)),
+      linear-gradient(180deg, #182536 0%, #111b29 100%) !important;
+    box-shadow:
+      0 0 0 2px rgba(249, 115, 22, 0.10),
+      0 10px 22px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  .tm-quick-link--appointments-pending::after {
+    display: none;
+  }
+
+  .tm-appointment-notification-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-appointment-notification-badge {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 3px 8px;
+    border: 1px solid #fb923c;
+    border-radius: 999px;
+    background: #f97316;
+    color: #111827;
+    font-size: 0.78rem;
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .tm-work-group--appointment-alert {
+    border-color: rgba(249, 115, 22, 0.46) !important;
+    box-shadow:
+      0 0 0 2px rgba(249, 115, 22, 0.07),
+      0 9px 20px rgba(0, 0, 0, 0.14) !important;
+  }
+
+  .tm-work-group--appointment-alert > .tm-work-group-summary {
+    background:
+      linear-gradient(180deg, rgba(249, 115, 22, 0.18), rgba(249, 115, 22, 0.08)),
+      linear-gradient(180deg, #192536 0%, #141f2d 100%) !important;
+  }
+
+  .tm-work-group--appointment-alert .tm-work-group-title::before {
+    content: "New";
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    margin-right: 8px;
+    padding: 2px 7px;
+    border: 1px solid rgba(251, 146, 60, 0.58);
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.16);
+    color: #fdba74;
+    font-size: 0.64rem;
+    font-weight: 950;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
   /* Mobile alignment */
   @media (max-width: 640px) {
     .tm-pro-card {
@@ -1611,10 +1683,15 @@
       {% for action in dashboard.quick_actions %}
       {% if action.label != 'Add Customer' %}
       <a
-        class="tm-quick-link"
+        class="tm-quick-link{% if action.pending_count %} tm-quick-link--appointments-pending{% endif %}"
         href="{{ action.href }}"
         {% if action.label == 'Create Estimate' %}data-tour-target="pro-create-estimate"{% elif action.label == 'View Customers' %}data-tour-target="pro-vehicle"{% endif %}
-      >{{ action.label }}</a>
+      >
+        <span class="tm-appointment-notification-label">{{ action.label }}{% if action.pending_count %} — {{ action.pending_count }} Pending{% endif %}</span>
+        {% if action.pending_count %}
+        <span class="tm-appointment-notification-badge" aria-label="{{ action.pending_count }} pending appointment requests">{{ action.pending_count }}</span>
+        {% endif %}
+      </a>
       {% endif %}
       {% endfor %}
     </div>
@@ -1636,7 +1713,10 @@
     <div class="tm-work-summary">
       {% for section in dashboard.sections %}
       {% set section_total = section.cards | sum(attribute='count') %}
-      <details class="tm-work-group">
+      <details
+        class="tm-work-group{% if section.title == 'Appointment Requests' and section_total > 0 %} tm-work-group--appointment-alert{% endif %}"
+        {% if section.title == 'Appointment Requests' and section_total > 0 %}open{% endif %}
+      >
         <summary class="tm-work-group-summary">
           <span class="tm-work-group-title">{{ section.title }}</span>
           <span class="tm-work-group-count">{{ section_total }} item{% if section_total != 1 %}s{% endif %}</span>
