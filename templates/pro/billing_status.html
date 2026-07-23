@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block body_class %}tm-billing-status-body{% endblock %}
+
+{% block content %}
+<section class="tm-billing-status-page" aria-labelledby="billing-status-title">
+  <article class="tm-card tm-billing-status-card tm-billing-status-card--{{ status_kind }}" data-billing-status-page>
+    <div class="tm-billing-status-icon" aria-hidden="true">
+      {% if status_kind == "success" %}
+        <span>&check;</span>
+      {% elif status_kind == "error" %}
+        <span>!</span>
+      {% else %}
+        <span>&minus;</span>
+      {% endif %}
+    </div>
+    <div class="tm-billing-status-copy">
+      <p class="tm-billing-status-eyebrow">{{ eyebrow }}</p>
+      <h1 id="billing-status-title">{{ heading }}</h1>
+      <p>{{ message }}</p>
+    </div>
+    <div class="tm-billing-status-actions">
+      <a class="tm-btn tm-btn-primary" href="{{ primary_href }}">{{ primary_label }}</a>
+      {% if secondary_label and secondary_href %}
+      <a class="tm-btn tm-btn-secondary" href="{{ secondary_href }}">{{ secondary_label }}</a>
+      {% endif %}
+    </div>
+  </article>
+</section>
+{% endblock %}

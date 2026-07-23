@@ -216,6 +216,31 @@ class StripeBillingTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 503)
         self.assertIn("Stripe billing is not configured", response.text)
+        self.assertIn("data-billing-status-page", response.text)
+        self.assertIn('href="/account/settings"', response.text)
+
+    def test_checkout_success_status_page_preserves_message_and_destination(self):
+        client = TestClient(main.app, base_url="http://localhost")
+
+        response = client.get("/pro/billing/checkout/success")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Subscription checkout complete", response.text)
+        self.assertIn("Your billing status will update as soon as Stripe confirms the subscription.", response.text)
+        self.assertIn("TorqueMech Pro Solo", response.text)
+        self.assertIn('href="/pro/dashboard"', response.text)
+        self.assertIn("data-billing-status-page", response.text)
+
+    def test_checkout_cancel_status_page_preserves_message_and_destination(self):
+        client = TestClient(main.app, base_url="http://localhost")
+
+        response = client.get("/pro/billing/checkout/cancel")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Checkout canceled", response.text)
+        self.assertIn("No subscription changes were made.", response.text)
+        self.assertIn('href="/account/settings"', response.text)
+        self.assertIn("data-billing-status-page", response.text)
 
     def test_checkout_uses_authenticated_shop(self):
         _, shop_id = self.create_user_shop()

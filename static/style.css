@@ -433,6 +433,25 @@ body.dark .tm-hero,
 .tm-pro-pill{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:999px;background:rgba(96,165,250,.12);color:var(--tm-blue-light);font-size:12px;font-weight:900;}
 .tm-pro-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
 
+/* Billing status pages */
+.tm-billing-status-body{background:#09111d;}
+.tm-billing-status-page{display:grid;place-items:center;min-height:calc(100vh - 170px);padding:34px 0;}
+.tm-billing-status-card{width:min(100%,560px);padding:28px;text-align:center;border-radius:var(--tm-radius-sm);box-shadow:var(--tm-shadow-lg);}
+.tm-billing-status-icon{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 18px;border-radius:999px;border:1px solid var(--tm-border);background:rgba(148,163,184,.12);color:var(--tm-text);font-size:1.55rem;font-weight:950;line-height:1;}
+.tm-billing-status-card--success .tm-billing-status-icon{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.36);color:#bbf7d0;}
+.tm-billing-status-card--error .tm-billing-status-icon{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.36);color:#fecaca;}
+.tm-billing-status-card--neutral .tm-billing-status-icon{background:rgba(96,165,250,.12);border-color:rgba(96,165,250,.32);color:#bfdbfe;}
+.tm-billing-status-eyebrow{margin:0 0 8px;color:var(--tm-orange-light);font-size:.78rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase;}
+.tm-billing-status-copy h1{margin:0;color:var(--tm-text);font-size:clamp(1.75rem,3vw,2.35rem);line-height:1.08;letter-spacing:0;}
+.tm-billing-status-copy p:last-child{margin:12px auto 0;max-width:44rem;color:var(--tm-text-soft);line-height:1.6;}
+.tm-billing-status-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:22px;}
+.tm-billing-status-actions .tm-btn{min-width:180px;}
+@media (max-width: 560px){
+  .tm-billing-status-page{padding:24px 0;}
+  .tm-billing-status-card{padding:22px 18px;}
+  .tm-billing-status-actions .tm-btn{width:100%;}
+}
+
 /* Trust pages */
 .tm-trust-page{
   padding-top: 32px;

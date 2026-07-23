@@ -11460,13 +11460,47 @@ def billing_base_url(request: Request) -> str:
     return str(request.base_url).rstrip("/")
 
 
-def billing_error_response(message: str, status_code: int = 503) -> HTMLResponse:
-    return HTMLResponse(
-        "<!doctype html><html><body>"
-        "<h1>Billing is unavailable</h1>"
-        f"<p>{message}</p>"
-        '<p><a href="/account/settings">Return to Account Settings</a></p>'
-        "</body></html>",
+def billing_status_response(
+    request: Request,
+    *,
+    title: str,
+    heading: str,
+    message: str,
+    status_kind: str,
+    primary_label: str,
+    primary_href: str,
+    status_code: int = 200,
+    eyebrow: str = "TorqueMech Pro Solo",
+    secondary_label: str = "",
+    secondary_href: str = "",
+) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "pro/billing_status.html",
+        {
+            "request": request,
+            "title": title,
+            "heading": heading,
+            "message": message,
+            "status_kind": status_kind,
+            "eyebrow": eyebrow,
+            "primary_label": primary_label,
+            "primary_href": primary_href,
+            "secondary_label": secondary_label,
+            "secondary_href": secondary_href,
+        },
+        status_code=status_code,
+    )
+
+
+def billing_error_response(request: Request, message: str, status_code: int = 503) -> HTMLResponse:
+    return billing_status_response(
+        request,
+        title="Billing Unavailable | TorqueMech",
+        heading="Billing is unavailable",
+        message=message,
+        status_kind="error",
+        primary_label="Return to Account Settings",
+        primary_href="/account/settings",
         status_code=status_code,
     )
 
@@ -11488,14 +11522,14 @@ def pro_billing_checkout(request: Request):
             )
             conn.commit()
         except BillingConfigurationError as exc:
-            return billing_error_response(str(exc))
+            return billing_error_response(request, str(exc))
         except BillingProviderError as exc:
-            return billing_error_response(str(exc), status_code=502)
+            return billing_error_response(request, str(exc), status_code=502)
     finally:
         conn.close()
     checkout_url = str(session.get("url") or "").strip()
     if not checkout_url:
-        return billing_error_response("Stripe did not return a Checkout URL. Please try again.", status_code=502)
+        return billing_error_response(request, "Stripe did not return a Checkout URL. Please try again.", status_code=502)
     return RedirectResponse(checkout_url, status_code=303)
 
 
@@ -11511,38 +11545,42 @@ def pro_billing_portal(request: Request):
                 return_url=f"{billing_base_url(request)}/account/settings",
             )
         except BillingCustomerRequiredError as exc:
-            return billing_error_response(str(exc), status_code=400)
+            return billing_error_response(request, str(exc), status_code=400)
         except BillingConfigurationError as exc:
-            return billing_error_response(str(exc))
+            return billing_error_response(request, str(exc))
         except BillingProviderError as exc:
-            return billing_error_response(str(exc), status_code=502)
+            return billing_error_response(request, str(exc), status_code=502)
     finally:
         conn.close()
     portal_url = str(session.get("url") or "").strip()
     if not portal_url:
-        return billing_error_response("Stripe did not return a Customer Portal URL. Please try again.", status_code=502)
+        return billing_error_response(request, "Stripe did not return a Customer Portal URL. Please try again.", status_code=502)
     return RedirectResponse(portal_url, status_code=303)
 
 
 @router.get("/billing/checkout/success", response_class=HTMLResponse)
-def pro_billing_checkout_success():
-    return HTMLResponse(
-        "<!doctype html><html><body>"
-        "<h1>Subscription checkout complete</h1>"
-        "<p>Your billing status will update as soon as Stripe confirms the subscription.</p>"
-        '<p><a href="/pro/dashboard">Return to Dashboard</a></p>'
-        "</body></html>"
+def pro_billing_checkout_success(request: Request):
+    return billing_status_response(
+        request,
+        title="Subscription Checkout Complete | TorqueMech",
+        heading="Subscription checkout complete",
+        message="Your billing status will update as soon as Stripe confirms the subscription. TorqueMech Pro Solo is ready once that confirmation arrives.",
+        status_kind="success",
+        primary_label="Return to Dashboard",
+        primary_href="/pro/dashboard",
     )
 
 
 @router.get("/billing/checkout/cancel", response_class=HTMLResponse)
-def pro_billing_checkout_cancel():
-    return HTMLResponse(
-        "<!doctype html><html><body>"
-        "<h1>Checkout canceled</h1>"
-        "<p>No subscription changes were made.</p>"
-        '<p><a href="/account/settings">Return to Account Settings</a></p>'
-        "</body></html>"
+def pro_billing_checkout_cancel(request: Request):
+    return billing_status_response(
+        request,
+        title="Checkout Canceled | TorqueMech",
+        heading="Checkout canceled",
+        message="No subscription changes were made.",
+        status_kind="neutral",
+        primary_label="Return to Account Settings",
+        primary_href="/account/settings",
     )
 
 
