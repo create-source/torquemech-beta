@@ -48,6 +48,18 @@ class FakeStripe:
     billing_portal = type("BillingPortal", (), {"Session": FakePortalSession})
 
 
+class FailingCheckoutSession:
+    @classmethod
+    def create(cls, **kwargs):
+        raise RuntimeError("stripe unavailable")
+
+
+class FailingStripe:
+    api_key = ""
+    checkout = type("Checkout", (), {"Session": FailingCheckoutSession})
+    billing_portal = type("BillingPortal", (), {"Session": FakePortalSession})
+
+
 class StripeBillingTests(unittest.TestCase):
     def setUp(self):
         self.conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
@@ -196,6 +208,36 @@ class StripeBillingTests(unittest.TestCase):
         self.assertEqual(FakeCheckoutSession.calls[-1]["metadata"]["shop_id"], str(shop_id))
         self.assertEqual(FakeCheckoutSession.calls[-1]["line_items"][0]["price"], "price_pro_solo_monthly")
 
+    def test_shop_with_no_subscription_row_can_create_checkout(self):
+        _, shop_id = self.create_user_shop()
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        session = service.create_checkout_session(
+            self.conn,
+            shop_id=shop_id,
+            shop_email="owner@example.com",
+            success_url="https://torquemech.test/success",
+            cancel_url="https://torquemech.test/cancel",
+        )
+
+        self.assertEqual(session["url"], "https://checkout.stripe.test/session")
+        self.assertEqual(FakeCheckoutSession.calls[-1]["client_reference_id"], str(shop_id))
+
+    def test_checkout_omits_stripe_customer_when_none_exists(self):
+        _, shop_id = self.create_user_shop()
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        service.create_checkout_session(
+            self.conn,
+            shop_id=shop_id,
+            shop_email="owner@example.com",
+            success_url="https://torquemech.test/success",
+            cancel_url="https://torquemech.test/cancel",
+        )
+
+        self.assertNotIn("customer", FakeCheckoutSession.calls[-1])
+        self.assertEqual(FakeCheckoutSession.calls[-1]["customer_email"], "owner@example.com")
+
     def test_existing_stripe_customer_is_reused(self):
         _, shop_id = self.create_user_shop()
         self.insert_subscription(shop_id, stripe_customer_id="cus_existing")
@@ -211,6 +253,21 @@ class StripeBillingTests(unittest.TestCase):
 
         self.assertEqual(FakeCheckoutSession.calls[-1]["customer"], "cus_existing")
         self.assertNotIn("customer_email", FakeCheckoutSession.calls[-1])
+
+    def test_checkout_does_not_create_fake_active_subscription(self):
+        _, shop_id = self.create_user_shop()
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        service.create_checkout_session(
+            self.conn,
+            shop_id=shop_id,
+            shop_email="owner@example.com",
+            success_url="https://torquemech.test/success",
+            cancel_url="https://torquemech.test/cancel",
+        )
+
+        count = self.conn.execute("SELECT COUNT(*) AS count FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()["count"]
+        self.assertEqual(count, 0)
 
     def test_checkout_cannot_target_another_shop(self):
         user_a, shop_a = self.create_user_shop(email="a@example.com", shop_name="A")
@@ -235,6 +292,27 @@ class StripeBillingTests(unittest.TestCase):
 
         with self.assertRaises(billing.BillingCustomerRequiredError):
             service.create_customer_portal_session(self.conn, shop_id=shop_id, return_url="https://torquemech.test/account")
+
+    def test_portal_requires_stored_customer_id(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, stripe_customer_id=None)
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        with self.assertRaises(billing.BillingCustomerRequiredError):
+            service.create_customer_portal_session(self.conn, shop_id=shop_id, return_url="https://torquemech.test/account")
+
+    def test_checkout_stripe_failure_returns_friendly_error(self):
+        user_id, shop_id = self.create_user_shop()
+        client = self.authenticated_client(user_id)
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FailingStripe)
+
+        with patch.object(pro_module, "StripeBillingService", return_value=service):
+            response = client.post("/pro/billing/checkout")
+
+        count = self.conn.execute("SELECT COUNT(*) AS count FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()["count"]
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("Stripe Checkout is temporarily unavailable", response.text)
+        self.assertEqual(count, 0)
 
     def test_valid_webhook_signature(self):
         payload = {"id": "evt_123", "type": "invoice.paid", "data": {"object": {}}}

@@ -44,6 +44,7 @@ from app.storage import (
 from app.billing import (
     BillingConfigurationError,
     BillingCustomerRequiredError,
+    BillingProviderError,
     BillingSignatureError,
     StripeBillingConfig,
     StripeBillingService,
@@ -11488,6 +11489,8 @@ def pro_billing_checkout(request: Request):
             conn.commit()
         except BillingConfigurationError as exc:
             return billing_error_response(str(exc))
+        except BillingProviderError as exc:
+            return billing_error_response(str(exc), status_code=502)
     finally:
         conn.close()
     checkout_url = str(session.get("url") or "").strip()
@@ -11511,6 +11514,8 @@ def pro_billing_portal(request: Request):
             return billing_error_response(str(exc), status_code=400)
         except BillingConfigurationError as exc:
             return billing_error_response(str(exc))
+        except BillingProviderError as exc:
+            return billing_error_response(str(exc), status_code=502)
     finally:
         conn.close()
     portal_url = str(session.get("url") or "").strip()

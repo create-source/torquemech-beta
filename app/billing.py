@@ -31,6 +31,10 @@ class BillingCustomerRequiredError(RuntimeError):
     pass
 
 
+class BillingProviderError(RuntimeError):
+    pass
+
+
 class BillingSignatureError(RuntimeError):
     pass
 
@@ -92,20 +96,7 @@ def require_existing_subscription(conn: sqlite3.Connection, shop_id: int) -> dic
     subscription = load_subscription(conn, shop_id)
     if subscription:
         return subscription
-    now = utc_now_iso()
-    conn.execute(
-        """
-        INSERT OR IGNORE INTO shop_subscriptions (
-          shop_id, plan_code, status, trial_started_at, trial_ends_at,
-          current_period_started_at, current_period_ends_at, canceled_at,
-          access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
-          stripe_price_id, created_at, updated_at
-        )
-        VALUES (?, ?, 'development', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?)
-        """,
-        (shop_id, PRO_SOLO_PLAN_CODE, now, now),
-    )
-    return load_subscription(conn, shop_id) or {"shop_id": shop_id, "status": "development"}
+    raise BillingCustomerRequiredError("Billing is not active for this shop yet.")
 
 
 def stripe_client() -> Any:
@@ -136,8 +127,8 @@ class StripeBillingService:
         cancel_url: str,
     ) -> dict[str, Any]:
         self.config.require_checkout()
-        subscription = require_existing_subscription(conn, shop_id)
-        customer_id = str(subscription.get("stripe_customer_id") or "").strip()
+        subscription = load_subscription(conn, shop_id)
+        customer_id = str((subscription or {}).get("stripe_customer_id") or "").strip()
         session_params: dict[str, Any] = {
             "mode": "subscription",
             "line_items": [{"price": self.config.pro_solo_monthly_price_id, "quantity": 1}],
@@ -153,7 +144,10 @@ class StripeBillingService:
             session_params["customer"] = customer_id
         elif shop_email:
             session_params["customer_email"] = shop_email
-        session = self._stripe().checkout.Session.create(**session_params)
+        try:
+            session = self._stripe().checkout.Session.create(**session_params)
+        except Exception as exc:
+            raise BillingProviderError("Stripe Checkout is temporarily unavailable. Please try again.") from exc
         return dict(session)
 
     def create_customer_portal_session(
@@ -168,7 +162,10 @@ class StripeBillingService:
         customer_id = str((subscription or {}).get("stripe_customer_id") or "").strip()
         if not customer_id:
             raise BillingCustomerRequiredError("Billing is not active for this shop yet.")
-        session = self._stripe().billing_portal.Session.create(customer=customer_id, return_url=return_url)
+        try:
+            session = self._stripe().billing_portal.Session.create(customer=customer_id, return_url=return_url)
+        except Exception as exc:
+            raise BillingProviderError("Stripe Billing Portal is temporarily unavailable. Please try again.") from exc
         return dict(session)
 
 
@@ -257,7 +254,7 @@ def update_subscription_for_shop(
     current_period_ends_at: str | None = None,
     canceled_at: str | None = None,
 ) -> dict[str, Any] | None:
-    existing = require_existing_subscription(conn, shop_id)
+    existing = load_subscription(conn, shop_id) or {}
     now = utc_now_iso()
     values = {
         "plan_code": PRO_SOLO_PLAN_CODE,
@@ -270,33 +267,59 @@ def update_subscription_for_shop(
         "stripe_price_id": stripe_price_id or existing.get("stripe_price_id"),
         "updated_at": now,
     }
-    conn.execute(
-        """
-        UPDATE shop_subscriptions
-        SET plan_code = ?,
-            status = ?,
-            current_period_started_at = ?,
-            current_period_ends_at = ?,
-            canceled_at = ?,
-            stripe_customer_id = ?,
-            stripe_subscription_id = ?,
-            stripe_price_id = ?,
-            updated_at = ?
-        WHERE shop_id = ?
-        """,
-        (
-            values["plan_code"],
-            values["status"],
-            values["current_period_started_at"],
-            values["current_period_ends_at"],
-            values["canceled_at"],
-            values["stripe_customer_id"],
-            values["stripe_subscription_id"],
-            values["stripe_price_id"],
-            values["updated_at"],
-            shop_id,
-        ),
-    )
+    if existing:
+        conn.execute(
+            """
+            UPDATE shop_subscriptions
+            SET plan_code = ?,
+                status = ?,
+                current_period_started_at = ?,
+                current_period_ends_at = ?,
+                canceled_at = ?,
+                stripe_customer_id = ?,
+                stripe_subscription_id = ?,
+                stripe_price_id = ?,
+                updated_at = ?
+            WHERE shop_id = ?
+            """,
+            (
+                values["plan_code"],
+                values["status"],
+                values["current_period_started_at"],
+                values["current_period_ends_at"],
+                values["canceled_at"],
+                values["stripe_customer_id"],
+                values["stripe_subscription_id"],
+                values["stripe_price_id"],
+                values["updated_at"],
+                shop_id,
+            ),
+        )
+    else:
+        conn.execute(
+            """
+            INSERT INTO shop_subscriptions (
+              shop_id, plan_code, status, trial_started_at, trial_ends_at,
+              current_period_started_at, current_period_ends_at, canceled_at,
+              access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
+              stripe_price_id, created_at, updated_at
+            )
+            VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
+            """,
+            (
+                shop_id,
+                values["plan_code"],
+                values["status"],
+                values["current_period_started_at"],
+                values["current_period_ends_at"],
+                values["canceled_at"],
+                values["stripe_customer_id"],
+                values["stripe_subscription_id"],
+                values["stripe_price_id"],
+                now,
+                values["updated_at"],
+            ),
+        )
     return load_subscription(conn, shop_id)
 
 
