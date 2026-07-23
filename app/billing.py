@@ -84,6 +84,25 @@ def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
+def stripe_result_to_dict(result: Any) -> dict[str, Any]:
+    if isinstance(result, dict):
+        return dict(result)
+    for method_name in ("to_dict_recursive", "to_dict"):
+        method = getattr(result, method_name, None)
+        if callable(method):
+            converted = method()
+            if isinstance(converted, dict):
+                return converted
+    try:
+        return dict(result)
+    except (TypeError, ValueError, KeyError):
+        return {
+            key: value
+            for key, value in vars(result).items()
+            if not key.startswith("_")
+        }
+
+
 def load_subscription(conn: sqlite3.Connection, shop_id: int) -> dict[str, Any] | None:
     row = conn.execute(
         "SELECT * FROM shop_subscriptions WHERE shop_id = ? LIMIT 1",
@@ -148,7 +167,7 @@ class StripeBillingService:
             session = self._stripe().checkout.Session.create(**session_params)
         except Exception as exc:
             raise BillingProviderError("Stripe Checkout is temporarily unavailable. Please try again.") from exc
-        return dict(session)
+        return stripe_result_to_dict(session)
 
     def create_customer_portal_session(
         self,
@@ -166,7 +185,7 @@ class StripeBillingService:
             session = self._stripe().billing_portal.Session.create(customer=customer_id, return_url=return_url)
         except Exception as exc:
             raise BillingProviderError("Stripe Billing Portal is temporarily unavailable. Please try again.") from exc
-        return dict(session)
+        return stripe_result_to_dict(session)
 
 
 def parse_stripe_signature_header(signature_header: str) -> tuple[str, list[str]]:

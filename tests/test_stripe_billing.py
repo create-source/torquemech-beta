@@ -33,6 +33,25 @@ class FakeCheckoutSession:
         return {"id": "cs_test_123", "url": "https://checkout.stripe.test/session"}
 
 
+class StripeLikeSession:
+    def __getitem__(self, key):
+        if key in {"id", "url"}:
+            return {"id": "cs_stripe_object", "url": "https://checkout.stripe.test/object"}[key]
+        raise KeyError(key)
+
+    def to_dict_recursive(self):
+        return {"id": "cs_stripe_object", "url": "https://checkout.stripe.test/object"}
+
+
+class StripeLikeCheckoutSession:
+    calls = []
+
+    @classmethod
+    def create(cls, **kwargs):
+        cls.calls.append(kwargs)
+        return StripeLikeSession()
+
+
 class FakePortalSession:
     calls = []
 
@@ -45,6 +64,12 @@ class FakePortalSession:
 class FakeStripe:
     api_key = ""
     checkout = type("Checkout", (), {"Session": FakeCheckoutSession})
+    billing_portal = type("BillingPortal", (), {"Session": FakePortalSession})
+
+
+class StripeLikeObjectStripe:
+    api_key = ""
+    checkout = type("Checkout", (), {"Session": StripeLikeCheckoutSession})
     billing_portal = type("BillingPortal", (), {"Session": FakePortalSession})
 
 
@@ -86,6 +111,7 @@ class StripeBillingTests(unittest.TestCase):
         pro_module.ensure_shop_profile_schema(self.conn)
         pro_module.ensure_shop_subscription_schema(self.conn)
         FakeCheckoutSession.calls.clear()
+        StripeLikeCheckoutSession.calls.clear()
         FakePortalSession.calls.clear()
 
     def create_user_shop(self, email="owner@example.com", shop_name="Alpha Shop") -> tuple[int, int]:
@@ -268,6 +294,21 @@ class StripeBillingTests(unittest.TestCase):
 
         count = self.conn.execute("SELECT COUNT(*) AS count FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()["count"]
         self.assertEqual(count, 0)
+
+    def test_checkout_accepts_stripe_object_response(self):
+        _, shop_id = self.create_user_shop()
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=StripeLikeObjectStripe)
+
+        session = service.create_checkout_session(
+            self.conn,
+            shop_id=shop_id,
+            shop_email="owner@example.com",
+            success_url="https://torquemech.test/success",
+            cancel_url="https://torquemech.test/cancel",
+        )
+
+        self.assertEqual(session["id"], "cs_stripe_object")
+        self.assertEqual(session["url"], "https://checkout.stripe.test/object")
 
     def test_checkout_cannot_target_another_shop(self):
         user_a, shop_a = self.create_user_shop(email="a@example.com", shop_name="A")
