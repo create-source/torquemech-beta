@@ -2913,7 +2913,8 @@ async def admin_bootstrap_submit(request: Request):
                 ),
             )
             user_id = int(cur.lastrowid)
-            bootstrap_existing_shop_to_user(conn, user_id, values["shop_name"])
+            shop_id = bootstrap_existing_shop_to_user(conn, user_id, values["shop_name"])
+            create_or_ensure_shop_subscription(conn, int(shop_id))
             conn.commit()
         except sqlite3.IntegrityError:
             conn.rollback()
@@ -3369,7 +3370,7 @@ async def reset_password_submit(request: Request):
 
 
 @app.get("/account/settings", response_class=HTMLResponse)
-def account_settings_page(request: Request, next: str = ""):
+def account_settings_page(request: Request, next: str = "", subscription_notice: str = ""):
     conn = app_db_conn(row_factory=True)
     try:
         ensure_auth_schema(conn)
@@ -3378,9 +3379,14 @@ def account_settings_page(request: Request, next: str = ""):
             return RedirectResponse("/login?next=%2Faccount%2Fsettings", status_code=303)
         request.state.current_user = user
         request.state.current_shop = current_shop_context(conn, request)
+        notice_message = ""
+        if subscription_notice == "read_only":
+            notice_message = str(request.session.pop("subscription_notice", "") or "").strip()
+            if not notice_message:
+                notice_message = "Your account is in read-only mode. Update billing to make changes."
         return templates.TemplateResponse(
             "account_settings.html",
-            account_settings_context(request, user=user, back_url=next),
+            account_settings_context(request, user=user, message=notice_message, back_url=next),
         )
     finally:
         conn.close()

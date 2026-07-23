@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import math
 import os
 import sqlite3
 import time
@@ -37,6 +38,48 @@ class BillingProviderError(RuntimeError):
 
 class BillingSignatureError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class SubscriptionAccess:
+    access_state: str
+    has_full_access: bool
+    is_read_only: bool
+    trial_started_at: datetime | None
+    trial_ends_at: datetime | None
+    trial_days_remaining: int
+    stripe_subscription_status: str | None
+    cancel_at_period_end: bool
+    current_period_end: datetime | None
+    message: str
+    plan_code: str = PRO_SOLO_PLAN_CODE
+    plan_name: str = PRO_SOLO_PLAN_NAME
+    shop_id: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        access_ends_at = self.trial_ends_at if self.access_state == "trial_active" else self.current_period_end
+        return {
+            "access_state": self.access_state,
+            "has_full_access": self.has_full_access,
+            "is_read_only": self.is_read_only,
+            "trial_started_at": self.trial_started_at.isoformat() if self.trial_started_at else None,
+            "trial_ends_at": self.trial_ends_at.isoformat() if self.trial_ends_at else None,
+            "trial_days_remaining": self.trial_days_remaining,
+            "stripe_subscription_status": self.stripe_subscription_status,
+            "cancel_at_period_end": self.cancel_at_period_end,
+            "current_period_end": self.current_period_end.isoformat() if self.current_period_end else None,
+            "current_period_ends_at": self.current_period_end.isoformat() if self.current_period_end else None,
+            "message": self.message,
+            "reason": self.access_state,
+            "status": self.stripe_subscription_status or "none",
+            "plan_code": self.plan_code,
+            "plan_name": self.plan_name,
+            "shop_id": self.shop_id,
+            "can_view": bool(self.shop_id),
+            "can_write": self.has_full_access,
+            "can_manage_billing": bool(self.shop_id),
+            "access_ends_at": access_ends_at.isoformat() if access_ends_at else None,
+        }
 
 
 @dataclass(frozen=True)
@@ -80,6 +123,40 @@ def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def parse_utc_datetime(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        try:
+            parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def bool_from_subscription_value(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return value != 0
+    raw = str(value or "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def remaining_trial_days(trial_ends_at: datetime | None, now: datetime) -> int:
+    if not trial_ends_at:
+        return 0
+    seconds = (trial_ends_at - now).total_seconds()
+    if seconds <= 0:
+        return 0
+    return max(1, math.ceil(seconds / 86400))
+
+
 def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
     return dict(row) if row else None
 
@@ -116,6 +193,192 @@ def require_existing_subscription(conn: sqlite3.Connection, shop_id: int) -> dic
     if subscription:
         return subscription
     raise BillingCustomerRequiredError("Billing is not active for this shop yet.")
+
+
+def resolve_subscription_access(
+    subscription: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
+    shop_id: int | None = None,
+) -> SubscriptionAccess:
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    current_shop_id = shop_id
+    if current_shop_id is None and subscription:
+        try:
+            current_shop_id = int(subscription.get("shop_id") or 0) or None
+        except (TypeError, ValueError):
+            current_shop_id = None
+
+    if not current_shop_id:
+        return SubscriptionAccess(
+            access_state="read_only_no_entitlement",
+            has_full_access=False,
+            is_read_only=True,
+            trial_started_at=None,
+            trial_ends_at=None,
+            trial_days_remaining=0,
+            stripe_subscription_status=None,
+            cancel_at_period_end=False,
+            current_period_end=None,
+            message="No shop entitlement is available for this account.",
+            shop_id=None,
+        )
+
+    if not subscription:
+        return SubscriptionAccess(
+            access_state="read_only_no_entitlement",
+            has_full_access=False,
+            is_read_only=True,
+            trial_started_at=None,
+            trial_ends_at=None,
+            trial_days_remaining=0,
+            stripe_subscription_status=None,
+            cancel_at_period_end=False,
+            current_period_end=None,
+            message="Start a trial or subscription to unlock full access.",
+            shop_id=current_shop_id,
+        )
+
+    status = str(subscription.get("status") or "").strip().lower() or None
+    trial_started_at = parse_utc_datetime(subscription.get("trial_started_at"))
+    trial_ends_at = parse_utc_datetime(subscription.get("trial_ends_at"))
+    current_period_end = parse_utc_datetime(
+        subscription.get("current_period_ends_at")
+        or subscription.get("current_period_end")
+        or subscription.get("subscription_current_period_end")
+    )
+    cancel_at_period_end = bool_from_subscription_value(
+        subscription.get("cancel_at_period_end", subscription.get("subscription_cancel_at_period_end"))
+    )
+    trial_days = remaining_trial_days(trial_ends_at, current)
+    plan_code = str(subscription.get("plan_code") or PRO_SOLO_PLAN_CODE)
+    has_durable_cancel_flag = "cancel_at_period_end" in subscription
+
+    # Legacy rows created before a cancel_at_period_end column still represented
+    # scheduled cancellation as status=canceled with a future period end.
+    legacy_canceling = (
+        not has_durable_cancel_flag
+        and status == "canceled"
+        and current_period_end is not None
+        and current_period_end > current
+    )
+
+    if status == "development":
+        return SubscriptionAccess(
+            access_state="subscribed_active",
+            has_full_access=True,
+            is_read_only=False,
+            trial_started_at=trial_started_at,
+            trial_ends_at=trial_ends_at,
+            trial_days_remaining=trial_days,
+            stripe_subscription_status=status,
+            cancel_at_period_end=cancel_at_period_end,
+            current_period_end=current_period_end,
+            message="Your subscription is active.",
+            plan_code=plan_code,
+            shop_id=current_shop_id,
+        )
+    if status == "trialing" and trial_ends_at and trial_ends_at > current:
+        return SubscriptionAccess(
+            access_state="trial_active",
+            has_full_access=True,
+            is_read_only=False,
+            trial_started_at=trial_started_at,
+            trial_ends_at=trial_ends_at,
+            trial_days_remaining=trial_days,
+            stripe_subscription_status=status,
+            cancel_at_period_end=cancel_at_period_end,
+            current_period_end=current_period_end,
+            message="Your trial is active.",
+            plan_code=plan_code,
+            shop_id=current_shop_id,
+        )
+    if status == "active" and cancel_at_period_end and current_period_end and current_period_end <= current:
+        return SubscriptionAccess(
+            access_state="read_only_canceled",
+            has_full_access=False,
+            is_read_only=True,
+            trial_started_at=trial_started_at,
+            trial_ends_at=trial_ends_at,
+            trial_days_remaining=trial_days,
+            stripe_subscription_status=status,
+            cancel_at_period_end=cancel_at_period_end,
+            current_period_end=current_period_end,
+            message="This subscription has ended.",
+            plan_code=plan_code,
+            shop_id=current_shop_id,
+        )
+    if status == "active":
+        state = "subscribed_canceling" if cancel_at_period_end and current_period_end and current_period_end > current else "subscribed_active"
+        return SubscriptionAccess(
+            access_state=state,
+            has_full_access=True,
+            is_read_only=False,
+            trial_started_at=trial_started_at,
+            trial_ends_at=trial_ends_at,
+            trial_days_remaining=trial_days,
+            stripe_subscription_status=status,
+            cancel_at_period_end=cancel_at_period_end,
+            current_period_end=current_period_end,
+            message="Your subscription remains active until the current period ends." if state == "subscribed_canceling" else "Your subscription is active.",
+            plan_code=plan_code,
+            shop_id=current_shop_id,
+        )
+    if status == "trialing" and not trial_ends_at and current_period_end and current_period_end > current:
+        return SubscriptionAccess(
+            access_state="subscribed_active",
+            has_full_access=True,
+            is_read_only=False,
+            trial_started_at=trial_started_at,
+            trial_ends_at=trial_ends_at,
+            trial_days_remaining=0,
+            stripe_subscription_status=status,
+            cancel_at_period_end=cancel_at_period_end,
+            current_period_end=current_period_end,
+            message="Your Stripe trial is active.",
+            plan_code=plan_code,
+            shop_id=current_shop_id,
+        )
+    if (status == "canceled" and cancel_at_period_end and current_period_end and current_period_end > current) or legacy_canceling:
+        return SubscriptionAccess(
+            access_state="subscribed_canceling",
+            has_full_access=True,
+            is_read_only=False,
+            trial_started_at=trial_started_at,
+            trial_ends_at=trial_ends_at,
+            trial_days_remaining=trial_days,
+            stripe_subscription_status=status,
+            cancel_at_period_end=True,
+            current_period_end=current_period_end,
+            message="Your subscription remains active until the current period ends.",
+            plan_code=plan_code,
+            shop_id=current_shop_id,
+        )
+
+    if status == "past_due":
+        state, message = "read_only_past_due", "Payment is past due. Full access resumes after billing is updated."
+    elif status == "unpaid":
+        state, message = "read_only_unpaid", "Payment is unpaid. Full access resumes after billing is updated."
+    elif status in {"canceled", "incomplete_expired"}:
+        state, message = "read_only_canceled", "This subscription has ended."
+    elif status == "trialing":
+        state, message = "read_only_trial_expired", "Your trial has expired."
+    else:
+        state, message = "read_only_no_entitlement", "Start a trial or subscription to unlock full access."
+    return SubscriptionAccess(
+        access_state=state,
+        has_full_access=False,
+        is_read_only=True,
+        trial_started_at=trial_started_at,
+        trial_ends_at=trial_ends_at,
+        trial_days_remaining=trial_days,
+        stripe_subscription_status=status,
+        cancel_at_period_end=cancel_at_period_end,
+        current_period_end=current_period_end,
+        message=message,
+        plan_code=plan_code,
+        shop_id=current_shop_id,
+    )
 
 
 def stripe_client() -> Any:
@@ -266,6 +529,7 @@ def update_subscription_for_shop(
     *,
     shop_id: int,
     status: str,
+    cancel_at_period_end: bool | int | None = None,
     stripe_customer_id: str | None = None,
     stripe_subscription_id: str | None = None,
     stripe_price_id: str | None = None,
@@ -275,9 +539,14 @@ def update_subscription_for_shop(
 ) -> dict[str, Any] | None:
     existing = load_subscription(conn, shop_id) or {}
     now = utc_now_iso()
+    if cancel_at_period_end is None:
+        stored_cancel_at_period_end = bool_from_subscription_value(existing.get("cancel_at_period_end"))
+    else:
+        stored_cancel_at_period_end = bool_from_subscription_value(cancel_at_period_end)
     values = {
         "plan_code": PRO_SOLO_PLAN_CODE,
         "status": status or existing.get("status") or "active",
+        "cancel_at_period_end": stored_cancel_at_period_end,
         "current_period_started_at": current_period_started_at or existing.get("current_period_started_at"),
         "current_period_ends_at": current_period_ends_at or existing.get("current_period_ends_at"),
         "canceled_at": canceled_at if canceled_at is not None else existing.get("canceled_at"),
@@ -294,6 +563,7 @@ def update_subscription_for_shop(
                 status = ?,
                 current_period_started_at = ?,
                 current_period_ends_at = ?,
+                cancel_at_period_end = ?,
                 canceled_at = ?,
                 stripe_customer_id = ?,
                 stripe_subscription_id = ?,
@@ -306,6 +576,7 @@ def update_subscription_for_shop(
                 values["status"],
                 values["current_period_started_at"],
                 values["current_period_ends_at"],
+                values["cancel_at_period_end"],
                 values["canceled_at"],
                 values["stripe_customer_id"],
                 values["stripe_subscription_id"],
@@ -319,11 +590,11 @@ def update_subscription_for_shop(
             """
             INSERT INTO shop_subscriptions (
               shop_id, plan_code, status, trial_started_at, trial_ends_at,
-              current_period_started_at, current_period_ends_at, canceled_at,
+              current_period_started_at, current_period_ends_at, cancel_at_period_end, canceled_at,
               access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
               stripe_price_id, created_at, updated_at
             )
-            VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
             """,
             (
                 shop_id,
@@ -331,6 +602,7 @@ def update_subscription_for_shop(
                 values["status"],
                 values["current_period_started_at"],
                 values["current_period_ends_at"],
+                values["cancel_at_period_end"],
                 values["canceled_at"],
                 values["stripe_customer_id"],
                 values["stripe_subscription_id"],
@@ -354,6 +626,9 @@ def price_id_from_subscription(subscription: dict[str, Any]) -> str | None:
 
 
 def sync_checkout_session_completed(conn: sqlite3.Connection, session: dict[str, Any]) -> dict[str, Any] | None:
+    subscription = session.get("subscription")
+    if isinstance(subscription, dict):
+        return sync_subscription_object(conn, subscription)
     shop_id = metadata_shop_id(session)
     if not shop_id:
         return None
@@ -375,6 +650,7 @@ def sync_subscription_object(conn: sqlite3.Connection, subscription: dict[str, A
         conn,
         shop_id=shop_id,
         status="canceled" if deleted else status_from_subscription(subscription),
+        cancel_at_period_end=subscription.get("cancel_at_period_end"),
         stripe_customer_id=str(subscription.get("customer") or "").strip() or None,
         stripe_subscription_id=str(subscription.get("id") or "").strip() or None,
         stripe_price_id=price_id_from_subscription(subscription),

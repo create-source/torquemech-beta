@@ -37,6 +37,8 @@ def auth_session_client(conn, base_url="http://localhost", email="owner@example.
         if column in user_columns:
             conn.execute(f"UPDATE users SET {column} = ? WHERE id = ?", (now, user_id))
     shop_id = pro_module.bootstrap_existing_shop_to_user(conn, user_id, "Test Shop")
+    pro_module.ensure_shop_subscription_schema(conn)
+    pro_module.create_or_ensure_shop_subscription(conn, shop_id, status="development")
     if booking_slug:
         conn.execute(
             "UPDATE shop_profile SET booking_slug = ? WHERE id = ?",
@@ -1042,9 +1044,7 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(row["customer_id"], customer_id)
         self.assertEqual(row["vehicle_id"], vehicle_id)
         self.assertEqual(row["status"], "Confirmed")
-        self.assertIn("Linked to customer", page.text)
-        self.assertIn("Open Customer", page.text)
-        self.assertIn("Create Estimate", page.text)
+        self.assertIn("Appointment linked to customer", page.text)
         self.assertNotIn("Add to Customer / Start Job", page.text)
 
     def test_calendar_conversion_creates_new_customer_vehicle_and_estimator_handoff(self):

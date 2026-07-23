@@ -60,6 +60,17 @@ class ShopSubscriptionTests(unittest.TestCase):
         pro_module.ensure_shop_profile_schema(self.conn)
         pro_module.ensure_shop_subscription_schema(self.conn)
 
+    def test_fresh_sqlite_shop_subscriptions_schema_contains_cancel_at_period_end(self):
+        columns = {
+            row["name"]: row
+            for row in self.conn.execute("PRAGMA table_info(shop_subscriptions)").fetchall()
+        }
+
+        self.assertIn("cancel_at_period_end", columns)
+        self.assertEqual(columns["cancel_at_period_end"]["type"].upper(), "INTEGER")
+        self.assertEqual(columns["cancel_at_period_end"]["notnull"], 1)
+        self.assertEqual(str(columns["cancel_at_period_end"]["dflt_value"]), "0")
+
     def create_verified_user_shop(self, email="owner@example.com", shop_name="Alpha Shop") -> tuple[int, int]:
         now = "2026-07-22T12:00:00+00:00"
         cur = self.conn.execute(
@@ -110,6 +121,7 @@ class ShopSubscriptionTests(unittest.TestCase):
             "trial_ends_at": None,
             "current_period_started_at": None,
             "current_period_ends_at": None,
+            "cancel_at_period_end": 0,
             "canceled_at": None,
             "access_grace_ends_at": None,
             **fields,
@@ -118,11 +130,11 @@ class ShopSubscriptionTests(unittest.TestCase):
             """
             INSERT INTO shop_subscriptions (
               shop_id, plan_code, status, trial_started_at, trial_ends_at,
-              current_period_started_at, current_period_ends_at, canceled_at,
+              current_period_started_at, current_period_ends_at, cancel_at_period_end, canceled_at,
               access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
               stripe_price_id, created_at, updated_at
             )
-            VALUES (?, 'pro_solo', ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?)
+            VALUES (?, 'pro_solo', ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?)
             """,
             (
                 shop_id,
@@ -131,6 +143,7 @@ class ShopSubscriptionTests(unittest.TestCase):
                 values["trial_ends_at"],
                 values["current_period_started_at"],
                 values["current_period_ends_at"],
+                values["cancel_at_period_end"],
                 values["canceled_at"],
                 values["access_grace_ends_at"],
                 now,
@@ -140,7 +153,7 @@ class ShopSubscriptionTests(unittest.TestCase):
         self.conn.commit()
         return pro_module.load_shop_subscription(self.conn, shop_id)
 
-    def test_existing_development_shop_has_full_access(self):
+    def test_shop_without_subscription_row_has_read_only_no_entitlement(self):
         _, shop_id = self.create_verified_user_shop()
 
         access = pro_module.shop_subscription_access_context(
@@ -149,9 +162,9 @@ class ShopSubscriptionTests(unittest.TestCase):
             now=datetime(2026, 7, 22, 12, tzinfo=timezone.utc),
         )
 
-        self.assertEqual(access["status"], "development")
+        self.assertEqual(access["access_state"], "read_only_no_entitlement")
         self.assertTrue(access["can_view"])
-        self.assertTrue(access["can_write"])
+        self.assertFalse(access["can_write"])
         self.assertTrue(access["can_manage_billing"])
 
     def test_newly_verified_shop_receives_exactly_one_14_day_trial(self):
@@ -204,12 +217,17 @@ class ShopSubscriptionTests(unittest.TestCase):
         _, past_due_shop_id = self.create_verified_user_shop(email="pastdue@example.com", shop_name="Past Due")
         now = datetime(2026, 7, 22, 12, tzinfo=timezone.utc)
         active = self.insert_subscription(active_shop_id, "active")
-        canceled = self.insert_subscription(canceled_shop_id, "canceled", current_period_ends_at="2026-08-01T00:00:00+00:00")
+        canceled = self.insert_subscription(
+            canceled_shop_id,
+            "canceled",
+            cancel_at_period_end=1,
+            current_period_ends_at="2026-08-01T00:00:00+00:00",
+        )
         past_due = self.insert_subscription(past_due_shop_id, "past_due", access_grace_ends_at="2026-07-23T00:00:00+00:00")
 
         self.assertTrue(pro_module.resolve_shop_access(active, now=now, shop_id=active_shop_id)["can_write"])
         self.assertTrue(pro_module.resolve_shop_access(canceled, now=now, shop_id=canceled_shop_id)["can_write"])
-        self.assertTrue(pro_module.resolve_shop_access(past_due, now=now, shop_id=past_due_shop_id)["can_write"])
+        self.assertFalse(pro_module.resolve_shop_access(past_due, now=now, shop_id=past_due_shop_id)["can_write"])
 
     def test_subscription_records_remain_isolated_by_shop(self):
         _, shop_a = self.create_verified_user_shop(email="a@example.com", shop_name="Shop A")

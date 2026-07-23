@@ -114,6 +114,18 @@ class AuthShopIsolationTests(unittest.TestCase):
             "UPDATE users SET email_verified_at = '2026-07-12T00:00:00' WHERE email = ?",
             (email,),
         )
+        shop = self.conn.execute(
+            """
+            SELECT sp.id
+            FROM shop_profile sp
+            JOIN users u ON u.id = sp.owner_user_id
+            WHERE u.email = ?
+            LIMIT 1
+            """,
+            (email,),
+        ).fetchone()
+        if shop:
+            pro_module.create_or_ensure_shop_subscription(self.conn, int(shop["id"]))
         self.conn.commit()
 
     def outbox_messages(self):

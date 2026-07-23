@@ -191,15 +191,16 @@ class StripeBillingTests(unittest.TestCase):
         signature = hmac.new(secret.encode("utf-8"), f"{timestamp}.".encode("utf-8") + raw, hashlib.sha256).hexdigest()
         return raw, f"t={timestamp},v1={signature}"
 
-    def subscription_event(self, shop_id: int, status="active") -> dict:
+    def subscription_event(self, shop_id: int, status="active", *, event_type="customer.subscription.updated", cancel_at_period_end=False) -> dict:
         return {
             "id": "evt_sub_updated",
-            "type": "customer.subscription.updated",
+            "type": event_type,
             "data": {
                 "object": {
                     "id": "sub_123",
                     "customer": "cus_123",
                     "status": status,
+                    "cancel_at_period_end": cancel_at_period_end,
                     "metadata": {"shop_id": str(shop_id), "plan_code": "pro_solo"},
                     "current_period_start": 1784707200,
                     "current_period_end": 1787385600,
@@ -418,7 +419,94 @@ class StripeBillingTests(unittest.TestCase):
         self.assertEqual(row["stripe_customer_id"], "cus_123")
         self.assertEqual(row["stripe_subscription_id"], "sub_123")
         self.assertEqual(row["stripe_price_id"], "price_pro_solo_monthly")
+        self.assertEqual(row["cancel_at_period_end"], 0)
         self.assertTrue(row["current_period_ends_at"].startswith("2026-08-22T"))
+
+    def test_subscription_created_persists_cancel_at_period_end_false(self):
+        _, shop_id = self.create_user_shop()
+
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(shop_id, event_type="customer.subscription.created", cancel_at_period_end=False),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertEqual(row["cancel_at_period_end"], 0)
+
+    def test_subscription_updated_persists_cancel_at_period_end_true_and_false(self):
+        _, shop_id = self.create_user_shop()
+
+        billing.handle_webhook_event(self.conn, self.subscription_event(shop_id, cancel_at_period_end=True))
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertEqual(row["cancel_at_period_end"], 1)
+
+        billing.handle_webhook_event(self.conn, self.subscription_event(shop_id, cancel_at_period_end=False))
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertEqual(row["cancel_at_period_end"], 0)
+
+    def test_cancel_at_period_end_access_before_and_after_period_end(self):
+        _, shop_id = self.create_user_shop()
+
+        billing.handle_webhook_event(self.conn, self.subscription_event(shop_id, cancel_at_period_end=True))
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+
+        before = billing.resolve_subscription_access(
+            dict(row),
+            shop_id=shop_id,
+            now=pro_module.parse_utc_datetime("2026-08-01T12:00:00+00:00"),
+        )
+        after = billing.resolve_subscription_access(
+            dict(row),
+            shop_id=shop_id,
+            now=pro_module.parse_utc_datetime("2026-08-23T12:00:00+00:00"),
+        )
+
+        self.assertEqual(before.access_state, "subscribed_canceling")
+        self.assertTrue(before.has_full_access)
+        self.assertEqual(after.access_state, "read_only_canceled")
+        self.assertFalse(after.has_full_access)
+
+    def test_deleted_subscription_persists_canceled_state_and_cancel_flag(self):
+        _, shop_id = self.create_user_shop()
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="canceled",
+                event_type="customer.subscription.deleted",
+                cancel_at_period_end=True,
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertTrue(result["processed"])
+        self.assertEqual(row["status"], "canceled")
+        self.assertEqual(row["cancel_at_period_end"], 1)
+
+    def test_checkout_session_completed_uses_expanded_subscription_object_when_available(self):
+        _, shop_id = self.create_user_shop()
+        event = {
+            "id": "evt_checkout",
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "client_reference_id": str(shop_id),
+                    "customer": "cus_session",
+                    "subscription": self.subscription_event(
+                        shop_id,
+                        event_type="customer.subscription.created",
+                        cancel_at_period_end=True,
+                    )["data"]["object"],
+                }
+            },
+        }
+
+        billing.handle_webhook_event(self.conn, event)
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertEqual(row["stripe_subscription_id"], "sub_123")
+        self.assertEqual(row["cancel_at_period_end"], 1)
 
     def test_shop_isolation(self):
         _, shop_a = self.create_user_shop(email="a@example.com", shop_name="A")

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS shop_subscriptions (
   trial_ends_at TEXT,
   current_period_started_at TEXT,
   current_period_ends_at TEXT,
+  cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
   canceled_at TEXT,
   access_grace_ends_at TEXT,
   stripe_customer_id TEXT,
@@ -326,6 +327,66 @@ def apply_subscriptions_schema(_args: argparse.Namespace) -> None:
         pg_conn.close()
 
 
+def sqlite_column_names(conn: sqlite3.Connection, table_name: str) -> set[str]:
+    return {str(row["name"]) for row in conn.execute(f"PRAGMA table_info({quote_sqlite_identifier(table_name)})")}
+
+
+def add_subscription_cancel_at_period_end_sqlite(args: argparse.Namespace) -> None:
+    if db.using_postgres():
+        raise SystemExit("Refusing SQLite cancel_at_period_end migration because the app is configured for PostgreSQL.")
+    if (os.getenv("DATABASE_URL") or "").strip():
+        raise SystemExit("Refusing SQLite cancel_at_period_end migration because DATABASE_URL is set.")
+
+    sqlite_path = Path(db.active_app_db_path()).resolve()
+    print(f"Applying cancel_at_period_end migration to SQLite database: {sqlite_path}")
+    conn = sqlite_connect(sqlite_path)
+    try:
+        columns = sqlite_column_names(conn, "shop_subscriptions")
+        if "cancel_at_period_end" not in columns:
+            conn.execute(
+                "ALTER TABLE shop_subscriptions ADD COLUMN cancel_at_period_end INTEGER NOT NULL DEFAULT 0"
+            )
+        conn.commit()
+        print(f"cancel_at_period_end migration applied successfully for SQLite database: {sqlite_path}")
+    except Exception as exc:
+        conn.rollback()
+        raise SystemExit(f"Failed to apply SQLite cancel_at_period_end migration: {exc}") from exc
+    finally:
+        conn.close()
+
+
+def add_subscription_cancel_at_period_end_postgres(_args: argparse.Namespace) -> None:
+    if not db.using_postgres():
+        raise SystemExit("DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands.")
+
+    pg_conn = pg_connect()
+    try:
+        with pg_conn:
+            with pg_conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'shop_subscriptions'
+                      AND column_name = 'cancel_at_period_end'
+                    """
+                )
+                if cur.fetchone() is None:
+                    cur.execute(
+                        """
+                        ALTER TABLE shop_subscriptions
+                        ADD COLUMN cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE
+                        """
+                    )
+        print("cancel_at_period_end migration applied successfully for PostgreSQL database")
+    except Exception as exc:
+        pg_conn.rollback()
+        raise SystemExit(f"Failed to apply PostgreSQL cancel_at_period_end migration: {exc}") from exc
+    finally:
+        pg_conn.close()
+
+
 def apply_subscriptions_schema_local(_args: argparse.Namespace) -> None:
     if db.using_postgres():
         raise SystemExit("Refusing local SQLite migration because the app is configured for PostgreSQL.")
@@ -399,6 +460,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     subscriptions_schema_local = subparsers.add_parser("apply-subscriptions-schema-local")
     subscriptions_schema_local.set_defaults(func=apply_subscriptions_schema_local)
+
+    subscriptions_cancel_local = subparsers.add_parser("add-subscription-cancel-at-period-end-local")
+    subscriptions_cancel_local.set_defaults(func=add_subscription_cancel_at_period_end_sqlite)
+
+    subscriptions_cancel_pg = subparsers.add_parser("add-subscription-cancel-at-period-end")
+    subscriptions_cancel_pg.set_defaults(func=add_subscription_cancel_at_period_end_postgres)
 
     subscriptions_backfill = subparsers.add_parser("backfill-development-subscriptions")
     subscriptions_backfill.set_defaults(func=backfill_development_subscriptions)

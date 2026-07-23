@@ -3,7 +3,6 @@ import base64
 import hashlib
 import hmac
 import logging
-import math
 import os
 import re
 import sqlite3
@@ -16,6 +15,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from reportlab.lib.pagesizes import letter
@@ -49,6 +49,8 @@ from app.billing import (
     StripeBillingConfig,
     StripeBillingService,
     handle_webhook_event,
+    remaining_trial_days,
+    resolve_subscription_access,
     verify_webhook_payload,
 )
 from db import connect_app_db
@@ -206,7 +208,44 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.globals["static_version"] = static_version
 templates.env.globals["build_finding_estimator_href"] = build_finding_estimator_href
 
-router = APIRouter(prefix="/pro", tags=["pro"])
+SUBSCRIPTION_READ_ONLY_ERROR_CODE = "subscription_read_only"
+SUBSCRIPTION_READ_ONLY_MESSAGE = (
+    "Your account is in read-only mode. Update billing to make changes."
+)
+PUBLIC_BOOKING_UNAVAILABLE_MESSAGE = (
+    "Online booking is temporarily unavailable for this shop. Please contact the shop directly."
+)
+SUBSCRIPTION_WRITE_GUARD_ALLOWED_PATHS = {
+    "/pro/billing/checkout",
+    "/pro/billing/portal",
+    "/pro/billing/webhook",
+    "/pro/estimate-conversion",
+}
+SUBSCRIPTION_WRITE_GUARD_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+class SubscriptionWriteGuardRoute(APIRoute):
+    def get_route_handler(self):
+        original_route_handler = super().get_route_handler()
+
+        async def guarded_route_handler(request: Request) -> Response:
+            path = request.url.path.rstrip("/") or request.url.path
+            if (
+                request.method.upper() in SUBSCRIPTION_WRITE_GUARD_METHODS
+                and path.startswith("/pro")
+                and path not in SUBSCRIPTION_WRITE_GUARD_ALLOWED_PATHS
+                and subscription_write_enforcement_enabled()
+                and current_user_id(request) is not None
+            ):
+                blocked = enforce_subscription_write_access(request)
+                if blocked is not None:
+                    return blocked
+            return await original_route_handler(request)
+
+        return guarded_route_handler
+
+
+router = APIRouter(prefix="/pro", tags=["pro"], route_class=SubscriptionWriteGuardRoute)
 public_router = APIRouter(tags=["booking"])
 
 FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined")
@@ -2798,6 +2837,7 @@ def create_shop_subscription_table(conn: sqlite3.Connection, table_name: str = "
           trial_ends_at TEXT,
           current_period_started_at TEXT,
           current_period_ends_at TEXT,
+          cancel_at_period_end INTEGER NOT NULL DEFAULT 0,
           canceled_at TEXT,
           access_grace_ends_at TEXT,
           stripe_customer_id TEXT,
@@ -2885,10 +2925,7 @@ def trial_days_remaining(subscription: dict[str, Any] | None, now: datetime | No
     if not ends_at:
         return 0
     current = (now or utc_now()).astimezone(timezone.utc)
-    seconds = (ends_at - current).total_seconds()
-    if seconds <= 0:
-        return 0
-    return max(1, math.ceil(seconds / 86400))
+    return remaining_trial_days(ends_at, current)
 
 
 def resolve_shop_access(
@@ -2897,78 +2934,7 @@ def resolve_shop_access(
     now: datetime | None = None,
     shop_id: int | None = None,
 ) -> dict[str, Any]:
-    current = (now or utc_now()).astimezone(timezone.utc)
-    if not shop_id:
-        return {
-            "status": "none",
-            "plan_code": PRO_SOLO_PLAN_CODE,
-            "plan_name": PRO_SOLO_PLAN_NAME,
-            "can_view": False,
-            "can_write": False,
-            "can_manage_billing": False,
-            "trial_days_remaining": 0,
-            "trial_ends_at": None,
-            "access_ends_at": None,
-            "reason": "no_shop",
-        }
-    if not subscription:
-        return {
-            "status": "development",
-            "plan_code": PRO_SOLO_PLAN_CODE,
-            "plan_name": PRO_SOLO_PLAN_NAME,
-            "can_view": True,
-            "can_write": True,
-            "can_manage_billing": True,
-            "trial_days_remaining": 0,
-            "trial_ends_at": None,
-            "access_ends_at": None,
-            "reason": "development_access",
-        }
-
-    status = str(subscription.get("status") or "").strip().lower() or "unknown"
-    trial_ends_at = parse_utc_datetime(subscription.get("trial_ends_at"))
-    current_period_ends_at = parse_utc_datetime(subscription.get("current_period_ends_at"))
-    access_grace_ends_at = parse_utc_datetime(subscription.get("access_grace_ends_at"))
-    can_write = False
-    reason = "inactive"
-    access_ends_at = None
-
-    if status == "development":
-        can_write = True
-        reason = "development_access"
-    elif status == "trialing":
-        can_write = bool(trial_ends_at and trial_ends_at > current)
-        reason = "trial_active" if can_write else "trial_expired"
-        access_ends_at = trial_ends_at
-    elif status == "active":
-        can_write = not current_period_ends_at or current_period_ends_at > current
-        reason = "subscription_active" if can_write else "subscription_period_ended"
-        access_ends_at = current_period_ends_at
-    elif status == "canceled":
-        can_write = bool(current_period_ends_at and current_period_ends_at > current)
-        reason = "canceled_period_active" if can_write else "canceled_period_ended"
-        access_ends_at = current_period_ends_at
-    elif status == "past_due":
-        can_write = bool(access_grace_ends_at and access_grace_ends_at > current)
-        reason = "past_due_grace" if can_write else "past_due_grace_expired"
-        access_ends_at = access_grace_ends_at
-    elif status in {"expired", "unpaid", "incomplete"}:
-        reason = status
-
-    can_view = True
-    access_ends_iso = access_ends_at.isoformat() if access_ends_at else None
-    return {
-        "status": status,
-        "plan_code": str(subscription.get("plan_code") or PRO_SOLO_PLAN_CODE),
-        "plan_name": PRO_SOLO_PLAN_NAME,
-        "can_view": can_view,
-        "can_write": can_write,
-        "can_manage_billing": can_view,
-        "trial_days_remaining": trial_days_remaining(subscription, current),
-        "trial_ends_at": trial_ends_at.isoformat() if trial_ends_at else None,
-        "access_ends_at": access_ends_iso,
-        "reason": reason,
-    }
+    return resolve_subscription_access(subscription, now=now or utc_now(), shop_id=shop_id).to_dict()
 
 
 def shop_subscription_access_context(
@@ -2990,6 +2956,82 @@ def shop_can_write(access: dict[str, Any] | None) -> bool:
 
 def shop_can_manage_billing(access: dict[str, Any] | None) -> bool:
     return bool((access or {}).get("can_manage_billing"))
+
+
+def request_wants_json_response(request: Request) -> bool:
+    requested_with = str(request.headers.get("x-requested-with") or "").strip().lower()
+    content_type = str(request.headers.get("content-type") or "").lower()
+    accept = str(request.headers.get("accept") or "").lower()
+    return (
+        requested_with in {"fetch", "xmlhttprequest"}
+        or "application/json" in content_type
+        or ("application/json" in accept and "text/html" not in accept)
+    )
+
+
+def subscription_write_enforcement_enabled() -> bool:
+    return (os.getenv("PRO_ENABLED") or "").strip().lower() != "false"
+
+
+def subscription_read_only_json_response(message: str = SUBSCRIPTION_READ_ONLY_MESSAGE) -> JSONResponse:
+    return JSONResponse(
+        {
+            "ok": False,
+            "error": SUBSCRIPTION_READ_ONLY_ERROR_CODE,
+            "code": SUBSCRIPTION_READ_ONLY_ERROR_CODE,
+            "message": message,
+        },
+        status_code=403,
+    )
+
+
+def subscription_read_only_redirect(request: Request, message: str = SUBSCRIPTION_READ_ONLY_MESSAGE) -> RedirectResponse:
+    attempted_url = str(request.url.path)
+    if request.url.query:
+        attempted_url = f"{attempted_url}?{request.url.query}"
+    back_url = safe_next_url(attempted_url)
+    query = {"subscription_notice": "read_only"}
+    if back_url:
+        query["next"] = back_url
+    response = RedirectResponse(f"/account/settings?{urlencode(query)}", status_code=303)
+    request.session["subscription_notice"] = message
+    return response
+
+
+def subscription_read_only_response(request: Request, message: str = SUBSCRIPTION_READ_ONLY_MESSAGE) -> Response:
+    if request_wants_json_response(request):
+        return subscription_read_only_json_response(message)
+    return subscription_read_only_redirect(request, message)
+
+
+def require_shop_write_access(
+    conn: sqlite3.Connection,
+    request: Request | None = None,
+    *,
+    shop_id: int | None = None,
+) -> dict[str, Any]:
+    resolved_shop_id = shop_id
+    if resolved_shop_id is None:
+        if request is None:
+            raise HTTPException(status_code=403, detail=SUBSCRIPTION_READ_ONLY_ERROR_CODE)
+        resolved_shop_id = required_current_shop_id(conn, request)
+    subscription = load_shop_subscription(conn, resolved_shop_id)
+    access = resolve_subscription_access(subscription, now=utc_now(), shop_id=resolved_shop_id).to_dict()
+    if access.get("has_full_access") and not access.get("is_read_only"):
+        return access
+    raise HTTPException(status_code=403, detail=SUBSCRIPTION_READ_ONLY_ERROR_CODE)
+
+
+def enforce_subscription_write_access(request: Request) -> Response | None:
+    conn = crm_db_conn()
+    try:
+        try:
+            require_shop_write_access(conn, request)
+        except HTTPException:
+            return subscription_read_only_response(request)
+    finally:
+        conn.close()
+    return None
 
 
 def save_shop_settings(conn: sqlite3.Connection, form: dict[str, str], shop_id: int | None = None) -> dict[str, Any]:
@@ -12018,6 +12060,23 @@ async def public_booking_submit(request: Request, shop_slug: str):
                 },
                 status_code=400,
             )
+        if subscription_write_enforcement_enabled():
+            try:
+                require_shop_write_access(conn, shop_id=shop_id)
+            except HTTPException:
+                return templates.TemplateResponse(
+                    "booking.html",
+                    {
+                        "request": request,
+                        "profile": profile,
+                        "shop_slug": profile["booking_slug"],
+                        "booking_schedule": booking_schedule,
+                        "success": False,
+                        "warning": PUBLIC_BOOKING_UNAVAILABLE_MESSAGE,
+                        "form": form,
+                    },
+                    status_code=503,
+                )
         closed, closed_reason = is_closed_booking_day(conn, form.get("requested_date", ""), shop_id=shop_id)
         if closed:
             warning = closed_reason or "The shop is closed on this day. Please choose another day."

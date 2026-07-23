@@ -305,6 +305,170 @@ class DatabasePortabilityTests(unittest.TestCase):
         self.assertIn("DATABASE_URL is set", str(raised.exception))
         self.assertFalse(sqlite_path.exists())
 
+    def test_sqlite_cancel_at_period_end_migration_adds_column_and_preserves_rows(self):
+        TEST_TMP_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_path = TEST_TMP_DIR / "test_cancel_at_period_end_migration.db"
+        sqlite_path.unlink(missing_ok=True)
+        self.addCleanup(lambda: sqlite_path.unlink(missing_ok=True))
+        conn = sqlite3.connect(sqlite_path)
+        try:
+            conn.executescript(
+                """
+                CREATE TABLE shop_subscriptions (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  shop_id INTEGER NOT NULL UNIQUE,
+                  plan_code TEXT NOT NULL DEFAULT 'pro_solo',
+                  status TEXT NOT NULL,
+                  trial_started_at TEXT,
+                  trial_ends_at TEXT,
+                  current_period_started_at TEXT,
+                  current_period_ends_at TEXT,
+                  canceled_at TEXT,
+                  access_grace_ends_at TEXT,
+                  stripe_customer_id TEXT,
+                  stripe_subscription_id TEXT,
+                  stripe_price_id TEXT,
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL
+                );
+                INSERT INTO shop_subscriptions (shop_id, plan_code, status, created_at, updated_at)
+                VALUES (7, 'pro_solo', 'active', '2026-07-22T12:00:00+00:00', '2026-07-22T12:00:00+00:00');
+                """
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        with patch.dict(os.environ, {}, clear=True), patch.object(
+            db_migration.db,
+            "active_app_db_path",
+            return_value=str(sqlite_path),
+        ):
+            db_migration.add_subscription_cancel_at_period_end_sqlite(Namespace())
+
+        conn = sqlite3.connect(sqlite_path)
+        conn.row_factory = sqlite3.Row
+        try:
+            columns = {row["name"]: row for row in conn.execute("PRAGMA table_info(shop_subscriptions)").fetchall()}
+            row = conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = 7").fetchone()
+        finally:
+            conn.close()
+
+        self.assertIn("cancel_at_period_end", columns)
+        self.assertEqual(columns["cancel_at_period_end"]["type"].upper(), "INTEGER")
+        self.assertEqual(columns["cancel_at_period_end"]["notnull"], 1)
+        self.assertEqual(str(columns["cancel_at_period_end"]["dflt_value"]), "0")
+        self.assertEqual(row["status"], "active")
+        self.assertEqual(row["cancel_at_period_end"], 0)
+
+    def test_sqlite_cancel_at_period_end_migration_is_idempotent(self):
+        TEST_TMP_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_path = TEST_TMP_DIR / "test_cancel_at_period_end_migration_idempotent.db"
+        sqlite_path.unlink(missing_ok=True)
+        self.addCleanup(lambda: sqlite_path.unlink(missing_ok=True))
+        conn = sqlite3.connect(sqlite_path)
+        try:
+            conn.execute(
+                """
+                CREATE TABLE shop_subscriptions (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  shop_id INTEGER NOT NULL UNIQUE,
+                  status TEXT NOT NULL,
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL
+                )
+                """
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        with patch.dict(os.environ, {}, clear=True), patch.object(
+            db_migration.db,
+            "active_app_db_path",
+            return_value=str(sqlite_path),
+        ):
+            db_migration.add_subscription_cancel_at_period_end_sqlite(Namespace())
+            db_migration.add_subscription_cancel_at_period_end_sqlite(Namespace())
+
+        conn = sqlite3.connect(sqlite_path)
+        try:
+            count = sum(
+                1
+                for row in conn.execute("PRAGMA table_info(shop_subscriptions)").fetchall()
+                if row[1] == "cancel_at_period_end"
+            )
+        finally:
+            conn.close()
+
+        self.assertEqual(count, 1)
+
+    def test_sqlite_cancel_at_period_end_migration_refuses_when_database_url_is_set(self):
+        TEST_TMP_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_path = TEST_TMP_DIR / "test_cancel_at_period_end_migration_refusal.db"
+        sqlite_path.unlink(missing_ok=True)
+        self.addCleanup(lambda: sqlite_path.unlink(missing_ok=True))
+        with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///local.db"}, clear=True), patch.object(
+            db_migration.db,
+            "active_app_db_path",
+            return_value=str(sqlite_path),
+        ):
+            with self.assertRaises(SystemExit) as raised:
+                db_migration.add_subscription_cancel_at_period_end_sqlite(Namespace())
+
+        self.assertIn("DATABASE_URL is set", str(raised.exception))
+        self.assertFalse(sqlite_path.exists())
+
+    def test_postgres_cancel_at_period_end_migration_uses_boolean_default_false(self):
+        statements = []
+
+        class FakeCursor:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def execute(self, sql):
+                statements.append(str(sql))
+
+            def fetchone(self):
+                return None
+
+        class FakePgConn:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def cursor(self):
+                return FakeCursor()
+
+            def rollback(self):
+                statements.append("ROLLBACK")
+
+            def close(self):
+                statements.append("CLOSE")
+
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://user:pass@example/db"}, clear=True), patch.object(
+            db_migration,
+            "pg_connect",
+            return_value=FakePgConn(),
+        ):
+            db_migration.add_subscription_cancel_at_period_end_postgres(Namespace())
+
+        combined = "\n".join(statements)
+        self.assertIn("ALTER TABLE shop_subscriptions", combined)
+        self.assertIn("ADD COLUMN cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE", combined)
+
+    def test_postgres_cancel_at_period_end_migration_requires_postgres_database_url(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(SystemExit) as raised:
+                db_migration.add_subscription_cancel_at_period_end_postgres(Namespace())
+
+        self.assertIn("explicit PostgreSQL URL", str(raised.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
