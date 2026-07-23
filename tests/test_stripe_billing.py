@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import sqlite3
 import time
 import unittest
@@ -79,10 +80,23 @@ class FailingCheckoutSession:
         raise RuntimeError("stripe unavailable")
 
 
+class FailingPortalSession:
+    @classmethod
+    def create(cls, **kwargs):
+        raise RuntimeError("stripe portal unavailable")
+
+
 class FailingStripe:
     api_key = ""
     checkout = type("Checkout", (), {"Session": FailingCheckoutSession})
-    billing_portal = type("BillingPortal", (), {"Session": FakePortalSession})
+    billing_portal = type("BillingPortal", (), {"Session": FailingPortalSession})
+
+
+def csrf_from(html: str) -> str:
+    match = re.search(r'name="csrf_token" value="([^"]+)"', html)
+    if not match:
+        raise AssertionError("csrf token not found")
+    return match.group(1)
 
 
 class StripeBillingTests(unittest.TestCase):
@@ -150,6 +164,10 @@ class StripeBillingTests(unittest.TestCase):
         now = "2026-07-22T12:00:00+00:00"
         defaults = {
             "status": "trialing",
+            "current_period_started_at": None,
+            "current_period_ends_at": None,
+            "cancel_at_period_end": 0,
+            "canceled_at": None,
             "stripe_customer_id": None,
             "stripe_subscription_id": None,
             "stripe_price_id": None,
@@ -159,15 +177,19 @@ class StripeBillingTests(unittest.TestCase):
             """
             INSERT INTO shop_subscriptions (
               shop_id, plan_code, status, trial_started_at, trial_ends_at,
-              current_period_started_at, current_period_ends_at, canceled_at,
+              current_period_started_at, current_period_ends_at, cancel_at_period_end, canceled_at,
               access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
               stripe_price_id, created_at, updated_at
             )
-            VALUES (?, 'pro_solo', ?, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?, ?, ?, ?)
+            VALUES (?, 'pro_solo', ?, NULL, NULL, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
             """,
             (
                 shop_id,
                 defaults["status"],
+                defaults["current_period_started_at"],
+                defaults["current_period_ends_at"],
+                defaults["cancel_at_period_end"],
+                defaults["canceled_at"],
                 defaults["stripe_customer_id"],
                 defaults["stripe_subscription_id"],
                 defaults["stripe_price_id"],
@@ -191,20 +213,60 @@ class StripeBillingTests(unittest.TestCase):
         signature = hmac.new(secret.encode("utf-8"), f"{timestamp}.".encode("utf-8") + raw, hashlib.sha256).hexdigest()
         return raw, f"t={timestamp},v1={signature}"
 
-    def subscription_event(self, shop_id: int, status="active", *, event_type="customer.subscription.updated", cancel_at_period_end=False) -> dict:
+    def subscription_event(
+        self,
+        shop_id: int,
+        status="active",
+        *,
+        event_type="customer.subscription.updated",
+        cancel_at_period_end=False,
+        stripe_subscription_id="sub_123",
+        stripe_customer_id="cus_123",
+        current_period_start=1784707200,
+        current_period_end=1787385600,
+        canceled_at=None,
+        metadata_shop_id=None,
+    ) -> dict:
+        subscription = {
+            "id": stripe_subscription_id,
+            "customer": stripe_customer_id,
+            "status": status,
+            "cancel_at_period_end": cancel_at_period_end,
+            "metadata": {"shop_id": str(metadata_shop_id if metadata_shop_id is not None else shop_id), "plan_code": "pro_solo"},
+            "current_period_start": current_period_start,
+            "current_period_end": current_period_end,
+            "items": {"data": [{"price": {"id": "price_pro_solo_monthly"}}]},
+        }
+        if canceled_at is not None:
+            subscription["canceled_at"] = canceled_at
         return {
             "id": "evt_sub_updated",
             "type": event_type,
+            "data": {"object": subscription},
+        }
+
+    def invoice_event(
+        self,
+        shop_id: int,
+        *,
+        event_type="invoice.paid",
+        stripe_subscription_id="sub_123",
+        stripe_customer_id="cus_123",
+        metadata_shop_id=None,
+    ) -> dict:
+        return {
+            "id": "evt_invoice",
+            "type": event_type,
             "data": {
                 "object": {
-                    "id": "sub_123",
-                    "customer": "cus_123",
-                    "status": status,
-                    "cancel_at_period_end": cancel_at_period_end,
-                    "metadata": {"shop_id": str(shop_id), "plan_code": "pro_solo"},
-                    "current_period_start": 1784707200,
-                    "current_period_end": 1787385600,
-                    "items": {"data": [{"price": {"id": "price_pro_solo_monthly"}}]},
+                    "customer": stripe_customer_id,
+                    "subscription": stripe_subscription_id,
+                    "subscription_details": {
+                        "metadata": {
+                            "shop_id": str(metadata_shop_id if metadata_shop_id is not None else shop_id),
+                            "plan_code": "pro_solo",
+                        }
+                    },
                 }
             },
         }
@@ -368,6 +430,156 @@ class StripeBillingTests(unittest.TestCase):
         with self.assertRaises(billing.BillingCustomerRequiredError):
             service.create_customer_portal_session(self.conn, shop_id=shop_id, return_url="https://torquemech.test/account")
 
+    def test_portal_uses_stored_customer_id(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_stored", stripe_subscription_id="sub_123")
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        session = service.create_customer_portal_session(
+            self.conn,
+            shop_id=shop_id,
+            return_url="https://torquemech.test/account/settings#billing-subscription",
+        )
+
+        self.assertEqual(session["url"], "https://billing.stripe.test/session")
+        self.assertEqual(FakePortalSession.calls[-1]["customer"], "cus_stored")
+        self.assertEqual(
+            FakePortalSession.calls[-1]["return_url"],
+            "https://torquemech.test/account/settings#billing-subscription",
+        )
+
+    def test_portal_route_redirects_to_mocked_stripe_url(self):
+        user_id, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_route", stripe_subscription_id="sub_123")
+        client = self.authenticated_client(user_id)
+        page = client.get("/account/settings")
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        with patch.object(pro_module, "StripeBillingService", return_value=service):
+            response = client.post(
+                "/pro/billing/portal",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "https://billing.stripe.test/session")
+        self.assertEqual(FakePortalSession.calls[-1]["customer"], "cus_route")
+
+    def test_portal_route_ignores_browser_submitted_customer_id_and_return_url(self):
+        user_a, shop_a = self.create_user_shop(email="a@example.com", shop_name="A")
+        _, shop_b = self.create_user_shop(email="b@example.com", shop_name="B")
+        self.insert_subscription(shop_a, status="active", stripe_customer_id="cus_a", stripe_subscription_id="sub_a")
+        self.insert_subscription(shop_b, status="active", stripe_customer_id="cus_b", stripe_subscription_id="sub_b")
+        client = self.authenticated_client(user_a)
+        page = client.get("/account/settings")
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        with patch.object(pro_module, "StripeBillingService", return_value=service):
+            response = client.post(
+                "/pro/billing/portal?shop_id={}&return_url=https://evil.test/after".format(shop_b),
+                data={
+                    "csrf_token": csrf_from(page.text),
+                    "customer": "cus_b",
+                    "customer_id": "cus_b",
+                    "stripe_customer_id": "cus_b",
+                    "return_url": "https://evil.test/form",
+                },
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(FakePortalSession.calls[-1]["customer"], "cus_a")
+        self.assertEqual(
+            FakePortalSession.calls[-1]["return_url"],
+            "http://localhost/account/settings#billing-subscription",
+        )
+
+    def test_shop_without_customer_id_cannot_open_portal(self):
+        user_id, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id=None, stripe_subscription_id="sub_123")
+        client = self.authenticated_client(user_id)
+        page = client.get("/account/settings")
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FakeStripe)
+
+        with patch.object(pro_module, "StripeBillingService", return_value=service):
+            response = client.post(
+                "/pro/billing/portal",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Billing is not active for this shop yet.", response.text)
+        self.assertEqual(FakePortalSession.calls, [])
+
+    def test_unauthenticated_portal_request_redirects_to_login(self):
+        client = TestClient(main.app, base_url="http://localhost")
+
+        response = client.post("/pro/billing/portal", follow_redirects=False)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login?next=%2Faccount%2Fsettings")
+        self.assertEqual(FakePortalSession.calls, [])
+
+    def test_portal_configuration_failure_returns_friendly_error(self):
+        user_id, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_route", stripe_subscription_id="sub_123")
+        client = self.authenticated_client(user_id)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/pro/billing/portal",
+            data={"csrf_token": csrf_from(page.text)},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("Stripe billing is not configured", response.text)
+        self.assertNotIn("sk_test", response.text)
+        self.assertEqual(FakePortalSession.calls, [])
+
+    def test_portal_stripe_failure_returns_friendly_error(self):
+        user_id, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_route", stripe_subscription_id="sub_123")
+        client = self.authenticated_client(user_id)
+        page = client.get("/account/settings")
+        service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FailingStripe)
+
+        with patch.object(pro_module, "StripeBillingService", return_value=service):
+            response = client.post(
+                "/pro/billing/portal",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("Stripe Billing Portal is temporarily unavailable", response.text)
+        self.assertNotIn("stripe portal unavailable", response.text)
+
+    def test_account_settings_manage_subscription_button_visibility(self):
+        user_id, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_route", stripe_subscription_id="sub_123")
+        client = self.authenticated_client(user_id)
+
+        page = client.get("/account/settings")
+
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Manage Subscription", page.text)
+        self.assertIn('action="/pro/billing/portal"', page.text)
+        self.assertIn('name="csrf_token"', page.text)
+        self.assertIn("Payment methods, invoices, and cancellation are handled securely by Stripe.", page.text)
+
+    def test_account_settings_hides_manage_subscription_for_ended_subscription(self):
+        user_id, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="canceled", stripe_customer_id="cus_route", stripe_subscription_id="sub_123")
+        client = self.authenticated_client(user_id)
+
+        page = client.get("/account/settings")
+
+        self.assertEqual(page.status_code, 200)
+        self.assertNotIn("Manage Subscription", page.text)
+
     def test_checkout_stripe_failure_returns_friendly_error(self):
         user_id, shop_id = self.create_user_shop()
         client = self.authenticated_client(user_id)
@@ -398,6 +610,7 @@ class StripeBillingTests(unittest.TestCase):
 
     def test_duplicate_webhook_idempotency(self):
         _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, stripe_customer_id="cus_123", stripe_subscription_id="sub_123")
         event = self.subscription_event(shop_id)
 
         first = billing.handle_webhook_event(self.conn, event)
@@ -410,6 +623,7 @@ class StripeBillingTests(unittest.TestCase):
 
     def test_subscription_status_synchronization(self):
         _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, stripe_customer_id="cus_123", stripe_subscription_id="sub_123")
 
         result = billing.handle_webhook_event(self.conn, self.subscription_event(shop_id, status="past_due"))
 
@@ -424,6 +638,7 @@ class StripeBillingTests(unittest.TestCase):
 
     def test_subscription_created_persists_cancel_at_period_end_false(self):
         _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, stripe_customer_id="cus_123", stripe_subscription_id="sub_123")
 
         billing.handle_webhook_event(
             self.conn,
@@ -435,6 +650,7 @@ class StripeBillingTests(unittest.TestCase):
 
     def test_subscription_updated_persists_cancel_at_period_end_true_and_false(self):
         _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, stripe_customer_id="cus_123", stripe_subscription_id="sub_123")
 
         billing.handle_webhook_event(self.conn, self.subscription_event(shop_id, cancel_at_period_end=True))
         row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
@@ -446,6 +662,7 @@ class StripeBillingTests(unittest.TestCase):
 
     def test_cancel_at_period_end_access_before_and_after_period_end(self):
         _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, stripe_customer_id="cus_123", stripe_subscription_id="sub_123")
 
         billing.handle_webhook_event(self.conn, self.subscription_event(shop_id, cancel_at_period_end=True))
         row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
@@ -468,6 +685,7 @@ class StripeBillingTests(unittest.TestCase):
 
     def test_deleted_subscription_persists_canceled_state_and_cancel_flag(self):
         _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, stripe_customer_id="cus_123", stripe_subscription_id="sub_123")
 
         result = billing.handle_webhook_event(
             self.conn,
@@ -482,7 +700,425 @@ class StripeBillingTests(unittest.TestCase):
         row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
         self.assertTrue(result["processed"])
         self.assertEqual(row["status"], "canceled")
+        self.assertEqual(row["cancel_at_period_end"], 0)
+
+    def test_lifecycle_active_update_uses_stored_stripe_identifiers(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="past_due", stripe_customer_id="cus_lifecycle", stripe_subscription_id="sub_lifecycle")
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="active",
+                stripe_customer_id="cus_lifecycle",
+                stripe_subscription_id="sub_lifecycle",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        access = billing.resolve_subscription_access(dict(row), shop_id=shop_id, now=pro_module.parse_utc_datetime("2026-08-01T12:00:00+00:00"))
+        self.assertTrue(result["processed"])
+        self.assertEqual(row["status"], "active")
+        self.assertEqual(row["stripe_customer_id"], "cus_lifecycle")
+        self.assertEqual(row["stripe_subscription_id"], "sub_lifecycle")
+        self.assertTrue(access.has_full_access)
+
+    def test_lifecycle_duplicate_subscription_update_is_idempotent(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="past_due", stripe_customer_id="cus_duplicate", stripe_subscription_id="sub_duplicate")
+        event = self.subscription_event(
+            shop_id,
+            status="active",
+            stripe_customer_id="cus_duplicate",
+            stripe_subscription_id="sub_duplicate",
+        )
+
+        first = billing.handle_webhook_event(self.conn, event)
+        second = billing.handle_webhook_event(self.conn, event)
+
+        rows = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchall()
+        self.assertTrue(first["processed"])
+        self.assertTrue(second["processed"])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["status"], "active")
+        self.assertEqual(rows[0]["stripe_subscription_id"], "sub_duplicate")
+
+    def test_lifecycle_scheduled_cancellation_preserves_access_until_period_end(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_canceling", stripe_subscription_id="sub_canceling")
+
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="active",
+                cancel_at_period_end=True,
+                stripe_customer_id="cus_canceling",
+                stripe_subscription_id="sub_canceling",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        before = billing.resolve_subscription_access(dict(row), shop_id=shop_id, now=pro_module.parse_utc_datetime("2026-08-01T12:00:00+00:00"))
+        after = billing.resolve_subscription_access(dict(row), shop_id=shop_id, now=pro_module.parse_utc_datetime("2026-08-23T12:00:00+00:00"))
         self.assertEqual(row["cancel_at_period_end"], 1)
+        self.assertEqual(before.access_state, "subscribed_canceling")
+        self.assertTrue(before.has_full_access)
+        self.assertEqual(after.access_state, "read_only_canceled")
+        self.assertFalse(after.has_full_access)
+
+    def test_lifecycle_cancellation_reversal_clears_pending_state_and_canceled_at(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(
+            shop_id,
+            status="active",
+            cancel_at_period_end=1,
+            canceled_at="2026-07-30T12:00:00+00:00",
+            stripe_customer_id="cus_reverse",
+            stripe_subscription_id="sub_reverse",
+        )
+
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="active",
+                cancel_at_period_end=False,
+                canceled_at=0,
+                stripe_customer_id="cus_reverse",
+                stripe_subscription_id="sub_reverse",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        access = billing.resolve_subscription_access(dict(row), shop_id=shop_id, now=pro_module.parse_utc_datetime("2026-08-01T12:00:00+00:00"))
+        self.assertEqual(row["cancel_at_period_end"], 0)
+        self.assertIsNone(row["canceled_at"])
+        self.assertEqual(access.access_state, "subscribed_active")
+        self.assertTrue(access.has_full_access)
+
+    def test_lifecycle_deleted_subscription_is_read_only(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_deleted", stripe_subscription_id="sub_deleted")
+
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="canceled",
+                event_type="customer.subscription.deleted",
+                cancel_at_period_end=True,
+                canceled_at=1784707200,
+                stripe_customer_id="cus_deleted",
+                stripe_subscription_id="sub_deleted",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        access = billing.resolve_subscription_access(dict(row), shop_id=shop_id, now=pro_module.parse_utc_datetime("2026-08-01T12:00:00+00:00"))
+        self.assertEqual(row["status"], "canceled")
+        self.assertEqual(row["cancel_at_period_end"], 0)
+        self.assertTrue(str(row["canceled_at"]).startswith("2026-07-22T"))
+        self.assertEqual(access.access_state, "read_only_canceled")
+        self.assertFalse(access.has_full_access)
+
+    def test_lifecycle_stale_subscription_update_after_deleted_is_ignored(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_stale", stripe_subscription_id="sub_stale")
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="canceled",
+                event_type="customer.subscription.deleted",
+                stripe_customer_id="cus_stale",
+                stripe_subscription_id="sub_stale",
+                canceled_at=1784707200,
+            ),
+        )
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="active",
+                stripe_customer_id="cus_stale",
+                stripe_subscription_id="sub_stale",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertFalse(result["processed"])
+        self.assertEqual(row["status"], "canceled")
+        self.assertEqual(row["stripe_subscription_id"], "sub_stale")
+
+    def test_lifecycle_invoice_after_canceled_subscription_is_ignored(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_invoice_canceled", stripe_subscription_id="sub_invoice_canceled")
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="canceled",
+                event_type="customer.subscription.deleted",
+                stripe_customer_id="cus_invoice_canceled",
+                stripe_subscription_id="sub_invoice_canceled",
+                canceled_at=1784707200,
+            ),
+        )
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.invoice_event(
+                shop_id,
+                event_type="invoice.paid",
+                stripe_customer_id="cus_invoice_canceled",
+                stripe_subscription_id="sub_invoice_canceled",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertFalse(result["processed"])
+        self.assertEqual(row["status"], "canceled")
+
+    def test_lifecycle_invoice_metadata_only_spoofing_is_ignored(self):
+        _, shop_id = self.create_user_shop()
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.invoice_event(
+                shop_id,
+                event_type="invoice.paid",
+                stripe_customer_id="cus_unknown_invoice",
+                stripe_subscription_id="sub_unknown_invoice",
+                metadata_shop_id=shop_id,
+            ),
+        )
+
+        rows = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchall()
+        self.assertFalse(result["processed"])
+        self.assertEqual(rows, [])
+
+    def test_lifecycle_past_due_unpaid_and_incomplete_expired_are_read_only(self):
+        states = [
+            ("past_due", "read_only_past_due"),
+            ("unpaid", "read_only_unpaid"),
+            ("incomplete_expired", "read_only_canceled"),
+        ]
+        for status, access_state in states:
+            with self.subTest(status=status):
+                _, shop_id = self.create_user_shop(email=f"{status}@example.com", shop_name=status)
+                self.insert_subscription(shop_id, status="active", stripe_customer_id=f"cus_{status}", stripe_subscription_id=f"sub_{status}")
+                billing.handle_webhook_event(
+                    self.conn,
+                    self.subscription_event(
+                        shop_id,
+                        status=status,
+                        stripe_customer_id=f"cus_{status}",
+                        stripe_subscription_id=f"sub_{status}",
+                    ),
+                )
+                row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+                access = billing.resolve_subscription_access(dict(row), shop_id=shop_id, now=pro_module.parse_utc_datetime("2026-08-01T12:00:00+00:00"))
+                self.assertEqual(row["status"], status)
+                self.assertEqual(access.access_state, access_state)
+                self.assertFalse(access.has_full_access)
+
+    def test_lifecycle_reactivated_subscription_regains_access(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="past_due", stripe_customer_id="cus_reactivated", stripe_subscription_id="sub_reactivated")
+
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="active",
+                stripe_customer_id="cus_reactivated",
+                stripe_subscription_id="sub_reactivated",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        access = billing.resolve_subscription_access(dict(row), shop_id=shop_id, now=pro_module.parse_utc_datetime("2026-08-01T12:00:00+00:00"))
+        self.assertEqual(access.access_state, "subscribed_active")
+        self.assertTrue(access.has_full_access)
+
+    def test_lifecycle_unknown_stripe_identifiers_are_ignored(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_known", stripe_subscription_id="sub_known")
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="canceled",
+                stripe_customer_id="cus_unknown",
+                stripe_subscription_id="sub_unknown",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertFalse(result["processed"])
+        self.assertEqual(result["reason"], "no_shop")
+        self.assertEqual(row["status"], "active")
+        self.assertEqual(row["stripe_customer_id"], "cus_known")
+        self.assertEqual(row["stripe_subscription_id"], "sub_known")
+
+    def test_lifecycle_subscription_created_metadata_only_spoofing_is_ignored(self):
+        _, shop_id = self.create_user_shop()
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                event_type="customer.subscription.created",
+                stripe_customer_id="cus_metadata_only",
+                stripe_subscription_id="sub_metadata_only",
+                metadata_shop_id=shop_id,
+            ),
+        )
+
+        rows = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchall()
+        self.assertFalse(result["processed"])
+        self.assertEqual(rows, [])
+
+    def test_lifecycle_metadata_mismatch_is_ignored(self):
+        _, shop_a = self.create_user_shop(email="metadata-a@example.com", shop_name="Metadata A")
+        _, shop_b = self.create_user_shop(email="metadata-b@example.com", shop_name="Metadata B")
+        self.insert_subscription(shop_a, status="active", stripe_customer_id="cus_a_meta", stripe_subscription_id="sub_a_meta")
+        self.insert_subscription(shop_b, status="active", stripe_customer_id="cus_b_meta", stripe_subscription_id="sub_b_meta")
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_b,
+                status="canceled",
+                stripe_customer_id="cus_a_meta",
+                stripe_subscription_id="sub_a_meta",
+                metadata_shop_id=shop_b,
+            ),
+        )
+
+        row_a = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_a,)).fetchone()
+        row_b = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_b,)).fetchone()
+        self.assertFalse(result["processed"])
+        self.assertEqual(row_a["status"], "active")
+        self.assertEqual(row_b["status"], "active")
+
+    def test_lifecycle_conflicting_customer_and_subscription_ids_are_ignored(self):
+        _, shop_a = self.create_user_shop(email="conflict-a@example.com", shop_name="Conflict A")
+        _, shop_b = self.create_user_shop(email="conflict-b@example.com", shop_name="Conflict B")
+        self.insert_subscription(shop_a, status="active", stripe_customer_id="cus_conflict_a", stripe_subscription_id="sub_conflict_a")
+        self.insert_subscription(shop_b, status="active", stripe_customer_id="cus_conflict_b", stripe_subscription_id="sub_conflict_b")
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_a,
+                status="canceled",
+                stripe_customer_id="cus_conflict_b",
+                stripe_subscription_id="sub_conflict_a",
+            ),
+        )
+
+        row_a = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_a,)).fetchone()
+        row_b = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_b,)).fetchone()
+        self.assertFalse(result["processed"])
+        self.assertEqual(row_a["status"], "active")
+        self.assertEqual(row_b["status"], "active")
+
+    def test_lifecycle_malformed_event_fails_safely(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_safe", stripe_subscription_id="sub_safe")
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            {"id": "evt_bad", "type": "customer.subscription.updated", "data": {"object": "not-a-subscription"}},
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertFalse(result["processed"])
+        self.assertEqual(row["status"], "active")
+
+    def test_lifecycle_subscription_objects_can_be_attribute_based(self):
+        class StripeObject:
+            def __init__(self, **values):
+                self.__dict__.update(values)
+
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="past_due", stripe_customer_id="cus_attr", stripe_subscription_id="sub_attr")
+        event = StripeObject(
+            type="customer.subscription.updated",
+            data=StripeObject(
+                object=StripeObject(
+                    id="sub_attr",
+                    customer="cus_attr",
+                    status="active",
+                    cancel_at_period_end=False,
+                    metadata={"shop_id": str(shop_id)},
+                    current_period_start=1784707200,
+                    current_period_end=1787385600,
+                    items={"data": [{"price": {"id": "price_attr"}}]},
+                )
+            ),
+        )
+
+        result = billing.handle_webhook_event(self.conn, event)
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertTrue(result["processed"])
+        self.assertEqual(row["status"], "active")
+        self.assertEqual(row["stripe_price_id"], "price_attr")
+
+    def test_lifecycle_webhooks_do_not_call_stripe_api_clients(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_no_api", stripe_subscription_id="sub_no_api")
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="past_due",
+                stripe_customer_id="cus_no_api",
+                stripe_subscription_id="sub_no_api",
+            ),
+        )
+
+        self.assertTrue(result["processed"])
+        self.assertEqual(FakeCheckoutSession.calls, [])
+        self.assertEqual(FakePortalSession.calls, [])
+
+    def test_lifecycle_cancellation_preserves_shop_operational_records(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="active", stripe_customer_id="cus_preserve", stripe_subscription_id="sub_preserve")
+        pro_module.ensure_customer_status_schema(self.conn)
+        now = "2026-07-22T12:00:00+00:00"
+        self.conn.execute(
+            """
+            INSERT INTO customers (shop_id, first_name, last_name, phone, email, customer_status, created_at, updated_at)
+            VALUES (?, 'Pat', 'Driver', '5550100', 'pat@example.com', 'active', ?, ?)
+            """,
+            (shop_id, now, now),
+        )
+        self.conn.commit()
+
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="canceled",
+                event_type="customer.subscription.deleted",
+                stripe_customer_id="cus_preserve",
+                stripe_subscription_id="sub_preserve",
+                canceled_at=1784707200,
+            ),
+        )
+
+        count = self.conn.execute("SELECT COUNT(*) AS count FROM customers WHERE shop_id = ?", (shop_id,)).fetchone()["count"]
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertEqual(count, 1)
+        self.assertEqual(row["status"], "canceled")
 
     def test_checkout_session_completed_uses_expanded_subscription_object_when_available(self):
         _, shop_id = self.create_user_shop()
@@ -508,12 +1144,55 @@ class StripeBillingTests(unittest.TestCase):
         self.assertEqual(row["stripe_subscription_id"], "sub_123")
         self.assertEqual(row["cancel_at_period_end"], 1)
 
+    def test_checkout_session_completed_can_reactivate_after_cancellation_with_new_subscription(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(
+            shop_id,
+            status="canceled",
+            canceled_at="2026-07-22T12:00:00+00:00",
+            stripe_customer_id="cus_recheckout",
+            stripe_subscription_id="sub_old_recheckout",
+        )
+        event = {
+            "id": "evt_checkout_reactivation",
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "client_reference_id": str(shop_id),
+                    "customer": "cus_recheckout",
+                    "subscription": self.subscription_event(
+                        shop_id,
+                        event_type="customer.subscription.created",
+                        stripe_customer_id="cus_recheckout",
+                        stripe_subscription_id="sub_new_recheckout",
+                    )["data"]["object"],
+                }
+            },
+        }
+
+        result = billing.handle_webhook_event(self.conn, event)
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertTrue(result["processed"])
+        self.assertEqual(row["status"], "active")
+        self.assertEqual(row["stripe_subscription_id"], "sub_new_recheckout")
+        self.assertIsNone(row["canceled_at"])
+
     def test_shop_isolation(self):
         _, shop_a = self.create_user_shop(email="a@example.com", shop_name="A")
         _, shop_b = self.create_user_shop(email="b@example.com", shop_name="B")
+        self.insert_subscription(shop_a, status="trialing", stripe_customer_id="cus_a", stripe_subscription_id="sub_a")
         self.insert_subscription(shop_b, status="trialing", stripe_customer_id="cus_b")
 
-        billing.handle_webhook_event(self.conn, self.subscription_event(shop_a, status="active"))
+        billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_a,
+                status="active",
+                stripe_customer_id="cus_a",
+                stripe_subscription_id="sub_a",
+            ),
+        )
 
         row_a = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_a,)).fetchone()
         row_b = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_b,)).fetchone()

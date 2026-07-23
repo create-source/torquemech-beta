@@ -24,6 +24,10 @@
   .tm-account-status.is-verified { background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
   .tm-account-status.is-unverified { background:rgba(249,115,22,.14); color:#fdba74; border:1px solid rgba(249,115,22,.3); }
   .tm-account-status.is-pending { background:rgba(59,130,246,.14); color:#bfdbfe; border:1px solid rgba(59,130,246,.32); }
+  .tm-account-status.is-success { background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
+  .tm-account-status.is-warning { background:rgba(245,158,11,.13); color:#fde68a; border:1px solid rgba(245,158,11,.34); }
+  .tm-account-status.is-danger { background:rgba(239,68,68,.12); color:#fecaca; border:1px solid rgba(239,68,68,.32); }
+  .tm-account-status.is-muted { background:rgba(148,163,184,.12); color:#cbd5e1; border:1px solid rgba(148,163,184,.25); }
   .tm-security-card { border:1px solid rgba(255,255,255,.1); border-radius:8px; margin-top:22px; padding:18px; background:#0b1220; }
   .tm-security-card h3 { color:#f8fafc; font-size:1.08rem; letter-spacing:0; margin:0; }
   .tm-security-card p { margin:8px 0 0; }
@@ -39,6 +43,15 @@
   .tm-account-error { color:#fb923c; font-size:.9rem; font-weight:800; }
   .tm-account-error[hidden] { display:none; }
   .tm-account-message { border-radius:8px; margin:0 0 16px; padding:11px 12px; font-weight:800; background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
+  .tm-billing-summary { display:grid; gap:16px; margin-top:14px; }
+  .tm-billing-lede { border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:16px; background:#0b1220; }
+  .tm-billing-lede p { margin:8px 0 0; }
+  .tm-billing-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .tm-billing-head h3 { margin:0; color:#f8fafc; font-size:1.08rem; letter-spacing:0; }
+  .tm-billing-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .tm-billing-notice { border-radius:8px; padding:12px; color:#f8fafc; border:1px solid rgba(255,255,255,.12); background:rgba(15,23,42,.72); }
+  .tm-billing-notice.is-warning { border-color:rgba(245,158,11,.34); background:rgba(69,26,3,.22); color:#fde68a; }
+  .tm-billing-notice.is-readonly { border-color:rgba(148,163,184,.28); background:rgba(15,23,42,.86); color:#dbe6f4; }
   .tm-account-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:20px; }
   .tm-account-primary, .tm-account-secondary { border:0; border-radius:8px; cursor:pointer; font-weight:900; padding:12px 16px; }
   .tm-account-primary { background:#f97316; color:#111827; }
@@ -48,8 +61,9 @@
   .tm-account-link { color:#fdba74; font-weight:900; }
   @media (max-width: 680px) {
     .tm-account-section { padding:18px; }
-    .tm-account-grid { grid-template-columns:1fr; gap:0; }
+    .tm-account-grid, .tm-billing-detail-grid { grid-template-columns:1fr; gap:0; }
     .tm-account-actions > * { width:100%; text-align:center; }
+    .tm-account-actions form, .tm-account-actions button, .tm-account-actions a { width:100%; }
   }
 </style>
 {% endblock %}
@@ -95,34 +109,110 @@
       </div>
     </form>
 
-    <section class="tm-account-section">
+    <section class="tm-account-section" id="billing-subscription">
       <h2>Billing &amp; Subscription</h2>
       <p>Manage the subscription for {{ current_shop.shop_name or "your shop" }}.</p>
-      <div class="tm-account-meta">
-        <div>
-          <span class="tm-account-label">Plan</span>
-          <div class="tm-account-readonly">{{ billing_access.plan_name or "TorqueMech Pro Solo" }}</div>
+      <div class="tm-billing-summary">
+        <div class="tm-billing-lede">
+          <div class="tm-billing-head">
+            <div>
+              <h3>{{ billing_display.plan_display_name }}</h3>
+              <p>{{ billing_display.summary_message }}</p>
+            </div>
+            <span class="tm-account-status is-{{ billing_display.status_tone }}">{{ billing_display.display_status }}</span>
+          </div>
         </div>
-        <div>
-          <span class="tm-account-label">Billing status</span>
-          <div class="tm-account-readonly">{{ billing_subscription.status or billing_access.status or "Not subscribed" }}</div>
-        </div>
-        {% if billing_subscription.current_period_ends_at %}
-        <div>
-          <span class="tm-account-label">Current billing period ends</span>
-          <div class="tm-account-readonly">{{ billing_subscription.current_period_ends_at }}</div>
+
+        {% if billing_display.is_scheduled_cancellation %}
+        <div class="tm-billing-notice is-warning" role="status">
+          Your subscription is scheduled to end on {{ billing_display.cancellation_date_display }}. You can continue using TorqueMech Pro until then. You may be able to reverse the cancellation through Stripe before that date.
         </div>
         {% endif %}
+
+        {% if billing_display.is_read_only %}
+        <div class="tm-billing-notice is-readonly" role="status">
+          {{ billing_display.read_only_message }} Existing records remain viewable, and subscribing restores full access.
+        </div>
+        {% endif %}
+
+        <div class="tm-billing-detail-grid">
+          <div>
+            <span class="tm-account-label">Plan</span>
+            <div class="tm-account-readonly">{{ billing_display.plan_display_name }}</div>
+          </div>
+          <div>
+            <span class="tm-account-label">Subscription status</span>
+            <div class="tm-account-readonly">{{ billing_display.display_status }}</div>
+          </div>
+          {% if billing_display.trial_end_display %}
+          <div>
+            <span class="tm-account-label">Trial ends</span>
+            <div class="tm-account-readonly">
+              {{ billing_display.trial_end_display }}{% if billing_display.is_trial and billing_display.days_remaining %} ({{ billing_display.days_remaining }} day{% if billing_display.days_remaining != 1 %}s{% endif %} remaining){% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if billing_display.renewal_date_display %}
+          <div>
+            <span class="tm-account-label">{% if billing_display.is_scheduled_cancellation %}Paid through{% else %}Renews or paid through{% endif %}</span>
+            <div class="tm-account-readonly">{{ billing_display.renewal_date_display }}</div>
+          </div>
+          {% endif %}
+          {% if billing_display.cancellation_date_display %}
+          <div>
+            <span class="tm-account-label">Scheduled cancellation</span>
+            <div class="tm-account-readonly">{{ billing_display.cancellation_date_display }}</div>
+          </div>
+          {% endif %}
+          <div>
+            <span class="tm-account-label">Read-only state</span>
+            <div class="tm-account-readonly">{{ "Read-only access" if billing_display.is_read_only else "Full access" }}</div>
+          </div>
+          <div>
+            <span class="tm-account-label">Payment problem</span>
+            <div class="tm-account-readonly">{{ "Action needed" if billing_display.is_payment_problem else "None shown" }}</div>
+          </div>
+          <div>
+            <span class="tm-account-label">Stripe subscription management</span>
+            <div class="tm-account-readonly">{{ "Available" if billing_display.stripe_management_available else "Portal opens after checkout" }}</div>
+          </div>
+        </div>
+
+        {% if billing_display.is_trial %}
+        <div class="tm-billing-notice">
+          Free trial. Subscribe when you are ready to continue with TorqueMech Pro after {{ billing_display.trial_end_display }}.
+        </div>
+        {% endif %}
+
+        {% if billing_display.is_payment_problem %}
+        <div class="tm-billing-notice is-warning">
+          Update your billing information through Stripe to restore full access.
+        </div>
+        {% endif %}
+
+        {% if billing_display.is_ended %}
+        <div class="tm-billing-notice is-readonly">
+          Creating or editing records requires an active subscription. Your shop information has not been deleted.
+        </div>
+        {% endif %}
+
+        <p>Payment methods, invoices, and cancellation are handled securely by Stripe. TorqueMech does not store card information.</p>
       </div>
       <div class="tm-account-actions">
-        {% if not billing_subscription.stripe_subscription_id %}
+        {% if billing_display.show_subscribe %}
         <form method="post" action="/pro/billing/checkout">
           <button class="tm-account-primary" type="submit">Subscribe</button>
         </form>
         {% endif %}
-        {% if billing_subscription.stripe_customer_id %}
+        {% if billing_display.show_reactivate %}
+        <form method="post" action="/pro/billing/checkout">
+          <button class="tm-account-primary" type="submit">Reactivate</button>
+        </form>
+        {% endif %}
+        {% if billing_display.show_manage_subscription %}
         <form method="post" action="/pro/billing/portal">
-          <button class="tm-account-secondary" type="submit">Manage Billing</button>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="tm-account-secondary" type="submit">Manage Subscription</button>
         </form>
         {% endif %}
       </div>
