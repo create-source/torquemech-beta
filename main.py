@@ -56,6 +56,7 @@ from routers.pro import (
     verify_password,
     user_email_verified,
 )
+from app.billing import build_billing_display
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -1953,6 +1954,28 @@ def account_settings_context(
             subscription = load_shop_subscription(conn, shop_id)
         finally:
             conn.close()
+    if shop_id and not subscription_access:
+        conn = app_db_conn(row_factory=True)
+        try:
+            subscription_access = shop_subscription_access_context(conn, shop_id)
+        finally:
+            conn.close()
+    portal_access_states = {
+        "subscribed_active",
+        "subscribed_canceling",
+        "trial_active",
+        "read_only_past_due",
+        "read_only_unpaid",
+    }
+    can_manage_stripe_subscription = bool(
+        (subscription or {}).get("stripe_customer_id")
+        and subscription_access.get("access_state") in portal_access_states
+    )
+    billing_display = build_billing_display(
+        subscription,
+        subscription_access,
+        display_tz=SHOP_ZONEINFO,
+    )
     return {
         "request": request,
         "csrf_token": csrf_token(request),
@@ -1975,6 +1998,8 @@ def account_settings_context(
         "current_shop": current_shop,
         "billing_subscription": subscription or {},
         "billing_access": subscription_access,
+        "billing_display": billing_display,
+        "can_manage_stripe_subscription": can_manage_stripe_subscription,
     }
 
 
