@@ -148,6 +148,9 @@ class BillingStatusUiTests(unittest.TestCase):
         self.assertIn("Active", html)
         self.assertIn("08/22/2026", html)
         self.assertIn("Manage Subscription", html)
+        self.assertIn("Full access", html)
+        self.assertNotIn("Scheduled cancellation", html)
+        self.assertNotIn("scheduled to end", html)
 
     def test_scheduled_cancellation_displays_end_date_and_access_remains_available(self):
         html = self.account_html(
@@ -160,8 +163,27 @@ class BillingStatusUiTests(unittest.TestCase):
 
         self.assertIn("scheduled to end on 08/22/2026", html)
         self.assertIn("continue using TorqueMech Pro until then", html)
+        self.assertIn("Scheduled cancellation", html)
+        self.assertIn("08/22/2026", html)
         self.assertIn("Full access", html)
         self.assertNotIn("creating or editing records requires an active subscription", html.lower())
+
+    def test_ended_cancel_at_period_end_hides_scheduled_cancellation_detail(self):
+        html = self.account_html(
+            "active",
+            current_period_ends_at="2026-07-22T12:00:00+00:00",
+            cancel_at_period_end=1,
+            stripe_customer_id="cus_ended_ui",
+            stripe_subscription_id="sub_ended_ui",
+        )
+
+        billing_html = self.billing_section(html)
+        self.assertIn("Subscription ended", billing_html)
+        self.assertIn("Read-only access", billing_html)
+        self.assertIn("Reactivate", html)
+        self.assertNotIn("Scheduled cancellation", billing_html)
+        self.assertNotIn("scheduled to end", billing_html)
+        self.assertIn("Creating or editing records requires an active subscription", billing_html)
 
     def test_cancellation_reversal_returns_to_normal_active_messaging(self):
         html = self.account_html(
@@ -174,6 +196,7 @@ class BillingStatusUiTests(unittest.TestCase):
 
         self.assertIn("Your TorqueMech Pro Solo subscription is active.", html)
         self.assertNotIn("scheduled to end", html)
+        self.assertNotIn("Scheduled cancellation", html)
 
     def test_canceled_subscription_displays_read_only_and_reactivate(self):
         html = self.account_html(
@@ -183,10 +206,15 @@ class BillingStatusUiTests(unittest.TestCase):
             stripe_subscription_id="sub_canceled_ui",
         )
 
-        self.assertIn("Your subscription has ended. Your TorqueMech information is still available in read-only mode.", html)
-        self.assertIn("Existing records remain viewable", html)
+        billing_html = self.billing_section(html)
+        self.assertIn("Your subscription has ended. Your TorqueMech information is still available in read-only mode.", billing_html)
+        self.assertIn("Subscription ended", billing_html)
+        self.assertIn("Read-only access", billing_html)
+        self.assertIn("Existing records remain viewable", billing_html)
         self.assertIn("Reactivate", html)
         self.assertNotIn("Manage Subscription", html)
+        self.assertNotIn("Scheduled cancellation", billing_html)
+        self.assertNotIn("scheduled to end", billing_html)
 
     def test_canceled_subscription_without_customer_offers_subscribe(self):
         html = self.account_html("canceled")

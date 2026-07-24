@@ -158,7 +158,7 @@
             <div class="tm-account-readonly">{{ billing_display.renewal_date_display }}</div>
           </div>
           {% endif %}
-          {% if billing_display.cancellation_date_display %}
+          {% if billing_display.is_scheduled_cancellation and billing_display.cancellation_date_display %}
           <div>
             <span class="tm-account-label">Scheduled cancellation</span>
             <div class="tm-account-readonly">{{ billing_display.cancellation_date_display }}</div>

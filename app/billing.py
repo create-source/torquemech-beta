@@ -229,7 +229,8 @@ def build_billing_display(
     plan_display_name = PRO_SOLO_PLAN_NAME if plan_code == PRO_SOLO_PLAN_CODE else str(access_dict.get("plan_name") or plan_code or PRO_SOLO_PLAN_NAME)
     trial_end_display = format_billing_display_date(trial_ends_at, display_tz=display_tz)
     renewal_date_display = format_billing_display_date(current_period_end, display_tz=display_tz)
-    cancellation_source = current_period_end if cancel_at_period_end else canceled_at
+    show_scheduled_cancellation = access_state == "subscribed_canceling"
+    cancellation_source = current_period_end if show_scheduled_cancellation else None
     cancellation_date_display = format_billing_display_date(cancellation_source, display_tz=display_tz)
     days_remaining = remaining_trial_days(trial_ends_at, current)
     has_customer = bool(str(subscription.get("stripe_customer_id") or "").strip())
@@ -304,7 +305,7 @@ def build_billing_display(
         "show_reactivate": show_reactivate,
         "stripe_management_available": has_customer,
         "is_trial": access_state == "trial_active",
-        "is_scheduled_cancellation": access_state == "subscribed_canceling",
+        "is_scheduled_cancellation": show_scheduled_cancellation,
         "is_payment_problem": access_state in PAYMENT_PROBLEM_ACCESS_STATES,
         "is_ended": access_state in ENDED_SUBSCRIPTION_ACCESS_STATES or status in {"canceled", "incomplete_expired"},
         "setup_incomplete": status in {"incomplete", "incomplete_expired"},
