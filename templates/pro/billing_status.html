@@ -25,6 +25,13 @@
       <a class="tm-btn tm-btn-primary" href="{{ primary_href }}">{{ primary_label }}</a>
       {% if secondary_label and secondary_href %}
       <a class="tm-btn tm-btn-secondary" href="{{ secondary_href }}">{{ secondary_label }}</a>
+      {% elif secondary_label and secondary_action %}
+      <form method="{{ secondary_method or 'post' }}" action="{{ secondary_action }}" class="tm-billing-status-form">
+        {% if secondary_csrf_token %}
+        <input type="hidden" name="csrf_token" value="{{ secondary_csrf_token }}">
+        {% endif %}
+        <button class="tm-btn tm-btn-secondary" type="submit">{{ secondary_label }}</button>
+      </form>
       {% endif %}
     </div>
   </article>

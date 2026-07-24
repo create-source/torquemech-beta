@@ -11515,6 +11515,9 @@ def billing_status_response(
     eyebrow: str = "TorqueMech Pro Solo",
     secondary_label: str = "",
     secondary_href: str = "",
+    secondary_action: str = "",
+    secondary_method: str = "get",
+    secondary_csrf_token: str = "",
 ) -> HTMLResponse:
     return templates.TemplateResponse(
         "pro/billing_status.html",
@@ -11529,30 +11532,61 @@ def billing_status_response(
             "primary_href": primary_href,
             "secondary_label": secondary_label,
             "secondary_href": secondary_href,
+            "secondary_action": secondary_action,
+            "secondary_method": secondary_method,
+            "secondary_csrf_token": secondary_csrf_token,
         },
         status_code=status_code,
     )
 
 
-def billing_error_response(request: Request, message: str, status_code: int = 503) -> HTMLResponse:
+GENERIC_BILLING_ERROR_MESSAGE = (
+    "We could not open billing right now. Return to Account Settings and try again in a moment."
+)
+
+
+def billing_error_response(
+    request: Request,
+    message: str | None = None,
+    status_code: int = 503,
+    *,
+    log_message: str = "",
+    retry_label: str = "",
+    retry_action: str = "",
+) -> HTMLResponse:
+    if log_message:
+        logger.warning(log_message)
     return billing_status_response(
         request,
-        title="Billing Unavailable | TorqueMech",
-        heading="Billing is unavailable",
-        message=message,
+        title="Billing Issue | TorqueMech",
+        heading="We could not open billing",
+        message=message or GENERIC_BILLING_ERROR_MESSAGE,
         status_kind="error",
         primary_label="Return to Account Settings",
         primary_href="/account/settings",
         status_code=status_code,
+        secondary_label=retry_label,
+        secondary_action=retry_action,
+        secondary_method="post" if retry_action else "get",
+        secondary_csrf_token=optional_csrf_token(request) if retry_action else "",
     )
 
 
 @router.post("/billing/checkout")
-def pro_billing_checkout(request: Request):
+async def pro_billing_checkout(request: Request):
+    form = await read_form_data(request)
     conn = crm_db_conn()
     try:
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login?next=%2Faccount%2Fsettings", status_code=303)
+        if not validate_csrf(request, form):
+            return billing_error_response(
+                request,
+                "Your billing session expired. Return to Account Settings and try again.",
+                status_code=400,
+            )
         shop_id = required_current_shop_id(conn, request)
-        user = current_user(conn, request) or {}
         base_url = billing_base_url(request)
         try:
             session = StripeBillingService().create_checkout_session(
@@ -11564,39 +11598,79 @@ def pro_billing_checkout(request: Request):
             )
             conn.commit()
         except BillingConfigurationError as exc:
-            return billing_error_response(request, str(exc))
+            logger.exception("BILLING_CHECKOUT_CONFIGURATION_ERROR")
+            return billing_error_response(
+                request,
+                status_code=503,
+                retry_label="Try Checkout Again",
+                retry_action="/pro/billing/checkout",
+            )
         except BillingProviderError as exc:
-            return billing_error_response(request, str(exc), status_code=502)
+            logger.exception("BILLING_CHECKOUT_PROVIDER_ERROR")
+            return billing_error_response(
+                request,
+                status_code=502,
+                retry_label="Try Checkout Again",
+                retry_action="/pro/billing/checkout",
+            )
     finally:
         conn.close()
     checkout_url = str(session.get("url") or "").strip()
     if not checkout_url:
-        return billing_error_response(request, "Stripe did not return a Checkout URL. Please try again.", status_code=502)
+        logger.warning("BILLING_CHECKOUT_MISSING_URL")
+        return billing_error_response(
+            request,
+            status_code=502,
+            retry_label="Try Checkout Again",
+            retry_action="/pro/billing/checkout",
+        )
     return RedirectResponse(checkout_url, status_code=303)
 
 
+def billing_account_settings_return_url(request: Request) -> str:
+    return f"{billing_base_url(request)}/account/settings#billing-subscription"
+
+
 @router.post("/billing/portal")
-def pro_billing_portal(request: Request):
+async def pro_billing_portal(request: Request):
+    form = await read_form_data(request)
     conn = crm_db_conn()
     try:
+        user = current_user(conn, request)
+        if not user:
+            return RedirectResponse("/login?next=%2Faccount%2Fsettings", status_code=303)
+        if not validate_csrf(request, form):
+            return billing_error_response(
+                request,
+                "Your billing session expired. Return to Account Settings and try again.",
+                status_code=400,
+            )
         shop_id = required_current_shop_id(conn, request)
         try:
             session = StripeBillingService().create_customer_portal_session(
                 conn,
                 shop_id=shop_id,
-                return_url=f"{billing_base_url(request)}/account/settings",
+                return_url=billing_account_settings_return_url(request),
             )
         except BillingCustomerRequiredError as exc:
-            return billing_error_response(request, str(exc), status_code=400)
+            logger.exception("BILLING_PORTAL_CUSTOMER_REQUIRED")
+            return billing_error_response(
+                request,
+                "Billing management is not available for this shop yet. Return to Account Settings to review your subscription options.",
+                status_code=400,
+            )
         except BillingConfigurationError as exc:
-            return billing_error_response(request, str(exc))
+            logger.exception("BILLING_PORTAL_CONFIGURATION_ERROR")
+            return billing_error_response(request, status_code=503)
         except BillingProviderError as exc:
-            return billing_error_response(request, str(exc), status_code=502)
+            logger.exception("BILLING_PORTAL_PROVIDER_ERROR")
+            return billing_error_response(request, status_code=502)
     finally:
         conn.close()
     portal_url = str(session.get("url") or "").strip()
     if not portal_url:
-        return billing_error_response(request, "Stripe did not return a Customer Portal URL. Please try again.", status_code=502)
+        logger.warning("BILLING_PORTAL_MISSING_URL")
+        return billing_error_response(request, status_code=502)
     return RedirectResponse(portal_url, status_code=303)
 
 
@@ -11604,12 +11678,14 @@ def pro_billing_portal(request: Request):
 def pro_billing_checkout_success(request: Request):
     return billing_status_response(
         request,
-        title="Subscription Checkout Complete | TorqueMech",
-        heading="Subscription checkout complete",
-        message="Your billing status will update as soon as Stripe confirms the subscription. TorqueMech Pro Solo is ready once that confirmation arrives.",
+        title="Checkout Complete | TorqueMech",
+        heading="Checkout complete",
+        message="Your checkout was completed successfully. Your Account Settings will reflect the latest subscription status as Stripe confirmation is received.",
         status_kind="success",
-        primary_label="Return to Dashboard",
-        primary_href="/pro/dashboard",
+        primary_label="Back to Account Settings",
+        primary_href="/account/settings",
+        secondary_label="Open Pro Dashboard",
+        secondary_href="/pro/dashboard",
     )
 
 
@@ -11619,10 +11695,14 @@ def pro_billing_checkout_cancel(request: Request):
         request,
         title="Checkout Canceled | TorqueMech",
         heading="Checkout canceled",
-        message="No subscription changes were made.",
+        message="Checkout was canceled, and no subscription change was completed.",
         status_kind="neutral",
-        primary_label="Return to Account Settings",
+        primary_label="Back to Account Settings",
         primary_href="/account/settings",
+        secondary_label="Try Subscribing Again",
+        secondary_action="/pro/billing/checkout",
+        secondary_method="post",
+        secondary_csrf_token=optional_csrf_token(request),
     )
 
 

@@ -230,11 +230,13 @@
       <div class="tm-account-actions">
         {% if billing_display.show_subscribe %}
         <form method="post" action="/pro/billing/checkout">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button class="tm-account-primary" type="submit">Subscribe</button>
         </form>
         {% endif %}
         {% if billing_display.show_reactivate %}
         <form method="post" action="/pro/billing/checkout">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button class="tm-account-primary" type="submit">Reactivate</button>
         </form>
         {% endif %}

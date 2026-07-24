@@ -99,6 +99,21 @@ def csrf_from(html: str) -> str:
     return match.group(1)
 
 
+def csrf_from_form(html: str, action: str) -> str:
+    escaped_action = re.escape(action)
+    match = re.search(
+        rf'<form[^>]+action="{escaped_action}"[^>]*>.*?name="csrf_token" value="([^"]+)"',
+        html,
+        re.S,
+    )
+    if not match:
+        raise AssertionError(f"csrf token not found for form action {action}")
+    token = match.group(1)
+    if not token.strip():
+        raise AssertionError(f"empty csrf token for form action {action}")
+    return token
+
+
 class StripeBillingTests(unittest.TestCase):
     def setUp(self):
         self.conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
@@ -274,36 +289,83 @@ class StripeBillingTests(unittest.TestCase):
     def test_missing_configuration_behavior(self):
         user_id, _ = self.create_user_shop()
         client = self.authenticated_client(user_id)
+        page = client.get("/account/settings")
 
-        response = client.post("/pro/billing/checkout")
+        response = client.post("/pro/billing/checkout", data={"csrf_token": csrf_from_form(page.text, "/pro/billing/checkout")})
 
         self.assertEqual(response.status_code, 503)
-        self.assertIn("Stripe billing is not configured", response.text)
+        self.assertIn("We could not open billing", response.text)
+        self.assertIn("We could not open billing right now. Return to Account Settings and try again in a moment.", response.text)
+        self.assertNotIn("Stripe billing is not configured", response.text)
+        self.assertNotIn("STRIPE_SECRET_KEY", response.text)
         self.assertIn("data-billing-status-page", response.text)
         self.assertIn('href="/account/settings"', response.text)
+        self.assertIn('method="post"', response.text)
+        self.assertIn('action="/pro/billing/checkout"', response.text)
+        self.assertTrue(csrf_from_form(response.text, "/pro/billing/checkout"))
+        self.assertIn("Try Checkout Again", response.text)
 
-    def test_checkout_success_status_page_preserves_message_and_destination(self):
+    def test_checkout_success_status_page_shows_branded_actions(self):
         client = TestClient(main.app, base_url="http://localhost")
 
         response = client.get("/pro/billing/checkout/success")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Subscription checkout complete", response.text)
-        self.assertIn("Your billing status will update as soon as Stripe confirms the subscription.", response.text)
+        self.assertIn("Checkout complete", response.text)
+        self.assertIn("Your checkout was completed successfully.", response.text)
+        self.assertIn("Account Settings will reflect the latest subscription status as Stripe confirmation is received.", response.text)
+        self.assertNotIn("webhook", response.text.lower())
         self.assertIn("TorqueMech Pro Solo", response.text)
+        self.assertIn('href="/account/settings"', response.text)
         self.assertIn('href="/pro/dashboard"', response.text)
+        self.assertIn("Back to Account Settings", response.text)
+        self.assertIn("Open Pro Dashboard", response.text)
+        self.assertIn("tm-billing-status-card--success", response.text)
         self.assertIn("data-billing-status-page", response.text)
 
-    def test_checkout_cancel_status_page_preserves_message_and_destination(self):
+    def test_checkout_cancel_status_page_shows_retry_form(self):
         client = TestClient(main.app, base_url="http://localhost")
 
         response = client.get("/pro/billing/checkout/cancel")
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("Checkout canceled", response.text)
-        self.assertIn("No subscription changes were made.", response.text)
+        self.assertIn("Checkout was canceled, and no subscription change was completed.", response.text)
+        self.assertNotIn("charged", response.text.lower())
         self.assertIn('href="/account/settings"', response.text)
+        self.assertIn("Back to Account Settings", response.text)
+        self.assertIn('method="post"', response.text)
+        self.assertIn('action="/pro/billing/checkout"', response.text)
+        self.assertTrue(csrf_from_form(response.text, "/pro/billing/checkout"))
+        self.assertIn("Try Subscribing Again", response.text)
+        self.assertIn("tm-billing-status-card--neutral", response.text)
         self.assertIn("data-billing-status-page", response.text)
+
+    def test_checkout_cancel_retry_token_reaches_checkout_route_behavior(self):
+        user_id, _ = self.create_user_shop()
+        client = self.authenticated_client(user_id)
+        page = client.get("/pro/billing/checkout/cancel")
+        token = csrf_from_form(page.text, "/pro/billing/checkout")
+
+        response = client.post("/pro/billing/checkout", data={"csrf_token": token})
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("We could not open billing", response.text)
+        self.assertNotIn("Your billing session expired", response.text)
+
+    def test_checkout_error_retry_token_reaches_checkout_route_behavior(self):
+        user_id, _ = self.create_user_shop()
+        client = self.authenticated_client(user_id)
+        page = client.get("/account/settings")
+        first = client.post("/pro/billing/checkout", data={"csrf_token": csrf_from_form(page.text, "/pro/billing/checkout")})
+        token = csrf_from_form(first.text, "/pro/billing/checkout")
+
+        retry = client.post("/pro/billing/checkout", data={"csrf_token": token})
+
+        self.assertEqual(first.status_code, 503)
+        self.assertEqual(retry.status_code, 503)
+        self.assertIn("We could not open billing", retry.text)
+        self.assertNotIn("Your billing session expired", retry.text)
 
     def test_checkout_uses_authenticated_shop(self):
         _, shop_id = self.create_user_shop()
@@ -409,8 +471,13 @@ class StripeBillingTests(unittest.TestCase):
                 return {"url": "https://checkout.stripe.test/session"}
 
         client = self.authenticated_client(user_a)
+        page = client.get("/account/settings")
         with patch.object(pro_module, "StripeBillingService", return_value=FakeService()):
-            response = client.post(f"/pro/billing/checkout?shop_id={shop_b}", follow_redirects=False)
+            response = client.post(
+                f"/pro/billing/checkout?shop_id={shop_b}",
+                data={"csrf_token": csrf_from_form(page.text, "/pro/billing/checkout")},
+                follow_redirects=False,
+            )
 
         self.assertEqual(response.status_code, 303)
         self.assertEqual(captured, [shop_a])
@@ -510,7 +577,10 @@ class StripeBillingTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Billing is not active for this shop yet.", response.text)
+        self.assertIn("Billing management is not available for this shop yet.", response.text)
+        self.assertIn("Return to Account Settings", response.text)
+        self.assertNotIn("Billing is not active for this shop yet.", response.text)
+        self.assertNotIn("sub_123", response.text)
         self.assertEqual(FakePortalSession.calls, [])
 
     def test_unauthenticated_portal_request_redirects_to_login(self):
@@ -535,8 +605,12 @@ class StripeBillingTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 503)
-        self.assertIn("Stripe billing is not configured", response.text)
+        self.assertIn("We could not open billing", response.text)
+        self.assertNotIn("Stripe billing is not configured", response.text)
         self.assertNotIn("sk_test", response.text)
+        self.assertNotIn('action="/pro/billing/portal"', response.text)
+        self.assertNotIn('action="/pro/billing/checkout"', response.text)
+        self.assertNotIn("Try Checkout Again", response.text)
         self.assertEqual(FakePortalSession.calls, [])
 
     def test_portal_stripe_failure_returns_friendly_error(self):
@@ -554,8 +628,11 @@ class StripeBillingTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 502)
-        self.assertIn("Stripe Billing Portal is temporarily unavailable", response.text)
+        self.assertIn("We could not open billing", response.text)
+        self.assertIn("Return to Account Settings", response.text)
+        self.assertNotIn("Stripe Billing Portal is temporarily unavailable", response.text)
         self.assertNotIn("stripe portal unavailable", response.text)
+        self.assertNotIn("cus_route", response.text)
 
     def test_account_settings_manage_subscription_button_visibility(self):
         user_id, shop_id = self.create_user_shop()
@@ -583,14 +660,19 @@ class StripeBillingTests(unittest.TestCase):
     def test_checkout_stripe_failure_returns_friendly_error(self):
         user_id, shop_id = self.create_user_shop()
         client = self.authenticated_client(user_id)
+        page = client.get("/account/settings")
         service = billing.StripeBillingService(config=self.stripe_config(), stripe_api=FailingStripe)
 
         with patch.object(pro_module, "StripeBillingService", return_value=service):
-            response = client.post("/pro/billing/checkout")
+            response = client.post("/pro/billing/checkout", data={"csrf_token": csrf_from_form(page.text, "/pro/billing/checkout")})
 
         count = self.conn.execute("SELECT COUNT(*) AS count FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()["count"]
         self.assertEqual(response.status_code, 502)
-        self.assertIn("Stripe Checkout is temporarily unavailable", response.text)
+        self.assertIn("We could not open billing", response.text)
+        self.assertIn("Try Checkout Again", response.text)
+        self.assertTrue(csrf_from_form(response.text, "/pro/billing/checkout"))
+        self.assertNotIn("Stripe Checkout is temporarily unavailable", response.text)
+        self.assertNotIn("stripe unavailable", response.text)
         self.assertEqual(count, 0)
 
     def test_valid_webhook_signature(self):

@@ -244,15 +244,20 @@ class BillingStatusUiTests(unittest.TestCase):
                 self.assertRegex(billing_html, r"(Subscription setup was not completed|subscription has ended)")
 
     def test_trialing_displays_trial_end_date_days_remaining_and_subscribe(self):
+        expected_days_remaining = 5
+        trial_started_at = datetime.now(timezone.utc).replace(microsecond=0)
+        trial_ends_at = trial_started_at + timedelta(days=expected_days_remaining)
+        trial_end_display = trial_ends_at.strftime("%m/%d/%Y")
+
         html = self.account_html(
             "trialing",
-            trial_started_at=NOW.isoformat(),
-            trial_ends_at="2026-07-28T12:00:00+00:00",
+            trial_started_at=trial_started_at.isoformat(),
+            trial_ends_at=trial_ends_at.isoformat(),
         )
 
         self.assertIn("Free trial", html)
-        self.assertIn("07/28/2026", html)
-        self.assertIn("5 days remaining", html)
+        self.assertIn(trial_end_display, html)
+        self.assertIn(f"{expected_days_remaining} days remaining", html)
         self.assertIn("Subscribe", html)
 
     def test_missing_and_malformed_date_fields_do_not_break_page(self):

@@ -329,7 +329,7 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
     def test_allowed_billing_webhook_and_auth_routes_remain_reachable(self):
         client, _, _ = self.expired_trial_client_with_records()
 
-        self.assertEqual(client.post("/pro/billing/checkout").status_code, 503)
+        self.assertIn(client.post("/pro/billing/checkout").status_code, {400, 503})
         self.assertIn(client.post("/pro/billing/portal").status_code, {400, 503})
         self.assertIn(client.post("/pro/billing/webhook", content=b"{}").status_code, {400, 503})
         self.assertEqual(client.get("/login").status_code, 200)
