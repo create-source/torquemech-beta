@@ -292,8 +292,8 @@ class BillingStatusUiTests(unittest.TestCase):
         html = self.account_html("active", current_period_ends_at="2026-08-22T12:00:00+00:00")
 
         self.assertNotIn("Manage Subscription", html)
-        self.assertIn("Stripe subscription management", html)
-        self.assertIn("Portal opens after checkout", html)
+        self.assertNotIn("Stripe subscription management", html)
+        self.assertNotIn("Portal opens after checkout", html)
 
     def test_unauthenticated_users_cannot_view_billing_section(self):
         response = TestClient(main.app, base_url="http://localhost").get("/account/settings", follow_redirects=False)
