@@ -1025,7 +1025,7 @@ def handle_webhook_event(conn: sqlite3.Connection, event: dict[str, Any]) -> dic
     elif event_type == "customer.subscription.updated":
         synced = sync_subscription_object(conn, obj)
     elif event_type == "customer.subscription.deleted":
-        synced = sync_subscription_object(conn, obj, deleted=True)
+        synced = sync_subscription_object(conn, obj, deleted=True, allow_metadata_fallback=True)
     elif event_type == "invoice.paid":
         synced = sync_invoice_event(conn, obj, paid=True)
     elif event_type == "invoice.payment_failed":

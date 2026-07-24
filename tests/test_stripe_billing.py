@@ -702,6 +702,42 @@ class StripeBillingTests(unittest.TestCase):
         self.assertEqual(row["status"], "canceled")
         self.assertEqual(row["cancel_at_period_end"], 0)
 
+    def test_deleted_subscription_uses_metadata_fallback_when_stripe_ids_are_missing_locally(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(
+            shop_id,
+            status="active",
+            cancel_at_period_end=1,
+            current_period_ends_at="2026-07-23T19:10:24+00:00",
+        )
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.subscription_event(
+                shop_id,
+                status="canceled",
+                event_type="customer.subscription.deleted",
+                cancel_at_period_end=True,
+                stripe_customer_id="cus_metadata_deleted",
+                stripe_subscription_id="sub_metadata_deleted",
+                metadata_shop_id=shop_id,
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        access = billing.resolve_subscription_access(
+            dict(row),
+            shop_id=shop_id,
+            now=pro_module.parse_utc_datetime("2026-07-24T12:00:00+00:00"),
+        )
+        self.assertTrue(result["processed"])
+        self.assertEqual(row["status"], "canceled")
+        self.assertEqual(row["cancel_at_period_end"], 0)
+        self.assertEqual(row["stripe_customer_id"], "cus_metadata_deleted")
+        self.assertEqual(row["stripe_subscription_id"], "sub_metadata_deleted")
+        self.assertEqual(access.access_state, "read_only_canceled")
+        self.assertFalse(access.has_full_access)
+
     def test_lifecycle_active_update_uses_stored_stripe_identifiers(self):
         _, shop_id = self.create_user_shop()
         self.insert_subscription(shop_id, status="past_due", stripe_customer_id="cus_lifecycle", stripe_subscription_id="sub_lifecycle")
