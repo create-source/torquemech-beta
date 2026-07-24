@@ -149,7 +149,7 @@
               <h3>{{ billing_display.plan_display_name }}</h3>
               <p>{{ billing_display.summary_message }}</p>
             </div>
-            <span class="tm-account-status is-{{ billing_display.status_tone }}{% if billing_display.is_ended %} is-ended{% endif %}">
+            <span class="tm-account-status {% if billing_display.display_status == 'Active' %}is-success{% else %}is-{{ billing_display.status_tone }}{% endif %}{% if billing_display.is_ended %} is-ended{% endif %}">
               {{ billing_display.display_status }}
             </span>
           </div>
