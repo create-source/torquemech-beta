@@ -12352,10 +12352,11 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
     try:
         shop_id = current_shop_id(conn, request)
 
-        logging.warning(
-            "CALENDAR_SESSION_DIAGNOSTIC user_id=%s shop_id=%s",
-            current_user_id(request),
-            shop_id,
+        print(
+            f"CALENDAR_SESSION_DIAGNOSTIC "
+            f"user_id={current_user_id(request)} "
+            f"shop_id={shop_id}",
+            flush=True,
         )
         profile = load_shop_profile_context(conn, shop_id=shop_id)
         appointments = attach_appointment_customer_messages(
