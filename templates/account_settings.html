@@ -249,7 +249,7 @@
         {% if billing_display.show_manage_subscription %}
         <form method="post" action="/pro/billing/portal">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <button class="tm-account-secondary" type="submit">Manage Subscription</button>
+          <button class="tm-account-primary" type="submit">Manage Subscription</button>
         </form>
         {% endif %}
       </div>
