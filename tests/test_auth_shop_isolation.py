@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import main
@@ -270,7 +271,11 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(message["Subject"], "Verify your TorqueMech account")
         self.assertEqual(send_call[2], "mailer@updates.torquemech.com")
         self.assertEqual(send_call[3], ["user@example.com"])
-        smtp_body = message.get_payload(decode=True).decode(message.get_content_charset() or "utf-8")
+        smtp_body = "\n".join(
+            part.get_payload(decode=True).decode(part.get_content_charset() or "utf-8")
+            for part in message.walk()
+            if part.get_content_type() in {"text/plain", "text/html"}
+        )
         self.assertIn("/verify-email?token=", smtp_body)
         self.assertNotEqual(message["From"], "smtp-user")
         self.assertIn("VERIFICATION_EMAIL_TRANSPORT_SELECTED transport=smtp", log_output)
@@ -278,13 +283,13 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("sender=mailer@updates.torquemech.com", log_output)
         self.assertIn("recipient=user@example.com", log_output)
         self.assertIn("VERIFICATION_EMAIL_DELIVERY_ENTERED transport=smtp", log_output)
-        self.assertIn("VERIFICATION_EMAIL_SMTP_CONNECTING", log_output)
-        self.assertIn("VERIFICATION_EMAIL_SMTP_CONNECTED", log_output)
-        self.assertIn("VERIFICATION_EMAIL_SMTP_STARTTLS_START", log_output)
-        self.assertIn("VERIFICATION_EMAIL_SMTP_STARTTLS_OK", log_output)
-        self.assertIn("VERIFICATION_EMAIL_SMTP_AUTH_START", log_output)
-        self.assertIn("VERIFICATION_EMAIL_SMTP_AUTH_OK", log_output)
-        self.assertIn("VERIFICATION_EMAIL_SMTP_SEND_START", log_output)
+        self.assertIn("EMAIL_SMTP_CONNECTING", log_output)
+        self.assertIn("EMAIL_SMTP_CONNECTED", log_output)
+        self.assertIn("EMAIL_SMTP_STARTTLS_START", log_output)
+        self.assertIn("EMAIL_SMTP_STARTTLS_OK", log_output)
+        self.assertIn("EMAIL_SMTP_AUTH_START", log_output)
+        self.assertIn("EMAIL_SMTP_AUTH_OK", log_output)
+        self.assertIn("EMAIL_SMTP_SEND_START", log_output)
         self.assertIn("VERIFICATION_EMAIL_SMTP_ACCEPTED", log_output)
         self.assertNotIn("smtp-pass", log_output)
         self.assertNotIn("smtp-user", log_output)
@@ -1824,9 +1829,11 @@ class AuthShopIsolationTests(unittest.TestCase):
             data={"shop_name": "Alpha Updated", "default_labor_rate": "125"},
             follow_redirects=False,
         )
+        calendar_one_page = client_one.get("/pro/calendar")
         appointment = client_one.post(
             "/pro/calendar",
             data={
+                "csrf_token": csrf_from(calendar_one_page.text),
                 "customer_name": "Alpha Customer",
                 "customer_phone": "5551112222",
                 "vehicle_label": "2010 Honda Accord",
@@ -1849,7 +1856,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         calendar_two = client_two.get("/pro/calendar")
         cross_update = client_two.post(
             f"/pro/calendar/{appointment_id}/status",
-            data={"status": "Confirmed"},
+            data={"csrf_token": csrf_from(calendar_two.text), "status": "Confirmed"},
             follow_redirects=False,
         )
 
@@ -1859,6 +1866,1562 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(calendar_two.status_code, 200)
         self.assertNotIn("Alpha Customer", calendar_two.text)
         self.assertEqual(cross_update.status_code, 404)
+
+    def test_same_shop_appointment_access_and_csrf_protected_status_update(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="alpha-calendar@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("alpha-calendar@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Alpha Calendar Customer",
+            status="Requested",
+        )
+
+        page = client.get("/pro/calendar")
+        missing_csrf = client.post(
+            f"/pro/calendar/{appointment_id}/status",
+            data={"status": "Confirmed"},
+            follow_redirects=False,
+        )
+        invalid_csrf = client.post(
+            f"/pro/calendar/{appointment_id}/status",
+            data={"csrf_token": "bad-token", "status": "Confirmed"},
+            follow_redirects=False,
+        )
+        valid = client.post(
+            f"/pro/calendar/{appointment_id}/status",
+            data={"csrf_token": csrf_from(page.text), "status": "Confirmed"},
+            follow_redirects=False,
+        )
+        row = self.conn.execute(
+            "SELECT status FROM service_appointments WHERE id = ?",
+            (appointment_id,),
+        ).fetchone()
+
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Alpha Calendar Customer", page.text)
+        self.assertEqual(missing_csrf.status_code, 403)
+        self.assertEqual(invalid_csrf.status_code, 403)
+        self.assertEqual(valid.status_code, 303)
+        self.assertEqual(valid.headers["location"], "/pro/calendar?notice=confirmed_email_missing")
+        self.assertEqual(row["status"], "Confirmed")
+
+    def test_same_shop_appointment_confirmation_email_succeeds(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="appt-email@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("appt-email@example.com")
+        self.conn.execute(
+            """
+            UPDATE shop_profile
+            SET shop_email = 'Service@Alpha.Example',
+                shop_phone = '5551234567',
+                shop_address = '742 Evergreen Terrace',
+                appointment_confirmation_template = 'Hi {customer_name}\n\n{shop_name} confirmed {service} for {vehicle} on {appointment_date} at {appointment_time}. Visit {shop_address}. Call {shop_phone}.'
+            WHERE id = ?
+            """,
+            (shop_id,),
+        )
+        self.conn.commit()
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Alpha Appointment",
+            customer_email="Alpha.Customer@Example.com",
+            status="Requested",
+        )
+        page = client.get("/pro/calendar")
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ) as send_email:
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/status",
+                data={"csrf_token": csrf_from(page.text), "status": "Confirmed"},
+                follow_redirects=False,
+            )
+        row = self.conn.execute(
+            "SELECT status FROM service_appointments WHERE id = ?",
+            (appointment_id,),
+        ).fetchone()
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=confirmed_email_sent")
+        self.assertEqual(row["status"], "Confirmed")
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(len(sent_messages), 1)
+        message = sent_messages[0]
+        self.assertEqual(message.recipients, ["alpha.customer@example.com"])
+        self.assertIn("Appointment Confirmed for", message.subject)
+        self.assertIn("Alpha Shop", message.subject)
+        self.assertIn("Hi Alpha Appointment", message.text_body)
+        self.assertIn("Alpha Shop confirmed Brake Inspection", message.text_body)
+        self.assertIn("2010 Honda Accord", message.text_body)
+        self.assertIn("742 Evergreen Terrace", message.text_body)
+        self.assertIn("(555) 123-4567", message.text_body)
+        self.assertIn("Alpha Shop confirmed Brake Inspection", message.html_body)
+        self.assertEqual(message.reply_to, "service@alpha.example")
+
+    def test_appointment_confirmation_retry_uses_linked_customer_email_and_ignores_invalid_reply_to(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="appt-retry@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("appt-retry@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Linked", vehicle_make="Honda")
+        self.conn.execute("UPDATE customers SET email = 'linked@example.com' WHERE id = ?", (customer_id,))
+        self.conn.execute("UPDATE shop_profile SET shop_email = 'not-an-email' WHERE id = ?", (shop_id,))
+        self.conn.commit()
+        appointment_id = pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_name": "Linked Owner",
+                "customer_phone": "5551112222",
+                "customer_email": "",
+                "vehicle_label": "",
+                "customer_id": customer_id,
+                "vehicle_id": vehicle_id,
+                "service_name": "Brake Inspection",
+                "requested_date": future_weekday(0),
+                "requested_time": "09:00",
+                "status": "Confirmed",
+            },
+            shop_id=shop_id,
+        )
+        page = client.get("/pro/calendar")
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ):
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/confirmation-email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=confirmation_email_sent")
+        self.assertIn("Email Confirmation", page.text)
+        self.assertEqual(sent_messages[0].recipients, ["linked@example.com"])
+        self.assertIsNone(sent_messages[0].reply_to)
+
+    def test_appointment_confirmation_email_missing_or_invalid_recipient_fails_without_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="appt-missing@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("appt-missing@example.com")
+        missing_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Missing Email",
+            customer_email="",
+            status="Requested",
+        )
+        invalid_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Invalid Email",
+            customer_email="not-an-email",
+            status="Requested",
+            requested_time="10:00",
+        )
+        page = client.get("/pro/calendar")
+
+        with patch.object(pro_module.email_service, "send_email") as missing_send:
+            missing = client.post(
+                f"/pro/calendar/{missing_id}/status",
+                data={"csrf_token": csrf_from(page.text), "status": "Confirmed"},
+                follow_redirects=False,
+            )
+        page = client.get("/pro/calendar")
+        with patch.object(pro_module.email_service, "send_email") as invalid_send:
+            invalid = client.post(
+                f"/pro/calendar/{invalid_id}/status",
+                data={"csrf_token": csrf_from(page.text), "status": "Confirmed"},
+                follow_redirects=False,
+            )
+        rows = {
+            int(row["id"]): row["status"]
+            for row in self.conn.execute(
+                "SELECT id, status FROM service_appointments WHERE id IN (?, ?)",
+                (missing_id, invalid_id),
+            ).fetchall()
+        }
+
+        self.assertEqual(missing.status_code, 303)
+        self.assertEqual(missing.headers["location"], "/pro/calendar?notice=confirmed_email_missing")
+        missing_send.assert_not_called()
+        self.assertEqual(invalid.status_code, 303)
+        self.assertEqual(invalid.headers["location"], "/pro/calendar?notice=confirmed_email_failed")
+        invalid_send.assert_not_called()
+        self.assertEqual(rows[missing_id], "Confirmed")
+        self.assertEqual(rows[invalid_id], "Confirmed")
+
+    def test_appointment_confirmation_email_requires_valid_csrf_before_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="appt-csrf@example.com", shop_name="Alpha Shop")
+        appointment_id = self.seed_service_appointment_for_shop(
+            self.shop_id_for_email("appt-csrf@example.com"),
+            customer_email="csrf@example.com",
+            status="Requested",
+        )
+        url = f"/pro/calendar/{appointment_id}/status"
+        retry_url = f"/pro/calendar/{appointment_id}/confirmation-email"
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            missing = client.post(url, data={"status": "Confirmed"}, follow_redirects=False)
+            invalid = client.post(url, data={"csrf_token": "bad-token", "status": "Confirmed"}, follow_redirects=False)
+            retry_missing = client.post(retry_url, data={}, follow_redirects=False)
+            retry_invalid = client.post(retry_url, data={"csrf_token": "bad-token"}, follow_redirects=False)
+
+        self.assertEqual(missing.status_code, 403)
+        self.assertEqual(invalid.status_code, 403)
+        self.assertEqual(retry_missing.status_code, 403)
+        self.assertEqual(retry_invalid.status_code, 403)
+        send_email.assert_not_called()
+
+    def test_cross_shop_appointment_confirmation_email_is_rejected_without_provider(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="appt-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("appt-alpha@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Alpha Pending",
+            customer_email="alpha-appt@example.com",
+            status="Requested",
+        )
+        confirmed_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Alpha Confirmed",
+            customer_email="alpha-confirmed@example.com",
+            status="Confirmed",
+            requested_time="10:00",
+        )
+        client_two = self.client()
+        self.signup(client_two, email="appt-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("appt-beta@example.com")
+        page_two = client_two.get("/pro/calendar")
+        csrf_token = csrf_from(page_two.text)
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            cross_confirm = client_two.post(
+                f"/pro/calendar/{appointment_id}/status",
+                data={"csrf_token": csrf_token, "status": "Confirmed"},
+                follow_redirects=False,
+            )
+            cross_retry = client_two.post(
+                f"/pro/calendar/{confirmed_id}/confirmation-email",
+                data={"csrf_token": csrf_token},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(cross_confirm.status_code, 404)
+        self.assertEqual(cross_retry.status_code, 404)
+        send_email.assert_not_called()
+
+    def test_appointment_confirmation_email_rejects_cross_shop_linked_customer_or_vehicle(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="appt-linked-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("appt-linked-alpha@example.com")
+        client_two = self.client()
+        self.signup(client_two, email="appt-linked-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("appt-linked-beta@example.com")
+        beta_shop = self.shop_id_for_email("appt-linked-beta@example.com")
+        beta_customer_id, beta_vehicle_id = self.seed_customer_vehicle_for_shop(beta_shop, first_name="Beta")
+        appointment_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Bad Link",
+            customer_email="valid@example.com",
+            status="Requested",
+        )
+        self.conn.execute(
+            "UPDATE service_appointments SET customer_id = ?, vehicle_id = ? WHERE id = ?",
+            (beta_customer_id, beta_vehicle_id, appointment_id),
+        )
+        self.conn.commit()
+        page = client.get("/pro/calendar")
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/status",
+                data={"csrf_token": csrf_from(page.text), "status": "Confirmed"},
+                follow_redirects=False,
+            )
+        row = self.conn.execute(
+            "SELECT status FROM service_appointments WHERE id = ?",
+            (appointment_id,),
+        ).fetchone()
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(row["status"], "Requested")
+        send_email.assert_not_called()
+
+    def test_appointment_confirmation_email_provider_failures_keep_status_confirmed(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="appt-provider@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("appt-provider@example.com")
+        config_failure_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Config Failure",
+            customer_email="config@example.com",
+            status="Requested",
+        )
+        provider_failure_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Provider Failure",
+            customer_email="provider@example.com",
+            status="Requested",
+            requested_time="10:00",
+        )
+        page = client.get("/pro/calendar")
+
+        with patch.object(
+            pro_module,
+            "appointment_email_service_config",
+            return_value=pro_module.email_service.EmailServiceConfig(transport="smtp", smtp_server="", smtp_pass="", from_address="sender@example.com"),
+        ):
+            config_failure = client.post(
+                f"/pro/calendar/{config_failure_id}/status",
+                data={"csrf_token": csrf_from(page.text), "status": "Confirmed"},
+                follow_redirects=False,
+            )
+        page = client.get("/pro/calendar")
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            return_value=pro_module.email_service.EmailSendResult(success=False, transport="test", error_category="provider_exception", provider_related=True),
+        ) as send_email:
+            provider_failure = client.post(
+                f"/pro/calendar/{provider_failure_id}/status",
+                data={"csrf_token": csrf_from(page.text), "status": "Confirmed"},
+                follow_redirects=False,
+            )
+        rows = {
+            int(row["id"]): row["status"]
+            for row in self.conn.execute(
+                "SELECT id, status FROM service_appointments WHERE id IN (?, ?)",
+                (config_failure_id, provider_failure_id),
+            ).fetchall()
+        }
+
+        self.assertEqual(config_failure.status_code, 303)
+        self.assertEqual(config_failure.headers["location"], "/pro/calendar?notice=confirmed_email_failed")
+        self.assertEqual(provider_failure.status_code, 303)
+        self.assertEqual(provider_failure.headers["location"], "/pro/calendar?notice=confirmed_email_failed")
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(rows[config_failure_id], "Confirmed")
+        self.assertEqual(rows[provider_failure_id], "Confirmed")
+
+    def test_appointment_confirmation_email_button_requires_customer_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="appt-button@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("appt-button@example.com")
+        self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="With Email",
+            customer_email="with@example.com",
+            status="Confirmed",
+        )
+        self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Without Email",
+            customer_email="",
+            status="Confirmed",
+            requested_time="10:00",
+        )
+        page = client.get("/pro/calendar")
+
+        self.assertIn("Email Confirmation", page.text)
+        without_card = page.text.split("Without Email", 1)[1].split("</article>", 1)[0]
+        self.assertNotIn("Email Confirmation", without_card)
+        self.assertIn("Add a customer email address before emailing this confirmation.", without_card)
+
+    def test_same_shop_appointment_cancellation_email_succeeds(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-email@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-email@example.com")
+        self.conn.execute(
+            """
+            UPDATE shop_profile
+            SET shop_email = 'Service@Alpha.Example',
+                shop_phone = '5551234567',
+                shop_address = '742 Evergreen Terrace',
+                appointment_cancellation_template = 'Hi {customer_name}\n\n{shop_name} canceled {service} for {vehicle} on {appointment_date} at {appointment_time}. Visit {shop_address}. Call {shop_phone}.'
+            WHERE id = ?
+            """,
+            (shop_id,),
+        )
+        self.conn.commit()
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Alpha Appointment",
+            customer_email="Alpha.Customer@Example.com",
+            status="Confirmed",
+        )
+        page = client.get("/pro/calendar")
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ) as send_email:
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/cancel",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        row = self.conn.execute(
+            "SELECT status FROM service_appointments WHERE id = ?",
+            (appointment_id,),
+        ).fetchone()
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=cancelled_email_sent")
+        self.assertEqual(row["status"], "Cancelled")
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(len(sent_messages), 1)
+        message = sent_messages[0]
+        self.assertEqual(message.recipients, ["alpha.customer@example.com"])
+        self.assertIn("Appointment Canceled for", message.subject)
+        self.assertIn("Alpha Shop", message.subject)
+        self.assertIn("Hi Alpha Appointment", message.text_body)
+        self.assertIn("Alpha Shop canceled Brake Inspection", message.text_body)
+        self.assertIn("2010 Honda Accord", message.text_body)
+        self.assertIn("742 Evergreen Terrace", message.text_body)
+        self.assertIn("(555) 123-4567", message.text_body)
+        self.assertIn("Alpha Shop canceled Brake Inspection", message.html_body)
+        self.assertEqual(message.reply_to, "service@alpha.example")
+
+    def test_appointment_cancellation_email_missing_or_invalid_recipient_fails_without_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-missing@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-missing@example.com")
+        missing_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Missing Email",
+            customer_email="",
+            status="Confirmed",
+        )
+        invalid_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Invalid Email",
+            customer_email="not-an-email",
+            status="Confirmed",
+            requested_time="10:00",
+        )
+        page = client.get("/pro/calendar")
+
+        with patch.object(pro_module.email_service, "send_email") as missing_send:
+            missing = client.post(
+                f"/pro/calendar/{missing_id}/cancel",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        page = client.get("/pro/calendar")
+        with patch.object(pro_module.email_service, "send_email") as invalid_send:
+            invalid = client.post(
+                f"/pro/calendar/{invalid_id}/cancel",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        rows = {
+            int(row["id"]): row["status"]
+            for row in self.conn.execute(
+                "SELECT id, status FROM service_appointments WHERE id IN (?, ?)",
+                (missing_id, invalid_id),
+            ).fetchall()
+        }
+
+        self.assertEqual(missing.status_code, 303)
+        self.assertEqual(missing.headers["location"], "/pro/calendar?notice=cancelled_email_missing")
+        missing_send.assert_not_called()
+        self.assertEqual(invalid.status_code, 303)
+        self.assertEqual(invalid.headers["location"], "/pro/calendar?notice=cancelled_email_failed")
+        invalid_send.assert_not_called()
+        self.assertEqual(rows[missing_id], "Cancelled")
+        self.assertEqual(rows[invalid_id], "Cancelled")
+
+    def test_appointment_cancellation_email_requires_valid_csrf_before_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-csrf@example.com", shop_name="Alpha Shop")
+        appointment_id = self.seed_service_appointment_for_shop(
+            self.shop_id_for_email("cancel-csrf@example.com"),
+            customer_email="csrf@example.com",
+            status="Confirmed",
+        )
+        retry_url = f"/pro/calendar/{appointment_id}/cancellation-email"
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            missing = client.post(f"/pro/calendar/{appointment_id}/cancel", data={}, follow_redirects=False)
+            invalid = client.post(f"/pro/calendar/{appointment_id}/cancel", data={"csrf_token": "bad-token"}, follow_redirects=False)
+            retry_missing = client.post(retry_url, data={}, follow_redirects=False)
+            retry_invalid = client.post(retry_url, data={"csrf_token": "bad-token"}, follow_redirects=False)
+
+        self.assertEqual(missing.status_code, 403)
+        self.assertEqual(invalid.status_code, 403)
+        self.assertEqual(retry_missing.status_code, 403)
+        self.assertEqual(retry_invalid.status_code, 403)
+        send_email.assert_not_called()
+
+    def test_cross_shop_appointment_cancellation_email_is_rejected_without_provider(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="cancel-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("cancel-alpha@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Alpha Confirmed",
+            customer_email="alpha-cancel@example.com",
+            status="Confirmed",
+        )
+        cancelled_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Alpha Cancelled",
+            customer_email="alpha-cancelled@example.com",
+            status="Cancelled",
+            requested_time="10:00",
+        )
+        client_two = self.client()
+        self.signup(client_two, email="cancel-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("cancel-beta@example.com")
+        page_two = client_two.get("/pro/calendar")
+        csrf_token = csrf_from(page_two.text)
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            cross_cancel = client_two.post(
+                f"/pro/calendar/{appointment_id}/cancel",
+                data={"csrf_token": csrf_token},
+                follow_redirects=False,
+            )
+            cross_retry = client_two.post(
+                f"/pro/calendar/{cancelled_id}/cancellation-email",
+                data={"csrf_token": csrf_token},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(cross_cancel.status_code, 303)
+        self.assertIn("error=", cross_cancel.headers["location"])
+        self.assertEqual(cross_retry.status_code, 404)
+        send_email.assert_not_called()
+
+    def test_appointment_cancellation_email_rejects_cross_shop_linked_customer_or_vehicle(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-linked-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("cancel-linked-alpha@example.com")
+        client_two = self.client()
+        self.signup(client_two, email="cancel-linked-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("cancel-linked-beta@example.com")
+        beta_shop = self.shop_id_for_email("cancel-linked-beta@example.com")
+        beta_customer_id, beta_vehicle_id = self.seed_customer_vehicle_for_shop(beta_shop, first_name="Beta")
+        appointment_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Bad Cancel Link",
+            customer_email="valid@example.com",
+            status="Confirmed",
+        )
+        self.conn.execute(
+            "UPDATE service_appointments SET customer_id = ?, vehicle_id = ? WHERE id = ?",
+            (beta_customer_id, beta_vehicle_id, appointment_id),
+        )
+        self.conn.commit()
+        page = client.get("/pro/calendar")
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/cancel",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        row = self.conn.execute(
+            "SELECT status FROM service_appointments WHERE id = ?",
+            (appointment_id,),
+        ).fetchone()
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(row["status"], "Confirmed")
+        send_email.assert_not_called()
+
+    def test_appointment_cancellation_email_provider_failures_keep_status_cancelled(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-provider@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-provider@example.com")
+        config_failure_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Config Failure",
+            customer_email="config@example.com",
+            status="Confirmed",
+        )
+        provider_failure_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Provider Failure",
+            customer_email="provider@example.com",
+            status="Confirmed",
+            requested_time="10:00",
+        )
+        page = client.get("/pro/calendar")
+
+        with patch.object(
+            pro_module,
+            "appointment_email_service_config",
+            return_value=pro_module.email_service.EmailServiceConfig(transport="smtp", smtp_server="", smtp_pass="", from_address="sender@example.com"),
+        ):
+            config_failure = client.post(
+                f"/pro/calendar/{config_failure_id}/cancel",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        page = client.get("/pro/calendar")
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            return_value=pro_module.email_service.EmailSendResult(success=False, transport="test", error_category="provider_exception", provider_related=True),
+        ) as send_email:
+            provider_failure = client.post(
+                f"/pro/calendar/{provider_failure_id}/cancel",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        rows = {
+            int(row["id"]): row["status"]
+            for row in self.conn.execute(
+                "SELECT id, status FROM service_appointments WHERE id IN (?, ?)",
+                (config_failure_id, provider_failure_id),
+            ).fetchall()
+        }
+
+        self.assertEqual(config_failure.status_code, 303)
+        self.assertEqual(config_failure.headers["location"], "/pro/calendar?notice=cancelled_email_failed")
+        self.assertEqual(provider_failure.status_code, 303)
+        self.assertEqual(provider_failure.headers["location"], "/pro/calendar?notice=cancelled_email_failed")
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(rows[config_failure_id], "Cancelled")
+        self.assertEqual(rows[provider_failure_id], "Cancelled")
+
+    def test_appointment_cancellation_retry_succeeds_and_rejects_non_cancelled(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-retry@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-retry@example.com")
+        cancelled_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Cancelled Email",
+            customer_email="cancelled@example.com",
+            status="Cancelled",
+        )
+        confirmed_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Confirmed Email",
+            customer_email="confirmed@example.com",
+            status="Confirmed",
+            requested_time="10:00",
+        )
+        page = client.get("/pro/calendar")
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ) as send_email:
+            retry = client.post(
+                f"/pro/calendar/{cancelled_id}/cancellation-email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+            non_cancelled = client.post(
+                f"/pro/calendar/{confirmed_id}/cancellation-email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(retry.status_code, 303)
+        self.assertEqual(retry.headers["location"], "/pro/calendar?notice=cancellation_email_sent")
+        self.assertEqual(non_cancelled.status_code, 404)
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(sent_messages[0].recipients, ["cancelled@example.com"])
+
+    def test_appointment_cancellation_email_button_requires_customer_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-button@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-button@example.com")
+        self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Canceled With Email",
+            customer_email="with@example.com",
+            status="Cancelled",
+        )
+        self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Canceled Without Email",
+            customer_email="",
+            status="Cancelled",
+            requested_time="10:00",
+        )
+        self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Confirmed With Email",
+            customer_email="confirmed@example.com",
+            status="Confirmed",
+            requested_time="11:00",
+        )
+        page = client.get("/pro/calendar")
+
+        self.assertIn("Email Cancellation", page.text)
+        without_card = page.text.split("Canceled Without Email", 1)[1].split("</article>", 1)[0]
+        confirmed_card = page.text.split("Confirmed With Email", 1)[1].split("</article>", 1)[0]
+        self.assertNotIn("Email Cancellation", without_card)
+        self.assertIn("Add a customer email address before emailing this cancellation.", without_card)
+        self.assertNotIn("Email Cancellation", confirmed_card)
+
+    def test_cross_shop_appointment_mutations_fail_safely(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="alpha-actions@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("alpha-actions@example.com")
+        requested_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Alpha Pending",
+            status="Requested",
+        )
+        confirmed_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Alpha Confirmed",
+            status="Confirmed",
+            requested_time="10:00",
+        )
+
+        client_two = self.client()
+        self.signup(client_two, email="beta-actions@example.com", shop_name="Beta Shop")
+        self.verify_user("beta-actions@example.com")
+        page_two = client_two.get("/pro/calendar")
+        csrf_token = csrf_from(page_two.text)
+
+        cross_confirm = client_two.post(
+            f"/pro/calendar/{requested_id}/status",
+            data={"csrf_token": csrf_token, "status": "Confirmed"},
+            follow_redirects=False,
+        )
+        cross_decline = client_two.post(
+            f"/pro/calendar/{requested_id}/status",
+            data={"csrf_token": csrf_token, "status": "Declined"},
+            follow_redirects=False,
+        )
+        cross_reschedule = client_two.post(
+            f"/pro/calendar/{confirmed_id}/reschedule",
+            data={
+                "csrf_token": csrf_token,
+                "requested_date": future_weekday(1),
+                "requested_time": "11:00",
+            },
+            follow_redirects=False,
+        )
+        cross_cancel = client_two.post(
+            f"/pro/calendar/{confirmed_id}/cancel",
+            data={"csrf_token": csrf_token},
+            follow_redirects=False,
+        )
+        rows = {
+            int(row["id"]): row["status"]
+            for row in self.conn.execute(
+                "SELECT id, status FROM service_appointments WHERE id IN (?, ?)",
+                (requested_id, confirmed_id),
+            ).fetchall()
+        }
+
+        self.assertEqual(page_two.status_code, 200)
+        self.assertNotIn("Alpha Pending", page_two.text)
+        self.assertEqual(cross_confirm.status_code, 404)
+        self.assertEqual(cross_decline.status_code, 404)
+        self.assertEqual(cross_reschedule.status_code, 303)
+        self.assertIn("error=", cross_reschedule.headers["location"])
+        self.assertEqual(cross_cancel.status_code, 303)
+        self.assertIn("error=", cross_cancel.headers["location"])
+        self.assertEqual(rows[requested_id], "Requested")
+        self.assertEqual(rows[confirmed_id], "Confirmed")
+
+    def test_calendar_conversion_rejects_cross_shop_customer_and_vehicle(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="alpha-convert@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("alpha-convert@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            alpha_shop,
+            customer_name="Alpha Conversion",
+            status="Confirmed",
+        )
+        alpha_customer_id, _ = self.seed_customer_vehicle_for_shop(
+            alpha_shop,
+            first_name="Alpha",
+            vehicle_make="Honda",
+        )
+
+        client_two = self.client()
+        self.signup(client_two, email="beta-convert@example.com", shop_name="Beta Shop")
+        self.verify_user("beta-convert@example.com")
+        beta_shop = self.shop_id_for_email("beta-convert@example.com")
+        beta_customer_id, beta_vehicle_id = self.seed_customer_vehicle_for_shop(
+            beta_shop,
+            first_name="Beta",
+            vehicle_make="Ford",
+        )
+
+        page = client.get("/pro/calendar")
+        csrf_token = csrf_from(page.text)
+        cross_customer = client.post(
+            f"/pro/calendar/{appointment_id}/convert",
+            data={
+                "csrf_token": csrf_token,
+                "customer_mode": "existing",
+                "customer_id": str(beta_customer_id),
+                "vehicle_mode": "existing",
+                "vehicle_id": str(beta_vehicle_id),
+                "conversion_action": "save",
+            },
+            follow_redirects=False,
+        )
+        cross_vehicle = client.post(
+            f"/pro/calendar/{appointment_id}/convert",
+            data={
+                "csrf_token": csrf_token,
+                "customer_mode": "existing",
+                "customer_id": str(alpha_customer_id),
+                "vehicle_mode": "existing",
+                "vehicle_id": str(beta_vehicle_id),
+                "conversion_action": "save",
+            },
+            follow_redirects=False,
+        )
+        appointment = self.conn.execute(
+            "SELECT customer_id, vehicle_id FROM service_appointments WHERE id = ?",
+            (appointment_id,),
+        ).fetchone()
+
+        with self.assertRaises(HTTPException):
+            pro_module.load_customer_for_shop(self.conn, beta_customer_id, alpha_shop)
+        with self.assertRaises(HTTPException):
+            pro_module.load_vehicle_for_shop(self.conn, beta_customer_id, beta_vehicle_id, alpha_shop)
+
+        self.assertEqual(cross_customer.status_code, 303)
+        self.assertIn("error=", cross_customer.headers["location"])
+        self.assertEqual(cross_vehicle.status_code, 303)
+        self.assertIn("error=", cross_vehicle.headers["location"])
+        self.assertIsNone(appointment["customer_id"])
+        self.assertIsNone(appointment["vehicle_id"])
+
+    def shop_id_for_email(self, email: str) -> int:
+        row = self.conn.execute(
+            """
+            SELECT sp.id
+            FROM shop_profile sp
+            JOIN users u ON u.id = sp.owner_user_id
+            WHERE u.email = ?
+            LIMIT 1
+            """,
+            (email,),
+        ).fetchone()
+        if not row:
+            raise AssertionError(f"shop not found for {email}")
+        return int(row["id"])
+
+    def seed_service_appointment_for_shop(
+        self,
+        shop_id: int,
+        *,
+        customer_name: str = "Appointment Customer",
+        customer_email: str = "",
+        status: str = "Requested",
+        requested_date: str | None = None,
+        requested_time: str = "09:00",
+    ) -> int:
+        return pro_module.create_service_appointment(
+            self.conn,
+            {
+                "customer_name": customer_name,
+                "customer_phone": "5551112222",
+                "customer_email": customer_email,
+                "vehicle_label": "2010 Honda Accord",
+                "service_name": "Brake Inspection",
+                "requested_date": requested_date or future_weekday(0),
+                "requested_time": requested_time,
+                "status": status,
+                "source": "manual",
+            },
+            shop_id=shop_id,
+        )
+
+    def seed_customer_vehicle_for_shop(self, shop_id: int, *, first_name: str = "Cross", vehicle_make: str = "Toyota") -> tuple[int, int]:
+        pro_module.ensure_customer_status_schema(self.conn)
+        now = "2026-07-24T12:00:00"
+        customer_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO customers (
+                  shop_id, first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
+                )
+                VALUES (?, ?, 'Owner', '5552223333', ?, 'active', '', ?, ?)
+                """,
+                (shop_id, first_name, f"{first_name.lower()}@example.com", now, now),
+            ).lastrowid
+        )
+        vehicle_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO customer_vehicles (shop_id, customer_id, year, make, model, created_at, updated_at)
+                VALUES (?, ?, 2014, ?, 'Camry', ?, ?)
+                """,
+                (shop_id, customer_id, vehicle_make, now, now),
+            ).lastrowid
+        )
+        self.conn.commit()
+        return customer_id, vehicle_id
+
+    def seed_invoice_estimate_records_for_shop(self, shop_id: int) -> dict[str, int]:
+        now = "2026-07-24T12:00:00"
+        pro_module.ensure_customer_status_schema(self.conn)
+        pro_module.ensure_repair_records_schema(self.conn)
+        pro_module.ensure_repair_completion_schema(self.conn)
+        pro_module.ensure_invoices_schema(self.conn)
+        pro_module.ensure_repair_estimate_documents_schema(self.conn)
+        customer_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO customers (
+                  shop_id, first_name, last_name, phone, email, customer_status,
+                  notes, created_at, updated_at
+                )
+                VALUES (?, 'Alpha', 'Customer', '555-0101', 'alpha@example.com',
+                        'active', '', ?, ?)
+                """,
+                (shop_id, now, now),
+            ).lastrowid
+        )
+        vehicle_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO customer_vehicles (
+                  shop_id, customer_id, year, make, model, mileage, created_at, updated_at
+                )
+                VALUES (?, ?, 2010, 'Honda', 'Accord', 120000, ?, ?)
+                """,
+                (shop_id, customer_id, now, now),
+            ).lastrowid
+        )
+        repair_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO repair_records (
+                  vehicle_id, customer_id, repair_name, repair_date, mileage,
+                  labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+                  workflow_source_type, status, completed_at, notes, created_at
+                )
+                VALUES (?, ?, 'Brake Pad Replacement', '2026-07-24', 120000,
+                        1.0, 120, 80, 120, 200, 'estimate', 'Completed', ?, '', ?)
+                """,
+                (vehicle_id, customer_id, now, now),
+            ).lastrowid
+        )
+        self.conn.execute(
+            """
+            INSERT INTO repair_completions (
+              repair_record_id, completion_notes, final_inspection_passed,
+              final_inspection_notes, completion_date, completion_mileage,
+              after_repair_photo_paths, completed_at, created_at, updated_at
+            )
+            VALUES (?, 'Done', 1, 'Passed', '2026-07-24', 120000, '[]', ?, ?, ?)
+            """,
+            (repair_id, now, now, now),
+        )
+        repair = pro_module.load_repair_record(self.conn, customer_id, vehicle_id, repair_id)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            now=now,
+        )
+        storage = pro_module.ensure_storage_directories()
+        pdf_path = storage.estimate_pdfs_dir / f"auth-shop-isolation-{shop_id}.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n")
+        self.addCleanup(lambda p=pdf_path: p.unlink(missing_ok=True))
+        estimate_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO repair_estimate_documents (
+                  customer_id, vehicle_id, finding_id, estimate_date, customer_name,
+                  vehicle_label, related_title, estimate_total, approval_status,
+                  pdf_path, invoice_id, payload_json, created_at
+                )
+                VALUES (?, ?, NULL, '2026-07-24', 'Alpha Customer',
+                        '2010 Honda Accord', 'Brake Pad Replacement', 200,
+                        'Prepared', ?, ?, '{}', ?)
+                """,
+                (customer_id, vehicle_id, str(pdf_path.resolve()), invoice["id"], now),
+            ).lastrowid
+        )
+        self.conn.commit()
+        return {
+            "customer_id": customer_id,
+            "vehicle_id": vehicle_id,
+            "repair_id": repair_id,
+            "invoice_id": int(invoice["id"]),
+            "estimate_id": estimate_id,
+        }
+
+    def test_estimate_invoice_customer_vehicle_pdf_routes_are_shop_isolated(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="one@example.com", shop_name="Alpha Shop")
+        alpha_ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("one@example.com"))
+
+        client_two = self.client()
+        self.signup(client_two, email="two@example.com", shop_name="Beta Shop")
+        self.verify_user("two@example.com")
+        self.login(client_two, email="two@example.com")
+
+        customer_url = f"/pro/customers/{alpha_ids['customer_id']}"
+        vehicle_url = f"/pro/customers/{alpha_ids['customer_id']}/vehicles/{alpha_ids['vehicle_id']}"
+        invoice_url = f"{vehicle_url}/invoices/{alpha_ids['invoice_id']}"
+        invoice_pdf_url = f"{invoice_url}/pdf"
+        estimate_pdf_url = f"{vehicle_url}/estimates/{alpha_ids['estimate_id']}/pdf"
+
+        same_customer = client_one.get(customer_url)
+        same_vehicle = client_one.get(vehicle_url)
+        same_invoice = client_one.get(invoice_url)
+        same_invoice_pdf = client_one.get(invoice_pdf_url)
+        same_estimate_pdf = client_one.get(estimate_pdf_url)
+        cross_customer = client_two.get(customer_url)
+        cross_vehicle = client_two.get(vehicle_url)
+        cross_invoice = client_two.get(invoice_url)
+        cross_invoice_pdf = client_two.get(invoice_pdf_url)
+        cross_estimate_pdf = client_two.get(estimate_pdf_url)
+
+        self.assertEqual(same_customer.status_code, 200)
+        self.assertEqual(same_vehicle.status_code, 200)
+        self.assertEqual(same_invoice.status_code, 200)
+        self.assertIn("Invoice", same_invoice.text)
+        self.assertEqual(same_invoice_pdf.status_code, 200)
+        self.assertEqual(same_invoice_pdf.headers["content-type"], "application/pdf")
+        self.assertTrue(same_invoice_pdf.content.startswith(b"%PDF"))
+        self.assertEqual(same_estimate_pdf.status_code, 200)
+        self.assertEqual(same_estimate_pdf.headers["content-type"], "application/pdf")
+        self.assertTrue(same_estimate_pdf.content.startswith(b"%PDF"))
+        self.assertEqual(cross_customer.status_code, 404)
+        self.assertEqual(cross_vehicle.status_code, 404)
+        self.assertEqual(cross_invoice.status_code, 404)
+        self.assertEqual(cross_invoice_pdf.status_code, 404)
+        self.assertEqual(cross_estimate_pdf.status_code, 404)
+
+        invoice = pro_module.load_invoice_record(
+            self.conn,
+            alpha_ids["customer_id"],
+            alpha_ids["vehicle_id"],
+            alpha_ids["invoice_id"],
+            shop_id=self.shop_id_for_email("one@example.com"),
+        )
+        item = invoice["items"][0]
+        edit_url = f"{invoice_url}/edit"
+        edit_page = client_one.get(edit_url)
+        saved = client_one.post(
+            edit_url,
+            data={
+                f"item_labor_total_{item['invoice_item_id']}": "130",
+                f"item_parts_total_{item['invoice_item_id']}": "85",
+                f"item_repair_notes_{item['invoice_item_id']}": "Edited customer note.",
+                "shop_supplies_fee": "0",
+                "tax_total": "0",
+                "discount_total": "0",
+                "warranty_text": "Edited warranty.",
+                "payment_terms": "Due on pickup.",
+                "confirm_total_change": "1",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(edit_page.status_code, 200)
+        self.assertEqual(saved.status_code, 303)
+        self.assertEqual(saved.headers["location"], invoice_url)
+        edited_pdf = client_one.get(invoice_pdf_url)
+        self.assertEqual(edited_pdf.status_code, 200)
+        self.assertIn(b"Edited warranty.", edited_pdf.content)
+
+    def test_same_shop_invoice_email_sends_pdf_attachment(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="invoice-sender@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("invoice-sender@example.com")
+        ids = self.seed_invoice_estimate_records_for_shop(shop_id)
+        self.conn.execute(
+            "UPDATE shop_profile SET shop_email = 'service@alpha.example', shop_phone = '5551234567' WHERE id = ?",
+            (shop_id,),
+        )
+        self.conn.commit()
+        invoice_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}"
+        page = client.get(invoice_url)
+        sent_messages = []
+
+        def fake_send(message, config=None, *, logger=None, resend_client=None):
+            sent_messages.append((message, config))
+            return pro_module.email_service.EmailSendResult(success=True, transport="test", provider_message_id="email_123")
+
+        with patch.object(pro_module, "build_invoice_pdf_bytes", return_value=b"%PDF-1.4 invoice email bytes") as build_pdf, \
+             patch.object(pro_module.email_service, "send_email", side_effect=fake_send):
+            response = client.post(
+                f"{invoice_url}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("invoice_email=sent", response.headers["location"])
+        self.assertEqual(len(sent_messages), 1)
+        message = sent_messages[0][0]
+        self.assertEqual(message.recipients, ["alpha@example.com"])
+        self.assertIn("Invoice", message.subject)
+        self.assertIn("Alpha Shop", message.subject)
+        self.assertIn("attached as a PDF", message.text_body)
+        self.assertIn("attached as a PDF", message.html_body)
+        self.assertIn("2010 Honda Accord", message.text_body)
+        self.assertEqual(message.reply_to, "service@alpha.example")
+        self.assertEqual(len(message.attachments), 1)
+        self.assertEqual(message.attachments[0].filename.startswith("TorqueMech-Invoice-"), True)
+        self.assertEqual(message.attachments[0].content_type, "application/pdf")
+        self.assertEqual(message.attachments[0].content, b"%PDF-1.4 invoice email bytes")
+        build_pdf.assert_called_once()
+
+    def test_invoice_email_omits_invalid_shop_reply_to(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="invalid-reply@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("invalid-reply@example.com")
+        ids = self.seed_invoice_estimate_records_for_shop(shop_id)
+        self.conn.execute("UPDATE shop_profile SET shop_email = 'not-an-email' WHERE id = ?", (shop_id,))
+        self.conn.commit()
+        invoice_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}"
+        page = client.get(invoice_url)
+        sent_messages = []
+
+        with patch.object(pro_module, "build_invoice_pdf_bytes", return_value=b"%PDF invoice"), \
+             patch.object(
+                 pro_module.email_service,
+                 "send_email",
+                 side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+             ):
+            response = client.post(
+                f"{invoice_url}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIsNone(sent_messages[0].reply_to)
+
+    def test_invoice_email_missing_or_invalid_customer_email_fails_without_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="missing-email@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("missing-email@example.com")
+        ids = self.seed_invoice_estimate_records_for_shop(shop_id)
+        invoice_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}"
+        page = client.get(invoice_url)
+        self.conn.execute("UPDATE customers SET email = '' WHERE id = ?", (ids["customer_id"],))
+        self.conn.commit()
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            missing = client.post(
+                f"{invoice_url}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.conn.execute("UPDATE customers SET email = 'not-an-email' WHERE id = ?", (ids["customer_id"],))
+        self.conn.commit()
+        page = client.get(invoice_url)
+        with patch.object(pro_module.email_service, "send_email") as invalid_send_email:
+            invalid = client.post(
+                f"{invoice_url}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(missing.status_code, 303)
+        self.assertIn("invoice_email=missing_customer_email", missing.headers["location"])
+        send_email.assert_not_called()
+        self.assertEqual(invalid.status_code, 303)
+        self.assertIn("invoice_email=error", invalid.headers["location"])
+        invalid_send_email.assert_not_called()
+
+    def test_invoice_email_requires_valid_csrf_before_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="csrf-invoice@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("csrf-invoice@example.com"))
+        invoice_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}/email"
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            missing = client.post(invoice_url, data={}, follow_redirects=False)
+            invalid = client.post(invoice_url, data={"csrf_token": "bad-token"}, follow_redirects=False)
+
+        self.assertEqual(missing.status_code, 403)
+        self.assertEqual(invalid.status_code, 403)
+        send_email.assert_not_called()
+
+    def test_cross_shop_invoice_email_is_rejected_without_provider(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="invoice-alpha@example.com", shop_name="Alpha Shop")
+        alpha_ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("invoice-alpha@example.com"))
+        client_two = self.client()
+        self.signup(client_two, email="invoice-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("invoice-beta@example.com")
+        self.login(client_two, email="invoice-beta@example.com")
+        beta_customer_id, beta_vehicle_id = self.seed_customer_vehicle_for_shop(self.shop_id_for_email("invoice-beta@example.com"))
+        beta_page = client_two.get("/pro/calendar")
+        alpha_url = f"/pro/customers/{alpha_ids['customer_id']}/vehicles/{alpha_ids['vehicle_id']}/invoices/{alpha_ids['invoice_id']}/email"
+        mixed_url = f"/pro/customers/{beta_customer_id}/vehicles/{beta_vehicle_id}/invoices/{alpha_ids['invoice_id']}/email"
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            cross = client_two.post(alpha_url, data={"csrf_token": csrf_from(beta_page.text)}, follow_redirects=False)
+            mixed = client_two.post(mixed_url, data={"csrf_token": csrf_from(beta_page.text)}, follow_redirects=False)
+
+        self.assertEqual(cross.status_code, 404)
+        self.assertEqual(mixed.status_code, 404)
+        send_email.assert_not_called()
+
+    def test_invoice_email_missing_provider_configuration_and_provider_failure_are_safe(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="provider-failure@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("provider-failure@example.com"))
+        invoice_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}"
+        page = client.get(invoice_url)
+
+        with patch.object(pro_module, "build_invoice_pdf_bytes", return_value=b"%PDF invoice"), \
+             patch.object(
+                 pro_module,
+                 "invoice_email_service_config",
+                 return_value=pro_module.email_service.EmailServiceConfig(transport="smtp", smtp_server="", smtp_pass="", from_address="sender@example.com"),
+             ):
+            missing_config = client.post(
+                f"{invoice_url}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        page = client.get(invoice_url)
+        with patch.object(pro_module, "build_invoice_pdf_bytes", return_value=b"%PDF invoice"), \
+             patch.object(
+                 pro_module.email_service,
+                 "send_email",
+                 return_value=pro_module.email_service.EmailSendResult(success=False, transport="test", error_category="provider_exception", provider_related=True),
+             ):
+            provider_failure = client.post(
+                f"{invoice_url}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(missing_config.status_code, 303)
+        self.assertIn("invoice_email=error", missing_config.headers["location"])
+        self.assertEqual(provider_failure.status_code, 303)
+        self.assertIn("invoice_email=error", provider_failure.headers["location"])
+
+    def test_invoice_email_pdf_generation_failure_is_safe(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="pdf-failure@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("pdf-failure@example.com"))
+        invoice_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}"
+        page = client.get(invoice_url)
+
+        with patch.object(pro_module, "build_invoice_pdf_bytes", side_effect=RuntimeError("pdf failed")), \
+             patch.object(pro_module.email_service, "send_email") as send_email:
+            response = client.post(
+                f"{invoice_url}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("invoice_email=error", response.headers["location"])
+        send_email.assert_not_called()
+
+    def test_invoice_detail_email_button_requires_customer_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="button-state@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("button-state@example.com"))
+        invoice_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/invoices/{ids['invoice_id']}"
+        with_email = client.get(invoice_url)
+        self.conn.execute("UPDATE customers SET email = '' WHERE id = ?", (ids["customer_id"],))
+        self.conn.commit()
+        without_email = client.get(invoice_url)
+
+        self.assertIn("Email Invoice", with_email.text)
+        self.assertNotIn("Email Invoice", without_email.text)
+        self.assertIn("Add a customer email address before emailing this invoice.", without_email.text)
+
+    def test_same_shop_estimate_email_sends_saved_pdf_attachment(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="estimate-sender@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("estimate-sender@example.com")
+        ids = self.seed_invoice_estimate_records_for_shop(shop_id)
+        self.conn.execute(
+            "UPDATE shop_profile SET shop_email = 'Service@Alpha.Example', shop_phone = '5551234567' WHERE id = ?",
+            (shop_id,),
+        )
+        self.conn.commit()
+        vehicle_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}"
+        page = client.get(vehicle_url)
+        pdf_path = Path(
+            self.conn.execute(
+                "SELECT pdf_path FROM repair_estimate_documents WHERE id = ?",
+                (ids["estimate_id"],),
+            ).fetchone()["pdf_path"]
+        )
+        saved_pdf_bytes = pdf_path.read_bytes()
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append((message, config, kwargs)) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ):
+            response = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("estimate_email=sent", response.headers["location"])
+        self.assertIn("#vehicle-timeline", response.headers["location"])
+        self.assertEqual(len(sent_messages), 1)
+        message = sent_messages[0][0]
+        self.assertEqual(message.recipients, ["alpha@example.com"])
+        self.assertEqual(message.subject, f"Estimate {ids['estimate_id']} from Alpha Shop")
+        self.assertIn(f"estimate {ids['estimate_id']}", message.text_body)
+        self.assertIn("Alpha Customer", message.text_body)
+        self.assertIn("2010 Honda Accord", message.text_body)
+        self.assertIn("attached as a PDF", message.text_body)
+        self.assertIn("attached as a PDF", message.html_body)
+        self.assertEqual(message.reply_to, "service@alpha.example")
+        self.assertEqual(len(message.attachments), 1)
+        self.assertEqual(message.attachments[0].filename, f"TorqueMech-Estimate-{ids['estimate_id']}.pdf")
+        self.assertEqual(message.attachments[0].content_type, "application/pdf")
+        self.assertEqual(message.attachments[0].content, saved_pdf_bytes)
+
+    def test_estimate_email_omits_invalid_shop_reply_to(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="estimate-invalid-reply@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("estimate-invalid-reply@example.com")
+        ids = self.seed_invoice_estimate_records_for_shop(shop_id)
+        self.conn.execute("UPDATE shop_profile SET shop_email = 'not-an-email' WHERE id = ?", (shop_id,))
+        self.conn.commit()
+        vehicle_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}"
+        page = client.get(vehicle_url)
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ):
+            response = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIsNone(sent_messages[0].reply_to)
+
+    def test_estimate_email_missing_or_invalid_customer_email_fails_without_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="estimate-missing-email@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("estimate-missing-email@example.com"))
+        vehicle_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}"
+        page = client.get(vehicle_url)
+        self.conn.execute("UPDATE customers SET email = '' WHERE id = ?", (ids["customer_id"],))
+        self.conn.commit()
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            missing = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.conn.execute("UPDATE customers SET email = 'not-an-email' WHERE id = ?", (ids["customer_id"],))
+        self.conn.commit()
+        page = client.get(vehicle_url)
+        with patch.object(pro_module.email_service, "send_email") as invalid_send_email:
+            invalid = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+
+        self.assertEqual(missing.status_code, 303)
+        self.assertIn("estimate_email=missing_customer_email", missing.headers["location"])
+        send_email.assert_not_called()
+        self.assertEqual(invalid.status_code, 303)
+        self.assertIn("estimate_email=error", invalid.headers["location"])
+        invalid_send_email.assert_not_called()
+
+    def test_estimate_email_requires_valid_csrf_before_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="csrf-estimate@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("csrf-estimate@example.com"))
+        estimate_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}/estimates/{ids['estimate_id']}/email"
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            missing = client.post(estimate_url, data={}, follow_redirects=False)
+            invalid = client.post(estimate_url, data={"csrf_token": "bad-token"}, follow_redirects=False)
+
+        self.assertEqual(missing.status_code, 403)
+        self.assertEqual(invalid.status_code, 403)
+        send_email.assert_not_called()
+
+    def test_cross_shop_estimate_email_is_rejected_without_provider(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="estimate-alpha@example.com", shop_name="Alpha Shop")
+        alpha_ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("estimate-alpha@example.com"))
+        client_two = self.client()
+        self.signup(client_two, email="estimate-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("estimate-beta@example.com")
+        self.login(client_two, email="estimate-beta@example.com")
+        beta_customer_id, beta_vehicle_id = self.seed_customer_vehicle_for_shop(self.shop_id_for_email("estimate-beta@example.com"))
+        beta_page = client_two.get("/pro/calendar")
+        alpha_url = f"/pro/customers/{alpha_ids['customer_id']}/vehicles/{alpha_ids['vehicle_id']}/estimates/{alpha_ids['estimate_id']}/email"
+        mixed_url = f"/pro/customers/{beta_customer_id}/vehicles/{beta_vehicle_id}/estimates/{alpha_ids['estimate_id']}/email"
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            cross = client_two.post(alpha_url, data={"csrf_token": csrf_from(beta_page.text)}, follow_redirects=False)
+            mixed = client_two.post(mixed_url, data={"csrf_token": csrf_from(beta_page.text)}, follow_redirects=False)
+
+        self.assertEqual(cross.status_code, 404)
+        self.assertEqual(mixed.status_code, 404)
+        send_email.assert_not_called()
+
+    def test_estimate_email_pdf_record_and_file_failures_are_safe(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="estimate-pdf-failures@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("estimate-pdf-failures@example.com"))
+        vehicle_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}"
+        page = client.get(vehicle_url)
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            missing_record = client.post(
+                f"{vehicle_url}/estimates/99999/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.assertEqual(missing_record.status_code, 404)
+        send_email.assert_not_called()
+
+        pdf_path = Path(
+            self.conn.execute(
+                "SELECT pdf_path FROM repair_estimate_documents WHERE id = ?",
+                (ids["estimate_id"],),
+            ).fetchone()["pdf_path"]
+        )
+        pdf_path.unlink()
+        with patch.object(pro_module.email_service, "send_email") as missing_file_send:
+            missing_file = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.assertEqual(missing_file.status_code, 303)
+        self.assertIn("estimate_email=error", missing_file.headers["location"])
+        missing_file_send.assert_not_called()
+
+    def test_estimate_email_unsafe_path_and_read_error_are_safe(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="estimate-path-failures@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("estimate-path-failures@example.com"))
+        vehicle_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}"
+        page = client.get(vehicle_url)
+        outside_pdf = (Path(main.BASE_DIR) / "tmp" / f"{self._testMethodName}-outside.pdf").resolve()
+        outside_pdf.parent.mkdir(parents=True, exist_ok=True)
+        outside_pdf.write_bytes(b"%PDF outside")
+        self.addCleanup(lambda: outside_pdf.unlink(missing_ok=True))
+        self.conn.execute(
+            "UPDATE repair_estimate_documents SET pdf_path = ? WHERE id = ?",
+            (str(outside_pdf), ids["estimate_id"]),
+        )
+        self.conn.commit()
+        with patch.object(pro_module.email_service, "send_email") as unsafe_send:
+            unsafe_path = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.assertEqual(unsafe_path.status_code, 303)
+        self.assertIn("estimate_email=error", unsafe_path.headers["location"])
+        unsafe_send.assert_not_called()
+
+        storage = pro_module.ensure_storage_directories()
+        replacement_pdf = storage.estimate_pdfs_dir / f"{self._testMethodName}-read-error.pdf"
+        replacement_pdf.write_bytes(b"%PDF read error")
+        self.addCleanup(lambda: replacement_pdf.unlink(missing_ok=True))
+        self.conn.execute(
+            "UPDATE repair_estimate_documents SET pdf_path = ? WHERE id = ?",
+            (str(replacement_pdf.resolve()), ids["estimate_id"]),
+        )
+        self.conn.commit()
+        with patch.object(Path, "read_bytes", side_effect=OSError("permission denied")), \
+             patch.object(pro_module.email_service, "send_email") as read_error_send:
+            read_error = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.assertEqual(read_error.status_code, 303)
+        self.assertIn("estimate_email=error", read_error.headers["location"])
+        read_error_send.assert_not_called()
+
+    def test_estimate_email_provider_and_attachment_failures_are_safe(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="estimate-provider-failure@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("estimate-provider-failure@example.com"))
+        vehicle_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}"
+        page = client.get(vehicle_url)
+
+        with patch.object(
+            pro_module,
+            "invoice_email_service_config",
+            return_value=pro_module.email_service.EmailServiceConfig(transport="smtp", smtp_server="", smtp_pass="", from_address="sender@example.com"),
+        ):
+            missing_config = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.assertEqual(missing_config.status_code, 303)
+        self.assertIn("estimate_email=error", missing_config.headers["location"])
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            return_value=pro_module.email_service.EmailSendResult(success=False, transport="test", error_category="provider_exception", provider_related=True),
+        ):
+            provider_failure = client.post(
+                f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+                data={"csrf_token": csrf_from(page.text)},
+                follow_redirects=False,
+            )
+        self.assertEqual(provider_failure.status_code, 303)
+        self.assertIn("estimate_email=error", provider_failure.headers["location"])
+
+        pdf_path = Path(
+            self.conn.execute(
+                "SELECT pdf_path FROM repair_estimate_documents WHERE id = ?",
+                (ids["estimate_id"],),
+            ).fetchone()["pdf_path"]
+        )
+        pdf_path.write_bytes(b"")
+        attachment_failure = client.post(
+            f"{vehicle_url}/estimates/{ids['estimate_id']}/email",
+            data={"csrf_token": csrf_from(page.text)},
+            follow_redirects=False,
+        )
+        self.assertEqual(attachment_failure.status_code, 303)
+        self.assertIn("estimate_email=error", attachment_failure.headers["location"])
+
+    def test_estimate_email_button_requires_customer_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="estimate-button-state@example.com", shop_name="Alpha Shop")
+        ids = self.seed_invoice_estimate_records_for_shop(self.shop_id_for_email("estimate-button-state@example.com"))
+        vehicle_url = f"/pro/customers/{ids['customer_id']}/vehicles/{ids['vehicle_id']}"
+        with_email = client.get(vehicle_url)
+        self.conn.execute("UPDATE customers SET email = '' WHERE id = ?", (ids["customer_id"],))
+        self.conn.commit()
+        without_email = client.get(vehicle_url)
+
+        self.assertIn("Email Estimate", with_email.text)
+        self.assertNotIn("Email Estimate", without_email.text)
+        self.assertIn("Add a customer email address before emailing this estimate.", without_email.text)
 
     def test_public_booking_page_remains_accessible(self):
         client = self.client()

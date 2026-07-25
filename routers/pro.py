@@ -2,6 +2,7 @@ import io
 import base64
 import hashlib
 import hmac
+import html
 import logging
 import os
 import re
@@ -41,6 +42,7 @@ from app.storage import (
     safe_upload_suffix,
     visual_reference_upload_url,
 )
+from app import email_service
 from app.billing import (
     BillingConfigurationError,
     BillingCustomerRequiredError,
@@ -334,6 +336,13 @@ def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
 
 def normalize_email(value: Any) -> str:
     return str(value or "").strip().lower()
+
+
+def optional_email_format_error(email: str) -> str:
+    clean = normalize_email(email)
+    if clean and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", clean):
+        return "Enter a valid email address."
+    return ""
 
 
 def hash_password(password: str) -> str:
@@ -1707,10 +1716,30 @@ def booking_availability_for_month(
     return {"month": month_start.strftime("%Y-%m"), "days": days}
 
 
+def public_booking_excluded_appointment_id(
+    conn: sqlite3.Connection,
+    request: Request,
+    shop_id: int,
+    exclude_appointment_id: int | None,
+) -> int | None:
+    if exclude_appointment_id is None or current_user_id(request) is None:
+        return None
+    return exclude_appointment_id if current_shop_id(conn, request) == shop_id else None
+
+
 def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any], shop_id: int | None = None) -> int:
     ensure_calendar_schema(conn)
     if shop_id is None:
         shop_id = optional_int_value(data.get("shop_id"))
+    customer_id = optional_int_value(data.get("customer_id"))
+    vehicle_id = optional_int_value(data.get("vehicle_id"))
+    if shop_id is not None:
+        if customer_id:
+            load_customer_for_shop(conn, customer_id, shop_id)
+        if vehicle_id:
+            if not customer_id:
+                raise HTTPException(status_code=404, detail="Customer not found")
+            load_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
     status = str(data.get("status") or "Requested").strip()
     if status not in APPOINTMENT_STATUS_OPTIONS:
         status = "Requested"
@@ -1733,8 +1762,8 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any], s
         """,
         (
             shop_id,
-            optional_int_value(data.get("customer_id")),
-            optional_int_value(data.get("vehicle_id")),
+            customer_id,
+            vehicle_id,
             optional_int_value(data.get("estimate_id")),
             optional_int_value(data.get("repair_id")),
             optional_int_value(data.get("invoice_id")),
@@ -1759,6 +1788,24 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any], s
     return int(cur.lastrowid)
 
 
+def public_booking_appointment_data(form: dict[str, str], vehicle_label: str, vehicle_parts: list[str]) -> dict[str, Any]:
+    return {
+        "customer_name": form.get("customer_name", ""),
+        "customer_phone": form.get("customer_phone", ""),
+        "customer_email": normalize_email(form.get("customer_email")),
+        "vehicle_label": vehicle_label,
+        "vehicle_year": vehicle_parts[0],
+        "vehicle_make": vehicle_parts[1],
+        "vehicle_model": vehicle_parts[2],
+        "service_name": form.get("service_name", ""),
+        "requested_date": form.get("requested_date", ""),
+        "requested_time": form.get("requested_time", ""),
+        "notes": form.get("notes", ""),
+        "source": "customer_booking",
+        "status": "Requested",
+    }
+
+
 def update_service_appointment_status(
     conn: sqlite3.Connection,
     appointment_id: int,
@@ -1770,13 +1817,7 @@ def update_service_appointment_status(
 
     ensure_calendar_schema(conn)
 
-    appointment = load_service_appointment(
-        conn,
-        appointment_id,
-        shop_id=shop_id,
-    )
-    if not appointment:
-        raise HTTPException(status_code=404, detail="Appointment not found")
+    load_service_appointment_for_shop(conn, appointment_id, shop_id)
 
     where_sql, params = shop_scope_where(shop_id)
 
@@ -1806,6 +1847,17 @@ def load_service_appointment(conn: sqlite3.Connection, appointment_id: int, shop
     return dict(row) if row else None
 
 
+def load_service_appointment_for_shop(
+    conn: sqlite3.Connection,
+    appointment_id: int,
+    shop_id: int | None,
+) -> dict[str, Any]:
+    appointment = load_service_appointment(conn, appointment_id, shop_id=shop_id)
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    return appointment
+
+
 def reschedule_service_appointment(
     conn: sqlite3.Connection,
     appointment_id: int,
@@ -1813,8 +1865,8 @@ def reschedule_service_appointment(
     requested_time: str,
     shop_id: int | None = None,
 ) -> None:
-    appointment = load_service_appointment(conn, appointment_id, shop_id=shop_id)
-    if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
+    appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+    if appointment.get("status") not in {"Confirmed", "Rescheduled"}:
         raise HTTPException(status_code=404, detail="Confirmed appointment not found.")
     available, warning = is_booking_time_available(
         conn,
@@ -1944,6 +1996,7 @@ APPOINTMENT_MESSAGE_PLACEHOLDERS = (
     "appointment_time",
     "shop_phone",
     "shop_email",
+    "shop_address",
 )
 
 
@@ -2024,6 +2077,11 @@ def appointment_template_token_values(
         or _context_lookup(sender_context, "email")
         or ""
     ).strip()
+    address_parts = [
+        str(_context_lookup(sender_context, key) or "").strip()
+        for key in ("shop_address", "shop_city", "shop_state", "shop_zip")
+    ]
+    address = ", ".join(part for part in address_parts if part)
     return {
         "customer_name": customer_name,
         "shop_name": shop_name,
@@ -2033,6 +2091,7 @@ def appointment_template_token_values(
         "appointment_time": appointment_time,
         "shop_phone": phone,
         "shop_email": email,
+        "shop_address": address,
     }
 
 
@@ -2059,6 +2118,149 @@ def render_appointment_message_template(
     rendered = "\n".join(cleaned_lines)
     rendered = re.sub(r"\n{3,}", "\n\n", rendered).strip()
     return rendered
+
+
+def appointment_email_service_config() -> email_service.EmailServiceConfig:
+    return email_service.config_from_env(default_outbox_path=STATE_DIR / "email_outbox.jsonl")
+
+
+def appointment_email_recipient(
+    conn: sqlite3.Connection,
+    appointment: dict[str, Any],
+    shop_id: int | None,
+) -> str:
+    customer_id = optional_int_value(appointment.get("customer_id"))
+    vehicle_id = optional_int_value(appointment.get("vehicle_id"))
+    linked_customer: dict[str, Any] | None = None
+    if customer_id:
+        linked_customer = load_customer_for_shop(conn, customer_id, shop_id)
+    if vehicle_id:
+        if not customer_id:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        load_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+    return normalize_email(appointment.get("customer_email") or (linked_customer or {}).get("email") or "")
+
+
+def appointment_confirmation_email_subject(
+    appointment: dict[str, Any],
+    shop_name: str,
+) -> str:
+    formatted_date = format_pro_date(appointment.get("requested_date"))
+    display_shop_name = str(shop_name or "TorqueMech Pro").strip()
+    if formatted_date:
+        return f"Appointment Confirmed for {formatted_date} - {display_shop_name}"
+    return f"Appointment Confirmed - {display_shop_name}"
+
+
+def appointment_email_html_body(text_body: str) -> str:
+    paragraphs = [
+        line.strip()
+        for line in re.split(r"\n{2,}", str(text_body or "").strip())
+        if line.strip()
+    ]
+    return "\n".join(
+        f"<p>{html.escape(paragraph).replace(chr(10), '<br>')}</p>"
+        for paragraph in paragraphs
+    )
+
+
+def appointment_confirmation_html_body(text_body: str) -> str:
+    return appointment_email_html_body(text_body)
+
+
+def appointment_cancellation_email_subject(
+    appointment: dict[str, Any],
+    shop_name: str,
+) -> str:
+    formatted_date = format_pro_date(appointment.get("requested_date"))
+    display_shop_name = str(shop_name or "TorqueMech Pro").strip()
+    if formatted_date:
+        return f"Appointment Canceled for {formatted_date} - {display_shop_name}"
+    return f"Appointment Canceled - {display_shop_name}"
+
+
+def appointment_reply_to_email(shop_profile: dict[str, Any]) -> str:
+    return valid_optional_email(shop_profile.get("shop_email") or shop_profile.get("email") or "")
+
+
+def appointment_confirmation_email_message(
+    *,
+    recipient_email: str,
+    appointment: dict[str, Any],
+    shop_profile: dict[str, Any],
+    shop_name: str,
+) -> email_service.EmailMessage:
+    confirmation_text = str(
+        appointment_customer_messages(appointment, shop_profile).get("confirmation_message") or ""
+    ).strip()
+    if not confirmation_text:
+        confirmation_text = appointment_customer_messages(
+            appointment,
+            {**dict(shop_profile or {}), "appointment_confirmation_template": ""},
+        ).get("confirmation_message", "")
+    return email_service.EmailMessage(
+        recipients=[recipient_email],
+        subject=appointment_confirmation_email_subject(appointment, shop_name),
+        text_body=confirmation_text,
+        html_body=appointment_email_html_body(confirmation_text),
+        reply_to=appointment_reply_to_email(shop_profile) or None,
+    )
+
+
+def appointment_cancellation_email_message(
+    *,
+    recipient_email: str,
+    appointment: dict[str, Any],
+    shop_profile: dict[str, Any],
+    shop_name: str,
+) -> email_service.EmailMessage:
+    cancellation_text = str(
+        appointment_customer_messages(appointment, shop_profile).get("cancellation_message") or ""
+    ).strip()
+    if not cancellation_text:
+        cancellation_text = appointment_customer_messages(
+            appointment,
+            {**dict(shop_profile or {}), "appointment_cancellation_template": ""},
+        ).get("cancellation_message", "")
+    return email_service.EmailMessage(
+        recipients=[recipient_email],
+        subject=appointment_cancellation_email_subject(appointment, shop_name),
+        text_body=cancellation_text,
+        html_body=appointment_email_html_body(cancellation_text),
+        reply_to=appointment_reply_to_email(shop_profile) or None,
+    )
+
+
+def send_appointment_confirmation_email(
+    *,
+    appointment: dict[str, Any],
+    recipient_email: str,
+    shop_profile: dict[str, Any],
+    shop_name: str,
+) -> email_service.EmailSendResult:
+    message = appointment_confirmation_email_message(
+        recipient_email=recipient_email,
+        appointment=appointment,
+        shop_profile=shop_profile,
+        shop_name=shop_name,
+    )
+    return email_service.send_email(message, appointment_email_service_config(), logger=logger)
+
+
+def send_appointment_cancellation_email(
+    *,
+    appointment: dict[str, Any],
+    recipient_email: str,
+    shop_profile: dict[str, Any],
+    shop_name: str,
+) -> email_service.EmailSendResult:
+    message = appointment_cancellation_email_message(
+        recipient_email=recipient_email,
+        appointment=appointment,
+        shop_profile=shop_profile,
+        shop_name=shop_name,
+    )
+    return email_service.send_email(message, appointment_email_service_config(), logger=logger)
 
 
 def appointment_customer_messages(
@@ -2255,7 +2457,7 @@ def load_calendar_conversion_context(conn: sqlite3.Connection, shop_id: int | No
     customer_shop_clause = ""
     customer_params: list[Any] = []
     if shop_id is not None:
-        customer_shop_clause = "AND (shop_id = ? OR shop_id IS NULL)"
+        customer_shop_clause = "AND shop_id = ?"
         customer_params.append(shop_id)
     customers = [
         dict(row)
@@ -2274,7 +2476,7 @@ def load_calendar_conversion_context(conn: sqlite3.Connection, shop_id: int | No
     vehicle_shop_clause = ""
     vehicle_params: list[Any] = []
     if shop_id is not None:
-        vehicle_shop_clause = "WHERE shop_id = ? OR shop_id IS NULL"
+        vehicle_shop_clause = "WHERE shop_id = ?"
         vehicle_params.append(shop_id)
     for row in conn.execute(
         f"""
@@ -2386,8 +2588,8 @@ def link_appointment_customer_vehicle(
 ) -> tuple[int, int, dict[str, Any]]:
     ensure_calendar_schema(conn)
     ensure_customer_status_schema(conn)
-    appointment = load_service_appointment(conn, appointment_id, shop_id=shop_id)
-    if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
+    appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+    if appointment.get("status") not in {"Confirmed", "Rescheduled"}:
         raise HTTPException(status_code=404, detail="Active confirmed appointment not found.")
     if optional_int_value(appointment.get("customer_id")) and optional_int_value(appointment.get("vehicle_id")):
         return int(appointment["customer_id"]), int(appointment["vehicle_id"]), appointment
@@ -2474,13 +2676,14 @@ def link_appointment_customer_vehicle(
         ).fetchone():
             raise HTTPException(status_code=400, detail="Select a vehicle for this customer.")
 
+    where_sql, params = shop_scope_where(shop_id)
     conn.execute(
-        """
+        f"""
         UPDATE service_appointments
         SET customer_id = ?, vehicle_id = ?, updated_at = ?
-        WHERE id = ?
+        WHERE id = ? AND {where_sql}
         """,
-        (customer_id, vehicle_id, now, appointment_id),
+        [customer_id, vehicle_id, now, appointment_id, *params],
     )
     conn.commit()
     linked = load_service_appointment(conn, appointment_id, shop_id=shop_id) or appointment
@@ -5846,14 +6049,31 @@ def invoice_item_display_record(record: dict[str, Any]) -> dict[str, Any]:
 def load_invoice_item_records(
     conn: sqlite3.Connection,
     invoice_id: int,
+    *,
+    customer_id: int | None = None,
+    vehicle_id: int | None = None,
+    shop_id: int | None = None,
 ) -> list[dict[str, Any]]:
     ensure_invoices_schema(conn)
     ensure_repair_completion_schema(conn)
     ensure_findings_records_schema(conn)
+    filters = ["ii.invoice_id = ?"]
+    params: list[Any] = [invoice_id]
+    if customer_id is not None:
+        filters.append("rr.customer_id = ?")
+        params.append(customer_id)
+    if vehicle_id is not None:
+        filters.append("rr.vehicle_id = ?")
+        params.append(vehicle_id)
+    if shop_id is not None:
+        filters.append("c.shop_id = ?")
+        filters.append("v.shop_id = ?")
+        params.extend([shop_id, shop_id])
+    where_sql = " AND ".join(filters)
     items = [
         invoice_item_display_record(dict(row))
         for row in conn.execute(
-            """
+            f"""
             SELECT
               ii.id AS invoice_item_id,
               ii.invoice_id,
@@ -5886,14 +6106,16 @@ def load_invoice_item_records(
               fr.recommendation AS source_recommendation
             FROM invoice_items ii
             JOIN repair_records rr ON rr.id = ii.repair_record_id
+            JOIN customers c ON c.id = rr.customer_id
+            JOIN customer_vehicles v ON v.id = rr.vehicle_id AND v.customer_id = c.id
             LEFT JOIN repair_completions rc ON rc.repair_record_id = rr.id
             LEFT JOIN findings_records fr
               ON rr.workflow_source_type = 'finding'
              AND fr.id = rr.workflow_source_id
-            WHERE ii.invoice_id = ?
+            WHERE {where_sql}
             ORDER BY ii.id ASC
             """,
-            (invoice_id,),
+            params,
         ).fetchall()
     ]
     parts_map = load_repair_job_parts_map(
@@ -5920,23 +6142,44 @@ def load_invoice_record(
     customer_id: int,
     vehicle_id: int,
     invoice_id: int,
+    shop_id: int | None = None,
 ) -> dict[str, Any]:
     ensure_invoices_schema(conn)
+    filters = [
+        "i.id = ?",
+        "i.customer_id = ?",
+        "i.vehicle_id = ?",
+        "c.id = i.customer_id",
+        "v.id = i.vehicle_id",
+        "v.customer_id = c.id",
+    ]
+    params: list[Any] = [invoice_id, customer_id, vehicle_id]
+    if shop_id is not None:
+        filters.append("c.shop_id = ?")
+        filters.append("v.shop_id = ?")
+        params.extend([shop_id, shop_id])
+    where_sql = " AND ".join(filters)
     invoice = row_to_dict(
         conn.execute(
-            """
+            f"""
             SELECT i.*
             FROM invoices i
-            WHERE i.id = ?
-              AND i.customer_id = ?
-              AND i.vehicle_id = ?
+            JOIN customers c ON c.id = i.customer_id
+            JOIN customer_vehicles v ON v.id = i.vehicle_id
+            WHERE {where_sql}
             """,
-            (invoice_id, customer_id, vehicle_id),
+            params,
         ).fetchone()
     )
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    invoice["items"] = load_invoice_item_records(conn, invoice_id)
+    invoice["items"] = load_invoice_item_records(
+        conn,
+        invoice_id,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        shop_id=shop_id,
+    )
     record = invoice_display_record(invoice)
     estimate_summary = invoice_estimate_summary(conn, invoice_id, final_total=record.get("grand_total"))
     record.update(estimate_summary)
@@ -6767,8 +7010,9 @@ def recalculate_invoice_from_repair(
     customer_id: int,
     vehicle_id: int,
     clear_item_overrides: bool = False,
+    shop_id: int | None = None,
 ) -> dict[str, Any]:
-    invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+    invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
     if clear_item_overrides:
         conn.execute(
             """
@@ -6779,7 +7023,7 @@ def recalculate_invoice_from_repair(
             """,
             (invoice_id,),
         )
-        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
     repairs = [
         load_repair_record(conn, customer_id, vehicle_id, int(item["repair_record_id"]))
         for item in invoice.get("items", [])
@@ -6820,7 +7064,7 @@ def recalculate_invoice_from_repair(
             vehicle_id,
         ),
     )
-    return load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+    return load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
 
 
 def invoice_payment_status_for_totals(grand_total: Any, amount_paid: Any, current_status: Any = "") -> str:
@@ -6973,6 +7217,177 @@ def pdf_lines(text: Any, max_chars: int = 92) -> list[str]:
 def invoice_filename(invoice: dict[str, Any]) -> str:
     number = re.sub(r"[^A-Za-z0-9_-]+", "-", str(invoice.get("invoice_number") or "invoice")).strip("-")
     return f"{number or 'invoice'}.pdf"
+
+
+def invoice_email_attachment_filename(invoice: dict[str, Any]) -> str:
+    number = re.sub(r"[^A-Za-z0-9_-]+", "-", str(invoice.get("invoice_number") or "invoice")).strip("-")
+    return f"TorqueMech-Invoice-{number or 'invoice'}.pdf"
+
+
+def estimate_email_identifier(estimate: dict[str, Any]) -> str:
+    raw_identifier = str(estimate.get("id") or "estimate").strip()
+    return raw_identifier or "estimate"
+
+
+def estimate_email_attachment_filename(estimate: dict[str, Any]) -> str:
+    identifier = re.sub(r"[^A-Za-z0-9_-]+", "-", estimate_email_identifier(estimate)).strip("-")
+    return f"TorqueMech-Estimate-{identifier or 'estimate'}.pdf"
+
+
+def invoice_vehicle_description(vehicle: dict[str, Any] | None) -> str:
+    vehicle = vehicle or {}
+    return " ".join(
+        str(vehicle.get(key) or "").strip()
+        for key in ("year", "make", "model")
+        if str(vehicle.get(key) or "").strip()
+    ).strip()
+
+
+def invoice_email_service_config() -> email_service.EmailServiceConfig:
+    return email_service.config_from_env(default_outbox_path=STATE_DIR / "email_outbox.jsonl")
+
+
+def valid_optional_email(value: Any) -> str:
+    email = normalize_email(value)
+    return email if email and not optional_email_format_error(email) else ""
+
+
+def estimate_pdf_path_for_email(estimate: dict[str, Any]) -> Path | None:
+    storage = configured_storage_paths()
+    pdf_path_raw = str(estimate.get("pdf_path") or "").strip()
+    if not pdf_path_raw:
+        return None
+    try:
+        pdf_path = Path(pdf_path_raw).resolve()
+        pdf_path.relative_to(storage.estimate_pdfs_dir.resolve())
+    except (OSError, ValueError):
+        return None
+    if not pdf_path.exists() or not pdf_path.is_file():
+        return None
+    return pdf_path
+
+
+def estimate_email_message(
+    *,
+    recipient_email: str,
+    estimate: dict[str, Any],
+    customer: dict[str, Any],
+    vehicle: dict[str, Any],
+    shop_profile: dict[str, Any],
+    shop_name: str,
+    pdf_bytes: bytes,
+) -> email_service.EmailMessage:
+    estimate_identifier = estimate_email_identifier(estimate)
+    display_shop_name = str(shop_name or shop_profile.get("shop_name") or "TorqueMech Pro").strip()
+    customer_label = customer_display_name(customer) or "Customer"
+    vehicle_label_text = invoice_vehicle_description(vehicle) or str(estimate.get("vehicle_label") or "").strip()
+    shop_phone = format_phone(shop_profile.get("shop_phone") or shop_profile.get("phone") or "")
+    shop_email = valid_optional_email(shop_profile.get("shop_email") or shop_profile.get("email") or "")
+    contact_parts = [part for part in (shop_phone, shop_email) if part]
+    contact_line = f"You can contact us at {' or '.join(contact_parts)}." if contact_parts else ""
+    subject = f"Estimate {estimate_identifier} from {display_shop_name}"
+    text_lines = [
+        f"Hi {customer_label},",
+        "",
+        f"Your estimate {estimate_identifier} from {display_shop_name} is attached as a PDF.",
+    ]
+    if vehicle_label_text:
+        text_lines.append(f"Vehicle: {vehicle_label_text}")
+    if contact_line:
+        text_lines.extend(["", contact_line])
+    text_lines.extend(["", "Thank you."])
+    html_lines = [
+        f"<p>Hi {html.escape(customer_label)},</p>",
+        f"<p>Your estimate <strong>{html.escape(estimate_identifier)}</strong> from {html.escape(display_shop_name)} is attached as a PDF.</p>",
+    ]
+    if vehicle_label_text:
+        html_lines.append(f"<p><strong>Vehicle:</strong> {html.escape(vehicle_label_text)}</p>")
+    if contact_line:
+        html_lines.append(f"<p>{html.escape(contact_line)}</p>")
+    html_lines.append("<p>Thank you.</p>")
+    return email_service.EmailMessage(
+        recipients=[recipient_email],
+        subject=subject,
+        text_body="\n".join(text_lines),
+        html_body="\n".join(html_lines),
+        reply_to=shop_email or None,
+        attachments=[
+            email_service.EmailAttachment(
+                filename=estimate_email_attachment_filename(estimate),
+                content_type="application/pdf",
+                content=pdf_bytes,
+            )
+        ],
+    )
+
+
+def invoice_email_message(
+    *,
+    recipient_email: str,
+    invoice: dict[str, Any],
+    customer: dict[str, Any],
+    vehicle: dict[str, Any],
+    shop_profile: dict[str, Any],
+    shop_name: str,
+    pdf_bytes: bytes,
+) -> email_service.EmailMessage:
+    invoice_number = str(invoice.get("invoice_number") or invoice.get("id") or "invoice").strip()
+    display_shop_name = str(shop_name or shop_profile.get("shop_name") or "TorqueMech Pro").strip()
+    customer_label = customer_display_name(customer) or "Customer"
+    vehicle_label_text = invoice_vehicle_description(vehicle)
+    shop_phone = format_phone(shop_profile.get("shop_phone") or shop_profile.get("phone") or "")
+    shop_email = valid_optional_email(shop_profile.get("shop_email") or shop_profile.get("email") or "")
+    contact_parts = [part for part in (shop_phone, shop_email) if part]
+    contact_line = f"You can contact us at {' or '.join(contact_parts)}." if contact_parts else ""
+    subject = f"Invoice {invoice_number} from {display_shop_name}"
+    vehicle_line = f"Vehicle: {vehicle_label_text}" if vehicle_label_text else ""
+    text_lines = [
+        f"Hi {customer_label},",
+        "",
+        f"Your invoice {invoice_number} from {display_shop_name} is attached as a PDF.",
+    ]
+    if vehicle_line:
+        text_lines.append(vehicle_line)
+    if contact_line:
+        text_lines.extend(["", contact_line])
+    text_lines.extend(["", "Thank you."])
+    html_lines = [
+        f"<p>Hi {html.escape(customer_label)},</p>",
+        f"<p>Your invoice <strong>{html.escape(invoice_number)}</strong> from {html.escape(display_shop_name)} is attached as a PDF.</p>",
+    ]
+    if vehicle_label_text:
+        html_lines.append(f"<p><strong>Vehicle:</strong> {html.escape(vehicle_label_text)}</p>")
+    if contact_line:
+        html_lines.append(f"<p>{html.escape(contact_line)}</p>")
+    html_lines.append("<p>Thank you.</p>")
+    return email_service.EmailMessage(
+        recipients=[recipient_email],
+        subject=subject,
+        text_body="\n".join(text_lines),
+        html_body="\n".join(html_lines),
+        reply_to=shop_email or None,
+        attachments=[
+            email_service.EmailAttachment(
+                filename=invoice_email_attachment_filename(invoice),
+                content_type="application/pdf",
+                content=pdf_bytes,
+            )
+        ],
+    )
+
+
+def invoice_email_redirect(customer_id: int, vehicle_id: int, invoice_id: int, notice: str) -> RedirectResponse:
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}?{urlencode({'invoice_email': notice})}",
+        status_code=303,
+    )
+
+
+def estimate_email_redirect(customer_id: int, vehicle_id: int, notice: str) -> RedirectResponse:
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}?{urlencode({'estimate_email': notice})}#vehicle-timeline",
+        status_code=303,
+    )
 
 
 INVOICE_PDF_DEFAULT_OPTIONS = {
@@ -9131,6 +9546,7 @@ def sync_estimate_conversion_source_context(payload: dict[str, Any]) -> None:
 def enrich_estimate_conversion_payload_links(
     conn: sqlite3.Connection,
     payload: dict[str, Any],
+    shop_id: int | None = None,
 ) -> dict[str, Any]:
     customer_id = optional_int_value(payload.get("customer_id"))
     vehicle_id = optional_int_value(payload.get("vehicle_id"))
@@ -9160,14 +9576,22 @@ def enrich_estimate_conversion_payload_links(
 
     if estimate_id and (not customer_id or not vehicle_id or not payload.get("finding_id")):
         ensure_repair_estimate_documents_schema(conn)
+        filters = ["red.id = ?"]
+        params: list[Any] = [estimate_id]
+        if shop_id is not None:
+            filters.append("c.shop_id = ?")
+            filters.append("v.shop_id = ?")
+            params.extend([shop_id, shop_id])
         estimate = row_to_dict(
             conn.execute(
-                """
-                SELECT *
-                FROM repair_estimate_documents
-                WHERE id = ?
+                f"""
+                SELECT red.*
+                FROM repair_estimate_documents red
+                JOIN customers c ON c.id = red.customer_id
+                JOIN customer_vehicles v ON v.id = red.vehicle_id AND v.customer_id = c.id
+                WHERE {' AND '.join(filters)}
                 """,
-                (estimate_id,),
+                params,
             ).fetchone()
         )
         if estimate:
@@ -9199,6 +9623,7 @@ def enrich_estimate_conversion_payload_links(
 def estimate_conversion_linked_context(
     conn: sqlite3.Connection,
     payload: dict[str, Any],
+    shop_id: int | None = None,
 ) -> dict[str, Any]:
     customer_id = optional_int_value(payload.get("customer_id"))
     vehicle_id = optional_int_value(payload.get("vehicle_id"))
@@ -9218,8 +9643,9 @@ def estimate_conversion_linked_context(
         return context
 
     ensure_customer_status_schema(conn)
-    customer = row_to_dict(conn.execute("SELECT * FROM customers WHERE id = ?", (customer_id,)).fetchone())
-    if not customer:
+    try:
+        customer = load_customer_for_shop(conn, customer_id, shop_id)
+    except HTTPException:
         context["warning"] = "The customer linked to this estimate no longer exists. Select or create a replacement before importing services."
         return context
     context["customer"] = customer
@@ -9228,17 +9654,9 @@ def estimate_conversion_linked_context(
     if not vehicle_id:
         context["warning"] = "This estimate has a linked customer but no linked vehicle. Select or create the vehicle before importing services."
         return context
-    vehicle = row_to_dict(
-        conn.execute(
-            """
-            SELECT *
-            FROM customer_vehicles
-            WHERE id = ? AND customer_id = ?
-            """,
-            (vehicle_id, customer_id),
-        ).fetchone()
-    )
-    if not vehicle:
+    try:
+        vehicle = load_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+    except HTTPException:
         context["warning"] = "The linked vehicle is missing or does not belong to the linked customer. Select or create the correct vehicle before importing services."
         return context
 
@@ -10872,6 +11290,106 @@ def load_customer_vehicle(
     return customer, vehicle
 
 
+def load_customer_for_shop(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    shop_id: int | None,
+) -> dict[str, Any]:
+    ensure_customer_status_schema(conn)
+    filters = ["id = ?"]
+    params: list[Any] = [customer_id]
+    if shop_id is not None:
+        filters.append("shop_id = ?")
+        params.append(shop_id)
+    customer = row_to_dict(
+        conn.execute(
+            f"SELECT * FROM customers WHERE {' AND '.join(filters)}",
+            params,
+        ).fetchone()
+    )
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return customer
+
+
+def load_vehicle_for_shop(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+    shop_id: int | None,
+) -> dict[str, Any]:
+    ensure_customer_status_schema(conn)
+    filters = ["v.id = ?", "v.customer_id = ?", "c.id = v.customer_id"]
+    params: list[Any] = [vehicle_id, customer_id]
+    if shop_id is not None:
+        filters.append("c.shop_id = ?")
+        filters.append("v.shop_id = ?")
+        params.extend([shop_id, shop_id])
+    vehicle = row_to_dict(
+        conn.execute(
+            f"""
+            SELECT v.*
+            FROM customer_vehicles v
+            JOIN customers c ON c.id = v.customer_id
+            WHERE {' AND '.join(filters)}
+            """,
+            params,
+        ).fetchone()
+    )
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    return vehicle
+
+
+def load_customer_vehicle_for_shop(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+    shop_id: int | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    customer = load_customer_for_shop(conn, customer_id, shop_id)
+    vehicle = load_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+    return customer, vehicle
+
+
+def load_estimate_document_for_shop(
+    conn: sqlite3.Connection,
+    customer_id: int,
+    vehicle_id: int,
+    estimate_id: int,
+    shop_id: int | None,
+) -> dict[str, Any]:
+    ensure_repair_estimate_documents_schema(conn)
+    filters = [
+        "red.id = ?",
+        "red.customer_id = ?",
+        "red.vehicle_id = ?",
+        "c.id = red.customer_id",
+        "v.id = red.vehicle_id",
+        "v.customer_id = c.id",
+    ]
+    params: list[Any] = [estimate_id, customer_id, vehicle_id]
+    if shop_id is not None:
+        filters.append("c.shop_id = ?")
+        filters.append("v.shop_id = ?")
+        params.extend([shop_id, shop_id])
+    record = row_to_dict(
+        conn.execute(
+            f"""
+            SELECT red.*
+            FROM repair_estimate_documents red
+            JOIN customers c ON c.id = red.customer_id
+            JOIN customer_vehicles v ON v.id = red.vehicle_id
+            WHERE {' AND '.join(filters)}
+            """,
+            params,
+        ).fetchone()
+    )
+    if not record:
+        raise HTTPException(status_code=404, detail="Estimate PDF not found")
+    return record
+
+
 @router.get("", response_class=HTMLResponse)
 def pro_welcome(request: Request):
     return templates.TemplateResponse(
@@ -11875,6 +12393,10 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             appointment["display_vehicle_label"] = appointment_vehicle_label(appointment)
             appointment["linked_customer_name"] = customer_display_name(linked_customer) if linked_customer else ""
             appointment["linked_vehicle_label"] = vehicle_label(linked_vehicle) if linked_vehicle else ""
+            appointment["confirmation_email_available"] = bool(
+                normalize_email(appointment.get("customer_email") or (linked_customer or {}).get("email") or "")
+            )
+            appointment["cancellation_email_available"] = appointment["confirmation_email_available"]
             appointment["customer_url"] = f"/pro/customers/{customer_id}" if customer_id else ""
             appointment["vehicle_url"] = (
                 f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
@@ -11910,8 +12432,20 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
         conn.close()
     preview_config = {
         "confirmed": ("Confirmed", "Confirmed appointment", "confirmation_message"),
+        "confirmed_email_sent": ("Confirmed", "Confirmed appointment", "confirmation_message"),
+        "confirmed_email_failed": ("Confirmed", "Confirmed appointment", "confirmation_message"),
+        "confirmed_email_missing": ("Confirmed", "Confirmed appointment", "confirmation_message"),
+        "confirmation_email_sent": ("Confirmed", "Confirmed appointment", "confirmation_message"),
+        "confirmation_email_failed": ("Confirmed", "Confirmed appointment", "confirmation_message"),
+        "confirmation_email_missing": ("Confirmed", "Confirmed appointment", "confirmation_message"),
         "rescheduled": ("Rescheduled", "Appointment rescheduled", "reschedule_message"),
         "cancelled": ("Cancelled", "Appointment cancelled", "cancellation_message"),
+        "cancelled_email_sent": ("Cancelled", "Appointment cancelled", "cancellation_message"),
+        "cancelled_email_failed": ("Cancelled", "Appointment cancelled", "cancellation_message"),
+        "cancelled_email_missing": ("Cancelled", "Appointment cancelled", "cancellation_message"),
+        "cancellation_email_sent": ("Cancelled", "Appointment cancelled", "cancellation_message"),
+        "cancellation_email_failed": ("Cancelled", "Appointment cancelled", "cancellation_message"),
+        "cancellation_email_missing": ("Cancelled", "Appointment cancelled", "cancellation_message"),
         "declined": ("Declined", "Request declined", "declined_message"),
     }
     action_preview = None
@@ -11932,15 +12466,28 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             "status_options": APPOINTMENT_STATUS_OPTIONS,
             "customers": conversion_context["customers"],
             "vehicles_by_customer": conversion_context["vehicles_by_customer"],
+            "csrf_token": optional_csrf_token(request),
             "saved": saved == "1",
             "error": error,
             "action_preview": action_preview,
             "notice": {
                 "confirmed": "Appointment confirmed.",
+                "confirmed_email_sent": "Appointment confirmed and confirmation email sent.",
+                "confirmed_email_failed": "Appointment confirmed, but we couldn't send the confirmation email.",
+                "confirmed_email_missing": "Appointment confirmed. Add a customer email address before emailing this confirmation.",
+                "confirmation_email_sent": "Confirmation email sent successfully.",
+                "confirmation_email_failed": "We couldn't send the confirmation email. Please try again.",
+                "confirmation_email_missing": "Add a customer email address before emailing this confirmation.",
                 "handled": "Booking request marked as handled.",
                 "declined": "Booking request declined.",
                 "rescheduled": "Appointment rescheduled.",
                 "cancelled": "Appointment canceled.",
+                "cancelled_email_sent": "Appointment canceled and cancellation email sent.",
+                "cancelled_email_failed": "Appointment canceled, but we couldn't send the cancellation email.",
+                "cancelled_email_missing": "Appointment canceled. Add a customer email address before emailing this cancellation.",
+                "cancellation_email_sent": "Cancellation email sent successfully.",
+                "cancellation_email_failed": "We couldn't send the cancellation email. Please try again.",
+                "cancellation_email_missing": "Add a customer email address before emailing this cancellation.",
                 "linked": "Appointment linked to customer.",
             }.get(notice, ""),
         },
@@ -11950,6 +12497,8 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
 @router.post("/calendar")
 async def pro_calendar_add(request: Request):
     form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     conn = crm_db_conn()
     try:
         shop_id = current_shop_id(conn, request)
@@ -11992,20 +12541,108 @@ async def pro_calendar_add(request: Request):
 @router.post("/calendar/{appointment_id}/status")
 async def pro_calendar_status_update(request: Request, appointment_id: int):
     form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     status = form.get("status", "Requested")
     conn = crm_db_conn()
+    send_confirmation = False
+    recipient_email = ""
+    appointment: dict[str, Any] | None = None
+    shop_profile: dict[str, Any] = {}
+    shop_name = ""
     try:
-        update_service_appointment_status(conn, appointment_id, status, shop_id=current_shop_id(conn, request))
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        appointment_before = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+        recipient_email = appointment_email_recipient(conn, appointment_before, shop_id)
+        update_service_appointment_status(conn, appointment_id, status, shop_id=shop_id)
+        if status == "Confirmed" and (appointment_before.get("status") or "") != "Confirmed":
+            send_confirmation = True
+            appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+            shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+            shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
         conn.close()
+    if send_confirmation:
+        if not recipient_email:
+            return RedirectResponse("/pro/calendar?notice=confirmed_email_missing", status_code=303)
+        if optional_email_format_error(recipient_email):
+            return RedirectResponse("/pro/calendar?notice=confirmed_email_failed", status_code=303)
+        try:
+            result = send_appointment_confirmation_email(
+                appointment=appointment or {},
+                recipient_email=recipient_email,
+                shop_profile=shop_profile,
+                shop_name=shop_name,
+            )
+        except Exception:
+            logger.exception("APPOINTMENT_CONFIRMATION_EMAIL_UNEXPECTED appointment_id=%s", appointment_id)
+            return RedirectResponse("/pro/calendar?notice=confirmed_email_failed", status_code=303)
+        if result.success:
+            logger.info("APPOINTMENT_CONFIRMATION_EMAIL_SENT appointment_id=%s transport=%s", appointment_id, result.transport)
+            return RedirectResponse("/pro/calendar?notice=confirmed_email_sent", status_code=303)
+        logger.warning(
+            "APPOINTMENT_CONFIRMATION_EMAIL_FAILED appointment_id=%s category=%s provider_related=%s configuration_related=%s",
+            appointment_id,
+            result.error_category,
+            result.provider_related,
+            result.configuration_related,
+        )
+        return RedirectResponse("/pro/calendar?notice=confirmed_email_failed", status_code=303)
     notice = {"Confirmed": "confirmed", "Handled": "handled", "Declined": "declined"}.get(status, "")
     suffix = f"?notice={notice}" if notice else ""
     return RedirectResponse(f"/pro/calendar{suffix}", status_code=303)
 
 
+@router.post("/calendar/{appointment_id}/confirmation-email")
+async def pro_calendar_confirmation_email(request: Request, appointment_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+        if (appointment.get("status") or "") != "Confirmed":
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        recipient_email = appointment_email_recipient(conn, appointment, shop_id)
+        if not recipient_email:
+            return RedirectResponse("/pro/calendar?notice=confirmation_email_missing", status_code=303)
+        if optional_email_format_error(recipient_email):
+            return RedirectResponse("/pro/calendar?notice=confirmation_email_failed", status_code=303)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+    finally:
+        conn.close()
+    try:
+        result = send_appointment_confirmation_email(
+            appointment=appointment,
+            recipient_email=recipient_email,
+            shop_profile=shop_profile,
+            shop_name=shop_name,
+        )
+    except Exception:
+        logger.exception("APPOINTMENT_CONFIRMATION_EMAIL_RETRY_UNEXPECTED appointment_id=%s", appointment_id)
+        return RedirectResponse("/pro/calendar?notice=confirmation_email_failed", status_code=303)
+    if result.success:
+        logger.info("APPOINTMENT_CONFIRMATION_EMAIL_RETRY_SENT appointment_id=%s transport=%s", appointment_id, result.transport)
+        return RedirectResponse("/pro/calendar?notice=confirmation_email_sent", status_code=303)
+    logger.warning(
+        "APPOINTMENT_CONFIRMATION_EMAIL_RETRY_FAILED appointment_id=%s category=%s provider_related=%s configuration_related=%s",
+        appointment_id,
+        result.error_category,
+        result.provider_related,
+        result.configuration_related,
+    )
+    return RedirectResponse("/pro/calendar?notice=confirmation_email_failed", status_code=303)
+
+
 @router.post("/calendar/{appointment_id}/reschedule")
 async def pro_calendar_reschedule(request: Request, appointment_id: int):
     form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     conn = crm_db_conn()
     try:
         try:
@@ -12027,25 +12664,113 @@ async def pro_calendar_reschedule(request: Request, appointment_id: int):
 
 
 @router.post("/calendar/{appointment_id}/cancel")
-def pro_calendar_cancel(request: Request, appointment_id: int):
+async def pro_calendar_cancel(request: Request, appointment_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     conn = crm_db_conn()
+    recipient_email = ""
+    appointment_after: dict[str, Any] | None = None
+    shop_profile: dict[str, Any] = {}
+    shop_name = ""
     try:
-        shop_id = current_shop_id(conn, request)
-        appointment = load_service_appointment(conn, appointment_id, shop_id=shop_id)
-        if not appointment or appointment.get("status") not in {"Confirmed", "Rescheduled"}:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        try:
+            appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+        except HTTPException:
             return RedirectResponse(
                 f"/pro/calendar?{urlencode({'error': 'Confirmed appointment not found.'})}",
                 status_code=303,
             )
+        if appointment.get("status") not in {"Confirmed", "Rescheduled"}:
+            return RedirectResponse(
+                f"/pro/calendar?{urlencode({'error': 'Confirmed appointment not found.'})}",
+                status_code=303,
+            )
+        recipient_email = appointment_email_recipient(conn, appointment, shop_id)
         update_service_appointment_status(conn, appointment_id, "Cancelled", shop_id=shop_id)
+        appointment_after = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
         conn.close()
-    return RedirectResponse("/pro/calendar?notice=cancelled", status_code=303)
+    if not recipient_email:
+        return RedirectResponse("/pro/calendar?notice=cancelled_email_missing", status_code=303)
+    if optional_email_format_error(recipient_email):
+        return RedirectResponse("/pro/calendar?notice=cancelled_email_failed", status_code=303)
+    try:
+        result = send_appointment_cancellation_email(
+            appointment=appointment_after or {},
+            recipient_email=recipient_email,
+            shop_profile=shop_profile,
+            shop_name=shop_name,
+        )
+    except Exception:
+        logger.exception("APPOINTMENT_CANCELLATION_EMAIL_UNEXPECTED appointment_id=%s", appointment_id)
+        return RedirectResponse("/pro/calendar?notice=cancelled_email_failed", status_code=303)
+    if result.success:
+        logger.info("APPOINTMENT_CANCELLATION_EMAIL_SENT appointment_id=%s transport=%s", appointment_id, result.transport)
+        return RedirectResponse("/pro/calendar?notice=cancelled_email_sent", status_code=303)
+    logger.warning(
+        "APPOINTMENT_CANCELLATION_EMAIL_FAILED appointment_id=%s category=%s provider_related=%s configuration_related=%s",
+        appointment_id,
+        result.error_category,
+        result.provider_related,
+        result.configuration_related,
+    )
+    return RedirectResponse("/pro/calendar?notice=cancelled_email_failed", status_code=303)
+
+
+@router.post("/calendar/{appointment_id}/cancellation-email")
+async def pro_calendar_cancellation_email(request: Request, appointment_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+        if (appointment.get("status") or "") != "Cancelled":
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        recipient_email = appointment_email_recipient(conn, appointment, shop_id)
+        if not recipient_email:
+            return RedirectResponse("/pro/calendar?notice=cancellation_email_missing", status_code=303)
+        if optional_email_format_error(recipient_email):
+            return RedirectResponse("/pro/calendar?notice=cancellation_email_failed", status_code=303)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+    finally:
+        conn.close()
+    try:
+        result = send_appointment_cancellation_email(
+            appointment=appointment,
+            recipient_email=recipient_email,
+            shop_profile=shop_profile,
+            shop_name=shop_name,
+        )
+    except Exception:
+        logger.exception("APPOINTMENT_CANCELLATION_EMAIL_RETRY_UNEXPECTED appointment_id=%s", appointment_id)
+        return RedirectResponse("/pro/calendar?notice=cancellation_email_failed", status_code=303)
+    if result.success:
+        logger.info("APPOINTMENT_CANCELLATION_EMAIL_RETRY_SENT appointment_id=%s transport=%s", appointment_id, result.transport)
+        return RedirectResponse("/pro/calendar?notice=cancellation_email_sent", status_code=303)
+    logger.warning(
+        "APPOINTMENT_CANCELLATION_EMAIL_RETRY_FAILED appointment_id=%s category=%s provider_related=%s configuration_related=%s",
+        appointment_id,
+        result.error_category,
+        result.provider_related,
+        result.configuration_related,
+    )
+    return RedirectResponse("/pro/calendar?notice=cancellation_email_failed", status_code=303)
 
 
 @router.post("/calendar/{appointment_id}/convert")
 async def pro_calendar_convert(request: Request, appointment_id: int):
     form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     action = form.get("conversion_action", "save")
     conn = crm_db_conn()
     try:
@@ -12072,6 +12797,7 @@ async def pro_calendar_convert(request: Request, appointment_id: int):
 
 @public_router.get("/book/{shop_slug}/available-times", response_class=JSONResponse)
 def public_booking_available_times(
+    request: Request,
     shop_slug: str,
     date: str = "",
     exclude_appointment_id: int | None = None,
@@ -12079,7 +12805,12 @@ def public_booking_available_times(
     conn = crm_db_conn()
     try:
         shop_id = shop_id_for_booking_slug(conn, shop_slug)
-        result = available_booking_times(conn, date, exclude_appointment_id, shop_id=shop_id)
+        result = available_booking_times(
+            conn,
+            date,
+            public_booking_excluded_appointment_id(conn, request, shop_id, exclude_appointment_id),
+            shop_id=shop_id,
+        )
     finally:
         conn.close()
     return JSONResponse(result)
@@ -12087,6 +12818,7 @@ def public_booking_available_times(
 
 @public_router.get("/book/{shop_slug}/available-dates", response_class=JSONResponse)
 def public_booking_available_dates(
+    request: Request,
     shop_slug: str,
     month: str = "",
     exclude_appointment_id: int | None = None,
@@ -12094,7 +12826,12 @@ def public_booking_available_dates(
     conn = crm_db_conn()
     try:
         shop_id = shop_id_for_booking_slug(conn, shop_slug)
-        result = booking_availability_for_month(conn, month, exclude_appointment_id, shop_id=shop_id)
+        result = booking_availability_for_month(
+            conn,
+            month,
+            public_booking_excluded_appointment_id(conn, request, shop_id, exclude_appointment_id),
+            shop_id=shop_id,
+        )
     finally:
         conn.close()
     return JSONResponse(result)
@@ -12155,6 +12892,21 @@ async def public_booking_submit(request: Request, shop_slug: str):
                     "booking_schedule": booking_schedule,
                     "success": False,
                     "warning": "Please complete the required fields and try again.",
+                    "form": form,
+                },
+                status_code=400,
+            )
+        email_error = optional_email_format_error(form.get("customer_email", ""))
+        if email_error:
+            return templates.TemplateResponse(
+                "booking.html",
+                {
+                    "request": request,
+                    "profile": profile,
+                    "shop_slug": profile["booking_slug"],
+                    "booking_schedule": booking_schedule,
+                    "success": False,
+                    "warning": email_error,
                     "form": form,
                 },
                 status_code=400,
@@ -12226,21 +12978,7 @@ async def public_booking_submit(request: Request, shop_slug: str):
             )
         create_service_appointment(
             conn,
-            {
-                "customer_name": form.get("customer_name", ""),
-                "customer_phone": form.get("customer_phone", ""),
-                "customer_email": form.get("customer_email", ""),
-                "vehicle_label": vehicle_label,
-                "vehicle_year": vehicle_parts[0],
-                "vehicle_make": vehicle_parts[1],
-                "vehicle_model": vehicle_parts[2],
-                "service_name": form.get("service_name", ""),
-                "requested_date": form.get("requested_date", ""),
-                "requested_time": form.get("requested_time", ""),
-                "notes": form.get("notes", ""),
-                "source": "customer_booking",
-                "status": "Requested",
-            },
+            public_booking_appointment_data(form, vehicle_label, vehicle_parts),
             shop_id=shop_id,
         )
     finally:
@@ -12318,30 +13056,44 @@ async def pro_estimate_conversion(request: Request):
     payload = load_estimate_conversion_payload(payload_json)
     conn = crm_db_conn()
     try:
-        payload = enrich_estimate_conversion_payload_links(conn, payload)
+        shop_id = current_shop_id(conn, request)
+        payload = enrich_estimate_conversion_payload_links(conn, payload, shop_id=shop_id)
         ensure_customer_status_schema(conn)
+        customer_filters = ["customer_status = 'active'"]
+        customer_params: list[Any] = []
+        vehicle_filters: list[str] = []
+        vehicle_params: list[Any] = []
+        if shop_id is not None:
+            customer_filters.insert(0, "shop_id = ?")
+            customer_params.append(shop_id)
+            vehicle_filters.append("shop_id = ?")
+            vehicle_params.append(shop_id)
         customers = [
             dict(row)
             for row in conn.execute(
-                """
+                f"""
                 SELECT *
                 FROM customers
-                WHERE customer_status = 'active'
+                WHERE {' AND '.join(customer_filters)}
                 ORDER BY updated_at DESC, created_at DESC, id DESC
-                """
+                """,
+                customer_params,
             ).fetchall()
         ]
         vehicles_by_customer: dict[str, list[dict[str, Any]]] = {}
+        vehicle_where = f"WHERE {' AND '.join(vehicle_filters)}" if vehicle_filters else ""
         for row in conn.execute(
-            """
+            f"""
             SELECT *
             FROM customer_vehicles
+            {vehicle_where}
             ORDER BY updated_at DESC, created_at DESC, id DESC
-            """
+            """,
+            vehicle_params,
         ).fetchall():
             vehicle = dict(row)
             vehicles_by_customer.setdefault(str(vehicle["customer_id"]), []).append(vehicle)
-        linked_context = estimate_conversion_linked_context(conn, payload)
+        linked_context = estimate_conversion_linked_context(conn, payload, shop_id=shop_id)
     finally:
         conn.close()
     return templates.TemplateResponse(
@@ -12382,10 +13134,11 @@ async def pro_estimate_conversion_create(request: Request):
 
     conn = crm_db_conn()
     try:
-        payload = enrich_estimate_conversion_payload_links(conn, payload)
+        shop_id = current_shop_id(conn, request)
+        payload = enrich_estimate_conversion_payload_links(conn, payload, shop_id=shop_id)
         ensure_customer_status_schema(conn)
         ensure_repair_records_schema(conn)
-        linked_context = estimate_conversion_linked_context(conn, payload)
+        linked_context = estimate_conversion_linked_context(conn, payload, shop_id=shop_id)
         appointment_id = optional_int_value(payload.get("appointment_id"))
         appointment: dict[str, Any] | None = None
         existing_appointment_repair_url = ""
@@ -12461,11 +13214,12 @@ async def pro_estimate_conversion_create(request: Request):
                 cur = conn.execute(
                     """
                     INSERT INTO customers (
-                      first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
+                      shop_id, first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
                     )
-                    VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?)
                     """,
                     (
+                        shop_id,
                         first_name,
                         last_name,
                         clean_phone(form.get("new_customer_phone", "")),
@@ -12479,11 +13233,9 @@ async def pro_estimate_conversion_create(request: Request):
             vehicle_mode = "new"
         elif not use_linked_records:
             customer_id = optional_int(form, "customer_id") or 0
-            customer = conn.execute(
-                "SELECT id FROM customers WHERE id = ?",
-                (customer_id,),
-            ).fetchone()
-            if not customer:
+            try:
+                load_customer_for_shop(conn, customer_id, shop_id)
+            except HTTPException:
                 raise HTTPException(status_code=400, detail="Select a customer")
 
         if vehicle_mode == "new":
@@ -12501,12 +13253,13 @@ async def pro_estimate_conversion_create(request: Request):
                 cur = conn.execute(
                     """
                     INSERT INTO customer_vehicles (
-                      customer_id, year, make, model, engine, vin, license_plate,
+                      shop_id, customer_id, year, make, model, engine, vin, license_plate,
                       mileage, notes, created_at, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
+                        shop_id,
                         customer_id,
                         optional_int_value(vehicle_year),
                         vehicle_make,
@@ -12524,15 +13277,9 @@ async def pro_estimate_conversion_create(request: Request):
             vehicle_mileage = optional_int(form, "new_vehicle_mileage")
         elif not use_linked_records:
             vehicle_id = optional_int(form, "vehicle_id") or 0
-            vehicle = conn.execute(
-                """
-                SELECT id, mileage
-                FROM customer_vehicles
-                WHERE id = ? AND customer_id = ?
-                """,
-                (vehicle_id, customer_id),
-            ).fetchone()
-            if not vehicle:
+            try:
+                vehicle = load_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+            except HTTPException:
                 raise HTTPException(status_code=400, detail="Select a vehicle for this customer")
             vehicle_mileage = vehicle["mileage"]
 
@@ -12925,6 +13672,7 @@ def pro_customer_vehicle_detail(
     finding_id: int = 0,
     finding_status: str = "",
     repair_ids: str = "",
+    estimate_email: str = "",
 ):
     converted_repair_ids = {
         int(value)
@@ -12933,7 +13681,8 @@ def pro_customer_vehicle_detail(
     }
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         ensure_maintenance_records_schema(conn)
         ensure_maintenance_reminder_events_schema(conn)
         ensure_repair_records_schema(conn)
@@ -13248,6 +13997,12 @@ def pro_customer_vehicle_detail(
             "finding_added_success": finding_added == "1",
             "new_finding_id": finding_id,
             "new_finding_status": finding_status,
+            "estimate_email_notice": {
+                "sent": "Estimate emailed successfully.",
+                "missing_customer_email": "Add a customer email address before emailing this estimate.",
+                "error": "We couldn't send the estimate email. Please try again.",
+            }.get(estimate_email, ""),
+            "csrf_token": optional_csrf_token(request),
         },
     )
 
@@ -13258,6 +14013,8 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
+        shop_id = current_shop_id(conn, request)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         cur = conn.execute(
             """
             UPDATE customer_vehicles
@@ -13271,7 +14028,7 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
               mileage = ?,
               notes = ?,
               updated_at = ?
-            WHERE id = ? AND customer_id = ?
+            WHERE id = ? AND customer_id = ? AND shop_id = ?
             """,
             (
                 optional_int(form, "year"),
@@ -13285,6 +14042,7 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
                 now,
                 vehicle_id,
                 customer_id,
+                shop_id,
             ),
         )
         if cur.rowcount == 0:
@@ -14809,7 +15567,8 @@ async def pro_invoice_generate(request: Request, customer_id: int, vehicle_id: i
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         repair = load_repair_record(conn, customer_id, vehicle_id, repair_id)
         attach_completion_status_to_repair(conn, repair)
         warnings = repair_invoice_warnings(repair)
@@ -14848,7 +15607,8 @@ async def pro_invoice_generate(request: Request, customer_id: int, vehicle_id: i
 def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int, repair_record_id: int | None = None):
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
         selected_repair_ids: set[int] = set()
         if repair_record_id:
@@ -14887,7 +15647,8 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         repairs = [
             load_repair_record(conn, customer_id, vehicle_id, repair_id)
             for repair_id in selected_ids
@@ -14981,16 +15742,17 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
 
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}", response_class=HTMLResponse)
 def pro_invoice_detail(
-    request: Request, customer_id: int, vehicle_id: int, invoice_id: int
+    request: Request, customer_id: int, vehicle_id: int, invoice_id: int, invoice_email: str = ""
 ):
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
-        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
         completion_warnings = invoice_completion_warnings(invoice)
         if completion_warnings:
             raise HTTPException(status_code=400, detail=completion_warnings[0])
-        shop_profile = load_shop_profile_context(conn)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
         conn.close()
@@ -15005,6 +15767,12 @@ def pro_invoice_detail(
             "shop_name": shop_name,
             "shop_profile": shop_profile,
             "refresh_warning": "",
+            "csrf_token": optional_csrf_token(request),
+            "invoice_email_notice": {
+                "sent": "Invoice emailed successfully.",
+                "missing_customer_email": "Add a customer email address before emailing this invoice.",
+                "error": "We couldn't send the invoice email. Please try again.",
+            }.get(invoice_email, ""),
         },
     )
 
@@ -15013,12 +15781,13 @@ def pro_invoice_detail(
 def pro_invoice_edit(request: Request, customer_id: int, vehicle_id: int, invoice_id: int):
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
-        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
         completion_warnings = invoice_completion_warnings(invoice)
         if completion_warnings:
             raise HTTPException(status_code=400, detail=completion_warnings[0])
-        shop_profile = load_shop_profile_context(conn)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
         conn.close()
@@ -15044,12 +15813,13 @@ async def pro_invoice_update(request: Request, customer_id: int, vehicle_id: int
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
-        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
         completion_warnings = invoice_completion_warnings(invoice)
         if completion_warnings:
             raise HTTPException(status_code=400, detail=completion_warnings[0])
-        shop_profile = load_shop_profile_context(conn)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
         locked = invoice_financial_edit_locked(invoice)
         if locked:
@@ -15109,13 +15879,14 @@ async def pro_invoice_recalculate(
     form = await read_form_data(request)
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
-        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
         if invoice.get("has_manual_adjustments") and form.get("confirm_refresh") != "1":
             completion_warnings = invoice_completion_warnings(invoice)
             if completion_warnings:
                 raise HTTPException(status_code=400, detail=completion_warnings[0])
-            shop_profile = load_shop_profile_context(conn)
+            shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
             shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
             return templates.TemplateResponse(
                 "pro/invoice_detail.html",
@@ -15136,6 +15907,7 @@ async def pro_invoice_recalculate(
             customer_id=customer_id,
             vehicle_id=vehicle_id,
             clear_item_overrides=True,
+            shop_id=shop_id,
         )
         conn.commit()
     finally:
@@ -15146,16 +15918,82 @@ async def pro_invoice_recalculate(
     )
 
 
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/email")
+async def pro_invoice_email(request: Request, customer_id: int, vehicle_id: int, invoice_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        try:
+            require_shop_write_access(conn, shop_id=shop_id)
+        except HTTPException:
+            return invoice_email_redirect(customer_id, vehicle_id, invoice_id, "error")
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
+        completion_warnings = invoice_completion_warnings(invoice)
+        if completion_warnings:
+            return invoice_email_redirect(customer_id, vehicle_id, invoice_id, "error")
+        recipient_email = normalize_email(customer.get("email"))
+        if not recipient_email:
+            return invoice_email_redirect(customer_id, vehicle_id, invoice_id, "missing_customer_email")
+        if optional_email_format_error(recipient_email):
+            return invoice_email_redirect(customer_id, vehicle_id, invoice_id, "error")
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+    finally:
+        conn.close()
+
+    try:
+        pdf_bytes = build_invoice_pdf_bytes(
+            invoice=invoice,
+            customer=customer,
+            vehicle=vehicle,
+            shop_name=shop_name,
+            shop_profile=shop_profile,
+            display_options=invoice.get("pdf_display_options") or INVOICE_PDF_DEFAULT_OPTIONS,
+        )
+    except Exception:
+        logger.exception("INVOICE_EMAIL_PDF_GENERATION_FAILED invoice_id=%s customer_id=%s vehicle_id=%s", invoice_id, customer_id, vehicle_id)
+        return invoice_email_redirect(customer_id, vehicle_id, invoice_id, "error")
+
+    message = invoice_email_message(
+        recipient_email=recipient_email,
+        invoice=invoice,
+        customer=customer,
+        vehicle=vehicle,
+        shop_profile=shop_profile,
+        shop_name=shop_name,
+        pdf_bytes=pdf_bytes,
+    )
+    result = email_service.send_email(message, invoice_email_service_config(), logger=logger)
+    if result.success:
+        logger.info("INVOICE_EMAIL_SENT invoice_id=%s customer_id=%s vehicle_id=%s transport=%s", invoice_id, customer_id, vehicle_id, result.transport)
+        return invoice_email_redirect(customer_id, vehicle_id, invoice_id, "sent")
+    logger.warning(
+        "INVOICE_EMAIL_SEND_FAILED invoice_id=%s customer_id=%s vehicle_id=%s category=%s provider_related=%s configuration_related=%s",
+        invoice_id,
+        customer_id,
+        vehicle_id,
+        result.error_category,
+        result.provider_related,
+        result.configuration_related,
+    )
+    return invoice_email_redirect(customer_id, vehicle_id, invoice_id, "error")
+
+
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/pdf")
 def pro_invoice_pdf(request: Request, customer_id: int, vehicle_id: int, invoice_id: int):
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
-        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id)
+        shop_id = current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
         completion_warnings = invoice_completion_warnings(invoice)
         if completion_warnings:
             raise HTTPException(status_code=400, detail=completion_warnings[0])
-        shop_profile = load_shop_profile_context(conn)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
         shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
     finally:
         conn.close()
@@ -15178,25 +16016,72 @@ def pro_invoice_pdf(request: Request, customer_id: int, vehicle_id: int, invoice
     )
 
 
-@router.get("/customers/{customer_id}/vehicles/{vehicle_id}/estimates/{estimate_id}/pdf")
-def pro_estimate_document_pdf(customer_id: int, vehicle_id: int, estimate_id: int):
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/estimates/{estimate_id}/email")
+async def pro_estimate_email(request: Request, customer_id: int, vehicle_id: int, estimate_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     conn = crm_db_conn()
     try:
-        ensure_repair_estimate_documents_schema(conn)
-        record = row_to_dict(
-            conn.execute(
-                """
-                SELECT *
-                FROM repair_estimate_documents
-                WHERE id = ?
-                  AND customer_id = ?
-                  AND vehicle_id = ?
-                """,
-                (estimate_id, customer_id, vehicle_id),
-            ).fetchone()
-        )
-        if not record:
-            raise HTTPException(status_code=404, detail="Estimate PDF not found")
+        shop_id = required_current_shop_id(conn, request)
+        try:
+            require_shop_write_access(conn, shop_id=shop_id)
+        except HTTPException:
+            return estimate_email_redirect(customer_id, vehicle_id, "error")
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        estimate = load_estimate_document_for_shop(conn, customer_id, vehicle_id, estimate_id, shop_id)
+        recipient_email = normalize_email(customer.get("email"))
+        if not recipient_email:
+            return estimate_email_redirect(customer_id, vehicle_id, "missing_customer_email")
+        if optional_email_format_error(recipient_email):
+            return estimate_email_redirect(customer_id, vehicle_id, "error")
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+        shop_name = shop_profile.get("shop_name") or load_shop_name(conn)
+    finally:
+        conn.close()
+
+    pdf_path = estimate_pdf_path_for_email(estimate)
+    if pdf_path is None:
+        logger.warning("ESTIMATE_EMAIL_PDF_UNAVAILABLE estimate_id=%s customer_id=%s vehicle_id=%s", estimate_id, customer_id, vehicle_id)
+        return estimate_email_redirect(customer_id, vehicle_id, "error")
+    try:
+        pdf_bytes = pdf_path.read_bytes()
+    except Exception:
+        logger.exception("ESTIMATE_EMAIL_PDF_READ_FAILED estimate_id=%s customer_id=%s vehicle_id=%s", estimate_id, customer_id, vehicle_id)
+        return estimate_email_redirect(customer_id, vehicle_id, "error")
+
+    message = estimate_email_message(
+        recipient_email=recipient_email,
+        estimate=estimate,
+        customer=customer,
+        vehicle=vehicle,
+        shop_profile=shop_profile,
+        shop_name=shop_name,
+        pdf_bytes=pdf_bytes,
+    )
+    result = email_service.send_email(message, invoice_email_service_config(), logger=logger)
+    if result.success:
+        logger.info("ESTIMATE_EMAIL_SENT estimate_id=%s customer_id=%s vehicle_id=%s transport=%s", estimate_id, customer_id, vehicle_id, result.transport)
+        return estimate_email_redirect(customer_id, vehicle_id, "sent")
+    logger.warning(
+        "ESTIMATE_EMAIL_SEND_FAILED estimate_id=%s customer_id=%s vehicle_id=%s category=%s provider_related=%s configuration_related=%s",
+        estimate_id,
+        customer_id,
+        vehicle_id,
+        result.error_category,
+        result.provider_related,
+        result.configuration_related,
+    )
+    return estimate_email_redirect(customer_id, vehicle_id, "error")
+
+
+@router.get("/customers/{customer_id}/vehicles/{vehicle_id}/estimates/{estimate_id}/pdf")
+def pro_estimate_document_pdf(request: Request, customer_id: int, vehicle_id: int, estimate_id: int):
+    conn = crm_db_conn()
+    try:
+        shop_id = current_shop_id(conn, request)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        record = load_estimate_document_for_shop(conn, customer_id, vehicle_id, estimate_id, shop_id)
     finally:
         conn.close()
 

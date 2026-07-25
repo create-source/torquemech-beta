@@ -202,6 +202,7 @@
     {% if item.status == "Requested" %}
     {% for status, label, style in [("Confirmed", "Confirm Appointment", "tm-btn-primary"), ("Handled", "Mark Handled", "tm-btn-secondary"), ("Declined", "Decline Request", "tm-btn-secondary")] %}
     <form method="post" action="/pro/calendar/{{ item.id }}/status">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input type="hidden" name="status" value="{{ status }}">
       <button class="tm-btn {{ style }}" type="submit">{{ label }}</button>
     </form>
@@ -211,6 +212,7 @@
       <summary class="tm-btn tm-btn-secondary">Reschedule</summary>
       <div class="tm-calendar-reschedule-panel">
         <form class="tm-calendar-reschedule-form" method="post" action="/pro/calendar/{{ item.id }}/reschedule">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="tm-availability-picker" data-availability-picker data-availability-lazy="true"
                data-dates-url="/book/torquemech-shop/available-dates?exclude_appointment_id={{ item.id }}"
                data-times-url="/book/torquemech-shop/available-times?exclude_appointment_id={{ item.id }}"
@@ -246,8 +248,19 @@
       </div>
     </details>
     <form method="post" action="/pro/calendar/{{ item.id }}/cancel" data-confirm-cancel>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <button class="tm-btn tm-btn-secondary" type="submit">Cancel Appointment</button>
     </form>
+    {% if item.status == "Confirmed" %}
+      {% if item.confirmation_email_available %}
+      <form method="post" action="/pro/calendar/{{ item.id }}/confirmation-email">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="tm-btn tm-btn-secondary" type="submit">Email Confirmation</button>
+      </form>
+      {% else %}
+      <p class="tm-book-warning">Add a customer email address before emailing this confirmation.</p>
+      {% endif %}
+    {% endif %}
     {% if item.customer_id and item.vehicle_id %}
     <div class="tm-calendar-linked">
       <strong>Linked to customer</strong>
@@ -274,6 +287,7 @@
     <details class="tm-calendar-convert" data-conversion-panel>
       <summary class="tm-btn tm-btn-primary">Add to Customer / Start Job</summary>
       <form class="tm-calendar-convert-panel" method="post" action="/pro/calendar/{{ item.id }}/convert">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <div class="tm-calendar-convert-mode" aria-label="Customer conversion mode">
           <label><input type="radio" name="customer_mode" value="existing" checked data-conversion-mode> Existing Customer</label>
           <label><input type="radio" name="customer_mode" value="new" data-conversion-mode> New Customer</label>
@@ -377,6 +391,16 @@
   {% set message_type = "cancellation" if item.status == "Cancelled" else "declined" %}
   <div class="tm-calendar-copy-row">
     {% set default_message = item.cancellation_message if item.status == "Cancelled" else item.declined_message %}
+    {% if item.status == "Cancelled" %}
+      {% if item.cancellation_email_available %}
+      <form method="post" action="/pro/calendar/{{ item.id }}/cancellation-email">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="tm-btn tm-btn-secondary" type="submit">Email Cancellation</button>
+      </form>
+      {% else %}
+      <p class="tm-book-warning">Add a customer email address before emailing this cancellation.</p>
+      {% endif %}
+    {% endif %}
     <details class="tm-calendar-message-editor">
       <summary class="tm-btn tm-btn-secondary">Edit Message</summary>
       <textarea class="tm-input" data-copy-source="{{ message_type }}" data-default-message="{{ default_message|e }}">{{ default_message }}</textarea>
@@ -439,6 +463,7 @@
     <summary>Add Appointment</summary>
     {% if saved %}<div style="color:#115e59;font-weight:900;">Appointment saved.</div>{% endif %}
     <form class="tm-calendar-form-grid" method="post" action="/pro/calendar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div><label class="tm-label" for="customer_name">Customer Name</label><input class="tm-input" id="customer_name" name="customer_name" type="text" required></div>
       <div><label class="tm-label" for="customer_phone">Phone</label><input class="tm-input" id="customer_phone" name="customer_phone" type="tel" placeholder="(***)***-****" required></div>
       <div><label class="tm-label" for="vehicle_label">Vehicle</label><input class="tm-input" id="vehicle_label" name="vehicle_label" type="text"></div>

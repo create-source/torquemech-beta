@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import sqlite3
 import shutil
 import unittest
@@ -66,6 +67,13 @@ def future_weekday(target_weekday: int, *, min_days: int = 14) -> str:
     return (candidate + timedelta(days=offset)).isoformat()
 
 
+def csrf_from(html: str) -> str:
+    match = re.search(r'name="csrf_token" value="([^"]+)"', html)
+    if not match:
+        raise AssertionError("csrf token not found")
+    return match.group(1)
+
+
 def ensure_test_booking_shop(conn, *, booking_slug: str = "torquemech-shop", shop_name: str = "TorqueMech Shop") -> int:
     pro_module.ensure_shop_profile_schema(conn)
     pro_module.ensure_calendar_schema(conn)
@@ -82,6 +90,24 @@ def ensure_test_booking_shop(conn, *, booking_slug: str = "torquemech-shop", sho
     )
     conn.commit()
     return 1
+
+
+def public_booking_payload(**overrides):
+    requested_date = overrides.pop("requested_date", future_weekday(0))
+    payload = {
+        "customer_name": "Natalie King",
+        "customer_phone": "(555)123-4567",
+        "customer_email": "natalie@example.com",
+        "vehicle_year": "2008",
+        "vehicle_make": "Toyota",
+        "vehicle_model": "Sequoia",
+        "service_name": "Oil Change",
+        "requested_date": requested_date,
+        "requested_time": "09:00",
+        "notes": "Morning preferred",
+    }
+    payload.update(overrides)
+    return payload
 
 
 def assign_shop_scope(conn, shop_id):
@@ -250,6 +276,213 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertEqual(post_response.status_code, 303)
         self.assertEqual(row["status"], "Requested")
         self.assertEqual(row["source"], "customer_booking")
+
+    def test_public_booking_uses_slug_shop_and_ignores_manipulated_shop_id(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            ensure_test_booking_shop(conn, booking_slug="alpha-shop", shop_name="Alpha Shop")
+            conn.execute(
+                "INSERT INTO shop_profile (id, shop_name, booking_slug, updated_at) VALUES (2, 'Beta Shop', 'beta-shop', '2026-07-22T12:00:00')"
+            )
+            conn.commit()
+            requested_date = future_weekday(0)
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                response = TestClient(main.app, base_url="http://localhost").post(
+                    "/book/alpha-shop",
+                    data=public_booking_payload(requested_date=requested_date, shop_id="2"),
+                    follow_redirects=False,
+                )
+                row = conn.execute("SELECT shop_id FROM service_appointments").fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(row["shop_id"], 1)
+
+    def test_public_booking_ignores_supplied_customer_vehicle_and_appointment_ids(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            ensure_test_booking_shop(conn, booking_slug="alpha-shop", shop_name="Alpha Shop")
+            pro_module.ensure_customer_status_schema(conn)
+            conn.execute(
+                "INSERT INTO shop_profile (id, shop_name, booking_slug, updated_at) VALUES (2, 'Beta Shop', 'beta-shop', '2026-07-22T12:00:00')"
+            )
+            now = "2026-07-22T12:00:00"
+            beta_customer_id = int(conn.execute(
+                """
+                INSERT INTO customers (shop_id, first_name, last_name, phone, email, customer_status, notes, created_at, updated_at)
+                VALUES (2, 'Beta', 'Customer', '5550001111', 'beta@example.com', 'active', '', ?, ?)
+                """,
+                (now, now),
+            ).lastrowid)
+            beta_vehicle_id = int(conn.execute(
+                """
+                INSERT INTO customer_vehicles (shop_id, customer_id, year, make, model, created_at, updated_at)
+                VALUES (2, ?, '2020', 'Honda', 'Civic', ?, ?)
+                """,
+                (beta_customer_id, now, now),
+            ).lastrowid)
+            existing_appointment_id = pro_module.create_service_appointment(
+                conn,
+                public_booking_payload(
+                    customer_name="Existing Request",
+                    requested_date=future_weekday(1),
+                    requested_time="10:00",
+                    status="Confirmed",
+                ),
+                shop_id=2,
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                response = TestClient(main.app, base_url="http://localhost").post(
+                    "/book/alpha-shop",
+                    data=public_booking_payload(
+                        customer_id=str(beta_customer_id),
+                        vehicle_id=str(beta_vehicle_id),
+                        appointment_id=str(existing_appointment_id),
+                    ),
+                    follow_redirects=False,
+                )
+                rows = conn.execute("SELECT * FROM service_appointments ORDER BY id").fetchall()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["id"], existing_appointment_id)
+        self.assertEqual(rows[0]["customer_name"], "Existing Request")
+        self.assertEqual(rows[1]["shop_id"], 1)
+        self.assertIsNone(rows[1]["customer_id"])
+        self.assertIsNone(rows[1]["vehicle_id"])
+
+    def test_public_booking_invalid_slug_fails_safely(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            ensure_test_booking_shop(conn)
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                response = TestClient(main.app, base_url="http://localhost").get("/book/not-a-shop")
+                count = conn.execute("SELECT COUNT(*) AS count FROM service_appointments").fetchone()["count"]
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(count, 0)
+
+    def test_public_availability_uses_slug_shop_and_ignores_exclude_appointment_id(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            ensure_test_booking_shop(conn, booking_slug="alpha-shop", shop_name="Alpha Shop")
+            conn.execute(
+                "INSERT INTO shop_profile (id, shop_name, booking_slug, updated_at) VALUES (2, 'Beta Shop', 'beta-shop', '2026-07-22T12:00:00')"
+            )
+            requested_date = future_weekday(0)
+            pro_module.save_shop_availability(
+                conn,
+                [{"day_of_week": 0, "is_open": True, "start_time": "09:00", "end_time": "10:00"}],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+                shop_id=1,
+            )
+            pro_module.save_shop_availability(
+                conn,
+                [{"day_of_week": 0, "is_open": True, "start_time": "11:00", "end_time": "12:00"}],
+                appointment_length_minutes=60,
+                buffer_minutes=0,
+                shop_id=2,
+            )
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                public_booking_payload(requested_date=requested_date, requested_time="09:00"),
+                shop_id=1,
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                client = TestClient(main.app, base_url="http://localhost")
+                blocked = client.get(
+                    f"/book/alpha-shop/available-times?date={requested_date}&exclude_appointment_id={appointment_id}"
+                )
+                beta = client.get(f"/book/beta-shop/available-times?date={requested_date}")
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(blocked.status_code, 200)
+        self.assertEqual(blocked.json()["state"], "unavailable")
+        self.assertEqual(beta.status_code, 200)
+        self.assertEqual(beta.json()["times"], [{"value": "11:00", "label": "11:00 AM"}])
+
+    def test_public_booking_email_validation_and_blank_optional_email(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            ensure_test_booking_shop(conn)
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                client = TestClient(main.app, base_url="http://localhost")
+                blank = client.post(
+                    "/book/torquemech-shop",
+                    data=public_booking_payload(customer_email="   ", requested_time="09:00"),
+                    follow_redirects=False,
+                )
+                valid = client.post(
+                    "/book/torquemech-shop",
+                    data=public_booking_payload(
+                        customer_email=" CASEY+Booking@Example.COM ",
+                        requested_time="10:00",
+                    ),
+                    follow_redirects=False,
+                )
+                invalid = client.post(
+                    "/book/torquemech-shop",
+                    data=public_booking_payload(customer_email="not-an-email", requested_time="11:00"),
+                    follow_redirects=False,
+                )
+                rows = conn.execute("SELECT customer_email FROM service_appointments ORDER BY id").fetchall()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(blank.status_code, 303)
+        self.assertEqual(valid.status_code, 303)
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn("Enter a valid email address.", invalid.text)
+        self.assertIn('value="not-an-email"', invalid.text)
+        self.assertEqual([row["customer_email"] for row in rows], ["", "casey+booking@example.com"])
+
+    def test_public_booking_works_without_authenticated_session_csrf(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            ensure_test_booking_shop(conn)
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.dict(
+                    os.environ,
+                    {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+                ):
+                response = TestClient(main.app, base_url="http://localhost").post(
+                    "/book/torquemech-shop",
+                    data=public_booking_payload(customer_email="csrf-free@example.com"),
+                    follow_redirects=False,
+                )
+                row = conn.execute("SELECT customer_email FROM service_appointments").fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(row["customer_email"], "csrf-free@example.com")
 
     def test_public_booking_rejects_times_outside_shop_schedule(self):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
@@ -511,19 +744,23 @@ class CalendarFoundationTests(unittest.TestCase):
             ), patch.dict(
                 os.environ,
                 {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ), patch.object(
+                pro_module.email_service,
+                "send_email",
+                return_value=pro_module.email_service.EmailSendResult(success=True, transport="test"),
             ):
                 client, _, shop_id = auth_session_client(conn)
                 assign_shop_scope(conn, shop_id)
                 pending_page = client.get("/pro/calendar")
                 confirm_response = client.post(
                     f"/pro/calendar/{appointment_id}/status",
-                    data={"status": "Confirmed"},
+                    data={"csrf_token": csrf_from(pending_page.text), "status": "Confirmed"},
                     follow_redirects=False,
                 )
-                confirmed_page = client.get("/pro/calendar?notice=confirmed")
+                confirmed_page = client.get("/pro/calendar?notice=confirmed_email_sent")
                 handled_response = client.post(
                     f"/pro/calendar/{appointment_id}/status",
-                    data={"status": "Handled"},
+                    data={"csrf_token": csrf_from(confirmed_page.text), "status": "Handled"},
                     follow_redirects=False,
                 )
                 second_client, _, _ = auth_session_client(conn, email="second-owner@example.com", booking_slug="")
@@ -555,8 +792,8 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("2020 Honda Civic", pending_page.text)
         self.assertNotIn("Copy Confirmation Message", pending_page.text)
         self.assertNotIn("Copy Cancellation Message", pending_page.text)
-        self.assertEqual(confirm_response.headers["location"], "/pro/calendar?notice=confirmed")
-        self.assertIn("Appointment confirmed.", confirmed_page.text)
+        self.assertEqual(confirm_response.headers["location"], "/pro/calendar?notice=confirmed_email_sent")
+        self.assertIn("Appointment confirmed and confirmation email sent.", confirmed_page.text)
         self.assertIn("Confirmed Appointments", confirmed_page.text)
         self.assertIn("Copy Confirmation Message", confirmed_page.text)
         self.assertNotIn("customer@example.com", second_calendar_page.text)
@@ -603,7 +840,11 @@ class CalendarFoundationTests(unittest.TestCase):
                 ).json()
                 reschedule_response = client.post(
                     f"/pro/calendar/{appointment_id}/reschedule",
-                    data={"requested_date": requested_date, "requested_time": "10:00"},
+                    data={
+                        "csrf_token": csrf_from(calendar_page.text),
+                        "requested_date": requested_date,
+                        "requested_time": "10:00",
+                    },
                     follow_redirects=False,
                 )
                 old_slot = pro_module.is_booking_time_available(conn, requested_date, "09:00")
@@ -611,10 +852,11 @@ class CalendarFoundationTests(unittest.TestCase):
                 rescheduled_page = client.get("/pro/calendar?notice=rescheduled")
                 cancel_response = client.post(
                     f"/pro/calendar/{appointment_id}/cancel",
+                    data={"csrf_token": csrf_from(rescheduled_page.text)},
                     follow_redirects=False,
                 )
                 canceled_slot = pro_module.is_booking_time_available(conn, requested_date, "10:00")
-                canceled_page = client.get("/pro/calendar?notice=cancelled")
+                canceled_page = client.get("/pro/calendar?notice=cancelled_email_missing")
                 row = conn.execute(
                     "SELECT requested_date, requested_time, status FROM service_appointments WHERE id = ?",
                     (appointment_id,),
@@ -633,9 +875,9 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Appointment rescheduled.", rescheduled_page.text)
         self.assertIn("10:00 AM", rescheduled_page.text)
         self.assertIn("Copy Reschedule Message", rescheduled_page.text)
-        self.assertEqual(cancel_response.headers["location"], "/pro/calendar?notice=cancelled")
+        self.assertEqual(cancel_response.headers["location"], "/pro/calendar?notice=cancelled_email_missing")
         self.assertTrue(canceled_slot[0])
-        self.assertIn("Appointment canceled.", canceled_page.text)
+        self.assertIn("Appointment canceled. Add a customer email address before emailing this cancellation.", canceled_page.text)
         self.assertIn("Appointment History (1)", canceled_page.text)
         self.assertNotIn('aria-label="Appointment History" open', canceled_page.text)
         self.assertIn("Copy Message", canceled_page.text)
@@ -670,7 +912,7 @@ class CalendarFoundationTests(unittest.TestCase):
                 pending_page = client.get("/pro/calendar")
                 decline_response = client.post(
                     f"/pro/calendar/{appointment_id}/status",
-                    data={"status": "Declined"},
+                    data={"csrf_token": csrf_from(pending_page.text), "status": "Declined"},
                     follow_redirects=False,
                 )
                 declined_page = client.get("/pro/calendar?notice=declined")
@@ -1021,9 +1263,11 @@ class CalendarFoundationTests(unittest.TestCase):
             ):
                 client, _, shop_id = auth_session_client(conn)
                 assign_shop_scope(conn, shop_id)
+                calendar_page = client.get("/pro/calendar")
                 response = client.post(
                     f"/pro/calendar/{appointment_id}/convert",
                     data={
+                        "csrf_token": csrf_from(calendar_page.text),
                         "customer_mode": "existing",
                         "customer_id": str(customer_id),
                         "vehicle_mode": "existing",
@@ -1074,9 +1318,11 @@ class CalendarFoundationTests(unittest.TestCase):
             ):
                 client, _, shop_id = auth_session_client(conn)
                 assign_shop_scope(conn, shop_id)
+                calendar_page = client.get("/pro/calendar")
                 response = client.post(
                     f"/pro/calendar/{appointment_id}/convert",
                     data={
+                        "csrf_token": csrf_from(calendar_page.text),
                         "customer_mode": "new",
                         "new_customer_name": "Sam Driver",
                         "new_customer_phone": "(555) 111-2222",
