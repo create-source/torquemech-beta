@@ -653,9 +653,15 @@
           <button class="tm-btn tm-btn-secondary" type="submit">Deactivate Customer</button>
         </form>
         {% endif %}
-        <details class="tm-crm-disclosure">
+        <details class="tm-crm-disclosure" {% if appointment_continuation %}open{% endif %}>
           <summary>Edit Customer</summary>
           <form method="post" action="/pro/customers/{{ customer.id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% if appointment_continuation %}
+            <input type="hidden" name="appointment_id" value="{{ appointment_continuation.appointment_id }}">
+            <input type="hidden" name="appointment_action" value="{{ appointment_continuation.appointment_action }}">
+            <input type="hidden" name="appointment_token" value="{{ appointment_continuation.appointment_token }}">
+            {% endif %}
             <div class="tm-crm-row">
               <div>
                 <label class="tm-label" for="first_name">First name</label>

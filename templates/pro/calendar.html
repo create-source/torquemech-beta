@@ -466,6 +466,9 @@
       </form>
       {% else %}
       <p class="tm-book-warning">Add a customer email address before emailing this cancellation.</p>
+      {% if item.cancellation_email_customer_edit_url %}
+      <a class="tm-btn tm-btn-secondary" href="{{ item.cancellation_email_customer_edit_url }}">Edit Customer</a>
+      {% endif %}
       {% endif %}
     {% endif %}
     <details class="tm-calendar-message-editor">

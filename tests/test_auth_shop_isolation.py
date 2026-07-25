@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 
 import main
@@ -2571,6 +2571,280 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Add a customer email address before emailing this cancellation.", without_card)
         self.assertNotIn("Email Cancellation", confirmed_card)
 
+    def test_cancelled_missing_email_shows_edit_customer_with_continuation_context(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-edit-link@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-edit-link@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Missing", email="")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Missing Owner",
+            customer_email="",
+            status="Cancelled",
+        )
+        self.link_appointment_customer(appointment_id, customer_id, vehicle_id)
+
+        page = client.get("/pro/calendar")
+        card = page.text.split("Missing Owner", 1)[1].split("</article>", 1)[0]
+        match = re.search(r'href="([^"]+)">Edit Customer</a>', card)
+        self.assertIsNotNone(match)
+        edit_url = html.unescape(match.group(1))
+        parsed = urlparse(edit_url)
+        query = parse_qs(parsed.query)
+
+        self.assertEqual(parsed.path, f"/pro/customers/{customer_id}")
+        self.assertEqual(query["appointment_id"], [str(appointment_id)])
+        self.assertEqual(query["appointment_action"], [pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION])
+        self.assertTrue(query["appointment_token"][0])
+        self.assertNotIn("customer_email", query)
+        self.assertNotIn("@", parsed.query)
+        self.assertNotIn("Email Cancellation", card)
+
+    def test_customer_save_continuation_sends_cancellation_email_once_using_saved_customer_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-save@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-save@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Saved", email="")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Saved Owner",
+            customer_email="",
+            status="Cancelled",
+        )
+        self.link_appointment_customer(appointment_id, customer_id, vehicle_id)
+        calendar_page = client.get("/pro/calendar")
+        card = calendar_page.text.split("Saved Owner", 1)[1].split("</article>", 1)[0]
+        edit_url = html.unescape(re.search(r'href="([^"]+)">Edit Customer</a>', card).group(1))
+        edit_page = client.get(edit_url)
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ) as send_email:
+            response = client.post(
+                f"/pro/customers/{customer_id}",
+                data={
+                    "csrf_token": csrf_from(edit_page.text),
+                    "appointment_id": re.search(r'name="appointment_id" value="([^"]+)"', edit_page.text).group(1),
+                    "appointment_action": re.search(r'name="appointment_action" value="([^"]+)"', edit_page.text).group(1),
+                    "appointment_token": re.search(r'name="appointment_token" value="([^"]+)"', edit_page.text).group(1),
+                    "first_name": "Saved",
+                    "last_name": "Owner",
+                    "phone": "5552223333",
+                    "email": "New.Customer@Example.COM",
+                    "customer_email": "query-or-form-email@example.com",
+                    "notes": "updated",
+                },
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=customer_updated_cancellation_email_sent")
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(len(sent_messages), 1)
+        self.assertEqual(sent_messages[0].recipients, ["new.customer@example.com"])
+        saved = self.conn.execute("SELECT email FROM customers WHERE id = ?", (customer_id,)).fetchone()
+        self.assertEqual(saved["email"], "New.Customer@Example.COM")
+        notice_page = client.get(response.headers["location"])
+        self.assertIn("Customer updated and cancellation email sent.", notice_page.text)
+
+    def test_customer_save_continuation_failure_still_saves_and_redirects_to_calendar_retry_notice(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-save-fail@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-save-fail@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Fail", email="")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Fail Owner",
+            customer_email="",
+            status="Cancelled",
+        )
+        self.link_appointment_customer(appointment_id, customer_id, vehicle_id)
+        calendar_page = client.get("/pro/calendar")
+        edit_url = html.unescape(re.search(r'href="([^"]+)">Edit Customer</a>', calendar_page.text).group(1))
+        edit_page = client.get(edit_url)
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            return_value=pro_module.email_service.EmailSendResult(success=False, transport="test", error_category="provider_exception", provider_related=True),
+        ) as send_email:
+            response = client.post(
+                f"/pro/customers/{customer_id}",
+                data={
+                    "csrf_token": csrf_from(edit_page.text),
+                    "appointment_id": re.search(r'name="appointment_id" value="([^"]+)"', edit_page.text).group(1),
+                    "appointment_action": re.search(r'name="appointment_action" value="([^"]+)"', edit_page.text).group(1),
+                    "appointment_token": re.search(r'name="appointment_token" value="([^"]+)"', edit_page.text).group(1),
+                    "first_name": "Fail",
+                    "last_name": "Owner",
+                    "phone": "5552223333",
+                    "email": "fail-new@example.com",
+                    "notes": "still saved",
+                },
+                follow_redirects=False,
+            )
+
+        saved = self.conn.execute("SELECT email, notes FROM customers WHERE id = ?", (customer_id,)).fetchone()
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=customer_updated_cancellation_email_failed")
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(saved["email"], "fail-new@example.com")
+        self.assertEqual(saved["notes"], "still saved")
+        notice_page = client.get(response.headers["location"])
+        self.assertIn(
+            "Customer updated, but the cancellation email could not be sent. Use Email Cancellation to retry.",
+            notice_page.text,
+        )
+
+    def test_ordinary_customer_edit_and_invalid_continuations_do_not_send_appointment_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-invalid-context@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-invalid-context@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Normal", email="")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Normal Owner",
+            customer_email="",
+            status="Cancelled",
+        )
+        self.link_appointment_customer(appointment_id, customer_id, vehicle_id)
+        edit_page = client.get(f"/pro/customers/{customer_id}")
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            ordinary = client.post(
+                f"/pro/customers/{customer_id}",
+                data={
+                    "csrf_token": csrf_from(edit_page.text),
+                    "first_name": "Normal",
+                    "last_name": "Owner",
+                    "phone": "5552223333",
+                    "email": "ordinary@example.com",
+                    "notes": "",
+                },
+                follow_redirects=False,
+            )
+            tampered = client.post(
+                f"/pro/customers/{customer_id}",
+                data={
+                    "csrf_token": csrf_from(edit_page.text),
+                    "appointment_id": str(appointment_id),
+                    "appointment_action": "send_confirmation_email_after_customer_save",
+                    "appointment_token": "bad-token",
+                    "first_name": "Normal",
+                    "last_name": "Owner",
+                    "phone": "5552223333",
+                    "email": "tampered@example.com",
+                    "notes": "",
+                },
+                follow_redirects=False,
+            )
+
+        self.assertEqual(ordinary.headers["location"], f"/pro/customers/{customer_id}")
+        self.assertEqual(tampered.headers["location"], f"/pro/customers/{customer_id}")
+        send_email.assert_not_called()
+
+    def test_customer_save_continuation_rejects_mismatched_cross_shop_and_non_cancelled_appointments(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-guards-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("cancel-guards-alpha@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="Guard", email="")
+        other_customer_id, other_vehicle_id = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="Other", email="")
+        cancelled_id = self.seed_service_appointment_for_shop(alpha_shop, customer_name="Guard Owner", status="Cancelled")
+        self.link_appointment_customer(cancelled_id, customer_id, vehicle_id)
+        mismatched_id = self.seed_service_appointment_for_shop(alpha_shop, customer_name="Other Owner", status="Cancelled", requested_time="10:00")
+        self.link_appointment_customer(mismatched_id, other_customer_id, other_vehicle_id)
+        confirmed_id = self.seed_service_appointment_for_shop(alpha_shop, customer_name="Confirmed Owner", status="Confirmed", requested_time="11:00")
+        self.link_appointment_customer(confirmed_id, customer_id, vehicle_id)
+        client_two = self.client()
+        self.signup(client_two, email="cancel-guards-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("cancel-guards-beta@example.com")
+        beta_shop = self.shop_id_for_email("cancel-guards-beta@example.com")
+        beta_customer_id, beta_vehicle_id = self.seed_customer_vehicle_for_shop(beta_shop, first_name="Beta", email="")
+        beta_cancelled_id = self.seed_service_appointment_for_shop(beta_shop, customer_name="Beta Owner", status="Cancelled")
+        self.link_appointment_customer(beta_cancelled_id, beta_customer_id, beta_vehicle_id)
+        page = client.get("/pro/calendar")
+        csrf_token = csrf_from(client.get(f"/pro/customers/{customer_id}").text)
+
+        valid_context = pro_module.customer_appointment_continuation_context(
+            Request({"type": "http", "session": {pro_module.AUTH_SESSION_CSRF_KEY: csrf_token}}),
+            shop_id=alpha_shop,
+            customer_id=customer_id,
+            appointment_id=cancelled_id,
+            action=pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+        )
+        mismatch_context = pro_module.customer_appointment_continuation_context(
+            Request({"type": "http", "session": {pro_module.AUTH_SESSION_CSRF_KEY: csrf_token}}),
+            shop_id=alpha_shop,
+            customer_id=customer_id,
+            appointment_id=mismatched_id,
+            action=pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+        )
+        confirmed_context = pro_module.customer_appointment_continuation_context(
+            Request({"type": "http", "session": {pro_module.AUTH_SESSION_CSRF_KEY: csrf_token}}),
+            shop_id=alpha_shop,
+            customer_id=customer_id,
+            appointment_id=confirmed_id,
+            action=pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+        )
+        cross_shop_context = pro_module.customer_appointment_continuation_context(
+            Request({"type": "http", "session": {pro_module.AUTH_SESSION_CSRF_KEY: csrf_token}}),
+            shop_id=alpha_shop,
+            customer_id=customer_id,
+            appointment_id=beta_cancelled_id,
+            action=pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+        )
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            for context in (mismatch_context, confirmed_context, cross_shop_context):
+                response = client.post(
+                    f"/pro/customers/{customer_id}",
+                    data={
+                        "csrf_token": csrf_token,
+                        **context,
+                        "first_name": "Guard",
+                        "last_name": "Owner",
+                        "phone": "5552223333",
+                        "email": "guard-new@example.com",
+                        "notes": "",
+                    },
+                    follow_redirects=False,
+                )
+                self.assertEqual(response.headers["location"], f"/pro/customers/{customer_id}")
+
+            different_customer = client.post(
+                f"/pro/customers/{other_customer_id}",
+                data={
+                    "csrf_token": csrf_token,
+                    **valid_context,
+                    "first_name": "Other",
+                    "last_name": "Owner",
+                    "phone": "5552223333",
+                    "email": "other-new@example.com",
+                    "notes": "",
+                },
+                follow_redirects=False,
+            )
+            cross_shop_customer = client.post(
+                f"/pro/customers/{beta_customer_id}",
+                data={
+                    "csrf_token": csrf_token,
+                    **valid_context,
+                    "first_name": "Beta",
+                    "last_name": "Owner",
+                    "phone": "5552223333",
+                    "email": "beta-new@example.com",
+                    "notes": "",
+                },
+                follow_redirects=False,
+            )
+
+        self.assertEqual(different_customer.headers["location"], f"/pro/customers/{other_customer_id}")
+        self.assertEqual(cross_shop_customer.status_code, 404)
+        send_email.assert_not_called()
+
     def test_cross_shop_appointment_mutations_fail_safely(self):
         client_one = self.client()
         self.bootstrap_owner(client_one, email="alpha-actions@example.com", shop_name="Alpha Shop")
@@ -2745,9 +3019,24 @@ class AuthShopIsolationTests(unittest.TestCase):
             shop_id=shop_id,
         )
 
-    def seed_customer_vehicle_for_shop(self, shop_id: int, *, first_name: str = "Cross", vehicle_make: str = "Toyota") -> tuple[int, int]:
+    def link_appointment_customer(self, appointment_id: int, customer_id: int, vehicle_id: int | None = None) -> None:
+        self.conn.execute(
+            "UPDATE service_appointments SET customer_id = ?, vehicle_id = ? WHERE id = ?",
+            (customer_id, vehicle_id, appointment_id),
+        )
+        self.conn.commit()
+
+    def seed_customer_vehicle_for_shop(
+        self,
+        shop_id: int,
+        *,
+        first_name: str = "Cross",
+        vehicle_make: str = "Toyota",
+        email: str | None = None,
+    ) -> tuple[int, int]:
         pro_module.ensure_customer_status_schema(self.conn)
         now = "2026-07-24T12:00:00"
+        customer_email = f"{first_name.lower()}@example.com" if email is None else email
         customer_id = int(
             self.conn.execute(
                 """
@@ -2756,7 +3045,7 @@ class AuthShopIsolationTests(unittest.TestCase):
                 )
                 VALUES (?, ?, 'Owner', '5552223333', ?, 'active', '', ?, ?)
                 """,
-                (shop_id, first_name, f"{first_name.lower()}@example.com", now, now),
+                (shop_id, first_name, customer_email, now, now),
             ).lastrowid
         )
         vehicle_id = int(

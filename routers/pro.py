@@ -1998,6 +1998,10 @@ APPOINTMENT_MESSAGE_PLACEHOLDERS = (
     "shop_email",
     "shop_address",
 )
+CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION = "send_cancellation_email_after_customer_save"
+CUSTOMER_APPOINTMENT_CONTINUATION_ACTIONS = {
+    CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+}
 
 
 def appointment_message_default_templates() -> dict[str, str]:
@@ -2122,6 +2126,90 @@ def render_appointment_message_template(
 
 def appointment_email_service_config() -> email_service.EmailServiceConfig:
     return email_service.config_from_env(default_outbox_path=STATE_DIR / "email_outbox.jsonl")
+
+
+def customer_appointment_continuation_signature(
+    request: Request,
+    *,
+    shop_id: int,
+    customer_id: int,
+    appointment_id: int,
+    action: str,
+) -> str:
+    payload = {
+        "shop_id": int(shop_id),
+        "customer_id": int(customer_id),
+        "appointment_id": int(appointment_id),
+        "action": str(action or ""),
+    }
+    body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    key = f"customer-appointment-continuation:{csrf_token(request)}".encode("utf-8")
+    return base64.urlsafe_b64encode(hmac.new(key, body, hashlib.sha256).digest()).decode("ascii").rstrip("=")
+
+
+def customer_appointment_continuation_context(
+    request: Request,
+    *,
+    shop_id: int,
+    customer_id: int,
+    appointment_id: int,
+    action: str,
+) -> dict[str, str]:
+    action = str(action or "")
+    if action not in CUSTOMER_APPOINTMENT_CONTINUATION_ACTIONS:
+        return {}
+    return {
+        "appointment_id": str(int(appointment_id)),
+        "appointment_action": action,
+        "appointment_token": customer_appointment_continuation_signature(
+            request,
+            shop_id=shop_id,
+            customer_id=customer_id,
+            appointment_id=appointment_id,
+            action=action,
+        ),
+    }
+
+
+def validate_customer_appointment_continuation_context(
+    request: Request,
+    form: dict[str, str],
+    *,
+    shop_id: int,
+    customer_id: int,
+) -> dict[str, Any] | None:
+    appointment_id = optional_int_value(form.get("appointment_id"))
+    action = str(form.get("appointment_action") or "").strip()
+    token = str(form.get("appointment_token") or "").strip()
+    if not appointment_id or action not in CUSTOMER_APPOINTMENT_CONTINUATION_ACTIONS or not token:
+        return None
+    expected = customer_appointment_continuation_signature(
+        request,
+        shop_id=shop_id,
+        customer_id=customer_id,
+        appointment_id=appointment_id,
+        action=action,
+    )
+    if not hmac.compare_digest(expected, token):
+        return None
+    return {"appointment_id": appointment_id, "action": action, "token": token}
+
+
+def customer_cancellation_email_edit_url(
+    request: Request,
+    *,
+    shop_id: int,
+    customer_id: int,
+    appointment_id: int,
+) -> str:
+    context = customer_appointment_continuation_context(
+        request,
+        shop_id=shop_id,
+        customer_id=customer_id,
+        appointment_id=appointment_id,
+        action=CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+    )
+    return f"/pro/customers/{customer_id}?{urlencode(context)}" if context else f"/pro/customers/{customer_id}"
 
 
 def appointment_email_recipient(
@@ -12398,6 +12486,19 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             )
             appointment["cancellation_email_available"] = appointment["confirmation_email_available"]
             appointment["customer_url"] = f"/pro/customers/{customer_id}" if customer_id else ""
+            appointment["cancellation_email_customer_edit_url"] = (
+                customer_cancellation_email_edit_url(
+                    request,
+                    shop_id=shop_id,
+                    customer_id=customer_id,
+                    appointment_id=int(appointment["id"]),
+                )
+                if appointment.get("status") == "Cancelled"
+                and customer_id
+                and linked_customer
+                and not appointment["cancellation_email_available"]
+                else ""
+            )
             appointment["vehicle_url"] = (
                 f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
                 if customer_id and vehicle_id
@@ -12488,6 +12589,8 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 "cancellation_email_sent": "Cancellation email sent successfully.",
                 "cancellation_email_failed": "We couldn't send the cancellation email. Please try again.",
                 "cancellation_email_missing": "Add a customer email address before emailing this cancellation.",
+                "customer_updated_cancellation_email_sent": "Customer updated and cancellation email sent.",
+                "customer_updated_cancellation_email_failed": "Customer updated, but the cancellation email could not be sent. Use Email Cancellation to retry.",
                 "linked": "Appointment linked to customer.",
             }.get(notice, ""),
         },
@@ -13494,8 +13597,11 @@ async def pro_customer_create(request: Request):
 @router.post("/customers/{customer_id}")
 async def pro_customer_update(request: Request, customer_id: int):
     form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
     now = datetime.utcnow().isoformat()
     conn = crm_db_conn()
+    cancellation_email_payload: dict[str, Any] | None = None
     try:
         ensure_customer_status_schema(conn)
         shop_id = required_current_shop_id(conn, request)
@@ -13525,8 +13631,66 @@ async def pro_customer_update(request: Request, customer_id: int):
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Customer not found")
         conn.commit()
+        continuation = validate_customer_appointment_continuation_context(
+            request,
+            form,
+            shop_id=shop_id,
+            customer_id=customer_id,
+        )
+        if continuation and continuation["action"] == CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION:
+            try:
+                appointment = load_service_appointment_for_shop(
+                    conn,
+                    int(continuation["appointment_id"]),
+                    shop_id,
+                )
+                linked_customer_id = optional_int_value(appointment.get("customer_id"))
+                if (
+                    (appointment.get("status") or "") == "Cancelled"
+                    and linked_customer_id == customer_id
+                ):
+                    saved_customer = load_customer_for_shop(conn, customer_id, shop_id)
+                    recipient_email = normalize_email(saved_customer.get("email") or "")
+                    if recipient_email and not optional_email_format_error(recipient_email):
+                        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+                        cancellation_email_payload = {
+                            "appointment_id": int(continuation["appointment_id"]),
+                            "appointment": appointment,
+                            "recipient_email": recipient_email,
+                            "shop_profile": shop_profile,
+                            "shop_name": shop_profile.get("shop_name") or load_shop_name(conn),
+                        }
+            except HTTPException:
+                cancellation_email_payload = None
     finally:
         conn.close()
+    if cancellation_email_payload:
+        appointment_id = cancellation_email_payload["appointment_id"]
+        try:
+            result = send_appointment_cancellation_email(
+                appointment=cancellation_email_payload["appointment"],
+                recipient_email=cancellation_email_payload["recipient_email"],
+                shop_profile=cancellation_email_payload["shop_profile"],
+                shop_name=cancellation_email_payload["shop_name"],
+            )
+        except Exception:
+            logger.exception("APPOINTMENT_CANCELLATION_EMAIL_CONTINUATION_UNEXPECTED appointment_id=%s", appointment_id)
+            return RedirectResponse("/pro/calendar?notice=customer_updated_cancellation_email_failed", status_code=303)
+        if result.success:
+            logger.info(
+                "APPOINTMENT_CANCELLATION_EMAIL_CONTINUATION_SENT appointment_id=%s transport=%s",
+                appointment_id,
+                result.transport,
+            )
+            return RedirectResponse("/pro/calendar?notice=customer_updated_cancellation_email_sent", status_code=303)
+        logger.warning(
+            "APPOINTMENT_CANCELLATION_EMAIL_CONTINUATION_FAILED appointment_id=%s category=%s provider_related=%s configuration_related=%s",
+            appointment_id,
+            result.error_category,
+            result.provider_related,
+            result.configuration_related,
+        )
+        return RedirectResponse("/pro/calendar?notice=customer_updated_cancellation_email_failed", status_code=303)
     return RedirectResponse(f"/pro/customers/{customer_id}", status_code=303)
 
 
@@ -13579,8 +13743,15 @@ async def pro_customer_reactivate(request: Request, customer_id: int):
 
 
 @router.get("/customers/{customer_id}", response_class=HTMLResponse)
-def pro_customer_detail(request: Request, customer_id: int):
+def pro_customer_detail(
+    request: Request,
+    customer_id: int,
+    appointment_id: str = "",
+    appointment_action: str = "",
+    appointment_token: str = "",
+):
     conn = crm_db_conn()
+    appointment_continuation: dict[str, Any] | None = None
     try:
         ensure_customer_status_schema(conn)
         shop_id = required_current_shop_id(conn, request)
@@ -13592,6 +13763,29 @@ def pro_customer_detail(request: Request, customer_id: int):
         )
         if not customer:
             raise HTTPException(status_code=404, detail="Customer not found")
+        continuation = validate_customer_appointment_continuation_context(
+            request,
+            {
+                "appointment_id": appointment_id,
+                "appointment_action": appointment_action,
+                "appointment_token": appointment_token,
+            },
+            shop_id=shop_id,
+            customer_id=customer_id,
+        )
+        if continuation and continuation["action"] == CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION:
+            try:
+                appointment = load_service_appointment_for_shop(conn, int(continuation["appointment_id"]), shop_id)
+                linked_customer_id = optional_int_value(appointment.get("customer_id"))
+                if (appointment.get("status") or "") == "Cancelled" and linked_customer_id == customer_id:
+                    load_customer_for_shop(conn, customer_id, shop_id)
+                    appointment_continuation = {
+                        "appointment_id": str(continuation["appointment_id"]),
+                        "appointment_action": continuation["action"],
+                        "appointment_token": continuation["token"],
+                    }
+            except HTTPException:
+                appointment_continuation = None
         vehicles = [
             dict(row)
             for row in conn.execute(
@@ -13613,6 +13807,8 @@ def pro_customer_detail(request: Request, customer_id: int):
             "request": request,
             "customer": customer,
             "vehicles": vehicles,
+            "csrf_token": optional_csrf_token(request),
+            "appointment_continuation": appointment_continuation,
         },
     )
 
