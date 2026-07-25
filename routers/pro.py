@@ -12475,7 +12475,14 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             vehicle_id = optional_int_value(appointment.get("vehicle_id"))
             estimate_id = optional_int_value(appointment.get("estimate_id"))
             repair_id = optional_int_value(appointment.get("repair_id"))
+            
             linked_customer = customer_by_id.get(customer_id or 0)
+            if customer_id and not linked_customer:
+                try:
+                    linked_customer = load_customer_for_shop(conn, customer_id, shop_id)
+                except HTTPException:
+                    linked_customer = None
+
             linked_vehicle = vehicle_by_id.get(vehicle_id or 0)
             linked_repair = repair_by_id.get(repair_id or 0)
             appointment["display_vehicle_label"] = appointment_vehicle_label(appointment)
