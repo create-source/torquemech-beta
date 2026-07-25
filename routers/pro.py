@@ -1759,21 +1759,40 @@ def create_service_appointment(conn: sqlite3.Connection, data: dict[str, Any], s
     return int(cur.lastrowid)
 
 
-def update_service_appointment_status(conn: sqlite3.Connection, appointment_id: int, status: str, shop_id: int | None = None) -> None:
+def update_service_appointment_status(
+    conn: sqlite3.Connection,
+    appointment_id: int,
+    status: str,
+    shop_id: int | None = None,
+) -> None:
     if status not in APPOINTMENT_STATUS_OPTIONS:
         raise HTTPException(status_code=400, detail="Invalid appointment status")
+
     ensure_calendar_schema(conn)
+
+    appointment = load_service_appointment(
+        conn,
+        appointment_id,
+        shop_id=shop_id,
+    )
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
     where_sql, params = shop_scope_where(shop_id)
-    cur = conn.execute(
+
+    conn.execute(
         f"""
         UPDATE service_appointments
         SET status = ?, updated_at = ?
         WHERE id = ? AND {where_sql}
         """,
-        [status, datetime.utcnow().isoformat(), appointment_id, *params],
+        [
+            status,
+            datetime.utcnow().isoformat(),
+            appointment_id,
+            *params,
+        ],
     )
-    if cur.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Appointment not found")
     conn.commit()
 
 
