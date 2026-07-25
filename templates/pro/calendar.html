@@ -270,8 +270,8 @@
         <form class="tm-calendar-reschedule-form" method="post" action="/pro/calendar/{{ item.id }}/reschedule">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="tm-availability-picker" data-availability-picker data-availability-lazy="true"
-              data-dates-url="/book/torquemech-shop/available-dates?exclude_appointment_id={{ item.id }}"
-              data-times-url="/book/torquemech-shop/available-times?exclude_appointment_id={{ item.id }}"
+              data-dates-url="/book/torquemech/available-dates?exclude_appointment_id={{ item.id }}"
+              data-times-url="/book/torquemech/available-times?exclude_appointment_id={{ item.id }}"
               data-time-target="#reschedule_time_{{ item.id }}"
               data-message-target="#reschedule_message_{{ item.id }}">
             <label class="tm-label" for="reschedule_date_{{ item.id }}">New Date</label>
@@ -538,8 +538,8 @@
       <div style="grid-column:1/-1;">
         <label class="tm-label" for="pro_requested_date">Date</label>
         <div class="tm-availability-picker" data-availability-picker
-             data-dates-url="/book/torquemech-shop/available-dates"
-             data-times-url="/book/torquemech-shop/available-times"
+             data-dates-url="/book/torquemech/available-dates"
+             data-times-url="/book/torquemech/available-times"
              data-time-target="#pro_requested_time" data-message-target="[data-pro-time-message]">
           <input id="pro_requested_date" name="requested_date" type="hidden" data-availability-date required>
           <div class="tm-availability-calendar">
