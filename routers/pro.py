@@ -12351,6 +12351,12 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
     conn = crm_db_conn()
     try:
         shop_id = current_shop_id(conn, request)
+
+        logging.warning(
+            "CALENDAR_SESSION_DIAGNOSTIC user_id=%s shop_id=%s",
+            current_user_id(request),
+            shop_id,
+        )
         profile = load_shop_profile_context(conn, shop_id=shop_id)
         appointments = attach_appointment_customer_messages(
             load_service_appointments(conn, shop_id=shop_id),
