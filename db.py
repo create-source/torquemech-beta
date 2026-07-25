@@ -124,6 +124,12 @@ class PostgresCompatCursor:
     def execute(self, sql: str, params: Iterable[Any] | None = None):
         return self.conn._execute(sql, params, cursor=self)
 
+    @property
+    def rowcount(self) -> int:
+        if self.cursor is None:
+            return -1
+        return int(self.cursor.rowcount)
+
     def fetchone(self):
         if self._rows is not None:
             return self._rows.pop(0) if self._rows else None
