@@ -74,6 +74,61 @@
     font-weight: 800;
   }
   .tm-calendar-actions, .tm-calendar-form-grid { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+  .tm-calendar-appointment-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+
+  .tm-calendar-appointment-actions .tm-calendar-reschedule[open] {
+    grid-column: 1 / -1;
+  }
+
+  .tm-calendar-appointment-actions .tm-calendar-reschedule {
+    flex: initial;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tm-calendar-appointment-actions .tm-calendar-reschedule > summary {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border-color: #ff7417;
+    background: #ff7417;
+    color: #08111f;
+    font-weight: 900;
+  }
+
+  .tm-calendar-appointment-actions .tm-calendar-reschedule > summary:hover {
+    border-color: #ff8a3d;
+    background: #ff8a3d;
+    color: #08111f;
+  }
+
+  .tm-calendar-cancel-form {
+    width: 100%;
+    margin: 0;
+  }
+
+  .tm-calendar-cancel-btn {
+    width: 100%;
+    min-height: 44px;
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+    font-weight: 900;
+  }
+
+  .tm-calendar-cancel-btn:hover {
+    border-color: #ef4444;
+    background: #dc2626;
+    color: #ffffff;
+  }
   .tm-calendar-copy-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .tm-calendar-message-editor {
     display: grid;
@@ -208,19 +263,20 @@
     </form>
     {% endfor %}
     {% elif item.status in ["Confirmed", "Rescheduled"] %}
+    <div class="tm-calendar-appointment-actions">
     <details class="tm-calendar-reschedule">
       <summary class="tm-btn tm-btn-secondary">Reschedule</summary>
       <div class="tm-calendar-reschedule-panel">
         <form class="tm-calendar-reschedule-form" method="post" action="/pro/calendar/{{ item.id }}/reschedule">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="tm-availability-picker" data-availability-picker data-availability-lazy="true"
-               data-dates-url="/book/torquemech-shop/available-dates?exclude_appointment_id={{ item.id }}"
-               data-times-url="/book/torquemech-shop/available-times?exclude_appointment_id={{ item.id }}"
-               data-time-target="#reschedule_time_{{ item.id }}"
-               data-message-target="#reschedule_message_{{ item.id }}">
+              data-dates-url="/book/torquemech-shop/available-dates?exclude_appointment_id={{ item.id }}"
+              data-times-url="/book/torquemech-shop/available-times?exclude_appointment_id={{ item.id }}"
+              data-time-target="#reschedule_time_{{ item.id }}"
+              data-message-target="#reschedule_message_{{ item.id }}">
             <label class="tm-label" for="reschedule_date_{{ item.id }}">New Date</label>
             <input id="reschedule_date_{{ item.id }}" name="requested_date" type="hidden"
-                   data-availability-date value="{{ item.requested_date }}" required>
+                  data-availability-date value="{{ item.requested_date }}" required>
             <div class="tm-availability-calendar">
               <div class="tm-availability-head">
                 <button class="tm-availability-nav" type="button" data-availability-prev aria-label="Previous month">‹</button>
@@ -247,10 +303,21 @@
         </form>
       </div>
     </details>
-    <form method="post" action="/pro/calendar/{{ item.id }}/cancel" data-confirm-cancel>
+
+    <form
+      class="tm-calendar-cancel-form"
+      method="post"
+      action="/pro/calendar/{{ item.id }}/cancel"
+      data-confirm-cancel
+    >
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button class="tm-btn tm-btn-secondary" type="submit">Cancel Appointment</button>
+
+      <button class="tm-btn tm-calendar-cancel-btn" type="submit">
+        Cancel Appointment
+      </button>
     </form>
+
+    </div>
     {% if item.status == "Confirmed" %}
       {% if item.confirmation_email_available %}
       <form method="post" action="/pro/calendar/{{ item.id }}/confirmation-email">
