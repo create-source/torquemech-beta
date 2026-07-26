@@ -2212,6 +2212,21 @@ def customer_cancellation_email_edit_url(
     return f"/pro/customers/{customer_id}?{urlencode(context)}" if context else f"/pro/customers/{customer_id}"
 
 
+def customer_cancellation_email_add_context(
+    request: Request,
+    *,
+    shop_id: int,
+    appointment_id: int,
+) -> dict[str, str]:
+    return customer_appointment_continuation_context(
+        request,
+        shop_id=shop_id,
+        customer_id=0,
+        appointment_id=appointment_id,
+        action=CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+    )
+
+
 def appointment_email_recipient(
     conn: sqlite3.Connection,
     appointment: dict[str, Any],
@@ -12506,6 +12521,17 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 and not appointment["cancellation_email_available"]
                 else ""
             )
+            appointment["cancellation_email_add_customer_context"] = (
+                customer_cancellation_email_add_context(
+                    request,
+                    shop_id=shop_id,
+                    appointment_id=int(appointment["id"]),
+                )
+                if appointment.get("status") == "Cancelled"
+                and not customer_id
+                and not appointment["cancellation_email_available"]
+                else {}
+            )
             appointment["vehicle_url"] = (
                 f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
                 if customer_id and vehicle_id
@@ -12598,6 +12624,9 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 "cancellation_email_missing": "Add a customer email address before emailing this cancellation.",
                 "customer_updated_cancellation_email_sent": "Customer updated and cancellation email sent.",
                 "customer_updated_cancellation_email_failed": "Customer updated, but the cancellation email could not be sent. Use Email Cancellation to retry.",
+                "customer_added_cancellation_email_sent": "Customer added and cancellation email sent.",
+                "customer_added_cancellation_email_failed": "Customer added, but the cancellation email could not be sent. Use Email Cancellation to retry.",
+                "customer_added_cancellation_email_missing": "Customer added. Add an email address before emailing this cancellation.",
                 "linked": "Appointment linked to customer.",
             }.get(notice, ""),
         },
@@ -12883,21 +12912,111 @@ async def pro_calendar_convert(request: Request, appointment_id: int):
         raise HTTPException(status_code=403, detail="Invalid CSRF token")
     action = form.get("conversion_action", "save")
     conn = crm_db_conn()
+    cancellation_email_payload: dict[str, Any] | None = None
     try:
-        try:
-            customer_id, vehicle_id, appointment = link_appointment_customer_vehicle(
-                conn,
-                appointment_id,
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        if action == "add_customer_cancellation_email":
+            continuation = validate_customer_appointment_continuation_context(
+                request,
                 form,
-                shop_id=current_shop_id(conn, request),
+                shop_id=shop_id,
+                customer_id=0,
             )
-        except HTTPException as exc:
-            return RedirectResponse(
-                f"/pro/calendar?{urlencode({'error': str(exc.detail)})}",
-                status_code=303,
+            if not continuation or int(continuation["appointment_id"]) != int(appointment_id):
+                return RedirectResponse("/pro/calendar?notice=cancellation_email_missing", status_code=303)
+            appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+            if (appointment.get("status") or "") != "Cancelled" or optional_int_value(appointment.get("customer_id")):
+                return RedirectResponse("/pro/calendar?notice=cancellation_email_missing", status_code=303)
+            now = datetime.utcnow().isoformat()
+            customer_name = form.get("new_customer_name", "") or appointment.get("customer_name") or ""
+            first_name, last_name = split_customer_name(customer_name)
+            cur = conn.execute(
+                """
+                INSERT INTO customers (
+                  shop_id, first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?)
+                """,
+                (
+                    shop_id,
+                    first_name,
+                    last_name,
+                    clean_phone(form.get("new_customer_phone", "") or appointment.get("customer_phone", "")),
+                    form.get("new_customer_email", ""),
+                    "Created from cancelled appointment customer add.",
+                    now,
+                    now,
+                ),
             )
+            customer_id = int(cur.lastrowid)
+            where_sql, params = shop_scope_where(shop_id)
+            conn.execute(
+                f"""
+                UPDATE service_appointments
+                SET customer_id = ?, updated_at = ?
+                WHERE id = ? AND {where_sql}
+                """,
+                [customer_id, now, appointment_id, *params],
+            )
+            conn.commit()
+            saved_customer = load_customer_for_shop(conn, customer_id, shop_id)
+            linked_appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
+            if (
+                (linked_appointment.get("status") or "") != "Cancelled"
+                or optional_int_value(linked_appointment.get("customer_id")) != customer_id
+            ):
+                return RedirectResponse(f"/pro/customers/{customer_id}", status_code=303)
+            recipient_email = normalize_email(saved_customer.get("email") or "")
+            if not recipient_email:
+                return RedirectResponse("/pro/calendar?notice=customer_added_cancellation_email_missing", status_code=303)
+            if optional_email_format_error(recipient_email):
+                return RedirectResponse("/pro/calendar?notice=customer_added_cancellation_email_failed", status_code=303)
+            shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+            cancellation_email_payload = {
+                "appointment_id": appointment_id,
+                "appointment": linked_appointment,
+                "recipient_email": recipient_email,
+                "shop_profile": shop_profile,
+                "shop_name": shop_profile.get("shop_name") or load_shop_name(conn),
+            }
+        else:
+            try:
+                customer_id, vehicle_id, appointment = link_appointment_customer_vehicle(
+                    conn,
+                    appointment_id,
+                    form,
+                    shop_id=shop_id,
+                )
+            except HTTPException as exc:
+                return RedirectResponse(
+                    f"/pro/calendar?{urlencode({'error': str(exc.detail)})}",
+                    status_code=303,
+                )
     finally:
         conn.close()
+    if cancellation_email_payload:
+        try:
+            result = send_appointment_cancellation_email(
+                appointment=cancellation_email_payload["appointment"],
+                recipient_email=cancellation_email_payload["recipient_email"],
+                shop_profile=cancellation_email_payload["shop_profile"],
+                shop_name=cancellation_email_payload["shop_name"],
+            )
+        except Exception:
+            logger.exception("APPOINTMENT_CANCELLATION_EMAIL_ADD_CUSTOMER_UNEXPECTED appointment_id=%s", appointment_id)
+            return RedirectResponse("/pro/calendar?notice=customer_added_cancellation_email_failed", status_code=303)
+        if result.success:
+            logger.info("APPOINTMENT_CANCELLATION_EMAIL_ADD_CUSTOMER_SENT appointment_id=%s transport=%s", appointment_id, result.transport)
+            return RedirectResponse("/pro/calendar?notice=customer_added_cancellation_email_sent", status_code=303)
+        logger.warning(
+            "APPOINTMENT_CANCELLATION_EMAIL_ADD_CUSTOMER_FAILED appointment_id=%s category=%s provider_related=%s configuration_related=%s",
+            appointment_id,
+            result.error_category,
+            result.provider_related,
+            result.configuration_related,
+        )
+        return RedirectResponse("/pro/calendar?notice=customer_added_cancellation_email_failed", status_code=303)
     if action == "estimate":
         appointment["customer_id"] = customer_id
         appointment["vehicle_id"] = vehicle_id

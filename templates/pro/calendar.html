@@ -468,6 +468,23 @@
       <p class="tm-book-warning">Add a customer email address before emailing this cancellation.</p>
       {% if item.cancellation_email_customer_edit_url %}
       <a class="tm-btn tm-btn-secondary" href="{{ item.cancellation_email_customer_edit_url }}">Edit Customer</a>
+      {% elif item.cancellation_email_add_customer_context %}
+      <details class="tm-calendar-convert" data-conversion-panel>
+        <summary class="tm-btn tm-btn-secondary">Add Customer</summary>
+        <form class="tm-calendar-convert-panel" method="post" action="/pro/calendar/{{ item.id }}/convert">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="customer_mode" value="new">
+          <input type="hidden" name="appointment_id" value="{{ item.cancellation_email_add_customer_context.appointment_id }}">
+          <input type="hidden" name="appointment_action" value="{{ item.cancellation_email_add_customer_context.appointment_action }}">
+          <input type="hidden" name="appointment_token" value="{{ item.cancellation_email_add_customer_context.appointment_token }}">
+          <div class="tm-calendar-convert-grid">
+            <div><label class="tm-label" for="cancel_new_customer_name_{{ item.id }}">Customer Name</label><input class="tm-input" id="cancel_new_customer_name_{{ item.id }}" name="new_customer_name" value="{{ item.customer_name or '' }}"></div>
+            <div><label class="tm-label" for="cancel_new_customer_phone_{{ item.id }}">Phone</label><input class="tm-input" id="cancel_new_customer_phone_{{ item.id }}" name="new_customer_phone" type="tel" placeholder="(***)***-****" value="{{ item.customer_phone|pro_phone if item.customer_phone else '' }}"></div>
+            <div><label class="tm-label" for="cancel_new_customer_email_{{ item.id }}">Email</label><input class="tm-input" id="cancel_new_customer_email_{{ item.id }}" name="new_customer_email" type="email" value=""></div>
+          </div>
+          <button class="tm-btn tm-btn-primary" type="submit" name="conversion_action" value="add_customer_cancellation_email">Save Customer</button>
+        </form>
+      </details>
       {% endif %}
       {% endif %}
     {% endif %}

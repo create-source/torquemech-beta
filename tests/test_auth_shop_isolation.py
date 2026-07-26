@@ -2600,6 +2600,30 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("@", parsed.query)
         self.assertNotIn("Email Cancellation", card)
 
+    def test_unlinked_cancelled_missing_email_shows_add_customer_continuation(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-add-link@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-add-link@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Unlinked Owner",
+            customer_email="",
+            status="Cancelled",
+        )
+
+        page = client.get("/pro/calendar")
+        card = page.text.split("Unlinked Owner", 1)[1].split("</article>", 1)[0]
+
+        self.assertIn(">Add Customer</summary>", card)
+        self.assertIn(f'action="/pro/calendar/{appointment_id}/convert"', card)
+        self.assertIn('name="conversion_action" value="add_customer_cancellation_email"', card)
+        self.assertIn(f'name="appointment_id" value="{appointment_id}"', card)
+        self.assertIn(f'name="appointment_action" value="{pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION}"', card)
+        self.assertIn('name="appointment_token"', card)
+        self.assertIn('name="new_customer_name" value="Unlinked Owner"', card)
+        self.assertNotIn("Edit Customer", card)
+        self.assertNotIn("Email Cancellation", card)
+
     def test_customer_save_continuation_sends_cancellation_email_once_using_saved_customer_email(self):
         client = self.client()
         self.bootstrap_owner(client, email="cancel-save@example.com", shop_name="Alpha Shop")
@@ -2649,6 +2673,228 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(saved["email"], "New.Customer@Example.COM")
         notice_page = client.get(response.headers["location"])
         self.assertIn("Customer updated and cancellation email sent.", notice_page.text)
+
+    def test_unlinked_add_customer_continuation_creates_links_and_sends_once_using_saved_email(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-add-send@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-add-send@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Add Send",
+            customer_email="",
+            status="Cancelled",
+        )
+        page = client.get("/pro/calendar")
+        card = page.text.split("Add Send", 1)[1].split("</article>", 1)[0]
+        sent_messages = []
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            side_effect=lambda message, config=None, **kwargs: sent_messages.append(message) or pro_module.email_service.EmailSendResult(success=True, transport="test"),
+        ) as send_email:
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/convert",
+                data={
+                    "csrf_token": csrf_from(page.text),
+                    "conversion_action": "add_customer_cancellation_email",
+                    "customer_mode": "new",
+                    "appointment_id": re.search(r'name="appointment_id" value="([^"]+)"', card).group(1),
+                    "appointment_action": re.search(r'name="appointment_action" value="([^"]+)"', card).group(1),
+                    "appointment_token": re.search(r'name="appointment_token" value="([^"]+)"', card).group(1),
+                    "new_customer_name": "Add Send",
+                    "new_customer_phone": "(555) 111-2222",
+                    "new_customer_email": "Added.Customer@Example.COM",
+                    "customer_email": "do-not-use@example.com",
+                },
+                follow_redirects=False,
+            )
+
+        appointment = self.conn.execute("SELECT customer_id, vehicle_id FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone()
+        customer = self.conn.execute("SELECT * FROM customers WHERE id = ?", (appointment["customer_id"],)).fetchone()
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=customer_added_cancellation_email_sent")
+        self.assertIsNotNone(appointment["customer_id"])
+        self.assertIsNone(appointment["vehicle_id"])
+        self.assertEqual(customer["shop_id"], shop_id)
+        self.assertEqual(customer["email"], "Added.Customer@Example.COM")
+        self.assertEqual(send_email.call_count, 1)
+        self.assertEqual(len(sent_messages), 1)
+        self.assertEqual(sent_messages[0].recipients, ["added.customer@example.com"])
+        notice_page = client.get(response.headers["location"])
+        self.assertIn("Customer added and cancellation email sent.", notice_page.text)
+
+    def test_unlinked_add_customer_missing_email_links_without_provider(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-add-missing@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-add-missing@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Add Missing",
+            customer_email="",
+            status="Cancelled",
+        )
+        page = client.get("/pro/calendar")
+        card = page.text.split("Add Missing", 1)[1].split("</article>", 1)[0]
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/convert",
+                data={
+                    "csrf_token": csrf_from(page.text),
+                    "conversion_action": "add_customer_cancellation_email",
+                    "customer_mode": "new",
+                    "appointment_id": re.search(r'name="appointment_id" value="([^"]+)"', card).group(1),
+                    "appointment_action": re.search(r'name="appointment_action" value="([^"]+)"', card).group(1),
+                    "appointment_token": re.search(r'name="appointment_token" value="([^"]+)"', card).group(1),
+                    "new_customer_name": "Add Missing",
+                    "new_customer_phone": "(555) 111-2222",
+                    "new_customer_email": "",
+                },
+                follow_redirects=False,
+            )
+
+        appointment = self.conn.execute("SELECT customer_id FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone()
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=customer_added_cancellation_email_missing")
+        self.assertIsNotNone(appointment["customer_id"])
+        send_email.assert_not_called()
+        notice_page = client.get(response.headers["location"])
+        self.assertIn("Customer added. Add an email address before emailing this cancellation.", notice_page.text)
+
+    def test_unlinked_add_customer_delivery_failure_keeps_created_linked_customer(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-add-fail@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("cancel-add-fail@example.com")
+        appointment_id = self.seed_service_appointment_for_shop(
+            shop_id,
+            customer_name="Add Fail",
+            customer_email="",
+            status="Cancelled",
+        )
+        page = client.get("/pro/calendar")
+        card = page.text.split("Add Fail", 1)[1].split("</article>", 1)[0]
+
+        with patch.object(
+            pro_module.email_service,
+            "send_email",
+            return_value=pro_module.email_service.EmailSendResult(success=False, transport="test", error_category="provider_exception", provider_related=True),
+        ) as send_email:
+            response = client.post(
+                f"/pro/calendar/{appointment_id}/convert",
+                data={
+                    "csrf_token": csrf_from(page.text),
+                    "conversion_action": "add_customer_cancellation_email",
+                    "customer_mode": "new",
+                    "appointment_id": re.search(r'name="appointment_id" value="([^"]+)"', card).group(1),
+                    "appointment_action": re.search(r'name="appointment_action" value="([^"]+)"', card).group(1),
+                    "appointment_token": re.search(r'name="appointment_token" value="([^"]+)"', card).group(1),
+                    "new_customer_name": "Add Fail",
+                    "new_customer_phone": "(555) 111-2222",
+                    "new_customer_email": "add-fail@example.com",
+                },
+                follow_redirects=False,
+            )
+
+        appointment = self.conn.execute("SELECT customer_id FROM service_appointments WHERE id = ?", (appointment_id,)).fetchone()
+        customer = self.conn.execute("SELECT email FROM customers WHERE id = ?", (appointment["customer_id"],)).fetchone()
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/pro/calendar?notice=customer_added_cancellation_email_failed")
+        self.assertIsNotNone(appointment["customer_id"])
+        self.assertEqual(customer["email"], "add-fail@example.com")
+        self.assertEqual(send_email.call_count, 1)
+        notice_page = client.get(response.headers["location"])
+        self.assertIn("Customer added, but the cancellation email could not be sent. Use Email Cancellation to retry.", notice_page.text)
+
+    def test_unlinked_add_customer_invalid_contexts_do_not_create_or_send(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="cancel-add-guard-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("cancel-add-guard-alpha@example.com")
+        cancelled_id = self.seed_service_appointment_for_shop(alpha_shop, customer_name="Alpha Add", status="Cancelled")
+        mismatch_id = self.seed_service_appointment_for_shop(alpha_shop, customer_name="Alpha Other", status="Cancelled", requested_time="10:00")
+        confirmed_id = self.seed_service_appointment_for_shop(alpha_shop, customer_name="Alpha Confirmed", status="Confirmed", requested_time="11:00")
+        page = client.get("/pro/calendar")
+        csrf_token = csrf_from(page.text)
+        valid_context = pro_module.customer_appointment_continuation_context(
+            Request({"type": "http", "session": {pro_module.AUTH_SESSION_CSRF_KEY: csrf_token}}),
+            shop_id=alpha_shop,
+            customer_id=0,
+            appointment_id=cancelled_id,
+            action=pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+        )
+        confirmed_context = pro_module.customer_appointment_continuation_context(
+            Request({"type": "http", "session": {pro_module.AUTH_SESSION_CSRF_KEY: csrf_token}}),
+            shop_id=alpha_shop,
+            customer_id=0,
+            appointment_id=confirmed_id,
+            action=pro_module.CUSTOMER_APPOINTMENT_CANCELLATION_EMAIL_ACTION,
+        )
+        client_two = self.client()
+        self.signup(client_two, email="cancel-add-guard-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("cancel-add-guard-beta@example.com")
+        beta_shop = self.shop_id_for_email("cancel-add-guard-beta@example.com")
+        beta_id = self.seed_service_appointment_for_shop(beta_shop, customer_name="Beta Add", status="Cancelled")
+        before_count = self.conn.execute("SELECT COUNT(*) AS count FROM customers").fetchone()["count"]
+
+        with patch.object(pro_module.email_service, "send_email") as send_email:
+            tampered = client.post(
+                f"/pro/calendar/{cancelled_id}/convert",
+                data={
+                    "csrf_token": csrf_token,
+                    "conversion_action": "add_customer_cancellation_email",
+                    "customer_mode": "new",
+                    "appointment_id": str(cancelled_id),
+                    "appointment_action": "send_confirmation_email_after_customer_save",
+                    "appointment_token": "bad-token",
+                    "new_customer_name": "Tampered",
+                    "new_customer_email": "tampered@example.com",
+                },
+                follow_redirects=False,
+            )
+            mismatched = client.post(
+                f"/pro/calendar/{mismatch_id}/convert",
+                data={
+                    "csrf_token": csrf_token,
+                    "conversion_action": "add_customer_cancellation_email",
+                    "customer_mode": "new",
+                    **valid_context,
+                    "new_customer_name": "Mismatched",
+                    "new_customer_email": "mismatched@example.com",
+                },
+                follow_redirects=False,
+            )
+            non_cancelled = client.post(
+                f"/pro/calendar/{confirmed_id}/convert",
+                data={
+                    "csrf_token": csrf_token,
+                    "conversion_action": "add_customer_cancellation_email",
+                    "customer_mode": "new",
+                    **confirmed_context,
+                    "new_customer_name": "Non Cancelled",
+                    "new_customer_email": "noncancelled@example.com",
+                },
+                follow_redirects=False,
+            )
+            cross_shop = client.post(
+                f"/pro/calendar/{beta_id}/convert",
+                data={
+                    "csrf_token": csrf_token,
+                    "conversion_action": "add_customer_cancellation_email",
+                    "customer_mode": "new",
+                    **valid_context,
+                    "new_customer_name": "Cross Shop",
+                    "new_customer_email": "cross@example.com",
+                },
+                follow_redirects=False,
+            )
+
+        after_count = self.conn.execute("SELECT COUNT(*) AS count FROM customers").fetchone()["count"]
+        self.assertEqual(tampered.headers["location"], "/pro/calendar?notice=cancellation_email_missing")
+        self.assertEqual(mismatched.headers["location"], "/pro/calendar?notice=cancellation_email_missing")
+        self.assertEqual(non_cancelled.headers["location"], "/pro/calendar?notice=cancellation_email_missing")
+        self.assertEqual(cross_shop.headers["location"], "/pro/calendar?notice=cancellation_email_missing")
+        self.assertEqual(after_count, before_count)
+        send_email.assert_not_called()
 
     def test_customer_save_continuation_failure_still_saves_and_redirects_to_calendar_retry_notice(self):
         client = self.client()
