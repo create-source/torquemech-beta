@@ -34,24 +34,20 @@
   .tm-book-form-intro { grid-column: 1 / -1; color: #475569; line-height: 1.5; margin: 0 0 2px; }
   .tm-book-section-title { grid-column: 1 / -1; margin: 5px 0 0; color: #0f172a; font-size: 1rem; }
   .tm-book-success {
-    border: 1px solid #d1d5db;
+    border: 1px solid #d1d5db !important;
     border-radius: 8px;
-    background: #ffffff;
-    color: #000000;
+    background: #ffffff !important;
+    color: #000000 !important;
     padding: 14px;
     font-weight: 900;
   }
-  .tm-book-success p { margin: 0; }
-  .tm-book-success-reminder {
-    margin-top: 8px !important;
-    color: #000000;
+
+  .tm-book-success p,
+  .tm-book-success-reminder,
+  .tm-book-success-contact,
+  .tm-book-success-contact a {
+    color: #000000 !important;
   }
-  .tm-book-success-contact {
-    margin-top: 8px !important;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-  }
-  .tm-book-success-contact a { color: inherit; }
   .tm-book-panel .tm-book-warning {
     width: 100% !important;
     box-sizing: border-box !important;
