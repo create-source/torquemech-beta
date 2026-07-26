@@ -7163,6 +7163,12 @@ if (getEstimateHint) {
       setConfirmMessage("error", "Some quoted services are missing prices. Review pricing before preparing the customer quote.");
       return false;
     }
+    if (isFindingEstimatorSession()) {
+      signatureDataUrl = null;
+      if (customerAgreesChk) customerAgreesChk.checked = false;
+      refreshApprovalStatus();
+      return true;
+    }
     const wantSig = getWantSig();
     if (wantSig === "yes") {
       try {
@@ -8101,7 +8107,7 @@ if (getEstimateHint) {
       }
 
       renderLineItems();
-      setStatus("ok", "Quote lines updated.");
+      setStatus("ok", isFindingEstimatorSession() ? "Estimate lines updated. Review before saving." : "Quote lines updated.");
       trackClarity("estimate_generated", {
         source: "estimator",
         action: "generate_all",
@@ -8110,7 +8116,9 @@ if (getEstimateHint) {
       });
       isGeneratingAllLines = false;
       if (generateAllBtn) generateAllBtn.disabled = false;
-      openConfirm();
+      if (openConfirm() && isFindingEstimatorSession()) {
+        setConfirmMessage("info", "Review the prepared estimate details, then save it to the linked finding.");
+      }
 
     } catch (e) {
       setStatus("error", `Generate all failed: ${e.message}`);

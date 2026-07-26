@@ -6,54 +6,77 @@
 <style>
   .tm-finding-panel {
     border: 1px solid rgba(15, 23, 42, 0.12);
-    border-left: 5px solid #d97706;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.94);
+    background: #fff;
     color:#0f172a;
-    padding: 18px;
+    padding: 16px;
     max-width: 920px;
+    opacity: 1;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   }
-  .tm-finding-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
-  .tm-finding-field { display:grid; gap:3px; }
-  .tm-finding-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
+  .tm-finding-panel + .tm-finding-panel { margin-top: 14px; }
+  .tm-finding-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px 12px; }
+  .tm-finding-field { display:grid; gap:4px; min-width:0; }
+  .tm-finding-field span { color:#334155 !important; opacity:1 !important; font-size:.74rem; font-weight:900; text-transform:uppercase; letter-spacing:0; }
   .tm-finding-field strong,
   .tm-finding-panel h2,
   .tm-finding-panel .tm-crm-kicker,
   .tm-finding-panel .tm-label {
-    color:#0f172a;
+    color:#0f172a !important;
+    -webkit-text-fill-color:#0f172a !important;
+    opacity:1 !important;
+  }
+  .tm-finding-section-title {
+    margin:0;
+    color:#0f172a !important;
+    -webkit-text-fill-color:#0f172a !important;
+    font-size:1rem;
+    font-weight:900;
+    line-height:1.25;
+    opacity:1 !important;
   }
   .tm-finding-panel .tm-history-empty,
   .tm-finding-panel .tm-hint,
   .tm-finding-panel textarea,
   .tm-finding-panel .tm-input {
     color:#334155;
+    color:#334155 !important;
+    -webkit-text-fill-color:#334155 !important;
+    opacity:1 !important;
   }
-  .tm-finding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
-  .tm-finding-notes { display:grid; gap:12px; margin-top:16px; }
-  .tm-finding-action-panel { display:grid; gap:12px; margin-top:16px; }
-  .tm-finding-photo-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; }
+  .tm-finding-panel .tm-input,
+  .tm-finding-panel textarea {
+    background:#fff !important;
+    border-color:rgba(15,23,42,.16) !important;
+  }
+  .tm-finding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .tm-finding-notes { display:grid; gap:12px; }
+  .tm-finding-action-panel { display:grid; gap:12px; }
+  .tm-finding-photo-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
   .tm-finding-photo-link {
     display:grid;
-    gap:6px;
-    color:#334155;
+    gap:7px;
+    color:#334155 !important;
     font-size:.82rem;
     font-weight:800;
     text-decoration:none;
+    min-width:0;
   }
   .tm-finding-photo-link img {
     width:100%;
-    aspect-ratio:4 / 3;
-    object-fit:cover;
+    height: min(320px, 42vw);
+    max-height: 320px;
+    object-fit:contain;
     border-radius:8px;
     border:1px solid rgba(15,23,42,.12);
     background:#f8fafc;
   }
-  .tm-finding-history { margin-top:16px; }
-  .tm-finding-history-list { display:grid; gap:10px; margin-top:12px; }
-  .tm-finding-history-item { border:1px solid rgba(15,23,42,.1); border-radius:8px; padding:12px; background:#fff; }
-  .tm-finding-history-time { color:#64748b; font-size:.82rem; font-weight:800; }
+  .tm-finding-history-list { display:grid; gap:8px; margin-top:10px; }
+  .tm-finding-history-item { border:1px solid rgba(15,23,42,.1); border-radius:8px; padding:10px 12px; background:#fff; }
+  .tm-finding-history-time { color:#475569 !important; font-size:.78rem; font-weight:800; opacity:1 !important; }
   .tm-finding-history-event { margin-top:4px; font-weight:900; color:#0f172a; }
   .tm-finding-history-finding { margin-top:3px; color:#475569; }
+  .tm-finding-panel textarea { min-height: 112px; resize: vertical; }
   .tm-status-chip {
     display:inline-flex;
     align-items:center;
@@ -66,7 +89,21 @@
     font-weight:900;
     text-transform:uppercase;
   }
-  @media (max-width:760px) { .tm-finding-grid { grid-template-columns:1fr; } }
+  @media (max-width:760px) {
+    .tm-pro-pagehead { align-items:flex-start; gap:14px; }
+    .tm-pro-pagehead .tm-btn { width:100%; justify-content:center; }
+    .tm-pro-title {
+      font-size: clamp(1.45rem, 8vw, 2rem) !important;
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+    .tm-finding-panel { padding:14px; }
+    .tm-finding-grid { grid-template-columns:1fr; }
+    .tm-finding-photo-grid { grid-template-columns:1fr; }
+    .tm-finding-photo-link img { height: min(300px, 72vw); max-height:300px; }
+    .tm-finding-actions .tm-btn { width:100%; justify-content:center; }
+    .tm-finding-panel textarea { min-height: 96px; }
+  }
 </style>
 {% endblock %}
 
@@ -116,7 +153,7 @@
   </section>
 
   <section class="tm-finding-panel tm-finding-action-panel" aria-label="Before photos">
-    <div class="tm-crm-kicker">Before Photos</div>
+    <h2 class="tm-finding-section-title">Before Photos</h2>
     {% if finding.before_inspection_photo_urls %}
     <div class="tm-finding-photo-grid">
       {% for photo_url in finding.before_inspection_photo_urls %}
@@ -132,7 +169,7 @@
   </section>
 
   <section class="tm-finding-panel tm-finding-action-panel" aria-label="Recommended Repair Estimate">
-    <div class="tm-crm-kicker">Recommended Repair Estimate</div>
+    <h2 class="tm-finding-section-title">Recommended Repair Estimate</h2>
     {% set has_saved_estimate = finding.estimate_document_id %}
     {% set has_inline_estimate = finding.labor_hours is not none or finding.labor_rate is not none or finding.labor_amount is not none or finding.parts_cost is not none %}
     {% set estimate_total = finding.estimate_total if finding.estimate_total is not none else ((finding.labor_amount or 0) + (finding.parts_cost or 0)) %}
@@ -176,7 +213,7 @@
   </form>
 
   <section class="tm-finding-panel tm-finding-history" aria-label="Finding History">
-    <div class="tm-crm-kicker">Finding History</div>
+    <h2 class="tm-finding-section-title">Finding History</h2>
     {% if finding_history_records %}
     <div class="tm-finding-history-list">
       {% for item in finding_history_records %}

@@ -547,13 +547,46 @@
   .tm-parts-source-group {
     display: grid;
     gap: 8px;
+    padding: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1) !important;
+    border-radius: 8px;
+    background: #fff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
   }
 
   .tm-parts-source-group-title {
-    color: #cbd5e1;
+    color: #0f172a !important;
+    opacity: 1 !important;
     font-size: .76rem;
     font-weight: 900;
     text-transform: uppercase;
+  }
+
+  .tm-parts-source-group .tm-intel-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .tm-parts-source-group .tm-intel-badge {
+    flex: 1 1 150px;
+    min-width: 0;
+    justify-content: center;
+    border-color: rgba(15, 23, 42, 0.16) !important;
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    text-align: center;
+    overflow-wrap: anywhere;
+    box-shadow: none !important;
+  }
+
+  .tm-parts-source-group a.tm-intel-badge:hover,
+  .tm-parts-source-group a.tm-intel-badge:focus-visible {
+    border-color: rgba(15, 118, 110, 0.44) !important;
+    background: #ecfdf5 !important;
+    color: #0f172a !important;
   }
 
   .tm-parts-source-accordion {

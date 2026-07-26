@@ -533,10 +533,10 @@
         <div class="tm-hint">This shared estimate is ready for customer review with PDF, email, and share handoff support.</div>
         {% endif %}
         <div class="estimator-final-step">Final action</div>
-        <div class="estimator-final-heading">{% if is_finding_estimator %}Save as Prepared Estimate{% else %}Ready for Customer Review{% endif %}</div>
+        <div class="estimator-final-heading">{% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Ready for Customer Review{% endif %}</div>
         <div class="tm-hint estimator-final-hint">{% if is_finding_estimator %}Save this estimate to the finding and return to the finding detail page.{% else %}Review estimate details before sharing.{% endif %}</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta" aria-describedby="customerQuoteFinalHint" disabled data-tour-target="estimator-pdf">
-          {% if is_finding_estimator %}Save as Prepared Estimate{% else %}Create Customer Quote{% endif %}
+          {% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Create Customer Quote{% endif %}
         </button>
         <div id="customerQuoteFinalHint" class="tm-quote-trust-microcopy">{% if is_finding_estimator %}No customer approval or repair order is created.{% else %}Includes services, pricing, notes, and total.{% endif %}</div>
       </div>
@@ -701,7 +701,7 @@
       </div>
 
       <div class="modal-actions tm-confirm-actions">
-        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">Download Customer PDF</button>
+        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">{% if is_finding_estimator %}Save Prepared Estimate{% else %}Download Customer PDF{% endif %}</button>
         <div class="tm-confirm-secondary-actions">
           <button id="prepareReviewedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">{% if is_finding_estimator %}Save as Prepared Estimate{% else %}Prepare Reviewed Estimate{% endif %}</button>
           {% if not is_finding_estimator %}

@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 import unittest
 from unittest.mock import patch
@@ -265,6 +266,10 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.text
         self.assertIn("Save as Prepared Estimate", html)
+        self.assertIn("Review & Save Prepared Estimate", html)
+        self.assertIn('id="generateAllBtn"', html)
+        self.assertIn('id="prepareReviewedEstimateBtn"', html)
+        self.assertIn('id="confirmAddBtn"', html)
         self.assertIn("Return to Finding", html)
         self.assertIn(">Back to Finding</a>", html)
         self.assertIn(">Back to Vehicle</a>", html)
@@ -274,6 +279,55 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertNotIn("Open Customer Quote", html)
         self.assertNotIn("Email Customer Quote", html)
         self.assertNotIn("Create Repair Order", html)
+
+    def test_finding_prepared_estimate_buttons_have_unique_ids_and_matching_js_bindings(self):
+        self.start_finding_estimator_context()
+        response = TestClient(main.app, base_url="http://localhost").get(
+            "/estimator?source=finding&customer_id=1&vehicle_id=2&finding_id=3"
+            "&year=2008&make=Toyota&model=Sequoia&recommended_repair=Water+Pump+Replacement"
+        )
+        html = response.text
+        ids = re.findall(r'id="([^"]+)"', html)
+
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertIn('button id="generateAllBtn" type="button"', html)
+        self.assertIn('button id="prepareReviewedEstimateBtn" type="button"', html)
+        self.assertIn('button id="confirmAddBtn" type="button"', html)
+
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        self.assertIn('generateAllBtn?.addEventListener("click"', app_js)
+        self.assertIn('prepareReviewedEstimateBtn?.addEventListener("click"', app_js)
+        self.assertIn('const trigger = e.target?.closest?.("#confirmAddBtn");', app_js)
+        self.assertIn('if (openConfirm() && isFindingEstimatorSession()) {', app_js)
+
+    def test_finding_prepared_estimate_save_skips_hidden_signature_gate(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        self.assertIn("if (isFindingEstimatorSession()) {", app_js)
+        self.assertIn("signatureDataUrl = null;", app_js)
+        self.assertIn("if (customerAgreesChk) customerAgreesChk.checked = false;", app_js)
+        self.assertIn("return true;", app_js)
+        self.assertLess(
+            app_js.index("if (isFindingEstimatorSession()) {", app_js.index("function validateCustomerQuoteReview()")),
+            app_js.index('const wantSig = getWantSig();', app_js.index("function validateCustomerQuoteReview()")),
+        )
+
+    def test_finding_prepared_estimate_redirect_only_after_successful_pdf_save(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        success_idx = app_js.index('if (isFindingSave) {')
+        redirect_idx = app_js.index("window.location.assign(returnUrl);", success_idx)
+        catch_idx = app_js.index("} catch (e) {", success_idx)
+
+        self.assertLess(success_idx, redirect_idx)
+        self.assertLess(redirect_idx, catch_idx)
+        self.assertIn("if (!contentType.includes(\"application/pdf\"))", app_js)
+        self.assertIn("if (!pdfResponse.ok)", app_js)
+        self.assertIn("setConfirmMessage(\"error\", \"Unable to generate PDF. Please try again.\");", app_js)
 
     def test_finding_completion_redirect_logic_is_present(self):
         with open("static/app.js", encoding="utf-8") as handle:

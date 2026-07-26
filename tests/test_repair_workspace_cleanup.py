@@ -1510,6 +1510,18 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Google Shopping", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
         self.assertIn("1A Auto", pro_module.DEFAULT_PARTS_SOURCE_LABELS)
 
+    def test_parts_sources_groups_use_scoped_light_background_styles(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+
+        self.assertIn(".tm-parts-source-group {", vehicle_detail)
+        self.assertIn("background: #fff !important;", vehicle_detail)
+        self.assertIn("color: #0f172a !important;", vehicle_detail)
+        self.assertIn(".tm-parts-source-group-title {", vehicle_detail)
+        self.assertIn(".tm-parts-source-group .tm-intel-badge-row", vehicle_detail)
+        self.assertIn("flex-wrap: wrap;", vehicle_detail)
+        self.assertIn(".tm-parts-source-group .tm-intel-badge", vehicle_detail)
+        self.assertIn("overflow-wrap: anywhere;", vehicle_detail)
+
     def test_parts_tracking_crud_summary_excludes_returned_and_not_needed(self):
         conn = sqlite3.connect(":memory:")
         conn.row_factory = sqlite3.Row
