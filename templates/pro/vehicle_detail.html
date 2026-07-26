@@ -4581,7 +4581,7 @@
                 {% if item.mileage is not none %}
                 <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                 {% endif %}
-                <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}{{ item.estimate_document_status or "Prepared" }}{% else %}None{% endif %}</span>
+                <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}Estimate prepared{% else %}None{% endif %}</span>
                 <span class="tm-crm-chip">Pro Job: {% if item.linked_repair_record_id %}Created{% else %}Not Created{% endif %}</span>
                 {% if new_finding_id and item.id == new_finding_id %}<span class="tm-crm-chip">New</span>{% endif %}
               </div>
@@ -4611,9 +4611,9 @@
                 {% if item.status == "Approved" and item.linked_repair_record_id %}
                 <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
                 {% if item.estimate_document_url %}
-                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>
+                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
                 {% else %}
-                <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                 {% endif %}
                 {% elif item.status == "Approved" %}
                 <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
@@ -4630,12 +4630,12 @@
                   <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
                   <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
                 </form>
-                {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate</a>{% endif %}
+                {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>{% endif %}
                 {% elif item.estimate_document_url %}
-                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate / Continue Quote</a>
+                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
                 <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
                 {% else %}
-                <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                 {% endif %}
               </div>
               <details class="tm-crm-disclosure tm-finding-estimate">
@@ -4696,7 +4696,7 @@
                   {% if item.mileage is not none %}
                   <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                   {% endif %}
-                  <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}{{ item.estimate_document_status or "Prepared" }}{% else %}None{% endif %}</span>
+                  <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}Estimate prepared{% else %}None{% endif %}</span>
                   <span class="tm-crm-chip">Pro Job: {% if item.linked_repair_record_id %}Created{% else %}Not Created{% endif %}</span>
                   {% if new_finding_id and item.id == new_finding_id %}<span class="tm-crm-chip">New</span>{% endif %}
                 </div>
@@ -4714,9 +4714,9 @@
                   {% if item.status == "Approved" and item.linked_repair_record_id %}
                   <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
                   {% if item.estimate_document_url %}
-                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Review Estimate</a>
+                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
                   {% else %}
-                  <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                  <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                   {% endif %}
                   {% elif item.status == "Approved" %}
                   <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
@@ -4733,12 +4733,12 @@
                     <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
                     <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
                   </form>
-                  {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate</a>{% endif %}
+                  {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>{% endif %}
                   {% elif item.estimate_document_url %}
-                  <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">Review Estimate / Continue Quote</a>
+                  <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
                   <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
                   {% else %}
-                  <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Create Estimate</a>
+                  <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                   {% endif %}
                 </div>
                 <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
@@ -4984,6 +4984,11 @@
       </span>
     </summary>
     <div class="tm-workspace-panel-body" data-timeline-body>
+      {% if estimate_email_notice %}
+      <div class="tm-history-empty" style="margin-bottom:12px; border-style:solid; background:#fffbeb; color:#92400e;" role="status">
+        {{ estimate_email_notice }}
+      </div>
+      {% endif %}
       {% if timeline_total %}
       <div class="tm-timeline-groups">
         {% for group in vehicle_timeline %}
@@ -5037,6 +5042,14 @@
                   <div class="tm-repair-card-actions" style="margin-top:10px;">
                     <a class="tm-btn tm-btn-secondary" href="{{ item.url }}">{{ item.action_label }}</a>
                     {% if item.edit_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.edit_url }}">Edit / Reopen Estimate</a>{% endif %}
+                    {% if customer.email %}
+                    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/estimates/{{ item.id }}/email">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                      <button class="tm-btn tm-btn-secondary" type="submit">Email Estimate</button>
+                    </form>
+                    {% else %}
+                    <p class="tm-history-empty" style="margin:0;">Add a customer email address before emailing this estimate.</p>
+                    {% endif %}
                   </div>
                   {% endif %}
                   {% endif %}

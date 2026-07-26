@@ -14531,8 +14531,16 @@ def pro_finding_record_detail(
 ):
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = required_current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        estimate_document_records = load_vehicle_estimate_documents(conn, customer_id, vehicle_id)
+        attach_estimate_documents_to_findings(
+            [finding],
+            estimate_document_records,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        )
         finding_history_records = load_finding_history_records(conn, finding_id)
         checklist_summary = repair_checklist_summary(conn, finding.get("linked_repair_record_id"))
     finally:
@@ -14565,7 +14573,8 @@ def pro_finding_record_edit(
 ):
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = required_current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
     finally:
         conn.close()
@@ -14598,7 +14607,8 @@ async def pro_finding_record_update(
 
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = required_current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         cur = conn.execute(
             f"""
@@ -14688,7 +14698,8 @@ async def pro_finding_notes_update(
 
     conn = crm_db_conn()
     try:
-        load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = required_current_shop_id(conn, request)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         previous_customer_notes = existing.get("customer_notes") or ""
         previous_internal_notes = existing.get("internal_notes") or ""
@@ -14748,7 +14759,8 @@ async def pro_finding_record_status_update(
 
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = required_current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         previous_status = existing.get("status") or ""
         if previous_status == status:

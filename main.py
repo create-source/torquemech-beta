@@ -49,6 +49,7 @@ from routers.pro import (
     repair_workspace_parts_sources,
     router as pro_router,
     safe_next_url,
+    shop_can_write,
     load_shop_subscription,
     shop_subscription_access_context,
     validate_csrf,
@@ -12736,7 +12737,7 @@ def shop_profile_pdf_preview() -> Response:
 # PDF
 # ===============================
 @app.post("/estimate/pdf")
-async def estimate_pdf(req: EstimateRequest) -> Response:
+async def estimate_pdf(request: Request, req: EstimateRequest) -> Response:
     try:
         metric_incr("pdf_single_generated")
         est = await estimate(req)
@@ -12887,6 +12888,7 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
         save_repair_estimate_pdf_if_available(
             req,
             pdf_bytes,
+            request=request,
             vehicle_line=customer_vehicle_line(req.year, req.make, req.model, req.displayModel),
             related_title=estimate_pdf_related_title(req, est.service_name),
             estimate_total=float(est.estimate or 0),
@@ -12898,6 +12900,8 @@ async def estimate_pdf(req: EstimateRequest) -> Response:
             headers={"Content-Disposition": "attachment; filename=torquemech_estimate.pdf"}
         )
 
+    except HTTPException:
+        raise
     except Exception:
         logging.exception("PDF_SINGLE_FAILED")
         metric_incr("errors_pdf_single")
@@ -13094,6 +13098,8 @@ def estimate_request_source_value(req: Any, key: str) -> str:
 
 
 def estimate_pdf_approval_status(req: Any) -> str:
+    if estimate_request_source_value(req, "source") == "finding":
+        return "Prepared estimate"
     if getattr(req, "signatureDataUrl", None):
         return "Signed customer approval"
     if getattr(req, "customerAgrees", False):
@@ -13195,6 +13201,7 @@ def save_repair_estimate_pdf_if_available(
     req: Any,
     pdf_bytes: bytes,
     *,
+    request: Request | None = None,
     vehicle_line: str,
     related_title: str,
     estimate_total: float,
@@ -13203,6 +13210,48 @@ def save_repair_estimate_pdf_if_available(
     vehicle_id = estimate_request_source_value(req, "vehicleId")
     if not customer_id or not vehicle_id:
         return
+    if estimate_request_source_value(req, "source") == "finding":
+        if request is None:
+            raise HTTPException(status_code=403, detail="Finding estimate saves require shop access.")
+        finding_id = estimate_request_source_value(req, "findingId")
+        if not finding_id:
+            raise HTTPException(status_code=400, detail="Finding estimate saves require a finding id.")
+        conn = app_db_conn()
+        try:
+            if current_user(conn, request) is None:
+                raise HTTPException(status_code=403, detail="Finding estimate saves require shop access.")
+            shop_context = current_shop_context(conn, request)
+            access_context = shop_subscription_access_context(conn, shop_context.get("id"))
+            if not shop_context.get("id") or not shop_can_write(access_context):
+                raise HTTPException(status_code=403, detail="Read-only subscription mode blocks saving finding estimates.")
+            try:
+                customer_id_int = int(customer_id)
+                vehicle_id_int = int(vehicle_id)
+                finding_id_int = int(finding_id)
+                shop_id_int = int(shop_context.get("id"))
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail="Invalid finding estimate link.")
+            linked_finding = conn.execute(
+                """
+                SELECT fr.id
+                FROM findings_records fr
+                JOIN customer_vehicles cv
+                  ON cv.id = fr.vehicle_id
+                 AND cv.customer_id = ?
+                JOIN customers c
+                  ON c.id = cv.customer_id
+                 AND c.shop_id = ?
+                WHERE fr.id = ?
+                  AND fr.customer_id = ?
+                  AND fr.vehicle_id = ?
+                LIMIT 1
+                """,
+                (customer_id_int, shop_id_int, finding_id_int, customer_id_int, vehicle_id_int),
+            ).fetchone()
+            if not linked_finding:
+                raise HTTPException(status_code=404, detail="Finding estimate link not found.")
+        finally:
+            conn.close()
     try:
         record_estimate_pdf_document(
             pdf_bytes=pdf_bytes,
@@ -13386,7 +13435,7 @@ def pdf_draw_multi_approval_block(
 
 
 @app.post("/estimate/pdf_multi")
-async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
+async def estimate_pdf_multi(request: Request, req: MultiPDFRequest) -> Response:
     try:
         metric_incr("pdf_multi_generated")
 
@@ -13840,6 +13889,7 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
         save_repair_estimate_pdf_if_available(
             req,
             pdf_bytes,
+            request=request,
             vehicle_line=vehicle_line,
             related_title=estimate_pdf_related_title(req, first_service_title),
             estimate_total=float(grand_total or 0),
@@ -13851,6 +13901,8 @@ async def estimate_pdf_multi(req: MultiPDFRequest) -> Response:
             headers={"Content-Disposition": "inline; filename=torquemech_estimate.pdf"},
         )
 
+    except HTTPException:
+        raise
     except Exception:
         logging.exception("PDF_MULTI_FAILED")
         metric_incr("errors_pdf_multi")

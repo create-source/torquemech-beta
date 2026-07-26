@@ -18,6 +18,23 @@
   .tm-finding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
   .tm-finding-notes { display:grid; gap:12px; margin-top:16px; }
   .tm-finding-action-panel { display:grid; gap:12px; margin-top:16px; }
+  .tm-finding-photo-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; }
+  .tm-finding-photo-link {
+    display:grid;
+    gap:6px;
+    color:#334155;
+    font-size:.82rem;
+    font-weight:800;
+    text-decoration:none;
+  }
+  .tm-finding-photo-link img {
+    width:100%;
+    aspect-ratio:4 / 3;
+    object-fit:cover;
+    border-radius:8px;
+    border:1px solid rgba(15,23,42,.12);
+    background:#f8fafc;
+  }
   .tm-finding-history { margin-top:16px; }
   .tm-finding-history-list { display:grid; gap:10px; margin-top:12px; }
   .tm-finding-history-item { border:1px solid rgba(15,23,42,.1); border-radius:8px; padding:12px; background:#fff; }
@@ -79,70 +96,51 @@
     </div>
   </section>
 
+  <section class="tm-finding-panel tm-finding-action-panel" aria-label="Before photos">
+    <div class="tm-crm-kicker">Before Photos</div>
+    {% if finding.before_inspection_photo_urls %}
+    <div class="tm-finding-photo-grid">
+      {% for photo_url in finding.before_inspection_photo_urls %}
+      <a class="tm-finding-photo-link" href="{{ photo_url }}" target="_blank" rel="noopener">
+        <img src="{{ photo_url }}" alt="Before photo {{ loop.index }} for this finding">
+        <span>Before photo {{ loop.index }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="tm-history-empty">No before photos are attached to this finding yet.</div>
+    {% endif %}
+  </section>
+
   <section class="tm-finding-panel tm-finding-action-panel" aria-label="Recommended Repair Estimate">
     <div class="tm-crm-kicker">Recommended Repair Estimate</div>
-    {% set has_estimate = finding.labor_hours is not none or finding.labor_rate is not none or finding.labor_amount is not none or finding.parts_cost is not none %}
-    {% set estimate_total = (finding.labor_amount or 0) + (finding.parts_cost or 0) %}
-    {% if has_estimate %}
+    {% set has_saved_estimate = finding.estimate_document_id %}
+    {% set has_inline_estimate = finding.labor_hours is not none or finding.labor_rate is not none or finding.labor_amount is not none or finding.parts_cost is not none %}
+    {% set estimate_total = finding.estimate_total if finding.estimate_total is not none else ((finding.labor_amount or 0) + (finding.parts_cost or 0)) %}
+    {% if has_saved_estimate %}
+    <div><span class="tm-status-chip">Estimate prepared</span></div>
+    {% endif %}
+    {% if has_saved_estimate or has_inline_estimate %}
     <div class="tm-finding-grid">
       <div class="tm-finding-field"><span>Service Name</span><strong>{{ finding.labor_description or finding.recommendation or "-" }}</strong></div>
+      {% if not has_saved_estimate %}
       <div class="tm-finding-field"><span>Labor</span><strong>{% if finding.labor_amount is not none %}{{ finding.labor_amount|pro_currency }}{% else %}-{% endif %}</strong></div>
       <div class="tm-finding-field"><span>Parts</span><strong>{% if finding.parts_cost is not none %}{{ finding.parts_cost|pro_currency }}{% else %}-{% endif %}</strong></div>
-      <div class="tm-finding-field"><span>Total</span><strong>{{ estimate_total|pro_currency }}</strong></div>
+      {% endif %}
+      <div class="tm-finding-field"><span>Estimated Total</span><strong>{{ estimate_total|pro_currency }}</strong></div>
     </div>
+    {% else %}
+    <div class="tm-history-empty">No repair estimate has been prepared for this finding yet.</div>
     {% endif %}
     <div class="tm-finding-actions" style="margin-top:0;">
-      <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, finding) }}">
-        {% if has_estimate %}Review Estimate{% else %}Create Estimate{% endif %}
+      <a class="tm-btn tm-btn-primary" href="{{ finding.estimate_document_edit_url or build_finding_estimator_href(customer, vehicle, finding) }}">
+        {% if has_saved_estimate %}View/Edit Repair Estimate{% else %}Build Repair Estimate{% endif %}
       </a>
+      {% if finding.estimate_document_url %}
+      <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
+      {% endif %}
     </div>
   </section>
-
-  <section class="tm-finding-panel tm-finding-action-panel" aria-label="Customer Decision">
-    <div class="tm-crm-kicker">Customer Decision</div>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/status">
-      <label class="tm-label" for="finding_customer_decision">Customer Decision / Update Status</label>
-      <select class="tm-input" id="finding_customer_decision" name="status" required>
-        {% for option in ["Open", "Approved", "Deferred", "Declined"] %}
-        <option value="{{ option }}" {% if finding.status == option %}selected{% endif %}>{{ option }}</option>
-        {% endfor %}
-      </select>
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:12px;">Update Customer Decision</button>
-    </form>
-    {% if finding.status == "Approved" and finding.linked_repair_record_id %}
-    <div class="tm-finding-actions" style="margin-top:0;">
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
-    </div>
-    {% elif finding.status == "Approved" %}
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
-      <input type="hidden" name="workflow_source_type" value="finding">
-      <input type="hidden" name="workflow_source_id" value="{{ finding.id }}">
-      <input type="hidden" name="return_to" value="repair_detail">
-      <input type="hidden" name="repair_name" value="{{ finding.labor_description or finding.recommendation or finding.finding or 'Finding' }}">
-      <input type="hidden" name="repair_date" value="{{ finding.finding_date or '' }}">
-      <input type="hidden" name="mileage" value="{% if finding.mileage is not none %}{{ finding.mileage }}{% endif %}">
-      <input type="hidden" name="labor_hours" value="{% if finding.labor_hours is not none %}{{ finding.labor_hours }}{% endif %}">
-      <input type="hidden" name="labor_rate" value="{% if finding.labor_rate is not none %}{{ finding.labor_rate }}{% endif %}">
-      <input type="hidden" name="parts_cost" value="{% if finding.parts_cost is not none %}{{ finding.parts_cost }}{% endif %}">
-      <input type="hidden" name="labor_cost" value="{% if finding.labor_amount is not none %}{{ finding.labor_amount }}{% endif %}">
-      <input type="hidden" name="notes" value="{{ finding.labor_reason or finding.recommendation or finding.finding or '' }}">
-      <button class="tm-btn tm-btn-primary" type="submit">Start Repair</button>
-    </form>
-    {% endif %}
-  </section>
-
-  {% if finding.status in ["Approved", "Completed"] %}
-  <section class="tm-finding-panel tm-finding-notes" aria-label="Repair workflow">
-    <div class="tm-crm-kicker">Repair Workflow</div>
-    <div><span class="tm-status-chip">{{ repair_work_status_label }}</span></div>
-    <div style="color:#64748b;">Repair progress is managed from the linked repair execution record.</div>
-    {% if finding.linked_repair_record_id %}
-    <div class="tm-finding-actions" style="margin-top:0;">
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
-    </div>
-    {% endif %}
-  </section>
-  {% endif %}
 
   <form class="tm-finding-panel tm-finding-notes" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/notes" aria-label="Finding notes">
     <div>

@@ -147,6 +147,20 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
                 (shop_id, customer_id, now, now),
             ).lastrowid
         )
+        finding_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO findings_records (
+                  customer_id, vehicle_id, request_type, finding, recommendation,
+                  severity, status, mileage, finding_date, created_at
+                )
+                VALUES (?, ?, 'finding', 'Brake pads worn',
+                        'Replace front brake pads', 'High', 'Open', 42000,
+                        '2026-07-22', ?)
+                """,
+                (customer_id, vehicle_id, now),
+            ).lastrowid
+        )
         repair_id = int(
             self.conn.execute(
                 """
@@ -220,6 +234,7 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
         return {
             "customer_id": customer_id,
             "vehicle_id": vehicle_id,
+            "finding_id": finding_id,
             "repair_id": repair_id,
             "invoice_id": invoice_id,
             "estimate_id": estimate_id,
@@ -308,6 +323,38 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["code"], "subscription_read_only")
+
+    def test_read_only_shop_cannot_save_finding_estimate_pdf(self):
+        client, _, records = self.expired_trial_client_with_records()
+
+        response = client.post(
+            "/estimate/pdf",
+            json={
+                "year": 2018,
+                "make": "Toyota",
+                "model": "Camry",
+                "service": "Brake pads",
+                "laborHours": 1.0,
+                "partsPrice": 80.0,
+                "laborRate": 120.0,
+                "source": "finding",
+                "customerId": str(records["customer_id"]),
+                "vehicleId": str(records["vehicle_id"]),
+                "findingId": str(records["finding_id"]),
+                "problemFound": "Brake pads worn",
+                "recommendedRepair": "Replace front brake pads",
+            },
+            headers={"accept": "application/json"},
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) FROM repair_estimate_documents WHERE finding_id = ?",
+                (records["finding_id"],),
+            ).fetchone()[0],
+            0,
+        )
 
     def test_upload_write_is_blocked_before_file_processing(self):
         client, _, records = self.expired_trial_client_with_records()

@@ -3317,6 +3317,175 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.conn.commit()
         return customer_id, vehicle_id
 
+    def seed_finding_for_shop_estimate_stage(self, customer_id: int, vehicle_id: int) -> int:
+        pro_module.ensure_findings_records_schema(self.conn)
+        now = "2026-07-24T12:00:00"
+        return int(
+            self.conn.execute(
+                """
+                INSERT INTO findings_records (
+                  customer_id, vehicle_id, request_type, finding, recommendation,
+                  before_inspection_photo_paths, severity, status, mileage,
+                  finding_date, customer_notes, internal_notes, created_at
+                )
+                VALUES (?, ?, 'finding', 'Brake pads below spec',
+                        'Replace front brake pads and resurface rotors',
+                        ?, 'High', 'Open', 120500, '2026-07-24',
+                        'Customer heard grinding.', 'Outer pads at 2mm.', ?)
+                """,
+                (
+                    customer_id,
+                    vehicle_id,
+                    json.dumps(["/static/uploads/findings/brake-before.jpg"]),
+                    now,
+                ),
+            ).lastrowid
+        )
+
+    def seed_repair_estimate_document_for_finding(
+        self,
+        customer_id: int,
+        vehicle_id: int,
+        finding_id: int,
+        *,
+        total: float = 700.0,
+    ) -> int:
+        pro_module.ensure_repair_estimate_documents_schema(self.conn)
+        payload = {
+            "source": "finding",
+            "problem_found": "Brake pads below spec",
+            "recommended_repair": "Replace front brake pads and resurface rotors",
+            "line_items": [
+                {
+                    "service_text": "Front brake service",
+                    "labor_hours": 2.0,
+                    "labor_rate": 150.0,
+                    "parts_total": 400.0,
+                    "pricing_mode": "custom",
+                }
+            ],
+        }
+        estimate_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO repair_estimate_documents (
+                  customer_id, vehicle_id, finding_id, estimate_date,
+                  customer_name, vehicle_label, related_title, estimate_total,
+                  approval_status, pdf_path, payload_json, created_at
+                )
+                VALUES (?, ?, ?, '2026-07-24', 'Alpha Customer',
+                        '2014 Toyota Camry', 'Front brake service', ?,
+                        'Prepared estimate', 'test-estimate.pdf', ?, '2026-07-24T12:15:00')
+                """,
+                (customer_id, vehicle_id, finding_id, total, json.dumps(payload)),
+            ).lastrowid
+        )
+        self.conn.commit()
+        return estimate_id
+
+    def test_shop_can_open_saved_finding_and_reopen_linked_estimate(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage1-alpha@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage1-alpha@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Alpha")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+
+        response = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Brake pads below spec", response.text)
+        self.assertIn("Replace front brake pads and resurface rotors", response.text)
+        self.assertIn("/static/uploads/findings/brake-before.jpg", response.text)
+        self.assertIn("Estimate prepared", response.text)
+        self.assertIn("$700.00", response.text)
+        self.assertIn("View/Edit Repair Estimate", response.text)
+        self.assertIn(f"estimate_id={estimate_id}", response.text)
+        self.assertIn(f"finding_id={finding_id}", response.text)
+        self.assertIn("Open Estimate PDF", response.text)
+        self.assertNotIn("Update Customer Decision", response.text)
+        self.assertNotIn("Start Repair", response.text)
+
+    def test_shop_can_start_estimate_from_own_saved_finding_and_other_shop_cannot_open_it(self):
+        alpha_client = self.client()
+        self.bootstrap_owner(alpha_client, email="stage1-alpha-open@example.com", shop_name="Alpha Shop")
+        alpha_shop_id = self.shop_id_for_email("stage1-alpha-open@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(alpha_shop_id, first_name="Own")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.conn.commit()
+
+        alpha_response = alpha_client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        self.assertEqual(alpha_response.status_code, 200)
+        self.assertIn("Build Repair Estimate", alpha_response.text)
+        self.assertIn("source=finding", alpha_response.text)
+        self.assertIn(f"customer_id={customer_id}", alpha_response.text)
+        self.assertIn(f"vehicle_id={vehicle_id}", alpha_response.text)
+        self.assertIn(f"finding_id={finding_id}", alpha_response.text)
+        self.assertIn("/static/uploads/findings/brake-before.jpg", alpha_response.text)
+
+        save_response = alpha_client.post(
+            "/estimate/pdf",
+            json={
+                "year": 2014,
+                "make": "Toyota",
+                "model": "Camry",
+                "service": "Front brake service",
+                "laborHours": 2.0,
+                "partsPrice": 400.0,
+                "laborRate": 150.0,
+                "source": "finding",
+                "customerId": str(customer_id),
+                "vehicleId": str(vehicle_id),
+                "findingId": str(finding_id),
+                "problemFound": "Brake pads below spec",
+                "recommendedRepair": "Replace front brake pads and resurface rotors",
+                "customerAgrees": True,
+            },
+        )
+        self.assertEqual(save_response.status_code, 200)
+        saved_estimate = self.conn.execute(
+            """
+            SELECT finding_id, customer_id, vehicle_id, estimate_total, approval_status
+            FROM repair_estimate_documents
+            WHERE finding_id = ?
+            """,
+            (finding_id,),
+        ).fetchone()
+        self.assertIsNotNone(saved_estimate)
+        self.assertEqual(saved_estimate["customer_id"], customer_id)
+        self.assertEqual(saved_estimate["vehicle_id"], vehicle_id)
+        self.assertEqual(saved_estimate["estimate_total"], 756)
+        self.assertEqual(saved_estimate["approval_status"], "Prepared estimate")
+
+        beta_client = self.client()
+        self.signup(beta_client, email="stage1-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("stage1-beta@example.com")
+        self.login(beta_client, email="stage1-beta@example.com")
+        beta_response = beta_client.get(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+            follow_redirects=False,
+        )
+        self.assertIn(beta_response.status_code, {403, 404})
+        cross_save = beta_client.post(
+            "/estimate/pdf",
+            json={
+                "year": 2014,
+                "make": "Toyota",
+                "model": "Camry",
+                "service": "Front brake service",
+                "laborHours": 2.0,
+                "partsPrice": 400.0,
+                "laborRate": 150.0,
+                "source": "finding",
+                "customerId": str(customer_id),
+                "vehicleId": str(vehicle_id),
+                "findingId": str(finding_id),
+                "problemFound": "Brake pads below spec",
+                "recommendedRepair": "Replace front brake pads and resurface rotors",
+            },
+        )
+        self.assertEqual(cross_save.status_code, 404)
+
     def seed_invoice_estimate_records_for_shop(self, shop_id: int) -> dict[str, int]:
         now = "2026-07-24T12:00:00"
         pro_module.ensure_customer_status_schema(self.conn)

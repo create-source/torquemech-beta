@@ -1,10 +1,20 @@
 import os
+import sqlite3
 import unittest
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 import main
+from routers import pro as pro_module
+
+
+class NonClosingConnection(sqlite3.Connection):
+    def close(self):
+        pass
+
+    def close_for_cleanup(self):
+        super().close()
 
 
 class EstimatorProHandoffUiTests(unittest.TestCase):
@@ -219,8 +229,50 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
     def test_finding_pdf_generation_saves_estimate_timeline_document(self):
         client = TestClient(main.app, base_url="http://localhost")
+        conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close_for_cleanup)
+        pro_module.ensure_customer_status_schema(conn)
+        pro_module.ensure_findings_records_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO customers (
+              id, shop_id, first_name, last_name, phone, email,
+              customer_status, notes, created_at, updated_at
+            )
+            VALUES (5, 1, 'Sam', 'Driver', '', '', 'active', '',
+                    '2026-07-24T12:00:00', '2026-07-24T12:00:00')
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO customer_vehicles (
+              id, shop_id, customer_id, year, make, model, created_at, updated_at
+            )
+            VALUES (8, 1, 5, 2008, 'Toyota', 'Sequoia',
+                    '2026-07-24T12:00:00', '2026-07-24T12:00:00')
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, customer_id, vehicle_id, request_type, finding, recommendation,
+              severity, status, created_at
+            )
+            VALUES (13, 5, 8, 'finding', 'Water pump leak',
+                    'Water Pump Replacement', 'High', 'Open', '2026-07-24T12:00:00')
+            """
+        )
+        conn.commit()
 
-        with patch.object(main, "record_estimate_pdf_document", return_value={"id": 77}) as save_mock:
+        with (
+            patch.object(main, "app_db_conn", return_value=conn),
+            patch.object(main, "current_user", return_value={"id": 1}),
+            patch.object(main, "current_shop_context", return_value={"id": 1}),
+            patch.object(main, "shop_subscription_access_context", return_value={"can_write": True}),
+            patch.object(main, "metric_incr", return_value=None),
+            patch.object(main, "record_estimate_pdf_document", return_value={"id": 77}) as save_mock,
+        ):
             response = client.post(
                 "/estimate/pdf_multi",
                 json={
@@ -265,7 +317,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertEqual(kwargs["vehicle_label"], "2008 Toyota Sequoia")
         self.assertEqual(kwargs["related_title"], "Water Pump Replacement")
         self.assertEqual(kwargs["estimate_total"], 700)
-        self.assertEqual(kwargs["approval_status"], "Customer reviewed estimate")
+        self.assertEqual(kwargs["approval_status"], "Prepared estimate")
 
 
 if __name__ == "__main__":

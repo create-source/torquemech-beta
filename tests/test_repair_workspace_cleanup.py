@@ -1111,7 +1111,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('aria-label="Expandable additional finding status groups"', vehicle_detail)
         self.assertIn('class="tm-history-summary-card tm-findings-status-card"', vehicle_detail)
         self.assertIn('data-finding-status-group="{{ group.label }}"', vehicle_detail)
-        self.assertIn("Create Estimate", vehicle_detail)
+        self.assertIn("Build Repair Estimate", vehicle_detail)
         self.assertIn("Open Repair", vehicle_detail)
         self.assertIn("Customer Decision / Update Status", vehicle_detail)
         self.assertIn("Edit Finding", vehicle_detail)
@@ -1317,16 +1317,19 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(pro_module.format_pro_date("2026-07-01T05:57:00"), "06/30/2026")
         self.assertEqual(pro_module.format_pro_date("2026-06-30"), "06/30/2026")
 
-    def test_finding_detail_has_estimate_and_customer_decision_actions(self):
+    def test_finding_detail_has_stage_one_estimate_actions_without_customer_decisions(self):
         finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")
 
         self.assertIn("Recommended Repair Estimate", finding_detail)
-        self.assertIn("Create Estimate", finding_detail)
-        self.assertIn("Review Estimate", finding_detail)
-        self.assertIn("Customer Decision", finding_detail)
-        self.assertIn("Update Customer Decision", finding_detail)
-        self.assertIn("Open Repair Workspace", finding_detail)
-        self.assertIn("Start Repair", finding_detail)
+        self.assertIn("Before Photos", finding_detail)
+        self.assertIn("Build Repair Estimate", finding_detail)
+        self.assertIn("View/Edit Repair Estimate", finding_detail)
+        self.assertIn("Estimate prepared", finding_detail)
+        self.assertIn("estimate_document_edit_url", finding_detail)
+        self.assertNotIn("Customer Decision", finding_detail)
+        self.assertNotIn("Update Customer Decision", finding_detail)
+        self.assertNotIn("Open Repair Workspace", finding_detail)
+        self.assertNotIn("Start Repair", finding_detail)
 
     def test_repair_completion_persists_uploaded_after_photos(self):
         conn = sqlite3.connect(":memory:")
@@ -1892,7 +1895,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('data-new-finding="true"', vehicle_detail)
         self.assertIn("Estimate:", vehicle_detail)
         self.assertIn("Pro Job:", vehicle_detail)
-        self.assertIn("Review Estimate / Continue Quote", vehicle_detail)
+        self.assertIn("View/Edit Repair Estimate", vehicle_detail)
 
     def test_finding_cards_use_approved_repair_job_action_matrix(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
@@ -1902,7 +1905,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('<button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>', vehicle_detail)
         self.assertIn('value="finding"', vehicle_detail)
         self.assertIn('name="workflow_source_id" value="{{ item.id }}"', vehicle_detail)
-        self.assertIn("Review Estimate", vehicle_detail)
+        self.assertIn("View/Edit Repair Estimate", vehicle_detail)
 
     def test_estimator_parts_sources_wait_for_service_specific_selection(self):
         estimator = (ROOT / "templates" / "estimator.html").read_text(encoding="utf-8")
