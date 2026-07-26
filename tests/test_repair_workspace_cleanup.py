@@ -1113,12 +1113,14 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn('data-finding-status-group="{{ group.label }}"', vehicle_detail)
         self.assertIn("Build Repair Estimate", vehicle_detail)
         self.assertIn("Open Repair", vehicle_detail)
-        self.assertIn("Customer Decision / Update Status", vehicle_detail)
         self.assertIn("Edit Finding", vehicle_detail)
         self.assertIn("build_finding_estimator_href(customer, vehicle, item)", vehicle_detail)
         self.assertNotIn("Open Source: Finding Repair Job", vehicle_detail)
         self.assertNotIn("Save Estimate / Recommended Repair", vehicle_detail)
-        self.assertIn("Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.", vehicle_detail)
+        self.assertNotIn("Customer Decision / Update Status", vehicle_detail)
+        self.assertNotIn("Customer Decision / Approval Status", vehicle_detail)
+        self.assertNotIn("Create Repair Job", vehicle_detail)
+        self.assertIn("Document problems found during inspection or during a repair. Prepared estimates stay linked to each finding.", vehicle_detail)
         self.assertIn("+ Add Finding / Recommended Work", vehicle_detail)
         self.assertEqual(vehicle_detail.count("+ Add Finding / Recommended Work"), 1)
         self.assertIn("Declined / Deferred", vehicle_detail)
@@ -1894,18 +1896,19 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("finding_added_success", vehicle_detail)
         self.assertIn('data-new-finding="true"', vehicle_detail)
         self.assertIn("Estimate:", vehicle_detail)
-        self.assertIn("Pro Job:", vehicle_detail)
+        self.assertIn("Estimate prepared", vehicle_detail)
+        self.assertNotIn("Pro Job:", vehicle_detail)
         self.assertIn("View/Edit Repair Estimate", vehicle_detail)
 
-    def test_finding_cards_use_approved_repair_job_action_matrix(self):
+    def test_finding_cards_use_stage_one_prepared_estimate_actions(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
 
-        self.assertIn('{% if item.status == "Approved" and item.linked_repair_record_id %}', vehicle_detail)
-        self.assertIn('{% elif item.status == "Approved" %}', vehicle_detail)
-        self.assertIn('<button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>', vehicle_detail)
-        self.assertIn('value="finding"', vehicle_detail)
-        self.assertIn('name="workflow_source_id" value="{{ item.id }}"', vehicle_detail)
+        self.assertIn("{% if item.estimate_document_url %}", vehicle_detail)
+        self.assertIn("Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}", vehicle_detail)
         self.assertIn("View/Edit Repair Estimate", vehicle_detail)
+        self.assertIn("Build Repair Estimate", vehicle_detail)
+        self.assertNotIn('<button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>', vehicle_detail)
+        self.assertNotIn('name="workflow_source_id" value="{{ item.id }}"', vehicle_detail)
 
     def test_estimator_parts_sources_wait_for_service_specific_selection(self):
         estimator = (ROOT / "templates" / "estimator.html").read_text(encoding="utf-8")

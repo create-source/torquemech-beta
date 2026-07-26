@@ -550,7 +550,7 @@
   }
 
   .tm-parts-source-group-title {
-    color: #334155;
+    color: #cbd5e1;
     font-size: .76rem;
     font-weight: 900;
     text-transform: uppercase;
@@ -3717,7 +3717,7 @@
     <details class="tm-crm-disclosure" style="margin-top:10px;">
       <summary>+ Add Finding / Recommended Work</summary>
       <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings" enctype="multipart/form-data">
-        <div class="tm-history-empty" style="margin-top:12px;">Approved recommended repairs become repair jobs in the Repair Workspace.</div>
+        <div class="tm-history-empty" style="margin-top:12px;">Prepared estimates stay linked to findings for review.</div>
         <div style="margin-top:12px;">
           <label class="tm-label" for="request_type">Request Type</label>
           <select class="tm-input" id="request_type" name="request_type" data-finding-request-type>
@@ -3820,7 +3820,7 @@
           </div>
         </div>
         <div style="margin-top:12px;">
-          <label class="tm-label" for="finding_status">Customer Decision / Approval Status</label>
+          <label class="tm-label" for="finding_status">Finding Status</label>
           <select class="tm-input" id="finding_status" name="status" required>
             <option value="Approved">Approved</option>
             <option value="Open" selected>Open</option>
@@ -4548,7 +4548,7 @@
         </div>
         {% endif %}
         <p class="tm-pro-subtitle" style="margin:0;">
-          Document problems found during inspection or during a repair. Approved recommended repairs become repair jobs.
+          Document problems found during inspection or during a repair. Prepared estimates stay linked to each finding.
         </p>
 
       <div class="tm-findings-status-groups" aria-label="Expandable additional finding status groups">
@@ -4581,8 +4581,12 @@
                 {% if item.mileage is not none %}
                 <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                 {% endif %}
-                <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}Estimate prepared{% else %}None{% endif %}</span>
-                <span class="tm-crm-chip">Pro Job: {% if item.linked_repair_record_id %}Created{% else %}Not Created{% endif %}</span>
+                {% if item.estimate_document_url %}
+                <span class="tm-crm-chip">Estimate prepared</span>
+                {% if item.estimate_total is not none %}<span class="tm-crm-chip">{{ item.estimate_total|pro_currency }}</span>{% endif %}
+                {% else %}
+                <span class="tm-crm-chip">Estimate: None</span>
+                {% endif %}
                 {% if new_finding_id and item.id == new_finding_id %}<span class="tm-crm-chip">New</span>{% endif %}
               </div>
               {% if item.request_type == "labor" %}
@@ -4608,52 +4612,13 @@
               </section>
               {% endif %}
               <div class="tm-finding-estimate" data-finding-estimate>
-                {% if item.status == "Approved" and item.linked_repair_record_id %}
-                <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
                 {% if item.estimate_document_url %}
-                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
-                {% else %}
-                <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
-                {% endif %}
-                {% elif item.status == "Approved" %}
-                <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
-                  <input type="hidden" name="workflow_source_type" value="finding">
-                  <input type="hidden" name="workflow_source_id" value="{{ item.id }}">
-                  <input type="hidden" name="return_to" value="repair_detail">
-                  <input type="hidden" name="repair_name" value="{{ item.labor_description or item.recommendation or item.finding or 'Finding' }}">
-                  <input type="hidden" name="repair_date" value="{{ item.finding_date or '' }}">
-                  <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
-                  <input type="hidden" name="labor_hours" value="{% if item.labor_hours is not none %}{{ item.labor_hours }}{% endif %}">
-                  <input type="hidden" name="labor_rate" value="{% if item.labor_rate is not none %}{{ item.labor_rate }}{% endif %}">
-                  <input type="hidden" name="parts_cost" value="{% if item.parts_cost is not none %}{{ item.parts_cost }}{% endif %}">
-                  <input type="hidden" name="labor_cost" value="{% if item.labor_amount is not none %}{{ item.labor_amount }}{% endif %}">
-                  <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
-                  <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
-                </form>
-                {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>{% endif %}
-                {% elif item.estimate_document_url %}
+                <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
                 <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
-                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
                 {% else %}
                 <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                 {% endif %}
               </div>
-              <details class="tm-crm-disclosure tm-finding-estimate">
-                <summary>Customer Decision / Update Status</summary>
-                <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" style="margin-top:12px;">
-                  <div class="tm-finding-status-control">
-                    <label class="tm-label" for="inline_finding_status_{{ item.id }}">Customer Decision</label>
-                    <span class="tm-finding-status-select">
-                      <select class="tm-input" id="inline_finding_status_{{ item.id }}" name="status" required>
-                        {% for option in ["Open", "Approved", "Deferred", "Declined"] %}
-                        <option value="{{ option }}" {% if item.status == option %}selected{% endif %}>{{ option }}</option>
-                        {% endfor %}
-                      </select>
-                    </span>
-                  </div>
-                  <button class="tm-btn tm-btn-primary" type="submit">Update Status</button>
-                </form>
-              </details>
               <div class="tm-repair-action-row">
                 <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit Finding</a>
               </div>
@@ -4696,8 +4661,12 @@
                   {% if item.mileage is not none %}
                   <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                   {% endif %}
-                  <span class="tm-crm-chip">Estimate: {% if item.estimate_document_url %}Estimate prepared{% else %}None{% endif %}</span>
-                  <span class="tm-crm-chip">Pro Job: {% if item.linked_repair_record_id %}Created{% else %}Not Created{% endif %}</span>
+                  {% if item.estimate_document_url %}
+                  <span class="tm-crm-chip">Estimate prepared</span>
+                  {% if item.estimate_total is not none %}<span class="tm-crm-chip">{{ item.estimate_total|pro_currency }}</span>{% endif %}
+                  {% else %}
+                  <span class="tm-crm-chip">Estimate: None</span>
+                  {% endif %}
                   {% if new_finding_id and item.id == new_finding_id %}<span class="tm-crm-chip">New</span>{% endif %}
                 </div>
                 {% if item.request_type == "labor" %}
@@ -4711,49 +4680,13 @@
                 <div style="color:#475569;"><strong>Recommended Repair:</strong> {{ item.recommendation or "No recommended repair recorded." }}</div>
                 {% endif %}
                 <div class="tm-finding-estimate" data-finding-estimate>
-                  {% if item.status == "Approved" and item.linked_repair_record_id %}
-                  <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair</a>
                   {% if item.estimate_document_url %}
-                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
-                  {% else %}
-                  <a class="tm-btn tm-btn-secondary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
-                  {% endif %}
-                  {% elif item.status == "Approved" %}
-                  <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs">
-                    <input type="hidden" name="workflow_source_type" value="finding">
-                    <input type="hidden" name="workflow_source_id" value="{{ item.id }}">
-                    <input type="hidden" name="return_to" value="repair_detail">
-                    <input type="hidden" name="repair_name" value="{{ item.labor_description or item.recommendation or item.finding or 'Finding' }}">
-                    <input type="hidden" name="repair_date" value="{{ item.finding_date or '' }}">
-                    <input type="hidden" name="mileage" value="{% if item.mileage is not none %}{{ item.mileage }}{% endif %}">
-                    <input type="hidden" name="labor_hours" value="{% if item.labor_hours is not none %}{{ item.labor_hours }}{% endif %}">
-                    <input type="hidden" name="labor_rate" value="{% if item.labor_rate is not none %}{{ item.labor_rate }}{% endif %}">
-                    <input type="hidden" name="parts_cost" value="{% if item.parts_cost is not none %}{{ item.parts_cost }}{% endif %}">
-                    <input type="hidden" name="labor_cost" value="{% if item.labor_amount is not none %}{{ item.labor_amount }}{% endif %}">
-                    <input type="hidden" name="notes" value="{{ item.labor_reason or item.recommendation or item.finding or '' }}">
-                    <button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>
-                  </form>
-                  {% if item.estimate_document_url %}<a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>{% endif %}
-                  {% elif item.estimate_document_url %}
+                  <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
                   <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
-                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_url }}">Open Estimate</a>
                   {% else %}
                   <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                   {% endif %}
                 </div>
-                <form class="tm-finding-status" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/status" data-finding-status-form>
-                  <div class="tm-finding-status-control">
-                    <label class="tm-label" for="finding_status_{{ item.id }}">Customer Decision / Approval Status</label>
-                    <span class="tm-finding-status-select">
-                      <select class="tm-input" id="finding_status_{{ item.id }}" name="status" required>
-                        {% for option in ["Open", "Approved", "Declined"] %}
-                        <option value="{{ option }}" {% if item.status == option %}selected{% endif %}>{{ option }}</option>
-                        {% endfor %}
-                      </select>
-                    </span>
-                  </div>
-                  <span class="tm-finding-status-feedback" data-finding-status-feedback aria-live="polite"></span>
-                </form>
                 <div class="tm-repair-action-row">
                   <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">Review Finding</a>
                   <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>

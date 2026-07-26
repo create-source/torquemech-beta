@@ -3423,6 +3423,18 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn(f"finding_id={finding_id}", alpha_response.text)
         self.assertIn("/static/uploads/findings/brake-before.jpg", alpha_response.text)
 
+        estimator_response = alpha_client.get(
+            f"/estimator?source=finding&customer_id={customer_id}&vehicle_id={vehicle_id}&finding_id={finding_id}"
+            "&year=2014&make=Toyota&model=Camry&recommended_repair=Front+brake+service"
+        )
+        self.assertEqual(estimator_response.status_code, 200)
+        self.assertIn("Pro finding workflow", estimator_response.text)
+        self.assertIn(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}", estimator_response.text)
+        self.assertIn(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}#recommendations-findings", estimator_response.text)
+        self.assertIn("/pro/dashboard", estimator_response.text)
+        self.assertNotIn(">Log In<", estimator_response.text)
+        self.assertNotIn(">Sign Up<", estimator_response.text)
+
         save_response = alpha_client.post(
             "/estimate/pdf",
             json={
@@ -3456,6 +3468,16 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(saved_estimate["vehicle_id"], vehicle_id)
         self.assertEqual(saved_estimate["estimate_total"], 756)
         self.assertEqual(saved_estimate["approval_status"], "Prepared estimate")
+
+        vehicle_response = alpha_client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+        self.assertEqual(vehicle_response.status_code, 200)
+        self.assertIn("Estimate prepared", vehicle_response.text)
+        self.assertIn("$756.00", vehicle_response.text)
+        self.assertIn("View/Edit Repair Estimate", vehicle_response.text)
+        self.assertIn("Edit Finding", vehicle_response.text)
+        self.assertNotIn("Customer Decision / Update Status", vehicle_response.text)
+        self.assertNotIn("Customer Decision / Approval Status", vehicle_response.text)
+        self.assertNotIn("Create Repair Job", vehicle_response.text)
 
         beta_client = self.client()
         self.signup(beta_client, email="stage1-beta@example.com", shop_name="Beta Shop")

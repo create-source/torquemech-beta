@@ -9,12 +9,20 @@
 <div class="tm-guided-estimator">
     <header class="tm-estimator-header" data-tour-target="estimator-welcome">
       <div>
-        <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% else %}Mechanic estimator{% endif %}</div>
-        <h1>{% if shared_id %}Customer Repair Quote{% else %}Build a customer-ready quote{% endif %}</h1>
+        <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% elif is_finding_estimator %}Pro finding workflow{% else %}Mechanic estimator{% endif %}</div>
+        <h1>{% if shared_id %}Customer Repair Quote{% elif is_finding_estimator %}Build repair estimate{% else %}Build a customer-ready quote{% endif %}</h1>
       </div>
 
       <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
     </header>
+
+    {% if is_finding_estimator %}
+    <nav class="tm-card tm-finding-estimator-nav" aria-label="Finding estimate navigation">
+      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.finding_url }}">Back to Finding</a>
+      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.vehicle_url }}">Vehicle</a>
+      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.command_center_url }}">Command Center</a>
+    </nav>
+    {% endif %}
 
     {% if not shared_id %}
     <div class="tm-card tm-estimator-quickstart" aria-label="Estimator process guide">
@@ -481,18 +489,25 @@
       <div id="draftsMsg" class="tm-local-status"></div>
 
       <div id="estimateSavedBlock" class="tm-inline-panel" hidden>
-        <div class="tm-inline-panel__title">Ready for Customer Review</div>
-        <div class="tm-hint tm-inline-panel__hint">Prepared estimate summary is ready to share or download.</div>
+        <div class="tm-inline-panel__title">{% if is_finding_estimator %}Repair Estimate Prepared{% else %}Ready for Customer Review{% endif %}</div>
+        <div class="tm-hint tm-inline-panel__hint">{% if is_finding_estimator %}The estimate was saved to the linked finding.{% else %}Prepared estimate summary is ready to share or download.{% endif %}</div>
         <div class="tm-saved-quote-actions">
-          {% if not shared_id %}
+          {% if not shared_id and not is_finding_estimator %}
           <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
           {% endif %}
+          {% if not is_finding_estimator %}
           <button id="openSavedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">Open Customer Quote</button>
           <button id="downloadSavedEstimatePdfBtn" type="button" class="tm-btn tm-btn-primary">Download Customer PDF</button>
+          {% endif %}
+          {% if is_finding_estimator %}
+          <a class="tm-btn tm-btn-primary" href="{{ finding_estimator_nav.finding_url }}?estimate_prepared=1">Return to Finding</a>
+          {% endif %}
         </div>
+        {% if not is_finding_estimator %}
         <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--saved">Review estimate details before sharing.</div>
+        {% endif %}
         <div id="estimateSavedLinkText" class="tm-hint tm-saved-link-text"></div>
-        {% if pro_handoff_available and not shared_id %}
+        {% if pro_handoff_available and not shared_id and not is_finding_estimator %}
         <div id="proJobHandoffActions" class="tm-pro-job-handoff" aria-label="Pro job handoff" hidden>
           <div>
             <div class="tm-pro-job-handoff__title">Create Repair Order</div>
@@ -513,12 +528,12 @@
         <div class="tm-hint">This shared estimate is ready for customer review with PDF, email, and share handoff support.</div>
         {% endif %}
         <div class="estimator-final-step">Final action</div>
-        <div class="estimator-final-heading">Ready for Customer Review</div>
-        <div class="tm-hint estimator-final-hint">Review estimate details before sharing.</div>
+        <div class="estimator-final-heading">{% if is_finding_estimator %}Save as Prepared Estimate{% else %}Ready for Customer Review{% endif %}</div>
+        <div class="tm-hint estimator-final-hint">{% if is_finding_estimator %}Save this estimate to the finding and return to the finding detail page.{% else %}Review estimate details before sharing.{% endif %}</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta" aria-describedby="customerQuoteFinalHint" disabled data-tour-target="estimator-pdf">
-          Create Customer Quote
+          {% if is_finding_estimator %}Save as Prepared Estimate{% else %}Create Customer Quote{% endif %}
         </button>
-        <div id="customerQuoteFinalHint" class="tm-quote-trust-microcopy">Includes services, pricing, notes, and total.</div>
+        <div id="customerQuoteFinalHint" class="tm-quote-trust-microcopy">{% if is_finding_estimator %}No customer approval or repair order is created.{% else %}Includes services, pricing, notes, and total.{% endif %}</div>
       </div>
 
     </section>
@@ -529,8 +544,8 @@
 
     <div class="modal-card tm-confirm-modal">
       <div class="modal-header tm-confirm-header">
-        <h2>Create Customer Quote</h2>
-        <p class="tm-confirm-intro">Review estimate details before sharing.</p>
+        <h2>{% if is_finding_estimator %}Save Prepared Estimate{% else %}Create Customer Quote{% endif %}</h2>
+        <p class="tm-confirm-intro">{% if is_finding_estimator %}Review estimate details before saving them to the linked finding.{% else %}Review estimate details before sharing.{% endif %}</p>
       </div>
 
       <section class="tm-confirm-section" aria-label="Business identity">
@@ -557,7 +572,7 @@
       </section>
 
       <section class="tm-confirm-section" aria-label="Customer information">
-        <div class="tm-confirm-section-title">Customer Review</div>
+        <div class="tm-confirm-section-title">{% if is_finding_estimator %}Prepared Estimate{% else %}Customer Review{% endif %}</div>
         <div class="grid2 tm-confirm-grid-compact">
           <div>
             <label for="customerName">Customer Name (optional)</label>
@@ -568,7 +583,7 @@
             <input id="customerPhone" type="tel" placeholder="(***)***-****" />
           </div>
         </div>
-        <label class="tm-confirm-check tm-confirm-agree">
+        <label class="tm-confirm-check tm-confirm-agree" {% if is_finding_estimator %}hidden{% endif %}>
           <input type="checkbox" id="customerAgreesChk" checked />
           <span>Customer reviewed the estimate details</span>
         </label>
@@ -631,7 +646,7 @@
         </div>
       </section>
 
-      <section class="tm-confirm-section" aria-label="Signature">
+      <section class="tm-confirm-section" aria-label="Signature" {% if is_finding_estimator %}hidden{% endif %}>
         <div class="tm-confirm-section-title">Approval Signature</div>
         <p class="tm-confirm-helper">Use a signature only when the customer is approving the reviewed estimate in person.</p>
         <div class="sig-choice tm-confirm-radio-row">
@@ -683,9 +698,11 @@
       <div class="modal-actions tm-confirm-actions">
         <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">Download Customer PDF</button>
         <div class="tm-confirm-secondary-actions">
-          <button id="prepareReviewedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">Prepare Reviewed Estimate</button>
+          <button id="prepareReviewedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">{% if is_finding_estimator %}Save as Prepared Estimate{% else %}Prepare Reviewed Estimate{% endif %}</button>
+          {% if not is_finding_estimator %}
           <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
           <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Customer Quote</button>
+          {% endif %}
           <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
         </div>
       </div>

@@ -9,12 +9,25 @@
     border-left: 5px solid #d97706;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
+    color:#0f172a;
     padding: 18px;
     max-width: 920px;
   }
   .tm-finding-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
   .tm-finding-field { display:grid; gap:3px; }
   .tm-finding-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
+  .tm-finding-field strong,
+  .tm-finding-panel h2,
+  .tm-finding-panel .tm-crm-kicker,
+  .tm-finding-panel .tm-label {
+    color:#0f172a;
+  }
+  .tm-finding-panel .tm-history-empty,
+  .tm-finding-panel .tm-hint,
+  .tm-finding-panel textarea,
+  .tm-finding-panel .tm-input {
+    color:#334155;
+  }
   .tm-finding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
   .tm-finding-notes { display:grid; gap:12px; margin-top:16px; }
   .tm-finding-action-panel { display:grid; gap:12px; margin-top:16px; }
@@ -67,6 +80,12 @@
     </div>
     <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#recommendations-findings">Back to Vehicle</a>
   </div>
+
+  {% if request.query_params.get("estimate_prepared") == "1" %}
+  <div class="tm-finding-panel tm-finding-action-panel" role="status" aria-live="polite">
+    <strong>Repair estimate prepared.</strong>
+  </div>
+  {% endif %}
 
   <section class="tm-finding-panel" aria-label="Finding record">
     <div class="tm-finding-grid">
@@ -158,7 +177,6 @@
 
   <section class="tm-finding-panel tm-finding-history" aria-label="Finding History">
     <div class="tm-crm-kicker">Finding History</div>
-    <h2 style="margin:4px 0 0;">Finding History</h2>
     {% if finding_history_records %}
     <div class="tm-finding-history-list">
       {% for item in finding_history_records %}

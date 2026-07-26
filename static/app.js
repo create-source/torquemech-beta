@@ -1949,6 +1949,22 @@
     };
   }
 
+  function isFindingEstimatorSession() {
+    const context = getEstimatorSourceContext();
+    return context.source === "finding" && !!(context.customerId && context.vehicleId && context.findingId);
+  }
+
+  function findingEstimatorReturnUrl() {
+    const context = getEstimatorSourceContext();
+    if (!isFindingEstimatorSession()) return "";
+    const url = new URL(
+      `/pro/customers/${encodeURIComponent(context.customerId)}/vehicles/${encodeURIComponent(context.vehicleId)}/findings/${encodeURIComponent(context.findingId)}`,
+      window.location.origin
+    );
+    url.searchParams.set("estimate_prepared", "1");
+    return `${url.pathname}${url.search}`;
+  }
+
   function safeReadStorage(storage, key) {
     try {
       return storage?.getItem(key) || "";
@@ -2710,6 +2726,14 @@
   }
 
   function showEstimateSavedBlock(d) {
+    if (isFindingEstimatorSession()) {
+      lastSavedEstimateLink = "";
+      if (estimateSavedBlock) estimateSavedBlock.hidden = false;
+      if (proJobHandoffActions) proJobHandoffActions.hidden = true;
+      if (customerQuoteFinalActions) customerQuoteFinalActions.hidden = true;
+      if (estimateSavedLinkText) estimateSavedLinkText.textContent = "";
+      return;
+    }
     lastSavedEstimateLink = buildShareLink(d);
     if (!estimateSavedBlock || !lastSavedEstimateLink) return;
 
@@ -6572,9 +6596,15 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (convertToProJobBtn) convertToProJobBtn.disabled = isGeneratingAllLines || !hasLines;
     customerQuoteFinalActions?.classList.toggle("is-disabled", !hasLines);
     if (customerQuoteFinalHint) {
-      customerQuoteFinalHint.textContent = hasLines
-        ? "Includes services, pricing, notes, and total."
-        : "Add at least one service to enable customer quote creation.";
+      if (isFindingEstimatorSession()) {
+        customerQuoteFinalHint.textContent = hasLines
+          ? "No customer approval or repair order is created."
+          : "Add at least one service to save a prepared estimate.";
+      } else {
+        customerQuoteFinalHint.textContent = hasLines
+          ? "Includes services, pricing, notes, and total."
+          : "Add at least one service to enable customer quote creation.";
+      }
     }
   }
 
@@ -7206,8 +7236,10 @@ if (getEstimateHint) {
         inspectionFindings: String(it.inspectionFindings || "").trim(),
       }));
       
+      const isFindingSave = isFindingEstimatorSession();
+
       // Generate PDF
-      setStatus("info", "Preparing customer PDF...");
+      setStatus("info", isFindingSave ? "Saving prepared estimate..." : "Preparing customer PDF...");
 
       const activeVehicle = getActiveVehicle() || {};
       const outputOptions = getCustomerOutputOptions();
@@ -7266,6 +7298,20 @@ if (getEstimateHint) {
       }
 
       const pdfBlob = await pdfResponse.blob();
+
+      if (isFindingSave) {
+        setStatus("ok", "Repair estimate prepared.");
+        setConfirmMessage("ok", "Repair estimate prepared. Returning to the finding...");
+        const returnUrl = findingEstimatorReturnUrl();
+        if (returnUrl) {
+          window.location.assign(returnUrl);
+          return;
+        }
+        showEstimateSavedBlock({ shareId: "" });
+        closeConfirm(true);
+        return;
+      }
+
       const pdfUrl = URL.createObjectURL(pdfBlob);
 
       // Use one controlled launch action. Mobile Safari often treats blob
@@ -7327,6 +7373,10 @@ if (getEstimateHint) {
 
   prepareReviewedEstimateBtn?.addEventListener("click", (e) => {
     e.preventDefault();
+    if (isFindingEstimatorSession()) {
+      handleGenerateCustomerPdf(e);
+      return;
+    }
     markCustomerQuoteReadyForProJob();
   });
 

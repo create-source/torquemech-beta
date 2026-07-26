@@ -18,6 +18,51 @@ class NonClosingConnection(sqlite3.Connection):
 
 
 class EstimatorProHandoffUiTests(unittest.TestCase):
+    def start_finding_estimator_context(self):
+        conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
+        conn.row_factory = sqlite3.Row
+        pro_module.ensure_customer_status_schema(conn)
+        pro_module.ensure_findings_records_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO customers (
+              id, shop_id, first_name, last_name, phone, email,
+              customer_status, notes, created_at, updated_at
+            )
+            VALUES (1, 9, 'Sam', 'Driver', '', '', 'active', '',
+                    '2026-07-24T12:00:00', '2026-07-24T12:00:00')
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO customer_vehicles (
+              id, shop_id, customer_id, year, make, model, created_at, updated_at
+            )
+            VALUES (2, 9, 1, 2008, 'Toyota', 'Sequoia',
+                    '2026-07-24T12:00:00', '2026-07-24T12:00:00')
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO findings_records (
+              id, customer_id, vehicle_id, request_type, finding, recommendation,
+              severity, status, created_at
+            )
+            VALUES (3, 1, 2, 'finding', 'Water pump leak',
+                    'Water Pump Replacement', 'High', 'Open', '2026-07-24T12:00:00')
+            """
+        )
+        conn.commit()
+        self.addCleanup(conn.close_for_cleanup)
+        patches = (
+            patch.object(main, "app_db_conn", return_value=conn),
+            patch.object(main, "current_user", return_value={"id": 4, "first_name": "Tech"}),
+            patch.object(main, "current_shop_context", return_value={"id": 9, "shop_name": "Alpha Shop"}),
+        )
+        for active_patch in patches:
+            active_patch.start()
+            self.addCleanup(active_patch.stop)
+
     def test_production_estimator_hides_convert_without_pro_access(self):
         with patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": "qa-secret"}):
             client = TestClient(main.app, base_url="https://torquemech.com")
@@ -117,6 +162,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("normalizeQuantity(serviceQuantityEl?.value)", app_js)
 
     def test_finding_estimator_shows_parts_sources_before_price_job(self):
+        self.start_finding_estimator_context()
         response = TestClient(main.app, base_url="http://localhost").get(
             "/estimator?source=finding&customer_id=1&vehicle_id=2&finding_id=3"
             "&year=2008&make=Toyota&model=Sequoia&recommended_repair=Water+Pump+Replacement"
@@ -124,6 +170,13 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         html = response.text
+        self.assertIn("Pro finding workflow", html)
+        self.assertIn('href="/pro/customers/1/vehicles/2/findings/3"', html)
+        self.assertIn('href="/pro/customers/1/vehicles/2#recommendations-findings"', html)
+        self.assertIn('href="/pro/dashboard"', html)
+        self.assertIn("Command Center", html)
+        self.assertNotIn(">Log In<", html)
+        self.assertNotIn(">Sign Up<", html)
         self.assertIn("Parts Sources", html)
         self.assertIn("Research Parts Pricing", html)
         self.assertIn(
@@ -136,6 +189,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertLess(html.index("Research Parts Pricing"), html.index("Price Job"))
 
     def test_finding_estimator_parts_sources_include_service_keyword(self):
+        self.start_finding_estimator_context()
         response = TestClient(main.app, base_url="http://localhost").get(
             "/estimator?source=finding&customer_id=1&vehicle_id=2&finding_id=3"
             "&year=2002&make=Ford&model=F-150"
@@ -194,6 +248,51 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("Research Parts Pricing", response.text)
+
+    def test_finding_estimator_hides_stage_two_completion_actions(self):
+        self.start_finding_estimator_context()
+        response = TestClient(main.app, base_url="http://localhost").get(
+            "/estimator?source=finding&customer_id=1&vehicle_id=2&finding_id=3"
+            "&year=2008&make=Toyota&model=Sequoia&recommended_repair=Water+Pump+Replacement"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.text
+        self.assertIn("Save as Prepared Estimate", html)
+        self.assertIn("Return to Finding", html)
+        self.assertNotIn("Copy Estimate Link", html)
+        self.assertNotIn("Open Customer Quote", html)
+        self.assertNotIn("Email Customer Quote", html)
+        self.assertNotIn("Create Repair Order", html)
+
+    def test_finding_completion_redirect_logic_is_present(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        self.assertIn("function isFindingEstimatorSession()", app_js)
+        self.assertIn("function findingEstimatorReturnUrl()", app_js)
+        self.assertIn("window.location.assign(returnUrl);", app_js)
+        self.assertIn('"estimate_prepared", "1"', app_js)
+        self.assertIn('if (isFindingEstimatorSession()) {', app_js)
+
+    def test_stage_one_visual_hooks_are_present(self):
+        with open("templates/pro/finding_detail.html", encoding="utf-8") as handle:
+            finding_html = handle.read()
+        with open("templates/pro/vehicle_detail.html", encoding="utf-8") as handle:
+            vehicle_html = handle.read()
+        with open("static/style.css", encoding="utf-8") as handle:
+            style_css = handle.read()
+
+        self.assertIn(".tm-finding-panel {", finding_html)
+        self.assertIn("color:#0f172a;", finding_html)
+        self.assertIn("color:#334155;", finding_html)
+        self.assertEqual(finding_html.count(">Finding History<"), 1)
+        self.assertNotIn("Customer Decision / Update Status", vehicle_html)
+        self.assertNotIn("Customer Decision / Approval Status", vehicle_html)
+        self.assertIn("Estimate prepared", vehicle_html)
+        self.assertIn("View/Edit Repair Estimate", vehicle_html)
+        self.assertIn(".tm-estimator-parts-source-group__title", style_css)
+        self.assertIn("color:#cbd5e1;", style_css)
 
     def test_pdf_generation_accepts_quantity_line_item(self):
         client = TestClient(main.app, base_url="http://localhost")

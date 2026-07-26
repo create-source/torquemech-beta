@@ -7641,11 +7641,69 @@ def quick_find_page(request: Request):
     )
 
 
+def load_finding_estimator_nav_context(request: Request) -> Dict[str, str]:
+    query = request.query_params
+    if str(query.get("source") or "").strip().lower() != "finding":
+        return {}
+
+    customer_id = str(query.get("customer_id") or "").strip()
+    vehicle_id = str(query.get("vehicle_id") or "").strip()
+    finding_id = str(query.get("finding_id") or "").strip()
+    if not (customer_id and vehicle_id and finding_id):
+        raise HTTPException(status_code=400, detail="Finding estimator links require customer, vehicle, and finding ids.")
+
+    conn = app_db_conn()
+    try:
+        user = current_user(conn, request)
+        if user is None:
+            raise HTTPException(status_code=403, detail="Finding estimator links require shop access.")
+        shop_context = current_shop_context(conn, request)
+        request.state.current_user = user
+        request.state.current_shop = shop_context
+        try:
+            customer_id_int = int(customer_id)
+            vehicle_id_int = int(vehicle_id)
+            finding_id_int = int(finding_id)
+            shop_id_int = int(shop_context.get("id"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid finding estimator link.")
+
+        linked = conn.execute(
+            """
+            SELECT fr.id
+            FROM findings_records fr
+            JOIN customer_vehicles cv
+              ON cv.id = fr.vehicle_id
+             AND cv.customer_id = ?
+            JOIN customers c
+              ON c.id = cv.customer_id
+             AND c.shop_id = ?
+            WHERE fr.id = ?
+              AND fr.customer_id = ?
+              AND fr.vehicle_id = ?
+            LIMIT 1
+            """,
+            (customer_id_int, shop_id_int, finding_id_int, customer_id_int, vehicle_id_int),
+        ).fetchone()
+        if not linked:
+            raise HTTPException(status_code=404, detail="Finding estimator link not found.")
+    finally:
+        conn.close()
+
+    base = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
+    return {
+        "finding_url": f"{base}/findings/{finding_id}",
+        "vehicle_url": f"{base}#recommendations-findings",
+        "command_center_url": "/pro/dashboard",
+    }
+
+
 @app.get("/estimator", response_class=HTMLResponse)
 def estimator(request: Request):
     metric_incr("page_estimator")
     pro_access_state = pro_request_access_state(request)
     query = request.query_params
+    finding_estimator_nav = load_finding_estimator_nav_context(request)
     estimator_parts_sources: List[Dict[str, str]] = []
     estimator_parts_source_title = ""
     if str(query.get("source") or "").strip().lower() == "finding":
@@ -7663,6 +7721,8 @@ def estimator(request: Request):
             "pro_handoff_available": pro_access_state["access_allowed"],
             "estimator_parts_sources": estimator_parts_sources,
             "estimator_parts_source_title": estimator_parts_source_title,
+            "finding_estimator_nav": finding_estimator_nav,
+            "is_finding_estimator": bool(finding_estimator_nav),
         },
     )
     if pro_access_state["qa_key_matched"]:
