@@ -12989,3 +12989,18 @@ body.tm-photo-access-open {
   background: rgba(249, 115, 22, 0.09);
   box-shadow: none;
 }
+
+/* Finding → Estimator context box */
+#findingEstimateContext {
+    background: #2C551E1F;
+    border: 1px solid #BBF7D0;
+    border-left: 4px solid #BBF7D0;
+    color: #BBF7D0;
+    box-shadow: none;
+}
+
+#findingEstimateContext strong,
+#findingEstimateContext span,
+#findingEstimateContext em {
+    color: #BBF7D0;
+}
