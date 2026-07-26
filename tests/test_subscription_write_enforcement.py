@@ -252,6 +252,17 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
         records = self.seed_shop_records(shop_id)
         return self.authenticated_client(user_id), shop_id, records
 
+    def active_trial_client_with_records(self, *, email="active@example.com", shop_name="Active Shop"):
+        user_id, shop_id = self.create_user_shop(email=email, shop_name=shop_name)
+        self.insert_subscription(
+            shop_id,
+            "trialing",
+            trial_started_at="2026-07-22T12:00:00+00:00",
+            trial_ends_at="2026-08-22T12:00:00+00:00",
+        )
+        records = self.seed_shop_records(shop_id)
+        return self.authenticated_client(user_id), shop_id, records
+
     def test_read_only_shop_can_view_existing_records_and_billing(self):
         client, _, records = self.expired_trial_client_with_records()
         customer_id = records["customer_id"]
@@ -311,6 +322,131 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
 
         page = client.get(first_location)
         self.assertIn("read-only mode", page.text)
+
+    def test_read_only_finding_write_does_not_sync_vehicle_mileage(self):
+        client, _, records = self.expired_trial_client_with_records()
+        customer_id = records["customer_id"]
+        vehicle_id = records["vehicle_id"]
+
+        response = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings",
+            data={"finding": "New tire wear", "severity": "Low", "status": "Open", "mileage": "107,000"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("subscription_notice=read_only", response.headers["location"])
+        vehicle = self.conn.execute(
+            "SELECT mileage FROM customer_vehicles WHERE id = ?",
+            (vehicle_id,),
+        ).fetchone()
+        finding_count = self.conn.execute(
+            "SELECT COUNT(*) AS count FROM findings_records WHERE vehicle_id = ?",
+            (vehicle_id,),
+        ).fetchone()["count"]
+        self.assertEqual(vehicle["mileage"], 42000)
+        self.assertEqual(finding_count, 1)
+
+    def test_creating_finding_syncs_higher_vehicle_mileage_and_detail_display(self):
+        client, _, records = self.active_trial_client_with_records(email="finding-create@example.com")
+        customer_id = records["customer_id"]
+        vehicle_id = records["vehicle_id"]
+        self.conn.execute("UPDATE customer_vehicles SET mileage = 100000 WHERE id = ?", (vehicle_id,))
+        self.conn.commit()
+
+        response = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings",
+            data={
+                "finding": "Documented odometer",
+                "recommendation": "Use updated mileage",
+                "severity": "Low",
+                "status": "Open",
+                "mileage": "107,000",
+            },
+            follow_redirects=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Current 107,000 miles", response.text)
+        vehicle = self.conn.execute(
+            "SELECT mileage FROM customer_vehicles WHERE id = ?",
+            (vehicle_id,),
+        ).fetchone()
+        finding = self.conn.execute(
+            """
+            SELECT mileage
+            FROM findings_records
+            WHERE vehicle_id = ? AND finding = 'Documented odometer'
+            """,
+            (vehicle_id,),
+        ).fetchone()
+        self.assertEqual(vehicle["mileage"], 107000)
+        self.assertEqual(finding["mileage"], 107000)
+
+    def test_editing_finding_syncs_higher_vehicle_mileage(self):
+        client, _, records = self.active_trial_client_with_records(email="finding-edit@example.com")
+        customer_id = records["customer_id"]
+        vehicle_id = records["vehicle_id"]
+        finding_id = records["finding_id"]
+        self.conn.execute("UPDATE customer_vehicles SET mileage = 100000 WHERE id = ?", (vehicle_id,))
+        self.conn.commit()
+
+        response = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+            data={
+                "request_type": "finding",
+                "finding": "Brake pads worn",
+                "recommendation": "Replace front brake pads",
+                "severity": "High",
+                "status": "Open",
+                "mileage": "109,500",
+                "finding_date": "2026-07-26",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        vehicle = self.conn.execute(
+            "SELECT mileage FROM customer_vehicles WHERE id = ?",
+            (vehicle_id,),
+        ).fetchone()
+        finding = self.conn.execute(
+            "SELECT mileage FROM findings_records WHERE id = ?",
+            (finding_id,),
+        ).fetchone()
+        self.assertEqual(vehicle["mileage"], 109500)
+        self.assertEqual(finding["mileage"], 109500)
+
+    def test_cross_shop_finding_create_cannot_sync_vehicle_mileage(self):
+        _, _, alpha_records = self.active_trial_client_with_records(email="alpha-finding@example.com")
+        beta_user_id, beta_shop_id = self.create_user_shop(email="beta-finding@example.com", shop_name="Beta Shop")
+        self.insert_subscription(
+            beta_shop_id,
+            "trialing",
+            trial_started_at="2026-07-22T12:00:00+00:00",
+            trial_ends_at="2026-08-22T12:00:00+00:00",
+        )
+        beta_client = self.authenticated_client(beta_user_id)
+        customer_id = alpha_records["customer_id"]
+        vehicle_id = alpha_records["vehicle_id"]
+
+        response = beta_client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings",
+            data={"finding": "Cross shop", "severity": "Low", "status": "Open", "mileage": "107,000"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 404)
+        vehicle = self.conn.execute(
+            "SELECT mileage FROM customer_vehicles WHERE id = ?",
+            (vehicle_id,),
+        ).fetchone()
+        finding_count = self.conn.execute(
+            "SELECT COUNT(*) AS count FROM findings_records WHERE vehicle_id = ? AND finding = 'Cross shop'",
+            (vehicle_id,),
+        ).fetchone()["count"]
+        self.assertEqual(vehicle["mileage"], 42000)
+        self.assertEqual(finding_count, 0)
 
     def test_read_only_json_write_returns_403_code(self):
         client, _, _ = self.expired_trial_client_with_records()

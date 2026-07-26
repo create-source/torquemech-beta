@@ -6707,6 +6707,31 @@ def optional_int_value(value: Any) -> int | None:
         return None
 
 
+def sync_vehicle_current_mileage_from_reading(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    shop_id: int,
+    mileage: Any,
+) -> bool:
+    documented_mileage = optional_int_value(mileage)
+    if documented_mileage is None:
+        return False
+    cur = conn.execute(
+        """
+        UPDATE customer_vehicles
+        SET mileage = ?
+        WHERE id = ?
+          AND customer_id = ?
+          AND shop_id = ?
+          AND (mileage IS NULL OR mileage < ?)
+        """,
+        (documented_mileage, vehicle_id, customer_id, shop_id, documented_mileage),
+    )
+    return cur.rowcount > 0
+
+
 def record_estimate_pdf_document(
     *,
     pdf_bytes: bytes,
@@ -14461,8 +14486,10 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
 
     conn = crm_db_conn()
     try:
-        customer, vehicle = load_customer_vehicle(conn, customer_id, vehicle_id)
+        shop_id = required_current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         ensure_findings_records_schema(conn)
+        finding_mileage = optional_int(form, "mileage")
         insert_columns = [
             "vehicle_id",
             "request_type",
@@ -14499,7 +14526,7 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             status,
             "completed" if status == "Completed" else "ready" if status == "Approved" else "",
             now if status in {"Approved", "Completed"} else "",
-            optional_int(form, "mileage"),
+            finding_mileage,
             local_today().isoformat(),
             now,
         ]
@@ -14528,6 +14555,13 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             status,
             customer_name(customer),
             now,
+        )
+        sync_vehicle_current_mileage_from_reading(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            shop_id=shop_id,
+            mileage=finding_mileage,
         )
         if status == "Approved":
             ensure_repair_record_for_approved_finding(
@@ -14637,6 +14671,7 @@ async def pro_finding_record_update(
         shop_id = required_current_shop_id(conn, request)
         customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        finding_mileage = optional_int(form, "mileage")
         cur = conn.execute(
             f"""
             UPDATE findings_records
@@ -14674,7 +14709,7 @@ async def pro_finding_record_update(
                 status,
                 status,
                 datetime.utcnow().isoformat(),
-                optional_int(form, "mileage"),
+                finding_mileage,
                 form.get("finding_date", ""),
                 *finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
             ),
@@ -14698,6 +14733,13 @@ async def pro_finding_record_update(
                 customer_name(customer),
                 now,
             )
+        sync_vehicle_current_mileage_from_reading(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            shop_id=shop_id,
+            mileage=finding_mileage,
+        )
         if status == "Approved":
             ensure_repair_record_for_approved_finding(
                 conn,

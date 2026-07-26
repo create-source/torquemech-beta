@@ -1490,6 +1490,100 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertEqual(pro_module.format_mileage("177000"), "177,000")
         self.assertEqual(pro_module.optional_int({"mileage": "177,000"}, "mileage"), 177000)
 
+    def test_vehicle_current_mileage_sync_keeps_higher_documented_reading(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        pro_module.ensure_customer_status_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO customers (id, shop_id, first_name, created_at, updated_at)
+            VALUES (1, 10, 'Ada', '2026-07-26', '2026-07-26')
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO customer_vehicles (id, customer_id, shop_id, mileage, created_at, updated_at)
+            VALUES (2, 1, 10, 100000, '2026-07-26', '2026-07-26')
+            """
+        )
+
+        updated = pro_module.sync_vehicle_current_mileage_from_reading(
+            conn,
+            customer_id=1,
+            vehicle_id=2,
+            shop_id=10,
+            mileage="107,000",
+        )
+
+        self.assertTrue(updated)
+        self.assertEqual(conn.execute("SELECT mileage FROM customer_vehicles WHERE id = 2").fetchone()["mileage"], 107000)
+
+    def test_vehicle_current_mileage_sync_never_reduces_or_blanks_mileage(self):
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        self.addCleanup(conn.close)
+        pro_module.ensure_customer_status_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO customers (id, shop_id, first_name, created_at, updated_at)
+            VALUES (1, 10, 'Ada', '2026-07-26', '2026-07-26')
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO customer_vehicles (id, customer_id, shop_id, mileage, created_at, updated_at)
+            VALUES (2, 1, 10, 107000, '2026-07-26', '2026-07-26')
+            """
+        )
+
+        lower_updated = pro_module.sync_vehicle_current_mileage_from_reading(
+            conn,
+            customer_id=1,
+            vehicle_id=2,
+            shop_id=10,
+            mileage="100,000",
+        )
+        blank_updated = pro_module.sync_vehicle_current_mileage_from_reading(
+            conn,
+            customer_id=1,
+            vehicle_id=2,
+            shop_id=10,
+            mileage="",
+        )
+
+        self.assertFalse(lower_updated)
+        self.assertFalse(blank_updated)
+        self.assertEqual(conn.execute("SELECT mileage FROM customer_vehicles WHERE id = 2").fetchone()["mileage"], 107000)
+
+    def test_vehicle_current_mileage_sync_is_shop_scoped_and_portable_sql(self):
+        class RecordingConnection:
+            def __init__(self):
+                self.sql = ""
+                self.params = ()
+
+            def execute(self, sql, params=()):
+                self.sql = sql
+                self.params = params
+                return type("Cursor", (), {"rowcount": 0})()
+
+        conn = RecordingConnection()
+
+        updated = pro_module.sync_vehicle_current_mileage_from_reading(
+            conn,
+            customer_id=1,
+            vehicle_id=2,
+            shop_id=10,
+            mileage="107,000",
+        )
+
+        self.assertFalse(updated)
+        self.assertIn("AND shop_id = ?", conn.sql)
+        self.assertIn("(mileage IS NULL OR mileage < ?)", conn.sql)
+        self.assertNotIn("GREATEST", conn.sql.upper())
+        self.assertNotIn("MAX(", conn.sql.upper())
+        self.assertEqual(conn.params, (107000, 2, 1, 10, 107000))
+
     def test_phone_formats_with_parentheses_and_parses_raw_digits(self):
         self.assertEqual(pro_module.format_phone("2223334444"), "(222)333-4444")
         self.assertEqual(pro_module.format_phone("1 (222) 333-4444"), "(222)333-4444")
