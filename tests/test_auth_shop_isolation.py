@@ -3349,15 +3349,17 @@ class AuthShopIsolationTests(unittest.TestCase):
         finding_id: int,
         *,
         total: float = 700.0,
+        service_name: str = "Front brake service",
+        payload_line_items: list[dict] | None = None,
     ) -> int:
         pro_module.ensure_repair_estimate_documents_schema(self.conn)
         payload = {
             "source": "finding",
             "problem_found": "Brake pads below spec",
             "recommended_repair": "Replace front brake pads and resurface rotors",
-            "line_items": [
+            "line_items": payload_line_items if payload_line_items is not None else [
                 {
-                    "service_text": "Front brake service",
+                    "service_text": service_name,
                     "labor_hours": 2.0,
                     "labor_rate": 150.0,
                     "parts_total": 400.0,
@@ -3374,10 +3376,10 @@ class AuthShopIsolationTests(unittest.TestCase):
                   approval_status, pdf_path, payload_json, created_at
                 )
                 VALUES (?, ?, ?, '2026-07-24', 'Alpha Customer',
-                        '2014 Toyota Camry', 'Front brake service', ?,
+                        '2014 Toyota Camry', ?, ?,
                         'Prepared estimate', 'test-estimate.pdf', ?, '2026-07-24T12:15:00')
                 """,
-                (customer_id, vehicle_id, finding_id, total, json.dumps(payload)),
+                (customer_id, vehicle_id, finding_id, service_name, total, json.dumps(payload)),
             ).lastrowid
         )
         self.conn.commit()
@@ -3398,6 +3400,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Replace front brake pads and resurface rotors", response.text)
         self.assertIn("/static/uploads/findings/brake-before.jpg", response.text)
         self.assertIn("Estimate prepared", response.text)
+        self.assertIn("Front brake service", response.text)
         self.assertIn("$700.00", response.text)
         self.assertIn("View/Edit Repair Estimate", response.text)
         self.assertIn(f"estimate_id={estimate_id}", response.text)
@@ -3405,6 +3408,50 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Open Estimate PDF", response.text)
         self.assertNotIn("Update Customer Decision", response.text)
         self.assertNotIn("Start Repair", response.text)
+
+    def test_finding_detail_displays_saved_prepared_estimate_service_name_and_total(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage1-service-name@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage1-service-name@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Service")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=812.34,
+            service_name="Brake Master Cylinder Replacement",
+        )
+
+        response = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Brake Master Cylinder Replacement", response.text)
+        self.assertIn("$812.34", response.text)
+        self.assertIn("View/Edit Repair Estimate", response.text)
+        self.assertIn("Open Estimate PDF", response.text)
+
+    def test_finding_detail_legacy_saved_estimate_without_service_data_degrades_safely(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage1-legacy-service@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage1-legacy-service@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Legacy")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=321.0,
+            service_name="",
+            payload_line_items=[],
+        )
+
+        response = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Estimate prepared", response.text)
+        self.assertIn("<strong>-</strong>", response.text)
+        self.assertIn("$321.00", response.text)
 
     def test_shop_can_start_estimate_from_own_saved_finding_and_other_shop_cannot_open_it(self):
         alpha_client = self.client()

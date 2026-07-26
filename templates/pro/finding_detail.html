@@ -178,7 +178,7 @@
     {% endif %}
     {% if has_saved_estimate or has_inline_estimate %}
     <div class="tm-finding-grid">
-      <div class="tm-finding-field"><span>Service Name</span><strong>{{ finding.labor_description or finding.recommendation or "-" }}</strong></div>
+      <div class="tm-finding-field"><span>Service Name</span><strong>{% if has_saved_estimate %}{{ finding.estimate_service_name or "-" }}{% else %}{{ finding.labor_description or finding.recommendation or "-" }}{% endif %}</strong></div>
       {% if not has_saved_estimate %}
       <div class="tm-finding-field"><span>Labor</span><strong>{% if finding.labor_amount is not none %}{{ finding.labor_amount|pro_currency }}{% else %}-{% endif %}</strong></div>
       <div class="tm-finding-field"><span>Parts</span><strong>{% if finding.parts_cost is not none %}{{ finding.parts_cost|pro_currency }}{% else %}-{% endif %}</strong></div>

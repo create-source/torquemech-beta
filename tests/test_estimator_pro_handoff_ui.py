@@ -255,6 +255,8 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertNotIn("Back to Finding", response.text)
         self.assertNotIn("Back to Vehicle", response.text)
         self.assertNotIn("data-finding-prepared-url", response.text)
+        self.assertIn("Prepare Reviewed Estimate", response.text)
+        self.assertIn('id="prepareReviewedEstimateBtn"', response.text)
 
     def test_finding_estimator_hides_stage_two_completion_actions(self):
         self.start_finding_estimator_context()
@@ -265,14 +267,19 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         html = response.text
-        self.assertIn("Save as Prepared Estimate", html)
+        button_labels = re.findall(r"<button[^>]*>(.*?)</button>", html, flags=re.S)
+        button_labels = [re.sub(r"\s+", " ", label).strip() for label in button_labels]
+
+        self.assertEqual(button_labels.count("Save Prepared Estimate"), 1)
+        self.assertNotIn("Save as Prepared Estimate", html)
         self.assertIn("Review & Save Prepared Estimate", html)
         self.assertIn('id="generateAllBtn"', html)
-        self.assertIn('id="prepareReviewedEstimateBtn"', html)
+        self.assertNotIn('id="prepareReviewedEstimateBtn"', html)
         self.assertIn('id="confirmAddBtn"', html)
         self.assertIn("Return to Finding", html)
         self.assertIn(">Back to Finding</a>", html)
         self.assertIn(">Back to Vehicle</a>", html)
+        self.assertIn(">Close</button>", html)
         self.assertIn('href="/pro/customers/1/vehicles/2/findings/3"', html)
         self.assertIn('href="/pro/customers/1/vehicles/2#recommendations-findings"', html)
         self.assertNotIn("Copy Estimate Link", html)
@@ -291,7 +298,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertEqual(len(ids), len(set(ids)))
         self.assertIn('button id="generateAllBtn" type="button"', html)
-        self.assertIn('button id="prepareReviewedEstimateBtn" type="button"', html)
+        self.assertNotIn('button id="prepareReviewedEstimateBtn" type="button"', html)
         self.assertIn('button id="confirmAddBtn" type="button"', html)
 
         with open("static/app.js", encoding="utf-8") as handle:

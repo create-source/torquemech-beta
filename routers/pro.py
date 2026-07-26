@@ -6880,6 +6880,31 @@ def estimate_document_edit_url(customer_id: int, vehicle_id: int, record: dict[s
     return f"/estimator?{urlencode(params)}"
 
 
+def estimate_document_service_summary(record: dict[str, Any]) -> str:
+    payload = estimate_document_payload(record)
+    line_items = payload.get("line_items")
+    if not isinstance(line_items, list):
+        line_items = payload.get("lineItems")
+    names: list[str] = []
+    if isinstance(line_items, list):
+        for item in line_items:
+            if not isinstance(item, dict):
+                continue
+            service_name = str(
+                item.get("service_text")
+                or item.get("displayServiceText")
+                or item.get("serviceText")
+                or item.get("service_name")
+                or item.get("display_service_name")
+                or ""
+            ).strip()
+            if service_name:
+                names.append(clean_service_quantity_title(service_name))
+    if names:
+        return ", ".join(names[:3])
+    return ""
+
+
 def latest_estimate_documents_by_finding_id(
     estimate_document_records: list[dict[str, Any]] | None,
 ) -> dict[int, dict[str, Any]]:
@@ -6923,12 +6948,14 @@ def attach_estimate_documents_to_findings(
             record["estimate_document_url"] = ""
             record["estimate_document_edit_url"] = ""
             record["estimate_document_status"] = ""
+            record["estimate_service_name"] = ""
             continue
         record["estimate_document_id"] = estimate_doc.get("id")
         record["estimate_document_url"] = estimate_document_url(customer_id, vehicle_id, estimate_doc.get("id"))
         record["estimate_document_edit_url"] = estimate_document_edit_url(customer_id, vehicle_id, estimate_doc)
         record["estimate_document_status"] = estimate_doc.get("approval_status") or ""
         record["estimate_total"] = estimate_doc.get("estimate_total")
+        record["estimate_service_name"] = estimate_document_service_summary(estimate_doc)
 
 
 def link_estimate_documents_for_invoice(

@@ -703,8 +703,8 @@
       <div class="modal-actions tm-confirm-actions">
         <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">{% if is_finding_estimator %}Save Prepared Estimate{% else %}Download Customer PDF{% endif %}</button>
         <div class="tm-confirm-secondary-actions">
-          <button id="prepareReviewedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">{% if is_finding_estimator %}Save as Prepared Estimate{% else %}Prepare Reviewed Estimate{% endif %}</button>
           {% if not is_finding_estimator %}
+          <button id="prepareReviewedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">{% if is_finding_estimator %}Save as Prepared Estimate{% else %}Prepare Reviewed Estimate{% endif %}</button>
           <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
           <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Customer Quote</button>
           {% else %}
