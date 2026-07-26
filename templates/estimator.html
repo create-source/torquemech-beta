@@ -6,7 +6,12 @@
 {% block page_css %}{% endblock %}
 
 {% block content %}
-<div class="tm-guided-estimator">
+<div class="tm-guided-estimator"
+     {% if is_finding_estimator %}
+     data-finding-url="{{ finding_estimator_nav.finding_url }}"
+     data-finding-prepared-url="{{ finding_estimator_nav.finding_url }}?estimate_prepared=1"
+     data-finding-vehicle-url="{{ finding_estimator_nav.vehicle_url }}"
+     {% endif %}>
     <header class="tm-estimator-header" data-tour-target="estimator-welcome">
       <div>
         <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% elif is_finding_estimator %}Pro finding workflow{% else %}Mechanic estimator{% endif %}</div>
@@ -702,6 +707,9 @@
           {% if not is_finding_estimator %}
           <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
           <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Customer Quote</button>
+          {% else %}
+          <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.finding_url }}">Back to Finding</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.vehicle_url }}">Back to Vehicle</a>
           {% endif %}
           <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
         </div>

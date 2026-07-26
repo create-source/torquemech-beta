@@ -1955,8 +1955,10 @@
   }
 
   function findingEstimatorReturnUrl() {
-    const context = getEstimatorSourceContext();
     if (!isFindingEstimatorSession()) return "";
+    const validatedUrl = document.querySelector(".tm-guided-estimator")?.dataset?.findingPreparedUrl || "";
+    if (validatedUrl) return validatedUrl;
+    const context = getEstimatorSourceContext();
     const url = new URL(
       `/pro/customers/${encodeURIComponent(context.customerId)}/vehicles/${encodeURIComponent(context.vehicleId)}/findings/${encodeURIComponent(context.findingId)}`,
       window.location.origin

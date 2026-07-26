@@ -173,6 +173,9 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("Pro finding workflow", html)
         self.assertIn('href="/pro/customers/1/vehicles/2/findings/3"', html)
         self.assertIn('href="/pro/customers/1/vehicles/2#recommendations-findings"', html)
+        self.assertIn('data-finding-url="/pro/customers/1/vehicles/2/findings/3"', html)
+        self.assertIn('data-finding-prepared-url="/pro/customers/1/vehicles/2/findings/3?estimate_prepared=1"', html)
+        self.assertIn('data-finding-vehicle-url="/pro/customers/1/vehicles/2#recommendations-findings"', html)
         self.assertIn('href="/pro/dashboard"', html)
         self.assertIn("Command Center", html)
         self.assertNotIn(">Log In<", html)
@@ -248,6 +251,9 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("Research Parts Pricing", response.text)
+        self.assertNotIn("Back to Finding", response.text)
+        self.assertNotIn("Back to Vehicle", response.text)
+        self.assertNotIn("data-finding-prepared-url", response.text)
 
     def test_finding_estimator_hides_stage_two_completion_actions(self):
         self.start_finding_estimator_context()
@@ -260,6 +266,10 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         html = response.text
         self.assertIn("Save as Prepared Estimate", html)
         self.assertIn("Return to Finding", html)
+        self.assertIn(">Back to Finding</a>", html)
+        self.assertIn(">Back to Vehicle</a>", html)
+        self.assertIn('href="/pro/customers/1/vehicles/2/findings/3"', html)
+        self.assertIn('href="/pro/customers/1/vehicles/2#recommendations-findings"', html)
         self.assertNotIn("Copy Estimate Link", html)
         self.assertNotIn("Open Customer Quote", html)
         self.assertNotIn("Email Customer Quote", html)
@@ -272,6 +282,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("function isFindingEstimatorSession()", app_js)
         self.assertIn("function findingEstimatorReturnUrl()", app_js)
         self.assertIn("window.location.assign(returnUrl);", app_js)
+        self.assertIn("findingPreparedUrl", app_js)
         self.assertIn('"estimate_prepared", "1"', app_js)
         self.assertIn('if (isFindingEstimatorSession()) {', app_js)
 
