@@ -790,12 +790,12 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertLess(pending_page.text.index("Confirmed Appointments"), pending_page.text.index("Appointment History"))
         self.assertIn("customer@example.com", pending_page.text)
         self.assertIn("2020 Honda Civic", pending_page.text)
-        self.assertNotIn("Copy Confirmation Message", pending_page.text)
+        self.assertNotIn("Copy Text Message", pending_page.text)
         self.assertNotIn("Copy Cancellation Message", pending_page.text)
         self.assertEqual(confirm_response.headers["location"], "/pro/calendar?notice=confirmed_email_sent")
         self.assertIn("Appointment confirmed and confirmation email sent.", confirmed_page.text)
         self.assertIn("Confirmed Appointments", confirmed_page.text)
-        self.assertIn("Copy Confirmation Message", confirmed_page.text)
+        self.assertIn("Copy Text Message", confirmed_page.text)
         self.assertNotIn("customer@example.com", second_calendar_page.text)
         self.assertNotIn("Pending Requests (6)", second_calendar_page.text)
         self.assertEqual(handled_response.headers["location"], "/pro/calendar?notice=handled")
@@ -866,7 +866,7 @@ class CalendarFoundationTests(unittest.TestCase):
 
         self.assertIn("Reschedule", calendar_page.text)
         self.assertIn("Cancel Appointment", calendar_page.text)
-        self.assertIn("Copy Confirmation Message", calendar_page.text)
+        self.assertIn("Copy Text Message", calendar_page.text)
         self.assertNotIn("Copy Cancellation Message", calendar_page.text)
         self.assertIn({"value": "09:00", "label": "9:00 AM"}, excluded_times["times"])
         self.assertEqual(reschedule_response.headers["location"], "/pro/calendar?notice=rescheduled")
@@ -874,15 +874,56 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertFalse(new_slot[0])
         self.assertIn("Appointment rescheduled.", rescheduled_page.text)
         self.assertIn("10:00 AM", rescheduled_page.text)
-        self.assertIn("Copy Reschedule Message", rescheduled_page.text)
+        self.assertIn("Copy Text Message", rescheduled_page.text)
         self.assertEqual(cancel_response.headers["location"], "/pro/calendar?notice=cancelled_email_missing")
         self.assertTrue(canceled_slot[0])
         self.assertIn("Appointment canceled. Add a customer email address before emailing this cancellation.", canceled_page.text)
         self.assertIn("Appointment History (1)", canceled_page.text)
         self.assertNotIn('aria-label="Appointment History" open', canceled_page.text)
-        self.assertIn("Copy Message", canceled_page.text)
+        self.assertIn("Copy Text Message", canceled_page.text)
         self.assertEqual(row["status"], "Cancelled")
         self.assertEqual(row["requested_time"], "10:00")
+
+    def test_cancellation_redirect_uses_specific_non_cancellable_error(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            appointment_id = pro_module.create_service_appointment(
+                conn,
+                {
+                    "customer_name": "Requested Customer",
+                    "customer_phone": "5555550100",
+                    "service_name": "Brake Service",
+                    "requested_date": future_weekday(0),
+                    "requested_time": "09:00",
+                    "status": "Requested",
+                },
+            )
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client, _, shop_id = auth_session_client(conn)
+                assign_shop_scope(conn, shop_id)
+                calendar_page = client.get("/pro/calendar")
+                response = client.post(
+                    f"/pro/calendar/{appointment_id}/cancel",
+                    data={"csrf_token": csrf_from(calendar_page.text)},
+                    follow_redirects=False,
+                )
+                row = conn.execute(
+                    "SELECT status FROM service_appointments WHERE id = ?",
+                    (appointment_id,),
+                ).fetchone()
+        finally:
+            sqlite3.Connection.close(conn)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("Only+confirmed+or+rescheduled+appointments+can+be+cancelled", response.headers["location"])
+        self.assertNotIn("Confirmed+appointment+not+found", response.headers["location"])
+        self.assertEqual(row["status"], "Requested")
 
     def test_declined_request_shows_declined_message_and_history(self):
         conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
@@ -925,7 +966,7 @@ class CalendarFoundationTests(unittest.TestCase):
 
         self.assertIn("Confirm Appointment", pending_page.text)
         self.assertIn("Decline Request", pending_page.text)
-        self.assertNotIn("Copy Confirmation Message", pending_page.text)
+        self.assertNotIn("Copy Text Message", pending_page.text)
         self.assertNotIn("Copy Cancellation Message", pending_page.text)
         self.assertEqual(decline_response.headers["location"], "/pro/calendar?notice=declined")
         self.assertEqual(row["status"], "Declined")
@@ -933,13 +974,74 @@ class CalendarFoundationTests(unittest.TestCase):
         self.assertIn("Declined", declined_page.text)
         self.assertIn("Appointment History (1)", declined_page.text)
         self.assertNotIn('aria-label="Appointment History" open', declined_page.text)
-        self.assertIn("Copy Message", declined_page.text)
+        self.assertIn("Copy Text Message", declined_page.text)
         self.assertIn(
             "We\u2019re unable to accept your appointment request for your 1998 Toyota Camry "
             "regarding Oil Change on 07/22/2026 at 4:00 PM.",
             declined_page.text,
         )
         self.assertNotIn("has been canceled", declined_page.text)
+
+    def test_appointment_cards_show_contact_aware_communication_actions(self):
+        conn = sqlite3.connect(":memory:", factory=NonClosingConnection, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        try:
+            requested_date = future_weekday(0)
+            contact_cases = [
+                ("Both", "both@example.com", "5555550100", True, True, False),
+                ("Email Only", "email-only@example.com", "", True, False, False),
+                ("Phone Only", "", "5555550101", False, True, False),
+                ("Neither", "", "", False, False, True),
+            ]
+            statuses = ["Confirmed", "Rescheduled", "Cancelled", "Declined"]
+            time_hour = 6
+            for status in statuses:
+                for label, email, phone, _send_email, _copy_text, _add_contact in contact_cases:
+                    pro_module.create_service_appointment(
+                        conn,
+                        {
+                            "customer_name": f"{status} {label}",
+                            "customer_phone": phone,
+                            "customer_email": email,
+                            "vehicle_label": "2020 Honda Civic",
+                            "service_name": "Brake Inspection",
+                            "requested_date": requested_date,
+                            "requested_time": f"{time_hour:02d}:00",
+                            "status": status,
+                        },
+                    )
+                    time_hour += 1
+            with patch.object(pro_module, "crm_db_conn", lambda: conn), patch.object(
+                main, "app_db_conn", lambda row_factory=False: conn
+            ), patch.dict(
+                os.environ,
+                {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""},
+            ):
+                client, _, shop_id = auth_session_client(conn)
+                assign_shop_scope(conn, shop_id)
+                page = client.get("/pro/calendar")
+        finally:
+            sqlite3.Connection.close(conn)
+
+        def card_for(name: str) -> str:
+            self.assertIn(name, page.text)
+            return page.text.split(name, 1)[1].split("</article>", 1)[0]
+
+        for status in statuses:
+            for label, _email, _phone, send_email, copy_text, add_contact in contact_cases:
+                card = card_for(f"{status} {label}")
+                if send_email:
+                    self.assertIn("Send Email", card, f"{status} {label}")
+                else:
+                    self.assertNotIn("Send Email", card, f"{status} {label}")
+                if copy_text:
+                    self.assertIn("Copy Text Message", card, f"{status} {label}")
+                else:
+                    self.assertNotIn("Copy Text Message", card, f"{status} {label}")
+                if add_contact:
+                    self.assertIn("Add Contact Info", card, f"{status} {label}")
+                else:
+                    self.assertNotIn("Add Contact Info", card, f"{status} {label}")
 
     def test_calendar_review_groups_counts_active_and_history_records(self):
         grouped = pro_module.group_booking_review_appointments(

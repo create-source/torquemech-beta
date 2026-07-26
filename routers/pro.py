@@ -12503,10 +12503,43 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
             appointment["display_vehicle_label"] = appointment_vehicle_label(appointment)
             appointment["linked_customer_name"] = customer_display_name(linked_customer) if linked_customer else ""
             appointment["linked_vehicle_label"] = vehicle_label(linked_vehicle) if linked_vehicle else ""
-            appointment["confirmation_email_available"] = bool(
-                normalize_email(appointment.get("customer_email") or (linked_customer or {}).get("email") or "")
-            )
+            customer_email = normalize_email(appointment.get("customer_email") or (linked_customer or {}).get("email") or "")
+            customer_phone = clean_phone(appointment.get("customer_phone") or (linked_customer or {}).get("phone") or "")
+            appointment["customer_email_available"] = bool(customer_email)
+            appointment["customer_phone_available"] = bool(customer_phone)
+            appointment["customer_email_address"] = customer_email
+            appointment["confirmation_email_available"] = appointment["customer_email_available"]
             appointment["cancellation_email_available"] = appointment["confirmation_email_available"]
+            appointment["email_action_hrefs"] = {
+                "reschedule": (
+                    "mailto:"
+                    + quote(customer_email)
+                    + "?"
+                    + urlencode(
+                        {
+                            "subject": appointment_cancellation_email_subject(appointment, profile.get("shop_name") or load_shop_name(conn)).replace(
+                                "Canceled", "Rescheduled"
+                            ),
+                            "body": appointment.get("reschedule_message", ""),
+                        }
+                    )
+                    if customer_email
+                    else ""
+                ),
+                "declined": (
+                    "mailto:"
+                    + quote(customer_email)
+                    + "?"
+                    + urlencode(
+                        {
+                            "subject": f"Appointment Update - {profile.get('shop_name') or load_shop_name(conn)}",
+                            "body": appointment.get("declined_message", ""),
+                        }
+                    )
+                    if customer_email
+                    else ""
+                ),
+            }
             appointment["customer_url"] = f"/pro/customers/{customer_id}" if customer_id else ""
             appointment["cancellation_email_customer_edit_url"] = (
                 customer_cancellation_email_edit_url(
@@ -12623,9 +12656,9 @@ def pro_calendar(request: Request, saved: str = "", notice: str = "", error: str
                 "cancellation_email_failed": "We couldn't send the cancellation email. Please try again.",
                 "cancellation_email_missing": "Add a customer email address before emailing this cancellation.",
                 "customer_updated_cancellation_email_sent": "Customer updated and cancellation email sent.",
-                "customer_updated_cancellation_email_failed": "Customer updated, but the cancellation email could not be sent. Use Email Cancellation to retry.",
+                "customer_updated_cancellation_email_failed": "Customer updated, but the cancellation email could not be sent. Use Send Email to retry.",
                 "customer_added_cancellation_email_sent": "Customer added and cancellation email sent.",
-                "customer_added_cancellation_email_failed": "Customer added, but the cancellation email could not be sent. Use Email Cancellation to retry.",
+                "customer_added_cancellation_email_failed": "Customer added, but the cancellation email could not be sent. Use Send Email to retry.",
                 "customer_added_cancellation_email_missing": "Customer added. Add an email address before emailing this cancellation.",
                 "linked": "Appointment linked to customer.",
             }.get(notice, ""),
@@ -12819,12 +12852,12 @@ async def pro_calendar_cancel(request: Request, appointment_id: int):
             appointment = load_service_appointment_for_shop(conn, appointment_id, shop_id)
         except HTTPException:
             return RedirectResponse(
-                f"/pro/calendar?{urlencode({'error': 'Confirmed appointment not found.'})}",
+                f"/pro/calendar?{urlencode({'error': 'Appointment not found.'})}",
                 status_code=303,
             )
         if appointment.get("status") not in {"Confirmed", "Rescheduled"}:
             return RedirectResponse(
-                f"/pro/calendar?{urlencode({'error': 'Confirmed appointment not found.'})}",
+                f"/pro/calendar?{urlencode({'error': 'Only confirmed or rescheduled appointments can be cancelled.'})}",
                 status_code=303,
             )
         recipient_email = appointment_email_recipient(conn, appointment, shop_id)

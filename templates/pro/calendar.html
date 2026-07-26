@@ -318,15 +318,11 @@
     </form>
 
     </div>
-    {% if item.status == "Confirmed" %}
-      {% if item.confirmation_email_available %}
+    {% if item.status == "Confirmed" and item.confirmation_email_available %}
       <form method="post" action="/pro/calendar/{{ item.id }}/confirmation-email">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="tm-btn tm-btn-secondary" type="submit">Email Confirmation</button>
+        <button class="tm-btn tm-btn-secondary" type="submit">Send Email</button>
       </form>
-      {% else %}
-      <p class="tm-book-warning">Add a customer email address before emailing this confirmation.</p>
-      {% endif %}
     {% endif %}
     {% if item.customer_id and item.vehicle_id %}
     <div class="tm-calendar-linked">
@@ -351,8 +347,8 @@
     </div>
     {% else %}
     {% set vehicle_bits = appointment_vehicle_parts(item) %}
-    <details class="tm-calendar-convert" data-conversion-panel>
-      <summary class="tm-btn tm-btn-primary">Add to Customer / Start Job</summary>
+    <details class="tm-calendar-convert" id="appointment_contact_{{ item.id }}" data-conversion-panel>
+      <summary class="tm-btn tm-btn-primary">{% if not item.customer_email_available and not item.customer_phone_available %}Add Contact Info{% else %}Add to Customer / Start Job{% endif %}</summary>
       <form class="tm-calendar-convert-panel" method="post" action="/pro/calendar/{{ item.id }}/convert">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <div class="tm-calendar-convert-mode" aria-label="Customer conversion mode">
@@ -411,22 +407,33 @@
     {% endif %}
   </div>
   {% if item.status in ["Confirmed", "Rescheduled"] %}
-  <div class="tm-calendar-copy-row" aria-label="Copy customer messages">
+  <div class="tm-calendar-copy-row" aria-label="Customer communication actions">
+    {% if item.status == "Rescheduled" and item.customer_email_available %}
+    <a class="tm-btn tm-btn-secondary" href="{{ item.email_action_hrefs.reschedule }}">Send Email</a>
+    {% endif %}
+    {% if item.customer_phone_available %}
     <details class="tm-calendar-message-editor">
       <summary class="tm-btn tm-btn-secondary">Edit Confirmation Message</summary>
       <textarea class="tm-input" data-copy-source="confirmation" data-default-message="{{ item.confirmation_message|e }}">{{ item.confirmation_message }}</textarea>
     </details>
-    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="confirmation">Copy Confirmation Message</button>
+    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="confirmation">Copy Text Message</button>
     <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="confirmation">Reset to Default</button>
     {% if item.status == "Rescheduled" %}
     <details class="tm-calendar-message-editor">
       <summary class="tm-btn tm-btn-secondary">Edit Reschedule Message</summary>
       <textarea class="tm-input" data-copy-source="reschedule" data-default-message="{{ item.reschedule_message|e }}">{{ item.reschedule_message }}</textarea>
     </details>
-    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="reschedule">Copy Reschedule Message</button>
+    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="reschedule">Copy Text Message</button>
     <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="reschedule">Reset to Default</button>
     {% endif %}
     <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
+    {% elif not item.customer_email_available %}
+      {% if item.customer_url %}
+      <a class="tm-btn tm-btn-secondary" href="{{ item.customer_url }}">Add Contact Info</a>
+      {% else %}
+      <a class="tm-btn tm-btn-secondary" href="#appointment_contact_{{ item.id }}">Add Contact Info</a>
+      {% endif %}
+    {% endif %}
   </div>
   {% endif %}
 </article>
@@ -462,15 +469,15 @@
       {% if item.cancellation_email_available %}
       <form method="post" action="/pro/calendar/{{ item.id }}/cancellation-email">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="tm-btn tm-btn-secondary" type="submit">Email Cancellation</button>
+        <button class="tm-btn tm-btn-secondary" type="submit">Send Email</button>
       </form>
-      {% else %}
+      {% elif not item.customer_phone_available %}
       <p class="tm-book-warning">Add a customer email address before emailing this cancellation.</p>
       {% if item.cancellation_email_customer_edit_url %}
-      <a class="tm-btn tm-btn-secondary" href="{{ item.cancellation_email_customer_edit_url }}">Edit Customer</a>
+      <a class="tm-btn tm-btn-secondary" href="{{ item.cancellation_email_customer_edit_url }}">Add Contact Info</a>
       {% elif item.cancellation_email_add_customer_context %}
       <details class="tm-calendar-convert" data-conversion-panel>
-        <summary class="tm-btn tm-btn-secondary">Add Customer</summary>
+        <summary class="tm-btn tm-btn-secondary">Add Contact Info</summary>
         <form class="tm-calendar-convert-panel" method="post" action="/pro/calendar/{{ item.id }}/convert">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <input type="hidden" name="customer_mode" value="new">
@@ -486,15 +493,25 @@
         </form>
       </details>
       {% endif %}
-      {% endif %}
     {% endif %}
+    {% elif item.status == "Declined" and item.customer_email_available %}
+    <a class="tm-btn tm-btn-secondary" href="{{ item.email_action_hrefs.declined }}">Send Email</a>
+    {% endif %}
+    {% if item.customer_phone_available %}
     <details class="tm-calendar-message-editor">
       <summary class="tm-btn tm-btn-secondary">Edit Message</summary>
       <textarea class="tm-input" data-copy-source="{{ message_type }}" data-default-message="{{ default_message|e }}">{{ default_message }}</textarea>
     </details>
-    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="{{ message_type }}">Copy Message</button>
+    <button class="tm-btn tm-btn-secondary" type="button" data-copy-appointment-message="{{ message_type }}">Copy Text Message</button>
     <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="{{ message_type }}">Reset to Default</button>
     <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
+    {% elif not item.customer_email_available and item.status != "Cancelled" %}
+      {% if item.customer_url %}
+      <a class="tm-btn tm-btn-secondary" href="{{ item.customer_url }}">Add Contact Info</a>
+      {% elif item.status == "Declined" %}
+      <span class="tm-btn tm-btn-secondary">Add Contact Info</span>
+      {% endif %}
+    {% endif %}
   </div>
   {% endif %}
 </article>
@@ -521,7 +538,7 @@
     <strong>{{ action_preview.title }}</strong>
     <textarea class="tm-input" data-copy-source="action" data-default-message="{{ action_preview.message|e }}">{{ action_preview.message }}</textarea>
     <div class="tm-calendar-message-preview-actions">
-      <button class="tm-btn tm-btn-primary" type="button" data-copy-appointment-message="action">Copy Message</button>
+      <button class="tm-btn tm-btn-primary" type="button" data-copy-appointment-message="action">Copy Text Message</button>
       <button class="tm-btn tm-btn-secondary" type="button" data-reset-appointment-message="action">Reset to Default</button>
       <span class="tm-calendar-copy-status" data-copy-status aria-live="polite"></span>
     </div>

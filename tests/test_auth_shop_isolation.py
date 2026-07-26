@@ -2003,7 +2003,7 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 303)
         self.assertEqual(response.headers["location"], "/pro/calendar?notice=confirmation_email_sent")
-        self.assertIn("Email Confirmation", page.text)
+        self.assertIn("Send Email", page.text)
         self.assertEqual(sent_messages[0].recipients, ["linked@example.com"])
         self.assertIsNone(sent_messages[0].reply_to)
 
@@ -2230,10 +2230,11 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
         page = client.get("/pro/calendar")
 
-        self.assertIn("Email Confirmation", page.text)
+        self.assertIn("Send Email", page.text)
         without_card = page.text.split("Without Email", 1)[1].split("</article>", 1)[0]
-        self.assertNotIn("Email Confirmation", without_card)
-        self.assertIn("Add a customer email address before emailing this confirmation.", without_card)
+        self.assertNotIn("Send Email", without_card)
+        self.assertIn("Copy Text Message", without_card)
+        self.assertNotIn("Add Contact Info", without_card)
 
     def test_same_shop_appointment_cancellation_email_succeeds(self):
         client = self.client()
@@ -2564,21 +2565,23 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
         page = client.get("/pro/calendar")
 
-        self.assertIn("Email Cancellation", page.text)
+        self.assertIn("Send Email", page.text)
         without_card = page.text.split("Canceled Without Email", 1)[1].split("</article>", 1)[0]
         confirmed_card = page.text.split("Confirmed With Email", 1)[1].split("</article>", 1)[0]
-        self.assertNotIn("Email Cancellation", without_card)
-        self.assertIn("Add a customer email address before emailing this cancellation.", without_card)
-        self.assertNotIn("Email Cancellation", confirmed_card)
+        self.assertNotIn("Send Email", without_card)
+        self.assertIn("Copy Text Message", without_card)
+        self.assertNotIn("Add Contact Info", without_card)
+        self.assertIn("Send Email", confirmed_card)
 
     def test_cancelled_missing_email_shows_edit_customer_with_continuation_context(self):
         client = self.client()
         self.bootstrap_owner(client, email="cancel-edit-link@example.com", shop_name="Alpha Shop")
         shop_id = self.shop_id_for_email("cancel-edit-link@example.com")
-        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Missing", email="")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Missing", email="", phone="")
         appointment_id = self.seed_service_appointment_for_shop(
             shop_id,
             customer_name="Missing Owner",
+            customer_phone="",
             customer_email="",
             status="Cancelled",
         )
@@ -2586,7 +2589,7 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         page = client.get("/pro/calendar")
         card = page.text.split("Missing Owner", 1)[1].split("</article>", 1)[0]
-        match = re.search(r'href="([^"]+)">Edit Customer</a>', card)
+        match = re.search(r'href="([^"]+)">Add Contact Info</a>', card)
         self.assertIsNotNone(match)
         edit_url = html.unescape(match.group(1))
         parsed = urlparse(edit_url)
@@ -2598,7 +2601,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertTrue(query["appointment_token"][0])
         self.assertNotIn("customer_email", query)
         self.assertNotIn("@", parsed.query)
-        self.assertNotIn("Email Cancellation", card)
+        self.assertNotIn("Send Email", card)
 
     def test_unlinked_cancelled_missing_email_shows_add_customer_continuation(self):
         client = self.client()
@@ -2607,6 +2610,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         appointment_id = self.seed_service_appointment_for_shop(
             shop_id,
             customer_name="Unlinked Owner",
+            customer_phone="",
             customer_email="",
             status="Cancelled",
         )
@@ -2614,7 +2618,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         page = client.get("/pro/calendar")
         card = page.text.split("Unlinked Owner", 1)[1].split("</article>", 1)[0]
 
-        self.assertIn(">Add Customer</summary>", card)
+        self.assertIn(">Add Contact Info</summary>", card)
         self.assertIn(f'action="/pro/calendar/{appointment_id}/convert"', card)
         self.assertIn('name="conversion_action" value="add_customer_cancellation_email"', card)
         self.assertIn(f'name="appointment_id" value="{appointment_id}"', card)
@@ -2622,23 +2626,24 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn('name="appointment_token"', card)
         self.assertIn('name="new_customer_name" value="Unlinked Owner"', card)
         self.assertNotIn("Edit Customer", card)
-        self.assertNotIn("Email Cancellation", card)
+        self.assertNotIn("Send Email", card)
 
     def test_customer_save_continuation_sends_cancellation_email_once_using_saved_customer_email(self):
         client = self.client()
         self.bootstrap_owner(client, email="cancel-save@example.com", shop_name="Alpha Shop")
         shop_id = self.shop_id_for_email("cancel-save@example.com")
-        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Saved", email="")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Saved", email="", phone="")
         appointment_id = self.seed_service_appointment_for_shop(
             shop_id,
             customer_name="Saved Owner",
+            customer_phone="",
             customer_email="",
             status="Cancelled",
         )
         self.link_appointment_customer(appointment_id, customer_id, vehicle_id)
         calendar_page = client.get("/pro/calendar")
         card = calendar_page.text.split("Saved Owner", 1)[1].split("</article>", 1)[0]
-        edit_url = html.unescape(re.search(r'href="([^"]+)">Edit Customer</a>', card).group(1))
+        edit_url = html.unescape(re.search(r'href="([^"]+)">Add Contact Info</a>', card).group(1))
         edit_page = client.get(edit_url)
         sent_messages = []
 
@@ -2681,6 +2686,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         appointment_id = self.seed_service_appointment_for_shop(
             shop_id,
             customer_name="Add Send",
+            customer_phone="",
             customer_email="",
             status="Cancelled",
         )
@@ -2731,6 +2737,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         appointment_id = self.seed_service_appointment_for_shop(
             shop_id,
             customer_name="Add Missing",
+            customer_phone="",
             customer_email="",
             status="Cancelled",
         )
@@ -2769,6 +2776,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         appointment_id = self.seed_service_appointment_for_shop(
             shop_id,
             customer_name="Add Fail",
+            customer_phone="",
             customer_email="",
             status="Cancelled",
         )
@@ -2804,7 +2812,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(customer["email"], "add-fail@example.com")
         self.assertEqual(send_email.call_count, 1)
         notice_page = client.get(response.headers["location"])
-        self.assertIn("Customer added, but the cancellation email could not be sent. Use Email Cancellation to retry.", notice_page.text)
+        self.assertIn("Customer added, but the cancellation email could not be sent. Use Send Email to retry.", notice_page.text)
 
     def test_unlinked_add_customer_invalid_contexts_do_not_create_or_send(self):
         client = self.client()
@@ -2900,16 +2908,17 @@ class AuthShopIsolationTests(unittest.TestCase):
         client = self.client()
         self.bootstrap_owner(client, email="cancel-save-fail@example.com", shop_name="Alpha Shop")
         shop_id = self.shop_id_for_email("cancel-save-fail@example.com")
-        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Fail", email="")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Fail", email="", phone="")
         appointment_id = self.seed_service_appointment_for_shop(
             shop_id,
             customer_name="Fail Owner",
+            customer_phone="",
             customer_email="",
             status="Cancelled",
         )
         self.link_appointment_customer(appointment_id, customer_id, vehicle_id)
         calendar_page = client.get("/pro/calendar")
-        edit_url = html.unescape(re.search(r'href="([^"]+)">Edit Customer</a>', calendar_page.text).group(1))
+        edit_url = html.unescape(re.search(r'href="([^"]+)">Add Contact Info</a>', calendar_page.text).group(1))
         edit_page = client.get(edit_url)
 
         with patch.object(
@@ -2941,7 +2950,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(saved["notes"], "still saved")
         notice_page = client.get(response.headers["location"])
         self.assertIn(
-            "Customer updated, but the cancellation email could not be sent. Use Email Cancellation to retry.",
+            "Customer updated, but the cancellation email could not be sent. Use Send Email to retry.",
             notice_page.text,
         )
 
@@ -3244,6 +3253,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         shop_id: int,
         *,
         customer_name: str = "Appointment Customer",
+        customer_phone: str = "5551112222",
         customer_email: str = "",
         status: str = "Requested",
         requested_date: str | None = None,
@@ -3253,7 +3263,7 @@ class AuthShopIsolationTests(unittest.TestCase):
             self.conn,
             {
                 "customer_name": customer_name,
-                "customer_phone": "5551112222",
+                "customer_phone": customer_phone,
                 "customer_email": customer_email,
                 "vehicle_label": "2010 Honda Accord",
                 "service_name": "Brake Inspection",
@@ -3279,6 +3289,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         first_name: str = "Cross",
         vehicle_make: str = "Toyota",
         email: str | None = None,
+        phone: str = "5552223333",
     ) -> tuple[int, int]:
         pro_module.ensure_customer_status_schema(self.conn)
         now = "2026-07-24T12:00:00"
@@ -3289,9 +3300,9 @@ class AuthShopIsolationTests(unittest.TestCase):
                 INSERT INTO customers (
                   shop_id, first_name, last_name, phone, email, customer_status, notes, created_at, updated_at
                 )
-                VALUES (?, ?, 'Owner', '5552223333', ?, 'active', '', ?, ?)
+                VALUES (?, ?, 'Owner', ?, ?, 'active', '', ?, ?)
                 """,
-                (shop_id, first_name, customer_email, now, now),
+                (shop_id, first_name, phone, customer_email, now, now),
             ).lastrowid
         )
         vehicle_id = int(
