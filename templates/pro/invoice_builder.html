@@ -62,11 +62,17 @@
     margin-top: 12px;
   }
   .tm-invoice-builder-warning {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border: 1px solid rgba(217, 119, 6, 0.28);
     border-radius: 8px;
     background: #fffbeb;
     color: #92400e;
     font-weight: 900;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
     padding: 12px;
     margin-top: 14px;
   }
@@ -219,6 +225,13 @@
         padding-top: 8px;
       }
 
+      .tm-pro-shell--invoice-builder .tm-invoice-builder-warning {
+        display: block;
+        width: 100%;
+        margin-top: 12px;
+        padding: 11px;
+      }
+
       .tm-pro-shell--invoice-builder .tm-invoice-builder-panel {
         width: 100%;
         max-width: 100%;
@@ -264,6 +277,7 @@
       }
     }
 
+
 </style>
 {% endblock %}
 
@@ -291,7 +305,7 @@
       <div class="tm-invoice-builder-list">
         {% for job in job_groups.ready %}
         {% set is_selected = (job.id in selected_repair_ids) if selected_repair_ids else true %}
-        <label class="tm-invoice-builder-job">
+        <div class="tm-invoice-builder-job">
           <input type="checkbox" name="repair_record_id" value="{{ job.id }}" {% if selected_repair_ids %}{% if job.id in selected_repair_ids %}checked{% endif %}{% else %}checked{% endif %}>
           <span>
             <span class="tm-invoice-builder-title">{{ job.repair_name or "Repair" }}</span>
@@ -325,7 +339,7 @@
               </span>
             </span>
           </span>
-        </label>
+        </div>
         {% endfor %}
       </div>
       {% else %}
@@ -340,7 +354,7 @@
       {% if job_groups.approved %}
       <div class="tm-invoice-builder-list">
         {% for job in job_groups.approved %}
-        <label class="tm-invoice-builder-job">
+        <div class="tm-invoice-builder-job"> 
           <input type="checkbox" value="{{ job.id }}" disabled>
           <span>
             <span class="tm-invoice-builder-title">{{ job.repair_name or "Repair" }}</span>
@@ -356,7 +370,7 @@
               <span>Total: {{ job.grand_total|pro_currency }}</span>
             </span>
           </span>
-        </label>
+        </div>
         {% endfor %}
       </div>
       {% else %}
