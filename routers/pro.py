@@ -8569,7 +8569,10 @@ def findings_records_has_customer_id(conn: sqlite3.Connection) -> bool:
 def finding_record_where_sql(conn: sqlite3.Connection, table_alias: str | None = None) -> str:
     prefix = f"{table_alias}." if table_alias else ""
     if findings_records_has_customer_id(conn):
-        return f"{prefix}id = ? AND {prefix}customer_id = ? AND {prefix}vehicle_id = ?"
+        return (
+            f"{prefix}id = ? AND {prefix}vehicle_id = ? "
+            f"AND ({prefix}customer_id = ? OR {prefix}customer_id IS NULL)"
+        )
     return f"{prefix}id = ? AND {prefix}vehicle_id = ?"
 
 
@@ -8580,7 +8583,7 @@ def finding_record_where_params(
     vehicle_id: int,
 ) -> tuple[Any, ...]:
     if findings_records_has_customer_id(conn):
-        return (finding_id, customer_id, vehicle_id)
+        return (finding_id, vehicle_id, customer_id)
     return (finding_id, vehicle_id)
 
 
@@ -8853,6 +8856,8 @@ def finding_repair_stage_label(finding: dict[str, Any]) -> str:
         return "Repair Completed"
     if optional_int_value(finding.get("linked_repair_record_id")):
         return "Repair Started"
+    if str(finding.get("status") or "").strip() == "Approved":
+        return "Ready for Repair"
     return ""
 
 
@@ -9077,7 +9082,15 @@ def load_repair_source_finding_for_detail(
     vehicle_id: int,
 ) -> dict[str, Any] | None:
     if normalize_workflow_source_type(repair.get("workflow_source_type")) != "finding":
-        return None
+        repair_id = optional_int_value(repair.get("id"))
+        if not repair_id:
+            return None
+        return linked_finding_for_repair_record(
+            conn,
+            repair_id=repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        )
     source_id = repair.get("workflow_source_id")
     if source_id is None:
         return None
@@ -9096,19 +9109,35 @@ def repair_execution_status_context(
     source_type = normalize_workflow_source_type(repair.get("workflow_source_type"))
     source_id = repair.get("workflow_source_id")
     if not source_type or source_id is None:
-        return None
-    try:
-        source_id = int(source_id)
-    except (TypeError, ValueError):
-        return None
-    if source_type == "finding":
-        source = load_finding_record(conn, customer_id, vehicle_id, source_id)
+        repair_id = optional_int_value(repair.get("id"))
+        if not repair_id:
+            return None
+        source = linked_finding_for_repair_record(
+            conn,
+            repair_id=repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        )
+        if not source:
+            return None
+        source_type = "finding"
+        source_id = source.get("id")
         current_status = source.get("repair_work_status") or (
             "completed" if source.get("status") == "Completed" else "ready"
         )
     else:
-        source = load_approval_record(conn, customer_id, vehicle_id, source_id)
-        current_status = source.get("repair_work_status") or "ready"
+        try:
+            source_id = int(source_id)
+        except (TypeError, ValueError):
+            return None
+        if source_type == "finding":
+            source = load_finding_record(conn, customer_id, vehicle_id, source_id)
+            current_status = source.get("repair_work_status") or (
+                "completed" if source.get("status") == "Completed" else "ready"
+            )
+        else:
+            source = load_approval_record(conn, customer_id, vehicle_id, source_id)
+            current_status = source.get("repair_work_status") or "ready"
     try:
         current_status = normalize_repair_work_status(current_status)
     except HTTPException:
@@ -10023,6 +10052,114 @@ def repair_work_notes_from_finding(record: dict[str, Any]) -> str:
     )
 
 
+def repair_record_is_valid_start_target(conn: sqlite3.Connection, repair_id: Any, *, customer_id: int, vehicle_id: int) -> bool:
+    parsed_repair_id = optional_int_value(repair_id)
+    if not parsed_repair_id:
+        return False
+    ensure_repair_completion_schema(conn)
+    ensure_invoices_schema(conn)
+    repair = row_to_dict(
+        conn.execute(
+            """
+            SELECT rr.*,
+                   rc.completed_at AS completion_completed_at,
+                   rc.completion_date,
+                   rc.completion_mileage,
+                   rc.completion_notes,
+                   rc.final_inspection_passed,
+                   rc.final_inspection_notes,
+                   direct_invoice.id AS direct_invoice_id,
+                   item_invoice.invoice_id AS item_invoice_id
+            FROM repair_records rr
+            LEFT JOIN repair_completions rc ON rc.repair_record_id = rr.id
+            LEFT JOIN invoices direct_invoice ON direct_invoice.repair_record_id = rr.id
+            LEFT JOIN invoice_items item_invoice ON item_invoice.repair_record_id = rr.id
+            WHERE rr.id = ?
+              AND rr.customer_id = ?
+              AND rr.vehicle_id = ?
+            LIMIT 1
+            """,
+            (parsed_repair_id, customer_id, vehicle_id),
+        ).fetchone()
+    )
+    if not repair:
+        return False
+    if str(repair.get("status") or "").strip() != "Open":
+        return False
+    if repair.get("direct_invoice_id") or repair.get("item_invoice_id"):
+        return False
+    completion = {
+        "completed_at": repair.get("completion_completed_at"),
+        "completion_date": repair.get("completion_date"),
+        "completion_mileage": repair.get("completion_mileage"),
+        "completion_notes": repair.get("completion_notes"),
+        "final_inspection_passed": repair.get("final_inspection_passed"),
+        "final_inspection_notes": repair.get("final_inspection_notes"),
+    }
+    if not repair_completion_missing_requirements(completion):
+        return False
+    return True
+
+
+def linked_finding_for_repair_record(
+    conn: sqlite3.Connection,
+    *,
+    repair_id: int,
+    customer_id: int,
+    vehicle_id: int,
+) -> dict[str, Any] | None:
+    ensure_findings_records_schema(conn)
+    where = ["linked_repair_record_id = ?", "vehicle_id = ?"]
+    params: list[Any] = [repair_id, vehicle_id]
+    if findings_records_has_customer_id(conn):
+        where.append("(customer_id = ? OR customer_id IS NULL)")
+        params.append(customer_id)
+    finding = row_to_dict(
+        conn.execute(
+            f"""
+            SELECT *
+            FROM findings_records
+            WHERE {" AND ".join(where)}
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            tuple(params),
+        ).fetchone()
+    )
+    return attach_finding_photo_urls(finding) if finding else None
+
+
+def find_valid_start_repair_for_finding(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+) -> int | None:
+    rows = conn.execute(
+        """
+        SELECT id
+        FROM repair_records
+        WHERE customer_id = ?
+          AND vehicle_id = ?
+          AND workflow_source_type = 'finding'
+          AND workflow_source_id = ?
+        ORDER BY id ASC
+        """,
+        (customer_id, vehicle_id, finding_id),
+    ).fetchall()
+    for row in rows:
+        repair_id = int(row["id"])
+        if repair_record_is_valid_start_target(
+            conn,
+            repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        ):
+            return repair_id
+    return None
+
+
 def ensure_repair_record_for_approved_finding(
     conn: sqlite3.Connection,
     *,
@@ -10048,32 +10185,45 @@ def ensure_repair_record_for_approved_finding(
         finding["estimate_service_name"] = estimate_document_service_summary(estimate_doc)
         finding["estimate_total"] = estimate_doc.get("estimate_total")
 
-    linked_repair_record_id = finding.get("linked_repair_record_id")
-    if linked_repair_record_id:
-        linked = conn.execute(
-            """
-            SELECT id
-            FROM repair_records
-            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
-            LIMIT 1
-            """,
-            (linked_repair_record_id, customer_id, vehicle_id),
-        ).fetchone()
-        if linked:
-            return int(linked["id"])
+    linked_repair_record_id = optional_int_value(finding.get("linked_repair_record_id"))
+    if linked_repair_record_id and repair_record_is_valid_start_target(
+        conn,
+        linked_repair_record_id,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+    ):
+        return linked_repair_record_id
 
-    existing_repair = conn.execute(
-        """
-        SELECT id
-        FROM repair_records
-        WHERE workflow_source_type = 'finding' AND workflow_source_id = ?
-        LIMIT 1
-        """,
-        (finding_id,),
-    ).fetchone()
-    if existing_repair:
-        repair_id = int(existing_repair["id"])
+    existing_repair_id = find_valid_start_repair_for_finding(
+        conn,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+    )
+    if existing_repair_id:
+        repair_id = existing_repair_id
     else:
+        repair_total = (
+            finding.get("estimate_total")
+            if finding.get("estimate_total") is not None
+            else float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0)
+        )
+        insert_values = (
+            vehicle_id,
+            customer_id,
+            repair_work_title_from_finding(finding),
+            local_today().isoformat(),
+            finding.get("mileage"),
+            finding.get("labor_hours"),
+            finding.get("labor_rate"),
+            finding.get("parts_cost"),
+            finding.get("labor_amount"),
+            repair_total,
+            finding_id,
+            repair_total,
+            repair_work_notes_from_finding(finding),
+            now,
+        )
         try:
             cur = conn.execute(
                 """
@@ -10085,26 +10235,7 @@ def ensure_repair_record_for_approved_finding(
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'finding', ?, ?, ?, 'Open', ?)
                 """,
-                (
-                    vehicle_id,
-                    customer_id,
-                    repair_work_title_from_finding(finding),
-                    local_today().isoformat(),
-                    finding.get("mileage"),
-                    finding.get("labor_hours"),
-                    finding.get("labor_rate"),
-                    finding.get("parts_cost"),
-                    finding.get("labor_amount"),
-                    finding.get("estimate_total")
-                    if finding.get("estimate_total") is not None
-                    else float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0),
-                    finding_id,
-                    finding.get("estimate_total")
-                    if finding.get("estimate_total") is not None
-                    else float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0),
-                    repair_work_notes_from_finding(finding),
-                    now,
-                ),
+                insert_values,
             )
             repair_id = int(cur.lastrowid)
         except sqlite3.IntegrityError:
@@ -10113,13 +10244,58 @@ def ensure_repair_record_for_approved_finding(
                 SELECT id
                 FROM repair_records
                 WHERE workflow_source_type = 'finding' AND workflow_source_id = ?
-                LIMIT 1
+                ORDER BY id ASC
                 """,
                 (finding_id,),
-            ).fetchone()
-            if not existing_repair:
-                raise
-            repair_id = int(existing_repair["id"])
+            ).fetchall()
+            repair_id = next(
+                (
+                    int(row["id"])
+                    for row in existing_repair
+                    if repair_record_is_valid_start_target(
+                        conn,
+                        row["id"],
+                        customer_id=customer_id,
+                        vehicle_id=vehicle_id,
+                    )
+                ),
+                0,
+            )
+            if not repair_id:
+                cur = conn.execute(
+                    """
+                    INSERT INTO repair_records (
+                      vehicle_id, customer_id, repair_name, repair_date, mileage,
+                      labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+                      track_as_maintenance, workflow_source_type, workflow_source_id,
+                      approved_estimate_total, notes, status, created_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL, ?, ?, 'Open', ?)
+                    """,
+                    (
+                        vehicle_id,
+                        customer_id,
+                        repair_work_title_from_finding(finding),
+                        local_today().isoformat(),
+                        finding.get("mileage"),
+                        finding.get("labor_hours"),
+                        finding.get("labor_rate"),
+                        finding.get("parts_cost"),
+                        finding.get("labor_amount"),
+                        repair_total,
+                        repair_total,
+                        "\n\n".join(
+                            part
+                            for part in (
+                                repair_work_notes_from_finding(finding),
+                                f"Source Finding ID: {finding_id}",
+                            )
+                            if str(part or "").strip()
+                        ),
+                        now,
+                    ),
+                )
+                repair_id = int(cur.lastrowid)
 
     conn.execute(
         f"""
@@ -14244,7 +14420,8 @@ def pro_customer_vehicle_detail(
                 FROM findings_records fr
                 LEFT JOIN repair_records rr
                   ON rr.id = fr.linked_repair_record_id
-                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                WHERE fr.vehicle_id = ?
+                  AND (fr.customer_id = ? OR fr.customer_id IS NULL)
                 ORDER BY
                   CASE fr.status
                     WHEN 'Approved' THEN 1
@@ -14264,7 +14441,7 @@ def pro_customer_vehicle_detail(
                   fr.finding_date DESC,
                   fr.id DESC
                 """,
-                (customer_id, vehicle_id),
+                (vehicle_id, customer_id),
             ).fetchall()
         ]
         for record in findings_records:
@@ -14278,10 +14455,11 @@ def pro_customer_vehicle_detail(
                 SELECT fhr.*, fr.finding, fr.request_type, fr.labor_description
                 FROM finding_history_records fhr
                 JOIN findings_records fr ON fr.id = fhr.finding_id
-                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                WHERE fr.vehicle_id = ?
+                  AND (fr.customer_id = ? OR fr.customer_id IS NULL)
                 ORDER BY fhr.created_at DESC, fhr.id DESC
                 """,
-                (customer_id, vehicle_id),
+                (vehicle_id, customer_id),
             ).fetchall()
         ]
         customer_decision_logs = [
@@ -14291,10 +14469,11 @@ def pro_customer_vehicle_detail(
                 SELECT cdl.*, fr.finding
                 FROM customer_decision_logs cdl
                 JOIN findings_records fr ON fr.id = cdl.finding_id
-                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
+                WHERE fr.vehicle_id = ?
+                  AND (fr.customer_id = ? OR fr.customer_id IS NULL)
                 ORDER BY cdl.created_at DESC, cdl.id DESC
                 """,
-                (customer_id, vehicle_id),
+                (vehicle_id, customer_id),
             ).fetchall()
         ]
         ensure_discrepancy_approvals_schema(conn)
@@ -14804,6 +14983,16 @@ async def pro_finding_start_repair(
         ):
             raise HTTPException(status_code=400, detail="Prepare an estimate before starting repair")
         previous_repair_id = optional_int_value(existing.get("linked_repair_record_id"))
+        previous_repair_is_valid = (
+            repair_record_is_valid_start_target(
+                conn,
+                previous_repair_id,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+            )
+            if previous_repair_id
+            else False
+        )
         repair_id = ensure_repair_record_for_approved_finding(
             conn,
             customer_id=customer_id,
@@ -14813,7 +15002,7 @@ async def pro_finding_start_repair(
         )
         if not repair_id:
             raise HTTPException(status_code=400, detail="Unable to start repair for this finding")
-        if not previous_repair_id:
+        if not previous_repair_is_valid or previous_repair_id != repair_id:
             append_finding_history_record(
                 conn,
                 finding_id,
@@ -16789,8 +16978,21 @@ def sync_repair_completion_source(
     source_type = normalize_workflow_source_type(repair.get("workflow_source_type"))
     source_id = repair.get("workflow_source_id")
     if not source_type or source_id is None:
-        return
-    source_id = int(source_id)
+        repair_id = optional_int_value(repair.get("id"))
+        if not repair_id:
+            return
+        linked_finding = linked_finding_for_repair_record(
+            conn,
+            repair_id=repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        )
+        if not linked_finding:
+            return
+        source_type = "finding"
+        source_id = int(linked_finding["id"])
+    else:
+        source_id = int(source_id)
     if source_type == "finding":
         existing = load_finding_record(conn, customer_id, vehicle_id, source_id)
         previous_status = existing.get("status") or ""

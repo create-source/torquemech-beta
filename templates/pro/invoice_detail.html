@@ -406,14 +406,53 @@
       <p class="tm-pro-subtitle">{{ invoice.created_at|pro_date }}</p>
     </div>
     <div class="tm-invoice-actions">
-      <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline">Back to Vehicle Timeline</a>
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/edit">Edit Invoice</a>
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/recalculate">
-        <button class="tm-btn tm-btn-secondary" type="submit">Refresh from Repair Records</button>
+      <a
+        class="tm-btn tm-btn-secondary"
+        href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}#vehicle-timeline"
+      >
+        Back to Vehicle Timeline
+      </a>
+
+      <a
+        class="tm-btn tm-btn-primary"
+        href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/edit"
+      >
+        Edit Invoice
+      </a>
+
+      {% if customer.email %}
+      <form
+        method="post"
+        action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/email"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="tm-btn tm-btn-secondary" type="submit">
+          Email Invoice
+        </button>
+      </form>
+      {% endif %}
+
+      <form
+        method="post"
+        action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/recalculate"
+      >
+        <button class="tm-btn tm-btn-secondary" type="submit">
+          Refresh from Repair Records
+        </button>
       </form>
     </div>
   </div>
+  {% if not customer.email %}
+  <div class="tm-invoice-fallback" style="margin-top:12px;">
+    Add a customer email address before emailing this invoice.
+  </div>
+  {% endif %}
 
+  {% if invoice_email_notice %}
+  <div class="tm-invoice-fallback" style="margin-top:12px;">
+    {{ invoice_email_notice }}
+  </div>
+  {% endif %}
   {% if refresh_warning %}
   <section class="tm-invoice-panel" aria-label="Refresh Confirmation" style="margin-bottom:16px;">
     <div class="tm-invoice-fallback">{{ refresh_warning }}</div>

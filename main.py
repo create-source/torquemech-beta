@@ -58,6 +58,7 @@ from routers.pro import (
     user_email_verified,
 )
 from app.billing import build_billing_display
+from app import email_service
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -2063,8 +2064,31 @@ def verification_outbox_path() -> Path:
     return Path(configured) if configured else STATE_DIR / "email_outbox.jsonl"
 
 
+def auth_email_service_config() -> email_service.EmailServiceConfig:
+    transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
+    feedback_email = str(FEEDBACK_EMAIL or "").strip()
+    return email_service.EmailServiceConfig(
+        transport=transport,
+        smtp_server=str(SMTP_SERVER or "").strip(),
+        smtp_port=int(SMTP_PORT or 587),
+        smtp_user=str(SMTP_USER or "").strip(),
+        smtp_pass=str(SMTP_PASS or ""),
+        resend_api_key=(os.getenv(RESEND_API_KEY_ENV) or "").strip(),
+        dev_outbox_path=verification_outbox_path(),
+        from_address="no-reply@updates.torquemech.com" if transport == "smtp" else feedback_email,
+        from_display_name="TorqueMech" if transport == "smtp" else "",
+        envelope_sender=feedback_email,
+        reply_to_address=feedback_email,
+        local_default_outbox_path=STATE_DIR / "email_outbox.jsonl",
+    )
+
+
+def validate_auth_email_configuration() -> email_service.EmailConfigurationValidation:
+    return email_service.validate_email_configuration(auth_email_service_config())
+
+
 def local_email_transport_enabled() -> bool:
-    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
     return transport in {"local", "test"}
 
 
@@ -2117,39 +2141,29 @@ def send_verification_email_local(request: Request, *, email: str, token: str, u
         user_id,
     )
     verification_url = verification_url_for_token(request, token)
-    outbox_path = verification_outbox_path()
-    outbox_path.parent.mkdir(parents=True, exist_ok=True)
-    now = datetime.utcnow().isoformat()
-    message = {
-        "created_at": now,
-        "transport": "local",
-        "to": email,
-        "subject": VERIFICATION_EMAIL_SUBJECT,
-        "verification_url": verification_url,
-        "token": token,
-        "user_id": user_id,
-        "body": (
-            "Verify your TorqueMech account before continuing to your Pro workspace.\n\n"
-            f"{verification_url}\n"
-        ),
-    }
-    with outbox_path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(message, sort_keys=True) + "\n")
+    message = email_service.EmailMessage(
+        recipients=[email],
+        subject=VERIFICATION_EMAIL_SUBJECT,
+        text_body=verification_email_text_body(verification_url),
+        html_body=verification_email_body(verification_url),
+        metadata={"verification_url": verification_url, "token": token, "user_id": user_id},
+    )
+    result = email_service.send_email(message, auth_email_service_config(), logger=verification_email_logger)
     verification_email_logger.info(
         "VERIFICATION_EMAIL_LOCAL_ACCEPTED sender=local-outbox recipient=%s outbox=%s",
         email,
-        outbox_path,
+        verification_outbox_path(),
     )
-    return True
+    return result.success
 
 
 def smtp_email_transport_enabled() -> bool:
-    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
     return transport == "smtp"
 
 
 def resend_email_transport_enabled() -> bool:
-    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
     return transport == "resend"
 
 
@@ -2180,105 +2194,34 @@ def send_verification_email_smtp(request: Request, *, email: str, token: str) ->
         FEEDBACK_EMAIL,
         email,
     )
-    if not (SMTP_SERVER and SMTP_PORT and SMTP_USER and SMTP_PASS and FEEDBACK_EMAIL):
+    config = auth_email_service_config()
+    validation = email_service.validate_email_configuration(config)
+    if not validation.ok:
         verification_email_logger.error(
-            "VERIFICATION_EMAIL_SMTP_NOT_CONFIGURED host=%s port=%s sender=%s recipient=%s",
-            SMTP_SERVER,
-            SMTP_PORT,
-            FEEDBACK_EMAIL,
+            "VERIFICATION_EMAIL_SMTP_NOT_CONFIGURED missing=%s recipient=%s",
+            ",".join(validation.missing_variables),
             email,
         )
         return False
 
     verification_url = verification_url_for_token(request, token)
-    msg = MIMEText(verification_email_body(verification_url), "html", "utf-8")
-    msg["Subject"] = VERIFICATION_EMAIL_SUBJECT
-    msg["From"] = "TorqueMech <no-reply@updates.torquemech.com>"
-    msg["To"] = email
-    msg["Sender"] = FEEDBACK_EMAIL
-    msg["Reply-To"] = FEEDBACK_EMAIL
-
-    try:
-        verification_email_logger.info(
-            "VERIFICATION_EMAIL_SMTP_CONNECTING host=%s port=%s sender=%s recipient=%s",
-            SMTP_SERVER,
-            SMTP_PORT,
-            FEEDBACK_EMAIL,
-            email,
-        )
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
-            verification_email_logger.info(
-                "VERIFICATION_EMAIL_SMTP_CONNECTED host=%s port=%s sender=%s recipient=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-            )
-            verification_email_logger.info(
-                "VERIFICATION_EMAIL_SMTP_STARTTLS_START host=%s port=%s sender=%s recipient=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-            )
-            server.starttls()
-            verification_email_logger.info(
-                "VERIFICATION_EMAIL_SMTP_STARTTLS_OK host=%s port=%s sender=%s recipient=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-            )
-            verification_email_logger.info(
-                "VERIFICATION_EMAIL_SMTP_AUTH_START host=%s port=%s sender=%s recipient=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-            )
-            server.login(SMTP_USER, SMTP_PASS)
-            verification_email_logger.info(
-                "VERIFICATION_EMAIL_SMTP_AUTH_OK host=%s port=%s sender=%s recipient=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-            )
-            verification_email_logger.info(
-                "VERIFICATION_EMAIL_SMTP_SEND_START host=%s port=%s sender=%s recipient=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-            )
-            refused = server.send_message(msg, from_addr=FEEDBACK_EMAIL, to_addrs=[email])
-        if refused:
-            verification_email_logger.error(
-                "VERIFICATION_EMAIL_SMTP_REFUSED host=%s port=%s sender=%s recipient=%s refused=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-                refused,
-            )
-            return False
-        verification_email_logger.info(
-            "VERIFICATION_EMAIL_SMTP_ACCEPTED host=%s port=%s sender=%s recipient=%s",
-            SMTP_SERVER,
-            SMTP_PORT,
-            FEEDBACK_EMAIL,
-            email,
-        )
-        return True
-    except Exception:
-        verification_email_logger.exception(
-            "VERIFICATION_EMAIL_SMTP_EXCEPTION host=%s port=%s sender=%s recipient=%s",
-            SMTP_SERVER,
-            SMTP_PORT,
-            FEEDBACK_EMAIL,
-            email,
-        )
-        return False
+    result = email_service.send_email(
+        email_service.EmailMessage(
+            recipients=[email],
+            subject=VERIFICATION_EMAIL_SUBJECT,
+            text_body=verification_email_text_body(verification_url),
+            html_body=verification_email_body(verification_url),
+        ),
+        config,
+        logger=verification_email_logger,
+    )
+    if result.error_category == "provider_refused":
+        verification_email_logger.error("VERIFICATION_EMAIL_SMTP_REFUSED host=%s port=%s sender=%s recipient=%s", SMTP_SERVER, SMTP_PORT, FEEDBACK_EMAIL, email)
+    elif result.provider_related and not result.success:
+        verification_email_logger.error("VERIFICATION_EMAIL_SMTP_EXCEPTION host=%s port=%s sender=%s recipient=%s", SMTP_SERVER, SMTP_PORT, FEEDBACK_EMAIL, email)
+    elif result.success:
+        verification_email_logger.info("VERIFICATION_EMAIL_SMTP_ACCEPTED host=%s port=%s sender=%s recipient=%s", SMTP_SERVER, SMTP_PORT, FEEDBACK_EMAIL, email)
+    return result.success
 
 
 def resend_email_id(response: Any) -> str:
@@ -2289,64 +2232,44 @@ def resend_email_id(response: Any) -> str:
 
 def send_verification_email_resend(request: Request, *, email: str, token: str) -> bool:
     sender = str(FEEDBACK_EMAIL or "").strip()
-    api_key = (os.getenv(RESEND_API_KEY_ENV) or "").strip()
     verification_email_logger.info(
         "VERIFICATION_EMAIL_DELIVERY_ENTERED transport=resend sender=%s recipient=%s",
         sender,
         email,
     )
-    if not sender:
+    config = auth_email_service_config()
+    validation = email_service.validate_email_configuration(config)
+    if not validation.ok:
+        missing = "api_key" if RESEND_API_KEY_ENV in validation.missing_variables else ",".join(validation.missing_variables)
         verification_email_logger.error(
-            "VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=sender recipient=%s",
-            email,
-        )
-        return False
-    if not api_key:
-        verification_email_logger.error(
-            "VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=api_key sender=%s recipient=%s",
-            sender,
-            email,
-        )
-        return False
-    if resend is None:
-        verification_email_logger.error(
-            "VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=package sender=%s recipient=%s",
+            "VERIFICATION_EMAIL_RESEND_NOT_CONFIGURED missing=%s sender=%s recipient=%s",
+            missing,
             sender,
             email,
         )
         return False
 
     verification_url = verification_url_for_token(request, token)
-    try:
-        resend.api_key = api_key
-        response = resend.Emails.send(
-            {
-                "from": sender,
-                "to": [email],
-                "subject": VERIFICATION_EMAIL_SUBJECT,
-                "html": verification_email_body(verification_url),
-                "text": verification_email_text_body(verification_url),
-            }
-        )
-        email_id = resend_email_id(response)
-        verification_email_logger.info(
-            "VERIFICATION_EMAIL_RESEND_ACCEPTED sender=%s recipient=%s resend_email_id=%s",
-            sender,
-            email,
-            email_id,
-        )
-        return True
-    except Exception:
-        verification_email_logger.exception(
-            "VERIFICATION_EMAIL_RESEND_EXCEPTION sender=%s recipient=%s",
-            sender,
-            email,
-        )
-        return False
+    result = email_service.send_email(
+        email_service.EmailMessage(
+            recipients=[email],
+            subject=VERIFICATION_EMAIL_SUBJECT,
+            text_body=verification_email_text_body(verification_url),
+            html_body=verification_email_body(verification_url),
+        ),
+        config,
+        logger=verification_email_logger,
+        resend_client=resend,
+    )
+    if result.success:
+        verification_email_logger.info("VERIFICATION_EMAIL_RESEND_ACCEPTED sender=%s recipient=%s resend_email_id=%s", sender, email, result.provider_message_id)
+    else:
+        verification_email_logger.error("VERIFICATION_EMAIL_RESEND_EXCEPTION sender=%s recipient=%s", sender, email)
+    return result.success
 
 
 def send_verification_email(request: Request, *, email: str, token: str, user_id: int) -> bool:
-    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
     sender = FEEDBACK_EMAIL if transport in {"smtp", "resend"} else "local-outbox"
     verification_email_logger.info(
         "VERIFICATION_EMAIL_TRANSPORT_SELECTED transport=%s host=%s port=%s sender=%s recipient=%s user_id=%s",
@@ -2374,27 +2297,23 @@ def send_password_reset_email_local(request: Request, *, email: str, token: str,
         user_id,
     )
     reset_url = password_reset_url_for_token(request, token)
-    outbox_path = verification_outbox_path()
-    outbox_path.parent.mkdir(parents=True, exist_ok=True)
-    now = datetime.utcnow().isoformat()
-    message = {
-        "created_at": now,
-        "transport": "local",
-        "to": email,
-        "subject": PASSWORD_RESET_EMAIL_SUBJECT,
-        "reset_url": reset_url,
-        "token": token,
-        "user_id": user_id,
-        "body": password_reset_email_text_body(reset_url),
-    }
-    with outbox_path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(message, sort_keys=True) + "\n")
+    result = email_service.send_email(
+        email_service.EmailMessage(
+            recipients=[email],
+            subject=PASSWORD_RESET_EMAIL_SUBJECT,
+            text_body=password_reset_email_text_body(reset_url),
+            html_body=password_reset_email_body(reset_url),
+            metadata={"reset_url": reset_url, "token": token, "user_id": user_id},
+        ),
+        auth_email_service_config(),
+        logger=verification_email_logger,
+    )
     verification_email_logger.info(
         "PASSWORD_RESET_EMAIL_LOCAL_ACCEPTED sender=local-outbox recipient=%s outbox=%s",
         email,
-        outbox_path,
+        verification_outbox_path(),
     )
-    return True
+    return result.success
 
 
 def send_password_reset_email_smtp(request: Request, *, email: str, token: str) -> bool:
@@ -2405,112 +2324,74 @@ def send_password_reset_email_smtp(request: Request, *, email: str, token: str) 
         FEEDBACK_EMAIL,
         email,
     )
-    if not (SMTP_SERVER and SMTP_PORT and SMTP_USER and SMTP_PASS and FEEDBACK_EMAIL):
+    config = auth_email_service_config()
+    validation = email_service.validate_email_configuration(config)
+    if not validation.ok:
         verification_email_logger.error(
-            "PASSWORD_RESET_EMAIL_SMTP_NOT_CONFIGURED host=%s port=%s sender=%s recipient=%s",
-            SMTP_SERVER,
-            SMTP_PORT,
-            FEEDBACK_EMAIL,
+            "PASSWORD_RESET_EMAIL_SMTP_NOT_CONFIGURED missing=%s recipient=%s",
+            ",".join(validation.missing_variables),
             email,
         )
         return False
     reset_url = password_reset_url_for_token(request, token)
-    msg = MIMEText(password_reset_email_body(reset_url), "html", "utf-8")
-    msg["Subject"] = PASSWORD_RESET_EMAIL_SUBJECT
-    msg["From"] = "TorqueMech <no-reply@updates.torquemech.com>"
-    msg["To"] = email
-    msg["Sender"] = FEEDBACK_EMAIL
-    msg["Reply-To"] = FEEDBACK_EMAIL
-    try:
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASS)
-            refused = server.send_message(msg, from_addr=FEEDBACK_EMAIL, to_addrs=[email])
-        if refused:
-            verification_email_logger.error(
-                "PASSWORD_RESET_EMAIL_SMTP_REFUSED host=%s port=%s sender=%s recipient=%s refused=%s",
-                SMTP_SERVER,
-                SMTP_PORT,
-                FEEDBACK_EMAIL,
-                email,
-                refused,
-            )
-            return False
-        verification_email_logger.info(
-            "PASSWORD_RESET_EMAIL_SMTP_ACCEPTED host=%s port=%s sender=%s recipient=%s",
-            SMTP_SERVER,
-            SMTP_PORT,
-            FEEDBACK_EMAIL,
-            email,
-        )
-        return True
-    except Exception:
-        verification_email_logger.exception(
-            "PASSWORD_RESET_EMAIL_SMTP_EXCEPTION host=%s port=%s sender=%s recipient=%s",
-            SMTP_SERVER,
-            SMTP_PORT,
-            FEEDBACK_EMAIL,
-            email,
-        )
-        return False
+    result = email_service.send_email(
+        email_service.EmailMessage(
+            recipients=[email],
+            subject=PASSWORD_RESET_EMAIL_SUBJECT,
+            text_body=password_reset_email_text_body(reset_url),
+            html_body=password_reset_email_body(reset_url),
+        ),
+        config,
+        logger=verification_email_logger,
+    )
+    if result.error_category == "provider_refused":
+        verification_email_logger.error("PASSWORD_RESET_EMAIL_SMTP_REFUSED host=%s port=%s sender=%s recipient=%s", SMTP_SERVER, SMTP_PORT, FEEDBACK_EMAIL, email)
+    elif result.provider_related and not result.success:
+        verification_email_logger.error("PASSWORD_RESET_EMAIL_SMTP_EXCEPTION host=%s port=%s sender=%s recipient=%s", SMTP_SERVER, SMTP_PORT, FEEDBACK_EMAIL, email)
+    elif result.success:
+        verification_email_logger.info("PASSWORD_RESET_EMAIL_SMTP_ACCEPTED host=%s port=%s sender=%s recipient=%s", SMTP_SERVER, SMTP_PORT, FEEDBACK_EMAIL, email)
+    return result.success
 
 
 def send_password_reset_email_resend(request: Request, *, email: str, token: str) -> bool:
     sender = str(FEEDBACK_EMAIL or "").strip()
-    api_key = (os.getenv(RESEND_API_KEY_ENV) or "").strip()
     verification_email_logger.info(
         "PASSWORD_RESET_EMAIL_DELIVERY_ENTERED transport=resend sender=%s recipient=%s",
         sender,
         email,
     )
-    if not sender:
-        verification_email_logger.error("PASSWORD_RESET_EMAIL_RESEND_NOT_CONFIGURED missing=sender recipient=%s", email)
-        return False
-    if not api_key:
+    config = auth_email_service_config()
+    validation = email_service.validate_email_configuration(config)
+    if not validation.ok:
+        missing = "api_key" if RESEND_API_KEY_ENV in validation.missing_variables else ",".join(validation.missing_variables)
         verification_email_logger.error(
-            "PASSWORD_RESET_EMAIL_RESEND_NOT_CONFIGURED missing=api_key sender=%s recipient=%s",
-            sender,
-            email,
-        )
-        return False
-    if resend is None:
-        verification_email_logger.error(
-            "PASSWORD_RESET_EMAIL_RESEND_NOT_CONFIGURED missing=package sender=%s recipient=%s",
+            "PASSWORD_RESET_EMAIL_RESEND_NOT_CONFIGURED missing=%s sender=%s recipient=%s",
+            missing,
             sender,
             email,
         )
         return False
     reset_url = password_reset_url_for_token(request, token)
-    try:
-        resend.api_key = api_key
-        response = resend.Emails.send(
-            {
-                "from": sender,
-                "to": [email],
-                "subject": PASSWORD_RESET_EMAIL_SUBJECT,
-                "html": password_reset_email_body(reset_url),
-                "text": password_reset_email_text_body(reset_url),
-            }
-        )
-        email_id = resend_email_id(response)
-        verification_email_logger.info(
-            "PASSWORD_RESET_EMAIL_RESEND_ACCEPTED sender=%s recipient=%s resend_email_id=%s",
-            sender,
-            email,
-            email_id,
-        )
-        return True
-    except Exception:
-        verification_email_logger.exception(
-            "PASSWORD_RESET_EMAIL_RESEND_EXCEPTION sender=%s recipient=%s",
-            sender,
-            email,
-        )
-        return False
+    result = email_service.send_email(
+        email_service.EmailMessage(
+            recipients=[email],
+            subject=PASSWORD_RESET_EMAIL_SUBJECT,
+            text_body=password_reset_email_text_body(reset_url),
+            html_body=password_reset_email_body(reset_url),
+        ),
+        config,
+        logger=verification_email_logger,
+        resend_client=resend,
+    )
+    if result.success:
+        verification_email_logger.info("PASSWORD_RESET_EMAIL_RESEND_ACCEPTED sender=%s recipient=%s resend_email_id=%s", sender, email, result.provider_message_id)
+    else:
+        verification_email_logger.error("PASSWORD_RESET_EMAIL_RESEND_EXCEPTION sender=%s recipient=%s", sender, email)
+    return result.success
 
 
 def send_password_reset_email(request: Request, *, email: str, token: str, user_id: int) -> bool:
-    transport = (os.getenv("TORQUEMECH_EMAIL_TRANSPORT") or "local").strip().lower()
+    transport = email_service.normalize_transport(os.getenv("TORQUEMECH_EMAIL_TRANSPORT"))
     sender = FEEDBACK_EMAIL if transport in {"smtp", "resend"} else "local-outbox"
     verification_email_logger.info(
         "PASSWORD_RESET_EMAIL_TRANSPORT_SELECTED transport=%s sender=%s recipient=%s user_id=%s",

@@ -3406,7 +3406,10 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn(f"estimate_id={estimate_id}", response.text)
         self.assertIn(f"finding_id={finding_id}", response.text)
         self.assertIn("Open Estimate PDF", response.text)
-        self.assertNotIn("Update Customer Decision", response.text)
+        self.assertIn("Customer Decision", response.text)
+        self.assertIn("Awaiting Customer Decision", response.text)
+        self.assertIn("Mark Customer Approved", response.text)
+        self.assertIn("Mark Customer Declined", response.text)
         self.assertNotIn("Start Repair", response.text)
 
     def test_finding_detail_displays_saved_prepared_estimate_service_name_and_total(self):
@@ -3430,6 +3433,419 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("$812.34", response.text)
         self.assertIn("View/Edit Repair Estimate", response.text)
         self.assertIn("Open Estimate PDF", response.text)
+
+    def test_prepared_finding_customer_decision_and_start_repair_workflow(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage1-decision@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage1-decision@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Decision")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=912.50,
+            service_name="Front Brake Service",
+        )
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        decision_url = f"{detail_url}/customer-decision"
+        start_url = f"{detail_url}/start-repair"
+
+        self.assertEqual(client.get(decision_url, follow_redirects=False).status_code, 405)
+        self.assertEqual(
+            client.post(decision_url, data={"decision": "approved"}, follow_redirects=False).status_code,
+            403,
+        )
+        page = client.get(detail_url)
+        token = csrf_from(page.text)
+
+        approved = client.post(
+            decision_url,
+            data={"csrf_token": token, "decision": "approved"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(approved.status_code, 303)
+        finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+        self.assertEqual(finding["status"], "Approved")
+        self.assertIsNone(finding["linked_repair_record_id"])
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 0)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM finding_history_records WHERE finding_id = ? AND event_type = 'customer_decision_changed'",
+                (finding_id,),
+            ).fetchone()["count"],
+            1,
+        )
+
+        approved_page = client.get(detail_url)
+        self.assertIn("Customer Approved", approved_page.text)
+        self.assertIn("Start Repair", approved_page.text)
+        vehicle_page_before_start = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+        self.assertEqual(vehicle_page_before_start.status_code, 200)
+        self.assertIn("Finding Status: Approved", vehicle_page_before_start.text)
+        self.assertIn("Customer Approved", vehicle_page_before_start.text)
+        self.assertIn("Ready for Repair", vehicle_page_before_start.text)
+        self.assertIn("Estimate prepared", vehicle_page_before_start.text)
+        self.assertIn("Open Finding", vehicle_page_before_start.text)
+        self.assertNotIn("Open Repair Workspace</a>", vehicle_page_before_start.text)
+        token = csrf_from(approved_page.text)
+        started = client.post(start_url, data={"csrf_token": token}, follow_redirects=False)
+
+        self.assertEqual(started.status_code, 303)
+        self.assertRegex(started.headers["location"], rf"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/\d+$")
+        repair = self.conn.execute("SELECT * FROM repair_records").fetchone()
+        self.assertEqual(repair["repair_name"], "Front Brake Service")
+        self.assertEqual(repair["approved_estimate_total"], 912.50)
+        self.assertEqual(repair["workflow_source_type"], "finding")
+        self.assertEqual(repair["workflow_source_id"], finding_id)
+        self.assertEqual(repair["status"], "Open")
+        self.assertIsNone(repair["completed_at"])
+        self.assertEqual(repair["total_cost"], 912.50)
+        finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+        self.assertEqual(finding["linked_repair_record_id"], repair["id"])
+        completion = self.conn.execute("SELECT * FROM repair_completions WHERE repair_record_id = ?", (repair["id"],)).fetchone()
+        self.assertIsNone(completion)
+        invoice_count = self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"]
+        self.assertEqual(invoice_count, 0)
+        invoice_jobs = pro_module.load_invoice_builder_jobs(self.conn, customer_id, vehicle_id)
+        self.assertNotIn(repair["id"], [job["id"] for job in invoice_jobs["ready"]])
+        self.assertIn(repair["id"], [job["id"] for job in invoice_jobs["approved"]])
+
+        repeated = client.post(start_url, data={"csrf_token": token}, follow_redirects=False)
+        self.assertEqual(repeated.status_code, 303)
+        self.assertEqual(repeated.headers["location"], started.headers["location"])
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 1)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM finding_history_records WHERE finding_id = ? AND event_type = 'repair_started'",
+                (finding_id,),
+            ).fetchone()["count"],
+            1,
+        )
+
+        decline_after_start = client.post(
+            decision_url,
+            data={"csrf_token": token, "decision": "declined"},
+            follow_redirects=False,
+        )
+        self.assertEqual(decline_after_start.status_code, 400)
+
+    def test_start_repair_does_not_reuse_stale_completed_linked_repair(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage1-stale-repair@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage1-stale-repair@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Stale")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=324.00,
+            service_name="Alternator Replacement",
+        )
+        pro_module.ensure_repair_records_schema(self.conn)
+        pro_module.ensure_repair_completion_schema(self.conn)
+        stale_repair_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO repair_records (
+                  vehicle_id, customer_id, repair_name, repair_date, mileage,
+                  labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+                  workflow_source_type, workflow_source_id, approved_estimate_total,
+                  status, completed_at, created_at
+                )
+                VALUES (?, ?, 'Legacy Alternator Replacement', '2026-07-23', 106000,
+                        0, 0, 0, 0, 0, 'finding', ?, 0,
+                        'Completed', '2026-07-23T15:00:00', '2026-07-23T12:00:00')
+                """,
+                (vehicle_id, customer_id, finding_id),
+            ).lastrowid
+        )
+        self.conn.execute(
+            """
+            INSERT INTO repair_completions (
+              repair_record_id, completion_date, completion_mileage,
+              completion_notes, final_inspection_passed, final_inspection_notes,
+              completed_at, created_at, updated_at
+            )
+            VALUES (?, '2026-07-23', 106000, 'Legacy completed repair.', 1, 'Passed.',
+                    '2026-07-23T15:00:00', '2026-07-23T15:00:00', '2026-07-23T15:00:00')
+            """,
+            (stale_repair_id,),
+        )
+        self.conn.execute(
+            """
+            UPDATE findings_records
+            SET status = 'Approved',
+                repair_work_status = 'ready',
+                linked_repair_record_id = ?
+            WHERE id = ?
+            """,
+            (stale_repair_id, finding_id),
+        )
+        self.conn.commit()
+
+        page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        token = csrf_from(page.text)
+        started = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair",
+            data={"csrf_token": token},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(started.status_code, 303)
+        new_repair_id = int(started.headers["location"].rstrip("/").split("/")[-1])
+        self.assertNotEqual(new_repair_id, stale_repair_id)
+        repairs = self.conn.execute(
+            "SELECT id, repair_name, status, completed_at, approved_estimate_total, total_cost FROM repair_records ORDER BY id"
+        ).fetchall()
+        self.assertEqual(len(repairs), 2)
+        self.assertEqual(repairs[0]["id"], stale_repair_id)
+        self.assertEqual(repairs[0]["status"], "Completed")
+        self.assertEqual(repairs[1]["id"], new_repair_id)
+        self.assertEqual(repairs[1]["repair_name"], "Alternator Replacement")
+        self.assertEqual(repairs[1]["status"], "Open")
+        self.assertIsNone(repairs[1]["completed_at"])
+        self.assertEqual(repairs[1]["approved_estimate_total"], 324.00)
+        self.assertEqual(repairs[1]["total_cost"], 324.00)
+        finding = self.conn.execute("SELECT linked_repair_record_id FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+        self.assertEqual(finding["linked_repair_record_id"], new_repair_id)
+        invoice_jobs = pro_module.load_invoice_builder_jobs(self.conn, customer_id, vehicle_id)
+        self.assertIn(stale_repair_id, [job["id"] for job in invoice_jobs["ready"]])
+        self.assertNotIn(new_repair_id, [job["id"] for job in invoice_jobs["ready"]])
+        self.assertIn(new_repair_id, [job["id"] for job in invoice_jobs["approved"]])
+
+        repeated = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair",
+            data={"csrf_token": token},
+            follow_redirects=False,
+        )
+        self.assertEqual(repeated.headers["location"], started.headers["location"])
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM repair_records WHERE workflow_source_type = 'finding' AND workflow_source_id = ? AND status = 'Open'",
+                (finding_id,),
+            ).fetchone()["count"],
+            1,
+        )
+
+    def test_start_repair_with_legacy_unique_source_index_uses_finding_link_for_fresh_repair(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage1-unique-stale@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage1-unique-stale@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Unique")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=444.00,
+            service_name="Starter Replacement",
+        )
+        pro_module.ensure_repair_records_schema(self.conn)
+        stale_repair_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO repair_records (
+                  vehicle_id, customer_id, repair_name, workflow_source_type,
+                  workflow_source_id, status, completed_at, created_at
+                )
+                VALUES (?, ?, 'Legacy Starter Replacement', 'finding', ?,
+                        'Completed', '2026-07-23T15:00:00', '2026-07-23T12:00:00')
+                """,
+                (vehicle_id, customer_id, finding_id),
+            ).lastrowid
+        )
+        self.conn.execute(
+            """
+            CREATE UNIQUE INDEX unique_test_repair_records_workflow_source
+            ON repair_records (workflow_source_type, workflow_source_id)
+            WHERE workflow_source_type IS NOT NULL
+              AND TRIM(workflow_source_type) != ''
+              AND workflow_source_id IS NOT NULL
+            """
+        )
+        self.conn.execute(
+            """
+            UPDATE findings_records
+            SET status = 'Approved',
+                repair_work_status = 'ready',
+                linked_repair_record_id = ?
+            WHERE id = ?
+            """,
+            (stale_repair_id, finding_id),
+        )
+        self.conn.commit()
+
+        page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        started = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair",
+            data={"csrf_token": csrf_from(page.text)},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(started.status_code, 303)
+        fresh_repair_id = int(started.headers["location"].rstrip("/").split("/")[-1])
+        self.assertNotEqual(fresh_repair_id, stale_repair_id)
+        repairs = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT id, workflow_source_type, workflow_source_id, status, notes FROM repair_records ORDER BY id"
+            ).fetchall()
+        ]
+        self.assertEqual(repairs[0]["workflow_source_type"], "finding")
+        self.assertEqual(repairs[0]["workflow_source_id"], finding_id)
+        self.assertEqual(repairs[0]["status"], "Completed")
+        self.assertIsNone(repairs[1]["workflow_source_type"])
+        self.assertIsNone(repairs[1]["workflow_source_id"])
+        self.assertEqual(repairs[1]["status"], "Open")
+        self.assertIn(f"Source Finding ID: {finding_id}", repairs[1]["notes"])
+        finding = self.conn.execute("SELECT linked_repair_record_id FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+        self.assertEqual(finding["linked_repair_record_id"], fresh_repair_id)
+        source_finding = pro_module.load_repair_source_finding_for_detail(
+            self.conn,
+            repairs[1],
+            customer_id,
+            vehicle_id,
+        )
+        self.assertEqual(source_finding["id"], finding_id)
+
+    def test_repair_start_target_must_be_open_and_unfinished_for_same_customer_vehicle(self):
+        self.bootstrap_owner(self.client(), email="start-target-status@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("start-target-status@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Target")
+        pro_module.ensure_repair_records_schema(self.conn)
+
+        def insert_repair(status: str, *, completed_at: str | None = None) -> int:
+            return int(
+                self.conn.execute(
+                    """
+                    INSERT INTO repair_records (
+                      vehicle_id, customer_id, repair_name, status, completed_at, created_at
+                    )
+                    VALUES (?, ?, 'Target Repair', ?, ?, '2026-07-24T12:00:00')
+                    """,
+                    (vehicle_id, customer_id, status, completed_at),
+                ).lastrowid
+            )
+
+        open_repair_id = insert_repair("Open")
+        self.assertTrue(
+            pro_module.repair_record_is_valid_start_target(
+                self.conn,
+                open_repair_id,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+            )
+        )
+        self.assertFalse(
+            pro_module.repair_record_is_valid_start_target(
+                self.conn,
+                open_repair_id,
+                customer_id=customer_id + 100,
+                vehicle_id=vehicle_id,
+            )
+        )
+        self.assertFalse(
+            pro_module.repair_record_is_valid_start_target(
+                self.conn,
+                open_repair_id,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id + 100,
+            )
+        )
+
+        for status in ("Completed", "Cancelled", "Declined", "Deferred", "In Progress"):
+            with self.subTest(status=status):
+                repair_id = insert_repair(status)
+                self.assertFalse(
+                    pro_module.repair_record_is_valid_start_target(
+                        self.conn,
+                        repair_id,
+                        customer_id=customer_id,
+                        vehicle_id=vehicle_id,
+                    )
+                )
+
+        formally_completed_repair_id = insert_repair("Open")
+        pro_module.ensure_repair_completion_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO repair_completions (
+              repair_record_id, completion_date, completion_mileage,
+              final_inspection_passed, completed_at, created_at, updated_at
+            )
+            VALUES (?, '2026-07-24', 120000, 1,
+                    '2026-07-24T15:00:00', '2026-07-24T15:00:00', '2026-07-24T15:00:00')
+            """,
+            (formally_completed_repair_id,),
+        )
+        self.assertFalse(
+            pro_module.repair_record_is_valid_start_target(
+                self.conn,
+                formally_completed_repair_id,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+            )
+        )
+
+        invoiced_repair_id = insert_repair("Open")
+        pro_module.ensure_invoices_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO invoices (
+              invoice_number, repair_record_id, customer_id, vehicle_id,
+              labor_total, parts_total, grand_total, created_at
+            )
+            VALUES ('TM-INV-TEST', ?, ?, ?, 0, 0, 0, '2026-07-24T16:00:00')
+            """,
+            (invoiced_repair_id, customer_id, vehicle_id),
+        )
+        self.assertFalse(
+            pro_module.repair_record_is_valid_start_target(
+                self.conn,
+                invoiced_repair_id,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+            )
+        )
+
+    def test_declined_prepared_finding_preserves_estimate_and_cannot_start_repair(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage1-decline@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage1-decline@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Decline")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        token = csrf_from(client.get(detail_url).text)
+
+        declined = client.post(
+            f"{detail_url}/customer-decision",
+            data={"csrf_token": token, "decision": "declined"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(declined.status_code, 303)
+        self.assertEqual(
+            self.conn.execute("SELECT status FROM findings_records WHERE id = ?", (finding_id,)).fetchone()["status"],
+            "Declined",
+        )
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 0)
+        estimate = self.conn.execute("SELECT * FROM repair_estimate_documents WHERE id = ?", (estimate_id,)).fetchone()
+        self.assertIsNotNone(estimate)
+        self.assertEqual(estimate["finding_id"], finding_id)
+
+        declined_page = client.get(detail_url)
+        self.assertIn("Customer Declined", declined_page.text)
+        self.assertNotIn("Start Repair", declined_page.text)
+        blocked = client.post(
+            f"{detail_url}/start-repair",
+            data={"csrf_token": csrf_from(declined_page.text)},
+            follow_redirects=False,
+        )
+        self.assertEqual(blocked.status_code, 400)
 
     def test_finding_detail_legacy_saved_estimate_without_service_data_degrades_safely(self):
         client = self.client()
