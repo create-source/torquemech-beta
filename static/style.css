@@ -9652,6 +9652,7 @@ body.tm-estimator-page .clear-fields-btn,
 body.tm-estimator-page #sigClearBtn,
 body.tm-estimator-page #prepareReviewedEstimateBtn,
 body.tm-estimator-page #copyQuoteBtn,
+body.tm-estimator-page #copyCustomerMessageBtn,
 body.tm-estimator-page #emailQuoteBtn,
 body.tm-estimator-page #confirmCloseBtn{
   border-color: rgba(15,23,42,.16);
@@ -9664,6 +9665,23 @@ body.tm-estimator-page #draftsCard{
   background: #08111f;
   border: 1px solid rgba(148, 163, 184, .18);
   box-shadow: none;
+}
+
+body.tm-estimator-page .customer-message-heading-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+body.tm-estimator-page .customer-message-heading-row .tm-confirm-section-title{
+  margin: 0;
+}
+
+body.tm-estimator-page #copyCustomerMessageBtn{
+  flex: 0 0 auto;
 }
 
 body.tm-estimator-page #draftsCard h2{

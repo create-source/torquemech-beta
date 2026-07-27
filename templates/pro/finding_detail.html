@@ -124,6 +124,55 @@
   </div>
   {% endif %}
 
+  {% if finding.estimate_document_id %}
+  <section class="tm-finding-panel tm-finding-action-panel" aria-label="Customer Decision">
+    <div>
+      <h2 class="tm-finding-section-title">Customer Decision</h2>
+      <div style="margin-top:10px;"><span class="tm-status-chip">{{ finding.customer_decision_label }}</span></div>
+      {% if finding.repair_stage_label %}
+      <div style="margin-top:8px;"><span class="tm-status-chip">{{ finding.repair_stage_label }}</span></div>
+      {% endif %}
+    </div>
+    <div class="tm-finding-grid">
+      <div class="tm-finding-field"><span>Prepared Estimate</span><strong>{{ finding.estimate_service_name or finding.recommendation or finding.finding or "-" }}</strong></div>
+      <div class="tm-finding-field"><span>Estimated Total</span><strong>{% if finding.estimate_total is not none %}{{ finding.estimate_total|pro_currency }}{% else %}-{% endif %}</strong></div>
+    </div>
+    <div class="tm-finding-actions" style="margin-top:0;">
+      {% if finding.status not in ["Approved", "Declined", "Completed"] %}
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="decision" value="approved">
+        <button class="tm-btn tm-btn-primary" type="submit">Mark Customer Approved</button>
+      </form>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="decision" value="declined">
+        <button class="tm-btn tm-btn-secondary" type="submit">Mark Customer Declined</button>
+      </form>
+      {% elif finding.status == "Declined" %}
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="decision" value="approved">
+        <button class="tm-btn tm-btn-primary" type="submit">Change Decision to Approved</button>
+      </form>
+      {% endif %}
+      {% if finding.status == "Approved" and not finding.linked_repair_record_id %}
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/start-repair">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="tm-btn tm-btn-primary" type="submit">Start Repair</button>
+      </form>
+      {% endif %}
+      {% if finding.linked_repair_record_id %}
+      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
+      {% endif %}
+      <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_edit_url or build_finding_estimator_href(customer, vehicle, finding) }}">View/Edit Repair Estimate</a>
+      {% if finding.estimate_document_url %}
+      <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
   <section class="tm-finding-panel" aria-label="Finding record">
     <div class="tm-finding-grid">
       <div class="tm-finding-field"><span>Finding Date</span><strong>{{ finding.finding_date|pro_date if finding.finding_date else "-" }}</strong></div>
@@ -197,55 +246,6 @@
       {% endif %}
     </div>
   </section>
-
-  {% if finding.estimate_document_id %}
-  <section class="tm-finding-panel tm-finding-action-panel" aria-label="Customer Decision">
-    <div>
-      <h2 class="tm-finding-section-title">Customer Decision</h2>
-      <div style="margin-top:10px;"><span class="tm-status-chip">{{ finding.customer_decision_label }}</span></div>
-      {% if finding.repair_stage_label %}
-      <div style="margin-top:8px;"><span class="tm-status-chip">{{ finding.repair_stage_label }}</span></div>
-      {% endif %}
-    </div>
-    <div class="tm-finding-grid">
-      <div class="tm-finding-field"><span>Prepared Estimate</span><strong>{{ finding.estimate_service_name or finding.recommendation or finding.finding or "-" }}</strong></div>
-      <div class="tm-finding-field"><span>Estimated Total</span><strong>{% if finding.estimate_total is not none %}{{ finding.estimate_total|pro_currency }}{% else %}-{% endif %}</strong></div>
-    </div>
-    <div class="tm-finding-actions" style="margin-top:0;">
-      {% if finding.status not in ["Approved", "Declined", "Completed"] %}
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input type="hidden" name="decision" value="approved">
-        <button class="tm-btn tm-btn-primary" type="submit">Mark Customer Approved</button>
-      </form>
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input type="hidden" name="decision" value="declined">
-        <button class="tm-btn tm-btn-secondary" type="submit">Mark Customer Declined</button>
-      </form>
-      {% elif finding.status == "Declined" %}
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input type="hidden" name="decision" value="approved">
-        <button class="tm-btn tm-btn-primary" type="submit">Change Decision to Approved</button>
-      </form>
-      {% endif %}
-      {% if finding.status == "Approved" and not finding.linked_repair_record_id %}
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/start-repair">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="tm-btn tm-btn-primary" type="submit">Start Repair</button>
-      </form>
-      {% endif %}
-      {% if finding.linked_repair_record_id %}
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
-      {% endif %}
-      <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_edit_url or build_finding_estimator_href(customer, vehicle, finding) }}">View/Edit Repair Estimate</a>
-      {% if finding.estimate_document_url %}
-      <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
-      {% endif %}
-    </div>
-  </section>
-  {% endif %}
 
   <form class="tm-finding-panel tm-finding-notes" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/notes" aria-label="Finding notes">
     <div>

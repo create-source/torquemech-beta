@@ -684,9 +684,12 @@
       </section>
 
       <section class="tm-confirm-section" aria-label="Customer message preview">
-        <label for="quotePreview" class="tm-confirm-section-title">
-          Customer message
-        </label>
+        <div class="customer-message-heading-row">
+          <label for="quotePreview" class="tm-confirm-section-title">
+            Customer message
+          </label>
+          <button id="copyCustomerMessageBtn" type="button" class="tm-btn tm-btn-secondary">Copy Message</button>
+        </div>
         <textarea
           id="quotePreview"
           class="tm-confirm-message-preview"

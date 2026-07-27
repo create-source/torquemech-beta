@@ -276,6 +276,8 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('id="generateAllBtn"', html)
         self.assertNotIn('id="prepareReviewedEstimateBtn"', html)
         self.assertIn('id="confirmAddBtn"', html)
+        self.assertIn('id="copyCustomerMessageBtn"', html)
+        self.assertIn('class="customer-message-heading-row"', html)
         self.assertIn("Return to Finding", html)
         self.assertIn(">Back to Finding</a>", html)
         self.assertIn(">Back to Vehicle</a>", html)
@@ -306,6 +308,11 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertIn('generateAllBtn?.addEventListener("click"', app_js)
         self.assertIn('prepareReviewedEstimateBtn?.addEventListener("click"', app_js)
+        self.assertIn('copyCustomerMessageBtn?.addEventListener("click"', app_js)
+        self.assertIn('navigator.clipboard?.writeText', app_js)
+        self.assertIn('document.execCommand("copy")', app_js)
+        self.assertIn('quotePreviewEl?.value || ""', app_js)
+        self.assertIn('copyCustomerMessageBtn.textContent = "Copied";', app_js)
         self.assertIn('const trigger = e.target?.closest?.("#confirmAddBtn");', app_js)
         self.assertIn('if (openConfirm() && isFindingEstimatorSession()) {', app_js)
 

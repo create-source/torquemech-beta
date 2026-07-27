@@ -4651,7 +4651,9 @@
                 {% if item.estimate_document_url %}
                 <span class="tm-crm-chip">Prepared Estimate: {{ item.estimate_service_name or "Service not named" }}</span>
                 <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
+                {% if group.label != "Awaiting Customer Decision" %}
                 <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
+                {% endif %}
                 {% else %}
                 <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                 {% endif %}
@@ -5081,6 +5083,7 @@
   aria-modal="true"
   aria-labelledby="photoAccessTitle"
   aria-describedby="photoAccessDescription"
+  data-photo-access-key="torquemech.photo_access_explained.{% if request.state.current_user %}user-{{ request.state.current_user.id }}{% elif request.state.current_shop %}shop-{{ request.state.current_shop.id }}{% else %}anonymous{% endif %}"
   hidden
 >
   <button
@@ -6114,11 +6117,32 @@
   const MAX_PHOTOS = 5;
   const photoAccessModal = document.getElementById("photoAccessModal");
   const continuePhotoAccessBtn = document.getElementById("continuePhotoAccessBtn");
+  const photoAccessAcknowledgedKey = photoAccessModal?.dataset.photoAccessKey || "torquemech.photo_access_explained.anonymous";
   let pendingPhotoInput = null;
   let photoAccessReturnFocus = null;
 
+  function hasPhotoAccessAcknowledgment() {
+    try {
+      return window.localStorage?.getItem(photoAccessAcknowledgedKey) === "1";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function recordPhotoAccessAcknowledgment() {
+    try {
+      window.localStorage?.setItem(photoAccessAcknowledgedKey, "1");
+    } catch (error) {
+      // Photo selection should still work when device storage is blocked.
+    }
+  }
+
   function openPhotoAccessModal(input, trigger) {
     if (!photoAccessModal || !continuePhotoAccessBtn || !input) return;
+    if (hasPhotoAccessAcknowledgment()) {
+      input.click();
+      return;
+    }
     pendingPhotoInput = input;
     photoAccessReturnFocus = trigger || document.activeElement;
     photoAccessModal.hidden = false;
@@ -6142,6 +6166,7 @@
     document.body.classList.remove("tm-photo-access-open");
     pendingPhotoInput = null;
     photoAccessReturnFocus = null;
+    recordPhotoAccessAcknowledgment();
     input?.click();
   });
 

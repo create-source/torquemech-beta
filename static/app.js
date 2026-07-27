@@ -1798,6 +1798,7 @@
   const confirmAddBtn = $("confirmAddBtn");
   const prepareReviewedEstimateBtn = $("prepareReviewedEstimateBtn");
   const copyQuoteBtn = $("copyQuoteBtn");
+  const copyCustomerMessageBtn = $("copyCustomerMessageBtn");
   const emailQuoteBtn = $("emailQuoteBtn");
   const quotePreviewEl = $("quotePreview");
   const confirmMsg = $("confirmMsg");
@@ -6128,6 +6129,48 @@ const confidenceEl = document.getElementById("laborConfidence");
       lineItems.forEach(it => { it.breakdownOpen = false; });
     }
     renderLineItems();
+  });
+
+  async function copyCustomerMessageText(text) {
+    const value = String(text || "");
+    if (!value.trim()) return false;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
+  }
+
+  copyCustomerMessageBtn?.addEventListener("click", async () => {
+    const originalLabel = copyCustomerMessageBtn.dataset.originalLabel || copyCustomerMessageBtn.textContent || "Copy Message";
+    copyCustomerMessageBtn.dataset.originalLabel = originalLabel;
+    try {
+      const copied = await copyCustomerMessageText(quotePreviewEl?.value || "");
+      if (!copied) {
+        setConfirmMessage("info", "Nothing to copy yet.");
+        return;
+      }
+      copyCustomerMessageBtn.textContent = "Copied";
+      setConfirmMessage("ok", "Message copied.");
+      window.clearTimeout(copyCustomerMessageBtn.dataset.resetTimer);
+      copyCustomerMessageBtn.dataset.resetTimer = window.setTimeout(() => {
+        copyCustomerMessageBtn.textContent = originalLabel;
+      }, 1800);
+    } catch (e) {
+      setConfirmMessage("error", "Copy failed. Try selecting the text manually.");
+    }
   });
 
   copyQuoteBtn?.addEventListener("click", async () => {

@@ -980,6 +980,13 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Up to 5 photos.", vehicle_detail)
         self.assertIn("No photos selected", vehicle_detail)
         self.assertIn("Upload photos of the original problem before repair.", vehicle_detail)
+        self.assertIn("data-photo-access-key=\"torquemech.photo_access_explained.", vehicle_detail)
+        self.assertIn("function hasPhotoAccessAcknowledgment()", vehicle_detail)
+        self.assertIn("function recordPhotoAccessAcknowledgment()", vehicle_detail)
+        self.assertIn('window.localStorage?.setItem(photoAccessAcknowledgedKey, "1")', vehicle_detail)
+        self.assertIn('window.localStorage?.getItem(photoAccessAcknowledgedKey) === "1"', vehicle_detail)
+        self.assertIn("recordPhotoAccessAcknowledgment();\n    input?.click();", vehicle_detail)
+        self.assertIn("button.addEventListener(\"click\", closePhotoAccessModal);", vehicle_detail)
         self.assertIn("After / Completion Photos", repair_detail)
         self.assertIn("Before / Inspection Photos", repair_detail)
         self.assertIn('id="after_repair_camera"', repair_detail)
@@ -2017,6 +2024,34 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Build Repair Estimate", vehicle_detail)
         self.assertNotIn('<button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>', vehicle_detail)
         self.assertNotIn('name="workflow_source_id" value="{{ item.id }}"', vehicle_detail)
+
+    def test_awaiting_customer_decision_cards_hide_estimate_edit_action(self):
+        vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
+        estimate_action_block = vehicle_detail.split('<div class="tm-finding-estimate" data-finding-estimate>', 1)[1].split('<div class="tm-repair-action-row">', 1)[0]
+
+        self.assertIn('"label": "Awaiting Customer Decision"', vehicle_detail)
+        self.assertIn('group.label != "Awaiting Customer Decision"', estimate_action_block)
+        self.assertIn(">Open Finding</a>", vehicle_detail)
+        self.assertIn(">Edit Finding</a>", vehicle_detail)
+        self.assertIn("Prepared Estimate: {{ item.estimate_service_name or \"Service not named\" }}", estimate_action_block)
+        self.assertIn("Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}", estimate_action_block)
+
+    def test_finding_detail_customer_decision_is_first_card_and_keeps_actions(self):
+        finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")
+
+        self.assertEqual(finding_detail.count('aria-label="Customer Decision"'), 1)
+        self.assertLess(
+            finding_detail.index('aria-label="Customer Decision"'),
+            finding_detail.index('aria-label="Finding record"'),
+        )
+        self.assertIn("{{ finding.customer_decision_label }}", finding_detail)
+        self.assertIn("{{ finding.repair_stage_label }}", finding_detail)
+        self.assertIn("Prepared Estimate", finding_detail)
+        self.assertIn("Estimated Total", finding_detail)
+        self.assertIn("Start Repair", finding_detail)
+        self.assertIn("View/Edit Repair Estimate", finding_detail)
+        self.assertIn("Open Estimate PDF", finding_detail)
+        self.assertIn("{% if finding.estimate_document_id %}", finding_detail)
 
     def test_estimator_parts_sources_wait_for_service_specific_selection(self):
         estimator = (ROOT / "templates" / "estimator.html").read_text(encoding="utf-8")
