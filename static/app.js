@@ -1234,8 +1234,16 @@
           modelSelect.appendChild(option);
         });
 
-        const validSelectedModel = models.includes(selectedModel) ? selectedModel : "";
-        const validSelectedDisplayModel = validSelectedModel ? selectedDisplayModel : "";
+        let validSelectedModel = models.includes(selectedModel) ? selectedModel : "";
+        let validSelectedDisplayModel = validSelectedModel ? selectedDisplayModel : "";
+        if (!validSelectedModel && selectedModel) {
+          const option = document.createElement("option");
+          option.value = selectedModel;
+          option.textContent = selectedDisplayModel || selectedModel;
+          modelSelect.appendChild(option);
+          validSelectedModel = selectedModel;
+          validSelectedDisplayModel = selectedDisplayModel || selectedModel;
+        }
         vehicle.model = validSelectedModel;
         vehicle.displayModel = validSelectedDisplayModel || validSelectedModel;
         modelSelect.disabled = false;
@@ -1757,6 +1765,7 @@
   const generateAllBtn = $("generateAllBtn");
   const addLineBtn = $("addLineBtn");
   const addServiceHint = $("addServiceHint");
+  const serviceCatalogLoadingHint = $("serviceCatalogLoadingHint");
   const getEstimateHint = $("getEstimateHint");
   const workflowStepText = $("workflowStepText");
   const quickEstimateBtn = document.getElementById("quickEstimateBtn");
@@ -5956,28 +5965,41 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!serviceEl) return;
 
     const requestId = ++loadServicesRequestId;
+    if (serviceCatalogLoadingHint) {
+      serviceCatalogLoadingHint.hidden = !categoryKey;
+      serviceCatalogLoadingHint.textContent = categoryKey ? "Loading services..." : "";
+    }
     resetServiceSearch({ placeholder: categoryKey ? "Loading services..." : SERVICE_SEARCH_PLACEHOLDER, disabled: false });
     serviceEl.innerHTML = `<option value="">${categoryKey ? "Loading services…" : "Select service…"}</option>`;
     serviceMeta = null;
     laborHoursTouched = false;
     renderSelectedServiceContext();
 
-    if (!categoryKey) return;
-
-    const rawServices = await getServicesForCategory(categoryKey);
-    if (requestId !== loadServicesRequestId || categoryEl?.value !== categoryKey) return;
-
-    const svcs = filterServicesForActiveVehicle(rawServices);
-    const categoryName = categoryEl?.options[categoryEl.selectedIndex]?.textContent || "";
-    serviceOptions = svcs.map((s) => mapServiceSearchOption(s, categoryKey, categoryName));
-    serviceEl.innerHTML = `<option value="">Select service…</option>`;
-    for (const s of svcs) {
-      const opt = document.createElement("option");
-      opt.value = s.code || "";
-      opt.textContent = s.name || s.code || "Service";
-      serviceEl.appendChild(opt);
+    if (!categoryKey) {
+      if (serviceCatalogLoadingHint) serviceCatalogLoadingHint.hidden = true;
+      return;
     }
-    enableServiceSearch();
+
+    try {
+      const rawServices = await getServicesForCategory(categoryKey);
+      if (requestId !== loadServicesRequestId || categoryEl?.value !== categoryKey) return;
+
+      const svcs = filterServicesForActiveVehicle(rawServices);
+      const categoryName = categoryEl?.options[categoryEl.selectedIndex]?.textContent || "";
+      serviceOptions = svcs.map((s) => mapServiceSearchOption(s, categoryKey, categoryName));
+      serviceEl.innerHTML = `<option value="">Select service…</option>`;
+      for (const s of svcs) {
+        const opt = document.createElement("option");
+        opt.value = s.code || "";
+        opt.textContent = s.name || s.code || "Service";
+        serviceEl.appendChild(opt);
+      }
+      enableServiceSearch();
+    } finally {
+      if (requestId === loadServicesRequestId && (!categoryEl || categoryEl.value === categoryKey) && serviceCatalogLoadingHint) {
+        serviceCatalogLoadingHint.hidden = true;
+      }
+    }
   }
 
   async function loadServiceMeta(serviceCode) {
@@ -8186,6 +8208,7 @@ if (getEstimateHint) {
 
       if (!yearSelect || !makeSelect || !makeSearch || !makeResults || !modelSelect) continue;
 
+      let selectorInitializing = true;
       await window.TorqueMechVehicleUI.initSharedVehicleSelector({
         yearSelect,
         makeSelect,
@@ -8199,10 +8222,13 @@ if (getEstimateHint) {
           displayModel: vehicle.displayModel || vehicle.model || "",
         },
         onChange: ({ year, make, model, displayModel }) => {
-          vehicle.year = year;
-          vehicle.make = make;
-          vehicle.model = model;
-          vehicle.displayModel = displayModel || model;
+          const preserveFindingHandoff = selectorInitializing && isFindingEstimatorSession();
+          vehicle.year = preserveFindingHandoff && vehicle.year && !year ? vehicle.year : year;
+          vehicle.make = preserveFindingHandoff && vehicle.make && !make ? vehicle.make : make;
+          vehicle.model = preserveFindingHandoff && vehicle.model && !model ? vehicle.model : model;
+          vehicle.displayModel = preserveFindingHandoff && vehicle.displayModel && !displayModel
+            ? vehicle.displayModel
+            : displayModel || vehicle.model;
           syncEstimateMeta();
           window.estimateState = estimateState;
           if (categoryEl?.value) {
@@ -8213,6 +8239,7 @@ if (getEstimateHint) {
           refreshQuotePreview();
         },
       });
+      selectorInitializing = false;
     }
 
     document.querySelectorAll(".remove-vehicle-btn").forEach((btn) => {
@@ -8303,20 +8330,39 @@ if (getEstimateHint) {
     try {
       const findingVehicleHydrated = await hydrateFindingEstimatorHandoff();
       populateYears();
+
+      if (findingVehicleHydrated) {
+        renderActiveVehicleBanner();
+        syncClearQuoteState();
+        if (serviceEl) serviceEl.innerHTML = `<option value="">Select service…</option>`;
+        resetServiceSearch();
+        updateQuantityPricingPreview();
+        updateEstimateButtonState();
+        setStatus("info", "Finding vehicle loaded. Estimator ready.");
+
+        void (async () => {
+          try {
+            await renderVehicles();
+            renderActiveVehicleBanner();
+            updateEstimateButtonState();
+          } catch (error) {
+            console.warn("Finding vehicle selector initialization failed:", error);
+          }
+        })();
+
+        void (async () => {
+          try {
+            await loadCategories();
+          } catch (error) {
+            console.warn("Finding category initialization failed:", error);
+          }
+        })();
+
+        return;
+      }
+
       await loadMakes();
       await loadCategories();
-
-      const preloadServiceCatalog = () => {
-        ensureAllServiceOptions("").catch((error) => {
-          console.warn("Service catalog preload failed:", error);
-        });
-      };
-
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(preloadServiceCatalog, { timeout: 1200 });
-      } else {
-        window.setTimeout(preloadServiceCatalog, 250);
-      }
 
       if (!findingVehicleHydrated) {
         await applyObdFromQuery();

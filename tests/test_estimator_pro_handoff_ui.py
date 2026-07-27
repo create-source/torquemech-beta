@@ -392,6 +392,8 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("/pro/estimator/finding-handoff?", app_js)
         self.assertIn("Loading customer and vehicle...", app_js)
         self.assertIn("Retry", app_js)
+        self.assertNotIn("preloadServiceCatalog", app_js)
+        self.assertNotIn('ensureAllServiceOptions("")', app_js)
         self.assertIn("const hasDirectFindingVehicle = findingContext.source === \"finding\" && !!findingContext.vehicleId;", app_js)
         self.assertIn("const vehicleLoaded = hasDirectFindingVehicle ? true : await preloadVehicle();", app_js)
         self.assertIn("if (!findingVehicleHydrated) {\n        await applyObdFromQuery();\n      }", app_js)
@@ -399,6 +401,64 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("findingPreparedUrl", app_js)
         self.assertIn('"estimate_prepared", "1"', app_js)
         self.assertIn('if (isFindingEstimatorSession()) {', app_js)
+
+    def test_finding_startup_renders_vehicle_before_optional_catalog_and_selectors(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        init_idx = app_js.index("const initReady = (async () => {")
+        hydrate_idx = app_js.index("const findingVehicleHydrated = await hydrateFindingEstimatorHandoff();", init_idx)
+        ready_idx = app_js.index('setStatus("info", "Finding vehicle loaded. Estimator ready.");', hydrate_idx)
+        selector_task_idx = app_js.index('console.warn("Finding vehicle selector initialization failed:", error);', ready_idx)
+        selector_idx = app_js.index("await renderVehicles();", ready_idx)
+        categories_task_idx = app_js.index('console.warn("Finding category initialization failed:", error);', selector_idx)
+        categories_idx = app_js.index("await loadCategories();", selector_idx)
+        return_idx = app_js.index("return;", selector_idx)
+        standalone_makes_idx = app_js.index("await loadMakes();", return_idx)
+        finding_branch = app_js[ready_idx:return_idx]
+
+        self.assertLess(hydrate_idx, ready_idx)
+        self.assertLess(ready_idx, selector_idx)
+        self.assertLess(selector_idx, selector_task_idx)
+        self.assertLess(selector_task_idx, categories_idx)
+        self.assertLess(categories_idx, categories_task_idx)
+        self.assertLess(selector_idx, return_idx)
+        self.assertLess(return_idx, standalone_makes_idx)
+        self.assertNotIn("await loadCategories();\n\n        void (async () => {\n          try {\n            await renderVehicles();", finding_branch)
+        self.assertIn("renderFindingHandoffSummary(payload);", app_js)
+        self.assertIn('data-finding-handoff-summary="true"', app_js)
+
+    def test_finding_vehicle_display_does_not_require_make_or_model_apis(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        apply_idx = app_js.index("function applyFindingHandoffPayload(payload = {})")
+        summary_idx = app_js.index("renderFindingHandoffSummary(payload);", apply_idx)
+        banner_idx = app_js.index("renderActiveVehicleBanner();", summary_idx)
+        selector_idx = app_js.index("await renderVehicles();", banner_idx)
+
+        self.assertLess(summary_idx, selector_idx)
+        self.assertLess(banner_idx, selector_idx)
+        self.assertIn("let validSelectedModel = models.includes(selectedModel) ? selectedModel : \"\";", app_js)
+        self.assertIn("if (!validSelectedModel && selectedModel) {", app_js)
+        self.assertIn("validSelectedModel = selectedModel;", app_js)
+
+    def test_service_catalog_is_lazy_loaded_and_cached(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        self.assertIn("const serviceCategoryCache = new Map();", app_js)
+        self.assertIn("const serviceCategoryRequests = new Map();", app_js)
+        self.assertIn("if (serviceCategoryCache.has(key))", app_js)
+        self.assertIn("serviceCategoryCache.set(key, normalized);", app_js)
+        self.assertIn('categoryEl?.addEventListener("change", async () => {', app_js)
+        self.assertIn("await loadServices(categoryEl.value);", app_js)
+        self.assertIn('serviceCatalogLoadingHint.hidden = !categoryKey;', app_js)
+        init_block = app_js[
+            app_js.index("const initReady = (async () => {"):
+            app_js.index("initReady.then(() => loadSharedEstimateFromPath());")
+        ]
+        self.assertNotIn("ensureAllServiceOptions", init_block)
 
     def test_stage_one_visual_hooks_are_present(self):
         with open("templates/pro/finding_detail.html", encoding="utf-8") as handle:
