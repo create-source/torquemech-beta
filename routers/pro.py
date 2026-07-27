@@ -5687,20 +5687,54 @@ def repair_labor_totals(repair: dict[str, Any]) -> dict[str, Any]:
 
 def repair_cost_totals(repair: dict[str, Any]) -> dict[str, Any]:
     labor = repair_labor_totals(repair)
+
     try:
         parts_total = float(repair.get("parts_cost") or 0)
     except (TypeError, ValueError):
         parts_total = 0.0
+
     try:
         tracked_parts_total = float(repair.get("tracked_parts_total") or 0)
     except (TypeError, ValueError):
         tracked_parts_total = 0.0
+
+    try:
+        approved_estimate_total = float(repair.get("approved_estimate_total") or 0)
+    except (TypeError, ValueError):
+        approved_estimate_total = 0.0
+
+    try:
+        stored_total = float(repair.get("total_cost") or 0)
+    except (TypeError, ValueError):
+        stored_total = 0.0
+
     labor_total = round(float(labor["labor_total"] or 0), 2)
-    parts_total = round(max(0.0, parts_total) + max(0.0, tracked_parts_total), 2)
+    parts_total = round(
+        max(0.0, parts_total) + max(0.0, tracked_parts_total),
+        2,
+    )
+    calculated_total = round(labor_total + parts_total, 2)
+
+    fallback_total = round(
+        max(0.0, approved_estimate_total or stored_total),
+        2,
+    )
+
+    grand_total = calculated_total if calculated_total > 0 else fallback_total
+
+    if calculated_total <= 0 and fallback_total > 0:
+        labor_total = fallback_total
+        labor = {
+            **labor,
+            "labor_total": labor_total,
+            "labor_rate_is_legacy": True,
+        }
+
     return {
         **labor,
+        "labor_total": labor_total,
         "parts_total": parts_total,
-        "grand_total": round(labor_total + parts_total, 2),
+        "grand_total": grand_total,
     }
 
 
@@ -16472,7 +16506,26 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
                 updates["labor_rate"] = max(labor_rate, 0)
             if parts_cost is not None:
                 updates["parts_cost"] = max(parts_cost, 0)
-            if updates:
+            existing_labor_hours = float(repair.get("labor_hours") or 0)
+            existing_labor_rate = float(repair.get("labor_rate") or 0)
+            existing_parts_cost = float(repair.get("parts_cost") or 0)
+
+            has_pricing_adjustment = (
+                (
+                    labor_hours is not None
+                    and max(labor_hours, 0) != existing_labor_hours
+                )
+                or (
+                    labor_rate is not None
+                    and max(labor_rate, 0) != existing_labor_rate
+                )
+                or (
+                    parts_cost is not None
+                    and max(parts_cost, 0) != existing_parts_cost
+                )
+            )
+
+            if has_pricing_adjustment:
                 effective_hours = updates.get("labor_hours", repair.get("labor_hours") or 0)
                 effective_rate = updates.get("labor_rate", repair.get("labor_rate") or 0)
                 effective_parts = updates.get("parts_cost", repair.get("parts_cost") or 0)
