@@ -11782,6 +11782,57 @@ def load_customer_vehicle_for_shop(
     return customer, vehicle
 
 
+@router.get("/estimator/finding-handoff")
+def pro_estimator_finding_handoff(
+    request: Request,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+):
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    finally:
+        conn.close()
+
+    customer_label = customer_display_name(customer)
+    vehicle_label_value = " ".join(
+        str(vehicle.get(key) or "").strip()
+        for key in ("year", "make", "model")
+    ).strip()
+    return {
+        "source": "finding",
+        "customer": {
+            "id": customer["id"],
+            "name": customer_label,
+            "phone": format_phone(customer.get("phone")),
+            "email": customer.get("email") or "",
+        },
+        "vehicle": {
+            "id": vehicle["id"],
+            "customer_id": vehicle["customer_id"],
+            "year": vehicle.get("year") or "",
+            "make": vehicle.get("make") or "",
+            "model": vehicle.get("model") or "",
+            "displayModel": vehicle.get("model") or "",
+            "mileage": vehicle.get("mileage"),
+            "vin": vehicle.get("vin") or "",
+            "label": vehicle_label_value or "Vehicle",
+        },
+        "finding": {
+            "id": finding["id"],
+            "title": finding.get("finding") or "",
+            "problemFound": finding.get("finding") or "",
+            "recommendedRepair": finding.get("recommendation") or "",
+            "mileage": finding.get("mileage") if finding.get("mileage") is not None else vehicle.get("mileage"),
+            "status": finding.get("status") or "",
+            "severity": finding.get("severity") or "",
+        },
+    }
+
+
 def load_estimate_document_for_shop(
     conn: sqlite3.Connection,
     customer_id: int,

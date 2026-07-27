@@ -1752,6 +1752,7 @@
 
   // Buttons / UI
   const statusBox = $("statusBox");
+  const vehicleSelectionHelper = $("vehicleSelectionHelper");
   const clearBtn = $("clearBtn");
   const generateAllBtn = $("generateAllBtn");
   const addLineBtn = $("addLineBtn");
@@ -1947,6 +1948,7 @@
       findingId: String(params.get("finding_id") || "").trim(),
       problemFound: String(params.get("problem_found") || "").trim(),
       recommendedRepair: String(params.get("recommended_repair") || "").trim(),
+      mileage: String(params.get("mileage") || "").trim(),
     };
   }
 
@@ -1966,6 +1968,120 @@
     );
     url.searchParams.set("estimate_prepared", "1");
     return `${url.pathname}${url.search}`;
+  }
+
+  function findingHandoffUrl() {
+    const context = getEstimatorSourceContext();
+    if (context.source !== "finding" || !(context.customerId && context.vehicleId && context.findingId)) return "";
+    const directUrl = document.querySelector(".tm-guided-estimator")?.dataset?.findingHandoffUrl || "";
+    if (directUrl) return directUrl;
+    const params = new URLSearchParams({
+      customer_id: context.customerId,
+      vehicle_id: context.vehicleId,
+      finding_id: context.findingId,
+    });
+    return `/pro/estimator/finding-handoff?${params.toString()}`;
+  }
+
+  function setVehicleHydrationMessage(kind, message) {
+    if (vehicleSelectionHelper) {
+      vehicleSelectionHelper.hidden = !message;
+      vehicleSelectionHelper.textContent = message || "";
+    }
+    if (message) setStatus(kind || "info", message);
+  }
+
+  function showFindingHandoffError(message) {
+    const text = message || "Unable to load the linked customer and vehicle.";
+    if (vehicleSelectionHelper) {
+      vehicleSelectionHelper.hidden = false;
+      vehicleSelectionHelper.innerHTML = `
+        <span>${escapeServiceResultHtml(text)}</span>
+        <button id="retryFindingHandoffBtn" type="button" class="tm-btn tm-btn-secondary" style="margin-left:8px;">Retry</button>
+      `;
+      vehicleSelectionHelper.querySelector("#retryFindingHandoffBtn")?.addEventListener("click", () => {
+        void hydrateFindingEstimatorHandoff();
+      });
+    }
+    setStatus("error", text);
+  }
+
+  function normalizeHandoffVehicle(rawVehicle = {}) {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      id: "veh_1",
+      year: String(rawVehicle.year || params.get("year") || "").trim(),
+      make: String(rawVehicle.make || params.get("make") || "").trim(),
+      model: String(rawVehicle.model || params.get("model") || "").trim(),
+      displayModel: String(rawVehicle.displayModel || rawVehicle.display_model || params.get("displayModel") || params.get("display_model") || rawVehicle.model || params.get("model") || "").trim(),
+      mileage: rawVehicle.mileage ?? params.get("mileage") ?? "",
+      services: [],
+    };
+  }
+
+  function renderFindingHandoffSummary(payload = {}) {
+    if (!vehiclesContainer) return;
+    const customerName = String(payload.customer?.name || getEstimatorSourceContext().customerName || "").trim();
+    const vehicle = normalizeHandoffVehicle(payload.vehicle || {});
+    const vehicleText = [vehicle.year, vehicle.make, vehicle.displayModel || vehicle.model].filter(Boolean).join(" ");
+    const finding = payload.finding || {};
+    const findingText = String(finding.title || finding.problemFound || getEstimatorSourceContext().problemFound || "").trim();
+    const repairText = String(finding.recommendedRepair || getEstimatorSourceContext().recommendedRepair || "").trim();
+    vehiclesContainer.innerHTML = `
+      <div class="vehicle-card is-active-vehicle" data-finding-handoff-summary="true">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+          <div>
+            <h3 style="margin:0;">Selected vehicle</h3>
+            <div class="tm-hint">${escapeServiceResultHtml([customerName, vehicleText].filter(Boolean).join(" | ") || "Customer vehicle")}</div>
+          </div>
+          <div class="tm-crm-chip">Finding workflow</div>
+        </div>
+        ${(findingText || repairText) ? `<div class="tm-hint" style="margin-top:8px;">${escapeServiceResultHtml([findingText, repairText].filter(Boolean).join(" | "))}</div>` : ""}
+      </div>
+    `;
+  }
+
+  function applyFindingHandoffPayload(payload = {}) {
+    const vehicle = normalizeHandoffVehicle(payload.vehicle || {});
+    estimateState = {
+      ...estimateState,
+      customer: {
+        name: String(payload.customer?.name || getEstimatorSourceContext().customerName || "").trim(),
+        phone: String(payload.customer?.phone || "").trim(),
+        email: String(payload.customer?.email || "").trim(),
+      },
+      activeVehicleId: "veh_1",
+      vehicles: [vehicle],
+    };
+    window.estimateState = estimateState;
+    if (customerNameEl && estimateState.customer.name) customerNameEl.value = estimateState.customer.name;
+    if (customerPhoneEl && estimateState.customer.phone) customerPhoneEl.value = formatPhone(estimateState.customer.phone);
+    const finding = payload.finding || {};
+    const recommendedRepair = String(finding.recommendedRepair || getEstimatorSourceContext().recommendedRepair || "").trim();
+    if (recommendedRepair && notesEl && !notesEl.value.trim()) {
+      notesEl.value = `Recommended Repair: ${recommendedRepair}`;
+    }
+    renderFindingHandoffSummary(payload);
+    renderActiveVehicleBanner();
+    renderSharedEstimateSnapshot();
+    refreshQuotePreview();
+    updateEstimateButtonState();
+  }
+
+  async function hydrateFindingEstimatorHandoff() {
+    const url = findingHandoffUrl();
+    if (!url) return false;
+    setVehicleHydrationMessage("info", "Loading customer and vehicle...");
+    try {
+      const payload = await apiJSON(url);
+      applyFindingHandoffPayload(payload);
+      setVehicleHydrationMessage("info", "");
+      return true;
+    } catch (error) {
+      console.warn("Finding estimator handoff failed:", error);
+      showFindingHandoffError(`Unable to load the linked customer and vehicle. ${error.message}`);
+      return false;
+    }
   }
 
   function safeReadStorage(storage, key) {
@@ -8185,6 +8301,7 @@ if (getEstimateHint) {
   // ---- Init ----
   const initReady = (async () => {
     try {
+      const findingVehicleHydrated = await hydrateFindingEstimatorHandoff();
       populateYears();
       await loadMakes();
       await loadCategories();
@@ -8201,7 +8318,9 @@ if (getEstimateHint) {
         window.setTimeout(preloadServiceCatalog, 250);
       }
 
-      await applyObdFromQuery();
+      if (!findingVehicleHydrated) {
+        await applyObdFromQuery();
+      }
       await renderVehicles();
       renderActiveVehicleBanner();
       syncTopVehicleToState();
@@ -8211,7 +8330,7 @@ if (getEstimateHint) {
 
       updateQuantityPricingPreview();
       updateEstimateButtonState();
-      setStatus("info", "Estimator ready.");
+      setStatus("info", findingVehicleHydrated ? "Finding vehicle loaded. Estimator ready." : "Estimator ready.");
     } catch (e) {
       setStatus("error", `Init failed: ${e.message}`);
     }
@@ -8350,7 +8469,12 @@ if (getEstimateHint) {
         customerNameEl.value = findingContext.customerName;
       }
 
-      const vehicleText = [year, make, displayModel || model].filter(Boolean).join(" ");
+      const activeVehicle = getActiveVehicle();
+      const vehicleText = [
+        activeVehicle?.year || year,
+        activeVehicle?.make || make,
+        getVehicleDisplayModel(activeVehicle) || displayModel || model,
+      ].filter(Boolean).join(" ");
       const findingText = findingContext.problemFound || findingContext.recommendedRepair || "";
       if (findingEstimateContextText) {
         const lines = [
@@ -8414,7 +8538,8 @@ if (getEstimateHint) {
           void refreshEstimatorPartsSources();
           return;
         }
-        const vehicleLoaded = await preloadVehicle();
+        const hasDirectFindingVehicle = findingContext.source === "finding" && !!findingContext.vehicleId;
+        const vehicleLoaded = hasDirectFindingVehicle ? true : await preloadVehicle();
         let serviceLoaded = false;
 
         if (service) {

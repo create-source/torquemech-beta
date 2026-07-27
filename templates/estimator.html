@@ -11,6 +11,7 @@
      data-finding-url="{{ finding_estimator_nav.finding_url }}"
      data-finding-prepared-url="{{ finding_estimator_nav.finding_url }}?estimate_prepared=1"
      data-finding-vehicle-url="{{ finding_estimator_nav.vehicle_url }}"
+     data-finding-handoff-url="{{ finding_estimator_nav.handoff_url }}"
      {% endif %}>
     <header class="tm-estimator-header" data-tour-target="estimator-welcome">
       <div>
@@ -116,7 +117,9 @@
         <div>
           <div class="tm-section-kicker">Step 1</div>
           <h2>Select Vehicle</h2>
-          <div class="tm-cta-helper">Choose the customer vehicle first.</div>
+          <div id="vehicleSelectionHelper" class="tm-cta-helper">
+            {% if is_finding_estimator %}Loading customer and vehicle...{% else %}Choose the customer vehicle first.{% endif %}
+          </div>
         </div>
 
         <div class="tm-vehicle-cta-group">

@@ -7576,6 +7576,10 @@ def load_finding_estimator_nav_context(request: Request) -> Dict[str, str]:
         "finding_url": f"{base}/findings/{finding_id}",
         "vehicle_url": f"{base}#recommendations-findings",
         "command_center_url": "/pro/dashboard",
+        "handoff_url": (
+            f"/pro/estimator/finding-handoff?customer_id={customer_id}"
+            f"&vehicle_id={vehicle_id}&finding_id={finding_id}"
+        ),
     }
 
 

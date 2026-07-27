@@ -382,6 +382,20 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
         ).fetchone()
         self.assertEqual(vehicle["mileage"], 107000)
         self.assertEqual(finding["mileage"], 107000)
+        maintenance = self.conn.execute(
+            "SELECT * FROM maintenance_records WHERE id = ?",
+            (records["maintenance_id"],),
+        ).fetchone()
+        annotated = pro_module.annotate_vehicle_maintenance_records(
+            [dict(maintenance)],
+            dict(vehicle),
+            {"id": customer_id},
+            pro_module.local_today(),
+            None,
+            {},
+        )
+        self.assertEqual(annotated[0]["remaining_miles"], -61000)
+        self.assertEqual(annotated[0]["maintenance_status_key"], "overdue")
 
     def test_editing_finding_syncs_higher_vehicle_mileage(self):
         client, _, records = self.active_trial_client_with_records(email="finding-edit@example.com")
@@ -416,6 +430,91 @@ class SubscriptionWriteEnforcementTests(unittest.TestCase):
         ).fetchone()
         self.assertEqual(vehicle["mileage"], 109500)
         self.assertEqual(finding["mileage"], 109500)
+
+    def test_lower_finding_mileage_does_not_reduce_vehicle_mileage(self):
+        client, _, records = self.active_trial_client_with_records(email="finding-lower@example.com")
+        customer_id = records["customer_id"]
+        vehicle_id = records["vehicle_id"]
+        finding_id = records["finding_id"]
+        self.conn.execute("UPDATE customer_vehicles SET mileage = 120000 WHERE id = ?", (vehicle_id,))
+        self.conn.commit()
+
+        response = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+            data={
+                "request_type": "finding",
+                "finding": "Brake pads worn",
+                "recommendation": "Replace front brake pads",
+                "severity": "High",
+                "status": "Open",
+                "mileage": "107,000",
+                "finding_date": "2026-07-26",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        vehicle = self.conn.execute(
+            "SELECT mileage FROM customer_vehicles WHERE id = ?",
+            (vehicle_id,),
+        ).fetchone()
+        finding = self.conn.execute(
+            "SELECT mileage FROM findings_records WHERE id = ?",
+            (finding_id,),
+        ).fetchone()
+        self.assertEqual(vehicle["mileage"], 120000)
+        self.assertEqual(finding["mileage"], 107000)
+
+    def test_invalid_or_blank_finding_mileage_does_not_overwrite_vehicle_mileage(self):
+        client, _, records = self.active_trial_client_with_records(email="finding-invalid@example.com")
+        customer_id = records["customer_id"]
+        vehicle_id = records["vehicle_id"]
+        finding_id = records["finding_id"]
+        self.conn.execute("UPDATE customer_vehicles SET mileage = 120000 WHERE id = ?", (vehicle_id,))
+        self.conn.commit()
+
+        invalid_response = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings",
+            data={
+                "finding": "Invalid odometer text",
+                "recommendation": "Ignore invalid mileage",
+                "severity": "Low",
+                "status": "Open",
+                "mileage": "not a number",
+            },
+            follow_redirects=False,
+        )
+        blank_response = client.post(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+            data={
+                "request_type": "finding",
+                "finding": "Brake pads worn",
+                "recommendation": "Replace front brake pads",
+                "severity": "High",
+                "status": "Open",
+                "mileage": "",
+                "finding_date": "2026-07-26",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(invalid_response.status_code, 303)
+        self.assertEqual(blank_response.status_code, 303)
+        vehicle = self.conn.execute(
+            "SELECT mileage FROM customer_vehicles WHERE id = ?",
+            (vehicle_id,),
+        ).fetchone()
+        invalid_finding = self.conn.execute(
+            "SELECT mileage FROM findings_records WHERE vehicle_id = ? AND finding = 'Invalid odometer text'",
+            (vehicle_id,),
+        ).fetchone()
+        blank_finding = self.conn.execute(
+            "SELECT mileage FROM findings_records WHERE id = ?",
+            (finding_id,),
+        ).fetchone()
+        self.assertEqual(vehicle["mileage"], 120000)
+        self.assertIsNone(invalid_finding["mileage"])
+        self.assertIsNone(blank_finding["mileage"])
 
     def test_cross_shop_finding_create_cannot_sync_vehicle_mileage(self):
         _, _, alpha_records = self.active_trial_client_with_records(email="alpha-finding@example.com")

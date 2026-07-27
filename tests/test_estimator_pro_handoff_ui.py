@@ -59,6 +59,8 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
             patch.object(main, "app_db_conn", return_value=conn),
             patch.object(main, "current_user", return_value={"id": 4, "first_name": "Tech"}),
             patch.object(main, "current_shop_context", return_value={"id": 9, "shop_name": "Alpha Shop"}),
+            patch.object(pro_module, "crm_db_conn", return_value=conn),
+            patch.object(pro_module, "required_current_shop_id", return_value=9),
         )
         for active_patch in patches:
             active_patch.start()
@@ -177,8 +179,11 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('data-finding-url="/pro/customers/1/vehicles/2/findings/3"', html)
         self.assertIn('data-finding-prepared-url="/pro/customers/1/vehicles/2/findings/3?estimate_prepared=1"', html)
         self.assertIn('data-finding-vehicle-url="/pro/customers/1/vehicles/2#recommendations-findings"', html)
+        self.assertIn('data-finding-handoff-url="/pro/estimator/finding-handoff?customer_id=1&amp;vehicle_id=2&amp;finding_id=3"', html)
         self.assertIn('href="/pro/dashboard"', html)
         self.assertIn("Command Center", html)
+        self.assertIn("Loading customer and vehicle...", html)
+        self.assertNotIn("Choose the customer vehicle first.", html)
         self.assertNotIn(">Log In<", html)
         self.assertNotIn(">Sign Up<", html)
         self.assertIn("Parts Sources", html)
@@ -255,8 +260,40 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertNotIn("Back to Finding", response.text)
         self.assertNotIn("Back to Vehicle", response.text)
         self.assertNotIn("data-finding-prepared-url", response.text)
+        self.assertNotIn("data-finding-handoff-url", response.text)
+        self.assertIn("Choose the customer vehicle first.", response.text)
+        self.assertNotIn("Loading customer and vehicle...", response.text)
         self.assertIn("Prepare Reviewed Estimate", response.text)
         self.assertIn('id="prepareReviewedEstimateBtn"', response.text)
+
+    def test_finding_estimator_handoff_endpoint_returns_exact_vehicle(self):
+        self.start_finding_estimator_context()
+        response = TestClient(main.app, base_url="http://localhost").get(
+            "/pro/estimator/finding-handoff?customer_id=1&vehicle_id=2&finding_id=3"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["source"], "finding")
+        self.assertEqual(payload["customer"]["id"], 1)
+        self.assertEqual(payload["customer"]["name"], "Sam Driver")
+        self.assertEqual(payload["vehicle"]["id"], 2)
+        self.assertEqual(payload["vehicle"]["customer_id"], 1)
+        self.assertEqual(payload["vehicle"]["year"], 2008)
+        self.assertEqual(payload["vehicle"]["make"], "Toyota")
+        self.assertEqual(payload["vehicle"]["model"], "Sequoia")
+        self.assertEqual(payload["finding"]["id"], 3)
+        self.assertEqual(payload["finding"]["problemFound"], "Water pump leak")
+        self.assertEqual(payload["finding"]["recommendedRepair"], "Water Pump Replacement")
+
+    def test_finding_estimator_handoff_endpoint_enforces_shop_scope(self):
+        self.start_finding_estimator_context()
+        with patch.object(pro_module, "required_current_shop_id", return_value=10):
+            response = TestClient(main.app, base_url="http://localhost").get(
+                "/pro/estimator/finding-handoff?customer_id=1&vehicle_id=2&finding_id=3"
+            )
+
+        self.assertEqual(response.status_code, 404)
 
     def test_finding_estimator_hides_stage_two_completion_actions(self):
         self.start_finding_estimator_context()
@@ -349,6 +386,15 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertIn("function isFindingEstimatorSession()", app_js)
         self.assertIn("function findingEstimatorReturnUrl()", app_js)
+        self.assertIn("function hydrateFindingEstimatorHandoff()", app_js)
+        self.assertIn("function applyFindingHandoffPayload(payload = {})", app_js)
+        self.assertIn("apiJSON(url)", app_js)
+        self.assertIn("/pro/estimator/finding-handoff?", app_js)
+        self.assertIn("Loading customer and vehicle...", app_js)
+        self.assertIn("Retry", app_js)
+        self.assertIn("const hasDirectFindingVehicle = findingContext.source === \"finding\" && !!findingContext.vehicleId;", app_js)
+        self.assertIn("const vehicleLoaded = hasDirectFindingVehicle ? true : await preloadVehicle();", app_js)
+        self.assertIn("if (!findingVehicleHydrated) {\n        await applyObdFromQuery();\n      }", app_js)
         self.assertIn("window.location.assign(returnUrl);", app_js)
         self.assertIn("findingPreparedUrl", app_js)
         self.assertIn('"estimate_prepared", "1"', app_js)
