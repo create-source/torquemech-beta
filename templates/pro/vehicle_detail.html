@@ -4651,9 +4651,7 @@
                 {% if item.estimate_document_url %}
                 <span class="tm-crm-chip">Prepared Estimate: {{ item.estimate_service_name or "Service not named" }}</span>
                 <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
-                {% if item.status != "Open" %}
-                <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
-                {% endif %}
+                
                 {% else %}
                 <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                 {% endif %}
@@ -4729,9 +4727,7 @@
                   {% if item.estimate_document_url %}
                   <span class="tm-crm-chip">Prepared Estimate: {{ item.estimate_service_name or "Service not named" }}</span>
                   <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
-                  {% if item.status != "Open" %}
-                  <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
-                  {% endif %}
+                  
                   {% else %}
                   <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                   {% endif %}
