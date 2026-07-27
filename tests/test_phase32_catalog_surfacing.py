@@ -119,6 +119,26 @@ class Phase32CatalogSurfacingTests(unittest.TestCase):
             with self.subTest(query=query):
                 self.assertIn(expected_code, matches)
 
+    def test_bounded_service_search_endpoint_returns_category_metadata(self):
+        response = self.client.get("/api/services/search", params={"q": "intake", "limit": 25})
+
+        self.assertEqual(response.status_code, 200)
+        results = response.json()
+        self.assertTrue(results)
+        self.assertLessEqual(len(results), 25)
+        self.assertTrue(all(result.get("category") for result in results))
+        self.assertTrue(all(result.get("categoryName") for result in results))
+        self.assertTrue(any("intake" in searchable_text(result) for result in results))
+
+    def test_service_search_endpoint_rejects_empty_or_too_short_queries_without_catalog_dump(self):
+        empty_response = self.client.get("/api/services/search", params={"q": "", "limit": 50})
+        short_response = self.client.get("/api/services/search", params={"q": "i", "limit": 50})
+
+        self.assertEqual(empty_response.status_code, 200)
+        self.assertEqual(short_response.status_code, 200)
+        self.assertEqual(empty_response.json(), [])
+        self.assertEqual(short_response.json(), [])
+
     def test_invalid_category_and_service_return_not_found(self):
         category_response = self.client.get("/api/services/not_a_real_category")
         service_response = self.client.get("/api/service/not_a_real_service")

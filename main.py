@@ -25,6 +25,7 @@ from fastapi import (
     Body,
     HTTPException,
     Response,
+    Query,
 )
 
 from routers.knowledge import router as knowledge_router
@@ -11910,6 +11911,66 @@ def get_categories() -> List[Dict[str, str]]:
     catalog = load_services_catalog()
     raw = catalog["raw"]
     return [{"key": c.get("key", ""), "name": c.get("name", "")} for c in raw["categories"]]
+
+
+def normalize_service_search_text(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).strip()
+
+
+def service_search_text(service: Dict[str, Any], category_key: str, category_name: str) -> str:
+    values: List[str] = [
+        service.get("code", ""),
+        service.get("name", ""),
+        service.get("description", ""),
+        service.get("summary", ""),
+        service.get("meta", ""),
+        category_key,
+        category_name,
+    ]
+    for key in ("keywords", "aliases"):
+        raw_value = service.get(key, "")
+        if isinstance(raw_value, list):
+            values.extend(str(item) for item in raw_value)
+        else:
+            values.append(str(raw_value or ""))
+    return normalize_service_search_text(" ".join(values))
+
+
+@app.get("/api/services/search")
+def search_services(q: str = Query("", min_length=0), limit: int = Query(40, ge=1, le=50)) -> List[Dict[str, Any]]:
+    query = normalize_service_search_text(q)
+    if len(query) < 2:
+        return []
+
+    query_terms = [term for term in query.split() if term]
+    catalog = load_services_catalog()
+    raw = catalog["raw"]
+    matches: List[Dict[str, Any]] = []
+
+    for category in raw["categories"]:
+        category_key = str(category.get("key") or "")
+        category_name = str(category.get("name") or category_key)
+        for service in category.get("services", []):
+            text = service_search_text(service, category_key, category_name)
+            if not all(term in text for term in query_terms):
+                continue
+
+            code = str(service.get("code") or "")
+            name = str(service.get("name") or code or "Service")
+            starts_name = normalize_service_search_text(name).startswith(query)
+            starts_code = normalize_service_search_text(code).startswith(query)
+            score = (20 if starts_name else 0) + (12 if starts_code else 0) + sum(text.count(term) for term in query_terms)
+            result = dict(service)
+            result["category"] = category_key
+            result["categoryName"] = category_name
+            result["_score"] = score
+            matches.append(result)
+
+    matches.sort(key=lambda item: (-int(item.get("_score") or 0), str(item.get("name") or item.get("code") or "")))
+    limited = matches[:limit]
+    for item in limited:
+        item.pop("_score", None)
+    return limited
 
 
 @app.get("/api/services/{category_key}")

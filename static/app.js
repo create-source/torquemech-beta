@@ -1555,14 +1555,13 @@
   const serviceClearBtn = $("serviceClearBtn");
   let serviceOptions = [];
   let serviceCategories = [];
-  let allServiceOptions = [];
-  let allServiceOptionsVehicleKey = "";
+  let globalServiceSearchOptions = [];
+  let globalServiceSearchQuery = "";
   const serviceCategoryCache = new Map();
   const serviceCategoryRequests = new Map();
-  let allServiceOptionsRequest = null;
   let loadServicesRequestId = 0;
-  let serviceCatalogSearchTimer = null;
-  let serviceCatalogSearchRequestId = 0;
+  let globalServiceSearchTimer = null;
+  let globalServiceSearchRequestId = 0;
   let serviceSearch = null;
   let serviceResults = null;
   const SERVICE_SEARCH_PLACEHOLDER = "Search services or symptoms...";
@@ -2080,6 +2079,11 @@
   async function hydrateFindingEstimatorHandoff() {
     const url = findingHandoffUrl();
     if (!url) return false;
+    clearTimeout(globalServiceSearchTimer);
+    globalServiceSearchRequestId += 1;
+    globalServiceSearchOptions = [];
+    globalServiceSearchQuery = "";
+    clearGlobalServiceSearchLoading();
     setVehicleHydrationMessage("info", "Loading customer and vehicle...");
     try {
       const payload = await apiJSON(url);
@@ -5199,60 +5203,40 @@ const confidenceEl = document.getElementById("laborConfidence");
     ].some((term) => normalizedQuery.includes(normalizeServiceSearch(term)) || compactQuery.includes(compactServiceSearch(term)));
   }
 
-  async function ensureAllServiceOptions(query = "") {
-    const vehicleKey = getServiceSearchVehicleKey();
-    const queryKey = isTimingChainSearchQuery(query) ? "timing-chain" : "default";
-    const cacheKey = `${vehicleKey}|${queryKey}`;
-    if (allServiceOptions.length && allServiceOptionsVehicleKey === cacheKey) {
-      return allServiceOptions;
-    }
+  async function searchServiceOptions(query = "", { limit = 40 } = {}) {
+    const normalizedQuery = normalizeServiceSearch(query);
+    if (normalizedQuery.length < 2) return [];
 
-    if (allServiceOptionsRequest?.cacheKey === cacheKey) {
-      return allServiceOptionsRequest.promise;
-    }
+    const results = await apiJSON(
+      `/api/services/search?q=${encodeURIComponent(normalizedQuery)}&limit=${encodeURIComponent(limit)}`
+    );
+    return filterServicesForActiveVehicle(Array.isArray(results) ? results : [], { query: normalizedQuery })
+      .map((service) => mapServiceSearchOption(service, service.category || "", service.categoryName || ""));
+  }
 
-    const promise = (async () => {
-      if (!serviceCategories.length) {
-        serviceCategories = await apiJSON("/api/categories");
-      }
+  async function searchSuggestionServiceOptions(suggestions = [], { limit = 50 } = {}) {
+    const queries = Array.from(new Set(
+      suggestions
+        .map((suggestion) => suggestion.serviceCode || suggestion.query || suggestion.label || "")
+        .map((value) => String(value || "").trim())
+        .filter((value) => normalizeServiceSearch(value).length >= 2)
+    )).slice(0, 8);
 
-      const groupedServices = await Promise.all(
-        serviceCategories.map(async (category) => {
-          try {
-            const categoryKey = category.key || "";
-            const categoryName = category.name || categoryKey;
-            const services = filterServicesForActiveVehicle(
-              await getServicesForCategory(categoryKey),
-              { query }
-            );
-            return services.map((service) => mapServiceSearchOption(service, categoryKey, categoryName));
-          } catch {
-            return [];
-          }
-        })
-      );
+    if (!queries.length) return [];
 
-      const seenCodes = new Set();
-      allServiceOptions = groupedServices
-        .flat()
-        .filter((service) => {
-          const serviceKey = service.code || service.name;
-          if (!serviceKey || seenCodes.has(serviceKey)) return false;
-          seenCodes.add(serviceKey);
-          return true;
-        });
-      allServiceOptionsVehicleKey = cacheKey;
-      return allServiceOptions;
-    })();
-
-    allServiceOptionsRequest = { cacheKey, promise };
-    try {
-      return await promise;
-    } finally {
-      if (allServiceOptionsRequest?.promise === promise) {
-        allServiceOptionsRequest = null;
-      }
-    }
+    const groups = await Promise.all(
+      queries.map((query) => searchServiceOptions(query, { limit: 8 }).catch(() => []))
+    );
+    const seenCodes = new Set();
+    return groups
+      .flat()
+      .filter((service) => {
+        const key = service.code || service.name;
+        if (!key || seenCodes.has(key)) return false;
+        seenCodes.add(key);
+        return true;
+      })
+      .slice(0, limit);
   }
 
   function getServiceSearchCluster(query) {
@@ -5531,7 +5515,8 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     let options = [];
     try {
-      options = await ensureAllServiceOptions();
+      const suggestionOptions = configs.flatMap((group) => group.suggestions || group.reminders || []);
+      options = await searchSuggestionServiceOptions(suggestionOptions, { limit: 50 });
     } catch (err) {
       console.warn("Commonly added service lookup failed", err);
       hidePairedSuggestions();
@@ -5581,7 +5566,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     let suggestions = [];
     if (configs.length) {
       try {
-        const options = await ensureAllServiceOptions();
+        const suggestionOptions = configs.flatMap((group) => group.suggestions || group.reminders || []);
+        const options = await searchSuggestionServiceOptions(suggestionOptions, { limit: 50 });
         const existingCodes = new Set(lineItems.map((it) => it.serviceCode).filter(Boolean));
         if (serviceEl?.value) existingCodes.add(serviceEl.value);
         suggestions = buildRelatedRepairSuggestions(configs, options, existingCodes, 2);
@@ -5603,7 +5589,8 @@ const confidenceEl = document.getElementById("laborConfidence");
 
     let options = [];
     try {
-      options = await ensureAllServiceOptions();
+      const quoteQuery = lineItems.map((it) => `${it.serviceText || ""} ${it.serviceCode || ""}`).join(" ");
+      options = await searchServiceOptions(quoteQuery, { limit: 50 });
     } catch (err) {
       console.warn("Quote completion service lookup failed", err);
       hideQuoteCompletionSuggestions();
@@ -5744,9 +5731,9 @@ const confidenceEl = document.getElementById("laborConfidence");
       return;
     }
 
-    const shouldSearchAllServices = !hasManualCategoryFilter();
+    const shouldUseGlobalSearch = !hasManualCategoryFilter() && globalServiceSearchQuery === normalizedQuery;
     const searchOptions =
-      shouldSearchAllServices && allServiceOptions.length ? allServiceOptions : serviceOptions;
+      shouldUseGlobalSearch && globalServiceSearchOptions.length ? globalServiceSearchOptions : serviceOptions;
     const seenServiceCodes = new Set();
     const seenServiceNames = new Set();
     const filtered = searchOptions
@@ -5836,7 +5823,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     const exists = Array.from(serviceEl.options || []).some((option) => option.value === serviceCode);
     if (exists) return;
 
-    const knownOption = [...serviceOptions, ...allServiceOptions].find((option) => option.code === serviceCode);
+    const knownOption = [...serviceOptions, ...globalServiceSearchOptions].find((option) => option.code === serviceCode);
     const opt = document.createElement("option");
     opt.value = serviceCode;
     opt.textContent = knownOption?.name || fallbackLabel || serviceCode;
@@ -5925,8 +5912,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     categoryEl.innerHTML = `<option value="">Select category…</option>`;
     const cats = await apiJSON("/api/categories");
     serviceCategories = cats;
-    allServiceOptions = [];
-    allServiceOptionsVehicleKey = "";
+    globalServiceSearchOptions = [];
+    globalServiceSearchQuery = "";
     for (const c of cats) {
       const opt = document.createElement("option");
       opt.value = c.key;
@@ -7882,24 +7869,49 @@ if (getEstimateHint) {
     }
   });
 
-  function scheduleFullServiceCatalogSearch(searchValue, delayMs = 180) {
-    clearTimeout(serviceCatalogSearchTimer);
-    const requestId = ++serviceCatalogSearchRequestId;
+  function clearGlobalServiceSearchLoading(requestId = null) {
+    if (requestId !== null && requestId !== globalServiceSearchRequestId) return;
+    if (serviceCatalogLoadingHint && !categoryEl?.value) {
+      serviceCatalogLoadingHint.hidden = true;
+      serviceCatalogLoadingHint.textContent = "";
+    }
+  }
+
+  function scheduleGlobalServiceSearch(searchValue, delayMs = 320) {
+    clearTimeout(globalServiceSearchTimer);
+    const requestId = ++globalServiceSearchRequestId;
     const normalizedValue = String(searchValue || "").trim();
 
-    if (normalizedValue.length < 2 || hasManualCategoryFilter()) return;
+    if (normalizedValue.length < 2 || hasManualCategoryFilter()) {
+      globalServiceSearchOptions = [];
+      globalServiceSearchQuery = "";
+      clearGlobalServiceSearchLoading(requestId);
+      return;
+    }
 
-    serviceCatalogSearchTimer = setTimeout(async () => {
+    globalServiceSearchTimer = setTimeout(async () => {
+      if (serviceCatalogLoadingHint && !categoryEl?.value) {
+        serviceCatalogLoadingHint.hidden = false;
+        serviceCatalogLoadingHint.textContent = "Loading services...";
+      }
       try {
-        await ensureAllServiceOptions(normalizedValue);
+        const options = await searchServiceOptions(normalizedValue, { limit: 40 });
 
         // Ignore a completed request when the user has already typed something else.
-        if (requestId !== serviceCatalogSearchRequestId) return;
+        if (requestId !== globalServiceSearchRequestId) return;
         if (serviceSearch?.value.trim() !== normalizedValue) return;
 
+        globalServiceSearchOptions = options;
+        globalServiceSearchQuery = normalizeServiceSearch(normalizedValue);
         renderServiceResults(normalizedValue);
       } catch (error) {
-        console.warn("Full service catalog search failed", error);
+        if (requestId === globalServiceSearchRequestId) {
+          globalServiceSearchOptions = [];
+          globalServiceSearchQuery = "";
+        }
+        console.warn("Service search failed", error);
+      } finally {
+        clearGlobalServiceSearchLoading(requestId);
       }
     }, delayMs);
   }
@@ -7911,8 +7923,11 @@ if (getEstimateHint) {
     updateServiceClearButton();
 
     clearTimeout(searchDebounceTimer);
-    clearTimeout(serviceCatalogSearchTimer);
-    serviceCatalogSearchRequestId += 1;
+    clearTimeout(globalServiceSearchTimer);
+    globalServiceSearchRequestId += 1;
+    globalServiceSearchOptions = [];
+    globalServiceSearchQuery = "";
+    clearGlobalServiceSearchLoading();
 
     if (searchValue.length >= 2) {
       searchDebounceTimer = setTimeout(() => {
@@ -7929,10 +7944,10 @@ if (getEstimateHint) {
       serviceOptions = [];
     }
 
-    // Show anything already cached immediately, then expand to all 788 services
-    // only after the user pauses typing.
+    // Show selected-category matches immediately, then use one bounded global search
+    // request only after the user pauses typing.
     renderServiceResults(searchValue);
-    scheduleFullServiceCatalogSearch(searchValue);
+    scheduleGlobalServiceSearch(searchValue);
 
     void loadServiceMeta("");
     updateServiceClearButton();
@@ -7945,7 +7960,7 @@ if (getEstimateHint) {
     if (!searchValue) return;
 
     renderServiceResults(searchValue);
-    scheduleFullServiceCatalogSearch(searchValue, 0);
+    scheduleGlobalServiceSearch(searchValue, 0);
   });
 
   serviceSearch?.addEventListener("blur", () => {

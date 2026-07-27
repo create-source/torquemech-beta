@@ -402,6 +402,65 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('"estimate_prepared", "1"', app_js)
         self.assertIn('if (isFindingEstimatorSession()) {', app_js)
 
+    def test_finding_hydration_does_not_start_global_service_search(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        apply_idx = app_js.index("function applyFindingHandoffPayload(payload = {})")
+        hydrate_idx = app_js.index("async function hydrateFindingEstimatorHandoff()", apply_idx)
+        safe_read_idx = app_js.index("function safeReadStorage(storage, key)", hydrate_idx)
+        hydration_block = app_js[apply_idx:safe_read_idx]
+
+        self.assertIn("notesEl.value = `Recommended Repair: ${recommendedRepair}`;", hydration_block)
+        self.assertIn("clearTimeout(globalServiceSearchTimer);", hydration_block)
+        self.assertNotIn("scheduleGlobalServiceSearch(", hydration_block)
+        self.assertNotIn("serviceSearch.dispatchEvent", hydration_block)
+        self.assertNotIn("new Event(\"input\"", hydration_block)
+
+    def test_service_search_uses_bounded_endpoint_not_all_category_timer(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        self.assertNotIn("function scheduleFullServiceCatalogSearch", app_js)
+        self.assertNotIn("ensureAllServiceOptions", app_js)
+        self.assertNotIn("Promise.all(\n        serviceCategories.map", app_js)
+        self.assertIn("function scheduleGlobalServiceSearch(searchValue, delayMs = 320)", app_js)
+        self.assertIn("normalizedValue.length < 2", app_js)
+        self.assertIn("await searchServiceOptions(normalizedValue, { limit: 40 })", app_js)
+        self.assertIn("/api/services/search?q=", app_js)
+        self.assertIn("requestId !== globalServiceSearchRequestId", app_js)
+        self.assertIn("globalServiceSearchQuery = normalizeServiceSearch(normalizedValue);", app_js)
+
+    def test_category_service_loading_remains_category_scoped_and_cached(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        get_services_idx = app_js.index("async function getServicesForCategory(categoryKey)")
+        load_services_idx = app_js.index("async function loadServices(categoryKey)", get_services_idx)
+        category_block = app_js[get_services_idx:load_services_idx]
+
+        self.assertIn("if (serviceCategoryCache.has(key))", category_block)
+        self.assertIn("return serviceCategoryCache.get(key);", category_block)
+        self.assertIn("apiJSON(`/api/services/${encodeURIComponent(key)}`)", category_block)
+        self.assertNotIn("/api/services/search", category_block)
+
+        load_block = app_js[load_services_idx:app_js.index("async function loadServiceMeta", load_services_idx)]
+        self.assertIn("const rawServices = await getServicesForCategory(categoryKey);", load_block)
+        self.assertIn('serviceCatalogLoadingHint.textContent = categoryKey ? "Loading services..." : "";', load_block)
+        self.assertIn("serviceCatalogLoadingHint.hidden = true;", load_block)
+
+    def test_service_selection_still_loads_metadata_and_updates_pricing(self):
+        with open("static/app.js", encoding="utf-8") as handle:
+            app_js = handle.read()
+
+        change_idx = app_js.index('serviceEl?.addEventListener("change", async () => {')
+        change_block = app_js[change_idx:app_js.index("function clearGlobalServiceSearchLoading", change_idx)]
+
+        self.assertIn("syncServiceSearchFromSelect();", change_block)
+        self.assertIn("await loadServiceMeta(serviceEl.value);", change_block)
+        self.assertIn("updateQuantityPricingPreview();", change_block)
+        self.assertIn("updateEstimateButtonState();", change_block)
+
     def test_finding_startup_renders_vehicle_before_optional_catalog_and_selectors(self):
         with open("static/app.js", encoding="utf-8") as handle:
             app_js = handle.read()
