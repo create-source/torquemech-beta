@@ -4586,9 +4586,9 @@
 
       <div class="tm-findings-status-groups" aria-label="Expandable additional finding status groups">
         {% for group in [
-          {"label": "Open", "statuses": ["Open"], "count": findings_summary.open, "empty": "No open findings."},
-          {"label": "Approved Recommended Work", "statuses": ["Approved"], "count": findings_summary.approved, "empty": "No approved recommended work."},
-          {"label": "Declined / Deferred", "statuses": ["Declined", "Deferred"], "count": findings_summary.declined, "empty": "No declined or deferred findings."}
+          {"label": "Awaiting Customer Decision", "statuses": ["Open"], "count": findings_summary.open, "empty": "No findings awaiting customer decision."},
+          {"label": "Customer Approved", "statuses": ["Approved"], "count": findings_summary.approved, "empty": "No customer-approved recommended work."},
+          {"label": "Customer Declined / Deferred", "statuses": ["Declined", "Deferred"], "count": findings_summary.declined, "empty": "No declined or deferred findings."}
         ] %}
         <details class="tm-history-summary-card tm-findings-status-card" data-finding-status-group="{{ group.label }}" {% if (new_finding_status and new_finding_status in group.statuses) or (group.label == "Open" and group.count) %}open{% endif %}>
           <summary>
@@ -4610,7 +4610,10 @@
                 <span class="tm-crm-chip">Labor Request</span>
                 {% endif %}
                 <span class="tm-crm-chip">{{ item.severity }}</span>
-                <span class="tm-crm-chip">{{ item.status }}</span>
+                <span class="tm-crm-chip">Finding Status: {{ item.status }}</span>
+                <span class="tm-crm-chip">{{ item.customer_decision_label }}</span>
+                {% if item.repair_stage_label %}<span class="tm-crm-chip">{{ item.repair_stage_label }}</span>{% endif %}
+                {% if item.linked_repair_status %}<span class="tm-crm-chip">Repair Status: {{ item.linked_repair_status }}</span>{% endif %}
                 {% if item.mileage is not none %}
                 <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                 {% endif %}
@@ -4646,6 +4649,7 @@
               {% endif %}
               <div class="tm-finding-estimate" data-finding-estimate>
                 {% if item.estimate_document_url %}
+                <span class="tm-crm-chip">Prepared Estimate: {{ item.estimate_service_name or "Service not named" }}</span>
                 <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
                 <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
                 {% else %}
@@ -4653,6 +4657,10 @@
                 {% endif %}
               </div>
               <div class="tm-repair-action-row">
+                <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">Open Finding</a>
+                {% if item.linked_repair_record_id %}
+                <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair Workspace</a>
+                {% endif %}
                 <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit Finding</a>
               </div>
             </article>
@@ -4690,7 +4698,10 @@
                   <span class="tm-crm-chip">Labor Request</span>
                   {% endif %}
                   <span class="tm-crm-chip">{{ item.severity }}</span>
-                  <span class="tm-crm-chip" data-finding-status-chip>{{ item.status }}</span>
+                  <span class="tm-crm-chip" data-finding-status-chip>Finding Status: {{ item.status }}</span>
+                  <span class="tm-crm-chip">{{ item.customer_decision_label }}</span>
+                  {% if item.repair_stage_label %}<span class="tm-crm-chip">{{ item.repair_stage_label }}</span>{% endif %}
+                  {% if item.linked_repair_status %}<span class="tm-crm-chip">Repair Status: {{ item.linked_repair_status }}</span>{% endif %}
                   {% if item.mileage is not none %}
                   <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
                   {% endif %}
@@ -4714,6 +4725,7 @@
                 {% endif %}
                 <div class="tm-finding-estimate" data-finding-estimate>
                   {% if item.estimate_document_url %}
+                  <span class="tm-crm-chip">Prepared Estimate: {{ item.estimate_service_name or "Service not named" }}</span>
                   <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
                   <a class="tm-btn tm-btn-primary" href="{{ item.estimate_document_edit_url or item.estimate_document_url }}">View/Edit Repair Estimate</a>
                   {% else %}
@@ -4721,7 +4733,10 @@
                   {% endif %}
                 </div>
                 <div class="tm-repair-action-row">
-                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">Review Finding</a>
+                  <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}">Open Finding</a>
+                  {% if item.linked_repair_record_id %}
+                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair Workspace</a>
+                  {% endif %}
                   <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
                 </div>
               </article>

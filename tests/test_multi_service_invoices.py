@@ -27,8 +27,20 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.conn.row_factory = sqlite3.Row
         self.addCleanup(self.conn.close_for_cleanup)
         self.crm_patch = patch.object(pro_module, "crm_db_conn", return_value=self.conn)
+        self.current_shop_patch = patch.object(pro_module, "current_shop_id", lambda conn, request=None: None)
+        self.required_shop_patch = patch.object(pro_module, "required_current_shop_id", lambda conn, request: None)
+        self.csrf_patch = patch.object(pro_module, "validate_csrf", lambda request, form: True)
+        self.write_access_patch = patch.object(pro_module, "require_shop_write_access", lambda conn, request=None, shop_id=None: {})
         self.crm_patch.start()
+        self.current_shop_patch.start()
+        self.required_shop_patch.start()
+        self.csrf_patch.start()
+        self.write_access_patch.start()
         self.addCleanup(self.crm_patch.stop)
+        self.addCleanup(self.current_shop_patch.stop)
+        self.addCleanup(self.required_shop_patch.stop)
+        self.addCleanup(self.csrf_patch.stop)
+        self.addCleanup(self.write_access_patch.stop)
         self.create_schema()
         self.seed_customer_vehicle()
 
@@ -885,13 +897,58 @@ class MultiServiceInvoiceTests(unittest.TestCase):
                 "parts_cost": "115",
                 "labor_reason": "Pads below service limit.",
                 "severity": "Medium",
-                "status": "Approved",
+                "status": "Open",
                 "mileage": "150,000",
             },
             follow_redirects=False,
         )
 
         self.assertEqual(finding_response.status_code, 303)
+        finding_id = self.conn.execute("SELECT id FROM findings_records ORDER BY id DESC LIMIT 1").fetchone()["id"]
+        pro_module.ensure_repair_estimate_documents_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO repair_estimate_documents (
+              customer_id, vehicle_id, finding_id, estimate_date, customer_name,
+              vehicle_label, related_title, estimate_total, approval_status,
+              pdf_path, payload_json, created_at
+            )
+            VALUES (1, 1, ?, '2026-06-25', 'Natalie Htut',
+                    '2008 Toyota Sequoia', 'Front Brake Pads Replacement',
+                    265, 'Prepared estimate', 'test-estimate.pdf', ?, '2026-06-25T12:05:00')
+            """,
+            (
+                finding_id,
+                json.dumps(
+                    {
+                        "source": "finding",
+                        "line_items": [
+                            {
+                                "service_text": "Front Brake Pads Replacement",
+                                "labor_hours": 1.2,
+                                "labor_rate": 125,
+                                "parts_total": 115,
+                            }
+                        ],
+                    }
+                ),
+            ),
+        )
+        self.conn.commit()
+        approved = client.post(
+            f"/pro/customers/1/vehicles/1/findings/{finding_id}/customer-decision",
+            data={"csrf_token": "test", "decision": "approved"},
+            follow_redirects=False,
+        )
+        self.assertEqual(approved.status_code, 303)
+        repair_count_before_start = self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"]
+        self.assertEqual(repair_count_before_start, 0)
+        started = client.post(
+            f"/pro/customers/1/vehicles/1/findings/{finding_id}/start-repair",
+            data={"csrf_token": "test"},
+            follow_redirects=False,
+        )
+        self.assertEqual(started.status_code, 303)
         repair = dict(self.conn.execute("SELECT * FROM repair_records ORDER BY id DESC LIMIT 1").fetchone())
         self.assertEqual(repair["status"], "Open")
         self.assertEqual(repair["workflow_source_type"], "finding")
@@ -1850,7 +1907,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(vehicle_detail.status_code, 200)
         self.assertIn("Coolant leak at water pump", vehicle_detail.text)
         self.assertIn("finding_id=77", vehicle_detail.text)
-        self.assertIn("Create Estimate", vehicle_detail.text)
+        self.assertIn("Build Repair Estimate", vehicle_detail.text)
         self.assertIn("Open Repair", vehicle_detail.text)
         self.assertNotIn("Open Source: Finding Repair Job", vehicle_detail.text)
 

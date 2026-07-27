@@ -28,8 +28,14 @@ class EstimatorProConversionTests(unittest.TestCase):
         self.conn.row_factory = sqlite3.Row
         self.addCleanup(self.conn.close_for_cleanup)
         self.crm_patch = patch.object(pro_module, "crm_db_conn", return_value=self.conn)
+        self.current_shop_patch = patch.object(pro_module, "current_shop_id", lambda conn, request=None: None)
+        self.required_shop_patch = patch.object(pro_module, "required_current_shop_id", lambda conn, request: None)
         self.crm_patch.start()
+        self.current_shop_patch.start()
+        self.required_shop_patch.start()
         self.addCleanup(self.crm_patch.stop)
+        self.addCleanup(self.current_shop_patch.stop)
+        self.addCleanup(self.required_shop_patch.stop)
         self.create_minimal_pro_schema()
 
     def create_minimal_pro_schema(self):

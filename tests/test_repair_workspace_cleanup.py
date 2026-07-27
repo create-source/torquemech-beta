@@ -1328,10 +1328,12 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("View/Edit Repair Estimate", finding_detail)
         self.assertIn("Estimate prepared", finding_detail)
         self.assertIn("estimate_document_edit_url", finding_detail)
-        self.assertNotIn("Customer Decision", finding_detail)
+        self.assertIn("Customer Decision", finding_detail)
+        self.assertIn("Mark Customer Approved", finding_detail)
+        self.assertIn("Mark Customer Declined", finding_detail)
         self.assertNotIn("Update Customer Decision", finding_detail)
-        self.assertNotIn("Open Repair Workspace", finding_detail)
-        self.assertNotIn("Start Repair", finding_detail)
+        self.assertIn("Open Repair Workspace", finding_detail)
+        self.assertIn("Start Repair", finding_detail)
 
     def test_repair_completion_persists_uploaded_after_photos(self):
         conn = sqlite3.connect(":memory:")

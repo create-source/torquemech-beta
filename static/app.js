@@ -5932,6 +5932,13 @@ const confidenceEl = document.getElementById("laborConfidence");
   }
 
   function getApprovalStatusCopy() {
+    if (isFindingEstimatorSession()) {
+      return {
+        state: "prepared",
+        title: "Prepared estimate",
+        detail: "The estimate will be saved to the linked finding without a customer signature.",
+      };
+    }
     const wantsSignature = getWantSig() === "yes";
     const reviewed = !!customerAgreesChk?.checked;
     let signed = false;

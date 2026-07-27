@@ -8839,6 +8839,41 @@ def append_customer_decision_log_if_needed(
     )
 
 
+def finding_customer_decision_label(finding: dict[str, Any]) -> str:
+    status = str(finding.get("status") or "").strip()
+    if status == "Approved":
+        return "Customer Approved"
+    if status == "Declined":
+        return "Customer Declined"
+    return "Awaiting Customer Decision"
+
+
+def finding_repair_stage_label(finding: dict[str, Any]) -> str:
+    if str(finding.get("status") or "").strip() == "Completed":
+        return "Repair Completed"
+    if optional_int_value(finding.get("linked_repair_record_id")):
+        return "Repair Started"
+    return ""
+
+
+def annotate_finding_workflow_state(finding: dict[str, Any]) -> dict[str, Any]:
+    finding["customer_decision_label"] = finding_customer_decision_label(finding)
+    finding["repair_stage_label"] = finding_repair_stage_label(finding)
+    return finding
+
+
+def latest_estimate_document_for_finding(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+) -> dict[str, Any] | None:
+    return latest_estimate_documents_by_finding_id(
+        load_vehicle_estimate_documents(conn, customer_id, vehicle_id)
+    ).get(finding_id)
+
+
 def customer_decision_log_source_label(value: Any) -> str:
     source = str(value or "").strip()
     if source == "internal/manual":
@@ -9965,6 +10000,9 @@ def build_approval_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def repair_work_title_from_finding(record: dict[str, Any]) -> str:
+    estimate_service_name = str(record.get("estimate_service_name") or "").strip()
+    if estimate_service_name:
+        return estimate_service_name
     if normalize_finding_request_type(record.get("request_type")) == "labor":
         return record.get("labor_description") or record.get("finding") or "Labor Request"
     return record.get("recommendation") or record.get("finding") or "Finding"
@@ -9975,6 +10013,8 @@ def repair_work_notes_from_finding(record: dict[str, Any]) -> str:
         part
         for part in [
             "Source: Approved finding",
+            record.get("estimate_document_id") and f"Prepared Estimate ID: {record.get('estimate_document_id')}",
+            record.get("estimate_document_url") and f"Prepared Estimate PDF: {record.get('estimate_document_url')}",
             record.get("finding") or "",
             record.get("recommendation") or "",
             record.get("labor_reason") or "",
@@ -9996,10 +10036,31 @@ def ensure_repair_record_for_approved_finding(
     finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
     if (finding.get("status") or "") != "Approved":
         return None
+    estimate_doc = latest_estimate_document_for_finding(
+        conn,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+    )
+    if estimate_doc:
+        finding["estimate_document_id"] = estimate_doc.get("id")
+        finding["estimate_document_url"] = estimate_document_url(customer_id, vehicle_id, estimate_doc.get("id"))
+        finding["estimate_service_name"] = estimate_document_service_summary(estimate_doc)
+        finding["estimate_total"] = estimate_doc.get("estimate_total")
 
     linked_repair_record_id = finding.get("linked_repair_record_id")
     if linked_repair_record_id:
-        return int(linked_repair_record_id)
+        linked = conn.execute(
+            """
+            SELECT id
+            FROM repair_records
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            LIMIT 1
+            """,
+            (linked_repair_record_id, customer_id, vehicle_id),
+        ).fetchone()
+        if linked:
+            return int(linked["id"])
 
     existing_repair = conn.execute(
         """
@@ -10020,9 +10081,9 @@ def ensure_repair_record_for_approved_finding(
                   vehicle_id, customer_id, repair_name, repair_date, mileage,
                   labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
                   track_as_maintenance, workflow_source_type, workflow_source_id,
-                  notes, status, created_at
+                  approved_estimate_total, notes, status, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'finding', ?, ?, 'Open', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'finding', ?, ?, ?, 'Open', ?)
                 """,
                 (
                     vehicle_id,
@@ -10034,8 +10095,13 @@ def ensure_repair_record_for_approved_finding(
                     finding.get("labor_rate"),
                     finding.get("parts_cost"),
                     finding.get("labor_amount"),
-                    float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0),
+                    finding.get("estimate_total")
+                    if finding.get("estimate_total") is not None
+                    else float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0),
                     finding_id,
+                    finding.get("estimate_total")
+                    if finding.get("estimate_total") is not None
+                    else float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0),
                     repair_work_notes_from_finding(finding),
                     now,
                 ),
@@ -14204,6 +14270,7 @@ def pro_customer_vehicle_detail(
         for record in findings_records:
             record.setdefault("customer_id", customer_id)
             attach_finding_photo_urls(record)
+            annotate_finding_workflow_state(record)
         finding_history_records = [
             dict(row)
             for row in conn.execute(
@@ -14211,10 +14278,10 @@ def pro_customer_vehicle_detail(
                 SELECT fhr.*, fr.finding, fr.request_type, fr.labor_description
                 FROM finding_history_records fhr
                 JOIN findings_records fr ON fr.id = fhr.finding_id
-                WHERE fr.vehicle_id = ?
+                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
                 ORDER BY fhr.created_at DESC, fhr.id DESC
                 """,
-                (vehicle_id,),
+                (customer_id, vehicle_id),
             ).fetchall()
         ]
         customer_decision_logs = [
@@ -14224,10 +14291,10 @@ def pro_customer_vehicle_detail(
                 SELECT cdl.*, fr.finding
                 FROM customer_decision_logs cdl
                 JOIN findings_records fr ON fr.id = cdl.finding_id
-                WHERE fr.vehicle_id = ?
+                WHERE fr.customer_id = ? AND fr.vehicle_id = ?
                 ORDER BY cdl.created_at DESC, cdl.id DESC
                 """,
-                (vehicle_id,),
+                (customer_id, vehicle_id),
             ).fetchall()
         ]
         ensure_discrepancy_approvals_schema(conn)
@@ -14563,14 +14630,6 @@ async def pro_finding_record_create(request: Request, customer_id: int, vehicle_
             shop_id=shop_id,
             mileage=finding_mileage,
         )
-        if status == "Approved":
-            ensure_repair_record_for_approved_finding(
-                conn,
-                customer_id=customer_id,
-                vehicle_id=vehicle_id,
-                finding_id=int(cur.lastrowid),
-                now=now,
-            )
         conn.commit()
     finally:
         conn.close()
@@ -14602,6 +14661,7 @@ def pro_finding_record_detail(
             customer_id=customer_id,
             vehicle_id=vehicle_id,
         )
+        annotate_finding_workflow_state(finding)
         finding_history_records = load_finding_history_records(conn, finding_id)
         checklist_summary = repair_checklist_summary(conn, finding.get("linked_repair_record_id"))
     finally:
@@ -14621,7 +14681,154 @@ def pro_finding_record_detail(
                 for value in REPAIR_WORK_STATUS_OPTIONS
             ],
             "repair_work_status_label": repair_work_status_label(finding.get("repair_work_status") or ("completed" if finding.get("status") == "Completed" else "ready")),
+            "csrf_token": optional_csrf_token(request),
         },
+    )
+
+
+@router.post(
+    "/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/customer-decision"
+)
+async def pro_finding_customer_decision_update(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    raw_decision = str(form.get("decision") or "").strip().lower()
+    if raw_decision not in {"approved", "declined"}:
+        raise HTTPException(status_code=400, detail="Invalid customer decision")
+    next_status = "Approved" if raw_decision == "approved" else "Declined"
+    now = datetime.utcnow().isoformat()
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        if not latest_estimate_document_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+        ):
+            raise HTTPException(status_code=400, detail="Prepare an estimate before recording a customer decision")
+        previous_status = str(existing.get("status") or "Open").strip() or "Open"
+        linked_repair_id = optional_int_value(existing.get("linked_repair_record_id"))
+        if next_status == "Declined" and linked_repair_id:
+            raise HTTPException(status_code=400, detail="A repair-started finding cannot be declined")
+        if previous_status == "Completed":
+            raise HTTPException(status_code=400, detail="Completed findings cannot change customer decision")
+        if previous_status not in {"Open", "Deferred", "Approved", "Declined"}:
+            raise HTTPException(status_code=400, detail="Unsupported finding status transition")
+        if previous_status == "Approved" and next_status == "Declined":
+            raise HTTPException(status_code=400, detail="Approved findings cannot be declined after approval")
+
+        if previous_status != next_status:
+            conn.execute(
+                f"""
+                UPDATE findings_records
+                SET status = ?,
+                    repair_work_status = CASE
+                      WHEN ? = 'Approved' AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+                      THEN 'ready'
+                      WHEN ? = 'Declined'
+                      THEN ''
+                      ELSE repair_work_status
+                    END,
+                    repair_work_updated_at = CASE
+                      WHEN ? = 'Approved' AND (repair_work_updated_at IS NULL OR TRIM(repair_work_updated_at) = '')
+                      THEN ?
+                      ELSE repair_work_updated_at
+                    END
+                WHERE {finding_record_where_sql(conn)}
+                """,
+                (
+                    next_status,
+                    next_status,
+                    next_status,
+                    next_status,
+                    now,
+                    *finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
+                ),
+            )
+            append_finding_history_record(
+                conn,
+                finding_id,
+                previous_status,
+                next_status,
+                "customer_decision_changed",
+                now,
+                notes=f"Customer {'Approved' if next_status == 'Approved' else 'Declined'}",
+            )
+        append_customer_decision_log_if_needed(
+            conn,
+            finding_id,
+            next_status,
+            customer_name(customer),
+            now,
+            notes=f"Customer {'Approved' if next_status == 'Approved' else 'Declined'} prepared estimate",
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+        status_code=303,
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair")
+async def pro_finding_start_repair(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    now = datetime.utcnow().isoformat()
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        if (existing.get("status") or "") != "Approved":
+            raise HTTPException(status_code=400, detail="Customer approval is required before starting repair")
+        if not latest_estimate_document_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+        ):
+            raise HTTPException(status_code=400, detail="Prepare an estimate before starting repair")
+        previous_repair_id = optional_int_value(existing.get("linked_repair_record_id"))
+        repair_id = ensure_repair_record_for_approved_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            now=now,
+        )
+        if not repair_id:
+            raise HTTPException(status_code=400, detail="Unable to start repair for this finding")
+        if not previous_repair_id:
+            append_finding_history_record(
+                conn,
+                finding_id,
+                "Approved",
+                "Repair Started",
+                "repair_started",
+                now,
+                notes=f"Repair Workspace record #{repair_id} started from approved finding",
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{repair_id}",
+        status_code=303,
     )
 
 
@@ -14740,14 +14947,6 @@ async def pro_finding_record_update(
             shop_id=shop_id,
             mileage=finding_mileage,
         )
-        if status == "Approved":
-            ensure_repair_record_for_approved_finding(
-                conn,
-                customer_id=customer_id,
-                vehicle_id=vehicle_id,
-                finding_id=finding_id,
-                now=datetime.utcnow().isoformat(),
-            )
         conn.commit()
     finally:
         conn.close()
@@ -14833,15 +15032,6 @@ async def pro_finding_record_status_update(
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
         previous_status = existing.get("status") or ""
         if previous_status == status:
-            if status == "Approved":
-                ensure_repair_record_for_approved_finding(
-                    conn,
-                    customer_id=customer_id,
-                    vehicle_id=vehicle_id,
-                    finding_id=finding_id,
-                    now=datetime.utcnow().isoformat(),
-                )
-                conn.commit()
             if request.headers.get("x-requested-with") == "fetch":
                 return JSONResponse(
                     {
@@ -14899,14 +15089,6 @@ async def pro_finding_record_status_update(
             customer_name(customer),
             now,
         )
-        if status == "Approved":
-            ensure_repair_record_for_approved_finding(
-                conn,
-                customer_id=customer_id,
-                vehicle_id=vehicle_id,
-                finding_id=finding_id,
-                now=now,
-            )
         conn.commit()
         activity_payload = vehicle_finding_activity_payload(conn, customer_id, vehicle_id)
     finally:
