@@ -7115,8 +7115,7 @@ def create_invoice_for_repairs(
             detail="Add labor, parts, or an invoice adjustment before finalizing this invoice.",
         )
     warranty_text = str(
-        invoice_options.get("warranty_text", shop_profile.get("warranty_note") or "")
-        or ""
+        invoice_options.get("warranty_text") or ""
     ).strip()
     primary_repair = selected_repairs[0]
     cur = conn.execute(
