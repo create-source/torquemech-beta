@@ -534,6 +534,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("View Customer Review", finding_html)
         self.assertIn("Copy Customer Link", finding_html)
         self.assertIn("data-copy-customer-review-link", finding_html)
+        self.assertNotIn("View/Edit Repair Estimate", finding_html)
         self.assertEqual(finding_html.count(">Finding History<"), 1)
         self.assertNotIn("Customer Decision / Update Status", vehicle_html)
         self.assertNotIn("Customer Decision / Approval Status", vehicle_html)

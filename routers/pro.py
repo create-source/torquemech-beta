@@ -1197,10 +1197,33 @@ def shop_booking_slug(profile: dict[str, Any] | None = None) -> str:
 
 
 def request_base_url(request: Request | None = None) -> str:
+    configured_url = str(
+        os.getenv("TORQUEMECH_PUBLIC_BASE_URL")
+        or os.getenv("PUBLIC_BASE_URL")
+        or os.getenv("APP_BASE_URL")
+        or ""
+    ).strip()
+    if configured_url:
+        return configured_url.rstrip("/")
+
     if request is not None:
-        hostname = str(request.url.hostname or "").lower()
+        forwarded_host = str(request.headers.get("x-forwarded-host") or "").split(",", 1)[0].strip()
+        external_host = forwarded_host or str(request.url.hostname or "")
+        hostname = external_host.lower().split(":", 1)[0]
         if hostname == "torquemech.com" or hostname.endswith(".torquemech.com"):
             return "https://torquemech.com"
+        forwarded_proto = str(request.headers.get("x-forwarded-proto") or "").split(",", 1)[0].strip().lower()
+        if not forwarded_proto:
+            forwarded = str(request.headers.get("forwarded") or "")
+            match = re.search(r"(?:^|[;,]\s*)proto=(?P<proto>https?)", forwarded, flags=re.IGNORECASE)
+            forwarded_proto = match.group("proto").lower() if match else ""
+        if forwarded_proto in {"http", "https"}:
+            port = request.url.port
+            host = external_host.lower()
+            port_suffix = f":{port}" if port and port not in {80, 443} else ""
+            if ":" in host:
+                port_suffix = ""
+            return f"{forwarded_proto}://{host}{port_suffix}"
         return str(request.base_url).rstrip("/")
     return "http://127.0.0.1:8125"
 
@@ -6972,7 +6995,7 @@ def parse_customer_estimate_review_token(token: str) -> dict[str, Any]:
 
 def customer_estimate_review_url(request: Request, estimate: dict[str, Any], shop_id: int) -> str:
     token = create_customer_estimate_review_token(estimate, shop_id)
-    return str(request.url_for("customer_estimate_review", token=token))
+    return f"{request_base_url(request)}/customer/estimate/{token}"
 
 
 def customer_estimate_review_pdf_url(request: Request, token: str) -> str:

@@ -181,7 +181,6 @@
       {% if finding.linked_repair_record_id %}
       <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
       {% endif %}
-      <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_edit_url or build_finding_estimator_href(customer, vehicle, finding) }}">View/Edit Repair Estimate</a>
       {% if finding.estimate_document_url %}
       <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
       {% endif %}
@@ -270,9 +269,11 @@
     <div class="tm-history-empty">No repair estimate has been prepared for this finding yet.</div>
     {% endif %}
     <div class="tm-finding-actions" style="margin-top:0;">
+      {% if not has_saved_estimate %}
       <a class="tm-btn tm-btn-primary" href="{{ finding.estimate_document_edit_url or build_finding_estimator_href(customer, vehicle, finding) }}">
-        {% if has_saved_estimate %}View/Edit Repair Estimate{% else %}Build Repair Estimate{% endif %}
+        Build Repair Estimate
       </a>
+      {% endif %}
       {% if finding.estimate_document_url %}
       <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
       {% endif %}

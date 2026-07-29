@@ -62,6 +62,7 @@ class AuthShopIsolationTests(unittest.TestCase):
                 "PRO_ACCESS_CODE": "",
                 "PRO_QA_KEY": "",
                 "TORQUEMECH_BOOTSTRAP_TOKEN": "boot-secret",
+                "TORQUEMECH_CUSTOMER_ESTIMATE_LINK_SECRET": "stage2a-customer-link-secret",
                 "TORQUEMECH_EMAIL_TRANSPORT": "test",
                 "TORQUEMECH_DEV_EMAIL_OUTBOX": str(self.outbox_path),
             },
@@ -3442,6 +3443,24 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Copy Customer Link", after.text)
         self.assertIn("/customer/estimate/", after.text)
 
+    def test_customer_estimate_review_link_honors_forwarded_https(self):
+        client = TestClient(main.app, base_url="http://railway.internal")
+        self.bootstrap_owner(client, email="stage2a-forwarded@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2a-forwarded@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Forwarded")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+
+        response = client.get(
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+            headers={"x-forwarded-proto": "https", "x-forwarded-host": "torquemech.com"},
+        )
+        review_link = self.customer_review_link_from_detail(response.text)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(review_link.startswith("https://torquemech.com/customer/estimate/"))
+        self.assertNotIn("http://torquemech.com/customer/estimate/", response.text)
+
     def test_customer_estimate_review_valid_token_is_public_and_customer_safe(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage2a-public@example.com", shop_name="Alpha Shop")
@@ -3579,9 +3598,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Estimate prepared", response.text)
         self.assertIn("Front brake service", response.text)
         self.assertIn("$700.00", response.text)
-        self.assertIn("View/Edit Repair Estimate", response.text)
-        self.assertIn(f"estimate_id={estimate_id}", response.text)
-        self.assertIn(f"finding_id={finding_id}", response.text)
+        self.assertNotIn("View/Edit Repair Estimate", response.text)
         self.assertIn("Open Estimate PDF", response.text)
         self.assertIn("Customer Decision", response.text)
         self.assertIn("Awaiting Customer Decision", response.text)
@@ -3608,7 +3625,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Brake Master Cylinder Replacement", response.text)
         self.assertIn("$812.34", response.text)
-        self.assertIn("View/Edit Repair Estimate", response.text)
+        self.assertNotIn("View/Edit Repair Estimate", response.text)
         self.assertIn("Open Estimate PDF", response.text)
 
     def test_prepared_finding_customer_decision_and_start_repair_workflow(self):
