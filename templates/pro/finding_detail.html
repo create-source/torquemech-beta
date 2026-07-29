@@ -194,6 +194,10 @@
     <div class="tm-finding-grid">
       <div class="tm-finding-field"><span>Prepared Estimate</span><strong>{{ finding.estimate_service_name or finding.recommendation or finding.finding or "-" }}</strong></div>
       <div class="tm-finding-field"><span>Estimated Total</span><strong>{% if finding.estimate_total is not none %}{{ finding.estimate_total|pro_currency }}{% else %}-{% endif %}</strong></div>
+      {% if decision_log %}
+      <div class="tm-finding-field"><span>Decision Source</span><strong>{{ decision_log.source_display }}</strong></div>
+      <div class="tm-finding-field"><span>Submitted</span><strong>{{ decision_log.created_at|pro_datetime }}</strong></div>
+      {% endif %}
     </div>
     <div class="tm-finding-actions" style="margin-top:0;">
       {% if finding.status not in ["Approved", "Declined", "Completed"] %}
@@ -206,6 +210,11 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="decision" value="declined">
         <button class="tm-btn tm-btn-secondary" type="submit">Mark Customer Declined</button>
+      </form>
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="decision" value="deferred">
+        <button class="tm-btn tm-btn-secondary" type="submit">Mark Customer Deferred</button>
       </form>
       {% elif finding.status == "Declined" %}
       <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">

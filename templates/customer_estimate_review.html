@@ -70,6 +70,59 @@
     color:#111827 !important;
     font-weight:900;
     text-decoration:none;
+    border:0;
+    cursor:pointer;
+  }
+  .tm-public-estimate-action--secondary {
+    background:#101b2f;
+    color:#f8fafc !important;
+    border:1px solid rgba(249,115,22,.48);
+  }
+  .tm-public-decision-card {
+    display:grid;
+    gap:14px;
+    border-color:rgba(249,115,22,.42);
+    background:linear-gradient(180deg, #101b2f 0%, #0b1728 100%);
+  }
+  .tm-public-decision-result {
+    border:1px solid rgba(249,115,22,.42);
+    border-left:4px solid var(--tm-orange);
+    border-radius:8px;
+    background:#0b1728;
+    padding:14px;
+  }
+  .tm-public-decision-result h3,
+  .tm-public-confirm h3 {
+    margin:0 0 6px;
+    color:#f8fafc;
+    font-size:1rem;
+  }
+  .tm-public-decision-actions {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+  }
+  .tm-public-decision-actions .tm-public-estimate-action,
+  .tm-public-confirm-actions .tm-public-estimate-action {
+    width:100%;
+    min-height:48px;
+  }
+  .tm-public-confirm {
+    display:grid;
+    gap:10px;
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:8px;
+    background:#071221;
+    padding:14px;
+    scroll-margin-top:16px;
+  }
+  .tm-public-confirm-actions {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .tm-public-confirm-actions form {
+    flex:1 1 180px;
   }
   .tm-public-estimate-panel {
     border:1px solid rgba(148,163,184,.2);
@@ -177,6 +230,8 @@
     .tm-public-estimate-panel { padding:15px; }
     .tm-public-estimate-grid { grid-template-columns:1fr; }
     .tm-public-estimate-actions .tm-public-estimate-action { width:100%; }
+    .tm-public-decision-actions { grid-template-columns:1fr; }
+    .tm-public-confirm-actions { display:grid; }
     .tm-public-estimate-price-grid { grid-template-columns:1fr 1fr; }
   }
   @media (max-width: 420px) {
@@ -189,6 +244,7 @@
     .tm-public-estimate-header p,
     .tm-public-estimate-kicker { color:#111; }
     .tm-public-estimate-action { display:none; }
+    .tm-public-decision-card { display:none; }
     .tm-public-estimate-panel {
       color:#111;
       background:#fff;
@@ -308,6 +364,67 @@
       <p class="tm-public-estimate-copy" style="margin-top:10px;">Tax is included only when shown in the prepared estimate PDF or line-item details.</p>
     </section>
 
+    <section class="tm-public-estimate-panel tm-public-decision-card" id="customer-decision" aria-label="Customer Decision">
+      <h2 class="tm-public-estimate-heading">Customer Decision</h2>
+      {% set recorded_decision = finding.status if finding.status in ["Approved", "Declined", "Deferred"] else "" %}
+      {% if recorded_decision %}
+        <div class="tm-public-decision-result" role="status" aria-live="polite">
+          {% if recorded_decision == "Approved" %}
+          <h3>Estimate Approved</h3>
+          <p class="tm-public-estimate-copy">Your decision was sent to the shop. The shop will contact you regarding the next steps.</p>
+          {% elif recorded_decision == "Declined" %}
+          <h3>Estimate Declined</h3>
+          <p class="tm-public-estimate-copy">Your decision was sent to the shop.</p>
+          {% else %}
+          <h3>Decision Saved</h3>
+          <p class="tm-public-estimate-copy">The shop has been informed that you would like more time.</p>
+          {% endif %}
+          <p class="tm-public-estimate-copy" style="margin-top:8px;">Submitted {% if decision_log and decision_log.created_at %}{{ decision_log.created_at|pro_datetime }}{% else %}today{% endif %}.</p>
+        </div>
+        <p class="tm-public-estimate-copy">To change this recorded decision, please contact the shop directly.</p>
+      {% else %}
+        <p class="tm-public-estimate-copy">Select what should happen with this prepared estimate. Your choice will be sent securely to the shop for this listed repair work.</p>
+        <div class="tm-public-decision-actions" aria-label="Decision choices">
+          <a class="tm-public-estimate-action" href="#confirm-approved" aria-label="Approve estimate">Approve {{ estimate.estimate_total|pro_currency }}</a>
+          <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#confirm-declined">Decline</a>
+          <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#confirm-deferred">Decide Later</a>
+        </div>
+        <section class="tm-public-confirm" id="confirm-approved" tabindex="-1" aria-label="Confirm approval">
+          <h3>Confirm Approval</h3>
+          <p class="tm-public-estimate-copy">By confirming, you authorize the listed repair work at the displayed estimate total of {{ estimate.estimate_total|pro_currency }}, subject to the prepared estimate terms.</p>
+          <div class="tm-public-confirm-actions">
+            <form method="post" action="{{ decision_url }}">
+              <input type="hidden" name="decision" value="approved">
+              <button class="tm-public-estimate-action" type="submit">Confirm Approval</button>
+            </form>
+            <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#customer-decision">Cancel</a>
+          </div>
+        </section>
+        <section class="tm-public-confirm" id="confirm-declined" tabindex="-1" aria-label="Confirm decline">
+          <h3>Confirm Decline</h3>
+          <p class="tm-public-estimate-copy">By confirming, the shop will be informed that you do not want the listed service performed.</p>
+          <div class="tm-public-confirm-actions">
+            <form method="post" action="{{ decision_url }}">
+              <input type="hidden" name="decision" value="declined">
+              <button class="tm-public-estimate-action" type="submit">Confirm Decline</button>
+            </form>
+            <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#customer-decision">Cancel</a>
+          </div>
+        </section>
+        <section class="tm-public-confirm" id="confirm-deferred" tabindex="-1" aria-label="Confirm decide later">
+          <h3>Confirm Decide Later</h3>
+          <p class="tm-public-estimate-copy">By confirming, you are not approving or declining yet. The shop will be informed that you would like more time.</p>
+          <div class="tm-public-confirm-actions">
+            <form method="post" action="{{ decision_url }}">
+              <input type="hidden" name="decision" value="deferred">
+              <button class="tm-public-estimate-action" type="submit">Confirm Decide Later</button>
+            </form>
+            <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#customer-decision">Cancel</a>
+          </div>
+        </section>
+      {% endif %}
+    </section>
+
     {% if service_education %}
     <section class="tm-public-estimate-panel" aria-label="Service education">
       <h2 class="tm-public-estimate-heading">Service Education</h2>
@@ -322,8 +439,8 @@
     </section>
     {% endif %}
 
-    <section class="tm-public-estimate-note" aria-label="Review only notice">
-      This secure page is view-only. No customer decision has been submitted from this link.
+    <section class="tm-public-estimate-note" aria-label="Secure review notice">
+      This secure page is for reviewing the prepared estimate and sending your decision to the shop.
     </section>
   </div>
 </main>

@@ -3,7 +3,7 @@ import re
 import sqlite3
 import unittest
 import html
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
@@ -3398,6 +3398,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         shop_id: int,
         *,
         finding_id: int | None = None,
+        expires_at: str | None = None,
     ) -> str:
         estimate = dict(
             self.conn.execute(
@@ -3407,7 +3408,22 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
         if finding_id is not None:
             estimate["finding_id"] = finding_id
-        return pro_module.create_customer_estimate_review_token(estimate, shop_id)
+        token = pro_module.create_customer_estimate_review_token(estimate, shop_id)
+        if expires_at is None:
+            return token
+        body = token.split(".", 1)[0]
+        payload = json.loads(pro_module.customer_estimate_token_unb64(body).decode("utf-8"))
+        payload["exp"] = expires_at
+        payload_bytes = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        new_body = pro_module.customer_estimate_token_b64(payload_bytes)
+        signature = pro_module.customer_estimate_token_b64(
+            pro_module.hmac.new(
+                pro_module.customer_estimate_review_secret().encode("utf-8"),
+                new_body.encode("ascii"),
+                pro_module.hashlib.sha256,
+            ).digest()
+        )
+        return f"{new_body}.{signature}"
 
     def make_estimate_pdf_available(self, estimate_id: int) -> None:
         storage = pro_module.ensure_storage_directories()
@@ -3546,13 +3562,20 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("$500.00", response.text)
         self.assertIn("$12.25", response.text)
         self.assertIn("$812.25", response.text)
+        self.assertIn("Customer Decision", response.text)
+        self.assertIn("Approve $812.25", response.text)
+        self.assertIn("Decline", response.text)
+        self.assertIn("Decide Later", response.text)
+        self.assertIn("Confirm Approval", response.text)
+        self.assertIn("Confirm Decline", response.text)
+        self.assertIn("Confirm Decide Later", response.text)
+        self.assertIn("displayed estimate total of $812.25", response.text)
         self.assertIn("/customer/estimate/", response.text)
         self.assertIn("/pdf", response.text)
         self.assertNotIn("Outer pads at 2mm.", response.text)
         self.assertNotIn("Internal Notes", response.text)
         self.assertNotIn("Mark Customer Approved", response.text)
         self.assertNotIn("Mark Customer Declined", response.text)
-        self.assertNotIn("Defer", response.text)
         self.assertNotIn("Start Repair", response.text)
         self.assertNotIn("Open Repair Workspace", response.text)
         self.assertNotIn("Edit Finding", response.text)
@@ -3562,6 +3585,9 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("labor_cost", response.text)
         self.assertNotIn("markup", response.text.lower())
         self.assertNotIn("profit_margin", response.text.lower())
+        review_token = urlparse(review_link).path.rsplit("/", 1)[-1]
+        visible_text = html.unescape(re.sub(r"<[^>]+>", " ", response.text))
+        self.assertNotIn(review_token, visible_text)
 
     def test_customer_estimate_review_rejects_invalid_and_tampered_tokens(self):
         client = self.client()
@@ -3629,6 +3655,132 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("New Brake Quote", new_response.text)
         self.assertNotIn("Old Brake Quote", new_response.text)
 
+    def test_customer_estimate_review_public_decisions_update_only_token_finding(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-public-decisions@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2a-public-decisions@example.com")
+        pro_module.ensure_repair_records_schema(self.conn)
+        for decision, expected_status, heading in (
+            ("approved", "Approved", "Estimate Approved"),
+            ("declined", "Declined", "Estimate Declined"),
+            ("deferred", "Deferred", "Decision Saved"),
+        ):
+            with self.subTest(decision=decision):
+                customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name=decision.title())
+                finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+                other_finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+                self.seed_repair_estimate_document_for_finding(
+                    customer_id,
+                    vehicle_id,
+                    finding_id,
+                    total=324.00,
+                    service_name="Alternator Replacement",
+                )
+                detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+                review_link = self.customer_review_link_from_detail(detail.text)
+                decision_url = f"{review_link}/decision"
+
+                get_attempt = client.get(decision_url, follow_redirects=False)
+                submitted = client.post(
+                    decision_url,
+                    data={
+                        "decision": decision,
+                        "shop_id": "999999",
+                        "finding_id": str(other_finding_id),
+                        "estimate_total": "1.00",
+                    },
+                    follow_redirects=False,
+                )
+
+                self.assertEqual(get_attempt.status_code, 405)
+                self.assertEqual(submitted.status_code, 303)
+                self.assertIn(f"decision_saved={expected_status.lower()}", submitted.headers["location"])
+                finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+                other_finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (other_finding_id,)).fetchone()
+                self.assertEqual(finding["status"], expected_status)
+                self.assertEqual(other_finding["status"], "Open")
+                self.assertIsNone(finding["linked_repair_record_id"])
+                self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 0)
+                self.assertEqual(
+                    self.conn.execute(
+                        "SELECT COUNT(*) AS count FROM finding_history_records WHERE finding_id = ? AND event_type = 'customer_decision_changed'",
+                        (finding_id,),
+                    ).fetchone()["count"],
+                    1,
+                )
+                log = self.conn.execute(
+                    "SELECT * FROM customer_decision_logs WHERE finding_id = ?",
+                    (finding_id,),
+                ).fetchone()
+                self.assertEqual(log["decision_status"], expected_status)
+                self.assertEqual(log["source"], "customer_secure_link")
+
+                repeated = client.post(decision_url, data={"decision": decision}, follow_redirects=False)
+                self.assertEqual(repeated.status_code, 303)
+                self.assertEqual(
+                    self.conn.execute(
+                        "SELECT COUNT(*) AS count FROM customer_decision_logs WHERE finding_id = ?",
+                        (finding_id,),
+                    ).fetchone()["count"],
+                    1,
+                )
+
+                decided_page = client.get(review_link)
+                self.assertEqual(decided_page.status_code, 200)
+                self.assertIn(heading, decided_page.text)
+                self.assertIn("Submitted", decided_page.text)
+                self.assertIn("contact the shop directly", decided_page.text)
+                self.assertNotIn("Approve $324.00", decided_page.text)
+                self.assertNotIn('aria-label="Decision choices"', decided_page.text)
+
+                staff_page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+                self.assertIn(f"Customer {expected_status}", staff_page.text)
+                self.assertIn("Customer submitted via secure link", staff_page.text)
+
+    def test_customer_estimate_review_public_decision_rejects_bad_tokens_and_values(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-public-reject@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2a-public-reject@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Reject")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+        detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        review_link = self.customer_review_link_from_detail(detail.text)
+
+        invalid = client.post("/customer/estimate/not-a-token/decision", data={"decision": "approved"})
+        unsupported = client.post(f"{review_link}/decision", data={"decision": "maybe"})
+        expired_token = self.signed_customer_estimate_token(
+            estimate_id,
+            shop_id,
+            expires_at=datetime(2000, 1, 1, tzinfo=timezone.utc).isoformat(),
+        )
+        expired = client.post(f"/customer/estimate/{expired_token}/decision", data={"decision": "approved"})
+
+        self.assertEqual(invalid.status_code, 404)
+        self.assertEqual(unsupported.status_code, 400)
+        self.assertEqual(expired.status_code, 404)
+        finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+        self.assertEqual(finding["status"], "Open")
+
+    def test_customer_estimate_review_public_decision_rejects_cross_shop_token(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-public-cross-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("stage2a-public-cross-alpha@example.com")
+        alpha_customer, alpha_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="Alpha")
+        alpha_finding = self.seed_finding_for_shop_estimate_stage(alpha_customer, alpha_vehicle)
+        alpha_estimate = self.seed_repair_estimate_document_for_finding(alpha_customer, alpha_vehicle, alpha_finding)
+        self.logout(client)
+        self.signup(client, email="stage2a-public-cross-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("stage2a-public-cross-beta@example.com")
+        beta_shop = self.shop_id_for_email("stage2a-public-cross-beta@example.com")
+
+        cross_shop_token = self.signed_customer_estimate_token(alpha_estimate, beta_shop)
+        response = client.post(f"/customer/estimate/{cross_shop_token}/decision", data={"decision": "approved"})
+
+        self.assertEqual(response.status_code, 404)
+        finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (alpha_finding,)).fetchone()
+        self.assertEqual(finding["status"], "Open")
+
     def test_shop_can_open_saved_finding_and_reopen_linked_estimate(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage1-alpha@example.com", shop_name="Alpha Shop")
@@ -3652,6 +3804,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Awaiting Customer Decision", response.text)
         self.assertIn("Mark Customer Approved", response.text)
         self.assertIn("Mark Customer Declined", response.text)
+        self.assertIn("Mark Customer Deferred", response.text)
         self.assertNotIn("Start Repair", response.text)
 
     def test_finding_detail_displays_saved_prepared_estimate_service_name_and_total(self):

@@ -254,6 +254,12 @@ FINDING_STATUS_OPTIONS = ("Approved", "Open", "Completed", "Deferred", "Declined
 FINDING_SEVERITY_OPTIONS = ("Low", "Medium", "High", "Critical")
 FINDING_REQUEST_TYPES = ("finding", "labor")
 CUSTOMER_DECISION_LOG_STATUSES = {"Approved", "Deferred", "Declined"}
+CUSTOMER_DECISION_VALUES = {"approved", "declined", "deferred"}
+CUSTOMER_DECISION_STATUS_BY_VALUE = {
+    "approved": "Approved",
+    "declined": "Declined",
+    "deferred": "Deferred",
+}
 APPROVAL_REQUEST_TYPES = ("finding", "labor", "parts")
 APPROVAL_DECISION_OPTIONS = ("pending", "approved", "declined", "deferred")
 REPAIR_WORK_STATUS_OPTIONS = ("ready", "in_progress", "waiting_parts", "completed")
@@ -6990,6 +6996,19 @@ def parse_customer_estimate_review_token(token: str) -> dict[str, Any]:
     payload = json.loads(customer_estimate_token_unb64(body).decode("utf-8"))
     if not isinstance(payload, dict) or payload.get("v") != 1:
         raise ValueError("unsupported token")
+    expires_at = str(payload.get("exp") or payload.get("expires_at") or "").strip()
+    if expires_at:
+        try:
+            if expires_at.isdigit():
+                expires_dt = datetime.fromtimestamp(int(expires_at), tz=timezone.utc)
+            else:
+                expires_dt = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+                if expires_dt.tzinfo is None:
+                    expires_dt = expires_dt.replace(tzinfo=timezone.utc)
+        except ValueError as exc:
+            raise ValueError("invalid expiration") from exc
+        if datetime.now(timezone.utc) > expires_dt:
+            raise ValueError("expired token")
     return payload
 
 
@@ -8948,6 +8967,7 @@ def append_customer_decision_log_if_needed(
     created_at: str,
     *,
     notes: str = "",
+    source: str = "internal/manual",
 ) -> None:
     if decision_status not in CUSTOMER_DECISION_LOG_STATUSES:
         return
@@ -8977,7 +8997,7 @@ def append_customer_decision_log_if_needed(
             finding_id,
             decision_status,
             customer_display_name,
-            "internal/manual",
+            source,
             "",
             "",
             "",
@@ -8996,6 +9016,8 @@ def finding_customer_decision_label(finding: dict[str, Any]) -> str:
         return "Customer Approved"
     if status == "Declined":
         return "Customer Declined"
+    if status == "Deferred":
+        return "Customer Deferred"
     return "Awaiting Customer Decision"
 
 
@@ -9031,7 +9053,118 @@ def customer_decision_log_source_label(value: Any) -> str:
     source = str(value or "").strip()
     if source == "internal/manual":
         return "Manual/Internal"
+    if source == "customer_secure_link":
+        return "Customer submitted via secure link"
     return source.title()
+
+
+def latest_customer_decision_log_for_finding(
+    conn: sqlite3.Connection,
+    finding_id: int,
+) -> dict[str, Any] | None:
+    ensure_customer_decision_logs_schema(conn)
+    record = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM customer_decision_logs
+            WHERE finding_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+            """,
+            (finding_id,),
+        ).fetchone()
+    )
+    if not record:
+        return None
+    record["source_display"] = customer_decision_log_source_label(record.get("source"))
+    return record
+
+
+def record_finding_customer_decision(
+    conn: sqlite3.Connection,
+    *,
+    customer: dict[str, Any],
+    finding: dict[str, Any],
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    raw_decision: str,
+    source: str,
+    allow_change: bool,
+    now: str,
+) -> str:
+    if raw_decision not in CUSTOMER_DECISION_VALUES:
+        raise HTTPException(status_code=400, detail="Invalid customer decision")
+    next_status = CUSTOMER_DECISION_STATUS_BY_VALUE[raw_decision]
+    previous_status = str(finding.get("status") or "Open").strip() or "Open"
+    linked_repair_id = optional_int_value(finding.get("linked_repair_record_id"))
+
+    if not latest_estimate_document_for_finding(
+        conn,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+    ):
+        raise HTTPException(status_code=400, detail="Prepare an estimate before recording a customer decision")
+    if previous_status == "Completed":
+        raise HTTPException(status_code=400, detail="Completed findings cannot change customer decision")
+    if previous_status not in {"Open", "Deferred", "Approved", "Declined"}:
+        raise HTTPException(status_code=400, detail="Unsupported finding status transition")
+    if next_status == "Declined" and linked_repair_id:
+        raise HTTPException(status_code=400, detail="A repair-started finding cannot be declined")
+    if previous_status in {"Approved", "Declined", "Deferred"} and previous_status != next_status and not allow_change:
+        raise HTTPException(status_code=409, detail="Customer decision already recorded")
+    if previous_status == "Approved" and next_status == "Declined":
+        raise HTTPException(status_code=400, detail="Approved findings cannot be declined after approval")
+
+    if previous_status != next_status:
+        conn.execute(
+            f"""
+            UPDATE findings_records
+            SET status = ?,
+                repair_work_status = CASE
+                  WHEN ? = 'Approved' AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
+                  THEN 'ready'
+                  WHEN ? IN ('Declined', 'Deferred')
+                  THEN ''
+                  ELSE repair_work_status
+                END,
+                repair_work_updated_at = CASE
+                  WHEN ? = 'Approved' AND (repair_work_updated_at IS NULL OR TRIM(repair_work_updated_at) = '')
+                  THEN ?
+                  ELSE repair_work_updated_at
+                END
+            WHERE {finding_record_where_sql(conn)}
+            """,
+            (
+                next_status,
+                next_status,
+                next_status,
+                next_status,
+                now,
+                *finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
+            ),
+        )
+        append_finding_history_record(
+            conn,
+            finding_id,
+            previous_status,
+            next_status,
+            "customer_decision_changed",
+            now,
+            notes=f"Customer {next_status}",
+        )
+    append_customer_decision_log_if_needed(
+        conn,
+        finding_id,
+        next_status,
+        customer_name(customer),
+        now,
+        notes=f"Customer {next_status} prepared estimate",
+        source=source,
+    )
+    return next_status
 
 
 def vehicle_finding_activity_payload(
@@ -12153,6 +12286,8 @@ def validate_customer_estimate_review_context(
     finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
     shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
     attach_finding_photo_urls(finding)
+    annotate_finding_workflow_state(finding)
+    decision_log = latest_customer_decision_log_for_finding(conn, finding_id)
     return {
         "shop": shop_profile,
         "customer": customer,
@@ -12161,6 +12296,7 @@ def validate_customer_estimate_review_context(
         "estimate": estimate,
         "line_items": normalize_customer_estimate_line_items(estimate),
         "service_education": customer_estimate_payload_education(estimate),
+        "decision_log": decision_log,
     }
 
 
@@ -13765,7 +13901,48 @@ def customer_estimate_review(request: Request, token: str):
             "request": request,
             **context,
             "pdf_url": pdf_url,
+            "decision_url": str(request.url_for("customer_estimate_review_decision", token=token)),
+            "decision_saved": request.query_params.get("decision_saved") or "",
         },
+    )
+
+
+@public_router.post("/customer/estimate/{token}/decision", name="customer_estimate_review_decision")
+async def customer_estimate_review_decision(request: Request, token: str):
+    form = await read_form_data(request)
+    raw_decision = str(form.get("decision") or "").strip().lower()
+    if raw_decision not in CUSTOMER_DECISION_VALUES:
+        raise HTTPException(status_code=400, detail="Invalid customer decision")
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        context = validate_customer_estimate_review_context(conn, token)
+        finding = context["finding"]
+        decision_status = record_finding_customer_decision(
+            conn,
+            customer=context["customer"],
+            finding=finding,
+            customer_id=int(context["customer"]["id"]),
+            vehicle_id=int(context["vehicle"]["id"]),
+            finding_id=int(finding["id"]),
+            raw_decision=raw_decision,
+            source="customer_secure_link",
+            allow_change=False,
+            now=now,
+        )
+        conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as exc:
+        conn.rollback()
+        logger.warning("CUSTOMER_ESTIMATE_DECISION_REJECTED reason=%s", exc)
+        return customer_estimate_unavailable_response(request)
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"{request.url_for('customer_estimate_review', token=token)}?decision_saved={decision_status.lower()}",
+        status_code=303,
     )
 
 
@@ -15293,6 +15470,7 @@ def pro_finding_record_detail(
             customer_review_url = customer_estimate_review_url(request, estimate_doc, shop_id)
         annotate_finding_workflow_state(finding)
         finding_history_records = load_finding_history_records(conn, finding_id)
+        decision_log = latest_customer_decision_log_for_finding(conn, finding_id)
         checklist_summary = repair_checklist_summary(conn, finding.get("linked_repair_record_id"))
     finally:
         conn.close()
@@ -15305,6 +15483,7 @@ def pro_finding_record_detail(
             "vehicle": vehicle,
             "finding": finding,
             "customer_review_url": customer_review_url,
+            "decision_log": decision_log,
             "finding_history_records": finding_history_records,
             "checklist_summary": checklist_summary,
             "repair_work_status_options": [
@@ -15327,9 +15506,8 @@ async def pro_finding_customer_decision_update(
     if not validate_csrf(request, form):
         raise HTTPException(status_code=403, detail="Invalid CSRF token")
     raw_decision = str(form.get("decision") or "").strip().lower()
-    if raw_decision not in {"approved", "declined"}:
+    if raw_decision not in CUSTOMER_DECISION_VALUES:
         raise HTTPException(status_code=400, detail="Invalid customer decision")
-    next_status = "Approved" if raw_decision == "approved" else "Declined"
     now = datetime.utcnow().isoformat()
 
     conn = crm_db_conn()
@@ -15338,68 +15516,17 @@ async def pro_finding_customer_decision_update(
         require_shop_write_access(conn, shop_id=shop_id)
         customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
-        if not latest_estimate_document_for_finding(
+        record_finding_customer_decision(
             conn,
+            customer=customer,
+            finding=existing,
             customer_id=customer_id,
             vehicle_id=vehicle_id,
             finding_id=finding_id,
-        ):
-            raise HTTPException(status_code=400, detail="Prepare an estimate before recording a customer decision")
-        previous_status = str(existing.get("status") or "Open").strip() or "Open"
-        linked_repair_id = optional_int_value(existing.get("linked_repair_record_id"))
-        if next_status == "Declined" and linked_repair_id:
-            raise HTTPException(status_code=400, detail="A repair-started finding cannot be declined")
-        if previous_status == "Completed":
-            raise HTTPException(status_code=400, detail="Completed findings cannot change customer decision")
-        if previous_status not in {"Open", "Deferred", "Approved", "Declined"}:
-            raise HTTPException(status_code=400, detail="Unsupported finding status transition")
-        if previous_status == "Approved" and next_status == "Declined":
-            raise HTTPException(status_code=400, detail="Approved findings cannot be declined after approval")
-
-        if previous_status != next_status:
-            conn.execute(
-                f"""
-                UPDATE findings_records
-                SET status = ?,
-                    repair_work_status = CASE
-                      WHEN ? = 'Approved' AND (repair_work_status IS NULL OR TRIM(repair_work_status) = '')
-                      THEN 'ready'
-                      WHEN ? = 'Declined'
-                      THEN ''
-                      ELSE repair_work_status
-                    END,
-                    repair_work_updated_at = CASE
-                      WHEN ? = 'Approved' AND (repair_work_updated_at IS NULL OR TRIM(repair_work_updated_at) = '')
-                      THEN ?
-                      ELSE repair_work_updated_at
-                    END
-                WHERE {finding_record_where_sql(conn)}
-                """,
-                (
-                    next_status,
-                    next_status,
-                    next_status,
-                    next_status,
-                    now,
-                    *finding_record_where_params(conn, finding_id, customer_id, vehicle_id),
-                ),
-            )
-            append_finding_history_record(
-                conn,
-                finding_id,
-                previous_status,
-                next_status,
-                "customer_decision_changed",
-                now,
-                notes=f"Customer {'Approved' if next_status == 'Approved' else 'Declined'}",
-            )
-        append_customer_decision_log_if_needed(
-            conn,
-            finding_id,
-            next_status,
-            customer_name(customer),
-            now,
-            notes=f"Customer {'Approved' if next_status == 'Approved' else 'Declined'} prepared estimate",
+            raw_decision=raw_decision,
+            source="internal/manual",
+            allow_change=True,
+            now=now,
         )
         conn.commit()
     finally:
