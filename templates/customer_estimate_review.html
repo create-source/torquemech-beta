@@ -73,6 +73,15 @@
     border:0;
     cursor:pointer;
   }
+  .tm-public-estimate-action:focus-visible {
+    outline:3px solid #fed7aa;
+    outline-offset:3px;
+  }
+  .tm-public-estimate-action:disabled,
+  .tm-public-estimate-action[aria-disabled="true"] {
+    cursor:not-allowed;
+    opacity:.68;
+  }
   .tm-public-estimate-action--secondary {
     background:#101b2f;
     color:#f8fafc !important;
@@ -92,7 +101,7 @@
     padding:14px;
   }
   .tm-public-decision-result h3,
-  .tm-public-confirm h3 {
+  .tm-public-decision-card h3 {
     margin:0 0 6px;
     color:#f8fafc;
     font-size:1rem;
@@ -102,27 +111,15 @@
     grid-template-columns:repeat(3, minmax(0, 1fr));
     gap:10px;
   }
-  .tm-public-decision-actions .tm-public-estimate-action,
-  .tm-public-confirm-actions .tm-public-estimate-action {
+  .tm-public-decision-actions form {
+    min-width:0;
+  }
+  .tm-public-decision-actions .tm-public-estimate-action {
     width:100%;
     min-height:48px;
   }
-  .tm-public-confirm {
-    display:grid;
-    gap:10px;
-    border:1px solid rgba(148,163,184,.22);
-    border-radius:8px;
-    background:#071221;
-    padding:14px;
-    scroll-margin-top:16px;
-  }
-  .tm-public-confirm-actions {
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .tm-public-confirm-actions form {
-    flex:1 1 180px;
+  .tm-public-decision-status {
+    min-height:1.4em;
   }
   .tm-public-estimate-panel {
     border:1px solid rgba(148,163,184,.2);
@@ -231,7 +228,6 @@
     .tm-public-estimate-grid { grid-template-columns:1fr; }
     .tm-public-estimate-actions .tm-public-estimate-action { width:100%; }
     .tm-public-decision-actions { grid-template-columns:1fr; }
-    .tm-public-confirm-actions { display:grid; }
     .tm-public-estimate-price-grid { grid-template-columns:1fr 1fr; }
   }
   @media (max-width: 420px) {
@@ -273,7 +269,7 @@
       <div class="tm-public-estimate-brand" aria-label="TorqueMech"><span>Torque</span><span>Mech</span></div>
       <div class="tm-public-estimate-kicker">Prepared Estimate Review</div>
       <h1>{{ estimate.related_title or line_items[0].service_name or "Repair Estimate" }}</h1>
-      <p>This page is for review only. Please contact the shop with questions or next steps.</p>
+      <p>Review the prepared estimate below, then approve, decline, or decide later.</p>
       {% if pdf_url %}
       <div class="tm-public-estimate-actions">
         <a class="tm-public-estimate-action" href="{{ pdf_url }}">Open Estimate PDF</a>
@@ -383,45 +379,22 @@
         </div>
         <p class="tm-public-estimate-copy">To change this recorded decision, please contact the shop directly.</p>
       {% else %}
-        <p class="tm-public-estimate-copy">Select what should happen with this prepared estimate. Your choice will be sent securely to the shop for this listed repair work.</p>
+        <p class="tm-public-estimate-copy">Select what should happen with this prepared estimate. Your choice will be sent securely to the shop.</p>
+        <p class="tm-public-estimate-copy tm-public-decision-status" id="customerDecisionStatus" aria-live="polite" aria-atomic="true"></p>
         <div class="tm-public-decision-actions" aria-label="Decision choices">
-          <a class="tm-public-estimate-action" href="#confirm-approved" aria-label="Approve estimate">Approve {{ estimate.estimate_total|pro_currency }}</a>
-          <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#confirm-declined">Decline</a>
-          <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#confirm-deferred">Decide Later</a>
+          <form method="post" action="{{ decision_url }}" data-customer-decision-form>
+            <input type="hidden" name="decision" value="approved">
+            <button class="tm-public-estimate-action" type="submit" data-loading-label="Approving..." aria-label="Approve estimate for {{ estimate.estimate_total|pro_currency }}">Approve {{ estimate.estimate_total|pro_currency }}</button>
+          </form>
+          <form method="post" action="{{ decision_url }}" data-customer-decision-form>
+            <input type="hidden" name="decision" value="declined">
+            <button class="tm-public-estimate-action tm-public-estimate-action--secondary" type="submit" data-loading-label="Declining...">Decline</button>
+          </form>
+          <form method="post" action="{{ decision_url }}" data-customer-decision-form>
+            <input type="hidden" name="decision" value="deferred">
+            <button class="tm-public-estimate-action tm-public-estimate-action--secondary" type="submit" data-loading-label="Saving...">Decide Later</button>
+          </form>
         </div>
-        <section class="tm-public-confirm" id="confirm-approved" tabindex="-1" aria-label="Confirm approval">
-          <h3>Confirm Approval</h3>
-          <p class="tm-public-estimate-copy">By confirming, you authorize the listed repair work at the displayed estimate total of {{ estimate.estimate_total|pro_currency }}, subject to the prepared estimate terms.</p>
-          <div class="tm-public-confirm-actions">
-            <form method="post" action="{{ decision_url }}">
-              <input type="hidden" name="decision" value="approved">
-              <button class="tm-public-estimate-action" type="submit">Confirm Approval</button>
-            </form>
-            <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#customer-decision">Cancel</a>
-          </div>
-        </section>
-        <section class="tm-public-confirm" id="confirm-declined" tabindex="-1" aria-label="Confirm decline">
-          <h3>Confirm Decline</h3>
-          <p class="tm-public-estimate-copy">By confirming, the shop will be informed that you do not want the listed service performed.</p>
-          <div class="tm-public-confirm-actions">
-            <form method="post" action="{{ decision_url }}">
-              <input type="hidden" name="decision" value="declined">
-              <button class="tm-public-estimate-action" type="submit">Confirm Decline</button>
-            </form>
-            <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#customer-decision">Cancel</a>
-          </div>
-        </section>
-        <section class="tm-public-confirm" id="confirm-deferred" tabindex="-1" aria-label="Confirm decide later">
-          <h3>Confirm Decide Later</h3>
-          <p class="tm-public-estimate-copy">By confirming, you are not approving or declining yet. The shop will be informed that you would like more time.</p>
-          <div class="tm-public-confirm-actions">
-            <form method="post" action="{{ decision_url }}">
-              <input type="hidden" name="decision" value="deferred">
-              <button class="tm-public-estimate-action" type="submit">Confirm Decide Later</button>
-            </form>
-            <a class="tm-public-estimate-action tm-public-estimate-action--secondary" href="#customer-decision">Cancel</a>
-          </div>
-        </section>
       {% endif %}
     </section>
 
@@ -444,4 +417,58 @@
     </section>
   </div>
 </main>
+<script>
+  (() => {
+    const forms = Array.from(document.querySelectorAll("[data-customer-decision-form]"));
+    if (!forms.length) return;
+    const buttons = forms
+      .map((form) => form.querySelector("button[type='submit']"))
+      .filter(Boolean);
+    const originalLabels = new Map(buttons.map((button) => [button, button.textContent]));
+    const statusEl = document.getElementById("customerDecisionStatus");
+    let isSubmitting = false;
+
+    const restoreDecisionButtons = () => {
+      isSubmitting = false;
+      buttons.forEach((button) => {
+        button.disabled = false;
+        button.setAttribute("aria-disabled", "false");
+        button.textContent = originalLabels.get(button) || button.textContent;
+      });
+      if (statusEl) statusEl.textContent = "";
+    };
+
+    const disableDecisionButtons = (selectedButton) => {
+      buttons.forEach((button) => {
+        button.disabled = true;
+        button.setAttribute("aria-disabled", "true");
+      });
+      if (selectedButton) {
+        selectedButton.textContent = selectedButton.dataset.loadingLabel || "Saving...";
+      }
+      if (statusEl) statusEl.textContent = "Submitting your decision securely.";
+    };
+
+    forms.forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        if (isSubmitting) {
+          event.preventDefault();
+          return;
+        }
+        const selectedButton = event.submitter || form.querySelector("button[type='submit']");
+        try {
+          if (!form.checkValidity()) {
+            restoreDecisionButtons();
+            return;
+          }
+          isSubmitting = true;
+          disableDecisionButtons(selectedButton);
+        } catch (error) {
+          restoreDecisionButtons();
+          throw error;
+        }
+      });
+    });
+  })();
+</script>
 {% endblock %}
