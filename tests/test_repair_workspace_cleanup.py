@@ -1332,7 +1332,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Recommended Repair Estimate", finding_detail)
         self.assertIn("Before Photos", finding_detail)
         self.assertIn("Build Repair Estimate", finding_detail)
-        self.assertIn("View/Edit Repair Estimate", finding_detail)
+        self.assertIn("Open Estimate PDF", finding_detail)
+        self.assertNotIn("View/Edit Repair Estimate", finding_detail)
         self.assertIn("Estimate prepared", finding_detail)
         self.assertIn("estimate_document_edit_url", finding_detail)
         self.assertIn("Customer Decision", finding_detail)
@@ -2013,15 +2014,17 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Estimate:", vehicle_detail)
         self.assertIn("Estimate prepared", vehicle_detail)
         self.assertNotIn("Pro Job:", vehicle_detail)
-        self.assertIn("View/Edit Repair Estimate", vehicle_detail)
+        self.assertNotIn("View/Edit Repair Estimate", vehicle_detail)
 
-    def test_finding_cards_use_stage_one_prepared_estimate_actions(self):
+    def test_finding_cards_keep_prepared_estimate_summary_without_edit_action(self):
         vehicle_detail = (ROOT / "templates" / "pro" / "vehicle_detail.html").read_text(encoding="utf-8")
 
         self.assertIn("{% if item.estimate_document_url %}", vehicle_detail)
         self.assertIn("Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}", vehicle_detail)
-        self.assertIn("View/Edit Repair Estimate", vehicle_detail)
         self.assertIn("Build Repair Estimate", vehicle_detail)
+        self.assertNotIn("View/Edit Repair Estimate", vehicle_detail)
+        self.assertNotIn("View Repair Estimate", vehicle_detail)
+        self.assertNotIn("Edit Repair Estimate", vehicle_detail)
         self.assertNotIn('<button class="tm-btn tm-btn-primary" type="submit">Create Repair Job</button>', vehicle_detail)
         self.assertNotIn('name="workflow_source_id" value="{{ item.id }}"', vehicle_detail)
 
@@ -2030,11 +2033,13 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         estimate_action_block = vehicle_detail.split('<div class="tm-finding-estimate" data-finding-estimate>', 1)[1].split('<div class="tm-repair-action-row">', 1)[0]
 
         self.assertIn('"label": "Awaiting Customer Decision"', vehicle_detail)
-        self.assertIn('group.label != "Awaiting Customer Decision"', estimate_action_block)
         self.assertIn(">Open Finding</a>", vehicle_detail)
         self.assertIn(">Edit Finding</a>", vehicle_detail)
         self.assertIn("Prepared Estimate: {{ item.estimate_service_name or \"Service not named\" }}", estimate_action_block)
         self.assertIn("Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}", estimate_action_block)
+        self.assertNotIn("View/Edit Repair Estimate", estimate_action_block)
+        self.assertNotIn("View Repair Estimate", estimate_action_block)
+        self.assertNotIn("Edit Repair Estimate", estimate_action_block)
 
     def test_finding_detail_customer_decision_is_first_card_and_keeps_actions(self):
         finding_detail = (ROOT / "templates" / "pro" / "finding_detail.html").read_text(encoding="utf-8")
@@ -2049,8 +2054,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Prepared Estimate", finding_detail)
         self.assertIn("Estimated Total", finding_detail)
         self.assertIn("Start Repair", finding_detail)
-        self.assertIn("View/Edit Repair Estimate", finding_detail)
         self.assertIn("Open Estimate PDF", finding_detail)
+        self.assertNotIn("View/Edit Repair Estimate", finding_detail)
         self.assertIn("{% if finding.estimate_document_id %}", finding_detail)
 
     def test_estimator_parts_sources_wait_for_service_specific_selection(self):

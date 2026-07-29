@@ -4651,8 +4651,6 @@
                 {% if item.estimate_document_url %}
                 <span class="tm-crm-chip">Prepared Estimate: {{ item.estimate_service_name or "Service not named" }}</span>
                 <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
-                <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or build_finding_estimator_href(customer, vehicle, item) }}">View/Edit Repair Estimate</a>
-                
                 {% else %}
                 <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                 {% endif %}
@@ -4728,8 +4726,6 @@
                   {% if item.estimate_document_url %}
                   <span class="tm-crm-chip">Prepared Estimate: {{ item.estimate_service_name or "Service not named" }}</span>
                   <span class="tm-crm-chip">Estimate prepared{% if item.estimate_total is not none %}: {{ item.estimate_total|pro_currency }}{% endif %}</span>
-                  <a class="tm-btn tm-btn-secondary" href="{{ item.estimate_document_edit_url or build_finding_estimator_href(customer, vehicle, item) }}">View/Edit Repair Estimate</a>
-                  
                   {% else %}
                   <a class="tm-btn tm-btn-primary" href="{{ build_finding_estimator_href(customer, vehicle, item) }}">Build Repair Estimate</a>
                   {% endif %}
@@ -4739,7 +4735,7 @@
                   {% if item.linked_repair_record_id %}
                   <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ item.linked_repair_record_id }}">Open Repair Workspace</a>
                   {% endif %}
-                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit</a>
+                  <a class="tm-btn tm-btn-secondary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ item.id }}/edit">Edit Finding</a>
                 </div>
               </article>
               {% endfor %}

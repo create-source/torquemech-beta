@@ -66,6 +66,90 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
             active_patch.start()
             self.addCleanup(active_patch.stop)
 
+    def start_vehicle_findings_card_context(self):
+        conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
+        conn.row_factory = sqlite3.Row
+        pro_module.ensure_customer_status_schema(conn)
+        pro_module.ensure_findings_records_schema(conn)
+        pro_module.ensure_repair_estimate_documents_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO customers (
+              id, shop_id, first_name, last_name, phone, email,
+              customer_status, notes, created_at, updated_at
+            )
+            VALUES (1, 9, 'Sam', 'Driver', '', '', 'active', '',
+                    '2026-07-24T12:00:00', '2026-07-24T12:00:00')
+            """
+        )
+        conn.execute(
+            """
+            INSERT INTO customer_vehicles (
+              id, shop_id, customer_id, year, make, model, created_at, updated_at
+            )
+            VALUES (2, 9, 1, 2008, 'Toyota', 'Sequoia',
+                    '2026-07-24T12:00:00', '2026-07-24T12:00:00')
+            """
+        )
+        for finding_id, status in (
+            (10, "Open"),
+            (11, "Open"),
+            (12, "Approved"),
+            (13, "Declined"),
+            (14, "Deferred"),
+        ):
+            conn.execute(
+                """
+                INSERT INTO findings_records (
+                  id, customer_id, vehicle_id, request_type, finding, recommendation,
+                  severity, status, finding_date, created_at
+                )
+                VALUES (?, 1, 2, 'finding', ?, ?, 'High', ?, '2026-07-24',
+                        '2026-07-24T12:00:00')
+                """,
+                (finding_id, f"Finding {finding_id}", f"Repair {finding_id}", status),
+            )
+        for estimate_id, finding_id in (
+            (101, 11),
+            (102, 12),
+            (103, 13),
+            (104, 14),
+        ):
+            conn.execute(
+                """
+                INSERT INTO repair_estimate_documents (
+                  id, customer_id, vehicle_id, finding_id, estimate_date,
+                  customer_name, vehicle_label, related_title, estimate_total,
+                  approval_status, pdf_path, created_at
+                )
+                VALUES (?, 1, 2, ?, '2026-07-24', 'Sam Driver',
+                        '2008 Toyota Sequoia', ?, 700, 'Prepared estimate',
+                        'estimate.pdf', '2026-07-24T12:00:00')
+                """,
+                (estimate_id, finding_id, f"Repair {finding_id}"),
+            )
+        conn.commit()
+        self.addCleanup(conn.close_for_cleanup)
+        patches = (
+            patch.object(main, "app_db_conn", return_value=conn),
+            patch.object(main, "current_user", return_value={"id": 4, "first_name": "Tech"}),
+            patch.object(main, "current_shop_context", return_value={"id": 9, "shop_name": "Alpha Shop"}),
+            patch.object(pro_module, "crm_db_conn", return_value=conn),
+            patch.object(pro_module, "required_current_shop_id", return_value=9),
+        )
+        for active_patch in patches:
+            active_patch.start()
+            self.addCleanup(active_patch.stop)
+
+    def finding_card_html(self, page_html, finding_id, *, slideout=False):
+        if slideout:
+            pattern = rf'<article[^>]*data-finding-card[^>]*data-finding-id="{finding_id}"[\s\S]*?</article>'
+        else:
+            pattern = rf'<article[^>]*id="finding-{finding_id}"[\s\S]*?</article>'
+        match = re.search(pattern, page_html)
+        self.assertIsNotNone(match, f"finding {finding_id} card should render")
+        return match.group(0)
+
     def test_production_estimator_hides_convert_without_pro_access(self):
         with patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": "qa-secret"}):
             client = TestClient(main.app, base_url="https://torquemech.com")
@@ -550,9 +634,72 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertNotIn("Customer Decision / Update Status", vehicle_html)
         self.assertNotIn("Customer Decision / Approval Status", vehicle_html)
         self.assertIn("Estimate prepared", vehicle_html)
-        self.assertIn("View/Edit Repair Estimate", vehicle_html)
+        self.assertNotIn("View/Edit Repair Estimate", vehicle_html)
         self.assertIn(".tm-estimator-parts-source-group__title", style_css)
         self.assertIn("color:#cbd5e1;", style_css)
+
+    def test_edit_finding_page_uses_dark_pro_form_card(self):
+        with open("templates/pro/finding_edit.html", encoding="utf-8") as handle:
+            finding_edit = handle.read()
+
+        self.assertIn('class="tm-finding-panel"', finding_edit)
+        self.assertIn("background:#081528;", finding_edit)
+        self.assertIn("border:1px solid rgba(148,163,184,.24);", finding_edit)
+        self.assertIn(".tm-finding-panel .tm-label { color:#e5eefb; }", finding_edit)
+        self.assertIn("border-color:#f97316 !important;", finding_edit)
+        self.assertNotIn("background:rgba(255,255,255,.94)", finding_edit)
+        self.assertNotIn("rgba(15,23,42,.12)", finding_edit)
+        self.assertIn(">Save Finding</button>", finding_edit)
+        self.assertIn(">View Finding</a>", finding_edit)
+        self.assertIn(
+            'method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}"',
+            finding_edit,
+        )
+        for field_name in (
+            "request_type",
+            "finding",
+            "recommendation",
+            "severity",
+            "status",
+            "mileage",
+            "finding_date",
+        ):
+            self.assertIn(f'name="{field_name}"', finding_edit)
+
+    def test_vehicle_finding_cards_hide_estimate_edit_actions_by_status(self):
+        self.start_vehicle_findings_card_context()
+        response = TestClient(main.app, base_url="http://localhost").get("/pro/customers/1/vehicles/2")
+
+        self.assertEqual(response.status_code, 200)
+        page_html = response.text
+
+        approved_card = self.finding_card_html(page_html, 12)
+        declined_card = self.finding_card_html(page_html, 13)
+        deferred_card = self.finding_card_html(page_html, 14)
+        awaiting_without_estimate_card = self.finding_card_html(page_html, 10)
+        awaiting_with_estimate_card = self.finding_card_html(page_html, 11)
+
+        for card_html in (approved_card, declined_card, deferred_card):
+            self.assertIn(">Open Finding</a>", card_html)
+            self.assertIn(">Edit Finding</a>", card_html)
+            self.assertIn("Estimate prepared", card_html)
+            self.assertNotRegex(card_html, r"View/Edit Repair Estimate|View Repair Estimate|Edit Repair Estimate")
+
+        self.assertIn(">Build Repair Estimate</a>", awaiting_without_estimate_card)
+        self.assertIn(">Open Finding</a>", awaiting_without_estimate_card)
+        self.assertIn(">Edit Finding</a>", awaiting_without_estimate_card)
+        self.assertNotRegex(awaiting_without_estimate_card, r"View/Edit Repair Estimate|View Repair Estimate|Edit Repair Estimate")
+
+        self.assertIn("Estimate prepared", awaiting_with_estimate_card)
+        self.assertNotIn(">Build Repair Estimate</a>", awaiting_with_estimate_card)
+        self.assertNotRegex(awaiting_with_estimate_card, r"View/Edit Repair Estimate|View Repair Estimate|Edit Repair Estimate")
+
+        for finding_id in (10, 11, 12, 13, 14):
+            slideout_card = self.finding_card_html(page_html, finding_id, slideout=True)
+            self.assertIn(">Open Finding</a>", slideout_card)
+            self.assertIn(">Edit Finding</a>", slideout_card)
+            self.assertNotRegex(slideout_card, r"View/Edit Repair Estimate|View Repair Estimate|Edit Repair Estimate")
+        self.assertIn(">Build Repair Estimate</a>", self.finding_card_html(page_html, 10, slideout=True))
 
     def test_stage_two_public_review_template_customer_safe_ui_hooks(self):
         with open("templates/customer_estimate_review.html", encoding="utf-8") as handle:
