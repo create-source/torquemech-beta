@@ -8,7 +8,55 @@
       </span>
     </a>
 
-    <!-- Right: Hamburger -->
+    <!-- Right: Notifications + Hamburger -->
+    {% if request.state.current_user %}
+      {% set staff_notifications = request.state.staff_notifications or {"unread_count": 0, "badge": "", "items": []} %}
+      {% set unread_count = staff_notifications["unread_count"] or 0 %}
+      <div class="tm-notification">
+        <button
+          class="tm-notificationBtn"
+          id="notificationBtn"
+          type="button"
+          aria-label="Notifications, {{ unread_count }} unread"
+          aria-expanded="false"
+          aria-controls="notificationPanel"
+        >
+          <span class="tm-notificationBtn__icon" aria-hidden="true">&#128276;</span>
+          {% if staff_notifications["badge"] %}
+          <span class="tm-notificationBtn__badge" aria-label="{{ unread_count }} unread notifications">{{ staff_notifications["badge"] }}</span>
+          {% endif %}
+        </button>
+        <section class="tm-notificationPanel" id="notificationPanel" aria-labelledby="notificationHeading" hidden>
+          <div class="tm-notificationPanel__head">
+            <h2 id="notificationHeading">Notifications</h2>
+            <span>{{ unread_count }} unread</span>
+          </div>
+          {% if staff_notifications["items"] %}
+          <div class="tm-notificationList">
+            {% for item in staff_notifications["items"] %}
+            <article class="tm-notificationItem tm-notificationItem--{{ item.notification_type|replace('customer_estimate_', '') }}{% if item.is_unread %} tm-notificationItem--unread{% endif %}">
+              <div class="tm-notificationItem__top">
+                <span class="tm-notificationItem__label">{{ item.status_label }}</span>
+                <time>{{ item.created_at_display }}</time>
+              </div>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.body }}</p>
+              {% if item.notification_type == "customer_estimate_approved" %}
+              <span class="tm-notificationItem__ready">Ready for Repair</span>
+              {% endif %}
+              <form method="post" action="/pro/notifications/{{ item.id }}/open">
+                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                <button class="tm-notificationItem__action" type="submit">Open Finding</button>
+              </form>
+            </article>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="tm-notificationEmpty">No new notifications.</p>
+          {% endif %}
+        </section>
+      </div>
+    {% endif %}
     <button class="tm-menuBtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
       <span class="tm-menuBtn__icon" aria-hidden="true">&#9776;</span>
     </button>
@@ -60,4 +108,3 @@
   <!-- Click-outside backdrop -->
   <div class="tm-menuBackdrop" id="menuBackdrop" hidden></div>
 </header>
-

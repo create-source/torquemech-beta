@@ -53,6 +53,7 @@ from routers.pro import (
     shop_can_write,
     load_shop_subscription,
     shop_subscription_access_context,
+    staff_notification_context,
     validate_csrf,
     verification_token_hash,
     verify_password,
@@ -1680,6 +1681,7 @@ async def auth_context_middleware(request: Request, call_next):
     request.state.current_user = None
     request.state.current_shop = {}
     request.state.subscription_access = {}
+    request.state.staff_notifications = {"unread_count": 0, "badge": "", "items": []}
     try:
         conn = app_db_conn(row_factory=True)
         try:
@@ -1687,10 +1689,9 @@ async def auth_context_middleware(request: Request, call_next):
             request.state.current_user = user
             if user:
                 request.state.current_shop = current_shop_context(conn, request)
-                request.state.subscription_access = shop_subscription_access_context(
-                    conn,
-                    int(request.state.current_shop.get("id") or 0) or None,
-                )
+                shop_id = int(request.state.current_shop.get("id") or 0) or None
+                request.state.subscription_access = shop_subscription_access_context(conn, shop_id)
+                request.state.staff_notifications = staff_notification_context(conn, shop_id)
         finally:
             conn.close()
     except Exception:

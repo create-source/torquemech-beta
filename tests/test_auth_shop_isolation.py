@@ -3738,12 +3738,38 @@ class AuthShopIsolationTests(unittest.TestCase):
                 ).fetchone()
                 self.assertEqual(log["decision_status"], expected_status)
                 self.assertEqual(log["source"], "customer_secure_link")
+                notification = self.conn.execute(
+                    "SELECT * FROM staff_notifications WHERE related_entity_id = ?",
+                    (finding_id,),
+                ).fetchone()
+                self.assertIsNotNone(notification)
+                self.assertEqual(notification["shop_id"], shop_id)
+                self.assertEqual(notification["related_entity_type"], "finding")
+                self.assertEqual(notification["target_url"], f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+                self.assertIn("Alternator Replacement", notification["body"])
+                self.assertIn("$324.00", notification["body"])
+                if decision != "deferred":
+                    self.assertIn(decision.title(), notification["title"])
+                if decision == "approved":
+                    self.assertEqual(notification["notification_type"], "customer_estimate_approved")
+                    self.assertIn("Ready for Repair", notification["body"])
+                elif decision == "declined":
+                    self.assertEqual(notification["notification_type"], "customer_estimate_declined")
+                else:
+                    self.assertEqual(notification["notification_type"], "customer_estimate_deferred")
 
                 repeated = client.post(decision_url, data={"decision": decision}, follow_redirects=False)
                 self.assertEqual(repeated.status_code, 303)
                 self.assertEqual(
                     self.conn.execute(
                         "SELECT COUNT(*) AS count FROM customer_decision_logs WHERE finding_id = ?",
+                        (finding_id,),
+                    ).fetchone()["count"],
+                    1,
+                )
+                self.assertEqual(
+                    self.conn.execute(
+                        "SELECT COUNT(*) AS count FROM staff_notifications WHERE related_entity_id = ?",
                         (finding_id,),
                     ).fetchone()["count"],
                     1,
@@ -3790,6 +3816,11 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(expired.status_code, 404)
         finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
         self.assertEqual(finding["status"], "Open")
+        pro_module.ensure_staff_notifications_schema(self.conn)
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM staff_notifications").fetchone()["count"],
+            0,
+        )
 
     def test_customer_estimate_review_public_decision_rejects_cross_shop_token(self):
         client = self.client()
@@ -3809,6 +3840,115 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (alpha_finding,)).fetchone()
         self.assertEqual(finding["status"], "Open")
+        pro_module.ensure_staff_notifications_schema(self.conn)
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM staff_notifications").fetchone()["count"],
+            0,
+        )
+
+    def test_pro_header_notification_bell_is_shop_scoped_and_opens_one_finding(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-notify-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("stage2a-notify-alpha@example.com")
+        alpha_customer, alpha_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="Alpha")
+        alpha_finding = self.seed_finding_for_shop_estimate_stage(alpha_customer, alpha_vehicle)
+        self.seed_repair_estimate_document_for_finding(
+            alpha_customer,
+            alpha_vehicle,
+            alpha_finding,
+            total=812.25,
+            service_name="Water Pump Replacement",
+        )
+        detail = client.get(f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}")
+        review_link = self.customer_review_link_from_detail(detail.text)
+        submitted = client.post(f"{review_link}/decision", data={"decision": "approved"}, follow_redirects=False)
+        self.assertEqual(submitted.status_code, 303)
+        notification = self.conn.execute("SELECT * FROM staff_notifications WHERE shop_id = ?", (alpha_shop,)).fetchone()
+        self.assertIsNotNone(notification)
+
+        dashboard = client.get("/pro/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertLess(dashboard.text.index('id="notificationBtn"'), dashboard.text.index('id="menuBtn"'))
+        self.assertIn('aria-label="Notifications, 1 unread"', dashboard.text)
+        self.assertIn('aria-expanded="false"', dashboard.text)
+        self.assertIn('aria-controls="notificationPanel"', dashboard.text)
+        self.assertIn('id="notificationPanel"', dashboard.text)
+        self.assertIn("Water Pump Replacement", dashboard.text)
+        self.assertIn("$812.25", dashboard.text)
+        self.assertIn("Ready for Repair", dashboard.text)
+        self.assertIn("Open Finding", dashboard.text)
+        self.assertIn("document.addEventListener(\"click\"", Path("static/nav.js").read_text(encoding="utf-8"))
+        self.assertIn("e.key === \"Escape\"", Path("static/nav.js").read_text(encoding="utf-8"))
+        self.assertIn("returnFocus", Path("static/nav.js").read_text(encoding="utf-8"))
+
+        for offset in range(101):
+            self.conn.execute(
+                """
+                INSERT INTO staff_notifications (
+                  shop_id, notification_type, title, body, related_entity_type,
+                  related_entity_id, target_url, source_key, created_at
+                )
+                VALUES (?, 'customer_estimate_declined', 'Customer Declined', 'Extra',
+                        'finding', ?, ?, ?, ?)
+                """,
+                (
+                    alpha_shop,
+                    alpha_finding,
+                    f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}",
+                    f"extra:{offset}",
+                    f"2026-07-24T12:{offset % 60:02d}:00",
+                ),
+            )
+        self.conn.commit()
+        capped = client.get("/pro/dashboard")
+        self.assertIn('aria-label="Notifications, 102 unread"', capped.text)
+        self.assertIn(">99+<", capped.text)
+
+        open_response = client.post(
+            f"/pro/notifications/{notification['id']}/open",
+            data={"csrf_token": csrf_from(dashboard.text), "next": "https://evil.example/"},
+            follow_redirects=False,
+        )
+        self.assertEqual(open_response.status_code, 303)
+        self.assertEqual(
+            open_response.headers["location"],
+            f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}",
+        )
+        read_notification = self.conn.execute(
+            "SELECT * FROM staff_notifications WHERE id = ?",
+            (notification["id"],),
+        ).fetchone()
+        self.assertIsNotNone(read_notification["read_at"])
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM staff_notifications WHERE shop_id = ? AND read_at IS NULL",
+                (alpha_shop,),
+            ).fetchone()["count"],
+            101,
+        )
+
+        self.logout(client)
+        self.signup(client, email="stage2a-notify-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("stage2a-notify-beta@example.com")
+        beta_dashboard = client.get("/pro/dashboard")
+        self.assertEqual(beta_dashboard.status_code, 200)
+        self.assertIn('aria-label="Notifications, 0 unread"', beta_dashboard.text)
+        self.assertIn("No new notifications.", beta_dashboard.text)
+        self.assertNotIn("Water Pump Replacement", beta_dashboard.text)
+        cross_read = client.post(
+            f"/pro/notifications/{notification['id']}/open",
+            data={"csrf_token": csrf_from(beta_dashboard.text)},
+            follow_redirects=False,
+        )
+        self.assertEqual(cross_read.status_code, 404)
+
+        self.conn.execute("UPDATE staff_notifications SET read_at = ? WHERE shop_id = ?", ("2026-07-24T14:00:00", alpha_shop))
+        self.conn.commit()
+        self.logout(client)
+        self.login(client, email="stage2a-notify-alpha@example.com")
+        empty_dashboard = client.get("/pro/dashboard")
+        self.assertIn('aria-label="Notifications, 0 unread"', empty_dashboard.text)
+        self.assertNotIn('tm-notificationBtn__badge"', empty_dashboard.text)
 
     def test_shop_can_open_saved_finding_and_reopen_linked_estimate(self):
         client = self.client()

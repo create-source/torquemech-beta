@@ -260,6 +260,16 @@ CUSTOMER_DECISION_STATUS_BY_VALUE = {
     "declined": "Declined",
     "deferred": "Deferred",
 }
+CUSTOMER_DECISION_NOTIFICATION_TYPE_BY_STATUS = {
+    "Approved": "customer_estimate_approved",
+    "Declined": "customer_estimate_declined",
+    "Deferred": "customer_estimate_deferred",
+}
+CUSTOMER_DECISION_NOTIFICATION_TITLE_BY_STATUS = {
+    "Approved": "Customer Approved",
+    "Declined": "Customer Declined",
+    "Deferred": "Customer Decided Later",
+}
 APPROVAL_REQUEST_TYPES = ("finding", "labor", "parts")
 APPROVAL_DECISION_OPTIONS = ("pending", "approved", "declined", "deferred")
 REPAIR_WORK_STATUS_OPTIONS = ("ready", "in_progress", "waiting_parts", "completed")
@@ -8959,6 +8969,137 @@ def ensure_customer_decision_logs_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def ensure_staff_notifications_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS staff_notifications (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          notification_type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          body TEXT NOT NULL,
+          related_entity_type TEXT NOT NULL,
+          related_entity_id INTEGER NOT NULL,
+          target_url TEXT NOT NULL,
+          source_key TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          read_at TEXT,
+          FOREIGN KEY (shop_id) REFERENCES shop_profile(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_staff_notifications_source_key "
+        "ON staff_notifications (source_key)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_staff_notifications_shop_unread "
+        "ON staff_notifications (shop_id, read_at, created_at DESC, id DESC)"
+    )
+    conn.commit()
+
+
+def vehicle_notification_label(vehicle: dict[str, Any]) -> str:
+    label = " ".join(
+        str(vehicle.get(key) or "").strip()
+        for key in ("year", "make", "model")
+    ).strip()
+    return label or "Vehicle"
+
+
+def finding_detail_url(customer_id: int, vehicle_id: int, finding_id: int) -> str:
+    return f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+
+
+def create_customer_decision_notification_if_needed(
+    conn: sqlite3.Connection,
+    *,
+    shop_id: int,
+    customer: dict[str, Any],
+    vehicle: dict[str, Any],
+    finding: dict[str, Any],
+    estimate: dict[str, Any],
+    decision_status: str,
+    created_at: str,
+) -> None:
+    notification_type = CUSTOMER_DECISION_NOTIFICATION_TYPE_BY_STATUS.get(decision_status)
+    if not notification_type:
+        return
+    ensure_staff_notifications_schema(conn)
+    customer_id = int(customer["id"])
+    vehicle_id = int(vehicle["id"])
+    finding_id = int(finding["id"])
+    estimate_id = int(estimate["id"])
+    customer_label = customer_name(customer)
+    vehicle_label_text = vehicle_notification_label(vehicle)
+    service = (
+        estimate_document_service_summary(estimate)
+        or str(finding.get("recommendation") or finding.get("labor_description") or finding.get("finding") or "").strip()
+        or "Prepared estimate"
+    )
+    total = format_currency(estimate.get("estimate_total")) or "$0.00"
+    status_note = " Ready for Repair." if decision_status == "Approved" else ""
+    body = f"{customer_label} - {vehicle_label_text} - {service} - {total}.{status_note}".strip()
+    source_key = f"customer_secure_link:{shop_id}:{customer_id}:{vehicle_id}:{finding_id}:{estimate_id}:{decision_status}"
+    conn.execute(
+        """
+        INSERT OR IGNORE INTO staff_notifications (
+          shop_id, notification_type, title, body, related_entity_type,
+          related_entity_id, target_url, source_key, created_at, read_at
+        )
+        VALUES (?, ?, ?, ?, 'finding', ?, ?, ?, ?, NULL)
+        """,
+        (
+            shop_id,
+            notification_type,
+            CUSTOMER_DECISION_NOTIFICATION_TITLE_BY_STATUS[decision_status],
+            body,
+            finding_id,
+            finding_detail_url(customer_id, vehicle_id, finding_id),
+            source_key,
+            created_at,
+        ),
+    )
+
+
+def staff_notification_context(conn: sqlite3.Connection, shop_id: int | None) -> dict[str, Any]:
+    if not shop_id:
+        return {"unread_count": 0, "badge": "", "items": []}
+    ensure_staff_notifications_schema(conn)
+    unread_count = int(
+        conn.execute(
+            "SELECT COUNT(*) AS count FROM staff_notifications WHERE shop_id = ? AND read_at IS NULL",
+            (shop_id,),
+        ).fetchone()["count"]
+    )
+    records = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM staff_notifications
+            WHERE shop_id = ?
+            ORDER BY created_at DESC, id DESC
+            LIMIT 10
+            """,
+            (shop_id,),
+        ).fetchall()
+    ]
+    for record in records:
+        record["is_unread"] = record.get("read_at") in (None, "")
+        record["created_at_display"] = format_pro_datetime(record.get("created_at")) or str(record.get("created_at") or "")
+        record["status_label"] = {
+            "customer_estimate_approved": "Approved",
+            "customer_estimate_declined": "Declined",
+            "customer_estimate_deferred": "Deferred",
+        }.get(str(record.get("notification_type") or ""), "Notification")
+    return {
+        "unread_count": unread_count,
+        "badge": "99+" if unread_count > 99 else (str(unread_count) if unread_count else ""),
+        "items": records,
+    }
+
+
 def append_customer_decision_log_if_needed(
     conn: sqlite3.Connection,
     finding_id: int,
@@ -13930,6 +14071,16 @@ async def customer_estimate_review_decision(request: Request, token: str):
             allow_change=False,
             now=now,
         )
+        create_customer_decision_notification_if_needed(
+            conn,
+            shop_id=int(context["shop"]["id"]),
+            customer=context["customer"],
+            vehicle=context["vehicle"],
+            finding=finding,
+            estimate=context["estimate"],
+            decision_status=decision_status,
+            created_at=now,
+        )
         conn.commit()
     except HTTPException:
         conn.rollback()
@@ -15535,6 +15686,73 @@ async def pro_finding_customer_decision_update(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
         status_code=303,
     )
+
+
+@router.post("/notifications/{notification_id}/open")
+async def pro_notification_open(request: Request, notification_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    now = datetime.utcnow().isoformat()
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        ensure_staff_notifications_schema(conn)
+        notification = row_to_dict(
+            conn.execute(
+                """
+                SELECT sn.*
+                FROM staff_notifications sn
+                WHERE sn.id = ?
+                  AND sn.shop_id = ?
+                  AND sn.related_entity_type = 'finding'
+                LIMIT 1
+                """,
+                (notification_id, shop_id),
+            ).fetchone()
+        )
+        if not notification:
+            raise HTTPException(status_code=404, detail="Notification not found")
+        target = row_to_dict(
+            conn.execute(
+                """
+                SELECT f.id AS finding_id, f.customer_id, f.vehicle_id
+                FROM findings_records f
+                JOIN customers c ON c.id = f.customer_id
+                JOIN customer_vehicles v ON v.id = f.vehicle_id
+                WHERE f.id = ?
+                  AND c.shop_id = ?
+                  AND v.shop_id = ?
+                  AND v.customer_id = c.id
+                LIMIT 1
+                """,
+                (int(notification["related_entity_id"]), shop_id, shop_id),
+            ).fetchone()
+        )
+        if not target:
+            raise HTTPException(status_code=404, detail="Notification target not found")
+        target_url = finding_detail_url(
+            int(target["customer_id"]),
+            int(target["vehicle_id"]),
+            int(target["finding_id"]),
+        )
+        if str(notification.get("target_url") or "") != target_url:
+            raise HTTPException(status_code=404, detail="Notification target not found")
+        conn.execute(
+            """
+            UPDATE staff_notifications
+            SET read_at = COALESCE(read_at, ?)
+            WHERE id = ? AND shop_id = ?
+            """,
+            (now, notification_id, shop_id),
+        )
+        conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return RedirectResponse(target_url, status_code=303)
 
 
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair")
