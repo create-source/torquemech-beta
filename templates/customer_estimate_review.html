@@ -7,8 +7,8 @@
 {% block page_css %}
 <style>
   .tm-public-estimate-page {
-    color-scheme: light;
-    background:#f8fafc;
+    color-scheme: dark;
+    background:#050e1b;
   }
   .tm-public-estimate-page .tm-container {
     max-width:none;
@@ -18,10 +18,15 @@
     --tm-navy: #0b1623;
     --tm-charcoal: #111827;
     --tm-orange: #f97316;
-    --tm-paper: #fff;
-    --tm-muted: #475569;
-    background:#f8fafc;
-    color:#0f172a;
+    --tm-panel: #101b2f;
+    --tm-panel-strong: #0b1728;
+    --tm-text: #f8fafc;
+    --tm-soft: #d7e1ee;
+    --tm-muted: #aebdd0;
+    background:
+      radial-gradient(circle at 14% -8%, rgba(249,115,22,.16), transparent 28rem),
+      linear-gradient(180deg, #071221 0%, #050e1b 100%);
+    color:var(--tm-soft);
     padding: 24px 16px 48px;
   }
   .tm-public-estimate-wrap { max-width: 980px; margin:0 auto; display:grid; gap:16px; }
@@ -29,10 +34,12 @@
     display:grid;
     gap:14px;
     border-radius:8px;
-    background:var(--tm-navy);
+    background:linear-gradient(180deg, #101b2f 0%, #071221 100%);
     color:#f8fafc;
     padding:22px;
     border-top:5px solid var(--tm-orange);
+    border:1px solid rgba(249,115,22,.28);
+    box-shadow:0 18px 38px rgba(0,0,0,.28);
   }
   .tm-public-estimate-brand {
     color:#fff;
@@ -65,36 +72,38 @@
     text-decoration:none;
   }
   .tm-public-estimate-panel {
-    border:1px solid rgba(15,23,42,.12);
+    border:1px solid rgba(148,163,184,.2);
     border-radius:8px;
-    background:var(--tm-paper);
+    background:var(--tm-panel);
     padding:18px;
-    box-shadow:0 10px 24px rgba(15,23,42,.06);
+    box-shadow:0 14px 30px rgba(0,0,0,.22);
   }
   .tm-public-estimate-panel,
   .tm-public-estimate-panel p,
   .tm-public-estimate-panel strong {
-    color:#0f172a;
+    color:var(--tm-soft);
   }
   .tm-public-estimate-heading,
   .tm-public-estimate-panel h2 {
     margin:0 0 12px;
-    color:#0b1623 !important;
-    -webkit-text-fill-color:#0b1623 !important;
+    color:#f8fafc !important;
+    -webkit-text-fill-color:#f8fafc !important;
     font-size:1.08rem;
     font-weight:900;
     line-height:1.25;
+    padding-left:10px;
+    border-left:4px solid var(--tm-orange);
   }
   .tm-public-estimate-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
   .tm-public-estimate-field { display:grid; gap:4px; min-width:0; }
-  .tm-public-estimate-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
-  .tm-public-estimate-field strong { color:#0f172a; overflow-wrap:anywhere; }
+  .tm-public-estimate-field span { color:#fed7aa; font-size:.74rem; font-weight:900; text-transform:uppercase; }
+  .tm-public-estimate-field strong { color:#f8fafc; overflow-wrap:anywhere; }
   .tm-public-estimate-copy { color:var(--tm-muted); line-height:1.55; margin:0; }
   .tm-public-estimate-photos { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; }
   .tm-public-estimate-photo {
     display:grid;
     gap:6px;
-    color:#334155;
+    color:#d7e1ee;
     font-size:.82rem;
     font-weight:800;
     text-decoration:none;
@@ -104,17 +113,17 @@
     height:min(300px, 42vw);
     max-height:300px;
     object-fit:contain;
-    border:1px solid rgba(15,23,42,.12);
+    border:1px solid rgba(148,163,184,.22);
     border-radius:8px;
-    background:#f8fafc;
+    background:#071221;
   }
   .tm-public-estimate-line-items { display:grid; gap:12px; }
   .tm-public-estimate-price-card {
     display:grid;
     gap:12px;
-    border:1px solid rgba(15,23,42,.12);
+    border:1px solid rgba(148,163,184,.2);
     border-radius:8px;
-    background:#fff;
+    background:var(--tm-panel-strong);
     padding:14px;
   }
   .tm-public-estimate-price-grid {
@@ -128,17 +137,17 @@
     min-width:0;
   }
   .tm-public-estimate-price-field span {
-    color:#475569;
+    color:#fed7aa;
     font-size:.74rem;
     font-weight:900;
     text-transform:uppercase;
   }
   .tm-public-estimate-price-field strong {
-    color:#0f172a;
+    color:#f8fafc;
     overflow-wrap:anywhere;
   }
   .tm-public-estimate-price-field--total strong {
-    color:#0b1623;
+    color:#fff7ed;
     font-size:1.08rem;
   }
   .tm-public-estimate-total {
@@ -148,18 +157,19 @@
     margin-top:14px;
     padding-top:14px;
     border-top:2px solid rgba(249,115,22,.35);
-    color:#0f172a;
+    color:#f8fafc;
     font-size:1.2rem;
     font-weight:900;
   }
   .tm-public-estimate-note {
     border-left:4px solid var(--tm-orange);
-    background:#fff7ed;
-    color:#7c2d12;
+    background:#101b2f;
+    color:#fff7ed;
     padding:12px;
     border-radius:8px;
     line-height:1.5;
     font-weight:800;
+    border-top:1px solid rgba(249,115,22,.28);
   }
   @media (max-width: 720px) {
     .tm-public-estimate { padding:14px 10px 32px; }
@@ -179,7 +189,23 @@
     .tm-public-estimate-header p,
     .tm-public-estimate-kicker { color:#111; }
     .tm-public-estimate-action { display:none; }
-    .tm-public-estimate-panel { box-shadow:none; break-inside:avoid; }
+    .tm-public-estimate-panel {
+      color:#111;
+      background:#fff;
+      box-shadow:none;
+      break-inside:avoid;
+    }
+    .tm-public-estimate-panel,
+    .tm-public-estimate-panel p,
+    .tm-public-estimate-panel strong,
+    .tm-public-estimate-heading,
+    .tm-public-estimate-field strong,
+    .tm-public-estimate-price-field strong,
+    .tm-public-estimate-total,
+    .tm-public-estimate-note {
+      color:#111 !important;
+      -webkit-text-fill-color:#111 !important;
+    }
   }
 </style>
 {% endblock %}
