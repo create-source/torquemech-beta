@@ -3442,6 +3442,15 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("View Customer Review", after.text)
         self.assertIn("Copy Customer Link", after.text)
         self.assertIn("/customer/estimate/", after.text)
+        self.assertIn("Secure customer review link ready to share.", after.text)
+        self.assertIn("Customer link copied.", after.text)
+        self.assertNotIn('<code id="customerReviewUrl"', after.text)
+
+        review_link = self.customer_review_link_from_detail(after.text)
+        visible_text = html.unescape(re.sub(r"<[^>]+>", " ", after.text))
+        self.assertNotIn(review_link, visible_text)
+        self.assertIn(f'href="{html.escape(review_link, quote=True)}"', after.text)
+        self.assertIn(f'data-copy-text="{html.escape(review_link, quote=True)}"', after.text)
 
     def test_customer_estimate_review_link_honors_forwarded_https(self):
         client = TestClient(main.app, base_url="http://railway.internal")
@@ -3494,6 +3503,13 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("Prepared Estimate Review", response.text)
+        self.assertNotIn('id="menuBtn"', response.text)
+        self.assertNotIn("tm-menuBtn", response.text)
+        self.assertNotIn('aria-label="Main menu"', response.text)
+        self.assertIn('class="tm-public-estimate-heading">Shop and Customer</h2>', response.text)
+        self.assertIn('class="tm-public-estimate-heading">Finding</h2>', response.text)
+        self.assertIn('class="tm-public-estimate-heading">Before Photos</h2>', response.text)
+        self.assertIn('class="tm-public-estimate-heading">Prepared Estimate</h2>', response.text)
         self.assertIn("Alpha Shop", response.text)
         self.assertIn("Public", response.text)
         self.assertIn("2014 Toyota Camry", response.text)
@@ -3502,6 +3518,13 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Customer heard grinding.", response.text)
         self.assertIn("/static/uploads/findings/brake-before.jpg", response.text)
         self.assertIn("Front Brake Pads Replacement", response.text)
+        self.assertIn("<span>Recommended Service</span><strong>Front Brake Pads Replacement</strong>", response.text)
+        self.assertNotIn("<span>Recommended Service</span><strong>Replace front brake pads and resurface rotors</strong>", response.text)
+        self.assertIn("<span>Service</span>", response.text)
+        self.assertIn("<span>Parts</span>", response.text)
+        self.assertIn("<span>Labor</span>", response.text)
+        self.assertIn("<span>Fees</span>", response.text)
+        self.assertIn("<span>Line Total</span>", response.text)
         self.assertIn("$300.00", response.text)
         self.assertIn("$500.00", response.text)
         self.assertIn("$12.25", response.text)
@@ -3513,6 +3536,9 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("Mark Customer Approved", response.text)
         self.assertNotIn("Mark Customer Declined", response.text)
         self.assertNotIn("Defer", response.text)
+        self.assertNotIn("Start Repair", response.text)
+        self.assertNotIn("Open Repair Workspace", response.text)
+        self.assertNotIn("Edit Finding", response.text)
         self.assertNotIn("/pro/customers/", response.text)
 
     def test_customer_estimate_review_rejects_invalid_and_tampered_tokens(self):

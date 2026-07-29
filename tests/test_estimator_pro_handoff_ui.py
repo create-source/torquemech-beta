@@ -531,9 +531,13 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("color:#0f172a;", finding_html)
         self.assertIn("color:#334155;", finding_html)
         self.assertIn("Customer Review Link", finding_html)
+        self.assertIn("Secure customer review link ready to share.", finding_html)
         self.assertIn("View Customer Review", finding_html)
         self.assertIn("Copy Customer Link", finding_html)
         self.assertIn("data-copy-customer-review-link", finding_html)
+        self.assertIn("data-copy-customer-review-status", finding_html)
+        self.assertIn("Customer link copied.", finding_html)
+        self.assertNotIn('<code id="customerReviewUrl"', finding_html)
         self.assertNotIn("View/Edit Repair Estimate", finding_html)
         self.assertEqual(finding_html.count(">Finding History<"), 1)
         self.assertNotIn("Customer Decision / Update Status", vehicle_html)
@@ -542,6 +546,26 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("View/Edit Repair Estimate", vehicle_html)
         self.assertIn(".tm-estimator-parts-source-group__title", style_css)
         self.assertIn("color:#cbd5e1;", style_css)
+
+    def test_stage_two_public_review_template_customer_safe_ui_hooks(self):
+        with open("templates/customer_estimate_review.html", encoding="utf-8") as handle:
+            public_review_html = handle.read()
+
+        self.assertIn("{% block site_nav %}{% endblock %}", public_review_html)
+        self.assertIn(".tm-public-estimate-heading", public_review_html)
+        self.assertIn("color:#0b1623 !important;", public_review_html)
+        self.assertIn("<span>Service</span>", public_review_html)
+        self.assertIn("<span>Parts</span>", public_review_html)
+        self.assertIn("<span>Labor</span>", public_review_html)
+        self.assertIn("<span>Fees</span>", public_review_html)
+        self.assertIn("<span>Tax</span>", public_review_html)
+        self.assertIn("<span>Line Total</span>", public_review_html)
+        self.assertIn("line_items[0].service_name or estimate.related_title or finding.recommendation", public_review_html)
+        self.assertIn("object-fit:contain;", public_review_html)
+        self.assertNotIn("Mark Customer Approved", public_review_html)
+        self.assertNotIn("Mark Customer Declined", public_review_html)
+        self.assertNotIn("Start Repair", public_review_html)
+        self.assertNotIn("Edit Finding", public_review_html)
 
     def test_pdf_generation_accepts_quantity_line_item(self):
         client = TestClient(main.app, base_url="http://localhost")

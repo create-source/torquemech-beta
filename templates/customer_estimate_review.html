@@ -1,9 +1,19 @@
 {% extends "layout.html" %}
 
 {% block title %}Estimate Review | TorqueMech{% endblock %}
+{% block body_class %}tm-public-estimate-page{% endblock %}
+{% block site_nav %}{% endblock %}
 
 {% block page_css %}
 <style>
+  .tm-public-estimate-page {
+    color-scheme: light;
+    background:#f8fafc;
+  }
+  .tm-public-estimate-page .tm-container {
+    max-width:none;
+    padding:0;
+  }
   .tm-public-estimate {
     --tm-navy: #0b1623;
     --tm-charcoal: #111827;
@@ -24,6 +34,14 @@
     padding:22px;
     border-top:5px solid var(--tm-orange);
   }
+  .tm-public-estimate-brand {
+    color:#fff;
+    font-size:1rem;
+    font-weight:900;
+    letter-spacing:0;
+  }
+  .tm-public-estimate-brand span:first-child { color:#f8fafc; }
+  .tm-public-estimate-brand span:last-child { color:#fb923c; }
   .tm-public-estimate-kicker {
     color:#fed7aa;
     font-size:.78rem;
@@ -53,7 +71,20 @@
     padding:18px;
     box-shadow:0 10px 24px rgba(15,23,42,.06);
   }
-  .tm-public-estimate-panel h2 { margin:0 0 12px; color:#0f172a; font-size:1.08rem; }
+  .tm-public-estimate-panel,
+  .tm-public-estimate-panel p,
+  .tm-public-estimate-panel strong {
+    color:#0f172a;
+  }
+  .tm-public-estimate-heading,
+  .tm-public-estimate-panel h2 {
+    margin:0 0 12px;
+    color:#0b1623 !important;
+    -webkit-text-fill-color:#0b1623 !important;
+    font-size:1.08rem;
+    font-weight:900;
+    line-height:1.25;
+  }
   .tm-public-estimate-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
   .tm-public-estimate-field { display:grid; gap:4px; min-width:0; }
   .tm-public-estimate-field span { color:#64748b; font-size:.74rem; font-weight:900; text-transform:uppercase; }
@@ -77,17 +108,39 @@
     border-radius:8px;
     background:#f8fafc;
   }
-  .tm-public-estimate-table { width:100%; border-collapse:collapse; }
-  .tm-public-estimate-table th,
-  .tm-public-estimate-table td {
-    border-bottom:1px solid rgba(15,23,42,.1);
-    padding:10px 8px;
-    text-align:left;
-    vertical-align:top;
+  .tm-public-estimate-line-items { display:grid; gap:12px; }
+  .tm-public-estimate-price-card {
+    display:grid;
+    gap:12px;
+    border:1px solid rgba(15,23,42,.12);
+    border-radius:8px;
+    background:#fff;
+    padding:14px;
   }
-  .tm-public-estimate-table th { color:#475569; font-size:.74rem; text-transform:uppercase; }
-  .tm-public-estimate-table td:last-child,
-  .tm-public-estimate-table th:last-child { text-align:right; }
+  .tm-public-estimate-price-grid {
+    display:grid;
+    grid-template-columns:repeat(5, minmax(0, 1fr));
+    gap:10px;
+  }
+  .tm-public-estimate-price-field {
+    display:grid;
+    gap:4px;
+    min-width:0;
+  }
+  .tm-public-estimate-price-field span {
+    color:#475569;
+    font-size:.74rem;
+    font-weight:900;
+    text-transform:uppercase;
+  }
+  .tm-public-estimate-price-field strong {
+    color:#0f172a;
+    overflow-wrap:anywhere;
+  }
+  .tm-public-estimate-price-field--total strong {
+    color:#0b1623;
+    font-size:1.08rem;
+  }
   .tm-public-estimate-total {
     display:flex;
     justify-content:space-between;
@@ -114,12 +167,10 @@
     .tm-public-estimate-panel { padding:15px; }
     .tm-public-estimate-grid { grid-template-columns:1fr; }
     .tm-public-estimate-actions .tm-public-estimate-action { width:100%; }
-    .tm-public-estimate-table,
-    .tm-public-estimate-table tbody,
-    .tm-public-estimate-table tr,
-    .tm-public-estimate-table td { display:block; width:100%; }
-    .tm-public-estimate-table thead { display:none; }
-    .tm-public-estimate-table td { text-align:left !important; padding:8px 0; }
+    .tm-public-estimate-price-grid { grid-template-columns:1fr 1fr; }
+  }
+  @media (max-width: 420px) {
+    .tm-public-estimate-price-grid { grid-template-columns:1fr; }
   }
   @media print {
     .tm-public-estimate { background:#fff; padding:0; }
@@ -137,6 +188,7 @@
 <main class="tm-public-estimate">
   <div class="tm-public-estimate-wrap">
     <header class="tm-public-estimate-header">
+      <div class="tm-public-estimate-brand" aria-label="TorqueMech"><span>Torque</span><span>Mech</span></div>
       <div class="tm-public-estimate-kicker">Prepared Estimate Review</div>
       <h1>{{ estimate.related_title or line_items[0].service_name or "Repair Estimate" }}</h1>
       <p>This page is for review only. Please contact the shop with questions or next steps.</p>
@@ -148,7 +200,7 @@
     </header>
 
     <section class="tm-public-estimate-panel" aria-label="Shop and customer">
-      <h2>Shop And Customer</h2>
+      <h2 class="tm-public-estimate-heading">Shop and Customer</h2>
       <div class="tm-public-estimate-grid">
         <div class="tm-public-estimate-field"><span>Shop</span><strong>{{ shop.shop_name or "TorqueMech Shop" }}</strong></div>
         <div class="tm-public-estimate-field"><span>Customer</span><strong>{{ customer.first_name or estimate.customer_name or "Customer" }}</strong></div>
@@ -160,7 +212,7 @@
     </section>
 
     <section class="tm-public-estimate-panel" aria-label="Vehicle">
-      <h2>Vehicle</h2>
+      <h2 class="tm-public-estimate-heading">Vehicle</h2>
       <div class="tm-public-estimate-grid">
         <div class="tm-public-estimate-field"><span>Vehicle</span><strong>{{ vehicle.year or "" }} {{ vehicle.make or "" }} {{ vehicle.model or "" }}{% if vehicle.engine %} {{ vehicle.engine }}{% endif %}</strong></div>
         <div class="tm-public-estimate-field"><span>Current Mileage</span><strong>{% if vehicle.mileage is not none %}{{ vehicle.mileage|pro_miles }} miles{% elif finding.mileage is not none %}{{ finding.mileage|pro_miles }} miles{% else %}-{% endif %}</strong></div>
@@ -168,10 +220,10 @@
     </section>
 
     <section class="tm-public-estimate-panel" aria-label="Finding">
-      <h2>Finding</h2>
+      <h2 class="tm-public-estimate-heading">Finding</h2>
       <div class="tm-public-estimate-grid">
         <div class="tm-public-estimate-field"><span>Problem</span><strong>{{ finding.finding or estimate.related_title or "-" }}</strong></div>
-        <div class="tm-public-estimate-field"><span>Recommended Service</span><strong>{{ finding.recommendation or estimate.related_title or "-" }}</strong></div>
+        <div class="tm-public-estimate-field"><span>Recommended Service</span><strong>{{ line_items[0].service_name or estimate.related_title or finding.recommendation or finding.finding or "-" }}</strong></div>
       </div>
       {% if finding.customer_notes %}
       <p class="tm-public-estimate-copy" style="margin-top:12px;">{{ finding.customer_notes }}</p>
@@ -179,7 +231,7 @@
     </section>
 
     <section class="tm-public-estimate-panel" aria-label="Before photos">
-      <h2>Before Photos</h2>
+      <h2 class="tm-public-estimate-heading">Before Photos</h2>
       {% if finding.before_inspection_photo_urls %}
       <div class="tm-public-estimate-photos">
         {% for photo_url in finding.before_inspection_photo_urls %}
@@ -195,33 +247,34 @@
     </section>
 
     <section class="tm-public-estimate-panel" aria-label="Prepared estimate pricing">
-      <h2>Prepared Estimate</h2>
-      <table class="tm-public-estimate-table">
-        <thead>
-          <tr>
-            <th>Service</th>
-            <th>Labor</th>
-            <th>Parts</th>
-            <th>Fees</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in line_items %}
-          <tr>
-            <td>
-              <strong>{{ item.service_name }}</strong>
-              {% if item.quantity and item.quantity != 1 %}<div class="tm-public-estimate-copy">Qty {{ item.quantity|pro_quantity }}</div>{% endif %}
-              {% if item.inspection_findings %}<div class="tm-public-estimate-copy">{{ item.inspection_findings }}</div>{% endif %}
-            </td>
-            <td>{{ item.labor_total|pro_currency }}</td>
-            <td>{{ item.parts_total|pro_currency }}</td>
-            <td>{{ item.fee_total|pro_currency }}</td>
-            <td>{{ item.line_total|pro_currency }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <h2 class="tm-public-estimate-heading">Prepared Estimate</h2>
+      <div class="tm-public-estimate-line-items">
+        {% for item in line_items %}
+        <article class="tm-public-estimate-price-card">
+          <div class="tm-public-estimate-price-field">
+            <span>Service</span>
+            <strong>{{ item.service_name }}</strong>
+            {% if item.quantity and item.quantity != 1 %}<div class="tm-public-estimate-copy">Qty {{ item.quantity|pro_quantity }}</div>{% endif %}
+            {% if item.inspection_findings %}<div class="tm-public-estimate-copy">{{ item.inspection_findings }}</div>{% endif %}
+          </div>
+          <div class="tm-public-estimate-price-grid">
+            {% if item.show_parts_total %}
+            <div class="tm-public-estimate-price-field"><span>Parts</span><strong>{{ item.parts_total|pro_currency }}</strong></div>
+            {% endif %}
+            {% if item.show_labor_total %}
+            <div class="tm-public-estimate-price-field"><span>Labor</span><strong>{{ item.labor_total|pro_currency }}</strong></div>
+            {% endif %}
+            {% if item.show_fee_total %}
+            <div class="tm-public-estimate-price-field"><span>Fees</span><strong>{{ item.fee_total|pro_currency }}</strong></div>
+            {% endif %}
+            {% if item.show_tax_total %}
+            <div class="tm-public-estimate-price-field"><span>Tax</span><strong>{{ item.tax_total|pro_currency }}</strong></div>
+            {% endif %}
+            <div class="tm-public-estimate-price-field tm-public-estimate-price-field--total"><span>Line Total</span><strong>{{ item.line_total|pro_currency }}</strong></div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
       <div class="tm-public-estimate-total">
         <span>Total</span>
         <span>{{ estimate.estimate_total|pro_currency }}</span>
@@ -231,7 +284,7 @@
 
     {% if service_education %}
     <section class="tm-public-estimate-panel" aria-label="Service education">
-      <h2>Service Education</h2>
+      <h2 class="tm-public-estimate-heading">Service Education</h2>
       {% for item in service_education %}
       <article style="display:grid;gap:7px;margin-top:{% if not loop.first %}12px{% else %}0{% endif %};">
         {% if item.title %}<strong>{{ item.title }}</strong>{% endif %}

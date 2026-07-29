@@ -58,13 +58,17 @@
     background:#fff7ed;
     padding:12px;
   }
-  .tm-customer-review-link code {
-    display:block;
-    overflow-wrap:anywhere;
-    white-space:normal;
+  .tm-customer-review-link p {
     color:#7c2d12;
-    font-size:.82rem;
+    font-size:.92rem;
+    font-weight:900;
     line-height:1.45;
+    margin:0;
+  }
+  .tm-customer-review-copy-status {
+    color:#166534;
+    font-size:.84rem;
+    font-weight:900;
   }
   .tm-finding-notes { display:grid; gap:12px; }
   .tm-finding-action-panel { display:grid; gap:12px; }
@@ -195,11 +199,12 @@
       <p class="tm-history-empty" style="margin:8px 0 0;">Share this secure, view-only page when the customer should review the prepared estimate.</p>
     </div>
     <div class="tm-customer-review-link">
-      <code id="customerReviewUrl">{{ customer_review_url }}</code>
+      <p>Secure customer review link ready to share.</p>
       <div class="tm-finding-actions" style="margin-top:0;">
         <a class="tm-btn tm-btn-primary" href="{{ customer_review_url }}" target="_blank" rel="noopener">View Customer Review</a>
         <button class="tm-btn tm-btn-secondary" type="button" data-copy-customer-review-link data-copy-text="{{ customer_review_url }}">Copy Customer Link</button>
       </div>
+      <div class="tm-customer-review-copy-status" data-copy-customer-review-status role="status" aria-live="polite" hidden></div>
     </div>
   </section>
   {% endif %}
@@ -334,6 +339,7 @@
 <script>
   document.querySelector("[data-copy-customer-review-link]")?.addEventListener("click", async (event) => {
     const button = event.currentTarget;
+    const status = document.querySelector("[data-copy-customer-review-status]");
     const value = button?.dataset?.copyText || "";
     if (!value) return;
     const original = button.textContent;
@@ -352,6 +358,10 @@
         textarea.remove();
       }
       button.textContent = "Copied";
+      if (status) {
+        status.hidden = false;
+        status.textContent = "Customer link copied.";
+      }
       window.setTimeout(() => { button.textContent = original || "Copy Customer Link"; }, 1400);
     } catch (error) {
       button.textContent = "Copy failed";

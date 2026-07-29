@@ -12009,26 +12009,43 @@ def normalize_customer_estimate_line_items(estimate: dict[str, Any]) -> list[dic
             or ""
         ).strip()
         labor_total = raw_item.get("labor_total")
+        if labor_total is None:
+            labor_total = raw_item.get("laborTotal")
         parts_total = raw_item.get("parts_total")
+        if parts_total is None:
+            parts_total = raw_item.get("partsTotal")
+        if parts_total is None:
+            parts_total = raw_item.get("partsPrice")
         fee_total = raw_item.get("travel_total")
         if fee_total is None:
             fee_total = raw_item.get("travelFee")
+        if fee_total is None:
+            fee_total = raw_item.get("fee_total")
+        tax_total = raw_item.get("tax_total")
+        if tax_total is None:
+            tax_total = raw_item.get("taxTotal")
         line_total = raw_item.get("line_total")
         if line_total is None:
             line_total = raw_item.get("grand_total")
         labor_amount = customer_estimate_public_float(labor_total)
         parts_amount = customer_estimate_public_float(parts_total)
         fee_amount = customer_estimate_public_float(fee_total)
+        tax_amount = customer_estimate_public_float(tax_total)
         total_amount = customer_estimate_public_float(line_total)
         if not total_amount:
-            total_amount = labor_amount + parts_amount + fee_amount
+            total_amount = labor_amount + parts_amount + fee_amount + tax_amount
         items.append(
             {
                 "service_name": clean_service_quantity_title(service_name) or "Recommended service",
                 "quantity": raw_item.get("quantity") or 1,
                 "labor_total": labor_amount,
+                "show_labor_total": labor_total is not None,
                 "parts_total": parts_amount,
+                "show_parts_total": parts_total is not None,
                 "fee_total": fee_amount,
+                "show_fee_total": fee_total is not None,
+                "tax_total": tax_amount,
+                "show_tax_total": tax_total is not None,
                 "line_total": total_amount,
                 "inspection_findings": str(raw_item.get("inspection_findings") or "").strip(),
             }
@@ -12042,8 +12059,13 @@ def normalize_customer_estimate_line_items(estimate: dict[str, Any]) -> list[dic
             or "Recommended service",
             "quantity": 1,
             "labor_total": 0,
+            "show_labor_total": False,
             "parts_total": 0,
+            "show_parts_total": False,
             "fee_total": 0,
+            "show_fee_total": False,
+            "tax_total": 0,
+            "show_tax_total": False,
             "line_total": customer_estimate_public_float(estimate.get("estimate_total")),
             "inspection_findings": "",
         }
