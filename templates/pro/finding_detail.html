@@ -50,6 +50,22 @@
     border-color:rgba(15,23,42,.16) !important;
   }
   .tm-finding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .tm-customer-review-link {
+    display:grid;
+    gap:10px;
+    border:1px solid rgba(234, 88, 12, .26);
+    border-radius:8px;
+    background:#fff7ed;
+    padding:12px;
+  }
+  .tm-customer-review-link code {
+    display:block;
+    overflow-wrap:anywhere;
+    white-space:normal;
+    color:#7c2d12;
+    font-size:.82rem;
+    line-height:1.45;
+  }
   .tm-finding-notes { display:grid; gap:12px; }
   .tm-finding-action-panel { display:grid; gap:12px; }
   .tm-finding-photo-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
@@ -169,6 +185,22 @@
       {% if finding.estimate_document_url %}
       <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
       {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if customer_review_url %}
+  <section class="tm-finding-panel tm-finding-action-panel" aria-label="Customer estimate review link">
+    <div>
+      <h2 class="tm-finding-section-title">Customer Review Link</h2>
+      <p class="tm-history-empty" style="margin:8px 0 0;">Share this secure, view-only page when the customer should review the prepared estimate.</p>
+    </div>
+    <div class="tm-customer-review-link">
+      <code id="customerReviewUrl">{{ customer_review_url }}</code>
+      <div class="tm-finding-actions" style="margin-top:0;">
+        <a class="tm-btn tm-btn-primary" href="{{ customer_review_url }}" target="_blank" rel="noopener">View Customer Review</a>
+        <button class="tm-btn tm-btn-secondary" type="button" data-copy-customer-review-link data-copy-text="{{ customer_review_url }}">Copy Customer Link</button>
+      </div>
     </div>
   </section>
   {% endif %}
@@ -298,4 +330,32 @@
     {% endif %}
   </section>
 </section>
+<script>
+  document.querySelector("[data-copy-customer-review-link]")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const value = button?.dataset?.copyText || "";
+    if (!value) return;
+    const original = button.textContent;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+      button.textContent = "Copied";
+      window.setTimeout(() => { button.textContent = original || "Copy Customer Link"; }, 1400);
+    } catch (error) {
+      button.textContent = "Copy failed";
+      window.setTimeout(() => { button.textContent = original || "Copy Customer Link"; }, 1800);
+    }
+  });
+</script>
 {% endblock %}

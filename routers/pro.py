@@ -6887,6 +6887,98 @@ def estimate_document_url(customer_id: int, vehicle_id: int, estimate_id: Any) -
     return f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/estimates/{estimate_id}/pdf" if estimate_id else ""
 
 
+def customer_estimate_review_secret() -> str:
+    for env_name in (
+        "TORQUEMECH_CUSTOMER_ESTIMATE_LINK_SECRET",
+        "TORQUEMECH_APP_SECRET",
+        "SECRET_KEY",
+    ):
+        value = str(os.getenv(env_name) or "").strip()
+        if value:
+            return value
+    logger.error("CUSTOMER_ESTIMATE_REVIEW_SECRET_MISSING")
+    raise HTTPException(status_code=503, detail="Customer estimate links are unavailable")
+
+
+def customer_estimate_token_b64(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
+
+
+def customer_estimate_token_unb64(value: str) -> bytes:
+    padding = "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode((value + padding).encode("ascii"))
+
+
+def customer_estimate_version_fingerprint(record: dict[str, Any]) -> str:
+    payload = {
+        "id": optional_int_value(record.get("id")),
+        "customer_id": optional_int_value(record.get("customer_id")),
+        "vehicle_id": optional_int_value(record.get("vehicle_id")),
+        "finding_id": optional_int_value(record.get("finding_id")),
+        "estimate_date": str(record.get("estimate_date") or ""),
+        "customer_name": str(record.get("customer_name") or ""),
+        "vehicle_label": str(record.get("vehicle_label") or ""),
+        "related_title": str(record.get("related_title") or ""),
+        "estimate_total": record.get("estimate_total"),
+        "pdf_path": str(record.get("pdf_path") or ""),
+        "payload_json": str(record.get("payload_json") or ""),
+        "created_at": str(record.get("created_at") or ""),
+    }
+    encoded = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def create_customer_estimate_review_token(estimate: dict[str, Any], shop_id: int) -> str:
+    payload = {
+        "v": 1,
+        "shop_id": int(shop_id),
+        "customer_id": int(estimate.get("customer_id") or 0),
+        "vehicle_id": int(estimate.get("vehicle_id") or 0),
+        "finding_id": int(estimate.get("finding_id") or 0),
+        "estimate_id": int(estimate.get("id") or 0),
+        "version": customer_estimate_version_fingerprint(estimate),
+        "iat": str(estimate.get("created_at") or datetime.now(timezone.utc).isoformat()),
+    }
+    payload_bytes = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    body = customer_estimate_token_b64(payload_bytes)
+    signature = customer_estimate_token_b64(
+        hmac.new(
+            customer_estimate_review_secret().encode("utf-8"),
+            body.encode("ascii"),
+            hashlib.sha256,
+        ).digest()
+    )
+    return f"{body}.{signature}"
+
+
+def parse_customer_estimate_review_token(token: str) -> dict[str, Any]:
+    body, sep, signature = str(token or "").strip().partition(".")
+    if not body or not sep or not signature:
+        raise ValueError("malformed token")
+    expected = customer_estimate_token_b64(
+        hmac.new(
+            customer_estimate_review_secret().encode("utf-8"),
+            body.encode("ascii"),
+            hashlib.sha256,
+        ).digest()
+    )
+    if not hmac.compare_digest(signature, expected):
+        raise ValueError("invalid signature")
+    payload = json.loads(customer_estimate_token_unb64(body).decode("utf-8"))
+    if not isinstance(payload, dict) or payload.get("v") != 1:
+        raise ValueError("unsupported token")
+    return payload
+
+
+def customer_estimate_review_url(request: Request, estimate: dict[str, Any], shop_id: int) -> str:
+    token = create_customer_estimate_review_token(estimate, shop_id)
+    return str(request.url_for("customer_estimate_review", token=token))
+
+
+def customer_estimate_review_pdf_url(request: Request, token: str) -> str:
+    return str(request.url_for("customer_estimate_review_pdf", token=token))
+
+
 def estimate_document_payload(record: dict[str, Any]) -> dict[str, Any]:
     raw_payload = record.get("payload_json") or "{}"
     try:
@@ -11871,6 +11963,180 @@ def load_estimate_document_for_shop(
     return record
 
 
+def customer_estimate_public_float(value: Any) -> float:
+    try:
+        return float(str(value or "0").replace(",", "").strip() or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def normalize_customer_estimate_line_items(estimate: dict[str, Any]) -> list[dict[str, Any]]:
+    payload = estimate_document_payload(estimate)
+    raw_items = payload.get("line_items") if isinstance(payload.get("line_items"), list) else []
+    items: list[dict[str, Any]] = []
+    for raw_item in raw_items:
+        if not isinstance(raw_item, dict):
+            continue
+        service_name = str(
+            raw_item.get("service_text")
+            or raw_item.get("displayServiceText")
+            or raw_item.get("serviceText")
+            or raw_item.get("service_name")
+            or estimate.get("related_title")
+            or ""
+        ).strip()
+        labor_total = raw_item.get("labor_total")
+        parts_total = raw_item.get("parts_total")
+        fee_total = raw_item.get("travel_total")
+        if fee_total is None:
+            fee_total = raw_item.get("travelFee")
+        line_total = raw_item.get("line_total")
+        if line_total is None:
+            line_total = raw_item.get("grand_total")
+        labor_amount = customer_estimate_public_float(labor_total)
+        parts_amount = customer_estimate_public_float(parts_total)
+        fee_amount = customer_estimate_public_float(fee_total)
+        total_amount = customer_estimate_public_float(line_total)
+        if not total_amount:
+            total_amount = labor_amount + parts_amount + fee_amount
+        items.append(
+            {
+                "service_name": clean_service_quantity_title(service_name) or "Recommended service",
+                "quantity": raw_item.get("quantity") or 1,
+                "labor_total": labor_amount,
+                "parts_total": parts_amount,
+                "fee_total": fee_amount,
+                "line_total": total_amount,
+                "inspection_findings": str(raw_item.get("inspection_findings") or "").strip(),
+            }
+        )
+    if items:
+        return items
+    return [
+        {
+            "service_name": estimate_document_service_summary(estimate)
+            or str(estimate.get("related_title") or "").strip()
+            or "Recommended service",
+            "quantity": 1,
+            "labor_total": 0,
+            "parts_total": 0,
+            "fee_total": 0,
+            "line_total": customer_estimate_public_float(estimate.get("estimate_total")),
+            "inspection_findings": "",
+        }
+    ]
+
+
+def customer_estimate_payload_education(estimate: dict[str, Any]) -> list[dict[str, Any]]:
+    payload = estimate_document_payload(estimate)
+    raw_education = payload.get("service_education") or payload.get("serviceEducation") or []
+    if isinstance(raw_education, dict):
+        raw_education = [raw_education]
+    if not isinstance(raw_education, list):
+        return []
+    education: list[dict[str, Any]] = []
+    for item in raw_education:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title") or "").strip()
+        summary = str(item.get("summary") or item.get("customer_note") or item.get("customerNote") or "").strip()
+        delay_risk = str(item.get("delay_risk") or item.get("delayRisk") or "").strip()
+        symptoms = item.get("symptoms") if isinstance(item.get("symptoms"), list) else []
+        if title or summary or delay_risk or symptoms:
+            education.append(
+                {
+                    "title": title,
+                    "summary": summary,
+                    "delay_risk": delay_risk,
+                    "symptoms": [str(value).strip() for value in symptoms if str(value or "").strip()],
+                }
+            )
+    return education
+
+
+def validate_customer_estimate_review_context(
+    conn: sqlite3.Connection,
+    token: str,
+) -> dict[str, Any]:
+    payload = parse_customer_estimate_review_token(token)
+    shop_id = optional_int_value(payload.get("shop_id"))
+    customer_id = optional_int_value(payload.get("customer_id"))
+    vehicle_id = optional_int_value(payload.get("vehicle_id"))
+    finding_id = optional_int_value(payload.get("finding_id"))
+    estimate_id = optional_int_value(payload.get("estimate_id"))
+    if not all((shop_id, customer_id, vehicle_id, finding_id, estimate_id)):
+        raise ValueError("token missing required ids")
+    ensure_shop_profile_schema(conn)
+    ensure_customer_status_schema(conn)
+    ensure_findings_records_schema(conn)
+    ensure_repair_estimate_documents_schema(conn)
+    estimate = row_to_dict(
+        conn.execute(
+            """
+            SELECT red.*
+            FROM repair_estimate_documents red
+            JOIN customers c ON c.id = red.customer_id
+            JOIN customer_vehicles v ON v.id = red.vehicle_id
+            JOIN findings_records f ON f.id = red.finding_id
+            WHERE red.id = ?
+              AND red.customer_id = ?
+              AND red.vehicle_id = ?
+              AND red.finding_id = ?
+              AND c.shop_id = ?
+              AND v.shop_id = ?
+              AND v.customer_id = c.id
+              AND f.customer_id = c.id
+              AND f.vehicle_id = v.id
+            """,
+            (estimate_id, customer_id, vehicle_id, finding_id, shop_id, shop_id),
+        ).fetchone()
+    )
+    if not estimate:
+        raise ValueError("estimate relationship not found")
+    latest = latest_estimate_document_for_finding(
+        conn,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+    )
+    if optional_int_value((latest or {}).get("id")) != estimate_id:
+        raise ValueError("stale estimate document")
+    expected_version = customer_estimate_version_fingerprint(estimate)
+    if not hmac.compare_digest(str(payload.get("version") or ""), expected_version):
+        raise ValueError("stale estimate version")
+    customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+    finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+    attach_finding_photo_urls(finding)
+    return {
+        "shop": shop_profile,
+        "customer": customer,
+        "vehicle": vehicle,
+        "finding": finding,
+        "estimate": estimate,
+        "line_items": normalize_customer_estimate_line_items(estimate),
+        "service_education": customer_estimate_payload_education(estimate),
+    }
+
+
+def customer_estimate_unavailable_response(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "customer_estimate_unavailable.html",
+        {"request": request},
+        status_code=404,
+    )
+
+
+def customer_estimate_pdf_path(estimate: dict[str, Any]) -> Path | None:
+    storage = configured_storage_paths()
+    try:
+        pdf_path = Path(str(estimate.get("pdf_path") or "")).resolve()
+        pdf_path.relative_to(storage.estimate_pdfs_dir.resolve())
+    except (OSError, ValueError):
+        return None
+    return pdf_path if pdf_path.exists() and pdf_path.is_file() else None
+
+
 @router.get("", response_class=HTMLResponse)
 def pro_welcome(request: Request):
     return templates.TemplateResponse(
@@ -13435,6 +13701,53 @@ async def pro_calendar_convert(request: Request, appointment_id: int):
     return RedirectResponse("/pro/calendar?notice=linked", status_code=303)
 
 
+@public_router.get("/customer/estimate/{token}", response_class=HTMLResponse, name="customer_estimate_review")
+def customer_estimate_review(request: Request, token: str):
+    conn = crm_db_conn()
+    try:
+        context = validate_customer_estimate_review_context(conn, token)
+    except Exception as exc:
+        logger.warning("CUSTOMER_ESTIMATE_REVIEW_REJECTED reason=%s", exc)
+        return customer_estimate_unavailable_response(request)
+    finally:
+        conn.close()
+    pdf_url = ""
+    if customer_estimate_pdf_path(context["estimate"]) is not None:
+        pdf_url = customer_estimate_review_pdf_url(request, token)
+    return templates.TemplateResponse(
+        "customer_estimate_review.html",
+        {
+            "request": request,
+            **context,
+            "pdf_url": pdf_url,
+        },
+    )
+
+
+@public_router.get("/customer/estimate/{token}/pdf", name="customer_estimate_review_pdf")
+def customer_estimate_review_pdf(request: Request, token: str):
+    conn = crm_db_conn()
+    try:
+        context = validate_customer_estimate_review_context(conn, token)
+    except Exception as exc:
+        logger.warning("CUSTOMER_ESTIMATE_REVIEW_PDF_REJECTED reason=%s", exc)
+        return customer_estimate_unavailable_response(request)
+    finally:
+        conn.close()
+    estimate = context["estimate"]
+    pdf_path = customer_estimate_pdf_path(estimate)
+    if pdf_path is None:
+        logger.warning("CUSTOMER_ESTIMATE_REVIEW_PDF_UNAVAILABLE estimate_id=%s", estimate.get("id"))
+        return customer_estimate_unavailable_response(request)
+    title = re.sub(r"[^A-Za-z0-9_-]+", "-", str(estimate.get("related_title") or "repair-estimate")).strip("-")
+    filename = f"{title or 'repair-estimate'}.pdf"
+    return Response(
+        pdf_path.read_bytes(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 @public_router.get("/book/{shop_slug}/available-times", response_class=JSONResponse)
 def public_booking_available_times(
     request: Request,
@@ -14924,6 +15237,15 @@ def pro_finding_record_detail(
             customer_id=customer_id,
             vehicle_id=vehicle_id,
         )
+        customer_review_url = ""
+        estimate_doc = latest_estimate_document_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+        )
+        if estimate_doc:
+            customer_review_url = customer_estimate_review_url(request, estimate_doc, shop_id)
         annotate_finding_workflow_state(finding)
         finding_history_records = load_finding_history_records(conn, finding_id)
         checklist_summary = repair_checklist_summary(conn, finding.get("linked_repair_record_id"))
@@ -14937,6 +15259,7 @@ def pro_finding_record_detail(
             "customer": customer,
             "vehicle": vehicle,
             "finding": finding,
+            "customer_review_url": customer_review_url,
             "finding_history_records": finding_history_records,
             "checklist_summary": checklist_summary,
             "repair_work_status_options": [

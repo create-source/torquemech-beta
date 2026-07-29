@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}Estimate Link Unavailable | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-public-estimate-shell {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 34px 16px 48px;
+  }
+  .tm-public-estimate-panel {
+    border: 1px solid rgba(255, 122, 26, .28);
+    border-radius: 8px;
+    background: #111827;
+    color: #f8fafc;
+    padding: 24px;
+  }
+  .tm-public-estimate-panel h1 { margin:0 0 10px; color:#fff; font-size:1.8rem; }
+  .tm-public-estimate-panel p { margin:0; color:#d1d5db; line-height:1.55; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="tm-public-estimate-shell">
+  <section class="tm-public-estimate-panel" aria-label="Estimate link unavailable">
+    <h1>Estimate Link Unavailable</h1>
+    <p>This estimate review link is unavailable. Please contact the repair shop for a fresh review link.</p>
+  </section>
+</main>
+{% endblock %}

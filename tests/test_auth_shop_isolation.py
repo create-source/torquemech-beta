@@ -3385,6 +3385,183 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.conn.commit()
         return estimate_id
 
+    def customer_review_link_from_detail(self, html_text: str) -> str:
+        match = re.search(r'https?://[^"\s<>]+/customer/estimate/[^"\s<>]+', html_text)
+        if not match:
+            raise AssertionError("customer review link not found")
+        return html.unescape(match.group(0))
+
+    def signed_customer_estimate_token(
+        self,
+        estimate_id: int,
+        shop_id: int,
+        *,
+        finding_id: int | None = None,
+    ) -> str:
+        estimate = dict(
+            self.conn.execute(
+                "SELECT * FROM repair_estimate_documents WHERE id = ?",
+                (estimate_id,),
+            ).fetchone()
+        )
+        if finding_id is not None:
+            estimate["finding_id"] = finding_id
+        return pro_module.create_customer_estimate_review_token(estimate, shop_id)
+
+    def make_estimate_pdf_available(self, estimate_id: int) -> None:
+        storage = pro_module.ensure_storage_directories()
+        pdf_path = storage.estimate_pdfs_dir / f"{self._testMethodName}-{estimate_id}.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n% customer estimate test\n")
+        self.addCleanup(lambda: pdf_path.unlink(missing_ok=True))
+        self.conn.execute(
+            "UPDATE repair_estimate_documents SET pdf_path = ? WHERE id = ?",
+            (str(pdf_path.resolve()), estimate_id),
+        )
+        self.conn.commit()
+
+    def test_finding_detail_customer_review_controls_only_after_prepared_estimate(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-controls@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2a-controls@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Controls")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+
+        before = client.get(detail_url)
+        self.assertEqual(before.status_code, 200)
+        self.assertNotIn('aria-label="Customer estimate review link"', before.text)
+        self.assertNotIn("View Customer Review", before.text)
+        self.assertNotIn("data-copy-text=\"http://localhost/customer/estimate/", before.text)
+
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+        after = client.get(detail_url)
+
+        self.assertEqual(after.status_code, 200)
+        self.assertIn("Customer Review Link", after.text)
+        self.assertIn("View Customer Review", after.text)
+        self.assertIn("Copy Customer Link", after.text)
+        self.assertIn("/customer/estimate/", after.text)
+
+    def test_customer_estimate_review_valid_token_is_public_and_customer_safe(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-public@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2a-public@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Public")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=812.25,
+            service_name="Front Brake Pads Replacement",
+            payload_line_items=[
+                {
+                    "service_text": "Front Brake Pads Replacement",
+                    "quantity": 1,
+                    "labor_total": 300.0,
+                    "parts_total": 500.0,
+                    "travel_total": 12.25,
+                    "line_total": 812.25,
+                    "inspection_findings": "Pads are below safe thickness.",
+                }
+            ],
+        )
+        self.make_estimate_pdf_available(estimate_id)
+        detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        review_link = self.customer_review_link_from_detail(detail.text)
+
+        public_client = self.client()
+        response = public_client.get(review_link)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Prepared Estimate Review", response.text)
+        self.assertIn("Alpha Shop", response.text)
+        self.assertIn("Public", response.text)
+        self.assertIn("2014 Toyota Camry", response.text)
+        self.assertIn("120,500 miles", response.text)
+        self.assertIn("Brake pads below spec", response.text)
+        self.assertIn("Customer heard grinding.", response.text)
+        self.assertIn("/static/uploads/findings/brake-before.jpg", response.text)
+        self.assertIn("Front Brake Pads Replacement", response.text)
+        self.assertIn("$300.00", response.text)
+        self.assertIn("$500.00", response.text)
+        self.assertIn("$12.25", response.text)
+        self.assertIn("$812.25", response.text)
+        self.assertIn("/customer/estimate/", response.text)
+        self.assertIn("/pdf", response.text)
+        self.assertNotIn("Outer pads at 2mm.", response.text)
+        self.assertNotIn("Internal Notes", response.text)
+        self.assertNotIn("Mark Customer Approved", response.text)
+        self.assertNotIn("Mark Customer Declined", response.text)
+        self.assertNotIn("Defer", response.text)
+        self.assertNotIn("/pro/customers/", response.text)
+
+    def test_customer_estimate_review_rejects_invalid_and_tampered_tokens(self):
+        client = self.client()
+        invalid = client.get("/customer/estimate/not-a-token")
+        self.assertEqual(invalid.status_code, 404)
+        self.assertIn("Estimate Link Unavailable", invalid.text)
+
+        self.bootstrap_owner(client, email="stage2a-tamper@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2a-tamper@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Tamper")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+        detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        review_link = self.customer_review_link_from_detail(detail.text)
+        tampered = review_link[:-1] + ("a" if review_link[-1] != "a" else "b")
+
+        response = client.get(tampered)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Estimate Link Unavailable", response.text)
+
+    def test_customer_estimate_review_rejects_cross_shop_and_wrong_finding_tokens(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("stage2a-alpha@example.com")
+        alpha_customer, alpha_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="Alpha")
+        alpha_finding = self.seed_finding_for_shop_estimate_stage(alpha_customer, alpha_vehicle)
+        alpha_estimate = self.seed_repair_estimate_document_for_finding(alpha_customer, alpha_vehicle, alpha_finding)
+        self.logout(client)
+        self.signup(client, email="stage2a-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("stage2a-beta@example.com")
+        beta_shop = self.shop_id_for_email("stage2a-beta@example.com")
+        beta_customer, beta_vehicle = self.seed_customer_vehicle_for_shop(beta_shop, first_name="Beta")
+        beta_finding = self.seed_finding_for_shop_estimate_stage(beta_customer, beta_vehicle)
+
+        cross_shop_token = self.signed_customer_estimate_token(alpha_estimate, beta_shop)
+        wrong_finding_token = self.signed_customer_estimate_token(alpha_estimate, alpha_shop, finding_id=beta_finding)
+
+        cross_shop = client.get(f"/customer/estimate/{cross_shop_token}")
+        wrong_finding = client.get(f"/customer/estimate/{wrong_finding_token}")
+
+        self.assertEqual(cross_shop.status_code, 404)
+        self.assertEqual(wrong_finding.status_code, 404)
+        self.assertNotIn("Brake pads below spec", cross_shop.text)
+        self.assertNotIn("Brake pads below spec", wrong_finding.text)
+
+    def test_customer_estimate_review_old_token_fails_after_new_prepared_estimate(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-stale@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2a-stale@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Stale")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, service_name="Old Brake Quote")
+        detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        old_link = self.customer_review_link_from_detail(detail.text)
+
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, service_name="New Brake Quote")
+        old_response = client.get(old_link)
+        new_detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        new_link = self.customer_review_link_from_detail(new_detail.text)
+        new_response = client.get(new_link)
+
+        self.assertEqual(old_response.status_code, 404)
+        self.assertEqual(new_response.status_code, 200)
+        self.assertIn("New Brake Quote", new_response.text)
+        self.assertNotIn("Old Brake Quote", new_response.text)
+
     def test_shop_can_open_saved_finding_and_reopen_linked_estimate(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage1-alpha@example.com", shop_name="Alpha Shop")
