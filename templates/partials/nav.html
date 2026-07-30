@@ -34,7 +34,7 @@
           {% if staff_notifications["items"] %}
           <div class="tm-notificationList">
             {% for item in staff_notifications["items"] %}
-            <div class="tm-notificationItemShell" data-notification-item data-notification-unread="{{ 'true' if item.is_unread else 'false' }}">
+            <div class="tm-notificationItemShell" data-notification-card data-notification-item data-notification-id="{{ item.id }}" data-notification-unread="{{ 'true' if item.is_unread else 'false' }}">
               <article class="tm-notificationItem tm-notificationItem--{{ item.notification_type|replace('customer_estimate_', '') }}{% if item.is_unread %} tm-notificationItem--unread{% endif %}">
                 <div class="tm-notificationItem__top">
                   <span class="tm-notificationItem__label">{{ item.status_label }}</span>

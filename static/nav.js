@@ -104,29 +104,41 @@ document.addEventListener("DOMContentLoaded", () => {
     showNotificationEmptyState();
   }
 
-  function wireNotificationDismissal() {
-    if (!notificationPanel) return;
-    notificationPanel.querySelectorAll("[data-notification-dismiss-form]").forEach((form) => {
-      form.addEventListener("submit", async (e) => {
-        if (!window.fetch) return;
-        e.preventDefault();
-        const item = form.closest("[data-notification-item]");
-        const submitter = e.submitter;
-        if (submitter) submitter.disabled = true;
-        try {
-          const response = await fetch(form.action, {
-            method: "POST",
-            body: new FormData(form),
-            credentials: "same-origin",
-            headers: { "X-Requested-With": "fetch" },
-          });
-          if (!response.ok) throw new Error("Dismiss failed");
-          removeNotificationItem(item);
-        } catch (error) {
-          form.submit();
-        }
+  async function dismissNotification(form, submitter) {
+    if (!window.fetch) return false;
+    if (form.dataset.notificationDismissPending === "true") return true;
+    const item = form.closest("[data-notification-card], [data-notification-item]");
+    form.dataset.notificationDismissPending = "true";
+    form.classList.remove("is-error");
+    if (submitter) submitter.disabled = true;
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
       });
-    });
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch (error) {
+        payload = null;
+      }
+      if (!response.ok || !payload || payload.ok !== true) throw new Error("Dismiss failed");
+      removeNotificationItem(item);
+      if (Number.isFinite(Number(payload.unread_count))) {
+        setNotificationUnreadCount(Number(payload.unread_count));
+      }
+      return true;
+    } catch (error) {
+      form.classList.add("is-error");
+      if (submitter) submitter.disabled = false;
+      form.dataset.notificationDismissPending = "false";
+      return true;
+    }
   }
 
   btn.addEventListener("click", (e) => {
@@ -162,8 +174,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (notificationBtn && notificationPanel) {
-    wireNotificationDismissal();
-
     notificationBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (notificationPanel.hidden) {
@@ -175,6 +185,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     notificationPanel.addEventListener("click", (e) => {
       e.stopPropagation();
+    });
+
+    notificationPanel.addEventListener("submit", (e) => {
+      const form = e.target.closest("[data-notification-dismiss-form]");
+      if (!form || !notificationPanel.contains(form)) return;
+      const submitter = e.submitter || form.querySelector("[type='submit']");
+      if (!window.fetch) return;
+      e.preventDefault();
+      dismissNotification(form, submitter);
     });
   }
 

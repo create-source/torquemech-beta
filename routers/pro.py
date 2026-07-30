@@ -486,6 +486,12 @@ def validate_csrf(request: Request, form: dict[str, str]) -> bool:
     return bool(expected and submitted and hmac.compare_digest(expected, submitted))
 
 
+def wants_json_response(request: Request) -> bool:
+    accept = request.headers.get("accept", "")
+    requested_with = request.headers.get("x-requested-with", "")
+    return "application/json" in accept.lower() or requested_with.lower() == "xmlhttprequest"
+
+
 def optional_csrf_token(request: Request) -> str:
     try:
         return csrf_token(request)
@@ -16287,7 +16293,10 @@ async def pro_notification_open(request: Request, notification_id: int):
 @router.post("/notifications/{notification_id}/dismiss")
 async def pro_notification_dismiss(request: Request, notification_id: int):
     form = await read_form_data(request)
+    wants_json = wants_json_response(request)
     if not validate_csrf(request, form):
+        if wants_json:
+            return JSONResponse({"ok": False, "error": "Invalid CSRF token"}, status_code=403)
         raise HTTPException(status_code=403, detail="Invalid CSRF token")
     conn = crm_db_conn()
     try:
@@ -16303,6 +16312,8 @@ async def pro_notification_dismiss(request: Request, notification_id: int):
             (notification_id, shop_id),
         ).fetchone()
         if not notification:
+            if wants_json:
+                return JSONResponse({"ok": False, "error": "Notification not found"}, status_code=404)
             raise HTTPException(status_code=404, detail="Notification not found")
         conn.execute(
             """
@@ -16311,12 +16322,26 @@ async def pro_notification_dismiss(request: Request, notification_id: int):
             """,
             (notification_id, shop_id),
         )
+        unread_count = int(
+            conn.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM staff_notifications
+                WHERE shop_id = ? AND read_at IS NULL
+                """,
+                (shop_id,),
+            ).fetchone()["count"]
+        )
         conn.commit()
     except HTTPException:
         conn.rollback()
         raise
     finally:
         conn.close()
+    if wants_json:
+        return JSONResponse(
+            {"ok": True, "notification_id": int(notification_id), "unread_count": max(0, unread_count)}
+        )
     return RedirectResponse("/pro/dashboard", status_code=303)
 
 

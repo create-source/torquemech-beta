@@ -3998,14 +3998,13 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn(">Open Finding</button>", dashboard.text)
         self.assertNotIn('name="next"', dashboard.text)
         nav_js = Path("static/nav.js").read_text(encoding="utf-8")
-        self.assertNotIn("wireNotificationSwipeActions", nav_js)
-        self.assertNotIn("notificationSwipe", nav_js)
-        self.assertNotIn("touchstart", nav_js)
-        self.assertNotIn("touchmove", nav_js)
-        self.assertNotIn("touchend", nav_js)
-        self.assertNotIn("touchcancel", nav_js)
-        self.assertNotIn("translateX", nav_js)
-        self.assertIn("setNotificationUnreadCount(notificationUnreadCount() - 1)", nav_js)
+        self.assertIn('notificationPanel.addEventListener("submit"', nav_js)
+        self.assertIn("[data-notification-dismiss-form]", nav_js)
+        self.assertIn('Accept: "application/json"', nav_js)
+        self.assertIn('credentials: "same-origin"', nav_js)
+        self.assertIn("body: new FormData(form)", nav_js)
+        self.assertIn("payload.ok !== true", nav_js)
+        self.assertIn("setNotificationUnreadCount(Number(payload.unread_count))", nav_js)
         self.assertIn("badge.remove()", nav_js)
         nav_css = Path("static/style.css").read_text(encoding="utf-8")
         notification_css = re.search(r"\.tm-notification\{.*?\.tm-menu\{", nav_css, re.S).group(0)
@@ -4050,13 +4049,32 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.logout(client)
         self.login(client, email="stage2a-dismiss-alpha@example.com")
         alpha_dashboard = client.get("/pro/dashboard")
-        dismissed = client.post(
+        missing_csrf = client.post(
             f"/pro/notifications/{notification['id']}/dismiss",
-            data={"csrf_token": csrf_from(alpha_dashboard.text), "next": "https://evil.example/"},
+            headers={"Accept": "application/json"},
             follow_redirects=False,
         )
-        self.assertEqual(dismissed.status_code, 303)
-        self.assertEqual(dismissed.headers["location"], "/pro/dashboard")
+        self.assertEqual(missing_csrf.status_code, 403)
+        self.assertEqual(missing_csrf.json()["ok"], False)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM staff_notifications WHERE id = ?",
+                (notification["id"],),
+            ).fetchone()["count"],
+            1,
+        )
+
+        ajax_dismissed = client.post(
+            f"/pro/notifications/{notification['id']}/dismiss",
+            data={"csrf_token": csrf_from(alpha_dashboard.text), "next": "https://evil.example/"},
+            headers={"Accept": "application/json"},
+            follow_redirects=False,
+        )
+        self.assertEqual(ajax_dismissed.status_code, 200)
+        self.assertEqual(
+            ajax_dismissed.json(),
+            {"ok": True, "notification_id": notification["id"], "unread_count": 0},
+        )
         self.assertEqual(
             self.conn.execute(
                 "SELECT COUNT(*) AS count FROM staff_notifications WHERE id = ?",
@@ -4068,6 +4086,48 @@ class AuthShopIsolationTests(unittest.TestCase):
             self.conn.execute(
                 "SELECT COUNT(*) AS count FROM staff_notifications WHERE shop_id = ? AND read_at IS NULL",
                 (alpha_shop,),
+            ).fetchone()["count"],
+            0,
+        )
+        already_dismissed = client.post(
+            f"/pro/notifications/{notification['id']}/dismiss",
+            data={"csrf_token": csrf_from(alpha_dashboard.text)},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+            follow_redirects=False,
+        )
+        self.assertEqual(already_dismissed.status_code, 404)
+        self.assertEqual(already_dismissed.json()["ok"], False)
+
+        fallback_notification_id = int(
+            self.conn.execute(
+                """
+                INSERT INTO staff_notifications (
+                  shop_id, notification_type, title, body, related_entity_type,
+                  related_entity_id, target_url, source_key, created_at
+                )
+                VALUES (?, 'customer_estimate_declined', 'Customer Declined', 'Fallback',
+                        'finding', ?, ?, 'fallback-dismiss-normal', '2026-07-24T12:30:00')
+                """,
+                (
+                    alpha_shop,
+                    alpha_finding,
+                    f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}",
+                ),
+            ).lastrowid
+        )
+        self.conn.commit()
+        fallback_dashboard = client.get("/pro/dashboard")
+        dismissed = client.post(
+            f"/pro/notifications/{fallback_notification_id}/dismiss",
+            data={"csrf_token": csrf_from(fallback_dashboard.text), "next": "https://evil.example/"},
+            follow_redirects=False,
+        )
+        self.assertEqual(dismissed.status_code, 303)
+        self.assertEqual(dismissed.headers["location"], "/pro/dashboard")
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM staff_notifications WHERE id = ?",
+                (fallback_notification_id,),
             ).fetchone()["count"],
             0,
         )

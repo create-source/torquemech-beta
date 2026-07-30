@@ -13,6 +13,8 @@ class NotificationDismissInteractionTests(unittest.TestCase):
         template = NAV_TEMPLATE.read_text(encoding="utf-8")
 
         self.assertIn('class="tm-notificationItem__dismissForm"', template)
+        self.assertIn("data-notification-card", template)
+        self.assertIn('data-notification-id="{{ item.id }}"', template)
         self.assertIn('method="post" action="/pro/notifications/{{ item.id }}/dismiss"', template)
         self.assertIn('name="csrf_token" value="{{ request.session.get(\'csrf_token\', \'\') }}"', template)
         self.assertIn('class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification"', template)
@@ -32,29 +34,29 @@ class NotificationDismissInteractionTests(unittest.TestCase):
         self.assertNotRegex(css, r"\.tm-notificationItem__dismiss[^F]")
         self.assertNotIn("display: none", self._notification_css_block(css))
 
-    def test_no_swipe_handlers_or_translated_states_remain(self):
+    def test_fetch_dismiss_uses_delegated_progressive_enhancement_flow(self):
         source = NAV_JS.read_text(encoding="utf-8")
-        css = NAV_CSS.read_text(encoding="utf-8")
-        template = NAV_TEMPLATE.read_text(encoding="utf-8")
-        combined = "\n".join([source, self._notification_css_block(css), template])
 
-        for obsolete in (
-            "wireNotificationSwipeActions",
-            "notificationSwipeReveal",
-            "notificationSwipeThreshold",
-            "notificationSwipeDirection",
-            "openNotificationSwipe",
-            "closeOpenNotificationSwipe",
-            "touchstart",
-            "touchmove",
-            "touchend",
-            "touchcancel",
-            "is-dragging",
-            "is-swiped",
-            "translateX",
-            "swipeDismiss",
+        for expected in (
+            'notificationPanel.addEventListener("submit"',
+            "[data-notification-dismiss-form]",
+            "if (!window.fetch) return;",
+            'method: "POST"',
+            "body: new FormData(form)",
+            'credentials: "same-origin"',
+            'Accept: "application/json"',
+            '"X-Requested-With": "XMLHttpRequest"',
+            "payload.ok !== true",
+            "removeNotificationItem(item)",
+            "setNotificationUnreadCount(Number(payload.unread_count))",
+            'form.dataset.notificationDismissPending === "true"',
+            "submitter.disabled = true",
+            "submitter.disabled = false",
+            'form.classList.add("is-error")',
         ):
-            self.assertNotIn(obsolete, combined)
+            self.assertIn(expected, source)
+
+        self.assertNotIn("form.submit()", source)
 
     def test_trash_button_is_compact_and_not_the_old_reveal_panel(self):
         css = NAV_CSS.read_text(encoding="utf-8")
