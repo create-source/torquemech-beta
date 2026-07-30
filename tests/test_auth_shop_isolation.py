@@ -4143,6 +4143,39 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("View/Edit Repair Estimate", response.text)
         self.assertIn("Open Estimate PDF", response.text)
 
+    def test_customer_decision_activity_sort_key_handles_mixed_timestamp_types(self):
+        events = [
+            {"label": "null", "created_at": None},
+            {"label": "invalid", "created_at": "not-a-timestamp"},
+            {"label": "sqlite-string", "created_at": "2026-07-30T17:00:00"},
+            {"label": "z-string", "created_at": "2026-07-30T18:30:00Z"},
+            {"label": "offset-string", "created_at": "2026-07-30T15:00:00+02:00"},
+            {"label": "naive-datetime", "created_at": datetime(2026, 7, 30, 16, 0, 0)},
+            {
+                "label": "aware-datetime",
+                "created_at": datetime(2026, 7, 30, 12, 0, 0, tzinfo=timezone(timedelta(hours=-7))),
+            },
+        ]
+
+        ordered = sorted(
+            events,
+            key=lambda event: pro_module.customer_decision_activity_sort_timestamp(event["created_at"]),
+            reverse=True,
+        )
+
+        self.assertEqual(
+            [event["label"] for event in ordered],
+            [
+                "aware-datetime",
+                "z-string",
+                "sqlite-string",
+                "naive-datetime",
+                "offset-string",
+                "null",
+                "invalid",
+            ],
+        )
+
     def test_prepared_finding_customer_decision_and_start_repair_workflow(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage1-decision@example.com", shop_name="Alpha Shop")

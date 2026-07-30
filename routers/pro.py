@@ -9295,6 +9295,17 @@ CUSTOMER_DECISION_ACTIVITY_LABELS = {
 }
 
 
+def customer_decision_activity_sort_timestamp(raw: Any) -> float:
+    parsed = parse_datetime_value(raw)
+    if not parsed:
+        return float("-inf")
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    else:
+        parsed = parsed.astimezone(timezone.utc)
+    return parsed.timestamp()
+
+
 def customer_decision_activity_for_finding(
     conn: sqlite3.Connection,
     *,
@@ -9319,7 +9330,7 @@ def customer_decision_activity_for_finding(
     estimate_records.sort(
         key=lambda record: (
             parse_date_value(record.get("estimate_date")) or date.min,
-            parse_datetime_value(record.get("created_at")) or datetime.min,
+            customer_decision_activity_sort_timestamp(record.get("created_at")),
             optional_int_value(record.get("id")) or 0,
         )
     )
@@ -9363,8 +9374,8 @@ def customer_decision_activity_for_finding(
         if estimate_id:
             decision["is_current"] = bool(latest_estimate_id and estimate_id == latest_estimate_id)
         else:
-            decision_created_at = parse_datetime_value(decision.get("created_at")) or datetime.min
-            latest_created_at = parse_datetime_value((latest_estimate or {}).get("created_at")) or datetime.min
+            decision_created_at = customer_decision_activity_sort_timestamp(decision.get("created_at"))
+            latest_created_at = customer_decision_activity_sort_timestamp((latest_estimate or {}).get("created_at"))
             decision["is_current"] = bool(latest_estimate and decision_created_at >= latest_created_at)
         decision["current_status_label"] = (
             "Current decision" if decision.get("is_current") else "Superseded by a newer prepared estimate"
@@ -9475,7 +9486,7 @@ def customer_decision_activity_for_finding(
         )
     events.sort(
         key=lambda event: (
-            parse_datetime_value(event.get("created_at")) or datetime.min,
+            customer_decision_activity_sort_timestamp(event.get("created_at")),
             optional_int_value(event.get("sort_id")) or 0,
         ),
         reverse=True,
