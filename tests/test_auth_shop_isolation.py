@@ -3876,10 +3876,26 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Water Pump Replacement", dashboard.text)
         self.assertIn("$812.25", dashboard.text)
         self.assertIn("Ready for Repair", dashboard.text)
+        self.assertIn("Start Repair", dashboard.text)
         self.assertIn("Open Finding", dashboard.text)
         self.assertIn("document.addEventListener(\"click\"", Path("static/nav.js").read_text(encoding="utf-8"))
         self.assertIn("e.key === \"Escape\"", Path("static/nav.js").read_text(encoding="utf-8"))
         self.assertIn("returnFocus", Path("static/nav.js").read_text(encoding="utf-8"))
+
+        started_from_notification = client.post(
+            f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}/start-repair",
+            data={"csrf_token": csrf_from(dashboard.text)},
+            follow_redirects=False,
+        )
+        self.assertEqual(started_from_notification.status_code, 303)
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"],
+            1,
+        )
+        dashboard_after_start = client.get("/pro/dashboard")
+        self.assertNotIn("Start Repair", dashboard_after_start.text)
+        self.assertIn("Open Repair Workspace", dashboard_after_start.text)
+        self.assertIn("Repair Workspace is open.", dashboard_after_start.text)
 
         for offset in range(101):
             self.conn.execute(
@@ -4171,6 +4187,8 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("Estimate prepared", vehicle_page_before_start.text)
         self.assertIn("Open Finding", vehicle_page_before_start.text)
         self.assertNotIn("Open Repair Workspace</a>", vehicle_page_before_start.text)
+        missing_csrf_start = client.post(start_url, data={}, follow_redirects=False)
+        self.assertEqual(missing_csrf_start.status_code, 403)
         token = csrf_from(approved_page.text)
         started = client.post(start_url, data={"csrf_token": token}, follow_redirects=False)
 
@@ -4205,6 +4223,9 @@ class AuthShopIsolationTests(unittest.TestCase):
             ).fetchone()["count"],
             1,
         )
+        repaired_page = client.get(detail_url)
+        self.assertNotIn("Start Repair", repaired_page.text)
+        self.assertIn("Open Repair Workspace", repaired_page.text)
 
         decline_after_start = client.post(
             decision_url,
@@ -4268,8 +4289,24 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
         self.conn.commit()
 
+        pro_module.append_customer_decision_log_if_needed(
+            self.conn,
+            finding_id,
+            "Approved",
+            "Stale Owner",
+            "2026-07-24T12:20:00",
+            source="internal/manual",
+            estimate_revision_id=self.conn.execute(
+                "SELECT id FROM repair_estimate_documents WHERE finding_id = ? ORDER BY id DESC LIMIT 1",
+                (finding_id,),
+            ).fetchone()["id"],
+        )
+        self.conn.commit()
+
         page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
         token = csrf_from(page.text)
+        self.assertNotIn("Start Repair", page.text)
+        self.assertIn("Open Repair Workspace", page.text)
         started = client.post(
             f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair",
             data={"csrf_token": token},
@@ -4277,26 +4314,20 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
 
         self.assertEqual(started.status_code, 303)
-        new_repair_id = int(started.headers["location"].rstrip("/").split("/")[-1])
-        self.assertNotEqual(new_repair_id, stale_repair_id)
+        self.assertEqual(
+            started.headers["location"],
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{stale_repair_id}",
+        )
         repairs = self.conn.execute(
             "SELECT id, repair_name, status, completed_at, approved_estimate_total, total_cost FROM repair_records ORDER BY id"
         ).fetchall()
-        self.assertEqual(len(repairs), 2)
+        self.assertEqual(len(repairs), 1)
         self.assertEqual(repairs[0]["id"], stale_repair_id)
         self.assertEqual(repairs[0]["status"], "Completed")
-        self.assertEqual(repairs[1]["id"], new_repair_id)
-        self.assertEqual(repairs[1]["repair_name"], "Alternator Replacement")
-        self.assertEqual(repairs[1]["status"], "Open")
-        self.assertIsNone(repairs[1]["completed_at"])
-        self.assertEqual(repairs[1]["approved_estimate_total"], 324.00)
-        self.assertEqual(repairs[1]["total_cost"], 324.00)
         finding = self.conn.execute("SELECT linked_repair_record_id FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
-        self.assertEqual(finding["linked_repair_record_id"], new_repair_id)
+        self.assertEqual(finding["linked_repair_record_id"], stale_repair_id)
         invoice_jobs = pro_module.load_invoice_builder_jobs(self.conn, customer_id, vehicle_id)
         self.assertIn(stale_repair_id, [job["id"] for job in invoice_jobs["ready"]])
-        self.assertNotIn(new_repair_id, [job["id"] for job in invoice_jobs["ready"]])
-        self.assertIn(new_repair_id, [job["id"] for job in invoice_jobs["approved"]])
 
         repeated = client.post(
             f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair",
@@ -4309,16 +4340,16 @@ class AuthShopIsolationTests(unittest.TestCase):
                 "SELECT COUNT(*) AS count FROM repair_records WHERE workflow_source_type = 'finding' AND workflow_source_id = ? AND status = 'Open'",
                 (finding_id,),
             ).fetchone()["count"],
-            1,
+            0,
         )
 
-    def test_start_repair_with_legacy_unique_source_index_uses_finding_link_for_fresh_repair(self):
+    def test_start_repair_with_legacy_unique_source_index_reuses_completed_repair(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage1-unique-stale@example.com", shop_name="Alpha Shop")
         shop_id = self.shop_id_for_email("stage1-unique-stale@example.com")
         customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Unique")
         finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
-        self.seed_repair_estimate_document_for_finding(
+        estimate_id = self.seed_repair_estimate_document_for_finding(
             customer_id,
             vehicle_id,
             finding_id,
@@ -4358,9 +4389,20 @@ class AuthShopIsolationTests(unittest.TestCase):
             """,
             (stale_repair_id, finding_id),
         )
+        pro_module.append_customer_decision_log_if_needed(
+            self.conn,
+            finding_id,
+            "Approved",
+            "Unique Owner",
+            "2026-07-24T12:20:00",
+            source="internal/manual",
+            estimate_revision_id=estimate_id,
+        )
         self.conn.commit()
 
         page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+        self.assertNotIn("Start Repair", page.text)
+        self.assertIn("Open Repair Workspace", page.text)
         started = client.post(
             f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair",
             data={"csrf_token": csrf_from(page.text)},
@@ -4368,26 +4410,25 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
 
         self.assertEqual(started.status_code, 303)
-        fresh_repair_id = int(started.headers["location"].rstrip("/").split("/")[-1])
-        self.assertNotEqual(fresh_repair_id, stale_repair_id)
+        self.assertEqual(
+            started.headers["location"],
+            f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{stale_repair_id}",
+        )
         repairs = [
             dict(row)
             for row in self.conn.execute(
                 "SELECT id, workflow_source_type, workflow_source_id, status, notes FROM repair_records ORDER BY id"
             ).fetchall()
         ]
+        self.assertEqual(len(repairs), 1)
         self.assertEqual(repairs[0]["workflow_source_type"], "finding")
         self.assertEqual(repairs[0]["workflow_source_id"], finding_id)
         self.assertEqual(repairs[0]["status"], "Completed")
-        self.assertIsNone(repairs[1]["workflow_source_type"])
-        self.assertIsNone(repairs[1]["workflow_source_id"])
-        self.assertEqual(repairs[1]["status"], "Open")
-        self.assertIn(f"Source Finding ID: {finding_id}", repairs[1]["notes"])
         finding = self.conn.execute("SELECT linked_repair_record_id FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
-        self.assertEqual(finding["linked_repair_record_id"], fresh_repair_id)
+        self.assertEqual(finding["linked_repair_record_id"], stale_repair_id)
         source_finding = pro_module.load_repair_source_finding_for_detail(
             self.conn,
-            repairs[1],
+            repairs[0],
             customer_id,
             vehicle_id,
         )
@@ -4529,6 +4570,73 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
         self.assertEqual(blocked.status_code, 400)
 
+    def test_deferred_and_stale_prepared_findings_cannot_start_repair(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2d-deferred-stale@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage2d-deferred-stale@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Deferred")
+
+        deferred_finding = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, deferred_finding)
+        deferred_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{deferred_finding}"
+        deferred_page = client.get(deferred_url)
+        deferred = client.post(
+            f"{deferred_url}/customer-decision",
+            data={"csrf_token": csrf_from(deferred_page.text), "decision": "deferred"},
+            follow_redirects=False,
+        )
+        self.assertEqual(deferred.status_code, 303)
+        deferred_page = client.get(deferred_url)
+        self.assertIn("Customer Deferred", deferred_page.text)
+        self.assertNotIn("Start Repair", deferred_page.text)
+        deferred_blocked = client.post(
+            f"{deferred_url}/start-repair",
+            data={"csrf_token": csrf_from(deferred_page.text)},
+            follow_redirects=False,
+        )
+        self.assertEqual(deferred_blocked.status_code, 400)
+
+        stale_finding = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        approved_estimate_id = self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            stale_finding,
+            total=700.00,
+            service_name="Original Estimate",
+        )
+        self.conn.execute(
+            "UPDATE findings_records SET status = 'Approved', repair_work_status = 'ready' WHERE id = ?",
+            (stale_finding,),
+        )
+        pro_module.append_customer_decision_log_if_needed(
+            self.conn,
+            stale_finding,
+            "Approved",
+            "Deferred Owner",
+            "2026-07-24T12:20:00",
+            source="internal/manual",
+            estimate_revision_id=approved_estimate_id,
+        )
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            stale_finding,
+            total=850.00,
+            service_name="Revised Estimate",
+        )
+        self.conn.commit()
+        stale_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{stale_finding}"
+        stale_page = client.get(stale_url)
+        self.assertIn("Customer Approved", stale_page.text)
+        self.assertNotIn("Start Repair", stale_page.text)
+        stale_blocked = client.post(
+            f"{stale_url}/start-repair",
+            data={"csrf_token": csrf_from(stale_page.text)},
+            follow_redirects=False,
+        )
+        self.assertEqual(stale_blocked.status_code, 400)
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 0)
+
     def test_finding_detail_legacy_saved_estimate_without_service_data_degrades_safely(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage1-legacy-service@example.com", shop_name="Alpha Shop")
@@ -4618,7 +4726,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(vehicle_response.status_code, 200)
         self.assertIn("Estimate prepared", vehicle_response.text)
         self.assertIn("$756.00", vehicle_response.text)
-        self.assertIn("View/Edit Repair Estimate", vehicle_response.text)
+        self.assertNotIn("View/Edit Repair Estimate", vehicle_response.text)
         self.assertIn("Edit Finding", vehicle_response.text)
         self.assertNotIn("Customer Decision / Update Status", vehicle_response.text)
         self.assertNotIn("Customer Decision / Approval Status", vehicle_response.text)

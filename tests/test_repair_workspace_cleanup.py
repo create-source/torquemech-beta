@@ -1340,8 +1340,8 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("Mark Customer Approved", finding_detail)
         self.assertIn("Mark Customer Declined", finding_detail)
         self.assertNotIn("Update Customer Decision", finding_detail)
-        self.assertIn("Open Repair Workspace", finding_detail)
-        self.assertIn("Start Repair", finding_detail)
+        self.assertIn("handoff_state.primary_action_label", finding_detail)
+        self.assertIn("handoff_state.primary_action_url", finding_detail)
 
     def test_repair_completion_persists_uploaded_after_photos(self):
         conn = sqlite3.connect(":memory:")
@@ -2053,7 +2053,7 @@ class RepairWorkspaceCleanupTests(unittest.TestCase):
         self.assertIn("{{ finding.repair_stage_label }}", finding_detail)
         self.assertIn("Prepared Estimate", finding_detail)
         self.assertIn("Estimated Total", finding_detail)
-        self.assertIn("Start Repair", finding_detail)
+        self.assertIn("handoff_state.primary_action_label", finding_detail)
         self.assertIn("Open Estimate PDF", finding_detail)
         self.assertNotIn("View/Edit Repair Estimate", finding_detail)
         self.assertIn("{% if finding.estimate_document_id %}", finding_detail)
