@@ -1687,6 +1687,27 @@
     padding-top: 10px;
   }
 
+  .tm-finding-decision-summary {
+    border-color: rgba(148, 163, 184, .22) !important;
+    background: rgba(15, 23, 42, .88) !important;
+    color: #f8fafc !important;
+  }
+
+  .tm-finding-decision-summary--approved {
+    border-color: rgba(34, 197, 94, .4) !important;
+    color: #bbf7d0 !important;
+  }
+
+  .tm-finding-decision-summary--warning {
+    border-color: rgba(245, 158, 11, .5) !important;
+    color: #fde68a !important;
+  }
+
+  .tm-finding-decision-summary--danger {
+    border-color: rgba(248, 113, 113, .5) !important;
+    color: #fecaca !important;
+  }
+
   .tm-findings-modal {
     position: fixed;
     inset: 0;
@@ -4613,6 +4634,11 @@
                 <span class="tm-crm-chip">Finding Status: {{ item.status }}</span>
                 <span class="tm-crm-chip">{{ item.customer_decision_label }}</span>
                 {% if item.repair_stage_label %}<span class="tm-crm-chip">{{ item.repair_stage_label }}</span>{% endif %}
+                {% if item.customer_decision_activity and item.customer_decision_activity.compact_label %}
+                <span class="tm-crm-chip tm-finding-decision-summary tm-finding-decision-summary--{{ item.customer_decision_activity.compact_tone }}">
+                  {{ item.customer_decision_activity.compact_label }}{% if item.customer_decision_activity.compact_date and item.customer_decision_activity.compact_label != "Approval superseded" and item.customer_decision_activity.compact_label not in ["Repair in progress", "Repair completed", "Invoice created"] %} &middot; {{ item.customer_decision_activity.compact_date|pro_date }}{% endif %}
+                </span>
+                {% endif %}
                 {% if item.linked_repair_status %}<span class="tm-crm-chip">Repair Status: {{ item.linked_repair_status }}</span>{% endif %}
                 {% if item.mileage is not none %}
                 <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>
@@ -4700,6 +4726,11 @@
                   <span class="tm-crm-chip" data-finding-status-chip>Finding Status: {{ item.status }}</span>
                   <span class="tm-crm-chip">{{ item.customer_decision_label }}</span>
                   {% if item.repair_stage_label %}<span class="tm-crm-chip">{{ item.repair_stage_label }}</span>{% endif %}
+                  {% if item.customer_decision_activity and item.customer_decision_activity.compact_label %}
+                  <span class="tm-crm-chip tm-finding-decision-summary tm-finding-decision-summary--{{ item.customer_decision_activity.compact_tone }}">
+                    {{ item.customer_decision_activity.compact_label }}{% if item.customer_decision_activity.compact_date and item.customer_decision_activity.compact_label != "Approval superseded" and item.customer_decision_activity.compact_label not in ["Repair in progress", "Repair completed", "Invoice created"] %} &middot; {{ item.customer_decision_activity.compact_date|pro_date }}{% endif %}
+                  </span>
+                  {% endif %}
                   {% if item.linked_repair_status %}<span class="tm-crm-chip">Repair Status: {{ item.linked_repair_status }}</span>{% endif %}
                   {% if item.mileage is not none %}
                   <span class="tm-crm-chip">{{ item.mileage|pro_miles }} miles</span>

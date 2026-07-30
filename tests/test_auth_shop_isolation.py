@@ -4189,11 +4189,19 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         approved_page = client.get(detail_url)
         self.assertIn("Customer Approved", approved_page.text)
+        self.assertIn("Customer Decision Activity", approved_page.text)
+        self.assertIn("Current decision", approved_page.text)
+        self.assertIn("Revision 1", approved_page.text)
+        self.assertIn("$912.50", approved_page.text)
+        self.assertIn("Repair not started", approved_page.text)
+        self.assertIn("Prepared estimate saved", approved_page.text)
+        self.assertIn("Customer approved estimate", approved_page.text)
         self.assertIn("Start Repair", approved_page.text)
         vehicle_page_before_start = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
         self.assertEqual(vehicle_page_before_start.status_code, 200)
         self.assertIn("Finding Status: Approved", vehicle_page_before_start.text)
         self.assertIn("Customer Approved", vehicle_page_before_start.text)
+        self.assertIn("Customer approved", vehicle_page_before_start.text)
         self.assertIn("Ready for Repair", vehicle_page_before_start.text)
         self.assertIn("Estimate prepared", vehicle_page_before_start.text)
         self.assertIn("Open Finding", vehicle_page_before_start.text)
@@ -4237,6 +4245,23 @@ class AuthShopIsolationTests(unittest.TestCase):
         repaired_page = client.get(detail_url)
         self.assertNotIn("Start Repair", repaired_page.text)
         self.assertIn("Open Repair Workspace", repaired_page.text)
+        self.assertIn("Repair in progress", repaired_page.text)
+
+        pro_module.ensure_invoices_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO invoices (
+              invoice_number, repair_record_id, customer_id, vehicle_id,
+              labor_total, parts_total, grand_total, created_at
+            )
+            VALUES ('TM-STAGE2E-INV', ?, ?, ?, 400, 512.50, 912.50, '2026-07-30T18:45:00')
+            """,
+            (repair["id"], customer_id, vehicle_id),
+        )
+        self.conn.commit()
+        invoiced_page = client.get(detail_url)
+        self.assertIn("View Invoice", invoiced_page.text)
+        self.assertIn("Invoice created", invoiced_page.text)
 
         decline_after_start = client.post(
             decision_url,
@@ -4573,6 +4598,8 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         declined_page = client.get(detail_url)
         self.assertIn("Customer Declined", declined_page.text)
+        self.assertIn("Declined", declined_page.text)
+        self.assertIn("Current decision", declined_page.text)
         self.assertNotIn("Start Repair", declined_page.text)
         blocked = client.post(
             f"{detail_url}/start-repair",
@@ -4599,6 +4626,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(deferred.status_code, 303)
         deferred_page = client.get(deferred_url)
         self.assertIn("Customer Deferred", deferred_page.text)
+        self.assertIn("Decided Later", deferred_page.text)
         self.assertNotIn("Start Repair", deferred_page.text)
         deferred_blocked = client.post(
             f"{deferred_url}/start-repair",
@@ -4639,7 +4667,14 @@ class AuthShopIsolationTests(unittest.TestCase):
         stale_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{stale_finding}"
         stale_page = client.get(stale_url)
         self.assertIn("Customer Approved", stale_page.text)
+        self.assertIn("Superseded by a newer prepared estimate", stale_page.text)
+        self.assertIn(
+            "A newer prepared estimate was created after this customer decision. Send the latest estimate for review before starting repair.",
+            stale_page.text,
+        )
         self.assertNotIn("Start Repair", stale_page.text)
+        stale_vehicle_page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+        self.assertIn("Approval superseded", stale_vehicle_page.text)
         stale_blocked = client.post(
             f"{stale_url}/start-repair",
             data={"csrf_token": csrf_from(stale_page.text)},

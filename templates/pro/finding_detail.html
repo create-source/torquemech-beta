@@ -147,6 +147,97 @@
     font-weight:900;
     text-transform:uppercase;
   }
+  .tm-decision-activity {
+    border-color: rgba(148, 163, 184, .18);
+    background: linear-gradient(180deg, #0b1623 0%, #111d2d 100%);
+    color: #f8fafc;
+    box-shadow: 0 18px 40px rgba(2, 6, 23, .24);
+  }
+  .tm-decision-activity .tm-finding-section-title,
+  .tm-decision-activity .tm-finding-field strong,
+  .tm-decision-activity .tm-crm-kicker {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+  }
+  .tm-decision-activity .tm-finding-field span {
+    color: #cbd5e1 !important;
+  }
+  .tm-decision-activity__hero {
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .tm-decision-activity__decision {
+    display:grid;
+    gap:6px;
+    min-width:0;
+  }
+  .tm-decision-activity__decision strong {
+    color:#f8fafc;
+    font-size:clamp(1.35rem, 4vw, 2rem);
+    line-height:1.08;
+  }
+  .tm-decision-activity__decision span,
+  .tm-decision-activity__hint {
+    color:#cbd5e1;
+    font-weight:800;
+  }
+  .tm-decision-activity__chips {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .tm-decision-chip {
+    display:inline-flex;
+    align-items:center;
+    min-height:30px;
+    border-radius:999px;
+    border:1px solid rgba(148, 163, 184, .2);
+    background:rgba(15, 23, 42, .72);
+    color:#e2e8f0;
+    padding:4px 10px;
+    font-size:.78rem;
+    font-weight:900;
+  }
+  .tm-decision-chip--approved { border-color:rgba(34,197,94,.42); color:#bbf7d0; background:rgba(20,83,45,.34); }
+  .tm-decision-chip--warning { border-color:rgba(245,158,11,.48); color:#fde68a; background:rgba(120,53,15,.32); }
+  .tm-decision-chip--danger { border-color:rgba(248,113,113,.48); color:#fecaca; background:rgba(127,29,29,.32); }
+  .tm-decision-warning {
+    border:1px solid rgba(245, 158, 11, .5);
+    border-radius:8px;
+    background:rgba(120, 53, 15, .24);
+    color:#fde68a;
+    padding:10px 12px;
+    font-weight:900;
+    line-height:1.45;
+  }
+  .tm-decision-activity-list {
+    display:grid;
+    gap:8px;
+    margin-top:2px;
+  }
+  .tm-decision-activity-item {
+    display:grid;
+    gap:4px;
+    border:1px solid rgba(148, 163, 184, .14);
+    border-radius:8px;
+    background:rgba(15, 23, 42, .5);
+    padding:10px 12px;
+  }
+  .tm-decision-activity-item time {
+    color:#cbd5e1;
+    font-size:.78rem;
+    font-weight:900;
+  }
+  .tm-decision-activity-item strong {
+    color:#f8fafc;
+  }
+  .tm-decision-activity-item span {
+    color:#cbd5e1;
+    font-weight:800;
+  }
   @media (max-width:760px) {
     .tm-pro-pagehead { align-items:flex-start; gap:14px; }
     .tm-pro-pagehead .tm-btn { width:100%; justify-content:center; }
@@ -182,23 +273,45 @@
   </div>
   {% endif %}
 
-  {% if finding.estimate_document_id %}
-  <section class="tm-finding-panel tm-finding-action-panel" aria-label="Customer Decision">
+  {% if customer_decision_activity and customer_decision_activity.has_activity %}
+  <section class="tm-finding-panel tm-finding-action-panel tm-decision-activity" aria-label="Customer Decision Activity">
     <div>
-      <h2 class="tm-finding-section-title">Customer Decision</h2>
-      <div style="margin-top:10px;"><span class="tm-status-chip">{{ finding.customer_decision_label }}</span></div>
-      {% if finding.repair_stage_label %}
-      <div style="margin-top:8px;"><span class="tm-status-chip">{{ finding.repair_stage_label }}</span></div>
-      {% endif %}
+      <h2 class="tm-finding-section-title">Customer Decision Activity</h2>
+    </div>
+    <div class="tm-decision-activity__hero">
+      <div class="tm-decision-activity__decision">
+        {% if customer_decision_activity.latest_decision %}
+        <strong>{{ customer_decision_activity.latest_decision.decision_label }}</strong>
+        <span>Customer {{ customer_decision_activity.latest_decision.decision_label }} on {{ customer_decision_activity.latest_decision.created_at|pro_datetime }}</span>
+        {% else %}
+        <strong>Awaiting Customer Decision</strong>
+        <span>No customer decision has been recorded yet.</span>
+        {% endif %}
+      </div>
+      <div class="tm-decision-activity__chips">
+        {% if customer_decision_activity.latest_decision %}
+        <span class="tm-decision-chip {% if customer_decision_activity.latest_decision.decision_status == 'Approved' and customer_decision_activity.latest_decision.is_current %}tm-decision-chip--approved{% elif not customer_decision_activity.latest_decision.is_current %}tm-decision-chip--warning{% elif customer_decision_activity.latest_decision.decision_status == 'Declined' %}tm-decision-chip--danger{% endif %}">
+          {{ customer_decision_activity.latest_decision.current_status_label }}
+        </span>
+        {% endif %}
+        <span class="tm-decision-chip">{{ customer_decision_activity.workflow_label }}</span>
+      </div>
     </div>
     <div class="tm-finding-grid">
       <div class="tm-finding-field"><span>Prepared Estimate</span><strong>{{ finding.estimate_service_name or finding.recommendation or finding.finding or "-" }}</strong></div>
+      <div class="tm-finding-field"><span>Latest Revision</span><strong>{{ customer_decision_activity.latest_estimate_revision_label or "-" }}</strong></div>
+      {% if customer_decision_activity.latest_decision %}
+      <div class="tm-finding-field"><span>Decision Revision</span><strong>{{ customer_decision_activity.latest_decision.estimate_revision_label }}</strong></div>
+      <div class="tm-finding-field"><span>Decision Total</span><strong>{% if customer_decision_activity.latest_decision.estimate_total is not none %}{{ customer_decision_activity.latest_decision.estimate_total|pro_currency }}{% elif finding.estimate_total is not none %}{{ finding.estimate_total|pro_currency }}{% else %}-{% endif %}</strong></div>
+      <div class="tm-finding-field"><span>Decision Source</span><strong>{{ customer_decision_activity.latest_decision.source_display }}</strong></div>
+      <div class="tm-finding-field"><span>Submitted</span><strong>{{ customer_decision_activity.latest_decision.created_at|pro_datetime }}</strong></div>
+      {% else %}
       <div class="tm-finding-field"><span>Estimated Total</span><strong>{% if finding.estimate_total is not none %}{{ finding.estimate_total|pro_currency }}{% else %}-{% endif %}</strong></div>
-      {% if decision_log %}
-      <div class="tm-finding-field"><span>Decision Source</span><strong>{{ decision_log.source_display }}</strong></div>
-      <div class="tm-finding-field"><span>Submitted</span><strong>{{ decision_log.created_at|pro_datetime }}</strong></div>
       {% endif %}
     </div>
+    {% if customer_decision_activity.stale_warning %}
+    <div class="tm-decision-warning" role="status">{{ customer_decision_activity.stale_warning }}</div>
+    {% endif %}
     <div class="tm-finding-actions" style="margin-top:0;">
       {% if finding.status not in ["Approved", "Declined", "Completed"] %}
       <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
@@ -237,6 +350,20 @@
       <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
       {% endif %}
     </div>
+    {% if customer_decision_activity.events %}
+    <div>
+      <div class="tm-decision-activity__hint">Activity</div>
+      <div class="tm-decision-activity-list">
+        {% for item in customer_decision_activity.events %}
+        <article class="tm-decision-activity-item">
+          <time>{{ item.created_at|pro_datetime }}</time>
+          <strong>{{ item.label }}</strong>
+          {% if item.detail %}<span>{{ item.detail }}</span>{% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
   </section>
   {% endif %}
 

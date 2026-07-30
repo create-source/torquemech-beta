@@ -9288,6 +9288,242 @@ def latest_customer_decision_log_for_finding(
     return record
 
 
+CUSTOMER_DECISION_ACTIVITY_LABELS = {
+    "Approved": "Approved",
+    "Declined": "Declined",
+    "Deferred": "Decided Later",
+}
+
+
+def customer_decision_activity_for_finding(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    finding: dict[str, Any] | None = None,
+    estimate_documents: list[dict[str, Any]] | None = None,
+    handoff_state: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    ensure_customer_decision_logs_schema(conn)
+    ensure_finding_history_records_schema(conn)
+    ensure_repair_records_schema(conn)
+    ensure_repair_completion_schema(conn)
+    ensure_invoices_schema(conn)
+    finding_record = finding or load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    estimate_records = [
+        dict(record)
+        for record in (estimate_documents if estimate_documents is not None else load_vehicle_estimate_documents(conn, customer_id, vehicle_id))
+        if optional_int_value(record.get("finding_id")) == finding_id
+    ]
+    estimate_records.sort(
+        key=lambda record: (
+            parse_date_value(record.get("estimate_date")) or date.min,
+            parse_datetime_value(record.get("created_at")) or datetime.min,
+            optional_int_value(record.get("id")) or 0,
+        )
+    )
+    revision_by_estimate_id = {
+        optional_int_value(record.get("id")): index + 1
+        for index, record in enumerate(estimate_records)
+        if optional_int_value(record.get("id"))
+    }
+    latest_estimate = latest_estimate_documents_by_finding_id(estimate_records).get(finding_id)
+    latest_estimate_id = optional_int_value((latest_estimate or {}).get("id"))
+
+    decision_logs = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM customer_decision_logs
+            WHERE finding_id = ?
+            ORDER BY created_at DESC, id DESC
+            """,
+            (finding_id,),
+        ).fetchall()
+    ]
+    for decision in decision_logs:
+        estimate_id = optional_int_value(decision.get("estimate_revision_id"))
+        estimate = next(
+            (record for record in estimate_records if optional_int_value(record.get("id")) == estimate_id),
+            None,
+        )
+        decision["source_display"] = customer_decision_log_source_label(decision.get("source"))
+        decision["decision_label"] = CUSTOMER_DECISION_ACTIVITY_LABELS.get(
+            str(decision.get("decision_status") or "").strip(),
+            str(decision.get("decision_status") or "Decision").strip() or "Decision",
+        )
+        decision["estimate_revision_label"] = (
+            f"Revision {revision_by_estimate_id.get(estimate_id)}"
+            if estimate_id and revision_by_estimate_id.get(estimate_id)
+            else "Latest prepared estimate at decision time"
+        )
+        decision["estimate_total"] = estimate.get("estimate_total") if estimate else None
+        if estimate_id:
+            decision["is_current"] = bool(latest_estimate_id and estimate_id == latest_estimate_id)
+        else:
+            decision_created_at = parse_datetime_value(decision.get("created_at")) or datetime.min
+            latest_created_at = parse_datetime_value((latest_estimate or {}).get("created_at")) or datetime.min
+            decision["is_current"] = bool(latest_estimate and decision_created_at >= latest_created_at)
+        decision["current_status_label"] = (
+            "Current decision" if decision.get("is_current") else "Superseded by a newer prepared estimate"
+        )
+
+    latest_decision = decision_logs[0] if decision_logs else None
+    current_handoff = handoff_state or repair_handoff_state_for_finding(
+        conn,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+        finding=finding_record,
+    )
+    workflow_label = {
+        "start_repair": "Repair not started",
+        "open_repair": "Repair in progress",
+        "completed_repair": "Repair completed",
+        "invoiced": "Invoice created",
+    }.get(str(current_handoff.get("kind") or ""), "Repair not started")
+
+    events: list[dict[str, Any]] = []
+    for estimate in estimate_records:
+        revision = revision_by_estimate_id.get(optional_int_value(estimate.get("id")))
+        events.append(
+            {
+                "created_at": estimate.get("created_at") or estimate.get("estimate_date") or "",
+                "label": "Prepared estimate saved",
+                "detail": f"Revision {revision}" if revision else "Prepared estimate",
+                "sort_id": optional_int_value(estimate.get("id")) or 0,
+            }
+        )
+    for decision in decision_logs:
+        events.append(
+            {
+                "created_at": decision.get("created_at") or "",
+                "label": f"Customer {str(decision.get('decision_label') or '').lower()} estimate",
+                "detail": decision.get("estimate_revision_label") or "",
+                "sort_id": optional_int_value(decision.get("id")) or 0,
+            }
+        )
+        if not decision.get("is_current"):
+            events.append(
+                {
+                    "created_at": (latest_estimate or {}).get("created_at") or decision.get("created_at") or "",
+                    "label": "A newer prepared estimate superseded the prior decision",
+                    "detail": decision.get("estimate_revision_label") or "",
+                    "sort_id": optional_int_value((latest_estimate or {}).get("id")) or 0,
+                }
+            )
+    for row in conn.execute(
+        """
+        SELECT event_type, new_status, notes, created_at, id
+        FROM finding_history_records
+        WHERE finding_id = ?
+          AND event_type IN ('repair_started', 'repair_work_status_changed')
+        ORDER BY created_at DESC, id DESC
+        """,
+        (finding_id,),
+    ).fetchall():
+        record = dict(row)
+        if record.get("event_type") == "repair_started":
+            label = "Repair started"
+        elif str(record.get("new_status") or "").strip() == "completed":
+            label = "Repair completed"
+        else:
+            continue
+        events.append(
+            {
+                "created_at": record.get("created_at") or "",
+                "label": label,
+                "detail": "",
+                "sort_id": optional_int_value(record.get("id")) or 0,
+            }
+        )
+    for row in conn.execute(
+        """
+        SELECT COALESCE(i.id, item_invoice.id) AS id,
+               COALESCE(i.invoice_number, item_invoice.invoice_number) AS invoice_number,
+               COALESCE(i.created_at, item_invoice.created_at) AS created_at
+        FROM repair_records rr
+        LEFT JOIN invoices i ON i.repair_record_id = rr.id
+        LEFT JOIN invoice_items ii ON ii.repair_record_id = rr.id
+        LEFT JOIN invoices item_invoice ON item_invoice.id = ii.invoice_id
+        WHERE rr.customer_id = ?
+          AND rr.vehicle_id = ?
+          AND (
+            (rr.workflow_source_type = 'finding' AND rr.workflow_source_id = ?)
+            OR rr.id = ?
+          )
+          AND (i.id IS NOT NULL OR item_invoice.id IS NOT NULL)
+        """,
+        (
+            customer_id,
+            vehicle_id,
+            finding_id,
+            optional_int_value(finding_record.get("linked_repair_record_id")) or 0,
+        ),
+    ).fetchall():
+        record = dict(row)
+        invoice_number = str(record.get("invoice_number") or "").strip()
+        events.append(
+            {
+                "created_at": record.get("created_at") or "",
+                "label": "Invoice created",
+                "detail": invoice_number,
+                "sort_id": optional_int_value(record.get("id")) or 0,
+            }
+        )
+    events.sort(
+        key=lambda event: (
+            parse_datetime_value(event.get("created_at")) or datetime.min,
+            optional_int_value(event.get("sort_id")) or 0,
+        ),
+        reverse=True,
+    )
+
+    compact_label = ""
+    compact_tone = ""
+    if current_handoff.get("kind") == "invoiced":
+        compact_label = "Invoice created"
+        compact_tone = "neutral"
+    elif current_handoff.get("kind") in {"open_repair", "completed_repair"}:
+        compact_label = "Repair completed" if current_handoff.get("kind") == "completed_repair" else "Repair in progress"
+        compact_tone = "neutral"
+    elif latest_decision:
+        if not latest_decision.get("is_current") and latest_decision.get("decision_status") == "Approved":
+            compact_label = "Approval superseded"
+            compact_tone = "warning"
+        else:
+            compact_label = f"Customer {str(latest_decision.get('decision_label') or '').lower()}"
+            compact_tone = {
+                "Approved": "approved",
+                "Declined": "danger",
+                "Deferred": "warning",
+            }.get(str(latest_decision.get("decision_status") or ""), "")
+
+    return {
+        "has_activity": bool(estimate_records or decision_logs),
+        "latest_decision": latest_decision,
+        "latest_estimate": latest_estimate,
+        "latest_estimate_revision_label": (
+            f"Revision {revision_by_estimate_id.get(latest_estimate_id)}"
+            if latest_estimate_id and revision_by_estimate_id.get(latest_estimate_id)
+            else ""
+        ),
+        "workflow_label": workflow_label,
+        "handoff_state": current_handoff,
+        "events": events,
+        "stale_warning": (
+            "A newer prepared estimate was created after this customer decision. Send the latest estimate for review before starting repair."
+            if latest_decision and not latest_decision.get("is_current")
+            else ""
+        ),
+        "compact_label": compact_label,
+        "compact_tone": compact_tone,
+        "compact_date": latest_decision.get("created_at") if latest_decision else "",
+    }
+
+
 def customer_approval_applies_to_latest_estimate(
     conn: sqlite3.Connection,
     *,
@@ -15544,6 +15780,23 @@ def pro_customer_vehicle_detail(
         )
         repair_invoice_map = load_repair_invoice_map(conn, customer_id, vehicle_id)
         annotate_repairs_with_invoice_status(repair_records, repair_invoice_map)
+        for record in findings_records:
+            record["handoff_state"] = repair_handoff_state_for_finding(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                finding_id=int(record.get("id") or 0),
+                finding=record,
+            )
+            record["customer_decision_activity"] = customer_decision_activity_for_finding(
+                conn,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                finding_id=int(record.get("id") or 0),
+                finding=record,
+                estimate_documents=estimate_document_records,
+                handoff_state=record["handoff_state"],
+            )
         seed_visual_references(conn)
         visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
         seed_repair_intelligence(conn)
@@ -15876,6 +16129,15 @@ def pro_finding_record_detail(
             finding_id=finding_id,
             finding=finding,
         )
+        customer_decision_activity = customer_decision_activity_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            finding=finding,
+            estimate_documents=estimate_document_records,
+            handoff_state=handoff_state,
+        )
         checklist_summary = repair_checklist_summary(conn, finding.get("linked_repair_record_id"))
     finally:
         conn.close()
@@ -15890,6 +16152,7 @@ def pro_finding_record_detail(
             "customer_review_url": customer_review_url,
             "decision_log": decision_log,
             "handoff_state": handoff_state,
+            "customer_decision_activity": customer_decision_activity,
             "finding_history_records": finding_history_records,
             "checklist_summary": checklist_summary,
             "repair_work_status_options": [
