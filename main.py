@@ -39,6 +39,7 @@ from routers.pro import (
     current_shop_context,
     current_user,
     ensure_auth_schema,
+    ensure_staff_notifications_schema,
     ensure_shop_profile_schema,
     hash_password,
     load_user_by_email,
@@ -4596,13 +4597,14 @@ def startup_checks() -> None:
         init_metrics_db()
         init_shop_profile_db()
         init_pro_crm_schema_db()
-        conn = app_db_conn(row_factory=True)
-        try:
-            ensure_auth_schema(conn)
-            ensure_password_reset_schema(conn)
-            ensure_shop_profile_schema(conn)
-        finally:
-            conn.close()
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        ensure_password_reset_schema(conn)
+        ensure_shop_profile_schema(conn)
+        ensure_staff_notifications_schema(conn)
+    finally:
+        conn.close()
     init_obd_db()
     obd_seed_from_json_if_empty() 
     _ = load_services_catalog()

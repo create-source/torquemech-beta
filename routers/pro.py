@@ -8969,7 +8969,7 @@ def ensure_customer_decision_logs_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def ensure_staff_notifications_schema(conn: sqlite3.Connection) -> None:
+def ensure_staff_notifications_schema(conn: sqlite3.Connection, *, commit: bool = True) -> None:
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS staff_notifications (
@@ -8996,7 +8996,8 @@ def ensure_staff_notifications_schema(conn: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_staff_notifications_shop_unread "
         "ON staff_notifications (shop_id, read_at, created_at DESC, id DESC)"
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def vehicle_notification_label(vehicle: dict[str, Any]) -> str:
@@ -9025,7 +9026,7 @@ def create_customer_decision_notification_if_needed(
     notification_type = CUSTOMER_DECISION_NOTIFICATION_TYPE_BY_STATUS.get(decision_status)
     if not notification_type:
         return
-    ensure_staff_notifications_schema(conn)
+    ensure_staff_notifications_schema(conn, commit=False)
     customer_id = int(customer["id"])
     vehicle_id = int(vehicle["id"])
     finding_id = int(finding["id"])
@@ -9043,11 +9044,12 @@ def create_customer_decision_notification_if_needed(
     source_key = f"customer_secure_link:{shop_id}:{customer_id}:{vehicle_id}:{finding_id}:{estimate_id}:{decision_status}"
     conn.execute(
         """
-        INSERT OR IGNORE INTO staff_notifications (
+        INSERT INTO staff_notifications (
           shop_id, notification_type, title, body, related_entity_type,
           related_entity_id, target_url, source_key, created_at, read_at
         )
         VALUES (?, ?, ?, ?, 'finding', ?, ?, ?, ?, NULL)
+        ON CONFLICT(source_key) DO NOTHING
         """,
         (
             shop_id,
@@ -14085,9 +14087,9 @@ async def customer_estimate_review_decision(request: Request, token: str):
     except HTTPException:
         conn.rollback()
         raise
-    except Exception as exc:
+    except Exception:
         conn.rollback()
-        logger.warning("CUSTOMER_ESTIMATE_DECISION_REJECTED reason=%s", exc)
+        logger.exception("CUSTOMER_ESTIMATE_DECISION_REJECTED")
         return customer_estimate_unavailable_response(request)
     finally:
         conn.close()
