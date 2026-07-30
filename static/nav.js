@@ -179,6 +179,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return Math.min(0, Math.max(-notificationSwipeReveal, startOffset + deltaX));
   }
 
+  function notificationSwipeDirection(absX, absY) {
+    if (Math.max(absX, absY) < notificationSwipeDirectionThreshold) return null;
+    if (absX >= notificationSwipeDirectionThreshold && absX >= absY * notificationSwipeHorizontalRatio) return "horizontal";
+    return "vertical";
+  }
+
   function wireNotificationSwipeActions() {
     if (!notificationPanel) return;
     notificationPanel.querySelectorAll("[data-notification-item]").forEach((item) => {
@@ -207,16 +213,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const absX = Math.abs(deltaX);
         const absY = Math.abs(deltaY);
         if (!gestureDirection) {
-          if (Math.max(absX, absY) < notificationSwipeDirectionThreshold) return;
-          if (absX > absY * notificationSwipeHorizontalRatio) {
-            gestureDirection = "horizontal";
+          gestureDirection = notificationSwipeDirection(absX, absY);
+          if (!gestureDirection) return;
+          if (gestureDirection === "horizontal") {
             item.classList.add("is-dragging");
-          } else if (absY > absX) {
-            gestureDirection = "vertical";
+          } else {
             active = false;
             closeNotificationSwipe(item);
-            return;
-          } else {
             return;
           }
         }
@@ -227,13 +230,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }, { passive: false });
 
       item.addEventListener("touchend", (e) => {
+        item.classList.remove("is-dragging");
         if (!active) return;
         active = false;
-        item.classList.remove("is-dragging");
         const touch = e.changedTouches[0];
         const deltaX = touch.clientX - startX;
-        const deltaY = touch.clientY - startY;
-        if (gestureDirection === "horizontal" && Math.abs(deltaX) > Math.abs(deltaY) * notificationSwipeHorizontalRatio) {
+        if (gestureDirection === "horizontal") {
           if (deltaX <= -notificationSwipeThreshold) {
             openNotificationSwipeItem(item);
           } else if (deltaX >= notificationSwipeThreshold) {

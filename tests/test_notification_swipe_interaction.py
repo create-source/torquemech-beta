@@ -23,7 +23,12 @@ def notification_swipe_config() -> dict[str, float]:
     return config
 
 
-def resolve_swipe(moves: list[tuple[float, float]], *, start_open: bool = False) -> dict[str, object]:
+def resolve_swipe(
+    moves: list[tuple[float, float]],
+    *,
+    start_open: bool = False,
+    canceled: bool = False,
+) -> dict[str, object]:
     config = notification_swipe_config()
     reveal = config["notificationSwipeReveal"]
     threshold = config["notificationSwipeThreshold"]
@@ -34,31 +39,44 @@ def resolve_swipe(moves: list[tuple[float, float]], *, start_open: bool = False)
     offsets = []
     prevent_default_count = 0
 
+    def direction_for(abs_x: float, abs_y: float) -> str | None:
+        if max(abs_x, abs_y) < direction_threshold:
+            return None
+        if abs_x >= direction_threshold and abs_x >= abs_y * horizontal_ratio:
+            return "horizontal"
+        return "vertical"
+
     for delta_x, delta_y in moves:
         abs_x = abs(delta_x)
         abs_y = abs(delta_y)
         if not direction:
-            if max(abs_x, abs_y) < direction_threshold:
+            direction = direction_for(abs_x, abs_y)
+            if not direction:
                 continue
-            if abs_x > abs_y * horizontal_ratio:
-                direction = "horizontal"
-            elif abs_y > abs_x:
-                direction = "vertical"
+            if direction == "vertical":
                 return {
                     "direction": direction,
                     "open": False,
                     "offsets": offsets,
                     "prevent_default_count": prevent_default_count,
+                    "dragging": False,
                 }
-            else:
-                continue
 
         if direction == "horizontal":
             prevent_default_count += 1
             offsets.append(min(0, max(-reveal, start_offset + delta_x)))
 
+    if canceled:
+        return {
+            "direction": direction,
+            "open": False,
+            "offsets": offsets + [0],
+            "prevent_default_count": prevent_default_count,
+            "dragging": False,
+        }
+
     end_x, end_y = moves[-1]
-    if direction == "horizontal" and abs(end_x) > abs(end_y) * horizontal_ratio:
+    if direction == "horizontal":
         is_open = end_x <= -threshold
     else:
         is_open = False
@@ -68,12 +86,29 @@ def resolve_swipe(moves: list[tuple[float, float]], *, start_open: bool = False)
         "open": is_open,
         "offsets": offsets,
         "prevent_default_count": prevent_default_count,
+        "dragging": False,
     }
 
 
 class NotificationSwipeInteractionTests(unittest.TestCase):
-    def test_vertical_movement_does_not_open_or_prevent_scroll(self):
+    def test_mostly_vertical_movement_with_small_horizontal_drift_does_not_open(self):
         result = resolve_swipe([(-6, 14), (-10, 44)])
+
+        self.assertEqual(result["direction"], "vertical")
+        self.assertFalse(result["open"])
+        self.assertEqual(result["offsets"], [])
+        self.assertEqual(result["prevent_default_count"], 0)
+
+    def test_diagonal_movement_slightly_more_horizontal_defaults_to_vertical(self):
+        result = resolve_swipe([(-12, 10), (-60, 52)])
+
+        self.assertEqual(result["direction"], "vertical")
+        self.assertFalse(result["open"])
+        self.assertEqual(result["offsets"], [])
+        self.assertEqual(result["prevent_default_count"], 0)
+
+    def test_vertical_movement_then_larger_horizontal_movement_remains_vertical(self):
+        result = resolve_swipe([(-7, 10), (-90, 36)])
 
         self.assertEqual(result["direction"], "vertical")
         self.assertFalse(result["open"])
@@ -100,6 +135,28 @@ class NotificationSwipeInteractionTests(unittest.TestCase):
         self.assertEqual(result["direction"], "horizontal")
         self.assertFalse(result["open"])
         self.assertLess(result["offsets"][0], 0)
+
+    def test_touchcancel_resets_dragging_and_snaps_closed(self):
+        result = resolve_swipe([(-12, 1), (-40, 2)], canceled=True)
+
+        self.assertEqual(result["direction"], "horizontal")
+        self.assertFalse(result["open"])
+        self.assertFalse(result["dragging"])
+        self.assertEqual(result["offsets"][-1], 0)
+
+    def test_only_horizontal_locked_gestures_call_prevent_default(self):
+        vertical = resolve_swipe([(-9, 12), (-70, 54)])
+        horizontal = resolve_swipe([(-12, 1), (-60, 4)])
+
+        self.assertEqual(vertical["prevent_default_count"], 0)
+        self.assertGreater(horizontal["prevent_default_count"], 0)
+
+    def test_direction_lock_helper_defaults_ambiguous_gestures_to_vertical(self):
+        source = NAV_JS.read_text(encoding="utf-8")
+
+        self.assertIn("function notificationSwipeDirection(absX, absY)", source)
+        self.assertIn("if (absX >= notificationSwipeDirectionThreshold && absX >= absY * notificationSwipeHorizontalRatio) return \"horizontal\";", source)
+        self.assertIn("return \"vertical\";", source)
 
     def test_opening_one_notification_closes_another(self):
         source = NAV_JS.read_text(encoding="utf-8")
