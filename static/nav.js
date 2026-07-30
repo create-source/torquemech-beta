@@ -136,7 +136,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const notificationSwipeReveal = 76;
-  const notificationSwipeThreshold = 38;
+  const notificationSwipeThreshold = 46;
+  const notificationSwipeDirectionThreshold = 8;
+  const notificationSwipeHorizontalRatio = 1.35;
   let openNotificationSwipe = null;
 
   function canUseNotificationSwipe() {
@@ -154,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeNotificationSwipe(item) {
     if (!item) return;
+    item.classList.remove("is-dragging");
     item.classList.remove("is-swiped");
     setNotificationSwipeOffset(item, 0);
     if (openNotificationSwipe === item) openNotificationSwipe = null;
@@ -162,6 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function openNotificationSwipeItem(item) {
     if (!item) return;
     if (openNotificationSwipe && openNotificationSwipe !== item) closeNotificationSwipe(openNotificationSwipe);
+    item.classList.remove("is-dragging");
     item.classList.add("is-swiped");
     setNotificationSwipeOffset(item, -notificationSwipeReveal);
     openNotificationSwipe = item;
@@ -171,57 +175,69 @@ document.addEventListener("DOMContentLoaded", () => {
     closeNotificationSwipe(openNotificationSwipe);
   }
 
+  function notificationSwipeOffset(startOffset, deltaX) {
+    return Math.min(0, Math.max(-notificationSwipeReveal, startOffset + deltaX));
+  }
+
   function wireNotificationSwipeActions() {
     if (!notificationPanel) return;
     notificationPanel.querySelectorAll("[data-notification-item]").forEach((item) => {
       let startX = 0;
       let startY = 0;
+      let startOffset = 0;
       let active = false;
-      let horizontalSwipe = false;
-      let verticalScroll = false;
+      let gestureDirection = null;
 
       item.addEventListener("touchstart", (e) => {
         if (!canUseNotificationSwipe()) return;
-        const touch = e.changedTouches[0];
+        const touch = e.touches[0];
         startX = touch.clientX;
         startY = touch.clientY;
+        startOffset = openNotificationSwipe === item ? -notificationSwipeReveal : 0;
         active = true;
-        horizontalSwipe = false;
-        verticalScroll = false;
+        gestureDirection = null;
         if (openNotificationSwipe && openNotificationSwipe !== item) closeNotificationSwipe(openNotificationSwipe);
       }, { passive: true });
 
       item.addEventListener("touchmove", (e) => {
         if (!active) return;
-        const touch = e.changedTouches[0];
+        const touch = e.touches[0];
         const deltaX = touch.clientX - startX;
         const deltaY = touch.clientY - startY;
-        if (!horizontalSwipe && !verticalScroll) {
-          if (Math.abs(deltaY) > 12 && Math.abs(deltaY) > Math.abs(deltaX)) {
-            verticalScroll = true;
+        const absX = Math.abs(deltaX);
+        const absY = Math.abs(deltaY);
+        if (!gestureDirection) {
+          if (Math.max(absX, absY) < notificationSwipeDirectionThreshold) return;
+          if (absX > absY * notificationSwipeHorizontalRatio) {
+            gestureDirection = "horizontal";
+            item.classList.add("is-dragging");
+          } else if (absY > absX) {
+            gestureDirection = "vertical";
             active = false;
             closeNotificationSwipe(item);
             return;
-          }
-          if (Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
-            horizontalSwipe = true;
+          } else {
+            return;
           }
         }
 
-        if (!horizontalSwipe) return;
+        if (gestureDirection !== "horizontal") return;
         e.preventDefault();
-        setNotificationSwipeOffset(item, deltaX);
+        setNotificationSwipeOffset(item, notificationSwipeOffset(startOffset, deltaX));
       }, { passive: false });
 
       item.addEventListener("touchend", (e) => {
         if (!active) return;
         active = false;
+        item.classList.remove("is-dragging");
         const touch = e.changedTouches[0];
         const deltaX = touch.clientX - startX;
         const deltaY = touch.clientY - startY;
-        if (horizontalSwipe && Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (gestureDirection === "horizontal" && Math.abs(deltaX) > Math.abs(deltaY) * notificationSwipeHorizontalRatio) {
           if (deltaX <= -notificationSwipeThreshold) {
             openNotificationSwipeItem(item);
+          } else if (deltaX >= notificationSwipeThreshold) {
+            closeNotificationSwipe(item);
           } else {
             closeNotificationSwipe(item);
           }
@@ -232,6 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       item.addEventListener("touchcancel", () => {
         active = false;
+        item.classList.remove("is-dragging");
         closeNotificationSwipe(item);
       }, { passive: true });
     });
@@ -291,7 +308,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.target.closest("[data-notification-item]")) return;
       closeOpenNotificationSwipe();
     }, { passive: true });
+
+    notificationPanel.addEventListener("scroll", closeOpenNotificationSwipe, { passive: true });
   }
+
+  window.addEventListener("scroll", closeOpenNotificationSwipe, { passive: true });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
