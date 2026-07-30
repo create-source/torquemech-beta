@@ -34,21 +34,33 @@
           {% if staff_notifications["items"] %}
           <div class="tm-notificationList">
             {% for item in staff_notifications["items"] %}
-            <article class="tm-notificationItem tm-notificationItem--{{ item.notification_type|replace('customer_estimate_', '') }}{% if item.is_unread %} tm-notificationItem--unread{% endif %}">
-              <div class="tm-notificationItem__top">
-                <span class="tm-notificationItem__label">{{ item.status_label }}</span>
-                <time>{{ item.created_at_display }}</time>
-              </div>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.body }}</p>
-              {% if item.notification_type == "customer_estimate_approved" %}
-              <span class="tm-notificationItem__ready">Ready for Repair</span>
-              {% endif %}
-              <form method="post" action="/pro/notifications/{{ item.id }}/open">
+            <div class="tm-notificationItemShell" data-notification-item data-notification-unread="{{ 'true' if item.is_unread else 'false' }}">
+              <form class="tm-notificationItem__swipeDismiss" method="post" action="/pro/notifications/{{ item.id }}/dismiss" data-notification-dismiss-form>
                 <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                <button class="tm-notificationItem__action" type="submit">Open Finding</button>
+                <button class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification">Dismiss</button>
               </form>
-            </article>
+              <article class="tm-notificationItem tm-notificationItem--{{ item.notification_type|replace('customer_estimate_', '') }}{% if item.is_unread %} tm-notificationItem--unread{% endif %}">
+                <div class="tm-notificationItem__top">
+                  <span class="tm-notificationItem__label">{{ item.status_label }}</span>
+                  <time>{{ item.created_at_display }}</time>
+                </div>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.body }}</p>
+                {% if item.notification_type == "customer_estimate_approved" %}
+                <span class="tm-notificationItem__ready">Ready for Repair</span>
+                {% endif %}
+                <div class="tm-notificationItem__actions">
+                  <form method="post" action="/pro/notifications/{{ item.id }}/open">
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                    <button class="tm-notificationItem__action" type="submit">Open Finding</button>
+                  </form>
+                  <form method="post" action="/pro/notifications/{{ item.id }}/dismiss" data-notification-dismiss-form>
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                    <button class="tm-notificationItem__dismiss" type="submit" aria-label="Dismiss notification">Dismiss</button>
+                  </form>
+                </div>
+              </article>
+            </div>
             {% endfor %}
           </div>
           {% else %}

@@ -15757,6 +15757,42 @@ async def pro_notification_open(request: Request, notification_id: int):
     return RedirectResponse(target_url, status_code=303)
 
 
+@router.post("/notifications/{notification_id}/dismiss")
+async def pro_notification_dismiss(request: Request, notification_id: int):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        ensure_staff_notifications_schema(conn)
+        notification = conn.execute(
+            """
+            SELECT id
+            FROM staff_notifications
+            WHERE id = ? AND shop_id = ?
+            LIMIT 1
+            """,
+            (notification_id, shop_id),
+        ).fetchone()
+        if not notification:
+            raise HTTPException(status_code=404, detail="Notification not found")
+        conn.execute(
+            """
+            DELETE FROM staff_notifications
+            WHERE id = ? AND shop_id = ?
+            """,
+            (notification_id, shop_id),
+        )
+        conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return RedirectResponse("/pro/dashboard", status_code=303)
+
+
 @router.post("/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/start-repair")
 async def pro_finding_start_repair(
     request: Request, customer_id: int, vehicle_id: int, finding_id: int

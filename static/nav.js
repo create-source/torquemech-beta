@@ -62,6 +62,111 @@ document.addEventListener("DOMContentLoaded", () => {
     if (options.returnFocus) notificationBtn.focus();
   }
 
+  function notificationUnreadCount() {
+    if (!notificationBtn) return 0;
+    const match = (notificationBtn.getAttribute("aria-label") || "").match(/(\d+) unread/);
+    return match ? Number.parseInt(match[1], 10) || 0 : 0;
+  }
+
+  function setNotificationUnreadCount(nextCount) {
+    if (!notificationBtn || !notificationPanel) return;
+    const safeCount = Math.max(0, nextCount);
+    notificationBtn.setAttribute("aria-label", `Notifications, ${safeCount} unread`);
+    const panelCount = notificationPanel.querySelector(".tm-notificationPanel__head span");
+    if (panelCount) panelCount.textContent = `${safeCount} unread`;
+    const badge = notificationBtn.querySelector(".tm-notificationBtn__badge");
+    if (badge) {
+      if (safeCount === 0) {
+        badge.remove();
+      } else {
+        badge.textContent = safeCount > 99 ? "99+" : String(safeCount);
+        badge.setAttribute("aria-label", `${safeCount} unread notifications`);
+      }
+    }
+  }
+
+  function showNotificationEmptyState() {
+    if (!notificationPanel) return;
+    const list = notificationPanel.querySelector(".tm-notificationList");
+    if (!list || list.querySelector("[data-notification-item]")) return;
+    list.remove();
+    const empty = document.createElement("p");
+    empty.className = "tm-notificationEmpty";
+    empty.textContent = "No new notifications.";
+    notificationPanel.appendChild(empty);
+  }
+
+  function removeNotificationItem(item) {
+    if (!item) return;
+    const wasUnread = item.dataset.notificationUnread === "true";
+    item.remove();
+    if (wasUnread) setNotificationUnreadCount(notificationUnreadCount() - 1);
+    showNotificationEmptyState();
+  }
+
+  function wireNotificationDismissal() {
+    if (!notificationPanel) return;
+    notificationPanel.querySelectorAll("[data-notification-dismiss-form]").forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        if (!window.fetch) return;
+        e.preventDefault();
+        const item = form.closest("[data-notification-item]");
+        const submitter = e.submitter;
+        if (submitter) submitter.disabled = true;
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "fetch" },
+          });
+          if (!response.ok) throw new Error("Dismiss failed");
+          removeNotificationItem(item);
+        } catch (error) {
+          form.submit();
+        }
+      });
+    });
+  }
+
+  function wireNotificationSwipeActions() {
+    if (!notificationPanel) return;
+    notificationPanel.querySelectorAll("[data-notification-item]").forEach((item) => {
+      let startX = 0;
+      let startY = 0;
+      let active = false;
+
+      item.addEventListener("touchstart", (e) => {
+        const touch = e.changedTouches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        active = true;
+      }, { passive: true });
+
+      item.addEventListener("touchmove", (e) => {
+        if (!active) return;
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        if (Math.abs(deltaX) > 20 && Math.abs(deltaX) > Math.abs(deltaY)) {
+          item.classList.toggle("is-swiped", deltaX < -36);
+        }
+      }, { passive: true });
+
+      item.addEventListener("touchend", (e) => {
+        if (!active) return;
+        active = false;
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          if (deltaX < -54) item.classList.add("is-swiped");
+          if (deltaX > 24) item.classList.remove("is-swiped");
+        }
+      }, { passive: true });
+    });
+  }
+
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
 
@@ -95,6 +200,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (notificationBtn && notificationPanel) {
+    wireNotificationDismissal();
+    wireNotificationSwipeActions();
+
     notificationBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (notificationPanel.hidden) {

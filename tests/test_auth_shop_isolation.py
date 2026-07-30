@@ -3950,6 +3950,116 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn('aria-label="Notifications, 0 unread"', empty_dashboard.text)
         self.assertNotIn('tm-notificationBtn__badge"', empty_dashboard.text)
 
+    def test_pro_header_notification_dismiss_deletes_only_shop_notification(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage2a-dismiss-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("stage2a-dismiss-alpha@example.com")
+        alpha_customer, alpha_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="Alpha")
+        alpha_finding = self.seed_finding_for_shop_estimate_stage(alpha_customer, alpha_vehicle)
+        alpha_estimate = self.seed_repair_estimate_document_for_finding(
+            alpha_customer,
+            alpha_vehicle,
+            alpha_finding,
+            total=812.25,
+            service_name="Water Pump Replacement",
+        )
+        pro_module.ensure_repair_records_schema(self.conn)
+        detail = client.get(f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}")
+        review_link = self.customer_review_link_from_detail(detail.text)
+        submitted = client.post(f"{review_link}/decision", data={"decision": "approved"}, follow_redirects=False)
+        self.assertEqual(submitted.status_code, 303)
+        notification = self.conn.execute("SELECT * FROM staff_notifications WHERE shop_id = ?", (alpha_shop,)).fetchone()
+        self.assertIsNotNone(notification)
+
+        dashboard = client.get("/pro/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn('aria-label="Dismiss notification"', dashboard.text)
+        self.assertIn('data-notification-dismiss-form', dashboard.text)
+        self.assertIn('data-notification-unread="true"', dashboard.text)
+        nav_js = Path("static/nav.js").read_text(encoding="utf-8")
+        self.assertIn("wireNotificationSwipeActions", nav_js)
+        self.assertIn("setNotificationUnreadCount(notificationUnreadCount() - 1)", nav_js)
+        self.assertIn("badge.remove()", nav_js)
+
+        finding_before = dict(self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (alpha_finding,)).fetchone())
+        decision_logs_before = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT * FROM customer_decision_logs WHERE finding_id = ? ORDER BY id",
+                (alpha_finding,),
+            ).fetchall()
+        ]
+        estimate_before = dict(
+            self.conn.execute("SELECT * FROM repair_estimate_documents WHERE id = ?", (alpha_estimate,)).fetchone()
+        )
+        repairs_before = [dict(row) for row in self.conn.execute("SELECT * FROM repair_records ORDER BY id").fetchall()]
+
+        self.logout(client)
+        self.signup(client, email="stage2a-dismiss-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("stage2a-dismiss-beta@example.com")
+        beta_dashboard = client.get("/pro/dashboard")
+        cross_dismiss = client.post(
+            f"/pro/notifications/{notification['id']}/dismiss",
+            data={"csrf_token": csrf_from(beta_dashboard.text), "next": "https://evil.example/"},
+            follow_redirects=False,
+        )
+        self.assertEqual(cross_dismiss.status_code, 404)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM staff_notifications WHERE id = ?",
+                (notification["id"],),
+            ).fetchone()["count"],
+            1,
+        )
+
+        self.logout(client)
+        self.login(client, email="stage2a-dismiss-alpha@example.com")
+        alpha_dashboard = client.get("/pro/dashboard")
+        dismissed = client.post(
+            f"/pro/notifications/{notification['id']}/dismiss",
+            data={"csrf_token": csrf_from(alpha_dashboard.text), "next": "https://evil.example/"},
+            follow_redirects=False,
+        )
+        self.assertEqual(dismissed.status_code, 303)
+        self.assertEqual(dismissed.headers["location"], "/pro/dashboard")
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM staff_notifications WHERE id = ?",
+                (notification["id"],),
+            ).fetchone()["count"],
+            0,
+        )
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM staff_notifications WHERE shop_id = ? AND read_at IS NULL",
+                (alpha_shop,),
+            ).fetchone()["count"],
+            0,
+        )
+        self.assertEqual(dict(self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (alpha_finding,)).fetchone()), finding_before)
+        self.assertEqual(
+            [
+                dict(row)
+                for row in self.conn.execute(
+                    "SELECT * FROM customer_decision_logs WHERE finding_id = ? ORDER BY id",
+                    (alpha_finding,),
+                ).fetchall()
+            ],
+            decision_logs_before,
+        )
+        self.assertEqual(
+            dict(self.conn.execute("SELECT * FROM repair_estimate_documents WHERE id = ?", (alpha_estimate,)).fetchone()),
+            estimate_before,
+        )
+        self.assertEqual([dict(row) for row in self.conn.execute("SELECT * FROM repair_records ORDER BY id").fetchall()], repairs_before)
+        finding_after = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (alpha_finding,)).fetchone()
+        self.assertEqual(finding_after["status"], "Approved")
+
+        empty_dashboard = client.get("/pro/dashboard")
+        self.assertIn('aria-label="Notifications, 0 unread"', empty_dashboard.text)
+        self.assertNotIn('tm-notificationBtn__badge"', empty_dashboard.text)
+        self.assertIn("No new notifications.", empty_dashboard.text)
+
     def test_shop_can_open_saved_finding_and_reopen_linked_estimate(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage1-alpha@example.com", shop_name="Alpha Shop")
