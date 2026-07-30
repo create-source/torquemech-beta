@@ -35,22 +35,24 @@
           <div class="tm-notificationList">
             {% for item in staff_notifications["items"] %}
             <div class="tm-notificationItemShell" data-notification-item data-notification-unread="{{ 'true' if item.is_unread else 'false' }}">
-              <form class="tm-notificationItem__swipeDismiss" method="post" action="/pro/notifications/{{ item.id }}/dismiss" data-notification-dismiss-form>
-                <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                <button class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification">
-                  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-                    <path d="M3 6h18"></path>
-                    <path d="M8 6V4h8v2"></path>
-                    <path d="M6 6l1 15h10l1-15"></path>
-                    <path d="M10 11v6"></path>
-                    <path d="M14 11v6"></path>
-                  </svg>
-                </button>
-              </form>
               <article class="tm-notificationItem tm-notificationItem--{{ item.notification_type|replace('customer_estimate_', '') }}{% if item.is_unread %} tm-notificationItem--unread{% endif %}">
                 <div class="tm-notificationItem__top">
                   <span class="tm-notificationItem__label">{{ item.status_label }}</span>
-                  <time>{{ item.created_at_display }}</time>
+                  <div class="tm-notificationItem__meta">
+                    <time>{{ item.created_at_display }}</time>
+                    <form class="tm-notificationItem__dismissForm" method="post" action="/pro/notifications/{{ item.id }}/dismiss" data-notification-dismiss-form>
+                      <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                      <button class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification">
+                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                          <path d="M3 6h18"></path>
+                          <path d="M8 6V4h8v2"></path>
+                          <path d="M6 6l1 15h10l1-15"></path>
+                          <path d="M10 11v6"></path>
+                          <path d="M14 11v6"></path>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
                 </div>
                 <h3>{{ item.title }}</h3>
                 <p>{{ item.body_display or item.body }}</p>
@@ -71,10 +73,6 @@
                   <form method="post" action="/pro/notifications/{{ item.id }}/open">
                     <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
                     <button class="tm-notificationItem__action" type="submit">Open Finding</button>
-                  </form>
-                  <form method="post" action="/pro/notifications/{{ item.id }}/dismiss" data-notification-dismiss-form>
-                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                    <button class="tm-notificationItem__dismiss" type="submit" aria-label="Dismiss notification">Dismiss</button>
                   </form>
                 </div>
               </article>
