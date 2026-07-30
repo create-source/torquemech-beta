@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeNotifications(options = {}) {
     if (!notificationBtn || !notificationPanel) return;
+    closeOpenNotificationSwipe();
     if (notificationPanel.hidden) return;
     notificationPanel.hidden = true;
     notificationBtn.setAttribute("aria-expanded", "false");
@@ -98,6 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function removeNotificationItem(item) {
     if (!item) return;
+    if (openNotificationSwipe === item) openNotificationSwipe = null;
     const wasUnread = item.dataset.notificationUnread === "true";
     item.remove();
     if (wasUnread) setNotificationUnreadCount(notificationUnreadCount() - 1);
@@ -107,6 +109,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function wireNotificationDismissal() {
     if (!notificationPanel) return;
     notificationPanel.querySelectorAll("[data-notification-dismiss-form]").forEach((form) => {
+      form.addEventListener("click", (e) => {
+        if (form.classList.contains("tm-notificationItem__swipeDismiss")) e.stopPropagation();
+      });
+
       form.addEventListener("submit", async (e) => {
         if (!window.fetch) return;
         e.preventDefault();
@@ -129,18 +135,60 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const notificationSwipeReveal = 76;
+  const notificationSwipeThreshold = 38;
+  let openNotificationSwipe = null;
+
+  function canUseNotificationSwipe() {
+    const touchCapable = window.matchMedia("(hover: none) and (pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+    const mobileLayout = window.matchMedia("(max-width: 640px)").matches;
+    return touchCapable && mobileLayout;
+  }
+
+  function setNotificationSwipeOffset(item, offset) {
+    const card = item ? item.querySelector(".tm-notificationItem") : null;
+    if (!card) return;
+    const clamped = Math.min(0, Math.max(-notificationSwipeReveal, offset));
+    card.style.transform = clamped === 0 ? "" : `translateX(${clamped}px)`;
+  }
+
+  function closeNotificationSwipe(item) {
+    if (!item) return;
+    item.classList.remove("is-swiped");
+    setNotificationSwipeOffset(item, 0);
+    if (openNotificationSwipe === item) openNotificationSwipe = null;
+  }
+
+  function openNotificationSwipeItem(item) {
+    if (!item) return;
+    if (openNotificationSwipe && openNotificationSwipe !== item) closeNotificationSwipe(openNotificationSwipe);
+    item.classList.add("is-swiped");
+    setNotificationSwipeOffset(item, -notificationSwipeReveal);
+    openNotificationSwipe = item;
+  }
+
+  function closeOpenNotificationSwipe() {
+    closeNotificationSwipe(openNotificationSwipe);
+  }
+
   function wireNotificationSwipeActions() {
     if (!notificationPanel) return;
     notificationPanel.querySelectorAll("[data-notification-item]").forEach((item) => {
       let startX = 0;
       let startY = 0;
       let active = false;
+      let horizontalSwipe = false;
+      let verticalScroll = false;
 
       item.addEventListener("touchstart", (e) => {
+        if (!canUseNotificationSwipe()) return;
         const touch = e.changedTouches[0];
         startX = touch.clientX;
         startY = touch.clientY;
         active = true;
+        horizontalSwipe = false;
+        verticalScroll = false;
+        if (openNotificationSwipe && openNotificationSwipe !== item) closeNotificationSwipe(openNotificationSwipe);
       }, { passive: true });
 
       item.addEventListener("touchmove", (e) => {
@@ -148,10 +196,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const touch = e.changedTouches[0];
         const deltaX = touch.clientX - startX;
         const deltaY = touch.clientY - startY;
-        if (Math.abs(deltaX) > 20 && Math.abs(deltaX) > Math.abs(deltaY)) {
-          item.classList.toggle("is-swiped", deltaX < -36);
+        if (!horizontalSwipe && !verticalScroll) {
+          if (Math.abs(deltaY) > 12 && Math.abs(deltaY) > Math.abs(deltaX)) {
+            verticalScroll = true;
+            active = false;
+            closeNotificationSwipe(item);
+            return;
+          }
+          if (Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            horizontalSwipe = true;
+          }
         }
-      }, { passive: true });
+
+        if (!horizontalSwipe) return;
+        e.preventDefault();
+        setNotificationSwipeOffset(item, deltaX);
+      }, { passive: false });
 
       item.addEventListener("touchend", (e) => {
         if (!active) return;
@@ -159,10 +219,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const touch = e.changedTouches[0];
         const deltaX = touch.clientX - startX;
         const deltaY = touch.clientY - startY;
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          if (deltaX < -54) item.classList.add("is-swiped");
-          if (deltaX > 24) item.classList.remove("is-swiped");
+        if (horizontalSwipe && Math.abs(deltaX) > Math.abs(deltaY)) {
+          if (deltaX <= -notificationSwipeThreshold) {
+            openNotificationSwipeItem(item);
+          } else {
+            closeNotificationSwipe(item);
+          }
+        } else {
+          closeNotificationSwipe(item);
         }
+      }, { passive: true });
+
+      item.addEventListener("touchcancel", () => {
+        active = false;
+        closeNotificationSwipe(item);
       }, { passive: true });
     });
   }
@@ -214,7 +284,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     notificationPanel.addEventListener("click", (e) => {
       e.stopPropagation();
+      if (openNotificationSwipe && !openNotificationSwipe.contains(e.target)) closeOpenNotificationSwipe();
     });
+
+    notificationPanel.addEventListener("touchmove", (e) => {
+      if (e.target.closest("[data-notification-item]")) return;
+      closeOpenNotificationSwipe();
+    }, { passive: true });
   }
 
   document.addEventListener("keydown", (e) => {
@@ -227,6 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", (e) => {
     if (!notificationBtn || !notificationPanel || notificationPanel.hidden) return;
     if (notificationPanel.contains(e.target) || notificationBtn.contains(e.target)) return;
+    closeOpenNotificationSwipe();
     closeNotifications();
   });
 });

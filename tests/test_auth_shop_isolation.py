@@ -3976,10 +3976,18 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn('aria-label="Dismiss notification"', dashboard.text)
         self.assertIn('data-notification-dismiss-form', dashboard.text)
         self.assertIn('data-notification-unread="true"', dashboard.text)
+        self.assertIn('class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification"', dashboard.text)
+        self.assertIn(">Open Finding</button>", dashboard.text)
+        self.assertNotIn('name="next"', dashboard.text)
         nav_js = Path("static/nav.js").read_text(encoding="utf-8")
         self.assertIn("wireNotificationSwipeActions", nav_js)
+        self.assertIn("const notificationSwipeReveal = 76", nav_js)
+        self.assertIn("const notificationSwipeThreshold = 38", nav_js)
         self.assertIn("setNotificationUnreadCount(notificationUnreadCount() - 1)", nav_js)
         self.assertIn("badge.remove()", nav_js)
+        nav_css = Path("static/style.css").read_text(encoding="utf-8")
+        self.assertIn(".tm-notificationItem__swipeDismiss{position:absolute;inset:0 0 0 auto;z-index:0;width:76px;display:none;", nav_css)
+        self.assertIn(".tm-notificationItem__dismiss{\n    display: none;\n  }", nav_css)
 
         finding_before = dict(self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (alpha_finding,)).fetchone())
         decision_logs_before = [

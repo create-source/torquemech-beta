@@ -37,7 +37,15 @@
             <div class="tm-notificationItemShell" data-notification-item data-notification-unread="{{ 'true' if item.is_unread else 'false' }}">
               <form class="tm-notificationItem__swipeDismiss" method="post" action="/pro/notifications/{{ item.id }}/dismiss" data-notification-dismiss-form>
                 <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                <button class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification">Dismiss</button>
+                <button class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification">
+                  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+                    <path d="M3 6h18"></path>
+                    <path d="M8 6V4h8v2"></path>
+                    <path d="M6 6l1 15h10l1-15"></path>
+                    <path d="M10 11v6"></path>
+                    <path d="M14 11v6"></path>
+                  </svg>
+                </button>
               </form>
               <article class="tm-notificationItem tm-notificationItem--{{ item.notification_type|replace('customer_estimate_', '') }}{% if item.is_unread %} tm-notificationItem--unread{% endif %}">
                 <div class="tm-notificationItem__top">
