@@ -9095,6 +9095,63 @@ def staff_notification_context(conn: sqlite3.Connection, shop_id: int | None) ->
             "customer_estimate_declined": "Declined",
             "customer_estimate_deferred": "Deferred",
         }.get(str(record.get("notification_type") or ""), "Notification")
+        record["body_display"] = record.get("body")
+        record["open_finding_url"] = record.get("target_url")
+        record["handoff_state"] = {
+            "kind": "none",
+            "primary_action_label": "",
+            "primary_action_url": "",
+            "primary_action_method": "get",
+        }
+        if str(record.get("related_entity_type") or "") == "finding":
+            target = row_to_dict(
+                conn.execute(
+                    """
+                    SELECT f.*
+                    FROM findings_records f
+                    JOIN customers c ON c.id = f.customer_id
+                    JOIN customer_vehicles v ON v.id = f.vehicle_id
+                    WHERE f.id = ?
+                      AND c.shop_id = ?
+                      AND v.shop_id = ?
+                      AND v.customer_id = c.id
+                    LIMIT 1
+                    """,
+                    (record.get("related_entity_id"), shop_id, shop_id),
+                ).fetchone()
+            )
+            if target:
+                customer_id = int(target["customer_id"])
+                vehicle_id = int(target["vehicle_id"])
+                finding_id = int(target["id"])
+                record["open_finding_url"] = finding_detail_url(customer_id, vehicle_id, finding_id)
+                if str(record.get("notification_type") or "") == "customer_estimate_approved":
+                    handoff_state = repair_handoff_state_for_finding(
+                        conn,
+                        customer_id=customer_id,
+                        vehicle_id=vehicle_id,
+                        finding_id=finding_id,
+                        finding=target,
+                    )
+                    record["handoff_state"] = handoff_state
+                    if handoff_state.get("kind") == "open_repair":
+                        record["body_display"] = re.sub(
+                            r"\s*Ready for Repair\.?$",
+                            " Repair Workspace is open.",
+                            str(record.get("body") or ""),
+                        ).strip()
+                    elif handoff_state.get("kind") == "invoiced":
+                        record["body_display"] = re.sub(
+                            r"\s*Ready for Repair\.?$",
+                            " Final invoice is ready.",
+                            str(record.get("body") or ""),
+                        ).strip()
+                    elif handoff_state.get("kind") == "completed_repair":
+                        record["body_display"] = re.sub(
+                            r"\s*Ready for Repair\.?$",
+                            " Repair has been completed.",
+                            str(record.get("body") or ""),
+                        ).strip()
     return {
         "unread_count": unread_count,
         "badge": "99+" if unread_count > 99 else (str(unread_count) if unread_count else ""),
@@ -9111,13 +9168,14 @@ def append_customer_decision_log_if_needed(
     *,
     notes: str = "",
     source: str = "internal/manual",
+    estimate_revision_id: Any = None,
 ) -> None:
     if decision_status not in CUSTOMER_DECISION_LOG_STATUSES:
         return
     ensure_customer_decision_logs_schema(conn)
     latest = conn.execute(
         """
-        SELECT decision_status
+        SELECT decision_status, estimate_revision_id
         FROM customer_decision_logs
         WHERE finding_id = ?
         ORDER BY created_at DESC, id DESC
@@ -9125,7 +9183,13 @@ def append_customer_decision_log_if_needed(
         """,
         (finding_id,),
     ).fetchone()
-    if latest and latest["decision_status"] == decision_status:
+    parsed_estimate_revision_id = optional_int_value(estimate_revision_id)
+    latest_estimate_revision_id = optional_int_value(latest["estimate_revision_id"]) if latest else None
+    if (
+        latest
+        and latest["decision_status"] == decision_status
+        and latest_estimate_revision_id == parsed_estimate_revision_id
+    ):
         return
     conn.execute(
         """
@@ -9145,7 +9209,7 @@ def append_customer_decision_log_if_needed(
             "",
             "",
             "",
-            None,
+            parsed_estimate_revision_id,
             notes,
             "",
             created_at,
@@ -9224,6 +9288,38 @@ def latest_customer_decision_log_for_finding(
     return record
 
 
+def customer_approval_applies_to_latest_estimate(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    finding: dict[str, Any] | None = None,
+    estimate_doc: dict[str, Any] | None = None,
+) -> bool:
+    finding_record = finding or load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    if str(finding_record.get("status") or "").strip() != "Approved":
+        return False
+    estimate = estimate_doc or latest_estimate_document_for_finding(
+        conn,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+    )
+    if not estimate:
+        return False
+    decision = latest_customer_decision_log_for_finding(conn, finding_id)
+    if not decision or str(decision.get("decision_status") or "").strip() != "Approved":
+        return False
+    estimate_id = optional_int_value(estimate.get("id"))
+    decision_estimate_id = optional_int_value(decision.get("estimate_revision_id"))
+    if decision_estimate_id:
+        return bool(estimate_id and decision_estimate_id == estimate_id)
+    decision_created_at = parse_datetime_value(decision.get("created_at")) or datetime.min
+    estimate_created_at = parse_datetime_value(estimate.get("created_at")) or datetime.min
+    return decision_created_at >= estimate_created_at
+
+
 def record_finding_customer_decision(
     conn: sqlite3.Connection,
     *,
@@ -9243,12 +9339,13 @@ def record_finding_customer_decision(
     previous_status = str(finding.get("status") or "Open").strip() or "Open"
     linked_repair_id = optional_int_value(finding.get("linked_repair_record_id"))
 
-    if not latest_estimate_document_for_finding(
+    estimate_doc = latest_estimate_document_for_finding(
         conn,
         customer_id=customer_id,
         vehicle_id=vehicle_id,
         finding_id=finding_id,
-    ):
+    )
+    if not estimate_doc:
         raise HTTPException(status_code=400, detail="Prepare an estimate before recording a customer decision")
     if previous_status == "Completed":
         raise HTTPException(status_code=400, detail="Completed findings cannot change customer decision")
@@ -9306,6 +9403,7 @@ def record_finding_customer_decision(
         now,
         notes=f"Customer {next_status} prepared estimate",
         source=source,
+        estimate_revision_id=estimate_doc.get("id"),
     )
     return next_status
 
@@ -10523,6 +10621,153 @@ def repair_record_is_valid_start_target(conn: sqlite3.Connection, repair_id: Any
     if not repair_completion_missing_requirements(completion):
         return False
     return True
+
+
+def repair_handoff_state_for_finding(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    finding: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    ensure_repair_records_schema(conn)
+    ensure_repair_completion_schema(conn)
+    ensure_invoices_schema(conn)
+    finding_record = finding or load_finding_record(conn, customer_id, vehicle_id, finding_id)
+    linked_repair_id = optional_int_value(finding_record.get("linked_repair_record_id"))
+    rows = [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT rr.*,
+                   rc.completed_at AS completion_completed_at,
+                   rc.completion_date,
+                   rc.completion_notes,
+                   rc.final_inspection_passed,
+                   direct_invoice.id AS direct_invoice_id,
+                   direct_invoice.invoice_number AS direct_invoice_number,
+                   item_invoice.id AS item_invoice_id,
+                   item_invoice.invoice_number AS item_invoice_number
+            FROM repair_records rr
+            LEFT JOIN repair_completions rc ON rc.repair_record_id = rr.id
+            LEFT JOIN invoices direct_invoice ON direct_invoice.repair_record_id = rr.id
+            LEFT JOIN invoice_items ii ON ii.repair_record_id = rr.id
+            LEFT JOIN invoices item_invoice ON item_invoice.id = ii.invoice_id
+            WHERE rr.customer_id = ?
+              AND rr.vehicle_id = ?
+              AND (
+                (rr.workflow_source_type = 'finding' AND rr.workflow_source_id = ?)
+                OR (? IS NOT NULL AND rr.id = ?)
+              )
+            ORDER BY
+              CASE WHEN rr.id = ? THEN 0 ELSE 1 END,
+              rr.id DESC
+            """,
+            (customer_id, vehicle_id, finding_id, linked_repair_id, linked_repair_id, linked_repair_id or 0),
+        ).fetchall()
+    ]
+    seen: set[int] = set()
+    repairs: list[dict[str, Any]] = []
+    for row in rows:
+        repair_id = optional_int_value(row.get("id"))
+        if not repair_id or repair_id in seen:
+            continue
+        seen.add(repair_id)
+        repairs.append(row)
+
+    active_repair: dict[str, Any] | None = None
+    invoiced_repair: dict[str, Any] | None = None
+    completed_repair: dict[str, Any] | None = None
+    fallback_repair: dict[str, Any] | None = None
+    for repair in repairs:
+        repair_id = int(repair["id"])
+        if repair_record_is_valid_start_target(
+            conn,
+            repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        ):
+            active_repair = repair
+            break
+        if repair.get("direct_invoice_id") or repair.get("item_invoice_id"):
+            invoiced_repair = invoiced_repair or repair
+        completion = {
+            "completed_at": repair.get("completion_completed_at"),
+            "completion_date": repair.get("completion_date"),
+            "completion_notes": repair.get("completion_notes"),
+            "final_inspection_passed": repair.get("final_inspection_passed"),
+        }
+        if str(repair.get("status") or "").strip() == "Completed" or not repair_completion_missing_requirements(completion):
+            completed_repair = completed_repair or repair
+        fallback_repair = fallback_repair or repair
+
+    base = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}"
+    state: dict[str, Any] = {
+        "kind": "none",
+        "primary_action_label": "",
+        "primary_action_url": "",
+        "primary_action_method": "get",
+        "repair_id": None,
+        "invoice_id": None,
+        "can_start_repair": False,
+        "open_finding_url": f"{base}/findings/{finding_id}",
+    }
+    if active_repair:
+        repair_id = int(active_repair["id"])
+        state.update(
+            {
+                "kind": "open_repair",
+                "primary_action_label": "Open Repair Workspace",
+                "primary_action_url": f"{base}/repairs/{repair_id}",
+                "repair_id": repair_id,
+            }
+        )
+        return state
+    if invoiced_repair:
+        repair_id = int(invoiced_repair["id"])
+        invoice_id = optional_int_value(invoiced_repair.get("direct_invoice_id")) or optional_int_value(
+            invoiced_repair.get("item_invoice_id")
+        )
+        state.update(
+            {
+                "kind": "invoiced",
+                "primary_action_label": "View Invoice" if invoice_id else "Open Repair Workspace",
+                "primary_action_url": f"{base}/invoices/{invoice_id}" if invoice_id else f"{base}/repairs/{repair_id}",
+                "repair_id": repair_id,
+                "invoice_id": invoice_id,
+            }
+        )
+        return state
+    if completed_repair or fallback_repair:
+        repair = completed_repair or fallback_repair
+        repair_id = int(repair["id"])
+        state.update(
+            {
+                "kind": "completed_repair",
+                "primary_action_label": "Open Repair Workspace",
+                "primary_action_url": f"{base}/repairs/{repair_id}",
+                "repair_id": repair_id,
+            }
+        )
+        return state
+    if customer_approval_applies_to_latest_estimate(
+        conn,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+        finding=finding_record,
+    ):
+        state.update(
+            {
+                "kind": "start_repair",
+                "primary_action_label": "Start Repair",
+                "primary_action_url": f"{base}/findings/{finding_id}/start-repair",
+                "primary_action_method": "post",
+                "can_start_repair": True,
+            }
+        )
+    return state
 
 
 def linked_finding_for_repair_record(
@@ -15624,6 +15869,13 @@ def pro_finding_record_detail(
         annotate_finding_workflow_state(finding)
         finding_history_records = load_finding_history_records(conn, finding_id)
         decision_log = latest_customer_decision_log_for_finding(conn, finding_id)
+        handoff_state = repair_handoff_state_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            finding=finding,
+        )
         checklist_summary = repair_checklist_summary(conn, finding.get("linked_repair_record_id"))
     finally:
         conn.close()
@@ -15637,6 +15889,7 @@ def pro_finding_record_detail(
             "finding": finding,
             "customer_review_url": customer_review_url,
             "decision_log": decision_log,
+            "handoff_state": handoff_state,
             "finding_history_records": finding_history_records,
             "checklist_summary": checklist_summary,
             "repair_work_status_options": [
@@ -15808,15 +16061,38 @@ async def pro_finding_start_repair(
         require_shop_write_access(conn, shop_id=shop_id)
         load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         existing = load_finding_record(conn, customer_id, vehicle_id, finding_id)
-        if (existing.get("status") or "") != "Approved":
-            raise HTTPException(status_code=400, detail="Customer approval is required before starting repair")
-        if not latest_estimate_document_for_finding(
+        estimate_doc = latest_estimate_document_for_finding(
             conn,
             customer_id=customer_id,
             vehicle_id=vehicle_id,
             finding_id=finding_id,
+        )
+        if not customer_approval_applies_to_latest_estimate(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            finding=existing,
+            estimate_doc=estimate_doc,
         ):
+            raise HTTPException(status_code=400, detail="Customer approval is required before starting repair")
+        if not estimate_doc:
             raise HTTPException(status_code=400, detail="Prepare an estimate before starting repair")
+        handoff_state = repair_handoff_state_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            finding=existing,
+        )
+        if handoff_state.get("kind") in {"open_repair", "invoiced", "completed_repair"} and handoff_state.get("repair_id"):
+            conn.commit()
+            if handoff_state.get("kind") == "invoiced" and handoff_state.get("invoice_id"):
+                return RedirectResponse(str(handoff_state["primary_action_url"]), status_code=303)
+            return RedirectResponse(
+                f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/repairs/{handoff_state['repair_id']}",
+                status_code=303,
+            )
         previous_repair_id = optional_int_value(existing.get("linked_repair_record_id"))
         previous_repair_is_valid = (
             repair_record_is_valid_start_target(

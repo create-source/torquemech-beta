@@ -53,11 +53,21 @@
                   <time>{{ item.created_at_display }}</time>
                 </div>
                 <h3>{{ item.title }}</h3>
-                <p>{{ item.body }}</p>
-                {% if item.notification_type == "customer_estimate_approved" %}
+                <p>{{ item.body_display or item.body }}</p>
+                {% if item.notification_type == "customer_estimate_approved" and item.handoff_state.kind == "start_repair" %}
                 <span class="tm-notificationItem__ready">Ready for Repair</span>
                 {% endif %}
                 <div class="tm-notificationItem__actions">
+                  {% if item.notification_type == "customer_estimate_approved" and item.handoff_state.primary_action_label %}
+                    {% if item.handoff_state.primary_action_method == "post" %}
+                  <form method="post" action="{{ item.handoff_state.primary_action_url }}">
+                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+                    <button class="tm-notificationItem__action tm-notificationItem__action--primary" type="submit">{{ item.handoff_state.primary_action_label }}</button>
+                  </form>
+                    {% else %}
+                  <a class="tm-notificationItem__action tm-notificationItem__action--primary" href="{{ item.handoff_state.primary_action_url }}">{{ item.handoff_state.primary_action_label }}</a>
+                    {% endif %}
+                  {% endif %}
                   <form method="post" action="/pro/notifications/{{ item.id }}/open">
                     <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
                     <button class="tm-notificationItem__action" type="submit">Open Finding</button>

@@ -223,14 +223,15 @@
         <button class="tm-btn tm-btn-primary" type="submit">Change Decision to Approved</button>
       </form>
       {% endif %}
-      {% if finding.status == "Approved" and not finding.linked_repair_record_id %}
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/start-repair">
+      {% if handoff_state and handoff_state.primary_action_label %}
+        {% if handoff_state.primary_action_method == "post" %}
+      <form method="post" action="{{ handoff_state.primary_action_url }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="tm-btn tm-btn-primary" type="submit">Start Repair</button>
+        <button class="tm-btn tm-btn-primary" type="submit">{{ handoff_state.primary_action_label }}</button>
       </form>
-      {% endif %}
-      {% if finding.linked_repair_record_id %}
-      <a class="tm-btn tm-btn-primary" href="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/repairs/{{ finding.linked_repair_record_id }}">Open Repair Workspace</a>
+        {% else %}
+      <a class="tm-btn tm-btn-primary" href="{{ handoff_state.primary_action_url }}">{{ handoff_state.primary_action_label }}</a>
+        {% endif %}
       {% endif %}
       {% if finding.estimate_document_url %}
       <a class="tm-btn tm-btn-secondary" href="{{ finding.estimate_document_url }}">Open Estimate PDF</a>
