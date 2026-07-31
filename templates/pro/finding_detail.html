@@ -423,9 +423,6 @@
         </form>
       </details>
       {% elif decision_status == "Declined" %}
-      <div class="tm-decision-follow-up__summary" role="status">
-        <strong>Customer declined this estimate. No further action is required.</strong>
-      </div>
       {% elif decision_status == "Deferred" %}
       <p class="tm-decision-follow-up__warning">Pricing may change. Create a new estimate revision before the customer approves later.</p>
       <details data-decision-follow-up-panel>
