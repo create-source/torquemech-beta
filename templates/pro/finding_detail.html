@@ -213,6 +213,65 @@
     font-weight:900;
     line-height:1.45;
   }
+  .tm-decision-follow-up {
+    display:grid;
+    gap:10px;
+    border:1px solid rgba(148, 163, 184, .16);
+    border-radius:8px;
+    background:rgba(15, 23, 42, .46);
+    padding:12px;
+  }
+  .tm-decision-follow-up__summary {
+    display:grid;
+    gap:4px;
+    color:#e2e8f0;
+    font-weight:800;
+  }
+  .tm-decision-follow-up__summary strong { color:#f8fafc; }
+  .tm-decision-follow-up__summary span { color:#cbd5e1; }
+  .tm-decision-follow-up details {
+    border:1px solid rgba(148, 163, 184, .18);
+    border-radius:8px;
+    background:rgba(2, 6, 23, .28);
+    padding:10px 12px;
+  }
+  .tm-decision-follow-up summary {
+    cursor:pointer;
+    color:#f8fafc;
+    font-weight:900;
+  }
+  .tm-decision-follow-up form {
+    display:grid;
+    gap:10px;
+    margin-top:10px;
+  }
+  .tm-decision-follow-up label {
+    display:grid;
+    gap:6px;
+    color:#cbd5e1;
+    font-size:.82rem;
+    font-weight:900;
+  }
+  .tm-decision-follow-up textarea,
+  .tm-decision-follow-up input[type="date"] {
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid rgba(148, 163, 184, .32);
+    border-radius:8px;
+    background:#0b1623 !important;
+    color:#f8fafc !important;
+    -webkit-text-fill-color:#f8fafc !important;
+    padding:10px 12px;
+    font:inherit;
+  }
+  .tm-decision-follow-up textarea { min-height:76px; resize:vertical; }
+  .tm-decision-activity-item--staff_follow_up {
+    border-color:rgba(249, 115, 22, .34);
+    background:rgba(67, 20, 7, .28);
+  }
+  .tm-decision-activity-item--customer_decision_current {
+    border-color:rgba(34,197,94,.28);
+  }
   .tm-decision-activity-list {
     display:grid;
     gap:8px;
@@ -272,26 +331,47 @@
     <strong>Repair estimate prepared.</strong>
   </div>
   {% endif %}
+  {% if request.query_params.get("follow_up_saved") == "1" %}
+  <div class="tm-finding-panel tm-finding-action-panel" role="status" aria-live="polite">
+    <strong>Follow-up saved.</strong>
+  </div>
+  {% endif %}
 
   {% if customer_decision_activity and customer_decision_activity.has_activity %}
-  <section class="tm-finding-panel tm-finding-action-panel tm-decision-activity" aria-label="Customer Decision Activity">
+  <section class="tm-finding-panel tm-finding-action-panel tm-decision-activity" aria-label="Customer Decision">
     <div>
-      <h2 class="tm-finding-section-title">Customer Decision Activity</h2>
+      <h2 class="tm-finding-section-title">Customer Decision</h2>
+      <div class="tm-decision-activity__hint">Customer Decision Activity</div>
     </div>
     <div class="tm-decision-activity__hero">
       <div class="tm-decision-activity__decision">
         {% if customer_decision_activity.latest_decision %}
         <strong>{{ customer_decision_activity.latest_decision.decision_label }}</strong>
-        <span>Customer {{ customer_decision_activity.latest_decision.decision_label }} on {{ customer_decision_activity.latest_decision.created_at|pro_datetime }}</span>
+        <span>Recorded {{ customer_decision_activity.latest_decision.created_at|pro_datetime }}</span>
         {% else %}
         <strong>Awaiting Customer Decision</strong>
-        <span>No customer decision has been recorded yet.</span>
+        <span>No current customer decision exists for the latest prepared estimate.</span>
         {% endif %}
       </div>
       <div class="tm-decision-activity__chips">
+        <span class="tm-decision-chip">{{ finding.customer_decision_label }}</span>
+        {% if finding.repair_stage_label %}
+        <span class="tm-decision-chip">{{ finding.repair_stage_label }}</span>
+        {% endif %}
         {% if customer_decision_activity.latest_decision %}
         <span class="tm-decision-chip {% if customer_decision_activity.latest_decision.decision_status == 'Approved' and customer_decision_activity.latest_decision.is_current %}tm-decision-chip--approved{% elif not customer_decision_activity.latest_decision.is_current %}tm-decision-chip--warning{% elif customer_decision_activity.latest_decision.decision_status == 'Declined' %}tm-decision-chip--danger{% endif %}">
           {{ customer_decision_activity.latest_decision.current_status_label }}
+        </span>
+        <span class="tm-decision-chip">
+          {% if customer_decision_activity.latest_decision.decision_status == "Approved" %}Customer Approved{% elif customer_decision_activity.latest_decision.decision_status == "Declined" %}Customer Declined{% elif customer_decision_activity.latest_decision.decision_status == "Deferred" %}Customer Deferred{% endif %}
+        </span>
+        {% if customer_decision_activity.latest_decision.decision_status == "Deferred" %}
+        <span class="tm-decision-chip">Decided Later</span>
+        {% endif %}
+        {% elif customer_decision_activity.latest_any_decision %}
+        <span class="tm-decision-chip tm-decision-chip--warning">Superseded by a newer prepared estimate</span>
+        <span class="tm-decision-chip">
+          {% if customer_decision_activity.latest_any_decision.decision_status == "Approved" %}Customer Approved{% elif customer_decision_activity.latest_any_decision.decision_status == "Declined" %}Customer Declined{% elif customer_decision_activity.latest_any_decision.decision_status == "Deferred" %}Customer Deferred{% endif %}
         </span>
         {% endif %}
         <span class="tm-decision-chip">{{ customer_decision_activity.workflow_label }}</span>
@@ -303,42 +383,129 @@
       {% if customer_decision_activity.latest_decision %}
       <div class="tm-finding-field"><span>Decision Revision</span><strong>{{ customer_decision_activity.latest_decision.estimate_revision_label }}</strong></div>
       <div class="tm-finding-field"><span>Decision Total</span><strong>{% if customer_decision_activity.latest_decision.estimate_total is not none %}{{ customer_decision_activity.latest_decision.estimate_total|pro_currency }}{% elif finding.estimate_total is not none %}{{ finding.estimate_total|pro_currency }}{% else %}-{% endif %}</strong></div>
+      <div class="tm-finding-field"><span>Customer</span><strong>{{ customer_decision_activity.latest_decision.customer_name or customer.first_name ~ " " ~ customer.last_name }}</strong></div>
       <div class="tm-finding-field"><span>Decision Source</span><strong>{{ customer_decision_activity.latest_decision.source_display }}</strong></div>
-      <div class="tm-finding-field"><span>Submitted</span><strong>{{ customer_decision_activity.latest_decision.created_at|pro_datetime }}</strong></div>
+      <div class="tm-finding-field"><span>Follow-up</span><strong>{% if customer_decision_activity.latest_follow_up %}{{ customer_decision_activity.latest_follow_up.status_label }}{% else %}-{% endif %}</strong></div>
       {% else %}
       <div class="tm-finding-field"><span>Estimated Total</span><strong>{% if finding.estimate_total is not none %}{{ finding.estimate_total|pro_currency }}{% else %}-{% endif %}</strong></div>
       {% endif %}
     </div>
+    {% if customer_decision_activity.latest_decision %}
+    <div class="tm-decision-follow-up">
+      <div class="tm-decision-follow-up__summary">
+        <strong>Next step</strong>
+        <span>{{ customer_decision_activity.latest_decision.next_step }}</span>
+      </div>
+      {% if customer_decision_activity.latest_follow_up %}
+      <div class="tm-decision-follow-up__summary">
+        <strong>{{ customer_decision_activity.latest_follow_up.status_label }}</strong>
+        {% if customer_decision_activity.latest_follow_up.follow_up_date_display %}<span>Scheduled for {{ customer_decision_activity.latest_follow_up.follow_up_date_display }}</span>{% endif %}
+        {% if customer_decision_activity.latest_follow_up.note %}<span>&ldquo;{{ customer_decision_activity.latest_follow_up.note }}&rdquo;</span>{% endif %}
+      </div>
+      {% endif %}
+      {% set latest_estimate_id = customer_decision_activity.latest_estimate.id if customer_decision_activity.latest_estimate else "" %}
+      {% set decision_status = customer_decision_activity.latest_decision.decision_status %}
+      {% if decision_status == "Approved" %}
+      <details>
+        <summary>Add Follow-up Note</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
+          <input type="hidden" name="action" value="add_note">
+          <label for="follow_up_note_approved">Note <textarea id="follow_up_note_approved" name="note" rows="3"></textarea></label>
+          <button class="tm-btn tm-btn-secondary" type="submit">Save Follow-up Note</button>
+        </form>
+      </details>
+      {% elif decision_status == "Declined" %}
+      <details>
+        <summary>Record Contact</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
+          <input type="hidden" name="action" value="contacted">
+          <label for="follow_up_note_declined_contact">Note <textarea id="follow_up_note_declined_contact" name="note" rows="3"></textarea></label>
+          <button class="tm-btn tm-btn-secondary" type="submit">Record Contact</button>
+        </form>
+      </details>
+      <details>
+        <summary>Close - No Further Action</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
+          <input type="hidden" name="action" value="closed_no_action">
+          <label for="follow_up_note_declined_close">Note <textarea id="follow_up_note_declined_close" name="note" rows="3"></textarea></label>
+          <button class="tm-btn tm-btn-secondary" type="submit">Close - No Further Action</button>
+        </form>
+      </details>
+      {% elif decision_status == "Deferred" %}
+      <details>
+        <summary>Schedule Follow-up</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
+          <input type="hidden" name="action" value="schedule_follow_up">
+          <label for="follow_up_date_deferred">Follow-up date <input id="follow_up_date_deferred" name="follow_up_date" type="date" required></label>
+          <label for="follow_up_note_deferred_schedule">Note <textarea id="follow_up_note_deferred_schedule" name="note" rows="3"></textarea></label>
+          <button class="tm-btn tm-btn-secondary" type="submit">Schedule Follow-up</button>
+        </form>
+      </details>
+      <details>
+        <summary>Record Contact</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
+          <input type="hidden" name="action" value="contacted">
+          <label for="follow_up_note_deferred_contact">Note <textarea id="follow_up_note_deferred_contact" name="note" rows="3"></textarea></label>
+          <button class="tm-btn tm-btn-secondary" type="submit">Record Contact</button>
+        </form>
+      </details>
+      <details>
+        <summary>Customer Requested More Time</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
+          <input type="hidden" name="action" value="customer_requested_more_time">
+          <label for="follow_up_note_deferred_time">Note <textarea id="follow_up_note_deferred_time" name="note" rows="3"></textarea></label>
+          <button class="tm-btn tm-btn-secondary" type="submit">Customer Requested More Time</button>
+        </form>
+      </details>
+      <details>
+        <summary>Close - No Further Action</summary>
+        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
+          <input type="hidden" name="action" value="closed_no_action">
+          <label for="follow_up_note_deferred_close">Note <textarea id="follow_up_note_deferred_close" name="note" rows="3"></textarea></label>
+          <button class="tm-btn tm-btn-secondary" type="submit">Close - No Further Action</button>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+    {% endif %}
     {% if customer_decision_activity.stale_warning %}
     <div class="tm-decision-warning" role="status">{{ customer_decision_activity.stale_warning }}</div>
     {% endif %}
     <div class="tm-finding-actions" style="margin-top:0;">
-      {% if finding.status not in ["Approved", "Declined", "Completed"] %}
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
+      {% if not customer_decision_activity.latest_decision and not customer_decision_activity.latest_any_decision and finding.status not in ["Approved", "Declined", "Completed"] %}
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision" data-prevent-double-submit>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="decision" value="approved">
         <button class="tm-btn tm-btn-primary" type="submit">Mark Customer Approved</button>
       </form>
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision" data-prevent-double-submit>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="decision" value="declined">
         <button class="tm-btn tm-btn-secondary" type="submit">Mark Customer Declined</button>
       </form>
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
+      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision" data-prevent-double-submit>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="decision" value="deferred">
         <button class="tm-btn tm-btn-secondary" type="submit">Mark Customer Deferred</button>
       </form>
-      {% elif finding.status == "Declined" %}
-      <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/customer-decision">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input type="hidden" name="decision" value="approved">
-        <button class="tm-btn tm-btn-primary" type="submit">Change Decision to Approved</button>
-      </form>
       {% endif %}
       {% if handoff_state and handoff_state.primary_action_label %}
         {% if handoff_state.primary_action_method == "post" %}
-      <form method="post" action="{{ handoff_state.primary_action_url }}">
+      <form method="post" action="{{ handoff_state.primary_action_url }}" data-prevent-double-submit>
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <button class="tm-btn tm-btn-primary" type="submit">{{ handoff_state.primary_action_label }}</button>
       </form>
@@ -355,7 +522,7 @@
       <div class="tm-decision-activity__hint">Activity</div>
       <div class="tm-decision-activity-list">
         {% for item in customer_decision_activity.events %}
-        <article class="tm-decision-activity-item">
+        <article class="tm-decision-activity-item tm-decision-activity-item--{{ item.item_type or 'event' }}">
           <time>{{ item.created_at|pro_datetime }}</time>
           <strong>{{ item.label }}</strong>
           {% if item.detail %}<span>{{ item.detail }}</span>{% endif %}
@@ -439,7 +606,7 @@
     {% set has_saved_estimate = finding.estimate_document_id %}
     {% set has_inline_estimate = finding.labor_hours is not none or finding.labor_rate is not none or finding.labor_amount is not none or finding.parts_cost is not none %}
     {% set estimate_total = finding.estimate_total if finding.estimate_total is not none else ((finding.labor_amount or 0) + (finding.parts_cost or 0)) %}
-    {% if has_saved_estimate %}
+    {% if finding.estimate_document_id %}
     <div><span class="tm-status-chip">Estimate prepared</span></div>
     {% endif %}
     {% if has_saved_estimate or has_inline_estimate %}
@@ -498,6 +665,8 @@
           Repair Workflow {{ item.new_status|replace("_", " ")|title }}
           {% elif item.event_type == "customer_decision_changed" %}
           Customer Decision: {{ item.new_status }}
+          {% elif item.event_type == "staff_follow_up_updated" %}
+          Staff Follow-up: {{ item.new_status|replace("_", " ")|title }}
           {% elif item.event_type == "repair_started" %}
           Repair Started
           {% elif finding.request_type == "labor" and item.new_status %}
@@ -508,6 +677,8 @@
         </div>
         {% if item.event_type == "finding_created" %}
         <div class="tm-finding-history-finding">Status: {{ item.new_status }}</div>
+        {% elif item.event_type == "staff_follow_up_updated" %}
+        <div class="tm-finding-history-finding">{% if item.actor_name %}{{ item.actor_name }} - {% endif %}{{ item.notes }}</div>
         {% endif %}
       </article>
       {% endfor %}
@@ -551,6 +722,19 @@
         status.textContent = "Unable to copy the link. Please try again.";
       }
     }
+  });
+  document.querySelectorAll("[data-prevent-double-submit]").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      if (form.dataset.submitPending === "true") {
+        event.preventDefault();
+        return;
+      }
+      form.dataset.submitPending = "true";
+      form.querySelectorAll("button[type='submit']").forEach((button) => {
+        button.disabled = true;
+        button.setAttribute("aria-disabled", "true");
+      });
+    });
   });
 </script>
 {% endblock %}

@@ -63,7 +63,7 @@ def runtime_schema_changes_allowed() -> bool:
     return (os.getenv("TORQUEMECH_ALLOW_RUNTIME_SCHEMA") or "").strip().lower() in {"1", "true", "yes"}
 
 
-POSTGRES_RUNTIME_SCHEMA_TABLE_ALLOWLIST = {"staff_notifications"}
+POSTGRES_RUNTIME_SCHEMA_TABLE_ALLOWLIST = {"staff_notifications", "customer_decision_follow_ups"}
 
 
 def connect_app_db(*, row_factory: bool = False):

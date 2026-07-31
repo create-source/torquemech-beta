@@ -4966,6 +4966,252 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(stale_blocked.status_code, 400)
         self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 0)
 
+    def test_stage3b_decision_card_displays_current_decision_and_follow_up_actions(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3b-card@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3b-card@example.com")
+        cases = (
+            ("approved", "Approved", "Customer approved this prepared estimate. The repair can now be started.", "Add Follow-up Note"),
+            ("declined", "Declined", "Customer declined this prepared estimate. Record any follow-up notes or close the opportunity.", "Close - No Further Action"),
+            ("deferred", "Decide Later", "Customer has not made a final decision. Schedule or record a follow-up.", "Schedule Follow-up"),
+        )
+        for raw_decision, label, next_step, action_text in cases:
+            with self.subTest(raw_decision=raw_decision):
+                customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name=f"Stage3B{raw_decision}")
+                finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+                self.seed_repair_estimate_document_for_finding(
+                    customer_id,
+                    vehicle_id,
+                    finding_id,
+                    total=321.45,
+                    service_name="Stage 3B Estimate",
+                )
+                detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+                page = client.get(detail_url)
+                posted = client.post(
+                    f"{detail_url}/customer-decision",
+                    data={"csrf_token": csrf_from(page.text), "decision": raw_decision},
+                    follow_redirects=False,
+                )
+                self.assertEqual(posted.status_code, 303)
+
+                rendered = client.get(detail_url)
+                self.assertIn("<h2 class=\"tm-finding-section-title\">Customer Decision</h2>", rendered.text)
+                self.assertIn(f"<strong>{label}</strong>", rendered.text)
+                self.assertIn("$321.45", rendered.text)
+                self.assertIn("Stage3B", rendered.text)
+                self.assertIn(next_step, rendered.text)
+                self.assertIn(action_text, rendered.text)
+                self.assertIn('data-prevent-double-submit', rendered.text)
+                self.assertIn("tm-decision-activity-item--customer_decision_current", rendered.text)
+
+    def test_stage3b_stale_decision_is_not_treated_as_current_card(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3b-stale@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3b-stale@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="StaleStage3B")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        original_estimate_id = self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=500.0,
+            service_name="Original Stage 3B Estimate",
+        )
+        pro_module.append_customer_decision_log_if_needed(
+            self.conn,
+            finding_id,
+            "Approved",
+            "StaleStage3B Owner",
+            "2026-07-24T12:10:00",
+            source="customer_secure_link",
+            estimate_revision_id=original_estimate_id,
+        )
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=650.0,
+            service_name="Revised Stage 3B Estimate",
+        )
+        self.conn.commit()
+
+        response = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("No current customer decision exists for the latest prepared estimate.", response.text)
+        self.assertIn("A newer prepared estimate was created after this customer decision.", response.text)
+        self.assertIn("A newer prepared estimate superseded the prior decision", response.text)
+        self.assertNotIn("Customer approved this prepared estimate. The repair can now be started.", response.text)
+        self.assertNotIn("Add Follow-up Note", response.text)
+
+    def test_stage3b_follow_up_writes_update_existing_record_and_preserve_side_effects(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3b-followup@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3b-followup@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Followup")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, total=777.0)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        review_link = self.customer_review_link_from_detail(client.get(detail_url).text)
+        decided = client.post(f"{review_link}/decision", data={"decision": "deferred"}, follow_redirects=False)
+        self.assertEqual(decided.status_code, 303)
+        notifications_before = self.conn.execute("SELECT COUNT(*) AS count FROM staff_notifications").fetchone()["count"]
+        page = client.get(detail_url)
+
+        scheduled = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "estimate_id": str(estimate_id),
+                "action": "schedule_follow_up",
+                "follow_up_date": "2026-08-02",
+                "note": "Customer asked us to call after payday.",
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(scheduled.status_code, 303)
+        contacted = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "estimate_id": str(estimate_id),
+                "action": "contacted",
+                "note": "Left voicemail.",
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(contacted.status_code, 303)
+
+        follow_ups = self.conn.execute("SELECT * FROM customer_decision_follow_ups WHERE finding_id = ?", (finding_id,)).fetchall()
+        self.assertEqual(len(follow_ups), 1)
+        self.assertEqual(follow_ups[0]["shop_id"], shop_id)
+        self.assertEqual(follow_ups[0]["customer_id"], customer_id)
+        self.assertEqual(follow_ups[0]["vehicle_id"], vehicle_id)
+        self.assertEqual(follow_ups[0]["estimate_revision_id"], estimate_id)
+        self.assertEqual(follow_ups[0]["status"], "contacted")
+        self.assertEqual(follow_ups[0]["note"], "Left voicemail.")
+        self.assertEqual(follow_ups[0]["follow_up_date"], "")
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 0)
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM staff_notifications").fetchone()["count"], notifications_before)
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM customer_decision_logs WHERE finding_id = ?", (finding_id,)).fetchone()["count"],
+            1,
+        )
+        history = client.get(detail_url)
+        self.assertIn("Follow-up saved.", client.get(scheduled.headers["location"]).text)
+        self.assertIn("Staff follow-up: Contacted", history.text)
+        self.assertIn("Left voicemail.", history.text)
+        self.assertIn("tm-decision-activity-item--staff_follow_up", history.text)
+
+    def test_stage3b_follow_up_rejects_invalid_inputs_and_stale_estimate(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3b-invalid@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3b-invalid@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="InvalidStage3B")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        page = client.get(detail_url)
+        self.assertEqual(
+            client.post(
+                f"{detail_url}/customer-decision",
+                data={"csrf_token": csrf_from(page.text), "decision": "deferred"},
+                follow_redirects=False,
+            ).status_code,
+            303,
+        )
+        token = csrf_from(client.get(detail_url).text)
+
+        missing_csrf = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={"estimate_id": str(estimate_id), "action": "contacted"},
+            follow_redirects=False,
+        )
+        bad_action = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={"csrf_token": token, "estimate_id": str(estimate_id), "action": "raw_status"},
+            follow_redirects=False,
+        )
+        missing_date = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={"csrf_token": token, "estimate_id": str(estimate_id), "action": "schedule_follow_up"},
+            follow_redirects=False,
+        )
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            service_name="Superseding Estimate",
+        )
+        stale = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={"csrf_token": token, "estimate_id": str(estimate_id), "action": "contacted"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(missing_csrf.status_code, 403)
+        self.assertEqual(bad_action.status_code, 400)
+        self.assertEqual(missing_date.status_code, 400)
+        self.assertEqual(stale.status_code, 409)
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM customer_decision_follow_ups").fetchone()["count"],
+            0,
+        )
+
+    def test_stage3b_follow_up_rejects_cross_shop_and_read_only_writes(self):
+        alpha_client = self.client()
+        self.bootstrap_owner(alpha_client, email="stage3b-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("stage3b-alpha@example.com")
+        alpha_customer, alpha_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="AlphaStage3B")
+        alpha_finding = self.seed_finding_for_shop_estimate_stage(alpha_customer, alpha_vehicle)
+        alpha_estimate = self.seed_repair_estimate_document_for_finding(alpha_customer, alpha_vehicle, alpha_finding)
+        alpha_url = f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}"
+        alpha_page = alpha_client.get(alpha_url)
+        self.assertEqual(
+            alpha_client.post(
+                f"{alpha_url}/customer-decision",
+                data={"csrf_token": csrf_from(alpha_page.text), "decision": "declined"},
+                follow_redirects=False,
+            ).status_code,
+            303,
+        )
+        self.logout(alpha_client)
+        beta_client = self.client()
+        self.signup(beta_client, email="stage3b-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("stage3b-beta@example.com")
+        beta_shop = self.shop_id_for_email("stage3b-beta@example.com")
+        beta_customer, beta_vehicle = self.seed_customer_vehicle_for_shop(beta_shop, first_name="BetaStage3B")
+        beta_finding = self.seed_finding_for_shop_estimate_stage(beta_customer, beta_vehicle)
+        beta_estimate = self.seed_repair_estimate_document_for_finding(beta_customer, beta_vehicle, beta_finding)
+        beta_url = f"/pro/customers/{beta_customer}/vehicles/{beta_vehicle}/findings/{beta_finding}"
+        beta_page = beta_client.get(beta_url)
+        beta_token = csrf_from(beta_page.text)
+
+        cross = beta_client.post(
+            f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}/decision-follow-up",
+            data={"csrf_token": beta_token, "estimate_id": str(alpha_estimate), "action": "contacted"},
+            follow_redirects=False,
+        )
+        self.conn.execute(
+            "UPDATE shop_subscriptions SET status = 'past_due', trial_ends_at = '2020-01-01T00:00:00' WHERE shop_id = ?",
+            (beta_shop,),
+        )
+        self.conn.commit()
+        read_only = beta_client.post(
+            f"{beta_url}/decision-follow-up",
+            data={"csrf_token": beta_token, "estimate_id": str(beta_estimate), "action": "contacted"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(cross.status_code, 404)
+        self.assertEqual(read_only.status_code, 303)
+        self.assertIn("subscription_notice=read_only", read_only.headers["location"])
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM customer_decision_follow_ups").fetchone()["count"],
+            0,
+        )
+
     def test_finding_detail_legacy_saved_estimate_without_service_data_degrades_safely(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage1-legacy-service@example.com", shop_name="Alpha Shop")

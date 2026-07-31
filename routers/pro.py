@@ -9152,6 +9152,43 @@ def staff_notification_context(conn: sqlite3.Connection, shop_id: int | None) ->
                 vehicle_id = int(target["vehicle_id"])
                 finding_id = int(target["id"])
                 record["open_finding_url"] = finding_detail_url(customer_id, vehicle_id, finding_id)
+                estimate = latest_estimate_document_for_finding(
+                    conn,
+                    customer_id=customer_id,
+                    vehicle_id=vehicle_id,
+                    finding_id=finding_id,
+                )
+                decision_status = {
+                    "customer_estimate_approved": "Approved",
+                    "customer_estimate_declined": "Declined",
+                    "customer_estimate_deferred": "Deferred",
+                }.get(str(record.get("notification_type") or ""), "")
+                follow_up_state = ""
+                if estimate and decision_status:
+                    decision = latest_customer_decision_for_prepared_estimate(
+                        conn,
+                        shop_id=shop_id,
+                        customer_id=customer_id,
+                        vehicle_id=vehicle_id,
+                        finding_id=finding_id,
+                        estimate_id=int(estimate["id"]),
+                        decision_status=decision_status,
+                    )
+                    follow_up = latest_follow_up_for_decision(
+                        conn,
+                        shop_id=shop_id,
+                        customer_id=customer_id,
+                        vehicle_id=vehicle_id,
+                        finding_id=finding_id,
+                        estimate_id=int(estimate["id"]),
+                        decision_log_id=optional_int_value((decision or {}).get("id")),
+                    ) if decision else None
+                    if decision_status == "Approved":
+                        follow_up_state = "Ready for Repair"
+                    elif decision:
+                        follow_up_state = follow_up_notification_state_label(follow_up)
+                if follow_up_state and str(record.get("notification_type") or "") != "customer_estimate_approved":
+                    record["body_display"] = f"{record.get('body') or ''} {follow_up_state}.".strip()
                 if str(record.get("notification_type") or "") == "customer_estimate_approved":
                     handoff_state = repair_handoff_state_for_finding(
                         conn,
@@ -9177,6 +9214,12 @@ def staff_notification_context(conn: sqlite3.Connection, shop_id: int | None) ->
                         record["body_display"] = re.sub(
                             r"\s*Ready for Repair\.?$",
                             " Repair has been completed.",
+                            str(record.get("body") or ""),
+                        ).strip()
+                    elif follow_up_state:
+                        record["body_display"] = re.sub(
+                            r"\s*Ready for Repair\.?$",
+                            f" {follow_up_state}.",
                             str(record.get("body") or ""),
                         ).strip()
     return {
@@ -9395,8 +9438,246 @@ def latest_customer_decision_matches_prepared_estimate(
 CUSTOMER_DECISION_ACTIVITY_LABELS = {
     "Approved": "Approved",
     "Declined": "Declined",
-    "Deferred": "Decided Later",
+    "Deferred": "Decide Later",
 }
+
+FOLLOW_UP_STATUSES = {
+    "pending",
+    "contacted",
+    "customer_requested_more_time",
+    "closed_no_action",
+}
+FOLLOW_UP_ACTION_TO_STATUS = {
+    "contacted": "contacted",
+    "customer_requested_more_time": "customer_requested_more_time",
+    "closed_no_action": "closed_no_action",
+    "schedule_follow_up": "pending",
+    "add_note": "pending",
+}
+FOLLOW_UP_STATUS_LABELS = {
+    "pending": "Follow-up Pending",
+    "contacted": "Contacted",
+    "customer_requested_more_time": "Customer Requested More Time",
+    "closed_no_action": "Closed - No Further Action",
+}
+CUSTOMER_DECISION_NEXT_STEP_COPY = {
+    "Approved": "Customer approved this prepared estimate. The repair can now be started.",
+    "Declined": "Customer declined this prepared estimate. Record any follow-up notes or close the opportunity.",
+    "Deferred": "Customer has not made a final decision. Schedule or record a follow-up.",
+}
+
+
+def ensure_customer_decision_follow_ups_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customer_decision_follow_ups (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          customer_id INTEGER NOT NULL,
+          vehicle_id INTEGER NOT NULL,
+          finding_id INTEGER NOT NULL,
+          estimate_revision_id INTEGER NOT NULL,
+          customer_decision_log_id INTEGER,
+          status TEXT NOT NULL,
+          note TEXT,
+          follow_up_date TEXT,
+          created_by INTEGER,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (shop_id) REFERENCES shop_profile(id),
+          FOREIGN KEY (customer_id) REFERENCES customers(id),
+          FOREIGN KEY (vehicle_id) REFERENCES customer_vehicles(id),
+          FOREIGN KEY (finding_id) REFERENCES findings_records(id),
+          FOREIGN KEY (estimate_revision_id) REFERENCES repair_estimate_documents(id),
+          FOREIGN KEY (customer_decision_log_id) REFERENCES customer_decision_logs(id),
+          FOREIGN KEY (created_by) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_customer_decision_follow_ups_scope "
+        "ON customer_decision_follow_ups (shop_id, customer_id, vehicle_id, finding_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_customer_decision_follow_ups_decision "
+        "ON customer_decision_follow_ups (customer_decision_log_id)"
+    )
+    conn.commit()
+
+
+def follow_up_status_label(status: Any) -> str:
+    clean = str(status or "").strip()
+    return FOLLOW_UP_STATUS_LABELS.get(clean, clean.replace("_", " ").title() if clean else "")
+
+
+def annotate_follow_up_record(record: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not record:
+        return None
+    record["status_label"] = follow_up_status_label(record.get("status"))
+    follow_up_date = parse_date_value(record.get("follow_up_date"))
+    record["follow_up_date_display"] = format_pro_date(follow_up_date) if follow_up_date else ""
+    return record
+
+
+def latest_follow_up_for_decision(
+    conn: sqlite3.Connection,
+    *,
+    shop_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    estimate_id: int,
+    decision_log_id: int | None,
+) -> dict[str, Any] | None:
+    ensure_customer_decision_follow_ups_schema(conn)
+    params: list[Any] = [shop_id, customer_id, vehicle_id, finding_id, estimate_id]
+    filters = [
+        "shop_id = ?",
+        "customer_id = ?",
+        "vehicle_id = ?",
+        "finding_id = ?",
+        "estimate_revision_id = ?",
+    ]
+    if decision_log_id:
+        filters.append("customer_decision_log_id = ?")
+        params.append(decision_log_id)
+    record = row_to_dict(
+        conn.execute(
+            f"""
+            SELECT *
+            FROM customer_decision_follow_ups
+            WHERE {' AND '.join(filters)}
+            ORDER BY updated_at DESC, id DESC
+            LIMIT 1
+            """,
+            tuple(params),
+        ).fetchone()
+    )
+    return annotate_follow_up_record(record)
+
+
+def follow_up_notification_state_label(follow_up: dict[str, Any] | None) -> str:
+    if not follow_up:
+        return "Follow-up Pending"
+    if follow_up.get("follow_up_date_display"):
+        return f"Follow-up Scheduled {follow_up['follow_up_date_display']}"
+    return follow_up_status_label(follow_up.get("status")) or "Follow-up Pending"
+
+
+def staff_display_name(user: dict[str, Any] | None) -> str:
+    if not user:
+        return ""
+    return " ".join(
+        part
+        for part in (
+            str(user.get("first_name") or "").strip(),
+            str(user.get("last_name") or "").strip(),
+        )
+        if part
+    ).strip() or str(user.get("email") or "").strip()
+
+
+def upsert_customer_decision_follow_up(
+    conn: sqlite3.Connection,
+    *,
+    shop_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    estimate_id: int,
+    decision_log_id: int,
+    status: str,
+    note: str,
+    follow_up_date: str,
+    created_by: int | None,
+    now: str,
+) -> dict[str, Any]:
+    if status not in FOLLOW_UP_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid follow-up status")
+    ensure_customer_decision_follow_ups_schema(conn)
+    existing = row_to_dict(
+        conn.execute(
+            """
+            SELECT *
+            FROM customer_decision_follow_ups
+            WHERE shop_id = ?
+              AND customer_id = ?
+              AND vehicle_id = ?
+              AND finding_id = ?
+              AND estimate_revision_id = ?
+              AND customer_decision_log_id = ?
+            ORDER BY updated_at DESC, id DESC
+            LIMIT 1
+            """,
+            (shop_id, customer_id, vehicle_id, finding_id, estimate_id, decision_log_id),
+        ).fetchone()
+    )
+    if existing:
+        conn.execute(
+            """
+            UPDATE customer_decision_follow_ups
+            SET status = ?,
+                note = ?,
+                follow_up_date = ?,
+                created_by = COALESCE(?, created_by),
+                updated_at = ?
+            WHERE id = ? AND shop_id = ?
+            """,
+            (status, note, follow_up_date, created_by, now, existing["id"], shop_id),
+        )
+        existing.update(
+            {
+                "status": status,
+                "note": note,
+                "follow_up_date": follow_up_date,
+                "updated_at": now,
+                "created_by": created_by or existing.get("created_by"),
+            }
+        )
+        return annotate_follow_up_record(existing) or existing
+    follow_up_id = int(
+        conn.execute(
+            """
+            INSERT INTO customer_decision_follow_ups (
+              shop_id, customer_id, vehicle_id, finding_id, estimate_revision_id,
+              customer_decision_log_id, status, note, follow_up_date,
+              created_by, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                shop_id,
+                customer_id,
+                vehicle_id,
+                finding_id,
+                estimate_id,
+                decision_log_id,
+                status,
+                note,
+                follow_up_date,
+                created_by,
+                now,
+                now,
+            ),
+        ).lastrowid
+    )
+    return annotate_follow_up_record(
+        {
+            "id": follow_up_id,
+            "shop_id": shop_id,
+            "customer_id": customer_id,
+            "vehicle_id": vehicle_id,
+            "finding_id": finding_id,
+            "estimate_revision_id": estimate_id,
+            "customer_decision_log_id": decision_log_id,
+            "status": status,
+            "note": note,
+            "follow_up_date": follow_up_date,
+            "created_by": created_by,
+            "created_at": now,
+            "updated_at": now,
+        }
+    ) or {}
 
 
 def customer_decision_activity_sort_timestamp(raw: Any) -> float:
@@ -9413,6 +9694,7 @@ def customer_decision_activity_sort_timestamp(raw: Any) -> float:
 def customer_decision_activity_for_finding(
     conn: sqlite3.Connection,
     *,
+    shop_id: int | None = None,
     customer_id: int,
     vehicle_id: int,
     finding_id: int,
@@ -9425,6 +9707,7 @@ def customer_decision_activity_for_finding(
     ensure_repair_records_schema(conn)
     ensure_repair_completion_schema(conn)
     ensure_invoices_schema(conn)
+    ensure_customer_decision_follow_ups_schema(conn)
     finding_record = finding or load_finding_record(conn, customer_id, vehicle_id, finding_id)
     estimate_records = [
         dict(record)
@@ -9485,7 +9768,24 @@ def customer_decision_activity_for_finding(
             "Current decision" if decision.get("is_current") else "Superseded by a newer prepared estimate"
         )
 
-    latest_decision = decision_logs[0] if decision_logs else None
+    latest_any_decision = decision_logs[0] if decision_logs else None
+    latest_decision = next((decision for decision in decision_logs if decision.get("is_current")), None)
+    latest_follow_up = None
+    if latest_decision and shop_id and latest_estimate_id:
+        latest_follow_up = latest_follow_up_for_decision(
+            conn,
+            shop_id=shop_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            estimate_id=latest_estimate_id,
+            decision_log_id=optional_int_value(latest_decision.get("id")),
+        )
+    if latest_decision:
+        latest_decision["next_step"] = CUSTOMER_DECISION_NEXT_STEP_COPY.get(
+            str(latest_decision.get("decision_status") or "").strip(),
+            "Review the prepared estimate decision and choose the next staff action.",
+        )
     current_handoff = handoff_state or repair_handoff_state_for_finding(
         conn,
         customer_id=customer_id,
@@ -9509,15 +9809,18 @@ def customer_decision_activity_for_finding(
                 "label": "Prepared estimate saved",
                 "detail": f"Revision {revision}" if revision else "Prepared estimate",
                 "sort_id": optional_int_value(estimate.get("id")) or 0,
+                "item_type": "estimate",
             }
         )
     for decision in decision_logs:
+        item_type = "customer_decision_current" if decision.get("is_current") else "customer_decision_superseded"
         events.append(
             {
                 "created_at": decision.get("created_at") or "",
                 "label": f"Customer {str(decision.get('decision_label') or '').lower()} estimate",
                 "detail": decision.get("estimate_revision_label") or "",
                 "sort_id": optional_int_value(decision.get("id")) or 0,
+                "item_type": item_type,
             }
         )
         if not decision.get("is_current"):
@@ -9527,6 +9830,48 @@ def customer_decision_activity_for_finding(
                     "label": "A newer prepared estimate superseded the prior decision",
                     "detail": decision.get("estimate_revision_label") or "",
                     "sort_id": optional_int_value((latest_estimate or {}).get("id")) or 0,
+                    "item_type": "customer_decision_superseded",
+                }
+            )
+    if shop_id:
+        for row in conn.execute(
+            """
+            SELECT cdfu.*, u.first_name AS staff_first_name, u.last_name AS staff_last_name
+            FROM customer_decision_follow_ups cdfu
+            LEFT JOIN users u ON u.id = cdfu.created_by
+            WHERE cdfu.shop_id = ?
+              AND cdfu.customer_id = ?
+              AND cdfu.vehicle_id = ?
+              AND cdfu.finding_id = ?
+            ORDER BY cdfu.updated_at DESC, cdfu.id DESC
+            """,
+            (shop_id, customer_id, vehicle_id, finding_id),
+        ).fetchall():
+            follow_up = annotate_follow_up_record(dict(row)) or {}
+            staff_name = " ".join(
+                part
+                for part in (
+                    str(follow_up.get("staff_first_name") or "").strip(),
+                    str(follow_up.get("staff_last_name") or "").strip(),
+                )
+                if part
+            ).strip()
+            details = []
+            if staff_name:
+                details.append(staff_name)
+            if follow_up.get("follow_up_date_display"):
+                details.append(f"Follow-up date: {follow_up['follow_up_date_display']}")
+            if str(follow_up.get("note") or "").strip():
+                details.append(str(follow_up.get("note") or "").strip())
+            events.append(
+                {
+                    "created_at": follow_up.get("updated_at") or follow_up.get("created_at") or "",
+                    "label": f"Staff follow-up: {follow_up.get('status_label') or 'Updated'}",
+                    "detail": " - ".join(details),
+                    "sort_id": optional_int_value(follow_up.get("id")) or 0,
+                    "item_type": "staff_follow_up",
+                    "follow_up_date": follow_up.get("follow_up_date"),
+                    "note": follow_up.get("note") or "",
                 }
             )
     for row in conn.execute(
@@ -9552,6 +9897,7 @@ def customer_decision_activity_for_finding(
                 "label": label,
                 "detail": "",
                 "sort_id": optional_int_value(record.get("id")) or 0,
+                "item_type": "repair",
             }
         )
     for row in conn.execute(
@@ -9586,6 +9932,7 @@ def customer_decision_activity_for_finding(
                 "label": "Invoice created",
                 "detail": invoice_number,
                 "sort_id": optional_int_value(record.get("id")) or 0,
+                "item_type": "invoice",
             }
         )
     events.sort(
@@ -9604,21 +9951,30 @@ def customer_decision_activity_for_finding(
     elif current_handoff.get("kind") in {"open_repair", "completed_repair"}:
         compact_label = "Repair completed" if current_handoff.get("kind") == "completed_repair" else "Repair in progress"
         compact_tone = "neutral"
-    elif latest_decision:
-        if not latest_decision.get("is_current") and latest_decision.get("decision_status") == "Approved":
+    elif latest_any_decision:
+        if not latest_decision and latest_any_decision.get("decision_status") == "Approved":
             compact_label = "Approval superseded"
             compact_tone = "warning"
-        else:
-            compact_label = f"Customer {str(latest_decision.get('decision_label') or '').lower()}"
+        elif latest_decision and latest_follow_up:
+            compact_label = follow_up_notification_state_label(latest_follow_up)
             compact_tone = {
                 "Approved": "approved",
                 "Declined": "danger",
                 "Deferred": "warning",
             }.get(str(latest_decision.get("decision_status") or ""), "")
+        else:
+            compact_label = f"Customer {str(latest_any_decision.get('decision_label') or '').lower()}"
+            compact_tone = {
+                "Approved": "approved",
+                "Declined": "danger",
+                "Deferred": "warning",
+            }.get(str(latest_any_decision.get("decision_status") or ""), "")
 
     return {
         "has_activity": bool(estimate_records or decision_logs),
         "latest_decision": latest_decision,
+        "latest_any_decision": latest_any_decision,
+        "latest_follow_up": latest_follow_up,
         "latest_estimate": latest_estimate,
         "latest_estimate_revision_label": (
             f"Revision {revision_by_estimate_id.get(latest_estimate_id)}"
@@ -9630,7 +9986,7 @@ def customer_decision_activity_for_finding(
         "events": events,
         "stale_warning": (
             "A newer prepared estimate was created after this customer decision. Send the latest estimate for review before starting repair."
-            if latest_decision and not latest_decision.get("is_current")
+            if latest_any_decision and not latest_decision
             else ""
         ),
         "compact_label": compact_label,
@@ -15929,6 +16285,7 @@ def pro_customer_vehicle_detail(
             )
             record["customer_decision_activity"] = customer_decision_activity_for_finding(
                 conn,
+                shop_id=shop_id,
                 customer_id=customer_id,
                 vehicle_id=vehicle_id,
                 finding_id=int(record.get("id") or 0),
@@ -16270,6 +16627,7 @@ def pro_finding_record_detail(
         )
         customer_decision_activity = customer_decision_activity_for_finding(
             conn,
+            shop_id=shop_id,
             customer_id=customer_id,
             vehicle_id=vehicle_id,
             finding_id=finding_id,
@@ -16341,6 +16699,124 @@ async def pro_finding_customer_decision_update(
         conn.close()
     return RedirectResponse(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}",
+        status_code=303,
+    )
+
+
+@router.post(
+    "/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}/decision-follow-up"
+)
+async def pro_finding_customer_decision_follow_up(
+    request: Request, customer_id: int, vehicle_id: int, finding_id: int
+):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    action = str(form.get("action") or "").strip()
+    if action not in FOLLOW_UP_ACTION_TO_STATUS:
+        raise HTTPException(status_code=400, detail="Invalid follow-up action")
+    submitted_estimate_id = optional_int_value(form.get("estimate_id"))
+    if not submitted_estimate_id:
+        raise HTTPException(status_code=400, detail="Prepared estimate is required")
+    note = str(form.get("note") or "").strip()
+    follow_up_date = ""
+    if action == "schedule_follow_up":
+        parsed_follow_up_date = parse_date_value(form.get("follow_up_date"))
+        if not parsed_follow_up_date:
+            raise HTTPException(status_code=400, detail="Enter a valid follow-up date")
+        follow_up_date = parsed_follow_up_date.isoformat()
+    now = datetime.utcnow().isoformat()
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        user = current_user(conn, request)
+        customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        finding = load_finding_record(conn, customer_id, vehicle_id, finding_id)
+        latest_estimate = latest_estimate_document_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+        )
+        latest_estimate_id = optional_int_value((latest_estimate or {}).get("id"))
+        if not latest_estimate or latest_estimate_id != submitted_estimate_id:
+            raise HTTPException(status_code=409, detail="This prepared estimate has been superseded")
+        latest_decision = latest_customer_decision_for_prepared_estimate(
+            conn,
+            shop_id=shop_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            estimate_id=latest_estimate_id,
+        )
+        if not latest_decision:
+            raise HTTPException(status_code=409, detail="No current customer decision exists for this prepared estimate")
+        decision_status = str(latest_decision.get("decision_status") or "").strip()
+        allowed_actions = {
+            "Approved": {"add_note"},
+            "Declined": {"contacted", "closed_no_action"},
+            "Deferred": {"schedule_follow_up", "contacted", "customer_requested_more_time", "closed_no_action"},
+        }.get(decision_status, set())
+        if action not in allowed_actions:
+            raise HTTPException(status_code=400, detail="Follow-up action is not allowed for this decision")
+        follow_up = upsert_customer_decision_follow_up(
+            conn,
+            shop_id=shop_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            estimate_id=latest_estimate_id,
+            decision_log_id=int(latest_decision["id"]),
+            status=FOLLOW_UP_ACTION_TO_STATUS[action],
+            note=note,
+            follow_up_date=follow_up_date,
+            created_by=current_user_id(request),
+            now=now,
+        )
+        history_parts = [follow_up.get("status_label") or follow_up_status_label(follow_up.get("status"))]
+        if follow_up.get("follow_up_date_display"):
+            history_parts.append(f"Follow-up date: {follow_up['follow_up_date_display']}")
+        if note:
+            history_parts.append(note)
+        actor_name = staff_display_name(user)
+        ensure_finding_history_records_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO finding_history_records (
+              finding_id, previous_status, new_status, event_type,
+              actor_name, notes, metadata_json, created_at
+            )
+            VALUES (?, ?, ?, 'staff_follow_up_updated', ?, ?, ?, ?)
+            """,
+            (
+                finding_id,
+                decision_status,
+                follow_up.get("status") or "",
+                actor_name,
+                " - ".join(part for part in history_parts if part),
+                json.dumps(
+                    {
+                        "follow_up_id": follow_up.get("id"),
+                        "estimate_revision_id": latest_estimate_id,
+                        "customer_decision_log_id": latest_decision.get("id"),
+                        "follow_up_date": follow_up.get("follow_up_date") or "",
+                    },
+                    ensure_ascii=True,
+                    sort_keys=True,
+                ),
+                now,
+            ),
+        )
+        conn.commit()
+    except HTTPException:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}?follow_up_saved=1",
         status_code=303,
     )
 
