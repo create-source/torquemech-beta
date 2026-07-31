@@ -9185,6 +9185,8 @@ def staff_notification_context(conn: sqlite3.Connection, shop_id: int | None) ->
                     ) if decision else None
                     if decision_status == "Approved":
                         follow_up_state = "Ready for Repair"
+                    elif decision_status == "Declined" and decision:
+                        follow_up_state = "No follow-up required"
                     elif decision:
                         follow_up_state = follow_up_notification_state_label(follow_up)
                 if follow_up_state and str(record.get("notification_type") or "") != "customer_estimate_approved":
@@ -9451,7 +9453,6 @@ FOLLOW_UP_ACTION_TO_STATUS = {
     "contacted": "contacted",
     "customer_requested_more_time": "customer_requested_more_time",
     "closed_no_action": "closed_no_action",
-    "schedule_follow_up": "pending",
     "add_note": "pending",
 }
 FOLLOW_UP_STATUS_LABELS = {
@@ -9462,8 +9463,8 @@ FOLLOW_UP_STATUS_LABELS = {
 }
 CUSTOMER_DECISION_NEXT_STEP_COPY = {
     "Approved": "Customer approved this prepared estimate. The repair can now be started.",
-    "Declined": "Customer declined this prepared estimate. Record any follow-up notes or close the opportunity.",
-    "Deferred": "Customer has not made a final decision. Schedule or record a follow-up.",
+    "Declined": "Customer declined this estimate. No further action is required.",
+    "Deferred": "Customer has not made a final decision. Record contact, schedule more time, or close the follow-up.",
 }
 
 
@@ -9554,6 +9555,43 @@ def latest_follow_up_for_decision(
         ).fetchone()
     )
     return annotate_follow_up_record(record)
+
+
+def normalize_declined_customer_decision_follow_ups(
+    conn: sqlite3.Connection,
+    *,
+    shop_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    estimate_id: int,
+    decision_log_id: int | None,
+    now: str,
+) -> int:
+    ensure_customer_decision_follow_ups_schema(conn)
+    params: list[Any] = [now, shop_id, customer_id, vehicle_id, finding_id, estimate_id]
+    filters = [
+        "shop_id = ?",
+        "customer_id = ?",
+        "vehicle_id = ?",
+        "finding_id = ?",
+        "estimate_revision_id = ?",
+    ]
+    if decision_log_id:
+        filters.append("customer_decision_log_id = ?")
+        params.append(decision_log_id)
+    cursor = conn.execute(
+        f"""
+        UPDATE customer_decision_follow_ups
+        SET status = 'closed_no_action',
+            follow_up_date = '',
+            updated_at = ?
+        WHERE {' AND '.join(filters)}
+          AND status = 'pending'
+        """,
+        tuple(params),
+    )
+    return int(cursor.rowcount or 0)
 
 
 def follow_up_notification_state_label(follow_up: dict[str, Any] | None) -> str:
@@ -9772,6 +9810,18 @@ def customer_decision_activity_for_finding(
     latest_decision = next((decision for decision in decision_logs if decision.get("is_current")), None)
     latest_follow_up = None
     if latest_decision and shop_id and latest_estimate_id:
+        if str(latest_decision.get("decision_status") or "").strip() == "Declined":
+            normalize_declined_customer_decision_follow_ups(
+                conn,
+                shop_id=shop_id,
+                customer_id=customer_id,
+                vehicle_id=vehicle_id,
+                finding_id=finding_id,
+                estimate_id=latest_estimate_id,
+                decision_log_id=optional_int_value(latest_decision.get("id")),
+                now=datetime.utcnow().isoformat(),
+            )
+            conn.commit()
         latest_follow_up = latest_follow_up_for_decision(
             conn,
             shop_id=shop_id,
@@ -9781,6 +9831,8 @@ def customer_decision_activity_for_finding(
             estimate_id=latest_estimate_id,
             decision_log_id=optional_int_value(latest_decision.get("id")),
         )
+        if str(latest_decision.get("decision_status") or "").strip() == "Declined":
+            latest_follow_up = None
     if latest_decision:
         latest_decision["next_step"] = CUSTOMER_DECISION_NEXT_STEP_COPY.get(
             str(latest_decision.get("decision_status") or "").strip(),
@@ -9848,6 +9900,13 @@ def customer_decision_activity_for_finding(
             (shop_id, customer_id, vehicle_id, finding_id),
         ).fetchall():
             follow_up = annotate_follow_up_record(dict(row)) or {}
+            if (
+                latest_decision
+                and str(latest_decision.get("decision_status") or "").strip() == "Declined"
+                and optional_int_value(follow_up.get("estimate_revision_id")) == latest_estimate_id
+                and optional_int_value(follow_up.get("customer_decision_log_id")) == optional_int_value(latest_decision.get("id"))
+            ):
+                continue
             staff_name = " ".join(
                 part
                 for part in (
@@ -10112,6 +10171,26 @@ def record_finding_customer_decision(
         source=source,
         estimate_revision_id=estimate_doc.get("id"),
     )
+    if next_status == "Declined":
+        decision_log = latest_customer_decision_for_prepared_estimate(
+            conn,
+            shop_id=int(customer["shop_id"]),
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            estimate_id=int(estimate_doc["id"]),
+            decision_status="Declined",
+        )
+        normalize_declined_customer_decision_follow_ups(
+            conn,
+            shop_id=int(customer["shop_id"]),
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            estimate_id=int(estimate_doc["id"]),
+            decision_log_id=optional_int_value((decision_log or {}).get("id")),
+            now=now,
+        )
     return next_status
 
 
@@ -16720,9 +16799,10 @@ async def pro_finding_customer_decision_follow_up(
         raise HTTPException(status_code=400, detail="Prepared estimate is required")
     note = str(form.get("note") or "").strip()
     follow_up_date = ""
-    if action == "schedule_follow_up":
-        parsed_follow_up_date = parse_date_value(form.get("follow_up_date"))
-        if not parsed_follow_up_date:
+    if action == "customer_requested_more_time":
+        raw_follow_up_date = str(form.get("follow_up_date") or "").strip()
+        parsed_follow_up_date = parse_date_value(raw_follow_up_date)
+        if not parsed_follow_up_date or parsed_follow_up_date.isoformat() != raw_follow_up_date:
             raise HTTPException(status_code=400, detail="Enter a valid follow-up date")
         follow_up_date = parsed_follow_up_date.isoformat()
     now = datetime.utcnow().isoformat()
@@ -16756,8 +16836,8 @@ async def pro_finding_customer_decision_follow_up(
         decision_status = str(latest_decision.get("decision_status") or "").strip()
         allowed_actions = {
             "Approved": {"add_note"},
-            "Declined": {"contacted", "closed_no_action"},
-            "Deferred": {"schedule_follow_up", "contacted", "customer_requested_more_time", "closed_no_action"},
+            "Declined": set(),
+            "Deferred": {"contacted", "customer_requested_more_time", "closed_no_action"},
         }.get(decision_status, set())
         if action not in allowed_actions:
             raise HTTPException(status_code=400, detail="Follow-up action is not allowed for this decision")

@@ -256,15 +256,21 @@
   .tm-decision-follow-up input[type="date"] {
     width:100%;
     box-sizing:border-box;
-    border:1px solid rgba(148, 163, 184, .32);
+    border:1px solid #94a3b8;
     border-radius:8px;
-    background:#0b1623 !important;
-    color:#f8fafc !important;
-    -webkit-text-fill-color:#f8fafc !important;
-    padding:10px 12px;
+    background:#fff !important;
+    color:#111827 !important;
+    -webkit-text-fill-color:#111827 !important;
+    padding:12px;
     font:inherit;
   }
+  .tm-decision-follow-up textarea::placeholder { color:#64748b; opacity:1; }
   .tm-decision-follow-up textarea { min-height:76px; resize:vertical; }
+  .tm-decision-follow-up__warning {
+    color:#fde68a;
+    font-weight:900;
+    line-height:1.45;
+  }
   .tm-decision-activity-item--staff_follow_up {
     border-color:rgba(249, 115, 22, .34);
     background:rgba(67, 20, 7, .28);
@@ -412,70 +418,44 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
           <input type="hidden" name="action" value="add_note">
-          <label for="follow_up_note_approved">Note <textarea id="follow_up_note_approved" name="note" rows="3"></textarea></label>
+          <label for="follow_up_note_approved">Note <textarea id="follow_up_note_approved" name="note" rows="3" placeholder="Enter follow-up notes…"></textarea></label>
           <button class="tm-btn tm-btn-secondary" type="submit">Save Follow-up Note</button>
         </form>
       </details>
       {% elif decision_status == "Declined" %}
-      <details>
-        <summary>Record Contact</summary>
-        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
-          <input type="hidden" name="action" value="contacted">
-          <label for="follow_up_note_declined_contact">Note <textarea id="follow_up_note_declined_contact" name="note" rows="3"></textarea></label>
-          <button class="tm-btn tm-btn-secondary" type="submit">Record Contact</button>
-        </form>
-      </details>
-      <details>
-        <summary>Close - No Further Action</summary>
-        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
-          <input type="hidden" name="action" value="closed_no_action">
-          <label for="follow_up_note_declined_close">Note <textarea id="follow_up_note_declined_close" name="note" rows="3"></textarea></label>
-          <button class="tm-btn tm-btn-secondary" type="submit">Close - No Further Action</button>
-        </form>
-      </details>
+      <div class="tm-decision-follow-up__summary" role="status">
+        <strong>Customer declined this estimate. No further action is required.</strong>
+      </div>
       {% elif decision_status == "Deferred" %}
-      <details>
-        <summary>Schedule Follow-up</summary>
-        <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
-          <input type="hidden" name="action" value="schedule_follow_up">
-          <label for="follow_up_date_deferred">Follow-up date <input id="follow_up_date_deferred" name="follow_up_date" type="date" required></label>
-          <label for="follow_up_note_deferred_schedule">Note <textarea id="follow_up_note_deferred_schedule" name="note" rows="3"></textarea></label>
-          <button class="tm-btn tm-btn-secondary" type="submit">Schedule Follow-up</button>
-        </form>
-      </details>
-      <details>
+      <p class="tm-decision-follow-up__warning">Pricing may change. Create a new estimate revision before the customer approves later.</p>
+      <details data-decision-follow-up-panel>
         <summary>Record Contact</summary>
         <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
           <input type="hidden" name="action" value="contacted">
-          <label for="follow_up_note_deferred_contact">Note <textarea id="follow_up_note_deferred_contact" name="note" rows="3"></textarea></label>
+          <label for="follow_up_note_deferred_contact">Follow-up notes <textarea id="follow_up_note_deferred_contact" name="note" rows="3" placeholder="Enter follow-up notes…"></textarea></label>
           <button class="tm-btn tm-btn-secondary" type="submit">Record Contact</button>
         </form>
       </details>
-      <details>
+      <details data-decision-follow-up-panel>
         <summary>Customer Requested More Time</summary>
         <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
           <input type="hidden" name="action" value="customer_requested_more_time">
-          <label for="follow_up_note_deferred_time">Note <textarea id="follow_up_note_deferred_time" name="note" rows="3"></textarea></label>
+          <label for="follow_up_date_deferred_time">Follow-up date <input id="follow_up_date_deferred_time" name="follow_up_date" type="date" required></label>
+          <label for="follow_up_note_deferred_time">Follow-up notes <textarea id="follow_up_note_deferred_time" name="note" rows="3" placeholder="Enter follow-up notes…"></textarea></label>
           <button class="tm-btn tm-btn-secondary" type="submit">Customer Requested More Time</button>
         </form>
       </details>
-      <details>
+      <details data-decision-follow-up-panel>
         <summary>Close - No Further Action</summary>
         <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/findings/{{ finding.id }}/decision-follow-up" data-prevent-double-submit>
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <input type="hidden" name="estimate_id" value="{{ latest_estimate_id }}">
           <input type="hidden" name="action" value="closed_no_action">
-          <label for="follow_up_note_deferred_close">Note <textarea id="follow_up_note_deferred_close" name="note" rows="3"></textarea></label>
+          <label for="follow_up_note_deferred_close">Follow-up notes <textarea id="follow_up_note_deferred_close" name="note" rows="3" placeholder="Enter follow-up notes…"></textarea></label>
           <button class="tm-btn tm-btn-secondary" type="submit">Close - No Further Action</button>
         </form>
       </details>
@@ -689,6 +669,20 @@
   </section>
 </section>
 <script>
+  document.querySelectorAll("[data-decision-follow-up-panel]").forEach((panel) => {
+    const summary = panel.querySelector("summary");
+    const sync = () => summary?.setAttribute("aria-expanded", panel.open ? "true" : "false");
+    sync();
+    panel.addEventListener("toggle", () => {
+      if (panel.open) {
+        document.querySelectorAll("[data-decision-follow-up-panel]").forEach((other) => {
+          if (other !== panel) other.open = false;
+        });
+      }
+      sync();
+    });
+  });
+
   document.querySelector("[data-copy-customer-review-link]")?.addEventListener("click", async (event) => {
     const button = event.currentTarget;
     const status = document.querySelector("[data-copy-customer-review-status]");

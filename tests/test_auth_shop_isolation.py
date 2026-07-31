@@ -3850,6 +3850,9 @@ class AuthShopIsolationTests(unittest.TestCase):
                 staff_page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
                 self.assertIn(f"Customer {expected_status}", staff_page.text)
                 self.assertIn("Customer submitted via secure link", staff_page.text)
+                if decision == "declined":
+                    self.assertIn("No follow-up required", staff_page.text)
+                    self.assertNotIn("Follow-up Pending", staff_page.text)
 
     def test_customer_estimate_review_public_decision_changes_create_one_additional_history_row(self):
         client = self.client()
@@ -4972,8 +4975,8 @@ class AuthShopIsolationTests(unittest.TestCase):
         shop_id = self.shop_id_for_email("stage3b-card@example.com")
         cases = (
             ("approved", "Approved", "Customer approved this prepared estimate. The repair can now be started.", "Add Follow-up Note"),
-            ("declined", "Declined", "Customer declined this prepared estimate. Record any follow-up notes or close the opportunity.", "Close - No Further Action"),
-            ("deferred", "Decide Later", "Customer has not made a final decision. Schedule or record a follow-up.", "Schedule Follow-up"),
+            ("declined", "Declined", "Customer declined this estimate. No further action is required.", "Customer declined this estimate. No further action is required."),
+            ("deferred", "Decide Later", "Customer has not made a final decision. Record contact, schedule more time, or close the follow-up.", "Customer Requested More Time"),
         )
         for raw_decision, label, next_step, action_text in cases:
             with self.subTest(raw_decision=raw_decision):
@@ -5002,8 +5005,19 @@ class AuthShopIsolationTests(unittest.TestCase):
                 self.assertIn("Stage3B", rendered.text)
                 self.assertIn(next_step, rendered.text)
                 self.assertIn(action_text, rendered.text)
-                self.assertIn('data-prevent-double-submit', rendered.text)
+                if raw_decision != "declined":
+                    self.assertIn('data-prevent-double-submit', rendered.text)
                 self.assertIn("tm-decision-activity-item--customer_decision_current", rendered.text)
+                if raw_decision == "declined":
+                    self.assertNotIn("<summary>Record Contact</summary>", rendered.text)
+                    self.assertNotIn("<summary>Close - No Further Action</summary>", rendered.text)
+                if raw_decision == "deferred":
+                    self.assertIn("<summary>Record Contact</summary>", rendered.text)
+                    self.assertIn("<summary>Customer Requested More Time</summary>", rendered.text)
+                    self.assertIn("<summary>Close - No Further Action</summary>", rendered.text)
+                    self.assertIn("Pricing may change. Create a new estimate revision before the customer approves later.", rendered.text)
+                    self.assertIn("placeholder=\"Enter follow-up notes…\"", rendered.text)
+                    self.assertIn("background:#fff !important;", rendered.text)
 
     def test_stage3b_stale_decision_is_not_treated_as_current_card(self):
         client = self.client()
@@ -5045,6 +5059,84 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertNotIn("Customer approved this prepared estimate. The repair can now be started.", response.text)
         self.assertNotIn("Add Follow-up Note", response.text)
 
+    def test_stage3b_declined_decision_has_no_pending_follow_up_and_rejects_actions(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3b-declined-terminal@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3b-declined-terminal@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="DeclinedStage3B")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, total=455.0)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        page = client.get(detail_url)
+        declined = client.post(
+            f"{detail_url}/customer-decision",
+            data={"csrf_token": csrf_from(page.text), "decision": "declined"},
+            follow_redirects=False,
+        )
+        self.assertEqual(declined.status_code, 303)
+
+        rendered = client.get(detail_url)
+        token = csrf_from(rendered.text)
+        rejected = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={"csrf_token": token, "estimate_id": str(estimate_id), "action": "contacted", "note": "Called anyway."},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(rejected.status_code, 400)
+        self.assertIn("Customer declined this estimate. No further action is required.", rendered.text)
+        self.assertIn("<strong>-</strong>", rendered.text)
+        self.assertNotIn("<summary>Record Contact</summary>", rendered.text)
+        self.assertNotIn("<summary>Close - No Further Action</summary>", rendered.text)
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM customer_decision_follow_ups WHERE finding_id = ?", (finding_id,)).fetchone()["count"],
+            0,
+        )
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"], 0)
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"], 0)
+
+    def test_stage3b_existing_pending_declined_follow_up_is_normalized_and_hidden(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3b-declined-cleanup@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3b-declined-cleanup@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="CleanupStage3B")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        estimate_id = self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, total=455.0)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        page = client.get(detail_url)
+        declined = client.post(
+            f"{detail_url}/customer-decision",
+            data={"csrf_token": csrf_from(page.text), "decision": "declined"},
+            follow_redirects=False,
+        )
+        self.assertEqual(declined.status_code, 303)
+        decision_log = self.conn.execute(
+            "SELECT * FROM customer_decision_logs WHERE finding_id = ? ORDER BY id DESC LIMIT 1",
+            (finding_id,),
+        ).fetchone()
+        pro_module.ensure_customer_decision_follow_ups_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO customer_decision_follow_ups (
+              shop_id, customer_id, vehicle_id, finding_id, estimate_revision_id,
+              customer_decision_log_id, status, note, follow_up_date,
+              created_by, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', 'Legacy pending row', '2026-08-03', NULL, '2026-07-24T12:00:00', '2026-07-24T12:00:00')
+            """,
+            (shop_id, customer_id, vehicle_id, finding_id, estimate_id, decision_log["id"]),
+        )
+        self.conn.commit()
+
+        rendered = client.get(detail_url)
+        follow_up = self.conn.execute("SELECT * FROM customer_decision_follow_ups WHERE finding_id = ?", (finding_id,)).fetchone()
+
+        self.assertEqual(follow_up["status"], "closed_no_action")
+        self.assertEqual(follow_up["follow_up_date"], "")
+        self.assertIn("Customer declined this estimate. No further action is required.", rendered.text)
+        self.assertNotIn("Follow-up Pending", rendered.text)
+        self.assertNotIn("Staff follow-up:", rendered.text)
+
     def test_stage3b_follow_up_writes_update_existing_record_and_preserve_side_effects(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage3b-followup@example.com", shop_name="Alpha Shop")
@@ -5059,18 +5151,28 @@ class AuthShopIsolationTests(unittest.TestCase):
         notifications_before = self.conn.execute("SELECT COUNT(*) AS count FROM staff_notifications").fetchone()["count"]
         page = client.get(detail_url)
 
-        scheduled = client.post(
+        more_time = client.post(
             f"{detail_url}/decision-follow-up",
             data={
                 "csrf_token": csrf_from(page.text),
                 "estimate_id": str(estimate_id),
-                "action": "schedule_follow_up",
+                "action": "customer_requested_more_time",
                 "follow_up_date": "2026-08-02",
                 "note": "Customer asked us to call after payday.",
             },
             follow_redirects=False,
         )
-        self.assertEqual(scheduled.status_code, 303)
+        self.assertEqual(more_time.status_code, 303)
+        closed = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={
+                "csrf_token": csrf_from(page.text),
+                "estimate_id": str(estimate_id),
+                "action": "closed_no_action",
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(closed.status_code, 303)
         contacted = client.post(
             f"{detail_url}/decision-follow-up",
             data={
@@ -5099,7 +5201,7 @@ class AuthShopIsolationTests(unittest.TestCase):
             1,
         )
         history = client.get(detail_url)
-        self.assertIn("Follow-up saved.", client.get(scheduled.headers["location"]).text)
+        self.assertIn("Follow-up saved.", client.get(more_time.headers["location"]).text)
         self.assertIn("Staff follow-up: Contacted", history.text)
         self.assertIn("Left voicemail.", history.text)
         self.assertIn("tm-decision-activity-item--staff_follow_up", history.text)
@@ -5135,7 +5237,17 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
         missing_date = client.post(
             f"{detail_url}/decision-follow-up",
-            data={"csrf_token": token, "estimate_id": str(estimate_id), "action": "schedule_follow_up"},
+            data={"csrf_token": token, "estimate_id": str(estimate_id), "action": "customer_requested_more_time"},
+            follow_redirects=False,
+        )
+        invalid_date = client.post(
+            f"{detail_url}/decision-follow-up",
+            data={
+                "csrf_token": token,
+                "estimate_id": str(estimate_id),
+                "action": "customer_requested_more_time",
+                "follow_up_date": "2026-08-02-nope",
+            },
             follow_redirects=False,
         )
         self.seed_repair_estimate_document_for_finding(
@@ -5153,6 +5265,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(missing_csrf.status_code, 403)
         self.assertEqual(bad_action.status_code, 400)
         self.assertEqual(missing_date.status_code, 400)
+        self.assertEqual(invalid_date.status_code, 400)
         self.assertEqual(stale.status_code, 409)
         self.assertEqual(
             self.conn.execute("SELECT COUNT(*) AS count FROM customer_decision_follow_ups").fetchone()["count"],
