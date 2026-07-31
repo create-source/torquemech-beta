@@ -9294,6 +9294,53 @@ def latest_customer_decision_log_for_finding(
     return record
 
 
+def latest_customer_decision_matches_prepared_estimate(
+    conn: sqlite3.Connection,
+    *,
+    shop_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    estimate_id: int,
+    decision_status: str,
+) -> bool:
+    ensure_customer_decision_logs_schema(conn)
+    record = conn.execute(
+        """
+        SELECT cdl.decision_status
+        FROM customer_decision_logs cdl
+        JOIN findings_records f ON f.id = cdl.finding_id
+        JOIN customers c ON c.id = f.customer_id
+        JOIN customer_vehicles v ON v.id = f.vehicle_id
+        JOIN repair_estimate_documents red ON red.id = cdl.estimate_revision_id
+        WHERE cdl.finding_id = ?
+          AND cdl.estimate_revision_id = ?
+          AND red.id = ?
+          AND red.customer_id = ?
+          AND red.vehicle_id = ?
+          AND red.finding_id = ?
+          AND c.shop_id = ?
+          AND v.shop_id = ?
+          AND v.customer_id = c.id
+          AND f.customer_id = c.id
+          AND f.vehicle_id = v.id
+        ORDER BY cdl.created_at DESC, cdl.id DESC
+        LIMIT 1
+        """,
+        (
+            finding_id,
+            estimate_id,
+            estimate_id,
+            customer_id,
+            vehicle_id,
+            finding_id,
+            shop_id,
+            shop_id,
+        ),
+    ).fetchone()
+    return bool(record and str(record["decision_status"] or "").strip() == decision_status)
+
+
 CUSTOMER_DECISION_ACTIVITY_LABELS = {
     "Approved": "Approved",
     "Declined": "Declined",
@@ -14559,6 +14606,16 @@ async def customer_estimate_review_decision(request: Request, token: str):
     try:
         context = validate_customer_estimate_review_context(conn, token)
         finding = context["finding"]
+        decision_status = CUSTOMER_DECISION_STATUS_BY_VALUE[raw_decision]
+        already_recorded = latest_customer_decision_matches_prepared_estimate(
+            conn,
+            shop_id=int(context["shop"]["id"]),
+            customer_id=int(context["customer"]["id"]),
+            vehicle_id=int(context["vehicle"]["id"]),
+            finding_id=int(finding["id"]),
+            estimate_id=int(context["estimate"]["id"]),
+            decision_status=decision_status,
+        )
         decision_status = record_finding_customer_decision(
             conn,
             customer=context["customer"],
@@ -14571,16 +14628,17 @@ async def customer_estimate_review_decision(request: Request, token: str):
             allow_change=False,
             now=now,
         )
-        create_customer_decision_notification_if_needed(
-            conn,
-            shop_id=int(context["shop"]["id"]),
-            customer=context["customer"],
-            vehicle=context["vehicle"],
-            finding=finding,
-            estimate=context["estimate"],
-            decision_status=decision_status,
-            created_at=now,
-        )
+        if not already_recorded:
+            create_customer_decision_notification_if_needed(
+                conn,
+                shop_id=int(context["shop"]["id"]),
+                customer=context["customer"],
+                vehicle=context["vehicle"],
+                finding=finding,
+                estimate=context["estimate"],
+                decision_status=decision_status,
+                created_at=now,
+            )
         conn.commit()
     except HTTPException:
         conn.rollback()

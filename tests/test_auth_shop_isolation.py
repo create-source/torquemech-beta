@@ -3652,9 +3652,11 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         cross_shop = client.get(f"/customer/estimate/{cross_shop_token}")
         wrong_finding = client.get(f"/customer/estimate/{wrong_finding_token}")
+        wrong_finding_post = client.post(f"/customer/estimate/{wrong_finding_token}/decision", data={"decision": "approved"})
 
         self.assertEqual(cross_shop.status_code, 404)
         self.assertEqual(wrong_finding.status_code, 404)
+        self.assertEqual(wrong_finding_post.status_code, 404)
         self.assertNotIn("Brake pads below spec", cross_shop.text)
         self.assertNotIn("Brake pads below spec", wrong_finding.text)
 
@@ -3670,24 +3672,46 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, service_name="New Brake Quote")
         old_response = client.get(old_link)
+        old_post = client.post(f"{old_link}/decision", data={"decision": "approved"})
         new_detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
         new_link = self.customer_review_link_from_detail(new_detail.text)
         new_response = client.get(new_link)
 
         self.assertEqual(old_response.status_code, 404)
+        self.assertEqual(old_post.status_code, 404)
         self.assertEqual(new_response.status_code, 200)
         self.assertIn("New Brake Quote", new_response.text)
         self.assertNotIn("Old Brake Quote", new_response.text)
+        finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+        self.assertEqual(finding["status"], "Open")
 
     def test_customer_estimate_review_public_decisions_update_only_token_finding(self):
         client = self.client()
         self.bootstrap_owner(client, email="stage2a-public-decisions@example.com", shop_name="Alpha Shop")
         shop_id = self.shop_id_for_email("stage2a-public-decisions@example.com")
         pro_module.ensure_repair_records_schema(self.conn)
-        for decision, expected_status, heading in (
-            ("approved", "Approved", "Estimate Approved"),
-            ("declined", "Declined", "Estimate Declined"),
-            ("deferred", "Deferred", "Decision Saved"),
+        for decision, expected_status, label, confirmation, explanation in (
+            (
+                "approved",
+                "Approved",
+                "Approved",
+                "Your approval was received.",
+                "The repair shop may now begin or schedule the approved service.",
+            ),
+            (
+                "declined",
+                "Declined",
+                "Declined",
+                "Your response was received.",
+                "This service was declined and the shop has been notified.",
+            ),
+            (
+                "deferred",
+                "Deferred",
+                "Deciding Later",
+                "Your response was received.",
+                "You chose to decide later. This secure estimate link may still be used while it remains valid.",
+            ),
         ):
             with self.subTest(decision=decision):
                 customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name=decision.title())
@@ -3774,10 +3798,20 @@ class AuthShopIsolationTests(unittest.TestCase):
                     ).fetchone()["count"],
                     1,
                 )
+                self.assertEqual(
+                    self.conn.execute(
+                        "SELECT COUNT(*) AS count FROM finding_history_records WHERE finding_id = ? AND event_type = 'customer_decision_changed'",
+                        (finding_id,),
+                    ).fetchone()["count"],
+                    1,
+                )
 
                 decided_page = client.get(review_link)
                 self.assertEqual(decided_page.status_code, 200)
-                self.assertIn(heading, decided_page.text)
+                self.assertIn(confirmation, decided_page.text)
+                self.assertIn(f"Current recorded decision: <strong>{label}</strong>", decided_page.text)
+                self.assertIn(explanation, decided_page.text)
+                self.assertIn('role="status" aria-live="polite" aria-atomic="true"', decided_page.text)
                 self.assertIn("Submitted", decided_page.text)
                 self.assertIn("contact the shop directly", decided_page.text)
                 self.assertNotIn("Approve $324.00", decided_page.text)
@@ -3843,6 +3877,63 @@ class AuthShopIsolationTests(unittest.TestCase):
         pro_module.ensure_staff_notifications_schema(self.conn)
         self.assertEqual(
             self.conn.execute("SELECT COUNT(*) AS count FROM staff_notifications").fetchone()["count"],
+            0,
+        )
+
+    def test_customer_decision_change_records_exactly_one_new_history_entry(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3a-change@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3a-change@example.com")
+        pro_module.ensure_repair_records_schema(self.conn)
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="Change")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=456.78,
+            service_name="Starter Replacement",
+        )
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        decision_url = f"{detail_url}/customer-decision"
+        page = client.get(detail_url)
+        csrf_token = csrf_from(page.text)
+
+        deferred = client.post(
+            decision_url,
+            data={"csrf_token": csrf_token, "decision": "deferred"},
+            follow_redirects=False,
+        )
+        self.assertEqual(deferred.status_code, 303)
+        history_before_change = self.conn.execute(
+            "SELECT COUNT(*) AS count FROM finding_history_records WHERE finding_id = ? AND event_type = 'customer_decision_changed'",
+            (finding_id,),
+        ).fetchone()["count"]
+        self.assertEqual(history_before_change, 1)
+
+        approved = client.post(
+            decision_url,
+            data={"csrf_token": csrf_token, "decision": "approved"},
+            follow_redirects=False,
+        )
+        self.assertEqual(approved.status_code, 303)
+
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM finding_history_records WHERE finding_id = ? AND event_type = 'customer_decision_changed'",
+                (finding_id,),
+            ).fetchone()["count"],
+            history_before_change + 1,
+        )
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM customer_decision_logs WHERE finding_id = ?",
+                (finding_id,),
+            ).fetchone()["count"],
+            2,
+        )
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"],
             0,
         )
 
