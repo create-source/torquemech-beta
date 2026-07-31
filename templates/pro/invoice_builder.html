@@ -76,6 +76,20 @@
     padding: 12px;
     margin-top: 14px;
   }
+  .tm-invoice-builder-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 12px;
+    color: #334155;
+    font-weight: 900;
+  }
+  .tm-invoice-builder-option input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: #0e7490;
+  }
   .tm-invoice-builder-fields {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -444,6 +458,12 @@
           <label class="tm-label" for="no_charge_reason">No Charge / Warranty / Courtesy Repair Reason</label>
           <textarea class="tm-input" id="no_charge_reason" name="no_charge_reason" rows="3" maxlength="800"></textarea>
         </div>
+        {% if shop_profile.warranty_note %}
+        <label class="tm-invoice-builder-option" for="include_warranty_on_invoice">
+          <input id="include_warranty_on_invoice" name="include_warranty_on_invoice" type="checkbox" value="1">
+          <span>Include warranty on invoice</span>
+        </label>
+        {% endif %}
       </details>
       <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Generate Final Invoice</button>
     </div>

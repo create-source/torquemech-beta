@@ -20,7 +20,6 @@ from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 from app.data.maintenance_library import (
@@ -7269,9 +7268,7 @@ def create_invoice_for_repairs(
             status_code=400,
             detail="Add labor, parts, or an invoice adjustment before finalizing this invoice.",
         )
-    warranty_text = str(
-        invoice_options.get("warranty_text") or shop_profile.get("warranty_note") or ""
-    ).strip()
+    warranty_text = str(invoice_options.get("warranty_text") or "").strip()
     primary_repair = selected_repairs[0]
     cur = conn.execute(
         """
@@ -7744,6 +7741,8 @@ INVOICE_PDF_DEFAULT_OPTIONS = {
     "include_after_service_education": False,
 }
 
+TORQUEMECH_ORANGE_RGB = (249 / 255, 115 / 255, 22 / 255)
+
 
 def invoice_pdf_options_from_query(query_params: Any) -> dict[str, bool]:
     options = dict(INVOICE_PDF_DEFAULT_OPTIONS)
@@ -7834,6 +7833,42 @@ def pdf_draw_round_rect(
     c.roundRect(x, y, width, height, radius, fill=1, stroke=1)
     c.setFillGray(0)
     c.setStrokeGray(0)
+
+
+INVOICE_PDF_TOTALS_HEADER_HEIGHT = 38
+INVOICE_PDF_TOTALS_ROW_HEIGHT = 16
+INVOICE_PDF_TOTALS_BALANCE_OFFSET = 58
+INVOICE_PDF_TOTALS_BOTTOM_PADDING = 24
+
+
+def invoice_pdf_total_rows(invoice: dict[str, Any], options: dict[str, bool]) -> list[tuple[str, Any]]:
+    total_rows: list[tuple[str, Any]] = []
+    if options.get("show_labor_total"):
+        total_rows.append(("Labor Subtotal", invoice.get("labor_total")))
+    if options.get("show_parts_total"):
+        total_rows.append(("Parts Subtotal", invoice.get("parts_total")))
+    total_rows.extend([
+        ("Fees / Shop Supplies", invoice.get("shop_supplies_fee")),
+        ("Tax", invoice.get("tax_total")),
+    ])
+    if invoice.get("discount_total"):
+        total_rows.append(("Discount", -float(invoice.get("discount_total") or 0)))
+    if invoice.get("approved_estimate_total") is not None:
+        total_rows.append(("Approved Estimate Total", invoice.get("approved_estimate_total")))
+        if invoice.get("estimate_final_difference"):
+            total_rows.append((invoice.get("estimate_difference_label") or "Final Difference", invoice.get("estimate_final_difference")))
+    return total_rows
+
+
+def invoice_pdf_totals_box_height(total_rows: list[tuple[str, Any]]) -> float:
+    return (
+        INVOICE_PDF_TOTALS_HEADER_HEIGHT
+        + len(total_rows) * INVOICE_PDF_TOTALS_ROW_HEIGHT
+        + INVOICE_PDF_TOTALS_BALANCE_OFFSET
+        + INVOICE_PDF_TOTALS_BOTTOM_PADDING
+    )
+
+
 def wrap_text(value: Any, max_chars: int = 88) -> list[str]:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
     if not text:
@@ -7989,18 +8024,12 @@ def build_invoice_pdf_bytes(
         c.rect(0, h - 104, w, 104, fill=1, stroke=0)
         c.setFillColorRGB(0.08, 0.52, 0.50)
         c.rect(0, h - 106, w, 3, fill=1, stroke=0)
-        logo_path = STATIC_DIR / "logo.png"
-        if logo_path.exists():
-            try:
-                c.drawImage(ImageReader(str(logo_path)), left, h - 75, width=118, height=28, preserveAspectRatio=True, mask="auto")
-            except Exception:
-                c.setFont("Helvetica-Bold", 18)
-                c.setFillColorRGB(1, 1, 1)
-                c.drawString(left, h - 62, "TorqueMech")
-        else:
-            c.setFont("Helvetica-Bold", 18)
-            c.setFillColorRGB(1, 1, 1)
-            c.drawString(left, h - 62, "TorqueMech")
+        c.setFont("Helvetica-Bold", 18)
+        c.setFillColorRGB(1, 1, 1)
+        c.drawString(left, h - 62, "Torque")
+        torque_width = c.stringWidth("Torque", "Helvetica-Bold", 18)
+        c.setFillColorRGB(*TORQUEMECH_ORANGE_RGB)
+        c.drawString(left + torque_width, h - 62, "Mech")
         c.setFont("Helvetica-Bold", 8)
         c.setFillColorRGB(0.70, 0.86, 0.86)
         c.drawString(left, h - 88, "FINAL CUSTOMER INVOICE")
@@ -8166,8 +8195,10 @@ def build_invoice_pdf_bytes(
     for index, item in enumerate(invoice.get("items") or [], start=1):
         y = draw_line_item(y, index, item)
 
-    totals_h = 190
-    if y - totals_h < bottom:
+    total_rows = invoice_pdf_total_rows(invoice, options)
+    totals_h = invoice_pdf_totals_box_height(total_rows)
+    side_panel_h = max(totals_h, 104)
+    if y - 16 - side_panel_h < bottom:
         y = new_page()
     y -= 16
     totals_w = 240
@@ -8176,29 +8207,14 @@ def build_invoice_pdf_bytes(
     c.setFont("Helvetica-Bold", 10)
     c.setFillColorRGB(0.05, 0.09, 0.16)
     c.drawString(totals_x + 14, y - 18, "Invoice Totals")
-    ty = y - 38
-    total_rows = []
-    if options.get("show_labor_total"):
-        total_rows.append(("Labor Subtotal", invoice.get("labor_total")))
-    if options.get("show_parts_total"):
-        total_rows.append(("Parts Subtotal", invoice.get("parts_total")))
-    total_rows.extend([
-        ("Fees / Shop Supplies", invoice.get("shop_supplies_fee")),
-        ("Tax", invoice.get("tax_total")),
-    ])
-    if invoice.get("discount_total"):
-        total_rows.append(("Discount", -float(invoice.get("discount_total") or 0)))
-    if invoice.get("approved_estimate_total") is not None:
-        total_rows.append(("Approved Estimate Total", invoice.get("approved_estimate_total")))
-        if invoice.get("estimate_final_difference"):
-            total_rows.append((invoice.get("estimate_difference_label") or "Final Difference", invoice.get("estimate_final_difference")))
+    ty = y - INVOICE_PDF_TOTALS_HEADER_HEIGHT
     for label, value in total_rows:
         c.setFont("Helvetica", 8.8)
         c.setFillColorRGB(0.30, 0.36, 0.44)
         c.drawString(totals_x + 14, ty, label)
         c.setFillGray(0)
         c.drawRightString(right - 14, ty, pdf_money(value))
-        ty -= 16
+        ty -= INVOICE_PDF_TOTALS_ROW_HEIGHT
     c.setStrokeColorRGB(0.58, 0.73, 0.72)
     c.line(totals_x + 14, ty + 5, right - 14, ty + 5)
     c.setStrokeGray(0)
@@ -8264,7 +8280,7 @@ def build_invoice_pdf_bytes(
         for _, lines in wrapped_details:
             needed += label_gap + len(lines) * line_gap + section_gap
         needed -= section_gap
-        y_after_totals = y - totals_h - 18
+        y_after_totals = y - side_panel_h - 18
         if y_after_totals - needed < bottom:
             y = new_page()
         else:
@@ -17934,6 +17950,7 @@ def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int, rep
         shop_id = current_shop_id(conn, request)
         customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
         job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
+        shop_profile = load_shop_profile_context(conn)
         selected_repair_ids: set[int] = set()
         if repair_record_id:
             selected = next(
@@ -17951,6 +17968,7 @@ def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int, rep
             "customer": customer,
             "vehicle": vehicle,
             "job_groups": job_groups,
+            "shop_profile": shop_profile,
             "selected_repair_ids": selected_repair_ids,
             "prefilled_repair_id": repair_record_id,
             "error": "",
@@ -17973,6 +17991,7 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
     try:
         shop_id = current_shop_id(conn, request)
         customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        shop_profile = load_shop_profile_context(conn)
         repairs = [
             load_repair_record(conn, customer_id, vehicle_id, repair_id)
             for repair_id in selected_ids
@@ -18091,6 +18110,7 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
                     "customer": customer,
                     "vehicle": vehicle,
                     "job_groups": job_groups,
+                    "shop_profile": shop_profile,
                     "selected_repair_ids": set(selected_ids),
                     "prefilled_repair_id": None,
                     "error": validation_error,
@@ -18102,6 +18122,11 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
             "discount_total": max(optional_float(form, "discount_total") or 0, 0),
             "tax_rate": max(optional_float(form, "tax_rate") or 0, 0),
             "no_charge_reason": str(form.get("no_charge_reason") or "").strip(),
+            "warranty_text": (
+                str(shop_profile.get("warranty_note") or "").strip()
+                if str(form.get("include_warranty_on_invoice") or "").lower() in {"1", "true", "on", "yes"}
+                else ""
+            ),
         }
         try:
             invoice = create_invoice_for_repairs(
@@ -18121,6 +18146,7 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
                     "customer": customer,
                     "vehicle": vehicle,
                     "job_groups": job_groups,
+                    "shop_profile": shop_profile,
                     "selected_repair_ids": set(selected_ids),
                     "prefilled_repair_id": None,
                     "error": str(exc.detail),

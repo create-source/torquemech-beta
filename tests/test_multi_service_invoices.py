@@ -1502,7 +1502,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(invoice_pdf.status_code, 400)
         self.assertIn("formally completed", invoice_detail.text)
 
-    def test_final_invoice_uses_stable_configured_totals_and_warranty(self):
+    def test_final_invoice_uses_stable_configured_totals_without_default_warranty(self):
         pro_module.save_shop_settings(
             self.conn,
             {
@@ -1531,7 +1531,119 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertEqual(invoice["tax_total"], 33)
         self.assertEqual(invoice["grand_total"], 445.5)
         self.assertEqual(invoice["payment_status"], "Unpaid")
-        self.assertIn("12 month warranty", invoice["warranty_text"])
+        self.assertEqual(invoice["warranty_text"], "")
+        self.assertEqual(invoice["payment_terms"], "")
+
+    def test_invoice_builder_checkbox_stores_and_displays_configured_warranty(self):
+        pro_module.save_shop_settings(
+            self.conn,
+            {
+                "shop_name": "TorqueMech Auto",
+                "warranty_note": "30 day warranty on labor.",
+                "custom_footer_note": "Payment required before release.",
+            },
+        )
+        self.insert_repair(72, "Starter Replacement", 1.4, 125, 190)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        builder = client.get("/pro/customers/1/vehicles/1/invoices/new?repair_record_id=72")
+        self.assertEqual(builder.status_code, 200)
+        self.assertIn("Include warranty on invoice", builder.text)
+        self.assertIn('id="include_warranty_on_invoice" name="include_warranty_on_invoice" type="checkbox" value="1"', builder.text)
+        self.assertNotIn('id="include_warranty_on_invoice" name="include_warranty_on_invoice" type="checkbox" value="1" checked', builder.text)
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={"repair_record_id": "72", "include_warranty_on_invoice": "1"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+
+        invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
+        detail = client.get("/pro/customers/1/vehicles/1/invoices/1")
+        pdf = client.get("/pro/customers/1/vehicles/1/invoices/1/pdf")
+
+        self.assertEqual(invoice["warranty_text"], "30 day warranty on labor.")
+        self.assertIn("30 day warranty on labor.", detail.text)
+        self.assertIn(b"Warranty Statement", pdf.content)
+        self.assertIn(b"30 day warranty on labor.", pdf.content)
+        self.assertIn(b"Payment required before release.", pdf.content)
+
+    def test_invoice_builder_unchecked_warranty_does_not_display_on_detail_or_pdf(self):
+        pro_module.save_shop_settings(
+            self.conn,
+            {
+                "shop_name": "TorqueMech Auto",
+                "warranty_note": "30 day warranty on labor.",
+                "custom_footer_note": "Payment due on pickup.",
+            },
+        )
+        self.insert_repair(73, "Water Pump Replacement", 2.0, 130, 240)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={"repair_record_id": "73"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+
+        invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
+        detail = client.get("/pro/customers/1/vehicles/1/invoices/1")
+        pdf = client.get("/pro/customers/1/vehicles/1/invoices/1/pdf")
+
+        self.assertEqual(invoice["warranty_text"], "")
+        self.assertNotIn("30 day warranty on labor.", detail.text)
+        self.assertNotIn(b"Warranty Statement", pdf.content)
+        self.assertNotIn(b"30 day warranty on labor.", pdf.content)
+        self.assertIn(b"Payment due on pickup.", pdf.content)
+
+    def test_existing_invoice_with_stored_warranty_still_displays(self):
+        self.insert_repair(74, "Radiator Replacement", 2.3, 140, 280)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 74)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T14:30:00",
+            invoice_options={"warranty_text": "Existing stored warranty text."},
+        )
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        detail = client.get(f"/pro/customers/1/vehicles/1/invoices/{invoice['id']}")
+        pdf = self.final_invoice_pdf(invoice)
+
+        self.assertIn("Existing stored warranty text.", detail.text)
+        self.assertIn(b"Warranty Statement", pdf)
+        self.assertIn(b"Existing stored warranty text.", pdf)
+
+    def test_shop_without_warranty_hides_builder_checkbox_and_blank_pdf_section(self):
+        self.insert_repair(75, "Thermostat Replacement", 1.1, 120, 45)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 75)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T14:45:00",
+        )
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        builder = client.get("/pro/customers/1/vehicles/1/invoices/new?repair_record_id=75")
+        pdf = self.final_invoice_pdf(invoice, {"shop_name": "TorqueMech Auto", "warranty_note": ""})
+
+        self.assertEqual(builder.status_code, 200)
+        self.assertNotIn("Include warranty on invoice", builder.text)
+        self.assertNotIn(b"Warranty Statement", pdf)
 
     def test_final_invoice_pdf_contains_customer_vehicle_and_no_estimate_language(self):
         self.conn.execute(
@@ -1910,7 +2022,7 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertIn(b"Partially Paid", partial_pdf)
         self.assertIn(b"Amount Paid", partial_pdf)
         self.assertIn(b"Balance Due", partial_pdf)
-        self.assertIn(b"12 month warranty on listed labor.", partial_pdf)
+        self.assertNotIn(b"12 month warranty on listed labor.", partial_pdf)
 
         self.conn.execute(
             "UPDATE invoices SET amount_paid = grand_total, payment_status = 'Paid in Full' WHERE id = ?",
@@ -1929,6 +2041,76 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         unpaid_pdf = self.final_invoice_pdf(invoice)
         self.assertIn(b"Payment Status: Unpaid", unpaid_pdf)
         self.assertIn(b"Balance Due", unpaid_pdf)
+
+    def test_final_invoice_pdf_totals_box_contains_balance_with_all_optional_rows(self):
+        self.insert_legacy_total_repair(86, "Approved Alternator Repair", labor_total=100, parts=0, approved_total=100)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 86)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:15:00",
+            invoice_options={
+                "shop_supplies_fee": 12.5,
+                "tax_rate": 0.08,
+                "discount_total": 5,
+            },
+        )
+        self.conn.execute("UPDATE invoices SET amount_paid = 20 WHERE id = ?", (invoice["id"],))
+        self.conn.commit()
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        rows = pro_module.invoice_pdf_total_rows(loaded, dict(pro_module.INVOICE_PDF_DEFAULT_OPTIONS))
+        box_height = pro_module.invoice_pdf_totals_box_height(rows)
+        balance_baseline_from_top = (
+            pro_module.INVOICE_PDF_TOTALS_HEADER_HEIGHT
+            + len(rows) * pro_module.INVOICE_PDF_TOTALS_ROW_HEIGHT
+            + pro_module.INVOICE_PDF_TOTALS_BALANCE_OFFSET
+        )
+        pdf = self.final_invoice_pdf(invoice)
+
+        self.assertEqual([label for label, _ in rows], [
+            "Labor Subtotal",
+            "Parts Subtotal",
+            "Fees / Shop Supplies",
+            "Tax",
+            "Discount",
+            "Approved Estimate Total",
+            "Additional Approved Amount",
+        ])
+        self.assertGreaterEqual(box_height - balance_baseline_from_top, 18)
+        self.assertIn(b"Additional Approved Amount", pdf)
+        self.assertIn(b"Balance Due", pdf)
+
+    def test_final_invoice_pdf_totals_box_works_without_optional_rows(self):
+        self.insert_repair(87, "Oil Pressure Sensor", 1.0, 110, 55)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 87)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:20:00",
+        )
+        loaded = pro_module.load_invoice_record(self.conn, 1, 1, invoice["id"])
+        options = {**pro_module.INVOICE_PDF_DEFAULT_OPTIONS, "show_labor_total": False, "show_parts_total": False}
+        rows = pro_module.invoice_pdf_total_rows(loaded, options)
+        box_height = pro_module.invoice_pdf_totals_box_height(rows)
+        balance_baseline_from_top = (
+            pro_module.INVOICE_PDF_TOTALS_HEADER_HEIGHT
+            + len(rows) * pro_module.INVOICE_PDF_TOTALS_ROW_HEIGHT
+            + pro_module.INVOICE_PDF_TOTALS_BALANCE_OFFSET
+        )
+        pdf = self.final_invoice_pdf(invoice, display_options=options)
+
+        self.assertEqual([label for label, _ in rows], ["Fees / Shop Supplies", "Tax"])
+        self.assertGreaterEqual(box_height - balance_baseline_from_top, 18)
+        self.assertIn(b"Balance Due", pdf)
+        self.assertNotIn(b"Labor Subtotal", pdf)
+        self.assertNotIn(b"Parts Subtotal", pdf)
+
+    def test_final_invoice_pdf_wordmark_uses_torquemech_orange(self):
+        self.assertEqual(pro_module.TORQUEMECH_ORANGE_RGB, (249 / 255, 115 / 255, 22 / 255))
 
     def test_final_invoice_pdf_includes_additional_approved_parts_and_excludes_declined(self):
         self.insert_repair(83, "Cooling System Repair", 2.4, 145, 90)
