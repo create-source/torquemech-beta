@@ -260,6 +260,11 @@ CUSTOMER_DECISION_STATUS_BY_VALUE = {
     "declined": "Declined",
     "deferred": "Deferred",
 }
+CUSTOMER_DECISION_VALUE_BY_STATUS = {
+    "Approved": "approved",
+    "Declined": "declined",
+    "Deferred": "deferred",
+}
 CUSTOMER_DECISION_NOTIFICATION_TYPE_BY_STATUS = {
     "Approved": "customer_estimate_approved",
     "Declined": "customer_estimate_declined",
@@ -9294,6 +9299,60 @@ def latest_customer_decision_log_for_finding(
     return record
 
 
+def latest_customer_decision_for_prepared_estimate(
+    conn: sqlite3.Connection,
+    *,
+    shop_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    finding_id: int,
+    estimate_id: int,
+    decision_status: str | None = None,
+) -> dict[str, Any] | None:
+    ensure_customer_decision_logs_schema(conn)
+    record = row_to_dict(
+        conn.execute(
+            """
+            SELECT cdl.*
+            FROM customer_decision_logs cdl
+            JOIN findings_records f ON f.id = cdl.finding_id
+            JOIN customers c ON c.id = f.customer_id
+            JOIN customer_vehicles v ON v.id = f.vehicle_id
+            JOIN repair_estimate_documents red ON red.id = cdl.estimate_revision_id
+            WHERE cdl.finding_id = ?
+              AND cdl.estimate_revision_id = ?
+              AND red.id = ?
+              AND red.customer_id = ?
+              AND red.vehicle_id = ?
+              AND red.finding_id = ?
+              AND c.shop_id = ?
+              AND v.shop_id = ?
+              AND v.customer_id = c.id
+              AND f.customer_id = c.id
+              AND f.vehicle_id = v.id
+            ORDER BY cdl.created_at DESC, cdl.id DESC
+            LIMIT 1
+            """,
+            (
+                finding_id,
+                estimate_id,
+                estimate_id,
+                customer_id,
+                vehicle_id,
+                finding_id,
+                shop_id,
+                shop_id,
+            ),
+        ).fetchone()
+    )
+    if not record:
+        return None
+    if decision_status and str(record.get("decision_status") or "").strip() != decision_status:
+        return None
+    record["source_display"] = customer_decision_log_source_label(record.get("source"))
+    return record
+
+
 def latest_customer_decision_matches_prepared_estimate(
     conn: sqlite3.Connection,
     *,
@@ -9304,41 +9363,17 @@ def latest_customer_decision_matches_prepared_estimate(
     estimate_id: int,
     decision_status: str,
 ) -> bool:
-    ensure_customer_decision_logs_schema(conn)
-    record = conn.execute(
-        """
-        SELECT cdl.decision_status
-        FROM customer_decision_logs cdl
-        JOIN findings_records f ON f.id = cdl.finding_id
-        JOIN customers c ON c.id = f.customer_id
-        JOIN customer_vehicles v ON v.id = f.vehicle_id
-        JOIN repair_estimate_documents red ON red.id = cdl.estimate_revision_id
-        WHERE cdl.finding_id = ?
-          AND cdl.estimate_revision_id = ?
-          AND red.id = ?
-          AND red.customer_id = ?
-          AND red.vehicle_id = ?
-          AND red.finding_id = ?
-          AND c.shop_id = ?
-          AND v.shop_id = ?
-          AND v.customer_id = c.id
-          AND f.customer_id = c.id
-          AND f.vehicle_id = v.id
-        ORDER BY cdl.created_at DESC, cdl.id DESC
-        LIMIT 1
-        """,
-        (
-            finding_id,
-            estimate_id,
-            estimate_id,
-            customer_id,
-            vehicle_id,
-            finding_id,
-            shop_id,
-            shop_id,
-        ),
-    ).fetchone()
-    return bool(record and str(record["decision_status"] or "").strip() == decision_status)
+    return bool(
+        latest_customer_decision_for_prepared_estimate(
+            conn,
+            shop_id=shop_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+            estimate_id=estimate_id,
+            decision_status=decision_status,
+        )
+    )
 
 
 CUSTOMER_DECISION_ACTIVITY_LABELS = {
@@ -9655,7 +9690,7 @@ def record_finding_customer_decision(
         raise HTTPException(status_code=400, detail="A repair-started finding cannot be declined")
     if previous_status in {"Approved", "Declined", "Deferred"} and previous_status != next_status and not allow_change:
         raise HTTPException(status_code=409, detail="Customer decision already recorded")
-    if previous_status == "Approved" and next_status == "Declined":
+    if previous_status == "Approved" and next_status == "Declined" and not allow_change:
         raise HTTPException(status_code=400, detail="Approved findings cannot be declined after approval")
 
     if previous_status != next_status:
@@ -12975,7 +13010,14 @@ def validate_customer_estimate_review_context(
     shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
     attach_finding_photo_urls(finding)
     annotate_finding_workflow_state(finding)
-    decision_log = latest_customer_decision_log_for_finding(conn, finding_id)
+    decision_log = latest_customer_decision_for_prepared_estimate(
+        conn,
+        shop_id=shop_id,
+        customer_id=customer_id,
+        vehicle_id=vehicle_id,
+        finding_id=finding_id,
+        estimate_id=estimate_id,
+    )
     return {
         "shop": shop_profile,
         "customer": customer,
@@ -14583,6 +14625,12 @@ def customer_estimate_review(request: Request, token: str):
     pdf_url = ""
     if customer_estimate_pdf_path(context["estimate"]) is not None:
         pdf_url = customer_estimate_review_pdf_url(request, token)
+    decision_saved = str(request.query_params.get("decision_saved") or "").strip().lower()
+    if decision_saved not in CUSTOMER_DECISION_VALUES:
+        decision_saved = ""
+    current_decision_status = str((context.get("decision_log") or {}).get("decision_status") or "").strip()
+    if CUSTOMER_DECISION_VALUE_BY_STATUS.get(current_decision_status) != decision_saved:
+        decision_saved = ""
     return templates.TemplateResponse(
         "customer_estimate_review.html",
         {
@@ -14590,7 +14638,7 @@ def customer_estimate_review(request: Request, token: str):
             **context,
             "pdf_url": pdf_url,
             "decision_url": str(request.url_for("customer_estimate_review_decision", token=token)),
-            "decision_saved": request.query_params.get("decision_saved") or "",
+            "decision_saved": decision_saved,
         },
     )
 
@@ -14607,7 +14655,7 @@ async def customer_estimate_review_decision(request: Request, token: str):
         context = validate_customer_estimate_review_context(conn, token)
         finding = context["finding"]
         decision_status = CUSTOMER_DECISION_STATUS_BY_VALUE[raw_decision]
-        already_recorded = latest_customer_decision_matches_prepared_estimate(
+        already_recorded = latest_customer_decision_for_prepared_estimate(
             conn,
             shop_id=int(context["shop"]["id"]),
             customer_id=int(context["customer"]["id"]),
@@ -14616,19 +14664,19 @@ async def customer_estimate_review_decision(request: Request, token: str):
             estimate_id=int(context["estimate"]["id"]),
             decision_status=decision_status,
         )
-        decision_status = record_finding_customer_decision(
-            conn,
-            customer=context["customer"],
-            finding=finding,
-            customer_id=int(context["customer"]["id"]),
-            vehicle_id=int(context["vehicle"]["id"]),
-            finding_id=int(finding["id"]),
-            raw_decision=raw_decision,
-            source="customer_secure_link",
-            allow_change=False,
-            now=now,
-        )
         if not already_recorded:
+            decision_status = record_finding_customer_decision(
+                conn,
+                customer=context["customer"],
+                finding=finding,
+                customer_id=int(context["customer"]["id"]),
+                vehicle_id=int(context["vehicle"]["id"]),
+                finding_id=int(finding["id"]),
+                raw_decision=raw_decision,
+                source="customer_secure_link",
+                allow_change=True,
+                now=now,
+            )
             create_customer_decision_notification_if_needed(
                 conn,
                 shop_id=int(context["shop"]["id"]),

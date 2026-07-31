@@ -362,40 +362,44 @@
 
     <section class="tm-public-estimate-panel tm-public-decision-card" id="customer-decision" aria-label="Customer Decision">
       <h2 class="tm-public-estimate-heading">Customer Decision</h2>
-      {% set recorded_decision = finding.status if finding.status in ["Approved", "Declined", "Deferred"] else "" %}
-      {% if recorded_decision %}
-        <div class="tm-public-decision-result" role="status" aria-live="polite">
-          {% if recorded_decision == "Approved" %}
-          <h3>Estimate Approved</h3>
-          <p class="tm-public-estimate-copy">Your decision was sent to the shop. The shop will contact you regarding the next steps.</p>
-          {% elif recorded_decision == "Declined" %}
-          <h3>Estimate Declined</h3>
-          <p class="tm-public-estimate-copy">Your decision was sent to the shop.</p>
+      {% set recorded_decision = decision_log.decision_status if decision_log and decision_log.decision_status in ["Approved", "Declined", "Deferred"] else "" %}
+      {% set recorded_decision_label = "Deciding Later" if recorded_decision == "Deferred" else recorded_decision %}
+      {% if decision_saved %}
+        <div class="tm-public-decision-result" role="status" aria-live="polite" aria-atomic="true">
+          {% if decision_saved == "approved" %}
+          <h3>Your approval was received.</h3>
+          <p class="tm-public-estimate-copy">The repair shop may now contact you, schedule the repair, or begin the approved work according to the shop's workflow.</p>
+          {% elif decision_saved == "declined" %}
+          <h3>Your response was received.</h3>
+          <p class="tm-public-estimate-copy">You declined the prepared service.</p>
           {% else %}
-          <h3>Decision Saved</h3>
-          <p class="tm-public-estimate-copy">The shop has been informed that you would like more time.</p>
+          <h3>Your response was received.</h3>
+          <p class="tm-public-estimate-copy">You chose to decide later and may return using this secure estimate link while it remains valid.</p>
           {% endif %}
-          <p class="tm-public-estimate-copy" style="margin-top:8px;">Submitted {% if decision_log and decision_log.created_at %}{{ decision_log.created_at|pro_datetime }}{% else %}today{% endif %}.</p>
-        </div>
-        <p class="tm-public-estimate-copy">To change this recorded decision, please contact the shop directly.</p>
-      {% else %}
-        <p class="tm-public-estimate-copy">Select what should happen with this prepared estimate. Your choice will be sent securely to the shop.</p>
-        <p class="tm-public-estimate-copy tm-public-decision-status" id="customerDecisionStatus" aria-live="polite" aria-atomic="true"></p>
-        <div class="tm-public-decision-actions" aria-label="Decision choices">
-          <form method="post" action="{{ decision_url }}" data-customer-decision-form>
-            <input type="hidden" name="decision" value="approved">
-            <button class="tm-public-estimate-action" type="submit" data-loading-label="Approving..." aria-label="Approve estimate for {{ estimate.estimate_total|pro_currency }}">Approve {{ estimate.estimate_total|pro_currency }}</button>
-          </form>
-          <form method="post" action="{{ decision_url }}" data-customer-decision-form>
-            <input type="hidden" name="decision" value="declined">
-            <button class="tm-public-estimate-action tm-public-estimate-action--secondary" type="submit" data-loading-label="Declining...">Decline</button>
-          </form>
-          <form method="post" action="{{ decision_url }}" data-customer-decision-form>
-            <input type="hidden" name="decision" value="deferred">
-            <button class="tm-public-estimate-action tm-public-estimate-action--secondary" type="submit" data-loading-label="Saving...">Decide Later</button>
-          </form>
         </div>
       {% endif %}
+      {% if recorded_decision %}
+      <div class="tm-public-decision-result" aria-label="Current recorded decision">
+        <h3>Current Recorded Decision</h3>
+        <p class="tm-public-estimate-copy">Current recorded decision: <strong>{{ recorded_decision_label }}</strong></p>
+      </div>
+      {% endif %}
+      <p class="tm-public-estimate-copy">Select what should happen with this prepared estimate. Your choice will be sent securely to the shop.</p>
+      <p class="tm-public-estimate-copy tm-public-decision-status" id="customerDecisionStatus" aria-live="polite" aria-atomic="true"></p>
+      <div class="tm-public-decision-actions" aria-label="Decision choices">
+        <form method="post" action="{{ decision_url }}" data-customer-decision-form>
+          <input type="hidden" name="decision" value="approved">
+          <button class="tm-public-estimate-action" type="submit" data-loading-label="Approving..." aria-label="Approve estimate for {{ estimate.estimate_total|pro_currency }}">Approve {{ estimate.estimate_total|pro_currency }}</button>
+        </form>
+        <form method="post" action="{{ decision_url }}" data-customer-decision-form>
+          <input type="hidden" name="decision" value="declined">
+          <button class="tm-public-estimate-action tm-public-estimate-action--secondary" type="submit" data-loading-label="Declining...">Decline</button>
+        </form>
+        <form method="post" action="{{ decision_url }}" data-customer-decision-form>
+          <input type="hidden" name="decision" value="deferred">
+          <button class="tm-public-estimate-action tm-public-estimate-action--secondary" type="submit" data-loading-label="Saving...">Decide Later</button>
+        </form>
+      </div>
     </section>
 
     {% if service_education %}

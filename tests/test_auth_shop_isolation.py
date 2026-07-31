@@ -3397,6 +3397,8 @@ class AuthShopIsolationTests(unittest.TestCase):
         estimate_id: int,
         shop_id: int,
         *,
+        customer_id: int | None = None,
+        vehicle_id: int | None = None,
         finding_id: int | None = None,
         expires_at: str | None = None,
     ) -> str:
@@ -3406,6 +3408,10 @@ class AuthShopIsolationTests(unittest.TestCase):
                 (estimate_id,),
             ).fetchone()
         )
+        if customer_id is not None:
+            estimate["customer_id"] = customer_id
+        if vehicle_id is not None:
+            estimate["vehicle_id"] = vehicle_id
         if finding_id is not None:
             estimate["finding_id"] = finding_id
         token = pro_module.create_customer_estimate_review_token(estimate, shop_id)
@@ -3640,6 +3646,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         alpha_customer, alpha_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="Alpha")
         alpha_finding = self.seed_finding_for_shop_estimate_stage(alpha_customer, alpha_vehicle)
         alpha_estimate = self.seed_repair_estimate_document_for_finding(alpha_customer, alpha_vehicle, alpha_finding)
+        alpha_other_customer, alpha_other_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="AlphaOther")
         self.logout(client)
         self.signup(client, email="stage2a-beta@example.com", shop_name="Beta Shop")
         self.verify_user("stage2a-beta@example.com")
@@ -3648,16 +3655,28 @@ class AuthShopIsolationTests(unittest.TestCase):
         beta_finding = self.seed_finding_for_shop_estimate_stage(beta_customer, beta_vehicle)
 
         cross_shop_token = self.signed_customer_estimate_token(alpha_estimate, beta_shop)
+        wrong_customer_token = self.signed_customer_estimate_token(alpha_estimate, alpha_shop, customer_id=alpha_other_customer)
+        wrong_vehicle_token = self.signed_customer_estimate_token(alpha_estimate, alpha_shop, vehicle_id=alpha_other_vehicle)
         wrong_finding_token = self.signed_customer_estimate_token(alpha_estimate, alpha_shop, finding_id=beta_finding)
 
         cross_shop = client.get(f"/customer/estimate/{cross_shop_token}")
+        wrong_customer = client.get(f"/customer/estimate/{wrong_customer_token}")
+        wrong_vehicle = client.get(f"/customer/estimate/{wrong_vehicle_token}")
         wrong_finding = client.get(f"/customer/estimate/{wrong_finding_token}")
+        wrong_customer_post = client.post(f"/customer/estimate/{wrong_customer_token}/decision", data={"decision": "approved"})
+        wrong_vehicle_post = client.post(f"/customer/estimate/{wrong_vehicle_token}/decision", data={"decision": "approved"})
         wrong_finding_post = client.post(f"/customer/estimate/{wrong_finding_token}/decision", data={"decision": "approved"})
 
         self.assertEqual(cross_shop.status_code, 404)
+        self.assertEqual(wrong_customer.status_code, 404)
+        self.assertEqual(wrong_vehicle.status_code, 404)
         self.assertEqual(wrong_finding.status_code, 404)
+        self.assertEqual(wrong_customer_post.status_code, 404)
+        self.assertEqual(wrong_vehicle_post.status_code, 404)
         self.assertEqual(wrong_finding_post.status_code, 404)
         self.assertNotIn("Brake pads below spec", cross_shop.text)
+        self.assertNotIn("Brake pads below spec", wrong_customer.text)
+        self.assertNotIn("Brake pads below spec", wrong_vehicle.text)
         self.assertNotIn("Brake pads below spec", wrong_finding.text)
 
     def test_customer_estimate_review_old_token_fails_after_new_prepared_estimate(self):
@@ -3696,21 +3715,21 @@ class AuthShopIsolationTests(unittest.TestCase):
                 "Approved",
                 "Approved",
                 "Your approval was received.",
-                "The repair shop may now begin or schedule the approved service.",
+                "The repair shop may now contact you, schedule the repair, or begin the approved work according to the shop's workflow.",
             ),
             (
                 "declined",
                 "Declined",
                 "Declined",
                 "Your response was received.",
-                "This service was declined and the shop has been notified.",
+                "You declined the prepared service.",
             ),
             (
                 "deferred",
                 "Deferred",
                 "Deciding Later",
                 "Your response was received.",
-                "You chose to decide later. This secure estimate link may still be used while it remains valid.",
+                "You chose to decide later and may return using this secure estimate link while it remains valid.",
             ),
         ):
             with self.subTest(decision=decision):
@@ -3806,25 +3825,88 @@ class AuthShopIsolationTests(unittest.TestCase):
                     1,
                 )
 
-                decided_page = client.get(review_link)
+                decided_page = client.get(repeated.headers["location"])
                 self.assertEqual(decided_page.status_code, 200)
                 self.assertIn(confirmation, decided_page.text)
                 self.assertIn(f"Current recorded decision: <strong>{label}</strong>", decided_page.text)
                 self.assertIn(explanation, decided_page.text)
                 self.assertIn('role="status" aria-live="polite" aria-atomic="true"', decided_page.text)
-                self.assertIn("Submitted", decided_page.text)
-                self.assertIn("contact the shop directly", decided_page.text)
-                self.assertNotIn("Approve $324.00", decided_page.text)
-                self.assertNotIn("Decline</button>", decided_page.text)
-                self.assertNotIn("Decide Later</button>", decided_page.text)
-                self.assertNotIn('aria-label="Decision choices"', decided_page.text)
+                self.assertIn("Current Recorded Decision", decided_page.text)
+                self.assertIn("Approve $324.00", decided_page.text)
+                self.assertIn("Decline</button>", decided_page.text)
+                self.assertIn("Decide Later</button>", decided_page.text)
+                self.assertIn('aria-label="Decision choices"', decided_page.text)
                 self.assertNotIn("Confirm Approval", decided_page.text)
                 self.assertNotIn("Confirm Decline", decided_page.text)
                 self.assertNotIn("Confirm Decide Later", decided_page.text)
+                plain_page = client.get(review_link)
+                self.assertIn(f"Current recorded decision: <strong>{label}</strong>", plain_page.text)
+                self.assertNotIn("Your approval was received.", plain_page.text)
+                self.assertNotIn("Your response was received.", plain_page.text)
+                wrong_confirmation = client.get(f"{review_link}?decision_saved=declined" if decision != "declined" else f"{review_link}?decision_saved=approved")
+                self.assertIn(f"Current recorded decision: <strong>{label}</strong>", wrong_confirmation.text)
+                self.assertNotIn("You declined the prepared service." if decision != "declined" else "The repair shop may now contact you", wrong_confirmation.text)
 
                 staff_page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
                 self.assertIn(f"Customer {expected_status}", staff_page.text)
                 self.assertIn("Customer submitted via secure link", staff_page.text)
+
+    def test_customer_estimate_review_public_decision_changes_create_one_additional_history_row(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3a-public-change@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3a-public-change@example.com")
+        pro_module.ensure_repair_records_schema(self.conn)
+        cases = (
+            ("approved", "declined", "Declined", "Declined"),
+            ("declined", "approved", "Approved", "Approved"),
+            ("deferred", "approved", "Approved", "Approved"),
+        )
+        for initial_decision, changed_decision, expected_status, label in cases:
+            with self.subTest(initial_decision=initial_decision, changed_decision=changed_decision):
+                customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(
+                    shop_id,
+                    first_name=f"{initial_decision.title()}To{changed_decision.title()}",
+                )
+                finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+                self.seed_repair_estimate_document_for_finding(
+                    customer_id,
+                    vehicle_id,
+                    finding_id,
+                    total=432.10,
+                    service_name="Fuel Pump Replacement",
+                )
+                detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+                review_link = self.customer_review_link_from_detail(detail.text)
+                decision_url = f"{review_link}/decision"
+
+                first = client.post(decision_url, data={"decision": initial_decision}, follow_redirects=False)
+                changed = client.post(decision_url, data={"decision": changed_decision}, follow_redirects=False)
+
+                self.assertEqual(first.status_code, 303)
+                self.assertEqual(changed.status_code, 303)
+                self.assertIn(f"decision_saved={changed_decision}", changed.headers["location"])
+                self.assertEqual(
+                    self.conn.execute(
+                        "SELECT COUNT(*) AS count FROM finding_history_records WHERE finding_id = ? AND event_type = 'customer_decision_changed'",
+                        (finding_id,),
+                    ).fetchone()["count"],
+                    2,
+                )
+                self.assertEqual(
+                    self.conn.execute(
+                        "SELECT COUNT(*) AS count FROM customer_decision_logs WHERE finding_id = ?",
+                        (finding_id,),
+                    ).fetchone()["count"],
+                    2,
+                )
+                self.assertEqual(
+                    self.conn.execute("SELECT COUNT(*) AS count FROM repair_records").fetchone()["count"],
+                    0,
+                )
+                finding = self.conn.execute("SELECT * FROM findings_records WHERE id = ?", (finding_id,)).fetchone()
+                self.assertEqual(finding["status"], expected_status)
+                page = client.get(review_link)
+                self.assertIn(f"Current recorded decision: <strong>{label}</strong>", page.text)
 
     def test_customer_estimate_review_public_decision_rejects_bad_tokens_and_values(self):
         client = self.client()
