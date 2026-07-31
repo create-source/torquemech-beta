@@ -5,7 +5,7 @@ import unittest
 import html
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 from unittest.mock import patch
 
 from fastapi import HTTPException, Request
@@ -4002,7 +4002,12 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertIn("[data-notification-dismiss-form]", nav_js)
         self.assertIn('Accept: "application/json"', nav_js)
         self.assertIn('credentials: "same-origin"', nav_js)
-        self.assertIn("body: new FormData(form)", nav_js)
+        self.assertIn("const formData = new FormData(form)", nav_js)
+        self.assertIn("const body = new URLSearchParams();", nav_js)
+        self.assertIn("body.append(name, value)", nav_js)
+        self.assertIn("fetch(form.action", nav_js)
+        self.assertNotIn("body: new FormData(form)", nav_js)
+        self.assertNotIn('"Content-Type"', nav_js)
         self.assertIn("payload.ok !== true", nav_js)
         self.assertIn("setNotificationUnreadCount(Number(payload.unread_count))", nav_js)
         self.assertIn("badge.remove()", nav_js)
@@ -4051,11 +4056,19 @@ class AuthShopIsolationTests(unittest.TestCase):
         alpha_dashboard = client.get("/pro/dashboard")
         missing_csrf = client.post(
             f"/pro/notifications/{notification['id']}/dismiss",
-            headers={"Accept": "application/json"},
+            headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"},
             follow_redirects=False,
         )
         self.assertEqual(missing_csrf.status_code, 403)
-        self.assertEqual(missing_csrf.json()["ok"], False)
+        self.assertEqual(missing_csrf.json(), {"ok": False, "error": "invalid_csrf"})
+        invalid_csrf = client.post(
+            f"/pro/notifications/{notification['id']}/dismiss",
+            data={"csrf_token": "bad-token"},
+            headers={"Accept": "application/json", "X-Requested-With": "XMLHttpRequest"},
+            follow_redirects=False,
+        )
+        self.assertEqual(invalid_csrf.status_code, 403)
+        self.assertEqual(invalid_csrf.json(), {"ok": False, "error": "invalid_csrf"})
         self.assertEqual(
             self.conn.execute(
                 "SELECT COUNT(*) AS count FROM staff_notifications WHERE id = ?",
@@ -4066,8 +4079,12 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         ajax_dismissed = client.post(
             f"/pro/notifications/{notification['id']}/dismiss",
-            data={"csrf_token": csrf_from(alpha_dashboard.text), "next": "https://evil.example/"},
-            headers={"Accept": "application/json"},
+            content=urlencode({"csrf_token": csrf_from(alpha_dashboard.text), "next": "https://evil.example/"}),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest",
+            },
             follow_redirects=False,
         )
         self.assertEqual(ajax_dismissed.status_code, 200)

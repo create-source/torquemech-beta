@@ -112,9 +112,16 @@ document.addEventListener("DOMContentLoaded", () => {
     form.classList.remove("is-error");
     if (submitter) submitter.disabled = true;
     try {
+      const formData = new FormData(form);
+      const body = new URLSearchParams();
+      for (const [name, value] of formData.entries()) {
+        if (typeof value === "string") {
+          body.append(name, value);
+        }
+      }
       const response = await fetch(form.action, {
         method: "POST",
-        body: new FormData(form),
+        body,
         credentials: "same-origin",
         headers: {
           Accept: "application/json",

@@ -17,6 +17,7 @@ class NotificationDismissInteractionTests(unittest.TestCase):
         self.assertIn('data-notification-id="{{ item.id }}"', template)
         self.assertIn('method="post" action="/pro/notifications/{{ item.id }}/dismiss"', template)
         self.assertIn('name="csrf_token" value="{{ request.session.get(\'csrf_token\', \'\') }}"', template)
+        self.assertNotRegex(template, r'<input[^>]+name="csrf_token"[^>]+disabled')
         self.assertIn('class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification"', template)
         self.assertNotIn("tm-notificationItem__swipeDismiss", template)
         self.assertNotRegex(template, r"tm-notificationItem__dismiss(?!Form)")
@@ -42,7 +43,12 @@ class NotificationDismissInteractionTests(unittest.TestCase):
             "[data-notification-dismiss-form]",
             "if (!window.fetch) return;",
             'method: "POST"',
-            "body: new FormData(form)",
+            "const formData = new FormData(form)",
+            "const body = new URLSearchParams();",
+            "for (const [name, value] of formData.entries())",
+            'if (typeof value === "string")',
+            "body.append(name, value)",
+            "body,",
             'credentials: "same-origin"',
             'Accept: "application/json"',
             '"X-Requested-With": "XMLHttpRequest"',
@@ -56,6 +62,9 @@ class NotificationDismissInteractionTests(unittest.TestCase):
         ):
             self.assertIn(expected, source)
 
+        self.assertIn("fetch(form.action", source)
+        self.assertNotIn("body: new FormData(form)", source)
+        self.assertNotIn('"Content-Type"', source)
         self.assertNotIn("form.submit()", source)
 
     def test_trash_button_is_compact_and_not_the_old_reveal_panel(self):

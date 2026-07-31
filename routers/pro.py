@@ -16293,14 +16293,15 @@ async def pro_notification_open(request: Request, notification_id: int):
 @router.post("/notifications/{notification_id}/dismiss")
 async def pro_notification_dismiss(request: Request, notification_id: int):
     form = await read_form_data(request)
-    wants_json = wants_json_response(request)
     if not validate_csrf(request, form):
+        wants_json = wants_json_response(request)
         if wants_json:
-            return JSONResponse({"ok": False, "error": "Invalid CSRF token"}, status_code=403)
+            return JSONResponse({"ok": False, "error": "invalid_csrf"}, status_code=403)
         raise HTTPException(status_code=403, detail="Invalid CSRF token")
     conn = crm_db_conn()
     try:
         shop_id = required_current_shop_id(conn, request)
+        wants_json = wants_json_response(request)
         ensure_staff_notifications_schema(conn)
         notification = conn.execute(
             """
@@ -16313,7 +16314,7 @@ async def pro_notification_dismiss(request: Request, notification_id: int):
         ).fetchone()
         if not notification:
             if wants_json:
-                return JSONResponse({"ok": False, "error": "Notification not found"}, status_code=404)
+                return JSONResponse({"ok": False, "error": "not_found"}, status_code=404)
             raise HTTPException(status_code=404, detail="Notification not found")
         conn.execute(
             """
