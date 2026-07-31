@@ -9442,6 +9442,11 @@ CUSTOMER_DECISION_ACTIVITY_LABELS = {
     "Declined": "Declined",
     "Deferred": "Decide Later",
 }
+CUSTOMER_DECISION_HISTORY_LABELS = {
+    "Approved": "Approved",
+    "Declined": "Declined",
+    "Deferred": "Deciding Later",
+}
 
 FOLLOW_UP_STATUSES = {
     "pending",
@@ -9729,6 +9734,18 @@ def customer_decision_activity_sort_timestamp(raw: Any) -> float:
     return parsed.timestamp()
 
 
+def customer_decision_history_has_distinct_change(decision_logs: list[dict[str, Any]]) -> bool:
+    previous_status = ""
+    for decision in reversed(decision_logs):
+        status = str(decision.get("decision_status") or "").strip()
+        if status not in CUSTOMER_DECISION_LOG_STATUSES:
+            continue
+        if previous_status and previous_status != status:
+            return True
+        previous_status = status
+    return False
+
+
 def customer_decision_activity_for_finding(
     conn: sqlite3.Connection,
     *,
@@ -9771,15 +9788,50 @@ def customer_decision_activity_for_finding(
         dict(row)
         for row in conn.execute(
             """
-            SELECT *
-            FROM customer_decision_logs
-            WHERE finding_id = ?
-            ORDER BY created_at DESC, id DESC
+            SELECT cdl.*
+            FROM customer_decision_logs cdl
+            JOIN findings_records f ON f.id = cdl.finding_id
+            JOIN customers c ON c.id = f.customer_id
+            JOIN customer_vehicles v ON v.id = f.vehicle_id
+            LEFT JOIN repair_estimate_documents red
+              ON red.id = cdl.estimate_revision_id
+            WHERE cdl.finding_id = ?
+              AND cdl.decision_status IN ('Approved', 'Declined', 'Deferred')
+              AND f.customer_id = ?
+              AND f.vehicle_id = ?
+              AND c.id = ?
+              AND v.id = ?
+              AND v.customer_id = c.id
+              AND (? IS NULL OR c.shop_id = ?)
+              AND (? IS NULL OR v.shop_id = ?)
+              AND (
+                cdl.estimate_revision_id IS NULL
+                OR (
+                  red.id = cdl.estimate_revision_id
+                  AND red.customer_id = ?
+                  AND red.vehicle_id = ?
+                  AND red.finding_id = ?
+                )
+              )
+            ORDER BY cdl.created_at DESC, cdl.id DESC
             """,
-            (finding_id,),
+            (
+                finding_id,
+                customer_id,
+                vehicle_id,
+                customer_id,
+                vehicle_id,
+                shop_id,
+                shop_id,
+                shop_id,
+                shop_id,
+                customer_id,
+                vehicle_id,
+                finding_id,
+            ),
         ).fetchall()
     ]
-    for decision in decision_logs:
+    for index, decision in enumerate(decision_logs):
         estimate_id = optional_int_value(decision.get("estimate_revision_id"))
         estimate = next(
             (record for record in estimate_records if optional_int_value(record.get("id")) == estimate_id),
@@ -9789,6 +9841,10 @@ def customer_decision_activity_for_finding(
         decision["decision_label"] = CUSTOMER_DECISION_ACTIVITY_LABELS.get(
             str(decision.get("decision_status") or "").strip(),
             str(decision.get("decision_status") or "Decision").strip() or "Decision",
+        )
+        decision["history_label"] = CUSTOMER_DECISION_HISTORY_LABELS.get(
+            str(decision.get("decision_status") or "").strip(),
+            decision["decision_label"],
         )
         decision["estimate_revision_label"] = (
             f"Revision {revision_by_estimate_id.get(estimate_id)}"
@@ -9805,9 +9861,11 @@ def customer_decision_activity_for_finding(
         decision["current_status_label"] = (
             "Current decision" if decision.get("is_current") else "Superseded by a newer prepared estimate"
         )
+        decision["is_latest_valid"] = index == 0
 
     latest_any_decision = decision_logs[0] if decision_logs else None
     latest_decision = next((decision for decision in decision_logs if decision.get("is_current")), None)
+    decision_changed = customer_decision_history_has_distinct_change(decision_logs)
     latest_follow_up = None
     if latest_decision and shop_id and latest_estimate_id:
         if str(latest_decision.get("decision_status") or "").strip() == "Declined":
@@ -10004,35 +10062,26 @@ def customer_decision_activity_for_finding(
 
     compact_label = ""
     compact_tone = ""
-    if current_handoff.get("kind") == "invoiced":
-        compact_label = "Invoice created"
-        compact_tone = "neutral"
-    elif current_handoff.get("kind") in {"open_repair", "completed_repair"}:
-        compact_label = "Repair completed" if current_handoff.get("kind") == "completed_repair" else "Repair in progress"
-        compact_tone = "neutral"
-    elif latest_any_decision:
-        if not latest_decision and latest_any_decision.get("decision_status") == "Approved":
-            compact_label = "Approval superseded"
-            compact_tone = "warning"
-        elif latest_decision and latest_follow_up:
-            compact_label = follow_up_notification_state_label(latest_follow_up)
-            compact_tone = {
-                "Approved": "approved",
-                "Declined": "danger",
-                "Deferred": "warning",
-            }.get(str(latest_decision.get("decision_status") or ""), "")
-        else:
-            compact_label = f"Customer {str(latest_any_decision.get('decision_label') or '').lower()}"
-            compact_tone = {
-                "Approved": "approved",
-                "Declined": "danger",
-                "Deferred": "warning",
-            }.get(str(latest_any_decision.get("decision_status") or ""), "")
+    if latest_any_decision:
+        compact_label = {
+            "Approved": "Customer Approved",
+            "Declined": "Customer Declined",
+            "Deferred": "Customer Deciding Later",
+        }.get(str(latest_any_decision.get("decision_status") or ""), "")
+        if not latest_decision:
+            compact_label = "Decision superseded"
+        compact_tone = {
+            "Approved": "approved",
+            "Declined": "danger",
+            "Deferred": "warning",
+        }.get(str(latest_any_decision.get("decision_status") or ""), "")
 
     return {
         "has_activity": bool(estimate_records or decision_logs),
         "latest_decision": latest_decision,
         "latest_any_decision": latest_any_decision,
+        "decision_history": decision_logs,
+        "decision_changed": decision_changed,
         "latest_follow_up": latest_follow_up,
         "latest_estimate": latest_estimate,
         "latest_estimate_revision_label": (
@@ -10050,7 +10099,7 @@ def customer_decision_activity_for_finding(
         ),
         "compact_label": compact_label,
         "compact_tone": compact_tone,
-        "compact_date": latest_decision.get("created_at") if latest_decision else "",
+        "compact_date": latest_any_decision.get("created_at") if latest_any_decision else "",
     }
 
 

@@ -4487,7 +4487,6 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(vehicle_page_before_start.status_code, 200)
         self.assertIn("Finding Status: Approved", vehicle_page_before_start.text)
         self.assertIn("Customer Approved", vehicle_page_before_start.text)
-        self.assertIn("Customer approved", vehicle_page_before_start.text)
         self.assertIn("Ready for Repair", vehicle_page_before_start.text)
         self.assertIn("Estimate prepared", vehicle_page_before_start.text)
         self.assertIn("Open Finding", vehicle_page_before_start.text)
@@ -4960,7 +4959,7 @@ class AuthShopIsolationTests(unittest.TestCase):
         )
         self.assertNotIn("Start Repair", stale_page.text)
         stale_vehicle_page = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
-        self.assertIn("Approval superseded", stale_vehicle_page.text)
+        self.assertIn("Decision superseded", stale_vehicle_page.text)
         stale_blocked = client.post(
             f"{stale_url}/start-repair",
             data={"csrf_token": csrf_from(stale_page.text)},
@@ -5324,6 +5323,352 @@ class AuthShopIsolationTests(unittest.TestCase):
             self.conn.execute("SELECT COUNT(*) AS count FROM customer_decision_follow_ups").fetchone()["count"],
             0,
         )
+
+    def test_stage3c_finding_detail_displays_complete_customer_decision_sequence(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3c-history@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3c-history@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="HistoryStage3C")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=432.10,
+            service_name="Fuel Pump Replacement",
+        )
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        decision_url = f"{detail_url}/customer-decision"
+
+        deferred_page = client.get(detail_url)
+        self.assertEqual(
+            client.post(
+                decision_url,
+                data={"csrf_token": csrf_from(deferred_page.text), "decision": "deferred"},
+                follow_redirects=False,
+            ).status_code,
+            303,
+        )
+        approved_page = client.get(detail_url)
+        self.assertEqual(
+            client.post(
+                decision_url,
+                data={"csrf_token": csrf_from(approved_page.text), "decision": "approved"},
+                follow_redirects=False,
+            ).status_code,
+            303,
+        )
+        logs = self.conn.execute(
+            "SELECT id FROM customer_decision_logs WHERE finding_id = ? ORDER BY id ASC",
+            (finding_id,),
+        ).fetchall()
+        self.conn.execute("UPDATE customer_decision_logs SET created_at = '2026-07-24T12:30:00' WHERE id = ?", (logs[0]["id"],))
+        self.conn.execute("UPDATE customer_decision_logs SET created_at = '2026-07-25T09:15:00' WHERE id = ?", (logs[1]["id"],))
+        self.conn.commit()
+
+        response = client.get(detail_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Customer Decision History", response.text)
+        self.assertIn("Customer changed their decision.", response.text)
+        self.assertIn("Deciding Later", response.text)
+        self.assertIn("Approved - Latest Decision", response.text)
+        self.assertIn("Current decision", response.text)
+        self.assertIn("$432.10", response.text)
+        self.assertLess(response.text.index("Approved - Latest Decision"), response.text.index("Deciding Later"))
+
+    def test_stage3c_vehicle_detail_displays_latest_customer_decision_summary(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3c-vehicle-summary@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3c-vehicle-summary@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="VehicleStage3C")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, total=333.0)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+
+        page = client.get(detail_url)
+        self.assertEqual(
+            client.post(
+                f"{detail_url}/customer-decision",
+                data={"csrf_token": csrf_from(page.text), "decision": "declined"},
+                follow_redirects=False,
+            ).status_code,
+            303,
+        )
+        self.conn.execute(
+            "UPDATE customer_decision_logs SET created_at = '2026-07-26T10:00:00' WHERE finding_id = ?",
+            (finding_id,),
+        )
+        self.conn.commit()
+
+        response = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Customer Declined", response.text)
+        self.assertIn("07/26/2026", response.text)
+        self.assertIn("Open Finding", response.text)
+        self.assertNotIn("Decision Changed", response.text)
+        self.assertIn("Customer Declined", self.vehicle_decision_summary_text(response.text))
+
+    def vehicle_decision_summary_text(self, html_text: str) -> str:
+        chips = re.findall(
+            r'<span class="tm-crm-chip tm-finding-decision-summary[^"]*">\s*(.*?)\s*</span>',
+            html_text,
+            flags=re.S,
+        )
+        return " ".join(re.sub(r"\s+", " ", chip).strip() for chip in chips)
+
+    def seed_stale_stage3c_decision(
+        self,
+        customer_id: int,
+        vehicle_id: int,
+        decision_status: str,
+        *,
+        old_total: float = 300.0,
+        new_total: float = 400.0,
+    ) -> int:
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        original_estimate_id = self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=old_total,
+            service_name=f"Original {decision_status} Estimate",
+        )
+        self.conn.execute(
+            "UPDATE findings_records SET status = ?, repair_work_status = ? WHERE id = ?",
+            ("Deferred" if decision_status == "Deferred" else decision_status, "ready" if decision_status == "Approved" else "", finding_id),
+        )
+        pro_module.append_customer_decision_log_if_needed(
+            self.conn,
+            finding_id,
+            decision_status,
+            "Stage3C Customer",
+            "2026-07-24T12:20:00",
+            source="internal/manual",
+            estimate_revision_id=original_estimate_id,
+        )
+        self.seed_repair_estimate_document_for_finding(
+            customer_id,
+            vehicle_id,
+            finding_id,
+            total=new_total,
+            service_name=f"Revised {decision_status} Estimate",
+        )
+        self.conn.commit()
+        return finding_id
+
+    def test_stage3c_stale_vehicle_detail_decisions_use_neutral_superseded_summary(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3c-stale-summary@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3c-stale-summary@example.com")
+        cases = (
+            ("Approved", "Customer Approved"),
+            ("Declined", "Customer Declined"),
+            ("Deferred", "Customer Deciding Later"),
+        )
+        for decision_status, forbidden_summary in cases:
+            with self.subTest(decision_status=decision_status):
+                customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(
+                    shop_id,
+                    first_name=f"Stale{decision_status}",
+                )
+                finding_id = self.seed_stale_stage3c_decision(customer_id, vehicle_id, decision_status)
+
+                detail = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}")
+                vehicle = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+                summary_text = self.vehicle_decision_summary_text(vehicle.text)
+
+                self.assertEqual(detail.status_code, 200)
+                self.assertEqual(vehicle.status_code, 200)
+                self.assertIn("Decision superseded", summary_text)
+                self.assertNotIn(forbidden_summary, summary_text)
+                self.assertIn("A newer prepared estimate was created after this customer decision.", detail.text)
+                self.assertIn("Latest Recorded Decision", detail.text)
+                self.assertNotIn(f"{decision_status if decision_status != 'Deferred' else 'Deciding Later'} - Latest Decision", detail.text)
+
+    def test_stage3c_current_declined_and_deferred_vehicle_summaries_remain_specific(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3c-current-summary@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3c-current-summary@example.com")
+        cases = (
+            ("declined", "Customer Declined"),
+            ("deferred", "Customer Deciding Later"),
+        )
+        for raw_decision, expected_summary in cases:
+            with self.subTest(raw_decision=raw_decision):
+                customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(
+                    shop_id,
+                    first_name=f"Current{raw_decision}",
+                )
+                finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+                self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, total=333.0)
+                detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+                page = client.get(detail_url)
+                decided = client.post(
+                    f"{detail_url}/customer-decision",
+                    data={"csrf_token": csrf_from(page.text), "decision": raw_decision},
+                    follow_redirects=False,
+                )
+                vehicle = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+                summary_text = self.vehicle_decision_summary_text(vehicle.text)
+
+                self.assertEqual(decided.status_code, 303)
+                self.assertIn(expected_summary, summary_text)
+                self.assertNotIn("Decision superseded", summary_text)
+
+    def test_stage3c_distinct_customer_decision_changes_are_flagged(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3c-distinct-changes@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3c-distinct-changes@example.com")
+        cases = (
+            ("deferred", "approved", "Customer Approved"),
+            ("approved", "declined", "Customer Declined"),
+        )
+        for initial_decision, changed_decision, latest_label in cases:
+            with self.subTest(initial_decision=initial_decision, changed_decision=changed_decision):
+                customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="ChangedStage3C")
+                finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+                self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, total=555.0)
+                detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+                decision_url = f"{detail_url}/customer-decision"
+
+                page = client.get(detail_url)
+                self.assertEqual(
+                    client.post(
+                        decision_url,
+                        data={"csrf_token": csrf_from(page.text), "decision": initial_decision},
+                        follow_redirects=False,
+                    ).status_code,
+                    303,
+                )
+                page = client.get(detail_url)
+                self.assertEqual(
+                    client.post(
+                        decision_url,
+                        data={"csrf_token": csrf_from(page.text), "decision": changed_decision},
+                        follow_redirects=False,
+                    ).status_code,
+                    303,
+                )
+
+                detail = client.get(detail_url)
+                vehicle = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+
+                self.assertIn("Customer changed their decision.", detail.text)
+                self.assertIn("Decision Changed", detail.text)
+                self.assertIn("Decision Changed", vehicle.text)
+                self.assertIn(latest_label, vehicle.text)
+
+    def test_stage3c_duplicate_and_single_decisions_are_not_flagged_as_changed(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3c-no-duplicate-change@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3c-no-duplicate-change@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="DuplicateStage3C")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        decision_url = f"{detail_url}/customer-decision"
+        page = client.get(detail_url)
+
+        first = client.post(
+            decision_url,
+            data={"csrf_token": csrf_from(page.text), "decision": "approved"},
+            follow_redirects=False,
+        )
+        second = client.post(
+            decision_url,
+            data={"csrf_token": csrf_from(client.get(detail_url).text), "decision": "approved"},
+            follow_redirects=False,
+        )
+        detail = client.get(detail_url)
+        vehicle = client.get(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}")
+
+        self.assertEqual(first.status_code, 303)
+        self.assertEqual(second.status_code, 303)
+        self.assertEqual(
+            self.conn.execute(
+                "SELECT COUNT(*) AS count FROM customer_decision_logs WHERE finding_id = ?",
+                (finding_id,),
+            ).fetchone()["count"],
+            1,
+        )
+        self.assertIn("Approved - Latest Decision", detail.text)
+        self.assertNotIn("Customer changed their decision.", detail.text)
+        self.assertNotIn("Decision Changed", detail.text)
+        self.assertNotIn("Decision Changed", vehicle.text)
+
+    def test_stage3c_decision_history_excludes_cross_shop_and_malformed_rows(self):
+        alpha_client = self.client()
+        self.bootstrap_owner(alpha_client, email="stage3c-scope-alpha@example.com", shop_name="Alpha Shop")
+        alpha_shop = self.shop_id_for_email("stage3c-scope-alpha@example.com")
+        alpha_customer, alpha_vehicle = self.seed_customer_vehicle_for_shop(alpha_shop, first_name="AlphaStage3C")
+        alpha_finding = self.seed_finding_for_shop_estimate_stage(alpha_customer, alpha_vehicle)
+        self.seed_repair_estimate_document_for_finding(alpha_customer, alpha_vehicle, alpha_finding, total=100.0)
+        alpha_url = f"/pro/customers/{alpha_customer}/vehicles/{alpha_vehicle}/findings/{alpha_finding}"
+        page = alpha_client.get(alpha_url)
+        self.assertEqual(
+            alpha_client.post(
+                f"{alpha_url}/customer-decision",
+                data={"csrf_token": csrf_from(page.text), "decision": "approved"},
+                follow_redirects=False,
+            ).status_code,
+            303,
+        )
+        self.logout(alpha_client)
+
+        beta_client = self.client()
+        self.signup(beta_client, email="stage3c-scope-beta@example.com", shop_name="Beta Shop")
+        self.verify_user("stage3c-scope-beta@example.com")
+        beta_shop = self.shop_id_for_email("stage3c-scope-beta@example.com")
+        beta_customer, beta_vehicle = self.seed_customer_vehicle_for_shop(beta_shop, first_name="BetaStage3C")
+        beta_finding = self.seed_finding_for_shop_estimate_stage(beta_customer, beta_vehicle)
+        beta_estimate = self.seed_repair_estimate_document_for_finding(beta_customer, beta_vehicle, beta_finding, total=999.0)
+        pro_module.ensure_customer_decision_logs_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO customer_decision_logs (
+              finding_id, decision_status, customer_name, source,
+              approval_method, advisor_name, signature_path, approval_pdf_path,
+              estimate_revision_id, notes, metadata_json, created_at
+            )
+            VALUES (?, 'Declined', 'Injected Customer', 'customer_secure_link',
+                    '', '', '', '', ?, 'Injected row', '', '2026-07-27T08:00:00')
+            """,
+            (alpha_finding, beta_estimate),
+        )
+        self.conn.commit()
+
+        cross_view = beta_client.get(alpha_url)
+        self.assertEqual(cross_view.status_code, 404)
+        self.logout(beta_client)
+        self.login(alpha_client, email="stage3c-scope-alpha@example.com")
+        detail = alpha_client.get(alpha_url)
+
+        self.assertEqual(detail.status_code, 200)
+        self.assertIn("Customer Approved", detail.text)
+        self.assertNotIn("Injected Customer", detail.text)
+        self.assertNotIn("Declined - Latest Decision", detail.text)
+
+    def test_stage3c_declined_terminal_message_still_appears_once(self):
+        client = self.client()
+        self.bootstrap_owner(client, email="stage3c-declined-once@example.com", shop_name="Alpha Shop")
+        shop_id = self.shop_id_for_email("stage3c-declined-once@example.com")
+        customer_id, vehicle_id = self.seed_customer_vehicle_for_shop(shop_id, first_name="DeclinedOnceStage3C")
+        finding_id = self.seed_finding_for_shop_estimate_stage(customer_id, vehicle_id)
+        self.seed_repair_estimate_document_for_finding(customer_id, vehicle_id, finding_id, total=455.0)
+        detail_url = f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
+        page = client.get(detail_url)
+        declined = client.post(
+            f"{detail_url}/customer-decision",
+            data={"csrf_token": csrf_from(page.text), "decision": "declined"},
+            follow_redirects=False,
+        )
+        rendered = client.get(detail_url)
+
+        self.assertEqual(declined.status_code, 303)
+        self.assertEqual(rendered.text.count("Customer declined this estimate. No further action is required."), 1)
+        self.assertNotIn("<summary>Record Contact</summary>", rendered.text)
 
     def test_finding_detail_legacy_saved_estimate_without_service_data_degrades_safely(self):
         client = self.client()

@@ -303,6 +303,41 @@
     color:#cbd5e1;
     font-weight:800;
   }
+  .tm-decision-history {
+    display:grid;
+    gap:8px;
+    border:1px solid rgba(148, 163, 184, .16);
+    border-radius:8px;
+    background:rgba(15, 23, 42, .36);
+    padding:12px;
+  }
+  .tm-decision-history__notice {
+    border:1px solid rgba(245, 158, 11, .38);
+    border-radius:8px;
+    background:rgba(120, 53, 15, .22);
+    color:#fde68a;
+    padding:9px 10px;
+    font-weight:900;
+  }
+  .tm-decision-history__list {
+    display:grid;
+    gap:8px;
+  }
+  .tm-decision-history__item {
+    display:grid;
+    gap:5px;
+    border:1px solid rgba(148, 163, 184, .14);
+    border-radius:8px;
+    background:rgba(2, 6, 23, .24);
+    padding:10px 12px;
+  }
+  .tm-decision-history__item strong {
+    color:#f8fafc;
+  }
+  .tm-decision-history__item span {
+    color:#cbd5e1;
+    font-weight:800;
+  }
   @media (max-width:760px) {
     .tm-pro-pagehead { align-items:flex-start; gap:14px; }
     .tm-pro-pagehead .tm-btn { width:100%; justify-content:center; }
@@ -369,7 +404,7 @@
           {{ customer_decision_activity.latest_decision.current_status_label }}
         </span>
         <span class="tm-decision-chip">
-          {% if customer_decision_activity.latest_decision.decision_status == "Approved" %}Customer Approved{% elif customer_decision_activity.latest_decision.decision_status == "Declined" %}Customer Declined{% elif customer_decision_activity.latest_decision.decision_status == "Deferred" %}Customer Deferred{% endif %}
+          {% if customer_decision_activity.latest_decision.decision_status == "Approved" %}Customer Approved{% elif customer_decision_activity.latest_decision.decision_status == "Declined" %}Customer Declined{% elif customer_decision_activity.latest_decision.decision_status == "Deferred" %}Customer Deciding Later{% endif %}
         </span>
         {% if customer_decision_activity.latest_decision.decision_status == "Deferred" %}
         <span class="tm-decision-chip">Decided Later</span>
@@ -377,8 +412,11 @@
         {% elif customer_decision_activity.latest_any_decision %}
         <span class="tm-decision-chip tm-decision-chip--warning">Superseded by a newer prepared estimate</span>
         <span class="tm-decision-chip">
-          {% if customer_decision_activity.latest_any_decision.decision_status == "Approved" %}Customer Approved{% elif customer_decision_activity.latest_any_decision.decision_status == "Declined" %}Customer Declined{% elif customer_decision_activity.latest_any_decision.decision_status == "Deferred" %}Customer Deferred{% endif %}
+          {% if customer_decision_activity.latest_any_decision.decision_status == "Approved" %}Customer Approved{% elif customer_decision_activity.latest_any_decision.decision_status == "Declined" %}Customer Declined{% elif customer_decision_activity.latest_any_decision.decision_status == "Deferred" %}Customer Deciding Later{% endif %}
         </span>
+        {% endif %}
+        {% if customer_decision_activity.decision_changed %}
+        <span class="tm-decision-chip tm-decision-chip--warning">Decision Changed</span>
         {% endif %}
         <span class="tm-decision-chip">{{ customer_decision_activity.workflow_label }}</span>
       </div>
@@ -461,6 +499,24 @@
     {% endif %}
     {% if customer_decision_activity.stale_warning %}
     <div class="tm-decision-warning" role="status">{{ customer_decision_activity.stale_warning }}</div>
+    {% endif %}
+    {% if customer_decision_activity.decision_history %}
+    <section class="tm-decision-history" aria-label="Customer Decision History">
+      <div class="tm-decision-activity__hint">Customer Decision History</div>
+      {% if customer_decision_activity.decision_changed %}
+      <div class="tm-decision-history__notice">Customer changed their decision.</div>
+      {% endif %}
+      <div class="tm-decision-history__list">
+        {% for decision in customer_decision_activity.decision_history %}
+        <article class="tm-decision-history__item">
+          <strong>{{ decision.history_label }}{% if decision.is_latest_valid and decision.is_current %} - Latest Decision{% elif decision.is_latest_valid %} - Latest Recorded Decision{% endif %}</strong>
+          <span>{{ decision.created_at|pro_datetime }}</span>
+          {% if decision.estimate_total is not none %}<span>Estimate total: {{ decision.estimate_total|pro_currency }}</span>{% endif %}
+          <span>{{ decision.current_status_label }}</span>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
     {% endif %}
     <div class="tm-finding-actions" style="margin-top:0;">
       {% if not customer_decision_activity.latest_decision and not customer_decision_activity.latest_any_decision and finding.status not in ["Approved", "Declined", "Completed"] %}
