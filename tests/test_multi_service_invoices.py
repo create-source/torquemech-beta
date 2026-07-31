@@ -201,6 +201,44 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         )
         self.conn.commit()
 
+    def insert_legacy_total_repair(self, repair_id, name="Legacy Finding Repair", labor_total=144, parts=0, approved_total=144):
+        now = "2026-06-25T12:00:00"
+        pro_module.ensure_repair_completion_schema(self.conn)
+        self.conn.execute(
+            """
+            INSERT INTO repair_records (
+              id, vehicle_id, customer_id, repair_name, repair_date, mileage,
+              labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
+              workflow_source_type, status, completed_at, notes,
+              approved_estimate_total, created_at
+            )
+            VALUES (?, 1, 1, ?, '2026-06-25', 150000,
+                    NULL, NULL, ?, ?, ?, 'finding', 'Completed', ?, 'Source: Finding',
+                    ?, ?)
+            """,
+            (
+                repair_id,
+                name,
+                parts,
+                labor_total,
+                labor_total + parts,
+                now,
+                approved_total,
+                now,
+            ),
+        )
+        self.conn.execute(
+            """
+            INSERT INTO repair_completions (
+              repair_record_id, completion_notes, final_inspection_passed, final_inspection_notes,
+              completion_date, completion_mileage, after_repair_photo_paths, completed_at, created_at, updated_at
+            )
+            VALUES (?, 'Done', 1, 'Final check passed', '2026-06-25', 150000, '[]', ?, ?, ?)
+            """,
+            (repair_id, now, now, now),
+        )
+        self.conn.commit()
+
     def insert_maintenance_record(self, maintenance_id, customer_id=1, vehicle_id=1, service_type="Oil Change"):
         now = "2026-06-25T12:00:00"
         pro_module.ensure_maintenance_records_schema(self.conn)
@@ -1318,6 +1356,96 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
         self.assertEqual(invoice["labor_total"], 180)
         self.assertEqual(invoice["grand_total"], 180)
+
+    def test_legacy_total_only_labor_edits_final_invoice_without_hours(self):
+        self.insert_legacy_total_repair(180, labor_total=144, parts=0, approved_total=144)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        builder = client.get("/pro/customers/1/vehicles/1/invoices/new?repair_record_id=180")
+
+        self.assertEqual(builder.status_code, 200)
+        self.assertIn("Legacy total", builder.text)
+        self.assertIn('for="labor_total_180">Labor Total</label>', builder.text)
+        self.assertIn('name="labor_total_180"', builder.text)
+        self.assertIn('value="144.00"', builder.text)
+        self.assertNotIn('name="labor_hours_180"', builder.text)
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={
+                "repair_record_id": "180",
+                "labor_total_180": "250.00",
+                "parts_cost_180": "0",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
+        self.assertEqual(invoice["items"][0]["labor_total"], 250)
+        self.assertEqual(invoice["items"][0]["parts_total"], 0)
+        self.assertEqual(invoice["items"][0]["grand_total"], 250)
+        self.assertEqual(invoice["labor_total"], 250)
+        self.assertEqual(invoice["parts_total"], 0)
+        self.assertEqual(invoice["grand_total"], 250)
+        self.assertEqual(invoice["balance_due"], 250)
+        self.assertEqual(invoice["approved_estimate_total"], 144)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 180)
+        self.assertIsNone(repair["labor_hours"])
+        self.assertIsNone(repair["labor_rate"])
+        self.assertEqual(repair["labor_cost"], 250)
+        self.assertEqual(repair["total_cost"], 250)
+
+    def test_hourly_labor_rate_without_positive_hours_is_rejected(self):
+        self.insert_repair(181, "Hourly Missing Hours", 1.0, 120, 0)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={
+                "repair_record_id": "181",
+                "labor_hours_181": "",
+                "labor_rate_181": "250.00",
+                "parts_cost_181": "0",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Enter valid positive labor hours for hourly labor before finalizing this invoice.", response.text)
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) AS count FROM invoices").fetchone()["count"], 0)
+
+    def test_invoice_builder_adjustments_still_apply_after_legacy_labor_total_edit(self):
+        self.insert_legacy_total_repair(182, labor_total=144, parts=20, approved_total=144)
+        app = FastAPI()
+        app.include_router(pro_module.router)
+        client = TestClient(app, base_url="http://localhost")
+
+        response = client.post(
+            "/pro/customers/1/vehicles/1/invoices",
+            data={
+                "repair_record_id": "182",
+                "labor_total_182": "250.00",
+                "parts_cost_182": "40.00",
+                "shop_supplies_fee": "10.00",
+                "discount_total": "20.00",
+                "tax_rate": "0.10",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 303)
+        invoice = pro_module.load_invoice_record(self.conn, 1, 1, 1)
+        self.assertEqual(invoice["labor_total"], 250)
+        self.assertEqual(invoice["parts_total"], 40)
+        self.assertEqual(invoice["shop_supplies_fee"], 10)
+        self.assertEqual(invoice["discount_total"], 20)
+        self.assertEqual(invoice["tax_total"], 28)
+        self.assertEqual(invoice["grand_total"], 308)
+        self.assertEqual(invoice["balance_due"], 308)
 
     def test_no_charge_reason_allows_zero_dollar_invoice(self):
         self.insert_repair(178, "Warranty Courtesy Repair", 0, 0, 0)

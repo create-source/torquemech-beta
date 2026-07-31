@@ -7270,7 +7270,7 @@ def create_invoice_for_repairs(
             detail="Add labor, parts, or an invoice adjustment before finalizing this invoice.",
         )
     warranty_text = str(
-        invoice_options.get("warranty_text") or ""
+        invoice_options.get("warranty_text") or shop_profile.get("warranty_note") or ""
     ).strip()
     primary_repair = selected_repairs[0]
     cur = conn.execute(
@@ -17977,30 +17977,61 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
             load_repair_record(conn, customer_id, vehicle_id, repair_id)
             for repair_id in selected_ids
         ]
+        validation_error = ""
         for repair in repairs:
             repair_id = int(repair.get("id") or 0)
+            repair_totals = repair_cost_totals(repair)
+            is_legacy_total = bool(repair_totals.get("labor_rate_is_legacy"))
+            labor_total = optional_float(form, f"labor_total_{repair_id}")
             labor_hours = optional_float(form, f"labor_hours_{repair_id}")
             labor_rate = optional_float(form, f"labor_rate_{repair_id}")
             parts_cost = optional_float(form, f"parts_cost_{repair_id}")
             updates: dict[str, Any] = {}
-            if labor_hours is not None:
-                updates["labor_hours"] = max(labor_hours, 0)
-            if labor_rate is not None:
-                updates["labor_rate"] = max(labor_rate, 0)
+            if is_legacy_total:
+                raw_labor_total = form.get(f"labor_total_{repair_id}", "").strip()
+                if raw_labor_total and labor_total is None:
+                    validation_error = "Enter a valid labor total before finalizing this invoice."
+                    break
+                if labor_total is not None:
+                    updates["labor_cost"] = max(labor_total, 0)
+            else:
+                raw_labor_rate = form.get(f"labor_rate_{repair_id}", "").strip()
+                raw_labor_hours = form.get(f"labor_hours_{repair_id}", "").strip()
+                if raw_labor_rate and (labor_hours is None or labor_hours <= 0):
+                    validation_error = "Enter valid positive labor hours for hourly labor before finalizing this invoice."
+                    break
+                if raw_labor_hours and (labor_hours is None or labor_hours <= 0):
+                    validation_error = "Enter valid positive labor hours for hourly labor before finalizing this invoice."
+                    break
+                if labor_hours is not None:
+                    updates["labor_hours"] = max(labor_hours, 0)
+                if labor_rate is not None:
+                    updates["labor_rate"] = max(labor_rate, 0)
             if parts_cost is not None:
                 updates["parts_cost"] = max(parts_cost, 0)
             existing_labor_hours = float(repair.get("labor_hours") or 0)
             existing_labor_rate = float(repair.get("labor_rate") or 0)
+            existing_labor_total = float(repair_totals.get("labor_total") or 0)
             existing_parts_cost = float(repair.get("parts_cost") or 0)
 
             has_pricing_adjustment = (
                 (
-                    labor_hours is not None
-                    and max(labor_hours, 0) != existing_labor_hours
+                    is_legacy_total
+                    and labor_total is not None
+                    and max(labor_total, 0) != existing_labor_total
                 )
                 or (
-                    labor_rate is not None
-                    and max(labor_rate, 0) != existing_labor_rate
+                    not is_legacy_total
+                    and (
+                        (
+                            labor_hours is not None
+                            and max(labor_hours, 0) != existing_labor_hours
+                        )
+                        or (
+                            labor_rate is not None
+                            and max(labor_rate, 0) != existing_labor_rate
+                        )
+                    )
                 )
                 or (
                     parts_cost is not None
@@ -18009,11 +18040,18 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
             )
 
             if has_pricing_adjustment:
-                effective_hours = updates.get("labor_hours", repair.get("labor_hours") or 0)
-                effective_rate = updates.get("labor_rate", repair.get("labor_rate") or 0)
+                effective_hours = None if is_legacy_total else updates.get("labor_hours", repair.get("labor_hours") or 0)
+                effective_rate = None if is_legacy_total else updates.get("labor_rate", repair.get("labor_rate") or 0)
                 effective_parts = updates.get("parts_cost", repair.get("parts_cost") or 0)
-                labor_total = round(float(effective_hours or 0) * float(effective_rate or 0), 2)
-                total_cost = round(labor_total + float(effective_parts or 0), 2)
+                effective_labor_total = round(
+                    float(
+                        updates.get("labor_cost", existing_labor_total)
+                        if is_legacy_total
+                        else float(effective_hours or 0) * float(effective_rate or 0)
+                    ),
+                    2,
+                )
+                total_cost = round(effective_labor_total + float(effective_parts or 0), 2)
                 conn.execute(
                     """
                     UPDATE repair_records
@@ -18028,7 +18066,7 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
                         effective_hours,
                         effective_rate,
                         effective_parts,
-                        labor_total,
+                        effective_labor_total,
                         total_cost,
                         repair_id,
                         customer_id,
@@ -18040,10 +18078,25 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
                         "labor_hours": effective_hours,
                         "labor_rate": effective_rate,
                         "parts_cost": effective_parts,
-                        "labor_cost": labor_total,
+                        "labor_cost": effective_labor_total,
                         "total_cost": total_cost,
                     }
                 )
+        if validation_error:
+            job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
+            return templates.TemplateResponse(
+                "pro/invoice_builder.html",
+                {
+                    "request": request,
+                    "customer": customer,
+                    "vehicle": vehicle,
+                    "job_groups": job_groups,
+                    "selected_repair_ids": set(selected_ids),
+                    "prefilled_repair_id": None,
+                    "error": validation_error,
+                },
+                status_code=400,
+            )
         invoice_options = {
             "shop_supplies_fee": max(optional_float(form, "shop_supplies_fee") or 0, 0),
             "discount_total": max(optional_float(form, "discount_total") or 0, 0),

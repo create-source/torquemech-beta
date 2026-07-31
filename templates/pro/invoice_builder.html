@@ -315,8 +315,13 @@
               {% if job.completed_at %}<span>Completed {{ job.completed_at|pro_date }}</span>{% endif %}
             </span>
             <span class="tm-invoice-builder-money">
+              {% if job.labor_rate_is_legacy %}
+              <span>Labor Total: {{ job.labor_total|pro_currency }}</span>
+              <span>Legacy total</span>
+              {% else %}
               <span>Labor Hours: {{ job.labor_hours if job.labor_hours is not none else "-" }}</span>
-              <span>Labor Rate: {% if job.labor_rate is not none %}{{ job.labor_rate|pro_currency }}/hr{% elif job.labor_rate_is_legacy %}Legacy total{% else %}-{% endif %}</span>
+              <span>Labor Rate: {% if job.labor_rate is not none %}{{ job.labor_rate|pro_currency }}/hr{% else %}-{% endif %}</span>
+              {% endif %}
               <span>Labor: {{ job.labor_total|pro_currency }}</span>
               <span>Parts: {{ job.parts_total|pro_currency }}</span>
               <span>Total: {{ job.grand_total|pro_currency }}</span>
@@ -325,6 +330,12 @@
             <span class="tm-invoice-builder-warning">Add labor, parts, or an invoice adjustment before finalizing this invoice.</span>
             {% endif %}
             <span class="tm-invoice-builder-fields">
+              {% if job.labor_rate_is_legacy %}
+              <span>
+                <label class="tm-label" for="labor_total_{{ job.id }}">Labor Total</label>
+                <input class="tm-input" id="labor_total_{{ job.id }}" name="labor_total_{{ job.id }}" type="text" inputmode="decimal" value="{{ '%.2f'|format(job.labor_total) if job.labor_total is not none else '' }}">
+              </span>
+              {% else %}
               <span>
                 <label class="tm-label" for="labor_hours_{{ job.id }}">Labor Hours</label>
                 <input class="tm-input" id="labor_hours_{{ job.id }}" name="labor_hours_{{ job.id }}" type="number" min="0" step="0.1" value="{{ job.labor_hours if job.labor_hours is not none else '' }}">
@@ -333,6 +344,7 @@
                 <label class="tm-label" for="labor_rate_{{ job.id }}">Labor Rate</label>
                 <input class="tm-input" id="labor_rate_{{ job.id }}" name="labor_rate_{{ job.id }}" type="text" inputmode="decimal" value="{{ '%.2f'|format(job.labor_rate) if job.labor_rate is not none else '' }}">
               </span>
+              {% endif %}
               <span>
                 <label class="tm-label" for="parts_cost_{{ job.id }}">Parts</label>
                 <input class="tm-input" id="parts_cost_{{ job.id }}" name="parts_cost_{{ job.id }}" type="text" inputmode="decimal" value="{{ '%.2f'|format(job.parts_total) if job.parts_total is not none else '' }}">
