@@ -4,12 +4,41 @@
 
 {% block page_css %}
 <style>
-  body { background:#09111d; }
-  .tm-auth-page { display:grid; place-items:center; min-height:calc(100vh - 170px); padding:34px 0; }
+  .tm-auth-page {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    display:grid;
+    place-items:center;
+    min-height:calc(100vh - 170px);
+    padding:34px 0;
+
+    background:
+      linear-gradient(rgba(255,255,255,.024) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.024) 1px, transparent 1px),
+      radial-gradient(circle at 88% 0%, rgba(249,115,22,.12), transparent 25rem),
+      linear-gradient(180deg, #07101f, #0b1526 55%, #07101f);
+
+    background-size:
+      32px 32px,
+      32px 32px,
+      auto,
+      auto;
+  }
   .tm-auth-panel { width:min(100%, 560px); border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; color:#e5edf7; padding:24px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
   .tm-auth-panel h1 { color:#f8fafc; font-size:2rem; letter-spacing:0; }
   .tm-auth-panel p { color:#a9b6c8; }
-  .tm-auth-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .tm-auth-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    align-items:start;
+  }
+  .tm-auth-grid > .tm-auth-field {
+    align-self:start;
+  }
+  .tm-password-grid .tm-auth-field {
+    grid-template-rows:auto auto minmax(38px, auto);
+  }
   .tm-auth-field { display:grid; gap:6px; margin-top:14px; }
   .tm-auth-field label { color:#dbe6f4; font-weight:800; }
   .tm-auth-field input { width:100%; border:1px solid rgba(255,255,255,.16); border-radius:8px; background:#0b1220; color:#f8fafc; padding:11px 12px; }
@@ -28,6 +57,17 @@
   .tm-auth-primary { border:0; border-radius:8px; background:#f97316; color:#111827; cursor:pointer; font-weight:900; padding:12px 16px; }
   .tm-auth-link { color:#fdba74; font-weight:900; }
   .tm-auth-error[hidden] { display:none; }
+
+  @media (min-width: 681px) {
+  .tm-password-error-slot {
+    min-height: 38px;
+  }
+
+  .tm-password-error-slot[hidden] {
+    display: block;
+    visibility: hidden;
+  }
+}
   @media (max-width: 680px) { .tm-auth-grid { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
@@ -65,7 +105,7 @@
       <input id="email" name="email" type="email" value="{{ values.email or '' }}" autocomplete="email" required>
       {% if errors.email %}<span class="tm-auth-error">{{ errors.email }}</span>{% endif %}
     </div>
-    <div class="tm-auth-grid">
+    <div class="tm-auth-grid tm-password-grid">
       <div class="tm-auth-field">
         <label for="password">Password</label>
         <div class="tm-password-control">
@@ -83,7 +123,10 @@
             </svg>
           </button>
         </div>
-        <span class="tm-auth-error" id="password_error" data-password-error {% if not errors.password %}hidden{% endif %}>{{ errors.password or '' }}</span>
+        <span class="tm-auth-error tm-password-error-slot"
+              id="password_error"
+              data-password-error
+              {% if not errors.password %}hidden{% endif %}>{{ errors.password or '' }}</span>
       </div>
       <div class="tm-auth-field">
         <label for="confirm_password">Confirm password</label>
@@ -102,7 +145,10 @@
             </svg>
           </button>
         </div>
-        <span class="tm-auth-error" id="confirm_password_error" data-confirm-password-error {% if not errors.confirm_password %}hidden{% endif %}>{{ errors.confirm_password or '' }}</span>
+        <span class="tm-auth-error tm-password-error-slot"
+              id="confirm_password_error"
+              data-confirm-password-error
+              {% if not errors.confirm_password %}hidden{% endif %}>{{ errors.confirm_password or '' }}</span>
       </div>
     </div>
     <div class="tm-auth-field">
