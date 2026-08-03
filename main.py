@@ -1707,6 +1707,8 @@ async def pro_private_access_middleware(request: Request, call_next):
         return await call_next(request)
     if path == "/pro/billing/webhook":
         return await call_next(request)
+    if path == "/pro/demo" or path.startswith("/pro/demo/"):
+        return await call_next(request)
 
     async def continue_if_authenticated():
         try:
@@ -4487,12 +4489,14 @@ def admin_obd_requests(request: Request, key: str | None = None):
         },
     )
 
-@app.get("/pro-preview", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/pro/home-preview", response_class=HTMLResponse, include_in_schema=False)
 def pro_home_preview(request: Request):
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "pro_home_preview.html",
         {"request": request},
     )
+    response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    return response
 
 
 @app.get("/about", response_class=HTMLResponse)
@@ -13917,6 +13921,116 @@ async def estimate_pdf_multi(request: Request, req: MultiPDFRequest) -> Response
         metric_incr("errors_pdf_multi")
         metric_incr("errors_total")
         raise
+
+@app.get(
+    "/demo-assets/2016-ford-f150-estimate.pdf",
+    include_in_schema=False,
+)
+async def demo_ford_f150_estimate_pdf(request: Request) -> Response:
+    demo_request = MultiPDFRequest(
+        year=2016,
+        make="Ford",
+        model="F-150",
+        displayModel="F-150 XLT 5.0L",
+        notes=(
+            "SAMPLE — DEMO ONLY. "
+            "This is fictional demonstration data and is not a real estimate."
+        ),
+        customerName="Marcus Hill",
+        customerPhone="(555) 201-1601",
+
+        # Keep IDs empty so this cannot save a prepared estimate.
+        source="demo",
+        customerId=None,
+        vehicleId=None,
+        findingId=None,
+
+        problemFound="Coolant smell and temperature rise while towing",
+        recommendedRepair=(
+            "Water pump, thermostat, gasket, and coolant service"
+        ),
+
+        businessName="TorqueMech Demo Shop",
+        mechanicName="Demo Service Advisor",
+        businessPhone="(555) 010-2040",
+        businessNote="SAMPLE — DEMO ONLY",
+
+        customerAgrees=False,
+        signatureDataUrl=None,
+
+        showGeneratedDate=True,
+        showHourlyRate=False,
+        showLaborColumn=False,
+        showPartsColumn=False,
+        showRiskNotes=True,
+        showInspectionFindings=True,
+        showDetailedLaborBreakdown=False,
+        includeServiceEducation=True,
+
+        lineItems=[
+            LineItemPDF(
+                serviceCode="water_pump_replacement",
+                serviceText="Water Pump Replacement",
+                displayServiceText="Water Pump Replacement",
+                quantity=1,
+                pricingMode="hourly",
+                laborHours=2.0,
+                laborRate=125.00,
+                partsPrice=235.00,
+                travelFee=0,
+                estimate=485.00,
+                status="recommended",
+                inspectionFindings=(
+                    "Pressure test found coolant seepage from the "
+                    "water pump weep hole."
+                ),
+            ),
+            LineItemPDF(
+                serviceCode="thermostat_replacement",
+                serviceText="Thermostat and Gasket Replacement",
+                displayServiceText="Thermostat and Gasket Replacement",
+                quantity=1,
+                pricingMode="hourly",
+                laborHours=0.7,
+                laborRate=125.00,
+                partsPrice=76.75,
+                travelFee=0,
+                estimate=164.25,
+                status="recommended",
+                inspectionFindings=(
+                    "Replace the thermostat and gasket while the "
+                    "cooling system is drained."
+                ),
+            ),
+            LineItemPDF(
+                serviceCode="coolant_service",
+                serviceText="Cooling System Service",
+                displayServiceText="Cooling System Service",
+                quantity=1,
+                pricingMode="hourly",
+                laborHours=1.0,
+                laborRate=125.00,
+                partsPrice=110.00,
+                travelFee=0,
+                estimate=235.00,
+                status="recommended",
+                inspectionFindings=(
+                    "Refill, bleed, warm-up test, and complete a "
+                    "final cooling-system leak check."
+                ),
+            ),
+        ],
+    )
+
+    response = await estimate_pdf_multi(request, demo_request)
+
+    # Display in the browser instead of forcing a download.
+    response.headers["Content-Disposition"] = (
+        'inline; filename="torquemech-demo-ford-estimate.pdf"'
+    )
+    response.headers["Cache-Control"] = "no-store"
+
+    return response
 
 @app.get("/electrical", response_class=HTMLResponse)
 def electrical_hub(request: Request):

@@ -1,0 +1,902 @@
+{% extends "layout.html" %}
+
+{% block title %}TorqueMech Pro Plan | $29/Month{% endblock %}
+
+{% block page_css %}
+<meta name="description" content="See what is included with TorqueMech Pro Solo, how the 14-day free trial works, and what happens after the trial.">
+<style>
+  :root {
+    --plan-bg: #080f1d;
+    --plan-panel: #111c2e;
+    --plan-panel-soft: rgba(17, 28, 46, .84);
+    --plan-border: rgba(148, 163, 184, .18);
+    --plan-text: #f8fafc;
+    --plan-muted: #aebdd0;
+    --plan-orange: #f97316;
+    --plan-orange-light: #fb923c;
+    --plan-green: #22c55e;
+  }
+
+  .tm-nav { display: none; }
+
+  body { background: var(--plan-bg); }
+
+  .tm-container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  .tm-plan {
+    min-height: 100vh;
+    color: var(--plan-text);
+    background:
+      linear-gradient(rgba(255,255,255,.024) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.024) 1px, transparent 1px),
+      radial-gradient(circle at 82% 2%, rgba(249,115,22,.18), transparent 24rem),
+      radial-gradient(circle at 8% 35%, rgba(59,130,246,.10), transparent 28rem),
+      linear-gradient(180deg, #080f1d 0%, #0b1424 55%, #080f1d 100%);
+    background-size: 32px 32px, 32px 32px, auto, auto, auto;
+  }
+
+  .tm-plan-wrap {
+    width: min(1040px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .tm-plan-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    background: rgba(8,15,29,.92);
+    backdrop-filter: blur(18px);
+  }
+
+  .tm-plan-header__inner {
+    min-height: 66px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .tm-plan-brand {
+    display: inline-flex;
+    align-items: baseline;
+    color: #fff;
+    font-size: 1.08rem;
+    font-weight: 950;
+    letter-spacing: -.02em;
+    text-decoration: none;
+  }
+
+  .tm-plan-brand span:last-child { color: var(--plan-orange); }
+
+  .tm-plan-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tm-plan-link {
+    color: #d7e1ee;
+    font-size: .86rem;
+    font-weight: 850;
+    text-decoration: none;
+  }
+
+  .tm-plan-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 950;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .16s ease, box-shadow .16s ease;
+  }
+
+  .tm-plan-btn:hover { transform: translateY(-2px); }
+
+  .tm-plan-btn--primary {
+    border-color: rgba(249,115,22,.58);
+    background: linear-gradient(180deg, var(--plan-orange-light), var(--plan-orange));
+    color: #111827;
+    box-shadow: 0 16px 30px rgba(249,115,22,.22);
+  }
+
+  .tm-plan-btn--secondary {
+    border-color: var(--plan-border);
+    background: rgba(17,28,46,.72);
+    color: #fff;
+  }
+
+  .tm-plan-hero {
+    padding: 78px 0 58px;
+    text-align: center;
+  }
+
+  .tm-plan-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 11px;
+    border: 1px solid rgba(249,115,22,.28);
+    border-radius: 999px;
+    background: rgba(249,115,22,.09);
+    color: #fed7aa;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+  }
+
+  .tm-plan-hero h1 {
+    max-width: 760px;
+    margin: 20px auto 0;
+    color: #fff;
+    font-size: clamp(2.25rem, 5.7vw, 4.25rem);
+    font-weight: 950;
+    line-height: 1.01;
+    letter-spacing: -.05em;
+  }
+
+  .tm-plan-gradient {
+    background: linear-gradient(90deg, #fff 0%, #fed7aa 48%, #fb923c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tm-plan-hero__lead {
+    max-width: 720px;
+    margin: 22px auto 0;
+    color: #cbd5e1;
+    font-size: 1.04rem;
+    font-weight: 700;
+    line-height: 1.65;
+  }
+
+  .tm-plan-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 26px;
+  }
+
+  .tm-plan-price strong {
+    color: #fff;
+    font-size: clamp(3.2rem, 9vw, 5rem);
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .tm-plan-price span {
+    color: var(--plan-muted);
+    font-size: 1rem;
+    font-weight: 850;
+  }
+
+  .tm-plan-offer {
+    margin: 14px 0 0;
+    color: var(--plan-muted);
+    font-size: .82rem;
+    font-weight: 800;
+  }
+
+  .tm-plan-section {
+    padding: 54px 0;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+
+  .tm-plan-heading {
+    max-width: 730px;
+    margin-bottom: 24px;
+  }
+
+  .tm-plan-heading h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.8rem, 4vw, 2.65rem);
+    font-weight: 950;
+    line-height: 1.08;
+    letter-spacing: -.035em;
+  }
+
+  .tm-plan-heading p {
+    margin: 12px 0 0;
+    color: var(--plan-muted);
+    font-size: .98rem;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .tm-plan-carousel {
+    position: relative;
+  }
+
+  .tm-plan-carousel-shell {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(148,163,184,.16);
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(249,115,22,.10), transparent 18rem),
+      rgba(10,20,36,.72);
+  }
+
+  .tm-plan-carousel-shell::before,
+  .tm-plan-carousel-shell::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 3;
+    width: 54px;
+    pointer-events: none;
+  }
+
+  .tm-plan-carousel-shell::before {
+    left: 0;
+    background: linear-gradient(90deg, rgba(10,20,36,.98), rgba(10,20,36,0));
+  }
+
+  .tm-plan-carousel-shell::after {
+    right: 0;
+    background: linear-gradient(270deg, rgba(10,20,36,.98), rgba(10,20,36,0));
+  }
+
+  .tm-plan-carousel-track {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    padding: 18px max(52px, calc((100% - 320px) / 2)) 20px;
+  }
+
+  .tm-plan-carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tm-plan-carousel-slide {
+    flex: 0 0 320px;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    opacity: .42;
+    transform: scale(.92);
+    transition: opacity .2s ease, transform .2s ease;
+  }
+
+  .tm-plan-carousel-slide.is-active {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .tm-plan-card {
+    min-height: 220px;
+    padding: 22px;
+    border: 1px solid var(--plan-border);
+    border-radius: 17px;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(249,115,22,.12), transparent 10rem),
+      linear-gradient(180deg, rgba(23,35,56,.98), rgba(15,25,42,.98));
+    box-shadow: 0 18px 40px rgba(0,0,0,.22);
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+
+  .tm-plan-carousel-slide.is-active .tm-plan-card {
+    border-color: rgba(249,115,22,.38);
+    box-shadow: 0 24px 48px rgba(0,0,0,.30);
+  }
+
+  .tm-plan-card__icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(249,115,22,.28);
+    border-radius: 13px;
+    background: rgba(249,115,22,.10);
+    color: #fed7aa;
+    font-size: .86rem;
+    font-weight: 950;
+  }
+
+  .tm-plan-card h3 {
+    margin: 24px 0 9px;
+    color: #fff;
+    font-size: 1.08rem;
+    font-weight: 950;
+  }
+
+  .tm-plan-card p {
+    margin: 0;
+    color: var(--plan-muted);
+    font-size: .92rem;
+    font-weight: 700;
+    line-height: 1.52;
+  }
+
+  .tm-plan-carousel-nav {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .tm-plan-carousel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+  }
+
+  .tm-plan-carousel-dot {
+    width: 8px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(148,163,184,.42);
+    cursor: pointer;
+    box-shadow: none;
+    transition: width .16s ease, background .16s ease;
+  }
+
+  .tm-plan-carousel-dot.is-active,
+  .tm-plan-carousel-dot[aria-current="true"] {
+    width: 20px;
+    background: var(--plan-orange);
+  }
+
+  .tm-plan-carousel-label {
+    color: #dbe7f5;
+    font-size: .78rem;
+    font-weight: 900;
+  }
+
+  .tm-plan-workflow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+
+  .tm-plan-workflow span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--plan-border);
+    border-radius: 999px;
+    background: rgba(17,28,46,.78);
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 900;
+  }
+
+  .tm-plan-info {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .tm-plan-info article {
+    position: relative;
+    overflow: hidden;
+    padding: 23px;
+    border: 1px solid rgba(249,115,22,.28);
+    border-radius: 17px;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(249,115,22,.13), transparent 10rem),
+      linear-gradient(180deg, rgba(23,35,56,.98), rgba(15,25,42,.98));
+    box-shadow: 0 18px 40px rgba(0,0,0,.20);
+  }
+
+  .tm-plan-info article::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--plan-orange-light), rgba(249,115,22,.18));
+  }
+
+  .tm-plan-info h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.04rem;
+    font-weight: 950;
+  }
+
+  .tm-plan-info p {
+    margin: 10px 0 0;
+    color: #cbd5e1;
+    font-size: .9rem;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .tm-plan-roi {
+    padding: 26px;
+    border: 1px solid rgba(249,115,22,.30);
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 90% 0%, rgba(249,115,22,.16), transparent 14rem),
+      linear-gradient(180deg, #151f31, #0f192a);
+  }
+
+  .tm-plan-roi strong {
+    display: block;
+    color: #fed7aa;
+    font-size: .78rem;
+    font-weight: 950;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .tm-plan-roi h2 {
+    margin: 10px 0 0;
+    color: #fff;
+    font-size: clamp(1.7rem, 4vw, 2.45rem);
+    font-weight: 950;
+    letter-spacing: -.035em;
+  }
+
+  .tm-plan-roi p {
+    margin: 13px 0 0;
+    color: #cbd5e1;
+    font-size: .96rem;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .tm-plan-final {
+    padding: 62px 0 72px;
+    text-align: center;
+  }
+
+  .tm-plan-final__card {
+    padding: 34px;
+    border: 1px solid rgba(249,115,22,.30);
+    border-radius: 20px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(249,115,22,.16), transparent 16rem),
+      linear-gradient(180deg, #151f31, #0f192a);
+    box-shadow: 0 24px 54px rgba(0,0,0,.25);
+  }
+
+  .tm-plan-final h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 950;
+    letter-spacing: -.04em;
+  }
+
+  .tm-plan-final p {
+    max-width: 650px;
+    margin: 14px auto 0;
+    color: var(--plan-muted);
+    font-size: .96rem;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .tm-plan-final__actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .tm-plan-final__actions .tm-plan-btn {
+    margin-top: 0;
+  }
+
+  .tm-plan-demo-note {
+    margin: 12px auto 0;
+    color: var(--plan-muted);
+    font-size: .78rem;
+    font-weight: 750;
+  }
+
+  .tm-footer {
+    margin-top: 0;
+    border-top: 1px solid rgba(255,255,255,.08);
+    background: #080f1d;
+  }
+
+  .tm-footer .tm-container {
+    width: min(1040px, calc(100% - 32px));
+    max-width: none;
+    padding: 0;
+  }
+
+  @media (max-width: 800px) {
+    .tm-plan-info { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .tm-plan-wrap { width: min(100% - 24px, 1040px); }
+
+    .tm-plan-header__inner { min-height: 60px; }
+
+    .tm-plan-nav { gap: 8px; }
+
+    .tm-plan-nav .tm-plan-link--home { display: none; }
+
+    .tm-plan-btn {
+      min-height: 38px;
+      padding: 0 11px;
+      font-size: .76rem;
+    }
+
+    .tm-plan-btn--login {
+      background: rgba(17,28,46,.9);
+    }
+
+    .tm-plan-hero { padding: 54px 0 44px; }
+
+    .tm-plan-hero h1 {
+      max-width: 100%;
+      padding-inline: 8px;
+      font-size: clamp(2rem, 9.9vw, 3.15rem); 
+      line-height: 1.03;
+      letter-spacing: -.045em;
+      overflow: visible;
+    }
+
+    .tm-plan-hero__lead {
+      font-size: .95rem;
+      line-height: 1.55;
+    }
+
+    .tm-plan-section { padding: 44px 0; }
+
+    .tm-plan-carousel-shell {
+      margin-left: -4px;
+      margin-right: -4px;
+    }
+
+    .tm-plan-carousel-shell::before,
+    .tm-plan-carousel-shell::after {
+      width: 28px;
+    }
+
+    .tm-plan-carousel-track {
+      gap: 12px;
+      padding: 16px max(26px, calc((100% - 300px) / 2)) 18px;
+    }
+
+    .tm-plan-carousel-slide {
+      flex-basis: min(300px, 82vw);
+    }
+
+    .tm-plan-card {
+      min-height: 205px;
+      padding: 19px;
+      border-radius: 16px;
+    }
+
+    .tm-plan-card__icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      font-size: .82rem;
+    }
+
+    .tm-plan-card h3 {
+      margin-top: 20px;
+      font-size: 1rem;
+    }
+
+    .tm-plan-card p {
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+
+    .tm-plan-workflow { gap: 7px; }
+
+    .tm-plan-workflow span {
+      min-height: 38px;
+      padding: 0 12px;
+      font-size: .76rem;
+    }
+
+    .tm-plan-roi { padding: 22px; }
+
+    .tm-plan-final { padding: 48px 0 58px; }
+
+    .tm-plan-final__card { padding: 26px 20px; }
+
+    .tm-plan-final__actions {
+      flex-direction: column;
+    }
+
+    .tm-plan-final__actions .tm-plan-btn { width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-plan">
+  <header class="tm-plan-header">
+    <div class="tm-plan-wrap tm-plan-header__inner">
+      <a class="tm-plan-brand" href="/pro/home-preview" aria-label="TorqueMech homepage">
+        <span>Torque</span><span>Mech</span>
+      </a>
+
+      <nav class="tm-plan-nav" aria-label="Plan navigation">
+        <a class="tm-plan-link tm-plan-link--home" href="/pro/home-preview">Back to Home</a>
+        <a class="tm-plan-btn tm-plan-btn--secondary tm-plan-btn--login" href="/login">Log In</a>
+        <a class="tm-plan-btn tm-plan-btn--primary" href="/signup">Sign Up</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="tm-plan-wrap tm-plan-hero">
+      <div class="tm-plan-eyebrow">TorqueMech Pro Solo</div>
+      <h1>One organized system for <span class="tm-plan-gradient">everyday repair work.</span></h1>
+      <p class="tm-plan-hero__lead">
+        Manage customers, vehicles, estimates, approvals, repairs, invoices, appointments,
+        and follow-ups in one connected workflow built for independent mechanics.
+      </p>
+
+      <div class="tm-plan-price">
+        <strong>$29</strong><span>/ month</span>
+      </div>
+
+      <p class="tm-plan-offer">Full access for 14 days · No commitment · Cancel anytime</p>
+    </section>
+
+    <section class="tm-plan-section">
+      <div class="tm-plan-wrap">
+        <div class="tm-plan-heading">
+          <h2>Everything included in TorqueMech Pro.</h2>
+          <p>Keep the entire customer and repair journey connected instead of juggling paperwork, spreadsheets, and scattered messages.</p>
+        </div>
+
+        <div class="tm-plan-carousel" data-tm-plan-carousel>
+          <div class="tm-plan-carousel-shell">
+            <div class="tm-plan-carousel-track" tabindex="0" data-tm-plan-carousel-track aria-label="Swipe through everything included in TorqueMech Pro">
+              <div class="tm-plan-carousel-slide is-active" data-tm-plan-carousel-slide data-title="Customers and vehicles">
+                <article class="tm-plan-card">
+                  <span class="tm-plan-card__icon">01</span>
+                  <h3>Customers and vehicles</h3>
+                  <p>Keep customer details, vehicle information, mileage, service history, and records organized in one place.</p>
+                </article>
+              </div>
+
+              <div class="tm-plan-carousel-slide" data-tm-plan-carousel-slide data-title="Professional estimates and invoices">
+                <article class="tm-plan-card">
+                  <span class="tm-plan-card__icon">02</span>
+                  <h3>Professional estimates and invoices</h3>
+                  <p>Create clear customer-facing documents and professional PDFs that strengthen your shop credibility.</p>
+                </article>
+              </div>
+
+              <div class="tm-plan-carousel-slide" data-tm-plan-carousel-slide data-title="Findings, photos, and approvals">
+                <article class="tm-plan-card">
+                  <span class="tm-plan-card__icon">03</span>
+                  <h3>Findings, photos, and approvals</h3>
+                  <p>Document recommended work with photos and explanations, then record customer decisions and additional approvals.</p>
+                </article>
+              </div>
+
+              <div class="tm-plan-carousel-slide" data-tm-plan-carousel-slide data-title="Repair workflow and parts">
+                <article class="tm-plan-card">
+                  <span class="tm-plan-card__icon">04</span>
+                  <h3>Repair workflow and parts</h3>
+                  <p>Turn approved work into active repairs, track progress, organize parts, and complete final inspections.</p>
+                </article>
+              </div>
+
+              <div class="tm-plan-carousel-slide" data-tm-plan-carousel-slide data-title="Appointments and booking requests">
+                <article class="tm-plan-card">
+                  <span class="tm-plan-card__icon">05</span>
+                  <h3>Appointments and booking requests</h3>
+                  <p>Manage your schedule, review customer booking requests, and keep appointment details connected to shop records.</p>
+                </article>
+              </div>
+
+              <div class="tm-plan-carousel-slide" data-tm-plan-carousel-slide data-title="Maintenance and follow-ups">
+                <article class="tm-plan-card">
+                  <span class="tm-plan-card__icon">06</span>
+                  <h3>Maintenance and follow-ups</h3>
+                  <p>Keep deferred repairs, maintenance recommendations, reminders, and future service opportunities visible.</p>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="tm-plan-carousel-nav" aria-label="Plan feature carousel position">
+            <div class="tm-plan-carousel-dots">
+              <button class="tm-plan-carousel-dot is-active" type="button" aria-label="Show Customers and vehicles" aria-current="true" data-tm-plan-carousel-dot="0"></button>
+              <button class="tm-plan-carousel-dot" type="button" aria-label="Show Professional estimates and invoices" aria-current="false" data-tm-plan-carousel-dot="1"></button>
+              <button class="tm-plan-carousel-dot" type="button" aria-label="Show Findings, photos, and approvals" aria-current="false" data-tm-plan-carousel-dot="2"></button>
+              <button class="tm-plan-carousel-dot" type="button" aria-label="Show Repair workflow and parts" aria-current="false" data-tm-plan-carousel-dot="3"></button>
+              <button class="tm-plan-carousel-dot" type="button" aria-label="Show Appointments and booking requests" aria-current="false" data-tm-plan-carousel-dot="4"></button>
+              <button class="tm-plan-carousel-dot" type="button" aria-label="Show Maintenance and follow-ups" aria-current="false" data-tm-plan-carousel-dot="5"></button>
+            </div>
+            <div class="tm-plan-carousel-label" data-tm-plan-carousel-label>Customers and vehicles</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-plan-section">
+      <div class="tm-plan-wrap">
+        <div class="tm-plan-heading">
+          <h2>Built around the real repair workflow.</h2>
+          <p>From the first customer request to the final follow-up, TorqueMech keeps each stage connected.</p>
+        </div>
+
+        {% set workflow = ["Customer", "Vehicle", "Estimate", "Approval", "Repair", "Inspection", "Invoice", "Follow-up"] %}
+        <div class="tm-plan-workflow" aria-label="TorqueMech repair workflow">
+          {% for item in workflow %}
+            <span>{{ item }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-plan-section">
+      <div class="tm-plan-wrap">
+        <div class="tm-plan-heading">
+          <h2>How the plan works.</h2>
+        </div>
+
+        <div class="tm-plan-info">
+          <article>
+            <h3>14-day free trial</h3>
+            <p>Try TorqueMech with full access on real jobs before deciding whether it fits your shop. No payment commitment is required to explore the workflow.</p>
+          </article>
+
+          <article>
+            <h3>After the trial</h3>
+            <p>Subscribe for $29 per month to keep full access. Without an active subscription, your shop information remains available in read-only mode.</p>
+          </article>
+
+          <article>
+            <h3>Cancel anytime</h3>
+            <p>You can cancel your subscription without a long-term contract. Your access follows the active billing period shown in your account.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-plan-section">
+      <div class="tm-plan-wrap">
+        <div class="tm-plan-roi">
+          <strong>A simple return on investment</strong>
+          <h2>Less than $1 per day to organize your shop.</h2>
+          <p>
+            One recovered customer, one additional approved repair, one avoided missed appointment,
+            or one hour of saved administrative work can cover the entire monthly subscription.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-plan-wrap tm-plan-final">
+      <div class="tm-plan-final__card">
+        <h2>Try it on real repair work.</h2>
+        <p>
+          Start with full access for 14 days. Use TorqueMech with your customers, estimates,
+          repairs, and invoices—then subscribe only if it fits your shop.
+        </p>
+
+        <div class="tm-plan-final__actions">
+          <a class="tm-plan-btn tm-plan-btn--primary" href="/pro/demo">Explore Demo Shop</a>
+          <a class="tm-plan-btn tm-plan-btn--secondary" href="/signup">Start 14-Day Free Trial</a>
+        </div>
+        <p class="tm-plan-demo-note">No account required to explore the demo. Demo changes are not saved.</p>
+      </div>
+    </section>
+  </main>
+</section>
+
+<script>
+  (function () {
+    var carousel = document.querySelector("[data-tm-plan-carousel]");
+    if (!carousel) return;
+
+    var track = carousel.querySelector("[data-tm-plan-carousel-track]");
+    var slides = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-plan-carousel-slide]"));
+    var dots = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-plan-carousel-dot]"));
+    var label = carousel.querySelector("[data-tm-plan-carousel-label]");
+    var activeIndex = 0;
+    var scrollFrame = 0;
+
+    function setActive(index) {
+      activeIndex = Math.max(0, Math.min(index, slides.length - 1));
+
+      slides.forEach(function (slide, slideIndex) {
+        var isActive = slideIndex === activeIndex;
+        slide.classList.toggle("is-active", isActive);
+        slide.setAttribute("aria-hidden", isActive ? "false" : "true");
+      });
+
+      dots.forEach(function (dot, dotIndex) {
+        var isActive = dotIndex === activeIndex;
+        dot.classList.toggle("is-active", isActive);
+        dot.setAttribute("aria-current", isActive ? "true" : "false");
+      });
+
+      if (label && slides[activeIndex]) {
+        label.textContent = slides[activeIndex].getAttribute("data-title") || "";
+      }
+    }
+
+    function nearestSlideIndex() {
+      var trackRect = track.getBoundingClientRect();
+      var center = trackRect.left + trackRect.width / 2;
+      var closestIndex = 0;
+      var closestDistance = Infinity;
+
+      slides.forEach(function (slide, index) {
+        var rect = slide.getBoundingClientRect();
+        var distance = Math.abs((rect.left + rect.width / 2) - center);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = index;
+        }
+      });
+
+      return closestIndex;
+    }
+
+    function scrollToSlide(index) {
+      var slide = slides[Math.max(0, Math.min(index, slides.length - 1))];
+      if (!slide) return;
+      slide.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      setActive(slides.indexOf(slide));
+    }
+
+    dots.forEach(function (dot, index) {
+      dot.addEventListener("click", function () {
+        scrollToSlide(index);
+      });
+    });
+
+    function syncActiveSlide() {
+      scrollFrame = 0;
+      setActive(nearestSlideIndex());
+    }
+
+    track.addEventListener("scroll", function () {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(syncActiveSlide);
+    }, { passive: true });
+
+    track.addEventListener("touchmove", function () {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(syncActiveSlide);
+    }, { passive: true });
+
+    track.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        scrollToSlide(activeIndex - 1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        scrollToSlide(activeIndex + 1);
+      }
+    });
+
+    requestAnimationFrame(function () {
+      setActive(nearestSlideIndex());
+    });
+  })();
+</script>
+{% endblock %}

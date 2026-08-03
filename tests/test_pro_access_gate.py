@@ -242,6 +242,229 @@ class ProAccessGateTests(unittest.TestCase):
             "/login?next=%2Fpro%2Fcustomers%2F1%2Fvehicles%2F1%2Fapprovals%2F1",
         )
 
+    def test_demo_shop_index_is_public_without_login(self):
+        conn, _ = auth_test_conn()
+        self.addCleanup(conn.close_for_cleanup)
+        with patch.object(main, "app_db_conn", lambda row_factory=False: conn), patch.object(
+            pro_module, "crm_db_conn", lambda: conn
+        ), patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""}):
+            response = TestClient(main.app, base_url="https://torquemech.com").get("/pro/demo")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Demo workspace — changes cannot be saved.", response.text)
+
+    def test_demo_shop_header_and_signup_links_are_public_ctas(self):
+        response = TestClient(main.app, base_url="https://torquemech.com").get("/pro/demo")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('href="/login">Log In</a>', response.text)
+        self.assertIn('href="/signup">Sign Up</a>', response.text)
+        self.assertIn('href="/signup">Create My Shop</a>', response.text)
+        self.assertIn('href="/signup">Start 14-Day Free Trial</a>', response.text)
+        self.assertNotIn("In a real shop account, these records link directly", response.text)
+
+    def test_demo_shop_detail_toolbar_is_compact_and_one_row(self):
+        response = TestClient(main.app, base_url="https://torquemech.com").get(
+            "/pro/demo/2018-honda-accord-front-brake-service"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('class="tm-demo-detail-toolbar"', response.text)
+        self.assertIn('class="tm-demo-detail-page__notice"', response.text)
+        self.assertIn("flex: 1 1 auto", response.text)
+        self.assertIn("tm-demo-detail-trial", response.text)
+        self.assertIn("flex: 0 0 142px", response.text)
+        self.assertIn("flex-basis: 130px", response.text)
+        toolbar_css = response.text.split(".tm-demo-detail-toolbar {", 1)[1].split("}", 1)[0]
+        self.assertNotIn("flex-direction: column", toolbar_css)
+
+    def test_demo_shop_footer_is_contained_and_responsive(self):
+        response = TestClient(main.app, base_url="https://torquemech.com").get("/pro/demo")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('class="tm-demo-footer tm-demo-wrap"', response.text)
+        self.assertIn("tm-demo-footer__row--primary", response.text)
+        self.assertIn("tm-demo-footer__row--support", response.text)
+        self.assertIn("tm-demo-footer__links", response.text)
+        self.assertIn("tm-demo-footer__support", response.text)
+        self.assertIn("overflow-wrap: anywhere", response.text)
+        self.assertIn("body > .tm-footer", response.text)
+
+    def test_demo_shop_rows_are_clickable(self):
+        response = TestClient(main.app, base_url="https://torquemech.com").get("/pro/demo")
+
+        self.assertEqual(response.status_code, 200)
+        for slug in (
+            "2018-honda-accord-front-brake-service",
+            "2016-ford-f-150-cooling-system-concern",
+            "2020-toyota-camry-alternator-replacement",
+            "2014-chevrolet-silverado-misfire-diagnosis",
+            "appointment-maria-lopez",
+            "appointment-daniel-kim",
+            "appointment-jordan-reed",
+            "deferred-tire-replacement",
+            "oil-service-due-soon",
+            "control-arm-estimate-follow-up",
+        ):
+            self.assertIn(f'class="tm-demo-item" href="/pro/demo/{slug}"', response.text)
+
+    def test_demo_shop_detail_routes_are_focused_and_public_without_login(self):
+        conn, _ = auth_test_conn()
+        self.addCleanup(conn.close_for_cleanup)
+        with patch.object(main, "app_db_conn", lambda row_factory=False: conn), patch.object(
+            pro_module, "crm_db_conn", lambda: conn
+        ), patch.dict(os.environ, {"PRO_ENABLED": "false", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""}):
+            client = TestClient(main.app, base_url="https://torquemech.com")
+            index_response = client.get("/pro/demo")
+            detail_paths = sorted(set(re.findall(r'href="(/pro/demo/[^".]+)"', index_response.text)))
+            detail_responses = {path: client.get(path) for path in detail_paths}
+
+        self.assertEqual(len(detail_paths), 10)
+        for path, response in detail_responses.items():
+            self.assertEqual(response.status_code, 200, path)
+            self.assertIn("Demo only", response.text)
+            self.assertIn("changes cannot be saved.", response.text)
+            self.assertIn("Back to Demo", response.text)
+            self.assertIn("Start Free Trial", response.text)
+            self.assertNotIn("Welcome back", response.text)
+            self.assertNotIn("Create My Shop", response.text)
+            self.assertNotIn("Command Center", response.text)
+            self.assertNotIn("Open repairs", response.text)
+            self.assertNotIn("Follow-up opportunities", response.text)
+            self.assertNotIn("Start 14-Day Free Trial", response.text)
+        self.assertIn("2018 Honda Accord - Front brake service", detail_responses["/pro/demo/2018-honda-accord-front-brake-service"].text)
+        self.assertIn("Brake pedal pulse and front-end squeal", detail_responses["/pro/demo/2018-honda-accord-front-brake-service"].text)
+        self.assertIn("$642.80", detail_responses["/pro/demo/2018-honda-accord-front-brake-service"].text)
+        self.assertNotIn("2016 Ford F-150 - Cooling-system concern", detail_responses["/pro/demo/2018-honda-accord-front-brake-service"].text)
+        self.assertNotIn("Maria Lopez", detail_responses["/pro/demo/2018-honda-accord-front-brake-service"].text)
+        self.assertIn("2016 Ford F-150 - Cooling-system concern", detail_responses["/pro/demo/2016-ford-f-150-cooling-system-concern"].text)
+        self.assertIn("2020 Toyota Camry - Alternator replacement", detail_responses["/pro/demo/2020-toyota-camry-alternator-replacement"].text)
+        self.assertIn("2014 Chevrolet Silverado - Misfire diagnosis", detail_responses["/pro/demo/2014-chevrolet-silverado-misfire-diagnosis"].text)
+        self.assertIn("Date/time", detail_responses["/pro/demo/appointment-maria-lopez"].text)
+        self.assertIn("Today, 9:00 AM", detail_responses["/pro/demo/appointment-maria-lopez"].text)
+        self.assertNotIn("Daniel Kim", detail_responses["/pro/demo/appointment-maria-lopez"].text)
+        self.assertIn("Deferred tire replacement", detail_responses["/pro/demo/deferred-tire-replacement"].text)
+        self.assertIn("Suggested next step", detail_responses["/pro/demo/deferred-tire-replacement"].text)
+        self.assertNotIn("Oil service due soon", detail_responses["/pro/demo/deferred-tire-replacement"].text)
+        self.assertIn("Oil service due soon", detail_responses["/pro/demo/oil-service-due-soon"].text)
+        self.assertIn("Control arm estimate", detail_responses["/pro/demo/control-arm-estimate-follow-up"].text)
+
+    def test_demo_shop_repair_actions_match_workflow_stage(self):
+        client = TestClient(main.app, base_url="https://torquemech.com")
+        honda = client.get("/pro/demo/2018-honda-accord-front-brake-service").text
+        ford = client.get("/pro/demo/2016-ford-f-150-cooling-system-concern").text
+        toyota = client.get("/pro/demo/2020-toyota-camry-alternator-replacement").text
+        chevrolet = client.get("/pro/demo/2014-chevrolet-silverado-misfire-diagnosis").text
+
+        self.assertIn("View Approved Estimate", honda)
+        self.assertIn("Open Repair Handoff Preview", honda)
+        self.assertIn("/pro/demo/2018-honda-accord-front-brake-service/approved-estimate.pdf", honda)
+        self.assertIn("/pro/demo/2018-honda-accord-front-brake-service/repair-handoff", honda)
+        self.assertNotIn("Generate Estimate PDF", honda)
+        self.assertNotIn("Generate Final Invoice PDF", honda)
+        self.assertIn("Generate Estimate PDF", ford)
+        self.assertNotIn("Generate Final Invoice PDF", ford)
+        self.assertNotIn("View Approved Estimate", ford)
+        self.assertIn("Generate Final Invoice PDF", toyota)
+        self.assertNotIn("Generate Estimate PDF", toyota)
+        self.assertIn("Open Repair Workspace Preview", chevrolet)
+        self.assertNotIn("Generate Estimate PDF", chevrolet)
+        self.assertNotIn("Generate Final Invoice PDF", chevrolet)
+
+    def test_demo_shop_detail_actions_have_no_hash_only_links(self):
+        client = TestClient(main.app, base_url="https://torquemech.com")
+        for path in (
+            "/pro/demo/2018-honda-accord-front-brake-service",
+            "/pro/demo/2016-ford-f-150-cooling-system-concern",
+            "/pro/demo/2020-toyota-camry-alternator-replacement",
+            "/pro/demo/2014-chevrolet-silverado-misfire-diagnosis",
+            "/pro/demo/appointment-maria-lopez",
+            "/pro/demo/appointment-daniel-kim",
+            "/pro/demo/appointment-jordan-reed",
+        ):
+            response = client.get(path)
+            self.assertEqual(response.status_code, 200, path)
+            actions = re.findall(r'<a class="tm-demo-btn tm-demo-btn--[^"]+" href="([^"]+)">', response.text)
+            self.assertTrue(actions, path)
+            for href in actions:
+                if href == "/pro/demo" or href == "/signup":
+                    continue
+                self.assertFalse(href.startswith("#"), f"{path} has nonfunctional action {href}")
+
+    def test_demo_shop_preview_actions_return_meaningful_content(self):
+        client = TestClient(main.app, base_url="https://torquemech.com")
+
+        handoff = client.get("/pro/demo/2018-honda-accord-front-brake-service/repair-handoff")
+        maria = client.get("/pro/demo/appointment-maria-lopez/appointment-summary")
+        unknown = client.get("/pro/demo/2018-honda-accord-front-brake-service/not-real")
+
+        self.assertEqual(handoff.status_code, 200)
+        self.assertIn("2018 Honda Accord - Repair handoff preview", handoff.text)
+        self.assertIn("Pads, rotors, and hardware staged", handoff.text)
+        self.assertEqual(maria.status_code, 200)
+        self.assertIn("Maria Lopez - Confirmed appointment", maria.text)
+        self.assertIn("Customer waiting for inspection result", maria.text)
+        self.assertEqual(unknown.status_code, 404)
+
+    def test_demo_shop_sample_pdf_routes_are_public_pro_style_and_in_memory(self):
+        client = TestClient(main.app, base_url="https://torquemech.com")
+
+        honda_pdf = client.get("/pro/demo/2018-honda-accord-front-brake-service/approved-estimate.pdf")
+        ford_pdf = client.get("/pro/demo/2016-ford-f-150-cooling-system-concern/estimate.pdf")
+        toyota_pdf = client.get("/pro/demo/2020-toyota-camry-alternator-replacement/invoice.pdf")
+
+        self.assertEqual(honda_pdf.status_code, 200)
+        self.assertEqual(honda_pdf.headers["content-type"], "application/pdf")
+        self.assertGreater(len(honda_pdf.content), 100)
+        self.assertIn(b"Generated with TorqueMech", honda_pdf.content)
+        self.assertIn(b"SAMPLE", honda_pdf.content)
+        self.assertEqual(ford_pdf.status_code, 200)
+        self.assertEqual(ford_pdf.headers["content-type"], "application/pdf")
+        self.assertGreater(len(ford_pdf.content), 100)
+        self.assertIn(b"Generated with TorqueMech", ford_pdf.content)
+        self.assertIn(b"Estimate Totals", ford_pdf.content)
+        self.assertIn(b"SAMPLE", ford_pdf.content)
+        self.assertIn(b"Sample document - not a real estimate.", ford_pdf.content)
+        self.assertEqual(toyota_pdf.status_code, 200)
+        self.assertEqual(toyota_pdf.headers["content-type"], "application/pdf")
+        self.assertGreater(len(toyota_pdf.content), 100)
+        self.assertIn(b"Generated with TorqueMech", toyota_pdf.content)
+        self.assertIn(b"Invoice Totals", toyota_pdf.content)
+        self.assertIn(b"SAMPLE", toyota_pdf.content)
+        self.assertIn(b"Sample document - not a real invoice.", toyota_pdf.content)
+        for path in (
+            "/pro/demo/2018-honda-accord-front-brake-service/approved-estimate.pdf",
+            "/pro/demo/2016-ford-f-150-cooling-system-concern/estimate.pdf",
+            "/pro/demo/2020-toyota-camry-alternator-replacement/invoice.pdf",
+        ):
+            for method in ("post", "put", "patch", "delete"):
+                response = getattr(client, method)(path)
+                self.assertEqual(response.status_code, 405, f"{method.upper()} {path}")
+
+    def test_demo_shop_pages_expose_no_write_forms_or_write_routes(self):
+        client = TestClient(main.app, base_url="https://torquemech.com")
+        paths = [
+            "/pro/demo",
+            "/pro/demo/2018-honda-accord-front-brake-service",
+            "/pro/demo/appointment-maria-lopez",
+            "/pro/demo/deferred-tire-replacement",
+        ]
+
+        for path in paths:
+            response = client.get(path)
+            self.assertEqual(response.status_code, 200, path)
+            demo_markup = response.text.split('<section class="tm-demo">', 1)[1].split("<footer", 1)[0].lower()
+            self.assertNotIn("<form", demo_markup)
+            self.assertNotRegex(response.text.lower(), r'method=["\'](?:post|put|patch|delete)["\']')
+            for method in ("post", "put", "patch", "delete"):
+                write_response = getattr(client, method)(path)
+                self.assertEqual(write_response.status_code, 405, f"{method.upper()} {path}")
+
+        demo_routes = [route for route in main.app.routes if getattr(route, "path", "").startswith("/pro/demo")]
+        self.assertTrue(demo_routes)
+        for route in demo_routes:
+            self.assertTrue(set(route.methods or set()).isdisjoint({"POST", "PUT", "PATCH", "DELETE"}), route.path)
+
 
 if __name__ == "__main__":
     unittest.main()

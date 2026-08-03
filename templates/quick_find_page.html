@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block title %}TorqueMech Quick Find{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="/static/quick_find.css?v={{ static_version('quick_find.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="tm-quick-find-page">
+  {% include "partials/quick_find.html" %}
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script src="/static/quick_find.js?v={{ static_version('quick_find.js') }}"></script>
+{% endblock %}

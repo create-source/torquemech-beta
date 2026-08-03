@@ -1,26 +1,34 @@
 {% extends "layout.html" %}
 
-{% block title %}TorqueMech | The Smart Operating System for Modern Mechanics{% endblock %}
+{% block title %}TorqueMech Pro | One Connected Repair Workflow{% endblock %}
 
 {% block page_css %}
+<meta name="robots" content="noindex, nofollow, noarchive">
 <style>
   :root {
-    --tm-pro-ink: #0b1120;
-    --tm-pro-orange: #f97316;
-    --tm-pro-muted: #94a3b8;
+    --pro-bg: #080f1d;
+    --pro-panel: rgba(16, 26, 43, .82);
+    --pro-panel-strong: #111c2e;
+    --pro-border: rgba(148, 163, 184, .18);
+    --pro-text: #f8fafc;
+    --pro-muted: #aebdd0;
+    --pro-orange: #f97316;
+    --pro-orange-light: #fb923c;
+    --pro-green: #22c55e;
   }
 
-  .tm-nav {
-    display: none;
+  .tm-nav { display: none; }
+
+  .tm-tour-backdrop,
+  .tm-tour-panel,
+  [data-tm-tour],
+  [data-tour-overlay] {
+    display: none !important;
   }
 
-  .tm-tour-restart[data-tm-tour-restart="pro"] {
-    display: none;
-    margin: 0;
-  }
 
   body {
-    background: #0b1120;
+    background: var(--pro-bg);
   }
 
   .tm-container {
@@ -29,407 +37,254 @@
     padding: 0;
   }
 
-  .tm-pro-landing {
+  .tm-pro-home {
     min-height: 100vh;
+    overflow: hidden;
+    color: var(--pro-text);
     background:
-      radial-gradient(circle at 72% 2%, rgba(249, 115, 22, 0.2), transparent 27rem),
-      radial-gradient(circle at 14% 58%, rgba(30, 41, 59, 0.82), transparent 32rem),
-      linear-gradient(180deg, #0b1120 0%, #101827 48%, #0b1120 100%);
-    color: #fff;
+      linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+      radial-gradient(circle at 82% 4%, rgba(249,115,22,.18), transparent 24rem),
+      radial-gradient(circle at 12% 38%, rgba(59,130,246,.10), transparent 28rem),
+      linear-gradient(180deg, #080f1d 0%, #0b1424 52%, #080f1d 100%);
+    background-size: 32px 32px, 32px 32px, auto, auto, auto;
   }
 
-  .tm-pro-landing-header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(11, 17, 32, 0.9);
-    backdrop-filter: blur(16px);
-  }
-
-  .tm-pro-landing-header__inner,
-  .tm-pro-landing-section {
+  .tm-pro-wrap {
     width: min(1120px, calc(100% - 32px));
     margin: 0 auto;
   }
 
-  .tm-pro-landing-section {
-    scroll-margin-top: 78px;
+  .tm-pro-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    background: rgba(8,15,29,.9);
+    backdrop-filter: blur(18px);
   }
 
-  .tm-pro-landing-header__inner {
+  .tm-pro-header__inner {
+    min-height: 66px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    min-height: 64px;
+    gap: 18px;
   }
 
   .tm-pro-brand {
     display: inline-flex;
     align-items: baseline;
     color: #fff;
-    font-size: 1.02rem;
-    font-weight: 900;
+    font-size: 1.08rem;
+    font-weight: 950;
+    letter-spacing: -.02em;
     text-decoration: none;
-    white-space: nowrap;
-    animation: tmBrandIn 460ms ease-out both;
   }
 
-  .tm-pro-brand span:last-child {
-    color: var(--tm-pro-orange);
-  }
+  .tm-pro-brand span:last-child { color: var(--pro-orange); }
 
-  .tm-pro-header-actions,
-  .tm-pro-hero-actions {
+  .tm-pro-nav {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 14px;
   }
 
-  .tm-pro-landing-link,
-  .tm-pro-landing-btn {
+  .tm-pro-nav__link {
+    color: #d7e1ee;
+    font-size: .86rem;
+    font-weight: 850;
+    text-decoration: none;
+  }
+
+  .tm-pro-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 42px;
-    border-radius: 8px;
+    min-height: 44px;
+    padding: 0 17px;
+    border: 1px solid transparent;
+    border-radius: 12px;
     font: inherit;
-    font-size: 0.9rem;
-    font-weight: 900;
+    font-size: .88rem;
+    font-weight: 950;
     text-decoration: none;
-    white-space: nowrap;
+    cursor: pointer;
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
   }
 
-  .tm-pro-landing-link {
-    border: 0;
-    background: transparent;
-    color: #cbd5e1;
-    padding: 0 4px;
-    cursor: default;
+  .tm-pro-btn:hover {
+    transform: translateY(-2px);
   }
 
-  .tm-pro-landing-btn {
-    border: 1px solid rgba(249, 115, 22, 0.52);
-    background: var(--tm-pro-orange);
+  .tm-pro-btn--primary {
+    border-color: rgba(249,115,22,.58);
+    background: linear-gradient(180deg, var(--pro-orange-light), var(--pro-orange));
     color: #111827;
-    padding: 0 15px;
-    box-shadow: 0 14px 28px rgba(249, 115, 22, 0.22);
+    box-shadow: 0 16px 30px rgba(249,115,22,.22);
   }
 
-  .tm-pro-landing-btn--secondary {
-    border-color: rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.08);
+  .tm-pro-btn--secondary {
+    border-color: rgba(148, 163, 184, .22);
+    background: rgba(17, 29, 49, .72);
     color: #fff;
-    box-shadow: none;
-  }
-
-  .tm-pro-explore {
-    display: grid;
-    justify-items: start;
-    gap: 6px;
-  }
-
-  .tm-pro-explore .tm-pro-landing-btn {
-    min-width: 190px;
-  }
-
-  .tm-pro-explore__note {
-    color: #cbd5e1;
-    font-size: 0.82rem;
-    font-weight: 750;
-    line-height: 1.4;
   }
 
   .tm-pro-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
-    gap: 42px;
-    align-items: center;
-    min-height: 640px;
-    padding: 56px 0 66px;
+    padding: 86px 0 72px;
+    text-align: center;
   }
 
   .tm-pro-hero-copy {
-    display: grid;
-    gap: 18px;
-    animation: tmContentIn 620ms ease-out 120ms both;
+    min-width: 0;
+  }
+
+  .tm-pro-hero-line {
+    display: block;
+    opacity: 0;
+    transform: translateY(-28px);
+    animation: tmHeroLineDrop 520ms ease-out forwards;
+  }
+
+  .tm-pro-hero-line--1 { animation-delay: 70ms; }
+  .tm-pro-hero-line--2 { animation-delay: 190ms; }
+  .tm-pro-hero-line--3 { animation-delay: 310ms; }
+  .tm-pro-hero-line--4 { animation-delay: 430ms; }
+
+  .tm-pro-hero__lead {
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: tmHeroLineDrop 500ms ease-out 570ms forwards;
+  }
+
+  @keyframes tmHeroLineDrop {
+    from {
+      opacity: 0;
+      transform: translateY(-28px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .tm-pro-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 11px;
+    border: 1px solid rgba(249,115,22,.24);
+    border-radius: 999px;
+    background: rgba(249,115,22,.08);
     color: #fed7aa;
-    font-size: 0.76rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .09em;
     text-transform: uppercase;
   }
 
   .tm-pro-hero h1 {
-    margin: 0;
-    max-width: 690px;
+    max-width: 900px;
+    margin: 22px auto 0;
     color: #fff;
-    font-size: 3.2rem;
-    font-weight: 900;
-    line-height: 1.02;
+    font-size: clamp(2.8rem, 7vw, 5.6rem);
+    font-weight: 950;
+    line-height: .96;
+    letter-spacing: -.06em;
   }
 
-  .tm-pro-hero p {
-    margin: 0;
-    max-width: 650px;
+  .tm-pro-gradient-text {
+    background: linear-gradient(90deg, #fff 0%, #fed7aa 42%, #fb923c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tm-pro-hero__lead {
+    max-width: 720px;
+    margin: 22px auto 0;
     color: #cbd5e1;
-    font-size: 1.06rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    line-height: 1.62;
+    line-height: 1.6;
   }
 
-  .tm-pro-offer {
-    display: grid;
-    gap: 5px;
-    padding-top: 2px;
+  .tm-pro-hero__actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 26px;
   }
 
-  .tm-pro-offer__promise {
-    color: #e2e8f0;
-    font-size: 0.9rem;
+  .tm-pro-hero__offer {
+    margin: 13px 0 0;
+    color: var(--pro-muted);
+    font-size: .82rem;
     font-weight: 800;
-    line-height: 1.45;
   }
 
-  .tm-pro-offer__price {
-    color: #fed7aa;
-    font-size: 0.88rem;
-    font-weight: 900;
-    letter-spacing: 0.01em;
-  }
 
-  .tm-pro-workflow-stage {
-    position: relative;
-    min-height: 438px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 18px;
-    background:
-      linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.94)),
-      radial-gradient(circle at 50% 10%, rgba(249, 115, 22, 0.3), transparent 18rem);
-    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
-    overflow: hidden;
-    animation: tmPanelIn 620ms ease-out 220ms both;
-  }
-
-  .tm-pro-workflow-stage::after {
-    content: "";
-    position: absolute;
-    inset: 108px 9% auto;
-    height: 280px;
-    background:
-      radial-gradient(ellipse at top, rgba(255, 237, 213, 0.24), rgba(251, 146, 60, 0.2) 34%, rgba(249, 115, 22, 0.08) 58%, transparent 78%);
-    filter: blur(4px);
-    opacity: 0;
-    animation: tmBeamOn 900ms ease-out 420ms both;
-    pointer-events: none;
-  }
-
-  .tm-pro-shop-light {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    z-index: 3;
-    width: 190px;
-    height: 182px;
-    transform: translateX(-50%);
-    pointer-events: none;
-  }
-
-  .tm-pro-shop-light::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 6px;
-    height: 69px;
-    transform: translateX(-50%);
-    background:
-      linear-gradient(90deg, transparent 0 1px, rgba(241, 245, 249, 0.58) 1px 3px, rgba(100, 116, 139, 0.5) 3px 5px, transparent 5px 6px);
-    border-radius: 999px;
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
-  }
-
-  .tm-pro-shop-light__shade {
-    position: absolute;
-    top: 68px;
-    left: 50%;
-    width: 136px;
-    height: 48px;
-    transform: translateX(-50%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-bottom-color: rgba(251, 146, 60, 0.36);
-    border-radius: 999px 999px 18px 18px;
-    background:
-      radial-gradient(circle at 50% 112%, rgba(255, 237, 213, 0.82), rgba(249, 115, 22, 0.16) 30%, transparent 48%),
-      linear-gradient(180deg, #475569 0%, #1f2937 46%, #0b1120 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.22),
-      inset 0 -10px 16px rgba(0, 0, 0, 0.24),
-      0 18px 34px rgba(0, 0, 0, 0.34),
-      0 0 46px rgba(249, 115, 22, 0.3);
-  }
-
-  .tm-pro-shop-light__shade::after {
-    content: "";
-    position: absolute;
-    left: 18px;
-    right: 18px;
-    bottom: -7px;
-    height: 14px;
-    border-radius: 999px;
-    background: radial-gradient(ellipse at center, rgba(255, 237, 213, 0.88), rgba(249, 115, 22, 0.32) 52%, transparent 74%);
-    filter: blur(1px);
-  }
-
-  .tm-pro-light-glow {
-    position: absolute;
-    top: 100px;
-    left: 50%;
-    z-index: 1;
-    width: 460px;
-    height: 310px;
-    transform: translateX(-50%);
-    background:
-      radial-gradient(ellipse at top, rgba(255, 237, 213, 0.5), rgba(251, 146, 60, 0.3) 28%, rgba(249, 115, 22, 0.11) 58%, transparent 78%);
-    opacity: 0;
-    filter: blur(2px);
-    animation: tmLightOn 780ms ease-out 360ms both;
-  }
-
-  .tm-pro-workflow-card {
-    position: relative;
-    z-index: 4;
-    display: grid;
-    gap: 12px;
-    width: min(410px, calc(100% - 36px));
-    margin: 184px auto 20px;
-  }
-
-  .tm-pro-workflow-card::before {
-    content: "";
-    position: absolute;
-    top: 26px;
-    bottom: 26px;
-    left: 20px;
-    width: 1px;
-    background: linear-gradient(180deg, rgba(249, 115, 22, 0.18), rgba(249, 115, 22, 0.44), rgba(148, 163, 184, 0.16));
-  }
-
-  .tm-pro-flow-pill {
-    position: relative;
-    display: grid;
-    grid-template-columns: 16px minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: center;
-    min-height: 58px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.8);
-    color: #f8fafc;
-    padding: 12px 14px;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2), 0 0 24px rgba(249, 115, 22, 0.04);
-    opacity: 0;
-    transform: translateY(12px);
-    animation: tmCardIn 520ms ease-out both;
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .tm-pro-flow-pill:nth-child(1) { animation-delay: 620ms; }
-  .tm-pro-flow-pill:nth-child(2) { animation-delay: 720ms; }
-  .tm-pro-flow-pill:nth-child(3) { animation-delay: 820ms; }
-  .tm-pro-flow-pill:nth-child(4) { animation-delay: 920ms; }
-  .tm-pro-flow-pill:nth-child(5) { animation-delay: 1020ms; }
-
-  .tm-pro-flow-dot {
-    position: relative;
-    z-index: 1;
-    width: 11px;
-    height: 11px;
-    border-radius: 999px;
-    background: var(--tm-pro-orange);
-    border: 2px solid rgba(15, 23, 42, 0.95);
-    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12), 0 0 14px rgba(249, 115, 22, 0.22);
-  }
-
-  .tm-pro-flow-pill strong {
-    color: #fff;
-    font-size: 0.95rem;
-    font-weight: 900;
-  }
-
-  .tm-pro-flow-pill span:last-child {
-    color: #94a3b8;
-    font-size: 0.78rem;
-    font-weight: 900;
-  }
-
-  .tm-pro-light-note {
-    position: relative;
-    z-index: 2;
-    margin: 0 auto 20px;
-    color: #fed7aa;
-    font-size: 0.78rem;
-    font-weight: 900;
-    text-align: center;
-  }
-
-  .tm-pro-light-note span {
-    color: #cbd5e1;
-  }
-
-  .tm-pro-light-section {
-    background:
-      radial-gradient(circle at 78% 6%, rgba(249, 115, 22, 0.1), transparent 22rem),
-      linear-gradient(180deg, rgba(16, 24, 39, 0.98), #0b1120 100%);
-    color: #f8fafc;
+  .tm-pro-section {
+    padding: 58px 0;
+    border-top: 1px solid rgba(255,255,255,.08);
   }
 
   .tm-pro-section-head {
-    display: grid;
-    gap: 7px;
-    max-width: 680px;
-    padding-top: 42px;
-    margin-bottom: 14px;
+    max-width: 700px;
+    margin-bottom: 24px;
+  }
+
+  .tm-pro-section-head--center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
   }
 
   .tm-pro-section-head h2 {
     margin: 0;
-    color: #f8fafc;
-    font-size: 1.5rem;
+    color: #fff;
+    font-size: clamp(1.85rem, 3.2vw, 2.7rem);
+    font-weight: 950;
+    line-height: 1.08;
+    letter-spacing: -.035em;
+  }
+
+  .tm-pro-workflow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .tm-pro-flow {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 0 15px;
+    border: 1px solid var(--pro-border);
+    border-radius: 999px;
+    background: rgba(17,28,46,.78);
+    color: #fff;
+    font-size: .82rem;
     font-weight: 900;
-    line-height: 1.15;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
   }
 
-  .tm-pro-section-head p {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 0.94rem;
-    font-weight: 750;
-    line-height: 1.45;
+  .tm-pro-flow:not(:last-child)::after {
+    display: none;
   }
-
   .tm-pro-product-preview {
     position: relative;
-    padding: 4px 0 32px;
   }
 
   .tm-pro-carousel-shell {
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    background:
-      radial-gradient(circle at 24% 8%, rgba(249, 115, 22, 0.13), transparent 17rem),
-      linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(11, 17, 32, 0.98));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 22px 54px rgba(0, 0, 0, 0.22);
     overflow: hidden;
+    border: 1px solid rgba(148,163,184,.16);
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(249,115,22,.10), transparent 18rem),
+      rgba(10,20,36,.72);
   }
 
   .tm-pro-carousel-shell::before,
@@ -439,29 +294,29 @@
     top: 0;
     bottom: 0;
     z-index: 3;
-    width: 74px;
+    width: 54px;
     pointer-events: none;
   }
 
   .tm-pro-carousel-shell::before {
     left: 0;
-    background: linear-gradient(90deg, #0f172a 0%, rgba(15, 23, 42, 0) 100%);
+    background: linear-gradient(90deg, rgba(10,20,36,.98), rgba(10,20,36,0));
   }
 
   .tm-pro-carousel-shell::after {
     right: 0;
-    background: linear-gradient(270deg, #0f172a 0%, rgba(15, 23, 42, 0) 100%);
+    background: linear-gradient(270deg, rgba(10,20,36,.98), rgba(10,20,36,0));
   }
 
   .tm-pro-carousel-track {
     display: flex;
-    gap: 18px;
+    gap: 14px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
     scrollbar-width: none;
-    padding: 24px max(72px, calc((100% - 520px) / 2)) 22px;
+    padding: 18px max(52px, calc((100% - 320px) / 2)) 20px;
   }
 
   .tm-pro-carousel-track::-webkit-scrollbar {
@@ -469,419 +324,172 @@
   }
 
   .tm-pro-carousel-slide {
-    flex: 0 0 min(520px, 72%);
+    flex: 0 0 320px;
     scroll-snap-align: center;
     scroll-snap-stop: always;
-    transform: scale(0.94);
-    opacity: 0.58;
-    transition: transform 220ms ease, opacity 220ms ease;
+    opacity: .42;
+    transform: scale(.92);
+    transition: opacity .2s ease, transform .2s ease;
   }
 
   .tm-pro-carousel-slide.is-active {
-    transform: scale(1);
     opacity: 1;
-  }
-
-  .tm-pro-carousel-slide:not(.is-active) .tm-pro-product-card {
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
-  }
-
-  .tm-pro-carousel-arrow {
-    position: absolute;
-    top: 50%;
-    z-index: 5;
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.92);
-    color: #f8fafc;
-    cursor: pointer;
-    font: inherit;
-    font-size: 1.35rem;
-    font-weight: 900;
-    line-height: 1;
-    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.26);
-    transform: translateY(-50%);
-    transition: border-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
-  }
-
-  .tm-pro-carousel-arrow:hover {
-    border-color: rgba(249, 115, 22, 0.42);
-    color: #fdba74;
-    transform: translateY(-50%) scale(1.04);
-  }
-
-  .tm-pro-carousel-arrow--prev {
-    left: 16px;
-  }
-
-  .tm-pro-carousel-arrow--next {
-    right: 16px;
-  }
-
-  .tm-pro-carousel-nav {
-    display: grid;
-    justify-items: center;
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  .tm-pro-carousel-dots {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .tm-pro-carousel-dot {
-    width: 8px;
-    height: 8px;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(148, 163, 184, 0.42);
-    cursor: pointer;
-    padding: 0;
-    transition: width 160ms ease, background 160ms ease;
-  }
-
-  .tm-pro-carousel-dot.is-active,
-  .tm-pro-carousel-dot[aria-current="true"] {
-    width: 22px;
-    background: var(--tm-pro-orange);
-  }
-
-  .tm-pro-carousel-label {
-    color: #cbd5e1;
-    font-size: 0.78rem;
-    font-weight: 900;
+    transform: scale(1);
   }
 
   .tm-pro-preview-panel {
     position: relative;
   }
 
-  .tm-pro-preview-panel::before,
-  .tm-pro-preview-panel::after {
-    content: "";
-    position: absolute;
-    left: 18px;
-    right: 18px;
-    bottom: -10px;
-    height: 34px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
-    pointer-events: none;
+  .tm-pro-benefit-card {
+    min-height: 220px;
+    padding: 22px;
+    border: 1px solid var(--pro-border);
+    border-radius: 17px;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(249,115,22,.12), transparent 10rem),
+      linear-gradient(180deg, rgba(23,35,56,.98), rgba(15,25,42,.98));
+    box-shadow: 0 18px 40px rgba(0,0,0,.22);
+    transition: border-color .2s ease, box-shadow .2s ease;
   }
 
-  .tm-pro-preview-panel::after {
-    left: 36px;
-    right: 36px;
-    bottom: -18px;
-    opacity: 0.7;
+  .tm-pro-carousel-slide.is-active .tm-pro-benefit-card {
+    border-color: rgba(249,115,22,.38);
+    box-shadow: 0 24px 48px rgba(0,0,0,.30);
   }
 
-  .tm-pro-product-card {
-    --tm-card-rise: 0px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-height: 232px;
-    overflow: hidden;
-    border: 1px solid rgba(15, 23, 42, 0.11);
-    border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
-    transform: translateY(var(--tm-card-rise));
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    animation: tmModuleIn 620ms ease-out both;
-    animation-delay: calc(var(--tm-card-index) * 90ms);
-    z-index: 2;
-  }
-
-  .tm-pro-product-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-top: 3px solid rgba(249, 115, 22, 0.72);
-    pointer-events: none;
-  }
-
-  .tm-pro-product-card:hover {
-    border-color: rgba(249, 115, 22, 0.26);
-    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
-    transform: translateY(calc(var(--tm-card-rise) - 3px));
-  }
-
-  .tm-pro-product-card.is-switching {
-    animation: tmPreviewSwitch 240ms ease-out both;
-  }
-
-  .tm-pro-module-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-height: 52px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-    background: linear-gradient(180deg, #111827, #0f172a);
-    padding: 13px 14px 12px;
-  }
-
-  .tm-pro-product-card h3 {
-    margin: 0;
-    min-width: 0;
-    color: #f8fafc;
-    font-size: 0.92rem;
-    font-weight: 900;
-    line-height: 1.1;
-  }
-
-  .tm-pro-module-chip {
-    flex: 0 0 auto;
-    border: 1px solid rgba(249, 115, 22, 0.34);
-    border-radius: 999px;
-    background: rgba(249, 115, 22, 0.12);
+  .tm-pro-value__icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(249,115,22,.28);
+    border-radius: 13px;
+    background: rgba(249,115,22,.10);
     color: #fed7aa;
-    font-size: 0.69rem;
-    font-weight: 900;
-    line-height: 1;
-    padding: 6px 8px;
-    white-space: nowrap;
+    font-size: 1rem;
+    font-weight: 950;
   }
 
-  .tm-pro-module-body {
+  .tm-pro-benefit-card h3 {
+    margin: 24px 0 9px;
+    color: #fff;
+    font-size: 1.08rem;
+    font-weight: 950;
+  }
+
+  .tm-pro-benefit-card p {
+    margin: 0;
+    color: var(--pro-muted);
+    font-size: .92rem;
+    font-weight: 700;
+    line-height: 1.52;
+  }
+
+  .tm-pro-carousel-nav {
     display: grid;
-    gap: 0;
-    padding: 6px 14px 0;
+    justify-items: center;
+    gap: 8px;
+    margin-top: 14px;
   }
 
-  .tm-pro-module-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: center;
-    min-height: 39px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.07);
-    color: #334155;
-    font-size: 0.86rem;
-    font-weight: 850;
-  }
-
-  .tm-pro-module-row:first-child {
-    color: #0f172a;
-    font-weight: 900;
-  }
-
-  .tm-pro-module-mark {
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    background: #f97316;
-    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
-  }
-
-  .tm-pro-module-line {
-    width: 46px;
-    height: 6px;
-    border-radius: 999px;
-    background: #e2e8f0;
-  }
-
-  .tm-pro-module-footer {
+  .tm-pro-carousel-dots {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: auto;
-    padding: 13px 14px 14px;
+    justify-content: center;
+    gap: 9px;
   }
 
-  .tm-pro-module-footer span {
-    color: #64748b;
-    font-size: 0.72rem;
+  .tm-pro-carousel-dot {
+    width: 8px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(148,163,184,.42);
+    cursor: pointer;
+    box-shadow: none;
+    transition: width .16s ease, background .16s ease;
+  }
+
+  .tm-pro-carousel-dot.is-active,
+  .tm-pro-carousel-dot[aria-current="true"] {
+    width: 20px;
+    background: var(--pro-orange);
+  }
+
+  .tm-pro-carousel-label {
+    color: #dbe7f5;
+    font-size: .78rem;
     font-weight: 900;
+  }
+
+  .tm-pro-price-card {
+    width: min(100%, 520px);
+    margin: 0 auto;
+    padding: 28px;
+    border: 1px solid rgba(249,115,22,.32);
+    border-radius: 20px;
+    background:
+      radial-gradient(circle at 80% 0%, rgba(249,115,22,.18), transparent 15rem),
+      linear-gradient(180deg, #151f31, #0f192a);
+    box-shadow: 0 24px 54px rgba(0,0,0,.26);
+    text-align: center;
+  }
+
+  .tm-pro-price-card__name {
+    color: var(--pro-orange-soft, #fed7aa);
+    font-size: .76rem;
+    font-weight: 950;
+    letter-spacing: .08em;
     text-transform: uppercase;
   }
 
-  .tm-pro-module-action {
-    min-height: 28px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 7px;
-    background: #f8fafc;
-    color: #0f172a;
-    font-size: 0.74rem;
-    font-weight: 900;
-    padding: 0 10px;
-    white-space: nowrap;
-  }
-
-  .tm-pro-steps {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding-bottom: 34px;
-  }
-
-  .tm-pro-step-carousel {
-    position: relative;
-    padding: 4px 0 4px;
-  }
-
-  .tm-pro-step-carousel .tm-pro-carousel-track {
-    padding-top: 22px;
-    padding-bottom: 22px;
-  }
-
-  .tm-pro-step-slide {
-    flex-basis: min(460px, 70%);
-  }
-
-  .tm-pro-step-card {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    min-height: 220px;
-    gap: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    background:
-      radial-gradient(circle at 16% 0%, rgba(249, 115, 22, 0.14), transparent 13rem),
-      linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.86));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 18px 42px rgba(0, 0, 0, 0.24);
-    padding: 20px;
-    overflow: hidden;
-  }
-
-  .tm-pro-step-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--tm-pro-orange), rgba(249, 115, 22, 0.24));
-  }
-
-  .tm-pro-step-card::after {
-    content: "";
-    position: absolute;
-    right: 18px;
-    bottom: 18px;
-    width: 74px;
-    height: 74px;
-    border: 1px solid rgba(249, 115, 22, 0.14);
-    border-radius: 999px;
-    background: rgba(249, 115, 22, 0.04);
-    pointer-events: none;
-  }
-
-  .tm-pro-step-number {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border: 1px solid rgba(249, 115, 22, 0.34);
-    border-radius: 999px;
-    background: rgba(249, 115, 22, 0.12);
-    color: #fed7aa;
-    font-size: 0.8rem;
-    font-weight: 900;
-    box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.08), 0 0 24px rgba(249, 115, 22, 0.12);
-  }
-
-  .tm-pro-step-card h3 {
-    margin: 2px 0 0;
-    color: #f8fafc;
-    font-size: 1.2rem;
-    font-weight: 900;
-  }
-
-  .tm-pro-step-card p {
-    margin: 0;
-    color: #cbd5e1;
-    font-size: 0.94rem;
-    font-weight: 750;
-    line-height: 1.45;
-  }
-
-  .tm-pro-final-cta {
+  .tm-pro-price {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    background:
-      radial-gradient(circle at 84% 12%, rgba(249, 115, 22, 0.16), transparent 16rem),
-      linear-gradient(180deg, #111827, #0b1120);
-    color: #fff;
-    padding: 20px;
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 13px;
   }
 
-  .tm-pro-final-cta h2 {
-    margin: 0;
+  .tm-pro-price strong {
     color: #fff;
-    font-size: 1.35rem;
-    font-weight: 900;
+    font-size: 3.4rem;
+    font-weight: 950;
+    line-height: 1;
   }
 
-  .tm-pro-final-cta p {
-    margin: 5px 0 0;
+  .tm-pro-price span {
+    color: var(--pro-muted);
+    font-size: .9rem;
+    font-weight: 850;
+  }
+
+  .tm-pro-price-card p {
+    margin: 14px 0 0;
     color: #cbd5e1;
-    font-size: 0.94rem;
+    font-size: .92rem;
     font-weight: 750;
   }
 
-  .tm-pro-final-cta .tm-pro-landing-btn {
-    box-shadow: none;
+  .tm-pro-price-card .tm-pro-btn {
+    width: 100%;
+    margin-top: 20px;
   }
 
-  .tm-pro-final-cta--trust {
-    align-items: center;
-  }
-
-  .tm-pro-trust-badges {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .tm-pro-trust-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 38px;
-    padding: 8px 12px;
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.72);
-    color: #e2e8f0;
-    font-size: 0.82rem;
+  .tm-pro-price-note {
+    display: block;
+    margin-top: 11px;
+    color: var(--pro-muted);
+    font-size: .78rem;
     font-weight: 800;
-    white-space: nowrap;
-  }
-
-  .tm-pro-trust-dot {
-    width: 7px;
-    height: 7px;
-    flex: 0 0 7px;
-    border-radius: 50%;
-    background: var(--tm-pro-orange);
-    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
   }
 
   .tm-footer {
     margin-top: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.09);
-    background: #0b1120;
-    color: #cbd5e1;
-    padding: 18px 0;
+    border-top: 1px solid rgba(255,255,255,.08);
+    background: #080f1d;
   }
 
   .tm-footer .tm-container {
@@ -890,767 +498,444 @@
     padding: 0;
   }
 
-  .tm-footer-brand,
-  .tm-footer-links a,
-  .tm-footer-support {
-    color: #94a3b8;
-  }
+  .tm-pro-carousel-arrow {
+      position: absolute;
+      top: 50%;
+      z-index: 6;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      background: rgba(8,15,29,.58);
+      color: #fff;
+      font: inherit;
+      font-size: 1.55rem;
+      font-weight: 950;
+      line-height: 1;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transform: translateY(-50%);
+      transition:
+        background .16s ease,
+        border-color .16s ease,
+        transform .16s ease,
+        opacity .16s ease;
+    }
 
-  .tm-footer-links a:hover,
-  .tm-footer-support a,
-  .tm-footer-support .tm-support-email {
-    color: #fed7aa;
-  }
+    .tm-pro-carousel-arrow:hover {
+      border-color: rgba(249,115,22,.55);
+      background: rgba(249,115,22,.22);
+      transform: translateY(-50%) scale(1.05);
+    }
 
-  .tm-footer #feedbackBtn {
-    border-color: rgba(255, 255, 255, 0.14);
-    color: #f8fafc;
-    background: rgba(255, 255, 255, 0.06);
-  }
+    .tm-pro-carousel-arrow--prev {
+      left: 16px;
+    }
 
-  @keyframes tmBrandIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    .tm-pro-carousel-arrow--next {
+      right: 16px;
+    }
 
-  @keyframes tmContentIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes tmPanelIn {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes tmLightOn {
-    0% { opacity: 0; transform: translateX(-50%) scale(0.92); }
-    42% { opacity: 0.72; }
-    100% { opacity: 1; transform: translateX(-50%) scale(1); }
-  }
-
-  @keyframes tmBeamOn {
-    0% { opacity: 0; transform: scaleY(0.86); }
-    55% { opacity: 0.9; }
-    100% { opacity: 1; transform: scaleY(1); }
-  }
-
-  @keyframes tmCardIn {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes tmModuleIn {
-    from { opacity: 0; transform: translateY(calc(var(--tm-card-rise) + 18px)); }
-    to { opacity: 1; transform: translateY(var(--tm-card-rise)); }
-  }
-
-  @keyframes tmPreviewSwitch {
-    from { opacity: 0; transform: translateY(10px) scale(0.985); }
-    to { opacity: 1; transform: translateY(var(--tm-card-rise)) scale(1); }
-  }
+    .tm-pro-carousel-arrow:disabled {
+      opacity: .28;
+      cursor: default;
+      transform: translateY(-50%);
+    }
 
   @media (prefers-reduced-motion: reduce) {
-    .tm-pro-brand,
-    .tm-pro-hero-copy,
-    .tm-pro-workflow-stage,
-    .tm-pro-workflow-stage::after,
-    .tm-pro-light-glow,
-    .tm-pro-flow-pill,
-    .tm-pro-product-card {
+    .tm-pro-hero-line,
+    .tm-pro-hero__lead {
       animation: none;
       opacity: 1;
-    }
-
-    .tm-pro-product-card,
-    .tm-pro-product-card:hover {
-      transform: translateY(var(--tm-card-rise));
-      transition: none;
-    }
-
-    .tm-pro-carousel-track {
-      scroll-behavior: auto;
-    }
-
-    .tm-pro-carousel-slide,
-    .tm-pro-carousel-arrow,
-    .tm-pro-carousel-dot {
-      transition: none;
+      transform: none;
     }
   }
 
   @media (max-width: 900px) {
-    .tm-pro-hero {
-      grid-template-columns: 1fr;
-      min-height: 0;
-      padding-top: 40px;
-    }
-
-    .tm-pro-hero h1 {
-      font-size: 2.45rem;
-    }
-
-    .tm-pro-carousel-slide {
-      flex-basis: min(500px, 78%);
-    }
-
-    .tm-pro-step-slide {
-      flex-basis: min(440px, 78%);
+    .tm-pro-values {
+      grid-template-columns: repeat(2, minmax(0,1fr));
     }
   }
 
   @media (max-width: 640px) {
-    .tm-pro-landing-header__inner,
-    .tm-pro-landing-section {
+    .tm-pro-wrap {
       width: min(100% - 24px, 1120px);
     }
 
-    .tm-pro-landing-header__inner {
+    .tm-pro-header__inner {
       min-height: 60px;
-      gap: 10px;
     }
 
-    .tm-pro-header-actions {
-      gap: 8px;
+    .tm-pro-nav {
+      gap: 9px;
     }
 
-    .tm-pro-landing-link,
-    .tm-pro-landing-btn {
-      min-height: 38px;
-      font-size: 0.8rem;
-      padding-left: 10px;
-      padding-right: 10px;
-    }
-
-    .tm-pro-hero {
-      gap: 20px;
-      padding: 20px 0 28px;
-    }
-
-    .tm-pro-hero-copy {
-      gap: 14px;
-    }
-
-    .tm-pro-hero h1 {
-      font-size: 2.04rem;
-    }
-
-    .tm-pro-hero p {
-      font-size: 0.96rem;
-      line-height: 1.5;
-    }
-
-    .tm-pro-explore {
-      justify-items: stretch;
-    }
-
-    .tm-pro-explore .tm-pro-landing-btn {
-      width: 100%;
-      min-height: 46px;
-      font-size: 0.86rem;
-    }
-
-    .tm-pro-explore__note {
-      font-size: 0.78rem;
-      text-align: center;
-    }
-
-    .tm-pro-hero-actions {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .tm-pro-hero-actions > div {
-      min-width: 0;
-    }
-
-    .tm-pro-hero-actions > div .tm-pro-landing-btn {
-      width: 100%;
-      min-height: 44px;
-      padding-left: 14px;
-      padding-right: 14px;
-      font-size: 0.82rem;
-    }
-
-    .tm-pro-hero-actions .tm-pro-landing-btn--secondary {
-      min-height: 40px;
-      padding-left: 12px;
-      padding-right: 12px;
-      font-size: 0.76rem;
-      box-shadow: none;
-    }
-
-    .tm-pro-offer {
-      gap: 3px;
-      padding-top: 0;
-    }
-
-    .tm-pro-offer__promise,
-    .tm-pro-offer__price {
-      font-size: 0.8rem;
-      line-height: 1.4;
-    }
-
-    .tm-pro-workflow-stage {
-      min-height: 405px;
-      border-radius: 14px;
-    }
-
-    .tm-pro-shop-light {
-      transform: translateX(-50%) scale(0.86);
-      transform-origin: top center;
-    }
-
-    .tm-pro-light-glow {
-      width: 320px;
-      height: 250px;
-    }
-
-    .tm-pro-workflow-card {
-      width: calc(100% - 24px);
-      margin-top: 172px;
-    }
-
-    .tm-pro-flow-pill {
-      grid-template-columns: 10px minmax(0, 1fr);
-      min-height: 50px;
-    }
-
-    .tm-pro-flow-pill span:last-child {
+    .tm-pro-nav__link {
       display: none;
     }
 
-    .tm-pro-section-head {
-      gap: 6px;
-      padding-top: 28px;
-      margin-bottom: 10px;
+    .tm-pro-nav .tm-pro-btn {
+      min-height: 38px;
+      padding: 0 11px;
+      font-size: .77rem;
     }
 
-    .tm-pro-product-preview {
-      padding-bottom: 18px;
+    .tm-pro-hero {
+      padding: 54px 0 50px;
+    }
+
+
+    .tm-pro-hero h1 {
+      font-size: clamp(2.55rem, 13vw, 3.75rem);
+    }
+
+    .tm-pro-hero__lead {
+      font-size: .96rem;
+      line-height: 1.52;
+    }
+
+    .tm-pro-hero__actions .tm-pro-btn {
+      width: 100%;
+    }
+
+    .tm-pro-section {
+      padding: 38px 0;
+    }
+
+    .tm-pro-workflow {
+      justify-content: flex-start;
+      gap: 8px;
+    }
+
+    .tm-pro-flow {
+      min-height: 38px;
+      padding: 0 12px;
+      font-size: .77rem;
+    }
+
+    .tm-pro-carousel-shell {
+      margin-left: -4px;
+      margin-right: -4px;
     }
 
     .tm-pro-carousel-shell::before,
     .tm-pro-carousel-shell::after {
-      width: 26px;
+      width: 28px;
     }
 
     .tm-pro-carousel-track {
       gap: 12px;
-      padding: 16px max(16px, calc((100% - 360px) / 2)) 18px;
+      padding: 16px max(26px, calc((100% - 300px) / 2)) 18px;
     }
 
     .tm-pro-carousel-slide {
-      flex-basis: min(360px, 92%);
-      transform: scale(0.97);
-      opacity: 0.72;
+      flex-basis: min(300px, 82vw);
     }
 
     .tm-pro-carousel-arrow {
       display: none;
     }
 
-    .tm-pro-product-card {
-      min-height: 0;
-      transform: none;
-      animation-name: tmModuleInMobile;
+    .tm-pro-benefit-card {
+      min-height: 205px;
+      padding: 19px;
+      border-radius: 16px;
     }
 
-    .tm-pro-product-card:nth-child(n) {
-      --tm-card-rise: 0px;
+    .tm-pro-value__icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      font-size: .86rem;
     }
 
-    .tm-pro-product-card:hover {
-      transform: translateY(-2px);
+    .tm-pro-benefit-card h3 {
+      margin-top: 20px;
+      font-size: 1rem;
     }
 
-    .tm-pro-module-header {
-      min-height: 50px;
+    .tm-pro-benefit-card p {
+      font-size: .86rem;
+      line-height: 1.45;
     }
-
-    .tm-pro-module-row {
-      min-height: 38px;
-    }
-
-    .tm-pro-steps {
-      padding-bottom: 22px;
-    }
-
-    .tm-pro-step-slide {
-      flex-basis: min(340px, 92%);
-    }
-
-    .tm-pro-step-card {
-      min-height: 210px;
-      padding: 14px;
-    }
-
-    @keyframes tmModuleInMobile {
-      from { opacity: 0; transform: translateY(14px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .tm-pro-final-cta {
-      align-items: stretch;
-      flex-direction: column;
-    }
-
-    .tm-pro-final-cta--trust {
-      gap: 18px;
-    }
-
-    .tm-pro-trust-badges {
-      justify-content: flex-start;
-    }
-
-    .tm-pro-trust-badge {
-      width: 100%;
-      justify-content: flex-start;
-      white-space: normal;
-    }
+    
   }
-  /* =========================================================
-    PRODUCT PREVIEW — READABLE DARK CARD
-    ========================================================= */
-
-  .tm-pro-product-card {
-    min-height: 250px !important;
-    border: 1px solid rgba(148, 163, 184, 0.28) !important;
-    background:
-      linear-gradient(180deg, #172436 0%, #111c2b 100%) !important;
-    color: #f8fafc !important;
-  }
-
-  /* Header */
-  .tm-pro-product-card .tm-pro-module-header {
-    min-height: 52px;
-    background:
-      linear-gradient(180deg, #1c2a3d 0%, #142033 100%) !important;
-    border-bottom-color: rgba(148, 163, 184, 0.18) !important;
-  }
-
-  .tm-pro-product-card .tm-pro-module-header h3 {
-    color: #ffffff !important;
-    opacity: 1 !important;
-  }
-
-  /* Body */
-  .tm-pro-product-card .tm-pro-module-body {
-    display: grid !important;
-    flex: 1 1 auto;
-    padding: 8px 14px 0 !important;
-    background:
-      linear-gradient(180deg, #152235 0%, #111c2b 100%) !important;
-  }
-
-  .tm-pro-product-card .tm-pro-module-row {
-    min-height: 42px !important;
-    grid-template-columns: minmax(0, 1fr) 46px !important;
-    align-items: center !important;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
-    color: #dbe7f5 !important;
-    opacity: 1 !important;
-  }
-
-  .tm-pro-product-card .tm-pro-module-row span:first-child {
-    color: #dbe7f5 !important;
-    -webkit-text-fill-color: #dbe7f5 !important;
-    font-weight: 850 !important;
-    opacity: 1 !important;
-  }
-
-  .tm-pro-product-card .tm-pro-module-row:first-child span:first-child {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    font-weight: 950 !important;
-  }
-
-  /* Right-side indicators */
-  .tm-pro-product-card .tm-pro-module-line {
-    justify-self: end;
-    width: 42px !important;
-    height: 6px !important;
-    background: #dbe7f5 !important;
-    opacity: 1 !important;
-  }
-
-  .tm-pro-product-card .tm-pro-module-mark {
-    justify-self: end;
-    background: #f97316 !important;
-    opacity: 1 !important;
-  }
-
-  /* Footer alignment */
-  .tm-pro-product-card .tm-pro-module-footer {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto !important;
-    align-items: center !important;
-    gap: 12px !important;
-    min-height: 58px;
-    margin-top: 0 !important;
-    padding: 11px 14px !important;
-    border-top: 1px solid rgba(148, 163, 184, 0.18) !important;
-    background:
-      linear-gradient(180deg, #182537 0%, #121d2c 100%) !important;
-  }
-
-  .tm-pro-product-card .tm-pro-module-footer > span:first-child {
-    justify-self: start;
-    align-self: center;
-    color: #94a3b8 !important;
-    -webkit-text-fill-color: #94a3b8 !important;
-    opacity: 1 !important;
-  }
-
-  .tm-pro-product-card .tm-pro-module-action {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    justify-self: end;
-    align-self: center;
-    min-width: 64px;
-    min-height: 32px !important;
-    margin: 0 !important;
-    padding: 0 11px !important;
-    border: 1px solid rgba(249, 115, 22, 0.45) !important;
-    border-radius: 8px !important;
-    background:
-      linear-gradient(180deg, #fb923c 0%, #f97316 100%) !important;
-    color: #111827 !important;
-    -webkit-text-fill-color: #111827 !important;
-    font-size: 0.72rem !important;
-    font-weight: 950 !important;
-    line-height: 1 !important;
-    opacity: 1 !important;
-  }
-
-  /* Do not excessively dim the cards */
-  .tm-pro-carousel-slide {
-    opacity: 0.78 !important;
-  }
-
-  .tm-pro-carousel-slide.is-active {
-    opacity: 1 !important;
-  }
-
-  @media (max-width: 640px) {
-    .tm-pro-product-card {
-      min-height: 248px !important;
-    }
-
-    .tm-pro-product-card .tm-pro-module-row span:first-child {
-      font-size: 0.86rem !important;
-    }
-
-    .tm-pro-product-card .tm-pro-module-footer {
-      min-height: 56px;
-      padding: 10px 12px !important;
-    }
-  }
-
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-landing">
-  <header class="tm-pro-landing-header">
-    <div class="tm-pro-landing-header__inner">
-      <a class="tm-pro-brand" href="/" aria-label="TorqueMech Home">
+<section class="tm-pro-home">
+  <header class="tm-pro-header">
+    <div class="tm-pro-wrap tm-pro-header__inner">
+      <a class="tm-pro-brand" href="/pro/home-preview" aria-label="TorqueMech Pro preview home">
         <span>Torque</span><span>Mech</span>
       </a>
-      <nav class="tm-pro-header-actions" aria-label="TorqueMech">
-        {% if request.state.current_user %}
-          {% set greeting_name = request.state.current_user.first_name or request.state.current_shop.shop_name or 'there' %}
-          <span class="tm-pro-landing-link">Hello, {{ greeting_name }}</span>
-          <form method="post" action="/logout" style="margin:0;">
-            <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-            <button class="tm-pro-landing-link" type="submit" style="cursor:pointer;">Log Out</button>
-          </form>
-        {% else %}
-          <a class="tm-pro-landing-link" href="/login">Log In</a>
-          <a class="tm-pro-landing-btn" href="/signup">Sign Up</a>
-        {% endif %}
+
+      <nav class="tm-pro-nav" aria-label="Preview navigation">
+        <a class="tm-pro-nav__link" href="#workflow">How It Works</a>
+        <a class="tm-pro-nav__link" href="#pricing">Pricing</a>
+        <a class="tm-pro-btn tm-pro-btn--secondary" href="/login">Log In</a>
+        <a class="tm-pro-btn tm-pro-btn--primary" href="/signup">Sign Up</a>
       </nav>
     </div>
   </header>
 
-  <section class="tm-pro-landing-section tm-pro-hero" aria-label="TorqueMech welcome">
-    <div class="tm-pro-hero-copy">
-      <div class="tm-pro-eyebrow">TorqueMech Pro</div>
-      <h1>Turn on a simpler shop workflow.</h1>
-      <p>Create estimates, manage repairs, send customer-ready PDFs, and keep every vehicle&rsquo;s history organized &mdash; without complicated shop software.</p>
-      {% if not request.state.current_user %}
-      <div class="tm-pro-explore">
-        <a class="tm-pro-landing-btn" href="/">Get Started</a>
-        <span class="tm-pro-explore__note">Try the guided estimator — no account required.</span>
-      </div>
-      {% endif %}
-      <div class="tm-pro-hero-actions">
-        <div>
-          {% if request.state.current_user %}
-            <a class="tm-pro-landing-btn" href="/pro/dashboard">Open Command Center</a>
-          {% else %}
-            <a class="tm-pro-landing-btn" href="/signup">Start 14-Day Free Trial</a>
-          {% endif %}
+  <main>
+    <section class="tm-pro-wrap tm-pro-hero" aria-labelledby="tm-pro-title">
+      <div class="tm-pro-hero-copy">
+        <div class="tm-pro-eyebrow">Built for independent mechanics</div>
+
+        <h1 id="tm-pro-title">
+          <span class="tm-pro-hero-line tm-pro-hero-line--1">Everything your</span>
+          <span class="tm-pro-hero-line tm-pro-hero-line--2">shop needs,</span>
+          <span class="tm-pro-hero-line tm-pro-hero-line--3">connected in</span>
+          <span class="tm-pro-hero-line tm-pro-hero-line--4 tm-pro-gradient-text">one workflow.</span>
+        </h1>
+
+        <p class="tm-pro-hero__lead">
+          Estimates, approvals, repairs, parts, invoices, and follow-ups — all in one place.
+        </p>
+
+        {% if not request.state.current_user %}
+        <div class="tm-pro-hero__actions">
+          <a class="tm-pro-btn tm-pro-btn--primary" href="/signup">
+            Start 14-Day Free Trial
+          </a>
         </div>
-        <a class="tm-pro-landing-btn tm-pro-landing-btn--secondary" href="#how-it-works">See How It Works</a>
-      </div>
-      {% if not request.state.current_user %}
-      <div class="tm-pro-offer" aria-label="TorqueMech Pro trial and pricing">
-        <span class="tm-pro-offer__promise">Try it free first. Subscribe later if it fits your shop.</span>
-        <span class="tm-pro-offer__price">TorqueMech Pro Solo — $29/month</span>
-      </div>
-      {% endif %}
-    </div>
 
-    <aside class="tm-pro-workflow-stage" aria-label="Workflow preview">
-      <div class="tm-pro-shop-light" aria-hidden="true">
-        <div class="tm-pro-shop-light__shade"></div>
+        <p class="tm-pro-hero__offer">
+          14 days free · $29/month after · No commitment
+        </p>
+        {% endif %}
       </div>
-      <div class="tm-pro-light-glow" aria-hidden="true"></div>
-      <div class="tm-pro-workflow-card">
-        {% set flow_items = [
-          ("Estimate Ready", "Quote built"),
-          ("Customer Approved", "Decision saved"),
-          ("Repair In Progress", "Work tracked"),
-          ("Invoice Saved", "PDF ready"),
-          ("History Updated", "Timeline clean")
-        ] %}
-        {% for label, meta in flow_items %}
-        <div class="tm-pro-flow-pill">
-          <span class="tm-pro-flow-dot" aria-hidden="true"></span>
-          <strong>{{ label }}</strong>
-          <span>{{ meta }}</span>
+    </section>
+
+    <section class="tm-pro-section" id="workflow">
+      <div class="tm-pro-wrap">
+        <div class="tm-pro-section-head tm-pro-section-head--center">
+          <h2>One job. One connected flow.</h2>
         </div>
-        {% endfor %}
-      </div>
-      <div class="tm-pro-light-note">Workflow on <span>without extra software weight</span></div>
-    </aside>
-  </section>
 
-  <div class="tm-pro-light-section">
-    <section class="tm-pro-landing-section" aria-label="TorqueMech product areas">
-      <div class="tm-pro-section-head">
-        <h2>Clean tools for daily repair work.</h2>
-        <p>Swipe through the workflow: estimates, customers, repairs, PDFs, and history.</p>
+        {% set workflow = ["Customer", "Vehicle", "Estimate", "Approval", "Repair", "Invoice", "Follow-up"] %}
+        <div class="tm-pro-workflow" aria-label="TorqueMech connected workflow">
+          {% for item in workflow %}
+          <span class="tm-pro-flow">{{ item }}</span>
+          {% endfor %}
+        </div>
       </div>
+    </section>
 
-      <div class="tm-pro-product-preview" data-tm-carousel aria-label="TorqueMech interface previews">
-        {% set product_cards = [
-          ("estimate", "Estimate Builder", "Ready", ["Brake Pads Replacement", "Labor 1.2 hrs", "Parts $89.99", "PDF Ready"], "Estimate", "Review"),
-          ("customer", "Customer Profile", "Active", ["John Smith", "2012 Toyota Camry", "3 saved records", "Follow-up available"], "Customer", "Open"),
-          ("repair", "Repair Workspace", "In Progress", ["Approved Work", "Brake Repair", "Final Inspection", "Ready to Complete"], "Repair", "View"),
-          ("maintenance", "Maintenance Follow-Up", "Due Soon", ["Oil Change", "Tire Rotation", "30-day follow-up", "Customer reminder"], "Maintenance", "Queue"),
-          ("pdf", "Customer PDF", "Generated", ["Estimate #10045", "Customer Copy", "Signature Line", "Download PDF"], "PDF", "Send"),
-          ("timeline", "Vehicle Timeline", "Updated", ["Estimate Created", "Customer Approved", "Invoice Saved", "History Updated"], "History", "View")
-        ] %}
-        <div class="tm-pro-carousel-shell">
-          <button class="tm-pro-carousel-arrow tm-pro-carousel-arrow--prev" type="button" aria-label="Previous preview" data-tm-carousel-prev>&lsaquo;</button>
-          <div class="tm-pro-carousel-track" tabindex="0" data-tm-carousel-track aria-label="Swipe through TorqueMech previews">
-            {% for key, title, status, rows, label, action in product_cards %}
-            <div class="tm-pro-carousel-slide{% if loop.first %} is-active{% endif %}" data-tm-carousel-slide data-title="{{ title }}" id="tm-carousel-{{ key }}">
-              <div class="tm-pro-preview-panel">
-                <article class="tm-pro-product-card" style="--tm-card-index: {{ loop.index0 }};">
-                  <div class="tm-pro-module-header">
-                    <h3>{{ title }}</h3>
-                    <span class="tm-pro-module-chip">{{ status }}</span>
-                  </div>
-                  <div class="tm-pro-module-body">
-                    {% for row in rows %}
-                    <div class="tm-pro-module-row">
-                      <span>{{ row }}</span>
-                      {% if loop.first %}
-                      <span class="tm-pro-module-mark" aria-hidden="true"></span>
-                      {% else %}
-                      <span class="tm-pro-module-line" aria-hidden="true"></span>
-                      {% endif %}
-                    </div>
-                    {% endfor %}
-                  </div>
-                  <div class="tm-pro-module-footer">
-                    <span>{{ label }}</span>
-                    <span class="tm-pro-module-action">{{ action }}</span>
-                  </div>
-                </article>
+    <section class="tm-pro-section">
+      <div class="tm-pro-wrap">
+        <div class="tm-pro-section-head">
+          <h2>Built for everyday repair work.</h2>
+        </div>
+
+        <div class="tm-pro-product-preview" data-tm-carousel>
+          <div class="tm-pro-carousel-shell">
+            <button
+              class="tm-pro-carousel-arrow tm-pro-carousel-arrow--prev"
+              type="button"
+              aria-label="Previous benefit"
+              data-tm-carousel-prev
+            >
+              ‹
+            </button>
+
+            <button
+              class="tm-pro-carousel-arrow tm-pro-carousel-arrow--next"
+              type="button"
+              aria-label="Next benefit"
+              data-tm-carousel-next
+            >
+              ›
+            </button>
+            <div class="tm-pro-carousel-track" tabindex="0" data-tm-carousel-track aria-label="Swipe through TorqueMech benefits">
+              <div class="tm-pro-carousel-slide is-active" data-tm-carousel-slide data-title="Organize every job">
+                <div class="tm-pro-preview-panel">
+                  <article class="tm-pro-benefit-card">
+                    <span class="tm-pro-value__icon" aria-hidden="true">01</span>
+                    <h3>Organize every job</h3>
+                    <p>Keep customers, vehicles, estimates, repairs, and invoices connected.</p>
+                  </article>
+                </div>
+              </div>
+
+              <div class="tm-pro-carousel-slide" data-tm-carousel-slide data-title="Build customer trust">
+                <div class="tm-pro-preview-panel">
+                  <article class="tm-pro-benefit-card">
+                    <span class="tm-pro-value__icon" aria-hidden="true">02</span>
+                    <h3>Build customer trust</h3>
+                    <p>Share clear estimates, photos, approvals, and professional PDFs.</p>
+                  </article>
+                </div>
+              </div>
+
+              <div class="tm-pro-carousel-slide" data-tm-carousel-slide data-title="Find parts faster">
+                <div class="tm-pro-preview-panel">
+                  <article class="tm-pro-benefit-card">
+                    <span class="tm-pro-value__icon" aria-hidden="true">03</span>
+                    <h3>Find parts faster</h3>
+                    <p>Search trusted parts sources directly from the repair workflow.</p>
+                  </article>
+                </div>
+              </div>
+
+              <div class="tm-pro-carousel-slide" data-tm-carousel-slide data-title="Capture future work">
+                <div class="tm-pro-preview-panel">
+                  <article class="tm-pro-benefit-card">
+                    <span class="tm-pro-value__icon" aria-hidden="true">04</span>
+                    <h3>Capture future work</h3>
+                    <p>Keep deferred repairs, maintenance, appointments, and follow-ups visible.</p>
+                  </article>
+                </div>
               </div>
             </div>
-            {% endfor %}
           </div>
-          <button class="tm-pro-carousel-arrow tm-pro-carousel-arrow--next" type="button" aria-label="Next preview" data-tm-carousel-next>&rsaquo;</button>
-        </div>
-        <div class="tm-pro-carousel-nav" aria-label="Carousel position">
-          <div class="tm-pro-carousel-dots">
-            {% for key, title, status, rows, label, action in product_cards %}
-            <button class="tm-pro-carousel-dot{% if loop.first %} is-active{% endif %}" type="button" aria-label="Show {{ title }}" aria-current="{{ 'true' if loop.first else 'false' }}" data-tm-carousel-dot="{{ loop.index0 }}"></button>
-            {% endfor %}
-          </div>
-          <div class="tm-pro-carousel-label" data-tm-carousel-label>Estimate Builder</div>
-        </div>
-      </div>
-    </section>
 
-    <section class="tm-pro-landing-section tm-pro-steps" id="how-it-works" aria-label="How TorqueMech Works">
-      <div class="tm-pro-section-head">
-        <h2>From quote to completed repair.</h2>
-        <p>TorqueMech keeps each step connected, so the job does not get lost between estimate, approval, repair, and invoice.</p>
-      </div>
-      {% set workflow_steps = [
-        ("01", "Price the job", "Build a clean estimate with labor, parts, notes, and customer-ready pricing."),
-        ("02", "Get approval", "Move approved work forward and keep declined or deferred work organized."),
-        ("03", "Finish the repair", "Track active repairs, completion status, and final invoice details."),
-        ("04", "Save the history", "Every estimate, invoice, repair, and follow-up stays with the vehicle.")
-      ] %}
-      <div class="tm-pro-step-carousel" data-tm-carousel aria-label="TorqueMech repair workflow">
-        <div class="tm-pro-carousel-shell">
-          <button class="tm-pro-carousel-arrow tm-pro-carousel-arrow--prev" type="button" aria-label="Previous workflow step" data-tm-carousel-prev>&lsaquo;</button>
-          <div class="tm-pro-carousel-track" tabindex="0" data-tm-carousel-track aria-label="Swipe through workflow steps">
-            {% for number, title, body in workflow_steps %}
-            <div class="tm-pro-carousel-slide tm-pro-step-slide{% if loop.first %} is-active{% endif %}" data-tm-carousel-slide data-title="{{ title }}" id="tm-workflow-carousel-{{ loop.index0 }}">
-              <article class="tm-pro-step-card">
-                <div class="tm-pro-step-number">{{ number }}</div>
-                <h3>{{ title }}</h3>
-                <p>{{ body }}</p>
-              </article>
+          <div class="tm-pro-carousel-nav" aria-label="Benefit carousel position">
+            <div class="tm-pro-carousel-dots">
+              <button class="tm-pro-carousel-dot is-active" type="button" aria-label="Show Organize every job" aria-current="true" data-tm-carousel-dot="0"></button>
+              <button class="tm-pro-carousel-dot" type="button" aria-label="Show Build customer trust" aria-current="false" data-tm-carousel-dot="1"></button>
+              <button class="tm-pro-carousel-dot" type="button" aria-label="Show Find parts faster" aria-current="false" data-tm-carousel-dot="2"></button>
+              <button class="tm-pro-carousel-dot" type="button" aria-label="Show Capture future work" aria-current="false" data-tm-carousel-dot="3"></button>
             </div>
-            {% endfor %}
+            <div class="tm-pro-carousel-label" data-tm-carousel-label>Organize every job</div>
           </div>
-          <button class="tm-pro-carousel-arrow tm-pro-carousel-arrow--next" type="button" aria-label="Next workflow step" data-tm-carousel-next>&rsaquo;</button>
-        </div>
-        <div class="tm-pro-carousel-nav" aria-label="Workflow carousel position">
-          <div class="tm-pro-carousel-dots">
-            {% for number, title, body in workflow_steps %}
-            <button class="tm-pro-carousel-dot{% if loop.first %} is-active{% endif %}" type="button" aria-label="Show {{ title }}" aria-current="{{ 'true' if loop.first else 'false' }}" data-tm-carousel-dot="{{ loop.index0 }}"></button>
-            {% endfor %}
-          </div>
-          <div class="tm-pro-carousel-label" data-tm-carousel-label>Price the job</div>
         </div>
       </div>
     </section>
 
-    <section class="tm-pro-landing-section" style="padding-bottom:44px;" aria-label="TorqueMech benefits">
-      <div class="tm-pro-final-cta tm-pro-final-cta--trust">
-        <div>
-          <h2>Built for real repair work.</h2>
-          <p>
-            Keep customer details, estimates, approvals, repairs, invoices,
-            and vehicle history connected in one place.
-          </p>
-        </div>
+    <section class="tm-pro-section" id="pricing">
+      <div class="tm-pro-wrap">
+        <article class="tm-pro-price-card">
+          <div class="tm-pro-price-card__name">TorqueMech Pro</div>
+          <div class="tm-pro-price"><strong>$29</strong><span>/ month</span></div>
+          <p>14-day free trial.</p>
 
-        <div class="tm-pro-trust-badges" aria-label="TorqueMech benefits">
-          <span class="tm-pro-trust-badge">
-            <span class="tm-pro-trust-dot" aria-hidden="true"></span>
-            No complicated setup
-          </span>
+          <a class="tm-pro-btn tm-pro-btn--primary" href="/pro/plan">View Plan Details</a>
 
-          <span class="tm-pro-trust-badge">
-            <span class="tm-pro-trust-dot" aria-hidden="true"></span>
-            Customer-ready PDFs
-          </span>
-
-          <span class="tm-pro-trust-badge">
-            <span class="tm-pro-trust-dot" aria-hidden="true"></span>
-            Organized repair history
-          </span>
-        </div>
+          <span class="tm-pro-price-note">No commitment · Cancel anytime</span>
+        </article>
       </div>
     </section>
-  </div>
+  </main>
 </section>
 
 <script>
   (function () {
-    var carousels = Array.prototype.slice.call(document.querySelectorAll("[data-tm-carousel]"));
+    var carousel = document.querySelector("[data-tm-carousel]");
+    if (!carousel) return;
 
-    carousels.forEach(function (carousel) {
-      var track = carousel.querySelector("[data-tm-carousel-track]");
-      var slides = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-slide]"));
-      var dots = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-dot]"));
-      var label = carousel.querySelector("[data-tm-carousel-label]");
-      var prev = carousel.querySelector("[data-tm-carousel-prev]");
-      var next = carousel.querySelector("[data-tm-carousel-next]");
-      var activeIndex = 0;
-      var scrollTimer = 0;
+    var track = carousel.querySelector("[data-tm-carousel-track]");
+    var slides = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-slide]"));
+    var dots = Array.prototype.slice.call(carousel.querySelectorAll("[data-tm-carousel-dot]"));
+    var label = carousel.querySelector("[data-tm-carousel-label]");
+    var previousButton = carousel.querySelector("[data-tm-carousel-prev]");
+    var nextButton = carousel.querySelector("[data-tm-carousel-next]");
+    var activeIndex = 0;
+    var scrollFrame = 0;
 
-      if (!track || !slides.length) return;
+    function setActive(index) {
+      activeIndex = Math.max(0, Math.min(index, slides.length - 1));
 
-      function setActive(index) {
-        activeIndex = Math.max(0, Math.min(index, slides.length - 1));
-        slides.forEach(function (slide, slideIndex) {
-          slide.classList.toggle("is-active", slideIndex === activeIndex);
-          slide.setAttribute("aria-hidden", slideIndex === activeIndex ? "false" : "true");
-        });
-        dots.forEach(function (dot, dotIndex) {
-          var isActive = dotIndex === activeIndex;
-          dot.classList.toggle("is-active", isActive);
-          dot.setAttribute("aria-current", isActive ? "true" : "false");
-        });
-        if (label && slides[activeIndex]) {
-          label.textContent = slides[activeIndex].getAttribute("data-title") || "";
+      slides.forEach(function (slide, slideIndex) {
+        slide.classList.toggle("is-active", slideIndex === activeIndex);
+        slide.setAttribute("aria-hidden", slideIndex === activeIndex ? "false" : "true");
+      });
+
+      dots.forEach(function (dot, dotIndex) {
+        var isActive = dotIndex === activeIndex;
+        dot.classList.toggle("is-active", isActive);
+        dot.setAttribute("aria-current", isActive ? "true" : "false");
+      });
+
+      if (label && slides[activeIndex]) {
+        label.textContent = slides[activeIndex].getAttribute("data-title") || "";
+      }
+      if (previousButton) {
+        previousButton.disabled = activeIndex === 0;
+      }
+
+      if (nextButton) {
+        nextButton.disabled = activeIndex === slides.length - 1;
+      }
+
+    }
+
+    function nearestSlideIndex() {
+      var trackRect = track.getBoundingClientRect();
+      var center = trackRect.left + trackRect.width / 2;
+      var closestIndex = 0;
+      var closestDistance = Infinity;
+
+      slides.forEach(function (slide, index) {
+        var rect = slide.getBoundingClientRect();
+        var distance = Math.abs((rect.left + rect.width / 2) - center);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = index;
         }
-      }
+      });
 
-      function scrollToSlide(index) {
-        var slide = slides[Math.max(0, Math.min(index, slides.length - 1))];
-        if (!slide) return;
-        slide.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-        setActive(slides.indexOf(slide));
-      }
+      return closestIndex;
+    }
 
-      function nearestSlideIndex() {
-        var trackRect = track.getBoundingClientRect();
-        var center = trackRect.left + trackRect.width / 2;
-        var closestIndex = 0;
-        var closestDistance = Infinity;
-        slides.forEach(function (slide, index) {
-          var rect = slide.getBoundingClientRect();
-          var distance = Math.abs(rect.left + rect.width / 2 - center);
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = index;
-          }
-        });
-        return closestIndex;
-      }
+    function scrollToSlide(index) {
+      var slide = slides[Math.max(0, Math.min(index, slides.length - 1))];
+      if (!slide) return;
+      slide.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      setActive(slides.indexOf(slide));
+    }
 
-      if (prev) {
-        prev.addEventListener("click", function () {
+    dots.forEach(function (dot, index) {
+      dot.addEventListener("click", function () {
+        scrollToSlide(index);
+      });
+    });
+
+    if (previousButton) {
+        previousButton.addEventListener("click", function () {
           scrollToSlide(activeIndex - 1);
         });
       }
 
-      if (next) {
-        next.addEventListener("click", function () {
+      if (nextButton) {
+        nextButton.addEventListener("click", function () {
           scrollToSlide(activeIndex + 1);
         });
       }
 
-      dots.forEach(function (dot, index) {
-        dot.addEventListener("click", function () {
-          scrollToSlide(index);
-        });
-      });
+    function syncActiveSlide() {
+      scrollFrame = 0;
+      setActive(nearestSlideIndex());
+    }
 
-      track.addEventListener("scroll", function () {
-        window.clearTimeout(scrollTimer);
-        scrollTimer = window.setTimeout(function () {
-          setActive(nearestSlideIndex());
-        }, 80);
-      }, { passive: true });
+    track.addEventListener("scroll", function () {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(syncActiveSlide);
+    }, { passive: true });
 
-      track.addEventListener("keydown", function (event) {
-        if (event.key === "ArrowLeft") {
-          event.preventDefault();
-          scrollToSlide(activeIndex - 1);
-        }
-        if (event.key === "ArrowRight") {
-          event.preventDefault();
-          scrollToSlide(activeIndex + 1);
-        }
-      });
+    track.addEventListener("touchmove", function () {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(syncActiveSlide);
+    }, { passive: true });
 
-      setActive(0);
+    track.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        scrollToSlide(activeIndex - 1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        scrollToSlide(activeIndex + 1);
+      }
+    });
+
+    requestAnimationFrame(function () {
+      setActive(nearestSlideIndex());
     });
   })();
 </script>

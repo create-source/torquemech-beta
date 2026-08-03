@@ -13558,6 +13558,646 @@ def pro_welcome(request: Request):
     )
 
 
+@router.get("/plan", response_class=HTMLResponse)
+def pro_plan_details(request: Request):
+    return templates.TemplateResponse(
+        "pro_plan_details.html",
+        {
+            "request": request,
+        },
+    )
+
+DEMO_WORKSPACE_WARNING = "Demo workspace \u2014 changes cannot be saved."
+DEMO_DETAIL_WARNING = "Demo only \u2014 changes cannot be saved."
+
+DEMO_SHOP_RECORDS: dict[str, dict[str, Any]] = {
+    "2018-honda-accord-front-brake-service": {
+        "type": "Repair workflow",
+        "title": "2018 Honda Accord - Front brake service",
+        "stage": "Customer Approved / Ready for Repair",
+        "status": "Ready for repair",
+        "customer": "Elena Brooks",
+        "vehicle": "2018 Honda Accord EX, 72,410 miles",
+        "subtitle": "Approved brake work ready for handoff",
+        "detail_fields": [
+            ("Vehicle", "2018 Honda Accord"),
+            ("Service", "Front brake service"),
+            ("Concern", "Brake pedal pulse and front-end squeal"),
+            ("Approved work", "Front pads, front rotors, hardware, road test"),
+            ("Estimate", "$642.80"),
+            ("Customer decision", "Approved"),
+            ("Status", "Ready for repair"),
+        ],
+        "actions": [
+            {"label": "View Approved Estimate", "href": "/pro/demo/2018-honda-accord-front-brake-service/approved-estimate.pdf", "style": "primary"},
+            {"label": "Open Repair Handoff Preview", "href": "/pro/demo/2018-honda-accord-front-brake-service/repair-handoff", "style": "secondary"},
+        ],
+    },
+    "2016-ford-f-150-cooling-system-concern": {
+        "type": "Repair workflow",
+        "title": "2016 Ford F-150 - Cooling-system concern",
+        "stage": "Prepared Estimate / Awaiting Customer Decision",
+        "status": "Awaiting decision",
+        "customer": "Marcus Hill",
+        "vehicle": "2016 Ford F-150 XLT 5.0L, 108,220 miles",
+        "subtitle": "Cooling estimate ready for customer review",
+        "detail_fields": [
+            ("Vehicle", "2016 Ford F-150"),
+            ("Concern", "Coolant smell and temperature rise while towing"),
+            ("Recommendation", "Water pump, thermostat, and coolant service"),
+            ("Estimate amount", "$884.25"),
+            ("Status", "Awaiting decision"),
+        ],
+        "actions": [
+            {"label": "Generate Estimate PDF", "href": "/pro/demo/2016-ford-f-150-cooling-system-concern/estimate.pdf", "style": "primary"},
+        ],
+    },
+    "2020-toyota-camry-alternator-replacement": {
+        "type": "Repair workflow",
+        "title": "2020 Toyota Camry - Alternator replacement",
+        "stage": "Repair Completed / Ready to Invoice",
+        "status": "Ready to invoice",
+        "customer": "Priya Nair",
+        "vehicle": "2020 Toyota Camry SE, 64,880 miles",
+        "subtitle": "Completed repair ready for final invoice",
+        "detail_fields": [
+            ("Vehicle", "2020 Toyota Camry"),
+            ("Completed service", "Alternator replacement"),
+            ("Labor", "$240.00"),
+            ("Parts", "$426.00"),
+            ("Tax", "$53.40"),
+            ("Total", "$719.40"),
+            ("Payment status", "Unpaid"),
+            ("Status", "Ready to invoice"),
+        ],
+        "actions": [
+            {"label": "Generate Final Invoice PDF", "href": "/pro/demo/2020-toyota-camry-alternator-replacement/invoice.pdf", "style": "primary"},
+        ],
+    },
+    "2014-chevrolet-silverado-misfire-diagnosis": {
+        "type": "Repair workflow",
+        "title": "2014 Chevrolet Silverado - Misfire diagnosis",
+        "stage": "Repair In Progress",
+        "status": "In progress",
+        "customer": "Owen Carter",
+        "vehicle": "2014 Chevrolet Silverado 1500 5.3L, 132,560 miles",
+        "subtitle": "Parts staged while ignition repair is underway",
+        "detail_fields": [
+            ("Vehicle", "2014 Chevrolet Silverado"),
+            ("Concern", "Flashing check-engine light and rough idle"),
+            ("Diagnosis", "Cylinder 4 ignition misfire"),
+            ("Repair status", "In progress"),
+            ("Parts status", "Coil and plugs staged"),
+            ("Current next step", "Install parts and road test"),
+        ],
+        "actions": [
+            {"label": "Open Repair Workspace Preview", "href": "/pro/demo/2014-chevrolet-silverado-misfire-diagnosis/repair-workspace", "style": "primary"},
+        ],
+    },
+    "appointment-maria-lopez": {
+        "type": "Appointment",
+        "title": "Maria Lopez",
+        "stage": "Confirmed appointment",
+        "status": "Confirmed",
+        "customer": "Maria Lopez",
+        "vehicle": "2019 Nissan Rogue, 51,300 miles",
+        "subtitle": "9:00 AM confirmed brake inspection",
+        "detail_fields": [
+            ("Customer", "Maria Lopez"),
+            ("Vehicle", "2019 Nissan Rogue"),
+            ("Mileage", "51,300 miles"),
+            ("Service", "Brake noise inspection"),
+            ("Date/time", "Today, 9:00 AM"),
+            ("Status", "Confirmed"),
+        ],
+        "actions": [{"label": "View Confirmed Appointment", "href": "/pro/demo/appointment-maria-lopez/appointment-summary", "style": "primary"}],
+    },
+    "appointment-daniel-kim": {
+        "type": "Appointment",
+        "title": "Daniel Kim",
+        "stage": "New booking request",
+        "status": "Requested",
+        "customer": "Daniel Kim",
+        "vehicle": "2017 Subaru Outback, 88,940 miles",
+        "subtitle": "New oil leak request needs review",
+        "detail_fields": [
+            ("Customer", "Daniel Kim"),
+            ("Vehicle", "2017 Subaru Outback"),
+            ("Requested service", "Oil leak inspection"),
+            ("Requested date/time", "Today, 11:30 AM"),
+            ("Short note", "Driveway spots after a highway trip"),
+            ("Status", "Requested"),
+        ],
+        "actions": [{"label": "Review Booking Request", "href": "/pro/demo/appointment-daniel-kim/booking-request", "style": "primary"}],
+    },
+    "appointment-jordan-reed": {
+        "type": "Appointment",
+        "title": "Jordan Reed",
+        "stage": "Scheduled maintenance visit",
+        "status": "Scheduled",
+        "customer": "Jordan Reed",
+        "vehicle": "2021 Hyundai Elantra, 39,120 miles",
+        "subtitle": "2:00 PM scheduled maintenance visit",
+        "detail_fields": [
+            ("Customer", "Jordan Reed"),
+            ("Vehicle", "2021 Hyundai Elantra"),
+            ("Mileage", "39,120 miles"),
+            ("Service", "Oil service and tire rotation"),
+            ("Date/time", "Today, 2:00 PM"),
+            ("Status", "Scheduled"),
+        ],
+        "actions": [{"label": "Open Appointment Preview", "href": "/pro/demo/appointment-jordan-reed/appointment-preview", "style": "primary"}],
+    },
+    "deferred-tire-replacement": {
+        "type": "Follow-up opportunity",
+        "title": "Deferred tire replacement",
+        "status": "Follow up next month",
+        "customer": "Nina Patel",
+        "vehicle": "2018 Mazda CX-5, 69,770 miles",
+        "subtitle": "4 tires deferred after brake approval",
+        "action_label": "View Deferred Work",
+        "detail_fields": [
+            ("Customer", "Nina Patel"),
+            ("Vehicle", "2018 Mazda CX-5"),
+            ("Follow-up type", "Deferred tire replacement"),
+            ("Status", "Follow up next month"),
+            ("Reason", "Front tires measured 3/32 with inside-edge wear."),
+            ("Suggested next step", "Send tire options and recommend an alignment check."),
+        ],
+    },
+    "oil-service-due-soon": {
+        "type": "Follow-up opportunity",
+        "title": "Oil service due soon",
+        "status": "Due soon",
+        "customer": "Avery Chen",
+        "vehicle": "2019 Honda CR-V, 44,520 miles",
+        "subtitle": "Due within 500 miles",
+        "action_label": "View Maintenance Reminder",
+        "detail_fields": [
+            ("Customer", "Avery Chen"),
+            ("Vehicle", "2019 Honda CR-V"),
+            ("Follow-up type", "Maintenance reminder"),
+            ("Status", "Due soon"),
+            ("Reason", "Oil service due within 500 miles."),
+            ("Suggested next step", "Send a maintenance reminder with a scheduling link."),
+        ],
+    },
+    "control-arm-estimate-follow-up": {
+        "type": "Follow-up opportunity",
+        "title": "Control arm estimate",
+        "status": "3 days waiting",
+        "customer": "Sam Rivera",
+        "vehicle": "2016 Jeep Grand Cherokee, 96,480 miles",
+        "subtitle": "Awaiting customer response",
+        "action_label": "View Estimate Follow-up",
+        "detail_fields": [
+            ("Customer", "Sam Rivera"),
+            ("Vehicle", "2016 Jeep Grand Cherokee"),
+            ("Follow-up type", "Estimate follow-up"),
+            ("Status", "3 days waiting"),
+            ("Reason", "Control arm bushing estimate has no decision after three days."),
+            ("Suggested next step", "Send a follow-up with the saved estimate."),
+        ],
+    },
+}
+
+def demo_shop_record_groups() -> dict[str, list[dict[str, Any]]]:
+    keys_by_group = {
+        "repair_workflow": [
+            "2018-honda-accord-front-brake-service",
+            "2016-ford-f-150-cooling-system-concern",
+            "2020-toyota-camry-alternator-replacement",
+            "2014-chevrolet-silverado-misfire-diagnosis",
+        ],
+        "appointments": [
+            "appointment-maria-lopez",
+            "appointment-daniel-kim",
+            "appointment-jordan-reed",
+        ],
+        "follow_ups": [
+            "deferred-tire-replacement",
+            "oil-service-due-soon",
+            "control-arm-estimate-follow-up",
+        ],
+    }
+    return {
+        group: [
+            {
+                **DEMO_SHOP_RECORDS[key],
+                "slug": key,
+                "href": f"/pro/demo/{key}",
+            }
+            for key in keys
+        ]
+        for group, keys in keys_by_group.items()
+    }
+
+
+def demo_shop_template_context(request: Request, record_slug: str | None = None) -> dict[str, Any]:
+    record = DEMO_SHOP_RECORDS.get(record_slug or "") if record_slug else None
+    if record_slug and record is None:
+        raise HTTPException(status_code=404, detail="Demo record not found")
+    return {
+        "request": request,
+        "demo_warning": DEMO_WORKSPACE_WARNING,
+        "demo_detail_warning": DEMO_DETAIL_WARNING,
+        "demo_records": demo_shop_record_groups(),
+        "demo_detail": ({**record, "slug": record_slug} if record else None),
+    }
+
+
+DEMO_PREVIEW_RECORDS: dict[tuple[str, str], dict[str, Any]] = {
+    ("2018-honda-accord-front-brake-service", "repair-handoff"): {
+        "type": "Repair handoff preview",
+        "title": "2018 Honda Accord - Repair handoff preview",
+        "stage": "Approved work handoff",
+        "status": "Ready for repair",
+        "detail_fields": [
+            ("Customer", "Elena Brooks"),
+            ("Vehicle", "2018 Honda Accord"),
+            ("Approved work", "Front pads, front rotors, hardware, road test"),
+            ("Parts status", "Pads, rotors, and hardware staged"),
+            ("Technician note", "Verify hub cleanup and caliper bracket torque."),
+            ("Next step", "Begin repair in bay 2"),
+        ],
+    },
+    ("2014-chevrolet-silverado-misfire-diagnosis", "repair-workspace"): {
+        "type": "Repair workspace preview",
+        "title": "2014 Chevrolet Silverado - Repair workspace preview",
+        "stage": "Active repair workspace",
+        "status": "In progress",
+        "detail_fields": [
+            ("Customer", "Owen Carter"),
+            ("Vehicle", "2014 Chevrolet Silverado"),
+            ("Active job", "Cylinder 4 ignition misfire"),
+            ("Checklist", "Parts staged, repair in progress"),
+            ("Parts", "Ignition coil and spark plugs"),
+            ("Next step", "Install parts, clear codes, road test"),
+        ],
+    },
+    ("appointment-maria-lopez", "appointment-summary"): {
+        "type": "Appointment summary",
+        "title": "Maria Lopez - Confirmed appointment",
+        "stage": "Confirmed appointment summary",
+        "status": "Confirmed",
+        "detail_fields": [
+            ("Customer", "Maria Lopez"),
+            ("Vehicle", "2019 Nissan Rogue"),
+            ("Mileage", "51,300 miles"),
+            ("Service", "Brake noise inspection"),
+            ("Date/time", "Today, 9:00 AM"),
+            ("Check-in note", "Customer waiting for inspection result"),
+        ],
+    },
+    ("appointment-daniel-kim", "booking-request"): {
+        "type": "Booking request preview",
+        "title": "Daniel Kim - Booking request",
+        "stage": "New request review",
+        "status": "Requested",
+        "detail_fields": [
+            ("Customer", "Daniel Kim"),
+            ("Vehicle", "2017 Subaru Outback"),
+            ("Requested service", "Oil leak inspection"),
+            ("Requested date/time", "Today, 11:30 AM"),
+            ("Customer note", "Driveway spots after a highway trip"),
+            ("Next step", "Confirm time or propose an alternate"),
+        ],
+    },
+    ("appointment-jordan-reed", "appointment-preview"): {
+        "type": "Appointment preview",
+        "title": "Jordan Reed - Scheduled maintenance",
+        "stage": "Scheduled maintenance preview",
+        "status": "Scheduled",
+        "detail_fields": [
+            ("Customer", "Jordan Reed"),
+            ("Vehicle", "2021 Hyundai Elantra"),
+            ("Mileage", "39,120 miles"),
+            ("Service", "Oil service and tire rotation"),
+            ("Date/time", "Today, 2:00 PM"),
+            ("Visit note", "Road-trip check before leaving town"),
+        ],
+    },
+}
+
+
+def demo_preview_template_context(request: Request, record_slug: str, preview_slug: str) -> dict[str, Any]:
+    preview = DEMO_PREVIEW_RECORDS.get((record_slug, preview_slug))
+    if preview is None:
+        raise HTTPException(status_code=404, detail="Demo preview not found")
+    return {
+        "request": request,
+        "demo_warning": DEMO_WORKSPACE_WARNING,
+        "demo_detail_warning": DEMO_DETAIL_WARNING,
+        "demo_records": demo_shop_record_groups(),
+        "demo_detail": {**preview, "slug": record_slug},
+    }
+
+
+DEMO_SHOP_PROFILE: dict[str, Any] = {
+    "shop_name": "TorqueMech Demo Shop",
+    "shop_phone": "(555) 010-2040",
+    "shop_email": "demo@torquemech.example",
+    "shop_address": "100 Sample Service Lane",
+    "shop_city": "Phoenix",
+    "shop_state": "AZ",
+    "shop_zip": "85001",
+}
+
+
+DEMO_PDF_DOCUMENTS: dict[tuple[str, str], dict[str, Any]] = {
+    ("2018-honda-accord-front-brake-service", "approved-estimate"): {
+        "title": "Approved Repair Estimate",
+        "document_no": "DEMO-APP-2018-ACCORD",
+        "customer": {"first_name": "Elena", "last_name": "Brooks", "phone": "(555) 201-1848", "email": "elena@example.test"},
+        "vehicle": {"year": 2018, "make": "Honda", "model": "Accord", "trim": "EX", "mileage": 72410},
+        "items": [
+            {"service_title": "Front brake pads and rotors", "labor_total": 225.00, "parts_total": 357.80, "grand_total": 642.80, "repair_notes": "Customer approved front pads, rotors, hardware, hub cleanup, and road test."},
+        ],
+        "subtotal": 642.80,
+        "tax_total": 0,
+        "total": 642.80,
+        "filename": "torquemech-demo-approved-estimate.pdf",
+        "notice": "Sample document - not a real estimate.",
+    },
+    ("2016-ford-f-150-cooling-system-concern", "estimate"): {
+        "title": "Repair Estimate",
+        "document_no": "DEMO-EST-2016-F150",
+        "customer": {"first_name": "Marcus", "last_name": "Hill", "phone": "(555) 201-1601", "email": "marcus@example.test"},
+        "vehicle": {"year": 2016, "make": "Ford", "model": "F-150", "trim": "XLT 5.0L", "mileage": 108220},
+        "items": [
+            {"service_title": "Water pump replacement", "labor_total": 250.00, "parts_total": 235.00, "grand_total": 485.00, "repair_notes": "Pressure test found seepage from the water pump weep hole."},
+            {"service_title": "Thermostat and gasket", "labor_total": 87.50, "parts_total": 76.75, "grand_total": 164.25, "repair_notes": "Replace thermostat while the cooling system is drained."},
+            {"service_title": "Coolant service", "labor_total": 125.00, "parts_total": 110.00, "grand_total": 235.00, "repair_notes": "Refill, bleed, warm-up check, and leak recheck."},
+        ],
+        "subtotal": 884.25,
+        "tax_total": 0,
+        "total": 884.25,
+        "filename": "torquemech-demo-estimate.pdf",
+        "notice": "Sample document - not a real estimate.",
+    },
+    ("2020-toyota-camry-alternator-replacement", "invoice"): {
+        "invoice": {
+            "id": 2020,
+            "invoice_number": "SAMPLE - DEMO ONLY",
+            "created_at": "2026-08-01",
+            "completion_summary_date": "2026-08-01",
+            "completed_at": "2026-08-01",
+            "repair_mileage": 64880,
+            "labor_total": 240.00,
+            "parts_total": 426.00,
+            "shop_supplies_fee": 0,
+            "tax_total": 53.40,
+            "discount_total": 0,
+            "total": 719.40,
+            "amount_paid": 0,
+            "payment_status": "Unpaid",
+            "completion_notes": "Sample document - not a real invoice. Alternator replacement completed, charging output verified at 14.2 volts.",
+            "final_inspection_notes": "Road test passed and warning lamp stayed off.",
+            "technician_name": "TorqueMech Demo Tech",
+            "items": [
+                {"repair_record_id": 420, "service_title": "Alternator replacement", "qty": 1, "labor_hours": 1.6, "labor_rate": 150, "labor_total": 240.00, "parts_total": 426.00, "grand_total": 666.00, "completion_notes": "Replacement alternator installed and charging system tested."},
+            ],
+        },
+        "customer": {"first_name": "Priya", "last_name": "Nair", "phone": "(555) 201-2020", "email": "priya@example.test"},
+        "vehicle": {"year": 2020, "make": "Toyota", "model": "Camry", "trim": "SE", "mileage": 64880, "vin": "DEMO2020CAMRY", "license_plate": "DEMO20"},
+        "shop_profile": {
+            **DEMO_SHOP_PROFILE,
+            "payment_terms": "SAMPLE - DEMO ONLY. Sample document - not a real invoice.",
+        },
+        "display_options": {
+            **INVOICE_PDF_DEFAULT_OPTIONS,
+            "include_after_service_education": False,
+            "show_final_inspection_notes": True,
+            "show_labor_hours": True,
+            "show_labor_rate": True,
+            "show_labor_total": True,
+            "show_parts_total": True,
+        },
+        "filename": "torquemech-demo-invoice.pdf",
+        "notice": "Sample document - not a real invoice.",
+    },
+}
+
+
+def build_demo_estimate_pdf_bytes(document: dict[str, Any]) -> bytes:
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=letter, pageCompression=0)
+    w, h = letter
+    left = 42
+    right = w - 42
+    c.setTitle(str(document["title"]))
+    shop_lines = invoice_shop_lines(DEMO_SHOP_PROFILE, DEMO_SHOP_PROFILE["shop_name"])
+    vehicle = document["vehicle"]
+    customer = document["customer"]
+    vehicle_title = " ".join(str(vehicle.get(key) or "").strip() for key in ("year", "make", "model", "trim")).strip()
+
+    c.setFillColorRGB(0.04, 0.12, 0.20)
+    c.rect(0, h - 104, w, 104, fill=1, stroke=0)
+    c.setFillColorRGB(0.08, 0.52, 0.50)
+    c.rect(0, h - 106, w, 3, fill=1, stroke=0)
+    c.setFont("Helvetica-Bold", 18)
+    c.setFillColorRGB(1, 1, 1)
+    c.drawString(left, h - 62, "Torque")
+    c.setFillColorRGB(*TORQUEMECH_ORANGE_RGB)
+    c.drawString(left + c.stringWidth("Torque", "Helvetica-Bold", 18), h - 62, "Mech")
+    c.setFont("Helvetica-Bold", 8)
+    c.setFillColorRGB(0.70, 0.86, 0.86)
+    c.drawString(left, h - 88, "CUSTOMER REPAIR ESTIMATE")
+    c.setFillColorRGB(1, 1, 1)
+    c.setFont("Helvetica-Bold", 24)
+    c.drawRightString(right, h - 48, str(document["title"]))
+    c.setFont("Helvetica-Bold", 10)
+    c.drawRightString(right, h - 68, str(document["document_no"]))
+    c.setFont("Helvetica-Bold", 8.5)
+    c.setFillColorRGB(*TORQUEMECH_ORANGE_RGB)
+    c.drawRightString(right, h - 86, "SAMPLE - DEMO ONLY")
+
+    y = h - 128
+    c.setFont("Helvetica-Bold", 9)
+    c.setFillColorRGB(0.34, 0.40, 0.48)
+    c.drawString(left, y, "SHOP")
+    c.drawString(left + 270, y, "ESTIMATE")
+    c.setFillGray(0)
+    y -= 13
+    c.setFont("Helvetica-Bold", 9.5)
+    c.drawString(left, y, shop_lines[0][:48])
+    c.setFont("Helvetica", 8.6)
+    sy = y - 12
+    for line in shop_lines[1:5]:
+        c.drawString(left, sy, line[:62])
+        sy -= 10
+    iy = y
+    for label, value in [("Estimate Date", "August 1, 2026"), ("Estimate Type", "Customer repair estimate"), ("Document Status", "Sample only")]:
+        c.setFillColorRGB(0.38, 0.45, 0.55)
+        c.drawString(left + 270, iy, label)
+        c.setFillGray(0)
+        c.drawRightString(right, iy, value)
+        iy -= 12
+
+    y = h - 202
+    card_h = 82
+    gap = 12
+    card_w = (right - left - gap) / 2
+    pdf_draw_round_rect(c, left, y - card_h, card_w, card_h, fill=(0.965, 0.985, 0.98), stroke=(0.75, 0.86, 0.85))
+    pdf_draw_round_rect(c, left + card_w + gap, y - card_h, card_w, card_h, fill=(0.985, 0.99, 1), stroke=(0.82, 0.87, 0.94))
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColorRGB(0.05, 0.09, 0.16)
+    c.drawString(left + 14, y - 17, "Customer")
+    c.drawString(left + card_w + gap + 14, y - 17, "Vehicle")
+    c.setFont("Helvetica", 9)
+    c.setFillGray(0)
+    c.drawString(left + 14, y - 35, customer_name(customer))
+    c.drawString(left + 14, y - 51, " | ".join(v for v in [format_phone(customer.get("phone")), customer.get("email") or ""] if v)[:48])
+    vx = left + card_w + gap + 14
+    c.drawString(vx, y - 35, vehicle_title[:42])
+    c.drawString(vx, y - 51, f"{format_mileage(vehicle.get('mileage'))} miles")
+    y -= card_h + 28
+
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColorRGB(0.05, 0.09, 0.16)
+    c.drawString(left, y, "Estimated Work")
+    c.setFont("Helvetica", 8.5)
+    c.setFillColorRGB(0.38, 0.45, 0.55)
+    c.drawRightString(right, y, str(document["notice"]))
+    y -= 12
+    c.setFillColorRGB(0.05, 0.09, 0.16)
+    c.roundRect(left, y - 24, right - left, 24, 6, fill=1, stroke=0)
+    c.setFillColorRGB(1, 1, 1)
+    c.setFont("Helvetica-Bold", 7.6)
+    c.drawString(left + 10, y - 15, "Service / Repair Description")
+    c.drawRightString(right - 190, y - 15, "Labor")
+    c.drawRightString(right - 120, y - 15, "Parts")
+    c.drawRightString(right - 10, y - 15, "Estimated Total")
+    y -= 32
+    for index, item in enumerate(document["items"], start=1):
+        row_h = 48
+        c.setFillColorRGB(0.985, 0.99, 1.0) if index % 2 else c.setFillColorRGB(1, 1, 1)
+        c.rect(left, y - row_h, right - left, row_h, fill=1, stroke=0)
+        c.setFont("Helvetica-Bold", 8.6)
+        c.setFillColorRGB(0.05, 0.09, 0.16)
+        c.drawString(left + 10, y - 13, f"{index}. {item['service_title']}")
+        c.setFont("Helvetica", 7.5)
+        c.setFillColorRGB(0.36, 0.42, 0.50)
+        for offset, line in enumerate(pdf_lines(item.get("repair_notes"), 72)[:2]):
+            c.drawString(left + 18, y - 27 - offset * 9, line)
+        c.setFillGray(0)
+        c.setFont("Helvetica", 8.2)
+        c.drawRightString(right - 190, y - 16, pdf_money(item.get("labor_total")))
+        c.drawRightString(right - 120, y - 16, pdf_money(item.get("parts_total")))
+        c.setFont("Helvetica-Bold", 8.4)
+        c.drawRightString(right - 10, y - 16, pdf_money(item.get("grand_total")))
+        y -= row_h
+    y -= 18
+    totals_w = 240
+    totals_x = right - totals_w
+    totals_h = 118
+    pdf_draw_round_rect(c, totals_x, y - totals_h, totals_w, totals_h, fill=(0.94, 0.98, 0.975), stroke=(0.62, 0.78, 0.77))
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColorRGB(0.05, 0.09, 0.16)
+    c.drawString(totals_x + 14, y - 18, "Estimate Totals")
+    ty = y - 40
+    for label, value in [("Estimated Subtotal", document["subtotal"]), ("Tax", document["tax_total"])]:
+        c.setFont("Helvetica", 8.8)
+        c.setFillColorRGB(0.30, 0.36, 0.44)
+        c.drawString(totals_x + 14, ty, label)
+        c.setFillGray(0)
+        c.drawRightString(right - 14, ty, pdf_money(value))
+        ty -= 16
+    c.setStrokeColorRGB(0.58, 0.73, 0.72)
+    c.line(totals_x + 14, ty + 5, right - 14, ty + 5)
+    c.setStrokeGray(0)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(totals_x + 14, ty - 10, "Estimate Total")
+    c.drawRightString(right - 14, ty - 10, pdf_money(document["total"]))
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColorRGB(*TORQUEMECH_ORANGE_RGB)
+    c.drawString(left, y - 24, "SAMPLE - DEMO ONLY")
+    c.setFont("Helvetica", 8.5)
+    c.setFillColorRGB(0.36, 0.42, 0.50)
+    c.drawString(left, y - 42, str(document["notice"]))
+    c.setStrokeColorRGB(0.86, 0.89, 0.93)
+    c.line(left, 58, right, 58)
+    c.setFont("Helvetica-Bold", 7.6)
+    c.setFillColorRGB(0.33, 0.39, 0.47)
+    c.drawString(left, 43, "Generated with TorqueMech")
+    c.setFont("Helvetica", 7.6)
+    c.drawRightString(right, 43, "Pro-style sample PDF")
+    c.save()
+    return buf.getvalue()
+
+
+def build_demo_invoice_pdf_bytes(document: dict[str, Any]) -> bytes:
+    return build_invoice_pdf_bytes(
+        invoice=document["invoice"],
+        customer=document["customer"],
+        vehicle=document["vehicle"],
+        shop_name=document["shop_profile"]["shop_name"],
+        shop_profile=document["shop_profile"],
+        display_options=document["display_options"],
+    )
+
+
+def build_demo_pdf_bytes(document: dict[str, Any], document_type: str) -> bytes:
+    if document_type == "invoice":
+        return build_demo_invoice_pdf_bytes(document)
+    return build_demo_estimate_pdf_bytes(document)
+
+
+def demo_pdf_response(record_slug: str, document_type: str) -> Response:
+    document = DEMO_PDF_DOCUMENTS.get((record_slug, document_type))
+    if document is None:
+        raise HTTPException(status_code=404, detail="Demo PDF not found")
+    return Response(
+        content=build_demo_pdf_bytes(document, document_type),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{document["filename"]}"'},
+    )
+
+
+@router.get("/demo", response_class=HTMLResponse)
+def pro_demo(request: Request):
+    return templates.TemplateResponse(
+        "pro/demo.html",
+        demo_shop_template_context(request),
+    )
+
+
+@router.get("/demo/{record_slug}", response_class=HTMLResponse)
+def pro_demo_detail(request: Request, record_slug: str):
+    return templates.TemplateResponse(
+        "pro/demo.html",
+        demo_shop_template_context(request, record_slug),
+    )
+
+
+@router.get("/demo/{record_slug}/approved-estimate.pdf")
+def pro_demo_approved_estimate_pdf(record_slug: str) -> Response:
+    return demo_pdf_response(record_slug, "approved-estimate")
+
+
+@router.get("/demo/{record_slug}/estimate.pdf")
+def pro_demo_estimate_pdf(record_slug: str) -> Response:
+    if record_slug == "2016-ford-f-150-cooling-system-concern":
+        return RedirectResponse(
+            "/demo-assets/2016-ford-f150-estimate.pdf",
+            status_code=307,
+        )
+
+    return demo_pdf_response(record_slug, "estimate")
+
+
+@router.get("/demo/{record_slug}/invoice.pdf")
+def pro_demo_invoice_pdf(record_slug: str) -> Response:
+    return demo_pdf_response(record_slug, "invoice")
+
+
+@router.get("/demo/{record_slug}/{preview_slug}", response_class=HTMLResponse)
+def pro_demo_preview(request: Request, record_slug: str, preview_slug: str):
+    return templates.TemplateResponse(
+        "pro/demo.html",
+        demo_preview_template_context(request, record_slug, preview_slug),
+    )
+
 @router.get("/dashboard", response_class=HTMLResponse)
 def pro_dashboard(request: Request):
     conn = crm_db_conn()
