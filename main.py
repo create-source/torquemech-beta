@@ -2856,11 +2856,7 @@ async def admin_bootstrap_submit(request: Request):
 def verify_email(request: Request, token: str = ""):
     submitted = str(token or "").strip()
     if not submitted:
-        return templates.TemplateResponse(
-            "verify_email_error.html",
-            {"request": request},
-            status_code=400,
-        )
+        return RedirectResponse("/login?verification=invalid", status_code=303)
     conn = app_db_conn(row_factory=True)
     try:
         ensure_auth_schema(conn)
@@ -2873,38 +2869,18 @@ def verify_email(request: Request, token: str = ""):
         if not user:
             pending_status, pending_user = pending_email_token_result(conn, submitted)
             if pending_status == "used":
-                return templates.TemplateResponse(
-                    "verify_email_error.html",
-                    {
-                        "request": request,
-                        "title": "Email address already updated",
-                        "message": "This verification link has already been used. Your email address has already been updated.",
-                        "action_href": "/account/settings" if current_user(conn, request) else "/login",
-                        "action_label": "Go to Account Settings" if current_user(conn, request) else "Log In",
-                    },
-                    status_code=200,
-                )
+                if current_user(conn, request):
+                    return RedirectResponse("/account/settings", status_code=303)
+                return RedirectResponse("/login?verification=updated", status_code=303)
             if pending_status == "expired":
-                return templates.TemplateResponse(
-                    "verify_email_error.html",
-                    {
-                        "request": request,
-                        "title": "Verification link expired",
-                        "message": "This verification link has expired. Return to Account Settings and request a new verification email.",
-                        "action_href": "/account/settings" if current_user(conn, request) else "/login",
-                        "action_label": "Go to Account Settings" if current_user(conn, request) else "Log In",
-                    },
-                    status_code=400,
-                )
+                if current_user(conn, request):
+                    return RedirectResponse("/account/settings", status_code=303)
+                return RedirectResponse("/login?verification=expired", status_code=303)
             if pending_status == "valid" and pending_user:
                 pending_email = normalize_email(pending_user.get("pending_email"))
                 duplicate_user = load_user_by_email(conn, pending_email) if pending_email else None
                 if duplicate_user and int(duplicate_user["id"]) != int(pending_user["id"]):
-                    return templates.TemplateResponse(
-                        "verify_email_error.html",
-                        {"request": request},
-                        status_code=400,
-                    )
+                    return RedirectResponse("/login?verification=invalid", status_code=303)
                 now = datetime.utcnow().isoformat()
                 conn.execute(
                     """
@@ -2944,11 +2920,7 @@ def verify_email(request: Request, token: str = ""):
                     },
                 )
         if not user:
-            return templates.TemplateResponse(
-                "verify_email_error.html",
-                {"request": request},
-                status_code=400,
-            )
+            return RedirectResponse("/login?verification=invalid", status_code=303)
         now = datetime.utcnow().isoformat()
         conn.execute(
             """
@@ -3078,12 +3050,24 @@ async def resend_verification_email(request: Request):
 
 
 @app.get("/login", response_class=HTMLResponse)
-def login_page(request: Request, next: str = "", reset: str = "", signed_out_all: str = ""):
+def login_page(
+    request: Request,
+    next: str = "",
+    reset: str = "",
+    signed_out_all: str = "",
+    verification: str = "",
+):
     message = ""
     if reset == "success":
         message = "Your password has been reset. You can now sign in."
     elif signed_out_all == "1":
         message = "You have been signed out of all devices."
+    elif verification == "invalid":
+        message = "This verification link has already been used or is no longer valid. Please log in."
+    elif verification == "expired":
+        message = "This verification link has expired. Please log in and request a new verification email."
+    elif verification == "updated":
+        message = "Your email address has already been updated. Please log in."
     return templates.TemplateResponse(
         "login.html",
         {
