@@ -1637,7 +1637,7 @@
 
 {% block content %}
 <section class="tm-pro-shell">
-  <div class="tm-pro-header">
+  <div class="tm-pro-header" data-tour-target="pro-dashboard">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">Command Center</h1>
@@ -1646,35 +1646,6 @@
       </p>
     </div>
   </div>
-
-  <div class="tm-pro-tour-actions">
-    <button class="tm-pro-show-welcome" type="button" data-pro-welcome-show hidden>Show welcome</button>
-  </div>
-
-  <section class="tm-pro-welcome" aria-label="Welcome to TorqueMech Pro" data-pro-welcome data-tour-target="pro-dashboard">
-    <div class="tm-pro-welcome-main">
-      <div class="tm-pro-welcome-copy">
-        <h2>Your mobile mechanic command center.</h2>
-        <p>
-          Manage customers, vehicles, estimates, approvals, active repairs, invoices, maintenance follow-ups,
-          and vehicle history from one organized workspace.
-        </p>
-        <p class="tm-pro-welcome-support">Start with the customer. Build the estimate. Get approval. Complete the repair. Keep the history.</p>
-        <div class="tm-pro-flow-row" aria-label="TorqueMech Pro workflow">
-          <span class="tm-pro-flow-step">Customer</span>
-          <span class="tm-pro-flow-step">Vehicle</span>
-          <span class="tm-pro-flow-step">Estimate</span>
-          <span class="tm-pro-flow-step">Approval</span>
-          <span class="tm-pro-flow-step">Repair</span>
-          <span class="tm-pro-flow-step">Invoice</span>
-          <span class="tm-pro-flow-step">History</span>
-        </div>
-        <div class="tm-pro-welcome-actions" aria-label="Welcome actions">
-          <button class="tm-pro-welcome-dismiss" type="button" data-pro-welcome-dismiss>Got it</button>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <section class="tm-quick-actions" aria-label="Quick actions" data-tour-target="pro-quick-actions">
     <h2>Fast Actions</h2>
@@ -1744,67 +1715,4 @@
   </section>
 </section>
 
-<script>
-  (function () {
-    var storageKey = "torquemechProWelcomeDismissed";
-    var welcome = document.querySelector("[data-pro-welcome]");
-    var dismiss = document.querySelector("[data-pro-welcome-dismiss]");
-    var show = document.querySelector("[data-pro-welcome-show]");
-    var viewWorkflow = document.querySelector("[data-pro-view-workflow]");
-    var workflow = document.getElementById("tm-pro-workflow");
-
-    if (!welcome || !show) return;
-
-    function setWelcomeVisible(isVisible) {
-      welcome.hidden = !isVisible;
-      show.hidden = isVisible;
-    }
-
-    function welcomeDismissed() {
-      try {
-        return localStorage.getItem(storageKey) === "true";
-      } catch (error) {
-        return false;
-      }
-    }
-
-    function rememberDismissed() {
-      try {
-        localStorage.setItem(storageKey, "true");
-      } catch (error) {
-        return;
-      }
-    }
-
-    function clearDismissed() {
-      try {
-        localStorage.removeItem(storageKey);
-      } catch (error) {
-        return;
-      }
-    }
-
-    setWelcomeVisible(!welcomeDismissed());
-
-    if (dismiss) {
-      dismiss.addEventListener("click", function () {
-        rememberDismissed();
-        setWelcomeVisible(false);
-      });
-    }
-
-    show.addEventListener("click", function () {
-      clearDismissed();
-      setWelcomeVisible(true);
-      welcome.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    if (viewWorkflow && workflow) {
-      viewWorkflow.addEventListener("click", function () {
-        workflow.open = true;
-        workflow.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-  })();
-</script>
 {% endblock %}
