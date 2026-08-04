@@ -74,6 +74,8 @@ body{
 
 body{
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
   font-family: var(--tm-font);
   background-color: var(--tm-bg-deep);
   background-image:
@@ -88,6 +90,41 @@ body{
     auto;
   background-attachment: fixed;
   color: var(--tm-text-soft);
+}
+
+body::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(96, 165, 250, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(96, 165, 250, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 12% 10%, rgba(37, 99, 235, 0.10), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgba(249, 115, 22, 0.08), transparent 30%);
+  background-size:
+    42px 42px,
+    42px 42px,
+    auto,
+    auto;
+  background-position:
+    -1px -1px,
+    -1px -1px,
+    center,
+    center;
+  background-attachment: fixed;
+}
+
+body.tm-public-estimate-page::before,
+body.tm-public-estimate-unavailable-page::before{
+  display: none;
+}
+
+@media print{
+  body::before{
+    display: none;
+  }
 }
 
 img{
