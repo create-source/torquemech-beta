@@ -33,11 +33,11 @@
     {% if not shared_id %}
     <div class="tm-card tm-estimator-quickstart" aria-label="Estimator process guide">
       <div class="tm-estimator-quickstart__title">Quote process</div>
-      <div class="tm-estimator-quickstart__steps" aria-label="Select vehicle, add service, enter pricing, create quote">
-        <span><b>1</b> Select vehicle</span>
-        <span><b>2</b> Add service</span>
-        <span><b>3</b> Enter pricing</span>
-        <span><b>4</b> Create quote</span>
+      <div class="tm-estimator-quickstart__steps" aria-label="Vehicle, service, pricing, review">
+        <span class="is-active" data-estimator-step="vehicle"><b>1</b> Vehicle</span>
+        <span data-estimator-step="service"><b>2</b> Service</span>
+        <span data-estimator-step="pricing"><b>3</b> Pricing</span>
+        <span data-estimator-step="review"><b>4</b> Review</span>
       </div>
     </div>
     {% endif %}
@@ -115,8 +115,7 @@
     <section class="tm-card tm-estimator-section" aria-label="Vehicles" data-tour-target="estimator-vehicle">
       <div class="section-header--vehicles">
         <div>
-          <div class="tm-section-kicker">Step 1</div>
-          <h2>Select Vehicle</h2>
+          <h2>Select vehicle</h2>
           <div id="vehicleSelectionHelper" class="tm-cta-helper">
             {% if is_finding_estimator %}Loading customer and vehicle...{% else %}Choose the customer vehicle first.{% endif %}
           </div>
@@ -146,27 +145,35 @@
       </div>
     </section>
 
-    <div id="estimateTotalBar" class="tm-estimate-total-bar" aria-live="polite" data-tour-target="estimator-total">
-      <div class="tm-estimate-total-bar__label">Quote Total</div>
-      <div id="estimateTotalValue" class="tm-estimate-total-bar__value">$0.00</div>
-    </div>
-    <div class="tm-quote-note">
-      <div>Customer quote note</div>
-      <div class="tm-hint">Final pricing may vary after inspection, taxes, parts confirmation, or additional repair needs.</div>
-    </div>
+    <aside class="tm-estimator-sticky-summary" aria-label="Estimate summary">
+      <div class="tm-estimator-sticky-summary__vehicle">
+        <span>Vehicle</span>
+        <strong id="activeVehicleSummary">Select a vehicle</strong>
+      </div>
+      <div class="tm-estimator-sticky-summary__status">
+        <span>Current step</span>
+        <strong id="estimatorCurrentStep">Vehicle</strong>
+      </div>
+      <div id="estimateTotalBar" class="tm-estimate-total-bar" aria-live="polite" data-tour-target="estimator-total">
+        <div class="tm-estimate-total-bar__label">Estimate total</div>
+        <div id="estimateTotalValue" class="tm-estimate-total-bar__value">$0.00</div>
+      </div>
+      <button id="stickyReviewBtn" type="button" class="tm-btn tm-btn-primary tm-estimator-sticky-summary__action">
+        Review estimate
+      </button>
+    </aside>
 
     <!-- Service -->
     <section class="tm-card tm-estimator-section" aria-label="Service" data-tour-target="estimator-service">
 
-    <div id="activeVehicleBanner" class="tm-active-vehicle-banner">
+    <div id="activeVehicleBanner" class="tm-active-vehicle-banner tm-active-vehicle-banner--compact">
       <div>Quoting vehicle</div>
       <strong id="activeVehicleText">Vehicle</strong>
     </div>
 
     <div class="vehicle-header">
       <div class="tm-service-title-group">
-        <div class="tm-section-kicker">Step 2</div>
-        <h2>Add a Service</h2>
+        <h2>Add a service</h2>
         <div class="tm-service-workflow-copy">Pick the job, price it, keep moving.</div>
       </div>
       <div class="tm-addServiceRow">
@@ -225,7 +232,7 @@
 
     <details class="tm-quick-quotes" aria-label="Common Repairs shortcuts">
       <summary class="tm-quick-quotes__summary">
-        <span class="tm-quick-quotes__eyebrow">Common Repairs</span>
+        <span class="tm-quick-quotes__eyebrow">Browse common repairs</span>
         <span class="tm-quick-quotes__chevron" aria-hidden="true">▾</span>
       </summary>
       <div class="tm-quick-quotes__list">
@@ -418,17 +425,16 @@
         
       </div>
 
-      <div class="tm-estimate-action-panel">
-      <div class="tm-estimate-action-panel__copy">
-        <div class="tm-estimate-action-panel__label">Current task</div>
-        <div class="tm-estimate-action-panel__heading">Add another repair or create the quote</div>
-        <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
-          Select vehicle, service, and pricing.
+      <div class="tm-estimate-action-panel tm-estimate-action-panel--simple">
+        <div class="tm-estimate-action-panel__copy">
+          <div class="tm-estimate-action-panel__heading">Add this service to the estimate</div>
+          <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
+            Select a vehicle, service, and pricing to continue.
+          </div>
+          <div id="getEstimateHint" class="tm-hint tm-estimate-action-hint" hidden>Choose service and pricing.</div>
         </div>
-      <div id="getEstimateHint" class="tm-hint tm-estimate-action-hint" hidden>Choose service and pricing.</div>
-      </div>
         <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary tm-estimate-action-panel__button">
-          Add Service to Quote
+          Add service
         </button>
       </div>
 
@@ -462,15 +468,38 @@
         </div>
       </div>
 
-      <div class="tm-quote-notes-field">
-        <label for="notes">Quote Notes (optional)</label>
-        <textarea id="notes" rows="3" placeholder="Add warranty, condition, or customer-facing notes..."></textarea>
-      </div>
+      <section class="tm-estimator-review-section" aria-label="Review estimate">
+        <div class="tm-estimator-review-section__head">
+          <div>
+            <div class="tm-estimator-review-section__eyebrow">Review</div>
+            <h2>Review estimate</h2>
+          </div>
+          <p>Confirm the jobs, pricing, and customer-facing notes before creating the quote.</p>
+        </div>
+
+        <div class="tm-quote-note">
+          <div>Customer quote note</div>
+          <div class="tm-hint">Final pricing may vary after inspection, taxes, parts confirmation, or additional repair needs.</div>
+        </div>
+
+        <div class="tm-quote-notes-field">
+          <label for="notes">Quote notes (optional)</label>
+          <textarea id="notes" rows="3" placeholder="Add warranty, condition, or customer-facing notes..."></textarea>
+        </div>
+      </section>
 
       <hr class="section-divider">
 
-      <!-- Saved Estimates (Local) --> 
-      <div class="tm-card" id="draftsCard" data-saved-estimates-disabled="false">
+      <!-- Saved Estimates (Local) -->
+      <details class="tm-card tm-saved-estimates-drawer" id="draftsCard" data-saved-estimates-disabled="false">
+        <summary>
+          <span>
+            <span class="tm-section-kicker">Local workspace</span>
+            <strong>Saved estimates</strong>
+          </span>
+          <small>Open, save, or remove a local draft</small>
+        </summary>
+        <div class="tm-saved-estimates-drawer__body">
       <div class="tm-section-kicker">Local workspace</div>
       <h2>Saved Estimates</h2>
       <div class="tm-hint tm-device-save-label">Saved on this device</div>
@@ -532,7 +561,8 @@
         {% endif %}
       </div>
 
-    </div>
+      </div>
+      </details>
 
       <div id="customerQuoteFinalActions" class="actions estimator-final-actions" aria-label="Finish customer quote" data-tour-target="estimator-finish">
         {% if shared_id %}
@@ -540,7 +570,7 @@
         {% endif %}
         <div class="estimator-final-step">Final action</div>
         <div class="estimator-final-heading">{% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Ready for Customer Review{% endif %}</div>
-        <div class="tm-hint estimator-final-hint">{% if is_finding_estimator %}Save this estimate to the finding and return to the finding detail page.{% else %}Review estimate details before sharing.{% endif %}</div>
+        <div class="tm-hint estimator-final-hint">{% if is_finding_estimator %}Save this estimate to the finding and return to the finding detail page.{% else %}Add a vehicle and at least one service, then review the estimate before sharing.{% endif %}</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta" aria-describedby="customerQuoteFinalHint" disabled data-tour-target="estimator-pdf">
           {% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Create Customer Quote{% endif %}
         </button>
@@ -727,4 +757,98 @@
     </div>
   </div>
 </div>
+
+{% block page_js %}
+{{ super() }}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const vehicleSource = document.getElementById("activeVehicleText");
+  const vehicleSummary = document.getElementById("activeVehicleSummary");
+  const currentStep = document.getElementById("estimatorCurrentStep");
+  const reviewButton = document.getElementById("stickyReviewBtn");
+  const reviewSection = document.querySelector(".tm-estimator-review-section");
+  const generateButton = document.getElementById("generateAllBtn");
+  const lineItemsWrap = document.getElementById("lineItemsWrap");
+  const serviceSelect = document.getElementById("service");
+  const stepNodes = Array.from(document.querySelectorAll("[data-estimator-step]"));
+
+  function hasVehicle() {
+    if (!vehicleSource) return false;
+    const text = (vehicleSource.textContent || "").trim();
+    return Boolean(text && text.toLowerCase() !== "vehicle" && !text.toLowerCase().includes("select"));
+  }
+
+  function hasServiceSelection() {
+    return Boolean(serviceSelect && serviceSelect.value);
+  }
+
+  function hasLineItems() {
+    return Boolean(lineItemsWrap && !lineItemsWrap.classList.contains("hidden"));
+  }
+
+  function syncWorkflowSummary() {
+    const vehicleReady = hasVehicle();
+    const serviceReady = hasServiceSelection();
+    const quoteReady = hasLineItems();
+
+    if (vehicleSummary && vehicleSource) {
+      vehicleSummary.textContent = vehicleReady
+        ? vehicleSource.textContent.trim()
+        : "Select a vehicle";
+    }
+
+    let step = "Vehicle";
+    let key = "vehicle";
+
+    if (vehicleReady && !serviceReady && !quoteReady) {
+      step = "Service";
+      key = "service";
+    } else if (vehicleReady && serviceReady && !quoteReady) {
+      step = "Pricing";
+      key = "pricing";
+    } else if (quoteReady) {
+      step = "Review";
+      key = "review";
+    }
+
+    if (currentStep) currentStep.textContent = step;
+
+    stepNodes.forEach((node) => {
+      node.classList.toggle("is-active", node.dataset.estimatorStep === key);
+    });
+
+    if (reviewButton) {
+      reviewButton.disabled = !quoteReady;
+      reviewButton.textContent = quoteReady ? "Review estimate" : "Add a service to continue";
+    }
+  }
+
+  reviewButton?.addEventListener("click", () => {
+    reviewSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (generateButton && !generateButton.disabled) {
+      generateButton.focus({ preventScroll: true });
+    }
+  });
+
+  const observer = new MutationObserver(syncWorkflowSummary);
+  [vehicleSource, lineItemsWrap, generateButton].forEach((element) => {
+    if (element) {
+      observer.observe(element, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ["class", "disabled"]
+      });
+    }
+  });
+
+  serviceSelect?.addEventListener("change", syncWorkflowSummary);
+  document.addEventListener("input", syncWorkflowSummary);
+
+  syncWorkflowSummary();
+});
+</script>
+{% endblock %}
+
 {% endblock %}

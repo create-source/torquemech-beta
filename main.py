@@ -4487,9 +4487,12 @@ def pro_home_preview(request: Request):
 def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
 
-@app.get("/about", response_class=HTMLResponse)
-def about(request: Request):
-    return templates.TemplateResponse("about.html", {"request": request})
+@app.get("/how-it-works", response_class=HTMLResponse)
+def how_it_works(request: Request):
+    return templates.TemplateResponse(
+        "how_it_works.html",
+        {"request": request},
+    )
 
 
 @app.get("/parts-center", response_class=HTMLResponse)
