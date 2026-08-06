@@ -19,12 +19,19 @@
 
   .tm-nav { display: none; }
 
-  .tm-tour-backdrop,
-  .tm-tour-panel,
-  [data-tm-tour],
-  [data-tour-overlay] {
-    display: none !important;
-  }
+  /* Never display the workspace guided tour on the public Pro homepage */
+.tm-tour-backdrop,
+.tm-tour-panel,
+.tm-tour-overlay,
+.tm-guided-tour,
+[data-tm-tour],
+[data-tour-overlay],
+[class*="tm-tour"],
+[id*="tm-tour"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 
 
   body {
@@ -1069,4 +1076,47 @@
     });
   })();
 </script>
+<script>
+  (function removeWorkspaceTourFromPublicHomepage() {
+    function removeTour() {
+      document
+        .querySelectorAll(
+          '.tm-tour-backdrop, ' +
+          '.tm-tour-panel, ' +
+          '.tm-tour-overlay, ' +
+          '.tm-guided-tour, ' +
+          '[data-tm-tour], ' +
+          '[data-tour-overlay], ' +
+          '[class*="tm-tour"], ' +
+          '[id*="tm-tour"]'
+        )
+        .forEach(function (element) {
+          element.remove();
+        });
+
+      document.body.classList.remove(
+        'tm-tour-open',
+        'tour-open',
+        'guided-tour-open'
+      );
+
+      document.documentElement.style.removeProperty('overflow');
+      document.body.style.removeProperty('overflow');
+    }
+
+    removeTour();
+
+    var observer = new MutationObserver(removeTour);
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+
+    window.setTimeout(function () {
+      removeTour();
+      observer.disconnect();
+    }, 2000);
+  }());
+</script>
+
 {% endblock %}
