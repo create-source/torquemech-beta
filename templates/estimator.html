@@ -3,7 +3,18 @@
 
 {% block body_class %}tm-estimator-page{% endblock %}
 
-{% block page_css %}{% endblock %}
+{% block page_css %}
+<style>
+  /* Keep the process guide in the normal document flow on desktop. */
+  @media (min-width: 769px) {
+    .tm-estimator-quickstart {
+      position: static !important;
+      top: auto !important;
+      z-index: auto !important;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="tm-guided-estimator"
