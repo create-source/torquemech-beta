@@ -3682,6 +3682,37 @@
     }
   }
 
+  /* =========================================================
+   VEHICLE DETAIL — DESKTOP LAYOUT
+   Keep the workflow in one continuous column so expanding a
+   section cannot create empty space beside the following cards.
+   ========================================================= */
+
+  @media (min-width: 761px) {
+    .tm-pro-shell--vehicle {
+      grid-template-columns: minmax(0, 1fr) !important;
+      width: min(100%, 1120px);
+      margin-inline: auto;
+      gap: 14px !important;
+    }
+
+    .tm-pro-shell--vehicle > * {
+      grid-column: 1 / -1 !important;
+      min-width: 0;
+    }
+
+    .tm-pro-shell--vehicle .tm-pro-pagehead {
+      align-items: end;
+    }
+
+    .tm-pro-shell--vehicle .tm-pro-title {
+      max-width: 100%;
+      font-size: clamp(2rem, 3.2vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+  }
+
 </style>
 {% include "pro/partials/repair_intelligence_styles.html" %}
 {% endblock %}
