@@ -12,6 +12,51 @@
       top: auto !important;
       z-index: auto !important;
     }
+
+    /* Keep the estimate summary from covering the service form on desktop. */
+    .tm-estimator-sticky-summary {
+      position: static !important;
+      top: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      left: auto !important;
+      z-index: auto !important;
+    }
+
+    /* Keep service-card controls readable and use the full desktop card width. */
+    body.tm-estimator-page .tm-repair-status-control {
+      border-color: rgba(253, 186, 116, .26);
+      background: rgba(15, 23, 42, .56);
+      color: #ffedd5;
+    }
+
+    body.tm-estimator-page .tm-repair-status-control span {
+      color: #ffedd5;
+    }
+
+    body.tm-estimator-page .tm-repair-status-control select {
+      border: 1px solid rgba(253, 186, 116, .24) !important;
+      background: #f8fafc !important;
+      color: #111827 !important;
+    }
+
+    body.tm-estimator-page .tm-service-risk-note,
+    body.tm-estimator-page .tm-inspection-findings {
+      width: 100%;
+      max-width: none;
+    }
+
+    body.tm-estimator-page .tm-service-risk-note {
+      border: 1px solid rgba(148, 163, 184, .48);
+      border-left: 3px solid rgba(249, 115, 22, .72);
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    body.tm-estimator-page .tm-service-risk-label,
+    body.tm-estimator-page .tm-service-risk-note span:last-child {
+      color: #334155;
+    }
   }
 </style>
 {% endblock %}
