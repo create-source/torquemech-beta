@@ -1707,7 +1707,11 @@ async def pro_private_access_middleware(request: Request, call_next):
         return await call_next(request)
     if path == "/pro/billing/webhook":
         return await call_next(request)
-    if path == "/pro/demo" or path.startswith("/pro/demo/"):
+    if (
+        path == "/pro/home-preview"
+        or path == "/pro/demo"
+        or path.startswith("/pro/demo/")
+    ):
         return await call_next(request)
 
     async def continue_if_authenticated():
