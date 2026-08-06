@@ -8444,13 +8444,8 @@ body:not(.tm-shared-quote) .tm-card.tm-estimator-section{
 }
 
 .tm-estimator-quickstart__steps span:not(:last-child)::after{
-  content: "";
-  position: absolute;
-  left: calc(100% + 6px);
-  top: 50%;
-  width: 12px;
-  height: 1px;
-  background: rgba(100, 116, 139, .42);
+  display: none;
+  content: none;
 }
 
 .tm-estimator-quickstart__steps b{

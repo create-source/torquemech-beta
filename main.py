@@ -13910,6 +13910,85 @@ async def estimate_pdf_multi(request: Request, req: MultiPDFRequest) -> Response
         raise
 
 @app.get(
+    "/demo-assets/2018-honda-accord-approved-estimate.pdf",
+    include_in_schema=False,
+)
+async def demo_honda_accord_approved_estimate_pdf(
+    request: Request,
+) -> Response:
+    demo_request = MultiPDFRequest(
+        year=2018,
+        make="Honda",
+        model="Accord",
+        displayModel="Accord EX",
+        notes=(
+            "SAMPLE — DEMO ONLY. "
+            "This is fictional demonstration data and is not a real estimate."
+        ),
+        customerName="Elena Brooks",
+        customerPhone="(555) 201-1848",
+
+        # Keep IDs empty so this cannot save a prepared estimate.
+        source="demo",
+        customerId=None,
+        vehicleId=None,
+        findingId=None,
+
+        problemFound="Brake pedal pulse and front-end squeal",
+        recommendedRepair=(
+            "Front brake pads, front rotors, hardware, hub cleanup, "
+            "and road test"
+        ),
+
+        businessName="TorqueMech Demo Shop",
+        mechanicName="Demo Service Advisor",
+        businessPhone="(555) 010-2040",
+        businessNote="SAMPLE — DEMO ONLY",
+
+        # Show this as customer reviewed and approved.
+        customerAgrees=True,
+        signatureDataUrl=None,
+
+        showGeneratedDate=True,
+        showHourlyRate=False,
+        showLaborColumn=False,
+        showPartsColumn=False,
+        showRiskNotes=True,
+        showInspectionFindings=True,
+        showDetailedLaborBreakdown=False,
+        includeServiceEducation=True,
+
+        lineItems=[
+            LineItemPDF(
+                serviceCode="front_brake_pads_and_rotors",
+                serviceText="Front Brake Pads and Rotors",
+                displayServiceText="Front Brake Pads and Rotors",
+                quantity=1,
+                pricingMode="hourly",
+                laborHours=1.5,
+                laborRate=150.00,
+                partsPrice=357.80,
+                travelFee=0,
+                estimate=642.80,
+                status="recommended",
+                inspectionFindings=(
+                    "Inspection confirmed front brake pulsation and noise. "
+                    "Customer approved front pads, front rotors, hardware, "
+                    "hub cleanup, and road test."
+                ),
+            ),
+        ],
+    )
+
+    response = await estimate_pdf_multi(request, demo_request)
+
+    response.headers["Content-Disposition"] = (
+        'inline; filename="torquemech-demo-honda-approved-estimate.pdf"'
+    )
+    response.headers["Cache-Control"] = "no-store"
+
+    return response
+@app.get(
     "/demo-assets/2016-ford-f150-estimate.pdf",
     include_in_schema=False,
 )

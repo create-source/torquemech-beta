@@ -14172,6 +14172,12 @@ def pro_demo_detail(request: Request, record_slug: str):
 
 @router.get("/demo/{record_slug}/approved-estimate.pdf")
 def pro_demo_approved_estimate_pdf(record_slug: str) -> Response:
+    if record_slug == "2018-honda-accord-front-brake-service":
+        return RedirectResponse(
+            "/demo-assets/2018-honda-accord-approved-estimate.pdf",
+            status_code=307,
+        )
+
     return demo_pdf_response(record_slug, "approved-estimate")
 
 

@@ -656,6 +656,21 @@
     margin-top: 16px;
   }
 
+  @media (min-width: 561px) {
+    .tm-demo-detail-card__head > div {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .tm-demo-back-btn {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 122px;
+      padding-inline: 16px;
+      white-space: nowrap;
+    }
+  }
+
   @media (max-width: 820px) {
     .tm-demo-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .tm-demo-grid { grid-template-columns: 1fr; }
@@ -933,7 +948,9 @@
           {% if demo_detail.stage %}<span>{{ demo_detail.stage }}</span>{% endif %}
           <span class="tm-demo-chip{% if demo_detail.status == 'Ready for repair' or demo_detail.status == 'Confirmed' %} tm-demo-chip--green{% elif demo_detail.status == 'Awaiting decision' or demo_detail.status == 'Requested' %} tm-demo-chip--yellow{% elif demo_detail.status == 'Ready to invoice' %} tm-demo-chip--orange{% endif %}">{{ demo_detail.status }}</span>
         </div>
-        <a class="tm-demo-btn tm-demo-btn--secondary" href="/pro/demo">Back to Demo</a>
+        <a class="tm-demo-btn tm-demo-btn--secondary tm-demo-back-btn" href="/pro/demo">
+          Back to Demo
+        </a>
       </div>
       <div class="tm-demo-detail-fields">
         {% for label, value in demo_detail.detail_fields %}
