@@ -195,6 +195,53 @@
     font-weight: 650;
     line-height: 1.35;
   }
+  .tm-payment-status-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 14px;
+    padding: 14px 16px;
+    border: 1px solid rgba(148, 163, 184, .28);
+    border-left: 4px solid #f97316;
+    border-radius: 8px;
+    background: rgba(15, 28, 47, .78);
+  }
+  .tm-payment-status-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+  .tm-payment-status-copy span {
+    color: #aebdd0;
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .tm-payment-status-copy strong {
+    color: #f8fafc;
+    font-size: 1.05rem;
+  }
+  .tm-payment-status-copy small {
+    color: #aebdd0;
+    font-size: .75rem;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+  .tm-payment-status-form {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+  .tm-payment-status-notice {
+    margin-top: 12px;
+    border: 1px solid rgba(34, 197, 94, .38);
+    border-radius: 8px;
+    background: rgba(20, 83, 45, .34);
+    color: #dcfce7;
+    font-weight: 800;
+    padding: 11px 13px;
+  }
   .tm-pro-shell--invoice-detail .tm-invoice-paper {
     background: #ffffff;
     color: #0f172a;
@@ -395,6 +442,16 @@
 
       .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel {
         padding-top: 16px;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-payment-status-card {
+        display: grid;
+        gap: 12px;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-payment-status-form,
+      .tm-pro-shell--invoice-detail .tm-payment-status-form .tm-btn {
+        width: 100%;
       }
     }
 
@@ -607,24 +664,39 @@
   <section id="customer-pdf-details" class="tm-invoice-panel tm-invoice-pdf-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
     <div class="tm-crm-kicker">PDF Options</div>
     <h2 style="margin:0;">Customer PDF Details</h2>
-    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/payment-status" style="margin-top:14px;">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <label class="tm-invoice-option tm-invoice-option--education">
-        <input
-          type="checkbox"
-          name="mark_paid_in_full"
-          value="1"
-          {% if invoice.balance_due <= 0 and invoice.grand_total > 0 %}checked{% endif %}
-        >
-        <span>
-          <strong>Mark balance paid in full</strong>
-          <small>Check only after payment is received. The PDF will show Paid in Full; unchecked invoices show Balance Due.</small>
-        </span>
-      </label>
-      <div class="tm-invoice-actions" style="margin-top:10px;">
-        <button class="tm-btn tm-btn-secondary" type="submit">Save Payment Status</button>
+    {% if payment_update_notice %}
+    <div class="tm-payment-status-notice" role="status">{{ payment_update_notice }}</div>
+    {% endif %}
+    <div class="tm-payment-status-card">
+      <div class="tm-payment-status-copy">
+        <span>Payment Status</span>
+        {% if invoice.balance_due <= 0 %}
+        <strong>Paid in Full</strong>
+        <small>Amount paid: {{ invoice.amount_paid|pro_currency }}. The customer PDF shows a zero balance.</small>
+        {% else %}
+        <strong>Balance Due: {{ invoice.balance_due|pro_currency }}</strong>
+        <small>Record full payment only after the customer has paid.</small>
+        {% endif %}
       </div>
-    </form>
+      <form class="tm-payment-status-form" method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/payment-status">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% if invoice.balance_due <= 0 and invoice.grand_total > 0 %}
+        <input type="hidden" name="payment_action" value="due">
+        <button
+          class="tm-btn tm-btn-secondary"
+          type="submit"
+          onclick="return confirm('Change this invoice back to Balance Due?');"
+        >Mark as Balance Due</button>
+        {% else %}
+        <input type="hidden" name="payment_action" value="paid">
+        <button
+          class="tm-btn tm-btn-primary"
+          type="submit"
+          onclick="return confirm('Confirm that full payment has been received?');"
+        >Mark Paid in Full</button>
+        {% endif %}
+      </form>
+    </div>
     <form method="get" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">
       <div class="tm-invoice-options">
         <label class="tm-invoice-option"><input type="checkbox" name="show_completion_date" value="1" {% if invoice.pdf_display_options.show_completion_date %}checked{% endif %}><span>Show completion date</span></label>

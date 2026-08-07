@@ -19621,7 +19621,12 @@ async def pro_invoice_create(request: Request, customer_id: int, vehicle_id: int
 
 @router.get("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}", response_class=HTMLResponse)
 def pro_invoice_detail(
-    request: Request, customer_id: int, vehicle_id: int, invoice_id: int, invoice_email: str = ""
+    request: Request,
+    customer_id: int,
+    vehicle_id: int,
+    invoice_id: int,
+    invoice_email: str = "",
+    payment_update: str = "",
 ):
     conn = crm_db_conn()
     try:
@@ -19652,7 +19657,66 @@ def pro_invoice_detail(
                 "missing_customer_email": "Add a customer email address before emailing this invoice.",
                 "error": "We couldn't send the invoice email. Please try again.",
             }.get(invoice_email, ""),
+            "payment_update_notice": {
+                "paid": "Payment recorded. This invoice is now Paid in Full.",
+                "due": "Payment status updated. The invoice now shows Balance Due.",
+            }.get(payment_update, ""),
         },
+    )
+
+
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}/payment-status")
+async def pro_invoice_payment_status(
+    request: Request, customer_id: int, vehicle_id: int, invoice_id: int
+):
+    form = await read_form_data(request)
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+
+    conn = crm_db_conn()
+    try:
+        shop_id = required_current_shop_id(conn, request)
+        require_shop_write_access(conn, shop_id=shop_id)
+        load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        invoice = load_invoice_record(conn, customer_id, vehicle_id, invoice_id, shop_id=shop_id)
+
+        grand_total = round(float(invoice.get("grand_total") or 0), 2)
+        payment_action = str(form.get("payment_action") or "").strip().lower()
+        if payment_action not in {"paid", "due"}:
+            raise HTTPException(status_code=400, detail="Choose a valid payment status")
+
+        if grand_total <= 0:
+            amount_paid = 0.0
+            payment_status = "No Charge"
+            notice = "paid"
+        elif payment_action == "paid":
+            amount_paid = grand_total
+            payment_status = "Paid in Full"
+            notice = "paid"
+        else:
+            amount_paid = 0.0
+            payment_status = "Unpaid"
+            notice = "due"
+
+        conn.execute(
+            """
+            UPDATE invoices
+            SET amount_paid = ?,
+                payment_status = ?
+            WHERE id = ?
+              AND customer_id = ?
+              AND vehicle_id = ?
+            """,
+            (amount_paid, payment_status, invoice_id, customer_id, vehicle_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return RedirectResponse(
+        f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/invoices/{invoice_id}"
+        f"?payment_update={notice}#customer-pdf-details",
+        status_code=303,
     )
 
 
