@@ -195,13 +195,13 @@
   }
   .tm-final-inspection-copy {
     margin: 0;
-    color: #78350f;
+    color: #0f172a;
     font-size: .88rem;
     font-weight: 800;
     line-height: 1.45;
   }
   .tm-final-inspection-card.is-passed .tm-final-inspection-copy {
-    color: #166534;
+    color: #0f172a;
   }
   .tm-final-inspection-card .tm-completion-check {
     min-height: 64px;
@@ -214,12 +214,12 @@
   }
   .tm-final-inspection-message {
     margin: 0;
-    color: #92400e;
+    color: #0f172a;
     font-size: .82rem;
     font-weight: 850;
   }
   .tm-final-inspection-card.is-passed .tm-final-inspection-message {
-    color: #166534;
+    color: #0f172a;
   }
   .tm-completion-submit-wrap {
     display: grid;
@@ -489,6 +489,26 @@
     .tm-pro-shell--repair-detail .tm-repair-panel + * {
       margin-top: 22px;
     }
+
+  @media (min-width:761px) {
+    .tm-pro-shell--repair-detail {
+      position: relative;
+      left: 50%;
+      width: min(1180px, calc(100vw - 64px));
+      max-width: none;
+      margin-inline: 0;
+      transform: translateX(-50%);
+    }
+
+    .tm-pro-shell--repair-detail .tm-repair-panel,
+    .tm-pro-shell--repair-detail .tm-checklist-panel,
+    .tm-pro-shell--repair-detail .tm-completion-panel {
+      width: 100%;
+      max-width: none;
+      box-sizing: border-box;
+    }
+  }
+
   @media (max-width:760px) {
     .tm-pro-shell--repair-detail .tm-switch-control {
         width: 100%;
@@ -710,7 +730,7 @@
         <div class="tm-final-inspection-head">
           <div>
             <h3 class="tm-completion-title">Final Inspection Required</h3>
-            <p class="tm-final-inspection-copy">Confirm the completed repair passed final inspection before creating the final invoice.</p>
+            <p class="tm-final-inspection-copy" style="color:#000000 !important;">Confirm the completed repair passed final inspection before creating the final invoice.</p>
           </div>
           <span class="tm-final-inspection-badge" data-final-inspection-badge>
             {% if completion.final_inspection_passed %}Inspection Passed{% else %}Required before invoice{% endif %}
@@ -720,7 +740,7 @@
           <input id="final_inspection_passed" name="final_inspection_passed" type="checkbox" value="1" {% if completion.final_inspection_passed %}checked{% endif %}>
           <span>I confirm this repair passed final inspection</span>
         </label>
-        <p class="tm-final-inspection-message" data-final-inspection-message aria-live="polite">
+        <p class="tm-final-inspection-message" data-final-inspection-message aria-live="polite" style="color:#000000 !important;">
           {% if completion.final_inspection_passed %}Final inspection is complete. You may mark the repair completed.{% else %}This required confirmation unlocks repair completion and final invoicing.{% endif %}
         </p>
         <label class="tm-label" for="final_inspection_notes">Final Inspection Comments (optional)</label>
