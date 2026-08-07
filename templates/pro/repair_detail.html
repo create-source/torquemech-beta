@@ -132,20 +132,21 @@
   .tm-photo-preview-list {
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(112px, 1fr));
-    gap:10px;
+    gap:14px;
     margin-top:8px;
+    padding:8px 8px 0 0;
   }
   .tm-photo-preview-list[hidden] { display:none !important; }
   .tm-photo-preview-item {
     position:relative;
     min-width:0;
-    overflow:hidden;
+    overflow:visible;
     border:1px solid rgba(15,23,42,.14);
     border-radius:10px;
     background:#fff;
     box-shadow:0 5px 14px rgba(15,23,42,.1);
   }
-  .tm-photo-preview-link { display:block; color:inherit; text-decoration:none; }
+  .tm-photo-preview-link { display:block; overflow:hidden; border-radius:inherit; color:inherit; text-decoration:none; }
   .tm-photo-preview-image {
     display:block;
     width:100%;
@@ -165,16 +166,18 @@
   }
   .tm-photo-preview-remove {
     position:absolute;
-    top:6px;
-    right:6px;
-    min-width:0;
-    min-height:30px;
-    padding:5px 8px;
+    top:-9px;
+    right:-9px;
+    width:28px;
+    height:28px;
+    min-width:28px;
+    min-height:28px;
+    padding:0;
     border:1px solid rgba(255,255,255,.72);
     border-radius:999px;
     background:rgba(15,23,42,.88);
     color:#fff;
-    font-size:.7rem;
+    font-size:1.1rem;
     font-weight:900;
     line-height:1;
     cursor:pointer;
@@ -892,40 +895,6 @@
   </section>
 </section>
 
-<div
-  class="tm-photo-access-modal"
-  data-photo-access-modal
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="photoAccessTitle"
-  aria-describedby="photoAccessDescription"
-  hidden
->
-  <button
-    class="tm-photo-access-backdrop"
-    type="button"
-    aria-label="Cancel photo access"
-    data-photo-access-cancel
-  ></button>
-  <div class="tm-photo-access-dialog" role="document">
-    <button
-      class="tm-photo-access-close"
-      type="button"
-      aria-label="Close photo access confirmation"
-      data-photo-access-cancel
-    >&times;</button>
-    <div class="tm-photo-access-icon" aria-hidden="true">📷</div>
-    <h2 id="photoAccessTitle">Allow Photo Access?</h2>
-    <p id="photoAccessDescription">
-      TorqueMech needs permission to open your camera or photo library so you can attach repair photos to this service record.
-    </p>
-    <p class="tm-photo-access-privacy">Photos are only added after you capture or select them.</p>
-    <div class="tm-photo-access-actions">
-      <button class="tm-btn tm-btn-secondary" type="button" data-photo-access-cancel>Cancel</button>
-      <button class="tm-btn tm-btn-primary" type="button" data-photo-access-continue>Continue</button>
-    </div>
-  </div>
-</div>
 {% endblock %}
 
 {% block page_js %}
@@ -976,18 +945,25 @@
   (() => {
     const MAX_PHOTOS = 5;
 
-    const activePhotoInput = (picker) => (
-      picker.querySelector('input[type="file"][data-photo-source][data-active-source="1"]')
-      || Array.from(picker.querySelectorAll('input[type="file"][data-photo-source]'))
-        .find((input) => (input.files?.length || 0) > 0)
-      || null
-    );
+    const selectedPhotos = (picker) => picker._selectedPhotos || [];
+
+    const syncPhotoInputs = (picker) => {
+      const inputs = Array.from(picker.querySelectorAll('input[type="file"][data-photo-source]'));
+      const storageInput = inputs.find((input) => input.dataset.photoSource === "library") || inputs[0];
+      if (!storageInput) return;
+
+      const transfer = new DataTransfer();
+      selectedPhotos(picker).forEach((file) => transfer.items.add(file));
+      storageInput.files = transfer.files;
+      inputs.forEach((input) => {
+        if (input !== storageInput) input.value = "";
+      });
+    };
 
     const updateCount = (picker) => {
       const output = picker.querySelector("[data-photo-selected-count]");
       if (!output) return;
-      const input = activePhotoInput(picker);
-      const count = input?.files?.length || 0;
+      const count = selectedPhotos(picker).length;
       output.textContent = count
         ? `${count} photo${count === 1 ? "" : "s"} selected`
         : "No photos selected";
@@ -1005,8 +981,7 @@
       releasePreviewUrls(picker);
       previewList.replaceChildren();
 
-      const input = activePhotoInput(picker);
-      const files = Array.from(input?.files || []);
+      const files = selectedPhotos(picker);
       previewList.hidden = files.length === 0;
 
       files.forEach((file, index) => {
@@ -1035,7 +1010,7 @@
         const remove = document.createElement("button");
         remove.className = "tm-photo-preview-remove";
         remove.type = "button";
-        remove.textContent = "Remove";
+        remove.textContent = "×";
         remove.dataset.photoRemove = String(index);
         remove.setAttribute("aria-label", `Remove ${file.name}`);
 
@@ -1046,15 +1021,8 @@
     };
 
     const removeSelectedPhoto = (picker, index) => {
-      const input = activePhotoInput(picker);
-      if (!input) return;
-
-      const remaining = Array.from(input.files || []).filter((file, fileIndex) => fileIndex !== index);
-      const transfer = new DataTransfer();
-      remaining.forEach((file) => transfer.items.add(file));
-      input.files = transfer.files;
-
-      if (!remaining.length) delete input.dataset.activeSource;
+      picker._selectedPhotos = selectedPhotos(picker).filter((file, fileIndex) => fileIndex !== index);
+      syncPhotoInputs(picker);
       updateCount(picker);
       renderPhotoPreviews(picker);
     };
@@ -1082,16 +1050,9 @@
       if (option) {
         const picker = option.closest("[data-photo-picker]");
         const input = document.getElementById(option.dataset.photoOpen);
-        const modal = document.querySelector("[data-photo-access-modal]");
         picker?.querySelector("[data-photo-source-menu]")?.setAttribute("hidden", "");
         picker?.querySelector("[data-photo-menu-toggle]")?.setAttribute("aria-expanded", "false");
-        if (!input || !modal) return;
-        modal.dataset.pendingPhotoInput = input.id;
-        modal.hidden = false;
-        document.body.classList.add("tm-photo-access-open");
-        window.requestAnimationFrame(() => {
-          modal.querySelector("[data-photo-access-continue]")?.focus();
-        });
+        input?.click();
         return;
       }
 
@@ -1103,37 +1064,6 @@
       });
     });
 
-    const closePhotoAccessModal = () => {
-      const modal = document.querySelector("[data-photo-access-modal]");
-      if (!modal) return;
-      modal.hidden = true;
-      delete modal.dataset.pendingPhotoInput;
-      document.body.classList.remove("tm-photo-access-open");
-    };
-
-    document.addEventListener("click", (event) => {
-      const cancel = event.target.closest("[data-photo-access-cancel]");
-      if (cancel) {
-        closePhotoAccessModal();
-        return;
-      }
-
-      const continueButton = event.target.closest("[data-photo-access-continue]");
-      if (!continueButton) return;
-      const modal = continueButton.closest("[data-photo-access-modal]");
-      const inputId = modal?.dataset.pendingPhotoInput || "";
-      const input = inputId ? document.getElementById(inputId) : null;
-      closePhotoAccessModal();
-      input?.click();
-    });
-
-    document.addEventListener("keydown", (event) => {
-      const modal = document.querySelector("[data-photo-access-modal]");
-      if (event.key === "Escape" && modal && !modal.hidden) {
-        closePhotoAccessModal();
-      }
-    });
-
     document.addEventListener("change", (event) => {
       const input = event.target.closest('input[type="file"][data-photo-source]');
       if (!input) return;
@@ -1141,19 +1071,14 @@
       const picker = input.closest("[data-photo-picker]");
       if (!picker) return;
 
-      if ((input.files?.length || 0) > MAX_PHOTOS) {
-        input.value = "";
-        window.alert(`Choose no more than ${MAX_PHOTOS} photos.`);
-      }
+      const incoming = Array.from(input.files || []);
+      const availableSlots = MAX_PHOTOS - selectedPhotos(picker).length;
+      picker._selectedPhotos = selectedPhotos(picker).concat(incoming.slice(0, Math.max(0, availableSlots)));
+      syncPhotoInputs(picker);
 
-      picker.querySelectorAll('input[type="file"][data-photo-source]').forEach((other) => {
-        if (other === input) {
-          other.dataset.activeSource = "1";
-        } else {
-          other.value = "";
-          delete other.dataset.activeSource;
-        }
-      });
+      if (incoming.length > availableSlots) {
+        window.alert(`You can attach up to ${MAX_PHOTOS} photos.`);
+      }
 
       updateCount(picker);
       renderPhotoPreviews(picker);

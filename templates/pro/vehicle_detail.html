@@ -453,8 +453,9 @@
   .tm-photo-preview-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-    gap: 10px;
+    gap: 14px;
     margin-top: 8px;
+    padding: 8px 8px 0 0;
   }
 
   .tm-photo-preview-list[hidden] {
@@ -464,7 +465,7 @@
   .tm-photo-preview-item {
     position: relative;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid rgba(15, 23, 42, 0.14);
     border-radius: 10px;
     background: #ffffff;
@@ -473,6 +474,8 @@
 
   .tm-photo-preview-link {
     display: block;
+    overflow: hidden;
+    border-radius: inherit;
     color: inherit;
     text-decoration: none;
   }
@@ -498,16 +501,18 @@
 
   .tm-photo-preview-remove {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    min-width: 0;
-    min-height: 30px;
-    padding: 5px 8px;
+    top: -9px;
+    right: -9px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.72);
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.88);
     color: #ffffff;
-    font-size: 0.7rem;
+    font-size: 1.1rem;
     font-weight: 900;
     line-height: 1;
     cursor: pointer;
@@ -5211,47 +5216,6 @@
 </section>
 
 
-<div
-  class="tm-photo-access-modal"
-  id="photoAccessModal"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="photoAccessTitle"
-  aria-describedby="photoAccessDescription"
-  data-photo-access-key="torquemech.photo_access_explained.{% if request.state.current_user %}user-{{ request.state.current_user.id }}{% elif request.state.current_shop %}shop-{{ request.state.current_shop.id }}{% else %}anonymous{% endif %}"
-  hidden
->
-  <button
-    class="tm-photo-access-backdrop"
-    type="button"
-    aria-label="Cancel photo access"
-    data-photo-access-cancel
-  ></button>
-
-  <div class="tm-photo-access-dialog">
-    <button
-      class="tm-photo-access-close"
-      type="button"
-      aria-label="Close photo access confirmation"
-      data-photo-access-cancel
-    >&times;</button>
-
-    <div class="tm-photo-access-icon" aria-hidden="true">📷</div>
-    <h2 id="photoAccessTitle">Allow Photo Access?</h2>
-    <p id="photoAccessDescription">
-      TorqueMech needs permission to open your camera or photo library so you can attach inspection photos to this finding.
-    </p>
-    <p class="tm-photo-access-privacy">
-      Photos are only saved after you select them and submit the finding.
-    </p>
-
-    <div class="tm-photo-access-actions">
-      <button class="tm-btn tm-btn-secondary" type="button" data-photo-access-cancel>Cancel</button>
-      <button class="tm-btn tm-btn-primary" id="continuePhotoAccessBtn" type="button">Continue</button>
-    </div>
-  </div>
-</div>
-
 <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
 <script>
 (() => {
@@ -6250,82 +6214,19 @@
 <script>
 (() => {
   const MAX_PHOTOS = 5;
-  const photoAccessModal = document.getElementById("photoAccessModal");
-  const continuePhotoAccessBtn = document.getElementById("continuePhotoAccessBtn");
-  const photoAccessAcknowledgedKey = photoAccessModal?.dataset.photoAccessKey || "torquemech.photo_access_explained.anonymous";
-  let pendingPhotoInput = null;
-  let photoAccessReturnFocus = null;
+  const selectedPhotos = (picker) => picker._selectedPhotos || [];
 
-  function hasPhotoAccessAcknowledgment() {
-    try {
-      return window.localStorage?.getItem(photoAccessAcknowledgedKey) === "1";
-    } catch (error) {
-      return false;
-    }
-  }
+  function syncPhotoInputs(picker) {
+    const inputs = Array.from(picker.querySelectorAll('input[type="file"][data-photo-source]'));
+    const storageInput = inputs.find((input) => input.dataset.photoSource === "library") || inputs[0];
+    if (!storageInput) return;
 
-  function recordPhotoAccessAcknowledgment() {
-    try {
-      window.localStorage?.setItem(photoAccessAcknowledgedKey, "1");
-    } catch (error) {
-      // Photo selection should still work when device storage is blocked.
-    }
-  }
-
-  function openPhotoAccessModal(input, trigger) {
-    if (!photoAccessModal || !continuePhotoAccessBtn || !input) return;
-    if (hasPhotoAccessAcknowledgment()) {
-      input.click();
-      return;
-    }
-    pendingPhotoInput = input;
-    photoAccessReturnFocus = trigger || document.activeElement;
-    photoAccessModal.hidden = false;
-    document.body.classList.add("tm-photo-access-open");
-    window.requestAnimationFrame(() => continuePhotoAccessBtn.focus());
-  }
-
-  function closePhotoAccessModal() {
-    if (!photoAccessModal) return;
-    photoAccessModal.hidden = true;
-    document.body.classList.remove("tm-photo-access-open");
-    pendingPhotoInput = null;
-    if (photoAccessReturnFocus?.focus) photoAccessReturnFocus.focus();
-    photoAccessReturnFocus = null;
-  }
-
-  continuePhotoAccessBtn?.addEventListener("click", () => {
-    const input = pendingPhotoInput;
-    if (!photoAccessModal) return;
-    photoAccessModal.hidden = true;
-    document.body.classList.remove("tm-photo-access-open");
-    pendingPhotoInput = null;
-    photoAccessReturnFocus = null;
-    recordPhotoAccessAcknowledgment();
-    input?.click();
-  });
-
-  photoAccessModal?.querySelectorAll("[data-photo-access-cancel]").forEach((button) => {
-    button.addEventListener("click", closePhotoAccessModal);
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && photoAccessModal && !photoAccessModal.hidden) {
-      closePhotoAccessModal();
-    }
-  });
-
-  function selectedFiles(picker) {
-    return Array.from(
-      picker.querySelectorAll('input[type="file"][data-photo-source]')
-    ).flatMap((input) => Array.from(input.files || []));
-  }
-
-  function activePhotoInput(picker) {
-    return picker.querySelector('input[type="file"][data-photo-source][data-active-source="1"]')
-      || Array.from(picker.querySelectorAll('input[type="file"][data-photo-source]'))
-        .find((input) => (input.files?.length || 0) > 0)
-      || null;
+    const transfer = new DataTransfer();
+    selectedPhotos(picker).forEach((file) => transfer.items.add(file));
+    storageInput.files = transfer.files;
+    inputs.forEach((input) => {
+      if (input !== storageInput) input.value = "";
+    });
   }
 
   function releasePreviewUrls(picker) {
@@ -6340,8 +6241,7 @@
     releasePreviewUrls(picker);
     previewList.replaceChildren();
 
-    const input = activePhotoInput(picker);
-    const files = Array.from(input?.files || []);
+    const files = selectedPhotos(picker);
     previewList.hidden = files.length === 0;
 
     files.forEach((file, index) => {
@@ -6370,7 +6270,7 @@
       const remove = document.createElement("button");
       remove.className = "tm-photo-preview-remove";
       remove.type = "button";
-      remove.textContent = "Remove";
+      remove.textContent = "×";
       remove.dataset.photoRemove = String(index);
       remove.setAttribute("aria-label", `Remove ${file.name}`);
 
@@ -6381,21 +6281,14 @@
   }
 
   function removeSelectedPhoto(picker, index) {
-    const input = activePhotoInput(picker);
-    if (!input) return;
-
-    const remaining = Array.from(input.files || []).filter((file, fileIndex) => fileIndex !== index);
-    const transfer = new DataTransfer();
-    remaining.forEach((file) => transfer.items.add(file));
-    input.files = transfer.files;
-
-    if (!remaining.length) delete input.dataset.activeSource;
+    picker._selectedPhotos = selectedPhotos(picker).filter((file, fileIndex) => fileIndex !== index);
+    syncPhotoInputs(picker);
     updateCount(picker);
     renderPhotoPreviews(picker);
   }
 
   function updateCount(picker) {
-    const count = selectedFiles(picker).length;
+    const count = selectedPhotos(picker).length;
     const output = picker.querySelector("[data-photo-selected-count]");
     if (!output) return;
     output.textContent = count
@@ -6433,9 +6326,7 @@
       if (menu) menu.hidden = true;
       if (toggleButton) toggleButton.setAttribute("aria-expanded", "false");
 
-      if (input) {
-        openPhotoAccessModal(input, sourceButton);
-      }
+      input?.click();
       return;
     }
 
@@ -6454,20 +6345,14 @@
     const picker = input.closest("[data-photo-picker]");
     if (!picker) return;
 
-    const files = Array.from(input.files || []);
-    if (files.length > MAX_PHOTOS) {
-      input.value = "";
-      window.alert(`Choose no more than ${MAX_PHOTOS} photos.`);
-    }
+    const incoming = Array.from(input.files || []);
+    const availableSlots = MAX_PHOTOS - selectedPhotos(picker).length;
+    picker._selectedPhotos = selectedPhotos(picker).concat(incoming.slice(0, Math.max(0, availableSlots)));
+    syncPhotoInputs(picker);
 
-    picker.querySelectorAll('input[type="file"][data-photo-source]').forEach((other) => {
-      if (other === input) {
-        other.dataset.activeSource = "1";
-      } else {
-        other.value = "";
-        delete other.dataset.activeSource;
-      }
-    });
+    if (incoming.length > availableSlots) {
+      window.alert(`You can attach up to ${MAX_PHOTOS} photos.`);
+    }
 
     updateCount(picker);
     renderPhotoPreviews(picker);
