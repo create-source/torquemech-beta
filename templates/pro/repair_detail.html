@@ -129,6 +129,62 @@
     border-radius:8px;
     background:#fff;
   }
+  .tm-photo-preview-list {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(112px, 1fr));
+    gap:10px;
+    margin-top:8px;
+  }
+  .tm-photo-preview-list[hidden] { display:none !important; }
+  .tm-photo-preview-item {
+    position:relative;
+    min-width:0;
+    overflow:hidden;
+    border:1px solid rgba(15,23,42,.14);
+    border-radius:10px;
+    background:#fff;
+    box-shadow:0 5px 14px rgba(15,23,42,.1);
+  }
+  .tm-photo-preview-link { display:block; color:inherit; text-decoration:none; }
+  .tm-photo-preview-image {
+    display:block;
+    width:100%;
+    aspect-ratio:4 / 3;
+    object-fit:cover;
+    background:#e2e8f0;
+  }
+  .tm-photo-preview-name {
+    display:block;
+    padding:7px 8px;
+    overflow:hidden;
+    color:#334155 !important;
+    font-size:.72rem !important;
+    font-weight:800;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .tm-photo-preview-remove {
+    position:absolute;
+    top:6px;
+    right:6px;
+    min-width:0;
+    min-height:30px;
+    padding:5px 8px;
+    border:1px solid rgba(255,255,255,.72);
+    border-radius:999px;
+    background:rgba(15,23,42,.88);
+    color:#fff;
+    font-size:.7rem;
+    font-weight:900;
+    line-height:1;
+    cursor:pointer;
+  }
+  .tm-photo-preview-remove:hover,
+  .tm-photo-preview-remove:focus-visible {
+    background:#b91c1c;
+    outline:3px solid rgba(248,113,113,.3);
+    outline-offset:1px;
+  }
   .tm-completion-checks { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
   .tm-completion-check {
     display:grid;
@@ -806,6 +862,7 @@
         <span class="tm-photo-privacy">Photos are optional and only saved when you attach them to this repair record.</span>
         <span class="tm-photo-helper">Up to 5 photos.</span>
         <span class="tm-photo-selected-count" data-photo-selected-count>No photos selected</span>
+        <div class="tm-photo-preview-list" data-photo-preview-list aria-label="Selected after repair photo previews" hidden></div>
         {% if completion.after_repair_photo_urls %}
         <strong>Uploaded After Photos</strong>
         <div class="tm-photo-list" aria-label="Uploaded after repair photos">
@@ -919,17 +976,97 @@
   (() => {
     const MAX_PHOTOS = 5;
 
+    const activePhotoInput = (picker) => (
+      picker.querySelector('input[type="file"][data-photo-source][data-active-source="1"]')
+      || Array.from(picker.querySelectorAll('input[type="file"][data-photo-source]'))
+        .find((input) => (input.files?.length || 0) > 0)
+      || null
+    );
+
     const updateCount = (picker) => {
       const output = picker.querySelector("[data-photo-selected-count]");
       if (!output) return;
-      const input = picker.querySelector('input[type="file"][data-photo-source][data-active-source="1"]');
+      const input = activePhotoInput(picker);
       const count = input?.files?.length || 0;
       output.textContent = count
         ? `${count} photo${count === 1 ? "" : "s"} selected`
         : "No photos selected";
     };
 
+    const releasePreviewUrls = (picker) => {
+      (picker._photoPreviewUrls || []).forEach((url) => URL.revokeObjectURL(url));
+      picker._photoPreviewUrls = [];
+    };
+
+    const renderPhotoPreviews = (picker) => {
+      const previewList = picker.querySelector("[data-photo-preview-list]");
+      if (!previewList) return;
+
+      releasePreviewUrls(picker);
+      previewList.replaceChildren();
+
+      const input = activePhotoInput(picker);
+      const files = Array.from(input?.files || []);
+      previewList.hidden = files.length === 0;
+
+      files.forEach((file, index) => {
+        const previewUrl = URL.createObjectURL(file);
+        picker._photoPreviewUrls.push(previewUrl);
+
+        const item = document.createElement("div");
+        item.className = "tm-photo-preview-item";
+
+        const link = document.createElement("a");
+        link.className = "tm-photo-preview-link";
+        link.href = previewUrl;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.setAttribute("aria-label", `View selected photo ${index + 1}: ${file.name}`);
+
+        const image = document.createElement("img");
+        image.className = "tm-photo-preview-image";
+        image.src = previewUrl;
+        image.alt = `Selected after repair photo ${index + 1}`;
+
+        const name = document.createElement("span");
+        name.className = "tm-photo-preview-name";
+        name.textContent = file.name;
+
+        const remove = document.createElement("button");
+        remove.className = "tm-photo-preview-remove";
+        remove.type = "button";
+        remove.textContent = "Remove";
+        remove.dataset.photoRemove = String(index);
+        remove.setAttribute("aria-label", `Remove ${file.name}`);
+
+        link.append(image, name);
+        item.append(link, remove);
+        previewList.append(item);
+      });
+    };
+
+    const removeSelectedPhoto = (picker, index) => {
+      const input = activePhotoInput(picker);
+      if (!input) return;
+
+      const remaining = Array.from(input.files || []).filter((file, fileIndex) => fileIndex !== index);
+      const transfer = new DataTransfer();
+      remaining.forEach((file) => transfer.items.add(file));
+      input.files = transfer.files;
+
+      if (!remaining.length) delete input.dataset.activeSource;
+      updateCount(picker);
+      renderPhotoPreviews(picker);
+    };
+
     document.addEventListener("click", (event) => {
+      const removeButton = event.target.closest("[data-photo-remove]");
+      if (removeButton) {
+        const picker = removeButton.closest("[data-photo-picker]");
+        if (picker) removeSelectedPhoto(picker, Number(removeButton.dataset.photoRemove));
+        return;
+      }
+
       const toggle = event.target.closest("[data-photo-menu-toggle]");
       if (toggle) {
         const picker = toggle.closest("[data-photo-picker]");
@@ -1019,6 +1156,7 @@
       });
 
       updateCount(picker);
+      renderPhotoPreviews(picker);
     });
   })();
 

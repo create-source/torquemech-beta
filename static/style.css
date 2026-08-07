@@ -13386,6 +13386,27 @@ body.tm-photo-access-open {
   line-height: 1.6;
 }
 
+.tm-workflow-video{
+  width: min(100%, 1040px);
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 1px solid rgba(96, 165, 250, .26);
+  border-radius: 18px;
+  background: #020617;
+  box-shadow:
+    inset 0 0 50px rgba(0, 0, 0, .30),
+    0 18px 42px rgba(0, 0, 0, .22);
+}
+
+.tm-workflow-video__player{
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #020617;
+  object-fit: contain;
+}
+
 
 .tm-workflow-intro{
   margin-top: 24px;
@@ -13668,6 +13689,11 @@ body.tm-photo-access-open {
   .tm-video-placeholder__icon{
     width: 62px;
     height: 62px;
+  }
+
+  .tm-workflow-video{
+    width: 100%;
+    border-radius: 15px;
   }
 
   .tm-workflow-intro{
