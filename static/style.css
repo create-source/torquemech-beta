@@ -1201,9 +1201,12 @@ body.dark .tm-hero,
   justify-content:center;
 }
 
-.tm-input-clear-btn:hover{
+.tm-input-clear-btn:hover,
+.tm-input-clear-btn:focus-visible,
+.tm-input-clear-btn:active{
   background:rgba(15, 23, 42, .08);
   color:#0f766e;
+  transform:translateY(-50%);
 }
 
 .tm-input-clear-btn:disabled{

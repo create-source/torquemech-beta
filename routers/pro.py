@@ -11664,6 +11664,174 @@ def find_valid_start_repair_for_finding(
     return None
 
 
+def approved_estimate_repair_pricing(estimate_doc: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Return the labor/parts split stored on a prepared estimate."""
+    if not estimate_doc:
+        return None
+    payload = estimate_document_payload(estimate_doc)
+    raw_items = payload.get("line_items")
+    if not isinstance(raw_items, list):
+        raw_items = payload.get("lineItems")
+    if not isinstance(raw_items, list) or not raw_items:
+        return None
+
+    labor_total = 0.0
+    parts_total = 0.0
+    labor_hours = 0.0
+    saw_labor_hours = False
+    hourly_rates: set[float] = set()
+    pricing_modes: set[str] = set()
+
+    for raw_item in raw_items:
+        if not isinstance(raw_item, dict):
+            continue
+        quantity = normalize_payload_quantity(raw_item.get("quantity", raw_item.get("qty", 1)))
+        item_hours = optional_payload_float(raw_item.get("labor_hours", raw_item.get("laborHours")))
+        hours_input = optional_payload_float(raw_item.get("labor_hours_input", raw_item.get("laborHoursInput")))
+        calculation_mode = str(
+            raw_item.get("labor_calculation_mode")
+            or raw_item.get("laborCalculationMode")
+            or "total"
+        ).strip().lower()
+        if calculation_mode == "per_item" and hours_input is not None:
+            item_hours = round(hours_input * quantity, 2)
+        item_rate = optional_payload_float(raw_item.get("labor_rate", raw_item.get("laborRate")))
+        item_labor = optional_payload_float(raw_item.get("labor_total", raw_item.get("laborTotal")))
+        item_parts = optional_payload_float(raw_item.get("parts_total", raw_item.get("partsTotal")))
+        parts_unit_cost = optional_payload_float(raw_item.get("parts_unit_cost", raw_item.get("partsUnitCost")))
+        if item_parts is None and parts_unit_cost is not None:
+            item_parts = round(parts_unit_cost * quantity, 2)
+
+        pricing_mode = str(raw_item.get("pricing_mode") or raw_item.get("pricingMode") or "hourly").strip().lower()
+        pricing_mode = "flat" if pricing_mode == "flat" else "hourly"
+        pricing_modes.add(pricing_mode)
+        if item_labor is None:
+            flat_rate = optional_payload_float(raw_item.get("flat_rate_price", raw_item.get("flatRatePrice")))
+            if pricing_mode == "flat" and flat_rate is not None:
+                item_labor = flat_rate
+            elif item_hours is not None and item_rate is not None:
+                item_labor = round(item_hours * item_rate, 2)
+
+        labor_total += float(item_labor or 0)
+        parts_total += float(item_parts or 0)
+        if item_hours is not None:
+            labor_hours += item_hours
+            saw_labor_hours = True
+        if item_rate is not None:
+            hourly_rates.add(round(item_rate, 4))
+
+    labor_total = round(max(labor_total, 0), 2)
+    parts_total = round(max(parts_total, 0), 2)
+    if labor_total <= 0 and parts_total <= 0:
+        return None
+
+    is_flat = pricing_modes == {"flat"}
+    labor_rate = next(iter(hourly_rates)) if not is_flat and len(hourly_rates) == 1 else None
+    normalized_hours = round(labor_hours, 2) if saw_labor_hours and labor_rate is not None else None
+    if normalized_hours is not None and abs(round(normalized_hours * labor_rate, 2) - labor_total) > 0.01:
+        normalized_hours = None
+        labor_rate = None
+
+    return {
+        "labor_hours": normalized_hours,
+        "labor_rate": labor_rate,
+        "labor_total": labor_total,
+        "parts_total": parts_total,
+        "grand_total": round(labor_total + parts_total, 2),
+        "pricing_mode": "flat" if is_flat else "hourly",
+        "flat_rate_price": labor_total if is_flat else None,
+    }
+
+
+def repair_pricing_needs_approved_estimate_sync(
+    repair: dict[str, Any],
+    pricing: dict[str, Any],
+    estimate_total: Any,
+) -> bool:
+    """Detect the legacy fallback that placed the approved total entirely in labor."""
+    expected_parts = float(pricing.get("parts_total") or 0)
+    if expected_parts <= 0:
+        return False
+    try:
+        stored_parts = float(repair.get("parts_cost") or 0)
+        stored_labor = float(repair.get("labor_cost") or 0)
+        stored_total = float(repair.get("total_cost") or 0)
+        approved_total = float(repair.get("approved_estimate_total") or estimate_total or 0)
+    except (TypeError, ValueError):
+        return False
+    if stored_parts > 0 or approved_total <= 0:
+        return False
+    expected_total = float(pricing.get("grand_total") or 0)
+    if abs(approved_total - expected_total) > 0.01:
+        return False
+    return (
+        abs(stored_labor) <= 0.01
+        or abs(stored_labor - approved_total) <= 0.01
+    ) and (
+        abs(stored_total) <= 0.01
+        or abs(stored_total - approved_total) <= 0.01
+    )
+
+
+def sync_repair_pricing_from_approved_estimate(
+    conn: sqlite3.Connection,
+    *,
+    repair_id: int,
+    customer_id: int,
+    vehicle_id: int,
+    estimate_doc: dict[str, Any] | None = None,
+) -> bool:
+    raw_repair = row_to_dict(
+        conn.execute(
+            """
+            SELECT * FROM repair_records
+            WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+            """,
+            (repair_id, customer_id, vehicle_id),
+        ).fetchone()
+    )
+    if not raw_repair or normalize_workflow_source_type(raw_repair.get("workflow_source_type")) != "finding":
+        return False
+    finding_id = optional_int_value(raw_repair.get("workflow_source_id"))
+    if not finding_id:
+        return False
+    if estimate_doc is None:
+        estimate_doc = latest_estimate_document_for_finding(
+            conn,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            finding_id=finding_id,
+        )
+    pricing = approved_estimate_repair_pricing(estimate_doc)
+    if not pricing or not repair_pricing_needs_approved_estimate_sync(
+        raw_repair,
+        pricing,
+        (estimate_doc or {}).get("estimate_total"),
+    ):
+        return False
+    conn.execute(
+        """
+        UPDATE repair_records
+        SET labor_hours = ?, labor_rate = ?, parts_cost = ?, labor_cost = ?,
+            total_cost = ?, pricing_mode = ?, flat_rate_price = ?
+        WHERE id = ? AND customer_id = ? AND vehicle_id = ?
+        """,
+        (
+            pricing["labor_hours"],
+            pricing["labor_rate"],
+            pricing["parts_total"],
+            pricing["labor_total"],
+            pricing["grand_total"],
+            pricing["pricing_mode"],
+            pricing["flat_rate_price"],
+            repair_id,
+            customer_id,
+            vehicle_id,
+        ),
+    )
+    return True
+
+
 def ensure_repair_record_for_approved_finding(
     conn: sqlite3.Connection,
     *,
@@ -11696,6 +11864,13 @@ def ensure_repair_record_for_approved_finding(
         customer_id=customer_id,
         vehicle_id=vehicle_id,
     ):
+        sync_repair_pricing_from_approved_estimate(
+            conn,
+            repair_id=linked_repair_record_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            estimate_doc=estimate_doc,
+        )
         return linked_repair_record_id
 
     existing_repair_id = find_valid_start_repair_for_finding(
@@ -11706,11 +11881,29 @@ def ensure_repair_record_for_approved_finding(
     )
     if existing_repair_id:
         repair_id = existing_repair_id
+        sync_repair_pricing_from_approved_estimate(
+            conn,
+            repair_id=repair_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+            estimate_doc=estimate_doc,
+        )
     else:
+        estimate_pricing = approved_estimate_repair_pricing(estimate_doc)
+        repair_labor_hours = (estimate_pricing or {}).get("labor_hours", finding.get("labor_hours"))
+        repair_labor_rate = (estimate_pricing or {}).get("labor_rate", finding.get("labor_rate"))
+        repair_parts_cost = (estimate_pricing or {}).get("parts_total", finding.get("parts_cost"))
+        repair_labor_cost = (estimate_pricing or {}).get("labor_total", finding.get("labor_amount"))
+        repair_pricing_mode = (estimate_pricing or {}).get("pricing_mode") or "hourly"
+        repair_flat_rate_price = (estimate_pricing or {}).get("flat_rate_price")
         repair_total = (
-            finding.get("estimate_total")
-            if finding.get("estimate_total") is not None
-            else float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0)
+            (estimate_pricing or {}).get("grand_total")
+            if estimate_pricing
+            else (
+                finding.get("estimate_total")
+                if finding.get("estimate_total") is not None
+                else float(finding.get("labor_amount") or 0) + float(finding.get("parts_cost") or 0)
+            )
         )
         insert_values = (
             vehicle_id,
@@ -11718,15 +11911,17 @@ def ensure_repair_record_for_approved_finding(
             repair_work_title_from_finding(finding),
             local_today().isoformat(),
             finding.get("mileage"),
-            finding.get("labor_hours"),
-            finding.get("labor_rate"),
-            finding.get("parts_cost"),
-            finding.get("labor_amount"),
+            repair_labor_hours,
+            repair_labor_rate,
+            repair_parts_cost,
+            repair_labor_cost,
             repair_total,
             finding_id,
             repair_total,
             repair_work_notes_from_finding(finding),
             now,
+            repair_pricing_mode,
+            repair_flat_rate_price,
         )
         try:
             cur = conn.execute(
@@ -11735,9 +11930,10 @@ def ensure_repair_record_for_approved_finding(
                   vehicle_id, customer_id, repair_name, repair_date, mileage,
                   labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
                   track_as_maintenance, workflow_source_type, workflow_source_id,
-                  approved_estimate_total, notes, status, created_at
+                  approved_estimate_total, notes, status, created_at,
+                  pricing_mode, flat_rate_price
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'finding', ?, ?, ?, 'Open', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'finding', ?, ?, ?, 'Open', ?, ?, ?)
                 """,
                 insert_values,
             )
@@ -11772,9 +11968,10 @@ def ensure_repair_record_for_approved_finding(
                       vehicle_id, customer_id, repair_name, repair_date, mileage,
                       labor_hours, labor_rate, parts_cost, labor_cost, total_cost,
                       track_as_maintenance, workflow_source_type, workflow_source_id,
-                      approved_estimate_total, notes, status, created_at
+                      approved_estimate_total, notes, status, created_at,
+                      pricing_mode, flat_rate_price
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL, ?, ?, 'Open', ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL, ?, ?, 'Open', ?, ?, ?)
                     """,
                     (
                         vehicle_id,
@@ -11782,10 +11979,10 @@ def ensure_repair_record_for_approved_finding(
                         repair_work_title_from_finding(finding),
                         local_today().isoformat(),
                         finding.get("mileage"),
-                        finding.get("labor_hours"),
-                        finding.get("labor_rate"),
-                        finding.get("parts_cost"),
-                        finding.get("labor_amount"),
+                        repair_labor_hours,
+                        repair_labor_rate,
+                        repair_parts_cost,
+                        repair_labor_cost,
                         repair_total,
                         repair_total,
                         "\n\n".join(
@@ -11797,6 +11994,8 @@ def ensure_repair_record_for_approved_finding(
                             if str(part or "").strip()
                         ),
                         now,
+                        repair_pricing_mode,
+                        repair_flat_rate_price,
                     ),
                 )
                 repair_id = int(cur.lastrowid)
@@ -19200,6 +19399,13 @@ def pro_invoice_builder(request: Request, customer_id: int, vehicle_id: int, rep
     try:
         shop_id = current_shop_id(conn, request)
         customer, vehicle = load_customer_vehicle_for_shop(conn, customer_id, vehicle_id, shop_id)
+        if repair_record_id and sync_repair_pricing_from_approved_estimate(
+            conn,
+            repair_id=repair_record_id,
+            customer_id=customer_id,
+            vehicle_id=vehicle_id,
+        ):
+            conn.commit()
         job_groups = load_invoice_builder_jobs(conn, customer_id, vehicle_id)
         shop_profile = load_shop_profile_context(conn)
         selected_repair_ids: set[int] = set()
