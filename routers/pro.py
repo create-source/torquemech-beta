@@ -8226,7 +8226,8 @@ def build_invoice_pdf_bytes(
     c.drawRightString(right - 14, ty - 30, pdf_money(payment["amount_paid"]))
     c.setFillColorRGB(0.78, 0.16, 0.16) if payment["balance_due"] > 0 else c.setFillColorRGB(0.05, 0.45, 0.28)
     c.setFont("Helvetica-Bold", 15)
-    c.drawString(totals_x + 14, ty - 58, payment["emphasis_label"])
+    if payment["balance_due"] > 0:
+        c.drawString(totals_x + 14, ty - 58, payment["emphasis_label"])
     c.drawRightString(right - 14, ty - 58, pdf_money(payment["balance_due"]) if payment["balance_due"] > 0 else "Paid in Full")
     c.setFillGray(0)
 
