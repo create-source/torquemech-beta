@@ -604,9 +604,27 @@
     </section>
   </section>
 
-  <section class="tm-invoice-panel tm-invoice-pdf-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
+  <section id="customer-pdf-details" class="tm-invoice-panel tm-invoice-pdf-panel" aria-label="Customer PDF Details" style="margin-top:16px;">
     <div class="tm-crm-kicker">PDF Options</div>
     <h2 style="margin:0;">Customer PDF Details</h2>
+    <form method="post" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/payment-status" style="margin-top:14px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="tm-invoice-option tm-invoice-option--education">
+        <input
+          type="checkbox"
+          name="mark_paid_in_full"
+          value="1"
+          {% if invoice.balance_due <= 0 and invoice.grand_total > 0 %}checked{% endif %}
+        >
+        <span>
+          <strong>Mark balance paid in full</strong>
+          <small>Check only after payment is received. The PDF will show Paid in Full; unchecked invoices show Balance Due.</small>
+        </span>
+      </label>
+      <div class="tm-invoice-actions" style="margin-top:10px;">
+        <button class="tm-btn tm-btn-secondary" type="submit">Save Payment Status</button>
+      </div>
+    </form>
     <form method="get" action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/invoices/{{ invoice.id }}/pdf">
       <div class="tm-invoice-options">
         <label class="tm-invoice-option"><input type="checkbox" name="show_completion_date" value="1" {% if invoice.pdf_display_options.show_completion_date %}checked{% endif %}><span>Show completion date</span></label>
