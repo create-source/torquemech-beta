@@ -287,6 +287,29 @@
     .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel {
       max-width: 920px;
     }
+
+    /* Keep every desktop section on one centered content boundary. */
+    @media (min-width: 761px) {
+      .tm-pro-shell--invoice-detail {
+        width: min(1120px, 100%);
+        max-width: 1120px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-pro-pagehead,
+      .tm-pro-shell--invoice-detail .tm-invoice-paper,
+      .tm-pro-shell--invoice-detail .tm-invoice-pdf-panel {
+        width: 100%;
+        max-width: none;
+      }
+
+      .tm-pro-shell--invoice-detail .tm-pro-title {
+        font-size: clamp(2.25rem, 3.5vw, 3.35rem);
+        line-height: 1.05;
+      }
+    }
+
     @media (max-width: 760px) {
       .tm-pro-shell--invoice-detail {
         width: 100%;
