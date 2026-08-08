@@ -4,13 +4,25 @@
 
 {% block page_css %}
 <style>
+  .tm-approval-detail-shell {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
   .tm-approval-summary,
   .tm-approval-panel {
+    box-sizing: border-box;
+    width: 100%;
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
+    color: #0f172a;
     padding: 18px;
-    max-width: 920px;
+  }
+
+  .tm-approval-panel h2 {
+    color: #0f172a;
   }
 
   .tm-approval-summary {
@@ -33,6 +45,7 @@
   }
 
   .tm-approval-chip {
+    max-width: 100%;
     border: 1px solid rgba(14, 116, 144, 0.22);
     border-radius: 999px;
     background: #ecfeff;
@@ -40,6 +53,7 @@
     font-weight: 800;
     padding: 6px 10px;
     text-transform: capitalize;
+    overflow-wrap: anywhere;
   }
 
   .tm-approval-chip--inactive {
@@ -63,6 +77,8 @@
   }
 
   .tm-approval-helper {
+    box-sizing: border-box;
+    width: 100%;
     border: 1px solid rgba(217, 119, 6, 0.18);
     border-radius: 8px;
     background: #fffbeb;
@@ -80,7 +96,25 @@
       grid-template-columns: 1fr;
     }
 
+    .tm-approval-actions,
+    .tm-approval-actions form {
+      width: 100%;
+    }
+
     .tm-approval-actions .tm-btn {
+      width: 100%;
+    }
+
+    .tm-approval-summary,
+    .tm-approval-panel {
+      padding: 14px;
+    }
+
+    .tm-approval-chip-row {
+      gap: 8px;
+    }
+
+    .tm-approval-panel > .tm-btn {
       width: 100%;
     }
   }
@@ -88,7 +122,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="tm-pro-shell">
+<section class="tm-pro-shell tm-approval-detail-shell">
   <div class="tm-pro-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>

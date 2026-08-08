@@ -7,6 +7,16 @@
   .tm-approval-shell {
     display: grid;
     gap: 16px;
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .tm-approval-pagehead {
+    width: 100%;
+    max-width: 1180px;
+    margin-right: auto;
+    margin-left: auto;
   }
 
   .tm-approval-summary {
@@ -17,10 +27,22 @@
 
   .tm-approval-summary-card,
   .tm-approval-panel {
+    box-sizing: border-box;
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.94);
+    color: #0f172a;
     padding: 16px;
+  }
+
+  .tm-approval-panel > summary {
+    color: #0f172a;
+    cursor: pointer;
+    font-weight: 900;
+  }
+
+  .tm-approval-panel h2 {
+    color: #0f172a;
   }
 
   .tm-approval-summary-card {
@@ -99,6 +121,14 @@
   .tm-approval-meta {
     color: #64748b;
     font-size: 0.92rem;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-approval-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .tm-approval-badge {
@@ -151,9 +181,35 @@
   }
 
   @media (max-width: 760px) {
-    .tm-approval-summary,
     .tm-approval-head {
       grid-template-columns: 1fr;
+    }
+
+    .tm-approval-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tm-approval-badges {
+      justify-content: flex-start;
+    }
+
+    .tm-approval-panel,
+    .tm-approval-summary-card {
+      padding: 14px;
+    }
+
+    .tm-approval-panel > form > .tm-btn {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tm-approval-summary {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-approval-count {
+      font-size: 1.75rem;
     }
   }
 </style>
@@ -168,7 +224,7 @@
         {{ item.customer_name }}{% if item.phone %} | {{ item.phone|pro_phone }}{% endif %} | {{ item.vehicle_label }}
       </div>
     </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+    <div class="tm-approval-badges">
       {% if item.customer_status == "inactive" %}
       <span class="tm-approval-badge tm-approval-badge--inactive">Customer Inactive</span>
       {% endif %}
@@ -202,7 +258,7 @@
 
 {% block content %}
 <section class="tm-pro-shell">
-  <div class="tm-pro-pagehead">
+  <div class="tm-pro-pagehead tm-approval-pagehead">
     <div>
       <div class="tm-pro-eyebrow">Internal Pro Area</div>
       <h1 class="tm-pro-title">Approvals</h1>
