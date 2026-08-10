@@ -68,7 +68,15 @@
     visibility: hidden;
   }
 }
-  @media (max-width: 680px) { .tm-auth-grid { grid-template-columns:1fr; } }
+  @media (max-width: 680px) {
+    .tm-auth-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-password-grid .tm-auth-field {
+      grid-template-rows: auto auto;
+    }
+  }
 </style>
 {% endblock %}
 
