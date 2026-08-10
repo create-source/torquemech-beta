@@ -3793,6 +3793,7 @@ canvas,
 .tm-footer-links a:hover,.tm-footerLink:hover,.tm-support-email,.tm-footer-support a{color:var(--tm-blue-light);}
 .tm-support-email{text-underline-offset:3px;font-weight:700;}
 .tm-support-email:hover{color:var(--tm-orange-light);}
+.tm-footer #feedbackBtn{min-height:auto;padding-top:0;padding-bottom:0;line-height:normal;}
 
 h1{
   font-weight:800;

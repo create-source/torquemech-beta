@@ -647,8 +647,11 @@
   }
 
   .tm-demo-footer__feedback {
-    min-height: 34px;
+    min-height: auto;
+    padding-top: 0;
+    padding-bottom: 0;
     padding-inline: 14px;
+    line-height: normal;
   }
 
   .tm-demo-cta .tm-demo-actions {
@@ -906,6 +909,14 @@
       justify-content: center;
       gap: 10px;
     }
+
+    .tm-demo-footer__feedback {
+      min-height: auto;
+      padding-top: 0;
+      padding-bottom: 0;
+      line-height: normal;
+    }
+
     .tm-demo-cta .tm-demo-btn {
       width: 100%;
       min-width: 0;
