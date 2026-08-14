@@ -799,10 +799,8 @@
     }
 
     maybeStartTour("estimator");
-    maybeStartTour("pro");
     window.setTimeout(initHelperTips, 800);
   }
-
   initTorqueMechOnboarding();
 
   if (window.__tmEstimatorAppBooted) return;
