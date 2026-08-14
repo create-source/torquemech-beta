@@ -756,13 +756,24 @@
       line-height: 1.45;
     }
 
-    .tm-footer :has(> #feedbackBtn) {
+    .tm-footer .tm-footer-right {
+      flex-direction: row;
+      align-items: center;
       flex-wrap: nowrap;
+      gap: 12px;
+    }
+
+    .tm-footer .tm-footer-support {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
       white-space: nowrap;
     }
 
     .tm-footer #feedbackBtn {
       flex: 0 0 auto;
+      white-space: nowrap;
     }
     
   }
