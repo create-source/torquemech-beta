@@ -113,33 +113,6 @@
     }
   }
 
-  /* Continue Workflow cards — keep text readable in dark theme */
-  .tm-workflow-entry-card,
-  .tm-workflow-entry-card:first-child {
-    border-color: rgba(148, 163, 184, 0.22) !important;
-    background: linear-gradient(
-      180deg,
-      #101d30 0%,
-      #0c1829 100%
-    ) !important;
-    color: #f8fafc !important;
-    box-shadow: none !important;
-  }
-
-  .tm-workflow-entry-card strong {
-    color: #ffffff !important;
-  }
-
-  .tm-workflow-entry-card .tm-muted {
-    color: #aebdd0 !important;
-  }
-
-  .tm-workflow-entry-card:hover,
-  .tm-workflow-entry-card:focus-visible {
-    border-color: rgba(96, 165, 250, 0.42) !important;
-    background: #132238 !important;
-  }
-
   /* Compact spacing between repair-guide categories */
   .tm-repair-guide-group.tm-section {
     padding-top: 5px;
@@ -162,39 +135,8 @@
     }
   }
 
-  /* Repair Guides — override global light-card rule */
-  [data-guide-browse-section] .tm-workflow-entry-card:first-child,
-  [data-guide-browse-section] .tm-workflow-entry-card:first-child strong {
-    color: #ffffff !important;
-  }
-
-  [data-guide-browse-section] .tm-workflow-entry-card:first-child .tm-muted {
-    color: #aebdd0 !important;
-  }
-
-  [data-guide-browse-section] .tm-workflow-entry-card:first-child {
-    background: linear-gradient(
-      180deg,
-      #101d30 0%,
-      #0c1829 100%
-    ) !important;
-  }
-
-  /* Repair Guides — slightly tighter mobile typography */
+  /* Repair Library — slightly tighter mobile typography */
   @media (max-width: 640px) {
-    [data-guide-browse-section] h2 {
-      font-size: 1.35rem;
-    }
-
-    .tm-workflow-entry-card strong {
-      font-size: 0.95rem;
-    }
-
-    .tm-workflow-entry-card .tm-muted {
-      font-size: 0.88rem;
-      line-height: 1.4;
-    }
-
     .tm-repair-guide-category__heading h2 {
       font-size: 1.02rem;
     }
@@ -211,10 +153,10 @@
 {% block content %}
 <section class="tm-section">
   <div class="tm-card">
-    <div class="tm-eyebrow">TorqueMech Repair Guides</div>
-    <h1 class="tm-page-title">Repair Guides</h1>
+    <div class="tm-eyebrow">TorqueMech Repair Library</div>
+    <h1 class="tm-page-title">Repair Library</h1>
     <p class="tm-muted">
-      Browse mechanic-focused repair procedures, labor context, and estimate workflows by system.
+      Browse step-by-step repair procedures, related checks, and labor information by vehicle system.
     </p>
     <div class="tm-intel-flow-strip" aria-label="Repair guide workflow notes">
       <span>System</span>
@@ -243,25 +185,6 @@
     <p id="repairGuideSearchCount" class="tm-repair-guide-count" aria-live="polite" hidden></p>
   </div>
 </section>
-
-{% if platform_sections %}
-<section class="tm-section" data-guide-browse-section>
-  <div class="tm-card">
-    <h2>Continue Workflow</h2>
-    <div class="tm-repair-guide-list">
-      {% for item in platform_sections %}
-      <a class="tm-repair-guide-item tm-workflow-entry-card" href="{{ item.href }}">
-        <div>
-          <strong>{{ item.title }}</strong>
-          <div class="tm-muted">{{ item.summary }}</div>
-        </div>
-        <span class="tm-workflow-entry-card__action">Open</span>
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
 
 <section class="tm-section tm-repair-guide-group" data-guide-search-results hidden>
   <div class="tm-card">
