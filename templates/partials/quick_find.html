@@ -1,138 +1,42 @@
-<header class="tm-nav">
-  <div class="tm-nav__inner">
-    <!-- Left: Wordmark (NO underline in nav) -->
-    <a class="tm-brand" href="/" aria-label="TorqueMech Home">
-      <span class="tm-brand_text">
-        <span class="tm-brand__torque">Torque</span><span class="tm-brand__mech">Mech</span>        
-      </span>
-    </a>
+<section class="tm-section">
+  <div class="tm-card tm-quick-find" data-quick-find>
+    <div class="tm-eyebrow">TorqueMech Diagnostic Search</div>
+    <h2 class="tm-quick-find__title">Search Codes, Costs, Symptoms, and Guides</h2>
+    <p class="tm-muted tm-quick-find__copy">
+      Start from an OBD code, symptom, or repair term and move toward the diagnostic path before choosing parts.
+    </p>
 
-    <!-- Right: Notifications + Hamburger -->
-    {% if request.state.current_user %}
-      {% set staff_notifications = request.state.staff_notifications or {"unread_count": 0, "badge": "", "items": []} %}
-      {% set unread_count = staff_notifications["unread_count"] or 0 %}
-      <div class="tm-notification">
-        <button
-          class="tm-notificationBtn"
-          id="notificationBtn"
-          type="button"
-          aria-label="Notifications, {{ unread_count }} unread"
-          aria-expanded="false"
-          aria-controls="notificationPanel"
-        >
-          <span class="tm-notificationBtn__icon" aria-hidden="true">&#128276;</span>
-          {% if staff_notifications["badge"] %}
-          <span class="tm-notificationBtn__badge" aria-label="{{ unread_count }} unread notifications">{{ staff_notifications["badge"] }}</span>
-          {% endif %}
-        </button>
-        <section class="tm-notificationPanel" id="notificationPanel" aria-labelledby="notificationHeading" hidden>
-          <div class="tm-notificationPanel__head">
-            <h2 id="notificationHeading">Notifications</h2>
-            <span>{{ unread_count }} unread</span>
-          </div>
-          {% if staff_notifications["items"] %}
-          <div class="tm-notificationList">
-            {% for item in staff_notifications["items"] %}
-            <div class="tm-notificationItemShell" data-notification-card data-notification-item data-notification-id="{{ item.id }}" data-notification-unread="{{ 'true' if item.is_unread else 'false' }}">
-              <article class="tm-notificationItem tm-notificationItem--{{ item.notification_type|replace('customer_estimate_', '') }}{% if item.is_unread %} tm-notificationItem--unread{% endif %}">
-                <div class="tm-notificationItem__top">
-                  <span class="tm-notificationItem__label">{{ item.status_label }}</span>
-                  <div class="tm-notificationItem__meta">
-                    <time>{{ item.created_at_display }}</time>
-                    <form class="tm-notificationItem__dismissForm" method="post" action="/pro/notifications/{{ item.id }}/dismiss" data-notification-dismiss-form>
-                      <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                      <button class="tm-notificationItem__trashAction" type="submit" aria-label="Dismiss notification">
-                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-                          <path d="M3 6h18"></path>
-                          <path d="M8 6V4h8v2"></path>
-                          <path d="M6 6l1 15h10l1-15"></path>
-                          <path d="M10 11v6"></path>
-                          <path d="M14 11v6"></path>
-                        </svg>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.body_display or item.body }}</p>
-                {% if item.notification_type == "customer_estimate_approved" and item.handoff_state.kind == "start_repair" %}
-                <span class="tm-notificationItem__ready">Ready for Repair</span>
-                {% endif %}
-                <div class="tm-notificationItem__actions">
-                  {% if item.notification_type == "customer_estimate_approved" and item.handoff_state.primary_action_label %}
-                    {% if item.handoff_state.primary_action_method == "post" %}
-                  <form method="post" action="{{ item.handoff_state.primary_action_url }}">
-                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                    <button class="tm-notificationItem__action tm-notificationItem__action--primary" type="submit">{{ item.handoff_state.primary_action_label }}</button>
-                  </form>
-                    {% else %}
-                  <a class="tm-notificationItem__action tm-notificationItem__action--primary" href="{{ item.handoff_state.primary_action_url }}">{{ item.handoff_state.primary_action_label }}</a>
-                    {% endif %}
-                  {% endif %}
-                  <form method="post" action="/pro/notifications/{{ item.id }}/open">
-                    <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                    <button class="tm-notificationItem__action" type="submit">Open Finding</button>
-                  </form>
-                </div>
-              </article>
-            </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <p class="tm-notificationEmpty">No new notifications.</p>
-          {% endif %}
-        </section>
-      </div>
-    {% endif %}
-    <button class="tm-menuBtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
-      <span class="tm-menuBtn__icon" aria-hidden="true">&#9776;</span>
-    </button>
-  </div>
-
-  <!-- Dropdown panel -->
-  <div class="tm-menu" id="navMenu" hidden>
-    <nav class="tm-menu__panel" aria-label="Main menu">
-      <a class="tm-menu__item" href="/">Home</a>
-      <a class="tm-menu__item" href="/how-it-works">How It Works</a>
-      <a class="tm-menu__item" href="/quick-find">Diagnostic Search</a>
-      <a class="tm-menu__item" href="/repair-guides">Repair Library</a>
-      <a class="tm-menu__item" href="/estimator">Estimator</a>
-      <a class="tm-menu__item tm-menu__item--soon" href="/parts-center">
-        <span>Parts Center</span>
-        <span class="tm-menu__badge">Coming Soon</span>
-      </a>
-
-      <div class="tm-menu__divider"></div>
-      {% if request.state.current_user %}
-        {% set greeting_name = request.state.current_user.first_name or request.state.current_shop.shop_name or 'there' %}
-        <div class="tm-menu__item" aria-label="Signed-in account">
-          <strong>Hello, {{ greeting_name }}</strong>
+    <form class="tm-quick-find__form" action="#" method="get" novalidate>
+      <label class="tm-quick-find__label" for="tmQuickFindInput">Diagnostic Search</label>
+      <div class="tm-quick-find__controls">
+        <div class="quick-find-input-wrap">
+          <input
+            id="tmQuickFindInput"
+            class="tm-quick-find__input"
+            type="search"
+            placeholder="Search P0420, alternator, oxygen sensor, rough idle..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button
+            type="button"
+            class="quick-find-clear"
+            aria-label="Clear search"
+            hidden
+          >
+            &times;
+          </button>
         </div>
-        <a class="tm-menu__item" href="/pro/dashboard">Command Center</a>
-        <a class="tm-menu__item" href="/account/settings">Account Settings</a>
-        <form method="post" action="/logout" style="margin:0;">
-          <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-          <button class="tm-menu__item" type="submit" style="width:100%; border:0; background:transparent; text-align:left; cursor:pointer;">Log Out</button>
-        </form>
-      {% else %}
-        <a class="tm-menu__item" href="/login">Log In</a>
-        <a class="tm-menu__item" href="/signup">Sign Up</a>
-      {% endif %}
-
-      <div class="tm-menu__divider"></div>
-      <button class="tm-menu__disclosure" id="resourcesMenuBtn" type="button" aria-expanded="false" aria-controls="resourcesMenuPanel">
-        <span>Resources</span>
-        <span class="tm-menu__chevron" aria-hidden="true">&#9662;</span>
-      </button>
-      <div class="tm-menu__resources" id="resourcesMenuPanel" hidden>
-        <a class="tm-menu__item tm-menu__item--resource" href="/symptoms">Repair Paths</a>
-        <a class="tm-menu__item tm-menu__item--resource" href="/repair-costs">Repair Cost Guides</a>
-        <a class="tm-menu__item tm-menu__item--resource" href="/obd">Vehicle Code Lookup</a>
-        <a class="tm-menu__item tm-menu__item--resource" href="/knowledge">Knowledge Hub</a>
+        <button class="tm-btn tm-btn-primary tm-quick-find__button" type="submit">Find Repair Path</button>
       </div>
-    </nav>
-  </div>
+    </form>
 
-  <!-- Click-outside backdrop -->
-  <div class="tm-menuBackdrop" id="menuBackdrop" hidden></div>
-</header>
+    <p class="tm-quick-find__hint">
+      Matches OBD codes, repair cost guides, symptom pages, and the Repair Library for a faster diagnosis-to-estimate flow.
+    </p>
+    <p class="tm-quick-find__empty tm-muted" data-quick-find-empty hidden>No matching pages found yet. Try a shorter term or an exact code.</p>
+
+    <div class="tm-quick-find__results" data-quick-find-results hidden></div>
+    <script type="application/json" data-quick-find-index>{{ quick_find_items | tojson }}</script>
+  </div>
+</section>
