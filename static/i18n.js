@@ -36,10 +36,20 @@
     if (state.exactText[clean]) return state.exactText[clean];
 
     const countMatch = clean.match(/^(\d+)\s+(customer|customers|vehicle|vehicles|item|items)$/i);
+
     if (countMatch) {
       const count = countMatch[1];
       const noun = countMatch[2].toLowerCase();
-      const translated = translate(`ui.${noun === "customers" ? "customers_lower" : noun === "vehicles" ? "vehicles_lower" : noun}`);
+
+      const key =
+        noun === "customers"
+          ? "ui.customers_lower"
+          : noun === "vehicles"
+            ? "ui.vehicles_lower"
+            : `ui.${noun}`;
+
+      const translated = translate(key, noun);
+
       return `${count} ${translated}`;
     }
 

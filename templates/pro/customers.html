@@ -178,6 +178,24 @@
       min-height: 0;
     }
   }
+
+  .tm-crm-page-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .tm-crm-count--desktop {
+    display: none;
+  }
+
+  @media (min-width: 900px) {
+    .tm-crm-count--desktop {
+      display: block;
+      margin-left: 4px;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -190,9 +208,13 @@
       <h1 class="tm-pro-title">Customers</h1>
       <p class="tm-pro-subtitle">Find the customer, open the vehicle, keep moving.</p>
     </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <div class="tm-crm-page-actions">
       <a class="tm-btn tm-btn-primary" href="/pro/customers?mode=add#add-customer">Add Customer</a>
       <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
+
+      <div class="tm-crm-count tm-crm-count--desktop">
+        {{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}
+      </div>
     </div>
   </div>
 
@@ -214,7 +236,7 @@
           <a class="tm-crm-filter-link {% if status_filter == 'inactive' %}tm-crm-filter-link--active{% endif %}" href="/pro/customers?status=inactive{% if q %}&q={{ q|urlencode }}{% endif %}">Inactive</a>
           <a class="tm-crm-filter-link {% if status_filter == 'all' %}tm-crm-filter-link--active{% endif %}" href="/pro/customers?status=all{% if q %}&q={{ q|urlencode }}{% endif %}">All</a>
         </div>
-        <div class="tm-crm-count" style="margin-top:8px;">{{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}</div>
+        
       </div>
     </div>
 
