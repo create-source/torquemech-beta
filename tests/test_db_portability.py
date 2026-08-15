@@ -528,6 +528,70 @@ class DatabasePortabilityTests(unittest.TestCase):
             "TEXT NOT NULL DEFAULT 'en-US'",
         )
 
+    def test_account_preferences_schema_command_is_registered(self):
+        args = db_migration.build_parser().parse_args(["apply-account-preferences-schema"])
+
+        self.assertIs(args.func, db_migration.apply_account_preferences_schema)
+
+    def test_account_preferences_schema_requires_postgres_database_url(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(SystemExit) as raised:
+                db_migration.apply_account_preferences_schema(Namespace())
+
+        self.assertIn("explicit PostgreSQL URL", str(raised.exception))
+
+    def test_account_preferences_schema_refuses_sqlite_database_url(self):
+        with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///local.db"}, clear=True):
+            with self.assertRaises(SystemExit) as raised:
+                db_migration.apply_account_preferences_schema(Namespace())
+
+        self.assertIn("explicit PostgreSQL URL", str(raised.exception))
+
+    def test_account_preferences_schema_uses_only_postgres_idempotent_alters(self):
+        statements = []
+
+        class FakeCursor:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def execute(self, sql):
+                statements.append(str(sql))
+
+        class FakePgConn:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def cursor(self):
+                return FakeCursor()
+
+            def rollback(self):
+                statements.append("ROLLBACK")
+
+            def close(self):
+                statements.append("CLOSE")
+
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://user:pass@example/db"}, clear=True), patch.object(
+            db_migration,
+            "pg_connect",
+            return_value=FakePgConn(),
+        ), patch.object(db_migration.db, "active_app_db_path") as active_app_db_path:
+            db_migration.apply_account_preferences_schema(Namespace())
+
+        active_app_db_path.assert_not_called()
+        combined = "\n".join(statements)
+        self.assertIn("ALTER TABLE users", combined)
+        self.assertIn("ADD COLUMN IF NOT EXISTS appearance_preference TEXT NOT NULL DEFAULT 'dark'", combined)
+        self.assertIn("ADD COLUMN IF NOT EXISTS language_preference TEXT NOT NULL DEFAULT 'en-US'", combined)
+        self.assertNotIn("shop_subscriptions", combined)
+        self.assertNotIn("sqlite_master", combined)
+        self.assertEqual(statements[-1], "CLOSE")
+
 
 if __name__ == "__main__":
     unittest.main()

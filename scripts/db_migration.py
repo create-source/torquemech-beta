@@ -389,6 +389,34 @@ def add_subscription_cancel_at_period_end_postgres(_args: argparse.Namespace) ->
         pg_conn.close()
 
 
+def apply_account_preferences_schema(_args: argparse.Namespace) -> None:
+    if not db.using_postgres():
+        raise SystemExit("DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands.")
+
+    pg_conn = pg_connect()
+    try:
+        with pg_conn:
+            with pg_conn.cursor() as cur:
+                cur.execute(
+                    """
+                    ALTER TABLE users
+                    ADD COLUMN IF NOT EXISTS appearance_preference TEXT NOT NULL DEFAULT 'dark'
+                    """
+                )
+                cur.execute(
+                    """
+                    ALTER TABLE users
+                    ADD COLUMN IF NOT EXISTS language_preference TEXT NOT NULL DEFAULT 'en-US'
+                    """
+                )
+        print("account preference schema applied successfully for PostgreSQL database")
+    except Exception as exc:
+        pg_conn.rollback()
+        raise SystemExit(f"Failed to apply PostgreSQL account preference schema: {exc}") from exc
+    finally:
+        pg_conn.close()
+
+
 def apply_subscriptions_schema_local(_args: argparse.Namespace) -> None:
     if db.using_postgres():
         raise SystemExit("Refusing local SQLite migration because the app is configured for PostgreSQL.")
@@ -468,6 +496,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     subscriptions_cancel_pg = subparsers.add_parser("add-subscription-cancel-at-period-end")
     subscriptions_cancel_pg.set_defaults(func=add_subscription_cancel_at_period_end_postgres)
+
+    account_preferences_schema = subparsers.add_parser("apply-account-preferences-schema")
+    account_preferences_schema.set_defaults(func=apply_account_preferences_schema)
 
     subscriptions_backfill = subparsers.add_parser("backfill-development-subscriptions")
     subscriptions_backfill.set_defaults(func=backfill_development_subscriptions)
