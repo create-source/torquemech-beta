@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 
 {% block title %}Request Appointment | TorqueMech{% endblock %}
+{% block i18n_payload %}{{ tm_public_i18n_json(tm_language)|safe }}{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="/static/available_date_picker.css?v={{ static_version('/static/available_date_picker.css') }}">

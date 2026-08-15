@@ -62,7 +62,18 @@ from routers.pro import (
 )
 from app.billing import build_billing_display
 from app import email_service
-from app.i18n import client_payload, client_payload_json, request_language, t_for_request
+from app.i18n import (
+    SUPPORTED_LANGUAGES,
+    client_payload,
+    client_payload_json,
+    locale_meta,
+    locale_options,
+    normalize_language,
+    public_client_payload_json,
+    request_language,
+    t_for_request,
+    translate_text_for_request,
+)
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -1647,6 +1658,10 @@ templates.env.globals["static_version"] = static_version
 templates.env.globals["tm_t"] = t_for_request
 templates.env.globals["tm_language"] = request_language
 templates.env.globals["tm_i18n_json"] = client_payload_json
+templates.env.globals["tm_public_i18n_json"] = public_client_payload_json
+templates.env.globals["tm_locale_meta"] = locale_meta
+templates.env.globals["tm_locale_options"] = locale_options
+templates.env.globals["tm_translate_text"] = translate_text_for_request
 app.state.templates = templates
 
 # routers
@@ -1922,7 +1937,7 @@ def validate_account_phone(value: Any) -> tuple[str, str]:
 
 
 APPEARANCE_PREFERENCES = ("system", "light", "dark")
-LANGUAGE_PREFERENCES = ("en-US", "es")
+LANGUAGE_PREFERENCES = SUPPORTED_LANGUAGES
 
 
 def normalize_appearance_preference(value: Any) -> str:
@@ -1931,8 +1946,7 @@ def normalize_appearance_preference(value: Any) -> str:
 
 
 def normalize_language_preference(value: Any) -> str:
-    clean = str(value or "").strip()
-    return clean if clean in LANGUAGE_PREFERENCES else "en-US"
+    return normalize_language(value)
 
 
 def user_preference_context(user: dict[str, Any] | None) -> dict[str, str]:
@@ -3362,7 +3376,8 @@ async def account_preferences_save(request: Request):
     language = normalize_language_preference(payload.get("language_preference"))
     if str(payload.get("appearance_preference") or "").strip().lower() not in APPEARANCE_PREFERENCES:
         return JSONResponse({"detail": "Invalid appearance preference."}, status_code=400)
-    if str(payload.get("language_preference") or "").strip() not in LANGUAGE_PREFERENCES:
+    submitted_language = str(payload.get("language_preference") or "").strip()
+    if submitted_language not in LANGUAGE_PREFERENCES and submitted_language.lower() not in {"en-us", "en_us"}:
         return JSONResponse({"detail": "Invalid language preference."}, status_code=400)
 
     conn = app_db_conn(row_factory=True)
@@ -3385,7 +3400,22 @@ async def account_preferences_save(request: Request):
         updated_user = current_user(conn, request) or user
         request.state.current_user = updated_user
         preferences = user_preference_context(updated_user)
-        return {**preferences, "i18n": client_payload(preferences["language"])}
+        response = JSONResponse({**preferences, "i18n": client_payload(preferences["language"])})
+        response.set_cookie(
+            "tm_appearance_preference",
+            preferences["appearance"],
+            max_age=31536000,
+            secure=request.url.scheme == "https",
+            samesite="lax",
+        )
+        response.set_cookie(
+            "tm_language_preference",
+            preferences["language"],
+            max_age=31536000,
+            secure=request.url.scheme == "https",
+            samesite="lax",
+        )
+        return response
     finally:
         conn.close()
 
@@ -7683,6 +7713,12 @@ def load_finding_estimator_nav_context(request: Request) -> Dict[str, str]:
 @app.get("/estimator", response_class=HTMLResponse)
 def estimator(request: Request):
     metric_incr("page_estimator")
+    if not getattr(request.state, "current_user", None):
+        conn = app_db_conn(row_factory=True)
+        try:
+            request.state.current_user = current_user(conn, request)
+        finally:
+            conn.close()
     pro_access_state = pro_request_access_state(request)
     query = request.query_params
     finding_estimator_nav = load_finding_estimator_nav_context(request)

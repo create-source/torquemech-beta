@@ -1021,11 +1021,11 @@ class AuthShopIsolationTests(unittest.TestCase):
         response = client.get("/account/settings")
 
         self.assertEqual(user["appearance_preference"], "dark")
-        self.assertEqual(user["language_preference"], "en-US")
+        self.assertEqual(user["language_preference"], "en")
         self.assertIn('<option value="dark" selected', response.text)
-        self.assertIn('<option value="en-US" selected', response.text)
+        self.assertIn('<option value="en" selected', response.text)
         self.assertIn('data-theme="dark"', response.text)
-        self.assertIn('data-language="en-US"', response.text)
+        self.assertIn('data-language="en"', response.text)
 
     def test_account_preferences_endpoint_requires_authentication(self):
         client = self.client()
@@ -1083,7 +1083,7 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(user["appearance_preference"], "dark")
-        self.assertEqual(user["language_preference"], "en-US")
+        self.assertEqual(user["language_preference"], "en")
 
     def test_account_preferences_save_ignores_submitted_user_identity(self):
         client_one = self.client()
@@ -1109,7 +1109,7 @@ class AuthShopIsolationTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(first_user["appearance_preference"], "dark")
-        self.assertEqual(first_user["language_preference"], "en-US")
+        self.assertEqual(first_user["language_preference"], "en")
         self.assertEqual(second_user["appearance_preference"], "system")
         self.assertEqual(second_user["language_preference"], "es")
 

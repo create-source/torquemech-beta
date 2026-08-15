@@ -210,7 +210,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("showProJobHandoffActions();", app_js)
         self.assertIn("function ensureConvertToProJobButton()", app_js)
         self.assertIn('button.id = "convertToProJobBtn";', app_js)
-        self.assertIn('button.textContent = convertToProJobMount.dataset.readyLabel || "Convert to Pro Job";', app_js)
+        self.assertIn('button.textContent = tmEstimatorText("estimator.create_repair_order"', app_js)
         self.assertIn("button.addEventListener(\"click\", handleConvertToProJob);", app_js)
         self.assertIn("customerQuoteReadyForProJob", app_js)
         self.assertIn("function validateCustomerQuoteReview()", app_js)
@@ -267,7 +267,8 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('href="/pro/dashboard"', html)
         self.assertIn("Command Center", html)
         self.assertIn("Loading customer and vehicle...", html)
-        self.assertNotIn("Choose the customer vehicle first.", html)
+        self.assertIn('data-i18n="estimator.loading_customer_vehicle"', html)
+        self.assertNotIn('data-i18n="estimator.choose_vehicle_first"', html)
         self.assertNotIn(">Log In<", html)
         self.assertNotIn(">Sign Up<", html)
         self.assertIn("Parts Sources", html)
@@ -279,7 +280,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn("Amazon", html)
         self.assertIn("O&#39;Reilly Catalog Search", html)
         self.assertIn("2008+Toyota+Sequoia+water+pump", html)
-        self.assertLess(html.index("Research Parts Pricing"), html.index("Price Job"))
+        self.assertLess(html.index("Research Parts Pricing"), html.index('class="pricing-controls__title"'))
 
     def test_finding_estimator_parts_sources_include_service_keyword(self):
         self.start_finding_estimator_context()
@@ -341,12 +342,12 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("Research Parts Pricing", response.text)
-        self.assertNotIn("Back to Finding", response.text)
-        self.assertNotIn("Back to Vehicle", response.text)
+        self.assertNotIn('href="/pro/customers/', response.text)
         self.assertNotIn("data-finding-prepared-url", response.text)
         self.assertNotIn("data-finding-handoff-url", response.text)
         self.assertIn("Choose the customer vehicle first.", response.text)
-        self.assertNotIn("Loading customer and vehicle...", response.text)
+        self.assertIn('data-i18n="estimator.choose_vehicle_first"', response.text)
+        self.assertNotIn('data-i18n="estimator.loading_customer_vehicle"', response.text)
         self.assertIn("Prepare Reviewed Estimate", response.text)
         self.assertIn('id="prepareReviewedEstimateBtn"', response.text)
 
@@ -392,7 +393,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         button_labels = [re.sub(r"\s+", " ", label).strip() for label in button_labels]
 
         self.assertEqual(button_labels.count("Save Prepared Estimate"), 1)
-        self.assertNotIn("Save as Prepared Estimate", html)
+        self.assertNotIn("Save as Prepared Estimate", button_labels)
         self.assertIn("Review & Save Prepared Estimate", html)
         self.assertIn('id="generateAllBtn"', html)
         self.assertNotIn('id="prepareReviewedEstimateBtn"', html)
@@ -405,10 +406,10 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn(">Close</button>", html)
         self.assertIn('href="/pro/customers/1/vehicles/2/findings/3"', html)
         self.assertIn('href="/pro/customers/1/vehicles/2#recommendations-findings"', html)
-        self.assertNotIn("Copy Estimate Link", html)
-        self.assertNotIn("Open Customer Quote", html)
-        self.assertNotIn("Email Customer Quote", html)
-        self.assertNotIn("Create Repair Order", html)
+        self.assertNotIn("Copy Estimate Link", button_labels)
+        self.assertNotIn("Open Customer Quote", button_labels)
+        self.assertNotIn("Email Customer Quote", button_labels)
+        self.assertNotIn('id="proJobHandoffActions"', html)
 
     def test_finding_prepared_estimate_buttons_have_unique_ids_and_matching_js_bindings(self):
         self.start_finding_estimator_context()
@@ -433,7 +434,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertIn('navigator.clipboard?.writeText', app_js)
         self.assertIn('document.execCommand("copy")', app_js)
         self.assertIn('quotePreviewEl?.value || ""', app_js)
-        self.assertIn('copyCustomerMessageBtn.textContent = "Copied";', app_js)
+        self.assertIn('copyCustomerMessageBtn.textContent = tmEstimatorText("estimator.modal.copied"', app_js)
         self.assertIn('const trigger = e.target?.closest?.("#confirmAddBtn");', app_js)
         self.assertIn('if (openConfirm() && isFindingEstimatorSession()) {', app_js)
 
@@ -462,7 +463,7 @@ class EstimatorProHandoffUiTests(unittest.TestCase):
         self.assertLess(redirect_idx, catch_idx)
         self.assertIn("if (!contentType.includes(\"application/pdf\"))", app_js)
         self.assertIn("if (!pdfResponse.ok)", app_js)
-        self.assertIn("setConfirmMessage(\"error\", \"Unable to generate PDF. Please try again.\");", app_js)
+        self.assertIn('setConfirmMessage("error", tmEstimatorText("estimator.status.pdf_failed"', app_js)
 
     def test_finding_completion_redirect_logic_is_present(self):
         with open("static/app.js", encoding="utf-8") as handle:

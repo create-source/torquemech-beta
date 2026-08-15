@@ -1887,6 +1887,17 @@
     return formatPhone(input?.value || "").trim();
   }
 
+  function tmEstimatorText(key, fallback, params = {}) {
+    if (window.tmI18n?.translate) {
+      return window.tmI18n.translate(key, fallback, params);
+    }
+    let output = String(fallback || key || "");
+    Object.entries(params || {}).forEach(([name, value]) => {
+      output = output.replaceAll(`{${name}}`, String(value == null ? "" : value));
+    });
+    return output;
+  }
+
   function bindEstimatorPhoneInput(input) {
     if (!input) return;
     window.TorqueMechPhone.bind(input);
@@ -2887,12 +2898,12 @@
 
   function handleConvertToProJob() {
     if (!lineItems.length) {
-      setStatus("error", "Add at least one service before converting to a Pro job.");
+      setStatus("error", tmEstimatorText("estimator.status.add_service_before_convert", "Add at least one service before converting to a Pro job."));
       return;
     }
     if (!customerQuoteReadyForProJob) {
       if (openConfirm()) {
-        setConfirmMessage("info", "Review the customer quote and choose signature or no signature before converting to a Pro Job.");
+        setConfirmMessage("info", tmEstimatorText("estimator.status.review_before_convert", "Review the customer quote and choose signature or no signature before converting to a Pro Job."));
       }
       return;
     }
@@ -2908,7 +2919,7 @@
     button.id = "convertToProJobBtn";
     button.type = "button";
     button.className = "tm-btn tm-btn-secondary estimator-final-cta";
-    button.textContent = convertToProJobMount.dataset.readyLabel || "Convert to Pro Job";
+    button.textContent = tmEstimatorText("estimator.create_repair_order", convertToProJobMount.dataset.readyLabel || "Create Repair Order");
     button.addEventListener("click", handleConvertToProJob);
     convertToProJobMount.appendChild(button);
     convertToProJobBtn = button;
@@ -2932,25 +2943,25 @@
 
     const draft = getDrafts().find((d) => String(d.shareId || "").toLowerCase() === shareId.toLowerCase());
     if (!draft) {
-      if (draftsMsg) draftsMsg.textContent = "This share link is ready, but the saved estimate is not stored on this device.";
+      if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.share_not_stored", "This share link is ready, but the saved estimate is not stored on this device.");
       return;
     }
 
     await applyDraft(draft);
     showEstimateSavedBlock(draft);
-    if (draftsMsg) draftsMsg.textContent = `Opened saved estimate from this device: ${draft.title}`;
+    if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.opened_from_device", "Opened saved estimate from this device: {title}", { title: draft.title });
   }
 
   function refreshDraftsUI() {
     if (!draftsSelect) return;
     if (document.getElementById("draftsCard")?.dataset.savedEstimatesDisabled === "true") {
-      draftsSelect.innerHTML = `<option value="">Unavailable</option>`;
+      draftsSelect.innerHTML = `<option value="">${escapeServiceResultHtml(tmEstimatorText("estimator.status.unavailable", "Unavailable"))}</option>`;
       if (draftsMsg) draftsMsg.textContent = "";
       return;
     }
 
     const drafts = getDrafts();
-    draftsSelect.innerHTML = `<option value="">Select a device-saved estimate</option>` +
+    draftsSelect.innerHTML = `<option value="">${escapeServiceResultHtml(tmEstimatorText("estimator.select_saved_estimate", "Select a saved estimate"))}</option>` +
       drafts.map(d => `<option value="${d.id}">${draftLabel(d)}</option>`).join("");
     draftsSelect.disabled = drafts.length === 0;
     if (loadDraftBtn) loadDraftBtn.disabled = drafts.length === 0;
@@ -2967,8 +2978,8 @@
 
     if (draftsMsg) {
       draftsMsg.textContent = drafts.length
-        ? `${drafts.length} saved on this device.`
-        : "No saved estimates yet.";
+        ? tmEstimatorText("estimator.status.saved_count", "{count} saved on this device.", { count: drafts.length })
+        : tmEstimatorText("estimator.status.no_saved_yet", "No saved estimates yet.");
     }
   }
 
@@ -3209,21 +3220,21 @@
       updateEstimateButtonState();
       showEstimateSavedBlock(d);
 
-      if (draftsMsg) draftsMsg.textContent = `Loaded from this device: ${d.title}`;
+      if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.loaded_from_device", "Loaded from this device: {title}", { title: d.title });
     }
 
   function saveCurrentDraft(options = {}) {
     const quiet = !!options.quiet;
     if (hasOpenLineEdit()) {
-      if (!quiet && draftsMsg) draftsMsg.textContent = "Save the current line edit before saving this estimate.";
-      setStatus("error", "Save the current line edit before saving this estimate.");
+      if (!quiet && draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.save_line_before_save", "Save the current line edit before saving this estimate.");
+      setStatus("error", tmEstimatorText("estimator.status.save_line_before_save", "Save the current line edit before saving this estimate."));
       focusOpenLineEdit();
       return null;
     }
 
     if (!lineItems.length) {
-      if (!quiet && draftsMsg) draftsMsg.textContent = "Add at least one quoted service before saving.";
-      setStatus("error", "Add at least one quoted service before saving.");
+      if (!quiet && draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.add_quoted_before_save", "Add at least one quoted service before saving.");
+      setStatus("error", tmEstimatorText("estimator.status.add_quoted_before_save", "Add at least one quoted service before saving."));
       return null;
     }
 
@@ -3243,8 +3254,8 @@
     try {
       setDrafts(nextDrafts);
     } catch (e) {
-      if (!quiet && draftsMsg) draftsMsg.textContent = "Unable to save this estimate on this device. Download the PDF to keep a copy.";
-      setStatus("error", "Unable to save this estimate on this device.");
+      if (!quiet && draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.unable_save_full", "Unable to save this estimate on this device. Download the PDF to keep a copy.");
+      setStatus("error", tmEstimatorText("estimator.status.unable_save", "Unable to save this estimate on this device."));
       return null;
     }
     activeDraftId = d.id;
@@ -3257,8 +3268,8 @@
 
     if (draftsMsg) {
       draftsMsg.textContent = quiet
-        ? `Quote ready: ${d.title}`
-        : `Saved: ${d.title}`;
+        ? tmEstimatorText("estimator.status.quote_ready", "Quote ready: {title}", { title: d.title })
+        : tmEstimatorText("estimator.status.saved_title", "Saved: {title}", { title: d.title });
     }
     return d;
   }
@@ -3266,14 +3277,14 @@
   async function loadSelectedDraft() {
     const id = draftsSelect?.value;
     if (!id) {
-      if (draftsMsg) draftsMsg.textContent = "Select a device-saved estimate to continue.";
+      if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.select_saved_continue", "Select a device-saved estimate to continue.");
       return;
     }
 
     const drafts = getDrafts();
     const d = drafts.find(x => x.id === id);
     if (!d) {
-      if (draftsMsg) draftsMsg.textContent = "Saved estimate not found on this device.";
+      if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.saved_not_found", "Saved estimate not found on this device.");
       return;
     }
 
@@ -3283,7 +3294,7 @@
   function deleteSelectedDraft() {
     const id = draftsSelect?.value;
     if (!id) {
-      if (draftsMsg) draftsMsg.textContent = "Select a device-saved estimate first.";
+      if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.select_saved_first", "Select a device-saved estimate first.");
       return;
     }
 
@@ -3299,7 +3310,7 @@
     refreshDraftsUI();
     if (draftsSelect) draftsSelect.value = "";
 
-    if (draftsMsg) draftsMsg.textContent = "Saved estimate deleted from this device.";
+    if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.saved_deleted", "Saved estimate deleted from this device.");
   }
 
   let laborHoursTouched = false;
@@ -6059,8 +6070,8 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (isFindingEstimatorSession()) {
       return {
         state: "prepared",
-        title: "Prepared estimate",
-        detail: "The estimate will be saved to the linked finding without a customer signature.",
+        title: tmEstimatorText("estimator.modal.status_prepared_title", "Prepared estimate"),
+        detail: tmEstimatorText("estimator.modal.status_prepared_detail", "The estimate will be saved to the linked finding without a customer signature."),
       };
     }
     const wantsSignature = getWantSig() === "yes";
@@ -6076,31 +6087,31 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (wantsSignature && signed) {
       return {
         state: "signed",
-        title: "Signed customer approval",
-        detail: "The PDF will show that the customer reviewed and approved the estimate. No payment is collected or recorded.",
+        title: tmEstimatorText("estimator.modal.status_signed_title", "Signed customer approval"),
+        detail: tmEstimatorText("estimator.modal.status_signed_detail", "The PDF will show that the customer reviewed and approved the estimate. No payment is collected or recorded."),
       };
     }
 
     if (wantsSignature) {
       return {
         state: "signature-needed",
-        title: "Signature required before PDF",
-        detail: "The customer must sign in the box below, or choose the no-signature PDF option.",
+        title: tmEstimatorText("estimator.modal.status_signature_needed_title", "Signature required before PDF"),
+        detail: tmEstimatorText("estimator.modal.status_signature_needed_detail", "The customer must sign in the box below, or choose the no-signature PDF option."),
       };
     }
 
     if (reviewed) {
       return {
         state: "reviewed",
-        title: "Customer reviewed estimate",
-        detail: "The PDF will show that the customer reviewed the estimate. No payment is collected or recorded.",
+        title: tmEstimatorText("estimator.modal.status_reviewed_title", "Customer reviewed estimate"),
+        detail: tmEstimatorText("estimator.modal.status_reviewed_detail", "The PDF will show that the customer reviewed the estimate. No payment is collected or recorded."),
       };
     }
 
     return {
       state: "prepared",
-      title: "Prepared estimate",
-      detail: "The PDF will be prepared for customer review, but it will not be marked reviewed or approved.",
+      title: tmEstimatorText("estimator.modal.status_prepared_title", "Prepared estimate"),
+      detail: tmEstimatorText("estimator.modal.status_prepared_pdf_detail", "The PDF will be prepared for customer review, but it will not be marked reviewed or approved."),
     };
   }
 
@@ -6108,7 +6119,7 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!approvalStatusEl) return;
     const status = getApprovalStatusCopy();
     approvalStatusEl.dataset.state = status.state;
-    approvalStatusEl.innerHTML = `<strong>${status.title}</strong><span>${status.detail}</span>`;
+    approvalStatusEl.innerHTML = `<strong>${escapeServiceResultHtml(status.title)}</strong><span>${escapeServiceResultHtml(status.detail)}</span>`;
   }
 
   document.querySelectorAll('input[name="wantSig"]').forEach((el) => {
@@ -6125,19 +6136,21 @@ const confidenceEl = document.getElementById("laborConfidence");
     if (!confirmModal) return false;
 
     if (hasOpenLineEdit()) {
-      setStatus("error", "Save the current line edit before creating the customer quote.");
+      setStatus("error", tmEstimatorText("estimator.status.save_line_before_quote", "Save the current line edit before creating the customer quote."));
       focusOpenLineEdit();
       return false;
     }
 
     if (isAddingLineItem || isGeneratingAllLines) {
-      setStatus("info", "Finish the current quote update before opening the customer quote.");
+      setStatus("info", tmEstimatorText("estimator.status.finish_update_before_quote", "Finish the current quote update before opening the customer quote."));
       return false;
     }
 
     clearConfirmMessage();
     confirmModal.classList.remove("hidden");
+    confirmModal.classList.add("is-open");
     confirmModal.setAttribute("aria-hidden", "false");
+    confirmModal.scrollTop = 0;
     document.body.classList.add("modal-open");
     window.TorqueMechClearFields?.refresh(confirmModal);
 
@@ -6151,12 +6164,12 @@ const confidenceEl = document.getElementById("laborConfidence");
       listEl.innerHTML = `
         <div class="tm-confirm-services-list">
           <div class="tm-confirm-total-band">
-            <span>Prepared estimate summary</span>
+            <span>${escapeServiceResultHtml(tmEstimatorText("estimator.modal.prepared_summary", "Prepared estimate summary"))}</span>
             <strong>${money(total)}</strong>
           </div>
           ${lineItems.map((it) => {
             const vehicleLabel = getCustomerVehicleLabel(it.vehicleLabel || getActiveVehicle());
-            const serviceTotal = it.estimate != null ? money(it.estimate) : "Pending";
+            const serviceTotal = it.estimate != null ? money(it.estimate) : tmEstimatorText("estimator.modal.pending", "Pending");
             const serviceName = escapeServiceResultHtml(displayServiceNameWithQuantity(it.serviceText || "Service", it.quantity));
             const pricingMeta = getVisibleLineItemPricingMeta(it, outputOptions);
             return `
@@ -6164,13 +6177,13 @@ const confidenceEl = document.getElementById("laborConfidence");
               <div class="tm-confirm-service-main">
                 <div class="tm-confirm-service-name">${serviceName}</div>
                 <div class="tm-confirm-service-status" data-status="${normalizeRepairStatus(it.status)}">
-                  Status: ${getRepairStatusLabel(it.status)}
+                  ${escapeServiceResultHtml(tmEstimatorText("estimator.modal.status_prefix", "Status"))}: ${escapeServiceResultHtml(getRepairStatusLabel(it.status))}
                 </div>
                 <div class="tm-confirm-service-vehicle">
                   ${escapeServiceResultHtml(vehicleLabel)}
                 </div>
                 ${pricingMeta.length ? `
-                  <div class="tm-confirm-service-breakdown" aria-label="Line item pricing">
+                  <div class="tm-confirm-service-breakdown" aria-label="${escapeServiceResultHtml(tmEstimatorText("estimator.modal.line_pricing", "Line item pricing"))}">
                     ${pricingMeta.map(item => `
                       <span data-kind="${escapeServiceResultHtml(item.kind || "")}" class="${item.empty ? "is-empty" : ""}">
                         <strong>${escapeServiceResultHtml(item.label)}</strong>
@@ -6184,13 +6197,13 @@ const confidenceEl = document.getElementById("laborConfidence");
                 </div>
               </div>
               <div class="tm-confirm-service-total">
-                <span>Estimate</span>
+                <span>${escapeServiceResultHtml(tmEstimatorText("estimator.modal.estimate", "Estimate"))}</span>
                 <strong>${serviceTotal}</strong>
               </div>
             </div>
           `}).join("")}
           <div class="tm-confirm-grand-total">
-            <div>Ready for customer review</div>
+            <div>${escapeServiceResultHtml(tmEstimatorText("estimator.modal.ready_review", "Ready for customer review"))}</div>
             <strong>${money(total)}</strong>
           </div>
         </div>
@@ -6200,7 +6213,9 @@ const confidenceEl = document.getElementById("laborConfidence");
     refreshQuotePreview();
     refreshQuoteIdentityNudge();
     refreshApprovalStatus();
+    window.tmI18n?.apply(confirmModal);
     resizeSigCanvas();
+    confirmModal.querySelector(".tm-confirm-modal")?.focus({ preventScroll: true });
     return true;
   }
 
@@ -6212,14 +6227,16 @@ const confidenceEl = document.getElementById("laborConfidence");
     }
 
     confirmModal?.classList.add("hidden");
+    confirmModal?.classList.remove("is-open");
     confirmModal?.setAttribute("aria-hidden", "true");
+    if (confirmModal) confirmModal.scrollTop = 0;
     document.body.classList.remove("modal-open");
     clearConfirmMessage();
 
     quickEstimateBtn?.focus();
   }
-  confirmBackdrop?.addEventListener("click", closeConfirm);
-  confirmCloseBtn?.addEventListener("click", closeConfirm);
+  confirmBackdrop?.addEventListener("click", () => closeConfirm());
+  confirmCloseBtn?.addEventListener("click", () => closeConfirm());
 
   customerNameEl?.addEventListener("input", () => {
     refreshQuotePreview();
@@ -6282,17 +6299,17 @@ const confidenceEl = document.getElementById("laborConfidence");
     try {
       const copied = await copyCustomerMessageText(quotePreviewEl?.value || "");
       if (!copied) {
-        setConfirmMessage("info", "Nothing to copy yet.");
+        setConfirmMessage("info", tmEstimatorText("estimator.modal.nothing_to_copy", "Nothing to copy yet."));
         return;
       }
-      copyCustomerMessageBtn.textContent = "Copied";
-      setConfirmMessage("ok", "Message copied.");
+      copyCustomerMessageBtn.textContent = tmEstimatorText("estimator.modal.copied", "Copied");
+      setConfirmMessage("ok", tmEstimatorText("estimator.modal.message_copied", "Message copied."));
       window.clearTimeout(copyCustomerMessageBtn.dataset.resetTimer);
       copyCustomerMessageBtn.dataset.resetTimer = window.setTimeout(() => {
         copyCustomerMessageBtn.textContent = originalLabel;
       }, 1800);
     } catch (e) {
-      setConfirmMessage("error", "Copy failed. Try selecting the text manually.");
+      setConfirmMessage("error", tmEstimatorText("estimator.modal.copy_failed_select", "Copy failed. Try selecting the text manually."));
     }
   });
 
@@ -6301,16 +6318,16 @@ const confidenceEl = document.getElementById("laborConfidence");
       const text = buildQuoteMessage();
 
       if (!text.trim()) {
-        setConfirmMessage("info", "Nothing to copy yet.");
+        setConfirmMessage("info", tmEstimatorText("estimator.modal.nothing_to_copy", "Nothing to copy yet."));
         return;
       }
 
       await navigator.clipboard.writeText(text);
-      setConfirmMessage("ok", "Quote message copied.");
-      setStatus("ok", "Quote message copied.");
+      setConfirmMessage("ok", tmEstimatorText("estimator.modal.quote_message_copied", "Quote message copied."));
+      setStatus("ok", tmEstimatorText("estimator.modal.quote_message_copied", "Quote message copied."));
     } catch (e) {
-      setConfirmMessage("error", "Copy failed. Try selecting the text manually.");
-      setStatus("error", `Copy failed: ${e.message}`);
+      setConfirmMessage("error", tmEstimatorText("estimator.modal.copy_failed_select", "Copy failed. Try selecting the text manually."));
+      setStatus("error", tmEstimatorText("estimator.modal.copy_failed_select", "Copy failed. Try selecting the text manually."));
     }
   });
 
@@ -7328,12 +7345,12 @@ if (getEstimateHint) {
 
   function validateCustomerQuoteReview() {
     if (!lineItems.length) {
-      setConfirmMessage("error", "Add at least one quoted service before preparing the customer quote.");
+      setConfirmMessage("error", tmEstimatorText("estimator.status.add_quoted_before_prepare", "Add at least one quoted service before preparing the customer quote."));
       return false;
     }
     const missing = lineItems.some(it => it.estimate == null);
     if (missing) {
-      setConfirmMessage("error", "Some quoted services are missing prices. Review pricing before preparing the customer quote.");
+      setConfirmMessage("error", tmEstimatorText("estimator.status.missing_prices", "Some quoted services are missing prices. Review pricing before preparing the customer quote."));
       return false;
     }
     if (isFindingEstimatorSession()) {
@@ -7347,14 +7364,14 @@ if (getEstimateHint) {
       try {
         if (!sigCanvas || canvasIsBlank()) {
           refreshApprovalStatus();
-          setConfirmMessage("error", "Signature is selected, but the signature box is empty. Ask the customer to sign, or choose the no-signature PDF option.");
+          setConfirmMessage("error", tmEstimatorText("estimator.status.signature_empty", "Signature is selected, but the signature box is empty. Ask the customer to sign, or choose the no-signature PDF option."));
           return false;
         }
         signatureDataUrl = sigCanvas.toDataURL("image/png");
         refreshApprovalStatus();
       } catch (err) {
         console.warn("Signature validation failed", err);
-        setConfirmMessage("error", "Signature could not be read. Please clear the box and have the customer sign again.");
+        setConfirmMessage("error", tmEstimatorText("estimator.status.signature_read_failed", "Signature could not be read. Please clear the box and have the customer sign again."));
         return false;
       }
     } else {
@@ -7374,8 +7391,8 @@ if (getEstimateHint) {
       hideEstimateSavedBlock();
     }
     showProJobHandoffActions();
-    setStatus("ok", "Reviewed estimate ready for Pro Job conversion.");
-    setConfirmMessage("ok", "Reviewed estimate ready. Convert to Pro Job is available.");
+    setStatus("ok", tmEstimatorText("estimator.status.reviewed_ready_pro", "Reviewed estimate ready for Pro Job conversion."));
+    setConfirmMessage("ok", tmEstimatorText("estimator.status.reviewed_ready", "Reviewed estimate ready. Convert to Pro Job is available."));
     closeConfirm(true);
     return true;
   }
@@ -7392,7 +7409,7 @@ if (getEstimateHint) {
 
     try {
       if (!lineItems.length) {
-        setConfirmMessage("error", "Add at least one quoted service before generating the PDF.");
+        setConfirmMessage("error", tmEstimatorText("estimator.status.add_quoted_before_pdf", "Add at least one quoted service before generating the PDF."));
         return;
       }
 
@@ -7420,7 +7437,9 @@ if (getEstimateHint) {
       const isFindingSave = isFindingEstimatorSession();
 
       // Generate PDF
-      setStatus("info", isFindingSave ? "Saving prepared estimate..." : "Preparing customer PDF...");
+      setStatus("info", isFindingSave
+        ? tmEstimatorText("estimator.status.saving_prepared", "Saving prepared estimate...")
+        : tmEstimatorText("estimator.status.preparing_pdf", "Preparing customer PDF..."));
 
       const activeVehicle = getActiveVehicle() || {};
       const outputOptions = getCustomerOutputOptions();
@@ -7481,8 +7500,8 @@ if (getEstimateHint) {
       const pdfBlob = await pdfResponse.blob();
 
       if (isFindingSave) {
-        setStatus("ok", "Repair estimate prepared.");
-        setConfirmMessage("ok", "Repair estimate prepared. Returning to the finding...");
+        setStatus("ok", tmEstimatorText("estimator.status.repair_prepared", "Repair estimate prepared."));
+        setConfirmMessage("ok", tmEstimatorText("estimator.status.returning_finding", "Repair estimate prepared. Returning to the finding..."));
         const returnUrl = findingEstimatorReturnUrl();
         if (returnUrl) {
           window.location.assign(returnUrl);
@@ -7506,7 +7525,7 @@ if (getEstimateHint) {
       a.click();
       a.remove();
 
-      setStatus("ok", "Customer PDF ready.");
+      setStatus("ok", tmEstimatorText("estimator.status.pdf_ready", "Customer PDF ready."));
       customerQuoteReadyForProJob = true;
       const finalizedDraft = saveCurrentDraft({ quiet: true });
       if (!finalizedDraft) {
@@ -7521,25 +7540,23 @@ if (getEstimateHint) {
 
       if (confirmMsg) {
         confirmMsg.dataset.kind = "ok";
-        confirmMsg.innerHTML = `
-          Your customer PDF is ready.<br>
-          Download, open, or share it with the customer.<br>
-          <a href="${pdfUrl}" download="torquemech_estimate.pdf">Download PDF</a>
-          &nbsp;|&nbsp;
-          <a href="${pdfUrl}" target="_blank" rel="noopener">Open PDF</a>
-        `;
+        confirmMsg.innerHTML = tmEstimatorText(
+          "estimator.modal.pdf_ready_html",
+          "Your customer PDF is ready.<br>Download, open, or share it with the customer.<br><a href=\"{url}\" download=\"torquemech_estimate.pdf\">Download PDF</a>&nbsp;|&nbsp;<a href=\"{url}\" target=\"_blank\" rel=\"noopener\">Open PDF</a>",
+          { url: pdfUrl }
+        );
       }
 
       // Do NOT auto-close immediately
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
 
-      setStatus("ok", "Customer PDF ready.");
+      setStatus("ok", tmEstimatorText("estimator.status.pdf_ready", "Customer PDF ready."));
       closeConfirm(true);
 
     } catch (e) {
       console.error("PDF generation failed", e);
-      setStatus("error", "Unable to generate PDF. Please try again.");
-      setConfirmMessage("error", "Unable to generate PDF. Please try again.");
+      setStatus("error", tmEstimatorText("estimator.status.pdf_failed", "Unable to generate PDF. Please try again."));
+      setConfirmMessage("error", tmEstimatorText("estimator.status.pdf_failed", "Unable to generate PDF. Please try again."));
     } finally {
       isGeneratingCustomerPdf = false;
       if (confirmAddBtn) confirmAddBtn.disabled = false;
@@ -8062,11 +8079,11 @@ if (getEstimateHint) {
 
     try {
       await navigator.clipboard.writeText(lastSavedEstimateLink);
-      if (draftsMsg) draftsMsg.textContent = "Saved estimate link copied.";
-      setStatus("ok", "Saved estimate link copied.");
+      if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.link_copied", "Saved estimate link copied.");
+      setStatus("ok", tmEstimatorText("estimator.status.link_copied", "Saved estimate link copied."));
     } catch (e) {
-      if (draftsMsg) draftsMsg.textContent = "Copy failed. Select the link manually.";
-      setStatus("error", `Copy failed: ${e.message}`);
+      if (draftsMsg) draftsMsg.textContent = tmEstimatorText("estimator.status.copy_failed", "Copy failed. Select the link manually.");
+      setStatus("error", tmEstimatorText("estimator.status.copy_failed", "Copy failed. Select the link manually."));
     }
   });
   openSavedEstimateBtn?.addEventListener("click", () => {
@@ -8076,22 +8093,22 @@ if (getEstimateHint) {
   });
   downloadSavedEstimatePdfBtn?.addEventListener("click", () => {
     if (!lineItems.length) {
-      setStatus("error", "Load or build an estimate before downloading a PDF.");
+      setStatus("error", tmEstimatorText("estimator.status.load_before_pdf", "Load or build an estimate before downloading a PDF."));
       return;
     }
 
     if (openConfirm()) {
-      setConfirmMessage("info", "Review the saved quote, then generate the customer PDF.");
+      setConfirmMessage("info", tmEstimatorText("estimator.status.review_saved_before_pdf", "Review the saved quote, then generate the customer PDF."));
     }
   });
   sharedDownloadPdfBtn?.addEventListener("click", () => {
     if (!lineItems.length) {
-      setStatus("error", "Load or build an estimate before downloading a PDF.");
+      setStatus("error", tmEstimatorText("estimator.status.load_before_pdf", "Load or build an estimate before downloading a PDF."));
       return;
     }
 
     if (openConfirm()) {
-      setConfirmMessage("info", "Review the shared quote, then generate the customer PDF.");
+      setConfirmMessage("info", tmEstimatorText("estimator.status.review_shared_before_pdf", "Review the shared quote, then generate the customer PDF."));
     }
   });
   customerNameEl?.addEventListener("input", () => {

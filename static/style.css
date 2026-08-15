@@ -2451,6 +2451,32 @@ tr:hover td{background:rgba(96,165,250,.05);}
 #confirmMsg.status{margin-top:12px;}
 #confirmMsg.status[data-kind="error"],#confirmMsg.status[data-kind="error"] *{color:#fecaca !important;font-weight:800;}
 
+body.tm-estimator-page #confirmModal.modal{
+  align-items: center;
+  justify-items: center;
+  place-items: center;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(12px, 3vw, 24px);
+}
+
+body.tm-estimator-page #confirmModal.modal.hidden{
+  display: none !important;
+  pointer-events: none;
+}
+
+body.tm-estimator-page #confirmModal .modal-backdrop{
+  position: fixed;
+}
+
+body.tm-estimator-page #confirmModal .tm-confirm-modal{
+  width: min(760px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  overflow-y: auto;
+}
+
 /* Modal */
 body.modal-open{
   overflow: hidden;
@@ -14519,4 +14545,188 @@ html[data-theme-effective="light"] body .tm-calendar-shell .tm-booking-link-pane
   html body .tm-account-nav{
     display: none !important;
   }
+}
+
+@media (max-width: 640px){
+  body.tm-estimator-page #confirmModal.modal{
+    place-items: center;
+    padding: 10px;
+  }
+
+  body.tm-estimator-page #confirmModal .tm-confirm-modal{
+    width: min(100%, calc(100vw - 20px));
+    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - 20px);
+    border-radius: 16px;
+  }
+}
+
+/* Phase 2 appearance guardrails for page-specific surfaces outside the Pro shell. */
+html[data-theme-effective="light"] body.tm-auth-page,
+html[data-theme-effective="light"] body.tm-book-page,
+html[data-theme-effective="light"] body.tm-quick-find-page,
+html[data-theme-effective="light"] body.tm-parts-page,
+html[data-theme-effective="light"] body.tm-public-estimate-page,
+html[data-theme-effective="light"] body.tm-public-estimate-unavailable-page,
+html[data-theme-effective="light"] body:not(.tm-public-estimate-page):not(.tm-public-estimate-unavailable-page){
+  background: var(--tm-bg-light) !important;
+  color: var(--tm-text-primary) !important;
+}
+
+html[data-theme-effective="light"] body .tm-auth-panel,
+html[data-theme-effective="light"] body .tm-auth-card,
+html[data-theme-effective="light"] body .tm-book-panel,
+html[data-theme-effective="light"] body .tm-book-header,
+html[data-theme-effective="light"] body .tm-booking-card,
+html[data-theme-effective="light"] body .tm-quick-find-panel,
+html[data-theme-effective="light"] body .tm-quick-find-card,
+html[data-theme-effective="light"] body .tm-parts-panel,
+html[data-theme-effective="light"] body .tm-parts-card,
+html[data-theme-effective="light"] body .tm-guide-panel,
+html[data-theme-effective="light"] body .tm-guide-card,
+html[data-theme-effective="light"] body .tm-repair-guide-card,
+html[data-theme-effective="light"] body .tm-cost-card,
+html[data-theme-effective="light"] body .tm-knowledge-card,
+html[data-theme-effective="light"] body .tm-obd-card,
+html[data-theme-effective="light"] body .tm-diagnostic-card,
+html[data-theme-effective="light"] body .tm-public-estimate-panel,
+html[data-theme-effective="light"] body .tm-public-decision-card,
+html[data-theme-effective="light"] body .tm-public-estimate-price-card,
+html[data-theme-effective="light"] body .tm-public-estimate-note,
+html[data-theme-effective="light"] body .tm-feedback-reminder,
+html[data-theme-effective="light"] body .tm-modal__panel{
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, .12) !important;
+  color: var(--tm-text-primary) !important;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, .08) !important;
+}
+
+html[data-theme-effective="light"] body .tm-public-estimate-header{
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, .96), rgba(30, 41, 59, .94)) !important;
+  border-color: rgba(15, 23, 42, .24) !important;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, .16) !important;
+}
+
+html[data-theme-effective="light"] body .tm-auth-panel h1,
+html[data-theme-effective="light"] body .tm-auth-card h1,
+html[data-theme-effective="light"] body .tm-book-panel h1,
+html[data-theme-effective="light"] body .tm-book-panel h2,
+html[data-theme-effective="light"] body .tm-book-header h1,
+html[data-theme-effective="light"] body .tm-quick-find-panel h1,
+html[data-theme-effective="light"] body .tm-quick-find-panel h2,
+html[data-theme-effective="light"] body .tm-parts-panel h1,
+html[data-theme-effective="light"] body .tm-parts-panel h2,
+html[data-theme-effective="light"] body .tm-guide-panel h1,
+html[data-theme-effective="light"] body .tm-guide-card h2,
+html[data-theme-effective="light"] body .tm-repair-guide-card h2,
+html[data-theme-effective="light"] body .tm-cost-card h2,
+html[data-theme-effective="light"] body .tm-knowledge-card h2,
+html[data-theme-effective="light"] body .tm-obd-card h2,
+html[data-theme-effective="light"] body .tm-diagnostic-card h2,
+html[data-theme-effective="light"] body .tm-public-estimate-panel h1,
+html[data-theme-effective="light"] body .tm-public-estimate-panel h2,
+html[data-theme-effective="light"] body .tm-public-estimate-panel h3,
+html[data-theme-effective="light"] body .tm-modal__panel h2{
+  color: var(--tm-text-primary) !important;
+  -webkit-text-fill-color: var(--tm-text-primary) !important;
+}
+
+html[data-theme-effective="light"] body .tm-auth-panel p,
+html[data-theme-effective="light"] body .tm-auth-card p,
+html[data-theme-effective="light"] body .tm-book-panel p,
+html[data-theme-effective="light"] body .tm-book-header p,
+html[data-theme-effective="light"] body .tm-quick-find-panel p,
+html[data-theme-effective="light"] body .tm-parts-panel p,
+html[data-theme-effective="light"] body .tm-guide-panel p,
+html[data-theme-effective="light"] body .tm-guide-card p,
+html[data-theme-effective="light"] body .tm-repair-guide-card p,
+html[data-theme-effective="light"] body .tm-cost-card p,
+html[data-theme-effective="light"] body .tm-knowledge-card p,
+html[data-theme-effective="light"] body .tm-obd-card p,
+html[data-theme-effective="light"] body .tm-diagnostic-card p,
+html[data-theme-effective="light"] body .tm-public-estimate-panel p,
+html[data-theme-effective="light"] body .tm-public-estimate-copy,
+html[data-theme-effective="light"] body .tm-modal__panel p{
+  color: var(--tm-text-secondary) !important;
+  -webkit-text-fill-color: var(--tm-text-secondary) !important;
+}
+
+html[data-theme-effective="light"] body .tm-public-estimate-field span,
+html[data-theme-effective="light"] body .tm-public-estimate-price-field span,
+html[data-theme-effective="light"] body .tm-kicker,
+html[data-theme-effective="light"] body .tm-eyebrow,
+html[data-theme-effective="light"] body .tm-meta{
+  color: var(--tm-text-muted-strong) !important;
+  -webkit-text-fill-color: var(--tm-text-muted-strong) !important;
+}
+
+html[data-theme-effective="light"] body .tm-public-estimate-field strong,
+html[data-theme-effective="light"] body .tm-public-estimate-price-field strong,
+html[data-theme-effective="light"] body .tm-public-estimate-total strong{
+  color: var(--tm-text-primary) !important;
+  -webkit-text-fill-color: var(--tm-text-primary) !important;
+}
+
+html[data-theme-effective="light"] body table,
+html[data-theme-effective="light"] body .tm-table,
+html[data-theme-effective="light"] body .tm-data-table{
+  background: #ffffff !important;
+  color: var(--tm-text-primary) !important;
+  border-color: rgba(15, 23, 42, .12) !important;
+}
+
+html[data-theme-effective="light"] body thead,
+html[data-theme-effective="light"] body th{
+  background: #f1f5f9 !important;
+  color: var(--tm-text-muted-strong) !important;
+  border-color: rgba(15, 23, 42, .12) !important;
+}
+
+html[data-theme-effective="light"] body td,
+html[data-theme-effective="light"] body tr{
+  border-color: rgba(15, 23, 42, .10) !important;
+}
+
+html[data-theme-effective="light"] body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not([type="color"]):not([type="range"]),
+html[data-theme-effective="light"] body select,
+html[data-theme-effective="light"] body textarea{
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: var(--tm-text-primary) !important;
+  -webkit-text-fill-color: var(--tm-text-primary) !important;
+}
+
+html[data-theme-effective="light"] body input::placeholder,
+html[data-theme-effective="light"] body textarea::placeholder{
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+
+/* Phase 2 Pro-shell light-mode corrections for legacy disclosure bars. */
+html[data-theme-effective="light"] body .tm-pro-shell .tm-crm-vehicle-summary,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-crm-panel,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-crm-disclosure > summary,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-workspace-section-summary,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-repair-work-section,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-repair-work-convert,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-repair-work-item,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-approval-item,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-history-item,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-calendar-panel,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-dashboard-card,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-dashboard-panel,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-dashboard-section,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-dashboard-section summary{
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, .12) !important;
+  color: var(--tm-text-primary) !important;
+  -webkit-text-fill-color: var(--tm-text-primary) !important;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .07) !important;
+}
+
+html[data-theme-effective="light"] body .tm-pro-shell .tm-crm-kicker,
+html[data-theme-effective="light"] body .tm-pro-shell .tm-workspace-section-count{
+  color: var(--tm-accent) !important;
+  -webkit-text-fill-color: var(--tm-accent) !important;
 }

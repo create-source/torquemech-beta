@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 
 {% block title %}Estimate Link Unavailable | TorqueMech{% endblock %}
+{% block i18n_payload %}{{ tm_public_i18n_json(tm_language)|safe }}{% endblock %}
 {% block body_class %}tm-public-estimate-unavailable-page{% endblock %}
 
 {% block page_css %}

@@ -188,13 +188,14 @@
       <div class="tm-account-preference-row">
         <div>
           <h3 data-i18n="account.language">Language</h3>
-          <p data-i18n="account.language_help">Spanish is available here as the first step toward broader translations.</p>
+          <p data-i18n="account.language_help">Choose the language TorqueMech should use for internal tools.</p>
         </div>
         <label class="tm-account-field" for="language_preference">
           <span class="tm-account-label" data-i18n="account.language">Language</span>
           <select id="language_preference" name="language_preference" data-preference-field>
-            <option value="en-US" {% if preferences.language == "en-US" %}selected{% endif %}>English (US)</option>
-            <option value="es" {% if preferences.language == "es" %}selected{% endif %}>Español</option>
+            {% for locale in tm_locale_options() %}
+            <option value="{{ locale.code }}" {% if preferences.language == locale.code %}selected{% endif %}>{{ locale.name }}</option>
+            {% endfor %}
           </select>
         </label>
       </div>
@@ -520,7 +521,7 @@
 </section>
 <script>
   const applyGeneralLanguage = (language) => {
-    document.documentElement.lang = language === "es" ? "es" : "en-US";
+    document.documentElement.lang = language || "en";
     document.documentElement.dataset.language = language;
     window.tmI18n?.apply(document);
   };
@@ -539,7 +540,7 @@
 
   const savePreferences = async () => {
     const appearance = document.getElementById("appearance_preference")?.value || "dark";
-    const language = document.getElementById("language_preference")?.value || "en-US";
+    const language = document.getElementById("language_preference")?.value || "en";
     window.tmApplyAppearancePreference?.(appearance);
     applyGeneralLanguage(language);
     setPreferenceStatus("saving", "");
@@ -574,7 +575,7 @@
       preferenceSaveTimer = window.setTimeout(savePreferences, 120);
     });
   });
-  applyGeneralLanguage(document.getElementById("language_preference")?.value || "en-US");
+  applyGeneralLanguage(document.getElementById("language_preference")?.value || "en");
 
   const accountPhoneInput = document.querySelector("[data-account-phone-input]");
   const digitsOnly = (value) => String(value || "").replace(/\D/g, "");

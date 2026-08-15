@@ -71,29 +71,29 @@
      {% endif %}>
     <header class="tm-estimator-header" data-tour-target="estimator-welcome">
       <div>
-        <div class="tm-estimator-kicker">{% if shared_id %}Customer view{% elif is_finding_estimator %}Pro finding workflow{% else %}Mechanic estimator{% endif %}</div>
-        <h1>{% if shared_id %}Customer Repair Quote{% elif is_finding_estimator %}Build repair estimate{% else %}Build a customer-ready quote{% endif %}</h1>
+        <div class="tm-estimator-kicker" data-i18n="{% if shared_id %}estimator.customer_view{% elif is_finding_estimator %}estimator.pro_finding_workflow{% else %}estimator.mechanic_estimator{% endif %}">{% if shared_id %}Customer view{% elif is_finding_estimator %}Pro finding workflow{% else %}Mechanic estimator{% endif %}</div>
+        <h1 data-i18n="{% if shared_id %}estimator.customer_repair_quote{% elif is_finding_estimator %}estimator.build_repair_estimate{% else %}estimator.build_customer_ready_quote{% endif %}">{% if shared_id %}Customer Repair Quote{% elif is_finding_estimator %}Build repair estimate{% else %}Build a customer-ready quote{% endif %}</h1>
       </div>
 
-      <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;">Install App</button>
+      <button id="installBtn" type="button" class="tm-btn tm-btn-ghost" style="display:none;" data-i18n="estimator.install_app">Install App</button>
     </header>
 
     {% if is_finding_estimator %}
     <nav class="tm-card tm-finding-estimator-nav" aria-label="Finding estimate navigation">
-      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.finding_url }}">Back to Finding</a>
-      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.vehicle_url }}">Vehicle</a>
-      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.command_center_url }}">Command Center</a>
+      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.finding_url }}" data-i18n="estimator.back_to_finding">Back to Finding</a>
+      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.vehicle_url }}" data-i18n="estimator.step_vehicle">Vehicle</a>
+      <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.command_center_url }}" data-i18n="nav.command_center">Command Center</a>
     </nav>
     {% endif %}
 
     {% if not shared_id %}
     <div class="tm-card tm-estimator-quickstart" aria-label="Estimator process guide">
-      <div class="tm-estimator-quickstart__title">Quote process</div>
+      <div class="tm-estimator-quickstart__title" data-i18n="estimator.quote_process">Quote process</div>
       <div class="tm-estimator-quickstart__steps" aria-label="Vehicle, service, pricing, review">
-        <span class="is-active" data-estimator-step="vehicle"><b>1</b> Vehicle</span>
-        <span data-estimator-step="service"><b>2</b> Service</span>
-        <span data-estimator-step="pricing"><b>3</b> Pricing</span>
-        <span data-estimator-step="review"><b>4</b> Review</span>
+        <span class="is-active" data-estimator-step="vehicle"><b>1</b> <span data-i18n="estimator.step_vehicle">Vehicle</span></span>
+        <span data-estimator-step="service"><b>2</b> <span data-i18n="estimator.step_service">Service</span></span>
+        <span data-estimator-step="pricing"><b>3</b> <span data-i18n="estimator.step_pricing">Pricing</span></span>
+        <span data-estimator-step="review"><b>4</b> <span data-i18n="estimator.step_review">Review</span></span>
       </div>
     </div>
     {% endif %}
@@ -171,14 +171,14 @@
     <section class="tm-card tm-estimator-section" aria-label="Vehicles" data-tour-target="estimator-vehicle">
       <div class="section-header--vehicles">
         <div>
-          <h2>Select vehicle</h2>
+          <h2 data-i18n="estimator.select_vehicle">Select vehicle</h2>
           <div id="vehicleSelectionHelper" class="tm-cta-helper">
-            {% if is_finding_estimator %}Loading customer and vehicle...{% else %}Choose the customer vehicle first.{% endif %}
+            <span data-i18n="{% if is_finding_estimator %}estimator.loading_customer_vehicle{% else %}estimator.choose_vehicle_first{% endif %}">{% if is_finding_estimator %}Loading customer and vehicle...{% else %}Choose the customer vehicle first.{% endif %}</span>
           </div>
         </div>
 
         <div class="tm-vehicle-cta-group">
-          <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn">Clear Quote</button>
+          <button id="clearBtn" type="button" class="tm-btn tm-btn-secondary clear-fields-btn" data-i18n="estimator.clear_quote">Clear Quote</button>
         </div>
       </div>
 
@@ -186,15 +186,15 @@
 
       <div class="vin-section" data-tour-target="estimator-vin">
         <button type="button" id="vinToggle" class="vin-toggle">
-          <span class="vin-toggle-text">Use VIN to fill vehicle details</span>
+          <span class="vin-toggle-text" data-i18n="estimator.use_vin">Use VIN to fill vehicle details</span>
           <span id="vinArrow" class="vin-arrow">▸</span>
         </button>
 
         <div id="vinPanel" class="vin-panel hidden">
           <label for="vin">VIN</label>
-          <input id="vin" type="text" maxlength="17" placeholder="Enter VIN" />
+          <input id="vin" type="text" maxlength="17" placeholder="Enter VIN" data-i18n-placeholder="estimator.enter_vin" />
           <button id="vinLookupBtn" type="button" class="tm-btn tm-btn-secondary tm-vin-lookup-btn">
-            Fill Vehicle from VIN
+            <span data-i18n="estimator.fill_vehicle_from_vin">Fill Vehicle from VIN</span>
           </button>
         </div>
         <div id="vinDecodedMeta" class="tm-hint tm-vin-decoded-meta"></div>
@@ -203,19 +203,19 @@
 
     <aside class="tm-estimator-sticky-summary" aria-label="Estimate summary">
       <div class="tm-estimator-sticky-summary__vehicle">
-        <span>Vehicle</span>
-        <strong id="activeVehicleSummary">Select a vehicle</strong>
+        <span data-i18n="estimator.step_vehicle">Vehicle</span>
+        <strong id="activeVehicleSummary" data-i18n="estimator.select_vehicle">Select a vehicle</strong>
       </div>
       <div class="tm-estimator-sticky-summary__status">
-        <span>Current step</span>
-        <strong id="estimatorCurrentStep">Vehicle</strong>
+        <span data-i18n="estimator.current_step">Current step</span>
+        <strong id="estimatorCurrentStep" data-i18n="estimator.step_vehicle">Vehicle</strong>
       </div>
       <div id="estimateTotalBar" class="tm-estimate-total-bar" aria-live="polite" data-tour-target="estimator-total">
-        <div class="tm-estimate-total-bar__label">Estimate total</div>
+        <div class="tm-estimate-total-bar__label" data-i18n="estimator.estimate_total">Estimate total</div>
         <div id="estimateTotalValue" class="tm-estimate-total-bar__value">$0.00</div>
       </div>
       <button id="stickyReviewBtn" type="button" class="tm-btn tm-btn-primary tm-estimator-sticky-summary__action">
-        Review estimate
+        <span data-i18n="estimator.review_estimate">Review estimate</span>
       </button>
     </aside>
 
@@ -223,89 +223,89 @@
     <section class="tm-card tm-estimator-section" aria-label="Service" data-tour-target="estimator-service">
 
     <div id="activeVehicleBanner" class="tm-active-vehicle-banner tm-active-vehicle-banner--compact">
-      <div>Quoting vehicle</div>
-      <strong id="activeVehicleText">Vehicle</strong>
+      <div data-i18n="estimator.quoting_vehicle">Quoting vehicle</div>
+      <strong id="activeVehicleText" data-i18n="estimator.step_vehicle">Vehicle</strong>
     </div>
 
     <div class="vehicle-header">
       <div class="tm-service-title-group">
-        <h2>Add a service</h2>
-        <div class="tm-service-workflow-copy">Pick the job, price it, keep moving.</div>
+        <h2 data-i18n="estimator.add_service">Add a service</h2>
+        <div class="tm-service-workflow-copy" data-i18n="estimator.pick_job">Pick the job, price it, keep moving.</div>
       </div>
       <div class="tm-addServiceRow">
   <span id="addServiceHint" class="tm-hint" aria-live="polite" hidden>
-    Ready for the next job.
+    <span data-i18n="estimator.ready_next_job">Ready for the next job.</span>
   </span>
   <button id="addLineBtn" class="tm-btn tm-btn-primary add-more-btn" type="button">
-    + Add Another Repair
+    <span data-i18n="estimator.add_another_repair">+ Add Another Repair</span>
   </button>
 </div>
     </div>
 
     <div class="grid2">
       <div class="tm-inline-clear-field">
-        <label for="category">Category</label>
+        <label for="category" data-i18n="estimator.category">Category</label>
         <select id="category"></select>
-        <button id="categoryClearBtn" type="button" class="tm-input-clear-btn" aria-label="Clear category" hidden>
+        <button id="categoryClearBtn" type="button" class="tm-input-clear-btn" aria-label="Clear category" data-i18n-aria-label="estimator.clear_category" hidden>
           &times;
         </button>
       </div>
 
       <div>
-        <label for="service">Service</label>
+        <label for="service" data-i18n="estimator.step_service">Service</label>
         <div class="tm-service-field-shell">
           <select id="service"></select>
-          <button id="serviceClearBtn" type="button" class="tm-input-clear-btn tm-service-clear-btn" aria-label="Clear selected service" hidden>
+          <button id="serviceClearBtn" type="button" class="tm-input-clear-btn tm-service-clear-btn" aria-label="Clear selected service" data-i18n-aria-label="estimator.clear_selected_service" hidden>
             &times;
           </button>
         </div>
         <div class="tm-hint tm-field-helper">
-          Search common jobs or symptoms, then price the repair for this vehicle.
+          <span data-i18n="estimator.service_help">Search common jobs or symptoms, then price the repair for this vehicle.</span>
         </div>
         <div id="serviceCatalogLoadingHint" class="tm-hint tm-field-helper" aria-live="polite" hidden>
-          Loading services...
+          <span data-i18n="estimator.loading_services">Loading services...</span>
         </div>
       </div>
     </div>
 
     <label class="tm-custom-service-toggle" for="customServiceToggle">
       <input id="customServiceToggle" type="checkbox" />
-      <span>Custom Service</span>
+      <span data-i18n="estimator.custom_service">Custom Service</span>
     </label>
 
     <div id="customServiceFields" class="tm-custom-service-fields hidden">
       <div class="grid2">
         <div>
-          <label for="customServiceName">Custom Service Name</label>
-          <input id="customServiceName" type="text" maxlength="180" placeholder="Radio Antenna Replacement" />
+          <label for="customServiceName" data-i18n="estimator.custom_service_name">Custom Service Name</label>
+          <input id="customServiceName" type="text" maxlength="180" placeholder="Radio Antenna Replacement" data-i18n-placeholder="estimator.custom_service_placeholder" />
         </div>
         <div>
-          <label for="customPartsSearchTerm">Parts Search Term / Parts Keyword</label>
-          <input id="customPartsSearchTerm" type="text" maxlength="180" placeholder="radio antenna" />
+          <label for="customPartsSearchTerm" data-i18n="estimator.parts_keyword">Parts Search Term / Parts Keyword</label>
+          <input id="customPartsSearchTerm" type="text" maxlength="180" placeholder="radio antenna" data-i18n-placeholder="estimator.parts_keyword_placeholder" />
         </div>
       </div>
     </div>
 
     <details class="tm-quick-quotes" aria-label="Common Repairs shortcuts">
       <summary class="tm-quick-quotes__summary">
-        <span class="tm-quick-quotes__eyebrow">Browse common repairs</span>
+        <span class="tm-quick-quotes__eyebrow" data-i18n="estimator.browse_common_repairs">Browse common repairs</span>
         <span class="tm-quick-quotes__chevron" aria-hidden="true">▾</span>
       </summary>
       <div class="tm-quick-quotes__list">
-        <button type="button" class="tm-quick-quote" data-quick-quote="oil_change">Oil Change</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="brake_pads">Brake Pads</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="battery">Battery</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="tire_rotation">Tire Rotation</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="spark_plugs">Spark Plugs</button>
-        <button type="button" class="tm-quick-quote" data-quick-quote="diagnostic">Diagnostic</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="oil_change" data-i18n="estimator.oil_change">Oil Change</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="brake_pads" data-i18n="estimator.brake_pads">Brake Pads</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="battery" data-i18n="estimator.battery">Battery</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="tire_rotation" data-i18n="estimator.tire_rotation">Tire Rotation</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="spark_plugs" data-i18n="estimator.spark_plugs">Spark Plugs</button>
+        <button type="button" class="tm-quick-quote" data-quick-quote="diagnostic" data-i18n="estimator.diagnostic">Diagnostic</button>
       </div>
     </details>
 
     <div id="estimatorWorkflowShortcuts" class="tm-estimator-workflow-shortcuts hidden" aria-live="polite">
       <div class="tm-estimator-workflow-shortcuts__head">
         <div>
-          <div class="tm-estimator-workflow-shortcuts__eyebrow">Next Best Step</div>
-          <div class="tm-estimator-workflow-shortcuts__title">Related checks and repair paths.</div>
+          <div class="tm-estimator-workflow-shortcuts__eyebrow" data-i18n="estimator.next_best_step">Next Best Step</div>
+          <div class="tm-estimator-workflow-shortcuts__title" data-i18n="estimator.related_checks">Related checks and repair paths.</div>
         </div>
       </div>
       <div id="estimatorWorkflowShortcutList" class="tm-estimator-workflow-shortcuts__list"></div>
@@ -313,8 +313,8 @@
    
     <div id="lineItemsWrap" class="line-items hidden">
       <div class="line-items-head">
-        <div class="line-items-title">Jobs on this quote</div>
-        <div class="line-items-hint">Edit pricing or add the next repair.</div>
+        <div class="line-items-title" data-i18n="estimator.jobs_on_quote">Jobs on this quote</div>
+        <div class="line-items-hint" data-i18n="estimator.edit_pricing">Edit pricing or add the next repair.</div>
       </div>
 
       <div id="lineItemsList" class="line-items-list"></div>
@@ -323,8 +323,8 @@
     <div id="pairedSuggestions" class="tm-paired-suggestions hidden" aria-live="polite">
       <div class="tm-paired-suggestions__head">
         <div>
-          <div class="tm-paired-suggestions__eyebrow">Mechanics Often Inspect</div>
-          <div class="tm-paired-suggestions__title">Common checks that pair with the repair you are quoting.</div>
+          <div class="tm-paired-suggestions__eyebrow" data-i18n="estimator.mechanics_inspect">Mechanics Often Inspect</div>
+          <div class="tm-paired-suggestions__title" data-i18n="estimator.common_checks">Common checks that pair with the repair you are quoting.</div>
         </div>
       </div>
       <div id="pairedSuggestionsList" class="tm-paired-suggestions__list"></div>
@@ -333,8 +333,8 @@
     <div id="completionSuggestions" class="tm-completion-suggestions hidden" aria-live="polite">
       <div class="tm-completion-suggestions__head">
         <div>
-          <div class="tm-completion-suggestions__eyebrow">Before finishing this quote</div>
-          <div class="tm-completion-suggestions__title">Workflow checks worth reviewing before the PDF.</div>
+          <div class="tm-completion-suggestions__eyebrow" data-i18n="estimator.before_finishing">Before finishing this quote</div>
+          <div class="tm-completion-suggestions__title" data-i18n="estimator.workflow_checks">Workflow checks worth reviewing before the PDF.</div>
         </div>
       </div>
       <div id="completionSuggestionsList" class="tm-completion-suggestions__list"></div>
@@ -391,24 +391,24 @@
 
       <div class="pricing-controls" aria-label="Pricing Controls">
         <div class="pricing-controls__head">
-          <div class="pricing-controls__title">Price Job</div>
-          <div class="pricing-controls__hint">Saved defaults stay on this device.</div>
+          <div class="pricing-controls__title" data-i18n="estimator.price_job">Price Job</div>
+          <div class="pricing-controls__hint" data-i18n="estimator.saved_defaults">Saved defaults stay on this device.</div>
         </div>
 
         <div id="selectedServiceContext" class="selected-service-context hidden" aria-live="polite"></div>
 
         <div class="pricing-controls__grid">
           <div class="pricing-control pricing-control--mode">
-            <label for="pricingMode">Quote Type</label>
+            <label for="pricingMode" data-i18n="estimator.quote_type">Quote Type</label>
             <select id="pricingMode">
-              <option value="hourly" selected>Hourly</option>
-              <option value="flat">Flat Rate</option>
+              <option value="hourly" selected data-i18n="estimator.hourly">Hourly</option>
+              <option value="flat" data-i18n="estimator.flat_rate">Flat Rate</option>
             </select>
           </div>
 
           <div class="pricing-control hourly-pricing-field" data-tour-target="estimator-labor">
             <label for="laborHours" class="pricing-control__label-row">
-              <span id="laborLabelText">Billable Labor Hours</span>
+              <span id="laborLabelText" data-i18n="estimator.billable_labor_hours">Billable Labor Hours</span>
               <span id="laborHoursRange" class="labor-range"></span>
             </label>
 
@@ -418,45 +418,45 @@
           </div>
 
           <div class="pricing-control hourly-pricing-field">
-            <label for="laborRate">Shop Labor Rate ($/hr)</label>
+            <label for="laborRate" data-i18n="estimator.shop_labor_rate">Shop Labor Rate ($/hr)</label>
             <input id="laborRate" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="90" />
           </div>
 
           <div class="pricing-control" data-tour-target="estimator-parts">
-            <label for="serviceQuantity">Quantity</label>
+            <label for="serviceQuantity" data-i18n="estimator.quantity">Quantity</label>
             <span class="tm-clearable-field tm-quantity-field">
               <input id="serviceQuantity" type="number" inputmode="numeric" min="1" step="1" value="1" />
-              <button id="serviceQuantityClearBtn" type="button" class="tm-input-clear-btn" aria-label="Clear quantity" hidden>&times;</button>
+              <button id="serviceQuantityClearBtn" type="button" class="tm-input-clear-btn" aria-label="Clear quantity" data-i18n-aria-label="estimator.clear_quantity" hidden>&times;</button>
             </span>
             <div id="quantityHelp" class="tm-hint tm-field-helper" hidden>
-              Use quantity for coils, plugs, injectors, tires, or per-side parts.
+              <span data-i18n="estimator.quantity_help">Use quantity for coils, plugs, injectors, tires, or per-side parts.</span>
             </div>
           </div>
 
           <div class="pricing-control">
-            <label id="partsPriceLabel" for="partsPrice">Parts Cost (optional)</label>
+            <label id="partsPriceLabel" for="partsPrice" data-i18n="estimator.parts_cost_optional">Parts Cost (optional)</label>
             <input id="partsPrice" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="0" />
             <div id="partsTotalPreview" class="tm-hint tm-field-helper" aria-live="polite"></div>
           </div>
 
           <div id="laborCalculationWrap" class="pricing-control hourly-pricing-field" hidden>
-            <label for="laborCalculationMode">How should labor be calculated?</label>
+            <label for="laborCalculationMode" data-i18n="estimator.labor_calc_question">How should labor be calculated?</label>
             <select id="laborCalculationMode">
-              <option value="total" selected>Use entered labor as total job labor</option>
-              <option value="per_item">Multiply labor by quantity</option>
+              <option value="total" selected data-i18n="estimator.labor_calc_total">Use entered labor as total job labor</option>
+              <option value="per_item" data-i18n="estimator.labor_calc_per_item">Multiply labor by quantity</option>
             </select>
-            <div class="tm-hint tm-field-helper">Most jobs should use total job labor. Only multiply labor when the same labor time repeats for each item.</div>
-            <div id="laborCalculationHelp" class="tm-hint tm-field-helper">Labor will not multiply. The labor hours entered are for the full job.</div>
+            <div class="tm-hint tm-field-helper" data-i18n="estimator.labor_calc_help">Most jobs should use total job labor. Only multiply labor when the same labor time repeats for each item.</div>
+            <div id="laborCalculationHelp" class="tm-hint tm-field-helper" data-i18n="estimator.labor_not_multiply">Labor will not multiply. The labor hours entered are for the full job.</div>
             <div id="laborTotalPreview" class="tm-hint tm-field-helper" aria-live="polite"></div>
           </div>
 
           <div class="pricing-control">
-            <label for="travelFee">Mobile/Travel Fee (optional)</label>
+            <label for="travelFee" data-i18n="estimator.travel_fee">Mobile/Travel Fee (optional)</label>
             <input id="travelFee" type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" value="0" />
           </div>
 
           <div id="flatRateWrap" class="pricing-control hidden">
-            <label for="flatRatePrice">Flat Job Price</label>
+            <label for="flatRatePrice" data-i18n="estimator.flat_job_price">Flat Job Price</label>
 
             <input
               id="flatRatePrice"
@@ -465,17 +465,18 @@
               pattern="[0-9]*[.]?[0-9]*"
               value="0"
               placeholder="Example: 220"
+              data-i18n-placeholder="estimator.flat_job_price_placeholder"
             />
           </div>
         </div>
 
-        <p class="recalc-note">
+        <p class="recalc-note" data-i18n="estimator.adjust_only_changed">
           Adjust only what changed.
         </p>
       </div>
 
       <div class="labor-help">
-        <span class="tm-hint">
+        <span class="tm-hint" data-i18n="estimator.labor_editable">
           Labor hours stay editable. Adjust total labor for the full job.
         </span>
         
@@ -483,14 +484,14 @@
 
       <div class="tm-estimate-action-panel tm-estimate-action-panel--simple">
         <div class="tm-estimate-action-panel__copy">
-          <div class="tm-estimate-action-panel__heading">Add this service to the estimate</div>
+          <div class="tm-estimate-action-panel__heading" data-i18n="estimator.add_service_heading">Add this service to the estimate</div>
           <div id="workflowStepText" class="tm-estimate-action-panel__text" aria-live="polite">
-            Select a vehicle, service, and pricing to continue.
+            <span data-i18n="estimator.select_vehicle_service_pricing">Select a vehicle, service, and pricing to continue.</span>
           </div>
-          <div id="getEstimateHint" class="tm-hint tm-estimate-action-hint" hidden>Choose service and pricing.</div>
+          <div id="getEstimateHint" class="tm-hint tm-estimate-action-hint" hidden data-i18n="estimator.choose_service_pricing">Choose service and pricing.</div>
         </div>
         <button id="quickEstimateBtn" type="button" class="tm-btn tm-btn-primary tm-estimate-action-panel__button">
-          Add service
+          <span data-i18n="estimator.add_service">Add service</span>
         </button>
       </div>
 
@@ -498,7 +499,7 @@
 
       <!-- Estimate Preview -->
       <div id="estimatePreview" class="preview hidden" aria-live="polite">
-        <div class="preview-label">Quote preview</div>
+        <div class="preview-label" data-i18n="estimator.quote_preview">Quote preview</div>
         <div class="preview-value" id="previewTotalText">—</div>
         <div class="preview-sub" id="previewSubText"></div>
       </div>
@@ -524,23 +525,23 @@
         </div>
       </div>
 
-      <section class="tm-estimator-review-section" aria-label="Review estimate">
+      <section class="tm-estimator-review-section" aria-label="Review estimate" data-i18n-aria-label="estimator.review_estimate">
         <div class="tm-estimator-review-section__head">
           <div>
-            <div class="tm-estimator-review-section__eyebrow">Review</div>
-            <h2>Review estimate</h2>
+            <div class="tm-estimator-review-section__eyebrow" data-i18n="estimator.step_review">Review</div>
+            <h2 data-i18n="estimator.review_estimate">Review estimate</h2>
           </div>
-          <p>Confirm the jobs, pricing, and customer-facing notes before creating the quote.</p>
+          <p data-i18n="estimator.confirm_jobs">Confirm the jobs, pricing, and customer-facing notes before creating the quote.</p>
         </div>
 
         <div class="tm-quote-note">
-          <div>Customer quote note</div>
-          <div class="tm-hint">Final pricing may vary after inspection, taxes, parts confirmation, or additional repair needs.</div>
+          <div data-i18n="estimator.customer_quote_note">Customer quote note</div>
+          <div class="tm-hint" data-i18n="estimator.final_pricing_varies">Final pricing may vary after inspection, taxes, parts confirmation, or additional repair needs.</div>
         </div>
 
         <div class="tm-quote-notes-field">
-          <label for="notes">Quote notes (optional)</label>
-          <textarea id="notes" rows="3" placeholder="Add warranty, condition, or customer-facing notes..."></textarea>
+          <label for="notes" data-i18n="estimator.quote_notes">Quote notes (optional)</label>
+          <textarea id="notes" rows="3" placeholder="Add warranty, condition, or customer-facing notes..." data-i18n-placeholder="estimator.quote_notes_placeholder"></textarea>
         </div>
       </section>
 
@@ -550,33 +551,33 @@
       <details class="tm-card tm-saved-estimates-drawer" id="draftsCard" data-saved-estimates-disabled="false">
         <summary>
           <span>
-            <span class="tm-section-kicker">Local workspace</span>
-            <strong>Saved estimates</strong>
+            <span class="tm-section-kicker" data-i18n="estimator.local_workspace">Local workspace</span>
+            <strong data-i18n="estimator.saved_estimates">Saved estimates</strong>
           </span>
-          <small>Open, save, or remove a local draft</small>
+          <small data-i18n="estimator.open_save_remove">Open, save, or remove a local draft</small>
         </summary>
         <div class="tm-saved-estimates-drawer__body">
-      <div class="tm-section-kicker">Local workspace</div>
-      <h2>Saved Estimates</h2>
-      <div class="tm-hint tm-device-save-label">Saved on this device</div>
+      <div class="tm-section-kicker" data-i18n="estimator.local_workspace">Local workspace</div>
+      <h2 data-i18n="estimator.saved_estimates_title">Saved Estimates</h2>
+      <div class="tm-hint tm-device-save-label" data-i18n="estimator.saved_on_device">Saved on this device</div>
 
       <div class="tm-inline-panel" id="draftRecoveryBlock">
-        <div class="tm-inline-panel__title">Reload a local estimate.</div>
+        <div class="tm-inline-panel__title" data-i18n="estimator.reload_local">Reload a local estimate.</div>
       </div>
 
       <div class="tm-draft-controls">
 
         <button id="saveDraftBtn" type="button" class="tm-btn tm-btn-secondary">
-          Save This Estimate for Later
+          <span data-i18n="estimator.save_later">Save This Estimate for Later</span>
         </button>
 
         <select id="draftsSelect">
-          <option value="">Select a saved estimate</option>
+          <option value="" data-i18n="estimator.select_saved_estimate">Select a saved estimate</option>
         </select>
 
         <div class="tm-draft-actions">
-          <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary">Open</button>
-          <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger">Delete</button>
+          <button id="loadDraftBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.open">Open</button>
+          <button id="deleteDraftBtn" type="button" class="tm-btn tm-btn-danger" data-i18n="estimator.delete">Delete</button>
         </div>
 
       </div>
@@ -585,34 +586,34 @@
       <div id="draftsMsg" class="tm-local-status"></div>
 
       <div id="estimateSavedBlock" class="tm-inline-panel" hidden>
-        <div class="tm-inline-panel__title">{% if is_finding_estimator %}Repair Estimate Prepared{% else %}Ready for Customer Review{% endif %}</div>
-        <div class="tm-hint tm-inline-panel__hint">{% if is_finding_estimator %}The estimate was saved to the linked finding.{% else %}Prepared estimate summary is ready to share or download.{% endif %}</div>
+        <div class="tm-inline-panel__title" data-i18n="{% if is_finding_estimator %}estimator.repair_estimate_prepared{% else %}estimator.ready_customer_review{% endif %}">{% if is_finding_estimator %}Repair Estimate Prepared{% else %}Ready for Customer Review{% endif %}</div>
+        <div class="tm-hint tm-inline-panel__hint" data-i18n="{% if is_finding_estimator %}estimator.saved_to_finding{% else %}estimator.prepared_summary_ready{% endif %}">{% if is_finding_estimator %}The estimate was saved to the linked finding.{% else %}Prepared estimate summary is ready to share or download.{% endif %}</div>
         <div class="tm-saved-quote-actions">
           {% if not shared_id and not is_finding_estimator %}
-          <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary">Copy Estimate Link</button>
+          <button id="copySavedEstimateLinkBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.copy_estimate_link">Copy Estimate Link</button>
           {% endif %}
           {% if not is_finding_estimator %}
-          <button id="openSavedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">Open Customer Quote</button>
-          <button id="downloadSavedEstimatePdfBtn" type="button" class="tm-btn tm-btn-primary">Download Customer PDF</button>
+          <button id="openSavedEstimateBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.open_customer_quote">Open Customer Quote</button>
+          <button id="downloadSavedEstimatePdfBtn" type="button" class="tm-btn tm-btn-primary" data-i18n="estimator.download_customer_pdf">Download Customer PDF</button>
           {% endif %}
           {% if is_finding_estimator %}
-          <a class="tm-btn tm-btn-primary" href="{{ finding_estimator_nav.finding_url }}?estimate_prepared=1">Return to Finding</a>
+          <a class="tm-btn tm-btn-primary" href="{{ finding_estimator_nav.finding_url }}?estimate_prepared=1" data-i18n="estimator.return_to_finding">Return to Finding</a>
           {% endif %}
         </div>
         {% if not is_finding_estimator %}
-        <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--saved">Review estimate details before sharing.</div>
+        <div class="tm-quote-trust-microcopy tm-quote-trust-microcopy--saved" data-i18n="estimator.review_before_sharing">Review estimate details before sharing.</div>
         {% endif %}
         <div id="estimateSavedLinkText" class="tm-hint tm-saved-link-text"></div>
         {% if pro_handoff_available and not shared_id and not is_finding_estimator %}
-        <div id="proJobHandoffActions" class="tm-pro-job-handoff" aria-label="Pro job handoff" hidden>
+        <div id="proJobHandoffActions" class="tm-pro-job-handoff" aria-label="Pro job handoff" data-i18n-aria-label="estimator.pro_job_handoff" hidden>
           <div>
-            <div class="tm-pro-job-handoff__title">Create Repair Order</div>
-            <div class="tm-pro-job-handoff__copy">Move the approved estimate into the repair workflow.</div>
+            <div class="tm-pro-job-handoff__title" data-i18n="estimator.create_repair_order">Create Repair Order</div>
+            <div class="tm-pro-job-handoff__copy" data-i18n="estimator.move_approved">Move the approved estimate into the repair workflow.</div>
           </div>
           <form id="convertToProJobForm" method="post" action="/pro/estimate-conversion" hidden>
             <input id="convertToProJobPayload" type="hidden" name="estimate_payload" value="">
           </form>
-          <div id="convertToProJobMount" data-ready-label="Create Repair Order"></div>
+          <div id="convertToProJobMount" data-ready-label="Create Repair Order" data-i18n-data-ready-label="estimator.create_repair_order"></div>
         </div>
         {% endif %}
       </div>
@@ -622,165 +623,165 @@
 
       <div id="customerQuoteFinalActions" class="actions estimator-final-actions" aria-label="Finish customer quote" data-tour-target="estimator-finish">
         {% if shared_id %}
-        <div class="tm-hint">This shared estimate is ready for customer review with PDF, email, and share handoff support.</div>
+        <div class="tm-hint" data-i18n="estimator.shared_ready">This shared estimate is ready for customer review with PDF, email, and share handoff support.</div>
         {% endif %}
-        <div class="estimator-final-step">Final action</div>
-        <div class="estimator-final-heading">{% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Ready for Customer Review{% endif %}</div>
-        <div class="tm-hint estimator-final-hint">{% if is_finding_estimator %}Save this estimate to the finding and return to the finding detail page.{% else %}Add a vehicle and at least one service, then review the estimate before sharing.{% endif %}</div>
+        <div class="estimator-final-step" data-i18n="estimator.final_action">Final action</div>
+        <div class="estimator-final-heading" data-i18n="{% if is_finding_estimator %}estimator.review_save_prepared{% else %}estimator.ready_customer_review{% endif %}">{% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Ready for Customer Review{% endif %}</div>
+        <div class="tm-hint estimator-final-hint" data-i18n="{% if is_finding_estimator %}estimator.save_to_finding_return{% else %}estimator.add_vehicle_service_review{% endif %}">{% if is_finding_estimator %}Save this estimate to the finding and return to the finding detail page.{% else %}Add a vehicle and at least one service, then review the estimate before sharing.{% endif %}</div>
         <button id="generateAllBtn" type="button" class="tm-btn tm-btn-primary estimator-final-cta" aria-describedby="customerQuoteFinalHint" disabled data-tour-target="estimator-pdf">
-          {% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Create Customer Quote{% endif %}
+          <span data-i18n="{% if is_finding_estimator %}estimator.review_save_prepared{% else %}estimator.create_customer_quote{% endif %}">{% if is_finding_estimator %}Review & Save Prepared Estimate{% else %}Create Customer Quote{% endif %}</span>
         </button>
-        <div id="customerQuoteFinalHint" class="tm-quote-trust-microcopy">{% if is_finding_estimator %}No customer approval or repair order is created.{% else %}Includes services, pricing, notes, and total.{% endif %}</div>
+        <div id="customerQuoteFinalHint" class="tm-quote-trust-microcopy" data-i18n="{% if is_finding_estimator %}estimator.no_customer_approval{% else %}estimator.includes_services{% endif %}">{% if is_finding_estimator %}No customer approval or repair order is created.{% else %}Includes services, pricing, notes, and total.{% endif %}</div>
       </div>
 
     </section>
 
   <!-- Confirm Modal -->
-  <div id="confirmModal" class="modal hidden" aria-hidden="true">
+  <div id="confirmModal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
     <div class="modal-backdrop" id="confirmBackdrop"></div>
 
-    <div class="modal-card tm-confirm-modal">
+    <div class="modal-card tm-confirm-modal" tabindex="-1">
       <div class="modal-header tm-confirm-header">
-        <h2>{% if is_finding_estimator %}Save Prepared Estimate{% else %}Create Customer Quote{% endif %}</h2>
-        <p class="tm-confirm-intro">{% if is_finding_estimator %}Review estimate details before saving them to the linked finding.{% else %}Review estimate details before sharing.{% endif %}</p>
+        <h2 id="confirmModalTitle" data-i18n="{% if is_finding_estimator %}estimator.modal.save_prepared{% else %}estimator.modal.create_customer_quote{% endif %}">{% if is_finding_estimator %}Save Prepared Estimate{% else %}Create Customer Quote{% endif %}</h2>
+        <p class="tm-confirm-intro" data-i18n="{% if is_finding_estimator %}estimator.modal.review_before_saving{% else %}estimator.modal.review_before_sharing{% endif %}">{% if is_finding_estimator %}Review estimate details before saving them to the linked finding.{% else %}Review estimate details before sharing.{% endif %}</p>
       </div>
 
-      <section class="tm-confirm-section" aria-label="Business identity">
-        <div class="tm-confirm-section-title">Business Identity</div>
-        <p class="tm-confirm-helper">This appears in the Prepared By area of the customer PDF. These defaults are saved on this device only.</p>
+      <section class="tm-confirm-section" aria-label="Business identity" data-i18n-aria-label="estimator.modal.business_identity">
+        <div class="tm-confirm-section-title" data-i18n="estimator.modal.business_identity">Business Identity</div>
+        <p class="tm-confirm-helper" data-i18n="estimator.modal.prepared_by_help">This appears in the Prepared By area of the customer PDF. These defaults are saved on this device only.</p>
         <div class="grid2 tm-confirm-grid-compact">
           <div>
-            <label for="businessName">Business / Shop Name</label>
-            <input id="businessName" type="text" maxlength="80" placeholder="Business or shop name" />
+            <label for="businessName" data-i18n="estimator.modal.business_name">Business / Shop Name</label>
+            <input id="businessName" type="text" maxlength="80" placeholder="Business or shop name" data-i18n-placeholder="estimator.modal.business_name_placeholder" />
           </div>
           <div>
-            <label for="mechanicName">Mechanic Name</label>
-            <input id="mechanicName" type="text" maxlength="80" placeholder="Mechanic name" />
+            <label for="mechanicName" data-i18n="estimator.modal.mechanic_name">Mechanic Name</label>
+            <input id="mechanicName" type="text" maxlength="80" placeholder="Mechanic name" data-i18n-placeholder="estimator.modal.mechanic_name_placeholder" />
           </div>
           <div>
-            <label for="businessPhone">Phone Number</label>
+            <label for="businessPhone" data-i18n="estimator.modal.phone_number">Phone Number</label>
             <input id="businessPhone" type="tel" maxlength="32" placeholder="(***)***-****" />
           </div>
           <div>
-            <label for="businessNote">Optional Business Note</label>
-            <textarea id="businessNote" rows="2" maxlength="180" placeholder="Warranty, license, or shop note..."></textarea>
+            <label for="businessNote" data-i18n="estimator.modal.business_note">Optional Business Note</label>
+            <textarea id="businessNote" rows="2" maxlength="180" placeholder="Warranty, license, or shop note..." data-i18n-placeholder="estimator.modal.business_note_placeholder"></textarea>
           </div>
         </div>
       </section>
 
-      <section class="tm-confirm-section" aria-label="Customer information">
-        <div class="tm-confirm-section-title">{% if is_finding_estimator %}Prepared Estimate{% else %}Customer Review{% endif %}</div>
+      <section class="tm-confirm-section" aria-label="Customer information" data-i18n-aria-label="estimator.modal.customer_review">
+        <div class="tm-confirm-section-title" data-i18n="{% if is_finding_estimator %}estimator.modal.prepared_estimate{% else %}estimator.modal.customer_review{% endif %}">{% if is_finding_estimator %}Prepared Estimate{% else %}Customer Review{% endif %}</div>
         <div class="grid2 tm-confirm-grid-compact">
           <div>
-            <label for="customerName">Customer Name (optional)</label>
-            <input id="customerName" type="text" placeholder="Customer name" />
+            <label for="customerName" data-i18n="estimator.modal.customer_name">Customer Name (optional)</label>
+            <input id="customerName" type="text" placeholder="Customer name" data-i18n-placeholder="estimator.modal.customer_name_placeholder" />
           </div>
           <div>
-            <label for="customerPhone">Customer Phone (optional)</label>
+            <label for="customerPhone" data-i18n="estimator.modal.customer_phone">Customer Phone (optional)</label>
             <input id="customerPhone" type="tel" placeholder="(***)***-****" />
           </div>
         </div>
         <label class="tm-confirm-check tm-confirm-agree" {% if is_finding_estimator %}hidden{% endif %}>
           <input type="checkbox" id="customerAgreesChk" checked />
-          <span>Customer reviewed the estimate details</span>
+          <span data-i18n="estimator.modal.customer_reviewed">Customer reviewed the estimate details</span>
         </label>
         <div id="approvalStatus" class="tm-approval-status" data-state="reviewed" aria-live="polite">
-          <strong>Customer reviewed estimate</strong>
-          <span>The PDF will show that the customer reviewed the estimate. No payment is collected or recorded.</span>
+          <strong data-i18n="estimator.modal.customer_reviewed_title">Customer reviewed estimate</strong>
+          <span data-i18n="estimator.modal.customer_reviewed_detail">The PDF will show that the customer reviewed the estimate. No payment is collected or recorded.</span>
         </div>
-        <p id="quoteIdentityNudge" class="tm-confirm-helper tm-confirm-helper--nudge hidden">
+        <p id="quoteIdentityNudge" class="tm-confirm-helper tm-confirm-helper--nudge hidden" data-i18n="estimator.modal.identity_nudge">
           Adding customer and business details makes the quote easier to match to the repair visit.
         </p>
       </section>
 
-      <section class="tm-confirm-section" aria-label="Estimate summary">
-        <div class="tm-confirm-section-title">Ready for Customer Review</div>
+      <section class="tm-confirm-section" aria-label="Estimate summary" data-i18n-aria-label="estimator.modal.estimate_summary">
+        <div class="tm-confirm-section-title" data-i18n="estimator.ready_customer_review">Ready for Customer Review</div>
         <div class="tm-confirm-services-wrap">
-          <div>Prepared estimate summary</div>
+          <div data-i18n="estimator.modal.prepared_summary">Prepared estimate summary</div>
           <div id="confirmServicesList">—</div>
         </div>
       </section>
 
-      <section class="tm-confirm-section" aria-label="Customer PDF details">
-        <div class="tm-confirm-section-title">Customer PDF details</div>
+      <section class="tm-confirm-section" aria-label="Customer PDF details" data-i18n-aria-label="estimator.modal.pdf_details">
+        <div class="tm-confirm-section-title" data-i18n="estimator.modal.pdf_details">Customer PDF details</div>
         <div class="tm-confirm-options-grid">
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowGeneratedDateChk" checked />
-            <span>Show prepared date and time</span>
+            <span data-i18n="estimator.modal.show_date">Show prepared date and time</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowHourlyRateChk" />
-            <span>Show shop labor rate</span>
+            <span data-i18n="estimator.modal.show_rate">Show shop labor rate</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowLaborColumnChk" />
-            <span>Show labor total</span>
+            <span data-i18n="estimator.modal.show_labor">Show labor total</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowPartsColumnChk" />
-            <span>Show parts total</span>
+            <span data-i18n="estimator.modal.show_parts">Show parts total</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowRiskNotesChk" checked />
-            <span>Show risk notes</span>
+            <span data-i18n="estimator.modal.show_risk">Show risk notes</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowInspectionFindingsChk" checked />
-            <span>Show inspection findings</span>
+            <span data-i18n="estimator.modal.show_findings">Show inspection findings</span>
           </label>
           <label class="tm-confirm-check">
             <input type="checkbox" id="pdfShowLaborBreakdownChk" />
-            <span>Show labor guide details</span>
+            <span data-i18n="estimator.modal.show_labor_guide">Show labor guide details</span>
           </label>
           <label class="tm-confirm-check tm-service-education-option">
             <input type="checkbox" id="pdfIncludeServiceEducationChk" checked>
 
             <span>
-              <strong>Include service education</strong>
-              <small>Adds a customer-friendly explanation of the recommended repair.</small>
+              <strong data-i18n="estimator.modal.include_education">Include service education</strong>
+              <small data-i18n="estimator.modal.education_help">Adds a customer-friendly explanation of the recommended repair.</small>
             </span>
           </label>
         </div>
       </section>
 
-      <section class="tm-confirm-section" aria-label="Signature" {% if is_finding_estimator %}hidden{% endif %}>
-        <div class="tm-confirm-section-title">Approval Signature</div>
-        <p class="tm-confirm-helper">Use a signature only when the customer is approving the reviewed estimate in person.</p>
+      <section class="tm-confirm-section" aria-label="Signature" data-i18n-aria-label="estimator.modal.signature" {% if is_finding_estimator %}hidden{% endif %}>
+        <div class="tm-confirm-section-title" data-i18n="estimator.modal.approval_signature">Approval Signature</div>
+        <p class="tm-confirm-helper" data-i18n="estimator.modal.signature_help">Use a signature only when the customer is approving the reviewed estimate in person.</p>
         <div class="sig-choice tm-confirm-radio-row">
         <label class="tm-confirm-check">
           <input type="radio" name="wantSig" value="yes" checked />
-          <span>Customer will sign reviewed estimate</span>
+          <span data-i18n="estimator.modal.customer_will_sign">Customer will sign reviewed estimate</span>
         </label>
 
         <label class="tm-confirm-check">
           <input type="radio" name="wantSig" value="no" />
-          <span>Prepare reviewed estimate without signature</span>
+          <span data-i18n="estimator.modal.no_signature">Prepare reviewed estimate without signature</span>
         </label>
       </div>
 
       <!-- Signature section -->
       <div id="sigSection" class="hidden tm-signature-panel">
-        <label class="tm-confirm-signature-label">Customer approval signature</label>
-        <p class="tm-confirm-signature-copy">Signature confirms the customer reviewed the estimate details shown above and approves the estimate. No payment is recorded.</p>
+        <label class="tm-confirm-signature-label" data-i18n="estimator.modal.signature_label">Customer approval signature</label>
+        <p class="tm-confirm-signature-copy" data-i18n="estimator.modal.signature_copy">Signature confirms the customer reviewed the estimate details shown above and approves the estimate. No payment is recorded.</p>
 
         <div class="sig-wrap">
           <canvas id="sigCanvas" class="tm-signature-canvas"></canvas>
         </div>
 
         <div class="tm-signature-actions">
-          <button id="sigClearBtn" type="button" class="tm-btn tm-btn-secondary">Clear Signature</button>
+          <button id="sigClearBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.modal.clear_signature">Clear Signature</button>
         </div>
 
         <div id="confirmMsg" class="status" data-kind="info" role="status" aria-live="polite"></div>
       </div>
       </section>
 
-      <section class="tm-confirm-section" aria-label="Customer message preview">
+      <section class="tm-confirm-section" aria-label="Customer message preview" data-i18n-aria-label="estimator.modal.customer_message_preview">
         <div class="customer-message-heading-row">
-          <label for="quotePreview" class="tm-confirm-section-title">
+          <label for="quotePreview" class="tm-confirm-section-title" data-i18n="estimator.modal.customer_message">
             Customer message
           </label>
-          <button id="copyCustomerMessageBtn" type="button" class="tm-btn tm-btn-secondary">Copy Message</button>
+          <button id="copyCustomerMessageBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.modal.copy_message">Copy Message</button>
         </div>
         <textarea
           id="quotePreview"
@@ -788,25 +789,26 @@
           rows="9"
           readonly
           placeholder="Customer message will appear here..."
+          data-i18n-placeholder="estimator.modal.customer_message_placeholder"
         ></textarea>
       </section>
 
-      <div class="tm-muted tm-confirm-note">
+      <div class="tm-muted tm-confirm-note" data-i18n="estimator.modal.pdf_note">
         Customer PDF uses the options above. Your working estimate stays available.
       </div>
 
       <div class="modal-actions tm-confirm-actions">
-        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary">{% if is_finding_estimator %}Save Prepared Estimate{% else %}Download Customer PDF{% endif %}</button>
+        <button id="confirmAddBtn" type="button" class="tm-btn tm-btn-primary tm-confirm-primary" data-i18n="{% if is_finding_estimator %}estimator.modal.save_prepared{% else %}estimator.download_customer_pdf{% endif %}">{% if is_finding_estimator %}Save Prepared Estimate{% else %}Download Customer PDF{% endif %}</button>
         <div class="tm-confirm-secondary-actions">
           {% if not is_finding_estimator %}
-          <button id="prepareReviewedEstimateBtn" type="button" class="tm-btn tm-btn-secondary">{% if is_finding_estimator %}Save as Prepared Estimate{% else %}Prepare Reviewed Estimate{% endif %}</button>
-          <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Copy Quote Message</button>
-          <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary">Email Customer Quote</button>
+          <button id="prepareReviewedEstimateBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.modal.prepare_reviewed">Prepare Reviewed Estimate</button>
+          <button id="copyQuoteBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.modal.copy_quote">Copy Quote Message</button>
+          <button id="emailQuoteBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.modal.email_quote">Email Customer Quote</button>
           {% else %}
-          <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.finding_url }}">Back to Finding</a>
-          <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.vehicle_url }}">Back to Vehicle</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.finding_url }}" data-i18n="estimator.back_to_finding">Back to Finding</a>
+          <a class="tm-btn tm-btn-secondary" href="{{ finding_estimator_nav.vehicle_url }}" data-i18n="estimator.modal.back_to_vehicle">Back to Vehicle</a>
           {% endif %}
-          <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary">Close</button>
+          <button id="confirmCloseBtn" type="button" class="tm-btn tm-btn-secondary" data-i18n="estimator.modal.close">Close</button>
         </div>
       </div>
 
@@ -827,6 +829,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const lineItemsWrap = document.getElementById("lineItemsWrap");
   const serviceSelect = document.getElementById("service");
   const stepNodes = Array.from(document.querySelectorAll("[data-estimator-step]"));
+
+  function t(key, fallback) {
+    return window.tmI18n?.translate?.(key, fallback) || fallback;
+  }
 
   function hasVehicle() {
     if (!vehicleSource) return false;
@@ -850,20 +856,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (vehicleSummary && vehicleSource) {
       vehicleSummary.textContent = vehicleReady
         ? vehicleSource.textContent.trim()
-        : "Select a vehicle";
+        : t("estimator.select_vehicle", "Select vehicle");
     }
 
-    let step = "Vehicle";
+    let step = t("estimator.step_vehicle", "Vehicle");
     let key = "vehicle";
 
     if (vehicleReady && !serviceReady && !quoteReady) {
-      step = "Service";
+      step = t("estimator.step_service", "Service");
       key = "service";
     } else if (vehicleReady && serviceReady && !quoteReady) {
-      step = "Pricing";
+      step = t("estimator.step_pricing", "Pricing");
       key = "pricing";
     } else if (quoteReady) {
-      step = "Review";
+      step = t("estimator.step_review", "Review");
       key = "review";
     }
 
@@ -875,7 +881,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (reviewButton) {
       reviewButton.disabled = !quoteReady;
-      reviewButton.textContent = quoteReady ? "Review estimate" : "Add a service to continue";
+      reviewButton.textContent = quoteReady
+        ? t("estimator.review_estimate", "Review estimate")
+        : t("estimator.add_service_to_continue", "Add a service to continue");
     }
   }
 

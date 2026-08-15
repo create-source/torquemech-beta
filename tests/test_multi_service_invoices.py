@@ -1686,6 +1686,59 @@ class MultiServiceInvoiceTests(unittest.TestCase):
         self.assertNotIn(b"Status: Recommended", pdf)
         self.assertNotIn(b"No payment is collected", pdf)
 
+    def test_final_invoice_pdf_system_text_stays_english_for_localized_languages(self):
+        self.insert_repair(82, "Cooling System Service", 1.5, 140, 110)
+        repair = pro_module.load_repair_record(self.conn, 1, 1, 82)
+        invoice = pro_module.create_invoice_for_repairs(
+            self.conn,
+            repairs=[repair],
+            customer_id=1,
+            vehicle_id=1,
+            now="2026-06-25T15:05:00",
+        )
+        english_pdf_markers = [
+            b"Final Invoice",
+            b"FINAL CUSTOMER INVOICE",
+            b"Bill To",
+            b"Vehicle",
+            b"Final Approved Work",
+            b"Invoice Totals",
+            b"Invoice Total",
+            b"Completion Information",
+            b"Generated with TorqueMech",
+        ]
+        localized_system_markers = [
+            "Presupuesto",
+            "Cotizacion",
+            "Factura",
+            "Cliente",
+            "Vehiculo",
+            "Báo giá",
+            "Hóa đơn",
+            "Khách hàng",
+            "客户",
+            "车辆",
+            "发票",
+        ]
+
+        for language in ("en", "es", "vi", "zh-Hans"):
+            with self.subTest(language=language):
+                pdf = self.final_invoice_pdf(
+                    invoice,
+                    shop_profile={
+                        "shop_name": "TorqueMech Auto",
+                        "shop_address": "123 Service Way, Fresno, CA",
+                        "shop_phone": "555-0199",
+                        "shop_email": "service@torquemech.test",
+                        "language_preference": language,
+                    },
+                )
+
+                for marker in english_pdf_markers:
+                    self.assertIn(marker, pdf)
+                for marker in localized_system_markers:
+                    self.assertNotIn(marker.encode("utf-8"), pdf)
+
     def test_final_invoice_pdf_footer_and_payment_terms_wording(self):
         self.insert_repair(85, "Oil Leak Diagnosis", 1.0, 120, 0)
         repair = pro_module.load_repair_record(self.conn, 1, 1, 85)
