@@ -14786,3 +14786,24 @@ html[data-theme-effective="light"] body .tm-pro-shell .tm-workspace-section-coun
     margin: 0;
   }
 }
+
+/* ==========================================================
+   CUSTOMERS — DESKTOP CARD SPACING FIX
+   ========================================================== */
+
+@media (min-width: 900px) {
+  .tm-pro-shell .tm-crm-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+  }
+
+  .tm-pro-shell .tm-crm-cards .tm-crm-card {
+    min-width: 0;
+    min-height: 140px;
+    padding: 18px !important;
+  }
+
+  .tm-pro-shell .tm-crm-card__top {
+    gap: 16px;
+  }
+}
