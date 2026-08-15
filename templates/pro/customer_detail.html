@@ -611,6 +611,250 @@
       top: 16px;
     }
   }
+
+  /* =========================================================
+   CUSTOMER DETAIL — LIGHT APPEARANCE
+   Keep this block last so it can override the dark workspace's
+   intentional !important declarations without changing Dark mode.
+   ========================================================= */
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-customer-card,
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-panel {
+    border-color: #d8e1ec !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow:
+      0 12px 28px rgba(15, 23, 42, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-chip {
+    border-color: #cbd5e1 !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+    color: #1e293b !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-contact .tm-crm-chip:last-child:not(.tm-crm-chip--inactive) {
+    border-color: #86efac !important;
+    background: #dcfce7 !important;
+    color: #166534 !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-chip--inactive {
+    border-color: #cbd5e1 !important;
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-notes {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #334155 !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-customer-actions .tm-btn-secondary {
+    border-color: #cbd5e1 !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+    color: #0f172a !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-customer-actions .tm-btn-secondary:hover {
+    border-color: #fb923c !important;
+    background: #fff7ed !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-customer-card .tm-crm-disclosure {
+    border-color: #d8e1ec;
+    background: #ffffff;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-customer-card .tm-crm-disclosure > summary {
+    border-color: #d8e1ec;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    color: #0f172a !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-customer-card .tm-label {
+    color: #334155 !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-panel .tm-crm-section-head {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-panel .tm-crm-section-head h2,
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-panel .tm-crm-disclosure > summary {
+    color: #0f172a !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-vehicle {
+    border-color: #c9d7e8 !important;
+    background:
+      radial-gradient(
+        circle at 92% 85%,
+        rgba(59, 130, 246, 0.09),
+        transparent 34%
+      ),
+      linear-gradient(145deg, #ffffff 0%, #f8fbff 58%, #eef5fd 100%) !important;
+    color: #0f172a !important;
+    box-shadow:
+      0 10px 22px rgba(15, 23, 42, 0.09),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-vehicle::before {
+    border-color: #bfdbfe;
+    background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 6px 14px rgba(59, 130, 246, 0.12);
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-vehicle::after {
+    background: rgba(59, 130, 246, 0.06);
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-vehicle-title {
+    color: #0f172a !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-vehicle .tm-crm-meta {
+    color: #64748b !important;
+  }
+
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-vehicle:hover,
+  :is(
+    html[data-theme="light"],
+    html[data-appearance="light"],
+    body[data-theme="light"],
+    body[data-appearance="light"],
+    body.tm-theme-light
+  ) .tm-crm-vehicle:focus-visible {
+    border-color: #f97316 !important;
+    box-shadow:
+      0 14px 28px rgba(15, 23, 42, 0.12),
+      0 0 0 3px rgba(249, 115, 22, 0.1) !important;
+  }
 </style>
 {% endblock %}
 
