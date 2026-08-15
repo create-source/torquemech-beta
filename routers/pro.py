@@ -17607,6 +17607,8 @@ def pro_finding_record_detail(
         )
         if estimate_doc:
             customer_review_url = customer_estimate_review_url(request, estimate_doc, shop_id)
+        shop_profile = load_shop_profile_context(conn, shop_id=shop_id)
+        shop_name = str(shop_profile.get("shop_name") or "TorqueMech Pro").strip()
         annotate_finding_workflow_state(finding)
         finding_history_records = load_finding_history_records(conn, finding_id)
         decision_log = latest_customer_decision_log_for_finding(conn, finding_id)
@@ -17639,6 +17641,7 @@ def pro_finding_record_detail(
             "vehicle": vehicle,
             "finding": finding,
             "customer_review_url": customer_review_url,
+            "shop_name": shop_name,
             "decision_log": decision_log,
             "handoff_state": handoff_state,
             "customer_decision_activity": customer_decision_activity,

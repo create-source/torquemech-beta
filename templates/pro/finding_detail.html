@@ -103,6 +103,31 @@
     line-height:1.45;
     margin:0;
   }
+  .tm-customer-review-message {
+    display:grid;
+    gap:8px;
+    min-width:0;
+  }
+  .tm-customer-review-message__label {
+    color:#0f172a;
+    font-size:.82rem;
+    font-weight:900;
+    line-height:1.35;
+  }
+  .tm-customer-review-message__body {
+    width:100%;
+    min-height:154px;
+    box-sizing:border-box;
+    border:1px solid rgba(15,23,42,.12);
+    border-radius:8px;
+    background:#fff;
+    color:#0f172a !important;
+    -webkit-text-fill-color:#0f172a !important;
+    padding:12px;
+    font:800 .88rem/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    white-space:pre-wrap;
+    resize:vertical;
+  }
   .tm-customer-review-copy-status {
     color:#166534;
     font-size:.84rem;
@@ -383,6 +408,7 @@
     .tm-finding-photo-grid { grid-template-columns:1fr; }
     .tm-finding-photo-link img { height: min(300px, 72vw); max-height:300px; }
     .tm-finding-actions .tm-btn { width:100%; justify-content:center; }
+    .tm-customer-review-link .tm-finding-actions { display:grid; grid-template-columns:1fr; }
     .tm-finding-panel textarea { min-height: 96px; }
   }
 </style>
@@ -601,6 +627,13 @@
 
   {% if customer_review_url %}
   <section class="tm-finding-panel tm-finding-action-panel" aria-label="Customer estimate review link">
+    {% set customer_first_name = customer.first_name|trim if customer.first_name else "there" %}
+    {% set display_shop_name = shop_name|trim if shop_name else "TorqueMech Pro" %}
+    {% set customer_review_message %}Hi {{ customer_first_name }}, your estimate from {{ display_shop_name }} is ready. Please use the secure link below to review it and approve, decline, or decide later:
+
+{{ customer_review_url }}
+
+Please contact us if you have any questions. Thank you!{% endset %}
     <div>
       <h2 class="tm-finding-section-title">Customer Review Link</h2>
       <p class="tm-history-empty" style="margin:8px 0 0;">Share this secure, view-only page when the customer should review the prepared estimate.</p>
@@ -613,9 +646,14 @@
       </div>
       <span class="tm-customer-review-link__preview" aria-label="Masked secure customer review link"><span>{{ customer_review_base_url }}</span><span>&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span></span>
       <p class="tm-customer-review-link__help">Secure customer review link ready to share.</p>
+      <div class="tm-customer-review-message">
+        <label class="tm-customer-review-message__label" for="customerReviewSuggestedMessage">Suggested Customer Message</label>
+        <textarea class="tm-customer-review-message__body" id="customerReviewSuggestedMessage" data-customer-review-message readonly>{{ customer_review_message }}</textarea>
+      </div>
       <div class="tm-finding-actions" style="margin-top:0;">
         <a class="tm-btn tm-btn-primary" href="{{ customer_review_url }}" target="_blank" rel="noopener">View Customer Review</a>
-        <button class="tm-btn tm-btn-secondary" type="button" data-copy-customer-review-link data-copy-text="{{ customer_review_url }}">Copy Customer Link</button>
+        <button class="tm-btn tm-btn-secondary" type="button" data-copy-customer-review data-copy-kind="message">Copy Message + Link</button>
+        <button class="tm-btn tm-btn-secondary" type="button" data-copy-customer-review data-copy-kind="link" data-copy-text="{{ customer_review_url }}">Copy Link Only</button>
       </div>
       <div class="tm-customer-review-copy-status" data-copy-customer-review-status role="status" aria-live="polite" hidden></div>
     </div>
@@ -768,39 +806,51 @@
     });
   });
 
-  document.querySelector("[data-copy-customer-review-link]")?.addEventListener("click", async (event) => {
-    const button = event.currentTarget;
-    const status = document.querySelector("[data-copy-customer-review-status]");
-    const value = button?.dataset?.copyText || "";
-    if (!value) return;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(value);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = value;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        textarea.remove();
-      }
-      if (status) {
-        status.hidden = false;
-        status.textContent = "Customer link copied.";
-        window.setTimeout(() => {
-          status.hidden = true;
-          status.textContent = "";
-        }, 2000);
-      }
-    } catch (error) {
-      if (status) {
-        status.hidden = false;
-        status.textContent = "Unable to copy the link. Please try again.";
-      }
+  async function copyFindingText(value) {
+    const text = String(value || "");
+    if (!text) return false;
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
     }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    return copied;
+  }
+
+  document.querySelectorAll("[data-copy-customer-review]").forEach((copyButton) => {
+    copyButton.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      const status = document.querySelector("[data-copy-customer-review-status]");
+      const kind = button?.dataset?.copyKind || "link";
+      const messageEl = document.querySelector("[data-customer-review-message]");
+      const value = kind === "message" ? (messageEl?.value || "") : (button?.dataset?.copyText || "");
+      if (!value) return;
+      try {
+        const copied = await copyFindingText(value);
+        if (!copied) throw new Error("Copy command failed");
+        if (status) {
+          status.hidden = false;
+          status.textContent = kind === "message" ? "Message copied." : "Link copied.";
+          window.setTimeout(() => {
+            status.hidden = true;
+            status.textContent = "";
+          }, 2000);
+        }
+      } catch (error) {
+        if (status) {
+          status.hidden = false;
+          status.textContent = "Unable to copy. Please try again.";
+        }
+      }
+    });
   });
   document.querySelectorAll("[data-prevent-double-submit]").forEach((form) => {
     form.addEventListener("submit", (event) => {
