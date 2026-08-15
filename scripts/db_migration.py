@@ -26,6 +26,8 @@ ACCOUNT_COLUMNS = {
     "stripe_subscription_id": "TEXT",
     "subscription_current_period_end": "TEXT",
     "subscription_cancel_at_period_end": "INTEGER",
+    "appearance_preference": "TEXT NOT NULL DEFAULT 'dark'",
+    "language_preference": "TEXT NOT NULL DEFAULT 'en-US'",
 }
 
 SHOP_SUBSCRIPTIONS_SCHEMA_SQL = """

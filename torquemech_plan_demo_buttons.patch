@@ -1,0 +1,51 @@
+*** Begin Patch
+*** Update File: templates/pro/pro_plan_details.html
+@@
+   .tm-plan-final .tm-plan-btn { margin-top: 22px; }
++
++  .tm-plan-final__actions {
++    display: flex;
++    justify-content: center;
++    gap: 12px;
++    margin-top: 22px;
++  }
++
++  .tm-plan-final__actions .tm-plan-btn {
++    margin-top: 0;
++  }
++
++  .tm-plan-demo-note {
++    margin: 12px auto 0;
++    color: var(--plan-muted);
++    font-size: .78rem;
++    font-weight: 750;
++  }
+@@
+     .tm-plan-final__card { padding: 26px 20px; }
+
+-    .tm-plan-final .tm-plan-btn { width: 100%; }
++    .tm-plan-final__actions {
++      flex-direction: column;
++    }
++
++    .tm-plan-final__actions .tm-plan-btn { width: 100%; }
+   }
+@@
+-        {% if request.state.current_user %}
+-          <a class="tm-plan-btn tm-plan-btn--primary" href="/pro/dashboard">Open Command Center</a>
+-        {% else %}
+-          <a class="tm-plan-btn tm-plan-btn--primary" href="/signup">Start 14-Day Free Trial</a>
+-        {% endif %}
++        {% if request.state.current_user %}
++          <div class="tm-plan-final__actions">
++            <a class="tm-plan-btn tm-plan-btn--primary" href="/pro/dashboard">Open Command Center</a>
++          </div>
++        {% else %}
++          <div class="tm-plan-final__actions">
++            <a class="tm-plan-btn tm-plan-btn--primary" href="/pro/demo">Explore Demo Shop</a>
++            <a class="tm-plan-btn tm-plan-btn--secondary" href="/signup">Start 14-Day Free Trial</a>
++          </div>
++          <p class="tm-plan-demo-note">No account required to explore the demo. Demo changes are not saved.</p>
++        {% endif %}
+       </div>
+*** End Patch

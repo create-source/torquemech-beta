@@ -42,6 +42,7 @@ from app.storage import (
     visual_reference_upload_url,
 )
 from app import email_service
+from app.i18n import client_payload_json, request_language, t_for_request
 from app.billing import (
     BillingConfigurationError,
     BillingCustomerRequiredError,
@@ -208,6 +209,9 @@ def static_version(asset_path: str) -> int:
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.globals["static_version"] = static_version
 templates.env.globals["build_finding_estimator_href"] = build_finding_estimator_href
+templates.env.globals["tm_t"] = t_for_request
+templates.env.globals["tm_language"] = request_language
+templates.env.globals["tm_i18n_json"] = client_payload_json
 
 SUBSCRIPTION_READ_ONLY_ERROR_CODE = "subscription_read_only"
 SUBSCRIPTION_READ_ONLY_MESSAGE = (
@@ -433,6 +437,8 @@ def ensure_auth_schema(conn: sqlite3.Connection) -> None:
         "stripe_subscription_id": "stripe_subscription_id TEXT",
         "subscription_current_period_end": "subscription_current_period_end TEXT",
         "subscription_cancel_at_period_end": "subscription_cancel_at_period_end INTEGER",
+        "appearance_preference": "appearance_preference TEXT NOT NULL DEFAULT 'dark'",
+        "language_preference": "language_preference TEXT NOT NULL DEFAULT 'en-US'",
         "created_at": "created_at TEXT",
         "updated_at": "updated_at TEXT",
     }.items():

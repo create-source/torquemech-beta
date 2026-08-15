@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block title %}TorqueMech Quick Find | Codes, Symptoms, Costs, and Guides{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="/static/quick_find.css?v={{ static_version('/static/quick_find.css') }}">
+<link rel="stylesheet" href="/static/home.css?v={{ static_version('/static/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="tm-homeSection" aria-labelledby="quick-find-page-title">
+  <div class="tm-homeSection__head">
+    <div class="tm-eyebrow">TorqueMech Quick Find</div>
+    <h1 id="quick-find-page-title">Search Codes, Costs, Symptoms, and Guides</h1>
+    <p>Start from an OBD code, symptom, or repair term and move toward the diagnostic path before choosing parts.</p>
+  </div>
+</section>
+
+<div id="quick-find">
+  {% include "partials/quick_find.html" %}
+</div>
+
+<section class="tm-homeSection tm-homeSection--compactStart">
+  <div class="tm-homeSection__head">
+    <h2>Popular Starting Points</h2>
+  </div>
+
+  <div class="tm-homeShortcutRow" aria-label="Popular starting points">
+    <a class="tm-homeShortcut" href="/obd/p0300">P0300</a>
+    <a class="tm-homeShortcut" href="/symptoms/rough-idle">Rough Idle</a>
+    <a class="tm-homeShortcut" href="/symptoms/brake-noise">Brake Noise</a>
+    <a class="tm-homeShortcut" href="/cost/spark-plug-replacement">Spark Plugs</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block page_js %}
+<script src="/static/quick_find.js?v={{ static_version('/static/quick_find.js') }}"></script>
+{% endblock %}

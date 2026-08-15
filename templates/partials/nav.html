@@ -16,7 +16,7 @@
           class="tm-notificationBtn"
           id="notificationBtn"
           type="button"
-          aria-label="Notifications, {{ unread_count }} unread"
+          aria-label="{{ tm_t(request, 'nav.notifications') }}, {{ unread_count }} unread"
           aria-expanded="false"
           aria-controls="notificationPanel"
         >
@@ -27,7 +27,7 @@
         </button>
         <section class="tm-notificationPanel" id="notificationPanel" aria-labelledby="notificationHeading" hidden>
           <div class="tm-notificationPanel__head">
-            <h2 id="notificationHeading">Notifications</h2>
+            <h2 id="notificationHeading" data-i18n="nav.notifications">Notifications</h2>
             <span>{{ unread_count }} unread</span>
           </div>
           {% if staff_notifications["items"] %}
@@ -56,7 +56,7 @@
                 <h3>{{ item.title }}</h3>
                 <p>{{ item.body_display or item.body }}</p>
                 {% if item.notification_type == "customer_estimate_approved" and item.handoff_state.kind == "start_repair" %}
-                <span class="tm-notificationItem__ready">Ready for Repair</span>
+                <span class="tm-notificationItem__ready" data-i18n="nav.ready_for_repair">Ready for Repair</span>
                 {% endif %}
                 <div class="tm-notificationItem__actions">
                   {% if item.notification_type == "customer_estimate_approved" and item.handoff_state.primary_action_label %}
@@ -71,7 +71,7 @@
                   {% endif %}
                   <form method="post" action="/pro/notifications/{{ item.id }}/open">
                     <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-                    <button class="tm-notificationItem__action" type="submit">Open Finding</button>
+                    <button class="tm-notificationItem__action" type="submit" data-i18n="nav.open_finding">Open Finding</button>
                   </form>
                 </div>
               </article>
@@ -79,7 +79,7 @@
             {% endfor %}
           </div>
           {% else %}
-          <p class="tm-notificationEmpty">No new notifications.</p>
+          <p class="tm-notificationEmpty" data-i18n="nav.no_new_notifications">No new notifications.</p>
           {% endif %}
         </section>
       </div>
@@ -92,14 +92,14 @@
   <!-- Dropdown panel -->
   <div class="tm-menu" id="navMenu" hidden>
     <nav class="tm-menu__panel" aria-label="Main menu">
-      <a class="tm-menu__item" href="/">Home</a>
-      <a class="tm-menu__item" href="/how-it-works">How It Works</a>
-      <a class="tm-menu__item" href="/quick-find">Diagnostic Search</a>
-      <a class="tm-menu__item" href="/repair-guides">Repair Library</a>
-      <a class="tm-menu__item" href="/estimator">Estimator</a>
+      <a class="tm-menu__item" href="/" data-i18n="nav.home">Home</a>
+      <a class="tm-menu__item" href="/how-it-works" data-i18n="nav.how_it_works">How It Works</a>
+      <a class="tm-menu__item" href="/quick-find" data-i18n="nav.diagnostic_search">Diagnostic Search</a>
+      <a class="tm-menu__item" href="/repair-guides" data-i18n="nav.repair_library">Repair Library</a>
+      <a class="tm-menu__item" href="/estimator" data-i18n="nav.estimator">Estimator</a>
       <a class="tm-menu__item tm-menu__item--soon" href="/parts-center">
-        <span>Parts Center</span>
-        <span class="tm-menu__badge">Coming Soon</span>
+        <span data-i18n="nav.parts_center">Parts Center</span>
+        <span class="tm-menu__badge" data-i18n="nav.coming_soon">Coming Soon</span>
       </a>
 
       <div class="tm-menu__divider"></div>
@@ -108,20 +108,20 @@
         <div class="tm-menu__item" aria-label="Signed-in account">
           <strong>Hello, {{ greeting_name }}</strong>
         </div>
-        <a class="tm-menu__item" href="/pro/dashboard">Command Center</a>
-        <a class="tm-menu__item" href="/account/settings">Account Settings</a>
+        <a class="tm-menu__item" href="/pro/dashboard" data-i18n="nav.command_center">Command Center</a>
+        <a class="tm-menu__item" href="/account/settings" data-i18n="nav.account_settings">Account Settings</a>
         <form method="post" action="/logout" style="margin:0;">
           <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
-          <button class="tm-menu__item" type="submit" style="width:100%; border:0; background:transparent; text-align:left; cursor:pointer;">Log Out</button>
+          <button class="tm-menu__item" type="submit" style="width:100%; border:0; background:transparent; text-align:left; cursor:pointer;" data-i18n="nav.logout">Log Out</button>
         </form>
       {% else %}
-        <a class="tm-menu__item" href="/login">Log In</a>
-        <a class="tm-menu__item" href="/signup">Sign Up</a>
+        <a class="tm-menu__item" href="/login" data-i18n="nav.login">Log In</a>
+        <a class="tm-menu__item" href="/signup" data-i18n="nav.signup">Sign Up</a>
       {% endif %}
 
       <div class="tm-menu__divider"></div>
       <button class="tm-menu__disclosure" id="resourcesMenuBtn" type="button" aria-expanded="false" aria-controls="resourcesMenuPanel">
-        <span>Resources</span>
+        <span data-i18n="nav.resources">Resources</span>
         <span class="tm-menu__chevron" aria-hidden="true">&#9662;</span>
       </button>
       <div class="tm-menu__resources" id="resourcesMenuPanel" hidden>

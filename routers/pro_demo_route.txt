@@ -1,0 +1,10 @@
+# Public, read-only TorqueMech demo.
+# Add this near the other public GET routes in routers/pro.py.
+@router.get("/demo", response_class=HTMLResponse)
+def pro_demo(request: Request):
+    return templates.TemplateResponse(
+        "pro/demo.html",
+        {
+            "request": request,
+        },
+    )

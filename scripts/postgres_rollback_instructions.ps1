@@ -1,0 +1,16 @@
+$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+Write-Host "PostgreSQL cutover rollback instructions only. This script does not change Railway variables."
+Write-Host ""
+Write-Host "1. Stop the production web service or place it into maintenance mode."
+Write-Host "2. Restore the previous SQLite configuration by removing/reverting the production DATABASE_URL variable."
+Write-Host "3. Confirm the persistent SQLite file still exists at .localstate/app.db or the production volume equivalent."
+Write-Host "4. Confirm .localstate/obd.sqlite remains present and unchanged."
+Write-Host "5. Restart the service after the SQLite configuration is restored."
+Write-Host "6. Validate homepage, estimator, login, Pro dashboard/customer routes, and service lookup."
+Write-Host "7. Preserve the PostgreSQL database unchanged for diagnosis."
+Write-Host "8. Never reverse-copy PostgreSQL data into SQLite automatically."
+Write-Host "9. Document any writes made after PostgreSQL cutover; rollback may lose those writes."
+Write-Host ""
+Write-Host "No Railway command was executed."

@@ -518,6 +518,16 @@ class DatabasePortabilityTests(unittest.TestCase):
 
         self.assertIn("explicit PostgreSQL URL", str(raised.exception))
 
+    def test_account_preference_columns_are_in_postgres_schema_migration(self):
+        self.assertEqual(
+            db_migration.ACCOUNT_COLUMNS["appearance_preference"],
+            "TEXT NOT NULL DEFAULT 'dark'",
+        )
+        self.assertEqual(
+            db_migration.ACCOUNT_COLUMNS["language_preference"],
+            "TEXT NOT NULL DEFAULT 'en-US'",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

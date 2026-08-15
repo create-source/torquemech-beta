@@ -1003,10 +1003,115 @@ class AuthShopIsolationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Account Settings", response.text)
         self.assertIn("owner@example.com", response.text)
-        self.assertIn('href="/account/settings">Account Settings</a>', response.text)
+        self.assertIn('href="/account/settings" data-i18n="nav.account_settings">Account Settings</a>', response.text)
         self.assertIn('data-password-toggle="current_password"', response.text)
         self.assertIn('data-password-toggle="new_password"', response.text)
         self.assertIn('data-password-toggle="confirm_new_password"', response.text)
+        self.assertIn('id="general"', response.text)
+        self.assertIn('id="appearance_preference"', response.text)
+        self.assertIn('id="language_preference"', response.text)
+        self.assertIn('href="#data-privacy"', response.text)
+        self.assertIn(".tm-account-nav { display:none; }", response.text)
+
+    def test_account_settings_preferences_default_to_dark_and_english(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+        response = client.get("/account/settings")
+
+        self.assertEqual(user["appearance_preference"], "dark")
+        self.assertEqual(user["language_preference"], "en-US")
+        self.assertIn('<option value="dark" selected', response.text)
+        self.assertIn('<option value="en-US" selected', response.text)
+        self.assertIn('data-theme="dark"', response.text)
+        self.assertIn('data-language="en-US"', response.text)
+
+    def test_account_preferences_endpoint_requires_authentication(self):
+        client = self.client()
+
+        response = client.post(
+            "/account/preferences",
+            json={"csrf_token": "anything", "appearance_preference": "light", "language_preference": "es"},
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_account_preferences_save_persists_for_current_user(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/preferences",
+            json={
+                "csrf_token": csrf_from(page.text),
+                "appearance_preference": "light",
+                "language_preference": "es",
+            },
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+        reloaded = client.get("/account/settings")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["appearance"], "light")
+        self.assertEqual(payload["language"], "es")
+        self.assertEqual(payload["i18n"]["language"], "es")
+        self.assertEqual(payload["i18n"]["translations"]["nav.command_center"], "Centro de mando")
+        self.assertEqual(payload["i18n"]["exactText"]["Customers"], "Clientes")
+        self.assertEqual(user["appearance_preference"], "light")
+        self.assertEqual(user["language_preference"], "es")
+        self.assertIn('data-theme="light"', reloaded.text)
+        self.assertIn('data-language="es"', reloaded.text)
+        self.assertIn('<option value="es" selected', reloaded.text)
+
+    def test_account_preferences_reject_invalid_values(self):
+        client = self.client()
+        self.bootstrap_owner(client)
+        page = client.get("/account/settings")
+
+        response = client.post(
+            "/account/preferences",
+            json={
+                "csrf_token": csrf_from(page.text),
+                "appearance_preference": "purple",
+                "language_preference": "es",
+            },
+        )
+        user = self.conn.execute("SELECT * FROM users WHERE email = 'owner@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(user["appearance_preference"], "dark")
+        self.assertEqual(user["language_preference"], "en-US")
+
+    def test_account_preferences_save_ignores_submitted_user_identity(self):
+        client_one = self.client()
+        self.bootstrap_owner(client_one, email="one@example.com", shop_name="Alpha Shop")
+        self.logout(client_one)
+        client_two = self.client()
+        self.signup(client_two, email="two@example.com", shop_name="Beta Shop")
+        self.verify_user("two@example.com")
+        user_one = self.conn.execute("SELECT * FROM users WHERE email = 'one@example.com'").fetchone()
+        page = client_two.get("/account/settings")
+
+        response = client_two.post(
+            "/account/preferences",
+            json={
+                "csrf_token": csrf_from(page.text),
+                "user_id": user_one["id"],
+                "appearance_preference": "system",
+                "language_preference": "es",
+            },
+        )
+        first_user = self.conn.execute("SELECT * FROM users WHERE email = 'one@example.com'").fetchone()
+        second_user = self.conn.execute("SELECT * FROM users WHERE email = 'two@example.com'").fetchone()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(first_user["appearance_preference"], "dark")
+        self.assertEqual(first_user["language_preference"], "en-US")
+        self.assertEqual(second_user["appearance_preference"], "system")
+        self.assertEqual(second_user["language_preference"], "es")
 
     def test_account_settings_account_created_date_displays(self):
         client = self.client()

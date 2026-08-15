@@ -1,5 +1,8 @@
 <!doctype html>
-<html lang="en">
+{% set tm_current_user = request.state.current_user if request and request.state.current_user else None %}
+{% set tm_language = (tm_current_user.language_preference if tm_current_user and tm_current_user.language_preference else "en-US") %}
+{% set tm_appearance = (tm_current_user.appearance_preference if tm_current_user and tm_current_user.appearance_preference else "dark") %}
+<html lang="{{ 'es' if tm_language == 'es' else 'en-US' }}" data-theme="{{ tm_appearance }}" data-theme-effective="{{ 'dark' if tm_appearance == 'system' else tm_appearance }}" data-language="{{ tm_language }}">
 <head>
 
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -16,7 +19,31 @@
   
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
+  <meta name="color-scheme" content="dark light" />
+  <script>
+    window.TM_I18N = {{ tm_i18n_json(tm_language)|safe }};
+    (function () {
+      var root = document.documentElement;
+      var preference = root.dataset.theme || "dark";
+      var apply = function () {
+        var effective = preference === "system" && window.matchMedia
+          ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
+          : preference;
+        root.dataset.themeEffective = effective === "light" ? "light" : "dark";
+      };
+      apply();
+      if (preference === "system" && window.matchMedia) {
+        try {
+          window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", apply);
+        } catch (_) {}
+      }
+      window.tmApplyAppearancePreference = function (nextPreference) {
+        preference = ["system", "light", "dark"].includes(nextPreference) ? nextPreference : "dark";
+        root.dataset.theme = preference;
+        apply();
+      };
+    })();
+  </script>
 
   <title>{% block title %}TorqueMech — Repair Estimates, Repair Guides & Repair Intelligence{% endblock %}</title>
 
@@ -84,19 +111,19 @@
       </div>
 
       <div class="tm-footer-links">
-        <a href="/terms">Terms</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/disclaimer">Disclaimer</a>
+        <a href="/terms" data-i18n="footer.terms">Terms</a>
+        <a href="/privacy" data-i18n="footer.privacy">Privacy</a>
+        <a href="/disclaimer" data-i18n="footer.disclaimer">Disclaimer</a>
       </div>
 
       <div class="tm-footer-right">
         <span class="tm-footer-support">
-          Support:
+          <span data-i18n="footer.support">Support</span>:
           <a href="mailto:support@torquemech.com" class="tm-support-email">support@torquemech.com</a>
         </span>
 
         <button id="feedbackBtn" type="button" class="tm-btn tm-btn-ghost">
-          Feedback
+          <span data-i18n="footer.feedback">Feedback</span>
         </button>
       </div>
 
@@ -104,6 +131,7 @@
   </footer>
 
   <script src="/static/nav.js?v={{ static_version('/static/nav.js') }}"></script>
+  <script src="/static/i18n.js?v={{ static_version('/static/i18n.js') }}"></script>
   <script src="/static/feedback.js?v={{ static_version('/static/feedback.js') }}"></script>
   <script src="/static/pro_form_helpers.js?v={{ static_version('/static/pro_form_helpers.js') }}"></script>
   {% block page_js %}{% endblock %}

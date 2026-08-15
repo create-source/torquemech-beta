@@ -62,6 +62,7 @@ from routers.pro import (
 )
 from app.billing import build_billing_display
 from app import email_service
+from app.i18n import client_payload, client_payload_json, request_language, t_for_request
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -1643,6 +1644,9 @@ def static_version(asset_path: str) -> int:
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.globals["static_version"] = static_version
+templates.env.globals["tm_t"] = t_for_request
+templates.env.globals["tm_language"] = request_language
+templates.env.globals["tm_i18n_json"] = client_payload_json
 app.state.templates = templates
 
 # routers
@@ -1917,6 +1921,27 @@ def validate_account_phone(value: Any) -> tuple[str, str]:
     return format_account_phone(digits), ""
 
 
+APPEARANCE_PREFERENCES = ("system", "light", "dark")
+LANGUAGE_PREFERENCES = ("en-US", "es")
+
+
+def normalize_appearance_preference(value: Any) -> str:
+    clean = str(value or "").strip().lower()
+    return clean if clean in APPEARANCE_PREFERENCES else "dark"
+
+
+def normalize_language_preference(value: Any) -> str:
+    clean = str(value or "").strip()
+    return clean if clean in LANGUAGE_PREFERENCES else "en-US"
+
+
+def user_preference_context(user: dict[str, Any] | None) -> dict[str, str]:
+    return {
+        "appearance": normalize_appearance_preference((user or {}).get("appearance_preference")),
+        "language": normalize_language_preference((user or {}).get("language_preference")),
+    }
+
+
 def format_account_created_at(user: dict[str, Any] | None) -> str:
     raw = str((user or {}).get("created_at") or "").strip()
     if not raw:
@@ -2006,6 +2031,7 @@ def account_settings_context(
         "has_pending_email_change": bool(pending_email),
         "verification_cooldown_remaining": cooldown_remaining,
         "verification_resend_available": bool(not user_email_verified(user) and cooldown_remaining <= 0),
+        "preferences": user_preference_context(user),
         "current_shop": current_shop,
         "billing_subscription": subscription or {},
         "billing_access": subscription_access,
@@ -3288,6 +3314,78 @@ def account_settings_page(request: Request, next: str = "", subscription_notice:
             "account_settings.html",
             account_settings_context(request, user=user, message=notice_message, back_url=next),
         )
+    finally:
+        conn.close()
+
+
+@app.get("/account/preferences")
+def account_preferences_get(request: Request):
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return JSONResponse({"detail": "Authentication required."}, status_code=401)
+        return user_preference_context(user)
+    finally:
+        conn.close()
+
+
+@app.post("/account/preferences")
+async def account_preferences_save(request: Request):
+    raw_body = (await request.body()).decode("utf-8", errors="replace")
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type.lower():
+        try:
+            payload = json.loads(raw_body or "{}")
+        except json.JSONDecodeError:
+            payload = {}
+    else:
+        parsed = parse_qs(raw_body, keep_blank_values=True)
+        payload = {key: values[0].strip() for key, values in parsed.items()}
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        if not user:
+            return JSONResponse({"detail": "Authentication required."}, status_code=401)
+    finally:
+        conn.close()
+
+    submitted_csrf = str(payload.get("csrf_token") or request.headers.get("x-csrf-token") or "")
+    expected_csrf = str(request.session.get("csrf_token") or "")
+    if not expected_csrf or not submitted_csrf or not hmac.compare_digest(expected_csrf, submitted_csrf):
+        return JSONResponse({"detail": "CSRF validation failed."}, status_code=400)
+
+    appearance = normalize_appearance_preference(payload.get("appearance_preference"))
+    language = normalize_language_preference(payload.get("language_preference"))
+    if str(payload.get("appearance_preference") or "").strip().lower() not in APPEARANCE_PREFERENCES:
+        return JSONResponse({"detail": "Invalid appearance preference."}, status_code=400)
+    if str(payload.get("language_preference") or "").strip() not in LANGUAGE_PREFERENCES:
+        return JSONResponse({"detail": "Invalid language preference."}, status_code=400)
+
+    conn = app_db_conn(row_factory=True)
+    try:
+        ensure_auth_schema(conn)
+        user = current_user(conn, request)
+        now = datetime.utcnow().isoformat()
+        conn.execute(
+            """
+            UPDATE users
+            SET appearance_preference = ?,
+                language_preference = ?,
+                updated_at = ?
+            WHERE id = ?
+              AND is_active = 1
+            """,
+            (appearance, language, now, int(user["id"])),
+        )
+        conn.commit()
+        updated_user = current_user(conn, request) or user
+        request.state.current_user = updated_user
+        preferences = user_preference_context(updated_user)
+        return {**preferences, "i18n": client_payload(preferences["language"])}
     finally:
         conn.close()
 

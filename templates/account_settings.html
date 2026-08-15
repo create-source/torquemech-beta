@@ -4,12 +4,18 @@
 
 {% block page_css %}
 <style>
-  body { background:#09111d; }
+  body { background:var(--tm-bg-deep); }
   .tm-account-page { display:grid; place-items:center; min-height:calc(100vh - 170px); padding:34px 0; }
-  .tm-account-shell { width:min(100%, 760px); color:#e5edf7; }
+  .tm-account-shell { width:min(100%, 1040px); color:#e5edf7; }
   .tm-account-header { margin-bottom:18px; }
   .tm-account-header h1 { margin:0; color:#f8fafc; font-size:2rem; letter-spacing:0; }
   .tm-account-header p { color:#a9b6c8; margin:8px 0 0; }
+  .tm-account-layout { align-items:start; display:grid; gap:18px; grid-template-columns:220px minmax(0, 1fr); }
+  .tm-account-nav { border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; box-shadow:0 18px 40px rgba(0,0,0,.2); display:grid; gap:4px; padding:8px; position:sticky; top:86px; }
+  .tm-account-nav a { border-radius:8px; color:#cbd5e1; font-weight:900; padding:10px 12px; text-decoration:none; }
+  .tm-account-nav a:hover, .tm-account-nav a:focus-visible { background:rgba(249,115,22,.12); color:#fdba74; outline:none; }
+  .tm-account-nav a[aria-current="page"] { background:rgba(249,115,22,.16); color:#fed7aa; }
+  .tm-account-main { min-width:0; }
   .tm-account-section { border:1px solid rgba(255,255,255,.12); border-radius:8px; background:#111827; padding:24px; box-shadow:0 24px 60px rgba(0,0,0,.28); }
   .tm-account-section + .tm-account-section { margin-top:18px; }
   .tm-account-section h2 { margin:0; color:#f8fafc; font-size:1.25rem; letter-spacing:0; }
@@ -18,7 +24,14 @@
   .tm-account-readonly { margin-top:6px; padding:12px; border:1px solid rgba(255,255,255,.14); border-radius:8px; background:#0b1220; color:#f8fafc; font-weight:400; overflow-wrap:anywhere; min-height:44px; }
   .tm-account-field { display:grid; gap:6px; margin-top:14px; }
   .tm-account-field label, .tm-account-label { color:#dbe6f4; font-weight:800; }
-  .tm-account-field input { width:100%; border:1px solid rgba(255,255,255,.16); border-radius:8px; background:#0b1220; color:#f8fafc; padding:11px 12px; }
+  .tm-account-field input, .tm-account-field select { width:100%; border:1px solid rgba(255,255,255,.16); border-radius:8px; background:#0b1220; color:#f8fafc; padding:11px 12px; }
+  .tm-account-preference-row { align-items:center; border-top:1px solid rgba(255,255,255,.1); display:grid; gap:14px; grid-template-columns:minmax(0, 1fr) minmax(180px, 240px); padding:18px 0; }
+  .tm-account-preference-row:first-of-type { border-top:0; padding-top:14px; }
+  .tm-account-preference-row h3 { color:#f8fafc; font-size:1.02rem; letter-spacing:0; margin:0; }
+  .tm-account-preference-row p { margin:6px 0 0; }
+  .tm-account-save-state { color:#93c5fd; font-size:.9rem; font-weight:900; min-height:22px; }
+  .tm-account-save-state.is-saved { color:#86efac; }
+  .tm-account-save-state.is-error { color:#fb923c; }
   .tm-account-meta { display:grid; gap:12px; margin-top:14px; }
   .tm-account-status { display:inline-flex; width:max-content; align-items:center; min-height:32px; padding:6px 10px; border-radius:8px; font-weight:900; }
   .tm-account-status.is-verified { background:rgba(34,197,94,.14); color:#bbf7d0; border:1px solid rgba(34,197,94,.28); }
@@ -96,11 +109,36 @@
     font-weight:400 !important;
   }
   @media (max-width: 680px) {
+    .tm-account-layout { grid-template-columns:1fr; }
+    .tm-account-nav { display:none; }
     .tm-account-section { padding:18px; }
     .tm-account-grid, .tm-billing-detail-grid { grid-template-columns:1fr; gap:0; }
+    .tm-account-preference-row { align-items:stretch; grid-template-columns:1fr; }
     .tm-account-actions > * { width:100%; text-align:center; }
     .tm-account-actions form, .tm-account-actions button, .tm-account-actions a { width:100%; }
   }
+  html[data-theme-effective="light"] body { background:#eef3f8; }
+  html[data-theme-effective="light"] .tm-account-shell { color:#0f172a; }
+  html[data-theme-effective="light"] .tm-account-header h1,
+  html[data-theme-effective="light"] .tm-account-section h2,
+  html[data-theme-effective="light"] .tm-account-section h3,
+  html[data-theme-effective="light"] .tm-account-label,
+  html[data-theme-effective="light"] .tm-account-field label { color:#0f172a; }
+  html[data-theme-effective="light"] .tm-account-header p,
+  html[data-theme-effective="light"] .tm-account-section p { color:#475569; }
+  html[data-theme-effective="light"] .tm-account-section,
+  html[data-theme-effective="light"] .tm-account-nav,
+  html[data-theme-effective="light"] .tm-security-card,
+  html[data-theme-effective="light"] .tm-billing-lede { border-color:rgba(15,23,42,.12); background:#ffffff; color:#0f172a; box-shadow:0 18px 40px rgba(15,23,42,.08); }
+  html[data-theme-effective="light"] .tm-account-readonly { border-color:rgba(15,23,42,.14); background:#f8fafc; color:#0f172a; }
+  html[data-theme-effective="light"] .tm-account-nav a { color:#334155; }
+  html[data-theme-effective="light"] .tm-account-nav a:hover,
+  html[data-theme-effective="light"] .tm-account-nav a:focus-visible,
+  html[data-theme-effective="light"] .tm-account-nav a[aria-current="page"] { background:rgba(249,115,22,.12); color:#9a3412; }
+  html[data-theme-effective="light"] .tm-account-field input,
+  html[data-theme-effective="light"] .tm-account-field select { border-color:#cbd5e1; background:#f8fafc; color:#0f172a; }
+  html[data-theme-effective="light"] .tm-account-preference-row { border-top-color:rgba(15,23,42,.1); }
+  html[data-theme-effective="light"] .tm-account-secondary { background:#ffffff; color:#0f172a; border-color:#cbd5e1; }
 </style>
 {% endblock %}
 
@@ -117,7 +155,53 @@
     {% if message %}<div class="tm-account-message" role="status">{{ message }}</div>{% endif %}
     {% if errors.form %}<div class="tm-account-error">{{ errors.form }}</div>{% endif %}
 
-    <form class="tm-account-section" method="post" action="/account/settings" novalidate>
+    <div class="tm-account-layout">
+      <nav class="tm-account-nav" aria-label="Account settings sections">
+        <a href="#general" aria-current="page" data-i18n="account.general">General</a>
+        <a href="#profile" data-i18n="account.profile">Profile</a>
+        <a href="#security-login" data-i18n="account.security_login">Security &amp; Login</a>
+        <a href="#data-privacy" data-i18n="account.data_privacy">Data &amp; Privacy</a>
+        <a href="#billing-subscription" data-i18n="account.billing_subscription">Billing &amp; Subscription</a>
+      </nav>
+
+      <div class="tm-account-main">
+    <section class="tm-account-section" id="general" data-account-general>
+      <h2 data-i18n="account.general">General</h2>
+      <p data-i18n="account.general_intro">Choose how TorqueMech looks and which language your account should use.</p>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" data-preference-csrf>
+
+      <div class="tm-account-preference-row">
+        <div>
+          <h3 data-i18n="account.appearance">Appearance</h3>
+          <p data-i18n="account.appearance_help">System follows your device. Dark keeps the current TorqueMech Pro look.</p>
+        </div>
+        <label class="tm-account-field" for="appearance_preference">
+          <span class="tm-account-label" data-i18n="account.theme">Theme</span>
+          <select id="appearance_preference" name="appearance_preference" data-preference-field>
+            <option value="system" {% if preferences.appearance == "system" %}selected{% endif %}>System</option>
+            <option value="light" {% if preferences.appearance == "light" %}selected{% endif %}>Light</option>
+            <option value="dark" {% if preferences.appearance == "dark" %}selected{% endif %}>Dark</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="tm-account-preference-row">
+        <div>
+          <h3 data-i18n="account.language">Language</h3>
+          <p data-i18n="account.language_help">Spanish is available here as the first step toward broader translations.</p>
+        </div>
+        <label class="tm-account-field" for="language_preference">
+          <span class="tm-account-label" data-i18n="account.language">Language</span>
+          <select id="language_preference" name="language_preference" data-preference-field>
+            <option value="en-US" {% if preferences.language == "en-US" %}selected{% endif %}>English (US)</option>
+            <option value="es" {% if preferences.language == "es" %}selected{% endif %}>Español</option>
+          </select>
+        </label>
+      </div>
+      <div class="tm-account-save-state is-saved" data-preference-status role="status" aria-live="polite" data-i18n="account.saved">Saved</div>
+    </section>
+
+    <form class="tm-account-section" id="profile" method="post" action="/account/settings" novalidate>
       <h2>Profile Information</h2>
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input type="hidden" name="back_url" value="{{ back_url }}">
@@ -255,7 +339,7 @@
       </div>
     </section>
 
-    <section class="tm-account-section">
+    <section class="tm-account-section" id="security-login">
       <h2>Security &amp; Login</h2>
       <div class="tm-account-meta">
         <div>
@@ -424,9 +508,74 @@
         </div>
       </form>
     </section>
+
+    <section class="tm-account-section" id="data-privacy">
+      <h2>Data &amp; Privacy</h2>
+      <p>Export and deletion controls will live here as account-level privacy tools. Shop records and invoice configuration remain in Shop Settings.</p>
+      <div class="tm-account-readonly">No data export or deletion action is available yet.</div>
+    </section>
+      </div>
+    </div>
   </div>
 </section>
 <script>
+  const applyGeneralLanguage = (language) => {
+    document.documentElement.lang = language === "es" ? "es" : "en-US";
+    document.documentElement.dataset.language = language;
+    window.tmI18n?.apply(document);
+  };
+
+  const preferenceFields = document.querySelectorAll("[data-preference-field]");
+  const preferenceStatus = document.querySelector("[data-preference-status]");
+  const preferenceCsrf = document.querySelector("[data-preference-csrf]");
+  let preferenceSaveTimer = null;
+
+  const setPreferenceStatus = (key, tone) => {
+    if (!preferenceStatus) return;
+    const keyMap = { saved: "account.saved", saving: "account.saving", error: "account.save_error" };
+    preferenceStatus.textContent = window.tmI18n?.translate(keyMap[key] || key, "") || key;
+    preferenceStatus.className = `tm-account-save-state ${tone || ""}`.trim();
+  };
+
+  const savePreferences = async () => {
+    const appearance = document.getElementById("appearance_preference")?.value || "dark";
+    const language = document.getElementById("language_preference")?.value || "en-US";
+    window.tmApplyAppearancePreference?.(appearance);
+    applyGeneralLanguage(language);
+    setPreferenceStatus("saving", "");
+    try {
+      const response = await fetch("/account/preferences", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": preferenceCsrf?.value || ""
+        },
+        body: JSON.stringify({
+          csrf_token: preferenceCsrf?.value || "",
+          appearance_preference: appearance,
+          language_preference: language
+        })
+      });
+      if (!response.ok) throw new Error("Preference save failed");
+      const saved = await response.json();
+      window.tmApplyAppearancePreference?.(saved.appearance);
+      if (saved.i18n) window.tmI18n?.load(saved.i18n);
+      applyGeneralLanguage(saved.language);
+      setPreferenceStatus("saved", "is-saved");
+    } catch (_) {
+      setPreferenceStatus("error", "is-error");
+    }
+  };
+
+  preferenceFields.forEach((field) => {
+    field.addEventListener("change", () => {
+      window.clearTimeout(preferenceSaveTimer);
+      preferenceSaveTimer = window.setTimeout(savePreferences, 120);
+    });
+  });
+  applyGeneralLanguage(document.getElementById("language_preference")?.value || "en-US");
+
   const accountPhoneInput = document.querySelector("[data-account-phone-input]");
   const digitsOnly = (value) => String(value || "").replace(/\D/g, "");
   const formatAccountPhone = (value) => {
