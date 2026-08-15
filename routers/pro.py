@@ -9058,6 +9058,114 @@ def finding_detail_url(customer_id: int, vehicle_id: int, finding_id: int) -> st
     return f"/pro/customers/{customer_id}/vehicles/{vehicle_id}/findings/{finding_id}"
 
 
+def customer_decision_alert_recipient(
+    conn: sqlite3.Connection,
+    shop: dict[str, Any],
+) -> tuple[str, str]:
+    owner = load_user_by_id(conn, optional_int_value(shop.get("owner_user_id")))
+    owner_email = valid_optional_email((owner or {}).get("email"))
+    if owner_email:
+        return owner_email, staff_display_name(owner) or "there"
+
+    shop_email = valid_optional_email(shop.get("shop_email") or shop.get("email"))
+    return shop_email, "there"
+
+
+def customer_decision_alert_email_message(
+    *,
+    recipient_email: str,
+    recipient_name: str,
+    customer: dict[str, Any],
+    vehicle: dict[str, Any],
+    finding: dict[str, Any],
+    estimate: dict[str, Any],
+    decision_status: str,
+    finding_url: str,
+) -> email_service.EmailMessage:
+    customer_label = customer_name(customer)
+    vehicle_label_text = vehicle_notification_label(vehicle)
+    service = (
+        estimate_document_service_summary(estimate)
+        or str(
+            finding.get("recommendation")
+            or finding.get("labor_description")
+            or finding.get("finding")
+            or "Prepared estimate"
+        ).strip()
+    )
+    total = format_currency(estimate.get("estimate_total")) or "$0.00"
+    action_text = {
+        "Approved": "approved the prepared estimate. It is ready for repair.",
+        "Declined": "declined the prepared estimate.",
+        "Deferred": "chose to decide later on the prepared estimate.",
+    }.get(decision_status, "updated the prepared estimate decision.")
+    subject_status = {
+        "Approved": "Customer approved",
+        "Declined": "Customer declined",
+        "Deferred": "Customer decided later",
+    }.get(decision_status, "Customer decision updated")
+    subject = f"{subject_status}: {customer_label} - {vehicle_label_text}"
+    greeting = str(recipient_name or "there").strip() or "there"
+    text_body = "\n".join(
+        [
+            f"Hi {greeting},",
+            "",
+            f"{customer_label} {action_text}",
+            "",
+            f"Vehicle: {vehicle_label_text}",
+            f"Service: {service}",
+            f"Estimate total: {total}",
+            "",
+            f"Open the finding: {finding_url}",
+            "",
+            "TorqueMech",
+        ]
+    )
+    html_body = "\n".join(
+        [
+            f"<p>Hi {html.escape(greeting)},</p>",
+            f"<p><strong>{html.escape(customer_label)}</strong> {html.escape(action_text)}</p>",
+            "<ul>",
+            f"<li><strong>Vehicle:</strong> {html.escape(vehicle_label_text)}</li>",
+            f"<li><strong>Service:</strong> {html.escape(service)}</li>",
+            f"<li><strong>Estimate total:</strong> {html.escape(total)}</li>",
+            "</ul>",
+            f'<p><a href="{html.escape(finding_url, quote=True)}">Open the finding in TorqueMech</a></p>',
+            "<p>TorqueMech</p>",
+        ]
+    )
+    return email_service.EmailMessage(
+        recipients=[recipient_email],
+        subject=subject,
+        text_body=text_body,
+        html_body=html_body,
+    )
+
+
+def send_customer_decision_alert_email(
+    *,
+    recipient_email: str,
+    recipient_name: str,
+    customer: dict[str, Any],
+    vehicle: dict[str, Any],
+    finding: dict[str, Any],
+    estimate: dict[str, Any],
+    decision_status: str,
+    finding_url: str,
+) -> email_service.EmailSendResult:
+    message = customer_decision_alert_email_message(
+        recipient_email=recipient_email,
+        recipient_name=recipient_name,
+        customer=customer,
+        vehicle=vehicle,
+        finding=finding,
+        estimate=estimate,
+        decision_status=decision_status,
+        finding_url=finding_url,
+    )
+    return email_service.send_email(message, invoice_email_service_config(), logger=logger)
+
+
 def create_customer_decision_notification_if_needed(
     conn: sqlite3.Connection,
     *,
@@ -16014,9 +16122,11 @@ async def customer_estimate_review_decision(request: Request, token: str):
     if raw_decision not in CUSTOMER_DECISION_VALUES:
         raise HTTPException(status_code=400, detail="Invalid customer decision")
     now = datetime.utcnow().isoformat()
+    email_alert_payload: dict[str, Any] | None = None
     conn = crm_db_conn()
     try:
         context = validate_customer_estimate_review_context(conn, token)
+        recipient_email, recipient_name = customer_decision_alert_recipient(conn, context["shop"])
         finding = context["finding"]
         decision_status = CUSTOMER_DECISION_STATUS_BY_VALUE[raw_decision]
         already_recorded = latest_customer_decision_for_prepared_estimate(
@@ -16051,6 +16161,25 @@ async def customer_estimate_review_decision(request: Request, token: str):
                 decision_status=decision_status,
                 created_at=now,
             )
+            if recipient_email:
+                email_alert_payload = {
+                    "recipient_email": recipient_email,
+                    "recipient_name": recipient_name,
+                    "customer": context["customer"],
+                    "vehicle": context["vehicle"],
+                    "finding": finding,
+                    "estimate": context["estimate"],
+                    "decision_status": decision_status,
+                    "finding_url": (
+                        f"{request_base_url(request)}"
+                        f"{finding_detail_url(int(context['customer']['id']), int(context['vehicle']['id']), int(finding['id']))}"
+                    ),
+                }
+            else:
+                logger.warning(
+                    "CUSTOMER_DECISION_ALERT_EMAIL_SKIPPED shop_id=%s reason=missing_recipient",
+                    context["shop"]["id"],
+                )
         conn.commit()
     except HTTPException:
         conn.rollback()
@@ -16061,6 +16190,32 @@ async def customer_estimate_review_decision(request: Request, token: str):
         return customer_estimate_unavailable_response(request)
     finally:
         conn.close()
+    if email_alert_payload:
+        try:
+            result = send_customer_decision_alert_email(**email_alert_payload)
+        except Exception:
+            logger.exception(
+                "CUSTOMER_DECISION_ALERT_EMAIL_UNEXPECTED estimate_id=%s decision_status=%s",
+                email_alert_payload["estimate"].get("id"),
+                email_alert_payload["decision_status"],
+            )
+        else:
+            if result.success:
+                logger.info(
+                    "CUSTOMER_DECISION_ALERT_EMAIL_SENT estimate_id=%s decision_status=%s transport=%s",
+                    email_alert_payload["estimate"].get("id"),
+                    email_alert_payload["decision_status"],
+                    result.transport,
+                )
+            else:
+                logger.warning(
+                    "CUSTOMER_DECISION_ALERT_EMAIL_FAILED estimate_id=%s decision_status=%s category=%s provider_related=%s configuration_related=%s",
+                    email_alert_payload["estimate"].get("id"),
+                    email_alert_payload["decision_status"],
+                    result.error_category,
+                    result.provider_related,
+                    result.configuration_related,
+                )
     return RedirectResponse(
         f"{request.url_for('customer_estimate_review', token=token)}?decision_saved={decision_status.lower()}",
         status_code=303,
