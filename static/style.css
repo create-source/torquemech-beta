@@ -15114,3 +15114,31 @@ body.tm-estimator-page
   border-color: #f97316 !important;
   background: #ffedd5 !important;
 }
+/* Compact estimator navigation buttons on mobile */
+@media (max-width: 700px) {
+  body.tm-estimator-page
+  .tm-guided-estimator
+  .tm-finding-estimator-nav {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 12px !important;
+  }
+
+  body.tm-estimator-page
+  .tm-guided-estimator
+  .tm-finding-estimator-nav
+  a.tm-btn.tm-btn-secondary {
+    flex: 0 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 7px 10px !important;
+    border-radius: 10px !important;
+    font-size: 0.78rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+}
