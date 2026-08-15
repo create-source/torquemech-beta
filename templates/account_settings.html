@@ -167,23 +167,8 @@
       <div class="tm-account-main">
     <section class="tm-account-section" id="general" data-account-general>
       <h2 data-i18n="account.general">General</h2>
-      <p data-i18n="account.general_intro">Choose how TorqueMech looks and which language your account should use.</p>
+      <p data-i18n="account.language_help">Choose the language TorqueMech should use for internal tools.</p>
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}" data-preference-csrf>
-
-      <div class="tm-account-preference-row">
-        <div>
-          <h3 data-i18n="account.appearance">Appearance</h3>
-          <p data-i18n="account.appearance_help">System follows your device. Dark keeps the current TorqueMech Pro look.</p>
-        </div>
-        <label class="tm-account-field" for="appearance_preference">
-          <span class="tm-account-label" data-i18n="account.theme">Theme</span>
-          <select id="appearance_preference" name="appearance_preference" data-preference-field>
-            <option value="system" {% if preferences.appearance == "system" %}selected{% endif %}>System</option>
-            <option value="light" {% if preferences.appearance == "light" %}selected{% endif %}>Light</option>
-            <option value="dark" {% if preferences.appearance == "dark" %}selected{% endif %}>Dark</option>
-          </select>
-        </label>
-      </div>
 
       <div class="tm-account-preference-row">
         <div>
@@ -541,7 +526,6 @@
   const savePreferences = async () => {
     const appearance = document.getElementById("appearance_preference")?.value || "dark";
     const language = document.getElementById("language_preference")?.value || "en";
-    window.tmApplyAppearancePreference?.(appearance);
     applyGeneralLanguage(language);
     setPreferenceStatus("saving", "");
     try {
@@ -554,13 +538,12 @@
         },
         body: JSON.stringify({
           csrf_token: preferenceCsrf?.value || "",
-          appearance_preference: appearance,
+          appearance_preference: "dark",
           language_preference: language
         })
       });
       if (!response.ok) throw new Error("Preference save failed");
-      const saved = await response.json();
-      window.tmApplyAppearancePreference?.(saved.appearance);
+      const saved = await response.json();     
       if (saved.i18n) window.tmI18n?.load(saved.i18n);
       applyGeneralLanguage(saved.language);
       setPreferenceStatus("saved", "is-saved");

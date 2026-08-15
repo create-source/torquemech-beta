@@ -3,10 +3,8 @@
 {% set tm_cookie_language = request.cookies.get("tm_language_preference") if request else "" %}
 {% set tm_language = (tm_current_user.language_preference if tm_current_user and tm_current_user.language_preference else (tm_cookie_language or "en")) %}
 {% set tm_locale = tm_locale_meta(tm_language) %}
-{% set tm_cookie_appearance = request.cookies.get("tm_appearance_preference") if request else "" %}
-{% set tm_appearance_raw = (tm_current_user.appearance_preference if tm_current_user and tm_current_user.appearance_preference else (tm_cookie_appearance or "dark")) %}
-{% set tm_appearance = tm_appearance_raw if tm_appearance_raw in ["system", "light", "dark"] else "dark" %}
-<html lang="{{ tm_locale.code }}" dir="{{ tm_locale.dir }}" data-theme="{{ tm_appearance }}" data-theme-effective="{{ 'dark' if tm_appearance == 'system' else tm_appearance }}" data-language="{{ tm_locale.code }}">
+
+<html lang="{{ tm_locale.code }}" dir="{{ tm_locale.dir }}" data-theme="dark" data-theme-effective="dark" data-language="{{ tm_locale.code }}">
 <head>
 
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -23,62 +21,8 @@
   
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
-  <script>
-    (function () {
-      var root = document.documentElement;
-      var preference = root.dataset.theme || "dark";
-
-      function getSystemTheme() {
-        if (!window.matchMedia) return "dark";
-        return window.matchMedia("(prefers-color-scheme: light)").matches
-          ? "light"
-          : "dark";
-      }
-
-      function apply() {
-        var effective =
-          preference === "system"
-            ? getSystemTheme()
-            : preference;
-
-        root.dataset.themeEffective =
-          effective === "light" ? "light" : "dark";
-      }
-
-      apply();
-
-      if (window.matchMedia) {
-        var systemThemeQuery = window.matchMedia("(prefers-color-scheme: light)");
-
-        try {
-          systemThemeQuery.addEventListener("change", function () {
-            if (preference === "system") {
-              apply();
-            }
-          });
-        } catch (_) {
-          try {
-            systemThemeQuery.addListener(function () {
-              if (preference === "system") {
-                apply();
-              }
-            });
-          } catch (_) {}
-        }
-      }
-
-      window.tmApplyAppearancePreference = function (nextPreference) {
-        preference = ["system", "light", "dark"].includes(nextPreference)
-          ? nextPreference
-          : "dark";
-
-        root.dataset.theme = preference;
-        apply();
-      };
-    })();
-  </script>
-
+  <meta name="color-scheme" content="dark" />
+  
   <script>
     window.TM_I18N =
       {% block i18n_payload %}
