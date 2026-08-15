@@ -14730,3 +14730,59 @@ html[data-theme-effective="light"] body .tm-pro-shell .tm-workspace-section-coun
   color: var(--tm-accent) !important;
   -webkit-text-fill-color: var(--tm-accent) !important;
 }
+
+/* ==========================================================
+   TorqueMech Global Mobile Footer Fix
+   iPhone / narrow mobile layouts
+   ========================================================== */
+
+@media (max-width: 400px) {
+  .tm-footer {
+    padding: 16px 0 18px;
+  }
+
+  .tm-footer-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    min-height: 0;
+  }
+
+  .tm-footer-left {
+    justify-content: flex-start;
+  }
+
+  .tm-footer-links {
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
+  .tm-footer-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .tm-footer-support {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .tm-support-email {
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .tm-footer #feedbackBtn {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 4px 14px;
+    margin: 0;
+  }
+}
