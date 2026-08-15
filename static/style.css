@@ -14889,3 +14889,175 @@ html[data-theme-effective="light"] .tm-notificationItem__trashAction:focus-visib
 html[data-theme-effective="light"] .tm-notificationPanel__head span {
   color: #475569 !important;
 }
+
+/* =========================================================
+   Estimator — final Light Appearance corrections
+   Must remain at the bottom of style.css
+========================================================= */
+
+html[data-theme-effective="light"] body.tm-estimator-page {
+  --tm-text: #0f172a;
+  --tm-text-muted: #64748b;
+  --tm-est-field-bg: #ffffff;
+  --tm-est-field-text: #0f172a;
+  --tm-est-field-placeholder: #64748b;
+  --tm-est-field-border: #cbd5e1;
+}
+
+/* Navigation logo */
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-brand__torque {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-brand__mech {
+  color: #f97316 !important;
+  -webkit-text-fill-color: #f97316 !important;
+}
+
+/* Generated service card */
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-service-title {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-service-vehicle {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-service-estimate {
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-service-estimate-label {
+  color: #c2410c !important;
+  -webkit-text-fill-color: #c2410c !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-service-estimate strong {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-service-meta strong {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-service-meta em {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-inspection-findings span {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+/* Quote Preview */
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.preview-value {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.preview-sub {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+
+/* Clear Quote button */
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.section-header--vehicles
+.tm-vehicle-cta-group {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  align-self: center !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.section-header--vehicles
+.tm-vehicle-cta-group
+.clear-fields-btn {
+  flex: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 8px 14px !important;
+}
+
+/* Estimator footer */
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-footer {
+  background: #f8fafc !important;
+  color: #475569 !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-footer
+.tm-footer-brand,
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-footer
+.tm-footer-links a,
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-footer
+.tm-footer-support,
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-footer
+.tm-footer-support > span {
+  color: #475569 !important;
+  -webkit-text-fill-color: #475569 !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-footer
+.tm-support-email {
+  color: #ea580c !important;
+  -webkit-text-fill-color: #ea580c !important;
+}
