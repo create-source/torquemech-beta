@@ -15061,3 +15061,56 @@ body.tm-estimator-page
   color: #ea580c !important;
   -webkit-text-fill-color: #ea580c !important;
 }
+/* Estimator navigation buttons — Light Appearance */
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-finding-estimator-nav
+a.tm-btn.tm-btn-secondary {
+  display: inline-flex !important;
+  width: auto !important;
+  min-height: 44px !important;
+  padding: 10px 16px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, .08) !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+.tm-guided-estimator
+.tm-finding-estimator-nav
+a.tm-btn.tm-btn-secondary:hover {
+  border-color: #fb923c !important;
+  background: #fff7ed !important;
+  color: #c2410c !important;
+  -webkit-text-fill-color: #c2410c !important;
+}
+
+/* Clear Quote button */
+html[data-theme-effective="light"]
+body.tm-estimator-page
+#clearBtn {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  height: auto !important;
+  padding: 9px 15px !important;
+  border: 1px solid #fdba74 !important;
+  border-radius: 10px !important;
+  background: #fff7ed !important;
+  color: #c2410c !important;
+  -webkit-text-fill-color: #c2410c !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-effective="light"]
+body.tm-estimator-page
+#clearBtn:hover {
+  border-color: #f97316 !important;
+  background: #ffedd5 !important;
+}
