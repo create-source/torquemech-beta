@@ -14807,3 +14807,85 @@ html[data-theme-effective="light"] body .tm-pro-shell .tm-workspace-section-coun
     gap: 16px;
   }
 }
+
+/* ==========================================================
+   NOTIFICATIONS — LIGHT MODE CONTRAST FIX
+   ========================================================== */
+
+html[data-theme-effective="light"] .tm-notificationItem {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem--approved {
+  border-left-color: #16a34a !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem--declined {
+  border-left-color: #dc2626 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem--deferred {
+  border-left-color: #d97706 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__label {
+  background: #ffedd5 !important;
+  color: #9a3412 !important;
+  border: 1px solid #fdba74 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem h3 {
+  color: #0f172a !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem p,
+html[data-theme-effective="light"] .tm-notificationItem time {
+  color: #475569 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__ready {
+  color: #15803d !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__action {
+  background: #fff7ed !important;
+  border-color: #f97316 !important;
+  color: #9a3412 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__action:hover,
+html[data-theme-effective="light"] .tm-notificationItem__action:focus-visible {
+  background: #ffedd5 !important;
+  color: #7c2d12 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__action--primary {
+  background: #f97316 !important;
+  border-color: #f97316 !important;
+  color: #111827 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__action--primary:hover,
+html[data-theme-effective="light"] .tm-notificationItem__action--primary:focus-visible {
+  background: #ea580c !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__trashAction {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationItem__trashAction:hover,
+html[data-theme-effective="light"] .tm-notificationItem__trashAction:focus-visible {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+  color: #b91c1c !important;
+}
+
+html[data-theme-effective="light"] .tm-notificationPanel__head span {
+  color: #475569 !important;
+}
