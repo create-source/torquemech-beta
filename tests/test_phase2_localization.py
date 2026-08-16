@@ -23,6 +23,7 @@ from app.i18n import (
     translate_text,
 )
 from app.i18n_exact_asian import EXACT_TEXT_VI_ZH
+from app.i18n_exact_pages import EXACT_TEXT_PAGE_TRANSLATIONS
 from routers import pro as pro_module
 
 
@@ -275,10 +276,51 @@ class Phase2LocalizationTests(unittest.TestCase):
             self.assertIn(f'feedbackText("{key}"', feedback_js)
         self.assertIn('data-i18n-placeholder="feedback.example_placeholder"', layout_html)
 
-    def test_internal_billing_and_maintenance_error_pages_are_in_translation_scope(self):
+    def test_internal_billing_and_maintenance_error_pages_are_in_global_translation_scope(self):
         i18n_js = (Path(main.BASE_DIR) / "static" / "i18n.js").read_text(encoding="utf-8")
-        self.assertIn(".tm-billing-status-page", i18n_js)
-        self.assertIn(".tm-maintenance-error-page", i18n_js)
+        self.assertIn('parent.closest("[data-no-i18n]")', i18n_js)
+        self.assertNotIn('parent.closest(".tm-menu,', i18n_js)
+
+    def test_translation_walker_covers_newer_pages_without_container_allowlist(self):
+        i18n_js = (Path(main.BASE_DIR) / "static" / "i18n.js").read_text(encoding="utf-8")
+        self.assertIn('parent.closest("[data-no-i18n]")', i18n_js)
+        self.assertNotIn('parent.closest(".tm-menu,', i18n_js)
+        self.assertIn("guide|guides|code|codes", i18n_js)
+
+    def test_newer_page_catalog_is_complete_for_every_non_english_locale(self):
+        representative_text = {
+            "Manage the profile and sign-in details for your TorqueMech account.",
+            "Search Codes, Costs, Symptoms, and Guides",
+            "See How TorqueMech Works",
+            "TorqueMech Repair Library",
+            "Browse Repair Cost Guides",
+            "Browse OBD Trouble Codes",
+            "Automotive Knowledge Hub",
+            "Log in",
+        }
+        self.assertTrue(representative_text.issubset(EXACT_TEXT_PAGE_TRANSLATIONS))
+        for language in ("es", "vi", "zh-Hans"):
+            with self.subTest(language=language):
+                exact = client_payload(language)["exactText"]
+                self.assertTrue(all(exact.get(text) and exact[text] != text for text in representative_text))
+
+    def test_newer_public_routes_ship_full_locale_payload(self):
+        client = self.client()
+        for route in (
+            "/quick-find",
+            "/how-it-works",
+            "/repair-guides",
+            "/login",
+            "/symptoms",
+            "/repair-costs",
+            "/obd",
+            "/knowledge",
+        ):
+            response = client.get(route, cookies={"tm_language_preference": "vi"})
+            with self.subTest(route=route):
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('data-language="vi"', response.text)
+                self.assertIn('"Browse OBD Trouble Codes": "Xem mã lỗi OBD"', response.text)
 
     def test_vietnamese_and_chinese_catalogs_do_not_inherit_english_values(self):
         english_payload = client_payload("en")

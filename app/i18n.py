@@ -5,6 +5,7 @@ import re
 from typing import Any
 
 from app.i18n_exact_asian import EXACT_TEXT_VI_ZH
+from app.i18n_exact_pages import EXACT_TEXT_PAGE_TRANSLATIONS
 
 
 DEFAULT_LANGUAGE = "en"
@@ -2375,6 +2376,12 @@ for _locale in ("vi", "zh-Hans"):
     EXACT_TEXT_TRANSLATIONS[_locale] = _generated_exact
 
 for _english_text, (_vi_text, _zh_text) in EXACT_TEXT_VI_ZH.items():
+    EXACT_TEXT_TRANSLATIONS["vi"][_english_text] = _vi_text
+    EXACT_TEXT_TRANSLATIONS["zh-Hans"][_english_text] = _zh_text
+
+for _english_text, (_es_text, _vi_text, _zh_text) in EXACT_TEXT_PAGE_TRANSLATIONS.items():
+    EXACT_TEXT_TRANSLATIONS_ES[_english_text] = _es_text
+    EXACT_TEXT_TRANSLATIONS["es"][_english_text] = _es_text
     EXACT_TEXT_TRANSLATIONS["vi"][_english_text] = _vi_text
     EXACT_TEXT_TRANSLATIONS["zh-Hans"][_english_text] = _zh_text
 

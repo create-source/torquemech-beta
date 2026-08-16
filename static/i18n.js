@@ -35,20 +35,19 @@
     if (!clean) return "";
     if (state.exactText[clean]) return state.exactText[clean];
 
-    const countMatch = clean.match(/^(\d+)\s+(customer|customers|vehicle|vehicles|item|items)$/i);
+    const countMatch = clean.match(/^(\d+)\s+(customer|customers|vehicle|vehicles|item|items|guide|guides|code|codes)$/i);
 
     if (countMatch) {
       const count = countMatch[1];
       const noun = countMatch[2].toLowerCase();
 
-      const key =
-        noun === "customers"
-          ? "ui.customers_lower"
-          : noun === "vehicles"
-            ? "ui.vehicles_lower"
-            : `ui.${noun}`;
+      const key = noun === "customers"
+        ? "ui.customers_lower"
+        : noun === "vehicles"
+          ? "ui.vehicles_lower"
+          : `ui.${noun}`;
 
-      const translated = translate(key, noun);
+      const translated = state.exactText[noun] || translate(key, noun);
 
       return `${count} ${translated}`;
     }
@@ -127,9 +126,6 @@
       acceptNode(node) {
         const parent = node.parentElement;
         if (!parent || skipTags.has(parent.tagName) || parent.closest("[data-no-i18n]")) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        if (!parent.closest(".tm-menu, .tm-notification, .tm-footer, .tm-pro-shell, .tm-billing-status-page, .tm-maintenance-error-page, .tm-account-page, .tm-estimator-page, .tm-modal, .tm-feedback-reminder, .tm-public-estimate-page, .tm-public-estimate-unavailable-page, .tm-book-page, .tm-auth-page, .tm-quick-find-page, .tm-parts-page")) {
           return NodeFilter.FILTER_REJECT;
         }
         return translateExactText(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
