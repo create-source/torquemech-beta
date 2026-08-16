@@ -768,6 +768,81 @@
     }
     
   }
+  .tm-pro-price-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    width: min(100%, 1040px);
+    margin: 0 auto;
+    align-items: stretch;
+  }
+
+  .tm-pro-price-grid .tm-pro-price-card {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tm-pro-price-card--sms {
+    border-color: rgba(187, 247, 208, .5);
+  }
+
+  .tm-pro-price-badge {
+    display: inline-flex;
+    align-self: center;
+    margin-bottom: 12px;
+    padding: 6px 11px;
+    border: 1px solid rgba(187, 247, 208, .38);
+    border-radius: 999px;
+    background: rgba(187, 247, 208, .1);
+    color: #bbf7d0;
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .tm-pro-price-features {
+    margin: 20px 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+
+  .tm-pro-price-features li {
+    position: relative;
+    margin-top: 10px;
+    padding-left: 24px;
+    color: #dbe7f5;
+    font-size: .88rem;
+    font-weight: 750;
+    line-height: 1.45;
+  }
+
+  .tm-pro-price-features li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #bbf7d0;
+    font-weight: 950;
+  }
+
+  .tm-pro-price-grid .tm-pro-btn {
+    margin-top: auto;
+  }
+
+  .tm-pro-btn--disabled {
+    opacity: .68;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  @media (max-width: 760px) {
+    .tm-pro-price-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -814,7 +889,7 @@
         </div>
 
         <p class="tm-pro-hero__offer">
-          14 days free · $29/month after · No commitment
+          14 days free · Plans start at $29/month · No commitment
         </p>
         {% endif %}
       </div>
@@ -934,15 +1009,60 @@
 
     <section class="tm-pro-section" id="pricing">
       <div class="tm-pro-wrap">
-        <article class="tm-pro-price-card">
-          <div class="tm-pro-price-card__name">TorqueMech Pro</div>
-          <div class="tm-pro-price"><strong>$29</strong><span>/ month</span></div>
-          <p>14-day free trial.</p>
+        <div class="tm-pro-section-head tm-pro-section-head--center">
+          <h2>Choose the plan that fits your shop.</h2>
+          <p>Start with email delivery or add built-in customer texting.</p>
+        </div>
 
-          <a class="tm-pro-btn tm-pro-btn--primary" href="/pro/plan">View Plan Details</a>
+        <div class="tm-pro-price-grid">
+          <article class="tm-pro-price-card">
+            <div class="tm-pro-price-card__name">TorqueMech Pro</div>
+            <div class="tm-pro-price">
+              <strong>$29</strong><span>/ month</span>
+            </div>
+            <p>Email delivery included</p>
 
-          <span class="tm-pro-price-note">No commitment · Cancel anytime</span>
-        </article>
+            <ul class="tm-pro-price-features">
+              <li>Customer, vehicle, estimate, repair, and invoice workflow</li>
+              <li>Shop calendar and online booking</li>
+              <li>Email booking confirmations and updates</li>
+              <li>Email estimate and customer-review links</li>
+            </ul>
+
+            <a class="tm-pro-btn tm-pro-btn--primary" href="/pro/plan">
+              View Plan Details
+            </a>
+
+            <span class="tm-pro-price-note">
+              14-day free trial · No commitment
+            </span>
+          </article>
+
+          <article class="tm-pro-price-card tm-pro-price-card--sms">
+            <span class="tm-pro-price-badge">Coming Soon</span>
+
+            <div class="tm-pro-price-card__name">TorqueMech Pro + SMS</div>
+            <div class="tm-pro-price">
+              <strong>$35</strong><span>/ month</span>
+            </div>
+            <p>Email and text delivery included</p>
+
+            <ul class="tm-pro-price-features">
+              <li>Everything included in TorqueMech Pro</li>
+              <li>Up to 100 outgoing text messages each month</li>
+              <li>Text booking updates and customer links</li>
+              <li>Delivery status and customer opt-out protection</li>
+            </ul>
+
+            <span class="tm-pro-btn tm-pro-btn--secondary tm-pro-btn--disabled">
+              Coming Soon
+            </span>
+
+            <span class="tm-pro-price-note">
+              SMS plan available at launch
+            </span>
+          </article>
+        </div>
       </div>
     </section>
   </main>
