@@ -3,6 +3,20 @@
 {% block title %}How It Works | TorqueMech{% endblock %}
 
 {% block content %}
+<style>
+  .tm-how-it-works .tm-how-hero .tm-page-title {
+    font-size: clamp(3rem, 4vw, 4rem);
+    line-height: 1.02;
+  }
+
+  @media (max-width: 640px) {
+    .tm-how-it-works .tm-how-hero .tm-page-title {
+      font-size: 2.5rem;
+      line-height: 1.08;
+    }
+  }
+</style>
+
 <section class="tm-section tm-how-it-works">
 
   <div class="tm-how-hero">
