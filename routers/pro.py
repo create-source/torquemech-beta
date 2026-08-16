@@ -8,6 +8,8 @@ import os
 import re
 import sqlite3
 import json
+import threading
+from functools import wraps
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import parse_qs, quote, urlencode
@@ -63,7 +65,7 @@ from app.billing import (
     resolve_subscription_access,
     verify_webhook_payload,
 )
-from db import connect_app_db
+from db import connect_app_db, using_postgres
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -358,6 +360,28 @@ def active_app_db_path() -> str:
 
 def crm_db_conn() -> sqlite3.Connection:
     return connect_app_db(row_factory=True)
+
+
+_POSTGRES_SCHEMA_READY: set[str] = set()
+_POSTGRES_SCHEMA_LOCK = threading.RLock()
+
+
+def postgres_schema_once(func):
+    """Run legacy runtime schema checks once per process on PostgreSQL."""
+    @wraps(func)
+    def wrapped(conn, *args, **kwargs):
+        if not using_postgres():
+            return func(conn, *args, **kwargs)
+        name = func.__name__
+        if name in _POSTGRES_SCHEMA_READY:
+            return None
+        with _POSTGRES_SCHEMA_LOCK:
+            if name in _POSTGRES_SCHEMA_READY:
+                return None
+            result = func(conn, *args, **kwargs)
+            _POSTGRES_SCHEMA_READY.add(name)
+            return result
+    return wrapped
 
 
 async def read_form_data(request: Request) -> dict[str, str]:
@@ -21042,3 +21066,14 @@ async def pro_maintenance_record_delete(
         f"/pro/customers/{customer_id}/vehicles/{vehicle_id}",
         status_code=303,
     )
+
+
+# PostgreSQL production schema is migrated explicitly. Keep the legacy
+# compatibility checks for safety, but do not repeat them on every request.
+for _schema_name, _schema_func in list(globals().items()):
+    if (
+        _schema_name.startswith("ensure_")
+        and _schema_name.endswith("_schema")
+        and callable(_schema_func)
+    ):
+        globals()[_schema_name] = postgres_schema_once(_schema_func)

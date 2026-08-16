@@ -256,15 +256,21 @@ def load_server_session_data(session_id: str) -> dict[str, Any]:
 
 class SQLiteSessionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if request.url.path == "/favicon.ico" or request.url.path.startswith("/static/"):
+            return await call_next(request)
         session_id = request.cookies.get(SESSION_COOKIE_NAME, "")
         session_data = load_server_session_data(session_id)
         if session_id and not session_data:
             session_id = ""
         request.scope["session"] = session_data
+        original_session_json = json.dumps(session_data, sort_keys=True, separators=(",", ":"))
         response = await call_next(request)
         try:
             updated_session = dict(request.scope.get("session") or {})
             rotate_session = bool(request.scope.pop("rotate_session_id", False))
+            updated_session_json = json.dumps(updated_session, sort_keys=True, separators=(",", ":"))
+            if session_id and not rotate_session and updated_session_json == original_session_json:
+                return response
             conn = app_db_conn(row_factory=True)
             try:
                 ensure_auth_schema(conn)
@@ -1692,6 +1698,8 @@ async def add_request_id_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         response.headers["X-Request-ID"] = rid
+        if request.url.path.startswith("/static/"):
+            response.headers.setdefault("Cache-Control", "public, max-age=3600")
         return response
     finally:
         _request_id_ctx.reset(token)
@@ -1699,14 +1707,16 @@ async def add_request_id_middleware(request: Request, call_next):
 
 @app.middleware("http")
 async def auth_context_middleware(request: Request, call_next):
-    request.state.current_user = None
+    if request.url.path == "/favicon.ico" or request.url.path.startswith("/static/"):
+        return await call_next(request)
+    request.state.current_user = getattr(request.state, "current_user", None)
     request.state.current_shop = {}
     request.state.subscription_access = {}
     request.state.staff_notifications = {"unread_count": 0, "badge": "", "items": []}
     try:
         conn = app_db_conn(row_factory=True)
         try:
-            user = current_user(conn, request)
+            user = request.state.current_user or current_user(conn, request)
             request.state.current_user = user
             if user:
                 request.state.current_shop = current_shop_context(conn, request)
@@ -1753,6 +1763,7 @@ async def pro_private_access_middleware(request: Request, call_next):
             logging.exception("AUTH_BOOTSTRAP_CHECK_FAILED")
             user = None
         if user and user_email_verified(user):
+            request.state.current_user = user
             return await call_next(request)
         if user:
             return RedirectResponse("/check-email", status_code=303)

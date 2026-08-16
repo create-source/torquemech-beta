@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -64,6 +65,27 @@ def runtime_schema_changes_allowed() -> bool:
 
 
 POSTGRES_RUNTIME_SCHEMA_TABLE_ALLOWLIST = {"staff_notifications", "customer_decision_follow_ups"}
+
+_POSTGRES_POOL = None
+_POSTGRES_POOL_DSN = ""
+_POSTGRES_POOL_LOCK = threading.Lock()
+
+
+def postgres_connection_pool(dsn: str):
+    global _POSTGRES_POOL, _POSTGRES_POOL_DSN
+    if _POSTGRES_POOL is not None and _POSTGRES_POOL_DSN == dsn:
+        return _POSTGRES_POOL
+    with _POSTGRES_POOL_LOCK:
+        if _POSTGRES_POOL is None or _POSTGRES_POOL_DSN != dsn:
+            from psycopg2.pool import ThreadedConnectionPool
+
+            _POSTGRES_POOL = ThreadedConnectionPool(
+                minconn=1,
+                maxconn=max(2, int(os.getenv("POSTGRES_POOL_MAX", "10"))),
+                dsn=dsn,
+            )
+            _POSTGRES_POOL_DSN = dsn
+    return _POSTGRES_POOL
 
 
 def connect_app_db(*, row_factory: bool = False):
@@ -160,7 +182,8 @@ class PostgresCompatConnection:
             raise RuntimeError("DATABASE_URL requires psycopg2-binary to be installed") from exc
 
         self._psycopg2 = psycopg2
-        self._conn = psycopg2.connect(dsn)
+        self._pool = postgres_connection_pool(dsn)
+        self._conn = self._pool.getconn()
         self.row_factory = row_factory
 
     def cursor(self) -> PostgresCompatCursor:
@@ -176,7 +199,15 @@ class PostgresCompatConnection:
         self._conn.rollback()
 
     def close(self) -> None:
-        self._conn.close()
+        if self._conn is None:
+            return
+        conn, self._conn = self._conn, None
+        try:
+            conn.rollback()
+        except Exception:
+            self._pool.putconn(conn, close=True)
+        else:
+            self._pool.putconn(conn)
 
     def _execute(
         self,
