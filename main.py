@@ -229,6 +229,7 @@ for _h in logging.getLogger().handlers:
 # ============================================================
 
 SESSION_COOKIE_NAME = "tm_session"
+SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
 BOOTSTRAP_TOKEN_ENV = "TORQUEMECH_BOOTSTRAP_TOKEN"
 
 
@@ -297,6 +298,7 @@ class SQLiteSessionMiddleware(BaseHTTPMiddleware):
                     response.set_cookie(
                         SESSION_COOKIE_NAME,
                         session_id,
+                        max_age=SESSION_COOKIE_MAX_AGE,
                         httponly=True,
                         secure=request.url.scheme == "https",
                         samesite="lax",
