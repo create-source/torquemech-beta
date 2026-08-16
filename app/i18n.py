@@ -2451,9 +2451,18 @@ def t(key: str, language: Any = DEFAULT_LANGUAGE) -> str:
 def request_language(request: Any) -> str:
     user = getattr(getattr(request, "state", None), "current_user", None)
     try:
-        return normalize_language(user.get("language_preference"))
+        user_language = user.get("language_preference")
     except AttributeError:
-        return normalize_language(getattr(user, "language_preference", ""))
+        user_language = getattr(user, "language_preference", "")
+
+    if str(user_language or "").strip():
+        return normalize_language(user_language)
+
+    cookies = getattr(request, "cookies", {}) or {}
+    try:
+        return normalize_language(cookies.get("tm_language_preference"))
+    except AttributeError:
+        return DEFAULT_LANGUAGE
 
 
 def t_for_request(request: Any, key: str) -> str:

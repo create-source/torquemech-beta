@@ -24,6 +24,7 @@ from app.i18n import (
 )
 from app.i18n_exact_asian import EXACT_TEXT_VI_ZH
 from app.i18n_exact_pages import EXACT_TEXT_PAGE_TRANSLATIONS
+from app.i18n_technical import translate_obd_title
 from routers import pro as pro_module
 
 
@@ -321,6 +322,56 @@ class Phase2LocalizationTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn('data-language="vi"', response.text)
                 self.assertIn('"Browse OBD Trouble Codes": "Xem mã lỗi OBD"', response.text)
+
+    def test_data_backed_symptom_cards_are_localized(self):
+        expected = {
+            "es": "Descarga de batería",
+            "vi": "Ắc quy bị hao điện",
+            "zh-Hans": "电池漏电",
+        }
+        for language, localized_title in expected.items():
+            response = self.client().get(
+                "/symptoms",
+                cookies={"tm_language_preference": language},
+            )
+            with self.subTest(language=language):
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(localized_title, response.text)
+                self.assertNotEqual(
+                    EXACT_TEXT_PAGE_TRANSLATIONS["Battery Drain"][
+                        {"es": 0, "vi": 1, "zh-Hans": 2}[language]
+                    ],
+                    "Battery Drain",
+                )
+
+    def test_obd_browse_titles_are_localized_but_codes_are_preserved(self):
+        expected = {
+            "es": "Circuito de control del regulador de volumen de combustible",
+            "vi": "Mạch điều khiển bộ điều chỉnh lưu lượng nhiên liệu",
+            "zh-Hans": "燃油量调节器控制电路",
+        }
+        source = "Fuel Volume Regulator Control Circuit/Open"
+        for language, localized_phrase in expected.items():
+            with self.subTest(language=language, unit=True):
+                localized = translate_obd_title(source, language)
+                self.assertIn(localized_phrase, localized)
+                self.assertNotIn("Fuel Volume Regulator", localized)
+
+            response = self.client().get(
+                "/obd",
+                cookies={"tm_language_preference": language},
+            )
+            with self.subTest(language=language, route=True):
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("P0001", response.text)
+                self.assertIn(localized_phrase, response.text)
+                card = re.search(
+                    r'<a class="obd-index-item" href="/obd/p0001">(.*?)</a>',
+                    response.text,
+                    re.S,
+                )
+                self.assertIsNotNone(card)
+                self.assertNotIn(source, card.group(1))
 
     def test_vietnamese_and_chinese_catalogs_do_not_inherit_english_values(self):
         english_payload = client_payload("en")

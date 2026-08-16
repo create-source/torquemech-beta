@@ -74,6 +74,7 @@ from app.i18n import (
     t_for_request,
     translate_text_for_request,
 )
+from app.i18n_technical import translate_obd_title
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -7771,7 +7772,7 @@ def estimator_parts_sources_api(request: Request):
 @app.get("/obd", response_class=HTMLResponse)
 def obd(request: Request):
     metric_incr("page_obd_lookup")
-    obd_code_groups, total_codes = build_obd_index_groups()
+    obd_code_groups, total_codes = build_obd_index_groups(language=request_language(request))
     return templates.TemplateResponse(
         "obd_index.html",
         {
@@ -7841,7 +7842,10 @@ OBD_RANGE_PAGE_CONFIG = {
     },
 }
 
-def build_obd_range_group(range_slug: str) -> Tuple[List[Dict[str, Any]], int, Dict[str, str] | None]:
+def build_obd_range_group(
+    range_slug: str,
+    language: str = "en",
+) -> Tuple[List[Dict[str, Any]], int, Dict[str, str] | None]:
     config = OBD_RANGE_PAGE_CONFIG.get(str(range_slug or "").lower())
     if not config or not OBD_SEED_JSON_PATH.exists():
         return [], 0, config
@@ -7868,7 +7872,7 @@ def build_obd_range_group(range_slug: str) -> Tuple[List[Dict[str, Any]], int, D
         items.append(
             {
                 "code": code,
-                "title": title,
+                "title": translate_obd_title(title, language),
                 "href": f"/obd/{code.lower()}",
             }
         )
@@ -7877,14 +7881,15 @@ def build_obd_range_group(range_slug: str) -> Tuple[List[Dict[str, Any]], int, D
 
     group = {
         "id": range_slug.lower(),
-        "title": config["group_title"],
+        "title": translate_obd_title(config["group_title"], language),
         "items": items,
     }
     return [group], len(items), config
 
 def render_obd_range_page(request: Request, range_slug: str):
     metric_incr("page_obd_lookup")
-    obd_code_groups, total_codes, config = build_obd_range_group(range_slug)
+    language = request_language(request)
+    obd_code_groups, total_codes, config = build_obd_range_group(range_slug, language)
     if not config:
         raise HTTPException(status_code=404, detail="OBD code range not found")
 
@@ -10352,7 +10357,10 @@ def build_diagnostic_summary(code: str):
 
     return summaries.get(code)
 
-def build_obd_index_groups(query: str = "") -> Tuple[List[Dict[str, Any]], int]:
+def build_obd_index_groups(
+    query: str = "",
+    language: str = "en",
+) -> Tuple[List[Dict[str, Any]], int]:
     if not OBD_SEED_JSON_PATH.exists():
         return [], 0
 
@@ -10401,7 +10409,11 @@ def build_obd_index_groups(query: str = "") -> Tuple[List[Dict[str, Any]], int]:
         return "other"
 
     groups_map = {
-        group_id: {"id": group_id, "title": title, "items": []}
+        group_id: {
+            "id": group_id,
+            "title": translate_obd_title(title, language),
+            "items": [],
+        }
         for group_id, title in group_defs
     }
 
@@ -10425,7 +10437,7 @@ def build_obd_index_groups(query: str = "") -> Tuple[List[Dict[str, Any]], int]:
         groups_map[pick_group(code)]["items"].append(
             {
                 "code": code,
-                "title": title,
+                "title": translate_obd_title(title, language),
                 "href": f"/obd/{code.lower()}",
             }
         )
@@ -10443,7 +10455,10 @@ def build_obd_index_groups(query: str = "") -> Tuple[List[Dict[str, Any]], int]:
 
 @app.get("/obd-codes", response_class=HTMLResponse)
 async def obd_codes_index(request: Request, q: str = ""):
-    obd_code_groups, total_codes = build_obd_index_groups(q)
+    obd_code_groups, total_codes = build_obd_index_groups(
+        q,
+        language=request_language(request),
+    )
     return templates.TemplateResponse(
         "obd_codes_index.html",
         {
