@@ -10,6 +10,8 @@ from fastapi.testclient import TestClient
 
 import main
 from app.i18n import (
+    EXACT_TEXT_TRANSLATIONS,
+    EXACT_TEXT_TRANSLATIONS_ES,
     LOCALE_REGISTRY,
     SUPPORTED_LANGUAGES,
     catalog_report,
@@ -20,6 +22,7 @@ from app.i18n import (
     t,
     translate_text,
 )
+from app.i18n_exact_asian import EXACT_TEXT_VI_ZH
 from routers import pro as pro_module
 
 
@@ -201,6 +204,81 @@ class Phase2LocalizationTests(unittest.TestCase):
             with self.subTest(language=language):
                 self.assertEqual(details["missing"], [])
                 self.assertEqual(details["unknown"], [])
+
+    def test_vietnamese_and_chinese_catalogs_have_no_placeholder_translations(self):
+        placeholders = {
+            "vi": "Nội dung giao diện",
+            "zh-Hans": "界面文本",
+        }
+        for language, placeholder in placeholders.items():
+            with self.subTest(language=language, catalog="translations"):
+                payload = client_payload(language)
+                self.assertNotIn(placeholder, payload["translations"].values())
+            with self.subTest(language=language, catalog="exactText"):
+                self.assertNotIn(placeholder, EXACT_TEXT_TRANSLATIONS[language].values())
+            with self.subTest(language=language, catalog="publicExactText"):
+                self.assertNotIn(placeholder, public_client_payload(language)["exactText"].values())
+
+    def test_vietnamese_and_chinese_keyed_catalogs_have_no_partial_english_phrases(self):
+        allowed_tokens = {
+            "app", "blank", "count", "crm", "download", "email", "estimate",
+            "href", "html", "nbsp", "noopener", "obd", "pdf", "pro", "radio",
+            "rel", "target", "title", "torquemech",
+            "url", "vin",
+        }
+        english = client_payload("es")["fallbackTranslations"]
+        for language in ("vi", "zh-Hans"):
+            localized = client_payload(language)["translations"]
+            leaks = {}
+            for key, source in english.items():
+                source_words = {
+                    word.lower() for word in re.findall(r"[A-Za-z]{3,}", source)
+                } - allowed_tokens
+                localized_words = {
+                    word.lower() for word in re.findall(r"[A-Za-z]{3,}", localized[key])
+                } - allowed_tokens
+                shared = source_words & localized_words
+                if shared:
+                    leaks[key] = sorted(shared)
+            with self.subTest(language=language):
+                self.assertEqual(leaks, {})
+
+    def test_reviewed_asian_exact_text_catalog_covers_every_generated_placeholder(self):
+        expected = {
+            key
+            for key, value in EXACT_TEXT_TRANSLATIONS_ES.items()
+            if value
+        }
+        resolved_without_manual_overlay = {
+            key
+            for key in expected
+            if key not in EXACT_TEXT_VI_ZH
+            and EXACT_TEXT_TRANSLATIONS["vi"].get(key) != "Nội dung giao diện"
+            and EXACT_TEXT_TRANSLATIONS["zh-Hans"].get(key) != "界面文本"
+        }
+        self.assertEqual(expected, set(EXACT_TEXT_VI_ZH) | resolved_without_manual_overlay)
+
+    def test_photo_limit_dialog_uses_locale_catalog_instead_of_spanish_literal(self):
+        i18n_js = (Path(main.BASE_DIR) / "static" / "i18n.js").read_text(encoding="utf-8")
+        self.assertIn('translate("ui.photo_limit", value, { count: photoLimit[1] })', i18n_js)
+        self.assertNotIn("Puedes adjuntar hasta ${photoLimit[1]} fotos", i18n_js)
+
+    def test_feedback_statuses_and_placeholder_use_translation_keys(self):
+        feedback_js = (Path(main.BASE_DIR) / "static" / "feedback.js").read_text(encoding="utf-8")
+        layout_html = (Path(main.BASE_DIR) / "templates" / "layout.html").read_text(encoding="utf-8")
+        for key in (
+            "feedback.message_required",
+            "feedback.sending",
+            "feedback.received",
+            "feedback.send_error",
+        ):
+            self.assertIn(f'feedbackText("{key}"', feedback_js)
+        self.assertIn('data-i18n-placeholder="feedback.example_placeholder"', layout_html)
+
+    def test_internal_billing_and_maintenance_error_pages_are_in_translation_scope(self):
+        i18n_js = (Path(main.BASE_DIR) / "static" / "i18n.js").read_text(encoding="utf-8")
+        self.assertIn(".tm-billing-status-page", i18n_js)
+        self.assertIn(".tm-maintenance-error-page", i18n_js)
 
     def test_vietnamese_and_chinese_catalogs_do_not_inherit_english_values(self):
         english_payload = client_payload("en")

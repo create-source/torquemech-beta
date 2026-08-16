@@ -23,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let activeTimer = null;
 
+  function feedbackText(key, fallback) {
+    return window.tmI18n?.translate?.(key, fallback) || fallback;
+  }
+
   function getDismissedUntil() {
     return Number(localStorage.getItem(DISMISS_UNTIL_KEY) || "0");
   }
@@ -124,12 +128,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const message = (msgEl?.value || "").trim();
     if (!message) {
-      statusEl.textContent = "Please enter a message.";
+      statusEl.textContent = feedbackText("feedback.message_required", "Please enter a message.");
       return;
     }
 
     submitBtn.disabled = true;
-    statusEl.textContent = "Sending…";
+    statusEl.textContent = feedbackText("feedback.sending", "Sending…");
 
     try {
       const payload = {
@@ -146,12 +150,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) throw new Error("Request failed");
 
-      statusEl.textContent = "Thanks — repair intelligence feedback received.";
+      statusEl.textContent = feedbackText("feedback.received", "Thanks — repair intelligence feedback received.");
       form.reset();
 
       setTimeout(() => closeModal(), 700);
     } catch (err) {
-      statusEl.textContent = "Could not send. Please try again.";
+      statusEl.textContent = feedbackText("feedback.send_error", "Could not send. Please try again.");
     } finally {
       submitBtn.disabled = false;
     }
