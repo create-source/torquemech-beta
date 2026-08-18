@@ -14567,10 +14567,21 @@ def pro_dashboard(request: Request, welcome: int = 0):
             return str(getattr(current_user, field, "") or "").strip()
 
     display_name = (
-        user_value("full_name")
+        user_value("first_name")
+        or user_value("full_name")
         or user_value("name")
+        or user_value("username")
         or user_value("display_name")
     )
+
+    email = user_value("email")
+
+    if display_name:
+        first_name = display_name.split()[0]
+    elif email:
+        first_name = email.split("@", 1)[0]
+    else:
+        first_name = "there"
     first_name = display_name.split()[0] if display_name else "there"
     conn = crm_db_conn()
     try:
