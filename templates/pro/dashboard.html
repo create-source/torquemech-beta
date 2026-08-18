@@ -1633,13 +1633,25 @@
     }
   }
 
+  /* Keep the Command Center sections vertically stacked on every screen */
+  .tm-pro-shell {
+    display: block !important;
+  }
+
+  .tm-pro-shell > * {
+    width: 100% !important;
+  }
+
+  .tm-pro-shell > * + * {
+    margin-top: 14px !important;
+  }
+
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="tm-pro-shell">
   <div class="tm-pro-header" data-tour-target="pro-dashboard">
-    <div>
       <div>
         {% if show_welcome %}
           <div class="tm-pro-eyebrow">Welcome to TorqueMech</div>
