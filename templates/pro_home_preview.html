@@ -3,7 +3,10 @@
 {% block title %}TorqueMech Pro | One Connected Repair Workflow{% endblock %}
 
 {% block page_css %}
+<link rel="canonical" href="{{ request.url.scheme }}://{{ request.url.netloc }}/">
+{% if request.url.path == "/pro/home-preview" %}
 <meta name="robots" content="noindex, nofollow, noarchive">
+{% endif %}
 <style>
   :root {
     --pro-bg: #080f1d;
@@ -18,6 +21,14 @@
   }
 
   .tm-nav { display: none; }
+
+  /* The marketing homepage does not use the site-wide feedback control. */
+  .tm-footer #feedbackBtn,
+  .feedback-fab,
+  .tm-feedback-fab,
+  .tm-feedback-reminder {
+    display: none !important;
+  }
 
   /* Hide only the guided-tour container on the public homepage */
   .tm-tour-root,
@@ -393,7 +404,7 @@
     flex: 0 0 320px;
     scroll-snap-align: center;
     scroll-snap-stop: always;
-    opacity: .42;
+    opacity: .68;
     transform: scale(.92);
     transition: opacity .2s ease, transform .2s ease;
   }
@@ -850,11 +861,11 @@
 <section class="tm-pro-home">
   <header class="tm-pro-header">
     <div class="tm-pro-wrap tm-pro-header__inner">
-      <a class="tm-pro-brand" href="/pro/home-preview" aria-label="TorqueMech Pro preview home">
+      <a class="tm-pro-brand" href="/" aria-label="TorqueMech home">
         <span>Torque</span><span>Mech</span>
       </a>
 
-      <nav class="tm-pro-nav" aria-label="Preview navigation">
+      <nav class="tm-pro-nav" aria-label="Primary navigation">
         <a class="tm-pro-nav__link" href="/how-it-works">How It Works</a>
         <a class="tm-pro-btn tm-pro-btn--secondary" href="/login">Log In</a>
         <a class="tm-pro-btn tm-pro-btn--primary" href="/signup">Sign Up</a>
@@ -1059,7 +1070,7 @@
             </span>
 
             <span class="tm-pro-price-note">
-              SMS plan available at launch
+              Upgrade option coming after launch
             </span>
           </article>
         </div>

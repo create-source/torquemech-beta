@@ -7647,7 +7647,7 @@ def build_quick_find_items() -> List[Dict[str, str]]:
 def home(request: Request):
     metric_incr("page_home")
     return templates.TemplateResponse(
-        "home.html",
+        "pro_home_preview.html",
         {"request": request},
     )
 
