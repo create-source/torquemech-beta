@@ -1640,12 +1640,21 @@
 <section class="tm-pro-shell">
   <div class="tm-pro-header" data-tour-target="pro-dashboard">
     <div>
-      <div class="tm-pro-eyebrow">Internal Pro Area</div>
-      <h1 class="tm-pro-title">Command Center</h1>
-      <p class="tm-pro-subtitle">
-        See what needs attention today: active repairs, approvals, invoices, maintenance follow-ups, and customer work.
-      </p>
-    </div>
+      <div>
+        {% if show_welcome %}
+          <div class="tm-pro-eyebrow">Welcome to TorqueMech</div>
+          <h1 class="tm-pro-title">Hello, {{ first_name }} 👋</h1>
+          <p class="tm-pro-subtitle">
+            Welcome to your Command Center. Start with Shop Settings, then add your first customer or create an estimate.
+          </p>
+        {% else %}
+          <div class="tm-pro-eyebrow">Command Center</div>
+          <h1 class="tm-pro-title">Welcome back, {{ first_name }}</h1>
+          <p class="tm-pro-subtitle">
+            Here’s what needs your attention today: active repairs, approvals, invoices, maintenance follow-ups, and customer work.
+          </p>
+        {% endif %}
+      </div>
   </div>
 
   <section class="tm-quick-actions" aria-label="Quick actions" data-tour-target="pro-quick-actions">
@@ -1715,5 +1724,13 @@
     </div>
   </section>
 </section>
+
+{% if show_welcome %}
+<script>
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, "/pro/dashboard");
+  }
+</script>
+{% endif %}
 
 {% endblock %}

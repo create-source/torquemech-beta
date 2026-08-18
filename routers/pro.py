@@ -14555,7 +14555,23 @@ def pro_demo_preview(request: Request, record_slug: str, preview_slug: str):
     )
 
 @router.get("/dashboard", response_class=HTMLResponse)
-def pro_dashboard(request: Request):
+def pro_dashboard(request: Request, welcome: int = 0):
+    current_user = getattr(request.state, "current_user", None)
+
+    def user_value(field: str) -> str:
+        if not current_user:
+            return ""
+        try:
+            return str(current_user[field] or "").strip()
+        except (KeyError, IndexError, TypeError):
+            return str(getattr(current_user, field, "") or "").strip()
+
+    display_name = (
+        user_value("full_name")
+        or user_value("name")
+        or user_value("display_name")
+    )
+    first_name = display_name.split()[0] if display_name else "there"
     conn = crm_db_conn()
     try:
         shop_id = current_shop_id(conn, request)
@@ -14568,6 +14584,8 @@ def pro_dashboard(request: Request):
         {
             "request": request,
             "dashboard": dashboard,
+            "first_name": first_name,
+            "show_welcome": welcome == 1,
         },
     )
 
