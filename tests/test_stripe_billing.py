@@ -250,7 +250,19 @@ class StripeBillingTests(unittest.TestCase):
             "metadata": {"shop_id": str(metadata_shop_id if metadata_shop_id is not None else shop_id), "plan_code": "pro_solo"},
             "current_period_start": current_period_start,
             "current_period_end": current_period_end,
-            "items": {"data": [{"price": {"id": "price_pro_solo_monthly"}}]},
+            "items": {
+                "data": [
+                    {
+                        "quantity": 2,
+                        "price": {
+                            "id": "price_pro_solo_monthly",
+                            "unit_amount": 2900,
+                            "currency": "usd",
+                            "recurring": {"interval": "month", "interval_count": 1},
+                        },
+                    }
+                ]
+            },
         }
         if canceled_at is not None:
             subscription["canceled_at"] = canceled_at
@@ -282,6 +294,7 @@ class StripeBillingTests(unittest.TestCase):
                             "plan_code": "pro_solo",
                         }
                     },
+                    "status_transitions": {"paid_at": 1784707300},
                 }
             },
         }
@@ -715,6 +728,11 @@ class StripeBillingTests(unittest.TestCase):
         self.assertEqual(row["stripe_customer_id"], "cus_123")
         self.assertEqual(row["stripe_subscription_id"], "sub_123")
         self.assertEqual(row["stripe_price_id"], "price_pro_solo_monthly")
+        self.assertEqual(row["recurring_unit_amount"], 2900)
+        self.assertEqual(row["currency"], "usd")
+        self.assertEqual(row["billing_interval"], "month")
+        self.assertEqual(row["billing_interval_count"], 1)
+        self.assertEqual(row["quantity"], 2)
         self.assertEqual(row["cancel_at_period_end"], 0)
         self.assertTrue(row["current_period_ends_at"].startswith("2026-08-22T"))
 
@@ -1017,6 +1035,26 @@ class StripeBillingTests(unittest.TestCase):
         rows = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchall()
         self.assertFalse(result["processed"])
         self.assertEqual(rows, [])
+
+    def test_invoice_paid_persists_first_paid_at_without_amount_guessing(self):
+        _, shop_id = self.create_user_shop()
+        self.insert_subscription(shop_id, status="trialing", stripe_customer_id="cus_paid", stripe_subscription_id="sub_paid")
+
+        result = billing.handle_webhook_event(
+            self.conn,
+            self.invoice_event(
+                shop_id,
+                event_type="invoice.paid",
+                stripe_customer_id="cus_paid",
+                stripe_subscription_id="sub_paid",
+            ),
+        )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertTrue(result["processed"])
+        self.assertEqual(row["status"], "active")
+        self.assertTrue(str(row["first_paid_at"]).startswith("2026-07-22T"))
+        self.assertIsNone(row["recurring_unit_amount"])
 
     def test_lifecycle_past_due_unpaid_and_incomplete_expired_are_read_only(self):
         states = [

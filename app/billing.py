@@ -723,6 +723,20 @@ class StripeBillingService:
             raise BillingProviderError("Stripe Billing Portal is temporarily unavailable. Please try again.") from exc
         return stripe_result_to_dict(session)
 
+    def retrieve_subscription(self, stripe_subscription_id: str) -> dict[str, Any]:
+        subscription_id = normalize_stripe_id(stripe_subscription_id)
+        if not subscription_id:
+            raise BillingCustomerRequiredError("Stripe subscription id is required.")
+        self.config.require_portal()
+        try:
+            subscription = self._stripe().Subscription.retrieve(
+                subscription_id,
+                expand=["items.data.price"],
+            )
+        except Exception as exc:
+            raise BillingProviderError("Stripe subscription lookup is temporarily unavailable.") from exc
+        return normalize_subscription_object(subscription)
+
 
 def parse_stripe_signature_header(signature_header: str) -> tuple[str, list[str]]:
     timestamp = ""
@@ -797,6 +811,39 @@ def status_from_subscription(subscription: dict[str, Any], fallback: str = "acti
     return status or "active"
 
 
+def recurring_billing_fields_from_subscription(subscription: dict[str, Any]) -> dict[str, Any]:
+    items = subscription.get("items")
+    data = items.get("data") if isinstance(items, dict) else None
+    if not isinstance(data, list) or not data:
+        return {}
+    item = data[0] if isinstance(data[0], dict) else {}
+    price = item.get("price") if isinstance(item, dict) else None
+    if not isinstance(price, dict):
+        return {}
+    recurring = price.get("recurring") if isinstance(price.get("recurring"), dict) else {}
+    fields: dict[str, Any] = {
+        "stripe_price_id": str(price.get("id") or "").strip() or None,
+        "recurring_unit_amount": price.get("unit_amount"),
+        "currency": str(price.get("currency") or "").strip().lower() or None,
+        "billing_interval": str(recurring.get("interval") or "").strip().lower() or None,
+        "billing_interval_count": recurring.get("interval_count") or 1,
+        "quantity": item.get("quantity") or 1,
+    }
+    try:
+        fields["recurring_unit_amount"] = int(fields["recurring_unit_amount"])
+    except (TypeError, ValueError):
+        fields["recurring_unit_amount"] = None
+    try:
+        fields["billing_interval_count"] = max(1, int(fields["billing_interval_count"] or 1))
+    except (TypeError, ValueError):
+        fields["billing_interval_count"] = 1
+    try:
+        fields["quantity"] = max(1, int(fields["quantity"] or 1))
+    except (TypeError, ValueError):
+        fields["quantity"] = 1
+    return fields
+
+
 def update_subscription_for_shop(
     conn: sqlite3.Connection,
     *,
@@ -806,6 +853,12 @@ def update_subscription_for_shop(
     stripe_customer_id: str | None = None,
     stripe_subscription_id: str | None = None,
     stripe_price_id: str | None = None,
+    recurring_unit_amount: int | None = None,
+    currency: str | None = None,
+    billing_interval: str | None = None,
+    billing_interval_count: int | None = None,
+    quantity: int | None = None,
+    first_paid_at: str | None = None,
     current_period_started_at: str | None = None,
     current_period_ends_at: str | None = None,
     canceled_at: str | None = None,
@@ -829,6 +882,12 @@ def update_subscription_for_shop(
         "stripe_customer_id": stripe_customer_id or existing.get("stripe_customer_id"),
         "stripe_subscription_id": stripe_subscription_id or existing.get("stripe_subscription_id"),
         "stripe_price_id": stripe_price_id or existing.get("stripe_price_id"),
+        "recurring_unit_amount": recurring_unit_amount if recurring_unit_amount is not None else existing.get("recurring_unit_amount"),
+        "currency": currency or existing.get("currency"),
+        "billing_interval": billing_interval or existing.get("billing_interval"),
+        "billing_interval_count": billing_interval_count if billing_interval_count is not None else existing.get("billing_interval_count"),
+        "quantity": quantity if quantity is not None else existing.get("quantity"),
+        "first_paid_at": first_paid_at or existing.get("first_paid_at"),
         "updated_at": now,
     }
     if existing:
@@ -844,6 +903,12 @@ def update_subscription_for_shop(
                 stripe_customer_id = ?,
                 stripe_subscription_id = ?,
                 stripe_price_id = ?,
+                recurring_unit_amount = ?,
+                currency = ?,
+                billing_interval = ?,
+                billing_interval_count = ?,
+                quantity = ?,
+                first_paid_at = ?,
                 updated_at = ?
             WHERE shop_id = ?
             """,
@@ -857,6 +922,12 @@ def update_subscription_for_shop(
                 values["stripe_customer_id"],
                 values["stripe_subscription_id"],
                 values["stripe_price_id"],
+                values["recurring_unit_amount"],
+                values["currency"],
+                values["billing_interval"],
+                values["billing_interval_count"],
+                values["quantity"],
+                values["first_paid_at"],
                 values["updated_at"],
                 shop_id,
             ),
@@ -868,9 +939,10 @@ def update_subscription_for_shop(
               shop_id, plan_code, status, trial_started_at, trial_ends_at,
               current_period_started_at, current_period_ends_at, cancel_at_period_end, canceled_at,
               access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
-              stripe_price_id, created_at, updated_at
+              stripe_price_id, recurring_unit_amount, currency, billing_interval,
+              billing_interval_count, quantity, first_paid_at, created_at, updated_at
             )
-            VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 shop_id,
@@ -883,6 +955,12 @@ def update_subscription_for_shop(
                 values["stripe_customer_id"],
                 values["stripe_subscription_id"],
                 values["stripe_price_id"],
+                values["recurring_unit_amount"],
+                values["currency"],
+                values["billing_interval"],
+                values["billing_interval_count"],
+                values["quantity"],
+                values["first_paid_at"],
                 now,
                 values["updated_at"],
             ),
@@ -961,6 +1039,7 @@ def sync_subscription_object(
     if allow_subscription_replacement and status_from_subscription(subscription) not in TERMINAL_SUBSCRIPTION_STATUSES:
         canceled_at_present = True
         canceled_at = None
+    billing_fields = recurring_billing_fields_from_subscription(subscription)
     return update_subscription_for_shop(
         conn,
         shop_id=shop_id,
@@ -968,7 +1047,12 @@ def sync_subscription_object(
         cancel_at_period_end=False if deleted else subscription.get("cancel_at_period_end"),
         stripe_customer_id=customer_id or None,
         stripe_subscription_id=subscription_id or None,
-        stripe_price_id=price_id_from_subscription(subscription),
+        stripe_price_id=billing_fields.get("stripe_price_id") or price_id_from_subscription(subscription),
+        recurring_unit_amount=billing_fields.get("recurring_unit_amount"),
+        currency=billing_fields.get("currency"),
+        billing_interval=billing_fields.get("billing_interval"),
+        billing_interval_count=billing_fields.get("billing_interval_count"),
+        quantity=billing_fields.get("quantity"),
         current_period_started_at=stripe_timestamp(subscription.get("current_period_start")),
         current_period_ends_at=stripe_timestamp(subscription.get("current_period_end")),
         canceled_at=canceled_at,
@@ -997,12 +1081,15 @@ def sync_invoice_event(conn: sqlite3.Connection, invoice: dict[str, Any], *, pai
     if not shop_id:
         return None
     status = "active" if paid else "past_due"
+    first_paid_at = stripe_timestamp(invoice.get("status_transitions", {}).get("paid_at")) if isinstance(invoice.get("status_transitions"), dict) else None
+    first_paid_at = first_paid_at or stripe_timestamp(invoice.get("created")) if paid else None
     return update_subscription_for_shop(
         conn,
         shop_id=shop_id,
         status=status,
         stripe_customer_id=str(invoice.get("customer") or "").strip() or None,
         stripe_subscription_id=str(invoice.get("subscription") or "").strip() or None,
+        first_paid_at=first_paid_at,
     )
 
 

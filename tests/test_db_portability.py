@@ -468,6 +468,70 @@ class DatabasePortabilityTests(unittest.TestCase):
         self.assertIn("DATABASE_URL is set", str(raised.exception))
         self.assertFalse(sqlite_path.exists())
 
+    def test_sqlite_owner_analytics_billing_migration_adds_columns_idempotently(self):
+        TEST_TMP_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_path = TEST_TMP_DIR / "test_owner_analytics_billing_migration.db"
+        sqlite_path.unlink(missing_ok=True)
+        self.addCleanup(lambda: sqlite_path.unlink(missing_ok=True))
+        conn = sqlite3.connect(sqlite_path)
+        try:
+            conn.executescript(
+                """
+                CREATE TABLE shop_profile (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  owner_user_id INTEGER,
+                  shop_name TEXT,
+                  updated_at TEXT NOT NULL
+                );
+                CREATE TABLE shop_subscriptions (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  shop_id INTEGER NOT NULL UNIQUE,
+                  status TEXT NOT NULL,
+                  stripe_subscription_id TEXT,
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL
+                );
+                INSERT INTO shop_profile (owner_user_id, shop_name, updated_at)
+                VALUES (1, 'Alpha', '2026-08-21T00:00:00+00:00');
+                INSERT INTO shop_subscriptions (shop_id, status, stripe_subscription_id, created_at, updated_at)
+                VALUES (1, 'active', 'sub_123', '2026-08-21T00:00:00+00:00', '2026-08-21T00:00:00+00:00');
+                """
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        with patch.dict(os.environ, {}, clear=True), patch.object(
+            db_migration.db,
+            "active_app_db_path",
+            return_value=str(sqlite_path),
+        ):
+            db_migration.add_owner_analytics_billing_fields_sqlite(Namespace())
+            db_migration.add_owner_analytics_billing_fields_sqlite(Namespace())
+
+        conn = sqlite3.connect(sqlite_path)
+        conn.row_factory = sqlite3.Row
+        try:
+            sub_columns = {row["name"] for row in conn.execute("PRAGMA table_info(shop_subscriptions)").fetchall()}
+            shop_columns = {row["name"]: row for row in conn.execute("PRAGMA table_info(shop_profile)").fetchall()}
+            row = conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = 1").fetchone()
+        finally:
+            conn.close()
+
+        self.assertTrue(
+            {
+                "recurring_unit_amount",
+                "currency",
+                "billing_interval",
+                "billing_interval_count",
+                "quantity",
+                "first_paid_at",
+            }.issubset(sub_columns)
+        )
+        self.assertIn("is_test_account", shop_columns)
+        self.assertEqual(str(shop_columns["is_test_account"]["dflt_value"]), "0")
+        self.assertEqual(row["stripe_subscription_id"], "sub_123")
+
     def test_postgres_cancel_at_period_end_migration_uses_boolean_default_false(self):
         statements = []
 

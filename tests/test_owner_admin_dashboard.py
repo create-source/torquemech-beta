@@ -13,6 +13,13 @@ import main
 from routers import pro as pro_module
 
 
+def csrf_from(html: str) -> str:
+    match = re.search(r'name="csrf_token" value="([^"]+)"', html)
+    if not match:
+        raise AssertionError("csrf token not found")
+    return match.group(1)
+
+
 class NonClosingConnection(sqlite3.Connection):
     def close(self):
         pass
@@ -75,6 +82,12 @@ class OwnerAdminDashboardTests(unittest.TestCase):
             "stripe_customer_id": None,
             "stripe_subscription_id": None,
             "stripe_price_id": None,
+            "recurring_unit_amount": None,
+            "currency": None,
+            "billing_interval": None,
+            "billing_interval_count": None,
+            "quantity": None,
+            "first_paid_at": None,
         }
         defaults.update(fields)
         self.conn.execute(
@@ -83,9 +96,10 @@ class OwnerAdminDashboardTests(unittest.TestCase):
               shop_id, plan_code, status, trial_started_at, trial_ends_at,
               current_period_started_at, current_period_ends_at, cancel_at_period_end, canceled_at,
               access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
-              stripe_price_id, created_at, updated_at
+              stripe_price_id, recurring_unit_amount, currency, billing_interval,
+              billing_interval_count, quantity, first_paid_at, created_at, updated_at
             )
-            VALUES (?, 'pro_solo', ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
+            VALUES (?, 'pro_solo', ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 shop_id,
@@ -99,6 +113,12 @@ class OwnerAdminDashboardTests(unittest.TestCase):
                 defaults["stripe_customer_id"],
                 defaults["stripe_subscription_id"],
                 defaults["stripe_price_id"],
+                defaults["recurring_unit_amount"],
+                defaults["currency"],
+                defaults["billing_interval"],
+                defaults["billing_interval_count"],
+                defaults["quantity"],
+                defaults["first_paid_at"],
                 now,
                 now,
             ),
@@ -138,6 +158,12 @@ class OwnerAdminDashboardTests(unittest.TestCase):
             trial_ends_at="2026-07-24T12:00:00+00:00",
             current_period_ends_at="2026-09-10T12:00:00+00:00",
             stripe_price_id="price_paid",
+            recurring_unit_amount=2900,
+            currency="usd",
+            billing_interval="month",
+            billing_interval_count=1,
+            quantity=1,
+            first_paid_at="2026-07-24T12:00:00+00:00",
         )
         self.insert_subscription(
             canceled_shop,
@@ -268,14 +294,56 @@ class OwnerAdminDashboardTests(unittest.TestCase):
 
     def test_trial_to_paid_conversion_calculation(self):
         accounts = [
-            {"status_key": "active", "trial_started_at": "2026-07-01T00:00:00+00:00", "monthly_amount": 25.0},
-            {"status_key": "active", "trial_started_at": "2026-07-02T00:00:00+00:00", "monthly_amount": 25.0},
-            {"status_key": "expired", "trial_started_at": "2026-07-03T00:00:00+00:00", "monthly_amount": None},
-            {"status_key": "trial", "trial_started_at": "2026-07-04T00:00:00+00:00", "monthly_amount": None},
+            {"status_key": "active", "trial_started_at": "2026-07-01T00:00:00+00:00", "trial_ends_at": "2026-07-15T00:00:00+00:00", "first_paid_at": "2026-07-15T01:00:00+00:00", "monthly_amount": 25.0},
+            {"status_key": "active", "trial_started_at": "2026-07-02T00:00:00+00:00", "trial_ends_at": "2026-07-16T00:00:00+00:00", "first_paid_at": "2026-07-16T01:00:00+00:00", "monthly_amount": 25.0},
+            {"status_key": "expired", "trial_started_at": "2026-07-03T00:00:00+00:00", "trial_ends_at": "2026-07-17T00:00:00+00:00", "monthly_amount": None},
+            {"status_key": "trial", "trial_started_at": "2026-08-14T00:00:00+00:00", "trial_ends_at": "2026-08-28T00:00:00+00:00", "monthly_amount": None},
         ]
         metrics = pro_module.owner_admin_metrics(accounts, [], now=datetime(2026, 8, 21, 12, 0, tzinfo=timezone.utc))
 
-        self.assertEqual(metrics["trial_to_paid_conversion"], 50.0)
+        self.assertAlmostEqual(metrics["trial_to_paid_conversion"], 66.66666666666666)
+        self.assertEqual(metrics["eligible_completed_trials"], 3)
+        self.assertEqual(metrics["paid_conversions"], 2)
+
+    def test_active_trials_excluded_from_conversion_denominator(self):
+        metrics = pro_module.owner_admin_metrics(
+            [
+                {"status_key": "trial", "trial_ends_at": "2026-08-25T00:00:00+00:00", "monthly_amount": None},
+                {"status_key": "expired", "trial_ends_at": "2026-07-01T00:00:00+00:00", "monthly_amount": None},
+            ],
+            [],
+            now=datetime(2026, 8, 21, 12, 0, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(metrics["eligible_completed_trials"], 1)
+        self.assertEqual(metrics["paid_conversions"], 0)
+        self.assertEqual(metrics["trial_to_paid_conversion"], 0.0)
+
+    def test_quantity_and_yearly_mrr_normalization_and_exclusions(self):
+        accounts = [
+            {"status_key": "active", "monthly_amount": 58.0, "is_test_account": False},
+            {"status_key": "active", "monthly_amount": 100.0, "is_test_account": False},
+            {"status_key": "active", "monthly_amount": 999.0, "is_test_account": True},
+            {"status_key": "canceled", "monthly_amount": 25.0, "is_test_account": False},
+            {"status_key": "payment_issue", "monthly_amount": 25.0, "is_test_account": False},
+        ]
+        metrics = pro_module.owner_admin_metrics(accounts, [], now=datetime(2026, 8, 21, 12, 0, tzinfo=timezone.utc))
+
+        self.assertEqual(
+            pro_module.subscription_monthly_amount(
+                {"recurring_unit_amount": 2900, "billing_interval": "month", "billing_interval_count": 1, "quantity": 2}
+            ),
+            58.0,
+        )
+        self.assertEqual(
+            pro_module.subscription_monthly_amount(
+                {"recurring_unit_amount": 120000, "billing_interval": "year", "billing_interval_count": 1, "quantity": 1}
+            ),
+            100.0,
+        )
+        self.assertEqual(metrics["mrr"], 158.0)
+        self.assertEqual(metrics["active_paid"], 2)
+        self.assertEqual(metrics["test_accounts"], 1)
 
     def test_status_filtering_and_existing_shop_isolation_remain_intact(self):
         seeded = self.seed_dashboard_accounts()
@@ -292,6 +360,143 @@ class OwnerAdminDashboardTests(unittest.TestCase):
         self.assertIn("Admin Shop", shop_response.text)
         self.assertNotIn("Paid Shop", shop_response.text)
         self.assertGreater(seeded["paid"][1], 0)
+
+    def test_mark_unmark_test_account_requires_admin_and_csrf(self):
+        normal_user, shop_id = self.create_user_shop("normal@example.com", "Normal Shop")
+        admin_user, _ = self.create_user_shop("admin@example.com", "Admin Shop")
+        normal_client = self.authenticated_client(normal_user)
+        admin_client = self.authenticated_client(admin_user)
+
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+            denied = normal_client.post(
+                f"/pro/admin/accounts/{shop_id}/test-account",
+                data={"csrf_token": "anything", "is_test_account": "1"},
+                follow_redirects=False,
+            )
+            missing_csrf = admin_client.post(
+                f"/pro/admin/accounts/{shop_id}/test-account",
+                data={"is_test_account": "1"},
+                follow_redirects=False,
+            )
+            page = admin_client.get("/pro/admin")
+            marked = admin_client.post(
+                f"/pro/admin/accounts/{shop_id}/test-account",
+                data={"csrf_token": csrf_from(page.text), "is_test_account": "1"},
+                follow_redirects=False,
+            )
+            unmarked_page = admin_client.get("/pro/admin?account_type=all")
+            unmarked = admin_client.post(
+                f"/pro/admin/accounts/{shop_id}/test-account",
+                data={"csrf_token": csrf_from(unmarked_page.text), "is_test_account": "0", "account_filter": "all"},
+                follow_redirects=False,
+            )
+
+        row = self.conn.execute("SELECT is_test_account FROM shop_profile WHERE id = ?", (shop_id,)).fetchone()
+        self.assertIn(denied.status_code, {303, 403})
+        self.assertEqual(missing_csrf.status_code, 403)
+        self.assertEqual(marked.status_code, 303)
+        self.assertIn("notice=Account+marked+as+test", marked.headers["location"])
+        self.assertEqual(unmarked.status_code, 303)
+        self.assertEqual(row["is_test_account"], 0)
+
+    def test_test_accounts_are_labeled_and_filtered(self):
+        self.seed_dashboard_accounts()
+        test_user, test_shop = self.create_user_shop("test@example.com", "QA Shop")
+        self.insert_subscription(test_shop, "active", recurring_unit_amount=2900, billing_interval="month", billing_interval_count=1, quantity=1)
+        self.conn.execute("UPDATE shop_profile SET is_test_account = 1 WHERE id = ?", (test_shop,))
+        self.conn.commit()
+        admin_user, _ = self.create_user_shop("admin@example.com", "Admin Shop")
+
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+            client = self.authenticated_client(admin_user)
+            real_page = client.get("/pro/admin")
+            test_page = client.get("/pro/admin?account_type=test")
+            all_page = client.get("/pro/admin?account_type=all")
+
+        self.assertEqual(real_page.status_code, 200)
+        self.assertNotIn("QA Shop", real_page.text)
+        self.assertIn("QA Shop", test_page.text)
+        self.assertIn("Test account", test_page.text)
+        self.assertIn("QA Shop", all_page.text)
+        self.assertGreater(test_user, 0)
+
+    def test_stripe_sync_requires_admin_csrf_and_handles_failure(self):
+        admin_user, shop_id = self.create_user_shop("admin@example.com", "Admin Shop")
+        self.insert_subscription(
+            shop_id,
+            "active",
+            stripe_customer_id="cus_sync",
+            stripe_subscription_id="sub_sync",
+        )
+
+        class FailingSyncService:
+            def retrieve_subscription(self, stripe_subscription_id):
+                raise pro_module.BillingProviderError("sk_test_should_not_leak")
+
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+            client = self.authenticated_client(admin_user)
+            no_csrf = client.post("/pro/admin/sync-stripe-data")
+            page = client.get("/pro/admin")
+            with patch.object(pro_module, "StripeBillingService", return_value=FailingSyncService()):
+                response = client.post(
+                    "/pro/admin/sync-stripe-data",
+                    data={"csrf_token": csrf_from(page.text)},
+                    follow_redirects=False,
+                )
+
+        self.assertEqual(no_csrf.status_code, 403)
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("failed", response.headers["location"])
+        self.assertNotIn("sk_test", response.headers["location"])
+
+    def test_stripe_sync_updates_matching_subscription_billing_fields(self):
+        admin_user, shop_id = self.create_user_shop("admin@example.com", "Admin Shop")
+        self.insert_subscription(
+            shop_id,
+            "active",
+            stripe_customer_id="cus_sync",
+            stripe_subscription_id="sub_sync",
+        )
+
+        class SyncService:
+            def retrieve_subscription(self, stripe_subscription_id):
+                return {
+                    "id": stripe_subscription_id,
+                    "customer": "cus_sync",
+                    "status": "active",
+                    "current_period_start": 1784707200,
+                    "current_period_end": 1787385600,
+                    "items": {
+                        "data": [
+                            {
+                                "quantity": 3,
+                                "price": {
+                                    "id": "price_synced",
+                                    "unit_amount": 3500,
+                                    "currency": "usd",
+                                    "recurring": {"interval": "month", "interval_count": 1},
+                                },
+                            }
+                        ]
+                    },
+                }
+
+        with patch.dict(os.environ, {"TORQUEMECH_ADMIN_EMAILS": "admin@example.com"}, clear=False):
+            client = self.authenticated_client(admin_user)
+            page = client.get("/pro/admin")
+            with patch.object(pro_module, "StripeBillingService", return_value=SyncService()):
+                response = client.post(
+                    "/pro/admin/sync-stripe-data",
+                    data={"csrf_token": csrf_from(page.text)},
+                    follow_redirects=False,
+                )
+
+        row = self.conn.execute("SELECT * FROM shop_subscriptions WHERE shop_id = ?", (shop_id,)).fetchone()
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(row["stripe_price_id"], "price_synced")
+        self.assertEqual(row["recurring_unit_amount"], 3500)
+        self.assertEqual(row["billing_interval"], "month")
+        self.assertEqual(row["quantity"], 3)
 
     def test_dashboard_sql_uses_sqlite_postgres_compatible_patterns(self):
         source = Path(pro_module.__file__).resolve()
