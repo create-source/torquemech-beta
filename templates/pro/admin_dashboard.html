@@ -1,0 +1,365 @@
+{% extends "layout.html" %}
+
+{% block title %}TorqueMech Owner Analytics{% endblock %}
+
+{% block page_css %}
+<style>
+  body {
+    background: #08111e;
+    color: #f8fafc;
+  }
+
+  .tm-admin-shell {
+    display: grid;
+    gap: 18px;
+    padding: 22px 0 34px;
+  }
+
+  .tm-admin-header,
+  .tm-admin-panel,
+  .tm-admin-note {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 12px;
+    background: linear-gradient(145deg, #101c2d 0%, #0b1625 100%);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  }
+
+  .tm-admin-header {
+    padding: 20px;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(249, 115, 22, 0.22), transparent 32%),
+      linear-gradient(145deg, #111d2f 0%, #0c1727 62%, #1a1518 100%);
+  }
+
+  .tm-admin-eyebrow {
+    margin: 0 0 6px;
+    color: #fb923c;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tm-admin-header h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.02;
+  }
+
+  .tm-admin-header p {
+    max-width: 820px;
+    margin: 10px 0 0;
+    color: #b9c8dc;
+    line-height: 1.48;
+  }
+
+  .tm-admin-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tm-admin-card {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    min-height: 120px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 10px;
+    background: linear-gradient(145deg, #182536 0%, #111b29 100%);
+    padding: 14px;
+  }
+
+  .tm-admin-card span {
+    color: #aebdd0;
+    font-size: 0.82rem;
+    font-weight: 850;
+  }
+
+  .tm-admin-card strong {
+    color: #fb923c;
+    font-size: 1.75rem;
+    line-height: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-admin-card small {
+    color: #b9c8dc;
+    line-height: 1.35;
+  }
+
+  .tm-admin-panel {
+    overflow: hidden;
+  }
+
+  .tm-admin-panel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .tm-admin-panel h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.12rem;
+  }
+
+  .tm-admin-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tm-admin-filter {
+    min-height: 34px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 999px;
+    color: #f8fafc;
+    background: #111c2d;
+    padding: 7px 11px;
+    font-size: 0.84rem;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .tm-admin-filter[aria-current="page"] {
+    border-color: #fb923c;
+    background: #f97316;
+    color: #111827;
+  }
+
+  .tm-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .tm-admin-table th,
+  .tm-admin-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .tm-admin-table th {
+    color: #aebdd0;
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .tm-admin-table td {
+    color: #f8fafc;
+    font-size: 0.9rem;
+  }
+
+  .tm-admin-muted {
+    color: #aebdd0;
+  }
+
+  .tm-admin-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .tm-admin-status--success {
+    border-color: rgba(34, 197, 94, 0.38);
+    color: #bbf7d0;
+    background: rgba(34, 197, 94, 0.12);
+  }
+
+  .tm-admin-status--info {
+    border-color: rgba(96, 165, 250, 0.38);
+    color: #bfdbfe;
+    background: rgba(59, 130, 246, 0.12);
+  }
+
+  .tm-admin-status--warning {
+    border-color: rgba(251, 191, 36, 0.42);
+    color: #fde68a;
+    background: rgba(251, 191, 36, 0.12);
+  }
+
+  .tm-admin-status--danger {
+    border-color: rgba(248, 113, 113, 0.42);
+    color: #fecaca;
+    background: rgba(248, 113, 113, 0.12);
+  }
+
+  .tm-admin-note {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    color: #b9c8dc;
+  }
+
+  .tm-admin-note h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  .tm-admin-note p {
+    margin: 0;
+  }
+
+  @media (max-width: 960px) {
+    .tm-admin-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 720px) {
+    .tm-admin-panel-head {
+      display: grid;
+    }
+
+    .tm-admin-table,
+    .tm-admin-table tbody,
+    .tm-admin-table tr,
+    .tm-admin-table td {
+      display: block;
+    }
+
+    .tm-admin-table thead {
+      display: none;
+    }
+
+    .tm-admin-table tr {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .tm-admin-table td {
+      display: grid;
+      grid-template-columns: 116px minmax(0, 1fr);
+      gap: 10px;
+      padding: 6px 0;
+      border: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .tm-admin-table td::before {
+      content: attr(data-label);
+      color: #aebdd0;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+  }
+
+  @media (max-width: 540px) {
+    .tm-admin-metrics {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-admin-header,
+    .tm-admin-panel-head,
+    .tm-admin-card,
+    .tm-admin-note {
+      padding: 14px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-admin-shell" aria-labelledby="tm-admin-title">
+  <header class="tm-admin-header">
+    <p class="tm-admin-eyebrow">Owner Analytics</p>
+    <h1 id="tm-admin-title">TorqueMech Platform Dashboard</h1>
+    <p>Internal account, subscription, and revenue visibility from the application database and Stripe webhook state.</p>
+  </header>
+
+  <section class="tm-admin-metrics" aria-label="Summary metrics">
+    <article class="tm-admin-card">
+      <span>Total signups</span>
+      <strong>{{ dashboard.metrics.total_signups }}</strong>
+      <small>{{ dashboard.metrics.new_signups_month }} new this calendar month</small>
+    </article>
+    <article class="tm-admin-card">
+      <span>Active trials</span>
+      <strong>{{ dashboard.metrics.active_trials }}</strong>
+      <small>{{ dashboard.metrics.expired_trials }} expired trial{% if dashboard.metrics.expired_trials != 1 %}s{% endif %}</small>
+    </article>
+    <article class="tm-admin-card">
+      <span>Active paid subscribers</span>
+      <strong>{{ dashboard.metrics.active_paid }}</strong>
+      <small>{{ dashboard.metrics.canceled }} canceled or unsubscribed</small>
+    </article>
+    <article class="tm-admin-card">
+      <span>Monthly recurring revenue</span>
+      <strong>{{ dashboard.metrics.mrr_display }}</strong>
+      <small>Normalized from stored recurring price data when available</small>
+    </article>
+    <article class="tm-admin-card">
+      <span>Trial-to-paid conversion</span>
+      <strong>{{ dashboard.metrics.trial_to_paid_conversion_display }}</strong>
+      <small>Paid conversions divided by accounts with recorded trial history</small>
+    </article>
+  </section>
+
+  {% if dashboard.metrics.missing_data %}
+  <section class="tm-admin-note" aria-label="Missing data">
+    <h2>Data limits</h2>
+    {% for item in dashboard.metrics.missing_data %}
+    <p>{{ item }}</p>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section class="tm-admin-panel" aria-label="Accounts">
+    <div class="tm-admin-panel-head">
+      <h2>Accounts</h2>
+      <nav class="tm-admin-filters" aria-label="Status filters">
+        {% for key, label in dashboard.filters.items() %}
+        <a class="tm-admin-filter" href="/pro/admin?status={{ key }}" {% if dashboard.selected_filter == key %}aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+
+    <table class="tm-admin-table">
+      <thead>
+        <tr>
+          <th>Shop</th>
+          <th>Owner Email</th>
+          <th>Signup</th>
+          <th>Status</th>
+          <th>Plan</th>
+          <th>Trial End</th>
+          <th>Renewal / Cancellation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for account in dashboard.accounts %}
+        <tr>
+          <td data-label="Shop">{{ account.shop_name or "Not available" }}</td>
+          <td data-label="Owner Email">{{ account.display_email or "Not available" }}</td>
+          <td data-label="Signup">{{ format_admin_date(account.signup_date) }}</td>
+          <td data-label="Status"><span class="tm-admin-status tm-admin-status--{{ account.status_tone }}">{{ account.status_label }}</span></td>
+          <td data-label="Plan">{{ account.plan_label }}</td>
+          <td data-label="Trial End">{{ format_admin_date(account.trial_ends_at) }}</td>
+          <td data-label="Renewal / Cancellation">{{ format_admin_date(account.renewal_or_cancellation_date) }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="tm-admin-muted">No accounts match this filter.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</section>
+{% endblock %}
