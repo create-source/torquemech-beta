@@ -14999,7 +14999,7 @@ async def pro_owner_admin_test_account_update(request: Request, shop_id: int):
             )
         conn.execute(
             "UPDATE shop_profile SET is_test_account = ?, updated_at = ? WHERE id = ?",
-            (mark, utc_now_iso(), shop_id),
+            (1 if mark else 0, utc_now_iso(), shop_id),
         )
         conn.commit()
     finally:

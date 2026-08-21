@@ -406,8 +406,8 @@ class OwnerAdminDashboardTests(unittest.TestCase):
         self.assertEqual(marked_row["is_test_account"], 1)
         self.assertEqual(unmarked.status_code, 303)
         self.assertEqual(row["is_test_account"], 0)
-        self.assertEqual([params[0] for params in self.conn.test_account_update_params], [True, False])
-        self.assertTrue(all(type(params[0]) is bool for params in self.conn.test_account_update_params))
+        self.assertEqual([params[0] for params in self.conn.test_account_update_params], [1, 0])
+        self.assertTrue(all(type(params[0]) is int for params in self.conn.test_account_update_params))
 
     def test_test_accounts_are_labeled_and_filtered(self):
         self.seed_dashboard_accounts()
