@@ -63,6 +63,7 @@ from app.billing import (
     handle_webhook_event,
     remaining_trial_days,
     resolve_subscription_access,
+    sync_subscription_object,
     verify_webhook_payload,
 )
 from db import connect_app_db, using_postgres
@@ -240,6 +241,7 @@ SUBSCRIPTION_WRITE_GUARD_ALLOWED_PATHS = {
     "/pro/billing/webhook",
     "/pro/estimate-conversion",
 }
+SUBSCRIPTION_WRITE_GUARD_ALLOWED_PREFIXES = ("/pro/admin",)
 SUBSCRIPTION_WRITE_GUARD_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
@@ -253,6 +255,7 @@ class SubscriptionWriteGuardRoute(APIRoute):
                 request.method.upper() in SUBSCRIPTION_WRITE_GUARD_METHODS
                 and path.startswith("/pro")
                 and path not in SUBSCRIPTION_WRITE_GUARD_ALLOWED_PATHS
+                and not any(path.startswith(prefix) for prefix in SUBSCRIPTION_WRITE_GUARD_ALLOWED_PREFIXES)
                 and subscription_write_enforcement_enabled()
                 and current_user_id(request) is not None
             ):
@@ -2914,6 +2917,7 @@ SHOP_PROFILE_COLUMNS = (
     "appointment_cancellation_template",
     "appointment_declined_template",
     "appointment_rescheduled_template",
+    "is_test_account",
     "updated_at",
 )
 
@@ -2951,6 +2955,7 @@ def create_shop_profile_table(conn: sqlite3.Connection, table_name: str = "shop_
           appointment_cancellation_template TEXT,
           appointment_declined_template TEXT,
           appointment_rescheduled_template TEXT,
+          is_test_account INTEGER NOT NULL DEFAULT 0,
           updated_at TEXT NOT NULL
         )
         """
@@ -3012,6 +3017,7 @@ def ensure_shop_profile_schema(conn: sqlite3.Connection) -> None:
         "appointment_cancellation_template": "appointment_cancellation_template TEXT",
         "appointment_declined_template": "appointment_declined_template TEXT",
         "appointment_rescheduled_template": "appointment_rescheduled_template TEXT",
+        "is_test_account": "is_test_account INTEGER NOT NULL DEFAULT 0",
         "updated_at": "updated_at TEXT",
     }.items():
         if column_name not in columns:
@@ -3259,6 +3265,12 @@ def create_shop_subscription_table(conn: sqlite3.Connection, table_name: str = "
           stripe_customer_id TEXT,
           stripe_subscription_id TEXT,
           stripe_price_id TEXT,
+          recurring_unit_amount INTEGER,
+          currency TEXT,
+          billing_interval TEXT,
+          billing_interval_count INTEGER,
+          quantity INTEGER,
+          first_paid_at TEXT,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           FOREIGN KEY (shop_id) REFERENCES shop_profile(id)
@@ -3269,6 +3281,17 @@ def create_shop_subscription_table(conn: sqlite3.Connection, table_name: str = "
 
 def ensure_shop_subscription_schema(conn: sqlite3.Connection) -> None:
     create_shop_subscription_table(conn)
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(shop_subscriptions)").fetchall()}
+    for column_name, column_sql in {
+        "recurring_unit_amount": "recurring_unit_amount INTEGER",
+        "currency": "currency TEXT",
+        "billing_interval": "billing_interval TEXT",
+        "billing_interval_count": "billing_interval_count INTEGER",
+        "quantity": "quantity INTEGER",
+        "first_paid_at": "first_paid_at TEXT",
+    }.items():
+        if column_name not in columns:
+            conn.execute(f"ALTER TABLE shop_subscriptions ADD COLUMN {column_sql}")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_subscriptions_shop_id ON shop_subscriptions (shop_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_shop_subscriptions_status ON shop_subscriptions (status)")
     conn.commit()
@@ -3297,6 +3320,11 @@ ADMIN_STATUS_FILTERS = {
     "canceled": "Canceled",
     "expired": "Expired",
 }
+ADMIN_ACCOUNT_FILTERS = {
+    "real": "Real Accounts",
+    "test": "Test Accounts",
+    "all": "All Accounts",
+}
 
 
 def admin_allowlisted_emails() -> set[str]:
@@ -3320,6 +3348,10 @@ def require_admin_user(request: Request) -> dict[str, Any] | sqlite3.Row:
     if not user_is_admin(user):
         raise HTTPException(status_code=403, detail="Admin access is not available.")
     return user
+
+
+def bool_from_admin_value(value: Any) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def subscription_status_bucket(subscription: dict[str, Any], *, now: datetime | None = None) -> dict[str, str]:
@@ -3360,7 +3392,7 @@ def subscription_monthly_amount(subscription: dict[str, Any]) -> float | None:
     if monthly_amount is not None:
         return round(monthly_amount, 2)
 
-    unit_amount = numeric_value("stripe_price_unit_amount", "stripe_unit_amount", "unit_amount")
+    unit_amount = numeric_value("recurring_unit_amount", "stripe_price_unit_amount", "stripe_unit_amount", "unit_amount")
     if unit_amount is None:
         amount = numeric_value("stripe_price_amount", "price_amount", "amount")
         if amount is not None:
@@ -3370,6 +3402,7 @@ def subscription_monthly_amount(subscription: dict[str, Any]) -> float | None:
     currency_amount = unit_amount / 100.0
     interval = str(
         subscription.get("stripe_price_recurring_interval")
+        or subscription.get("billing_interval")
         or subscription.get("recurring_interval")
         or subscription.get("interval")
         or "month"
@@ -3377,6 +3410,7 @@ def subscription_monthly_amount(subscription: dict[str, Any]) -> float | None:
     try:
         interval_count = int(
             subscription.get("stripe_price_recurring_interval_count")
+            or subscription.get("billing_interval_count")
             or subscription.get("recurring_interval_count")
             or subscription.get("interval_count")
             or 1
@@ -3384,6 +3418,11 @@ def subscription_monthly_amount(subscription: dict[str, Any]) -> float | None:
     except (TypeError, ValueError):
         interval_count = 1
     interval_count = max(1, interval_count)
+    try:
+        quantity = max(1, int(subscription.get("quantity") or 1))
+    except (TypeError, ValueError):
+        quantity = 1
+    currency_amount = currency_amount * quantity
     if interval == "month":
         return round(currency_amount / interval_count, 2)
     if interval == "year":
@@ -3402,6 +3441,7 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
           sp.shop_name AS shop_name,
           sp.shop_email AS shop_email,
           sp.email AS legacy_shop_email,
+          sp.is_test_account AS is_test_account,
           sp.updated_at AS shop_updated_at,
           u.id AS user_id,
           u.email AS owner_email,
@@ -3418,6 +3458,12 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
           ss.stripe_customer_id AS stripe_customer_id,
           ss.stripe_subscription_id AS stripe_subscription_id,
           ss.stripe_price_id AS stripe_price_id,
+          ss.recurring_unit_amount AS recurring_unit_amount,
+          ss.currency AS currency,
+          ss.billing_interval AS billing_interval,
+          ss.billing_interval_count AS billing_interval_count,
+          ss.quantity AS quantity,
+          ss.first_paid_at AS first_paid_at,
           ss.created_at AS subscription_created_at,
           ss.updated_at AS subscription_updated_at
         FROM shop_profile sp
@@ -3442,6 +3488,12 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
             "stripe_customer_id": account.get("stripe_customer_id"),
             "stripe_subscription_id": account.get("stripe_subscription_id"),
             "stripe_price_id": account.get("stripe_price_id"),
+            "recurring_unit_amount": account.get("recurring_unit_amount"),
+            "currency": account.get("currency"),
+            "billing_interval": account.get("billing_interval"),
+            "billing_interval_count": account.get("billing_interval_count"),
+            "quantity": account.get("quantity"),
+            "first_paid_at": account.get("first_paid_at"),
         }
         bucket = subscription_status_bucket(subscription, now=now) if account.get("subscription_id") else {
             "key": "unknown",
@@ -3462,6 +3514,7 @@ def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None =
             account.get("canceled_at") or account.get("current_period_ends_at")
         )
         account["monthly_amount"] = subscription_monthly_amount(subscription)
+        account["is_test_account"] = bool_from_admin_value(account.get("is_test_account"))
         accounts.append(account)
     return accounts
 
@@ -3483,40 +3536,58 @@ def format_admin_percent(value: float | None) -> str:
     return f"{value:.1f}%"
 
 
+def account_first_paid_at(account: dict[str, Any]) -> datetime | None:
+    first_paid = parse_utc_datetime(account.get("first_paid_at"))
+    if first_paid:
+        return first_paid
+    if account.get("status_key") != "active":
+        return None
+    period_start = parse_utc_datetime(account.get("current_period_started_at"))
+    trial_end = parse_utc_datetime(account.get("trial_ends_at"))
+    if period_start and (not trial_end or period_start >= trial_end):
+        return period_start
+    return None
+
+
 def owner_admin_metrics(accounts: list[dict[str, Any]], users: list[dict[str, Any]], *, now: datetime | None = None) -> dict[str, Any]:
     current = (now or utc_now()).astimezone(timezone.utc)
     month_start = current.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    active_trials = [account for account in accounts if account["status_key"] == "trial"]
-    active_paid = [account for account in accounts if account["status_key"] == "active"]
-    canceled = [account for account in accounts if account["status_key"] == "canceled"]
-    expired = [account for account in accounts if account["status_key"] == "expired"]
+    real_accounts = [account for account in accounts if not account.get("is_test_account")]
+    active_trials = [account for account in real_accounts if account["status_key"] == "trial"]
+    active_paid = [account for account in real_accounts if account["status_key"] == "active"]
+    canceled = [account for account in real_accounts if account["status_key"] == "canceled"]
+    expired = [account for account in real_accounts if account["status_key"] == "expired"]
     known_amounts = [account["monthly_amount"] for account in active_paid if account.get("monthly_amount") is not None]
     mrr = round(sum(float(amount) for amount in known_amounts), 2) if len(known_amounts) == len(active_paid) else None
     trial_population = [
-        account for account in accounts
-        if account.get("trial_started_at") or account["status_key"] in {"trial", "expired"}
+        account for account in real_accounts
+        if parse_utc_datetime(account.get("trial_ends_at")) and parse_utc_datetime(account.get("trial_ends_at")) <= current
     ]
     converted_trials = [
         account for account in trial_population
-        if account["status_key"] == "active"
+        if account_first_paid_at(account) is not None
     ]
     conversion = (len(converted_trials) / len(trial_population) * 100.0) if trial_population else None
     new_signups = [
-        user for user in users
-        if (parse_utc_datetime(user.get("created_at")) or datetime.min.replace(tzinfo=timezone.utc)) >= month_start
+        account for account in real_accounts
+        if (parse_utc_datetime(account.get("signup_date")) or datetime.min.replace(tzinfo=timezone.utc)) >= month_start
     ]
     missing: list[str] = []
     if mrr is None:
-        missing.append("MRR needs a stored recurring amount and billing interval for every active paid subscription; current subscription rows only guarantee Stripe price IDs.")
+        missing.append("MRR needs stored recurring unit amount, billing interval, interval count, and quantity for every active paid real account. Use Sync Stripe Data to backfill existing Stripe subscriptions.")
     if conversion is None:
-        missing.append("Trial-to-paid conversion needs at least one account with recorded trial start/status history.")
+        missing.append("Conversion needs at least one real account with a completed trial.")
     return {
-        "total_signups": len(users),
+        "total_signups": len(real_accounts),
+        "real_accounts": len(real_accounts),
+        "test_accounts": len([account for account in accounts if account.get("is_test_account")]),
         "new_signups_month": len(new_signups),
         "active_trials": len(active_trials),
         "active_paid": len(active_paid),
         "canceled": len(canceled),
         "expired_trials": len(expired),
+        "eligible_completed_trials": len(trial_population),
+        "paid_conversions": len(converted_trials),
         "mrr": mrr,
         "mrr_display": format_admin_money(mrr),
         "trial_to_paid_conversion": conversion,
@@ -3525,20 +3596,38 @@ def owner_admin_metrics(accounts: list[dict[str, Any]], users: list[dict[str, An
     }
 
 
-def owner_admin_dashboard_context(conn: sqlite3.Connection, *, status_filter: str = "all", now: datetime | None = None) -> dict[str, Any]:
+def owner_admin_dashboard_context(
+    conn: sqlite3.Connection,
+    *,
+    status_filter: str = "all",
+    account_filter: str = "real",
+    now: datetime | None = None,
+    notice: str = "",
+    error: str = "",
+) -> dict[str, Any]:
     accounts = owner_admin_account_rows(conn, now=now)
     ensure_auth_schema(conn)
     users = [dict(row) for row in conn.execute("SELECT id, email, created_at FROM users ORDER BY created_at DESC, id DESC").fetchall()]
     selected_filter = status_filter if status_filter in ADMIN_STATUS_FILTERS else "all"
+    selected_account_filter = account_filter if account_filter in ADMIN_ACCOUNT_FILTERS else "real"
     filtered_accounts = [
         account for account in accounts
-        if selected_filter == "all" or account["status_key"] == selected_filter
+        if (selected_filter == "all" or account["status_key"] == selected_filter)
+        and (
+            selected_account_filter == "all"
+            or (selected_account_filter == "test" and account.get("is_test_account"))
+            or (selected_account_filter == "real" and not account.get("is_test_account"))
+        )
     ]
     return {
         "metrics": owner_admin_metrics(accounts, users, now=now),
         "accounts": filtered_accounts,
         "filters": ADMIN_STATUS_FILTERS,
+        "account_filters": ADMIN_ACCOUNT_FILTERS,
         "selected_filter": selected_filter,
+        "selected_account_filter": selected_account_filter,
+        "notice": notice,
+        "error": error,
     }
 
 
@@ -14854,11 +14943,17 @@ def pro_dashboard(request: Request, welcome: int = 0):
 
 
 @router.get("/admin", response_class=HTMLResponse)
-def pro_owner_admin_dashboard(request: Request, status: str = "all"):
+def pro_owner_admin_dashboard(request: Request, status: str = "all", account_type: str = "real", notice: str = "", error: str = ""):
     require_admin_user(request)
     conn = crm_db_conn()
     try:
-        dashboard = owner_admin_dashboard_context(conn, status_filter=status)
+        dashboard = owner_admin_dashboard_context(
+            conn,
+            status_filter=status,
+            account_filter=account_type,
+            notice=notice,
+            error=error,
+        )
     finally:
         conn.close()
     return templates.TemplateResponse(
@@ -14867,8 +14962,110 @@ def pro_owner_admin_dashboard(request: Request, status: str = "all"):
             "request": request,
             "dashboard": dashboard,
             "format_admin_date": format_admin_date,
+            "csrf_token": optional_csrf_token(request),
         },
     )
+
+
+def owner_admin_redirect_url(status: str = "all", account_type: str = "real", **messages: str) -> str:
+    params = {
+        "status": status if status in ADMIN_STATUS_FILTERS else "all",
+        "account_type": account_type if account_type in ADMIN_ACCOUNT_FILTERS else "real",
+    }
+    for key, value in messages.items():
+        clean = str(value or "").strip()
+        if clean:
+            params[key] = clean[:240]
+    return f"/pro/admin?{urlencode(params)}"
+
+
+@router.post("/admin/accounts/{shop_id}/test-account")
+async def pro_owner_admin_test_account_update(request: Request, shop_id: int):
+    require_admin_user(request)
+    form = await read_form_data(request)
+    status_filter = str(form.get("status_filter") or "all")
+    account_filter = str(form.get("account_filter") or "real")
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    mark = bool_from_admin_value(form.get("is_test_account"))
+    conn = crm_db_conn()
+    try:
+        ensure_shop_profile_schema(conn)
+        row = conn.execute("SELECT id FROM shop_profile WHERE id = ? LIMIT 1", (shop_id,)).fetchone()
+        if not row:
+            return RedirectResponse(
+                owner_admin_redirect_url(status_filter, account_filter, error="Account was not found."),
+                status_code=303,
+            )
+        conn.execute(
+            "UPDATE shop_profile SET is_test_account = ?, updated_at = ? WHERE id = ?",
+            (1 if mark else 0, utc_now_iso(), shop_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    notice = "Account marked as test." if mark else "Account unmarked as test."
+    return RedirectResponse(owner_admin_redirect_url(status_filter, account_filter, notice=notice), status_code=303)
+
+
+@router.post("/admin/sync-stripe-data")
+async def pro_owner_admin_sync_stripe_data(request: Request):
+    require_admin_user(request)
+    form = await read_form_data(request)
+    status_filter = str(form.get("status_filter") or "all")
+    account_filter = str(form.get("account_filter") or "real")
+    if not validate_csrf(request, form):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+    conn = crm_db_conn()
+    updated = 0
+    skipped = 0
+    failed = 0
+    try:
+        ensure_shop_subscription_schema(conn)
+        rows = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT shop_id, stripe_subscription_id
+                FROM shop_subscriptions
+                WHERE stripe_subscription_id IS NOT NULL
+                  AND TRIM(stripe_subscription_id) != ''
+                ORDER BY shop_id
+                """
+            ).fetchall()
+        ]
+        service = StripeBillingService()
+        for row in rows:
+            subscription_id = str(row.get("stripe_subscription_id") or "").strip()
+            try:
+                stripe_subscription = service.retrieve_subscription(subscription_id)
+                synced = sync_subscription_object(conn, stripe_subscription)
+                if synced and int(synced.get("shop_id") or 0) == int(row.get("shop_id") or 0):
+                    updated += 1
+                else:
+                    skipped += 1
+            except BillingConfigurationError:
+                raise
+            except BillingProviderError:
+                failed += 1
+            except Exception:
+                logger.exception("ADMIN_STRIPE_SYNC_ROW_FAILED shop_id=%s", row.get("shop_id"))
+                failed += 1
+        conn.commit()
+    except BillingConfigurationError:
+        conn.rollback()
+        return RedirectResponse(
+            owner_admin_redirect_url(
+                status_filter,
+                account_filter,
+                error="Stripe sync is not configured. Check server billing settings and try again.",
+            ),
+            status_code=303,
+        )
+    finally:
+        conn.close()
+    notice = f"Stripe sync complete: {updated} updated, {skipped} skipped, {failed} failed."
+    return RedirectResponse(owner_admin_redirect_url(status_filter, account_filter, notice=notice), status_code=303)
 
 
 @router.get("/visual-references", response_class=HTMLResponse)
@@ -15712,6 +15909,7 @@ async def pro_billing_webhook(request: Request):
         return JSONResponse({"error": "Invalid Stripe webhook signature."}, status_code=400)
     conn = crm_db_conn()
     try:
+        ensure_shop_subscription_schema(conn)
         result = handle_webhook_event(conn, event)
     finally:
         conn.close()

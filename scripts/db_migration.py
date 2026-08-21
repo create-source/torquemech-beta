@@ -46,10 +46,34 @@ CREATE TABLE IF NOT EXISTS shop_subscriptions (
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
   stripe_price_id TEXT,
+  recurring_unit_amount INTEGER,
+  currency TEXT,
+  billing_interval TEXT,
+  billing_interval_count INTEGER,
+  quantity INTEGER,
+  first_paid_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 )
 """
+
+SUBSCRIPTION_BILLING_COLUMNS_SQLITE = {
+    "recurring_unit_amount": "INTEGER",
+    "currency": "TEXT",
+    "billing_interval": "TEXT",
+    "billing_interval_count": "INTEGER",
+    "quantity": "INTEGER",
+    "first_paid_at": "TEXT",
+}
+
+SUBSCRIPTION_BILLING_COLUMNS_POSTGRES = {
+    "recurring_unit_amount": "INTEGER",
+    "currency": "TEXT",
+    "billing_interval": "TEXT",
+    "billing_interval_count": "INTEGER",
+    "quantity": "INTEGER",
+    "first_paid_at": "TEXT",
+}
 
 SHOP_SUBSCRIPTIONS_INDEX_SQL = (
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_shop_subscriptions_shop_id ON shop_subscriptions (shop_id)",
@@ -389,6 +413,56 @@ def add_subscription_cancel_at_period_end_postgres(_args: argparse.Namespace) ->
         pg_conn.close()
 
 
+def add_owner_analytics_billing_fields_sqlite(_args: argparse.Namespace) -> None:
+    if db.using_postgres():
+        raise SystemExit("Refusing SQLite owner analytics migration because the app is configured for PostgreSQL.")
+    if (os.getenv("DATABASE_URL") or "").strip():
+        raise SystemExit("Refusing SQLite owner analytics migration because DATABASE_URL is set.")
+
+    sqlite_path = Path(db.active_app_db_path()).resolve()
+    print(f"Applying owner analytics billing migration to SQLite database: {sqlite_path}")
+    conn = sqlite_connect(sqlite_path)
+    try:
+        sub_columns = sqlite_column_names(conn, "shop_subscriptions")
+        for column_name, column_type in SUBSCRIPTION_BILLING_COLUMNS_SQLITE.items():
+            if column_name not in sub_columns:
+                conn.execute(f"ALTER TABLE shop_subscriptions ADD COLUMN {column_name} {column_type}")
+        shop_columns = sqlite_column_names(conn, "shop_profile")
+        if "is_test_account" not in shop_columns:
+            conn.execute("ALTER TABLE shop_profile ADD COLUMN is_test_account INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+        print("owner analytics billing migration applied successfully for SQLite database")
+    except Exception as exc:
+        conn.rollback()
+        raise SystemExit(f"Failed to apply SQLite owner analytics billing migration: {exc}") from exc
+    finally:
+        conn.close()
+
+
+def add_owner_analytics_billing_fields_postgres(_args: argparse.Namespace) -> None:
+    if not db.using_postgres():
+        raise SystemExit("DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands.")
+
+    pg_conn = pg_connect()
+    try:
+        with pg_conn:
+            with pg_conn.cursor() as cur:
+                for column_name, column_type in SUBSCRIPTION_BILLING_COLUMNS_POSTGRES.items():
+                    cur.execute(f"ALTER TABLE shop_subscriptions ADD COLUMN IF NOT EXISTS {column_name} {column_type}")
+                cur.execute(
+                    """
+                    ALTER TABLE shop_profile
+                    ADD COLUMN IF NOT EXISTS is_test_account BOOLEAN NOT NULL DEFAULT FALSE
+                    """
+                )
+        print("owner analytics billing migration applied successfully for PostgreSQL database")
+    except Exception as exc:
+        pg_conn.rollback()
+        raise SystemExit(f"Failed to apply PostgreSQL owner analytics billing migration: {exc}") from exc
+    finally:
+        pg_conn.close()
+
+
 def apply_account_preferences_schema(_args: argparse.Namespace) -> None:
     if not db.using_postgres():
         raise SystemExit("DATABASE_URL must be an explicit PostgreSQL URL for PostgreSQL migration commands.")
@@ -496,6 +570,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     subscriptions_cancel_pg = subparsers.add_parser("add-subscription-cancel-at-period-end")
     subscriptions_cancel_pg.set_defaults(func=add_subscription_cancel_at_period_end_postgres)
+
+    owner_analytics_local = subparsers.add_parser("add-owner-analytics-billing-fields-local")
+    owner_analytics_local.set_defaults(func=add_owner_analytics_billing_fields_sqlite)
+
+    owner_analytics_pg = subparsers.add_parser("add-owner-analytics-billing-fields")
+    owner_analytics_pg.set_defaults(func=add_owner_analytics_billing_fields_postgres)
 
     account_preferences_schema = subparsers.add_parser("apply-account-preferences-schema")
     account_preferences_schema.set_defaults(func=apply_account_preferences_schema)

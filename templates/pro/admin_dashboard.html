@@ -114,6 +114,13 @@
     gap: 8px;
   }
 
+  .tm-admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
   .tm-admin-filter {
     min-height: 34px;
     border: 1px solid rgba(148, 163, 184, 0.24);
@@ -214,6 +221,55 @@
     margin: 0;
   }
 
+  .tm-admin-alert {
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    border-radius: 8px;
+    background: rgba(34, 197, 94, 0.12);
+    color: #dcfce7;
+    padding: 12px 14px;
+    font-weight: 850;
+  }
+
+  .tm-admin-alert--error {
+    border-color: rgba(248, 113, 113, 0.42);
+    background: rgba(248, 113, 113, 0.12);
+    color: #fee2e2;
+  }
+
+  .tm-admin-inline-form {
+    display: inline-flex;
+    margin: 0;
+  }
+
+  .tm-admin-button {
+    min-height: 34px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 8px;
+    color: #111827;
+    background: #fb923c;
+    padding: 7px 11px;
+    font-size: 0.84rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .tm-admin-button--secondary {
+    color: #f8fafc;
+    background: #111c2d;
+  }
+
+  .tm-admin-chip {
+    display: inline-flex;
+    margin-top: 6px;
+    border: 1px solid rgba(251, 146, 60, 0.38);
+    border-radius: 999px;
+    padding: 3px 8px;
+    color: #fed7aa;
+    background: rgba(251, 146, 60, 0.12);
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+
   @media (max-width: 960px) {
     .tm-admin-metrics {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -283,11 +339,18 @@
     <p>Internal account, subscription, and revenue visibility from the application database and Stripe webhook state.</p>
   </header>
 
+  {% if dashboard.notice %}
+  <div class="tm-admin-alert" role="status">{{ dashboard.notice }}</div>
+  {% endif %}
+  {% if dashboard.error %}
+  <div class="tm-admin-alert tm-admin-alert--error" role="alert">{{ dashboard.error }}</div>
+  {% endif %}
+
   <section class="tm-admin-metrics" aria-label="Summary metrics">
     <article class="tm-admin-card">
-      <span>Total signups</span>
-      <strong>{{ dashboard.metrics.total_signups }}</strong>
-      <small>{{ dashboard.metrics.new_signups_month }} new this calendar month</small>
+      <span>Real accounts</span>
+      <strong>{{ dashboard.metrics.real_accounts }}</strong>
+      <small>{{ dashboard.metrics.test_accounts }} marked test account{% if dashboard.metrics.test_accounts != 1 %}s{% endif %} excluded by default</small>
     </article>
     <article class="tm-admin-card">
       <span>Active trials</span>
@@ -302,13 +365,19 @@
     <article class="tm-admin-card">
       <span>Monthly recurring revenue</span>
       <strong>{{ dashboard.metrics.mrr_display }}</strong>
-      <small>Normalized from stored recurring price data when available</small>
+      <small>Active paid and canceling real accounts with current access, normalized from stored Stripe recurring data</small>
     </article>
     <article class="tm-admin-card">
       <span>Trial-to-paid conversion</span>
       <strong>{{ dashboard.metrics.trial_to_paid_conversion_display }}</strong>
-      <small>Paid conversions divided by accounts with recorded trial history</small>
+      <small>{{ dashboard.metrics.paid_conversions }} paid conversion{% if dashboard.metrics.paid_conversions != 1 %}s{% endif %} / {{ dashboard.metrics.eligible_completed_trials }} eligible completed trial{% if dashboard.metrics.eligible_completed_trials != 1 %}s{% endif %}</small>
     </article>
+  </section>
+
+  <section class="tm-admin-note" aria-label="Metric definitions">
+    <h2>Metric definitions</h2>
+    <p>MRR: sum of locally stored recurring unit amount multiplied by quantity, normalized to monthly value by Stripe billing interval and interval count, for active paid or cancel-at-period-end real accounts that still have access. Canceled, expired, incomplete, unpaid, past-due, and test accounts are excluded.</p>
+    <p>Conversion: paid conversions divided by eligible completed trials. Active trials are excluded from the denominator; incomplete and past-due subscriptions are not counted as converted.</p>
   </section>
 
   {% if dashboard.metrics.missing_data %}
@@ -323,9 +392,24 @@
   <section class="tm-admin-panel" aria-label="Accounts">
     <div class="tm-admin-panel-head">
       <h2>Accounts</h2>
+      <div class="tm-admin-actions">
+        <form class="tm-admin-inline-form" method="post" action="/pro/admin/sync-stripe-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
+          <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
+          <button class="tm-admin-button" type="submit">Sync Stripe Data</button>
+        </form>
+      </div>
+    </div>
+    <div class="tm-admin-panel-head">
+      <nav class="tm-admin-filters" aria-label="Account filters">
+        {% for key, label in dashboard.account_filters.items() %}
+        <a class="tm-admin-filter" href="/pro/admin?status={{ dashboard.selected_filter }}&account_type={{ key }}" {% if dashboard.selected_account_filter == key %}aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
       <nav class="tm-admin-filters" aria-label="Status filters">
         {% for key, label in dashboard.filters.items() %}
-        <a class="tm-admin-filter" href="/pro/admin?status={{ key }}" {% if dashboard.selected_filter == key %}aria-current="page"{% endif %}>{{ label }}</a>
+        <a class="tm-admin-filter" href="/pro/admin?status={{ key }}&account_type={{ dashboard.selected_account_filter }}" {% if dashboard.selected_filter == key %}aria-current="page"{% endif %}>{{ label }}</a>
         {% endfor %}
       </nav>
     </div>
@@ -340,22 +424,35 @@
           <th>Plan</th>
           <th>Trial End</th>
           <th>Renewal / Cancellation</th>
+          <th>Admin</th>
         </tr>
       </thead>
       <tbody>
         {% for account in dashboard.accounts %}
         <tr>
-          <td data-label="Shop">{{ account.shop_name or "Not available" }}</td>
+          <td data-label="Shop">
+            {{ account.shop_name or "Not available" }}
+            {% if account.is_test_account %}<span class="tm-admin-chip">Test account</span>{% endif %}
+          </td>
           <td data-label="Owner Email">{{ account.display_email or "Not available" }}</td>
           <td data-label="Signup">{{ format_admin_date(account.signup_date) }}</td>
           <td data-label="Status"><span class="tm-admin-status tm-admin-status--{{ account.status_tone }}">{{ account.status_label }}</span></td>
           <td data-label="Plan">{{ account.plan_label }}</td>
           <td data-label="Trial End">{{ format_admin_date(account.trial_ends_at) }}</td>
           <td data-label="Renewal / Cancellation">{{ format_admin_date(account.renewal_or_cancellation_date) }}</td>
+          <td data-label="Admin">
+            <form class="tm-admin-inline-form" method="post" action="/pro/admin/accounts/{{ account.shop_id }}/test-account">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="hidden" name="status_filter" value="{{ dashboard.selected_filter }}">
+              <input type="hidden" name="account_filter" value="{{ dashboard.selected_account_filter }}">
+              <input type="hidden" name="is_test_account" value="{% if account.is_test_account %}0{% else %}1{% endif %}">
+              <button class="tm-admin-button tm-admin-button--secondary" type="submit">{% if account.is_test_account %}Unmark test{% else %}Mark test{% endif %}</button>
+            </form>
+          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="7" class="tm-admin-muted">No accounts match this filter.</td>
+          <td colspan="8" class="tm-admin-muted">No accounts match this filter.</td>
         </tr>
         {% endfor %}
       </tbody>
