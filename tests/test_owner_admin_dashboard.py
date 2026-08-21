@@ -21,6 +21,11 @@ def csrf_from(html: str) -> str:
 
 
 class NonClosingConnection(sqlite3.Connection):
+    def execute(self, sql, parameters=(), /):
+        if str(sql).strip().startswith("UPDATE shop_profile SET is_test_account = ?"):
+            self.test_account_update_params.append(parameters)
+        return super().execute(sql, parameters)
+
     def close(self):
         pass
 
@@ -32,6 +37,7 @@ class OwnerAdminDashboardTests(unittest.TestCase):
     def setUp(self):
         self.conn = sqlite3.connect(":memory:", check_same_thread=False, factory=NonClosingConnection)
         self.conn.row_factory = sqlite3.Row
+        self.conn.test_account_update_params = []
         self.addCleanup(self.conn.close_for_cleanup)
         self.app_db_patch = patch.object(main, "app_db_conn", lambda row_factory=False: self.conn)
         self.crm_patch = patch.object(pro_module, "crm_db_conn", lambda: self.conn)
@@ -384,6 +390,7 @@ class OwnerAdminDashboardTests(unittest.TestCase):
                 data={"csrf_token": csrf_from(page.text), "is_test_account": "1"},
                 follow_redirects=False,
             )
+            marked_row = self.conn.execute("SELECT is_test_account FROM shop_profile WHERE id = ?", (shop_id,)).fetchone()
             unmarked_page = admin_client.get("/pro/admin?account_type=all")
             unmarked = admin_client.post(
                 f"/pro/admin/accounts/{shop_id}/test-account",
@@ -396,8 +403,11 @@ class OwnerAdminDashboardTests(unittest.TestCase):
         self.assertEqual(missing_csrf.status_code, 403)
         self.assertEqual(marked.status_code, 303)
         self.assertIn("notice=Account+marked+as+test", marked.headers["location"])
+        self.assertEqual(marked_row["is_test_account"], 1)
         self.assertEqual(unmarked.status_code, 303)
         self.assertEqual(row["is_test_account"], 0)
+        self.assertEqual([params[0] for params in self.conn.test_account_update_params], [True, False])
+        self.assertTrue(all(type(params[0]) is bool for params in self.conn.test_account_update_params))
 
     def test_test_accounts_are_labeled_and_filtered(self):
         self.seed_dashboard_accounts()
