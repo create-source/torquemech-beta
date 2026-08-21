@@ -3290,6 +3290,258 @@ def load_shop_subscription(conn: sqlite3.Connection, shop_id: int | None) -> dic
     return dict(row) if row else None
 
 
+ADMIN_STATUS_FILTERS = {
+    "all": "All",
+    "trial": "Trial",
+    "active": "Active",
+    "canceled": "Canceled",
+    "expired": "Expired",
+}
+
+
+def admin_allowlisted_emails() -> set[str]:
+    raw = os.getenv("TORQUEMECH_ADMIN_EMAILS") or ""
+    return {normalize_email(part) for part in raw.split(",") if normalize_email(part)}
+
+
+def user_is_admin(user: dict[str, Any] | sqlite3.Row | None) -> bool:
+    allowlist = admin_allowlisted_emails()
+    if not allowlist or not user:
+        return False
+    try:
+        email = user.get("email")  # type: ignore[attr-defined]
+    except AttributeError:
+        email = user["email"] if "email" in user.keys() else ""
+    return normalize_email(email) in allowlist
+
+
+def require_admin_user(request: Request) -> dict[str, Any] | sqlite3.Row:
+    user = getattr(request.state, "current_user", None)
+    if not user_is_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access is not available.")
+    return user
+
+
+def subscription_status_bucket(subscription: dict[str, Any], *, now: datetime | None = None) -> dict[str, str]:
+    access = resolve_subscription_access(subscription or None, shop_id=subscription.get("shop_id"), now=now)
+    status = str(subscription.get("status") or "").strip().lower()
+    if access.access_state == "trial_active":
+        return {"key": "trial", "label": "Trial", "tone": "info"}
+    if access.access_state in {"subscribed_active", "subscribed_canceling"}:
+        return {"key": "active", "label": "Active paid", "tone": "success"}
+    if access.access_state == "read_only_trial_expired":
+        return {"key": "expired", "label": "Expired trial", "tone": "muted"}
+    if access.access_state == "read_only_canceled" or status in {"canceled", "incomplete_expired"}:
+        return {"key": "canceled", "label": "Canceled", "tone": "danger"}
+    if access.access_state in {"read_only_past_due", "read_only_unpaid"} or status in {"past_due", "unpaid", "incomplete"}:
+        label = "Past due" if status == "past_due" else "Incomplete" if status == "incomplete" else "Payment issue"
+        return {"key": "payment_issue", "label": label, "tone": "warning"}
+    return {"key": "unknown", "label": "Not available", "tone": "muted"}
+
+
+def subscription_monthly_amount(subscription: dict[str, Any]) -> float | None:
+    def numeric_value(*keys: str) -> float | None:
+        for key in keys:
+            if key not in subscription:
+                continue
+            raw = subscription.get(key)
+            if raw in (None, ""):
+                continue
+            try:
+                value = float(raw)
+            except (TypeError, ValueError):
+                continue
+            if value < 0:
+                return None
+            return value
+        return None
+
+    monthly_amount = numeric_value("recurring_monthly_amount", "monthly_amount")
+    if monthly_amount is not None:
+        return round(monthly_amount, 2)
+
+    unit_amount = numeric_value("stripe_price_unit_amount", "stripe_unit_amount", "unit_amount")
+    if unit_amount is None:
+        amount = numeric_value("stripe_price_amount", "price_amount", "amount")
+        if amount is not None:
+            return round(amount, 2)
+        return None
+
+    currency_amount = unit_amount / 100.0
+    interval = str(
+        subscription.get("stripe_price_recurring_interval")
+        or subscription.get("recurring_interval")
+        or subscription.get("interval")
+        or "month"
+    ).strip().lower()
+    try:
+        interval_count = int(
+            subscription.get("stripe_price_recurring_interval_count")
+            or subscription.get("recurring_interval_count")
+            or subscription.get("interval_count")
+            or 1
+        )
+    except (TypeError, ValueError):
+        interval_count = 1
+    interval_count = max(1, interval_count)
+    if interval == "month":
+        return round(currency_amount / interval_count, 2)
+    if interval == "year":
+        return round(currency_amount / (12 * interval_count), 2)
+    return None
+
+
+def owner_admin_account_rows(conn: sqlite3.Connection, *, now: datetime | None = None) -> list[dict[str, Any]]:
+    ensure_auth_schema(conn)
+    ensure_shop_profile_schema(conn)
+    ensure_shop_subscription_schema(conn)
+    rows = conn.execute(
+        """
+        SELECT
+          sp.id AS shop_id,
+          sp.shop_name AS shop_name,
+          sp.shop_email AS shop_email,
+          sp.email AS legacy_shop_email,
+          sp.updated_at AS shop_updated_at,
+          u.id AS user_id,
+          u.email AS owner_email,
+          u.created_at AS user_created_at,
+          ss.id AS subscription_id,
+          ss.plan_code AS plan_code,
+          ss.status AS subscription_status,
+          ss.trial_started_at AS trial_started_at,
+          ss.trial_ends_at AS trial_ends_at,
+          ss.current_period_started_at AS current_period_started_at,
+          ss.current_period_ends_at AS current_period_ends_at,
+          ss.cancel_at_period_end AS cancel_at_period_end,
+          ss.canceled_at AS canceled_at,
+          ss.stripe_customer_id AS stripe_customer_id,
+          ss.stripe_subscription_id AS stripe_subscription_id,
+          ss.stripe_price_id AS stripe_price_id,
+          ss.created_at AS subscription_created_at,
+          ss.updated_at AS subscription_updated_at
+        FROM shop_profile sp
+        LEFT JOIN users u ON u.id = sp.owner_user_id
+        LEFT JOIN shop_subscriptions ss ON ss.shop_id = sp.id
+        ORDER BY COALESCE(u.created_at, ss.created_at, sp.updated_at) DESC, sp.id DESC
+        """
+    ).fetchall()
+    accounts: list[dict[str, Any]] = []
+    for row in rows:
+        account = dict(row)
+        subscription = {
+            "shop_id": account.get("shop_id"),
+            "plan_code": account.get("plan_code"),
+            "status": account.get("subscription_status"),
+            "trial_started_at": account.get("trial_started_at"),
+            "trial_ends_at": account.get("trial_ends_at"),
+            "current_period_started_at": account.get("current_period_started_at"),
+            "current_period_ends_at": account.get("current_period_ends_at"),
+            "cancel_at_period_end": account.get("cancel_at_period_end"),
+            "canceled_at": account.get("canceled_at"),
+            "stripe_customer_id": account.get("stripe_customer_id"),
+            "stripe_subscription_id": account.get("stripe_subscription_id"),
+            "stripe_price_id": account.get("stripe_price_id"),
+        }
+        bucket = subscription_status_bucket(subscription, now=now) if account.get("subscription_id") else {
+            "key": "unknown",
+            "label": "Not available",
+            "tone": "muted",
+        }
+        account["status_key"] = bucket["key"]
+        account["status_label"] = bucket["label"]
+        account["status_tone"] = bucket["tone"]
+        account["display_email"] = (
+            str(account.get("owner_email") or "").strip()
+            or str(account.get("shop_email") or "").strip()
+            or str(account.get("legacy_shop_email") or "").strip()
+        )
+        account["signup_date"] = account.get("user_created_at") or account.get("subscription_created_at") or account.get("shop_updated_at")
+        account["plan_label"] = PRO_SOLO_PLAN_NAME if account.get("plan_code") == PRO_SOLO_PLAN_CODE else str(account.get("plan_code") or "Not available")
+        account["renewal_or_cancellation_date"] = account.get("current_period_ends_at") if account.get("cancel_at_period_end") else (
+            account.get("canceled_at") or account.get("current_period_ends_at")
+        )
+        account["monthly_amount"] = subscription_monthly_amount(subscription)
+        accounts.append(account)
+    return accounts
+
+
+def format_admin_date(value: Any) -> str:
+    parsed = parse_utc_datetime(value)
+    return parsed.strftime("%b %-d, %Y") if parsed and os.name != "nt" else parsed.strftime("%b %#d, %Y") if parsed else "Not available"
+
+
+def format_admin_money(value: float | None) -> str:
+    if value is None:
+        return "Not available"
+    return f"${value:,.2f}"
+
+
+def format_admin_percent(value: float | None) -> str:
+    if value is None:
+        return "Not available"
+    return f"{value:.1f}%"
+
+
+def owner_admin_metrics(accounts: list[dict[str, Any]], users: list[dict[str, Any]], *, now: datetime | None = None) -> dict[str, Any]:
+    current = (now or utc_now()).astimezone(timezone.utc)
+    month_start = current.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    active_trials = [account for account in accounts if account["status_key"] == "trial"]
+    active_paid = [account for account in accounts if account["status_key"] == "active"]
+    canceled = [account for account in accounts if account["status_key"] == "canceled"]
+    expired = [account for account in accounts if account["status_key"] == "expired"]
+    known_amounts = [account["monthly_amount"] for account in active_paid if account.get("monthly_amount") is not None]
+    mrr = round(sum(float(amount) for amount in known_amounts), 2) if len(known_amounts) == len(active_paid) else None
+    trial_population = [
+        account for account in accounts
+        if account.get("trial_started_at") or account["status_key"] in {"trial", "expired"}
+    ]
+    converted_trials = [
+        account for account in trial_population
+        if account["status_key"] == "active"
+    ]
+    conversion = (len(converted_trials) / len(trial_population) * 100.0) if trial_population else None
+    new_signups = [
+        user for user in users
+        if (parse_utc_datetime(user.get("created_at")) or datetime.min.replace(tzinfo=timezone.utc)) >= month_start
+    ]
+    missing: list[str] = []
+    if mrr is None:
+        missing.append("MRR needs a stored recurring amount and billing interval for every active paid subscription; current subscription rows only guarantee Stripe price IDs.")
+    if conversion is None:
+        missing.append("Trial-to-paid conversion needs at least one account with recorded trial start/status history.")
+    return {
+        "total_signups": len(users),
+        "new_signups_month": len(new_signups),
+        "active_trials": len(active_trials),
+        "active_paid": len(active_paid),
+        "canceled": len(canceled),
+        "expired_trials": len(expired),
+        "mrr": mrr,
+        "mrr_display": format_admin_money(mrr),
+        "trial_to_paid_conversion": conversion,
+        "trial_to_paid_conversion_display": format_admin_percent(conversion),
+        "missing_data": missing,
+    }
+
+
+def owner_admin_dashboard_context(conn: sqlite3.Connection, *, status_filter: str = "all", now: datetime | None = None) -> dict[str, Any]:
+    accounts = owner_admin_account_rows(conn, now=now)
+    ensure_auth_schema(conn)
+    users = [dict(row) for row in conn.execute("SELECT id, email, created_at FROM users ORDER BY created_at DESC, id DESC").fetchall()]
+    selected_filter = status_filter if status_filter in ADMIN_STATUS_FILTERS else "all"
+    filtered_accounts = [
+        account for account in accounts
+        if selected_filter == "all" or account["status_key"] == selected_filter
+    ]
+    return {
+        "metrics": owner_admin_metrics(accounts, users, now=now),
+        "accounts": filtered_accounts,
+        "filters": ADMIN_STATUS_FILTERS,
+        "selected_filter": selected_filter,
+    }
+
+
 def create_or_ensure_shop_subscription(
     conn: sqlite3.Connection,
     shop_id: int,
@@ -14597,6 +14849,24 @@ def pro_dashboard(request: Request, welcome: int = 0):
             "dashboard": dashboard,
             "first_name": first_name,
             "show_welcome": welcome == 1,
+        },
+    )
+
+
+@router.get("/admin", response_class=HTMLResponse)
+def pro_owner_admin_dashboard(request: Request, status: str = "all"):
+    require_admin_user(request)
+    conn = crm_db_conn()
+    try:
+        dashboard = owner_admin_dashboard_context(conn, status_filter=status)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(
+        "pro/admin_dashboard.html",
+        {
+            "request": request,
+            "dashboard": dashboard,
+            "format_admin_date": format_admin_date,
         },
     )
 
