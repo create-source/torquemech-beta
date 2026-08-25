@@ -15157,3 +15157,35 @@ body.tm-estimator-page
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
 }
+
+/* Logged-in navigation: Log Out above hamburger */
+.tm-nav__accountStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.tm-nav__topLogoutForm {
+  margin: 0;
+  line-height: 1;
+}
+
+.tm-nav__topLogout {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 0 4px;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.tm-nav__topLogout:hover,
+.tm-nav__topLogout:focus-visible {
+  color: #fb923c;
+}

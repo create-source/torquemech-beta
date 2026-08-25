@@ -1,11 +1,7 @@
 <header class="tm-nav">
   <div class="tm-nav__inner">
     <!-- Left: Wordmark (NO underline in nav) -->
-    <a class="tm-brand" href="/" aria-label="TorqueMech Home">
-      <span class="tm-brand_text">
-        <span class="tm-brand__torque">Torque</span><span class="tm-brand__mech">Mech</span>        
-      </span>
-    </a>
+    <a class="tm-menu__item" href="/pro/dashboard" data-i18n="nav.home">Home</a>
 
     <!-- Right: Notifications + Hamburger -->
     {% if request.state.current_user %}
@@ -84,9 +80,20 @@
         </section>
       </div>
     {% endif %}
-    <button class="tm-menuBtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
-      <span class="tm-menuBtn__icon" aria-hidden="true">&#9776;</span>
-    </button>
+    <div class="tm-nav__accountStack">
+      {% if request.state.current_user %}
+      <form class="tm-nav__topLogoutForm" method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ request.session.get('csrf_token', '') }}">
+        <button class="tm-nav__topLogout" type="submit" data-i18n="nav.logout">
+          Log Out
+        </button>
+      </form>
+      {% endif %}
+
+      <button class="tm-menuBtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+        <span class="tm-menuBtn__icon" aria-hidden="true">&#9776;</span>
+      </button>
+    </div>
   </div>
 
   <!-- Dropdown panel -->
