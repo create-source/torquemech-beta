@@ -861,7 +861,7 @@
 <section class="tm-pro-home">
   <header class="tm-pro-header">
     <div class="tm-pro-wrap tm-pro-header__inner">
-      <a class="tm-pro-brand" href="/" aria-label="TorqueMech home">
+      <a class="tm-pro-brand" href="{{ '/pro/dashboard' if request.state.current_user else '/' }}" aria-label="TorqueMech home">
         <span>Torque</span><span>Mech</span>
       </a>
 
