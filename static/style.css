@@ -15142,3 +15142,18 @@ body.tm-estimator-page
     white-space: nowrap !important;
   }
 }
+
+/* Shop Settings — pricing labels on dark background */
+.tm-shop-settings-panel[aria-label="Pricing defaults"] .tm-label,
+.tm-shop-settings-panel[aria-label="Pricing defaults"] .tm-tax-toggle,
+.tm-shop-settings-panel[aria-label="Pricing defaults"] .tm-tax-toggle span {
+  color: #dbe7f5 !important;
+  -webkit-text-fill-color: #dbe7f5 !important;
+}
+
+/* Dollar and percent symbols */
+.tm-shop-settings-panel[aria-label="Pricing defaults"]
+.tm-affix-input__symbol {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
