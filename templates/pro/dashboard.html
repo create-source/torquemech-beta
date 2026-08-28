@@ -1773,6 +1773,15 @@
   }
 
   button.addEventListener("click", async () => {
+    const isMobileDevice =
+      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && window.matchMedia("(max-width: 900px)").matches);
+
+    if (!isMobileDevice) {
+      window.open(bookingUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
     try {
       if (navigator.share) {
         await navigator.share({
@@ -1785,9 +1794,6 @@
 
       await copyBookingLink();
       label.textContent = "Link Copied";
-      window.setTimeout(() => {
-        label.textContent = originalLabel;
-      }, 1800);
     } catch (error) {
       if (error?.name === "AbortError") return;
 
@@ -1797,11 +1803,11 @@
       } catch (_) {
         label.textContent = "Unable to Share Link";
       }
-
-      window.setTimeout(() => {
-        label.textContent = originalLabel;
-      }, 1800);
     }
+
+    window.setTimeout(() => {
+      label.textContent = originalLabel;
+    }, 1800);
   });
 })();
 </script>
