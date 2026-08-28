@@ -631,12 +631,12 @@
 <section class="tm-plan">
   <header class="tm-plan-header">
     <div class="tm-plan-wrap tm-plan-header__inner">
-      <a class="tm-plan-brand" href="/pro/home-preview" aria-label="TorqueMech homepage">
+      <a class="tm-plan-brand" href="{{ tm_home_href(request) }}" aria-label="TorqueMech homepage">
         <span>Torque</span><span>Mech</span>
       </a>
 
       <nav class="tm-plan-nav" aria-label="Plan navigation">
-        <a class="tm-plan-link tm-plan-link--home" href="/pro/home-preview">Back to Home</a>
+        <a class="tm-plan-link tm-plan-link--home" href="{{ tm_home_href(request) }}">Back to Home</a>
         <a class="tm-plan-btn tm-plan-btn--secondary tm-plan-btn--login" href="/login">Log In</a>
         <a class="tm-plan-btn tm-plan-btn--primary" href="/signup">Sign Up</a>
       </nav>

@@ -1,7 +1,7 @@
 <header class="tm-nav">
   <div class="tm-nav__inner">
     <!-- Left: Wordmark (NO underline in nav) -->
-    <a class="tm-brand" href="/" aria-label="TorqueMech Home">
+    <a class="tm-brand" href="{{ tm_home_href(request) }}" aria-label="TorqueMech Home">
       <span class="tm-brand_text">
         <span class="tm-brand__torque">Torque</span><span class="tm-brand__mech">Mech</span>
       </span>
@@ -92,7 +92,7 @@
   <!-- Dropdown panel -->
   <div class="tm-menu" id="navMenu" hidden>
     <nav class="tm-menu__panel" aria-label="Main menu">
-      <a class="tm-menu__item" href="{{ '/pro/dashboard' if request.state.current_user else '/' }}" data-i18n="nav.home">Home</a>
+      <a class="tm-menu__item" href="{{ tm_home_href(request) }}" data-i18n="nav.home">Home</a>
       <a class="tm-menu__item" href="/how-it-works" data-i18n="nav.how_it_works">How It Works</a>
       <a class="tm-menu__item" href="/quick-find" data-i18n="nav.diagnostic_search">Diagnostic Search</a>
       <a class="tm-menu__item" href="/repair-guides" data-i18n="nav.repair_library">Repair Library</a>

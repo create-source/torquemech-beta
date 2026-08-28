@@ -31,6 +31,7 @@ def auth_test_conn():
     conn.row_factory = sqlite3.Row
     pro_module.ensure_auth_schema(conn)
     pro_module.ensure_shop_profile_schema(conn)
+    pro_module.ensure_shop_subscription_schema(conn)
     now = "2026-07-12T00:00:00"
     conn.execute(
         """
@@ -48,6 +49,49 @@ def auth_test_conn():
     return conn, user_id
 
 
+def insert_subscription(conn, shop_id: int, status: str, **fields):
+    values = {
+        "trial_started_at": None,
+        "trial_ends_at": None,
+        "current_period_started_at": None,
+        "current_period_ends_at": None,
+        "cancel_at_period_end": 0,
+        "canceled_at": None,
+        "stripe_customer_id": None,
+        "stripe_subscription_id": None,
+        "stripe_price_id": None,
+        **fields,
+    }
+    now = "2026-07-12T00:00:00"
+    conn.execute(
+        """
+        INSERT INTO shop_subscriptions (
+          shop_id, plan_code, status, trial_started_at, trial_ends_at,
+          current_period_started_at, current_period_ends_at, cancel_at_period_end, canceled_at,
+          access_grace_ends_at, stripe_customer_id, stripe_subscription_id,
+          stripe_price_id, created_at, updated_at
+        )
+        VALUES (?, 'pro_solo', ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
+        """,
+        (
+            shop_id,
+            status,
+            values["trial_started_at"],
+            values["trial_ends_at"],
+            values["current_period_started_at"],
+            values["current_period_ends_at"],
+            values["cancel_at_period_end"],
+            values["canceled_at"],
+            values["stripe_customer_id"],
+            values["stripe_subscription_id"],
+            values["stripe_price_id"],
+            now,
+            now,
+        ),
+    )
+    conn.commit()
+
+
 def authenticated_client(conn, user_id, base_url="https://torquemech.com"):
     now = "2026-07-12T00:00:00"
     session_id = f"access-test-session-{user_id}"
@@ -62,6 +106,15 @@ def authenticated_client(conn, user_id, base_url="https://torquemech.com"):
     client = TestClient(main.app, base_url=base_url)
     client.cookies.set(main.SESSION_COOKIE_NAME, session_id)
     return client
+
+
+def assert_shared_home_navigation(testcase, html: str, expected_href: str):
+    testcase.assertIn(f'<a class="tm-brand" href="{expected_href}" aria-label="TorqueMech Home">', html)
+    testcase.assertIn(f'<a class="tm-menu__item" href="{expected_href}" data-i18n="nav.home">Home</a>', html)
+
+
+def assert_marketing_home_logo(testcase, html: str, expected_href: str):
+    testcase.assertRegex(html, rf'<a class="tm-pro-brand" href="{re.escape(expected_href)}" aria-label="TorqueMech home">')
 
 
 class ProAccessGateTests(unittest.TestCase):
@@ -187,6 +240,61 @@ class ProAccessGateTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("Access Test Shop", response.text)
+
+    def test_subscribed_user_logo_and_menu_home_link_to_dashboard(self):
+        conn, user_id = auth_test_conn()
+        self.addCleanup(conn.close_for_cleanup)
+        shop_id = int(conn.execute("SELECT id FROM shop_profile WHERE owner_user_id = ?", (user_id,)).fetchone()["id"])
+        insert_subscription(conn, shop_id, "active", current_period_ends_at="2026-08-12T00:00:00+00:00")
+        with patch.object(main, "app_db_conn", lambda row_factory=False: conn), patch.object(
+            pro_module, "crm_db_conn", lambda: conn
+        ), patch.dict(os.environ, {"PRO_ENABLED": "true", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""}):
+            client = authenticated_client(conn, user_id)
+            response = client.get("/")
+            estimator_response = client.get("/estimator")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(estimator_response.status_code, 200)
+        assert_marketing_home_logo(self, response.text, "/pro/dashboard")
+        assert_shared_home_navigation(self, estimator_response.text, "/pro/dashboard")
+
+    def test_free_trial_user_logo_and_menu_home_link_to_dashboard(self):
+        conn, user_id = auth_test_conn()
+        self.addCleanup(conn.close_for_cleanup)
+        shop_id = int(conn.execute("SELECT id FROM shop_profile WHERE owner_user_id = ?", (user_id,)).fetchone()["id"])
+        insert_subscription(
+            conn,
+            shop_id,
+            "trialing",
+            trial_started_at="2026-07-12T00:00:00+00:00",
+            trial_ends_at="2026-07-26T00:00:00+00:00",
+        )
+        with patch.object(main, "app_db_conn", lambda row_factory=False: conn), patch.object(
+            pro_module, "crm_db_conn", lambda: conn
+        ), patch.dict(os.environ, {"PRO_ENABLED": "true", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""}):
+            client = authenticated_client(conn, user_id)
+            response = client.get("/")
+            estimator_response = client.get("/estimator")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(estimator_response.status_code, 200)
+        assert_marketing_home_logo(self, response.text, "/pro/dashboard")
+        assert_shared_home_navigation(self, estimator_response.text, "/pro/dashboard")
+
+    def test_logged_out_visitor_logo_and_menu_home_link_to_public_home(self):
+        conn, _ = auth_test_conn()
+        self.addCleanup(conn.close_for_cleanup)
+        with patch.object(main, "app_db_conn", lambda row_factory=False: conn), patch.object(
+            pro_module, "crm_db_conn", lambda: conn
+        ), patch.dict(os.environ, {"PRO_ENABLED": "true", "PRO_ACCESS_CODE": "", "PRO_QA_KEY": ""}):
+            client = TestClient(main.app, base_url="https://torquemech.com")
+            response = client.get("/")
+            estimator_response = client.get("/estimator")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(estimator_response.status_code, 200)
+        assert_marketing_home_logo(self, response.text, "/")
+        assert_shared_home_navigation(self, estimator_response.text, "/")
 
     def test_login_next_accepts_safe_url_and_rejects_external_url(self):
         conn, _ = auth_test_conn()

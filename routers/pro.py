@@ -53,6 +53,7 @@ from app.i18n import (
     t_for_request,
     translate_text_for_request,
 )
+from app.navigation import tm_home_href
 from app.billing import (
     BillingConfigurationError,
     BillingCustomerRequiredError,
@@ -227,6 +228,7 @@ templates.env.globals["tm_public_i18n_json"] = public_client_payload_json
 templates.env.globals["tm_locale_meta"] = locale_meta
 templates.env.globals["tm_locale_options"] = locale_options
 templates.env.globals["tm_translate_text"] = translate_text_for_request
+templates.env.globals["tm_home_href"] = tm_home_href
 
 SUBSCRIPTION_READ_ONLY_ERROR_CODE = "subscription_read_only"
 SUBSCRIPTION_READ_ONLY_MESSAGE = (

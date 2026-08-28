@@ -75,6 +75,7 @@ from app.i18n import (
     translate_text_for_request,
 )
 from app.i18n_technical import translate_obd_title
+from app.navigation import tm_home_href
 
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -1671,6 +1672,7 @@ templates.env.globals["tm_public_i18n_json"] = public_client_payload_json
 templates.env.globals["tm_locale_meta"] = locale_meta
 templates.env.globals["tm_locale_options"] = locale_options
 templates.env.globals["tm_translate_text"] = translate_text_for_request
+templates.env.globals["tm_home_href"] = tm_home_href
 app.state.templates = templates
 
 # routers
@@ -1718,6 +1720,8 @@ async def auth_context_middleware(request: Request, call_next):
     try:
         conn = app_db_conn(row_factory=True)
         try:
+            if not isinstance(request.scope.get("session"), dict):
+                request.scope["session"] = load_server_session_data(request.cookies.get(SESSION_COOKIE_NAME, ""))
             user = request.state.current_user or current_user(conn, request)
             request.state.current_user = user
             if user:

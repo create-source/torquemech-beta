@@ -1307,7 +1307,7 @@
 <section class="tm-pro-landing">
   <header class="tm-pro-landing-header">
     <div class="tm-pro-landing-header__inner">
-      <a class="tm-pro-brand" href="/" aria-label="TorqueMech Home">
+      <a class="tm-pro-brand" href="{{ tm_home_href(request) }}" aria-label="TorqueMech Home">
         <span>Torque</span><span>Mech</span>
       </a>
       <nav class="tm-pro-header-actions" aria-label="TorqueMech">
@@ -1333,7 +1333,7 @@
       <p>Create estimates, manage repairs, send customer-ready PDFs, and keep every vehicle&rsquo;s history organized &mdash; without complicated shop software.</p>
       {% if not request.state.current_user %}
       <div class="tm-pro-explore">
-        <a class="tm-pro-landing-btn" href="/">Get Started</a>
+        <a class="tm-pro-landing-btn" href="{{ tm_home_href(request) }}">Get Started</a>
         <span class="tm-pro-explore__note">Try the guided estimator — no account required.</span>
       </div>
       {% endif %}
