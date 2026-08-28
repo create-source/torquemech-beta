@@ -1210,6 +1210,8 @@
   .tm-quick-link {
     position: relative;
     overflow: hidden;
+    font: inherit;
+    cursor: pointer;
     min-height: 48px !important;
     border: 1px solid rgba(148, 163, 184, 0.28) !important;
     border-radius: 10px !important;
@@ -1687,9 +1689,13 @@
       </a>
       {% endif %}
       {% endfor %}
-      <a class="tm-quick-link" href="/pro/calendar#customer-booking-link">
-        <span class="tm-appointment-notification-label">Customer Booking Link</span>
-      </a>
+      <button
+        class="tm-quick-link tm-quick-link--copy-booking"
+        type="button"
+        data-copy-dashboard-booking-link
+      >
+        <span class="tm-appointment-notification-label" data-booking-link-label>Copy Booking Link</span>
+      </button>
     </div>
   </section>
 
@@ -1739,6 +1745,45 @@
     </div>
   </section>
 </section>
+
+<script>
+(() => {
+  const button = document.querySelector("[data-copy-dashboard-booking-link]");
+  const label = document.querySelector("[data-booking-link-label]");
+  if (!button || !label) return;
+
+  const bookingUrl = `${window.location.origin}/book/torquemech`;
+  const originalLabel = label.textContent;
+
+  button.addEventListener("click", async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(bookingUrl);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = bookingUrl;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+
+      label.textContent = "Booking Link Copied";
+      window.setTimeout(() => {
+        label.textContent = originalLabel;
+      }, 1800);
+    } catch (_) {
+      label.textContent = "Unable to Copy Link";
+      window.setTimeout(() => {
+        label.textContent = originalLabel;
+      }, 1800);
+    }
+  });
+})();
+</script>
 
 {% if show_welcome %}
 <script>
