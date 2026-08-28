@@ -109,11 +109,6 @@
   .tm-book-date-clear {
     border: 0;
     border-radius: 999px;
-    ...
-  }
-  .tm-book-date-clear {
-    border: 0;
-    border-radius: 999px;
     background: #e2e8f0;
     color: #334155;
     cursor: pointer;
@@ -321,6 +316,125 @@
         <input class="tm-input" id="service_name" name="service_name" type="text" maxlength="220" value="{{ form.service_name if form else '' }}" required>
       </div>
       <h2 class="tm-book-section-title">Preferred appointment window</h2>
+
+      <div class="tm-book-wide">
+        <div class="tm-book-date-heading">
+          <label class="tm-label" for="requested_date">Preferred Date</label>
+          <button
+            class="tm-book-date-clear"
+            type="button"
+            data-availability-clear
+            aria-label="Clear preferred date"
+            hidden
+          >
+            × Clear
+          </button>
+        </div>
+
+        <div
+          class="tm-availability-picker"
+          data-availability-picker
+          data-dates-url="/book/{{ shop_slug }}/available-dates"
+          data-times-url="/book/{{ shop_slug }}/available-times"
+          data-time-target="#requested_time"
+          data-message-target="[data-time-message]"
+        >
+          <input
+            id="requested_date"
+            name="requested_date"
+            type="hidden"
+            data-availability-date
+            data-pro-date-clear="off"
+            data-tm-date-clear="off"
+            value="{{ form.requested_date if form else '' }}"
+            required
+          >
+
+          <div class="tm-availability-calendar">
+            <div class="tm-availability-head">
+              <button
+                class="tm-availability-nav"
+                type="button"
+                data-availability-prev
+                aria-label="Previous month"
+              >
+                ‹
+              </button>
+
+              <div
+                class="tm-availability-month"
+                data-availability-month
+                aria-live="polite"
+              ></div>
+
+              <button
+                class="tm-availability-nav"
+                type="button"
+                data-availability-next
+                aria-label="Next month"
+              >
+                ›
+              </button>
+            </div>
+
+            <div class="tm-availability-weekdays" aria-hidden="true">
+              <span>Sun</span>
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+            </div>
+
+            <div
+              class="tm-availability-days"
+              data-availability-days
+              role="group"
+              aria-label="Available booking dates"
+            ></div>
+
+            <div class="tm-availability-legend">
+              <span>Available</span>
+              <span class="is-unavailable">Unavailable</span>
+            </div>
+          </div>
+
+          <div
+            class="tm-availability-status"
+            data-availability-status
+            aria-live="polite"
+          ></div>
+        </div>
+      </div>
+
+      <div>
+        <label class="tm-label" for="requested_time">
+          Preferred Drop-Off / Appointment Time
+        </label>
+
+        <select
+          class="tm-input"
+          id="requested_time"
+          name="requested_time"
+          data-selected-time="{{ form.requested_time if form else '' }}"
+          required
+          disabled
+        >
+          <option value="">Select an available drop-off time</option>
+        </select>
+
+        <p
+          class="tm-book-time-message"
+          data-time-message
+          aria-live="polite"
+        ></p>
+
+        <p class="tm-book-time-helper">
+          This is your preferred drop-off or appointment time. Repair duration depends on the service, inspection, parts availability, and shop schedule.
+        </p>
+      </div>
+
       <div class="tm-book-wide tm-book-photo-card">
         <h2 class="tm-book-photo-title">
           Photos of the Vehicle / Issue
@@ -346,15 +460,6 @@
           hidden
         >
 
-        <input
-          id="vehicle_photos"
-          name="vehicle_photos"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-          multiple
-          hidden
-        >
-
         <p class="tm-book-photo-note">Photos are optional.</p>
         <p class="tm-book-photo-note">Up to 5 photos.</p>
 
@@ -367,14 +472,6 @@
           id="vehicle-photo-preview"
           aria-live="polite"
         ></div>
-      </div>
-      <div>
-        <label class="tm-label" for="requested_time">Preferred Drop-Off / Appointment Time</label>
-        <select class="tm-input" id="requested_time" name="requested_time" data-selected-time="{{ form.requested_time if form else '' }}" required disabled>
-          <option value="">Select an available drop-off time</option>
-        </select>
-        <p class="tm-book-time-message" data-time-message aria-live="polite"></p>
-        <p class="tm-book-time-helper">This is your preferred drop-off or appointment time. Repair duration depends on the service, inspection, parts availability, and shop schedule.</p>
       </div>
       <div class="tm-book-wide">
         <h2 class="tm-book-section-title" style="margin-bottom:10px;">
