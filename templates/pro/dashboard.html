@@ -1694,7 +1694,7 @@
         type="button"
         data-copy-dashboard-booking-link
       >
-        <span class="tm-appointment-notification-label" data-booking-link-label>Copy Booking Link</span>
+        <span class="tm-appointment-notification-label" data-booking-link-label>Share Booking Link</span>
       </button>
     </div>
   </section>
@@ -1755,28 +1755,49 @@
   const bookingUrl = `${window.location.origin}/book/torquemech`;
   const originalLabel = label.textContent;
 
+  async function copyBookingLink() {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(bookingUrl);
+      return;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = bookingUrl;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+
   button.addEventListener("click", async () => {
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(bookingUrl);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = bookingUrl;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        textarea.remove();
+      if (navigator.share) {
+        await navigator.share({
+          title: "Book with TorqueMech",
+          text: "Use this link to request an appointment.",
+          url: bookingUrl
+        });
+        return;
       }
 
-      label.textContent = "Booking Link Copied";
+      await copyBookingLink();
+      label.textContent = "Link Copied";
       window.setTimeout(() => {
         label.textContent = originalLabel;
       }, 1800);
-    } catch (_) {
-      label.textContent = "Unable to Copy Link";
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+
+      try {
+        await copyBookingLink();
+        label.textContent = "Link Copied";
+      } catch (_) {
+        label.textContent = "Unable to Share Link";
+      }
+
       window.setTimeout(() => {
         label.textContent = originalLabel;
       }, 1800);
