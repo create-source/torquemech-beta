@@ -90,7 +90,27 @@
     line-height: 1.45;
     margin: 7px 0 0;
   }
-  .tm-book-date-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .tm-book-date-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .tm-availability-picker {
+    width: 100%;
+  }
+
+  .tm-availability-calendar {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .tm-book-date-clear {
+    border: 0;
+    border-radius: 999px;
+    ...
+  }
   .tm-book-date-clear {
     border: 0;
     border-radius: 999px;
@@ -114,6 +134,114 @@
   .tm-book-form .tm-input { min-height: 46px; }
   .tm-book-form textarea.tm-input { min-height: 112px; }
   .tm-book-submit { min-height: 48px; font-size: 1rem; }
+
+  .tm-book-photo-card {
+    padding: 14px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .tm-book-photo-title {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+
+  .tm-book-photo-description {
+    margin: 0 0 10px;
+    color: #475569;
+    font-size: .88rem;
+    font-weight: 700;
+  }
+
+  .tm-book-photo-button:hover {
+    background: #0d8f85;
+  }
+  .tm-book-photo-note {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: .82rem;
+  }
+
+  .tm-book-photo-status {
+    margin: 4px 0 0;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 800;
+  }
+
+  .tm-book-photo-picker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-height: 42px;
+    padding: 11px 14px;
+    cursor: pointer;
+  }
+
+  .tm-book-photo-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.tm-book-photo-preview-item {
+  position: relative;
+  width: 120px;
+  height: 90px;
+  flex: 0 0 120px;
+}
+
+.tm-book-photo-preview-item img {
+  display: block;
+  width: 120px !important;
+  height: 90px !important;
+  max-width: 120px !important;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
+
+.tm-book-photo-remove {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+
+  width: 24px !important;
+  min-width: 24px !important;
+  max-width: 24px !important;
+
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-radius: 50% !important;
+
+  background: rgba(15, 23, 42, .88) !important;
+  color: #fff !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+
+  cursor: pointer;
+  z-index: 2;
+}
+
+.tm-book-photo-remove:hover {
+  background: #dc2626 !important;
+}
   @media (max-width: 640px) {
     .tm-book-form { grid-template-columns: 1fr; }
     .tm-book-form .tm-btn { width: 100%; }
@@ -159,7 +287,7 @@
   {% else %}
   <section class="tm-book-panel" aria-label="Schedule service">
     {% if warning %}<div class="tm-book-warning" role="alert">{{ warning }}</div>{% endif %}
-    <form class="tm-book-form" method="post" action="/book/{{ shop_slug }}">
+    <form class="tm-book-form" method="post" action="/book/{{ shop_slug }}" enctype="multipart/form-data">
       <input type="hidden" name="appointment_length_minutes" value="{{ booking_schedule.appointment_length_minutes }}">
       <p class="tm-book-form-intro">Choose a preferred date and time. The shop will review your request and confirm the final appointment window.</p>
       <h2 class="tm-book-section-title">Contact information</h2>
@@ -193,30 +321,52 @@
         <input class="tm-input" id="service_name" name="service_name" type="text" maxlength="220" value="{{ form.service_name if form else '' }}" required>
       </div>
       <h2 class="tm-book-section-title">Preferred appointment window</h2>
-      <div class="tm-book-wide">
-        <div class="tm-book-date-heading">
-          <label class="tm-label" for="requested_date">Preferred Date</label>
-          <button class="tm-book-date-clear" type="button" data-availability-clear aria-label="Clear preferred date" hidden>× Clear</button>
-        </div>
-        <div class="tm-availability-picker" data-availability-picker
-             data-dates-url="/book/{{ shop_slug }}/available-dates"
-             data-times-url="/book/{{ shop_slug }}/available-times"
-             data-time-target="#requested_time" data-message-target="[data-time-message]">
-          <input id="requested_date" name="requested_date" type="hidden" data-availability-date data-pro-date-clear="off" data-tm-date-clear="off" value="{{ form.requested_date if form else '' }}" required>
-          <div class="tm-availability-calendar">
-            <div class="tm-availability-head">
-              <button class="tm-availability-nav" type="button" data-availability-prev aria-label="Previous month">‹</button>
-              <div class="tm-availability-month" data-availability-month aria-live="polite"></div>
-              <button class="tm-availability-nav" type="button" data-availability-next aria-label="Next month">›</button>
-            </div>
-            <div class="tm-availability-weekdays" aria-hidden="true">
-              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-            </div>
-            <div class="tm-availability-days" data-availability-days role="group" aria-label="Available booking dates"></div>
-            <div class="tm-availability-legend"><span>Available</span><span class="is-unavailable">Unavailable</span></div>
-          </div>
-          <div class="tm-availability-status" data-availability-status aria-live="polite"></div>
-        </div>
+      <div class="tm-book-wide tm-book-photo-card">
+        <h2 class="tm-book-photo-title">
+          Photos of the Vehicle / Issue
+        </h2>
+
+        <p class="tm-book-photo-description">
+          Upload photos that may help the shop understand the problem before your appointment.
+        </p>
+
+        <label
+          class="tm-photo-upload-button tm-book-photo-picker"
+          for="vehicle_photos"
+        >
+          Add Photos
+        </label>
+
+        <input
+          id="vehicle_photos"
+          name="vehicle_photos"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          multiple
+          hidden
+        >
+
+        <input
+          id="vehicle_photos"
+          name="vehicle_photos"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          multiple
+          hidden
+        >
+
+        <p class="tm-book-photo-note">Photos are optional.</p>
+        <p class="tm-book-photo-note">Up to 5 photos.</p>
+
+        <p class="tm-book-photo-status" id="vehicle-photo-status">
+          No photos selected
+        </p>
+
+        <div
+          class="tm-book-photo-preview"
+          id="vehicle-photo-preview"
+          aria-live="polite"
+        ></div>
       </div>
       <div>
         <label class="tm-label" for="requested_time">Preferred Drop-Off / Appointment Time</label>
@@ -225,6 +375,37 @@
         </select>
         <p class="tm-book-time-message" data-time-message aria-live="polite"></p>
         <p class="tm-book-time-helper">This is your preferred drop-off or appointment time. Repair duration depends on the service, inspection, parts availability, and shop schedule.</p>
+      </div>
+      <div class="tm-book-wide">
+        <h2 class="tm-book-section-title" style="margin-bottom:10px;">
+          Photos of the Vehicle / Issue
+          <span class="tm-book-required">(optional)</span>
+        </h2>
+
+        <p class="tm-book-photo-helper">
+          Upload photos that may help the shop understand the issue before your appointment.
+          Examples include warning lights, leaks, damaged parts, tire wear, or anything unusual.
+        </p>
+
+        <label class="tm-book-photo-upload" for="vehicle_photos">
+          <span class="tm-book-photo-upload-title">Add Photos</span>
+          <span class="tm-book-photo-upload-subtitle">Up to 5 images</span>
+
+          <input
+            id="vehicle_photos"
+            name="vehicle_photos"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            multiple
+            hidden
+          >
+        </label>
+
+        <div
+          class="tm-book-photo-preview"
+          id="vehicle-photo-preview"
+          aria-live="polite"
+        ></div>
       </div>
       <div class="tm-book-wide">
         <label class="tm-label" for="notes">Notes or Message to the Shop</label>
@@ -293,4 +474,92 @@
 
 {% block page_js %}
 <script src="/static/available_date_picker.js?v={{ static_version('/static/available_date_picker.js') }}"></script>
+
+<script>
+(() => {
+  const photoInput = document.getElementById("vehicle_photos");
+  
+  const preview = document.getElementById("vehicle-photo-preview");
+  const status = document.getElementById("vehicle-photo-status");
+
+  if (!photoInput || !preview) return;
+
+  let selectedFiles = [];
+
+  const syncInputFiles = () => {
+    const dataTransfer = new DataTransfer();
+
+    selectedFiles.forEach((file) => {
+      dataTransfer.items.add(file);
+    });
+
+    photoInput.files = dataTransfer.files;
+  };
+
+  const renderPreviews = () => {
+    preview.innerHTML = "";
+
+    if (status) {
+      status.textContent =
+        selectedFiles.length === 0
+          ? "No photos selected"
+          : `${selectedFiles.length} photo${selectedFiles.length === 1 ? "" : "s"} selected`;
+    }
+
+    selectedFiles.forEach((file, index) => {
+      const item = document.createElement("div");
+      item.className = "tm-book-photo-preview-item";
+
+      const img = document.createElement("img");
+      img.alt = `Selected vehicle photo ${index + 1}`;
+
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      img.onload = () => URL.revokeObjectURL(objectUrl);
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "tm-book-photo-remove";
+      removeButton.setAttribute("aria-label", `Remove photo ${index + 1}`);
+      removeButton.textContent = "×";
+
+      removeButton.addEventListener("click", () => {
+        selectedFiles.splice(index, 1);
+        syncInputFiles();
+        renderPreviews();
+      });
+
+      item.appendChild(img);
+      item.appendChild(removeButton);
+      preview.appendChild(item);
+    });
+  };
+
+  photoInput.addEventListener("change", () => {
+    const incomingFiles = Array.from(photoInput.files || []);
+
+    incomingFiles.forEach((file) => {
+      if (selectedFiles.length >= 5) return;
+
+      const duplicate = selectedFiles.some(
+        (existing) =>
+          existing.name === file.name &&
+          existing.size === file.size &&
+          existing.lastModified === file.lastModified
+      );
+
+      if (!duplicate) {
+        selectedFiles.push(file);
+      }
+    });
+
+    syncInputFiles();
+    renderPreviews();
+
+    if (incomingFiles.length + selectedFiles.length > 5) {
+      alert("You can upload up to 5 photos.");
+    }
+  });
+})();
+</script>
 {% endblock %}
