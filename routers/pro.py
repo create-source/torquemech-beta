@@ -9145,6 +9145,45 @@ def repair_checklist_summary(
     }
 
 
+def repair_checklist_summaries_map(
+    conn: sqlite3.Connection,
+    repair_record_ids: set[int] | list[int] | tuple[int, ...],
+) -> dict[int, dict[str, int]]:
+    """Build checklist summaries for many repairs with one grouped query."""
+    repair_ids = sorted({int(value) for value in repair_record_ids if int(value or 0) > 0})
+    if not repair_ids:
+        return {}
+    ensure_repair_checklist_schema(conn)
+    placeholders = ",".join("?" for _ in repair_ids)
+    rows = conn.execute(
+        f"""
+        SELECT
+          repair_record_id,
+          COUNT(*) AS total,
+          SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) AS completed
+        FROM repair_checklist_items
+        WHERE repair_record_id IN ({placeholders})
+        GROUP BY repair_record_id
+        """,
+        repair_ids,
+    ).fetchall()
+    summaries: dict[int, dict[str, int]] = {
+        repair_id: {"completed": 0, "total": 0, "incomplete": 0, "percent": 0}
+        for repair_id in repair_ids
+    }
+    for row in rows:
+        repair_id = int(row["repair_record_id"] or 0)
+        total = int(row["total"] or 0)
+        completed = int(row["completed"] or 0)
+        summaries[repair_id] = {
+            "completed": completed,
+            "total": total,
+            "incomplete": max(total - completed, 0),
+            "percent": int(round((completed / total) * 100)) if total else 0,
+        }
+    return summaries
+
+
 def repair_completion_requires_checklist_override(
     conn: sqlite3.Connection,
     repair_record_id: int | None,
@@ -18159,16 +18198,17 @@ def pro_customer_vehicle_detail(
                 estimate_documents=estimate_document_records,
                 handoff_state=record["handoff_state"],
             )
-        seed_visual_references(conn)
+        # Seed/reference setup is handled outside the normal Vehicle Detail GET.
+        # Avoid write-heavy seed work and repeated full-table repair-intelligence reads here.
         visual_reference_records = load_visual_references_for_vehicle(conn, vehicle)
-        seed_repair_intelligence(conn)
         repair_intelligence_records = load_repair_intelligence_for_vehicle(conn, vehicle)
         for repair_record in repair_records:
-            repair_record["repair_intelligence_records"] = load_repair_intelligence_for_repair(
-                conn,
-                vehicle,
-                repair_record.get("repair_name"),
-            )
+            repair_name = repair_record.get("repair_name")
+            repair_record["repair_intelligence_records"] = [
+                record
+                for record in repair_intelligence_records
+                if repair_intelligence_matches_repair(record, repair_name)
+            ]
         linked_repair_record_ids = {
             int(record.get("linked_repair_record_id") or 0)
             for record in [*findings_records, *approval_records]
@@ -18179,10 +18219,10 @@ def pro_customer_vehicle_detail(
             for record in repair_records
             if record.get("id") and not repair_is_formally_completed(record)
         )
-        checklist_summaries = {
-            repair_record_id: repair_checklist_summary(conn, repair_record_id)
-            for repair_record_id in linked_repair_record_ids
-        }
+        checklist_summaries = repair_checklist_summaries_map(
+            conn,
+            linked_repair_record_ids,
+        )
     finally:
         conn.close()
 
