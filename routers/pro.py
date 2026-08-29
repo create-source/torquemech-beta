@@ -4392,7 +4392,84 @@ def customer_name(record: dict[str, Any]) -> str:
     name = f"{record.get('first_name') or ''} {record.get('last_name') or ''}".strip()
     return name or "Customer"
 
+def maintenance_status_key(row: sqlite3.Row, today: date) -> str:
+    record = dict(row)
 
+    current_mileage = record.get("current_mileage")
+    mileage_performed = record.get("mileage_performed")
+    interval_miles = record.get("interval_miles")
+    interval_months = record.get("interval_months")
+
+    library_defaults = maintenance_defaults_for(
+        record.get("service_type") or ""
+    )
+
+    if interval_miles is None:
+        interval_miles = library_defaults.get("interval_miles")
+
+    if interval_months is None:
+        interval_months = library_defaults.get("interval_months")
+
+    performed_date = parse_date_value(record.get("date_performed"))
+
+    due_mileage = record.get("due_mileage")
+    if due_mileage is None and mileage_performed is not None and interval_miles:
+        due_mileage = int(mileage_performed) + int(interval_miles)
+
+    due_date = parse_date_value(record.get("due_date"))
+    if due_date is None and performed_date and interval_months:
+        due_date = add_months(performed_date, int(interval_months))
+
+    if due_mileage is None and due_date is None:
+        return "unknown"
+
+    overdue_by_mileage = (
+        due_mileage is not None
+        and current_mileage is not None
+        and int(current_mileage) > due_mileage
+    )
+
+    overdue_by_date = (
+        due_date is not None
+        and today > due_date
+    )
+
+    if overdue_by_mileage or overdue_by_date:
+        return "overdue"
+
+    due_soon_by_mileage = (
+        due_mileage is not None
+        and current_mileage is not None
+        and int(current_mileage) <= due_mileage
+        and due_mileage - int(current_mileage) <= 1000
+    )
+
+    due_soon_by_date = (
+        due_date is not None
+        and today <= due_date
+        and due_date - today <= timedelta(days=30)
+    )
+
+    if due_soon_by_mileage or due_soon_by_date:
+        return "due_soon"
+
+    candidate_by_mileage = (
+        due_mileage is not None
+        and current_mileage is not None
+        and int(current_mileage) <= due_mileage
+        and due_mileage - int(current_mileage) <= 3000
+    )
+
+    candidate_by_date = (
+        due_date is not None
+        and today <= due_date
+        and due_date - today <= timedelta(days=90)
+    )
+
+    if candidate_by_mileage or candidate_by_date:
+        return "candidate"
+
+    return "future"
 def build_follow_up_record(row: sqlite3.Row, today: date) -> dict[str, Any]:
     record = dict(row)
     current_mileage = record.get("current_mileage")
@@ -13618,67 +13695,113 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
     )
 
     active_customers_clause = "COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'"
+    repair_scope_sql, repair_scope_params = shop_scope_where(shop_id, "c.shop_id")
+
+    repair_columns = {
+        row[1]
+        for row in conn.execute("PRAGMA table_info(repair_records)").fetchall()
+    }
+
+    repair_status_expr = (
+        "LOWER(REPLACE(COALESCE(rr.repair_work_status, ''), '-', '_'))"
+        if "repair_work_status" in repair_columns
+        else "''"
+    )
+
+    repair_summary = conn.execute(
+        f"""
+        SELECT
+        SUM(
+            CASE
+            WHEN COALESCE(rr.status, 'Open') <> 'Completed'
+            THEN 1 ELSE 0
+            END
+        ) AS open_count,
+
+        SUM(
+            CASE
+            WHEN COALESCE(rr.status, 'Open') <> 'Completed'
+            AND {repair_status_expr} NOT IN ('in_progress', 'waiting_parts')
+            THEN 1 ELSE 0
+            END
+        ) AS approved_count,
+
+        SUM(
+            CASE
+            WHEN COALESCE(rr.status, 'Open') <> 'Completed'
+            AND {repair_status_expr} = 'in_progress'
+            THEN 1 ELSE 0
+            END
+        ) AS in_progress_count,
+
+        SUM(
+            CASE
+            WHEN COALESCE(rr.status, 'Open') <> 'Completed'
+            AND {repair_status_expr} IN ('in_progress', 'waiting_parts')
+            THEN 1 ELSE 0
+            END
+        ) AS ready_to_complete_count,
+
+        SUM(
+            CASE
+            WHEN COALESCE(rr.status, '') = 'Completed'
+            AND invoice_hits.repair_record_id IS NULL
+            THEN 1 ELSE 0
+            END
+        ) AS not_invoiced_count,
+
+        SUM(
+            CASE
+            WHEN COALESCE(rr.status, '') = 'Completed'
+            AND invoice_hits.repair_record_id IS NOT NULL
+            THEN 1 ELSE 0
+            END
+        ) AS already_invoiced_count
+
+        FROM repair_records rr
+        JOIN customers c ON c.id = rr.customer_id
+
+        LEFT JOIN (
+        SELECT repair_record_id
+        FROM invoice_items
+        WHERE repair_record_id IS NOT NULL
+
+        UNION
+
+        SELECT repair_record_id
+        FROM invoices
+        WHERE repair_record_id IS NOT NULL
+        ) invoice_hits
+        ON invoice_hits.repair_record_id = rr.id
+
+        WHERE {active_customers_clause}
+        AND {repair_scope_sql}
+        AND COALESCE(rr.status, '') NOT IN ('Declined', 'Deleted', 'Denied')
+        """,
+        repair_scope_params,
+    ).fetchone()
+
     repair_counts = {
-        "open": 0,
-        "approved": 0,
-        "in_progress": 0,
-        "ready_to_complete": 0,
-        "not_invoiced": 0,
-        "already_invoiced": 0,
+        "open": int(repair_summary["open_count"] or 0),
+        "approved": int(repair_summary["approved_count"] or 0),
+        "in_progress": int(repair_summary["in_progress_count"] or 0),
+        "ready_to_complete": int(
+            repair_summary["ready_to_complete_count"] or 0
+        ),
+        "not_invoiced": int(repair_summary["not_invoiced_count"] or 0),
+        "already_invoiced": int(
+            repair_summary["already_invoiced_count"] or 0
+        ),
         "recently_invoiced": 0,
     }
-    repair_columns = {row[1] for row in conn.execute("PRAGMA table_info(repair_records)").fetchall()}
-    repair_status_select = (
-        "rr.repair_work_status"
-        if "repair_work_status" in repair_columns
-        else "'' AS repair_work_status"
-    )
-    repair_rows = [
-        dict(row)
-        for row in conn.execute(
-            f"""
-            SELECT
-              rr.id,
-              rr.status,
-              {repair_status_select},
-              rr.completed_at,
-              CASE WHEN invoice_hits.repair_record_id IS NULL THEN 0 ELSE 1 END AS is_invoiced
-            FROM repair_records rr
-            JOIN customers c ON c.id = rr.customer_id
-            LEFT JOIN (
-              SELECT DISTINCT repair_record_id
-              FROM invoice_items
-              WHERE repair_record_id IS NOT NULL
-              UNION
-              SELECT repair_record_id
-              FROM invoices
-              WHERE repair_record_id IS NOT NULL
-            ) invoice_hits ON invoice_hits.repair_record_id = rr.id
-            WHERE {active_customers_clause}
-              AND COALESCE(rr.status, '') NOT IN ('Declined', 'Deleted', 'Denied')
-            """
-        ).fetchall()
-    ]
-    for repair in repair_rows:
-        status = repair.get("status") or "Open"
-        repair_status = str(repair.get("repair_work_status") or "").strip().lower().replace("-", "_")
-        is_invoiced = bool(repair.get("is_invoiced"))
-        if status == "Completed":
-            if is_invoiced:
-                repair_counts["already_invoiced"] += 1
-            else:
-                repair_counts["not_invoiced"] += 1
-            continue
-        repair_counts["open"] += 1
-        if repair_status == "in_progress":
-            repair_counts["in_progress"] += 1
-            repair_counts["ready_to_complete"] += 1
-        elif repair_status == "waiting_parts":
-            repair_counts["ready_to_complete"] += 1
-        else:
-            repair_counts["approved"] += 1
 
     recent_invoice_cutoff = (today - timedelta(days=14)).isoformat()
+
+    invoice_scope_sql, invoice_scope_params = shop_scope_where(
+        shop_id,
+        "c.shop_id",
+    )
+
     repair_counts["recently_invoiced"] = int(
         conn.execute(
             f"""
@@ -13686,92 +13809,112 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
             FROM invoices i
             JOIN customers c ON c.id = i.customer_id
             WHERE {active_customers_clause}
-              AND COALESCE(i.created_at, '') >= ?
+            AND {invoice_scope_sql}
+            AND COALESCE(i.created_at, '') >= ?
             """,
-            (recent_invoice_cutoff,),
+            [*invoice_scope_params, recent_invoice_cutoff],
         ).fetchone()["count"]
         or 0
     )
+    finding_scope_sql, finding_scope_params = shop_scope_where(shop_id, "c.shop_id")
 
-    finding_counts = {"open": 0, "estimate_ready": 0, "approved_not_converted": 0, "deferred_declined": 0}
-    finding_counts["open"] = int(
-        conn.execute(
-            f"""
-            SELECT COUNT(*) AS count
-            FROM findings_records fr
-            JOIN customers c ON c.id = fr.customer_id
-            WHERE {active_customers_clause}
-              AND COALESCE(fr.status, 'Open') = 'Open'
-            """
-        ).fetchone()["count"]
-        or 0
-    )
-    finding_counts["estimate_ready"] = int(
+    finding_summary = conn.execute(
+        f"""
+        SELECT
+        SUM(
+            CASE
+            WHEN COALESCE(fr.status, 'Open') = 'Open'
+            THEN 1 ELSE 0
+            END
+        ) AS open_count,
+
+        SUM(
+            CASE
+            WHEN COALESCE(fr.status, '') = 'Approved'
+            AND (fr.linked_repair_record_id IS NULL OR fr.linked_repair_record_id = 0)
+            THEN 1 ELSE 0
+            END
+        ) AS approved_not_converted_count,
+
+        SUM(
+            CASE
+            WHEN COALESCE(fr.status, '') IN ('Deferred', 'Declined')
+            THEN 1 ELSE 0
+            END
+        ) AS deferred_declined_count
+
+        FROM findings_records fr
+        JOIN customers c ON c.id = fr.customer_id
+
+        WHERE {active_customers_clause}
+        AND {finding_scope_sql}
+        """,
+        finding_scope_params,
+    ).fetchone()
+
+    estimate_ready_count = int(
         conn.execute(
             f"""
             SELECT COUNT(DISTINCT fr.id) AS count
             FROM findings_records fr
             JOIN customers c ON c.id = fr.customer_id
             JOIN repair_estimate_documents red
-              ON red.finding_id = fr.id
-             AND red.customer_id = fr.customer_id
-             AND red.vehicle_id = fr.vehicle_id
+            ON red.finding_id = fr.id
+            AND red.customer_id = fr.customer_id
+            AND red.vehicle_id = fr.vehicle_id
             WHERE {active_customers_clause}
-            """
-        ).fetchone()["count"]
-        or 0
-    )
-    finding_counts["approved_not_converted"] = int(
-        conn.execute(
-            f"""
-            SELECT COUNT(*) AS count
-            FROM findings_records fr
-            JOIN customers c ON c.id = fr.customer_id
-            WHERE {active_customers_clause}
-              AND COALESCE(fr.status, '') = 'Approved'
-              AND (fr.linked_repair_record_id IS NULL OR fr.linked_repair_record_id = 0)
-            """
-        ).fetchone()["count"]
-        or 0
-    )
-    finding_counts["deferred_declined"] = int(
-        conn.execute(
-            f"""
-            SELECT COUNT(*) AS count
-            FROM findings_records fr
-            JOIN customers c ON c.id = fr.customer_id
-            WHERE {active_customers_clause}
-              AND COALESCE(fr.status, '') IN ('Deferred', 'Declined')
-            """
+            AND {finding_scope_sql}
+            """,
+            finding_scope_params,
         ).fetchone()["count"]
         or 0
     )
 
-    maintenance_counts = {"overdue": 0, "due_soon": 0, "candidate": 0}
-    shop_name = load_shop_name(conn)
+    finding_counts = {
+        "open": int(finding_summary["open_count"] or 0),
+        "estimate_ready": estimate_ready_count,
+        "approved_not_converted": int(
+            finding_summary["approved_not_converted_count"] or 0
+        ),
+        "deferred_declined": int(
+            finding_summary["deferred_declined_count"] or 0
+        ),
+    }
+
+    maintenance_counts = {
+        "overdue": 0,
+        "due_soon": 0,
+        "candidate": 0,
+    }
+
+    maintenance_scope_sql, maintenance_scope_params = shop_scope_where(
+        shop_id,
+        "c.shop_id",
+    )
+
     maintenance_rows = conn.execute(
         f"""
         SELECT
-          m.*,
-          c.first_name,
-          c.last_name,
-          c.phone,
-          c.email,
-          c.customer_status,
-          v.year AS vehicle_year,
-          v.make AS vehicle_make,
-          v.model AS vehicle_model,
-          v.mileage AS current_mileage,
-          ? AS shop_name
+        m.service_type,
+        m.date_performed,
+        m.mileage_performed,
+        m.interval_miles,
+        m.interval_months,
+        m.due_mileage,
+        m.due_date,
+        v.mileage AS current_mileage
         FROM maintenance_records m
         JOIN customers c ON c.id = m.customer_id
         JOIN customer_vehicles v ON v.id = m.vehicle_id
         WHERE {active_customers_clause}
+        AND {maintenance_scope_sql}
         """,
-        (shop_name,),
+        maintenance_scope_params,
     ).fetchall()
+
     for row in maintenance_rows:
-        status_key = build_follow_up_record(row, today).get("status_key")
+        status_key = maintenance_status_key(row, today)
+
         if status_key in maintenance_counts:
             maintenance_counts[status_key] += 1
 
@@ -16961,25 +17104,66 @@ async def public_booking_submit(request: Request, shop_slug: str):
 
 
 @router.get("/customers", response_class=HTMLResponse)
-def pro_customers(request: Request, q: str = "", status: str = "active"):
+def pro_customers(
+    request: Request,
+    q: str = "",
+    status: str = "active",
+    page: int = 1,
+):
     search = q.strip()
     status_filter = normalize_customer_status(status)
+
+    page_size = 50
+    page = max(1, page)
+
     conn = crm_db_conn()
     try:
         ensure_customer_status_schema(conn)
         shop_id = required_current_shop_id(conn, request)
+
         conditions = ["c.shop_id = ?"]
         params: list[Any] = [shop_id]
+
         if status_filter != "all":
-            conditions.append("COALESCE(NULLIF(c.customer_status, ''), 'active') = ?")
+            conditions.append(
+                "COALESCE(NULLIF(c.customer_status, ''), 'active') = ?"
+            )
             params.append(status_filter)
+
         if search:
             like = f"%{search}%"
             conditions.append(
-                "(c.first_name LIKE ? OR c.last_name LIKE ? OR c.phone LIKE ? OR c.email LIKE ?)"
+                "(c.first_name LIKE ? "
+                "OR c.last_name LIKE ? "
+                "OR c.phone LIKE ? "
+                "OR c.email LIKE ?)"
             )
             params.extend([like, like, like, like])
+
         where_clause = "WHERE " + " AND ".join(conditions)
+
+        total_customers = int(
+            conn.execute(
+                f"""
+                SELECT COUNT(*) AS count
+                FROM customers c
+                {where_clause}
+                """,
+                params,
+            ).fetchone()["count"]
+            or 0
+        )
+
+        total_pages = max(
+            1,
+            (total_customers + page_size - 1) // page_size,
+        )
+
+        if page > total_pages:
+            page = total_pages
+
+        offset = (page - 1) * page_size
+
         rows = conn.execute(
             f"""
             SELECT c.*, COUNT(v.id) AS vehicle_count
@@ -16990,11 +17174,16 @@ def pro_customers(request: Request, q: str = "", status: str = "active"):
             {where_clause}
             GROUP BY c.id
             ORDER BY c.updated_at DESC, c.created_at DESC, c.id DESC
+            LIMIT ? OFFSET ?
             """,
-            params,
+            [*params, page_size, offset],
         ).fetchall()
+
     finally:
         conn.close()
+
+    page_start = offset + 1 if total_customers else 0
+    page_end = min(offset + len(rows), total_customers)
 
     return templates.TemplateResponse(
         "pro/customers.html",
@@ -17003,9 +17192,16 @@ def pro_customers(request: Request, q: str = "", status: str = "active"):
             "customers": [dict(row) for row in rows],
             "q": search,
             "status_filter": status_filter,
+            "total_customers": total_customers,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages,
+            "page_start": page_start,
+            "page_end": page_end,
+            "has_previous_page": page > 1,
+            "has_next_page": page < total_pages,
         },
     )
-
 
 @router.get("/estimate-conversion", response_class=HTMLResponse)
 def pro_estimate_conversion_empty(request: Request):

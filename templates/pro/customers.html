@@ -196,6 +196,49 @@
       margin-left: 4px;
     }
   }
+
+  .tm-crm-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+  }
+
+  .tm-crm-pagination__summary,
+  .tm-crm-pagination__page {
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .tm-crm-pagination__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 640px) {
+    .tm-crm-pagination {
+      align-items: stretch;
+    }
+
+    .tm-crm-pagination__actions {
+      width: 100%;
+    }
+
+    .tm-crm-pagination__actions .tm-btn {
+      flex: 1 1 0;
+      text-align: center;
+    }
+
+    .tm-crm-pagination__page {
+      width: 100%;
+      text-align: center;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -213,7 +256,7 @@
       <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">Back to CRM</a>
 
       <div class="tm-crm-count tm-crm-count--desktop">
-        {{ customers|length }} customer{% if customers|length != 1 %}s{% endif %}
+        {{ total_customers }} customer{% if total_customers != 1 %}s{% endif %}
       </div>
     </div>
   </div>
@@ -268,7 +311,37 @@
         <div class="tm-crm-empty">No customers found.</div>
       {% endif %}
     </div>
+{% if total_pages > 1 %}
+<nav class="tm-crm-pagination" aria-label="Customer pages">
+  <div class="tm-crm-pagination__summary">
+    Showing {{ page_start }}–{{ page_end }} of {{ total_customers }}
+  </div>
 
+  <div class="tm-crm-pagination__actions">
+    {% if has_previous_page %}
+    <a
+      class="tm-btn tm-btn-secondary"
+      href="/pro/customers?page={{ page - 1 }}{% if status_filter != 'active' %}&status={{ status_filter }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}#customer-list"
+    >
+      Previous
+    </a>
+    {% endif %}
+
+    <span class="tm-crm-pagination__page">
+      Page {{ page }} of {{ total_pages }}
+    </span>
+
+    {% if has_next_page %}
+    <a
+      class="tm-btn tm-btn-secondary"
+      href="/pro/customers?page={{ page + 1 }}{% if status_filter != 'active' %}&status={{ status_filter }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}#customer-list"
+    >
+      Next
+    </a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
     {% if add_mode %}
     <details id="add-customer" class="tm-crm-add">
       <summary>Add Customer</summary>
