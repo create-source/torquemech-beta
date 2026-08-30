@@ -20131,7 +20131,6 @@ def pro_repair_record_detail(
         invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
         completion_progress = repair_completion_progress(completion)
         source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
-        seed_repair_intelligence(conn)
         repair_intelligence_records = load_repair_intelligence_for_repair(
             conn,
             vehicle,
@@ -21004,7 +21003,6 @@ def completion_detail_context(
     invoice_warnings = repair_invoice_warnings(repair) if not invoice else []
     completion_progress = repair_completion_progress(completion)
     source_finding = load_repair_source_finding_for_detail(conn, repair, customer_id, vehicle_id)
-    seed_repair_intelligence(conn)
     repair_intelligence_records = load_repair_intelligence_for_repair(
         conn,
         vehicle,
