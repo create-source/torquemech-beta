@@ -1,0 +1,366 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ queue_title }} | TorqueMech Pro{% endblock %}
+
+{% block page_css %}
+<style>
+  body {
+    background: #08111e;
+    color: #f8fafc;
+  }
+
+  .tm-queue-shell {
+    display: grid;
+    gap: 16px;
+    padding-top: 22px;
+    padding-bottom: 36px;
+  }
+
+  .tm-queue-header {
+    display: grid;
+    gap: 8px;
+    padding: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 14px;
+    background:
+      radial-gradient(
+        circle at 90% 10%,
+        rgba(249, 115, 22, 0.18),
+        transparent 34%
+      ),
+      linear-gradient(
+        145deg,
+        #111d2f 0%,
+        #0c1727 100%
+      );
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.2);
+  }
+
+  .tm-queue-eyebrow {
+    color: #fb923c;
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .tm-queue-header h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(1.55rem, 3vw, 2.2rem);
+    line-height: 1.1;
+  }
+
+  .tm-queue-header p {
+    margin: 0;
+    max-width: 760px;
+    color: #b9c8dc;
+    line-height: 1.5;
+  }
+
+  .tm-queue-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .tm-queue-nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 9px;
+    background: #111c2d;
+    color: #f8fafc;
+    font-size: 0.86rem;
+    font-weight: 900;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .tm-queue-nav a:hover {
+    border-color: rgba(249, 115, 22, 0.55);
+    background: #18263b;
+  }
+
+  .tm-queue-nav a.is-active {
+    border-color: #f97316;
+    background: rgba(249, 115, 22, 0.14);
+    color: #fdba74;
+  }
+
+  .tm-queue-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-queue-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 12px;
+    background:
+      linear-gradient(
+        145deg,
+        #111c2d 0%,
+        #0d1828 100%
+      );
+  }
+
+  .tm-queue-card-main {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .tm-queue-card h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.02rem;
+    line-height: 1.3;
+  }
+
+  .tm-queue-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .tm-queue-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 8px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.035);
+    color: #cbd5e1;
+    font-size: 0.76rem;
+    font-weight: 800;
+  }
+
+  .tm-queue-chip--status {
+    border-color: rgba(249, 115, 22, 0.28);
+    background: rgba(249, 115, 22, 0.09);
+    color: #fdba74;
+  }
+
+  .tm-queue-description {
+    margin: 0;
+    color: #a9b6c8;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .tm-queue-actions {
+    display: grid;
+    gap: 8px;
+    min-width: 150px;
+  }
+
+  .tm-queue-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid #f97316;
+    border-radius: 9px;
+    background: #f97316;
+    color: #111827;
+    font-size: 0.84rem;
+    font-weight: 900;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .tm-queue-action:hover {
+    background: #fb923c;
+  }
+
+  .tm-queue-action--secondary {
+    border-color: rgba(148, 163, 184, 0.3);
+    background: #182536;
+    color: #f8fafc;
+  }
+
+  .tm-queue-empty {
+    padding: 24px 18px;
+    border: 1px dashed rgba(148, 163, 184, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    color: #a9b6c8;
+    text-align: center;
+  }
+
+  .tm-queue-back {
+    display: inline-flex;
+    width: fit-content;
+    color: #fb923c;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .tm-queue-back:hover {
+    color: #fdba74;
+  }
+
+  @media (max-width: 760px) {
+    .tm-queue-shell {
+      padding-top: 14px;
+    }
+
+    .tm-queue-nav {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .tm-queue-card {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-queue-actions {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tm-queue-nav {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-queue-header {
+      padding: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-queue-shell">
+
+  <a class="tm-queue-back" href="/pro/dashboard">
+    ← Back to Command Center
+  </a>
+
+  <header class="tm-queue-header">
+    <div class="tm-queue-eyebrow">Estimates &amp; Approvals</div>
+
+    <h1>{{ queue_title }}</h1>
+
+    <p>{{ queue_description }}</p>
+  </header>
+
+  <nav class="tm-queue-nav" aria-label="Estimate and approval queues">
+    <a
+      href="/pro/estimate-approvals?queue=open"
+      class="{% if selected_queue == 'open' %}is-active{% endif %}"
+    >
+      Open Findings
+    </a>
+
+    <a
+      href="/pro/estimate-approvals?queue=estimates"
+      class="{% if selected_queue == 'estimates' %}is-active{% endif %}"
+    >
+      Estimates Ready
+    </a>
+
+    <a
+      href="/pro/estimate-approvals?queue=approved"
+      class="{% if selected_queue == 'approved' %}is-active{% endif %}"
+    >
+      Approved
+    </a>
+
+    <a
+      href="/pro/estimate-approvals?queue=deferred"
+      class="{% if selected_queue == 'deferred' %}is-active{% endif %}"
+    >
+      Deferred / Declined
+    </a>
+  </nav>
+
+  {% if records %}
+  <div class="tm-queue-list">
+
+    {% for record in records %}
+    <article class="tm-queue-card">
+
+      <div class="tm-queue-card-main">
+
+        <h2>
+          {{ record.customer_name }}
+          {% if record.vehicle_label %}
+            — {{ record.vehicle_label }}
+          {% endif %}
+        </h2>
+
+        <div class="tm-queue-meta">
+          <span class="tm-queue-chip tm-queue-chip--status">
+            {{ record.status }}
+          </span>
+
+          {% if record.severity %}
+          <span class="tm-queue-chip">
+            {{ record.severity }}
+          </span>
+          {% endif %}
+
+          {% if record.display_date %}
+          <span class="tm-queue-chip">
+            {{ record.display_date }}
+          </span>
+          {% endif %}
+        </div>
+
+        {% if record.finding %}
+        <p class="tm-queue-description">
+          <strong>Finding:</strong> {{ record.finding }}
+        </p>
+        {% endif %}
+
+        {% if record.recommendation %}
+        <p class="tm-queue-description">
+          <strong>Recommendation:</strong> {{ record.recommendation }}
+        </p>
+        {% endif %}
+
+      </div>
+
+      <div class="tm-queue-actions">
+
+        <a class="tm-queue-action" href="{{ record.detail_url }}">
+          {{ record.primary_action_label }}
+        </a>
+
+        {% if record.estimate_url %}
+        <a
+          class="tm-queue-action tm-queue-action--secondary"
+          href="{{ record.estimate_url }}"
+        >
+          View Estimate
+        </a>
+        {% endif %}
+
+      </div>
+
+    </article>
+    {% endfor %}
+
+  </div>
+
+  {% else %}
+
+  <div class="tm-queue-empty">
+    {{ empty_message }}
+  </div>
+
+  {% endif %}
+
+</section>
+{% endblock %}

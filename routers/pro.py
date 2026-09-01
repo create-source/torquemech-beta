@@ -13975,7 +13975,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
             "title": "Active Work",
             "empty": "No active repairs need attention right now.",
             "cards": [
-                dashboard_card(
+    dashboard_card(
     "Open Repairs",
     repair_counts["open"],
     "Active jobs not completed yet.",
@@ -14009,10 +14009,34 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
             "title": "Estimates & Approvals",
             "empty": "No findings or approval follow-ups are waiting.",
             "cards": [
-                dashboard_card("Open Findings", finding_counts["open"], "Findings still waiting on a decision.", "/pro/customers", "Review Findings"),
-                dashboard_card("Estimates Ready", finding_counts["estimate_ready"], "Saved estimate PDFs are available.", "/pro/customers", "Open Estimates"),
-                dashboard_card("Approved Not Converted", finding_counts["approved_not_converted"], "Approved findings without repair records.", "/pro/approvals", "Review Queue"),
-                dashboard_card("Deferred / Declined", finding_counts["deferred_declined"], "Customer decisions to revisit later.", "/pro/approvals", "Review Decisions"),
+    dashboard_card(
+        "Open Findings",
+        finding_counts["open"],
+        "Findings still waiting on a decision.",
+        "/pro/estimate-approvals?queue=open",
+        "Review Findings",
+    ),
+    dashboard_card(
+        "Estimates Ready",
+        finding_counts["estimate_ready"],
+        "Saved estimate PDFs are available.",
+        "/pro/estimate-approvals?queue=estimates",
+        "Open Estimates",
+    ),
+    dashboard_card(
+        "Approved Not Converted",
+        finding_counts["approved_not_converted"],
+        "Approved findings without repair records.",
+        "/pro/estimate-approvals?queue=approved",
+        "Review Queue",
+    ),
+    dashboard_card(
+        "Deferred / Declined",
+        finding_counts["deferred_declined"],
+        "Customer decisions to revisit later.",
+        "/pro/estimate-approvals?queue=deferred",
+        "Review Decisions",
+    ),
             ],
         },
         {
@@ -15320,6 +15344,221 @@ def pro_active_jobs(
             "selected_status": selected_status,
             "selected_status_label": filter_labels[selected_status],
             "filter_labels": filter_labels,
+        },
+    )
+
+@router.get("/estimate-approvals", response_class=HTMLResponse)
+def pro_estimate_approvals(
+    request: Request,
+    queue: str = "open",
+):
+    allowed_queues = {
+        "open",
+        "estimates",
+        "approved",
+        "deferred",
+    }
+
+    selected_queue = str(queue or "open").strip().lower()
+    if selected_queue not in allowed_queues:
+        selected_queue = "open"
+
+    queue_config = {
+        "open": {
+            "title": "Open Findings",
+            "description": "Findings still waiting for a customer decision.",
+            "empty": "No open findings are waiting for a decision.",
+            "action": "Review Finding",
+        },
+        "estimates": {
+            "title": "Estimates Ready",
+            "description": "Prepared estimates that are ready to review or send to the customer.",
+            "empty": "No prepared estimates are waiting.",
+            "action": "Review Finding",
+        },
+        "approved": {
+            "title": "Approved Not Converted",
+            "description": "Customer-approved findings that have not been converted into repair jobs yet.",
+            "empty": "No approved findings are waiting to become repair jobs.",
+            "action": "Open Approved Finding",
+        },
+        "deferred": {
+            "title": "Deferred / Declined",
+            "description": "Customer decisions that were deferred or declined and may need follow-up later.",
+            "empty": "No deferred or declined findings are waiting.",
+            "action": "Review Decision",
+        },
+    }
+
+    conn = crm_db_conn()
+
+    try:
+        ensure_customer_status_schema(conn)
+        ensure_findings_records_schema(conn)
+        ensure_repair_estimate_documents_schema(conn)
+
+        shop_id = required_current_shop_id(conn, request)
+
+        conditions = [
+            "c.shop_id = ?",
+            "v.shop_id = ?",
+            "v.customer_id = c.id",
+            "fr.customer_id = c.id",
+            "fr.vehicle_id = v.id",
+            "COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'",
+        ]
+        params: list[Any] = [shop_id, shop_id]
+
+        if selected_queue == "open":
+            conditions.append(
+                "COALESCE(NULLIF(fr.status, ''), 'Open') = 'Open'"
+            )
+
+        elif selected_queue == "estimates":
+            conditions.append(
+                """
+                EXISTS (
+                    SELECT 1
+                    FROM repair_estimate_documents red_check
+                    WHERE red_check.finding_id = fr.id
+                      AND red_check.customer_id = fr.customer_id
+                      AND red_check.vehicle_id = fr.vehicle_id
+                )
+                """
+            )
+
+        elif selected_queue == "approved":
+            conditions.append(
+                "COALESCE(fr.status, '') = 'Approved'"
+            )
+            conditions.append(
+                "(fr.linked_repair_record_id IS NULL OR fr.linked_repair_record_id = 0)"
+            )
+
+        elif selected_queue == "deferred":
+            conditions.append(
+                "COALESCE(fr.status, '') IN ('Deferred', 'Declined')"
+            )
+
+        rows = conn.execute(
+            f"""
+            SELECT
+                fr.*,
+
+                c.first_name,
+                c.last_name,
+
+                v.year AS vehicle_year,
+                v.make AS vehicle_make,
+                v.model AS vehicle_model,
+
+                (
+                    SELECT red.id
+                    FROM repair_estimate_documents red
+                    WHERE red.finding_id = fr.id
+                      AND red.customer_id = fr.customer_id
+                      AND red.vehicle_id = fr.vehicle_id
+                    ORDER BY
+                        red.estimate_date DESC,
+                        red.created_at DESC,
+                        red.id DESC
+                    LIMIT 1
+                ) AS latest_estimate_id
+
+            FROM findings_records fr
+
+            JOIN customers c
+              ON c.id = fr.customer_id
+
+            JOIN customer_vehicles v
+              ON v.id = fr.vehicle_id
+
+            WHERE {" AND ".join(conditions)}
+
+            ORDER BY
+                COALESCE(fr.finding_date, '') DESC,
+                COALESCE(fr.created_at, '') DESC,
+                fr.id DESC
+            """,
+            params,
+        ).fetchall()
+
+        records = []
+
+        for row in rows:
+            record = dict(row)
+
+            customer_label = " ".join(
+                part
+                for part in [
+                    str(record.get("first_name") or "").strip(),
+                    str(record.get("last_name") or "").strip(),
+                ]
+                if part
+            ).strip() or "Customer"
+
+            vehicle_label_value = " ".join(
+                part
+                for part in [
+                    str(record.get("vehicle_year") or "").strip(),
+                    str(record.get("vehicle_make") or "").strip(),
+                    str(record.get("vehicle_model") or "").strip(),
+                ]
+                if part
+            ).strip() or "Vehicle"
+
+            customer_id = int(record["customer_id"])
+            vehicle_id = int(record["vehicle_id"])
+            finding_id = int(record["id"])
+
+            detail_url = (
+                f"/pro/customers/{customer_id}"
+                f"/vehicles/{vehicle_id}"
+                f"/findings/{finding_id}"
+            )
+
+            estimate_id = optional_int_value(
+                record.get("latest_estimate_id")
+            )
+
+            estimate_url = ""
+            if estimate_id:
+                estimate_url = estimate_document_url(
+                    customer_id,
+                    vehicle_id,
+                    estimate_id,
+                )
+
+            record.update(
+                {
+                    "customer_name": customer_label,
+                    "vehicle_label": vehicle_label_value,
+                    "detail_url": detail_url,
+                    "estimate_url": estimate_url,
+                    "primary_action_label": queue_config[selected_queue]["action"],
+                    "display_date": format_pro_datetime(
+                    record.get("finding_date")
+                    or record.get("created_at")
+                ),
+                }
+            )
+
+            records.append(record)
+
+    finally:
+        conn.close()
+
+    config = queue_config[selected_queue]
+
+    return templates.TemplateResponse(
+        "pro/estimate_approvals_queue.html",
+        {
+            "request": request,
+            "selected_queue": selected_queue,
+            "queue_title": config["title"],
+            "queue_description": config["description"],
+            "empty_message": config["empty"],
+            "records": records,
         },
     )
 
