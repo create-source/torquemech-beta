@@ -1,0 +1,244 @@
+{% extends "layout.html" %}
+
+{% block title %}Active Jobs | TorqueMech{% endblock %}
+
+{% block page_css %}
+<style>
+  .tm-active-jobs {
+    display: grid;
+    gap: 18px;
+    padding-top: 22px;
+    padding-bottom: 36px;
+  }
+
+  .tm-active-jobs-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .tm-active-jobs-head h1 {
+    margin: 0;
+    color: #f8fafc;
+  }
+
+  .tm-active-jobs-head p {
+    margin: 6px 0 0;
+    color: #a9b6c8;
+  }
+
+  .tm-active-job-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tm-active-job-filter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 9px;
+    background: #111c2d;
+    color: #dbeafe;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .tm-active-job-filter:hover,
+  .tm-active-job-filter:focus-visible {
+    border-color: rgba(249, 115, 22, 0.6);
+    color: #ffffff;
+  }
+
+  .tm-active-job-filter.is-active {
+    border-color: #f97316;
+    background: rgba(249, 115, 22, 0.16);
+    color: #fdba74;
+  }
+
+  .tm-active-job-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .tm-active-job {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 12px;
+    background:
+      linear-gradient(
+        145deg,
+        #182536 0%,
+        #111b29 100%
+      );
+  }
+
+  .tm-active-job-main {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .tm-active-job-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+  }
+
+  .tm-active-job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    color: #b9c8dc;
+    font-size: 0.88rem;
+  }
+
+  .tm-active-job-status {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    min-height: 28px;
+    padding: 4px 9px;
+    border: 1px solid rgba(249, 115, 22, 0.28);
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.10);
+    color: #fdba74;
+    font-size: 0.76rem;
+    font-weight: 900;
+  }
+
+  .tm-active-job-action {
+    min-width: 150px;
+  }
+
+  .tm-active-job-empty {
+    padding: 22px;
+    border: 1px dashed rgba(148, 163, 184, 0.28);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    color: #a9b6c8;
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .tm-active-jobs {
+      padding-top: 14px;
+    }
+
+    .tm-active-jobs-head {
+      align-items: stretch;
+    }
+
+    .tm-active-job-filters {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .tm-active-job {
+      grid-template-columns: 1fr;
+    }
+
+    .tm-active-job-action {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="tm-pro-shell tm-active-jobs">
+
+  <div class="tm-active-jobs-head">
+    <div>
+      <div class="tm-pro-eyebrow">Command Center</div>
+      <h1 class="tm-pro-title">Active Jobs</h1>
+      <p>
+        {{ selected_status_label }}
+        — {{ jobs|length }} job{% if jobs|length != 1 %}s{% endif %}
+      </p>
+    </div>
+
+    <a class="tm-btn tm-btn-secondary" href="/pro/dashboard">
+      Back to Command Center
+    </a>
+  </div>
+
+  <nav class="tm-active-job-filters" aria-label="Active job filters">
+    {% for key, label in filter_labels.items() %}
+    <a
+      class="tm-active-job-filter{% if selected_status == key %} is-active{% endif %}"
+      href="/pro/active-jobs?status={{ key }}"
+    >
+      {{ label }}
+    </a>
+    {% endfor %}
+  </nav>
+
+  <div class="tm-active-job-list">
+    {% if jobs %}
+
+      {% for job in jobs %}
+      <article class="tm-active-job">
+
+        <div class="tm-active-job-main">
+
+          <span class="tm-active-job-status">
+            {{ job.status_label }}
+          </span>
+
+          <h2 class="tm-active-job-title">
+            {{ job.repair_name or "Repair Job" }}
+          </h2>
+
+          <div class="tm-active-job-meta">
+            <span>{{ job.customer_name }}</span>
+            <span>•</span>
+            <span>{{ job.vehicle_label }}</span>
+
+            {% if job.current_mileage is not none %}
+            <span>•</span>
+            <span>{{ job.current_mileage|pro_miles }} miles</span>
+            {% endif %}
+          </div>
+
+          {% if job.repair_date %}
+          <div class="tm-active-job-meta">
+            <span>Repair date {{ job.repair_date|pro_date }}</span>
+          </div>
+          {% endif %}
+
+        </div>
+
+        <a
+          class="tm-btn tm-btn-primary tm-active-job-action"
+          href="{{ job.repair_url }}"
+        >
+          Open Repair
+        </a>
+
+      </article>
+      {% endfor %}
+
+    {% else %}
+
+      <div class="tm-active-job-empty">
+        No {{ selected_status_label|lower }} jobs need attention.
+      </div>
+
+    {% endif %}
+  </div>
+
+</section>
+{% endblock %}

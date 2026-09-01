@@ -13975,10 +13975,34 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
             "title": "Active Work",
             "empty": "No active repairs need attention right now.",
             "cards": [
-                dashboard_card("Open Repairs", repair_counts["open"], "Active jobs not completed yet.", "/pro/customers#customer-list", "Find Repair"),
-                dashboard_card("Approved Repairs", repair_counts["approved"], "Approved work ready to start.", "/pro/approvals", "Review Approvals"),
-                dashboard_card("In Progress Repairs", repair_counts["in_progress"], "Jobs currently being worked.", "/pro/customers#customer-list", "View Active Jobs"),
-                dashboard_card("Ready to Complete", repair_counts["ready_to_complete"], "Started work ready for final checks.", "/pro/customers#customer-list", "Complete Repairs"),
+                dashboard_card(
+    "Open Repairs",
+    repair_counts["open"],
+    "Active jobs not completed yet.",
+    "/pro/active-jobs?status=open",
+    "Find Repair",
+    ),
+    dashboard_card(
+        "Approved Repairs",
+        repair_counts["approved"],
+        "Approved work ready to start.",
+        "/pro/active-jobs?status=approved",
+        "Start Repair",
+    ),
+    dashboard_card(
+        "In Progress Repairs",
+        repair_counts["in_progress"],
+        "Jobs currently being worked.",
+        "/pro/active-jobs?status=in_progress",
+        "View Active Jobs",
+    ),
+    dashboard_card(
+        "Ready to Complete",
+        repair_counts["ready_to_complete"],
+        "Started work ready for final checks.",
+        "/pro/active-jobs?status=ready_to_complete",
+        "Complete Repairs",
+    ),
             ],
         },
         {
@@ -14037,7 +14061,7 @@ def build_pro_dashboard_summary(conn: sqlite3.Connection, shop_id: int | None = 
                 "pending_count": pending_appointment_count,
             },
             {"label": "Shop Settings", "href": "/pro/shop-settings"},
-            {"label": "View Active Jobs", "href": "/pro/customers#customer-list"},
+            {"label": "View Active Jobs", "href": "/pro/active-jobs"},
         ],
     }
 
@@ -15125,6 +15149,179 @@ def pro_dashboard(request: Request, welcome: int = 0):
         },
     )
 
+@router.get("/active-jobs", response_class=HTMLResponse)
+def pro_active_jobs(
+    request: Request,
+    status: str = "all",
+):
+    allowed_statuses = {
+        "all",
+        "open",
+        "approved",
+        "in_progress",
+        "ready_to_complete",
+    }
+
+    selected_status = str(status or "all").strip().lower()
+    if selected_status not in allowed_statuses:
+        selected_status = "all"
+
+    conn = crm_db_conn()
+    try:
+        ensure_customer_status_schema(conn)
+        ensure_repair_records_schema(conn)
+
+        shop_id = required_current_shop_id(conn, request)
+
+        repair_columns = {
+            row[1]
+            for row in conn.execute(
+                "PRAGMA table_info(repair_records)"
+            ).fetchall()
+        }
+
+        repair_status_expr = (
+            "LOWER(REPLACE(COALESCE(rr.repair_work_status, ''), '-', '_'))"
+            if "repair_work_status" in repair_columns
+            else "''"
+        )
+
+        conditions = [
+            "c.shop_id = ?",
+            "COALESCE(NULLIF(c.customer_status, ''), 'active') = 'active'",
+            "COALESCE(rr.status, '') NOT IN ('Completed', 'Declined', 'Deleted', 'Denied')",
+        ]
+        params: list[Any] = [shop_id]
+
+        if selected_status == "approved":
+            conditions.append(
+                f"{repair_status_expr} NOT IN ('in_progress', 'waiting_parts')"
+            )
+
+        elif selected_status == "in_progress":
+            conditions.append(
+                f"{repair_status_expr} = 'in_progress'"
+            )
+
+        elif selected_status == "ready_to_complete":
+            conditions.append(
+                f"{repair_status_expr} IN ('in_progress', 'waiting_parts')"
+            )
+
+        where_clause = " AND ".join(conditions)
+
+        rows = conn.execute(
+            f"""
+            SELECT
+            rr.id,
+            rr.customer_id,
+            rr.vehicle_id,
+            rr.repair_name,
+            rr.repair_date,
+            rr.status,
+            {repair_status_expr} AS repair_work_status_key,
+            rr.created_at,
+
+            c.first_name,
+            c.last_name,
+
+            v.year AS vehicle_year,
+            v.make AS vehicle_make,
+            v.model AS vehicle_model,
+            v.mileage AS current_mileage
+
+            FROM repair_records rr
+
+            JOIN customers c
+            ON c.id = rr.customer_id
+
+            JOIN customer_vehicles v
+            ON v.id = rr.vehicle_id
+            AND v.customer_id = rr.customer_id
+
+            WHERE {where_clause}
+
+            ORDER BY rr.created_at DESC, rr.id DESC
+            """,
+            params,
+        ).fetchall()
+
+        jobs = []
+
+        for row in rows:
+            job = dict(row)
+
+            work_status = str(
+                job.get("repair_work_status_key") or ""
+            ).strip().lower()
+
+            if work_status == "in_progress":
+                status_key = "in_progress"
+                status_label = "In Progress"
+
+            elif work_status == "waiting_parts":
+                status_key = "ready_to_complete"
+                status_label = "Ready to Complete"
+
+            elif work_status:
+                status_key = "approved"
+                status_label = "Approved"
+
+            else:
+                status_key = "open"
+                status_label = "Open"
+
+            job["status_key"] = status_key
+            job["status_label"] = status_label
+
+            job["customer_name"] = " ".join(
+                part
+                for part in [
+                    str(job.get("first_name") or "").strip(),
+                    str(job.get("last_name") or "").strip(),
+                ]
+                if part
+            ) or "Customer"
+
+            job["vehicle_label"] = " ".join(
+                part
+                for part in [
+                    str(job.get("vehicle_year") or "").strip(),
+                    str(job.get("vehicle_make") or "").strip(),
+                    str(job.get("vehicle_model") or "").strip(),
+                ]
+                if part
+            ) or "Vehicle"
+
+            job["repair_url"] = (
+                f"/pro/customers/{job['customer_id']}"
+                f"/vehicles/{job['vehicle_id']}"
+                f"/repairs/{job['id']}"
+            )
+
+            jobs.append(job)
+
+    finally:
+        conn.close()
+
+    filter_labels = {
+        "all": "All Active",
+        "open": "Open Repairs",
+        "approved": "Approved",
+        "in_progress": "In Progress",
+        "ready_to_complete": "Ready to Complete",
+    }
+
+    return templates.TemplateResponse(
+        "pro/active_jobs.html",
+        {
+            "request": request,
+            "jobs": jobs,
+            "selected_status": selected_status,
+            "selected_status_label": filter_labels[selected_status],
+            "filter_labels": filter_labels,
+        },
+    )
 
 @router.get("/admin", response_class=HTMLResponse)
 def pro_owner_admin_dashboard(request: Request, status: str = "all", account_type: str = "real", notice: str = "", error: str = ""):
