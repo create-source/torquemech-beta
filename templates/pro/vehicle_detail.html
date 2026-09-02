@@ -3915,28 +3915,30 @@
         <textarea class="tm-input" id="notes" name="notes" rows="4" maxlength="1200" placeholder="Vehicle-specific notes such as known issues, customer concerns, warranty context, or inspection reminders.">{{ vehicle.notes or "" }}</textarea>
       </div>
 
-      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button>
+      <button class="tm-btn tm-btn-primary" type="submit" style="margin-top:14px;">Save Vehicle</button> 
+      </form>
       <div class="tm-vehicle-danger-zone">
         <div>
-          <strong>Danger Zone</strong>
+          <strong>Archive Vehicle</strong>
           <p>
-            Permanently delete this vehicle only if it was added by mistake.
-            Vehicles with existing shop records cannot be deleted.
+            Hide this vehicle from active customer workflows while preserving
+            its findings, repairs, estimates, invoices, photos, maintenance,
+            and service history.
           </p>
         </div>
 
         <form
           method="post"
-          action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/delete"
-          onsubmit="return confirm('Permanently delete {{ vehicle.year or '' }} {{ vehicle.make or '' }} {{ vehicle.model or '' }}? This cannot be undone.');"
+          action="/pro/customers/{{ customer.id }}/vehicles/{{ vehicle.id }}/archive"
+          onsubmit="return confirm('Archive {{ vehicle.year or '' }} {{ vehicle.make or '' }} {{ vehicle.model or '' }}? Its history will be preserved.');"
         >
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button class="tm-btn tm-vehicle-delete-btn" type="submit">
-            Permanently Delete Vehicle
+            Archive Vehicle
           </button>
         </form>
       </div>
-    </form>
+    
   </details>
 
   <section class="tm-crm-panel" aria-label="Add finding or recommended work" style="margin-top:16px;">

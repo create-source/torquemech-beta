@@ -4907,6 +4907,10 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
     vehicle_columns = {row[1] for row in conn.execute("PRAGMA table_info(customer_vehicles)").fetchall()}
     if "shop_id" not in vehicle_columns:
         conn.execute("ALTER TABLE customer_vehicles ADD COLUMN shop_id INTEGER")
+
+    if "archived_at" not in vehicle_columns:
+        conn.execute("ALTER TABLE customer_vehicles ADD COLUMN archived_at TEXT")
+
     conn.execute(
         """
         UPDATE customers
@@ -18627,7 +18631,7 @@ def pro_customer_detail(
                 """
                 SELECT *
                 FROM customer_vehicles
-                WHERE customer_id = ? AND shop_id = ?
+                WHERE customer_id = ? AND shop_id = ? AND archived_at IS NULL
                 ORDER BY updated_at DESC, created_at DESC, id DESC
                 """,
                 (customer_id, shop_id),
@@ -19106,8 +19110,8 @@ async def pro_customer_vehicle_update(request: Request, customer_id: int, vehicl
         conn.close()
     return RedirectResponse(f"/pro/customers/{customer_id}/vehicles/{vehicle_id}", status_code=303)
 
-@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/delete")
-async def pro_customer_vehicle_delete(
+@router.post("/customers/{customer_id}/vehicles/{vehicle_id}/archive")
+async def pro_customer_vehicle_archive(
     request: Request,
     customer_id: int,
     vehicle_id: int,
@@ -19129,58 +19133,20 @@ async def pro_customer_vehicle_delete(
             shop_id,
         )
 
-        related_checks = [
-            ("findings_records", "vehicle_id"),
-            ("repair_records", "vehicle_id"),
-            ("maintenance_records", "vehicle_id"),
-            ("service_history_records", "vehicle_id"),
-            ("discrepancy_approvals", "vehicle_id"),
-            ("service_appointments", "vehicle_id"),
-            ("invoices", "vehicle_id"),
-            ("repair_estimate_documents", "vehicle_id"),
-        ]
-
-        for table_name, column_name in related_checks:
-            table_exists = conn.execute(
-                """
-                SELECT 1
-                FROM sqlite_master
-                WHERE type = 'table' AND name = ?
-                LIMIT 1
-                """,
-                (table_name,),
-            ).fetchone()
-
-            if not table_exists:
-                continue
-
-            related = conn.execute(
-                f"""
-                SELECT 1
-                FROM {table_name}
-                WHERE {column_name} = ?
-                LIMIT 1
-                """,
-                (vehicle_id,),
-            ).fetchone()
-
-            if related:
-                raise HTTPException(
-                    status_code=409,
-                    detail=(
-                        "This vehicle has existing TorqueMech records and "
-                        "cannot be permanently deleted."
-                    ),
-                )
+        now = datetime.utcnow().isoformat()
 
         cur = conn.execute(
             """
-            DELETE FROM customer_vehicles
+            UPDATE customer_vehicles
+            SET archived_at = ?,
+                updated_at = ?
             WHERE id = ?
               AND customer_id = ?
               AND shop_id = ?
             """,
             (
+                now,
+                now,
                 vehicle_id,
                 customer_id,
                 shop_id,
