@@ -194,6 +194,17 @@
     padding: 12px;
   }
   .tm-calendar-convert-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tm-calendar-customer-search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: end;
+    margin-bottom: 10px;
+  }
+  .tm-calendar-customer-search-row .tm-btn {
+    min-width: 104px;
+    min-height: 46px;
+  }
   .tm-calendar-convert-mode { display: flex; gap: 12px; flex-wrap: wrap; font-weight: 800; color: #334155; }
   .tm-calendar-linked {
     display: grid;
@@ -230,6 +241,12 @@
     .tm-calendar-reschedule > summary, .tm-calendar-reschedule-form .tm-btn { width: 100%; }
     .tm-calendar-convert > summary, .tm-calendar-convert-panel .tm-btn { width: 100%; }
     .tm-calendar-convert-grid { grid-template-columns: 1fr; }
+    .tm-calendar-customer-search-row {
+      grid-template-columns: 1fr;
+    }
+    .tm-calendar-customer-search-row .tm-btn {
+      width: 100%;
+    }
     .tm-calendar-message-preview-actions .tm-btn { width: 100%; }
     .tm-calendar-panel { padding: 13px; }
     .tm-calendar-card { gap: 7px; padding: 11px; }
@@ -356,8 +373,13 @@
           <label><input type="radio" name="customer_mode" value="new" data-conversion-mode> New Customer</label>
         </div>
         <div data-existing-customer-fields>
-          <label class="tm-label" for="customer_filter_{{ item.id }}">Search Customers</label>
-          <input class="tm-input" id="customer_filter_{{ item.id }}" type="search" placeholder="Name, phone, or email" data-customer-filter>
+          <div class="tm-calendar-customer-search-row">
+            <div>
+              <label class="tm-label" for="customer_filter_{{ item.id }}">Search Customers</label>
+              <input class="tm-input" id="customer_filter_{{ item.id }}" type="search" placeholder="Name, phone, or email" data-customer-filter>
+            </div>
+            <button class="tm-btn tm-btn-secondary" type="button" data-customer-search>Search</button>
+          </div>
           <div class="tm-calendar-convert-grid">
             <div>
               <label class="tm-label" for="customer_id_{{ item.id }}">Customer</label>
@@ -693,6 +715,7 @@ document.querySelectorAll("[data-conversion-panel]").forEach((panel) => {
   const customerSelect = panel.querySelector("[data-customer-select]");
   const vehicleSelect = panel.querySelector("[data-vehicle-select]");
   const customerFilter = panel.querySelector("[data-customer-filter]");
+  const customerSearchButton = panel.querySelector("[data-customer-search]");
 
   function selectedCustomerMode() {
     return panel.querySelector("[data-conversion-mode]:checked")?.value || "existing";
@@ -717,12 +740,35 @@ document.querySelectorAll("[data-conversion-panel]").forEach((panel) => {
   customerModes.forEach((input) => input.addEventListener("change", syncModes));
   vehicleModes.forEach((input) => input.addEventListener("change", syncModes));
   customerSelect?.addEventListener("change", syncVehicleOptions);
-  customerFilter?.addEventListener("input", () => {
-    const needle = customerFilter.value.trim().toLowerCase();
+
+  function runCustomerSearch() {
+    const needle = customerFilter?.value.trim().toLowerCase() || "";
+    const matchingOptions = [];
+
     customerSelect?.querySelectorAll("option[data-search]").forEach((option) => {
-      option.hidden = needle && !option.dataset.search.includes(needle);
+      const matches = !needle || option.dataset.search.includes(needle);
+      option.hidden = !matches;
+      if (matches) matchingOptions.push(option);
     });
+
+    if (matchingOptions.length === 1) {
+      customerSelect.value = matchingOptions[0].value;
+      syncVehicleOptions();
+    } else if (matchingOptions.length === 0) {
+      customerSelect.value = "";
+      syncVehicleOptions();
+    }
+
+    customerSelect?.focus({ preventScroll: true });
+  }
+
+  customerSearchButton?.addEventListener("click", runCustomerSearch);
+  customerFilter?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    runCustomerSearch();
   });
+
   syncVehicleOptions();
   syncModes();
 });
