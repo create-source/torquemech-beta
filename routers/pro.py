@@ -4900,31 +4900,18 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         """
     )
 
-    if using_postgres():
-        conn.execute(
-            """
-            ALTER TABLE customers
-            ADD COLUMN IF NOT EXISTS shop_id INTEGER
-            """
-        )
-        conn.execute(
-            """
-            ALTER TABLE customers
-            ADD COLUMN IF NOT EXISTS customer_status TEXT NOT NULL DEFAULT 'active'
-            """
-        )
-        conn.execute(
-            """
-            ALTER TABLE customer_vehicles
-            ADD COLUMN IF NOT EXISTS shop_id INTEGER
-            """
-        )
-        conn.execute(
-            """
-            ALTER TABLE customer_vehicles
-            ADD COLUMN IF NOT EXISTS archived_at TEXT
-            """
-        )
+    if not using_postgres():
+        vehicle_columns = {
+            row[1]
+            for row in conn.execute(
+                "PRAGMA table_info(customer_vehicles)"
+            ).fetchall()
+        }
+
+        if "archived_at" not in vehicle_columns:
+            conn.execute(
+                "ALTER TABLE customer_vehicles ADD COLUMN archived_at TEXT"
+            )
     else:
         columns = {
             row[1]
