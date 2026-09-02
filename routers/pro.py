@@ -4899,74 +4899,74 @@ def ensure_customer_status_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    if using_postgres():
-    conn.execute(
-        """
-        ALTER TABLE customers
-        ADD COLUMN IF NOT EXISTS shop_id INTEGER
-        """
-    )
-    conn.execute(
-        """
-        ALTER TABLE customers
-        ADD COLUMN IF NOT EXISTS customer_status TEXT NOT NULL DEFAULT 'active'
-        """
-    )
-    conn.execute(
-        """
-        ALTER TABLE customer_vehicles
-        ADD COLUMN IF NOT EXISTS shop_id INTEGER
-        """
-    )
-    conn.execute(
-        """
-        ALTER TABLE customer_vehicles
-        ADD COLUMN IF NOT EXISTS archived_at TEXT
-        """
-    )
-else:
-    columns = {
-        row[1]
-        for row in conn.execute(
-            "PRAGMA table_info(customers)"
-        ).fetchall()
-    }
+        if using_postgres():
+            conn.execute(
+                """
+                ALTER TABLE customers
+                ADD COLUMN IF NOT EXISTS shop_id INTEGER
+                """
+            )
+            conn.execute(
+                """
+                ALTER TABLE customers
+                ADD COLUMN IF NOT EXISTS customer_status TEXT NOT NULL DEFAULT 'active'
+                """
+            )
+            conn.execute(
+                """
+                ALTER TABLE customer_vehicles
+                ADD COLUMN IF NOT EXISTS shop_id INTEGER
+                """
+            )
+            conn.execute(
+                """
+                ALTER TABLE customer_vehicles
+                ADD COLUMN IF NOT EXISTS archived_at TEXT
+                """
+            )
+        else:
+            columns = {
+                row[1]
+                for row in conn.execute(
+                    "PRAGMA table_info(customers)"
+                ).fetchall()
+            }
 
-    if "shop_id" not in columns:
+            if "shop_id" not in columns:
+                conn.execute(
+                    "ALTER TABLE customers ADD COLUMN shop_id INTEGER"
+                )
+
+            if "customer_status" not in columns:
+                conn.execute(
+                    "ALTER TABLE customers "
+                    "ADD COLUMN customer_status TEXT NOT NULL DEFAULT 'active'"
+                )
+
+            vehicle_columns = {
+                row[1]
+                for row in conn.execute(
+                    "PRAGMA table_info(customer_vehicles)"
+                ).fetchall()
+            }
+
+            if "shop_id" not in vehicle_columns:
+                conn.execute(
+                    "ALTER TABLE customer_vehicles ADD COLUMN shop_id INTEGER"
+                )
+
+            if "archived_at" not in vehicle_columns:
+                conn.execute(
+                    "ALTER TABLE customer_vehicles ADD COLUMN archived_at TEXT"
+                )
+
         conn.execute(
-            "ALTER TABLE customers ADD COLUMN shop_id INTEGER"
+            """
+            UPDATE customers
+            SET customer_status = 'active'
+            WHERE customer_status IS NULL OR TRIM(customer_status) = ''
+            """
         )
-
-    if "customer_status" not in columns:
-        conn.execute(
-            "ALTER TABLE customers "
-            "ADD COLUMN customer_status TEXT NOT NULL DEFAULT 'active'"
-        )
-
-    vehicle_columns = {
-        row[1]
-        for row in conn.execute(
-            "PRAGMA table_info(customer_vehicles)"
-        ).fetchall()
-    }
-
-    if "shop_id" not in vehicle_columns:
-        conn.execute(
-            "ALTER TABLE customer_vehicles ADD COLUMN shop_id INTEGER"
-        )
-
-    if "archived_at" not in vehicle_columns:
-        conn.execute(
-            "ALTER TABLE customer_vehicles ADD COLUMN archived_at TEXT"
-        )
-
-    conn.execute(
-        """
-        UPDATE customers
-        SET customer_status = 'active'
-        WHERE customer_status IS NULL OR TRIM(customer_status) = ''
-        """
-    )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_shop_id ON customers (shop_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customer_vehicles_shop_id ON customer_vehicles (shop_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_customers_status ON customers (customer_status)")
